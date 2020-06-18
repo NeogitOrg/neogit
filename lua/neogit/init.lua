@@ -15,7 +15,9 @@ local function git_status()
   result.branch = vim.fn.matchlist(output[lineidx], branch_re)[2]
   lineidx = lineidx + 1
 
-  result.remote = vim.fn.matchlist(output[lineidx], remote_re)[3]
+  local matches = vim.fn.matchlist(output[lineidx], remote_re)
+  result.ahead_by = tonumber(matches[5]) or 0
+  result.remote = matches[3]
   lineidx = lineidx + 1
 
   while output[lineidx] ~= "" do
