@@ -43,6 +43,17 @@ function! s:neogit()
     endfor
   endif
 
+  if status.ahead_by != 0
+    call Write("")
+    call Write("Unmerged into " . status.remote . " (" . status.ahead_by . ")")
+
+    let commits = luaeval("neogit.unmerged('" . status.remote . "')")
+
+    for commit in commits
+      call Write(commit)
+    endfor
+  endif
+
   setlocal nomodifiable
   setlocal nohidden
   setlocal noswapfile

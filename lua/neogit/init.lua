@@ -1,14 +1,18 @@
 local branch_re = "On branch \\(\\w\\+\\)"
-local remote_re = "Your branch is \\(up to date with\\|ahead of\\|behind\\) '\\(.*\\)' \\?\\(by \\(\\d*\\) commit\\)\\?"
+local remote_re = "Your branch \\(is up to date with\\|is ahead of\\|is behind\\|and\\) '\\(.*\\)' \\?\\(by \\(\\d*\\) commit\\|have diverged\\)\\?"
 local change_re = "\\W*\\(.*\\):\\W*\\(.*\\)"
 
 local function git_status()
   local output = vim.fn.systemlist("git status")
   local lineidx = 1
 
+  local function parse_current_line(regex)
+    return vim.fn.matchlist(output[lineidx], regex)
+  end
+
   local function parse_changes(list)
     while output[lineidx] ~= "" do
-      local matches = vim.fn.matchlist(output[lineidx], change_re)
+      local matches = parse_current_line(change_re)
       local type = matches[2]
       local file = matches[3]
       table.insert(list, { type = type, file = file })
@@ -30,15 +34,20 @@ local function git_status()
   result.ahead_by = 0
   result.behind_by = 0
 
-  result.branch = vim.fn.matchlist(output[lineidx], branch_re)[2]
+  result.branch = parse_current_line(branch_re)[2]
   lineidx = lineidx + 1
 
-  local matches = vim.fn.matchlist(output[lineidx], remote_re)
+  local matches = parse_current_line(remote_re)
 
   if matches[2] == "ahead of" then
     result.ahead_by = tonumber(matches[5])
   elseif matches[2] == "behind" then
     result.behind_by = tonumber(matches[5])
+  elseif matches[2] == "and" then
+    lineidx = lineidx + 1
+    local matches = parse_current_line("and have \\(\\d*\\) and \\(\\d*\\)")
+    result.ahead_by = tonumber(matches[2])
+    result.behind_by = tonumber(matches[3])
   end
 
   result.remote = matches[3]
@@ -98,6 +107,8 @@ local function git_unmerged(branch)
   local output = vim.fn.systemlist("git log --oneline " .. branch .. "..")
   return output
 end
+
+git_status()
 
 return {
   status = git_status,
