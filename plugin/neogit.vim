@@ -1,6 +1,9 @@
 lua neogit = require("neogit")
 
-function s:neogit_move_to_section(step)
+function! s:neogit_toggle()
+endfunction
+
+function! s:neogit_move_to_section(step)
   let line = line('.')
   let i = 0
   let idx = -1
@@ -196,6 +199,7 @@ function! s:neogit()
   nnoremap <buffer> <silent> [s :call <SID>neogit_prev_section()<CR>
   nnoremap <buffer> <silent> u :call <SID>neogit_unstage()<CR>
   nnoremap <buffer> <silent> U :call <SID>neogit_unstage_all()<CR>
+  nnoremap <buffer> <silent> <TAB> :call <SID>neogit_toggle()<CR>
 endfunction
 
 command! -nargs=0 Neogit call <SID>neogit()
