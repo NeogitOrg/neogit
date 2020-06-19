@@ -1,9 +1,56 @@
 lua neogit = require("neogit")
 
-function! s:neogit_toggle()
+let s:change_regex = "^modified \\(.*\\)$"
+
+function! s:neogit_get_hovered_file()
+  let line = getline('.')
+  let matches = matchlist(line, s:change_regex)
+
+  if len(matches) == 0
+    return v:null
+  endif
+
+  return matches[1]
 endfunction
 
-function! s:neogit_move_to_section(step)
+function! s:neogit_toggle()
+  setlocal modifiable
+
+  let file = s:neogit_get_hovered_file()
+
+  if file == v:null 
+    return
+  endif
+
+  let section = s:neogit_get_hovered_section()
+
+  let change_idx = line('.') - section.start - 1
+  let change = s:state.status[section.name][change_idx]
+
+  if change.diff_open == v:true 
+    let change.diff_open = v:false
+
+    normal j
+    silent execute 'normal ' change.diff_height . 'dd'
+    normal k
+
+    let section.end = section.end - change.diff_height
+  else
+    let result = systemlist("git diff " . file)
+    let diff = result[4:-1]
+
+    let change.diff_open = v:true
+    let change.diff_height = len(diff) 
+
+    let section.end = section.end + change.diff_height
+
+    call append('.', diff)
+  endif
+
+  setlocal nomodifiable
+endfunction
+
+function! s:neogit_get_hovered_section_idx()
   let line = line('.')
   let i = 0
   let idx = -1
@@ -16,22 +63,58 @@ function! s:neogit_move_to_section(step)
     let i = i + 1
   endfor
 
-  if i == len(s:state.locations)
-    if a:step < 0
-      let idx = i
-    endif
+  return idx
+endfunction
+
+function! s:neogit_get_hovered_section()
+  return s:state.locations[s:neogit_get_hovered_section_idx()]
+endfunction
+
+function! s:neogit_move_to_section(step)
+  let idx = s:neogit_get_hovered_section_idx()
+
+  if a:step < 0 && idx == -1 
+    let idx = 0
   endif
 
-  if len(s:state.locations) - 1 >= idx + a:step && idx + a:step >= 0
-    call cursor(s:state.locations[idx + a:step].start, 0)
+  if len(s:state.locations) == idx + a:step
+    let idx = -1
+  endif
+
+  call cursor(s:state.locations[idx + a:step].start, 0)
+endfunction
+
+function! s:neogit_move_to_item(step)
+  let section = s:neogit_get_hovered_section()
+  let file = s:neogit_get_hovered_file()
+  let line = line('.')
+
+  if file != v:null 
+    if a:step > 0
+      if line < section.end
+        silent execute 'normal ' . a:step . 'j'
+      endif
+    else
+      if line > section.start + 1
+        silent execute 'normal ' . (a:step * -1) . 'k'
+      endif
+    endif
   endif
 endfunction
 
-function s:neogit_next_section()
+function! s:neogit_next_item()
+  call s:neogit_move_to_item(1)
+endfunction
+
+function! s:neogit_prev_item()
+  call s:neogit_move_to_item(-1)
+endfunction
+
+function! s:neogit_next_section()
   call s:neogit_move_to_section(1)
 endfunction
 
-function s:neogit_prev_section()
+function! s:neogit_prev_section()
   call s:neogit_move_to_section(-1)
 endfunction
 
@@ -46,22 +129,18 @@ function! s:neogit_unstage_all()
 endfunction
 
 function! s:neogit_stage()
-  let line = getline('.')
-  let matches = matchlist(line, "^modified \\(.*\\)$")
+  let file = s:neogit_get_hovered_file()
 
-  if len(matches) != 0
-    let file = matches[1]
+  if file != v:null
     call system("git add " . file)
     call s:neogit_refresh_status()
   endif
 endfunction
 
 function! s:neogit_unstage()
-  let line = getline('.')
-  let matches = matchlist(line, "^modified \\(.*\\)$")
+  let file = s:neogit_get_hovered_file()
 
-  if len(matches) != 0
-    let file = matches[1]
+  if file != v:null
     call system("git reset " . file)
     call s:neogit_refresh_status()
   endif
@@ -182,6 +261,14 @@ function! s:neogit_print_status()
   endif
 endfunction
 
+function! s:neogit_push()
+  !git push
+  call s:neogit_refresh_status()
+endfunction
+
+function! s:neogit_commit()
+endfunction
+
 function! s:neogit()
   enew
 
@@ -193,10 +280,14 @@ function! s:neogit()
   setlocal nobuflisted
 
   nnoremap <buffer> <silent> q :bp!\|bd!#<CR>
+  nnoremap <buffer> <silent> pp :call <SID>neogit_push()<CR>
+  nnoremap <buffer> <silent> cc :call <SID>neogit_commit()<CR>
   nnoremap <buffer> <silent> s :call <SID>neogit_stage()<CR>
   nnoremap <buffer> <silent> S :call <SID>neogit_stage_all()<CR>
-  nnoremap <buffer> <silent> ]s :call <SID>neogit_next_section()<CR>
-  nnoremap <buffer> <silent> [s :call <SID>neogit_prev_section()<CR>
+  nnoremap <buffer> <silent> <m-n> :call <SID>neogit_next_section()<CR>
+  nnoremap <buffer> <silent> <m-p> :call <SID>neogit_prev_section()<CR>
+  nnoremap <buffer> <silent> <c-n> :call <SID>neogit_next_item()<CR>
+  nnoremap <buffer> <silent> <c-p> :call <SID>neogit_prev_item()<CR>
   nnoremap <buffer> <silent> u :call <SID>neogit_unstage()<CR>
   nnoremap <buffer> <silent> U :call <SID>neogit_unstage_all()<CR>
   nnoremap <buffer> <silent> <TAB> :call <SID>neogit_toggle()<CR>

@@ -15,7 +15,7 @@ local function git_status()
       local matches = parse_current_line(change_re)
       local type = matches[2]
       local file = matches[3]
-      table.insert(list, { type = type, file = file })
+      table.insert(list, { type = type, file = file, diff_open = false, diff_height = 0 })
       lineidx = lineidx + 1
     end
   end
@@ -108,7 +108,7 @@ local function git_stashes()
   local result = {}
   for i, line in ipairs(output) do
     local matches = vim.fn.matchlist(line, "stash@{\\(\\d*\\)}: \\(.*\\)")
-    table.insert(result, { idx = tonumber(matches[2]), name = matches[3] })
+    table.insert(result, { idx = tonumber(matches[2]), name = matches[3]})
   end
   return result
 end
