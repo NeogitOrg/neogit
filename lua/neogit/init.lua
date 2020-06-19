@@ -103,6 +103,16 @@ local function git_unpulled(branch)
   return output
 end
 
+local function git_stashes()
+  local output = vim.fn.systemlist("git stash list")
+  local result = {}
+  for i, line in ipairs(output) do
+    local matches = vim.fn.matchlist(line, "stash@{\\(\\d*\\)}: \\(.*\\)")
+    table.insert(result, { idx = tonumber(matches[2]), name = matches[3] })
+  end
+  return result
+end
+
 local function git_unmerged(branch)
   local output = vim.fn.systemlist("git log --oneline " .. branch .. "..")
   return output
@@ -113,6 +123,7 @@ git_status()
 return {
   status = git_status,
   fetch = git_fetch,
+  stashes = git_stashes,
   unpulled = git_unpulled,
   unmerged = git_unmerged,
   tree = git_tree

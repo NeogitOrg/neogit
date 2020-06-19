@@ -2,6 +2,7 @@ lua neogit = require("neogit")
 
 function! s:neogit()
   let status = luaeval("neogit.status()")
+  let stashes = luaeval("neogit.stashes()")
   let s:lineidx = 0
 
   echo status
@@ -32,11 +33,21 @@ function! s:neogit()
     endfor
   endif
 
+  if len(stashes) != 0
+    call Write("")
+    call Write("Stashes (" . len(stashes) . ")")
+    for stash in stashes
+      call Write("stash@{" . stash.idx . "} " . stash.name)
+    endfor
+  endif
+
   if status.behind_by != 0
     call Write("")
     call Write("Unpulled from " . status.remote . " (" . status.behind_by . ")")
 
     let commits = luaeval("neogit.unpulled('" . status.remote . "')")
+
+    " test
 
     for commit in commits
       call Write(commit)
