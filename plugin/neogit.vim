@@ -370,6 +370,9 @@ function! s:neogit()
   " commit
   nnoremap <buffer> <silent> cc :call <SID>neogit_commit()<CR>
 
+  " refresh
+  nnoremap <buffer> <silent> r :call <SID>neogit_refresh_status()<CR>
+
   nnoremap <buffer> <silent> q :bp!\|bd!#<CR>
   nnoremap <buffer> <silent> cc :call <SID>neogit_commit()<CR>
   nnoremap <buffer> <silent> s :call <SID>neogit_stage()<CR>
