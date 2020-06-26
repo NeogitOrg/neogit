@@ -13,35 +13,68 @@ function! s:neogit_get_hovered_file()
   return matches[1]
 endfunction
 
+function! s:neogit_get_hovered_change()
+  let section = s:neogit_get_hovered_section()
+  let changes = s:state.status[section.name]
+  let line = line('.')
+  let change = v:null
+
+  for curr_change in changes
+    if curr_change.start <= line && line <= curr_change.end
+      let change = curr_change
+      break
+    endif
+  endfor
+
+  return change
+endfunction
+
 function! s:neogit_toggle()
   setlocal modifiable
 
-  let file = s:neogit_get_hovered_file()
+  let section = s:neogit_get_hovered_section()
 
-  if file == v:null 
+  if section is v:null
     return
   endif
 
-  let section = s:neogit_get_hovered_section()
+  let changes = s:state.status[section.name]
+  let line = line('.')
 
-  let change_idx = line('.') - section.start - 1
-  let change = s:state.status[section.name][change_idx]
+  let change = s:neogit_get_hovered_change()
 
   if change.diff_open == v:true 
     let change.diff_open = v:false
 
-    normal j
-    silent execute 'normal ' change.diff_height . 'dd'
+    silent execute ':' . (change.start + 1)
+    silent execute 'normal ' . change.diff_height . 'dd'
     normal k
 
+    for c in changes
+      if c.start > change.start 
+        let c.start = c.start - change.diff_height
+        let c.end = c.end - change.diff_height
+      endif
+    endfor
+
+    let change.end = change.start
     let section.end = section.end - change.diff_height
+    let change.diff_height = 0
   else
-    let result = systemlist("git diff " . file)
+    let result = systemlist("git diff " . change.file)
     let diff = result[4:-1]
 
     let change.diff_open = v:true
     let change.diff_height = len(diff) 
 
+    for c in changes
+      if c.start > change.start 
+        let c.start = c.start + change.diff_height
+        let c.end = c.end + change.diff_height
+      endif
+    endfor
+
+    let change.end = change.start + change.diff_height
     let section.end = section.end + change.diff_height
 
     call append('.', diff)
@@ -86,19 +119,27 @@ endfunction
 
 function! s:neogit_move_to_item(step)
   let section = s:neogit_get_hovered_section()
+  let changes = s:state.status[section.name]
   let file = s:neogit_get_hovered_file()
   let line = line('.')
 
-  if file != v:null 
-    if a:step > 0
-      if line < section.end
-        silent execute 'normal ' . a:step . 'j'
+  let change = s:neogit_get_hovered_change()
+
+  let next_line = 0
+
+  if a:step > 0 
+    let next_line = change.start + change.diff_height + 1
+  else
+    for c in changes
+      if c.end == change.start - 1
+        let next_line = c.start
+        break
       endif
-    else
-      if line > section.start + 1
-        silent execute 'normal ' . (a:step * -1) . 'k'
-      endif
-    endif
+    endfor
+  endif
+
+  if change isnot v:null && next_line <= section.end && next_line >= section.start + 1
+    silent execute ':' . next_line
   endif
 endfunction
 
@@ -186,6 +227,8 @@ function! s:neogit_print_status()
     let start = s:lineidx
     for change in status.unstaged_changes
       call Write(change.type . " " . change.file)
+      let change.start = s:lineidx
+      let change.end = s:lineidx
     endfor
     let end = s:lineidx
     call add(s:state.locations, {
@@ -201,6 +244,8 @@ function! s:neogit_print_status()
     let start = s:lineidx
     for change in status.staged_changes
       call Write(change.type . " " . change.file)
+      let change.start = s:lineidx
+      let change.end = s:lineidx
     endfor
     let end = s:lineidx
     call add(s:state.locations, {
