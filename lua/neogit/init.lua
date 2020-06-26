@@ -41,9 +41,9 @@ local function git_status()
 
   local matches = parse_current_line(remote_re)
 
-  if matches[2] == "ahead of" then
+  if matches[2] == "is ahead of" then
     result.ahead_by = tonumber(matches[5])
-  elseif matches[2] == "behind" then
+  elseif matches[2] == "is behind" then
     result.behind_by = tonumber(matches[5])
   elseif matches[2] == "and" then
     lineidx = lineidx + 1
@@ -120,7 +120,7 @@ local function git_unmerged(branch)
   return output
 end
 
-git_status()
+-- git_status()
 
 return {
   status = git_status,
