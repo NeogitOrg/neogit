@@ -306,8 +306,18 @@ function! s:neogit_print_status()
   endif
 endfunction
 
-function! s:neogit_push()
-  !git push
+function! s:neogit_fetch(remote)
+  execute '!git fetch ' . a:remote
+  call s:neogit_refresh_status()
+endfunction
+
+function! s:neogit_pull(remote)
+  execute '!git pull ' . a:remote
+  call s:neogit_refresh_status()
+endfunction
+
+function! s:neogit_push(remote)
+  execute '!git push' . a:remote
   call s:neogit_refresh_status()
 endfunction
 
@@ -324,8 +334,19 @@ function! s:neogit()
   setlocal noswapfile
   setlocal nobuflisted
 
+  " fetch
+  nnoremap <buffer> <silent> fp :call <SID>neogit_fetch("")<CR>
+  nnoremap <buffer> <silent> fu :call <SID>neogit_fetch("upstream")<CR>
+
+  " pull
+  nnoremap <buffer> <silent> Fp :call <SID>neogit_pull("")<CR>
+  nnoremap <buffer> <silent> Fu :call <SID>neogit_pull("upstream")<CR>
+
+  " push 
+  nnoremap <buffer> <silent> Pp :call <SID>neogit_push("")<CR>
+  nnoremap <buffer> <silent> Pu :call <SID>neogit_push("upstream")<CR>
+
   nnoremap <buffer> <silent> q :bp!\|bd!#<CR>
-  nnoremap <buffer> <silent> pp :call <SID>neogit_push()<CR>
   nnoremap <buffer> <silent> cc :call <SID>neogit_commit()<CR>
   nnoremap <buffer> <silent> s :call <SID>neogit_stage()<CR>
   nnoremap <buffer> <silent> S :call <SID>neogit_stage_all()<CR>
