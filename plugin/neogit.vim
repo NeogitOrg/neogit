@@ -326,7 +326,12 @@ function! s:neogit_commit_on_delete()
 
   silent !rm .git/COMMIT_EDITMSG
 
-  execute '!git commit -m "' . join(msg, "\r\n") . '"'
+  if len(msg) > 0
+    execute '!git commit -m "' . join(msg, "\r\n") . '"'
+
+    call s:neogit_refresh_status()
+  endif
+
 endfunction
 
 function! s:neogit_commit()
