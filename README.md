@@ -1,6 +1,6 @@
 # Neogit
 
-test
+A Magit clone for Neovim that may change some things to fit the Vim philosophy.
 
 ## TODO
 
@@ -17,4 +17,5 @@ test
 - [ ] Unstage chunk
 - [ ] Commit
 - [x] Push
-- [ ] Pull
+- [x] Pull
+- [x] Fetch

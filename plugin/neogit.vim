@@ -321,7 +321,23 @@ function! s:neogit_push(remote)
   call s:neogit_refresh_status()
 endfunction
 
+function! s:neogit_commit_on_delete()
+  let msg = getline(0, '$')
+
+  silent !rm .git/COMMIT_EDITMSG
+
+  execute '!git commit -m "' . join(msg, "\r\n") . '"'
+endfunction
+
 function! s:neogit_commit()
+  silent !rm .git/COMMIT_EDITMSG
+  execute '15sp .git/COMMIT_EDITMSG'
+
+  setlocal nohidden
+  setlocal noswapfile
+  setlocal nobuflisted
+
+  autocmd! WinClosed <buffer> call <SID>neogit_commit_on_delete()
 endfunction
 
 function! s:neogit()
@@ -345,6 +361,9 @@ function! s:neogit()
   " push 
   nnoremap <buffer> <silent> Pp :call <SID>neogit_push("")<CR>
   nnoremap <buffer> <silent> Pu :call <SID>neogit_push("upstream")<CR>
+
+  " commit
+  nnoremap <buffer> <silent> cc :call <SID>neogit_commit()<CR>
 
   nnoremap <buffer> <silent> q :bp!\|bd!#<CR>
   nnoremap <buffer> <silent> cc :call <SID>neogit_commit()<CR>

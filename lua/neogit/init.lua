@@ -12,15 +12,12 @@ local function git_status()
 
   local function parse_changes(list)
     while output[lineidx] ~= "" do
-      section_start = section_start + 1
       local matches = parse_current_line(change_re)
       local type = matches[2]
       local file = matches[3]
       local diff_height = 0
       local diff_open = false
-      local start = 0
-      local end = 0
-      table.insert(list, { type = type, file = file, diff_open = diff_open, diff_height = diff_height, start = start, "end" = end })
+      table.insert(list, { type = type, file = file, diff_open = diff_open, diff_height = diff_height })
       lineidx = lineidx + 1
     end
   end
