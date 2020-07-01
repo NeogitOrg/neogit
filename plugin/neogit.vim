@@ -328,11 +328,12 @@ endfunction
 function! s:neogit_commit_on_delete()
   let msg = getline(0, '$')
 
-  "  silent !rm .git/COMMIT_EDITMSG
+  silent !rm .git/COMMIT_EDITMSG
 
   if len(msg) > 0
+    echo msg
     call s:neogit_focus()
-    call s:neogit_refresh_status()
+    " call s:neogit_refresh_status()
 
     execute '!git commit -m "' . join(msg, "\r\n") . '"'
   endif
