@@ -187,8 +187,11 @@ function! s:neogit_unstage()
   endif
 endfunction
 
+function! s:neogit_focus()
+  execute ':sb ' . bufnr('Neogit')
+endfunction
+
 function! s:neogit_refresh_status()
-  b Neogit
   setlocal modifiable
 
   let line = line('.')
@@ -330,6 +333,7 @@ function! s:neogit_commit_on_delete()
   if len(msg) > 0
     execute '!git commit -m "' . join(msg, "\r\n") . '"'
 
+    call s:neogit_focus()
     call s:neogit_refresh_status()
   endif
 
