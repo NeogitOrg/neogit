@@ -331,10 +331,10 @@ function! s:neogit_commit_on_delete()
   silent !rm .git/COMMIT_EDITMSG
 
   if len(msg) > 0
-    execute '!git commit -m "' . join(msg, "\r\n") . '"'
-
     call s:neogit_focus()
     call s:neogit_refresh_status()
+
+    execute '!git commit -m "' . join(msg, "\r\n") . '"'
   endif
 
 endfunction
