@@ -328,7 +328,7 @@ endfunction
 function! s:neogit_commit_on_delete()
   let msg = getline(0, '$')
 
-  silent !rm .git/COMMIT_EDITMSG
+  "  silent !rm .git/COMMIT_EDITMSG
 
   if len(msg) > 0
     call s:neogit_focus()
