@@ -332,8 +332,9 @@ function! s:neogit_commit_on_delete()
 
   if len(msg) > 0
     echo msg
-    call s:neogit_focus()
-    " call s:neogit_refresh_status()
+
+    bp
+    call s:neogit_refresh_status()
 
     execute '!git commit -m "' . join(msg, "\r\n") . '"'
   endif
