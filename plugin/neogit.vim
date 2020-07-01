@@ -328,6 +328,8 @@ endfunction
 function! s:neogit_commit_on_delete()
   let msg = getline(0, '$')
 
+  echo msg
+
   silent !rm .git/COMMIT_EDITMSG
 
   if len(msg) > 0
