@@ -188,6 +188,7 @@ function! s:neogit_unstage()
 endfunction
 
 function! s:neogit_refresh_status()
+  b Neogit
   setlocal modifiable
 
   let line = line('.')
@@ -350,10 +351,11 @@ function! s:neogit()
 
   call s:neogit_print_status()
 
+  file Neogit
+
   setlocal nomodifiable
   setlocal nohidden
   setlocal noswapfile
-  setlocal nobuflisted
 
   " fetch
   nnoremap <buffer> <silent> fp :call <SID>neogit_fetch("")<CR>
@@ -377,12 +379,8 @@ function! s:neogit()
   nnoremap <buffer> <silent> cc :call <SID>neogit_commit()<CR>
   nnoremap <buffer> <silent> s :call <SID>neogit_stage()<CR>
   nnoremap <buffer> <silent> S :call <SID>neogit_stage_all()<CR>
-  nnoremap <buffer> <silent> <m-n> :call <SID>neogit_next_section()<CR>
-  nnoremap <buffer> <silent> <m-p> :call <SID>neogit_prev_section()<CR>
   nnoremap <buffer> <silent> <c-j> :call <SID>neogit_next_section()<CR>
   nnoremap <buffer> <silent> <c-k> :call <SID>neogit_prev_section()<CR>
-  nnoremap <buffer> <silent> <c-n> :call <SID>neogit_next_item()<CR>
-  nnoremap <buffer> <silent> <c-p> :call <SID>neogit_prev_item()<CR>
   nnoremap <buffer> <silent> <s-j> :call <SID>neogit_next_item()<CR>
   nnoremap <buffer> <silent> <s-k> :call <SID>neogit_prev_item()<CR>
   nnoremap <buffer> <silent> u :call <SID>neogit_unstage()<CR>
