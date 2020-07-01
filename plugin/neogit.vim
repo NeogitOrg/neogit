@@ -387,5 +387,3 @@ function! s:neogit()
 endfunction
 
 command! -nargs=0 Neogit call <SID>neogit()
-
-Neogit
