@@ -331,11 +331,6 @@ function! s:neogit_commit_on_delete()
   silent !rm .git/COMMIT_EDITMSG
 
   if len(msg) > 0
-    echo msg
-
-    bp
-    call s:neogit_refresh_status()
-
     execute '!git commit -m "' . join(msg, "\r\n") . '"'
   endif
 
@@ -362,6 +357,8 @@ function! s:neogit()
   setlocal nomodifiable
   setlocal nohidden
   setlocal noswapfile
+
+  autocmd! BufEnter <buffer> call <SID>neogit_refresh_status()
 
   " fetch
   nnoremap <buffer> <silent> fp :call <SID>neogit_fetch("")<CR>
