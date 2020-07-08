@@ -87,7 +87,7 @@ local function git_status()
 
     while output[lineidx] ~= "" do
       local file = string.sub(output[lineidx], 2)
-      table.insert(result.untracked_files, { name = file })
+      table.insert(result.untracked_files, { name = file, diff_height = 0, diff_open = false })
       lineidx = lineidx + 1
     end
   end

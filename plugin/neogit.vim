@@ -46,10 +46,6 @@ function! s:neogit_get_hovered_change()
 endfunction
 
 function! s:neogit_toggle()
-  if len(matchlist(getline('.'), s:change_regex)) == 0
-    return
-  endif
-
   setlocal modifiable
 
   let section = s:neogit_get_hovered_section()
@@ -58,10 +54,18 @@ function! s:neogit_toggle()
     return
   endif
 
+  if section.name == "untracked_files"
+    return
+  endif
+
   let changes = s:state.status[section.name]
   let line = line('.')
 
   let change = s:neogit_get_hovered_change()
+
+  if change is v:null
+    return
+  endif
 
   if change.type == "deleted" || change.type == "new file"
     return
@@ -90,8 +94,6 @@ function! s:neogit_toggle()
 
     let change.diff_open = v:true
     let change.diff_height = len(diff) 
-
-    echo change
 
     for c in changes
       if c.start > change.start 
@@ -145,11 +147,25 @@ endfunction
 
 function! s:neogit_move_to_item(step)
   let section = s:neogit_get_hovered_section()
+
+  if section is v:null
+    return
+  endif
+
   let changes = s:state.status[section.name]
   let file = s:neogit_get_hovered_file()
   let line = line('.')
 
+  if section.start == line && a:step > 0
+    silent execute ":" . (section.start + 1)
+    return
+  endif
+
   let change = s:neogit_get_hovered_change()
+
+  if change is v:null
+    return
+  endif
 
   let next_line = 0
 
@@ -459,6 +475,7 @@ function! s:neogit()
   setlocal noswapfile
   setlocal nohidden
   setlocal nobuflisted
+  setlocal foldmethod=syntax
 
   autocmd! BufEnter <buffer> call <SID>neogit_refresh_status()
 
