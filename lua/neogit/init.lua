@@ -87,7 +87,7 @@ local function git_status()
 
     while output[lineidx] ~= "" do
       local file = string.sub(output[lineidx], 2)
-      table.insert(result.untracked_files, file)
+      table.insert(result.untracked_files, { name = file })
       lineidx = lineidx + 1
     end
   end
@@ -124,8 +124,6 @@ local function git_unmerged(branch)
   local output = vim.fn.systemlist("git log --oneline " .. branch .. "..")
   return output
 end
-
-print(vim.inspect(git_status()))
 
 return {
   status = git_status,

@@ -1,24 +1,32 @@
 lua neogit = require("neogit")
 
-let s:change_regex = "^modified \\(.*\\)$"
-let s:previous_shell_output = ""
+let s:change_regex = "^\\(modified\\|new file\\)\\? \\(\\S*\\)$"
+let s:untracked_regex = "^\\(\\S*\\)$"
+let s:previous_shell_output = []
+let s:previous_shell_cmd = ""
 let g:neogit_use_tab = 1
 
 function! s:neogit_execute_shell(cmd, msg)
   echo a:msg . "..."
+  let s:previous_shell_cmd = a:cmd
   let s:previous_shell_output = systemlist(a:cmd)
-  " echo ""
 endfunction
 
 function! s:neogit_get_hovered_file()
   let line = getline('.')
   let matches = matchlist(line, s:change_regex)
+  let idx = 2
+
+  if len(matches) == 0
+    let matches = matchlist(line, s:untracked_regex)
+    let idx = 1
+  endif
 
   if len(matches) == 0
     return v:null
   endif
 
-  return matches[1]
+  return matches[idx]
 endfunction
 
 function! s:neogit_get_hovered_change()
@@ -38,6 +46,10 @@ function! s:neogit_get_hovered_change()
 endfunction
 
 function! s:neogit_toggle()
+  if len(matchlist(getline('.'), s:change_regex)) == 0
+    return
+  endif
+
   setlocal modifiable
 
   let section = s:neogit_get_hovered_section()
@@ -64,8 +76,6 @@ function! s:neogit_toggle()
         let c.end = c.end - change.diff_height
       endif
     endfor
-
-
 
     let change.end = change.start
     let section.end = section.end - change.diff_height
@@ -120,8 +130,6 @@ function! s:neogit_move_to_section(step)
     let idx = 0
   endif
 
-
-
   if len(s:state.locations) == idx + a:step
     let idx = -1
   endif
@@ -172,7 +180,7 @@ function! s:neogit_prev_section()
 endfunction
 
 function! s:neogit_stage_all()
-  call s:neogit_execute_shell("git add " . join(map(s:state.status.unstaged_changes, {_, val -> val.file}), " "), "")
+  call s:neogit_execute_shell("git add .", "")
   call s:neogit_refresh_status()
 endfunction
 
@@ -236,6 +244,23 @@ function! s:neogit_print_status()
 
   call Write("Head: " . status.branch)
   call Write("Push: " . status.remote)
+
+  if len(status.untracked_files) != 0
+    call Write("")
+    call Write("Untracked files (" . len(status.untracked_files) . ")")
+    let start = s:lineidx
+    for file in status.untracked_files
+      call Write(file.name)
+      let file.start = s:lineidx
+      let file.end = s:lineidx
+    endfor
+    let end = s:lineidx
+    call add(s:state.locations, {
+          \ "name": "untracked_files",
+          \ "start": start,
+          \ "end": end
+          \})
+  endif
 
   if len(status.unstaged_changes) != 0
     call Write("")
@@ -340,8 +365,6 @@ endfunction
 function! s:neogit_commit_on_delete()
   let msg = getline(0, '$')
 
-  echo msg
-
   silent !rm .git/COMMIT_EDITMSG
 
   if len(msg) > 0
@@ -375,6 +398,11 @@ function! s:neogit_log()
   normal gg
 
   setlocal nomodifiable
+  setlocal readonly
+
+  file NeogitLog
+
+  nnoremap <buffer> <silent> q :close!<CR>
 endfunction
 
 function! s:neogit_quit()
@@ -386,7 +414,26 @@ function! s:neogit_quit()
 endfunction
 
 function! s:neogit_show_previous_shell_output()
-  echom s:previous_shell_output
+  if len(s:previous_shell_output) == 0
+    echo "Empty shell output"
+    return
+  endif
+
+  below 15new
+
+  call setline(1, '$ ' . s:previous_shell_cmd)
+  call append(1, '')
+  call append('.', s:previous_shell_output)
+
+  setlocal readonly
+  setlocal nomodifiable
+  setlocal noswapfile
+  setlocal nohidden
+  setlocal nobuflisted
+
+  file NeogitShellOutput
+
+  nnoremap <buffer> <silent> q :close!<CR>
 endfunction
 
 function! s:neogit()
@@ -398,11 +445,13 @@ function! s:neogit()
 
   call s:neogit_print_status()
 
-  file Neogit
+  file NeogitStatus
 
+  setlocal readonly
   setlocal nomodifiable
-  setlocal nohidden
   setlocal noswapfile
+  setlocal nohidden
+  setlocal nobuflisted
 
   autocmd! BufEnter <buffer> call <SID>neogit_refresh_status()
 
