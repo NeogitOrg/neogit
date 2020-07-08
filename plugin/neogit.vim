@@ -446,6 +446,7 @@ function! s:neogit()
   call s:neogit_print_status()
 
   file NeogitStatus
+  set filetype=NeogitStatus
 
   setlocal readonly
   setlocal nomodifiable
