@@ -1,6 +1,6 @@
 lua neogit = require("neogit")
 
-let s:change_regex = "^\\(modified\\|new file\\)\\? \\(\\S*\\)$"
+let s:change_regex = "^\\(modified\\|new file\\|deleted\\)\\? \\(\\S*\\)$"
 let s:untracked_regex = "^\\(\\S*\\)$"
 let s:previous_shell_output = []
 let s:previous_shell_cmd = ""
@@ -63,6 +63,10 @@ function! s:neogit_toggle()
 
   let change = s:neogit_get_hovered_change()
 
+  if change.type == "deleted" || change.type == "new file"
+    return
+  endif
+
   if change.diff_open == v:true 
     let change.diff_open = v:false
 
@@ -86,6 +90,8 @@ function! s:neogit_toggle()
 
     let change.diff_open = v:true
     let change.diff_height = len(diff) 
+
+    echo change
 
     for c in changes
       if c.start > change.start 
