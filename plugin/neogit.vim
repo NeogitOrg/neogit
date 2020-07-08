@@ -1,6 +1,14 @@
 lua neogit = require("neogit")
 
 let s:change_regex = "^modified \\(.*\\)$"
+let s:previous_shell_output = ""
+let g:neogit_use_tab = 1
+
+function! s:neogit_execute_shell(cmd, msg)
+  echo a:msg . "..."
+  let s:previous_shell_output = systemlist(a:cmd)
+  " echo ""
+endfunction
 
 function! s:neogit_get_hovered_file()
   let line = getline('.')
@@ -57,6 +65,8 @@ function! s:neogit_toggle()
       endif
     endfor
 
+
+
     let change.end = change.start
     let section.end = section.end - change.diff_height
     let change.diff_height = 0
@@ -110,6 +120,8 @@ function! s:neogit_move_to_section(step)
     let idx = 0
   endif
 
+
+
   if len(s:state.locations) == idx + a:step
     let idx = -1
   endif
@@ -160,12 +172,12 @@ function! s:neogit_prev_section()
 endfunction
 
 function! s:neogit_stage_all()
-  call system("git add " . join(map(s:state.status.unstaged_changes, {_, val -> val.file}), " "))
+  call s:neogit_execute_shell("git add " . join(map(s:state.status.unstaged_changes, {_, val -> val.file}), " "), "")
   call s:neogit_refresh_status()
 endfunction
 
 function! s:neogit_unstage_all()
-  call system("git reset")
+  call s:neogit_execute_shell("git reset", "")
   call s:neogit_refresh_status()
 endfunction
 
@@ -173,7 +185,7 @@ function! s:neogit_stage()
   let file = s:neogit_get_hovered_file()
 
   if file != v:null
-    call system("git add " . file)
+    call s:neogit_execute_shell("git add " . file, "")
     call s:neogit_refresh_status()
   endif
 endfunction
@@ -182,13 +194,13 @@ function! s:neogit_unstage()
   let file = s:neogit_get_hovered_file()
 
   if file != v:null
-    call system("git reset " . file)
+    call s:neogit_execute_shell("git reset " . file, "")
     call s:neogit_refresh_status()
   endif
 endfunction
 
 function! s:neogit_focus()
-  execute ':sb ' . bufnr('Neogit')
+  silent execute ':sb ' . bufnr('Neogit')
 endfunction
 
 function! s:neogit_refresh_status()
@@ -311,17 +323,17 @@ function! s:neogit_print_status()
 endfunction
 
 function! s:neogit_fetch(remote)
-  execute '!git fetch ' . a:remote
+  call s:neogit_execute_shell('git fetch ' . a:remote, "Fetching")
   call s:neogit_refresh_status()
 endfunction
 
 function! s:neogit_pull(remote)
-  execute '!git pull ' . a:remote
+  call s:neogit_execute_shell('git pull ' . a:remote, "Pulling")
   call s:neogit_refresh_status()
 endfunction
 
 function! s:neogit_push(remote)
-  execute '!git push' . a:remote
+  call s:neogit_execute_shell('git push' . a:remote, "Pushing")
   call s:neogit_refresh_status()
 endfunction
 
@@ -333,14 +345,14 @@ function! s:neogit_commit_on_delete()
   silent !rm .git/COMMIT_EDITMSG
 
   if len(msg) > 0
-    execute '!git commit -m "' . join(msg, "\r\n") . '"'
+    call s:neogit_execute_shell('git commit -m "' . join(msg, "\r\n") . '"', "Commiting")
   endif
 
 endfunction
 
 function! s:neogit_commit()
   silent !rm .git/COMMIT_EDITMSG
-  execute '15sp .git/COMMIT_EDITMSG'
+  silent execute 'above 15sp .git/COMMIT_EDITMSG'
 
   setlocal nohidden
   setlocal noswapfile
@@ -349,8 +361,40 @@ function! s:neogit_commit()
   autocmd! WinClosed <buffer> call <SID>neogit_commit_on_delete()
 endfunction
 
+function! s:neogit_log()
+  below 15new
+
+  setlocal noswapfile
+  setlocal nobuflisted
+  setlocal nohidden
+
+  let result = luaeval("neogit.log()")
+
+  call append(0, result)
+  
+  normal gg
+
+  setlocal nomodifiable
+endfunction
+
+function! s:neogit_quit()
+  if g:neogit_use_tab == 1
+    bd!
+  else
+    bp!\|bd!#
+  endif
+endfunction
+
+function! s:neogit_show_previous_shell_output()
+  echom s:previous_shell_output
+endfunction
+
 function! s:neogit()
-  enew
+  if g:neogit_use_tab == 1 
+    tabnew
+  else 
+    enew
+  endif
 
   call s:neogit_print_status()
 
@@ -362,35 +406,46 @@ function! s:neogit()
 
   autocmd! BufEnter <buffer> call <SID>neogit_refresh_status()
 
-  " fetch
+  "{{{ fetch
   nnoremap <buffer> <silent> fp :call <SID>neogit_fetch("")<CR>
   nnoremap <buffer> <silent> fu :call <SID>neogit_fetch("upstream")<CR>
-
-  " pull
+  "}}}
+  "{{{ pull
   nnoremap <buffer> <silent> Fp :call <SID>neogit_pull("")<CR>
   nnoremap <buffer> <silent> Fu :call <SID>neogit_pull("upstream")<CR>
-
-  " push 
+  "}}}
+  "{{{ push 
   nnoremap <buffer> <silent> Pp :call <SID>neogit_push("")<CR>
   nnoremap <buffer> <silent> Pu :call <SID>neogit_push("upstream")<CR>
-
-  " commit
+  "}}}
+  "{{{ commit
   nnoremap <buffer> <silent> cc :call <SID>neogit_commit()<CR>
-
-  " refresh
+  "}}}
+  "{{{ refresh
   nnoremap <buffer> <silent> r :call <SID>neogit_refresh_status()<CR>
-
-  nnoremap <buffer> <silent> q :bp!\|bd!#<CR>
-  nnoremap <buffer> <silent> cc :call <SID>neogit_commit()<CR>
+  "}}}
+  "{{{ stage
   nnoremap <buffer> <silent> s :call <SID>neogit_stage()<CR>
   nnoremap <buffer> <silent> S :call <SID>neogit_stage_all()<CR>
+  "}}}
+  "{{{ unstage
+  nnoremap <buffer> <silent> u :call <SID>neogit_unstage()<CR>
+  nnoremap <buffer> <silent> U :call <SID>neogit_unstage_all()<CR>
+  "}}}
+  "{{{ movement
   nnoremap <buffer> <silent> <c-j> :call <SID>neogit_next_section()<CR>
   nnoremap <buffer> <silent> <c-k> :call <SID>neogit_prev_section()<CR>
   nnoremap <buffer> <silent> <s-j> :call <SID>neogit_next_item()<CR>
   nnoremap <buffer> <silent> <s-k> :call <SID>neogit_prev_item()<CR>
-  nnoremap <buffer> <silent> u :call <SID>neogit_unstage()<CR>
-  nnoremap <buffer> <silent> U :call <SID>neogit_unstage_all()<CR>
+  "}}}
+  "{{{ log
+  nnoremap <buffer> <silent> l :call <SID>neogit_log()<CR>
+  "}}}
+  "{{{ misc
+  nnoremap <buffer> <silent> q :call <SID>neogit_quit()<CR>
+  nnoremap <buffer> <silent> $ :call <SID>neogit_show_previous_shell_output()<CR>
   nnoremap <buffer> <silent> <TAB> :call <SID>neogit_toggle()<CR>
+  "}}}
 endfunction
 
 command! -nargs=0 Neogit call <SID>neogit()

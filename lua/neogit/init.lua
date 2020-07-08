@@ -61,6 +61,11 @@ local function git_status()
 
   lineidx = lineidx + 1
 
+  if output[lineidx] == "You are currently rebasing." then
+    lineidx = lineidx + 2
+    lineidx = lineidx + 1
+  end
+
   if output[lineidx] == "Changes to be committed:" then
     skip_explanation()
 
@@ -90,7 +95,7 @@ local function git_status()
   return result
 end
 
-local function git_tree()
+local function git_log()
   local output = vim.fn.systemlist("git log --graph --pretty=oneline --abbrev-commit")
   return output
 end
@@ -120,7 +125,7 @@ local function git_unmerged(branch)
   return output
 end
 
--- git_status()
+print(vim.inspect(git_status()))
 
 return {
   status = git_status,
@@ -128,5 +133,5 @@ return {
   stashes = git_stashes,
   unpulled = git_unpulled,
   unmerged = git_unmerged,
-  tree = git_tree
+  log = git_log
 }
