@@ -9,7 +9,7 @@ let g:neogit_highlight_modifier = 0
 let g:neogit_use_tab = 1
 
 function! s:neogit_execute_shell(cmd, msg)
-  echom a:msg . "..." " test commit
+  silent execute "normal :echo " . a:msg . "..."
   let s:previous_shell_cmd = a:cmd
   let s:previous_shell_output = systemlist(a:cmd)
 endfunction
