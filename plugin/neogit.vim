@@ -9,7 +9,7 @@ let g:neogit_highlight_modifier = 0
 let g:neogit_use_tab = 1
 
 function! s:neogit_execute_shell(cmd, msg)
-  execute "normal :echo " . a:msg . "..."
+  echo a:msg . "..."
   let s:previous_shell_cmd = a:cmd
   let s:previous_shell_output = systemlist(a:cmd)
 endfunction
@@ -392,6 +392,7 @@ function! s:neogit_commit_on_delete()
   silent !rm .git/COMMIT_EDITMSG
 
   if len(msg) > 0
+    redraw
     call s:neogit_execute_shell('git commit -m "' . join(msg, "\r\n") . '"', "Commiting")
   endif
 
