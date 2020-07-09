@@ -24,7 +24,7 @@ syn region neogitUnmergedTitle start=/^Unmerged into/ end=/$/ contains=neogitTit
 
 syn region neogitChange start=/^\(modified\|deleted\|new file\) .*$/ end=/$/ contains=neogitChangeModified,neogitChangeDeleted,neogitChangeNewFile
 syn region neogitHunk start=/^@@ -\d\+,\d\+ +\d\+,\d\+ @@/ end=/^@@ -\d\+,\d\+ +\d\+,\d\+ @@/ contains=neogitDiffAdd,neogitDiffDelete transparent
-syn region neogitLog start=/^[0-9a-z]\{7} .*/ end=/$/ contains=neogitHash
+syn region neogitLog start=/^[0-9a-z]\{7} / end=/./ contains=neogitHash
 
 hi def link neogitBranch Macro
 hi def link neogitTitle Function
