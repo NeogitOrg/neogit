@@ -4,6 +4,8 @@ let s:change_regex = "^\\(modified\\|new file\\|deleted\\)\\? \\(\\S*\\)$"
 let s:untracked_regex = "^\\(\\S*\\)$"
 let s:previous_shell_output = []
 let s:previous_shell_cmd = ""
+
+let g:neogit_highlight_modifier = 0
 let g:neogit_use_tab = 1
 
 function! s:neogit_execute_shell(cmd, msg)
@@ -54,7 +56,7 @@ function! s:neogit_toggle()
     return
   endif
 
-  if section.name == "untracked_files"
+  if section.name == "untracked_files" || section.name == "unmerged" || section.name == "unpulled"
     return
   endif
 
@@ -407,7 +409,7 @@ function! s:neogit_commit()
 endfunction
 
 function! s:neogit_log()
-  below 15new
+  below new
 
   setlocal noswapfile
   setlocal nobuflisted
@@ -423,8 +425,9 @@ function! s:neogit_log()
   setlocal readonly
 
   file NeogitLog
+  set filetype=NeogitLog
 
-  nnoremap <buffer> <silent> q :close!<CR>
+  nnoremap <buffer> <silent> q :bd!<CR>
 endfunction
 
 function! s:neogit_quit()
@@ -436,12 +439,7 @@ function! s:neogit_quit()
 endfunction
 
 function! s:neogit_show_previous_shell_output()
-  if len(s:previous_shell_output) == 0
-    echo "Empty shell output"
-    return
-  endif
-
-  below 15new
+  below new
 
   call setline(1, '$ ' . s:previous_shell_cmd)
   call append(1, '')
@@ -455,7 +453,7 @@ function! s:neogit_show_previous_shell_output()
 
   file NeogitShellOutput
 
-  nnoremap <buffer> <silent> q :close!<CR>
+  nnoremap <buffer> <silent> q :bd!<CR>
 endfunction
 
 function! s:neogit()
