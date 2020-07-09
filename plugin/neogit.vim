@@ -9,9 +9,12 @@ let g:neogit_highlight_modifier = 0
 let g:neogit_use_tab = 1
 
 function! s:neogit_execute_shell(cmd, msg)
-  echo a:msg . "..."
+  if a:msg != "" 
+    echo a:msg . "..."
+  endif
   let s:previous_shell_cmd = a:cmd
   let s:previous_shell_output = systemlist(a:cmd)
+  return s:previous_shell_output
 endfunction
 
 function! s:neogit_get_hovered_file()
@@ -405,7 +408,7 @@ function! s:neogit_commit_amend_on_delete()
 
   if len(msg) > 0
     redraw
-    call s:neogit_execute_shell('git commit -m "' . join(msg, "\r\n") . '"', "Commiting")
+    call s:neogit_execute_shell('git commit --amend -m "' . join(msg, "\r\n") . '"', "Amending")
   endif
 
 endfunction
@@ -422,14 +425,17 @@ function! s:neogit_commit()
 endfunction
 
 function! s:neogit_commit_amend()
-  call s:neogit_execute_shell('git commit -amend', "")
+  silent !rm .git/COMMIT_EDITMSG
   silent execute 'above 15sp .git/COMMIT_EDITMSG'
+  let msg = s:neogit_execute_shell('git log -1 --pretty=%B', "")
+
+  call setline(1, msg)
 
   setlocal nohidden
   setlocal noswapfile
   setlocal nobuflisted
 
-  autocmd! WinClosed <buffer> call <SID>neogit_commit_on_delete()
+  autocmd! WinClosed <buffer> call <SID>neogit_commit_amend_on_delete()
 endfunction
 
 function! s:neogit_log()
