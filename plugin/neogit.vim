@@ -398,8 +398,31 @@ function! s:neogit_commit_on_delete()
 
 endfunction
 
+function! s:neogit_commit_amend_on_delete()
+  let msg = getline(0, '$')
+
+  silent !rm .git/COMMIT_EDITMSG
+
+  if len(msg) > 0
+    redraw
+    call s:neogit_execute_shell('git commit -m "' . join(msg, "\r\n") . '"', "Commiting")
+  endif
+
+endfunction
+
 function! s:neogit_commit()
   silent !rm .git/COMMIT_EDITMSG
+  silent execute 'above 15sp .git/COMMIT_EDITMSG'
+
+  setlocal nohidden
+  setlocal noswapfile
+  setlocal nobuflisted
+
+  autocmd! WinClosed <buffer> call <SID>neogit_commit_on_delete()
+endfunction
+
+function! s:neogit_commit_amend()
+  call s:neogit_execute_shell('git commit -amend', "")
   silent execute 'above 15sp .git/COMMIT_EDITMSG'
 
   setlocal nohidden
@@ -492,6 +515,7 @@ function! s:neogit()
   "}}}
   "{{{ commit
   nnoremap <buffer> <silent> cc :call <SID>neogit_commit()<CR>
+  nnoremap <buffer> <silent> ca :call <SID>neogit_commit_amend()<CR>
   "}}}
   "{{{ refresh
   nnoremap <buffer> <silent> r :call <SID>neogit_refresh_status()<CR>
