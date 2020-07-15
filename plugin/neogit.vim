@@ -507,47 +507,14 @@ function! s:neogit()
 
   autocmd! BufEnter <buffer> call <SID>neogit_refresh_status()
 
-  "{{{ fetch
-  nnoremap <buffer> <silent> fp :call <SID>neogit_fetch("")<CR>
-  nnoremap <buffer> <silent> fu :call <SID>neogit_fetch("upstream")<CR>
-  "}}}
-  "{{{ pull
-  nnoremap <buffer> <silent> Fp :call <SID>neogit_pull("")<CR>
-  nnoremap <buffer> <silent> Fu :call <SID>neogit_pull("upstream")<CR>
-  "}}}
-  "{{{ push 
-  nnoremap <buffer> <silent> Pp :call <SID>neogit_push("")<CR>
-  nnoremap <buffer> <silent> Pu :call <SID>neogit_push("upstream")<CR>
-  "}}}
-  "{{{ commit
-  nnoremap <buffer> <silent> cc :call <SID>neogit_commit()<CR>
-  nnoremap <buffer> <silent> ca :call <SID>neogit_commit_amend()<CR>
-  "}}}
-  "{{{ refresh
-  nnoremap <buffer> <silent> r :call <SID>neogit_refresh_status()<CR>
-  "}}}
-  "{{{ stage
-  nnoremap <buffer> <silent> s :call <SID>neogit_stage()<CR>
-  nnoremap <buffer> <silent> S :call <SID>neogit_stage_all()<CR>
-  "}}}
-  "{{{ unstage
-  nnoremap <buffer> <silent> u :call <SID>neogit_unstage()<CR>
-  nnoremap <buffer> <silent> U :call <SID>neogit_unstage_all()<CR>
-  "}}}
-  "{{{ movement
+  nnoremap <buffer> <silent> c :lua require'neogit.popups.commit'.create()<CR>
+  nnoremap <buffer> <silent> l :lua require'neogit.popups.log'.create()<CR>
   nnoremap <buffer> <silent> <c-j> :call <SID>neogit_next_section()<CR>
   nnoremap <buffer> <silent> <c-k> :call <SID>neogit_prev_section()<CR>
   nnoremap <buffer> <silent> <s-j> :call <SID>neogit_next_item()<CR>
   nnoremap <buffer> <silent> <s-k> :call <SID>neogit_prev_item()<CR>
-  "}}}
-  "{{{ log
-  nnoremap <buffer> <silent> l :call <SID>neogit_log()<CR>
-  "}}}
-  "{{{ misc
   nnoremap <buffer> <silent> q :call <SID>neogit_quit()<CR>
-  nnoremap <buffer> <silent> $ :call <SID>neogit_show_previous_shell_output()<CR>
   nnoremap <buffer> <silent> <TAB> :call <SID>neogit_toggle()<CR>
-  "}}}
 endfunction
 
 command! -nargs=0 Neogit call <SID>neogit()
