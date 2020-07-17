@@ -1,7 +1,9 @@
+## General
+
 * refactor: split up git.lua file into git/*.lua
 * refactor: extract common functionality for a mapping manager to mapping_manager.lua
 
-## status
+## Status
 
 * fix: improve status load time (this should also fix stage/unstage/... slowness)
 
