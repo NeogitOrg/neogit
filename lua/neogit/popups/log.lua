@@ -1,5 +1,32 @@
 local popup = require("neogit.lib.popup")
 local util = require("neogit.lib.util")
+local buffer = require("neogit.buffer")
+local git = require("neogit.git")
+
+local function commits_to_string(commits)
+  local result = {}
+  local previous_level = 0
+
+  for _, commit in pairs(commits) do
+    local branch = "*"
+    if previous_level > commit.level then
+      table.insert(result, string.rep(" ", 7) .. string.rep(" |", commit.level + 1) .. "/")
+    elseif previous_level < commit.level then
+      table.insert(result, string.rep(" ", 7) .. string.rep(" |", previous_level + 1) .. "\\")
+    end
+    for _=1,commit.level do
+      branch = "| " .. branch
+    end
+    if commit.remote == "" then
+      table.insert(result, string.format("%s %s %s", commit.hash, branch, commit.message))
+    else
+      table.insert(result, string.format("%s %s %s %s", commit.hash, branch, commit.remote, commit.message))
+    end
+    previous_level = commit.level
+  end
+
+  return result
+end
 
 local function create()
   popup.create(
@@ -105,56 +132,18 @@ local function create()
           key = "l",
           description = "Log current",
           callback = function(popup)
-            local cmd = "git log " .. popup.to_cli()
+            local cmd = "git log --oneline " .. popup.to_cli()
             local output = vim.fn.systemlist(cmd)
-            local output_len = #output
+            local commits = git.parse_log(output)
 
-            local commits = {}
-
-            for i=1,output_len do
-              local matches = vim.fn.matchlist(output[i], "^[| ]*\\* .*commit \\(.*\\)")
-              if #matches ~= 0 then
-                local commit = {
-                  hash = matches[2]
-                }
-                while true do
-                  i = i + 1
-                  matches = vim.fn.matchlist(output[i], "^\\(| \\?\\)\\+\\(.*\\)")
-                  if #matches == 0 then
-                    break;
-                  end
-                  print(matches[3])
-                end
-                table.insert(commits, commit)
-                util.inspect(matches)
+            buffer.create({
+              name = "NeogitLog",
+              initialize = function()
+                local result = commits_to_string(commits)
+                vim.fn.matchadd("Comment", "^[a-z0-9]\\{7}\\ze ")
+                vim.api.nvim_put(result, "l", false, false)
               end
-            end
-
-            print(#commits)
-
-            vim.api.nvim_command("below new")
-
-            local buf_handle = vim.api.nvim_get_current_buf()
-
-            vim.api.nvim_buf_set_name(buf_handle, "NeogitLog")
-            vim.api.nvim_buf_set_option(buf_handle, "buftype", "nofile")
-            vim.api.nvim_buf_set_option(buf_handle, "bufhidden", "hide")
-            vim.api.nvim_buf_set_option(buf_handle, "swapfile", false)
-
-            vim.api.nvim_put(output, "l", false, false)
-
-            vim.api.nvim_buf_set_option(buf_handle, "readonly", true)
-            vim.api.nvim_buf_set_option(buf_handle, "modifiable", false)
-            vim.api.nvim_buf_set_keymap(
-              buf_handle,
-              "n",
-              "q",
-              "<cmd>bw<CR>",
-              {
-                noremap = true,
-                silent = true
-              }
-            )
+            })
           end
         },
         {
@@ -204,8 +193,6 @@ local function create()
       }
     })
 end
-
-create()
 
 return {
   create = create

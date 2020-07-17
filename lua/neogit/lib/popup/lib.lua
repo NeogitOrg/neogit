@@ -1,3 +1,5 @@
+package.loaded['neogit.lib.popup.lib'] = nil
+
 local util = require("neogit.lib.util")
 
 local popups = {}
@@ -176,6 +178,19 @@ local function toggle_popup_option(buf_handle, key)
   end
 end
 
+local function toggle(buf_handle)
+  local line = vim.fn.getline('.')
+  local matches = vim.fn.matchlist(line, "^ \\([-=]\\)\\([a-zA-Z]\\)")
+  local is_switch = matches[2] == "-"
+  local key = matches[3]
+  if is_switch then
+    toggle_popup_switch(buf_handle, key)
+  else
+    toggle_popup_option(buf_handle, key)
+  end
+end
+
+
 local function create_popup(id, switches, options, actions)
   local popup = {
     id = id,
@@ -277,10 +292,21 @@ local function create_popup(id, switches, options, actions)
       silent = true
     }
   )
+  vim.api.nvim_buf_set_keymap(
+    buf_handle,
+    "n",
+    "<TAB>",
+    string.format("<cmd>lua require'neogit.lib.popup'.toggle(%d)<CR>", buf_handle),
+    {
+      noremap = true,
+      silent = true
+    }
+  )
 end
 
 return {
   create = create_popup,
+  toggle = toggle,
   toggle_switch = toggle_popup_switch,
   toggle_option = toggle_popup_option,
   do_action = do_action

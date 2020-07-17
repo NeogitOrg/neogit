@@ -517,4 +517,4 @@ function! s:neogit()
   nnoremap <buffer> <silent> <TAB> :call <SID>neogit_toggle()<CR>
 endfunction
 
-command! -nargs=0 Neogit call <SID>neogit()
+command! -nargs=0 Neogit :lua require'neogit.status'.create()<CR>
