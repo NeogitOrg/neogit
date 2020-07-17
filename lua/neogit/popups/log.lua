@@ -1,7 +1,6 @@
 local popup = require("neogit.lib.popup")
-local util = require("neogit.lib.util")
 local buffer = require("neogit.buffer")
-local git = require("neogit.git")
+local git = require("neogit.lib.git")
 
 local function commits_to_string(commits)
   local result = {}
@@ -132,10 +131,7 @@ local function create()
           key = "l",
           description = "Log current",
           callback = function(popup)
-            local cmd = "git log --oneline " .. popup.to_cli()
-            local output = vim.fn.systemlist(cmd)
-            local commits = git.parse_log(output)
-
+            local commits = git.log.list("git log --oneline " .. popup.to_cli())
             buffer.create({
               name = "NeogitLog",
               initialize = function()

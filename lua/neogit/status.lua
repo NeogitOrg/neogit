@@ -1,5 +1,5 @@
 local buffer = require("neogit.buffer")
-local git = require("neogit.git")
+local git = require("neogit.lib.git")
 local util = require("neogit.lib.util")
 
 local mappings = {}
@@ -98,8 +98,8 @@ end
 local function display_status()
   locations = {}
 
-  status = git.parse_status(git.cli("status"))
-  status.stashes = git.parse_stashes(git.cli("stash list"))
+  status = git.status.get()
+  status.stashes = git.stash.list()
 
   local line_idx = 3
   local output = {
@@ -184,7 +184,7 @@ local function display_status()
     end
   })
   if status.behind_by ~= 0 then
-    status.unpulled = util.map(git.cli(string.format("log --oneline ..%s", status.remote)), function(i)
+    status.unpulled = util.map(git.cli.run(string.format("log --oneline ..%s", status.remote)), function(i)
       return {
         name = i
       }
@@ -197,7 +197,7 @@ local function display_status()
     })
   end
   if status.ahead_by ~= 0 then
-    status.unmerged = util.map(git.cli(string.format("log --oneline %s..", status.remote)), function(i)
+    status.unmerged = util.map(git.cli.run(string.format("log --oneline %s..", status.remote)), function(i)
       return {
         name = i
       }
@@ -261,7 +261,7 @@ local function stage()
     return
   end
 
-  git.stage(item.name)
+  git.status.stage(item.name)
 
   refresh_status()
 end
@@ -275,7 +275,7 @@ local function unstage()
 
   local item = get_current_section_item()
 
-  git.unstage(item.name)
+  git.status.unstage(item.name)
 
   refresh_status()
 end
@@ -318,16 +318,16 @@ local function create()
       mappings["tab"] = toggle
       mappings["s"] = stage
       mappings["S"] = function()
-        git.stage_modified()
+        git.status.stage_modified()
         refresh_status()
       end
       mappings["control s"] = function()
-        git.stage_all()
+        git.status.stage_all()
         refresh_status()
       end
       mappings["u"] = unstage
       mappings["U"] = function()
-        git.unstage_all()
+        git.status.unstage_all()
         refresh_status()
       end
       mappings["c"] = require("neogit.popups.commit").create
