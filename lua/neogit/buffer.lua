@@ -18,6 +18,9 @@ local function create(config)
 
   local buf_handle = vim.api.nvim_get_current_buf()
 
+  vim.api.nvim_command("set nonu")
+  vim.api.nvim_command("set nornu")
+
   vim.api.nvim_buf_set_name(buf_handle, config.name)
   vim.api.nvim_buf_set_option(buf_handle, "buftype", "nofile")
   vim.api.nvim_buf_set_option(buf_handle, "bufhidden", "hide")

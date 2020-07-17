@@ -48,7 +48,12 @@ local function toggle()
 
     vim.api.nvim_command("normal zd")
 
-    local diff = git.diff({ name = change.name, cache = section.name == "staged_changes"})
+    local diff
+    if section.name == "staged_changes" then
+      diff = git.diff.staged(change.name)
+    else
+      diff = git.diff.unstaged(change.name)
+    end
 
     change.diff_open = true
     change.diff_height = #diff.lines
@@ -330,8 +335,10 @@ local function create()
         git.status.unstage_all()
         refresh_status()
       end
+
       mappings["c"] = require("neogit.popups.commit").create
       mappings["l"] = require("neogit.popups.log").create
+      mappings["P"] = require("neogit.popups.push").create
 
       local function key_to_vim(k)
         if k == "tab" then

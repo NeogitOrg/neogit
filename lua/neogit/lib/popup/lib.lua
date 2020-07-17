@@ -31,7 +31,6 @@ local function draw_popup(popup)
   end
 
   table.insert(output, "")
-
   table.insert(output, "Options")
 
   for _, option in pairs(popup.options) do
@@ -221,6 +220,9 @@ local function create_popup(id, switches, options, actions)
     buf_handle = vim.api.nvim_get_current_buf()
 
     popups[buf_handle] = popup
+
+    vim.api.nvim_command("set nonu")
+    vim.api.nvim_command("set nornu")
 
     vim.api.nvim_buf_set_option(buf_handle, "buftype", "nofile")
     vim.api.nvim_buf_set_option(buf_handle, "bufhidden", "hide")
