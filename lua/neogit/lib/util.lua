@@ -2,10 +2,10 @@ local function inspect(x)
   print(vim.inspect(x))
 end
 
-local function time(f)
+local function time(name, f)
   local before = vim.fn.reltime()
   f()
-  print(vim.fn.reltimestr(vim.fn.reltime(before)))
+  print(name .. " took " .. vim.fn.reltimefloat(vim.fn.reltime(before)) * 100 .. "ms")
 end
 
 local function str_right_pad(str, len, sep)

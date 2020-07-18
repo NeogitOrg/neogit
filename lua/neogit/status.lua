@@ -286,89 +286,91 @@ local function unstage()
 end
 
 local function create()
-  if buffer.exists("NeogitStatus") then
-    buffer.go_to("NeogitStatus")
-    return
-  end
-  buffer.create({
-    name = "NeogitStatus",
-    tab = true,
-    initialize = function(buf_handle)
-      display_status()
-
-      vim.fn.matchadd("Macro", "^Head: \\zs.*")
-      vim.fn.matchadd("SpecialChar", "^Push: \\zs.*")
-
-      vim.fn.matchadd("Function", "^Untracked files\\ze (")
-      vim.fn.matchadd("Function", "^Unstaged changes\\ze (")
-      vim.fn.matchadd("Function", "^Staged changes\\ze (")
-      vim.fn.matchadd("Function", "^Stashes\\ze (")
-
-      vim.fn.matchadd("Function", "^Unmerged into\\ze .* (")
-      vim.fn.matchadd("SpecialChar", "^Unmerged into \\zs.*\\ze (")
-
-      vim.fn.matchadd("Function", "^Unpulled from\\ze .* (")
-      vim.fn.matchadd("SpecialChar", "^Unpulled from \\zs.*\\ze (")
-
-      vim.fn.matchadd("Comment", "^[a-z0-9]\\{7}\\ze ")
-      vim.fn.matchadd("Comment", "^stash@{[0-9]*}\\ze ")
-
-      vim.fn.matchadd("DiffAdd", "^+.*")
-      vim.fn.matchadd("DiffDelete", "^-.*")
-
-      -- vim.fn.matchadd("DiffAdd", "^new file\\ze")
-      -- vim.fn.matchadd("DiffDelete", "^deleted\\ze")
-      -- vim.fn.matchadd("DiffChange", "^modified\\ze")
-
-      mappings["tab"] = toggle
-      mappings["s"] = stage
-      mappings["S"] = function()
-        git.status.stage_modified()
-        refresh_status()
-      end
-      mappings["control s"] = function()
-        git.status.stage_all()
-        refresh_status()
-      end
-      mappings["u"] = unstage
-      mappings["U"] = function()
-        git.status.unstage_all()
-        refresh_status()
-      end
-
-      mappings["c"] = require("neogit.popups.commit").create
-      mappings["l"] = require("neogit.popups.log").create
-      mappings["P"] = require("neogit.popups.push").create
-
-      local function key_to_vim(k)
-        if k == "tab" then
-          return "<TAB>"
-        end
-        return k
-      end
-
-      local function map_to_vim(m)
-        if vim.startswith(m, "control") then
-          return string.format("<C-%s>", vim.split(m, " ", true)[2])
-        else
-          return key_to_vim(m)
-        end
-      end
-
-      for k,_ in pairs(mappings) do
-        vim.api.nvim_buf_set_keymap(
-          buf_handle,
-          "n",
-          map_to_vim(k),
-          string.format("<cmd>lua require('neogit.status').mappings['%s']()<CR>", k),
-          {
-            noremap = true,
-            silent = true
-          }
-        )
-      end
+  util.time("Creating NeogitStatus", function()
+    if buffer.exists("NeogitStatus") then
+      buffer.go_to("NeogitStatus")
+      return
     end
-  })
+    buffer.create({
+      name = "NeogitStatus",
+      tab = true,
+      initialize = function(buf_handle)
+        display_status()
+
+        vim.fn.matchadd("Macro", "^Head: \\zs.*")
+        vim.fn.matchadd("SpecialChar", "^Push: \\zs.*")
+
+        vim.fn.matchadd("Function", "^Untracked files\\ze (")
+        vim.fn.matchadd("Function", "^Unstaged changes\\ze (")
+        vim.fn.matchadd("Function", "^Staged changes\\ze (")
+        vim.fn.matchadd("Function", "^Stashes\\ze (")
+
+        vim.fn.matchadd("Function", "^Unmerged into\\ze .* (")
+        vim.fn.matchadd("SpecialChar", "^Unmerged into \\zs.*\\ze (")
+
+        vim.fn.matchadd("Function", "^Unpulled from\\ze .* (")
+        vim.fn.matchadd("SpecialChar", "^Unpulled from \\zs.*\\ze (")
+
+        vim.fn.matchadd("Comment", "^[a-z0-9]\\{7}\\ze ")
+        vim.fn.matchadd("Comment", "^stash@{[0-9]*}\\ze ")
+
+        vim.fn.matchadd("DiffAdd", "^+.*")
+        vim.fn.matchadd("DiffDelete", "^-.*")
+
+        -- vim.fn.matchadd("DiffAdd", "^new file\\ze")
+        -- vim.fn.matchadd("DiffDelete", "^deleted\\ze")
+        -- vim.fn.matchadd("DiffChange", "^modified\\ze")
+
+        mappings["tab"] = toggle
+        mappings["s"] = stage
+        mappings["S"] = function()
+          git.status.stage_modified()
+          refresh_status()
+        end
+        mappings["control s"] = function()
+          git.status.stage_all()
+          refresh_status()
+        end
+        mappings["u"] = unstage
+        mappings["U"] = function()
+          git.status.unstage_all()
+          refresh_status()
+        end
+
+        mappings["c"] = require("neogit.popups.commit").create
+        mappings["l"] = require("neogit.popups.log").create
+        mappings["P"] = require("neogit.popups.push").create
+
+        local function key_to_vim(k)
+          if k == "tab" then
+            return "<TAB>"
+          end
+          return k
+        end
+
+        local function map_to_vim(m)
+          if vim.startswith(m, "control") then
+            return string.format("<C-%s>", vim.split(m, " ", true)[2])
+          else
+            return key_to_vim(m)
+          end
+        end
+
+        for k,_ in pairs(mappings) do
+          vim.api.nvim_buf_set_keymap(
+            buf_handle,
+            "n",
+            map_to_vim(k),
+            string.format("<cmd>lua require('neogit.status').mappings['%s']()<CR>", k),
+            {
+              noremap = true,
+              silent = true
+            }
+          )
+        end
+      end
+    })
+  end)
 end
 
 return {
