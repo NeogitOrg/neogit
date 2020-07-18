@@ -48,7 +48,7 @@ local status = {
       local details = matches[3]
 
       if marker == "##" then
-        matches = vim.fn.matchlist(details, "^\\([a-zA-Z0-9]*\\)...\\(\\S*\\) \\?\\[\\%(\\(ahead\\) \\([0-9]*\\)\\%(, \\)\\?\\)\\?\\%(\\(behind\\) \\([0-9]*\\)\\)\\?\\]")
+        matches = vim.fn.matchlist(details, "^\\([a-zA-Z0-9]*\\)...\\(\\S*\\) \\?\\%(\\[\\%(\\(ahead\\) \\([0-9]*\\)\\%(, \\)\\?\\)\\?\\%(\\(behind\\) \\([0-9]*\\)\\)\\?\\]\\)\\?")
         result.branch = matches[2]
         result.remote = matches[3]
         set_diversion(matches[4], matches[5])
