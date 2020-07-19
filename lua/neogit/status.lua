@@ -1,8 +1,8 @@
 local buffer = require("neogit.buffer")
 local git = require("neogit.lib.git")
 local util = require("neogit.lib.util")
+local mappings_manager = require("neogit.lib.mappings_manager")
 
-local mappings = {}
 local status = {}
 local locations = {}
 
@@ -253,6 +253,10 @@ local function refresh_status()
   end)
 end
 
+function __NeogitStatusRefresh()
+  print("TODO: __NeogitStatusRefresh")
+end
+
 local function stage()
   local section = get_current_section()
 
@@ -320,54 +324,28 @@ local function create()
         -- vim.fn.matchadd("DiffAdd", "^new file\\ze")
         -- vim.fn.matchadd("DiffDelete", "^deleted\\ze")
         -- vim.fn.matchadd("DiffChange", "^modified\\ze")
+        local mmanager = mappings_manager.new()
 
-        mappings["tab"] = toggle
-        mappings["s"] = stage
-        mappings["S"] = function()
+        mmanager.mappings["tab"] = toggle
+        mmanager.mappings["s"] = stage
+        mmanager.mappings["S"] = function()
           git.status.stage_modified()
           refresh_status()
         end
-        mappings["control s"] = function()
+        mmanager.mappings["control-s"] = function()
           git.status.stage_all()
           refresh_status()
         end
-        mappings["u"] = unstage
-        mappings["U"] = function()
+        mmanager.mappings["u"] = unstage
+        mmanager.mappings["U"] = function()
           git.status.unstage_all()
           refresh_status()
         end
+        mmanager.mappings["c"] = require("neogit.popups.commit").create
+        mmanager.mappings["l"] = require("neogit.popups.log").create
+        mmanager.mappings["P"] = require("neogit.popups.push").create
 
-        mappings["c"] = require("neogit.popups.commit").create
-        mappings["l"] = require("neogit.popups.log").create
-        mappings["P"] = require("neogit.popups.push").create
-
-        local function key_to_vim(k)
-          if k == "tab" then
-            return "<TAB>"
-          end
-          return k
-        end
-
-        local function map_to_vim(m)
-          if vim.startswith(m, "control") then
-            return string.format("<C-%s>", vim.split(m, " ", true)[2])
-          else
-            return key_to_vim(m)
-          end
-        end
-
-        for k,_ in pairs(mappings) do
-          vim.api.nvim_buf_set_keymap(
-            buf_handle,
-            "n",
-            map_to_vim(k),
-            string.format("<cmd>lua require('neogit.status').mappings['%s']()<CR>", k),
-            {
-              noremap = true,
-              silent = true
-            }
-          )
-        end
+        mmanager.register()
       end
     })
   end)

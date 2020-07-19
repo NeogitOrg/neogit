@@ -1,4 +1,8 @@
 local popup = require("neogit.lib.popup")
+local cli = require("neogit.lib.git.cli")
+local util = require("neogit.lib.util")
+local buffer = require("neogit.buffer")
+local mappings_manager = require("neogit.lib.mappings_manager")
 
 local function create()
   popup.create(
@@ -67,7 +71,39 @@ local function create()
           key = "c",
           description = "Commit",
           callback = function(popup)
-            print("git commit " .. popup.to_cli())
+            local output = {
+              "",
+              "# Please enter the commit message for your changes. Lines starting",
+              "# with '#' will be ignored, and an empty message aborts the commit."
+            }
+
+            for _, line in pairs(cli.run("status")) do
+              if not vim.startswith(line, "  (") then
+                table.insert(output, "# " .. line)
+              end
+            end
+
+            buffer.create {
+              name = ".git/COMMIT_EDITMSG",
+              filetype = "gitcommit",
+              modifiable = true,
+              readonly = false,
+              initialize = function(buf_handle)
+                vim.api.nvim_buf_set_lines(buf_handle, 0, -1, false, output)
+                local mmanager = mappings_manager.new()
+
+                mmanager.mappings["control-c control-c"] = function()
+                  vim.api.nvim_command("silent set buftype=")
+                  vim.api.nvim_command("silent g/^#/d")
+                  vim.api.nvim_command("silent w!")
+                  vim.api.nvim_command("silent bw!")
+                  cli.run("commit -F .git/COMMIT_EDITMSG " .. popup.to_cli())
+                  __NeogitStatusRefresh()
+                end
+
+                mmanager.register()
+              end
+            }
           end
         },
       },
