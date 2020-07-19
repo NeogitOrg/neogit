@@ -1,6 +1,7 @@
 ## General
 
 * refactor: extract common functionality for a mapping manager to mapping_manager.lua
+* explore a concept of notifications using floating windows to show errors or stuff like that
 
 ## Status
 
