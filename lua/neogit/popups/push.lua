@@ -37,7 +37,11 @@ local function create()
         {
           key = "p",
           description = "Push to pushremote",
-          callback = function() end
+          callback = function()
+            print("Pushing to pushremote...")
+            git.cli.run("push")
+            print("Pushed to pushremote")
+          end
         },
         {
           key = "u",
