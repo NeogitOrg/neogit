@@ -57,10 +57,11 @@ local status = {
         insert_change(result.untracked_files, "A", details)
       else
         local chars = vim.split(marker, "")
-        if chars[1] == " " then
-          insert_change(result.unstaged_changes, chars[2], details)
-        else
+        if chars[1] ~= " " then
           insert_change(result.staged_changes, chars[1], details)
+        end
+        if chars[2] ~= " " then
+          insert_change(result.unstaged_changes, chars[2], details)
         end
       end
     end
