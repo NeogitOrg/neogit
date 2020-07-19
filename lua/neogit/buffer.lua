@@ -22,14 +22,30 @@ local function create(config)
   vim.api.nvim_command("set nornu")
 
   vim.api.nvim_buf_set_name(buf_handle, config.name)
-  vim.api.nvim_buf_set_option(buf_handle, "buftype", "nofile")
+
+  if config.buftype then
+    vim.api.nvim_buf_set_option(buf_handle, "buftype", config.buftype)
+  else
+    vim.api.nvim_buf_set_option(buf_handle, "buftype", "nofile")
+  end
+
   vim.api.nvim_buf_set_option(buf_handle, "bufhidden", "hide")
   vim.api.nvim_buf_set_option(buf_handle, "swapfile", false)
 
   config.initialize(buf_handle)
 
-  vim.api.nvim_buf_set_option(buf_handle, "readonly", true)
-  vim.api.nvim_buf_set_option(buf_handle, "modifiable", false)
+  if config.filetype then
+    vim.api.nvim_command("set filetype=" .. config.filetype)
+  end
+
+  if not config.modifiable then
+    vim.api.nvim_buf_set_option(buf_handle, "modifiable", false)
+  end
+
+  if config.readonly ~= nil and config.readonly then
+    vim.api.nvim_buf_set_option(buf_handle, "readonly", true)
+  end
+
   vim.api.nvim_buf_set_keymap(
     buf_handle,
     "n",
