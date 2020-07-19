@@ -131,7 +131,7 @@ local function create()
           key = "l",
           description = "Log current",
           callback = function(popup)
-            local commits = git.log.list("git log --oneline " .. popup.to_cli())
+            local commits = git.log.list(popup.to_cli())
             buffer.create({
               name = "NeogitLog",
               initialize = function()
