@@ -251,6 +251,8 @@ local function refresh_status()
 
     vim.api.nvim_win_set_cursor(0, cursor)
   end)
+
+  print("Refreshed status!")
 end
 
 function __NeogitStatusRefresh()
@@ -336,6 +338,7 @@ local function create()
           git.status.stage_all()
           refresh_status()
         end
+        mmanager.mappings["control-r"] = refresh_status
         mmanager.mappings["u"] = unstage
         mmanager.mappings["U"] = function()
           git.status.unstage_all()
