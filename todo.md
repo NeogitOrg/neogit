@@ -6,6 +6,11 @@
 ## Status
 
 * fix: improve status load time (this should also fix stage/unstage/... slowness)
+* feat: stage hunk
+* feat: unstage hunk
+* feat: stage selection
+* feat: unstage selection
+* feat: git restore
 
 ## Popups
 
