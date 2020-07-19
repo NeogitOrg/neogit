@@ -20,6 +20,16 @@ local function map(tbl, f)
   return t
 end
 
+local function filter(tbl, f)
+  local t = {}
+  for k,v in pairs(tbl) do
+    if f(v) then
+      table.insert(t, v)
+    end
+  end
+  return t
+end
+
 local function create_fold(first, last)
   vim.api.nvim_command(string.format("%d,%dfold", first, last))
 end
@@ -55,6 +65,7 @@ return {
   time = time,
   slice = slice,
   map = map,
+  filter = filter,
   str_right_pad = str_right_pad,
   str_count = str_count,
   create_fold = create_fold
