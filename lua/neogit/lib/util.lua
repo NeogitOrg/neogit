@@ -17,8 +17,9 @@ end
 
 local function time(name, f)
   local before = vim.fn.reltime()
-  f()
-  print(name .. " took " .. vim.fn.reltimefloat(vim.fn.reltime(before)) * 100 .. "ms")
+  local res = f()
+  print(name .. " took " .. vim.fn.reltimefloat(vim.fn.reltime(before)) * 1000 .. "ms")
+  return res
 end
 
 local function str_right_pad(str, len, sep)

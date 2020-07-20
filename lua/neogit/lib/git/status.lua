@@ -1,4 +1,5 @@
 local cli = require("neogit.lib.git.cli")
+local util = require("neogit.lib.util")
 
 local function marker_to_type(m)
   if m == "M" then
@@ -14,13 +15,18 @@ end
 
 local status = {
   get = function()
-    local output = cli.run("status --porcelain=1 --branch")
+    local outputs = cli.run_batch {
+      "status --porcelain=1 --branch",
+      "stash list",
+    }
+
     local result = {
       unstaged_changes = {},
       staged_changes = {},
       untracked_files = {},
-      ahead_by = 0,
-      behind_by = 0,
+      stash = {},
+      unpulled = {},
+      unmerged = {},
       branch = "",
       remote = ""
     }
@@ -34,25 +40,15 @@ local status = {
       })
     end
 
-    local function set_diversion(type, value)
-      if type == "behind" then
-        result.behind_by = tonumber(value)
-      elseif type == "ahead" then
-        result.ahead_by = tonumber(value)
-      end
-    end
-
     for _, line in pairs(output) do
       local matches = vim.fn.matchlist(line, "\\(.\\{2}\\) \\(.*\\)")
       local marker = matches[2]
       local details = matches[3]
 
       if marker == "##" then
-        matches = vim.fn.matchlist(details, "^\\([a-zA-Z0-9]*\\)...\\(\\S*\\) \\?\\%(\\[\\%(\\(ahead\\) \\([0-9]*\\)\\%(, \\)\\?\\)\\?\\%(\\(behind\\) \\([0-9]*\\)\\)\\?\\]\\)\\?")
+        matches = vim.fn.matchlist(details, "^\\([a-zA-Z0-9]*\\)...\\(\\S*\\).*")
         result.branch = matches[2]
         result.remote = matches[3]
-        set_diversion(matches[4], matches[5])
-        set_diversion(matches[6], matches[7])
       elseif marker == "??" then
         insert_change(result.untracked_files, "A", details)
       else

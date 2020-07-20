@@ -404,6 +404,8 @@ local function create()
   end)
 end
 
+create()
+
 return {
   create = create,
   toggle = toggle,
