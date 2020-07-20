@@ -91,8 +91,14 @@ local function create(message, options)
     content = message
   })
 
+  local timer
+
   local function delete()
     notification_count = notification_count - 1
+
+    if timer then
+      timer:stop()
+    end
 
     for _, n in pairs(notifications) do
       if n.window == window then
@@ -110,7 +116,9 @@ local function create(message, options)
     vim.api.nvim_win_close(border_win, false)
   end
 
-  vim.defer_fn(delete, options.delay or 2000)
+  timer = vim.defer_fn(delete, options.delay or 2000)
+
+  return delete
 end
 
 return {
