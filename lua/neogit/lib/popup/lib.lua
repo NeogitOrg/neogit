@@ -131,8 +131,11 @@ local function do_action(buf_handle, key)
   for _, col in pairs(popup.actions) do
     for _, item in pairs(col) do
       if item.key == key then
-        item.callback(popup)
+        local ret = item.callback(popup)
         vim.api.nvim_command(buf_handle .. "bw")
+        if type(ret) == "function" then
+          ret()
+        end
         return
       end
     end
