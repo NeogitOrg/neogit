@@ -18,9 +18,10 @@ local function create(message, options)
     error("First argument has to be either a table or a string")
   end
 
-  options = options or {
-    type = "info"
-  }
+  options = options or {}
+  options.type = options.type or "info"
+  options.delay = options.delay or 2000
+
   local prev_notification = notifications[notification_count - 1] or {height = 0, row = vim.api.nvim_get_option("lines") - 2}
   local width = util.tbl_longest_str(message)
   local height = #message
@@ -115,13 +116,13 @@ local function create(message, options)
       type = options.type
     })
 
-    if vim.api.winbufnr(window) ~= -1 then
+    if vim.fn.winbufnr(window) ~= -1 then
       vim.api.nvim_win_close(window, false)
       vim.api.nvim_win_close(border_win, false)
     end
   end
 
-  timer = vim.defer_fn(delete, options.delay or 2000)
+  timer = vim.defer_fn(delete, options.delay)
 
   return delete
 end
