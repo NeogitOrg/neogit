@@ -2,6 +2,19 @@ local function inspect(x)
   print(vim.inspect(x))
 end
 
+local function tbl_longest_str(tbl)
+  local len = 0
+
+  for _,str in pairs(tbl) do
+    local str_len = #str
+    if str_len > len then
+      len = str_len
+    end
+  end
+
+  return len
+end
+
 local function time(name, f)
   local before = vim.fn.reltime()
   f()
@@ -65,6 +78,7 @@ return {
   time = time,
   slice = slice,
   map = map,
+  tbl_longest_str = tbl_longest_str,
   filter = filter,
   str_right_pad = str_right_pad,
   str_count = str_count,
