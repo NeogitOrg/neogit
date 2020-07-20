@@ -41,8 +41,6 @@ local function create(config)
     vim.api.nvim_buf_set_option(buf_handle, "readonly", true)
   end
 
-  local close_cmd
-
   if config.tab then
     vim.api.nvim_buf_set_keymap(
       buf_handle,
@@ -66,14 +64,20 @@ local function create(config)
       }
     )
   end
+
+  return buf_handle
 end
 
 local function exists(name)
   return vim.fn.bufnr(name) ~= -1
 end
 
-local function go_to(name)
-  vim.api.nvim_command(vim.fn.bufwinnr(name) .. "wincmd w")
+local function go_to(buf)
+  if type(buf) == "string" then
+    vim.api.nvim_command(vim.fn.bufwinnr(buf) .. "wincmd w")
+  elseif type(buf) == "number" then
+    vim.api.nvim_command(buf .. "wincmd w")
+  end
 end
 
 return {
