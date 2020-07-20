@@ -96,8 +96,10 @@ local function create(message, options)
   local function delete()
     notification_count = notification_count - 1
 
-    if timer then
+    if timer:is_active() then
       timer:stop()
+    else
+      return
     end
 
     for _, n in pairs(notifications) do
