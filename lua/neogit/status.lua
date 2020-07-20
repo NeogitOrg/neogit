@@ -1,6 +1,7 @@
 local buffer = require("neogit.buffer")
 local git = require("neogit.lib.git")
 local util = require("neogit.lib.util")
+local notif = require("neogit.lib.notification")
 local mappings_manager = require("neogit.lib.mappings_manager")
 
 local status = {}
@@ -84,12 +85,14 @@ local function toggle()
     buffer.modify(function()
       vim.api.nvim_put(diff.lines, "l", true, false)
     end)
+    vim.cmd("norm k")
 
     for _, hunk in pairs(diff.hunks) do
       util.create_fold(change.first + hunk.first, change.first + hunk.last)
     end
 
     util.create_fold(change.first, change.last)
+
     vim.api.nvim_command("normal zO")
   else
     vim.api.nvim_command("normal za")
@@ -256,7 +259,7 @@ local function refresh_status()
 end
 
 function __NeogitStatusRefresh()
-  print("TODO: __NeogitStatusRefresh")
+  notif.create("TODO: __NeogitStatusRefresh", { type = "warning" })
 end
 
 local function stage()
