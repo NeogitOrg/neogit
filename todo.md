@@ -1,8 +1,3 @@
-## General
-
-* refactor: extract common functionality for a mapping manager to mapping_manager.lua
-* explore a concept of notifications using floating windows to show errors or stuff like that
-
 ## Status
 
 * fix: improve status load time (this should also fix stage/unstage/... slowness)
@@ -21,3 +16,4 @@
 
 * feat: add the concept of a buffer "object"
 * change: create function now returns a buffer "object"
+* refactor: automatically create a mappings_manager when creating a buffer and pass it as second argument to the initialize function
