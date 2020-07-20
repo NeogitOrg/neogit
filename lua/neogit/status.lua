@@ -6,15 +6,20 @@ local mappings_manager = require("neogit.lib.mappings_manager")
 
 local status = {}
 local locations = {}
+local buf_handle = nil
 
-local function get_current_section()
+local function get_current_section_idx()
   local linenr = vim.fn.line(".")
-  for _, l in pairs(locations) do
+  for i, l in pairs(locations) do
     if l.first <= linenr and linenr <= l.last then
-      return l
+      return i
     end
   end
   return nil
+end
+
+local function get_current_section()
+  return locations[get_current_section_idx()]
 end
 
 local function get_current_section_item()
@@ -30,8 +35,7 @@ local function get_current_section_item()
 end
 
 local function empty_buffer()
-  vim.api.nvim_command("norm ggVGzd")
-  vim.api.nvim_command("1,$delete")
+  vim.api.nvim_buf_set_lines(buf_handle, 0, -1, false, {})
 end
 
 local function toggle()
@@ -88,10 +92,10 @@ local function toggle()
     vim.cmd("norm k")
 
     for _, hunk in pairs(diff.hunks) do
-      util.create_fold(change.first + hunk.first, change.first + hunk.last)
+      util.create_fold(0, change.first + hunk.first, change.first + hunk.last)
     end
 
-    util.create_fold(change.first, change.last)
+    util.create_fold(0, change.first, change.last)
 
     vim.api.nvim_command("normal zO")
   else
@@ -218,48 +222,78 @@ local function display_status()
     })
   end
 
-  vim.api.nvim_buf_set_lines(0, 0, -1, false, output)
-
-  vim.api.nvim_command("setlocal foldmethod=manual")
-  vim.api.nvim_command([[
-  function! FoldFunction()
-    return getline(v:foldstart)
-  endfunction
-  ]])
-  vim.api.nvim_command("setlocal fillchars=fold:\\ ")
-  vim.api.nvim_command("setlocal foldminlines=0")
-  vim.api.nvim_command("setlocal foldtext=FoldFunction()")
-  vim.api.nvim_command("hi Folded guibg=None guifg=None")
+  vim.api.nvim_buf_set_lines(buf_handle, 0, -1, false, output)
 
   for _,l in pairs(locations) do
     local items = status[l.name]
     if items ~= nil then
       for _, i in pairs(items) do
-        util.create_fold(i.first, i.last)
+        util.create_fold(buf_handle, i.first, i.last)
       end
     end
-    util.create_fold(l.first, l.last)
+    util.create_fold(buf_handle, l.first, l.last)
   end
-
-  vim.api.nvim_command("set foldlevel=1")
+  vim.cmd("set foldlevel=1")
 end
 
 local function refresh_status()
   buffer.modify(function()
-    local cursor = vim.api.nvim_win_get_cursor(0)
+    local section_idx = get_current_section_idx()
+    local section = locations[section_idx]
 
-    empty_buffer()
+    if section ~= nil then
+      local item = get_current_section_item()
 
-    display_status()
+      empty_buffer()
 
-    vim.api.nvim_win_set_cursor(0, cursor)
+      display_status()
+
+      local idx = 0
+      if item then
+        local items = status[section.name]
+        for i,it in pairs(items) do
+          if it.name == item.name then
+            idx = i
+            break
+          end
+        end
+      end
+
+      local found = false
+      for _,l in pairs(locations) do
+        if l.name == section.name then
+          vim.api.nvim_win_set_cursor(0, { l.first + idx, 0 })
+          found = true
+          break
+        end
+      end
+
+      if not found then
+        if section_idx > #locations then
+          section_idx = #locations
+        end
+        vim.api.nvim_win_set_cursor(0, { locations[section_idx].first + idx, 0 })
+      end
+    else
+      local cursor = vim.api.nvim_win_get_cursor(0)
+
+      empty_buffer()
+
+      display_status()
+
+      vim.api.nvim_win_set_cursor(0, cursor)
+    end
   end)
 
   print("Refreshed status!")
 end
 
 function __NeogitStatusRefresh()
-  notif.create("TODO: __NeogitStatusRefresh", { type = "warning" })
+  refresh_status()
+end
+
+function __NeogitStatusOnClose()
+  buf_handle = nil
 end
 
 local function stage()
@@ -296,14 +330,25 @@ end
 
 local function create()
   util.time("Creating NeogitStatus", function()
-    if buffer.exists("NeogitStatus") then
-      buffer.go_to("NeogitStatus")
+    if buf_handle then
+      buffer.go_to(buf_handle)
       return
     end
-    buffer.create({
+    buf_handle = buffer.create({
       name = "NeogitStatus",
       tab = true,
-      initialize = function(buf_handle)
+      initialize = function()
+        vim.api.nvim_command("setlocal foldmethod=manual")
+        vim.api.nvim_command([[
+        function! FoldFunction()
+          return getline(v:foldstart)
+        endfunction
+        ]])
+        vim.api.nvim_command("setlocal fillchars=fold:\\ ")
+        vim.api.nvim_command("setlocal foldminlines=0")
+        vim.api.nvim_command("setlocal foldtext=FoldFunction()")
+        vim.api.nvim_command("hi Folded guibg=None guifg=None")
+
         display_status()
 
         vim.fn.matchadd("Macro", "^Head: \\zs.*")
@@ -352,6 +397,8 @@ local function create()
         mmanager.mappings["P"] = require("neogit.popups.push").create
 
         mmanager.register()
+
+        vim.cmd("au BufWipeout <buffer> lua __NeogitStatusOnClose()")
       end
     })
   end)
