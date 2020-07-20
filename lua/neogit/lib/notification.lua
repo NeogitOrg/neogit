@@ -18,7 +18,7 @@ local function create(message, options)
     error("First argument has to be either a table or a string")
   end
 
-  local options = options or {
+  options = options or {
     type = "info"
   }
   local prev_notification = notifications[notification_count - 1] or {height = 0, row = vim.api.nvim_get_option("lines") - 2}
@@ -98,13 +98,14 @@ local function create(message, options)
 
     if timer:is_active() then
       timer:stop()
-    else
-      return
     end
 
-    for _, n in pairs(notifications) do
+    for i, n in pairs(notifications) do
       if n.window == window then
-        notifications[window] = nil
+        if notifications[i] == nil then
+          return
+        end
+        notifications[i] = nil
         break
       end
     end
