@@ -1,5 +1,5 @@
 local popup = require("neogit.lib.popup")
-local buffer = require("neogit.buffer")
+local notif = require("neogit.lib.notification")
 local git = require("neogit.lib.git")
 
 local function create()
@@ -38,9 +38,10 @@ local function create()
           key = "p",
           description = "Push to pushremote",
           callback = function()
-            print("Pushing to pushremote...")
+            local delete = notif.create "Pushing to pushremote..."
             git.cli.run("push")
-            print("Pushed to pushremote")
+            delete()
+            notif.create "Pushed to pushremote"
           end
         },
         {
