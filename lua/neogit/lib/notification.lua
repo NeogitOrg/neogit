@@ -115,8 +115,10 @@ local function create(message, options)
       type = options.type
     })
 
-    vim.api.nvim_win_close(window, false)
-    vim.api.nvim_win_close(border_win, false)
+    if vim.api.winbufnr(window) ~= -1 then
+      vim.api.nvim_win_close(window, false)
+      vim.api.nvim_win_close(border_win, false)
+    end
   end
 
   timer = vim.defer_fn(delete, options.delay or 2000)
