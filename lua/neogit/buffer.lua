@@ -23,13 +23,8 @@ local function create(config)
 
   vim.api.nvim_buf_set_name(buf_handle, config.name)
 
-  if config.buftype then
-    vim.api.nvim_buf_set_option(buf_handle, "buftype", config.buftype)
-  else
-    vim.api.nvim_buf_set_option(buf_handle, "buftype", "nofile")
-  end
-
-  vim.api.nvim_buf_set_option(buf_handle, "bufhidden", "hide")
+  vim.api.nvim_buf_set_option(buf_handle, "bufhidden", config.bufhidden or "wipe")
+  vim.api.nvim_buf_set_option(buf_handle, "buftype", config.buftype or "nofile")
   vim.api.nvim_buf_set_option(buf_handle, "swapfile", false)
 
   config.initialize(buf_handle)
@@ -46,16 +41,31 @@ local function create(config)
     vim.api.nvim_buf_set_option(buf_handle, "readonly", true)
   end
 
-  vim.api.nvim_buf_set_keymap(
-    buf_handle,
-    "n",
-    "q",
-    "<cmd>bw<CR>",
-    {
-      noremap = true,
-      silent = true
-    }
-  )
+  local close_cmd
+
+  if config.tab then
+    vim.api.nvim_buf_set_keymap(
+      buf_handle,
+      "n",
+      "q",
+      "<cmd>tabclose<CR>",
+      {
+        noremap = true,
+        silent = true
+      }
+    )
+  else
+    vim.api.nvim_buf_set_keymap(
+      buf_handle,
+      "n",
+      "q",
+      "<cmd>q<CR>",
+      {
+        noremap = true,
+        silent = true
+      }
+    )
+  end
 end
 
 local function exists(name)
