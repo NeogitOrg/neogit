@@ -18,6 +18,14 @@ local function get_current_section_idx()
   return nil
 end
 
+local function get_location(section_name)
+  for _,l in pairs(locations) do
+    if l.name == section_name then
+      return l
+    end
+  end
+end
+
 local function get_current_section()
   return locations[get_current_section_idx()]
 end
@@ -38,6 +46,68 @@ local function empty_buffer()
   vim.api.nvim_buf_set_lines(buf_handle, 0, -1, false, {})
 end
 
+local function insert_diff(section, change)
+  vim.api.nvim_command("normal zd")
+
+  if not change.diff_content then
+    if section.name == "staged_changes" then
+      change.diff_content = git.diff.staged(change.name)
+    else
+      change.diff_content = git.diff.unstaged(change.name)
+    end
+  end
+
+  change.diff_open = true
+  change.diff_height = #change.diff_content.lines
+
+  for _, c in pairs(status[section.name]) do
+    if c.first > change.last then
+      c.first = c.first + change.diff_height
+      c.last = c.last + change.diff_height
+    end
+  end
+
+  for _, s in pairs(locations) do
+    if s.first > section.last then
+      s.first = s.first + change.diff_height
+      s.last = s.last + change.diff_height
+      for _, c in pairs(status[s.name]) do
+        if c.first > change.last then
+          c.first = c.first + change.diff_height
+          c.last = c.last + change.diff_height
+        end
+      end
+    end
+  end
+
+  change.last = change.first + change.diff_height
+  section.last = section.last + change.diff_height
+
+  buffer.modify(function()
+    vim.api.nvim_put(change.diff_content.lines, "l", true, false)
+  end)
+
+  for _, hunk in pairs(change.diff_content.hunks) do
+    util.create_fold(0, change.first + hunk.first, change.first + hunk.last)
+  end
+
+  util.create_fold(0, change.first, change.last)
+end
+
+local function insert_diffs()
+  local function insert(name)
+    local location = get_location(name)
+    for _,c in pairs(status[name]) do
+      if not c.diff_open then
+        vim.api.nvim_win_set_cursor(0, { c.first, 0 })
+        insert_diff(location, c)
+      end
+    end
+  end
+  insert("unstaged_changes")
+  insert("staged_changes")
+end
+
 local function toggle()
   local linenr = vim.fn.line(".")
   local line = vim.fn.getline(linenr)
@@ -51,53 +121,10 @@ local function toggle()
       return
     end
 
-    vim.api.nvim_command("normal zd")
-
-    local diff
-    if section.name == "staged_changes" then
-      diff = git.diff.staged(change.name)
-    else
-      diff = git.diff.unstaged(change.name)
-    end
-
-    change.diff_open = true
-    change.diff_height = #diff.lines
-
-    for _, c in pairs(status[section.name]) do
-      if c.first > change.last then
-        c.first = c.first + change.diff_height
-        c.last = c.last + change.diff_height
-      end
-    end
-
-    for _, s in pairs(locations) do
-      if s.first > section.last then
-        s.first = s.first + change.diff_height
-        s.last = s.last + change.diff_height
-        for _, c in pairs(status[s.name]) do
-          if c.first > change.last then
-            c.first = c.first + change.diff_height
-            c.last = c.last + change.diff_height
-          end
-        end
-      end
-    end
-
-    change.last = change.first + change.diff_height
-    section.last = section.last + change.diff_height
-
-    buffer.modify(function()
-      vim.api.nvim_put(diff.lines, "l", true, false)
-    end)
-    vim.cmd("norm k")
-
-    for _, hunk in pairs(diff.hunks) do
-      util.create_fold(0, change.first + hunk.first, change.first + hunk.last)
-    end
-
-    util.create_fold(0, change.first, change.last)
+    insert_diff(section, change)
 
     vim.api.nvim_command("normal zO")
+    vim.cmd("norm k")
   else
     vim.api.nvim_command("normal za")
   end
@@ -109,9 +136,6 @@ end
 
 local function display_status()
   locations = {}
-
-  status = git.status.get()
-  status.stashes = git.stash.list()
 
   local line_idx = 3
   local output = {
@@ -128,7 +152,7 @@ local function display_status()
   local function write_section(options)
     local items
 
-    if options.items == nil then 
+    if options.items == nil then
       items = status[options.name]
     else
       items = options.items
@@ -195,32 +219,18 @@ local function display_status()
       return "stash@{" .. stash.idx .. "} " .. stash.name
     end
   })
-  if status.behind_by ~= 0 then
-    status.unpulled = util.map(git.cli.run(string.format("log --oneline ..%s", status.remote)), function(i)
-      return {
-        name = i
-      }
-    end)
-    write_section({
-      name = "unpulled",
-      title = function()
-        return "Unpulled from " .. status.remote .. " (" .. status.behind_by .. ")"
-      end,
-    })
-  end
-  if status.ahead_by ~= 0 then
-    status.unmerged = util.map(git.cli.run(string.format("log --oneline %s..", status.remote)), function(i)
-      return {
-        name = i
-      }
-    end)
-    write_section({
-      name = "unmerged",
-      title = function()
-        return "Unmerged into " .. status.remote .. " (" .. status.ahead_by .. ")"
-      end,
-    })
-  end
+  write_section({
+    name = "unpulled",
+    title = function()
+      return "Unpulled from " .. status.remote .. " (" .. #status.unpulled .. ")"
+    end,
+  })
+  write_section({
+    name = "unmerged",
+    title = function()
+      return "Unmerged into " .. status.remote .. " (" .. #status.unmerged .. ")"
+    end,
+  })
 
   vim.api.nvim_buf_set_lines(buf_handle, 0, -1, false, output)
 
@@ -237,58 +247,69 @@ local function display_status()
 end
 
 local function refresh_status()
-  buffer.modify(function()
-    local section_idx = get_current_section_idx()
-    local section = locations[section_idx]
-
-    if section ~= nil then
-      local item = get_current_section_item()
-
-      empty_buffer()
-
-      display_status()
-
-      local idx = 0
-      if item then
-        local items = status[section.name]
-        for i,it in pairs(items) do
-          if it.name == item.name then
-            idx = i
-            break
-          end
-        end
+  for _,x in pairs(status) do
+    if type(x) == "table" then
+      for _,i in pairs(x) do
+        i.diff_open = false
       end
-
-      local found = false
-      for _,l in pairs(locations) do
-        if l.name == section.name then
-          vim.api.nvim_win_set_cursor(0, { l.first + idx, 0 })
-          found = true
-          break
-        end
-      end
-
-      if not found then
-        if section_idx > #locations then
-          section_idx = #locations
-        end
-        vim.api.nvim_win_set_cursor(0, { locations[section_idx].first + idx, 0 })
-      end
-    else
-      local cursor = vim.api.nvim_win_get_cursor(0)
-
-      empty_buffer()
-
-      display_status()
-
-      vim.api.nvim_win_set_cursor(0, cursor)
     end
+  end
+
+  buffer.modify(function()
+    empty_buffer()
+
+    display_status()
   end)
 
   print("Refreshed status!")
 end
 
+function load_diffs()
+  local unstaged = {}
+  local staged = {}
+  for _,c in pairs(status.unstaged_changes) do
+    if not c.diff_open and not c.diff_content then
+      table.insert(unstaged, c.name)
+    end
+  end
+  local unstaged_len = #unstaged
+  for _,c in pairs(status.staged_changes) do
+    if not c.diff_open and not c.diff_content then
+      table.insert(staged, c.name)
+    end
+  end
+  local cmds = {}
+  for _, c in pairs(unstaged) do
+    table.insert(cmds, "diff " .. c)
+  end
+  for _, c in pairs(staged) do
+    table.insert(cmds, "diff --cached " .. c)
+  end
+  local results = git.cli.run_batch(cmds)
+
+  for i=1,#results do
+    if i <= unstaged_len then
+      local name = unstaged[i]
+      for _,c in pairs(status.unstaged_changes) do
+        if c.name == name then
+          c.diff_content = git.diff.parse(results[i])
+          break
+        end
+      end
+    else
+      local name = staged[i - unstaged_len]
+      for _,c in pairs(status.staged_changes) do
+        if c.name == name then
+          c.diff_content = git.diff.parse(results[i])
+          break
+        end
+      end
+    end
+  end
+end
+
 function __NeogitStatusRefresh()
+  status = git.status.get()
   refresh_status()
 end
 
@@ -309,7 +330,29 @@ local function stage()
     return
   end
 
+  status[section.name] = util.filter(status[section.name], function(i)
+    return i.name ~= item.name
+  end)
+
+  local change = nil
+  for _,c in pairs(status.staged_changes) do
+    if c.name == item.name then
+      change = c
+      break
+    end
+  end
+
+  if change then
+    change.diff_content = nil
+  else
+    table.insert(status.staged_changes, item)
+  end
+
   git.status.stage(item.name)
+
+  if change then
+    change.diff_content = git.diff.staged(change.name)
+  end
 
   refresh_status()
 end
@@ -323,7 +366,46 @@ local function unstage()
 
   local item = get_current_section_item()
 
+  if item == nil then
+    return
+  end
+
+  status[section.name] = util.filter(status[section.name], function(i)
+    return i.name ~= item.name
+  end)
+
+  local change = nil
+  if item.type == "new file" then
+    for _,c in pairs(status.untracked_files) do
+      if c.name == item.name then
+        change = c
+        break
+      end
+    end
+  else
+    for _,c in pairs(status.unstaged_changes) do
+      if c.name == item.name then
+        change = c
+        break
+      end
+    end
+  end
+
+  if change then
+    change.diff_content = nil
+  else
+    if item.type == "new file" then
+      table.insert(status.untracked_files, item)
+    else
+      table.insert(status.unstaged_changes, item)
+    end
+  end
+
   git.status.unstage(item.name)
+
+  if change then
+    change.diff_content = git.diff.unstaged(change.name)
+  end
 
   refresh_status()
 end
@@ -332,7 +414,6 @@ local function create()
   util.time("Creating NeogitStatus", function()
     if buf_handle then
       buffer.go_to(buf_handle)
-      return
     end
     buf_handle = buffer.create({
       name = "NeogitStatus",
@@ -349,6 +430,7 @@ local function create()
         vim.api.nvim_command("setlocal foldtext=FoldFunction()")
         vim.api.nvim_command("hi Folded guibg=None guifg=None")
 
+        status = git.status.get()
         display_status()
 
         vim.fn.matchadd("Macro", "^Head: \\zs.*")
@@ -376,20 +458,59 @@ local function create()
         -- vim.fn.matchadd("DiffChange", "^modified\\ze")
         local mmanager = mappings_manager.new()
 
+        mmanager.mappings["1"] = function()
+          vim.cmd("set foldlevel=0")
+          vim.cmd("norm zz")
+        end
+        mmanager.mappings["2"] = function()
+          vim.cmd("set foldlevel=1")
+          vim.cmd("norm zz")
+        end
+        mmanager.mappings["3"] = function()
+          vim.cmd("set foldlevel=1")
+          insert_diffs()
+          vim.cmd("set foldlevel=2")
+          vim.cmd("norm zz")
+        end
+        mmanager.mappings["4"] = function()
+          vim.cmd("set foldlevel=1")
+          insert_diffs()
+          vim.cmd("set foldlevel=3")
+          vim.cmd("norm zz")
+        end
         mmanager.mappings["tab"] = toggle
         mmanager.mappings["s"] = stage
         mmanager.mappings["S"] = function()
+          for _,c in pairs(status.unstaged_changes) do
+            table.insert(status.staged_changes, c)
+          end
+          status.unstaged_changes = {}
           git.status.stage_modified()
           refresh_status()
         end
         mmanager.mappings["control-s"] = function()
+          for _,c in pairs(status.unstaged_changes) do
+            table.insert(status.staged_changes, c)
+          end
+          for _,c in pairs(status.untracked_files) do
+            table.insert(status.staged_changes, c)
+          end
+          status.unstaged_changes = {}
+          status.untracked_files = {}
           git.status.stage_all()
           refresh_status()
         end
-        mmanager.mappings["control-r"] = refresh_status
+        mmanager.mappings["control-r"] = __NeogitStatusRefresh
         mmanager.mappings["u"] = unstage
         mmanager.mappings["U"] = function()
-          git.status.unstage_all()
+          for _,c in pairs(status.staged_changes) do
+            if c.type == "new file" then
+              table.insert(status.untracked_files, c)
+            else
+              table.insert(status.unstaged_changes, c)
+            end
+          end
+          status.staged_changes = {}
           refresh_status()
         end
         mmanager.mappings["c"] = require("neogit.popups.commit").create
@@ -399,6 +520,8 @@ local function create()
         mmanager.register()
 
         vim.cmd("au BufWipeout <buffer> lua __NeogitStatusOnClose()")
+
+        vim.defer_fn(load_diffs, 0)
       end
     })
   end)
@@ -408,6 +531,5 @@ create()
 
 return {
   create = create,
-  toggle = toggle,
-  mappings = mappings
+  toggle = toggle
 }

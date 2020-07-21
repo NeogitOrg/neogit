@@ -47,7 +47,10 @@ local cli = {
           amount = amount + 1
         end,
         on_stdout = function(_, data)
-          output = data
+          local len = #data - 1
+          for i=1,len do
+            output[i] = data[i]
+          end
         end,
         stdout_buffered = true
       })

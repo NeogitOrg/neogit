@@ -2,6 +2,7 @@ local util = require("neogit.lib.util")
 local cli = require("neogit.lib.git.cli")
 
 local function parse_diff(output)
+  output = util.slice(output, 5)
   local diff = {
     lines = output,
     hunks = {}
@@ -9,13 +10,15 @@ local function parse_diff(output)
 
   local len = #output
 
-  local hunk = {}
+  local hunk = nil
 
   for i=1,len do
     local is_new_hunk = #vim.fn.matchlist(output[i], "^@@") ~= 0
     if is_new_hunk then
-      if hunk.first ~= nil then
+      if hunk ~= nil then
         table.insert(diff.hunks, hunk)
+        hunk = {}
+      else
         hunk = {}
       end
       hunk.first = i
@@ -31,10 +34,23 @@ local function parse_diff(output)
 end
 
 return {
-  staged = function(name)
-    return parse_diff(util.slice(cli.run("diff --cached " .. name), 5))
+  parse = parse_diff,
+  staged = function(name, cb)
+    if cb then
+      cli.run("diff --cached " .. name, function(o)
+        cb(parse_diff(o))
+      end)
+    else
+      return parse_diff(cli.run("diff --cached " .. name))
+    end
   end,
-  unstaged = function(name)
-    return parse_diff(util.slice(cli.run("diff " .. name), 5))
+  unstaged = function(name, cb)
+    if cb then
+      cli.run("diff " .. name, function(o)
+        cb(parse_diff(o))
+      end)
+    else
+      return parse_diff(cli.run("diff --cached " .. name))
+    end
   end,
 }
