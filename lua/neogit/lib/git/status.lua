@@ -1,3 +1,5 @@
+package.loaded['neogit.lib.git.status'] = nil
+
 local git = {
   cli = require("neogit.lib.git.cli"),
   stash = require("neogit.lib.git.stash")
@@ -72,6 +74,22 @@ local status = {
   end,
   stage = function(name)
     git.cli.run("add " .. name)
+  end,
+  stage_range = function(name, diff, from, to)
+    local metadata = vim.split(git.cli.run("ls-files -s " .. name)[1], " ")
+    local mode = metadata[1]
+    local hash = metadata[2]
+    local file_disk = git.cli.run("cat-file -p " .. hash)
+    local new_file = {}
+
+    for i,line in pairs(file_disk) do
+      if from <= i and i <= to then
+        table.insert(new_file, diff[i - from + 1])
+      else
+        table.insert(new_file, line)
+      end
+      print(new_file[i])
+    end
   end,
   stage_modified = function()
     git.cli.run("add -u")

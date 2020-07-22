@@ -13,16 +13,18 @@ local function parse_diff(output)
   local hunk = nil
 
   for i=1,len do
-    local is_new_hunk = #vim.fn.matchlist(output[i], "^@@") ~= 0
-    if is_new_hunk then
+    local matches = vim.fn.matchlist(output[i], "^@@ -\\([0-9]*\\),\\([0-9]*\\) +\\([0-9]*\\),\\([0-9]*\\) @@")
+
+    if #matches ~= 0 then
       if hunk ~= nil then
         table.insert(diff.hunks, hunk)
-        hunk = {}
-      else
-        hunk = {}
       end
-      hunk.first = i
-      hunk.last = i
+      hunk = {
+        from = tonumber(matches[4]),
+        to = tonumber(matches[5]),
+        first = i,
+        last = i
+      }
     else
       hunk.last = hunk.last + 1
     end
@@ -33,7 +35,7 @@ local function parse_diff(output)
   return diff
 end
 
-return {
+local diff = {
   parse = parse_diff,
   staged = function(name, cb)
     if cb then
@@ -50,7 +52,9 @@ return {
         cb(parse_diff(o))
       end)
     else
-      return parse_diff(cli.run("diff --cached " .. name))
+      return parse_diff(cli.run("diff " .. name))
     end
   end,
 }
+
+return diff

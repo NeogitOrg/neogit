@@ -330,31 +330,52 @@ local function stage()
     return
   end
 
-  status[section.name] = util.filter(status[section.name], function(i)
-    return i.name ~= item.name
-  end)
+  local line = vim.fn.line('.')
+  local on_hunk = not vim.fn.matchlist(vim.fn.getline('.'), "^\\(modified\\|new file\\|deleted\\) .*")[1]
 
-  local change = nil
-  for _,c in pairs(status.staged_changes) do
-    if c.name == item.name then
-      change = c
-      break
+  if on_hunk then
+    local hunk
+    for _,h in pairs(item.diff_content.hunks) do
+      if item.first + h.first <= line and line <= item.first + h.last then
+        hunk = h
+        break
+      end
     end
-  end
-
-  if change then
-    change.diff_content = nil
+    print(item.name, hunk.from, hunk.to)
+    git.status.stage_range(
+      item.name,
+      vim.api.nvim_buf_get_lines(buf_handle, item.first + hunk.first, item.first + hunk.last, false),
+      hunk.from,
+      hunk.to
+    )
   else
-    table.insert(status.staged_changes, item)
   end
 
-  git.status.stage(item.name)
+  -- status[section.name] = util.filter(status[section.name], function(i)
+  --   return i.name ~= item.name
+  -- end)
 
-  if change then
-    change.diff_content = git.diff.staged(change.name)
-  end
+  -- local change = nil
+  -- for _,c in pairs(status.staged_changes) do
+  --   if c.name == item.name then
+  --     change = c
+  --     break
+  --   end
+  -- end
 
-  refresh_status()
+  -- if change then
+  --   change.diff_content = nil
+  -- else
+  --   table.insert(status.staged_changes, item)
+  -- end
+
+  -- git.status.stage(item.name)
+
+  -- if change then
+  --   change.diff_content = git.diff.staged(change.name)
+  -- end
+
+  -- refresh_status()
 end
 
 local function unstage()
