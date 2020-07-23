@@ -333,7 +333,7 @@ local function stage()
   local line = vim.fn.line('.')
   local on_hunk = not vim.fn.matchlist(vim.fn.getline('.'), "^\\(modified\\|new file\\|deleted\\) .*")[1]
 
-  if on_hunk then
+  if on_hunk and section.name ~= "untracked_files" then
     local hunk
     for _,h in pairs(item.diff_content.hunks) do
       if item.first + h.first <= line and line <= item.first + h.last then
@@ -341,41 +341,69 @@ local function stage()
         break
       end
     end
-    print(item.name, hunk.from, hunk.to)
     git.status.stage_range(
       item.name,
       vim.api.nvim_buf_get_lines(buf_handle, item.first + hunk.first, item.first + hunk.last, false),
-      hunk.from,
-      hunk.to
+      hunk
     )
+    local unstaged_diff = git.diff.unstaged(item.name)
+    local staged_diff = git.diff.staged(item.name)
+
+    if #unstaged_diff.lines == 0 then
+      status[section.name] = util.filter(status[section.name], function(i)
+        return i.name ~= item.name
+      end)
+    else
+      item.diff_open = false
+      item.diff_content = unstaged_diff
+    end
+
+    if #staged_diff.lines ~= 0 then
+      local change = nil
+      for _,c in pairs(status.staged_changes) do
+        if c.name == item.name then
+          change = c
+          break
+        end
+      end
+
+      if change then
+        change.diff_content = staged_diff
+      else
+        local new_item = vim.deepcopy(item)
+        new_item.diff_content = staged_diff
+        new_item.diff_open = false
+        table.insert(status.staged_changes, new_item)
+      end
+    end
   else
+    status[section.name] = util.filter(status[section.name], function(i)
+      return i.name ~= item.name
+    end)
+
+    local change = nil
+    for _,c in pairs(status.staged_changes) do
+      if c.name == item.name then
+        change = c
+        break
+      end
+    end
+
+    if change then
+      change.diff_content = nil
+    else
+      table.insert(status.staged_changes, item)
+    end
+
+    git.status.stage(item.name)
+
+    if change then
+      change.diff_content = git.diff.staged(change.name)
+    end
+
   end
 
-  -- status[section.name] = util.filter(status[section.name], function(i)
-  --   return i.name ~= item.name
-  -- end)
-
-  -- local change = nil
-  -- for _,c in pairs(status.staged_changes) do
-  --   if c.name == item.name then
-  --     change = c
-  --     break
-  --   end
-  -- end
-
-  -- if change then
-  --   change.diff_content = nil
-  -- else
-  --   table.insert(status.staged_changes, item)
-  -- end
-
-  -- git.status.stage(item.name)
-
-  -- if change then
-  --   change.diff_content = git.diff.staged(change.name)
-  -- end
-
-  -- refresh_status()
+  refresh_status()
 end
 
 local function unstage()
@@ -391,43 +419,87 @@ local function unstage()
     return
   end
 
-  status[section.name] = util.filter(status[section.name], function(i)
-    return i.name ~= item.name
-  end)
+  local line = vim.fn.line('.')
+  local on_hunk = not vim.fn.matchlist(vim.fn.getline('.'), "^\\(modified\\|new file\\|deleted\\) .*")[1]
 
-  local change = nil
-  if item.type == "new file" then
-    for _,c in pairs(status.untracked_files) do
-      if c.name == item.name then
-        change = c
+  if on_hunk then
+    local hunk
+    for _,h in pairs(item.diff_content.hunks) do
+      if item.first + h.first <= line and line <= item.first + h.last then
+        hunk = h
         break
       end
     end
-  else
-    for _,c in pairs(status.unstaged_changes) do
-      if c.name == item.name then
-        change = c
-        break
-      end
-    end
-  end
+    git.status.unstage_range(
+      item.name,
+      vim.api.nvim_buf_get_lines(buf_handle, item.first + hunk.first, item.first + hunk.last, false),
+      hunk
+    )
+    local unstaged_diff = git.diff.unstaged(item.name)
+    local staged_diff = git.diff.staged(item.name)
 
-  if change then
-    change.diff_content = nil
-  else
-    if item.type == "new file" then
-      table.insert(status.untracked_files, item)
+    if #staged_diff.lines == 0 then
+      status[section.name] = util.filter(status[section.name], function(i)
+        return i.name ~= item.name
+      end)
     else
-      table.insert(status.unstaged_changes, item)
+      item.diff_open = false
+      item.diff_content = staged_diff
+    end
+
+    if #unstaged_diff.lines ~= 0 then
+      if item.type == "new file" then
+        table.insert(status.untracked_files, item)
+      else
+        local change = nil
+        for _,c in pairs(status.unstaged_changes) do
+          if c.name == item.name then
+            change = c
+            break
+          end
+        end
+
+        if change then
+          change.diff_content = unstaged_diff
+        else
+          local new_item = vim.deepcopy(item)
+          new_item.diff_content = unstaged_diff
+          new_item.diff_open = false
+          table.insert(status.unstaged_changes, new_item)
+        end
+      end
+    end
+  else
+    status[section.name] = util.filter(status[section.name], function(i)
+      return i.name ~= item.name
+    end)
+
+    local change = nil
+    if item.type ~= "new file" then
+      for _,c in pairs(status.unstaged_changes) do
+        if c.name == item.name then
+          change = c
+          break
+        end
+      end
+    end
+
+    if change then
+      change.diff_content = nil
+    else
+      if item.type == "new file" then
+        table.insert(status.untracked_files, item)
+      else
+        table.insert(status.unstaged_changes, item)
+      end
+    end
+
+    git.status.unstage(item.name)
+
+    if change then
+      change.diff_content = git.diff.unstaged(change.name)
     end
   end
-
-  git.status.unstage(item.name)
-
-  if change then
-    change.diff_content = git.diff.unstaged(change.name)
-  end
-
   refresh_status()
 end
 
@@ -521,6 +593,9 @@ local function create()
           git.status.stage_all()
           refresh_status()
         end
+        mmanager.mappings["$"] = function()
+          util.inspect(git.cli.history)
+        end
         mmanager.mappings["control-r"] = __NeogitStatusRefresh
         mmanager.mappings["u"] = unstage
         mmanager.mappings["U"] = function()
@@ -547,8 +622,6 @@ local function create()
     })
   end)
 end
-
-create()
 
 return {
   create = create,

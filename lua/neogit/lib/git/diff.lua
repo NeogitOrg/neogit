@@ -20,8 +20,10 @@ local function parse_diff(output)
         table.insert(diff.hunks, hunk)
       end
       hunk = {
-        from = tonumber(matches[4]),
-        to = tonumber(matches[5]),
+        index_from = tonumber(matches[2]),
+        index_len = tonumber(matches[3]),
+        disk_from = tonumber(matches[4]),
+        disk_len = tonumber(matches[5]),
         first = i,
         last = i
       }

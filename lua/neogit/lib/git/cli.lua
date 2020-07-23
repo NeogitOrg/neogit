@@ -2,7 +2,7 @@ local history = {}
 local cli = {
   run = function(cmd, cb)
     if type(cb) == "function" then
-      local output = {}
+      local output = nil
       vim.fn.jobstart("git " .. cmd, {
         on_exit = function(_, code)
           table.insert(history, {
@@ -13,8 +13,9 @@ local cli = {
           cb(output)
         end,
         on_stdout = function(_, data)
-          table.insert(output, data)
-        end
+          output = data
+        end,
+        stdout_buffered = true
       })
     else
       local output = vim.fn.systemlist("git " .. cmd)
@@ -25,6 +26,28 @@ local cli = {
       })
       return output
     end
+  end,
+  run_with_stdin = function(cmd, data)
+    local output = nil
+    local job = vim.fn.jobstart("git " .. cmd, {
+      on_exit = function(_, code)
+        table.insert(history, {
+          cmd = "git " .. cmd,
+          output = output,
+          code = code
+        })
+      end,
+      on_stdout = function(_, data)
+        output = data
+      end,
+      stdout_buffered = true
+    })
+
+    vim.fn.chansend(job, data)
+    vim.fn.chanclose(job, "stdin")
+    vim.fn.jobwait({ job })
+
+    return output
   end,
   run_batch = function(cmds)
     local len = #cmds

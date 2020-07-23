@@ -75,21 +75,32 @@ local status = {
   stage = function(name)
     git.cli.run("add " .. name)
   end,
-  stage_range = function(name, diff, from, to)
+  stage_range = function(name, diff, hunk)
     local metadata = vim.split(git.cli.run("ls-files -s " .. name)[1], " ")
     local mode = metadata[1]
     local hash = metadata[2]
-    local file_disk = git.cli.run("cat-file -p " .. hash)
+    local file_index = git.cli.run("cat-file -p " .. hash)
+    local file_index_len = #file_index
+    local diff_len = #diff
     local new_file = {}
 
-    for i,line in pairs(file_disk) do
-      if from <= i and i <= to then
-        table.insert(new_file, diff[i - from + 1])
-      else
-        table.insert(new_file, line)
-      end
-      print(new_file[i])
+    for i=1,hunk.index_from-1 do
+      table.insert(new_file, file_index[i])
     end
+    for i=hunk.index_from,hunk.index_from + diff_len do
+      local diff_line = vim.fn.matchlist(diff[i - hunk.index_from + 1], "^\\([+ -]\\)\\(.*\\)")
+      if diff_line[2] == "+" or diff_line[2] == " " then
+        table.insert(new_file, diff_line[3])
+      end
+    end
+    for i=hunk.index_from + hunk.index_len,file_index_len do
+      table.insert(new_file, file_index[i])
+    end
+
+    table.insert(new_file, "")
+
+    local output = git.cli.run_with_stdin("hash-object -w --stdin", new_file)
+    git.cli.run(string.format("update-index --cacheinfo %d %s %s", mode, output[1], name))
   end,
   stage_modified = function()
     git.cli.run("add -u")
@@ -99,6 +110,33 @@ local status = {
   end,
   unstage = function(name)
     git.cli.run("reset " .. name)
+  end,
+  unstage_range = function(name, diff, hunk)
+    local metadata = vim.split(git.cli.run("ls-files -s " .. name)[1], " ")
+    local mode = metadata[1]
+    local hash = metadata[2]
+    local file_index = git.cli.run("cat-file -p " .. hash)
+    local file_index_len = #file_index
+    local diff_len = #diff
+    local new_file = {}
+
+    for i=1,hunk.disk_from-1 do
+      table.insert(new_file, file_index[i])
+    end
+    for i=hunk.disk_from,hunk.disk_from + diff_len do
+      local diff_line = vim.fn.matchlist(diff[i - hunk.disk_from + 1], "^\\([+ -]\\)\\(.*\\)")
+      if diff_line[2] == "-" or diff_line[2] == " " then
+        table.insert(new_file, diff_line[3])
+      end
+    end
+    for i=hunk.disk_from + hunk.disk_len,file_index_len do
+      table.insert(new_file, file_index[i])
+    end
+
+    table.insert(new_file, "")
+
+    local output = git.cli.run_with_stdin("hash-object -w --stdin", new_file)
+    git.cli.run(string.format("update-index --cacheinfo %d %s %s", mode, output[1], name))
   end,
   unstage_all = function()
     git.cli.run("reset")
