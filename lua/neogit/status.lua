@@ -247,6 +247,10 @@ local function display_status()
 end
 
 local function refresh_status()
+  if buf_handle == nil then
+    return
+  end
+
   for _,x in pairs(status) do
     if type(x) == "table" then
       for _,i in pairs(x) do
