@@ -39,10 +39,7 @@ local function create()
           description = "Push to pushremote",
           callback = function()
             return function()
-              local delete = notif.create("Pushing to pushremote...", { delay = 100000 })
-              vim.cmd("redraw")
               git.cli.run("push")
-              delete()
               notif.create "Pushed to pushremote"
             end
           end
