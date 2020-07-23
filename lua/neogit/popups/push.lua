@@ -41,6 +41,7 @@ local function create()
             return function()
               git.cli.run("push", function()
                 notif.create "Pushed to pushremote"
+                __NeogitStatusRefresh()
               end)
             end
           end
