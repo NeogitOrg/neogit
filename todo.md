@@ -1,12 +1,7 @@
 ## Status
-+
-* change: pre load all diffs in a batch command (done)
-* fix: improve status load time (done)
-* feat: changing fold level with 1,2,3,4 (done)
+
 * feat: contextually retain cursor position
 * fix: improve stage/unstage all speed
-* feat: stage hunk
-* feat: unstage hunk
 * feat: stage selection
 * feat: unstage selection
 * feat: git restore
