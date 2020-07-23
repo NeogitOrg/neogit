@@ -39,8 +39,9 @@ local function create()
           description = "Push to pushremote",
           callback = function()
             return function()
-              git.cli.run("push")
-              notif.create "Pushed to pushremote"
+              git.cli.run("push", function()
+                notif.create "Pushed to pushremote"
+              end)
             end
           end
         },
