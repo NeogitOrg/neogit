@@ -1,15 +1,28 @@
+local notif = require("neogit.lib.notification")
+
+local last_code = 0
 local history = {}
+
+function handle_new_cmd(cmd, output, code)
+  table.insert(history, {
+    cmd = "git " .. cmd,
+    output = output,
+    code = code
+  })
+
+  last_code = code
+
+  if code ~= 0 then
+    notif.create({ "Git Error (" .. code .. ")!", "", "Press $ to see the git command history." }, { type = "error" })
+  end
+end
 local cli = {
   run = function(cmd, cb)
     if type(cb) == "function" then
       local output = nil
       vim.fn.jobstart("git " .. cmd, {
         on_exit = function(_, code)
-          table.insert(history, {
-            cmd = "git " .. cmd,
-            output = output,
-            code = code
-          })
+          handle_new_cmd(cmd, output, code)
           cb(output)
         end,
         on_stdout = function(_, data)
@@ -19,11 +32,7 @@ local cli = {
       })
     else
       local output = vim.fn.systemlist("git " .. cmd)
-      table.insert(history, {
-        cmd = "git " .. cmd,
-        output = output,
-        code = vim.v.shell_error
-      })
+      handle_new_cmd(cmd, output, vim.v.shell_error)
       return output
     end
   end,
@@ -31,11 +40,7 @@ local cli = {
     local output = nil
     local job = vim.fn.jobstart("git " .. cmd, {
       on_exit = function(_, code)
-        table.insert(history, {
-          cmd = "git " .. cmd,
-          output = output,
-          code = code
-        })
+        handle_new_cmd(cmd, output, code)
       end,
       on_stdout = function(_, data)
         output = data
@@ -59,11 +64,7 @@ local cli = {
 
       vim.fn.jobstart("git " .. cmd, {
         on_exit = function(_, code)
-          table.insert(history, {
-            cmd = "git " .. cmd,
-            output = output,
-            code = code
-          })
+          handle_new_cmd(cmd, output, code)
 
           result[i] = output
 
@@ -89,6 +90,7 @@ local cli = {
 
     return result
   end,
+  last_code = last_code,
   history = history
 }
 

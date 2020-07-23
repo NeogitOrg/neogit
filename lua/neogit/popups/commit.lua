@@ -98,7 +98,9 @@ local function create()
                   vim.api.nvim_command("silent w!")
                   vim.api.nvim_command("silent bw!")
                   cli.run("commit -F .git/COMMIT_EDITMSG " .. popup.to_cli())
-                  __NeogitStatusRefresh()
+                  if cli.last_code == 0 then
+                    __NeogitStatusRefresh()
+                  end
                 end
 
                 mmanager.register()
