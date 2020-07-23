@@ -8,8 +8,6 @@
 
 ## Push
 
-* change: maybe only send a notification on completion?
-
 ## Popups
 
 * chore: rename popup -> transient
