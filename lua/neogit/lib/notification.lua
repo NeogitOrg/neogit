@@ -122,6 +122,7 @@ local function create(message, options)
     end
   end
 
+  vim.cmd("redraw")
   timer = vim.defer_fn(delete, options.delay)
 
   return delete
