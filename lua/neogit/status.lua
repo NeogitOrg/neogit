@@ -8,8 +8,7 @@ local status = {}
 local locations = {}
 local buf_handle = nil
 
-local function get_current_section_idx()
-  local linenr = vim.fn.line(".")
+local function get_section_idx_for_line(linenr)
   for i, l in pairs(locations) do
     if l.first <= linenr and linenr <= l.last then
       return i
@@ -26,20 +25,24 @@ local function get_location(section_name)
   end
 end
 
-local function get_current_section()
-  return locations[get_current_section_idx()]
+local function get_section_for_line(linenr)
+  return locations[get_section_idx_for_line(linenr)]
 end
 
-local function get_current_section_item()
-  local linenr = vim.fn.line(".")
-  local section = get_current_section()
+local function get_section_item_for_line(linenr)
+  local section = get_section_for_line(linenr)
 
   for _, item in pairs(status[section.name]) do
     if item.first <= linenr and linenr <= item.last then
-      return item
+      return section, item
     end
   end
+
   return nil
+end
+
+local function get_current_section_item()
+  return get_section_item_for_line(vim.fn.line("."))
 end
 
 local function empty_buffer()
@@ -113,8 +116,7 @@ local function toggle()
   local line = vim.fn.getline(linenr)
   local matches = vim.fn.matchlist(line, "^modified \\(.*\\)")
   if #matches ~= 0 then
-    local section = get_current_section()
-    local change = get_current_section_item()
+    local section, change = get_current_section_item()
 
     if change.diff_open then
       vim.api.nvim_command("normal za")
@@ -320,163 +322,205 @@ end
 function __NeogitStatusOnClose()
   buf_handle = nil
 end
+function get_hunk_of_item_for_line(item, line)
+  local hunk
+  for _,h in pairs(item.diff_content.hunks) do
+    if item.first + h.first <= line and line <= item.first + h.last then
+      hunk = h
+      break
+    end
+  end
+  return hunk
+end
+function get_current_hunk_of_item(item)
+  return get_hunk_of_item_for_line(item, vim.fn.line("."))
+end
+
+local function add_change(list, item, diff)
+  local change = nil
+  for _,c in pairs(list) do
+    if c.name == item.name then
+      change = c
+      break
+    end
+  end
+
+  if change then
+    change.diff_content = diff
+  else
+    local new_item = vim.deepcopy(item)
+    new_item.diff_content = diff
+    new_item.diff_open = false
+    table.insert(list, new_item)
+  end
+end
+
+local function remove_change(name, item)
+  status[name] = util.filter(status[name], function(i)
+    return i.name ~= item.name
+  end)
+end
+
+local function stage_range(item, section, hunk, from, to)
+  git.status.stage_range(
+    item.name,
+    vim.api.nvim_buf_get_lines(buf_handle, item.first, item.last, false),
+    hunk,
+    from,
+    to
+  )
+  local unstaged_diff = git.diff.unstaged(item.name)
+  local staged_diff = git.diff.staged(item.name)
+
+  if #unstaged_diff.lines == 0 then
+    remove_change(section.name, item)
+  else
+    item.diff_open = false
+    item.diff_content = unstaged_diff
+  end
+
+  if #staged_diff.lines ~= 0 then
+    add_change(status.staged_changes, item, staged_diff)
+  end
+end
+local function unstage_range(item, section, hunk, from, to)
+  git.status.unstage_range(
+    item.name,
+    vim.api.nvim_buf_get_lines(buf_handle, item.first, item.last, false),
+    hunk,
+    from,
+    to
+  )
+  local unstaged_diff = git.diff.unstaged(item.name)
+  local staged_diff = git.diff.staged(item.name)
+
+  if #staged_diff.lines == 0 then
+    remove_change(section.name, item)
+  else
+    item.diff_open = false
+    item.diff_content = staged_diff
+  end
+
+  if #unstaged_diff.lines ~= 0 then
+    if item.type == "new file" then
+      table.insert(status.untracked_files, item)
+    else
+      add_change(status.unstaged_changes, item, unstaged_diff)
+    end
+  end
+end
+--- Validates the current selection and acts accordingly
+--@return nil
+--@return number, number
+local function get_selection()
+  local first_line = vim.fn.getpos("v")[2]
+  local last_line = vim.fn.getpos(".")[2]
+  local first_section, first_item = get_section_item_for_line(first_line)
+  local last_section, last_item = get_section_item_for_line(last_line)
+
+  if not first_section or
+     not first_item or
+     not last_section or
+     not last_item
+  then
+    return nil
+  end
+
+  local first_hunk = get_hunk_of_item_for_line(first_item, first_line)
+  local last_hunk = get_hunk_of_item_for_line(last_item, last_line)
+
+  if not first_hunk or not last_hunk then
+    return nil
+  end
+
+  if first_section.name ~= last_section.name or
+     first_item.name ~= last_item.name or
+     first_hunk.first ~= last_hunk.first
+  then
+    return nil
+  end
+
+  first_line = first_line - first_item.first
+  last_line = last_line - last_item.first
+
+  -- both hunks are the same anyway so only have to check one
+  if first_hunk.first == first_line or
+     first_hunk.first == last_line
+  then
+    return nil
+  end
+
+  return first_section, first_item, first_hunk, first_line, last_line
+end
+
+local function stage_selection()
+  local section, item, hunk, from, to = get_selection()
+  if from == nil then
+    return
+  end
+  stage_range(item, section, hunk, from, to)
+  refresh_status()
+end
+
+local function unstage_selection()
+  local section, item, hunk, from, to = get_selection()
+  if from == nil then
+    return
+  end
+  unstage_range(item, section, hunk, from, to)
+  refresh_status()
+end
 
 local function stage()
-  local section = get_current_section()
+  local section, item = get_current_section_item()
 
-  if section == nil or (section.name ~= "unstaged_changes" and section.name ~= "untracked_files") then
+  if section == nil or (section.name ~= "unstaged_changes" and section.name ~= "untracked_files") or item == nil then
     return
   end
 
-  local item = get_current_section_item()
+  local mode = vim.api.nvim_get_mode()
 
-  if item == nil then
+  if mode.mode == "V" then
+    stage_selection()
     return
   end
 
-  local line = vim.fn.line('.')
   local on_hunk = not vim.fn.matchlist(vim.fn.getline('.'), "^\\(modified\\|new file\\|deleted\\) .*")[1]
 
   if on_hunk and section.name ~= "untracked_files" then
-    local hunk
-    for _,h in pairs(item.diff_content.hunks) do
-      if item.first + h.first <= line and line <= item.first + h.last then
-        hunk = h
-        break
-      end
-    end
-    git.status.stage_range(
-      item.name,
-      vim.api.nvim_buf_get_lines(buf_handle, item.first + hunk.first, item.first + hunk.last, false),
-      hunk
-    )
-    local unstaged_diff = git.diff.unstaged(item.name)
-    local staged_diff = git.diff.staged(item.name)
-
-    if #unstaged_diff.lines == 0 then
-      status[section.name] = util.filter(status[section.name], function(i)
-        return i.name ~= item.name
-      end)
-    else
-      item.diff_open = false
-      item.diff_content = unstaged_diff
-    end
-
-    if #staged_diff.lines ~= 0 then
-      local change = nil
-      for _,c in pairs(status.staged_changes) do
-        if c.name == item.name then
-          change = c
-          break
-        end
-      end
-
-      if change then
-        change.diff_content = staged_diff
-      else
-        local new_item = vim.deepcopy(item)
-        new_item.diff_content = staged_diff
-        new_item.diff_open = false
-        table.insert(status.staged_changes, new_item)
-      end
-    end
+    local hunk = get_current_hunk_of_item(item)
+    stage_range(item, section, hunk, item.first + hunk.first, item.first + hunk.last)
   else
-    status[section.name] = util.filter(status[section.name], function(i)
-      return i.name ~= item.name
-    end)
-
-    local change = nil
-    for _,c in pairs(status.staged_changes) do
-      if c.name == item.name then
-        change = c
-        break
-      end
-    end
-
-    if change then
-      change.diff_content = nil
-    else
-      table.insert(status.staged_changes, item)
-    end
-
     git.status.stage(item.name)
-
-    if change then
-      change.diff_content = git.diff.staged(change.name)
-    end
-
+    remove_change(section.name, item)
+    add_change(status.staged_changes, item, git.diff.staged(item.name))
   end
 
   refresh_status()
 end
 
 local function unstage()
-  local section = get_current_section()
+  local section, item = get_current_section_item()
 
-  if section == nil or section.name ~= "staged_changes" then
+  if section == nil or section.name ~= "staged_changes" or item == nil then
     return
   end
 
-  local item = get_current_section_item()
+  local mode = vim.api.nvim_get_mode()
 
-  if item == nil then
+  if mode.mode == "V" then
+    unstage_selection()
     return
   end
 
-  local line = vim.fn.line('.')
   local on_hunk = not vim.fn.matchlist(vim.fn.getline('.'), "^\\(modified\\|new file\\|deleted\\) .*")[1]
 
   if on_hunk then
-    local hunk
-    for _,h in pairs(item.diff_content.hunks) do
-      if item.first + h.first <= line and line <= item.first + h.last then
-        hunk = h
-        break
-      end
-    end
-    git.status.unstage_range(
-      item.name,
-      vim.api.nvim_buf_get_lines(buf_handle, item.first + hunk.first, item.first + hunk.last, false),
-      hunk
-    )
-    local unstaged_diff = git.diff.unstaged(item.name)
-    local staged_diff = git.diff.staged(item.name)
-
-    if #staged_diff.lines == 0 then
-      status[section.name] = util.filter(status[section.name], function(i)
-        return i.name ~= item.name
-      end)
-    else
-      item.diff_open = false
-      item.diff_content = staged_diff
-    end
-
-    if #unstaged_diff.lines ~= 0 then
-      if item.type == "new file" then
-        table.insert(status.untracked_files, item)
-      else
-        local change = nil
-        for _,c in pairs(status.unstaged_changes) do
-          if c.name == item.name then
-            change = c
-            break
-          end
-        end
-
-        if change then
-          change.diff_content = unstaged_diff
-        else
-          local new_item = vim.deepcopy(item)
-          new_item.diff_content = unstaged_diff
-          new_item.diff_open = false
-          table.insert(status.unstaged_changes, new_item)
-        end
-      end
-    end
+    local hunk = get_current_hunk_of_item(item)
   else
-    status[section.name] = util.filter(status[section.name], function(i)
-      return i.name ~= item.name
-    end)
+    git.status.unstage(item.name)
+
+    remove_change(section.name, item)
 
     local change = nil
     if item.type ~= "new file" then
@@ -489,19 +533,13 @@ local function unstage()
     end
 
     if change then
-      change.diff_content = nil
+      change.diff_content = git.diff.unstaged(change.name)
     else
       if item.type == "new file" then
         table.insert(status.untracked_files, item)
       else
         table.insert(status.unstaged_changes, item)
       end
-    end
-
-    git.status.unstage(item.name)
-
-    if change then
-      change.diff_content = git.diff.unstaged(change.name)
     end
   end
   refresh_status()
@@ -576,7 +614,7 @@ local function create()
           vim.cmd("norm zz")
         end
         mmanager.mappings["tab"] = toggle
-        mmanager.mappings["s"] = stage
+        mmanager.mappings["s"] = { "nv", stage, true }
         mmanager.mappings["S"] = function()
           for _,c in pairs(status.unstaged_changes) do
             table.insert(status.staged_changes, c)
@@ -601,7 +639,7 @@ local function create()
           util.inspect(git.cli.history)
         end
         mmanager.mappings["control-r"] = __NeogitStatusRefresh
-        mmanager.mappings["u"] = unstage
+        mmanager.mappings["u"] = { "nv", unstage, true }
         mmanager.mappings["U"] = function()
           for _,c in pairs(status.staged_changes) do
             if c.type == "new file" then
