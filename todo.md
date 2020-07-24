@@ -5,8 +5,6 @@
 ## Status
 
 * feat: contextually retain cursor position
-* feat: stage selection (done)
-* feat: unstage selection (done)
 * feat: git restore
 * feat: $ to see git command history
 
@@ -16,6 +14,10 @@
 
 * chore: rename popup -> transient
 * fix: default values for options don't get displayed on initial draw
+
+## Stash
+
+* feat: delete stash
 
 ## Buffer
 
