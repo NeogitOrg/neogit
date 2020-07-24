@@ -5,9 +5,8 @@
 ## Status
 
 * feat: contextually retain cursor position
-* fix: improve stage/unstage all speed
-* feat: stage selection
-* feat: unstage selection
+* feat: stage selection (done)
+* feat: unstage selection (done)
 * feat: git restore
 * feat: $ to see git command history
 
