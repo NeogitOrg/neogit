@@ -9,7 +9,6 @@
 
 ## Status
 
-* feat: contextually retain cursor position
 * feat: git restore
 * feat: $ to see git command history
 
