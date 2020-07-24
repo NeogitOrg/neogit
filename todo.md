@@ -2,6 +2,11 @@
 
 * refactor: extract buffers like "NeogitLog" into their own files
 
+## Commit
+
+* feat: save commit messages in memory
+* feat: make it possible to go through previous commit messages when writing one
+
 ## Status
 
 * feat: contextually retain cursor position
