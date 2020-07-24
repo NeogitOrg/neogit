@@ -2,30 +2,6 @@ local function inspect(x)
   print(vim.inspect(x))
 end
 
-local function tbl_longest_str(tbl)
-  local len = 0
-
-  for _,str in pairs(tbl) do
-    local str_len = #str
-    if str_len > len then
-      len = str_len
-    end
-  end
-
-  return len
-end
-
-local function time(name, f)
-  local before = vim.fn.reltime()
-  local res = f()
-  print(name .. " took " .. vim.fn.reltimefloat(vim.fn.reltime(before)) * 1000 .. "ms")
-  return res
-end
-
-local function str_right_pad(str, len, sep)
-  return str .. sep:rep(len - #str)
-end
-
 local function map(tbl, f)
   local t = {}
   for k,v in pairs(tbl) do
@@ -42,6 +18,50 @@ local function filter(tbl, f)
     end
   end
   return t
+end
+
+local function print_tbl(tbl)
+  for _,x in pairs(tbl) do
+    print("| " .. x)
+  end
+end
+
+local function tbl_longest_str(tbl)
+  local len = 0
+
+  for _,str in pairs(tbl) do
+    local str_len = #str
+    if str_len > len then
+      len = str_len
+    end
+  end
+
+  return len
+end
+
+local function get_keymaps(mode, startswith)
+  local maps = vim.api.nvim_get_keymap(mode)
+  if startswith then
+    return filter(
+      maps,
+      function (x)
+        return vim.startswith(x.lhs, startswith)
+      end
+    )
+  else
+    return maps
+  end
+end
+
+local function time(name, f)
+  local before = vim.fn.reltime()
+  local res = f()
+  print(name .. " took " .. vim.fn.reltimefloat(vim.fn.reltime(before)) * 1000 .. "ms")
+  return res
+end
+
+local function str_right_pad(str, len, sep)
+  return str .. sep:rep(len - #str)
 end
 
 local function create_fold(buf, first, last)
@@ -87,6 +107,8 @@ return {
   filter = filter,
   str_right_pad = str_right_pad,
   str_count = str_count,
-  create_fold = create_fold
+  create_fold = create_fold,
+  get_keymaps = get_keymaps,
+  print_tbl = print_tbl,
 }
 
