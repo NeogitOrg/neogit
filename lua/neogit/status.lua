@@ -257,6 +257,44 @@ local function display_status()
   vim.cmd("set foldlevel=1")
 end
 
+function primitive_move_cursor()
+  for _,l in pairs(locations) do
+    if l.first <= line and line <= l.last then
+      vim.api.nvim_win_set_cursor(0, { l.first, 0 })
+      break
+    end
+  end
+end
+
+--- TODO: rename
+--- basically moves the cursor to the next section if the current one has no more items
+--@param name of the current section
+--@param name of the next section
+--@returns whether the function managed to find the next cursor position
+function contextually_move_cursor(current, next)
+  local items = status[current]
+  local items_len = #items
+
+  if items_len == 0 then
+    local staged_changes = status[next]
+    if #staged_changes ~= 0 then
+      vim.api.nvim_win_set_cursor(0, { get_location(next).first + 1, 0 })
+    end
+    return true
+  else
+    local line = get_location(current).first
+    if item_idx > items_len then
+      line = line + items_len
+    else
+      line = line + item_idx
+    end
+    vim.api.nvim_win_set_cursor(0, { line, 0 })
+    return true
+  end
+
+  return false
+end
+
 local function refresh_status()
   if buf_handle == nil then
     return
@@ -273,6 +311,12 @@ local function refresh_status()
   local line = vim.fn.line(".")
   local section_idx = get_section_idx_for_line(line)
   local section = locations[section_idx]
+
+  if section == nil then
+    primitive_move_cursor()
+    return
+  end
+
   local item_idx = line - section.first
 
   buffer.modify(function()
@@ -280,35 +324,6 @@ local function refresh_status()
 
     display_status()
   end)
-
-  --- TODO: rename
-  --- basically moves the cursor to the next section if the current one has no more items
-  --@param name of the current section
-  --@param name of the next section
-  --@returns whether the function managed to find the next cursor position
-  function contextually_move_cursor(current, next)
-    local items = status[current]
-    local items_len = #items
-
-    if items_len == 0 then
-      local staged_changes = status[next]
-      if #staged_changes ~= 0 then
-        vim.api.nvim_win_set_cursor(0, { get_location(next).first + 1, 0 })
-      end
-      return true
-    else
-      local line = get_location(current).first
-      if item_idx > items_len then
-        line = line + items_len
-      else
-        line = line + item_idx
-      end
-      vim.api.nvim_win_set_cursor(0, { line, 0 })
-      return true
-    end
-
-    return false
-  end
 
   if section.name == "unstaged_changes" then
     if contextually_move_cursor("unstaged_changes", "staged_changes") then
@@ -324,13 +339,7 @@ local function refresh_status()
      return
    end
   end
-
-  for _,l in pairs(locations) do
-    if l.first <= line and line <= l.last then
-      vim.api.nvim_win_set_cursor(0, { l.first, 0 })
-      break
-    end
-  end
+  primitive_move_cursor()
 end
 
 function load_diffs()
