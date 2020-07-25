@@ -262,7 +262,7 @@ local function display_status()
   vim.cmd("set foldlevel=1")
 end
 
-function primitive_move_cursor()
+function primitive_move_cursor(line)
   for _,l in pairs(locations) do
     if l.first <= line and line <= l.last then
       vim.api.nvim_win_set_cursor(0, { l.first, 0 })
@@ -276,7 +276,7 @@ end
 --@param name of the current section
 --@param name of the next section
 --@returns whether the function managed to find the next cursor position
-function contextually_move_cursor(current, next)
+function contextually_move_cursor(current, next, item_idx)
   local items = status[current]
   local items_len = #items
 
@@ -318,7 +318,7 @@ local function refresh_status()
   local section = locations[section_idx]
 
   if section == nil then
-    primitive_move_cursor()
+    primitive_move_cursor(line)
     return
   end
 
@@ -331,20 +331,20 @@ local function refresh_status()
   end)
 
   if section.name == "unstaged_changes" then
-    if contextually_move_cursor("unstaged_changes", "staged_changes") then
+    if contextually_move_cursor("unstaged_changes", "staged_changes", item_idx) then
       return
     end
   elseif section.name == "staged_changes" then
-    if contextually_move_cursor("staged_changes", "unstaged_changes") then
+    if contextually_move_cursor("staged_changes", "unstaged_changes", item_idx) then
       return
     end
   elseif section.name == "untracked_files" then
-    if contextually_move_cursor("untracked_files", "staged_changes") or
-       contextually_move_cursor("untracked_files", "unstaged_changes") then
+    if contextually_move_cursor("untracked_files", "staged_changes", item_idx) or
+       contextually_move_cursor("untracked_files", "unstaged_changes", item_idx) then
      return
    end
   end
-  primitive_move_cursor()
+  primitive_move_cursor(line)
 end
 
 function load_diffs()
