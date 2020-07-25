@@ -134,9 +134,9 @@ local function create()
             local commits = git.log.list(popup.to_cli())
             buffer.create({
               name = "NeogitLog",
+              filetype = "NeogitLog",
               initialize = function()
                 local result = commits_to_string(commits)
-                vim.fn.matchadd("Comment", "^[a-z0-9]\\{7}\\ze ")
                 vim.api.nvim_put(result, "l", false, false)
               end
             })

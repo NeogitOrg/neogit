@@ -89,14 +89,16 @@ local function create()
               modifiable = true,
               readonly = false,
               initialize = function(buf_handle)
-                vim.api.nvim_buf_set_lines(buf_handle, 0, -1, false, output)
                 local mmanager = mappings_manager.new()
+                vim.api.nvim_buf_set_lines(buf_handle, 0, -1, false, output)
 
                 mmanager.mappings["control-c control-c"] = function()
-                  vim.api.nvim_command("silent set buftype=")
-                  vim.api.nvim_command("silent g/^#/d")
-                  vim.api.nvim_command("silent w!")
-                  vim.api.nvim_command("silent bw!")
+                  vim.cmd([[
+                    silent set buftype=
+                    silent g/^#/d
+                    silent w!
+                    silent bw!
+                  ]])
                   cli.run("commit -F .git/COMMIT_EDITMSG " .. popup.to_cli())
                   if cli.last_code == 0 then
                     __NeogitStatusRefresh()

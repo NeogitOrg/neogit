@@ -629,46 +629,26 @@ local function create()
     end
     buf_handle = buffer.create({
       name = "NeogitStatus",
+      filetype = "NeogitStatus",
       tab = true,
       initialize = function()
-        vim.api.nvim_command("setlocal foldmethod=manual")
-        vim.api.nvim_command([[
-        function! FoldFunction()
-          return getline(v:foldstart)
-        endfunction
+        vim.cmd([[
+          function! NeogitFoldFunction()
+            return getline(v:foldstart)
+          endfunction
+
+          setlocal foldmethod=manual
+          setlocal foldlevel=1
+          setlocal fillchars=fold:\ 
+          setlocal foldminlines=0
+          setlocal foldtext=NeogitFoldFunction()
+
+          au BufWipeout <buffer> lua __NeogitStatusOnClose()
         ]])
-        vim.api.nvim_command("setlocal fillchars=fold:\\ ")
-        vim.api.nvim_command("setlocal foldminlines=0")
-        vim.api.nvim_command("setlocal foldtext=FoldFunction()")
-        vim.api.nvim_command("hi Folded guibg=None guifg=None")
 
         status = git.status.get()
         display_status()
 
-        vim.fn.matchadd("Macro", "^Head: \\zs.*")
-        vim.fn.matchadd("SpecialChar", "^Push: \\zs.*")
-
-        vim.fn.matchadd("Function", "^Untracked files\\ze (")
-        vim.fn.matchadd("Function", "^Unstaged changes\\ze (")
-        vim.fn.matchadd("Function", "^Unmerged changes\\ze (")
-        vim.fn.matchadd("Function", "^Staged changes\\ze (")
-        vim.fn.matchadd("Function", "^Stashes\\ze (")
-
-        vim.fn.matchadd("Function", "^Unmerged into\\ze .* (")
-        vim.fn.matchadd("SpecialChar", "^Unmerged into \\zs.*\\ze (")
-
-        vim.fn.matchadd("Function", "^Unpulled from\\ze .* (")
-        vim.fn.matchadd("SpecialChar", "^Unpulled from \\zs.*\\ze (")
-
-        vim.fn.matchadd("Comment", "^[a-z0-9]\\{7}\\ze ")
-        vim.fn.matchadd("Comment", "^stash@{[0-9]*}\\ze ")
-
-        vim.fn.matchadd("DiffAdd", "^+.*")
-        vim.fn.matchadd("DiffDelete", "^-.*")
-
-        -- vim.fn.matchadd("DiffAdd", "^new file\\ze")
-        -- vim.fn.matchadd("DiffDelete", "^deleted\\ze")
-        -- vim.fn.matchadd("DiffChange", "^modified\\ze")
         local mmanager = mappings_manager.new()
 
         mmanager.mappings["1"] = function()
@@ -735,8 +715,6 @@ local function create()
         mmanager.mappings["P"] = require("neogit.popups.push").create
 
         mmanager.register()
-
-        vim.cmd("au BufWipeout <buffer> lua __NeogitStatusOnClose()")
 
         vim.defer_fn(load_diffs, 0)
       end
