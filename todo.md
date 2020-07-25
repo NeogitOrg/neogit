@@ -33,5 +33,3 @@
 * refactor: automatically create a mappings_manager when creating a buffer and pass it as second argument to the initialize function
 
 ## Highlighting
-
-* refactor: extract highlighting logic into syntax files
