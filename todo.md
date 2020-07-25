@@ -32,6 +32,10 @@
 * change: create function now returns a buffer "object"
 * refactor: automatically create a mappings_manager when creating a buffer and pass it as second argument to the initialize function
 
+## Workflow (Not sure)
+
+* feat: support creating branches based on a predefined model (something like feature branches)
+
 ## Highlighting
 
 * refactor: extract highlighting logic into syntax files
