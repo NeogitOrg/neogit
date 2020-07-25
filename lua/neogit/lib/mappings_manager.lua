@@ -49,7 +49,7 @@ local function new()
           for _,m in pairs(vim.split(mapping[1], "")) do
             if type(mapping[2]) == "string" then
               f_call = mapping[2]
-            elseif mapping[3] then
+            elseif mapping[3] and m == "v" then
               f_call = f_call .. "<ESC>"
             end
             vim.api.nvim_buf_set_keymap(id, m, map_to_vim(k), f_call, {

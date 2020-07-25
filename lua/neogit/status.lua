@@ -29,16 +29,25 @@ local function get_section_for_line(linenr)
   return locations[get_section_idx_for_line(linenr)]
 end
 
-local function get_section_item_for_line(linenr)
-  local section = get_section_for_line(linenr)
+local function get_section_item_idx_for_line(linenr)
+  local section_idx = get_section_idx_for_line(linenr)
+  local section = locations[section_idx]
 
-  for _, item in pairs(status[section.name]) do
+
+  for i, item in pairs(status[section.name]) do
     if item.first <= linenr and linenr <= item.last then
-      return section, item
+      return section_idx, i
     end
   end
 
-  return nil
+  return section_idx, nil
+end
+
+local function get_section_item_for_line(linenr)
+  local section_idx, item_idx = get_section_item_idx_for_line(linenr)
+  local section = locations[section_idx]
+
+  return section, status[section.name][item_idx]
 end
 
 local function get_current_section_item()
@@ -261,13 +270,67 @@ local function refresh_status()
     end
   end
 
+  local line = vim.fn.line(".")
+  local section_idx = get_section_idx_for_line(line)
+  local section = locations[section_idx]
+  local item_idx = line - section.first
+
   buffer.modify(function()
     empty_buffer()
 
     display_status()
   end)
 
-  print("Refreshed status!")
+  --- TODO: rename
+  --- basically moves the cursor to the next section if the current one has no more items
+  --@param name of the current section
+  --@param name of the next section
+  --@returns whether the function managed to find the next cursor position
+  function contextually_move_cursor(current, next)
+    local items = status[current]
+    local items_len = #items
+
+    if items_len == 0 then
+      local staged_changes = status[next]
+      if #staged_changes ~= 0 then
+        vim.api.nvim_win_set_cursor(0, { get_location(next).first + 1, 0 })
+      end
+      return true
+    else
+      local line = get_location(current).first
+      if item_idx > items_len then
+        line = line + items_len
+      else
+        line = line + item_idx
+      end
+      vim.api.nvim_win_set_cursor(0, { line, 0 })
+      return true
+    end
+
+    return false
+  end
+
+  if section.name == "unstaged_changes" then
+    if contextually_move_cursor("unstaged_changes", "staged_changes") then
+      return
+    end
+  elseif section.name == "staged_changes" then
+    if contextually_move_cursor("staged_changes", "unstaged_changes") then
+      return
+    end
+  elseif section.name == "untracked_files" then
+    if contextually_move_cursor("untracked_files", "staged_changes") or
+       contextually_move_cursor("untracked_files", "unstaged_changes") then
+     return
+   end
+  end
+
+  for _,l in pairs(locations) do
+    if l.first <= line and line <= l.last then
+      vim.api.nvim_win_set_cursor(0, { l.first, 0 })
+      break
+    end
+  end
 end
 
 function load_diffs()
@@ -649,6 +712,7 @@ local function create()
             end
           end
           status.staged_changes = {}
+          git.status.unstage_all()
           refresh_status()
         end
         mmanager.mappings["c"] = require("neogit.popups.commit").create
@@ -664,6 +728,8 @@ local function create()
     })
   end)
 end
+
+create()
 
 return {
   create = create,

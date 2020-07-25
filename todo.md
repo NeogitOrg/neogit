@@ -9,9 +9,10 @@
 
 ## Status
 
-* feat: contextually retain cursor position
+* feat: contextually retain cursor position (WIP)
 * feat: git restore
 * feat: $ to see git command history
+* fix: unstage/stage all don't check for existing entries
 
 ## Push
 
