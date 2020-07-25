@@ -219,6 +219,11 @@ local function display_status()
     display = change_to_str
   })
   write_section({
+    name = "unmerged_changes",
+    title = "Unmerged changes",
+    display = change_to_str
+  })
+  write_section({
     name = "staged_changes",
     title = "Staged changes",
     display = change_to_str
@@ -546,7 +551,7 @@ end
 local function stage()
   local section, item = get_current_section_item()
 
-  if section == nil or (section.name ~= "unstaged_changes" and section.name ~= "untracked_files") or item == nil then
+  if section == nil or (section.name ~= "unstaged_changes" and section.name ~= "untracked_files" and section.name ~= "unmerged_changes") or item == nil then
     return
   end
 
@@ -557,7 +562,7 @@ local function stage()
     return
   end
 
-  local on_hunk = not vim.fn.matchlist(vim.fn.getline('.'), "^\\(modified\\|new file\\|deleted\\) .*")[1]
+  local on_hunk = not vim.fn.matchlist(vim.fn.getline('.'), "^\\(modified\\|new file\\|deleted\\|conflict\\) .*")[1]
 
   if on_hunk and section.name ~= "untracked_files" then
     local hunk = get_current_hunk_of_item(item)
@@ -645,6 +650,7 @@ local function create()
 
         vim.fn.matchadd("Function", "^Untracked files\\ze (")
         vim.fn.matchadd("Function", "^Unstaged changes\\ze (")
+        vim.fn.matchadd("Function", "^Unmerged changes\\ze (")
         vim.fn.matchadd("Function", "^Staged changes\\ze (")
         vim.fn.matchadd("Function", "^Stashes\\ze (")
 
@@ -737,8 +743,6 @@ local function create()
     })
   end)
 end
-
-create()
 
 return {
   create = create,

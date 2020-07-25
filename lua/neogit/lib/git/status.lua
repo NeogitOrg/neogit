@@ -13,6 +13,8 @@ local function marker_to_type(m)
     return "new file"
   elseif m == "D" then
     return "deleted"
+  elseif m == "U" then
+    return "conflict"
   else
     return "unknown"
   end
@@ -85,9 +87,10 @@ local status = {
     }
 
     local result = {
-      unstaged_changes = {},
-      staged_changes = {},
       untracked_files = {},
+      unstaged_changes = {},
+      unmerged_changes = {},
+      staged_changes = {},
       stashes = git.stash.parse(outputs[2]),
       unpulled = util.map(outputs[4], function(x) return { name = x } end),
       unmerged = util.map(outputs[3], function(x) return { name = x } end),
@@ -116,6 +119,8 @@ local status = {
         result.remote = matches[3]
       elseif marker == "??" then
         insert_change(result.untracked_files, "A", details)
+      elseif marker == "UU" then
+        insert_change(result.unmerged_changes, "U", details)
       else
         local chars = vim.split(marker, "")
         if chars[1] ~= " " then
