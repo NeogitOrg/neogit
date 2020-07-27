@@ -8,15 +8,15 @@ local util = require("neogit.lib.util")
 
 local function marker_to_type(m)
   if m == "M" then
-    return "modified"
+    return "Modified"
   elseif m == "A" then
-    return "new file"
+    return "New file"
   elseif m == "D" then
-    return "deleted"
+    return "Deleted"
   elseif m == "U" then
-    return "conflict"
+    return "Conflict"
   else
-    return "unknown"
+    return "Unknown"
   end
 end
 

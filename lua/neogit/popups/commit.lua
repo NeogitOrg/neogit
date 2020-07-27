@@ -88,8 +88,7 @@ local function create()
               filetype = "gitcommit",
               modifiable = true,
               readonly = false,
-              initialize = function(buf_handle)
-                local mmanager = mappings_manager.new()
+              initialize = function(buf_handle, mmanager)
                 vim.api.nvim_buf_set_lines(buf_handle, 0, -1, false, output)
 
                 mmanager.mappings["control-c control-c"] = function()
@@ -104,8 +103,6 @@ local function create()
                     __NeogitStatusRefresh()
                   end
                 end
-
-                mmanager.register()
               end
             }
           end

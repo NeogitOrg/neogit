@@ -1,5 +1,7 @@
 package.loaded['neogit.buffer'] = nil
 
+local mappings_manager = require("neogit.lib.mappings_manager")
+
 local function modify(f)
   local buf_handle = vim.api.nvim_get_current_buf()
   vim.api.nvim_buf_set_option(buf_handle, "readonly", false)
@@ -27,11 +29,21 @@ local function create(config)
   vim.api.nvim_buf_set_option(buf_handle, "buftype", config.buftype or "nofile")
   vim.api.nvim_buf_set_option(buf_handle, "swapfile", false)
 
-  config.initialize(buf_handle)
-
   if config.filetype then
     vim.api.nvim_command("set filetype=" .. config.filetype)
   end
+
+  local mmanager = mappings_manager.new()
+
+  if config.tab then
+    mmanager.mappings["q"] = "<cmd>tabclose<CR>"
+  else
+    mmanager.mappings["q"] = "<cmd>q<CR>"
+  end
+
+  config.initialize(buf_handle, mmanager)
+
+  mmanager.register()
 
   if not config.modifiable then
     vim.api.nvim_buf_set_option(buf_handle, "modifiable", false)
@@ -39,30 +51,6 @@ local function create(config)
 
   if config.readonly ~= nil and config.readonly then
     vim.api.nvim_buf_set_option(buf_handle, "readonly", true)
-  end
-
-  if config.tab then
-    vim.api.nvim_buf_set_keymap(
-      buf_handle,
-      "n",
-      "q",
-      "<cmd>tabclose<CR>",
-      {
-        noremap = true,
-        silent = true
-      }
-    )
-  else
-    vim.api.nvim_buf_set_keymap(
-      buf_handle,
-      "n",
-      "q",
-      "<cmd>q<CR>",
-      {
-        noremap = true,
-        silent = true
-      }
-    )
   end
 
   return buf_handle

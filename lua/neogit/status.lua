@@ -2,8 +2,8 @@ local buffer = require("neogit.buffer")
 local git = require("neogit.lib.git")
 local util = require("neogit.lib.util")
 local notif = require("neogit.lib.notification")
-local mappings_manager = require("neogit.lib.mappings_manager")
 
+local refreshing = false
 local status = {}
 local locations = {}
 local buf_handle = nil
@@ -33,7 +33,6 @@ local function get_section_item_idx_for_line(linenr)
   local section_idx = get_section_idx_for_line(linenr)
   local section = locations[section_idx]
 
-
   for i, item in pairs(status[section.name]) do
     if item.first <= linenr and linenr <= item.last then
       return section_idx, i
@@ -59,6 +58,10 @@ local function empty_buffer()
 end
 
 local function insert_diff(section, change)
+  if change.type == "Deleted" or change.type == "New file" then
+    return
+  end
+
   vim.api.nvim_command("normal zd")
 
   if not change.diff_content then
@@ -123,7 +126,7 @@ end
 local function toggle()
   local linenr = vim.fn.line(".")
   local line = vim.fn.getline(linenr)
-  local matches = vim.fn.matchlist(line, "^modified \\(.*\\)")
+  local matches = vim.fn.matchlist(line, "^Modified \\(.*\\)")
   if #matches ~= 0 then
     local section, change = get_current_section_item()
 
@@ -351,13 +354,13 @@ function load_diffs()
   local unstaged = {}
   local staged = {}
   for _,c in pairs(status.unstaged_changes) do
-    if not c.diff_open and not c.diff_content then
+    if c.type ~= "Deleted" and c.type ~= "New file" and not c.diff_open and not c.diff_content then
       table.insert(unstaged, c.name)
     end
   end
   local unstaged_len = #unstaged
   for _,c in pairs(status.staged_changes) do
-    if not c.diff_open and not c.diff_content then
+    if c.type ~= "Deleted" and c.type ~= "New file" and not c.diff_open and not c.diff_content then
       table.insert(staged, c.name)
     end
   end
@@ -392,8 +395,13 @@ function load_diffs()
 end
 
 function __NeogitStatusRefresh()
+  if refreshing then
+    return
+  end
+  refreshing = true
   status = git.status.get()
   refresh_status()
+  refreshing = false
 end
 
 function __NeogitStatusOnClose()
@@ -548,6 +556,10 @@ local function unstage_selection()
   refresh_status()
 end
 
+local function line_is_hunk(line)
+  return not vim.fn.matchlist(line, "^\\(Modified\\|New file\\|Deleted\\|Conflict\\) .*")[1]
+end
+
 local function stage()
   local section, item = get_current_section_item()
 
@@ -562,7 +574,7 @@ local function stage()
     return
   end
 
-  local on_hunk = not vim.fn.matchlist(vim.fn.getline('.'), "^\\(modified\\|new file\\|deleted\\|conflict\\) .*")[1]
+  local on_hunk = line_is_hunk(vim.fn.getline('.'))
 
   if on_hunk and section.name ~= "untracked_files" then
     local hunk = get_current_hunk_of_item(item)
@@ -590,7 +602,7 @@ local function unstage()
     return
   end
 
-  local on_hunk = not vim.fn.matchlist(vim.fn.getline('.'), "^\\(modified\\|new file\\|deleted\\) .*")[1]
+  local on_hunk = line_is_hunk(vim.fn.getline('.'))
 
   if on_hunk then
     local hunk = get_current_hunk_of_item(item)
@@ -631,25 +643,8 @@ local function create()
       name = "NeogitStatus",
       filetype = "NeogitStatus",
       tab = true,
-      initialize = function()
-        vim.cmd([[
-          function! NeogitFoldFunction()
-            return getline(v:foldstart)
-          endfunction
-
-          setlocal foldmethod=manual
-          setlocal foldlevel=1
-          setlocal fillchars=fold:\ 
-          setlocal foldminlines=0
-          setlocal foldtext=NeogitFoldFunction()
-
-          au BufWipeout <buffer> lua __NeogitStatusOnClose()
-        ]])
-
-        status = git.status.get()
+      initialize = function(_, mmanager)
         display_status()
-
-        local mmanager = mappings_manager.new()
 
         mmanager.mappings["1"] = function()
           vim.cmd("set foldlevel=0")
@@ -713,8 +708,6 @@ local function create()
         mmanager.mappings["c"] = require("neogit.popups.commit").create
         mmanager.mappings["l"] = require("neogit.popups.log").create
         mmanager.mappings["P"] = require("neogit.popups.push").create
-
-        mmanager.register()
 
         vim.defer_fn(load_diffs, 0)
       end
