@@ -11,8 +11,11 @@
 
 * feat: contextually retain cursor position (WIP)
 * feat: git restore
+* feat: see diff of new/deleted files
 * feat: $ to see git command history
 * fix: unstage/stage all don't check for existing entries
+* change: 1/2/3/4 are local to section
+* feat: add M-1/M-2/M-3/M-3 as global versions
 
 ## Push
 
