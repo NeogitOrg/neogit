@@ -64,14 +64,6 @@ local function str_right_pad(str, len, sep)
   return str .. sep:rep(len - #str)
 end
 
-local function create_fold(buf, first, last)
-  if not buf or buf == 0 then
-    vim.api.nvim_command(string.format("%d,%dfold", first, last))
-  else
-    vim.api.nvim_command(string.format(buf .. "bufdo %d,%dfold", first, last))
-  end
-end
-
 local function slice (tbl, s, e)
   local pos, new = 1, {}
 

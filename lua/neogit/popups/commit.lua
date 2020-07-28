@@ -1,8 +1,7 @@
 local popup = require("neogit.lib.popup")
 local cli = require("neogit.lib.git.cli")
 local util = require("neogit.lib.util")
-local buffer = require("neogit.buffer")
-local mappings_manager = require("neogit.lib.mappings_manager")
+local Buffer = require("neogit.lib.buffer")
 
 local function create()
   popup.create(
@@ -83,15 +82,17 @@ local function create()
               end
             end
 
-            buffer.create {
+            Buffer.create {
               name = ".git/COMMIT_EDITMSG",
               filetype = "gitcommit",
               modifiable = true,
               readonly = false,
-              initialize = function(buf_handle, mmanager)
-                vim.api.nvim_buf_set_lines(buf_handle, 0, -1, false, output)
+              initialize = function(buffer)
+                buffer:set_lines(0, -1, false, output)
 
-                mmanager.mappings["control-c control-c"] = function()
+                local mappings = buffer.mmanager.mappings
+
+                mappings["control-c control-c"] = function()
                   vim.cmd([[
                     silent set buftype=
                     silent g/^#/d
