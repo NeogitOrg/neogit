@@ -31,6 +31,10 @@
 * feat: add the concept of a buffer class 
 * change: create function now returns a buffer "object"
 
+## Workflow (Not sure)
+
+* feat: support creating branches based on a predefined model (something like feature branches)
+
 ## Highlighting
 
 ## Jobs
