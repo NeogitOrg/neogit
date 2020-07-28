@@ -11,7 +11,7 @@ end
 
 function handle_new_cmd(job)
   table.insert(history, {
-    cmd = "git " .. job.cmd,
+    cmd = job.cmd,
     stdout = job.stdout,
     stderr = job.stderr,
     code = job.code,

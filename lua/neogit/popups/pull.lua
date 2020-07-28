@@ -26,8 +26,8 @@ local function create()
           description = "Pull from upstream",
           callback = function()
             vim.defer_fn(function()
-              git.cli.run("pull", function(job)
-                if job.code == 0 then
+              git.cli.run("pull --no-commit", function(_, code)
+                if code == 0 then
                   notif.create "Pulled from upstream"
                   __NeogitStatusRefresh()
                 end
