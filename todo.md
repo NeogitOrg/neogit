@@ -28,8 +28,12 @@
 ## Buffer
 
 * refactor: move buffer into lib
-* feat: add the concept of a buffer "object"
+* feat: add the concept of a buffer class 
 * change: create function now returns a buffer "object"
-* refactor: automatically create a mappings_manager when creating a buffer and pass it as second argument to the initialize function
 
 ## Highlighting
+
+## Jobs
+
+* refactor: extract jobs lib
+* refactor: introduce job class
