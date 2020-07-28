@@ -1,4 +1,5 @@
 local Buffer = require("neogit.lib.buffer")
+local GitCommandHistory = require("neogit.buffers.git_command_history")
 local git = require("neogit.lib.git")
 local util = require("neogit.lib.util")
 local notif = require("neogit.lib.notification")
@@ -695,7 +696,7 @@ local function create()
         refresh_status()
       end
       mappings["$"] = function()
-        util.inspect(git.cli.history)
+        GitCommandHistory:new():show()
       end
       mappings["control-r"] = __NeogitStatusRefresh
       mappings["u"] = { "nv", unstage, true }

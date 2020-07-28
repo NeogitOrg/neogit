@@ -2,7 +2,6 @@ local notif = require("neogit.lib.notification")
 local Job = require("neogit.lib.job")
 local util = require("neogit.lib.util")
 
-local last_code = 0
 local history = {}
 
 function prepend_git(x)
@@ -17,8 +16,6 @@ function handle_new_cmd(job)
     code = job.code,
     time = job.time
   })
-
-  last_code = job.code
 
   if job.code ~= 0 then
     notif.create({ "Git Error (" .. job.code .. ")!", "", "Press $ to see the git command history." }, { type = "error" })
@@ -69,7 +66,6 @@ local cli = {
 
     return results
   end,
-  last_code = last_code,
   history = history
 }
 

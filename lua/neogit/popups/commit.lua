@@ -99,10 +99,11 @@ local function create()
                     silent w!
                     silent bw!
                   ]])
-                  cli.run("commit -F .git/COMMIT_EDITMSG " .. popup.to_cli())
-                  if cli.last_code == 0 then
-                    __NeogitStatusRefresh()
-                  end
+                  cli.run("commit -F .git/COMMIT_EDITMSG " .. popup.to_cli(), function(_, code)
+                    if code == 0 then
+                      __NeogitStatusRefresh()
+                    end
+                  end)
                 end
               end
             }
