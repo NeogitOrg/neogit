@@ -53,8 +53,8 @@ local function create()
           description = "Push to upstream",
           callback = function()
             return function()
-              git.cli.run("push", function(job)
-                if job.code == 0 then
+              git.cli.run("push", function(_, code)
+                if code == 0 then
                   notif.create "Pushed to upstream"
                   __NeogitStatusRefresh()
                 end
