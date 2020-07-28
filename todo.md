@@ -34,6 +34,3 @@
 ## Highlighting
 
 ## Jobs
-
-* refactor: extract jobs lib
-* refactor: introduce job class

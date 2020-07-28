@@ -1,94 +1,73 @@
 local notif = require("neogit.lib.notification")
+local Job = require("neogit.lib.job")
+local util = require("neogit.lib.util")
 
 local last_code = 0
 local history = {}
 
-function handle_new_cmd(cmd, output, code)
+function prepend_git(x)
+  return "git " .. x
+end
+
+function handle_new_cmd(job)
   table.insert(history, {
-    cmd = "git " .. cmd,
-    output = output,
-    code = code
+    cmd = "git " .. job.cmd,
+    stdout = job.stdout,
+    stderr = job.stderr,
+    code = job.code,
+    time = job.time
   })
 
-  last_code = code
+  last_code = job.code
 
-  if code ~= 0 then
-    notif.create({ "Git Error (" .. code .. ")!", "", "Press $ to see the git command history." }, { type = "error" })
+  if job.code ~= 0 then
+    notif.create({ "Git Error (" .. job.code .. ")!", "", "Press $ to see the git command history." }, { type = "error" })
   end
 end
+
 local cli = {
   run = function(cmd, cb)
     if type(cb) == "function" then
-      local output = nil
-      vim.fn.jobstart("git " .. cmd, {
-        on_exit = function(_, code)
-          handle_new_cmd(cmd, output, code)
-          cb(output)
-        end,
-        on_stdout = function(_, data)
-          output = data
-        end,
-        stdout_buffered = true
-      })
+      local job = Job:new(prepend_git(cmd), function(job)
+        handle_new_cmd(job)
+        cb(job.stdout, job.code, job.stderr)
+      end)
+
+      job:start()
     else
-      local output = vim.fn.systemlist("git " .. cmd)
-      handle_new_cmd(cmd, output, vim.v.shell_error)
-      return output
+      local job = Job:new(prepend_git(cmd))
+
+      job:start()
+      job:wait()
+
+      handle_new_cmd(job)
+      return job.stdout
     end
   end,
   run_with_stdin = function(cmd, data)
-    local output = nil
-    local job = vim.fn.jobstart("git " .. cmd, {
-      on_exit = function(_, code)
-        handle_new_cmd(cmd, output, code)
-      end,
-      on_stdout = function(_, data)
-        output = data
-      end,
-      stdout_buffered = true
-    })
+    local job = Job:new(prepend_git(cmd))
 
-    vim.fn.chansend(job, data)
-    vim.fn.chanclose(job, "stdin")
-    vim.fn.jobwait({ job })
+    job:write(data)
+    job:wait()
 
-    return output
+    handle_new_cmd(job)
+
+    return job.stdout
   end,
   run_batch = function(cmds)
-    local len = #cmds
-    local amount = 0
-    local result = {}
+    local jobs = Job.batch(util.map(cmds, prepend_git))
 
-    for i, cmd in pairs(cmds) do
-      local output = {}
+    Job.start_all(jobs)
+    Job.wait_all(jobs)
 
-      vim.fn.jobstart("git " .. cmd, {
-        on_exit = function(_, code)
-          handle_new_cmd(cmd, output, code)
+    local results = {}
 
-          result[i] = output
-
-          amount = amount + 1
-        end,
-        on_stdout = function(_, data)
-          local len = #data - 1
-          for i=1,len do
-            output[i] = data[i]
-          end
-        end,
-        stdout_buffered = true
-      })
+    for i,job in pairs(jobs) do
+      handle_new_cmd(job)
+      results[i] = job.stdout
     end
 
-    while true do
-      if len == amount then
-        break
-      end
-
-      vim.cmd("sleep 1 m")
-    end
-
-    return result
+    return results
   end,
   last_code = last_code,
   history = history
