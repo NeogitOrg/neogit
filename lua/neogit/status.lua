@@ -706,8 +706,9 @@ local function create()
           refresh_status()
         end
         mmanager.mappings["c"] = require("neogit.popups.commit").create
-        mmanager.mappings["l"] = require("neogit.popups.log").create
+        mmanager.mappings["L"] = require("neogit.popups.log").create
         mmanager.mappings["P"] = require("neogit.popups.push").create
+        mmanager.mappings["p"] = require("neogit.popups.pull").create
 
         vim.defer_fn(load_diffs, 0)
       end
