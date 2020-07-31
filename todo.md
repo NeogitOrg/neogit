@@ -1,6 +1,7 @@
 ## General
 
 * refactor: extract buffers like "NeogitLog" into their own files
+* feat: floating windows
 
 ## Commit
 
