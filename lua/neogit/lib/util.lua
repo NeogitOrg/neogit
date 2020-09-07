@@ -90,6 +90,35 @@ local function str_count(str, target)
   return count
 end
 
+local function get_path_dir(path)
+  local dir = path
+  local prev = ''
+  while dir ~= prev do
+    local git_dir = dir .. '/.git'
+    local dir_info = vim.loop.fs_stat(git_dir)
+    if dir_info and dir_info['type'] == 'directory' then
+      local obj_dir_info = vim.loop.fs_stat(git_dir .. '/objects')
+      if obj_dir_info and obj_dir_info['type'] == 'directory' then
+        local refs_dir_info = vim.loop.fs_stat(git_dir .. '/refs')
+        if refs_dir_info and refs_dir_info['type'] == 'directory' then
+          local head_info = vim.loop.fs_stat(git_dir .. '/HEAD')
+          if head_info and head_info.size > 10 then return git_dir end
+        end
+      end
+    elseif dir_info and dir_info['type'] == 'file' then
+      local reldir = vim.fn.readfile(git_dir)[1] or ''
+      if string.find(reldir, '^gitdir: ') then
+        return vim.fn.simplify(dir .. '/' .. string.sub(reldir, 9))
+      end
+    end
+
+    prev = dir
+    dir = vim.fn.fnamemodify(dir, ':h')
+  end
+
+  return ''
+end
+
 return {
   inspect = inspect,
   time = time,
@@ -100,6 +129,7 @@ return {
   str_right_pad = str_right_pad,
   str_count = str_count,
   create_fold = create_fold,
+  get_path_dir = get_path_dir,
   get_keymaps = get_keymaps,
   print_tbl = print_tbl,
 }

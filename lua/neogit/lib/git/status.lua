@@ -79,12 +79,12 @@ end
 
 local status = {
   get = function()
-    local outputs = git.cli.run_batch {
+    local outputs = git.cli.run_batch({
       "status --porcelain=1 --branch",
       "stash list",
       "log --oneline @{upstream}..",
-      "log --oneline ..@{upstream}",
-    }
+      "log --oneline ..@{upstream}"
+    }, false)
 
     local result = {
       untracked_files = {},

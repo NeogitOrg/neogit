@@ -1,3 +1,4 @@
+lua require("neogit")
 lua require("neogit.status")
 
 function! s:refresh()

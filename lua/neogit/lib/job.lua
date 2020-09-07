@@ -42,7 +42,13 @@ function Job:start()
   self.stderr = {}
   local started_at = vim.fn.reltime()
 
-  self.channel = vim.fn.jobstart(self.cmd, {
+  local task = self.cmd
+
+  if vim.fn.has('win32') then
+    task = { 'cmd', '/C', task }
+  end
+
+  self.channel = vim.fn.jobstart(task, {
     on_exit = function(_, code)
       self.code = code
       self.done = true

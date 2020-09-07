@@ -8,7 +8,11 @@ function prepend_git(x)
   return "git " .. x
 end
 
-function handle_new_cmd(job)
+function handle_new_cmd(job, popup)
+  if popup == nil then
+    popup = true
+  end
+
   table.insert(history, {
     cmd = job.cmd,
     stdout = job.stdout,
@@ -17,7 +21,7 @@ function handle_new_cmd(job)
     time = job.time
   })
 
-  if job.code ~= 0 then
+  if popup and job.code ~= 0 then
     notif.create({ "Git Error (" .. job.code .. ")!", "", "Press $ to see the git command history." }, { type = "error" })
   end
 end
@@ -51,7 +55,7 @@ local cli = {
 
     return job.stdout
   end,
-  run_batch = function(cmds)
+  run_batch = function(cmds, popup)
     local jobs = Job.batch(util.map(cmds, prepend_git))
 
     Job.start_all(jobs)
@@ -60,7 +64,7 @@ local cli = {
     local results = {}
 
     for i,job in pairs(jobs) do
-      handle_new_cmd(job)
+      handle_new_cmd(job, popup)
       results[i] = job.stdout
     end
 

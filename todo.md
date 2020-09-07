@@ -1,6 +1,7 @@
 ## General
 
 * refactor: extract buffers like "NeogitLog" into their own files
+* feat: periodically do git fetch in background
 
 ## Commit
 
