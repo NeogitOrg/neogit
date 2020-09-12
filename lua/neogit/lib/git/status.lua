@@ -1,5 +1,3 @@
-package.loaded['neogit.lib.git.status'] = nil
-
 local git = {
   cli = require("neogit.lib.git.cli"),
   stash = require("neogit.lib.git.stash")
@@ -34,13 +32,13 @@ local function update_range(name, diff, hunk, from, to, cached)
   local mark_del = "-"
   local new_file = {}
 
-  from = from or 1
+  from = from or 0
   to = to or diff_len
 
   if from > to then
     local temp = to
     to = from
-    from = to
+    from = to - 1
   end
 
   if cached then
@@ -54,9 +52,10 @@ local function update_range(name, diff, hunk, from, to, cached)
   for i=1,diff_start - 1 do
     table.insert(new_file, file_index[i])
   end
-  for i=diff_start,diff_end+diff_len do
+  for i=diff_start,diff_end do
     local diff_idx = i - diff_start + 1
     local diff_line = vim.fn.matchlist(diff[diff_idx], "^\\([+ -]\\)\\(.*\\)")
+
     if from <= diff_idx and diff_idx <= to then
       if diff_line[2] ~= mark_del then
         table.insert(new_file, diff_line[3])
@@ -156,5 +155,7 @@ local status = {
     git.cli.run("reset")
   end,
 }
+
+-- status.stage_range(
 
 return status

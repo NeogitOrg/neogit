@@ -2,6 +2,8 @@ local function inspect(x)
   print(vim.inspect(x))
 end
 
+_G.inspect = inspect
+
 local function map(tbl, f)
   local t = {}
   for k,v in pairs(tbl) do
@@ -25,6 +27,8 @@ local function print_tbl(tbl)
     print("| " .. x)
   end
 end
+
+_G.print_tbl = print_tbl
 
 local function tbl_longest_str(tbl)
   local len = 0

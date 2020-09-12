@@ -12,7 +12,7 @@ call s:refresh()
 
 augroup Neogit
   au!
-  au BufWritePost,BufEnter * call <SID>refresh()
+  au BufWritePost,BufEnter,FocusGained,ShellCmdPost,VimResume * call <SID>refresh()
 augroup END
 
 command! -nargs=0 Neogit :lua require'neogit.status'.create()<CR>

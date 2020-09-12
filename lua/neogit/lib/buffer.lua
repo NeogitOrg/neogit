@@ -38,7 +38,7 @@ function Buffer:clear()
 end
 
 function Buffer:get_lines(first, last, strict)
-  vim.api.nvim_buf_get_lines(self.handle, first, last, strict)
+  return vim.api.nvim_buf_get_lines(self.handle, first, last, strict)
 end
 
 function Buffer:set_lines(first, last, strict, lines)
@@ -61,7 +61,7 @@ function Buffer:put(lines, after, follow)
 end
 
 function Buffer:create_fold(first, last)
-  vim.api.nvim_command(string.format(self.handle .. "bufdo %d,%dfold", first, last))
+  vim.cmd(string.format(self.handle .. "bufdo %d,%dfold", first, last))
 end
 
 function Buffer:unlock()

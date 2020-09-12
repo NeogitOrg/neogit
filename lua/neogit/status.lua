@@ -59,7 +59,7 @@ local function insert_diff(section, change)
     return
   end
 
-  vim.api.nvim_command("normal zd")
+  vim.cmd("normal zd")
 
   if not change.diff_content then
     if section.name == "staged_changes" then
@@ -124,20 +124,21 @@ local function toggle()
   local linenr = vim.fn.line(".")
   local line = vim.fn.getline(linenr)
   local matches = vim.fn.matchlist(line, "^Modified \\(.*\\)")
+
   if #matches ~= 0 then
     local section, change = get_current_section_item()
 
     if change.diff_open then
-      vim.api.nvim_command("normal za")
+      vim.cmd("normal za")
       return
     end
 
     insert_diff(section, change)
 
-    vim.api.nvim_command("normal zO")
+    vim.cmd("normal zO")
     vim.cmd("norm k")
   else
-    vim.api.nvim_command("normal za")
+    vim.cmd("normal za")
   end
 end
 
@@ -394,8 +395,8 @@ function load_diffs()
   end
 end
 
-function __NeogitStatusRefresh()
-  if refreshing then
+function __NeogitStatusRefresh(force)
+  if refreshing or (status_buffer ~= nil and not force) then
     return
   end
   refreshing = true
@@ -450,7 +451,7 @@ end
 local function stage_range(item, section, hunk, from, to)
   git.status.stage_range(
     item.name,
-    status_buffer:get_lines(item.first, item.last, false),
+    status_buffer:get_lines(item.first + hunk.first, item.first + hunk.last, false),
     hunk,
     from,
     to
@@ -472,7 +473,7 @@ end
 local function unstage_range(item, section, hunk, from, to)
   git.status.unstage_range(
     item.name,
-    status_buffer:get_lines(item.first, item.last, false),
+    status_buffer:get_lines(item.first + hunk.first, item.first + hunk.last, false),
     hunk,
     from,
     to
@@ -536,7 +537,7 @@ local function get_selection()
     return nil
   end
 
-  return first_section, first_item, first_hunk, first_line, last_line
+  return first_section, first_item, first_hunk, first_line - first_hunk.first, last_line - first_hunk.first
 end
 
 local function stage_selection()
@@ -579,7 +580,7 @@ local function stage()
 
   if on_hunk and section.name ~= "untracked_files" then
     local hunk = get_current_hunk_of_item(item)
-    stage_range(item, section, hunk, item.first + hunk.first, item.first + hunk.last)
+    stage_range(item, section, hunk, nil, nil)
   else
     git.status.stage(item.name)
     remove_change(section.name, item)
@@ -607,7 +608,7 @@ local function unstage()
 
   if on_hunk then
     local hunk = get_current_hunk_of_item(item)
-    unstage_range(item, section, hunk, item.first + hunk.first, item.first + hunk.last)
+    unstage_range(item, section, hunk, nil, nil)
   else
     git.status.unstage(item.name)
 
@@ -698,7 +699,7 @@ local function create()
       mappings["$"] = function()
         GitCommandHistory:new():show()
       end
-      mappings["control-r"] = __NeogitStatusRefresh
+      mappings["control-r"] = function() __NeogitStatusRefresh(true) end
       mappings["u"] = { "nv", unstage, true }
       mappings["U"] = function()
         for _,c in pairs(status.staged_changes) do
@@ -716,7 +717,7 @@ local function create()
       mappings["L"] = require("neogit.popups.log").create
       mappings["P"] = require("neogit.popups.push").create
       mappings["p"] = require("neogit.popups.pull").create
-
+      
       vim.defer_fn(load_diffs, 0)
     end
   }

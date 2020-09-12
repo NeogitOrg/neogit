@@ -17,8 +17,8 @@ local Job = {
 Job.__index = Job
 
 --- Creates a new Job
--- @tparam string cmd the command to be executed
--- @tparam function? on_exit a callback that gets called when the job exits
+--@tparam string cmd the command to be executed
+--@tparam function? on_exit a callback that gets called when the job exits
 function Job:new(cmd, on_exit)
   local this = {
     cmd = cmd,
@@ -44,7 +44,7 @@ function Job:start()
 
   local task = self.cmd
 
-  if vim.fn.has('win32') then
+  if vim.fn.has('win32') == 1 then
     task = { 'cmd', '/C', task }
   end
 
@@ -83,7 +83,7 @@ end
 
 --- Writes the given strings to the stdin
 -- This function also closes stdin so it can only be called once
--- @tparam {string, ...} lines a list of strings
+--@tparam {string, ...} lines a list of strings
 function Job:write(lines)
   vim.fn.chansend(self.channel, lines)
   vim.fn.chanclose(self.channel, "stdin")

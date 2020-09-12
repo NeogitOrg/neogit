@@ -48,6 +48,7 @@ local cli = {
   run_with_stdin = function(cmd, data)
     local job = Job:new(prepend_git(cmd))
 
+    job:start()
     job:write(data)
     job:wait()
 
