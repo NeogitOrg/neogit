@@ -725,5 +725,6 @@ end
 
 return {
   create = create,
-  toggle = toggle
+  toggle = toggle,
+  get_status = function() return status end
 }

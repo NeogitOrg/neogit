@@ -113,9 +113,9 @@ local status = {
       local details = matches[3]
 
       if marker == "##" then
-        matches = vim.fn.matchlist(details, "^\\([a-zA-Z0-9]*\\)...\\(\\S*\\).*")
-        result.branch = matches[2]
-        result.remote = matches[3]
+        local tokens = vim.split(details, "...", true)
+        result.branch = tokens[1]
+        result.remote = tokens[2] or result.branch
       elseif marker == "??" then
         insert_change(result.untracked_files, "A", details)
       elseif marker == "UU" then
