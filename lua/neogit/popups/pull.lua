@@ -29,7 +29,7 @@ local function create()
               git.cli.run("pull --no-commit", function(_, code)
                 if code == 0 then
                   notif.create "Pulled from upstream"
-                  __NeogitStatusRefresh()
+                  __NeogitStatusRefresh(true)
                 end
               end)
             end, 0)

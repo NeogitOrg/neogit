@@ -42,7 +42,7 @@ local function create()
               git.cli.run("push", function(_, code)
                 if code == 0 then
                   notif.create "Pushed to pushremote"
-                  __NeogitStatusRefresh()
+                  __NeogitStatusRefresh(true)
                 end
               end)
             end
@@ -56,7 +56,7 @@ local function create()
               git.cli.run("push", function(_, code)
                 if code == 0 then
                   notif.create "Pushed to upstream"
-                  __NeogitStatusRefresh()
+                  __NeogitStatusRefresh(true)
                 end
               end)
             end
