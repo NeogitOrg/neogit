@@ -34,6 +34,8 @@ U - unstage staged changes
 
 c - open commit popup
 
+ctrl-c ctrl-c - commit (when writing the message)
+
 L - open log popup
 
 P - open push popup
