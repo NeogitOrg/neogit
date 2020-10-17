@@ -322,17 +322,17 @@ local function refresh_status()
   local section_idx = get_section_idx_for_line(line)
   local section = locations[section_idx]
 
+  status_buffer:unlock()
+  status_buffer:clear()
+  display_status()
+  status_buffer:lock()
+
   if section == nil then
     primitive_move_cursor(line)
     return
   end
 
   local item_idx = line - section.first
-
-  status_buffer:unlock()
-  status_buffer:clear()
-  display_status()
-  status_buffer:lock()
 
   if section.name == "unstaged_changes" then
     if contextually_move_cursor("unstaged_changes", "staged_changes", item_idx) then
@@ -646,9 +646,14 @@ local function create()
   Buffer.create {
     name = "NeogitStatus",
     filetype = "NeogitStatus",
-    tab = true,
+    kind = "tab",
     initialize = function(buffer)
       status_buffer = buffer
+
+      -- checks if the status table is {}
+      if next(status) == nil then
+        status = git.status.get()
+      end
 
       display_status()
 

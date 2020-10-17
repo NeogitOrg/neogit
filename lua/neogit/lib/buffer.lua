@@ -94,10 +94,16 @@ function Buffer.exists(name)
 end
 
 function Buffer.create(config)
-  if config.tab then
+  local config = config or {}
+  local kind = config.kind or "split"
+
+  if kind == "tab" then
     vim.cmd("tabnew")
-  else
+  elseif kind == "split" then
     vim.cmd("below new")
+  elseif kind == "floating" then
+    vim.api.nvim_err_writeln("Floating kind is not implemented yet")
+    return nil
   end
 
   local buffer = Buffer:new(vim.api.nvim_get_current_buf())
