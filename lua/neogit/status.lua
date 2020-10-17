@@ -396,9 +396,6 @@ function load_diffs()
 end
 
 function __NeogitStatusRefresh(force)
-  print(force)
-  print(refreshing)
-  print(status_buffer)
   if refreshing or (status_buffer ~= nil and not force) then
     return
   end
