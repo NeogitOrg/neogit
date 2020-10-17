@@ -100,7 +100,6 @@ local function create()
                     silent bw!
                   ]])
                   cli.run("commit -F .git/COMMIT_EDITMSG " .. popup.to_cli(), function(_, code)
-                    print(code)
                     if code == 0 then
                       __NeogitStatusRefresh()
                     end
