@@ -115,7 +115,7 @@ local status = {
       if marker == "##" then
         local tokens = vim.split(details, "...", true)
         result.branch = tokens[1]
-        result.remote = vim.split(tokens[2], " ", true)[1] or result.branch
+        result.remote = tokens[2] and vim.split(tokens[2], " ", true)[1] or result.branch
       elseif marker == "??" then
         insert_change(result.untracked_files, "A", details)
       elseif marker == "UU" then
