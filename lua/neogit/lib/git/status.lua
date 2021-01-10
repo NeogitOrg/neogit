@@ -82,7 +82,9 @@ local status = {
       "status --porcelain=1 --branch",
       "stash list",
       "log --oneline @{upstream}..",
-      "log --oneline ..@{upstream}"
+      "log --oneline ..@{upstream}",
+      "log -1 --pretty=%B",
+      "log -1 --pretty=%B @{upstream}"
     }, false)
 
     local result = {
@@ -93,6 +95,12 @@ local status = {
       stashes = git.stash.parse(outputs[2]),
       unpulled = util.map(outputs[4], function(x) return { name = x } end),
       unmerged = util.map(outputs[3], function(x) return { name = x } end),
+      HEAD = {
+        message = outputs[5][1]
+      },
+      upstream = {
+        message = outputs[6][1]
+      },
       branch = "",
       remote = ""
     }

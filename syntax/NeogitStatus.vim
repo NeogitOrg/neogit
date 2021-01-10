@@ -3,8 +3,9 @@ if exists("b:current_syntax")
 endif
 
 syn match NeogitObjectId /^[a-z0-9]\{7} /
-syn match NeogitBranch /.*/ contained
-syn match NeogitRemote /[a-zA-Z/]/ contained
+syn match NeogitCommitMessage /.*/ contained
+syn match NeogitBranch /\S\+/ contained nextgroup=NeogitCommitMessage
+syn match NeogitRemote /\S\+/ contained nextgroup=NeogitCommitMessage
 syn match NeogitDiffAdd /.*/ contained
 syn match NeogitDiffDelete /.*/ contained
 syn match NeogitStash /stash@{[0-9]*}\ze/
@@ -20,8 +21,8 @@ for section in b:sections
   execute 'hi def link Neogit' . id . ' Function'
 endfor
 
-syn region NeogitHeadRegion start=/^Head: \zs.*/ end=/$/ contains=NeogitBranch
-syn region NeogitPushRegion start=/^Push: \zs.*/ end=/$/ contains=NeogitRemote
+syn region NeogitHeadRegion start=/^Head: \zs/ end=/$/ contains=NeogitBranch
+syn region NeogitPushRegion start=/^Push: \zs/ end=/$/ contains=NeogitRemote
 syn region NeogitUnmergedIntoRegion start=/^Unmerged into .*/ end=/$/ contains=NeogitRemote,NeogitUnmergedInto
 syn region NeogitUnpulledFromRegion start=/^Unpulled from .*/ end=/$/ contains=NeogitRemote,NeogitUnpulledFrom
 syn region NeogitDiffAddRegion start=/^+.*$/ end=/$/ contains=NeogitDiffAdd
