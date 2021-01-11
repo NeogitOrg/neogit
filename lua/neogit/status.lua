@@ -637,7 +637,8 @@ local function unstage()
   refresh_status()
 end
 
-local function create()
+local function create(kind)
+  kind = kind or 'tab'
   if status_buffer then
     status_buffer:focus()
     return
@@ -646,7 +647,7 @@ local function create()
   Buffer.create {
     name = "NeogitStatus",
     filetype = "NeogitStatus",
-    kind = "tab",
+    kind = kind,
     initialize = function(buffer)
       status_buffer = buffer
 
