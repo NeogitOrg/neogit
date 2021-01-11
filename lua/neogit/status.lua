@@ -152,12 +152,15 @@ local function display_status()
   end
 
   locations = {}
-  local line_idx = 3
+  local line_idx = 2
   local output = {
-    "Head: " .. status.branch .. " " .. status.HEAD.message,
-    "Push: " .. status.remote .. " " .. (status.upstream.message or ''),
-    ""
+    "Head: " .. status.head.branch .. " " .. status.head.message
   }
+  if status.upstream ~= nil then
+    line_idx = line_idx + 1
+    table.insert(output, "Push: " .. status.upstream.branch .. " " .. status.upstream.message)
+  end
+  table.insert(output, "")
 
   local function write(str)
     table.insert(output, str)
