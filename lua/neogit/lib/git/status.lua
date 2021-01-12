@@ -82,7 +82,9 @@ local status = {
       "status --porcelain=1 --branch",
       "stash list",
       "log --oneline @{upstream}..",
-      "log --oneline ..@{upstream}"
+      "log --oneline ..@{upstream}",
+      "log -1 --pretty=%B",
+      "log -1 --pretty=%B @{upstream}"
     }, false)
 
     local result = {
@@ -93,8 +95,11 @@ local status = {
       stashes = git.stash.parse(outputs[2]),
       unpulled = util.map(outputs[4], function(x) return { name = x } end),
       unmerged = util.map(outputs[3], function(x) return { name = x } end),
-      branch = "",
-      remote = ""
+      head = {
+        message = outputs[5][1],
+        branch = ""
+      },
+      upstream = nil
     }
 
     local function insert_change(list, marker, name)
@@ -114,8 +119,13 @@ local status = {
 
       if marker == "##" then
         local tokens = vim.split(details, "...", true)
-        result.branch = tokens[1]
-        result.remote = tokens[2] and vim.split(tokens[2], " ", true)[1] or result.branch
+        result.head.branch = tokens[1]
+        if tokens[2] ~= nil then
+          result.upstream = {
+            branch = vim.split(tokens[2], " ", true)[1],
+            message = outputs[6][1]
+          }
+        end
       elseif marker == "??" then
         insert_change(result.untracked_files, "A", details)
       elseif marker == "UU" then

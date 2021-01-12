@@ -152,13 +152,15 @@ local function display_status()
   end
 
   locations = {}
-
-  local line_idx = 3
+  local line_idx = 2
   local output = {
-    "Head: " .. status.branch,
-    "Push: " .. status.remote,
-    ""
+    "Head: " .. status.head.branch .. " " .. status.head.message
   }
+  if status.upstream ~= nil then
+    line_idx = line_idx + 1
+    table.insert(output, "Push: " .. status.upstream.branch .. " " .. status.upstream.message)
+  end
+  table.insert(output, "")
 
   local function write(str)
     table.insert(output, str)
@@ -310,11 +312,17 @@ local function refresh_status()
     return
   end
 
-  for _,x in pairs(status) do
-    if type(x) == "table" then
-      for _,i in pairs(x) do
-        i.diff_open = false
-      end
+  for _,x in ipairs({
+    'untracked_files',
+    'unstaged_changes',
+    'unmerged_changes',
+    'staged_changes',
+    'unpulled',
+    'unmerged',
+    'stashes'
+  }) do
+    for _,i in ipairs(status[x]) do
+      i.diff_open = false
     end
   end
 
