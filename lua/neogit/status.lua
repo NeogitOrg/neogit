@@ -51,7 +51,7 @@ local function get_current_section_item()
 end
 
 local function toggle()
-  vim.cmd("normal za")
+  vim.cmd("silent! normal za")
 end
 
 local function change_to_str(change)
