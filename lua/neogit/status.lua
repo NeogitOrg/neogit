@@ -9,6 +9,8 @@ local status = {}
 local locations = {}
 local status_buffer = nil
 
+local hunk_header_matcher = vim.regex('^@@.*@@')
+
 local function get_section_idx_for_line(linenr)
   for i, l in pairs(locations) do
     if l.first <= linenr and linenr <= l.last then
@@ -104,11 +106,14 @@ local function display_status()
       local location = {
         name = options.name,
         first = line_idx,
-        last = 0
+        last = 0,
+        files = {}
       }
 
       for _, item in pairs(items) do
         local name
+        local hunks = {}
+        local current_hunk
 
         if options.display then
           name = options.display(item)
@@ -127,6 +132,14 @@ local function display_status()
         if item.diff_content ~= nil then
           for _, diff_line in ipairs(item.diff_content.lines) do
             write(diff_line)
+            if hunk_header_matcher:match_str(diff_line) then
+              if current_hunk ~= nil then
+                current_hunk.last = line_idx - 1
+                table.insert(hunks, current_hunk)
+              end
+              current_hunk = { first = line_idx }
+              status_buffer:place_sign(line_idx, 'NeogitHunkHeader')
+            end
           end
           item.diff_open = true
         end
@@ -134,12 +147,22 @@ local function display_status()
 
         if type(item) == "table" then
           item.last = line_idx
+          if current_hunk ~= nil then
+            current_hunk.last = line_idx
+            table.insert(hunks, current_hunk)
+          end
         end
+
+        table.insert(location.files, {
+          first = item.first,
+          last = item.last,
+          hunks = hunks
+        })
       end
 
-      write("")
 
       location.last = line_idx
+      write("")
 
       table.insert(locations, location)
     end
@@ -445,6 +468,7 @@ end
 local function get_selection()
   local first_line = vim.fn.getpos("v")[2]
   local last_line = vim.fn.getpos(".")[2]
+
   local first_section, first_item = get_section_item_for_line(first_line)
   local last_section, last_item = get_section_item_for_line(last_line)
 
@@ -665,13 +689,63 @@ local function create(kind)
       mappings["P"] = require("neogit.popups.push").create
       mappings["p"] = require("neogit.popups.pull").create
 
-      vim.defer_fn(load_diffs, 0)
+      vim.defer_fn(function ()
+        load_diffs()
+        refresh_status()
+      end, 0)
     end
   }
+end
+
+local highlight_group = vim.api.nvim_create_namespace("section-highlight")
+local function update_highlight()
+  vim.api.nvim_buf_clear_namespace(0, highlight_group, 0, -1)
+  status_buffer:clear_sign_group('ctx')
+
+  local line = vim.fn.line('.')
+  local first, last
+
+  for _,loc in ipairs(locations) do
+    if line == loc.first then
+      first, last = loc.first, loc.last
+      break
+    elseif line >= loc.first and line <= loc.last then
+      for _,file in ipairs(loc.files) do
+        if line == file.first then
+          first, last = file.first, file.last
+          break
+        elseif line >= file.first and line <= file.last then
+          for _, hunk in ipairs(file.hunks) do
+            if line <= hunk.last then
+              first, last = hunk.first, hunk.last
+              break
+            end
+          end
+          break
+        end
+      end
+      break
+    end
+  end
+
+  if first == nil or last == nil then
+    return
+  end
+  print(vim.inspect(locations))
+  print(line, first, last)
+
+  for i=first,last do
+    if hunk_header_matcher:match_str(vim.fn.getline(i)) then
+      status_buffer:place_sign(i, 'NeogitHunkHeaderHighlight', 'ctx')
+    else
+      status_buffer:place_sign(i, 'NeogitDiffContextHighlight', 'ctx')
+    end
+  end
 end
 
 return {
   create = create,
   toggle = toggle,
+  update_highlight = update_highlight,
   get_status = function() return status end
 }

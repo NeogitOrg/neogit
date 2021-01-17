@@ -1,6 +1,7 @@
 package.loaded['neogit.buffer'] = nil
 
 local mappings_manager = require("neogit.lib.mappings_manager")
+local next_sign_id = 1
 
 local Buffer = {
   handle = nil,
@@ -105,6 +106,23 @@ function Buffer:open_fold(line, reset_pos)
   if reset_pos == true then
     vim.fn.setpos('.', pos)
   end
+end
+
+function Buffer:place_sign(line, name, group)
+  local sign_id = next_sign_id
+  next_sign_id = next_sign_id + 1
+
+  local cmd = 'sign place '..sign_id..' line='..line..' name='..name
+  if group ~= nil then
+    cmd = cmd..' group='..group
+  end
+  cmd = cmd..' buffer='..self.handle
+
+  vim.cmd(cmd)
+end
+
+function Buffer:clear_sign_group(group)
+  vim.cmd('sign unplace * group='..group..' buffer='..self.handle)
 end
 
 function Buffer:set_filetype(ft)
