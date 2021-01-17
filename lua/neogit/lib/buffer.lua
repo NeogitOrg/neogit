@@ -93,6 +93,20 @@ function Buffer:set_foldlevel(level)
   vim.cmd("setlocal foldlevel=" .. level)
 end
 
+function Buffer:open_fold(line, reset_pos)
+  local pos
+  if reset_pos == true then
+    pos = vim.fn.getpos()
+  end
+
+  vim.fn.setpos('.', {self.handle, line, 0, 0})
+  vim.cmd('normal zo')
+
+  if reset_pos == true then
+    vim.fn.setpos('.', pos)
+  end
+end
+
 function Buffer:set_filetype(ft)
   vim.cmd("setlocal filetype=" .. ft)
 end
