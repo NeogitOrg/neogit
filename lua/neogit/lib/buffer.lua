@@ -3,13 +3,14 @@ package.loaded['neogit.buffer'] = nil
 local mappings_manager = require("neogit.lib.mappings_manager")
 
 local Buffer = {
-  handle = nil
+  handle = nil,
 }
 Buffer.__index = Buffer
 
 function Buffer:new(handle)
   local this = {
     handle = handle,
+    border = nil,
     mmanager = mappings_manager.new()
   }
 
@@ -103,17 +104,64 @@ end
 function Buffer.create(config)
   local config = config or {}
   local kind = config.kind or "split"
+  local buffer = nil
 
   if kind == "tab" then
     vim.cmd("tabnew")
+    buffer = Buffer:new(vim.api.nvim_get_current_buf())
   elseif kind == "split" then
     vim.cmd("below new")
+    buffer = Buffer:new(vim.api.nvim_get_current_buf())
   elseif kind == "floating" then
-    vim.api.nvim_err_writeln("Floating kind is not implemented yet")
-    return nil
-  end
+    -- Creates the border window
+    local vim_height = vim.api.nvim_eval [[&lines]]
+    local vim_width = vim.api.nvim_eval [[&columns]]
+    local width = math.floor(vim_width * 0.8) + 5
+    local height = math.floor(vim_height * 0.7) + 2
+    local col = vim_width * 0.1 - 2
+    local row = vim_height * 0.15 - 1
 
-  local buffer = Buffer:new(vim.api.nvim_get_current_buf())
+    local border_buffer = vim.api.nvim_create_buf(false, true)
+    local border_window = vim.api.nvim_open_win(border_buffer, true, {
+      relative = 'editor',
+      width = width,
+      height = height,
+      col = col,
+      row = row,
+      style = 'minimal',
+      focusable = false
+    })
+
+    vim.api.nvim_win_set_cursor(border_window, { 1, 0 })
+
+    vim.wo.winhl = "Normal:Normal"
+
+    vim.api.nvim_buf_set_lines(border_buffer, 0, 1, false, { "┌" .. string.rep('─', width - 2) .. "┐" })
+    for i=2,height-1 do
+      vim.api.nvim_buf_set_lines(border_buffer, i - 1, i, false, { "│" .. string.rep(' ', width - 2) .. "│"})
+    end
+    vim.api.nvim_buf_set_lines(border_buffer, height - 1, -1, false, { "└" .. string.rep('─', width - 2) .. "┘" })
+    -- Creates the content window
+    local width = width - 2 
+    local height = height - 2
+    local col = col + 1
+    local row = row + 1
+
+    local content_buffer = vim.api.nvim_create_buf(false, true)
+    local content_window = vim.api.nvim_open_win(content_buffer, true, {
+      relative = 'editor',
+      width = width,
+      height = height,
+      col = col,
+      row = row,
+      style = 'minimal',
+      focusable = false
+    })
+
+    vim.api.nvim_win_set_cursor(content_window, { 1, 0 })
+    buffer = Buffer:new(content_buffer)
+    buffer.border_buffer = border_buffer
+  end
 
   vim.cmd("set nonu")
   vim.cmd("set nornu")
@@ -128,10 +176,8 @@ function Buffer.create(config)
     buffer:set_filetype(config.filetype)
   end
 
-  if config.tab then
-    buffer.mmanager.mappings["q"] = "<cmd>tabclose<CR>"
-  else
-    buffer.mmanager.mappings["q"] = "<cmd>q<CR>"
+  buffer.mmanager.mappings["q"] = function()
+    buffer:close()
   end
 
   config.initialize(buffer)
