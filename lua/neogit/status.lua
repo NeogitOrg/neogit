@@ -201,18 +201,20 @@ local function display_status()
       return "stash@{" .. stash.idx .. "} " .. stash.name
     end
   })
-  write_section({
-    name = "unpulled",
-    title = function()
-      return "Unpulled from " .. status.upstream.branch .. " (" .. #status.unpulled .. ")"
-    end,
-  })
-  write_section({
-    name = "unmerged",
-    title = function()
-      return "Unmerged into " .. status.upstream.branch .. " (" .. #status.unmerged .. ")"
-    end,
-  })
+  if status.upstream ~= nil then
+    write_section({
+      name = "unpulled",
+      title = function()
+        return "Unpulled from " .. status.upstream.branch .. " (" .. #status.unpulled .. ")"
+      end,
+    })
+    write_section({
+      name = "unmerged",
+      title = function()
+        return "Unmerged into " .. status.upstream.branch .. " (" .. #status.unmerged .. ")"
+      end,
+    })
+  end
 
   status_buffer:set_lines(0, -1, false, output)
   status_buffer:set_foldlevel(2)
