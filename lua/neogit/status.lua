@@ -718,6 +718,8 @@ local function update_highlight()
   local line = vim.fn.line('.')
   local first, last
 
+  -- This nested madness finds the smallest section the cursor is currently
+  -- enclosed by, based on the locations table created while rendering.
   for _,loc in ipairs(locations) do
     if line == loc.first then
       first, last = loc.first, loc.last
@@ -744,8 +746,6 @@ local function update_highlight()
   if first == nil or last == nil then
     return
   end
-  print(vim.inspect(locations))
-  print(line, first, last)
 
   for i=first,last do
     local line = vim.fn.getline(i)

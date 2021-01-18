@@ -1,7 +1,6 @@
 package.loaded['neogit.buffer'] = nil
 
 local mappings_manager = require("neogit.lib.mappings_manager")
-local next_sign_id = 1
 
 local Buffer = {
   handle = nil,
@@ -108,10 +107,14 @@ function Buffer:open_fold(line, reset_pos)
   end
 end
 
-function Buffer:place_sign(line, name, group)
-  local sign_id = next_sign_id
-  next_sign_id = next_sign_id + 1
+function Buffer:place_sign(line, name, group, id)
+  -- Sign IDs should be unique within a group, however there's no downside as
+  -- long as we don't want to uniquely identify the placed sign later. Thus,
+  -- we leave the choice to the caller
+  local sign_id = id or 1
 
+  -- There's an equivalent function sign_place() which can automatically use
+  -- a free ID, but is considerable slower, so we use the command for now
   local cmd = 'sign place '..sign_id..' line='..line..' name='..name
   if group ~= nil then
     cmd = cmd..' group='..group
@@ -119,6 +122,7 @@ function Buffer:place_sign(line, name, group)
   cmd = cmd..' buffer='..self.handle
 
   vim.cmd(cmd)
+  return sign_id
 end
 
 function Buffer:clear_sign_group(group)
