@@ -245,13 +245,13 @@ local function display_status()
   write_section({
     name = "unpulled",
     title = function()
-      return "Unpulled from " .. status.remote .. " (" .. #status.unpulled .. ")"
+      return "Unpulled from " .. status.upstream.branch .. " (" .. #status.unpulled .. ")"
     end,
   })
   write_section({
     name = "unmerged",
     title = function()
-      return "Unmerged into " .. status.remote .. " (" .. #status.unmerged .. ")"
+      return "Unmerged into " .. status.upstream.branch .. " (" .. #status.unmerged .. ")"
     end,
   })
 
