@@ -41,3 +41,15 @@ L - open log popup
 P - open push popup
 
 p - open pull popup
+
+## Contextual Highlighting
+
+The colors for contextual highlighting are defined with these highlight groups:
+```viml
+hi def NeogitDiffAddHighlight guibg=#404040
+hi def NeogitDiffDeleteHighlight guibg=#404040
+hi def NeogitDiffContextHighlight ctermbg=4 guibg=#333333
+hi def NeogitHunkHeader guifg=#cccccc guibg=#404040
+hi def NeogitHunkHeaderHighlight guifg=#cccccc guibg=#4d4d4d
+```
+You can override them to fit your colorscheme by creating a `syntax/NeogitStatus.vim` in your vim configuration.
