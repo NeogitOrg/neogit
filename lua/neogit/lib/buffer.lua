@@ -55,6 +55,13 @@ function Buffer:move_cursor(line)
   end
 end
 
+function Buffer:close()
+  vim.api.nvim_buf_delete(self.handle, {})
+  if self.border_buffer then
+    vim.api.nvim_buf_delete(self.border_buffer, {})
+  end
+end
+
 function Buffer:put(lines, after, follow)
   self:focus()
   vim.api.nvim_put(lines, "l", after, follow)
