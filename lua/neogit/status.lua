@@ -377,7 +377,11 @@ function __NeogitStatusRefresh(force)
   refreshing = true
   status = git.status.get()
   refresh_status()
-  refreshing = false
+  vim.defer_fn(function ()
+    load_diffs()
+    vim.schedule(refresh_status)
+    refreshing = false
+  end, 0)
 end
 
 function __NeogitStatusOnClose()
