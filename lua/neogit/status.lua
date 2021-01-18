@@ -10,6 +10,8 @@ local locations = {}
 local status_buffer = nil
 
 local hunk_header_matcher = vim.regex('^@@.*@@')
+local diff_add_matcher = vim.regex('^+')
+local diff_delete_matcher = vim.regex('^-')
 
 local function get_section_idx_for_line(linenr)
   for i, l in pairs(locations) do
@@ -63,6 +65,7 @@ end
 local function display_status()
   status_buffer:unlock()
   local old_view = vim.fn.winsaveview()
+  status_buffer:clear_sign_group('hl')
   status_buffer:clear()
 
   if status_buffer == nil then
@@ -138,7 +141,11 @@ local function display_status()
                 table.insert(hunks, current_hunk)
               end
               current_hunk = { first = line_idx }
-              status_buffer:place_sign(line_idx, 'NeogitHunkHeader')
+              status_buffer:place_sign(line_idx, 'NeogitHunkHeader', 'hl')
+            elseif diff_add_matcher:match_str(diff_line) then
+              status_buffer:place_sign(line_idx, 'NeogitDiffAdd', 'hl')
+            elseif diff_delete_matcher:match_str(diff_line) then
+              status_buffer:place_sign(line_idx, 'NeogitDiffDelete', 'hl')
             end
           end
           item.diff_open = true
@@ -691,7 +698,7 @@ local function create(kind)
 
       vim.defer_fn(function ()
         load_diffs()
-        refresh_status()
+        vim.schedule(refresh_status)
       end, 0)
     end
   }
@@ -735,8 +742,13 @@ local function update_highlight()
   print(line, first, last)
 
   for i=first,last do
-    if hunk_header_matcher:match_str(vim.fn.getline(i)) then
+    local line = vim.fn.getline(i)
+    if hunk_header_matcher:match_str(line) then
       status_buffer:place_sign(i, 'NeogitHunkHeaderHighlight', 'ctx')
+    elseif diff_add_matcher:match_str(line) then
+      status_buffer:place_sign(i, 'NeogitDiffAddHighlight', 'ctx')
+    elseif diff_delete_matcher:match_str(line) then
+      status_buffer:place_sign(i, 'NeogitDiffDeleteHighlight', 'ctx')
     else
       status_buffer:place_sign(i, 'NeogitDiffContextHighlight', 'ctx')
     end
