@@ -12,7 +12,23 @@ The todo file does not represent ALL of the missing features. This file just sho
 
 [TODO](./todo.md)
 
-## Commands
+## Usage
+
+You can either open neogit by using the `Neogit` command or using the lua api.
+
+```lua
+local neogit = require('neogit')
+
+neogit.status.create(<kind>)
+```
+
+The create function takes 1 optional argument that can be one of the following values:
+
+* tab (default)
+* floating
+* split
+
+## Status Keybindings
 
 $ - command history
 
