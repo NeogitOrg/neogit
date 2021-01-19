@@ -390,13 +390,17 @@ end
 
 function get_hunk_of_item_for_line(item, line)
   local hunk
+  local lines = {}
   for _,h in pairs(item.diff_content.hunks) do
     if item.first + h.first <= line and line <= item.first + h.last then
       hunk = h
+      for i=hunk.first,hunk.last do
+        table.insert(lines, item.diff_content.lines[i])
+      end
       break
     end
   end
-  return hunk
+  return hunk, lines
 end
 function get_current_hunk_of_item(item)
   return get_hunk_of_item_for_line(item, vim.fn.line("."))
@@ -572,6 +576,7 @@ local function unstage_selection()
 end
 
 local function line_is_hunk(line)
+  -- This returns a false positive on untracked file entries
   return not vim.fn.matchlist(line, "^\\(Modified\\|New file\\|Deleted\\|Conflict\\) .*")[1]
 end
 
@@ -648,6 +653,46 @@ local function unstage()
     end
   end
   refresh_status()
+end
+
+local function discard()
+  local section, item = get_current_section_item()
+
+  if section == nil or item == nil then
+    return
+  end
+
+  local result = vim.fn.confirm("Do you really want to do this?", "&Yes\n&No", 2)
+  if result == 2 then
+    return
+  end
+
+  -- TODO: refactor nesting
+  if section.name == "untracked_files" then
+    vim.fn.delete(item.name)
+  else
+
+    local on_hunk = line_is_hunk(vim.fn.getline('.'))
+
+    if on_hunk then
+      local _, lines = get_current_hunk_of_item(item)
+      local diff = table.concat(lines, "\n")
+      diff = table.concat({'--- a/'..item.name, '+++ b/'..item.name, diff, ""}, "\n")
+      if section.name == "staged_changes" then
+        git.apply(diff, '--reverse --index')
+      else
+        git.apply(diff, '--reverse')
+      end
+    elseif section.name == "unstaged_changes" then
+      git.checkout({ files = {item.name} })
+    elseif section.name == "staged_changes" then
+      git.reset({ files = {item.name} })
+      git.checkout({ files = {item.name} })
+    end
+
+  end
+
+  __NeogitStatusRefresh(true)
 end
 
 local function create(kind)
@@ -734,6 +779,7 @@ local function create(kind)
       mappings["L"] = require("neogit.popups.log").create
       mappings["P"] = require("neogit.popups.push").create
       mappings["p"] = require("neogit.popups.pull").create
+      mappings["x"] = discard
 
       vim.defer_fn(function ()
         load_diffs()
