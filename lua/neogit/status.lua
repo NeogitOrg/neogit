@@ -9,6 +9,10 @@ local status = {}
 local locations = {}
 local status_buffer = nil
 
+local hunk_header_matcher = vim.regex('^@@.*@@')
+local diff_add_matcher = vim.regex('^+')
+local diff_delete_matcher = vim.regex('^-')
+
 local function get_section_idx_for_line(linenr)
   for i, l in pairs(locations) do
     if l.first <= linenr and linenr <= l.last then
@@ -24,10 +28,6 @@ local function get_location(section_name)
       return l
     end
   end
-end
-
-local function get_section_for_line(linenr)
-  return locations[get_section_idx_for_line(linenr)]
 end
 
 local function get_section_item_idx_for_line(linenr)
@@ -54,92 +54,8 @@ local function get_current_section_item()
   return get_section_item_for_line(vim.fn.line("."))
 end
 
-local function insert_diff(section, change)
-  if change.type == "Deleted" or change.type == "New file" then
-    return
-  end
-
-  vim.cmd("normal zd")
-
-  if not change.diff_content then
-    if section.name == "staged_changes" then
-      change.diff_content = git.diff.staged(change.name)
-    else
-      change.diff_content = git.diff.unstaged(change.name)
-    end
-  end
-
-  change.diff_open = true
-  change.diff_height = #change.diff_content.lines
-
-  for _, c in pairs(status[section.name]) do
-    if c.first > change.last then
-      c.first = c.first + change.diff_height
-      c.last = c.last + change.diff_height
-    end
-  end
-
-  for _, s in pairs(locations) do
-    if s.first > section.last then
-      s.first = s.first + change.diff_height
-      s.last = s.last + change.diff_height
-      for _, c in pairs(status[s.name]) do
-        if c.first > change.last then
-          c.first = c.first + change.diff_height
-          c.last = c.last + change.diff_height
-        end
-      end
-    end
-  end
-
-  change.last = change.first + change.diff_height
-  section.last = section.last + change.diff_height
-
-  status_buffer:unlock()
-  status_buffer:put(change.diff_content.lines, true, false)
-  status_buffer:lock()
-
-  for _, hunk in pairs(change.diff_content.hunks) do
-    status_buffer:create_fold(change.first + hunk.first, change.first + hunk.last)
-  end
-
-  status_buffer:create_fold(change.first, change.last)
-end
-
-local function insert_diffs()
-  local function insert(name)
-    local location = get_location(name)
-    for _,c in pairs(status[name]) do
-      if not c.diff_open then
-        vim.api.nvim_win_set_cursor(0, { c.first, 0 })
-        insert_diff(location, c)
-      end
-    end
-  end
-  insert("unstaged_changes")
-  insert("staged_changes")
-end
-
 local function toggle()
-  local linenr = vim.fn.line(".")
-  local line = vim.fn.getline(linenr)
-  local matches = vim.fn.matchlist(line, "^Modified \\(.*\\)")
-
-  if #matches ~= 0 then
-    local section, change = get_current_section_item()
-
-    if change.diff_open then
-      vim.cmd("normal za")
-      return
-    end
-
-    insert_diff(section, change)
-
-    vim.cmd("normal zO")
-    vim.cmd("norm k")
-  else
-    vim.cmd("normal za")
-  end
+  vim.cmd("silent! normal za")
 end
 
 local function change_to_str(change)
@@ -147,6 +63,11 @@ local function change_to_str(change)
 end
 
 local function display_status()
+  status_buffer:unlock()
+  local old_view = vim.fn.winsaveview()
+  status_buffer:clear_sign_group('hl')
+  status_buffer:clear()
+
   if status_buffer == nil then
     return
   end
@@ -188,29 +109,67 @@ local function display_status()
       local location = {
         name = options.name,
         first = line_idx,
-        last = 0
+        last = 0,
+        files = {}
       }
 
       for _, item in pairs(items) do
-        local name = item.name
+        local name
+        local hunks = {}
+        local current_hunk
 
         if options.display then
           name = options.display(item)
         elseif type(item) == "string" then
           name = item
+        else
+          name = item.name
         end
 
         write(name)
 
         if type(item) == "table" then
           item.first = line_idx
-          item.last = line_idx
         end
+
+        if item.diff_content ~= nil then
+          for _, diff_line in ipairs(item.diff_content.lines) do
+            write(diff_line)
+            if hunk_header_matcher:match_str(diff_line) then
+              if current_hunk ~= nil then
+                current_hunk.last = line_idx - 1
+                table.insert(hunks, current_hunk)
+              end
+              current_hunk = { first = line_idx }
+              status_buffer:place_sign(line_idx, 'NeogitHunkHeader', 'hl')
+            elseif diff_add_matcher:match_str(diff_line) then
+              status_buffer:place_sign(line_idx, 'NeogitDiffAdd', 'hl')
+            elseif diff_delete_matcher:match_str(diff_line) then
+              status_buffer:place_sign(line_idx, 'NeogitDiffDelete', 'hl')
+            end
+          end
+          item.diff_open = true
+        end
+
+
+        if type(item) == "table" then
+          item.last = line_idx
+          if current_hunk ~= nil then
+            current_hunk.last = line_idx
+            table.insert(hunks, current_hunk)
+          end
+        end
+
+        table.insert(location.files, {
+          first = item.first,
+          last = item.last,
+          hunks = hunks
+        })
       end
 
-      write("")
 
       location.last = line_idx
+      write("")
 
       table.insert(locations, location)
     end
@@ -242,31 +201,43 @@ local function display_status()
       return "stash@{" .. stash.idx .. "} " .. stash.name
     end
   })
-  write_section({
-    name = "unpulled",
-    title = function()
-      return "Unpulled from " .. status.upstream.branch .. " (" .. #status.unpulled .. ")"
-    end,
-  })
-  write_section({
-    name = "unmerged",
-    title = function()
-      return "Unmerged into " .. status.upstream.branch .. " (" .. #status.unmerged .. ")"
-    end,
-  })
+  if status.upstream ~= nil then
+    write_section({
+      name = "unpulled",
+      title = function()
+        return "Unpulled from " .. status.upstream.branch .. " (" .. #status.unpulled .. ")"
+      end,
+    })
+    write_section({
+      name = "unmerged",
+      title = function()
+        return "Unmerged into " .. status.upstream.branch .. " (" .. #status.unmerged .. ")"
+      end,
+    })
+  end
 
   status_buffer:set_lines(0, -1, false, output)
+  status_buffer:set_foldlevel(2)
 
   for _,l in pairs(locations) do
     local items = status[l.name]
     if items ~= nil and l.name ~= "stashes" and l.name ~= "unpulled" and l.name ~= "unmerged" then
       for _, i in pairs(items) do
+        if i.diff_content ~= nil then
+          for _,h in ipairs(i.diff_content.hunks) do
+            status_buffer:create_fold(i.first + h.first, i.first + h.last)
+            status_buffer:open_fold(i.first + h.first)
+          end
+        end
         status_buffer:create_fold(i.first, i.last)
       end
     end
     status_buffer:create_fold(l.first, l.last)
+    status_buffer:open_fold(l.first)
   end
-  status_buffer:set_foldlevel(1)
+
+  vim.fn.winrestview(old_view)
+  status_buffer:lock()
 end
 
 function primitive_move_cursor(line)
@@ -330,10 +301,7 @@ local function refresh_status()
   local section_idx = get_section_idx_for_line(line)
   local section = locations[section_idx]
 
-  status_buffer:unlock()
-  status_buffer:clear()
   display_status()
-  status_buffer:lock()
 
   if section == nil then
     primitive_move_cursor(line)
@@ -359,7 +327,7 @@ local function refresh_status()
   primitive_move_cursor(line)
 end
 
-function load_diffs()
+local function load_diffs()
   local unstaged = {}
   local staged = {}
   for _,c in pairs(status.unstaged_changes) do
@@ -382,22 +350,21 @@ function load_diffs()
   end
   local results = git.cli.run_batch(cmds)
 
-  for i=1,#results do
-    if i <= unstaged_len then
-      local name = unstaged[i]
-      for _,c in pairs(status.unstaged_changes) do
-        if c.name == name then
-          c.diff_content = git.diff.parse(results[i])
-          break
-        end
+  for i=1,unstaged_len do
+    local name = unstaged[i]
+    for _,c in pairs(status.unstaged_changes) do
+      if c.name == name then
+        c.diff_content = git.diff.parse(results[i])
+        break
       end
-    else
-      local name = staged[i - unstaged_len]
-      for _,c in pairs(status.staged_changes) do
-        if c.name == name then
-          c.diff_content = git.diff.parse(results[i])
-          break
-        end
+    end
+  end
+  for i=unstaged_len+1,#results do
+    local name = staged[i - unstaged_len]
+    for _,c in pairs(status.staged_changes) do
+      if c.name == name then
+        c.diff_content = git.diff.parse(results[i])
+        break
       end
     end
   end
@@ -410,7 +377,11 @@ function __NeogitStatusRefresh(force)
   refreshing = true
   status = git.status.get()
   refresh_status()
-  refreshing = false
+  vim.defer_fn(function ()
+    load_diffs()
+    vim.schedule(refresh_status)
+    refreshing = false
+  end, 0)
 end
 
 function __NeogitStatusOnClose()
@@ -510,6 +481,7 @@ end
 local function get_selection()
   local first_line = vim.fn.getpos("v")[2]
   local last_line = vim.fn.getpos(".")[2]
+
   local first_section, first_item = get_section_item_for_line(first_line)
   local last_section, last_item = get_section_item_for_line(last_line)
 
@@ -678,13 +650,11 @@ local function create(kind)
       end
       mappings["3"] = function()
         vim.cmd("set foldlevel=1")
-        insert_diffs()
         vim.cmd("set foldlevel=2")
         vim.cmd("norm zz")
       end
       mappings["4"] = function()
         vim.cmd("set foldlevel=1")
-        insert_diffs()
         vim.cmd("set foldlevel=3")
         vim.cmd("norm zz")
       end
@@ -731,14 +701,69 @@ local function create(kind)
       mappings["L"] = require("neogit.popups.log").create
       mappings["P"] = require("neogit.popups.push").create
       mappings["p"] = require("neogit.popups.pull").create
-      
-      vim.defer_fn(load_diffs, 0)
+
+      vim.defer_fn(function ()
+        load_diffs()
+        vim.schedule(refresh_status)
+      end, 0)
     end
   }
+end
+
+local highlight_group = vim.api.nvim_create_namespace("section-highlight")
+local function update_highlight()
+  vim.api.nvim_buf_clear_namespace(0, highlight_group, 0, -1)
+  status_buffer:clear_sign_group('ctx')
+
+  local line = vim.fn.line('.')
+  local first, last
+
+  -- This nested madness finds the smallest section the cursor is currently
+  -- enclosed by, based on the locations table created while rendering.
+  for _,loc in ipairs(locations) do
+    if line == loc.first then
+      first, last = loc.first, loc.last
+      break
+    elseif line >= loc.first and line <= loc.last then
+      for _,file in ipairs(loc.files) do
+        if line == file.first then
+          first, last = file.first, file.last
+          break
+        elseif line >= file.first and line <= file.last then
+          for _, hunk in ipairs(file.hunks) do
+            if line <= hunk.last then
+              first, last = hunk.first, hunk.last
+              break
+            end
+          end
+          break
+        end
+      end
+      break
+    end
+  end
+
+  if first == nil or last == nil then
+    return
+  end
+
+  for i=first,last do
+    local line = vim.fn.getline(i)
+    if hunk_header_matcher:match_str(line) then
+      status_buffer:place_sign(i, 'NeogitHunkHeaderHighlight', 'ctx')
+    elseif diff_add_matcher:match_str(line) then
+      status_buffer:place_sign(i, 'NeogitDiffAddHighlight', 'ctx')
+    elseif diff_delete_matcher:match_str(line) then
+      status_buffer:place_sign(i, 'NeogitDiffDeleteHighlight', 'ctx')
+    else
+      status_buffer:place_sign(i, 'NeogitDiffContextHighlight', 'ctx')
+    end
+  end
 end
 
 return {
   create = create,
   toggle = toggle,
+  update_highlight = update_highlight,
   get_status = function() return status end
 }

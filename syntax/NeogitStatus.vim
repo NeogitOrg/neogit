@@ -40,5 +40,19 @@ hi def link NeogitUnpulledFrom Function
 
 hi def link NeogitStash Comment
 
+hi def NeogitDiffAddHighlight guibg=#404040
+hi def NeogitDiffDeleteHighlight guibg=#404040
+hi def NeogitDiffContextHighlight ctermbg=4 guibg=#333333
+hi def NeogitHunkHeader guifg=#cccccc guibg=#404040
+hi def NeogitHunkHeaderHighlight guifg=#cccccc guibg=#4d4d4d
+
+sign define NeogitDiffContextHighlight linehl=NeogitDiffContextHighlight
+sign define NeogitHunkHeader linehl=NeogitHunkHeader
+sign define NeogitHunkHeaderHighlight linehl=NeogitHunkHeaderHighlight
+sign define NeogitDiffAdd linehl=NeogitDiffAdd
+sign define NeogitDiffAddHighlight linehl=NeogitDiffAddHighlight
+sign define NeogitDiffDelete linehl=NeogitDiffDelete
+sign define NeogitDiffDeleteHighlight linehl=NeogitDiffDeleteHighlight
+
 "TODO: find a better way to do this
 hi Folded guibg=None guifg=None
