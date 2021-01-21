@@ -706,7 +706,8 @@ local function discard()
     local on_hunk = line_is_hunk(vim.fn.getline('.'))
 
     if on_hunk then
-      local _, lines = get_current_hunk_of_item(item)
+      local hunk, lines = get_current_hunk_of_item(item)
+      lines[1] = string.format('@@ -%d,%d +%d,%d @@', hunk.index_from, hunk.index_len, hunk.index_from, hunk.disk_len)
       local diff = table.concat(lines, "\n")
       diff = table.concat({'--- a/'..item.name, '+++ b/'..item.name, diff, ""}, "\n")
       if section.name == "staged_changes" then
