@@ -58,6 +58,8 @@ P - open push popup
 
 p - open pull popup
 
+x - discard changes (also supports discarding hunks)
+
 ## Contextual Highlighting
 
 The colors for contextual highlighting are defined with these highlight groups:

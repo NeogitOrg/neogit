@@ -390,13 +390,17 @@ end
 
 function get_hunk_of_item_for_line(item, line)
   local hunk
+  local lines = {}
   for _,h in pairs(item.diff_content.hunks) do
     if item.first + h.first <= line and line <= item.first + h.last then
       hunk = h
+      for i=hunk.first,hunk.last do
+        table.insert(lines, item.diff_content.lines[i])
+      end
       break
     end
   end
-  return hunk
+  return hunk, lines
 end
 function get_current_hunk_of_item(item)
   return get_hunk_of_item_for_line(item, vim.fn.line("."))
@@ -427,30 +431,52 @@ local function remove_change(name, item)
   end)
 end
 
-local function generate_patch_from_selection(item, hunk, from, to)
+local function generate_patch_from_selection(item, hunk, from, to, reverse)
+  reverse = reverse or false
+  if from > to then
+    from, to = to, from
+  end
+  from = from + hunk.first
+  to = to + hunk.first
+
   local diff_content = {}
-  local applied_len = hunk.index_len
+  local len_start = hunk.index_len
+  local len_offset = 0
 
-  for k,v in ipairs(item.diff_content.lines) do
-    if k ~= 1 then
-      local diff_line = vim.fn.matchlist(v, "^\\([+ -]\\)\\(.*\\)")
+  -- + 1 skips the hunk header, since we construct that manually afterwards
+  for k = hunk.first + 1, hunk.last do
+    local v = item.diff_content.lines[k]
+    local diff_line = vim.fn.matchlist(v, "^\\([+ -]\\)\\(.*\\)")
 
-      if diff_line[2] == "+" or diff_line[2] == "-" then
-        if from + 1 <= k and k <= to + 1 then 
-          if diff_line[2] == "+" then
-            applied_len = applied_len + 1
-          else
-            applied_len = applied_len - 1
-          end
-          table.insert(diff_content, v)
-        end
-      else
+    if diff_line[2] == "+" or diff_line[2] == "-" then
+      if from <= k and k <= to then
+        len_offset = len_offset + (diff_line[2] == "+" and 1 or -1)
         table.insert(diff_content, v)
+      else
+
+        -- If we want to apply the patch normally, we need to include every `-` line we skip as a normal line,
+        -- since we want to keep that line. We also need to adapt the original line offset based on if we skip or not
+        if not reverse then
+          if diff_line[2] == "-" then
+            table.insert(diff_content, " "..diff_line[3])
+          end
+          len_start = len_start + (diff_line[2] == "-" and 1 or -1)
+        -- If we want to apply the patch in reverse, we need to include every `+` line we skip as a normal line, since
+        -- it's unchanged as far as the diff is concerned and should not be reversed.
+        -- We also need to adapt the original line offset based on if we skip or not
+        elseif reverse then
+          if diff_line[2] == "+" then
+            table.insert(diff_content, " "..diff_line[3])
+          end
+          len_start = len_start + (diff_line[2] == "-" and -1 or 1)
+        end
       end
+    else
+      table.insert(diff_content, v)
     end
   end
 
-  local diff_header = string.format("@@ -%d,%d +%d,%d @@", hunk.index_from, hunk.index_len, hunk.disk_from, applied_len)
+  local diff_header = string.format("@@ -%d,%d +%d,%d @@", hunk.index_from, len_start, hunk.index_from, len_start + len_offset)
 
   table.insert(diff_content, 1, diff_header)
   table.insert(diff_content, 1, string.format("+++ b/%s", item.name))
@@ -572,6 +598,7 @@ local function unstage_selection()
 end
 
 local function line_is_hunk(line)
+  -- This returns a false positive on untracked file entries
   return not vim.fn.matchlist(line, "^\\(Modified\\|New file\\|Deleted\\|Conflict\\) .*")[1]
 end
 
@@ -648,6 +675,56 @@ local function unstage()
     end
   end
   refresh_status()
+end
+
+local function discard()
+  local section, item = get_current_section_item()
+
+  if section == nil or item == nil then
+    return
+  end
+
+  local result = vim.fn.confirm("Do you really want to do this?", "&Yes\n&No", 2)
+  if result == 2 then
+    return
+  end
+
+  -- TODO: fix nesting
+  local mode = vim.api.nvim_get_mode()
+  if mode.mode == "V" then
+    local section, item, hunk, from, to = get_selection()
+    local patch = generate_patch_from_selection(item, hunk, from, to, true)
+    if section.name == "staged_changes" then
+      git.apply(patch, '--reverse --index')
+    else
+      git.apply(patch, '--reverse')
+    end
+  elseif section.name == "untracked_files" then
+    vim.fn.delete(item.name)
+  else
+
+    local on_hunk = line_is_hunk(vim.fn.getline('.'))
+
+    if on_hunk then
+      local hunk, lines = get_current_hunk_of_item(item)
+      lines[1] = string.format('@@ -%d,%d +%d,%d @@', hunk.index_from, hunk.index_len, hunk.index_from, hunk.disk_len)
+      local diff = table.concat(lines, "\n")
+      diff = table.concat({'--- a/'..item.name, '+++ b/'..item.name, diff, ""}, "\n")
+      if section.name == "staged_changes" then
+        git.apply(diff, '--reverse --index')
+      else
+        git.apply(diff, '--reverse')
+      end
+    elseif section.name == "unstaged_changes" then
+      git.checkout({ files = {item.name} })
+    elseif section.name == "staged_changes" then
+      git.reset({ files = {item.name} })
+      git.checkout({ files = {item.name} })
+    end
+
+  end
+
+  __NeogitStatusRefresh(true)
 end
 
 local function create(kind)
@@ -734,6 +811,7 @@ local function create(kind)
       mappings["L"] = require("neogit.popups.log").create
       mappings["P"] = require("neogit.popups.push").create
       mappings["p"] = require("neogit.popups.pull").create
+      mappings["x"] = { "nv", discard, true }
 
       vim.defer_fn(function ()
         load_diffs()
