@@ -456,6 +456,39 @@ local function remove_change(name, item)
   end)
 end
 
+local function generate_patch_from_selection(item, hunk, from, to)
+  local diff_content = {}
+  local applied_len = hunk.index_len
+
+  for k,v in ipairs(item.diff_content.lines) do
+    if k ~= 1 then
+      local diff_line = vim.fn.matchlist(v, "^\\([+ -]\\)\\(.*\\)")
+
+      if diff_line[2] == "+" or diff_line[2] == "-" then
+        if from + 1 <= k and k <= to + 1 then 
+          if diff_line[2] == "+" then
+            applied_len = applied_len + 1
+          else
+            applied_len = applied_len - 1
+          end
+          table.insert(diff_content, v)
+        end
+      else
+        table.insert(diff_content, v)
+      end
+    end
+  end
+
+  local diff_header = string.format("@@ -%d,%d +%d,%d @@", hunk.index_from, hunk.index_len, hunk.disk_from, applied_len)
+
+  table.insert(diff_content, 1, diff_header)
+  table.insert(diff_content, 1, string.format("+++ b/%s", item.name))
+  table.insert(diff_content, 1, string.format("--- a/%s", item.name))
+  table.insert(diff_content, "\n")
+  return table.concat(diff_content, "\n")
+end
+
+
 local function stage_range(item, section, hunk, from, to)
   git.status.stage_range(
     item.name,
