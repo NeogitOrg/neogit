@@ -93,6 +93,42 @@ function Buffer:set_foldlevel(level)
   vim.cmd("setlocal foldlevel=" .. level)
 end
 
+function Buffer:open_fold(line, reset_pos)
+  local pos
+  if reset_pos == true then
+    pos = vim.fn.getpos()
+  end
+
+  vim.fn.setpos('.', {self.handle, line, 0, 0})
+  vim.cmd('normal zo')
+
+  if reset_pos == true then
+    vim.fn.setpos('.', pos)
+  end
+end
+
+function Buffer:place_sign(line, name, group, id)
+  -- Sign IDs should be unique within a group, however there's no downside as
+  -- long as we don't want to uniquely identify the placed sign later. Thus,
+  -- we leave the choice to the caller
+  local sign_id = id or 1
+
+  -- There's an equivalent function sign_place() which can automatically use
+  -- a free ID, but is considerable slower, so we use the command for now
+  local cmd = 'sign place '..sign_id..' line='..line..' name='..name
+  if group ~= nil then
+    cmd = cmd..' group='..group
+  end
+  cmd = cmd..' buffer='..self.handle
+
+  vim.cmd(cmd)
+  return sign_id
+end
+
+function Buffer:clear_sign_group(group)
+  vim.cmd('sign unplace * group='..group..' buffer='..self.handle)
+end
+
 function Buffer:set_filetype(ft)
   vim.cmd("setlocal filetype=" .. ft)
 end
