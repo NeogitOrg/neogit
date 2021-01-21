@@ -431,30 +431,52 @@ local function remove_change(name, item)
   end)
 end
 
-local function generate_patch_from_selection(item, hunk, from, to)
+local function generate_patch_from_selection(item, hunk, from, to, reverse)
+  reverse = reverse or false
+  if from > to then
+    from, to = to, from
+  end
+  from = from + hunk.first
+  to = to + hunk.first
+
   local diff_content = {}
-  local applied_len = hunk.index_len
+  local len_start = hunk.index_len
+  local len_offset = 0
 
-  for k,v in ipairs(item.diff_content.lines) do
-    if k ~= 1 then
-      local diff_line = vim.fn.matchlist(v, "^\\([+ -]\\)\\(.*\\)")
+  -- + 1 skips the hunk header, since we construct that manually afterwards
+  for k = hunk.first + 1, hunk.last do
+    local v = item.diff_content.lines[k]
+    local diff_line = vim.fn.matchlist(v, "^\\([+ -]\\)\\(.*\\)")
 
-      if diff_line[2] == "+" or diff_line[2] == "-" then
-        if from + 1 <= k and k <= to + 1 then 
-          if diff_line[2] == "+" then
-            applied_len = applied_len + 1
-          else
-            applied_len = applied_len - 1
-          end
-          table.insert(diff_content, v)
-        end
-      else
+    if diff_line[2] == "+" or diff_line[2] == "-" then
+      if from <= k and k <= to then
+        len_offset = len_offset + (diff_line[2] == "+" and 1 or -1)
         table.insert(diff_content, v)
+      else
+
+        -- If we want to apply the patch normally, we need to include every `-` line we skip as a normal line,
+        -- since we want to keep that line. We also need to adapt the original line offset based on if we skip or not
+        if not reverse then
+          if diff_line[2] == "-" then
+            table.insert(diff_content, " "..diff_line[3])
+          end
+          len_start = len_start + (diff_line[2] == "-" and 1 or -1)
+        -- If we want to apply the patch in reverse, we need to include every `+` line we skip as a normal line, since
+        -- it's unchanged as far as the diff is concerned and should not be reversed.
+        -- We also need to adapt the original line offset based on if we skip or not
+        elseif reverse then
+          if diff_line[2] == "+" then
+            table.insert(diff_content, " "..diff_line[3])
+          end
+          len_start = len_start + (diff_line[2] == "-" and -1 or 1)
+        end
       end
+    else
+      table.insert(diff_content, v)
     end
   end
 
-  local diff_header = string.format("@@ -%d,%d +%d,%d @@", hunk.index_from, hunk.index_len, hunk.disk_from, applied_len)
+  local diff_header = string.format("@@ -%d,%d +%d,%d @@", hunk.index_from, len_start, hunk.index_from, len_start + len_offset)
 
   table.insert(diff_content, 1, diff_header)
   table.insert(diff_content, 1, string.format("+++ b/%s", item.name))
@@ -667,8 +689,17 @@ local function discard()
     return
   end
 
-  -- TODO: refactor nesting
-  if section.name == "untracked_files" then
+  -- TODO: fix nesting
+  local mode = vim.api.nvim_get_mode()
+  if mode.mode == "V" then
+    local section, item, hunk, from, to = get_selection()
+    local patch = generate_patch_from_selection(item, hunk, from, to, true)
+    if section.name == "staged_changes" then
+      git.apply(patch, '--reverse --index')
+    else
+      git.apply(patch, '--reverse')
+    end
+  elseif section.name == "untracked_files" then
     vim.fn.delete(item.name)
   else
 
@@ -779,7 +810,7 @@ local function create(kind)
       mappings["L"] = require("neogit.popups.log").create
       mappings["P"] = require("neogit.popups.push").create
       mappings["p"] = require("neogit.popups.pull").create
-      mappings["x"] = discard
+      mappings["x"] = { "nv", discard, true }
 
       vim.defer_fn(function ()
         load_diffs()
