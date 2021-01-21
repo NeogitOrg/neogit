@@ -750,6 +750,12 @@ local function create(kind)
 
       local mappings = buffer.mmanager.mappings
 
+      mappings["q"] = function()
+        notif.delete_all()
+        vim.defer_fn(function ()
+          status_buffer:close()
+        end, 0)
+      end
       mappings["1"] = function()
         vim.cmd("set foldlevel=0")
         vim.cmd("norm zz")

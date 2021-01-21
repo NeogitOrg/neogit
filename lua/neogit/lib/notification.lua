@@ -78,7 +78,8 @@ local function create(message, options)
     vim.api.nvim_win_set_option(border_win, "winhl", "Normal:NeogitNotificationError")
   end
 
-  table.insert(notifications, {
+  local timer
+  local notification = {
     window = window,
     buffer = buffer,
     height = height,
@@ -89,46 +90,51 @@ local function create(message, options)
       window = border_win,
       buffer = border_buf
     },
-    content = message
-  })
+    content = message,
+    delete = function()
+      notification_count = notification_count - 1
 
-  local timer
+      if timer:is_active() then
+        timer:stop()
+      end
 
-  local function delete()
-    notification_count = notification_count - 1
-
-    if timer:is_active() then
-      timer:stop()
-    end
-
-    for i, n in pairs(notifications) do
-      if n.window == window then
-        if notifications[i] == nil then
-          return
+      for i, n in pairs(notifications) do
+        if n.window == window then
+          if notifications[i] == nil then
+            return
+          end
+          notifications[i] = nil
+          break
         end
-        notifications[i] = nil
-        break
+      end
+
+      table.insert(message_history, {
+        content = message,
+        type = options.type
+      })
+
+      if vim.fn.winbufnr(window) ~= -1 then
+        vim.api.nvim_win_close(window, false)
+        vim.api.nvim_win_close(border_win, false)
       end
     end
+  }
 
-    table.insert(message_history, {
-      content = message,
-      type = options.type
-    })
-
-    if vim.fn.winbufnr(window) ~= -1 then
-      vim.api.nvim_win_close(window, false)
-      vim.api.nvim_win_close(border_win, false)
-    end
-  end
+  table.insert(notifications, notification)
 
   vim.cmd("redraw")
-  timer = vim.defer_fn(delete, options.delay)
+  timer = vim.defer_fn(notification.delete, options.delay)
 
-  return delete
+  return notification
 end
 
 return {
   create = create,
+  delete_all = function()
+    for _, n in ipairs(notifications) do
+      n:delete()
+    end
+    notifications = {}
+  end,
   get_history = function() return message_history end
 }
