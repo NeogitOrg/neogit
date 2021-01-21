@@ -22,7 +22,8 @@ Job.__index = Job
 function Job:new(cmd, on_exit)
   local this = {
     cmd = cmd,
-    on_exit = on_exit
+    on_exit = on_exit,
+    cwd = nil
   }
 
   setmetatable(this, self)
@@ -49,6 +50,7 @@ function Job:start()
   end
 
   self.channel = vim.fn.jobstart(task, {
+    cwd = self.cwd,
     on_exit = function(_, code)
       self.code = code
       self.done = true

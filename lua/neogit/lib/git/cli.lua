@@ -2,7 +2,19 @@ local notif = require("neogit.lib.notification")
 local Job = require("neogit.lib.job")
 local util = require("neogit.lib.util")
 
+local function get_root_path()
+  local job = Job:new("git rev-parse --show-toplevel")
+
+  job:start()
+  job:wait()
+
+  local path = job.stdout[1]
+
+  return path
+end
+
 local history = {}
+local cwd = get_root_path()
 
 function prepend_git(x)
   return "git " .. x
@@ -34,9 +46,13 @@ local cli = {
         cb(job.stdout, job.code, job.stderr)
       end)
 
+      job.cwd = cwd
+
       job:start()
     else
       local job = Job:new(prepend_git(cmd))
+
+      job.cwd = cwd
 
       job:start()
       job:wait()
@@ -48,6 +64,8 @@ local cli = {
   run_with_stdin = function(cmd, data)
     local job = Job:new(prepend_git(cmd))
 
+    job.cwd = cwd
+
     job:start()
     job:write(data)
     job:wait()
@@ -58,6 +76,10 @@ local cli = {
   end,
   run_batch = function(cmds, popup)
     local jobs = Job.batch(util.map(cmds, prepend_git))
+
+    for i,job in pairs(jobs) do
+      job.cwd = cwd
+    end
 
     Job.start_all(jobs)
     Job.wait_all(jobs)
