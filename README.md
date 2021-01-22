@@ -72,3 +72,14 @@ You can override them to fit your colorscheme by creating a `syntax/NeogitStatus
 The todo file does not represent ALL of the missing features. This file just shows the features which I noticed were missing and I have to implement. This file will grow in the future.
 
 [TODO](./todo.md)
+
+## Testing
+
+Assure that you have [plenary.nvim](https://github.com/nvim-lua/plenary.nvim) 
+installed as a plugin for your neovim instance. Afterwards, run `make test`
+to run the unit test suite.
+
+Plenary uses it's own port of busted and a bundled luassert, so consult their
+code and the respective [busted](http://olivinelabs.com/busted/) and 
+[luassert](http://olivinelabs.com/busted/#asserts) docs for what methods are 
+available.
