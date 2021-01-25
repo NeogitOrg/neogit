@@ -6,8 +6,6 @@ local Buffer = require("neogit.lib.buffer")
 local function create_commit_window(msg, commit_cb)
   local output = {}
 
-  inspect(popup.to_cli())
-
   if msg then
     for _, line in ipairs(msg) do
       table.insert(output, line)
