@@ -44,12 +44,12 @@ The create function takes 1 optional argument that can be one of the following v
 | Tab        | Toggle diff                                      |
 | s          | Stage (also supports staging selection/hunk)     |
 | S          | Stage unstaged changes                           |
-| <C-s>      | Stage Everything                                 |
-| <C-r>      | Refresh Buffer                                   |
+| \<C-s>      | Stage Everything                                 |
+| \<C-r>      | Refresh Buffer                                   |
 | u          | Unstage (also supports staging selection/hunk)   |
 | U          | Unstage staged changes                           |
 | c          | Open commit popup                                |
-| <C-C><C-C> | Commit (when writing a commit message)           |
+| \<C-C>\<C-C> | Commit (when writing a commit message)           |
 | L          | Open log popup                                   |
 | p          | Open pull popup                                  |
 | P          | Open push popup                                  |
