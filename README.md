@@ -1,20 +1,25 @@
 # Neogit
 
-A Magit clone for Neovim that may change some things to fit the Vim philosophy.
+A **work-in-progress** Magit clone for Neovim that is geared toward the Vim philosophy.
 
-## Status
+## Installation
 
-Very WIP.
+| Plugin Manager         | Command                                                                             |
+|------------------------|-------------------------------------------------------------------------------------|
+| [Packer][packer.nvim]  | `  use 'TimUntersberger/neogit'`                                                    |
+| [Vim-plug][vim-plug]   | `Plug 'TimUntersberger/neogit'`                                                     |
+| [NeoBundle][neobundle] | `NeoBundle 'TimUntersberger/neogit'`                                                |
+| [Vundle][vundle]       | `Bundle 'TimUntersberger/neogit'`                                                   |
+| [Pathogen][pathogen]   | `git clone https://github.com/TimUntersberger/neogit.git ~/.vim/bundle/targets.vim` |
+| [Dein][dein]           | `call dein#add('TimUntersberger/neogit')`                                           |
 
-## Todo
+You also use in the built-in package manager:
 
-The todo file does not represent ALL of the missing features. This file just shows the features which I noticed were missing and I have to implement. This file will grow in the future.
-
-[TODO](./todo.md)
+`git clone --depth 1 https://github.com/TimUntersberger/neogit $XDG_CONFIG_HOME/nvim/pack/plugins/start/neogit`
 
 ## Usage
 
-You can either open neogit by using the `Neogit` command or using the lua api.
+You can either open neogit by using the `Neogit` command or using the lua api:
 
 ```lua
 local neogit = require('neogit')
@@ -27,6 +32,7 @@ The create function takes 1 optional argument that can be one of the following v
 * tab (default)
 * floating
 * split
+
 
 ## Status Keybindings
 
@@ -60,6 +66,7 @@ p - open pull popup
 
 x - discard changes (also supports discarding hunks)
 
+
 ## Contextual Highlighting
 
 The colors for contextual highlighting are defined with these highlight groups:
@@ -71,3 +78,9 @@ hi def NeogitHunkHeader guifg=#cccccc guibg=#404040
 hi def NeogitHunkHeaderHighlight guifg=#cccccc guibg=#4d4d4d
 ```
 You can override them to fit your colorscheme by creating a `syntax/NeogitStatus.vim` in your vim configuration.
+
+## Todo
+
+The todo file does not represent ALL of the missing features. This file just shows the features which I noticed were missing and I have to implement. This file will grow in the future.
+
+[TODO](./todo.md)
