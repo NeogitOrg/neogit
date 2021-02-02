@@ -1,0 +1,107 @@
+*neogit.txt* A Magit clone for Neovim that is geared towards the Vim philosophy. 
+*neogit*
+Author: TimUntersberger
+License: MIT license {{{
+
+  Copyright (c) 2020 Karl Yngve Lervåg
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to
+  deal in the Software without restriction, including without limitation the
+  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+  sell copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in
+  all copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+  IN THE SOFTWARE.
+}}}
+
+==============================================================================
+CONTENTS                                        *neogit-contents*
+
+    1. Intro                         |neogit-intro|
+    2. Commands                      |neogit-commands|
+    3. Mappings                      |neogit-mappings|
+    4. Highlights                    |neogit-highlights|
+
+
+==============================================================================
+1. Intro                                        *neogit-intro*
+
+Neogit is a magit clone for Neovim that is currerently work in progress.
+
+==============================================================================
+2. Commands                                     *neogit-commands*
+
+                                                *:Neogit*           
+:Neogit                 In a Git repository, opens a new NeogitStatus tab.
+
+==============================================================================
+3. Mappings                                      *neogit-mappings*
+
+                                                *neogit-staging-maps*
+Staging/unstaging maps ~
+
+                                                *neogit_s*
+s                       Stage (also supports staging selection/hunk) 
+
+                                                *neogit_S*
+S                       Stage unstage changes
+
+                                                *neogit_<C-s>*
+<C-s>                   Stage Everything
+
+                                                *neogit_u*
+u                       Unstage (also supports unstaging selection/hunk)
+
+                                                *neogit_U*
+U                       Unstage staged changes
+
+                                                *neogit_x*
+x                       Discard changes (also supports discarding hunks)
+
+                                                *neogit_d*
+Diff maps ~
+                                                *neogit_<tab>*
+<tab>                   Toggle diff
+
+
+                                                *neogit_c*
+Commit maps ~
+                                                *neogit_c*
+c                       Open commit popup
+
+<C-C><C-C>              Commit (when writing a commit message)
+
+                                                *neogit-misc-maps*
+Miscellaneous maps ~
+                                                *neogit_$*
+$                       Command History
+
+                                                *neogit_fold*
+1, 2, 3, 4              Set a foldlevel
+
+                                                *neogit_<C-r>*
+<C-r>                   Refresh Buffer
+
+                                                *neogit_L*
+L                       Open log popup
+
+                                                *neogit_p*
+p                       Open pull popup
+
+                                                *neogit_P*
+P                       Open push popup
+==============================================================================
+4. Highlights                                    *neogit-highlights*
+
+
+ vim:tw=78:ts=8:ft=help
