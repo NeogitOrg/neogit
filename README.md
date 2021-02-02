@@ -37,23 +37,23 @@ The create function takes 1 optional argument that can be one of the following v
 
 ## Status Keybindings
 
-| Keybinding | Function                                         |
-|------------|--------------------------------------------------|
-| $          | Command history                                  |
-| 1, 2, 3, 4 | Set a foldlevel                                  |
-| Tab        | Toggle diff                                      |
-| s          | Stage (also supports staging selection/hunk)     |
-| S          | Stage unstaged changes                           |
-| \<C-s>      | Stage Everything                                 |
-| \<C-r>      | Refresh Buffer                                   |
-| u          | Unstage (also supports staging selection/hunk)   |
-| U          | Unstage staged changes                           |
-| c          | Open commit popup                                |
+| Keybinding   | Function                                         |
+|--------------|--------------------------------------------------|
+| Tab          | Toggle diff                                      |
+| 1, 2, 3, 4   | Set a foldlevel                                  |
+| $            | Command history                                  |
+| s            | Stage (also supports staging selection/hunk)     |
+| S            | Stage unstaged changes                           |
+| \<C-s>       | Stage Everything                                 |
+| u            | Unstage (also supports staging selection/hunk)   |
+| U            | Unstage staged changes                           |
+| c            | Open commit popup                                |
+| L            | Open log popup                                   |
+| p            | Open pull popup                                  |
+| P            | Open push popup                                  |
+| x            | Discard changes (also supports discarding hunks) |
+| \<C-r>       | Refresh Buffer                                   |
 | \<C-C>\<C-C> | Commit (when writing a commit message)           |
-| L          | Open log popup                                   |
-| p          | Open pull popup                                  |
-| P          | Open push popup                                  |
-| x          | Discard changes (also supports discarding hunks) |
 
 ## Contextual Highlighting
 
