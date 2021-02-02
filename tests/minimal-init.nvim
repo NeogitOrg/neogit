@@ -1,0 +1,2 @@
+set rtp+=.
+runtime plugin/neogit.vim
