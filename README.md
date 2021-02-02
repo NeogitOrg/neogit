@@ -1,12 +1,12 @@
 # Neogit
 
-A *work-in-progress* Magit clone for Neovim that is geared toward the Vim philosophy.
+A **work-in-progress** Magit clone for Neovim that is geared toward the Vim philosophy.
 
 ## Installation
 
 | Plugin Manager                                       | Command                                                                        |
 |------------------------------------------------------|--------------------------------------------------------------------------------|
-| [Packer](https://github.com/wbthomason/packer.nvim)  | `  use 'TimUntersberger/neogit'`                                               |
+| [Packer](https://github.com/wbthomason/packer.nvim)  | `use 'TimUntersberger/neogit'`                                               |
 | [Vim-plug](https://github.com/junegunn/vim-plug)     | `Plug 'TimUntersberger/neogit'`                                                |
 | [NeoBundle](https://github.com/Shougo/neobundle.vim) | `NeoBundle 'TimUntersberger/neogit'`                                           |
 | [Vundle](https://github.com/VundleVim/Vundle.vim)    | `Bundle 'TimUntersberger/neogit'`                                              |
@@ -14,7 +14,9 @@ A *work-in-progress* Magit clone for Neovim that is geared toward the Vim philos
 | [Dein](https://github.com/Shougo/dein.vim)           | `call dein#add('TimUntersberger/neogit')`                                      |
 
 You also use in the built-in package manager:
-`$ git clone --depth 1 https://github.com/TimUntersberger/neogit $XDG_CONFIG_HOME/nvim/pack/plugins/start/neogit`
+```bash
+$ git clone --depth 1 https://github.com/TimUntersberger/neogit $XDG_CONFIG_HOME/nvim/pack/plugins/start/neogit
+```
 
 ## Usage
 
@@ -35,36 +37,23 @@ The create function takes 1 optional argument that can be one of the following v
 
 ## Status Keybindings
 
-$ - command history
-
-1, 2, 3, 4 - set foldlevel
-
-tab - toggle diff
-
-s - stage (also supports staging selection/hunk)
-
-S - stage unstaged changes
-
-ctrl s - stage everything
-
-ctrl r - refresh buffer
-
-u - unstage (also supports unstaging selection/hunk)
-
-U - unstage staged changes
-
-c - open commit popup
-
-ctrl-c ctrl-c - commit (when writing the message)
-
-L - open log popup
-
-P - open push popup
-
-p - open pull popup
-
-x - discard changes (also supports discarding hunks)
-
+| Keybinding | Function                                         |
+|------------|--------------------------------------------------|
+| $          | Command history                                  |
+| 1, 2, 3, 4 | Set a foldlevel                                  |
+| Tab        | Toggle diff                                      |
+| s          | Stage (also supports staging selection/hunk)     |
+| S          | Stage unstaged changes                           |
+| <C-s>      | Stage Everything                                 |
+| <C-r>      | Refresh Buffer                                   |
+| u          | Unstage (also supports staging selection/hunk)   |
+| U          | Unstage staged changes                           |
+| c          | Open commit popup                                |
+| <C-C><C-C> | Commit (when writing a commit message)           |
+| L          | Open log popup                                   |
+| p          | Open pull popup                                  |
+| P          | Open push popup                                  |
+| x          | Discard changes (also supports discarding hunks) |
 
 ## Contextual Highlighting
 
