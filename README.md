@@ -1,21 +1,20 @@
 # Neogit
 
-A **work-in-progress** Magit clone for Neovim that is geared toward the Vim philosophy.
+A *work-in-progress* Magit clone for Neovim that is geared toward the Vim philosophy.
 
 ## Installation
 
-| Plugin Manager         | Command                                                                             |
-|------------------------|-------------------------------------------------------------------------------------|
-| [Packer][packer.nvim]  | `  use 'TimUntersberger/neogit'`                                                    |
-| [Vim-plug][vim-plug]   | `Plug 'TimUntersberger/neogit'`                                                     |
-| [NeoBundle][neobundle] | `NeoBundle 'TimUntersberger/neogit'`                                                |
-| [Vundle][vundle]       | `Bundle 'TimUntersberger/neogit'`                                                   |
-| [Pathogen][pathogen]   | `git clone https://github.com/TimUntersberger/neogit.git ~/.vim/bundle/targets.vim` |
-| [Dein][dein]           | `call dein#add('TimUntersberger/neogit')`                                           |
+| Plugin Manager                                       | Command                                                                        |
+|------------------------------------------------------|--------------------------------------------------------------------------------|
+| [Packer](https://github.com/wbthomason/packer.nvim)  | `  use 'TimUntersberger/neogit'`                                               |
+| [Vim-plug](https://github.com/junegunn/vim-plug)     | `Plug 'TimUntersberger/neogit'`                                                |
+| [NeoBundle](https://github.com/Shougo/neobundle.vim) | `NeoBundle 'TimUntersberger/neogit'`                                           |
+| [Vundle](https://github.com/VundleVim/Vundle.vim)    | `Bundle 'TimUntersberger/neogit'`                                              |
+| [Pathogen](https://github.com/tpope/vim-pathogen)    | `git clone https://github.com/TimUntersberger/neogit.git ~/.vim/bundle/neogit` |
+| [Dein](https://github.com/Shougo/dein.vim)           | `call dein#add('TimUntersberger/neogit')`                                      |
 
 You also use in the built-in package manager:
-
-`git clone --depth 1 https://github.com/TimUntersberger/neogit $XDG_CONFIG_HOME/nvim/pack/plugins/start/neogit`
+`$ git clone --depth 1 https://github.com/TimUntersberger/neogit $XDG_CONFIG_HOME/nvim/pack/plugins/start/neogit`
 
 ## Usage
 
