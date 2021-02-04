@@ -74,7 +74,7 @@ Diff maps ~
 <tab>                   Toggle diff
 
 
-                                                *neogit_c*
+                                                *neogit-commit-maps*
 Commit maps ~
                                                 *neogit_c*
 c                       Open commit popup
