@@ -59,7 +59,11 @@ local function toggle()
 end
 
 local function change_to_str(change)
-  return string.format("%s %s", change.type, change.name)
+  if change.original_name ~= nil then
+    return string.format("%s %s -> %s", change.type, change.original_name, change.name)
+  else
+    return string.format("%s %s", change.type, change.name)
+  end
 end
 
 local function display_status()
