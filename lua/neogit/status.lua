@@ -460,7 +460,6 @@ local function generate_patch_from_selection(item, hunk, from, to, reverse)
           if diff_line[2] == "-" then
             table.insert(diff_content, " "..diff_line[3])
           end
-          len_start = len_start + (diff_line[2] == "-" and 1 or -1)
         -- If we want to apply the patch in reverse, we need to include every `+` line we skip as a normal line, since
         -- it's unchanged as far as the diff is concerned and should not be reversed.
         -- We also need to adapt the original line offset based on if we skip or not
@@ -882,5 +881,6 @@ return {
   create = create,
   toggle = toggle,
   update_highlight = update_highlight,
-  get_status = function() return status end
+  get_status = function() return status end,
+  generate_patch_from_selection = generate_patch_from_selection
 }
