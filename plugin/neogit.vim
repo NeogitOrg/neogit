@@ -13,6 +13,7 @@ call s:refresh()
 augroup Neogit
   au!
   au BufWritePost,BufEnter,FocusGained,ShellCmdPost,VimResume * call <SID>refresh()
+  au DirChanged * lua vim.defer_fn(function() __NeogitStatusRefresh(true) end, 0)
 augroup END
 
 command! -nargs=0 Neogit :lua require'neogit.status'.create()<CR>

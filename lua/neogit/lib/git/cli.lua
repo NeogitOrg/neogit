@@ -14,13 +14,12 @@ local function get_root_path()
 end
 
 local history = {}
-local cwd = get_root_path()
 
-function prepend_git(x)
+local function prepend_git(x)
   return "git " .. x
 end
 
-function handle_new_cmd(job, popup)
+local function handle_new_cmd(job, popup)
   if popup == nil then
     popup = true
   end
@@ -46,13 +45,13 @@ local cli = {
         cb(job.stdout, job.code, job.stderr)
       end)
 
-      job.cwd = cwd
+      job.cwd = get_root_path()
 
       job:start()
     else
       local job = Job:new(prepend_git(cmd))
 
-      job.cwd = cwd
+      job.cwd = get_root_path()
 
       job:start()
       job:wait()
@@ -64,7 +63,7 @@ local cli = {
   run_with_stdin = function(cmd, data)
     local job = Job:new(prepend_git(cmd))
 
-    job.cwd = cwd
+    job.cwd = get_root_path()
 
     job:start()
     job:write(data)
@@ -76,6 +75,7 @@ local cli = {
   end,
   run_batch = function(cmds, popup)
     local jobs = Job.batch(util.map(cmds, prepend_git))
+    local cwd = get_root_path()
 
     for i,job in pairs(jobs) do
       job.cwd = cwd

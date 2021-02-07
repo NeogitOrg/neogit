@@ -371,9 +371,14 @@ local function load_diffs()
 end
 
 function __NeogitStatusRefresh(force)
-  if refreshing or (status_buffer ~= nil and not force) then
-    return
+  local function wait(ms)
+    vim.wait(ms or 1000, function() return not refreshing end)
   end
+
+  if refreshing or (status_buffer ~= nil and not force) then
+    return wait
+  end
+
   refreshing = true
   status = git.status.get()
   refresh_status()
@@ -382,6 +387,8 @@ function __NeogitStatusRefresh(force)
     vim.schedule(refresh_status)
     refreshing = false
   end, 0)
+
+  return wait
 end
 
 function __NeogitStatusOnClose()
