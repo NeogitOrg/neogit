@@ -104,7 +104,6 @@ local status = {
 
     local function insert_change(list, marker, entry)
       local matches = vim.fn.matchlist(entry, "\\(.*\\) -> \\(.*\\)")
-      print(vim.inspect(matches))
       local name, original_name
       if matches[3] ~= nil and matches[3] ~= "" then
         name = matches[3]
@@ -113,6 +112,7 @@ local status = {
         name = entry
         original_name = nil
       end
+
       table.insert(list, {
         type = marker_to_type(marker),
         name = name,
