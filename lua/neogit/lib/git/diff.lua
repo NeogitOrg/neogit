@@ -44,11 +44,11 @@ local diff = {
   parse = parse_diff,
   staged = function(name, cb)
     if cb then
-      cli.run("diff --cached " .. name, function(o)
+      cli.run('diff --cached -- "' .. name .. '"', function(o)
         cb(parse_diff(o))
       end)
     else
-      return parse_diff(cli.run("diff --cached " .. name))
+      return parse_diff(cli.run('diff --cached -- "' .. name .. '"'))
     end
   end,
   unstaged = function(name, cb)
@@ -57,7 +57,7 @@ local diff = {
         cb(parse_diff(o))
       end)
     else
-      return parse_diff(cli.run("diff " .. name))
+      return parse_diff(cli.run('diff -- "' .. name .. '"'))
     end
   end,
 }

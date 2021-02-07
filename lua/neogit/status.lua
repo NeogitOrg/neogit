@@ -343,10 +343,10 @@ local function load_diffs()
   end
   local cmds = {}
   for _, c in pairs(unstaged) do
-    table.insert(cmds, "diff " .. c)
+    table.insert(cmds, 'diff -- "' .. c .. '"')
   end
   for _, c in pairs(staged) do
-    table.insert(cmds, "diff --cached " .. c)
+    table.insert(cmds, 'diff --cached -- "' .. c .. '"')
   end
   local results = git.cli.run_batch(cmds)
 
