@@ -146,9 +146,6 @@ local status = {
   stage = function(name)
     git.cli.run("add " .. name)
   end,
-  stage_range = function(name, diff, hunk, from, to)
-    update_range(name, diff, hunk, from, to, false)
-  end,
   stage_modified = function()
     git.cli.run("add -u")
   end,

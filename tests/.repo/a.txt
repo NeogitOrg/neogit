@@ -1,0 +1,11 @@
+This is a text file under version control.
+This is a change made to a tracked file.
+Here are some lines we can change during the tests.
+
+
+
+
+This is a second block of text to create a second hunk.
+It also has some line we can manipulate.
+Adding a new line right here!
+Here is some more.

@@ -371,9 +371,14 @@ local function load_diffs()
 end
 
 function __NeogitStatusRefresh(force)
-  if refreshing or (status_buffer ~= nil and not force) then
-    return
+  local function wait(ms)
+    vim.wait(ms or 1000, function() return not refreshing end)
   end
+
+  if refreshing or (status_buffer ~= nil and not force) then
+    return wait
+  end
+
   refreshing = true
   status = git.status.get()
   refresh_status()
@@ -382,6 +387,8 @@ function __NeogitStatusRefresh(force)
     vim.schedule(refresh_status)
     refreshing = false
   end, 0)
+
+  return wait
 end
 
 function __NeogitStatusOnClose()
@@ -433,6 +440,9 @@ end
 
 local function generate_patch_from_selection(item, hunk, from, to, reverse)
   reverse = reverse or false
+  from = from or 1
+  to = to or hunk.last - hunk.first
+
   if from > to then
     from, to = to, from
   end
@@ -460,7 +470,6 @@ local function generate_patch_from_selection(item, hunk, from, to, reverse)
           if diff_line[2] == "-" then
             table.insert(diff_content, " "..diff_line[3])
           end
-          len_start = len_start + (diff_line[2] == "-" and 1 or -1)
         -- If we want to apply the patch in reverse, we need to include every `+` line we skip as a normal line, since
         -- it's unchanged as far as the diff is concerned and should not be reversed.
         -- We also need to adapt the original line offset based on if we skip or not
@@ -486,28 +495,6 @@ local function generate_patch_from_selection(item, hunk, from, to, reverse)
 end
 
 
-local function stage_range(item, section, hunk, from, to)
-  git.status.stage_range(
-    item.name,
-    status_buffer:get_lines(item.first + hunk.first, item.first + hunk.last, false),
-    hunk,
-    from,
-    to
-  )
-  local unstaged_diff = git.diff.unstaged(item.name)
-  local staged_diff = git.diff.staged(item.name)
-
-  if #unstaged_diff.lines == 0 then
-    remove_change(section.name, item)
-  else
-    item.diff_open = false
-    item.diff_content = unstaged_diff
-  end
-
-  if #staged_diff.lines ~= 0 then
-    add_change(status.staged_changes, item, staged_diff)
-  end
-end
 local function unstage_range(item, section, hunk, from, to)
   git.status.unstage_range(
     item.name,
@@ -580,12 +567,9 @@ local function get_selection()
 end
 
 local function stage_selection()
-  local section, item, hunk, from, to = get_selection()
-  if from == nil then
-    return
-  end
-  stage_range(item, section, hunk, from, to)
-  refresh_status()
+  local _, item, hunk, from, to = get_selection()
+  local patch = generate_patch_from_selection(item, hunk, from, to)
+  git.apply(patch, '--cached')
 end
 
 local function unstage_selection()
@@ -613,21 +597,22 @@ local function stage()
 
   if mode.mode == "V" then
     stage_selection()
-    return
-  end
-
-  local on_hunk = line_is_hunk(vim.fn.getline('.'))
-
-  if on_hunk and section.name ~= "untracked_files" then
-    local hunk = get_current_hunk_of_item(item)
-    stage_range(item, section, hunk, nil, nil)
   else
-    git.status.stage(item.name)
-    remove_change(section.name, item)
-    add_change(status.staged_changes, item, git.diff.staged(item.name))
+
+    local on_hunk = line_is_hunk(vim.fn.getline('.'))
+
+    if on_hunk and section.name ~= "untracked_files" then
+      local hunk = get_current_hunk_of_item(item)
+      local patch = generate_patch_from_selection(item, hunk)
+      git.apply(patch, '--cached')
+    else
+      git.status.stage(item.name)
+      remove_change(section.name, item)
+      add_change(status.staged_changes, item, git.diff.staged(item.name))
+    end
   end
 
-  refresh_status()
+  __NeogitStatusRefresh(true)
 end
 
 local function unstage()
@@ -882,5 +867,6 @@ return {
   create = create,
   toggle = toggle,
   update_highlight = update_highlight,
-  get_status = function() return status end
+  get_status = function() return status end,
+  generate_patch_from_selection = generate_patch_from_selection
 }
