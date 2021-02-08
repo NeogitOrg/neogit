@@ -59,7 +59,11 @@ local function toggle()
 end
 
 local function change_to_str(change)
-  return string.format("%s %s", change.type, change.name)
+  if change.original_name ~= nil then
+    return string.format("%s %s -> %s", change.type, change.original_name, change.name)
+  else
+    return string.format("%s %s", change.type, change.name)
+  end
 end
 
 local function display_status()
@@ -332,26 +336,34 @@ local function load_diffs()
   local staged = {}
   for _,c in pairs(status.unstaged_changes) do
     if c.type ~= "Deleted" and c.type ~= "New file" and not c.diff_open and not c.diff_content then
-      table.insert(unstaged, c.name)
+      table.insert(unstaged, c)
     end
   end
   local unstaged_len = #unstaged
   for _,c in pairs(status.staged_changes) do
     if c.type ~= "Deleted" and c.type ~= "New file" and not c.diff_open and not c.diff_content then
-      table.insert(staged, c.name)
+      table.insert(staged, c)
     end
   end
   local cmds = {}
   for _, c in pairs(unstaged) do
-    table.insert(cmds, "diff " .. c)
+    if c.original_name ~= nil then
+      table.insert(cmds, 'diff -- "' .. c.original_name .. '" "' .. c.name .. '"')
+    else
+      table.insert(cmds, 'diff -- "' .. c.name .. '"')
+    end
   end
   for _, c in pairs(staged) do
-    table.insert(cmds, "diff --cached " .. c)
+    if c.original_name ~= nil then
+      table.insert(cmds, 'diff --cached -- "' .. c.original_name .. '" "' .. c.name .. '"')
+    else
+      table.insert(cmds, 'diff --cached -- "' .. c.name .. '"')
+    end
   end
   local results = git.cli.run_batch(cmds)
 
   for i=1,unstaged_len do
-    local name = unstaged[i]
+    local name = unstaged[i].name
     for _,c in pairs(status.unstaged_changes) do
       if c.name == name then
         c.diff_content = git.diff.parse(results[i])
@@ -360,7 +372,7 @@ local function load_diffs()
     end
   end
   for i=unstaged_len+1,#results do
-    local name = staged[i - unstaged_len]
+    local name = staged[i - unstaged_len].name
     for _,c in pairs(status.staged_changes) do
       if c.name == name then
         c.diff_content = git.diff.parse(results[i])
@@ -503,8 +515,8 @@ local function unstage_range(item, section, hunk, from, to)
     from,
     to
   )
-  local unstaged_diff = git.diff.unstaged(item.name)
-  local staged_diff = git.diff.staged(item.name)
+  local unstaged_diff = git.diff.unstaged(item.name, item.original_name)
+  local staged_diff = git.diff.staged(item.name, item.original_name)
 
   if #staged_diff.lines == 0 then
     remove_change(section.name, item)
@@ -608,7 +620,7 @@ local function stage()
     else
       git.status.stage(item.name)
       remove_change(section.name, item)
-      add_change(status.staged_changes, item, git.diff.staged(item.name))
+      add_change(status.staged_changes, item, git.diff.staged(item.name, item.original_name))
     end
   end
 
@@ -650,7 +662,7 @@ local function unstage()
     end
 
     if change then
-      change.diff_content = git.diff.unstaged(change.name)
+      change.diff_content = git.diff.unstaged(change.name, change.original_name)
     else
       if item.type == "new file" then
         table.insert(status.untracked_files, item)

@@ -1,19 +1,35 @@
-local util = require("neogit.lib.util")
 local cli = require("neogit.lib.git.cli")
 
+local hunk_header_matcher = vim.regex('^@@.*@@')
+
 local function parse_diff(output)
-  output = util.slice(output, 5)
+  local header = {}
+  local hunks = {}
+  local is_header = true
+
+  for i=1,#output do
+    if is_header and hunk_header_matcher:match_str(output[i]) then
+      is_header = false
+    end
+
+    if is_header then
+      table.insert(header, output[i])
+    else
+      table.insert(hunks, output[i])
+    end
+  end
+
   local diff = {
-    lines = output,
+    lines = hunks,
     hunks = {}
   }
 
-  local len = #output
+  local len = #hunks
 
   local hunk = nil
 
   for i=1,len do
-    local line = output[i]
+    local line = hunks[i]
     if not vim.startswith(line, "+++") then
       local matches = vim.fn.matchlist(line, "^@@ -\\([0-9]*\\),\\?\\([0-9]*\\)\\? +\\([0-9]*\\),\\?\\([0-9]*\\)\\? @@")
 
@@ -42,22 +58,36 @@ end
 
 local diff = {
   parse = parse_diff,
-  staged = function(name, cb)
+  staged = function(name, original_name, cb)
+    local cmd
+    if original_name ~= nil then
+      cmd = 'diff --cached -- "' .. original_name .. '" "' .. name .. '"'
+    else
+      cmd = 'diff --cached -- "' .. name .. '"'
+    end
+
     if cb then
-      cli.run("diff --cached " .. name, function(o)
+      cli.run(cmd, function(o)
         cb(parse_diff(o))
       end)
     else
-      return parse_diff(cli.run("diff --cached " .. name))
+      return parse_diff(cli.run(cmd))
     end
   end,
-  unstaged = function(name, cb)
+  unstaged = function(name, original_name, cb)
+    local cmd
+    if original_name ~= nil then
+      cmd = 'diff -- "' .. original_name .. '" "' .. name .. '"'
+    else
+      cmd = 'diff -- "' .. name .. '"'
+    end
+
     if cb then
-      cli.run("diff " .. name, function(o)
+      cli.run(cmd, function(o)
         cb(parse_diff(o))
       end)
     else
-      return parse_diff(cli.run("diff " .. name))
+      return parse_diff(cli.run(cmd))
     end
   end,
 }
