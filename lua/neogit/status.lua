@@ -477,7 +477,7 @@ local function generate_patch_from_selection(item, hunk, from, to, reverse)
       else
 
         -- If we want to apply the patch normally, we need to include every `-` line we skip as a normal line,
-        -- since we want to keep that line. We also need to adapt the original line offset based on if we skip or not
+        -- since we want to keep that line.
         if not reverse then
           if diff_line[2] == "-" then
             table.insert(diff_content, " "..diff_line[3])
@@ -507,32 +507,6 @@ local function generate_patch_from_selection(item, hunk, from, to, reverse)
 end
 
 
-local function unstage_range(item, section, hunk, from, to)
-  git.status.unstage_range(
-    item.name,
-    status_buffer:get_lines(item.first + hunk.first, item.first + hunk.last, false),
-    hunk,
-    from,
-    to
-  )
-  local unstaged_diff = git.diff.unstaged(item.name, item.original_name)
-  local staged_diff = git.diff.staged(item.name, item.original_name)
-
-  if #staged_diff.lines == 0 then
-    remove_change(section.name, item)
-  else
-    item.diff_open = false
-    item.diff_content = staged_diff
-  end
-
-  if #unstaged_diff.lines ~= 0 then
-    if item.type == "new file" then
-      table.insert(status.untracked_files, item)
-    else
-      add_change(status.unstaged_changes, item, unstaged_diff)
-    end
-  end
-end
 --- Validates the current selection and acts accordingly
 --@return nil
 --@return number, number
@@ -585,11 +559,12 @@ local function stage_selection()
 end
 
 local function unstage_selection()
-  local section, item, hunk, from, to = get_selection()
+  local _, item, hunk, from, to = get_selection()
   if from == nil then
     return
   end
-  unstage_range(item, section, hunk, from, to)
+  local patch = generate_patch_from_selection(item, hunk, from, to, true)
+  git.apply(patch, '--reverse --cached')
   refresh_status()
 end
 
@@ -638,40 +613,42 @@ local function unstage()
 
   if mode.mode == "V" then
     unstage_selection()
-    return
-  end
-
-  local on_hunk = line_is_hunk(vim.fn.getline('.'))
-
-  if on_hunk then
-    local hunk = get_current_hunk_of_item(item)
-    unstage_range(item, section, hunk, nil, nil)
   else
-    git.status.unstage(item.name)
 
-    remove_change(section.name, item)
+    local on_hunk = line_is_hunk(vim.fn.getline('.'))
 
-    local change = nil
-    if item.type ~= "new file" then
-      for _,c in pairs(status.unstaged_changes) do
-        if c.name == item.name then
-          change = c
-          break
+    if on_hunk then
+      local hunk = get_current_hunk_of_item(item)
+      local patch = generate_patch_from_selection(item, hunk, nil, nil, true)
+      git.apply(patch, '--reverse --cached')
+    else
+      git.status.unstage(item.name)
+
+      remove_change(section.name, item)
+
+      local change = nil
+      if item.type ~= "new file" then
+        for _,c in pairs(status.unstaged_changes) do
+          if c.name == item.name then
+            change = c
+            break
+          end
+        end
+      end
+
+      if change then
+        change.diff_content = git.diff.unstaged(change.name, change.original_name)
+      else
+        if item.type == "new file" then
+          table.insert(status.untracked_files, item)
+        else
+          table.insert(status.unstaged_changes, item)
         end
       end
     end
-
-    if change then
-      change.diff_content = git.diff.unstaged(change.name, change.original_name)
-    else
-      if item.type == "new file" then
-        table.insert(status.untracked_files, item)
-      else
-        table.insert(status.unstaged_changes, item)
-      end
-    end
   end
-  refresh_status()
+
+  __NeogitStatusRefresh(true)
 end
 
 local function discard()

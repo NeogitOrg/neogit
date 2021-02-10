@@ -1,0 +1,10 @@
+This is another test file.
+Changes here!
+This way, unstaging staged changes can be tested.
+
+
+
+Some more lines down here to force a second hunk.
+I can't think of anything else.
+Duh.
+And here as well
