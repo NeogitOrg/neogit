@@ -1,4 +1,5 @@
 local cli = require("neogit.lib.git.cli")
+local a = require('neogit.async')
 
 local function command_with_files(name, params)
     local args = params.args or {}
@@ -19,9 +20,9 @@ return {
   cli = cli,
   diff = require("neogit.lib.git.diff"),
 
-  apply = function (patch, parameters)
-    cli.run_with_stdin(string.format('apply %s', parameters), patch)
-  end,
+  apply = a.sync(function (patch, parameters)
+    a.wait(cli.exec('apply', parameters, nil, patch))
+  end),
   checkout = function (params)
     cli.run(command_with_files('checkout', params))
   end,
