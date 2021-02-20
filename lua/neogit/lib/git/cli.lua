@@ -66,6 +66,10 @@ local cli = {
     local processes = {}
     local root = cwd or a.wait(git_root())
 
+    if root == nil or root == "" then
+      return nil
+    end
+
     for _, cmd in ipairs(cmds) do
       table.insert(processes, exec(cmd.cmd, cmd.args, root))
     end

@@ -30,6 +30,8 @@ local status = {
       {cmd = 'log',    args = {'-1', '--pretty=%B', '@{upstream}'}}
     }))
 
+    if status == nil then return nil end
+
     local result = {
       untracked_files = {},
       unstaged_changes = {},
