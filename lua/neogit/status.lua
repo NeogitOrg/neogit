@@ -599,7 +599,7 @@ local stage = a.sync(function()
       local patch = generate_patch_from_selection(item, hunk)
       a.wait(git.apply(patch, {'--cached'}))
     else
-      git.status.stage(item.name)
+      a.wait(git.status.stage(item.name))
     end
   end
 
@@ -628,7 +628,7 @@ local unstage = a.sync(function()
       a.wait(git.apply(patch, {'--reverse', '--cached'}))
       print('after unstaging')
     else
-      git.status.unstage(item.name)
+      a.wait(git.status.unstage(item.name))
     end
   end
 
@@ -636,7 +636,7 @@ local unstage = a.sync(function()
   current_operation = nil
 end)
 
-local function discard()
+local discard = a.sync(function()
   local section, item = get_current_section_item()
 
   if section == nil or item == nil then
@@ -654,11 +654,12 @@ local function discard()
     local section, item, hunk, from, to = get_selection()
     local patch = generate_patch_from_selection(item, hunk, from, to, true)
     if section.name == "staged_changes" then
-      git.apply(patch, '--reverse --index')
+      a.wait(git.apply(patch, {'--reverse', '--index'}))
     else
-      git.apply(patch, '--reverse')
+      a.wait(git.apply(patch, {'--reverse'}))
     end
   elseif section.name == "untracked_files" then
+    a.wait_for_textlock()
     vim.fn.delete(item.name)
   else
 
@@ -670,21 +671,21 @@ local function discard()
       local diff = table.concat(lines, "\n")
       diff = table.concat({'--- a/'..item.name, '+++ b/'..item.name, diff, ""}, "\n")
       if section.name == "staged_changes" then
-        git.apply(diff, '--reverse --index')
+        a.wait(git.apply(diff, {'--reverse', '--index'}))
       else
-        git.apply(diff, '--reverse')
+        a.wait(git.apply(diff, {'--reverse'}))
       end
     elseif section.name == "unstaged_changes" then
-      git.checkout({ files = {item.name} })
+      a.wait(git.checkout({ files = {item.name} }))
     elseif section.name == "staged_changes" then
-      git.reset({ files = {item.name} })
-      git.checkout({ files = {item.name} })
+      a.wait(git.reset({ files = {item.name} }))
+      a.wait(git.checkout({ files = {item.name} }))
     end
 
   end
 
   __NeogitStatusRefresh(true)
-end
+end)
 
 local function create(kind)
   kind = kind or 'tab'
@@ -735,15 +736,15 @@ local function create(kind)
       end
       mappings["tab"] = toggle
       mappings["s"] = { "nv", function () a.run(stage) end, true }
-      mappings["S"] = function()
+      mappings["S"] = a.sync(function()
         for _,c in pairs(status.unstaged_changes) do
           table.insert(status.staged_changes, c)
         end
         status.unstaged_changes = {}
-        git.status.stage_modified()
+        a.wait(git.status.stage_modified())
         refresh_status()
-      end
-      mappings["control-s"] = function()
+      end)
+      mappings["control-s"] = a.sync(function()
         for _,c in pairs(status.unstaged_changes) do
           table.insert(status.staged_changes, c)
         end
@@ -752,15 +753,15 @@ local function create(kind)
         end
         status.unstaged_changes = {}
         status.untracked_files = {}
-        git.status.stage_all()
+        a.wait(git.status.stage_all())
         refresh_status()
-      end
+      end)
       mappings["$"] = function()
         GitCommandHistory:new():show()
       end
       mappings["control-r"] = function() __NeogitStatusRefresh(true) end
       mappings["u"] = { "nv", function () a.run(unstage) end, true }
-      mappings["U"] = function()
+      mappings["U"] = a.sync(function()
         for _,c in pairs(status.staged_changes) do
           if c.type == "new file" then
             table.insert(status.untracked_files, c)
@@ -769,14 +770,14 @@ local function create(kind)
           end
         end
         status.staged_changes = {}
-        git.status.unstage_all()
+        a.wait(git.status.unstage_all())
         refresh_status()
-      end
+      end)
       mappings["c"] = require("neogit.popups.commit").create
       mappings["L"] = require("neogit.popups.log").create
       mappings["P"] = require("neogit.popups.push").create
       mappings["p"] = require("neogit.popups.pull").create
-      mappings["x"] = { "nv", discard, true }
+      mappings["x"] = { "nv", function () a.run(discard) end, true }
 
       a.dispatch(function ()
         a.wait(load_diffs())

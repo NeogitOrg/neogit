@@ -178,21 +178,21 @@ local status = {
 
     return result
   end,
-  stage = function(name)
-    git.cli.run("add " .. name)
-  end,
-  stage_modified = function()
-    git.cli.run("add -u")
-  end,
-  stage_all = function()
-    git.cli.run("add -A")
-  end,
-  unstage = function(name)
-    git.cli.run("reset " .. name)
-  end,
-  unstage_all = function()
-    git.cli.run("reset")
-  end,
+  stage = a.sync(function(name)
+    a.wait(git.cli.exec("add", {name}))
+  end),
+  stage_modified = a.sync(function()
+    a.wait(git.cli.exec("add", {"-u"}))
+  end),
+  stage_all = a.sync(function()
+    a.wait(git.cli.exec("add", {"-A"}))
+  end),
+  unstage = a.sync(function(name)
+    a.wait(git.cli.exec("reset", {name}))
+  end),
+  unstage_all = a.sync(function()
+    a.wait(git.cli.exec("reset"))
+  end),
 }
 
 -- status.stage_range(
