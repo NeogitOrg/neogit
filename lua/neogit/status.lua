@@ -397,7 +397,7 @@ function __NeogitStatusRefresh(force)
   a.dispatch(function ()
     refreshing = true
 
-    status = a.wait(git.status.get_async())
+    status = a.wait(git.status.get())
     if status == nil then return end
     a.wait(load_diffs())
     a.wait_for_textlock()
@@ -701,13 +701,6 @@ local function create(kind)
     initialize = function(buffer)
       status_buffer = buffer
 
-      -- checks if the status table is {}
-      if next(status) == nil then
-        status = git.status.get()
-      end
-
-      display_status()
-
       local mappings = buffer.mmanager.mappings
 
       mappings["q"] = function()
@@ -736,54 +729,59 @@ local function create(kind)
       end
       mappings["tab"] = toggle
       mappings["s"] = { "nv", function () a.run(stage) end, true }
-      mappings["S"] = a.sync(function()
-        for _,c in pairs(status.unstaged_changes) do
-          table.insert(status.staged_changes, c)
-        end
-        status.unstaged_changes = {}
-        a.wait(git.status.stage_modified())
-        refresh_status()
-      end)
-      mappings["control-s"] = a.sync(function()
-        for _,c in pairs(status.unstaged_changes) do
-          table.insert(status.staged_changes, c)
-        end
-        for _,c in pairs(status.untracked_files) do
-          table.insert(status.staged_changes, c)
-        end
-        status.unstaged_changes = {}
-        status.untracked_files = {}
-        a.wait(git.status.stage_all())
-        refresh_status()
-      end)
+      mappings["S"] = function ()
+        a.dispatch(function()
+          for _,c in pairs(status.unstaged_changes) do
+            table.insert(status.staged_changes, c)
+          end
+          status.unstaged_changes = {}
+          a.wait(git.status.stage_modified())
+          a.wait_for_textlock()
+          refresh_status()
+        end)
+      end
+      mappings["control-s"] = function ()
+        a.dispatch(function()
+          for _,c in pairs(status.unstaged_changes) do
+            table.insert(status.staged_changes, c)
+          end
+          for _,c in pairs(status.untracked_files) do
+            table.insert(status.staged_changes, c)
+          end
+          status.unstaged_changes = {}
+          status.untracked_files = {}
+          a.wait(git.status.stage_all())
+          a.wait_for_textlock()
+          refresh_status()
+        end)
+      end
       mappings["$"] = function()
         GitCommandHistory:new():show()
       end
       mappings["control-r"] = function() __NeogitStatusRefresh(true) end
       mappings["u"] = { "nv", function () a.run(unstage) end, true }
-      mappings["U"] = a.sync(function()
-        for _,c in pairs(status.staged_changes) do
-          if c.type == "new file" then
-            table.insert(status.untracked_files, c)
-          else
-            table.insert(status.unstaged_changes, c)
+      mappings["U"] = function ()
+        a.dispatch(function()
+          for _,c in pairs(status.staged_changes) do
+            if c.type == "new file" then
+              table.insert(status.untracked_files, c)
+            else
+              table.insert(status.unstaged_changes, c)
+            end
           end
-        end
-        status.staged_changes = {}
-        a.wait(git.status.unstage_all())
-        refresh_status()
-      end)
+          status.staged_changes = {}
+          a.wait(git.status.unstage_all())
+          a.wait_for_textlock()
+          refresh_status()
+        end)
+      end
       mappings["c"] = require("neogit.popups.commit").create
       mappings["L"] = require("neogit.popups.log").create
       mappings["P"] = require("neogit.popups.push").create
       mappings["p"] = require("neogit.popups.pull").create
       mappings["x"] = { "nv", function () a.run(discard) end, true }
 
-      a.dispatch(function ()
-        a.wait(load_diffs())
-        a.wait_for_textlock()
-        refresh_status()
-      end)
+      __NeogitStatusRefresh(true)
     end
   }
 end
@@ -847,5 +845,8 @@ return {
   generate_patch_from_selection = generate_patch_from_selection,
   wait_on_current_operation = function (ms)
     vim.wait(ms or 1000, function() return not current_operation end)
+  end,
+  wait_on_refresh = function (ms)
+    vim.wait(ms or 1000, function() return not refreshing end)
   end
 }

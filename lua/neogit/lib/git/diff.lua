@@ -1,5 +1,3 @@
-local cli = require("neogit.lib.git.cli")
-
 local function parse_diff(output)
   local header = {}
   local hunks = {}
@@ -55,39 +53,7 @@ local function parse_diff(output)
 end
 
 local diff = {
-  parse = parse_diff,
-  staged = function(name, original_name, cb)
-    local cmd
-    if original_name ~= nil then
-      cmd = 'diff --cached -- "' .. original_name .. '" "' .. name .. '"'
-    else
-      cmd = 'diff --cached -- "' .. name .. '"'
-    end
-
-    if cb then
-      cli.run(cmd, function(o)
-        cb(parse_diff(o))
-      end)
-    else
-      return parse_diff(cli.run(cmd))
-    end
-  end,
-  unstaged = function(name, original_name, cb)
-    local cmd
-    if original_name ~= nil then
-      cmd = 'diff -- "' .. original_name .. '" "' .. name .. '"'
-    else
-      cmd = 'diff -- "' .. name .. '"'
-    end
-
-    if cb then
-      cli.run(cmd, function(o)
-        cb(parse_diff(o))
-      end)
-    else
-      return parse_diff(cli.run(cmd))
-    end
-  end,
+  parse = parse_diff
 }
 
 return diff

@@ -32,13 +32,16 @@ local function spawn(options, cb)
   end)
   --print('started process', vim.inspect(options), '->', handle, err, '@'..(params.cwd or '')..'@')
   if not handle then
+    stdout:close()
+    stderr:close()
+    stdin:close()
     error(err)
   end
 
   if options.input ~= nil then
     vim.loop.write(stdin, options.input)
-    stdin:close()
   end
+  stdin:close()
 
   vim.loop.read_start(stdout, function(err, data)
     --print('STDOUT', err, data)

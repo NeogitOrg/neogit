@@ -1,5 +1,3 @@
-local cli = require("neogit.lib.git.cli")
-
 local function parse(output)
   local result = {}
   for _, line in ipairs(output) do
@@ -10,9 +8,5 @@ local function parse(output)
 end
 
 return {
-  parse = parse,
-  list = function()
-    local output = cli.run("stash list")
-    return parse(output)
-  end
+  parse = parse
 }
