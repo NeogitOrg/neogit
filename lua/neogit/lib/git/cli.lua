@@ -44,8 +44,8 @@ local exec = a.sync(function(cmd, args, cwd, stdin)
   }))
   handle_new_cmd({
     cmd = cmd .. ' ' .. table.concat(args, ' '),
-    stdout = vim.split(result, '\n'),
-    stderr = vim.split(errors, '\n'),
+    stdout = result ~= "" and vim.split(result, '\n') or {},
+    stderr = errors ~= "" and vim.split(errors, '\n') or {},
     code = code,
     time = os.clock() - time
   }, true)
