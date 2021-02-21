@@ -38,9 +38,9 @@ local function create()
         {
           key = "p",
           description = "Push to pushremote",
-          callback = function()
+          callback = function(popup)
             a.dispatch(function ()
-              local _, code = a.wait(git.cli.exec("push"))
+              local _, code = a.wait(git.cli.exec("push", popup.get_arguments()))
               if code == 0 then
                 a.wait_for_textlock()
                 notif.create "Pushed to pushremote"
@@ -52,9 +52,9 @@ local function create()
         {
           key = "u",
           description = "Push to upstream",
-          callback = function()
+          callback = function(popup)
             a.dispatch(function ()
-              local _, code = a.wait(git.cli.exec("push"))
+              local _, code = a.wait(git.cli.exec("push", popup.get_arguments()))
               if code == 0 then
                 a.wait_for_textlock()
                 notif.create "Pushed to upstream"

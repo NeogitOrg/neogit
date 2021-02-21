@@ -55,7 +55,7 @@ local exec = a.sync(function(cmd, args, cwd, stdin)
   }))
   --print('git', table.concat(args, ' '), '->', code, errors)
 
-  return result, code
+  return result, code, errors
 end)
 
 local cli = {
