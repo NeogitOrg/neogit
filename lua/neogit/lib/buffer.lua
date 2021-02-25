@@ -183,7 +183,7 @@ function Buffer.create(config)
     local col = col + 1
     local row = row + 1
 
-    local content_buffer = vim.api.nvim_create_buf(false, true)
+    local content_buffer = vim.api.nvim_create_buf(true, true)
     local content_window = vim.api.nvim_open_win(content_buffer, true, {
       relative = 'editor',
       width = width,
