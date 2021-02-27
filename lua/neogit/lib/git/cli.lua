@@ -43,7 +43,7 @@ local exec = a.sync(function(cmd, args, cwd, stdin)
     cwd = cwd or a.wait(git_root())
   }))
   handle_new_cmd({
-    cmd = cmd .. ' ' .. table.concat(args, ' '),
+    cmd =  'git ' .. table.concat(args, ' '),
     stdout = result ~= "" and vim.split(result, '\n') or {},
     stderr = errors ~= "" and vim.split(errors, '\n') or {},
     code = code,
