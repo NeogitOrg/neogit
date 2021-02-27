@@ -38,8 +38,8 @@ local status = {
       unmerged_changes = {},
       staged_changes = {},
       stashes = nil,
-      unpulled = util.map(vim.split(unpulled, '\n'), function(x) return { name = x } end),
-      unmerged = util.map(vim.split(unmerged, '\n'), function(x) return { name = x } end),
+      unpulled = unpulled ~= "" and util.map(vim.split(unpulled, '\n'), function(x) return { name = x } end) or {},
+      unmerged = unmerged ~= "" and util.map(vim.split(unmerged, '\n'), function(x) return { name = x } end) or {},
       head = {
         message = vim.split(head, '\n')[1],
         branch = ""
