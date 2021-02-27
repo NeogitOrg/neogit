@@ -136,7 +136,14 @@ local function create()
         {
           key = "e",
           description = "Extend",
-          callback = function() end
+          callback = function(popup)
+            a.dispatch(function ()
+              local _, code = a.wait(cli.commit.no_edit.amend.call())
+              if code == 0 then
+                __NeogitStatusRefresh(true)
+              end
+            end)
+          end
         },
         {
           key = "w",

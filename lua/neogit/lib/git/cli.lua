@@ -66,7 +66,8 @@ local configurations = {
   }),
   commit = config({
     flags = {
-      amend = '--amend'
+      amend = '--amend',
+      no_edit = '--no-edit'
     },
     options = {
       commit_message_file = '--file'
