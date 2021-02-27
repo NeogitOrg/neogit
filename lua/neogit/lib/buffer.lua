@@ -137,8 +137,9 @@ function Buffer.exists(name)
   return vim.fn.bufnr(name) ~= -1
 end
 
-function Buffer.create(config)
+function Buffer.create(config, options)
   local config = config or {}
+  local width = options.width or 50
   local kind = config.kind or "split"
   local buffer = nil
 
@@ -147,6 +148,9 @@ function Buffer.create(config)
     buffer = Buffer:new(vim.api.nvim_get_current_buf())
   elseif kind == "split" then
     vim.cmd("below new")
+    buffer = Buffer:new(vim.api.nvim_get_current_buf())
+  elseif kind == "vsplit" then
+    vim.cmd("botright " .. width .. "vnew")
     buffer = Buffer:new(vim.api.nvim_get_current_buf())
   elseif kind == "floating" then
     -- Creates the border window
