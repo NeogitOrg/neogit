@@ -40,7 +40,7 @@ local function create()
           description = "Push to pushremote",
           callback = function(popup)
             a.dispatch(function ()
-              local _, code = a.wait(git.cli.exec("push", popup.get_arguments()))
+              local _, code = a.wait(git.cli.push.args(unpack(popup.get_arguments())).call())
               if code == 0 then
                 a.wait_for_textlock()
                 notif.create "Pushed to pushremote"
@@ -54,7 +54,7 @@ local function create()
           description = "Push to upstream",
           callback = function(popup)
             a.dispatch(function ()
-              local _, code = a.wait(git.cli.exec("push", popup.get_arguments()))
+              local _, code = a.wait(git.cli.push.args(unpack(popup.get_arguments())).call())
               if code == 0 then
                 a.wait_for_textlock()
                 notif.create "Pushed to upstream"

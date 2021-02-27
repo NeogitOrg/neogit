@@ -42,7 +42,7 @@ local prompt_commit_message = a.sync(function (msg)
   table.insert(output, "# Please enter the commit message for your changes. Lines starting")
   table.insert(output, "# with '#' will be ignored, and an empty message aborts the commit.")
 
-  local status_output = a.wait(cli.exec('status'))
+  local status_output = a.wait(cli.status.call())
   status_output = vim.split(status_output, '\n')
 
   for _, line in pairs(status_output) do
@@ -124,8 +124,7 @@ local function create()
           callback = function(popup)
             a.dispatch(function ()
               a.wait(prompt_commit_message(nil))
-              local args = vim.list_extend({"-F", ".git/COMMIT_EDITMSG"}, popup.get_arguments())
-              local _, code = a.wait(cli.exec("commit", args))
+              local _, code = a.wait(cli.commit.commit_message_file('.git/COMMIT_EDITMSG').args(unpack(popup.get_arguments())).call())
               if code == 0 then
                 __NeogitStatusRefresh(true)
               end
@@ -149,11 +148,11 @@ local function create()
           description = "Amend",
           callback = function(popup)
             a.dispatch(function ()
-              local msg = a.wait(cli.exec("log", {"-1", "--pretty=%B"}))
+              local msg = a.wait(cli.log.max_count(1).pretty('%B').call())
               msg = vim.split(msg, '\n')
 
               a.wait(prompt_commit_message(msg))
-              local _, code = a.wait(cli.exec("commit", {"-F", ".git/COMMIT_EDITMSG", "--amend"}))
+              local _, code = a.wait(cli.commit.commit_message_file('.git/COMMIT_EDITMSG').amend.call())
               if code == 0 then
                 __NeogitStatusRefresh(true)
               end

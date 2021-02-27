@@ -21,14 +21,14 @@ end
 
 local status = {
   get = a.sync(function ()
-    local status, stash, unmerged, unpulled, head, upstream = a.wait(git.cli.exec_all({
-      {cmd = 'status', args = {'--porcelain=1', '--branch'}},
-      {cmd = 'stash',  args = {'list'}},
-      {cmd = 'log',    args = {'--oneline', '@{upstream}..'}},
-      {cmd = 'log',    args = {'--oneline', '..@{upstream}'}},
-      {cmd = 'log',    args = {'-1', '--pretty=%B'}},
-      {cmd = 'log',    args = {'-1', '--pretty=%B', '@{upstream}'}}
-    }))
+    local status, stash, unmerged, unpulled, head, upstream = a.wait(git.cli.in_parallel(
+      git.cli.status.porcelain(1).branch,
+      git.cli.stash.args('list'),
+      git.cli.log.oneline.for_range('@{upstream}..'),
+      git.cli.log.oneline.for_range('..@{upstream}'),
+      git.cli.log.max_count(1).pretty('%B'),
+      git.cli.log.max_count(1).pretty('%B').for_range('@{upstream}')
+    ).call())
 
     if status == nil then return nil end
 
@@ -102,19 +102,19 @@ local status = {
     return result
   end),
   stage = a.sync(function(name)
-    a.wait(git.cli.exec("add", {name}))
+    a.wait(git.cli.add.files(name).call())
   end),
   stage_modified = a.sync(function()
-    a.wait(git.cli.exec("add", {"-u"}))
+    a.wait(git.cli.add.update.call())
   end),
   stage_all = a.sync(function()
-    a.wait(git.cli.exec("add", {"-A"}))
+    a.wait(git.cli.add.all.call())
   end),
   unstage = a.sync(function(name)
-    a.wait(git.cli.exec("reset", {name}))
+    a.wait(git.cli.reset.files(name).call())
   end),
   unstage_all = a.sync(function()
-    a.wait(git.cli.exec("reset"))
+    a.wait(git.cli.reset.call())
   end),
 }
 

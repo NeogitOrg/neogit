@@ -7,7 +7,7 @@ return {
     options = vim.split(options, ' ')
     table.insert(options, 1, '--oneline')
 
-    local output = a.wait(cli.exec("log",  options))
+    local output = a.wait(cli.log.oneline.args(unpack(options)).call())
     output = vim.split(output, '\n')
     local output_len = #output
     local commits = {}

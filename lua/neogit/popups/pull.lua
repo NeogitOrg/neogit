@@ -27,7 +27,7 @@ local function create()
           description = "Pull from upstream",
           callback = function()
             a.dispatch(function ()
-              local _, code = a.wait(git.cli.exec("pull", {"--no-commit"}))
+              local _, code = a.wait(git.cli.pull.no_commit.call())
               if code == 0 then
                 a.wait_for_textlock()
                 notif.create "Pulled from upstream"
