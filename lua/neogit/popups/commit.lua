@@ -2,10 +2,14 @@ local popup = require("neogit.lib.popup")
 local cli = require("neogit.lib.git.cli")
 local Buffer = require("neogit.lib.buffer")
 local a = require('neogit.async')
+local uv = require('neogit.async.uv')
+local split = require('neogit.lib.util').split
+
+local COMMIT_FILE = '.git/NEOGIT_COMMIT_EDITMSG'
 
 local get_commit_message = a.wrap(function (content, cb)
   Buffer.create {
-    name = ".git/COMMIT_EDITMSG",
+    name = COMMIT_FILE,
     filetype = "gitcommit",
     modifiable = true,
     readonly = false,
@@ -31,7 +35,7 @@ end)
 local prompt_commit_message = a.sync(function (msg)
   local output = {}
 
-  if msg then
+  if msg and #msg > 0 then
     for _, line in ipairs(msg) do
       table.insert(output, line)
     end
@@ -123,9 +127,12 @@ local function create()
           description = "Commit",
           callback = function(popup)
             a.dispatch(function ()
-              a.wait(prompt_commit_message(nil))
-              local _, code = a.wait(cli.commit.commit_message_file('.git/COMMIT_EDITMSG').args(unpack(popup.get_arguments())).call())
+              local data = a.wait(uv.read_file(COMMIT_FILE))
+              local old_content = split(data or '', '\n')
+              a.wait(prompt_commit_message(old_content))
+              local _, code = a.wait(cli.commit.commit_message_file(COMMIT_FILE).args(unpack(popup.get_arguments())).call())
               if code == 0 then
+                a.wait(uv.fs_unlink(COMMIT_FILE))
                 __NeogitStatusRefresh(true)
               end
             end)
@@ -140,6 +147,7 @@ local function create()
             a.dispatch(function ()
               local _, code = a.wait(cli.commit.no_edit.amend.call())
               if code == 0 then
+                a.wait(uv.fs_unlink(COMMIT_FILE))
                 __NeogitStatusRefresh(true)
               end
             end)
@@ -159,8 +167,9 @@ local function create()
               msg = vim.split(msg, '\n')
 
               a.wait(prompt_commit_message(msg))
-              local _, code = a.wait(cli.commit.commit_message_file('.git/COMMIT_EDITMSG').amend.call())
+              local _, code = a.wait(cli.commit.commit_message_file(COMMIT_FILE).amend.call())
               if code == 0 then
+                a.wait(uv.fs_unlink(COMMIT_FILE))
                 __NeogitStatusRefresh(true)
               end
             end)
