@@ -38,16 +38,16 @@ local status = {
       unmerged_changes = {},
       staged_changes = {},
       stashes = nil,
-      unpulled = unpulled ~= "" and util.map(vim.split(unpulled, '\n'), function(x) return { name = x } end) or {},
-      unmerged = unmerged ~= "" and util.map(vim.split(unmerged, '\n'), function(x) return { name = x } end) or {},
+      unpulled = util.map(util.split(unpulled, '\n'), function(x) return { name = x } end),
+      unmerged = util.map(util.split(unmerged, '\n'), function(x) return { name = x } end),
       head = {
-        message = vim.split(head, '\n')[1],
+        message = util.split(head, '\n')[1],
         branch = ""
       },
       upstream = nil
     }
 
-    result.stashes = git.stash.parse(vim.split(stash, '\n'))
+    result.stashes = git.stash.parse(util.split(stash, '\n'))
 
     local function insert_change(list, marker, entry)
       local orig, new = entry:match('^(.-) -> (.*)')
@@ -72,7 +72,7 @@ local status = {
       })
     end
 
-    for _, line in pairs(vim.split(status, '\n')) do
+    for _, line in pairs(util.split(status, '\n')) do
       local marker, details = line:match('(..) (.*)')
 
       if marker == "##" then

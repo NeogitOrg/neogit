@@ -3,6 +3,7 @@ local Job = require("neogit.lib.job")
 local util = require("neogit.lib.util")
 local a = require('neogit.async')
 local process = require('neogit.process')
+local split = require('neogit.lib.util').split
 
 local git_root = a.sync(function()
   return vim.trim(a.wait(process.spawn({cmd = 'git', args = {'rev-parse', '--show-toplevel'}})))
@@ -44,8 +45,8 @@ local exec = a.sync(function(cmd, args, cwd, stdin)
   }))
   handle_new_cmd({
     cmd =  'git ' .. table.concat(args, ' '),
-    stdout = result ~= "" and vim.split(result, '\n') or {},
-    stderr = errors ~= "" and vim.split(errors, '\n') or {},
+    stdout = split(result, '\n'),
+    stderr = split(errors, '\n'),
     code = code,
     time = os.clock() - time
   }, true)
