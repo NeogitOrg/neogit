@@ -94,6 +94,12 @@ local function create()
         enabled = false
       },
       {
+        key = "S",
+        description = "Do not sign this commit",
+        cli = "no-gpg-sign",
+        enabled = false
+      },
+      {
         key = "R",
         description = "Claim authorship and reset author date",
         cli = "reset-author",
