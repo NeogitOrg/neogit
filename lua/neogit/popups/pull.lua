@@ -1,6 +1,7 @@
 local popup = require("neogit.lib.popup")
 local notif = require("neogit.lib.notification")
 local git = require("neogit.lib.git")
+local a = require('neogit.async')
 
 local function create()
   popup.create(
@@ -25,14 +26,14 @@ local function create()
           key = "u",
           description = "Pull from upstream",
           callback = function()
-            vim.defer_fn(function()
-              git.cli.run("pull --no-commit", function(_, code)
-                if code == 0 then
-                  notif.create "Pulled from upstream"
-                  __NeogitStatusRefresh(true)
-                end
-              end)
-            end, 0)
+            a.dispatch(function ()
+              local _, code = a.wait(git.cli.exec("pull", {"--no-commit"}))
+              if code == 0 then
+                a.wait_for_textlock()
+                notif.create "Pulled from upstream"
+                __NeogitStatusRefresh(true)
+              end
+            end)
           end
         },
         {

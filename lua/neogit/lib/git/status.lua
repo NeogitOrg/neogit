@@ -2,6 +2,7 @@ local git = {
   cli = require("neogit.lib.git.cli"),
   stash = require("neogit.lib.git.stash")
 }
+local a = require('neogit.async')
 local util = require("neogit.lib.util")
 
 local function marker_to_type(m)
@@ -18,96 +19,44 @@ local function marker_to_type(m)
   end
 end
 
-local function update_range(name, diff, hunk, from, to, cached)
-  local metadata = vim.split(git.cli.run("ls-files -s " .. name)[1], " ")
-  local mode = metadata[1]
-  local hash = metadata[2]
-  local file_index = git.cli.run("cat-file -p " .. hash)
-  local file_index_len = #file_index
-  local diff_len = #diff
-  local diff_start = hunk.index_from
-  local diff_end = hunk.index_from + diff_len - 1
-  local diff_index_end = hunk.index_from + hunk.index_len - 1
-  local mark_add = "+"
-  local mark_del = "-"
-  local new_file = {}
-
-  from = from or 0
-  to = to or diff_len
-
-  if from > to then
-    local temp = to
-    to = from
-    from = to - 1
-  end
-
-  if cached then
-    mark_add = "-"
-    mark_del = "+"
-    diff_start = hunk.disk_from
-    diff_end = hunk.disk_from + diff_len - 1
-    diff_index_end = hunk.disk_from + hunk.disk_len - 1
-  end
-
-  for i=1,diff_start - 1 do
-    table.insert(new_file, file_index[i])
-  end
-  for i=diff_start,diff_end do
-    local diff_idx = i - diff_start + 1
-    local diff_line = vim.fn.matchlist(diff[diff_idx], "^\\([+ -]\\)\\(.*\\)")
-
-    if from <= diff_idx and diff_idx <= to then
-      if diff_line[2] ~= mark_del then
-        table.insert(new_file, diff_line[3])
-      end
-    else
-      if diff_line[2] ~= mark_add then
-        table.insert(new_file, diff_line[3])
-      end
-    end
-  end
-  for i=diff_index_end + 1,file_index_len do
-    table.insert(new_file, file_index[i])
-  end
-
-  table.insert(new_file, "")
-
-  local output = git.cli.run_with_stdin("hash-object -w --stdin", new_file)
-  git.cli.run(string.format("update-index --cacheinfo %d %s %s", mode, output[1], name))
-end
-
 local status = {
-  get = function()
-    local outputs = git.cli.run_batch({
-      "status --porcelain=1 --branch",
-      "stash list",
-      "log --oneline @{upstream}..",
-      "log --oneline ..@{upstream}",
-      "log -1 --pretty=%B",
-      "log -1 --pretty=%B @{upstream}"
-    }, false)
+  get = a.sync(function ()
+    local status, stash, unmerged, unpulled, head, upstream = a.wait(git.cli.exec_all({
+      {cmd = 'status', args = {'--porcelain=1', '--branch'}},
+      {cmd = 'stash',  args = {'list'}},
+      {cmd = 'log',    args = {'--oneline', '@{upstream}..'}},
+      {cmd = 'log',    args = {'--oneline', '..@{upstream}'}},
+      {cmd = 'log',    args = {'-1', '--pretty=%B'}},
+      {cmd = 'log',    args = {'-1', '--pretty=%B', '@{upstream}'}}
+    }))
+
+    if status == nil then return nil end
 
     local result = {
       untracked_files = {},
       unstaged_changes = {},
       unmerged_changes = {},
       staged_changes = {},
-      stashes = git.stash.parse(outputs[2]),
-      unpulled = util.map(outputs[4], function(x) return { name = x } end),
-      unmerged = util.map(outputs[3], function(x) return { name = x } end),
+      stashes = nil,
+      unpulled = unpulled ~= "" and util.map(vim.split(unpulled, '\n'), function(x) return { name = x } end) or {},
+      unmerged = unmerged ~= "" and util.map(vim.split(unmerged, '\n'), function(x) return { name = x } end) or {},
       head = {
-        message = outputs[5][1],
+        message = vim.split(head, '\n')[1],
         branch = ""
       },
       upstream = nil
     }
 
+    result.stashes = git.stash.parse(vim.split(stash, '\n'))
+
     local function insert_change(list, marker, entry)
-      local matches = vim.fn.matchlist(entry, "\\(.*\\) -> \\(.*\\)")
+      local orig, new = entry:match('^(.-) -> (.*)')
+
       local name, original_name
-      if matches[3] ~= nil and matches[3] ~= "" then
-        name = matches[3]
-        original_name = matches[2]
+      if orig then
+        print('matches', orig, new)
+        name = new
+        original_name = orig
       else
         name = entry
         original_name = nil
@@ -123,10 +72,8 @@ local status = {
       })
     end
 
-    for _, line in pairs(outputs[1]) do
-      local matches = vim.fn.matchlist(line, "\\(.\\{2}\\) \\(.*\\)")
-      local marker = matches[2]
-      local details = matches[3]
+    for _, line in pairs(vim.split(status, '\n')) do
+      local marker, details = line:match('(..) (.*)')
 
       if marker == "##" then
         local tokens = vim.split(details, "...", true)
@@ -134,7 +81,7 @@ local status = {
         if tokens[2] ~= nil then
           result.upstream = {
             branch = vim.split(tokens[2], " ", true)[1],
-            message = outputs[6][1]
+            message = vim.split(upstream, '\n')[1]
           }
         end
       elseif marker == "??" then
@@ -153,25 +100,22 @@ local status = {
     end
 
     return result
-  end,
-  stage = function(name)
-    git.cli.run("add " .. name)
-  end,
-  stage_modified = function()
-    git.cli.run("add -u")
-  end,
-  stage_all = function()
-    git.cli.run("add -A")
-  end,
-  unstage = function(name)
-    git.cli.run("reset " .. name)
-  end,
-  unstage_range = function(name, diff, hunk, from, to)
-    update_range(name, diff, hunk, from, to, true)
-  end,
-  unstage_all = function()
-    git.cli.run("reset")
-  end,
+  end),
+  stage = a.sync(function(name)
+    a.wait(git.cli.exec("add", {name}))
+  end),
+  stage_modified = a.sync(function()
+    a.wait(git.cli.exec("add", {"-u"}))
+  end),
+  stage_all = a.sync(function()
+    a.wait(git.cli.exec("add", {"-A"}))
+  end),
+  unstage = a.sync(function(name)
+    a.wait(git.cli.exec("reset", {name}))
+  end),
+  unstage_all = a.sync(function()
+    a.wait(git.cli.exec("reset"))
+  end),
 }
 
 -- status.stage_range(

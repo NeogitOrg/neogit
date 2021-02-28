@@ -1,14 +1,10 @@
-local cli = require("neogit.lib.git.cli")
-
-local hunk_header_matcher = vim.regex('^@@.*@@')
-
 local function parse_diff(output)
   local header = {}
   local hunks = {}
   local is_header = true
 
   for i=1,#output do
-    if is_header and hunk_header_matcher:match_str(output[i]) then
+    if is_header and output[i]:match('^@@.*@@') then
       is_header = false
     end
 
@@ -31,17 +27,17 @@ local function parse_diff(output)
   for i=1,len do
     local line = hunks[i]
     if not vim.startswith(line, "+++") then
-      local matches = vim.fn.matchlist(line, "^@@ -\\([0-9]*\\),\\?\\([0-9]*\\)\\? +\\([0-9]*\\),\\?\\([0-9]*\\)\\? @@")
+      local index_from, index_len, disk_from, disk_len = line:match('@@ %-(%d+),?(%d*) %+(%d+),?(%d*) @@')
 
-      if #matches ~= 0 then
+      if index_from then
         if hunk ~= nil then
           table.insert(diff.hunks, hunk)
         end
         hunk = {
-          index_from = tonumber(matches[2]),
-          index_len = tonumber(matches[3]) or 1,
-          disk_from = tonumber(matches[4]),
-          disk_len = tonumber(matches[5]) or 1,
+          index_from = tonumber(index_from),
+          index_len = tonumber(index_len) or 1,
+          disk_from = tonumber(disk_from),
+          disk_len = tonumber(disk_len) or 1,
           first = i,
           last = i
         }
@@ -57,39 +53,7 @@ local function parse_diff(output)
 end
 
 local diff = {
-  parse = parse_diff,
-  staged = function(name, original_name, cb)
-    local cmd
-    if original_name ~= nil then
-      cmd = 'diff --cached -- "' .. original_name .. '" "' .. name .. '"'
-    else
-      cmd = 'diff --cached -- "' .. name .. '"'
-    end
-
-    if cb then
-      cli.run(cmd, function(o)
-        cb(parse_diff(o))
-      end)
-    else
-      return parse_diff(cli.run(cmd))
-    end
-  end,
-  unstaged = function(name, original_name, cb)
-    local cmd
-    if original_name ~= nil then
-      cmd = 'diff -- "' .. original_name .. '" "' .. name .. '"'
-    else
-      cmd = 'diff -- "' .. name .. '"'
-    end
-
-    if cb then
-      cli.run(cmd, function(o)
-        cb(parse_diff(o))
-      end)
-    else
-      return parse_diff(cli.run(cmd))
-    end
-  end,
+  parse = parse_diff
 }
 
 return diff

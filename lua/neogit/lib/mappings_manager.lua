@@ -54,7 +54,8 @@ local function new()
             end
             vim.api.nvim_buf_set_keymap(id, m, map_to_vim(k), f_call, {
               silent = true,
-              noremap = true
+              noremap = true,
+              nowait = true
             })
           end
         else
@@ -63,7 +64,8 @@ local function new()
           end
           vim.api.nvim_buf_set_keymap(id, "n", map_to_vim(k), f_call, {
             silent = true,
-            noremap = true
+            noremap = true,
+            nowait = true
           })
         end
       end

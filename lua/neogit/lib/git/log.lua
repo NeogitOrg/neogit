@@ -1,26 +1,35 @@
 local cli = require("neogit.lib.git.cli")
 local util = require("neogit.lib.util")
+local a = require('neogit.async')
 
 return {
-  list = function(options)
-    local output = cli.run("log --oneline " .. options)
+  list = a.sync(function(options)
+    options = vim.split(options, ' ')
+    table.insert(options, 1, '--oneline')
+
+    local output = a.wait(cli.exec("log",  options))
+    output = vim.split(output, '\n')
     local output_len = #output
     local commits = {}
 
     for i=1,output_len do
-      local matches = vim.fn.matchlist(output[i], "^\\([| \\*]*\\)\\([a-zA-Z0-9]*\\) \\((.*)\\)\\? \\?\\(.*\\)")
+      local level, hash, rest = output[i]:match("([| *]*)([a-zA-Z0-9]+) (.*)")
+      if level ~= nil then
+        local remote, message = rest:match("%((.-)%) (.*)")
+        if remote == nil then
+          message = rest
+        end
 
-      if #matches ~= 0 and matches[3] ~= "" then
         local commit = {
-          level = util.str_count(matches[2], "|"),
-          hash = matches[3],
-          remote = matches[4],
-          message = matches[5]
+          level = util.str_count(level, "|"),
+          hash = hash,
+          remote = remote or "",
+          message = message
         }
         table.insert(commits, commit)
       end
     end
 
     return commits
-  end
+  end)
 }

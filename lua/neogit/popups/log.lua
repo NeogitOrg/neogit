@@ -1,6 +1,7 @@
 local popup = require("neogit.lib.popup")
 local Buffer = require("neogit.lib.buffer")
 local git = require("neogit.lib.git")
+local a = require('neogit.async')
 
 local function commits_to_string(commits)
   local result = {}
@@ -131,15 +132,18 @@ local function create()
           key = "l",
           description = "Log current",
           callback = function(popup)
-            local commits = git.log.list(popup.to_cli())
-            Buffer.create({
-              name = "NeogitLog",
-              filetype = "NeogitLog",
-              initialize = function(buffer)
-                local result = commits_to_string(commits)
-                buffer:set_lines(0, -1, false, result)
-              end
-            })
+            a.dispatch(function ()
+              local commits = a.wait(git.log.list(popup.to_cli()))
+              a.wait_for_textlock()
+              Buffer.create({
+                name = "NeogitLog",
+                filetype = "NeogitLog",
+                initialize = function(buffer)
+                  local result = commits_to_string(commits)
+                  buffer:set_lines(0, -1, false, result)
+                end
+              })
+            end)
           end
         },
         {
