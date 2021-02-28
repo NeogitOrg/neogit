@@ -67,6 +67,7 @@ local configurations = {
   commit = config({
     flags = {
       amend = '--amend',
+      only = '--only',
       no_edit = '--no-edit'
     },
     options = {

@@ -156,7 +156,19 @@ local function create()
         {
           key = "w",
           description = "Reword",
-          callback = function() end
+          callback = function()
+            a.dispatch(function ()
+              local msg = a.wait(cli.log.max_count(1).pretty('%B').call())
+              msg = vim.split(msg, '\n')
+
+              a.wait(prompt_commit_message(msg))
+              local _, code = a.wait(cli.commit.commit_message_file(COMMIT_FILE).amend.only.call())
+              if code == 0 then
+                a.wait(uv.fs_unlink(COMMIT_FILE))
+                __NeogitStatusRefresh(true)
+              end
+            end)
+          end
         },
         {
           key = "a",
