@@ -25,6 +25,9 @@ local configurations = {
   log = config({
     flags = {
       oneline = "--oneline",
+      branches = "--branches",
+      remotes = "--remotes",
+      all = "--all"
     },
     options = {
       pretty = "--pretty",
