@@ -399,10 +399,11 @@ function __NeogitStatusRefresh(force)
     refreshing = true
 
     status = a.wait(git.status.get())
-    if status == nil then return end
-    a.wait(load_diffs())
-    a.wait_for_textlock()
-    refresh_status()
+    if status ~= nil then
+      a.wait(load_diffs())
+      a.wait_for_textlock()
+      refresh_status()
+    end
 
     refreshing = false
   end)
