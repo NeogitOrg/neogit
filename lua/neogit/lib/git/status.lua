@@ -28,7 +28,7 @@ local status = {
       git.cli.log.oneline.for_range('..@{upstream}'),
       git.cli.log.max_count(1).pretty('%B'),
       git.cli.log.max_count(1).pretty('%B').for_range('@{upstream}')
-    ).call())
+    ).show_popup(false).call())
 
     if status == nil then return nil end
 

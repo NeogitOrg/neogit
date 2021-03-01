@@ -111,8 +111,9 @@ local function handle_new_cmd(job, popup)
   end
 end
 
-local exec = a.sync(function(cmd, args, cwd, stdin)
+local exec = a.sync(function(cmd, args, cwd, stdin, show_popup)
   args = args or {}
+  if show_popup == nil then show_popup = true end
   table.insert(args, 1, cmd)
 
   local time = os.clock()
@@ -128,7 +129,7 @@ local exec = a.sync(function(cmd, args, cwd, stdin)
     stderr = split(errors, '\n'),
     code = code,
     time = os.clock() - time
-  }, true)
+  }, show_popup)
   --print('git', table.concat(args, ' '), '->', code, errors)
 
   return result, code, errors
@@ -168,6 +169,13 @@ local mt_builder = {
     if action == 'cwd' then
       return function (cwd)
         tbl[k_state].cwd = cwd
+        return tbl
+      end
+    end
+
+    if action == 'show_popup' then
+      return function (show_popup)
+        tbl[k_state].show_popup = show_popup
         return tbl
       end
     end
@@ -215,6 +223,7 @@ local function new_builder(subcommand)
     arguments = {},
     files = {},
     input = nil,
+    show_popup = true,
     cwd = nil
   }
 
@@ -229,7 +238,7 @@ local function new_builder(subcommand)
       table.insert(args, '--')
       for _,f in ipairs(state.files) do table.insert(args, f) end
 
-      return a.wait(exec(subcommand, args, state.cwd, state.input))
+      return a.wait(exec(subcommand, args, state.cwd, state.input, state.show_popup))
     end)
   }, mt_builder)
 end
@@ -237,6 +246,7 @@ end
 local function new_parallel_builder(calls)
   local state = {
     calls = calls,
+    show_popup = true,
     cwd = nil
   }
 
@@ -249,7 +259,7 @@ local function new_parallel_builder(calls)
     if not state.cwd or state.cwd == "" then return end
 
     for _,c in ipairs(state.calls) do
-      c.cwd(state.cwd)
+      c.cwd(state.cwd).show_popup(state.show_popup)
     end
 
     local processes = {}
@@ -267,6 +277,13 @@ local function new_parallel_builder(calls)
       if action == 'cwd' then
         return function (cwd)
           state.cwd = cwd
+          return tbl
+        end
+      end
+
+      if action == 'show_popup' then
+        return function (show_popup)
+          state.show_popup = show_popup
           return tbl
         end
       end
