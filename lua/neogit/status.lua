@@ -1,6 +1,7 @@
 local Buffer = require("neogit.lib.buffer")
 local GitCommandHistory = require("neogit.buffers.git_command_history")
 local git = require("neogit.lib.git")
+local cli = require('neogit.lib.git.cli')
 local util = require("neogit.lib.util")
 local notif = require("neogit.lib.notification")
 local a = require'neogit.async'
@@ -351,19 +352,19 @@ local load_diffs = a.sync(function ()
   local cmds = {}
   for _, c in pairs(unstaged) do
     if c.original_name ~= nil then
-      table.insert(cmds, {cmd = 'diff', args = {'--', c.original_name, c.name}})
+      table.insert(cmds, cli.diff.files(c.original_name, c.name))
     else
-      table.insert(cmds, {cmd = 'diff', args = {'--', c.name}})
+      table.insert(cmds, cli.diff.files(c.name))
     end
   end
   for _, c in pairs(staged) do
     if c.original_name ~= nil then
-      table.insert(cmds, {cmd = 'diff', args = {'--cached', '--', c.original_name, c.name}})
+      table.insert(cmds, cli.diff.cached.files(c.original_name, c.name))
     else
-      table.insert(cmds, {cmd = 'diff', args = {'--cached', '--', c.name}})
+      table.insert(cmds, cli.diff.cached.files(c.name))
     end
   end
-  local results = { a.wait(git.cli.exec_all(cmds)) }
+  local results = { a.wait(git.cli.in_parallel(unpack(cmds)).call()) }
 
   for i=1,unstaged_len do
     local name = unstaged[i].name
@@ -561,7 +562,7 @@ end
 local stage_selection = a.sync(function()
   local _, item, hunk, from, to = get_selection()
   local patch = generate_patch_from_selection(item, hunk, from, to)
-  a.wait(git.apply(patch, {'--cached'}))
+  a.wait(cli.apply.cached.with_patch(patch).call())
 end)
 
 local unstage_selection = a.sync(function()
@@ -570,7 +571,7 @@ local unstage_selection = a.sync(function()
     return
   end
   local patch = generate_patch_from_selection(item, hunk, from, to, true)
-  a.wait(git.apply(patch, {'--reverse', '--cached'}))
+  a.wait(cli.apply.reverse.cached.with_patch(patch).call())
 end)
 
 local function line_is_hunk(line)
@@ -597,7 +598,7 @@ local stage = a.sync(function()
     if on_hunk and section.name ~= "untracked_files" then
       local hunk = get_current_hunk_of_item(item)
       local patch = generate_patch_from_selection(item, hunk)
-      a.wait(git.apply(patch, {'--cached'}))
+      a.wait(cli.apply.cached.with_patch(patch).call())
     else
       a.wait(git.status.stage(item.name))
     end
@@ -625,8 +626,7 @@ local unstage = a.sync(function()
     if on_hunk then
       local hunk = get_current_hunk_of_item(item)
       local patch = generate_patch_from_selection(item, hunk, nil, nil, true)
-      a.wait(git.apply(patch, {'--reverse', '--cached'}))
-      print('after unstaging')
+      a.wait(cli.apply.reverse.cached.with_patch(patch).call())
     else
       a.wait(git.status.unstage(item.name))
     end
@@ -654,9 +654,9 @@ local discard = a.sync(function()
     local section, item, hunk, from, to = get_selection()
     local patch = generate_patch_from_selection(item, hunk, from, to, true)
     if section.name == "staged_changes" then
-      a.wait(git.apply(patch, {'--reverse', '--index'}))
+      a.wait(cli.apply.reverse.index.with_patch(patch).call())
     else
-      a.wait(git.apply(patch, {'--reverse'}))
+      a.wait(cli.apply.reverse.with_path(patch).call())
     end
   elseif section.name == "untracked_files" then
     a.wait_for_textlock()
@@ -671,15 +671,15 @@ local discard = a.sync(function()
       local diff = table.concat(lines, "\n")
       diff = table.concat({'--- a/'..item.name, '+++ b/'..item.name, diff, ""}, "\n")
       if section.name == "staged_changes" then
-        a.wait(git.apply(diff, {'--reverse', '--index'}))
+        a.wait(cli.apply.reverse.index.with_patch(diff).call())
       else
-        a.wait(git.apply(diff, {'--reverse'}))
+        a.wait(cli.apply.reverse.with_patch(diff).call())
       end
     elseif section.name == "unstaged_changes" then
-      a.wait(git.checkout({ files = {item.name} }))
+      a.wait(cli.checkout.files(item.name).call())
     elseif section.name == "staged_changes" then
-      a.wait(git.reset({ files = {item.name} }))
-      a.wait(git.checkout({ files = {item.name} }))
+      a.wait(cli.reset.files(item.name).call())
+      a.wait(cli.checkout.files(item.name).call())
     end
 
   end

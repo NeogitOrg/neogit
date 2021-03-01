@@ -94,6 +94,11 @@ local function str_count(str, target)
   return count
 end
 
+local function split(str, sep)
+  if str == "" then return {} end
+  return vim.split(str, sep)
+end
+
 return {
   inspect = inspect,
   time = time,
@@ -106,5 +111,6 @@ return {
   create_fold = create_fold,
   get_keymaps = get_keymaps,
   print_tbl = print_tbl,
+  split = split
 }
 
