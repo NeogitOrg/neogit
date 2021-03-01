@@ -3,6 +3,17 @@ local notif = require("neogit.lib.notification")
 local git = require("neogit.lib.git")
 local a = require('neogit.async')
 
+local function push_upstream(popup)
+  a.dispatch(function ()
+    local _, code = a.wait(git.cli.push.args(unpack(popup.get_arguments())).call())
+    if code == 0 then
+      a.wait_for_textlock()
+      notif.create "Pushed to pushremote"
+      __NeogitStatusRefresh(true)
+    end
+  end)
+end
+
 local function create()
   popup.create(
     "NeogitPushPopup",
@@ -38,30 +49,12 @@ local function create()
         {
           key = "p",
           description = "Push to pushremote",
-          callback = function(popup)
-            a.dispatch(function ()
-              local _, code = a.wait(git.cli.push.args(unpack(popup.get_arguments())).call())
-              if code == 0 then
-                a.wait_for_textlock()
-                notif.create "Pushed to pushremote"
-                __NeogitStatusRefresh(true)
-              end
-            end)
-          end
+          callback = push_upstream
         },
         {
           key = "u",
           description = "Push to upstream",
-          callback = function(popup)
-            a.dispatch(function ()
-              local _, code = a.wait(git.cli.push.args(unpack(popup.get_arguments())).call())
-              if code == 0 then
-                a.wait_for_textlock()
-                notif.create "Pushed to upstream"
-                __NeogitStatusRefresh(true)
-              end
-            end)
-          end
+          callback = push_upstream
         },
         {
           key = "e",

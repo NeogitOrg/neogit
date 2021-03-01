@@ -3,6 +3,17 @@ local notif = require("neogit.lib.notification")
 local git = require("neogit.lib.git")
 local a = require('neogit.async')
 
+local function pull_upstream(popup)
+  a.dispatch(function ()
+    local _, code = a.wait(git.cli.pull.no_commit.args(unpack(popup.get_arguments())).call())
+    if code == 0 then
+      a.wait_for_textlock()
+      notif.create "Pulled from upstream"
+      __NeogitStatusRefresh(true)
+    end
+  end)
+end
+
 local function create()
   popup.create(
     "NeogitPullPopup",
@@ -20,21 +31,12 @@ local function create()
         {
           key = "p",
           description = "Pull from pushremote",
-          callback = function() end
+          callback = pull_upstream
         },
         {
           key = "u",
           description = "Pull from upstream",
-          callback = function(popup)
-            a.dispatch(function ()
-              local _, code = a.wait(git.cli.pull.no_commit.args(popup.get_arguments()).call())
-              if code == 0 then
-                a.wait_for_textlock()
-                notif.create "Pulled from upstream"
-                __NeogitStatusRefresh(true)
-              end
-            end)
-          end
+          callback = pull_upstream
         },
         {
           key = "e",
