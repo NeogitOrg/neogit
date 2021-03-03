@@ -1,5 +1,7 @@
 # Neogit
 
+![preview](https://user-images.githubusercontent.com/32014449/109874516-8042af00-7c6f-11eb-8afc-65ef52448c7a.png)
+
 A **work-in-progress** Magit clone for Neovim that is geared toward the Vim philosophy.
 
 ## Installation
