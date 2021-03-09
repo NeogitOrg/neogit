@@ -22,6 +22,16 @@ local function spawn(options, cb)
 
   if options.cwd then params.cwd = options.cwd end
   if options.args then params.args = options.args end
+  if options.env then
+    params.env = {}
+    -- setting 'env' completely overrides the parent environment, so we need to
+    -- append all variables that are necessary for git to work in addition to
+    -- all variables from passed object.
+    table.insert(params.env, string.format('%s=%s', 'HOME', os.getenv('HOME')))
+    for k, v in pairs(options.env) do
+      table.insert(params.env, string.format('%s=%s', k, v))
+    end
+  end
 
   local handle, err
   handle, err = vim.loop.spawn(options.cmd, params, function (code, _)
@@ -32,7 +42,7 @@ local function spawn(options, cb)
     process_closed = true
     raise_if_fully_closed()
   end)
-  --print('started process', vim.inspect(options), '->', handle, err, '@'..(params.cwd or '')..'@')
+  --print('started process', vim.inspect(params), '->', handle, err, '@'..(params.cwd or '')..'@')
   if not handle then
     stdout:close()
     stderr:close()

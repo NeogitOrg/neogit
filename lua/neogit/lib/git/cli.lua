@@ -8,6 +8,7 @@ local function config(setup)
   setup.flags = setup.flags or {}
   setup.options = setup.options or {}
   setup.aliases = setup.aliases or {}
+  setup.short_opts = setup.short_opts or {}
   return setup
 end
 
@@ -43,11 +44,24 @@ local configurations = {
   }),
   diff = config({
     flags = {
+      null_terminated = '-z',
       cached = '--cached',
+      name_only = '--name-only'
     },
   }),
   stash = config({ }),
-  reset = config({ }),
+  reset = config({
+    flags = {
+      hard = '--hard',
+    },
+    aliases = {
+      commit = function (tbl)
+        return function (cm)
+          return tbl.args(cm)
+        end
+      end
+    }
+  }),
   checkout = config({ }),
   apply = config({
     flags = {
@@ -82,6 +96,60 @@ local configurations = {
     flags = {
       no_commit = '--no-commit'
     },
+  }),
+  ['read-tree'] = config({
+    flags = {
+      merge = '-m'
+    },
+    options = {
+      index_output = '--index-output'
+    },
+    aliases = {
+      tree = function (tbl)
+        return function (tree)
+          return tbl.args(tree)
+        end
+      end
+    }
+  }),
+  ['write-tree'] = config({}),
+  ['commit-tree'] = config({
+    flags = {
+      no_gpg_sign = "--no-gpg-sign"
+    },
+    short_opts = {
+      parent = "-p",
+      message = "-m"
+    },
+    aliases = {
+      parents = function (tbl)
+        return function (...)
+          for _, p in ipairs({...}) do
+            tbl.parent(p)
+          end
+          return tbl
+        end
+      end,
+      tree = function (tbl)
+        return function (tree)
+          return tbl.args(tree)
+        end
+      end
+    }
+  }),
+  ['update-index'] = config({
+    flags = {
+      add = '--add',
+      remove = '--remove'
+    }
+  }),
+  ['update-ref'] = config({
+    flags = {
+      create_reflog = '--create-reflog'
+    },
+    short_opts = {
+      message = '-m'
+    }
   })
 }
 
@@ -111,7 +179,7 @@ local function handle_new_cmd(job, popup)
   end
 end
 
-local exec = a.sync(function(cmd, args, cwd, stdin, show_popup)
+local exec = a.sync(function(cmd, args, cwd, stdin, env, show_popup)
   args = args or {}
   if show_popup == nil then show_popup = true end
   table.insert(args, 1, cmd)
@@ -120,6 +188,7 @@ local exec = a.sync(function(cmd, args, cwd, stdin, show_popup)
   local result, code, errors = a.wait(process.spawn({
     cmd = 'git',
     args = args,
+    env = env,
     input = stdin,
     cwd = cwd or a.wait(git_root())
   }))
@@ -173,6 +242,15 @@ local mt_builder = {
       end
     end
 
+    if action == 'env' then
+      return function (cfg)
+        for k, v in pairs(cfg) do
+          tbl[k_state].env[k] = v
+        end
+        return tbl
+      end
+    end
+
     if action == 'show_popup' then
       return function (show_popup)
         tbl[k_state].show_popup = show_popup
@@ -192,6 +270,14 @@ local mt_builder = {
         else
           table.insert(tbl[k_state].options, tbl[k_config].options[action])
         end
+        return tbl
+      end
+    end
+
+    if tbl[k_config].short_opts[action] then
+      return function (value)
+        table.insert(tbl[k_state].options, tbl[k_config].short_opts[action])
+        table.insert(tbl[k_state].options, value)
         return tbl
       end
     end
@@ -224,7 +310,8 @@ local function new_builder(subcommand)
     files = {},
     input = nil,
     show_popup = true,
-    cwd = nil
+    cwd = nil,
+    env = {}
   }
 
   return setmetatable({
@@ -235,10 +322,10 @@ local function new_builder(subcommand)
       local args = {}
       for _,o in ipairs(state.options) do table.insert(args, o) end
       for _,a in ipairs(state.arguments) do table.insert(args, a) end
-      table.insert(args, '--')
+      if #state.files > 0 then table.insert(args, '--') end
       for _,f in ipairs(state.files) do table.insert(args, f) end
 
-      return a.wait(exec(subcommand, args, state.cwd, state.input, state.show_popup))
+      return a.wait(exec(subcommand, args, state.cwd, state.input, state.env, state.show_popup))
     end)
   }, mt_builder)
 end
