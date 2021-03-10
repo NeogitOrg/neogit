@@ -193,7 +193,7 @@ local function toggle(buf_handle)
 end
 
 
-local function create_popup(id, switches, options, actions)
+local function create_popup(id, switches, options, actions, env)
   local function collect_arguments()
     local flags = {}
     for _, switch in pairs(switches) do
@@ -214,6 +214,7 @@ local function create_popup(id, switches, options, actions)
     switches = switches,
     options = options,
     actions = actions,
+    env = env,
     to_cli = function()
       local flags = collect_arguments()
       return table.concat(flags, " ")

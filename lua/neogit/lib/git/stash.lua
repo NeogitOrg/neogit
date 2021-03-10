@@ -14,13 +14,12 @@ local function trim_null_terminator(str)
   return string.gsub(str, "^(.-)%z*$", "%1")
 end
 
-local stash = a.sync(function (include)
+local perform_stash = a.sync(function (include)
   if not include then return end
 
   local index = a.wait(
     cli['commit-tree']
       .no_gpg_sign
-      .message('test')
       .parent('HEAD')
       .tree(a.wait(cli['write-tree'].call()))
       .call())
@@ -32,7 +31,6 @@ local stash = a.sync(function (include)
       .args(index)
       .call())
 
-  print(vim.inspect(include))
   if include.worktree then
     local files = a.wait(
       cli.diff
@@ -59,7 +57,6 @@ local stash = a.sync(function (include)
   local tree = a.wait(
     cli['commit-tree']
       .no_gpg_sign
-      .message('teststash')
       .parents('HEAD', index)
       .tree(a.wait(cli['write-tree'].call()))
       .env({
@@ -67,15 +64,16 @@ local stash = a.sync(function (include)
       })
       .call())
 
-  print(index, tree)
   a.wait(
     cli['update-ref']
-      .message('stashentry')
       .create_reflog
       .args('refs/stash', tree)
       .call())
 
   if include.worktree and include.index then
+    -- disabled because stashing both worktree and index via this function
+    -- leaves a malformed stash entry, so reverting the changes is
+    -- destructive until fixed.
     --a.wait(
       --cli.reset
         --.hard
@@ -103,10 +101,57 @@ end)
 
 return {
   parse = parse,
-  stash_all = function ()
-    return stash({ worktree = true, index = true })
-  end,
+  stash_all = a.sync(function ()
+    a.wait(cli.stash.call())
+    -- this should work, but for some reason doesn't.
+    --return perform_stash({ worktree = true, index = true })
+  end),
   stash_index = function ()
-    return stash({ worktree = false, index = true })
-  end
+    return perform_stash({ worktree = false, index = true })
+  end,
+
+  pop = a.sync(function (stash)
+    local _, code = a.wait(cli.stash
+      .apply
+      .index
+      .args(stash)
+      .show_popup(false)
+      .call())
+
+    if code == 0 then
+      a.wait(cli.stash
+        .drop
+        .args(stash)
+        .call())
+    else
+      a.wait(cli.stash
+        .apply
+        .args(stash)
+        .call())
+    end
+  end),
+
+  apply = a.sync(function (stash)
+    local _, code = a.wait(cli.stash
+      .apply
+      .index
+      .args(stash)
+      .show_popup(false)
+      .call())
+
+    if code ~= 0 then
+      a.wait(cli.stash
+        .apply
+        .args(stash)
+        .call())
+    end
+  end),
+
+  drop = a.sync(function (stash)
+    a.wait(cli.stash
+      .drop
+      .args(stash)
+      .call())
+  end)
+
 }

@@ -49,7 +49,13 @@ local configurations = {
       name_only = '--name-only'
     },
   }),
-  stash = config({ }),
+  stash = config({
+    flags = {
+      apply = 'apply',
+      drop = 'drop',
+      index = '--index'
+    }
+  }),
   reset = config({
     flags = {
       hard = '--hard',
