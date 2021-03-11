@@ -22,12 +22,13 @@ local function spawn(options, cb)
 
   if options.cwd then params.cwd = options.cwd end
   if options.args then params.args = options.args end
-  if options.env then
+  if options.env and #options.env > 0 then
     params.env = {}
     -- setting 'env' completely overrides the parent environment, so we need to
     -- append all variables that are necessary for git to work in addition to
     -- all variables from passed object.
     table.insert(params.env, string.format('%s=%s', 'HOME', os.getenv('HOME')))
+    table.insert(params.env, string.format('%s=%s', 'GNUPGHOME', os.getenv('GNUPGHOME')))
     for k, v in pairs(options.env) do
       table.insert(params.env, string.format('%s=%s', k, v))
     end
