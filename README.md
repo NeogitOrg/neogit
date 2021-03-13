@@ -8,7 +8,7 @@ A **work-in-progress** Magit clone for Neovim that is geared toward the Vim phil
 
 | Plugin Manager                                       | Command                                                                        |
 |------------------------------------------------------|--------------------------------------------------------------------------------|
-| [Packer](https://github.com/wbthomason/packer.nvim)  | `use 'TimUntersberger/neogit'`                                               |
+| [Packer](https://github.com/wbthomason/packer.nvim)  | `use 'TimUntersberger/neogit'`                                                 |
 | [Vim-plug](https://github.com/junegunn/vim-plug)     | `Plug 'TimUntersberger/neogit'`                                                |
 | [NeoBundle](https://github.com/Shougo/neobundle.vim) | `NeoBundle 'TimUntersberger/neogit'`                                           |
 | [Vundle](https://github.com/VundleVim/Vundle.vim)    | `Bundle 'TimUntersberger/neogit'`                                              |
@@ -53,6 +53,7 @@ The create function takes 1 optional argument that can be one of the following v
 | L            | Open log popup                                   |
 | p            | Open pull popup                                  |
 | P            | Open push popup                                  |
+| Z            | Open stash popup                                 |
 | x            | Discard changes (also supports discarding hunks) |
 | \<C-r>       | Refresh Buffer                                   |
 | \<C-C>\<C-C> | Commit (when writing a commit message)           |
