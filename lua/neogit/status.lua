@@ -776,6 +776,7 @@ local function create(kind)
           refresh_status()
         end)
       end
+      mappings["?"] = require("neogit.popups.help").create
       mappings["c"] = require("neogit.popups.commit").create
       mappings["L"] = require("neogit.popups.log").create
       mappings["P"] = require("neogit.popups.push").create

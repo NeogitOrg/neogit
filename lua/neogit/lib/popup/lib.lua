@@ -98,7 +98,8 @@ local function draw_popup(popup)
 
   vim.api.nvim_put(output, "l", false, false)
 
-  popup.action_highlight = vim.fn.matchadd("Operator", " \\zs[a-zA-Z]\\ze ")
+  popup.action_highlight = vim.fn.matchadd("Operator", " \\zs[a-zA-Z$]\\ze ")
+  popup.action_highlight = vim.fn.matchadd("Operator", " \\zs<[a-zA-Z-]*>\\ze ")
   popup.key_highlight = vim.fn.matchadd("Operator", "^ \\(-\\|=\\)[a-zA-Z]")
   popup.title_highlight = vim.fn.matchadd("Function", "^[a-zA-Z]\\S*")
 
