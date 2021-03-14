@@ -35,7 +35,7 @@ local function create()
           description = "Stash",
           callback = function(popup)
             require('neogit.popups.stash').create()
-            popups.stash.create()
+            popups.stash.create(vim.fn.getpos('.'))
           end
         },
       },
