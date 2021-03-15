@@ -44,6 +44,7 @@ The create function takes 1 optional argument that can be one of the following v
 | Tab          | Toggle diff                                      |
 | 1, 2, 3, 4   | Set a foldlevel                                  |
 | $            | Command history                                  |
+| b            | Branch popup                                     |
 | s            | Stage (also supports staging selection/hunk)     |
 | S            | Stage unstaged changes                           |
 | \<C-s>       | Stage Everything                                 |
