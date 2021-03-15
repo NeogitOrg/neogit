@@ -60,6 +60,15 @@ local function create()
       },
       {
         {
+          key = "b",
+          description = "Branch",
+          callback = function (popup)
+            require('neogit.popups.branch').create()
+          end
+        }
+      },
+      {
+        {
           key = "$",
           description = "Git Command History",
           callback = function(popup)
