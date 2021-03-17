@@ -776,13 +776,19 @@ local function create(kind)
           refresh_status()
         end)
       end
-      mappings["?"] = require("neogit.popups.help").create
+      mappings["?"] = function ()
+        local pos = vim.fn.getpos('.')
+        pos[1] = vim.api.nvim_get_current_buf()
+        require("neogit.popups.help").create(pos)
+      end
       mappings["c"] = require("neogit.popups.commit").create
       mappings["L"] = require("neogit.popups.log").create
       mappings["P"] = require("neogit.popups.push").create
       mappings["p"] = require("neogit.popups.pull").create
       mappings["Z"] = function ()
-        require('neogit.popups.stash').create(vim.fn.getpos('.'))
+        local pos = vim.fn.getpos('.')
+        pos[1] = vim.api.nvim_get_current_buf()
+        require('neogit.popups.stash').create(pos)
       end
       mappings["x"] = { "nv", function () a.run(discard) end, true }
 
