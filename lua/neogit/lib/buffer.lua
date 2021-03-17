@@ -228,6 +228,9 @@ function Buffer.create(config)
     buffer:set_option("readonly", true)
   end
 
+  -- This sets fold styling for Neogit windows without overriding user styling
+  vim.api.nvim_exec(buffer.handle .. "bufdo setlocal winhl=Folded:NeogitFold", true)
+
   return buffer
 end
 

@@ -46,6 +46,8 @@ hi def NeogitDiffContextHighlight ctermbg=4 guibg=#333333
 hi def NeogitHunkHeader guifg=#cccccc guibg=#404040
 hi def NeogitHunkHeaderHighlight guifg=#cccccc guibg=#4d4d4d
 
+hi def NeogitFold guifg=None guibg=None
+
 sign define NeogitDiffContextHighlight linehl=NeogitDiffContextHighlight
 sign define NeogitHunkHeader linehl=NeogitHunkHeader
 sign define NeogitHunkHeaderHighlight linehl=NeogitHunkHeaderHighlight
@@ -55,4 +57,3 @@ sign define NeogitDiffDelete linehl=NeogitDiffDelete
 sign define NeogitDiffDeleteHighlight linehl=NeogitDiffDeleteHighlight
 
 "TODO: find a better way to do this
-hi Folded guibg=None guifg=None
