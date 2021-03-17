@@ -1,64 +1,13 @@
 local eq = assert.are.same
 local status = require'neogit.status'
-
--- very naiive implementation, we only use this to generate unique folder names
-math.randomseed(os.clock()^5)
-local function random_string(length)
-	local res = ""
-	for _ = 1, length do
-		res = res .. string.char(math.random(97, 122))
-	end
-	return res
-end
-
-local function prepare_repository(dir)
-  vim.cmd('silent !cp -r tests/.repo/ /tmp/'..dir)
-  vim.cmd('cd /tmp/'..dir)
-  vim.cmd('silent !cp -r .git.orig/ .git/')
-end
-
-local function cleanup_repository(dir)
-  vim.cmd('cd -')
-  vim.cmd('silent !rm -rf /tmp/'..dir)
-end
-
-local function in_prepared_repo(cb)
-  return function ()
-    local dir = 'neogit_test_'..random_string(5)
-    prepare_repository(dir)
-    vim.cmd('Neogit')
-    status.wait_on_refresh()
-    local _, err = pcall(cb)
-    cleanup_repository(dir)
-    if err ~= nil then
-      error(err)
-    end
-  end
-end
+local harness = require'tests.git_harness'
+local in_prepared_repo = harness.in_prepared_repo
+local get_git_status = harness.get_git_status
+local get_git_diff = harness.get_git_diff
 
 local function act(normal_cmd)
   vim.cmd('normal '..normal_cmd)
   status.wait_on_current_operation()
-end
-
-local function get_git_status(files)
-  local result = vim.api.nvim_exec('!git status -s --porcelain=1 -- ' .. (files or ''), true)
-  local lines = vim.split(result, '\n')
-  local output = {}
-  for i=3,#lines do
-    table.insert(output, lines[i])
-  end
-  return table.concat(output, '\n')
-end
-
-local function get_git_diff(files, flags)
-  local result = vim.api.nvim_exec('!git diff '..(flags or '')..' -- ' ..(files or ''), true)
-  local lines = vim.split(result, '\n')
-  local output = {}
-  for i=5,#lines do
-    table.insert(output, lines[i])
-  end
-  return table.concat(output, '\n')
 end
 
 describe('status buffer', function ()

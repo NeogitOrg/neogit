@@ -68,7 +68,23 @@ local configurations = {
       end
     }
   }),
-  checkout = config({ }),
+  checkout = config({
+    short_opts = {
+      b = '-b',
+    },
+    aliases = {
+      branch = function (tbl)
+        return function (branch)
+          return tbl.args(branch)
+        end
+      end,
+      new_branch = function (tbl)
+        return function (branch)
+          return tbl.b(branch)
+        end
+      end
+    }
+  }),
   apply = config({
     flags = {
       cached = '--cached',
@@ -101,6 +117,13 @@ local configurations = {
   pull = config({
     flags = {
       no_commit = '--no-commit'
+    },
+  }),
+  branch = config({
+    flags = {
+      list = '--list',
+      all = '-a',
+      remotes = '-r'
     },
   }),
   ['read-tree'] = config({

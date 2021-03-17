@@ -790,6 +790,7 @@ local function create(kind)
         pos[1] = vim.api.nvim_get_current_buf()
         require('neogit.popups.stash').create(pos)
       end
+      mappings["b"] = require('neogit.popups.branch').create
       mappings["x"] = { "nv", function () a.run(discard) end, true }
 
       __NeogitStatusRefresh(true)
