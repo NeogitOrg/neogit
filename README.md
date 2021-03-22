@@ -25,8 +25,8 @@ $ git clone --depth 1 https://github.com/TimUntersberger/neogit $XDG_CONFIG_HOME
 You can either open neogit by using the `Neogit` command 
 
 ```vim
-Neogit -- uses tab
-Neogit kind=<kind> -- override kind
+Neogit " uses tab
+Neogit kind=<kind> " override kind
 ```
 
 or using the lua api:
