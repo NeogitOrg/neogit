@@ -22,12 +22,19 @@ $ git clone --depth 1 https://github.com/TimUntersberger/neogit $XDG_CONFIG_HOME
 
 ## Usage
 
-You can either open neogit by using the `Neogit` command or using the lua api:
+You can either open neogit by using the `Neogit` command 
+
+```vim
+Neogit -- uses tab
+Neogit kind=<kind> -- override kind
+```
+
+or using the lua api:
 
 ```lua
 local neogit = require('neogit')
 
-neogit.status.create(<kind>)
+neogit.status.create("<kind>")
 ```
 
 The create function takes 1 optional argument that can be one of the following values:
@@ -35,7 +42,6 @@ The create function takes 1 optional argument that can be one of the following v
 * tab (default)
 * floating (This currently doesn't work with popups)
 * split
-
 
 ## Status Keybindings
 
@@ -59,6 +65,53 @@ The create function takes 1 optional argument that can be one of the following v
 | x            | Discard changes (also supports discarding hunks) |
 | \<C-r>       | Refresh Buffer                                   |
 | \<C-C>\<C-C> | Commit (when writing a commit message)           |
+
+## Configuration
+
+You can configure neogit by running the `neogit.setup` function.
+
+```lua
+local neogit = require("neogit")
+
+neogit.setup {
+  -- override/add mappings
+  mappings = {
+    -- modify status buffer mappings
+    status = {
+      -- Adds a mapping with "B" as key that does the "BranchPopup" command
+      ["B"] = "BranchPopup",
+      -- Removes the default mapping of "s"
+      ["s"] = "",
+    }
+  }
+}
+```
+
+Right now only the status buffer supports custom mappings. The other popups will follow shortly.
+
+List of status commands:
+
+* Close
+* Depth1 (Set foldlevel to 1)
+* Depth2 (Set foldlevel to 2)
+* Depth3 (Set foldlevel to 3)
+* Depth4 (Set foldlevel to 4)
+* Toggle
+* Discard (Normal and visual mode)
+* Stage (Normal and visual mode)
+* StageUnstaged
+* StageAll
+* Unstage (Normal and visual mode)
+* UnstageStaged
+* CommandHistory
+* RefreshBuffer
+* HelpPopup
+* PullPopup
+* PushPopup
+* CommitPopup
+* LogPopup
+* StashPopup
+* BranchPopup
 
 ## Contextual Highlighting
 
