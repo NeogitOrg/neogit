@@ -109,6 +109,7 @@ local function parse_command_args(...)
   end
   if kind ~= 'tab' and kind ~= 'floating' and kind ~= 'split' then
     vim.api.nvim_err_writeln('Invalid kind')
+    kind = 'tab'
   end
   return kind
 end
