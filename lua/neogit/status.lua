@@ -689,7 +689,6 @@ local discard = a.sync(function()
 end)
 
 local function create(kind)
-  kind = kind or 'tab'
   if status_buffer then
     status_buffer:focus()
     return

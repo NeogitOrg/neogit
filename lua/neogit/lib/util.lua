@@ -99,6 +99,21 @@ local function split(str, sep)
   return vim.split(str, sep)
 end
 
+local function parse_command_args(...)
+  local args = {...}
+  local kind = 'tab'
+  for _, val in pairs(args) do
+    if string.find(val, 'kind=') then
+      kind = string.sub(val, 6)
+    end
+  end
+  if kind ~= 'tab' and kind ~= 'floating' and kind ~= 'split' then
+    vim.api.nvim_err_writeln('Invalid kind')
+    kind = 'tab'
+  end
+  return kind
+end
+
 return {
   inspect = inspect,
   time = time,
@@ -111,6 +126,7 @@ return {
   create_fold = create_fold,
   get_keymaps = get_keymaps,
   print_tbl = print_tbl,
-  split = split
+  split = split,
+  parse_command_args = parse_command_args
 }
 
