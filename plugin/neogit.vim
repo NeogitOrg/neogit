@@ -16,4 +16,4 @@ augroup Neogit
   au DirChanged * lua vim.defer_fn(function() __NeogitStatusRefresh(true) end, 0)
 augroup END
 
-command! -nargs=0 Neogit :lua require'neogit.status'.create()<CR>
+command! -nargs=* Neogit lua require'neogit.status'.create(require'neogit.lib.util'.parse_command_args(<f-args>))<CR>
