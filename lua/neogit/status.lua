@@ -688,8 +688,23 @@ local discard = a.sync(function()
   __NeogitStatusRefresh(true)
 end)
 
-local function create(kind)
+local function create(...)
+  local args = {...}
+  local kind = nil
+
+  for _, val in pairs(args) do
+    local kindpos = string.find(val, "kind=")
+    if kindpos then
+      kind = string.sub(val, 6)
+    end
+  end
+
   kind = kind or 'tab'
+  if kind ~= 'tab' or kind ~= 'floating' or kind ~= 'split' then
+    vim.api.nvim_err_writeln("Invalid kind")
+    return
+  end
+
   if status_buffer then
     status_buffer:focus()
     return
