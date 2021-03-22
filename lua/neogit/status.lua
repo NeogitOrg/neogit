@@ -4,6 +4,7 @@ local git = require("neogit.lib.git")
 local cli = require('neogit.lib.git.cli')
 local util = require("neogit.lib.util")
 local notif = require("neogit.lib.notification")
+local config = require("neogit.config")
 local a = require'neogit.async'
 
 local refreshing = false
@@ -688,6 +689,97 @@ local discard = a.sync(function()
   __NeogitStatusRefresh(true)
 end)
 
+local cmd_func_map = {
+  ["Close"] = function()
+    notif.delete_all()
+    vim.defer_fn(function ()
+      status_buffer:close()
+    end, 0)
+  end,
+  ["Depth1"] = function()
+    vim.cmd("set foldlevel=0")
+    vim.cmd("norm zz")
+  end,
+  ["Depth2"] = function()
+    vim.cmd("set foldlevel=1")
+    vim.cmd("norm zz")
+  end,
+  ["Depth3"] = function()
+    vim.cmd("set foldlevel=1")
+    vim.cmd("set foldlevel=2")
+    vim.cmd("norm zz")
+  end,
+  ["Depth4"] = function()
+    vim.cmd("set foldlevel=1")
+    vim.cmd("set foldlevel=3")
+    vim.cmd("norm zz")
+  end,
+  ["Toggle"] = toggle,
+  ["Discard"] = { "nv", function () a.run(discard) end, true },
+  ["Stage"] = { "nv", function () a.run(stage) end, true },
+  ["StageUnstaged"] = function ()
+    a.dispatch(function()
+      for _,c in pairs(status.unstaged_changes) do
+        table.insert(status.staged_changes, c)
+      end
+      status.unstaged_changes = {}
+      a.wait(git.status.stage_modified())
+      a.wait_for_textlock()
+      refresh_status()
+    end)
+  end,
+  ["StageAll"] = function ()
+    a.dispatch(function()
+      for _,c in pairs(status.unstaged_changes) do
+        table.insert(status.staged_changes, c)
+      end
+      for _,c in pairs(status.untracked_files) do
+        table.insert(status.staged_changes, c)
+      end
+      status.unstaged_changes = {}
+      status.untracked_files = {}
+      a.wait(git.status.stage_all())
+      a.wait_for_textlock()
+      refresh_status()
+    end)
+  end,
+  ["Unstage"] = { "nv", function () a.run(unstage) end, true },
+  ["UnstageStaged"] = function ()
+    a.dispatch(function()
+      for _,c in pairs(status.staged_changes) do
+        if c.type == "new file" then
+          table.insert(status.untracked_files, c)
+        else
+          table.insert(status.unstaged_changes, c)
+        end
+      end
+      status.staged_changes = {}
+      a.wait(git.status.unstage_all())
+      a.wait_for_textlock()
+      refresh_status()
+    end)
+  end,
+  ["CommandHistory"] = function()
+    GitCommandHistory:new():show()
+  end,
+  ["RefreshBuffer"] = function() __NeogitStatusRefresh(true) end,
+  ["HelpPopup"] = function ()
+    local pos = vim.fn.getpos('.')
+    pos[1] = vim.api.nvim_get_current_buf()
+    require("neogit.popups.help").create(pos)
+  end,
+  ["PullPopup"] = require("neogit.popups.pull").create,
+  ["PushPopup"] = require("neogit.popups.push").create,
+  ["CommitPopup"] = require("neogit.popups.commit").create,
+  ["LogPopup"] = require("neogit.popups.log").create,
+  ["StashPopup"] = function ()
+    local pos = vim.fn.getpos('.')
+    pos[1] = vim.api.nvim_get_current_buf()
+    require("neogit.popups.stash").create(pos)
+  end,
+  ["BranchPopup"] = require("neogit.popups.branch").create,
+}
+
 local function create(kind)
   kind = kind or 'tab'
   if status_buffer then
@@ -704,94 +796,11 @@ local function create(kind)
 
       local mappings = buffer.mmanager.mappings
 
-      mappings["q"] = function()
-        notif.delete_all()
-        vim.defer_fn(function ()
-          status_buffer:close()
-        end, 0)
+      for key, val in pairs(config.values.mappings.status) do
+        if val ~= "" then
+          mappings[key] = cmd_func_map[val]
+        end
       end
-      mappings["1"] = function()
-        vim.cmd("set foldlevel=0")
-        vim.cmd("norm zz")
-      end
-      mappings["2"] = function()
-        vim.cmd("set foldlevel=1")
-        vim.cmd("norm zz")
-      end
-      mappings["3"] = function()
-        vim.cmd("set foldlevel=1")
-        vim.cmd("set foldlevel=2")
-        vim.cmd("norm zz")
-      end
-      mappings["4"] = function()
-        vim.cmd("set foldlevel=1")
-        vim.cmd("set foldlevel=3")
-        vim.cmd("norm zz")
-      end
-      mappings["tab"] = toggle
-      mappings["s"] = { "nv", function () a.run(stage) end, true }
-      mappings["S"] = function ()
-        a.dispatch(function()
-          for _,c in pairs(status.unstaged_changes) do
-            table.insert(status.staged_changes, c)
-          end
-          status.unstaged_changes = {}
-          a.wait(git.status.stage_modified())
-          a.wait_for_textlock()
-          refresh_status()
-        end)
-      end
-      mappings["control-s"] = function ()
-        a.dispatch(function()
-          for _,c in pairs(status.unstaged_changes) do
-            table.insert(status.staged_changes, c)
-          end
-          for _,c in pairs(status.untracked_files) do
-            table.insert(status.staged_changes, c)
-          end
-          status.unstaged_changes = {}
-          status.untracked_files = {}
-          a.wait(git.status.stage_all())
-          a.wait_for_textlock()
-          refresh_status()
-        end)
-      end
-      mappings["$"] = function()
-        GitCommandHistory:new():show()
-      end
-      mappings["control-r"] = function() __NeogitStatusRefresh(true) end
-      mappings["u"] = { "nv", function () a.run(unstage) end, true }
-      mappings["U"] = function ()
-        a.dispatch(function()
-          for _,c in pairs(status.staged_changes) do
-            if c.type == "new file" then
-              table.insert(status.untracked_files, c)
-            else
-              table.insert(status.unstaged_changes, c)
-            end
-          end
-          status.staged_changes = {}
-          a.wait(git.status.unstage_all())
-          a.wait_for_textlock()
-          refresh_status()
-        end)
-      end
-      mappings["?"] = function ()
-        local pos = vim.fn.getpos('.')
-        pos[1] = vim.api.nvim_get_current_buf()
-        require("neogit.popups.help").create(pos)
-      end
-      mappings["c"] = require("neogit.popups.commit").create
-      mappings["L"] = require("neogit.popups.log").create
-      mappings["P"] = require("neogit.popups.push").create
-      mappings["p"] = require("neogit.popups.pull").create
-      mappings["Z"] = function ()
-        local pos = vim.fn.getpos('.')
-        pos[1] = vim.api.nvim_get_current_buf()
-        require('neogit.popups.stash').create(pos)
-      end
-      mappings["b"] = require('neogit.popups.branch').create
-      mappings["x"] = { "nv", function () a.run(discard) end, true }
 
       __NeogitStatusRefresh(true)
     end

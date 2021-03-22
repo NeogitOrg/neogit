@@ -18,7 +18,7 @@ local get_commit_message = a.wrap(function (content, cb)
 
       local mappings = buffer.mmanager.mappings
 
-      mappings["control-c control-c"] = function()
+      mappings["<c-c><c-c>"] = function()
         vim.cmd([[
           silent set buftype=
           silent g/^#/d
