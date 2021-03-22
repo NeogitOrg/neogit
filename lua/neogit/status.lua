@@ -700,7 +700,7 @@ local function create(...)
   end
 
   kind = kind or 'tab'
-  if kind ~= 'tab' or kind ~= 'floating' or kind ~= 'split' then
+  if kind ~= 'tab' and kind ~= 'floating' and kind ~= 'split' then
     vim.api.nvim_err_writeln("Invalid kind")
     return
   end
