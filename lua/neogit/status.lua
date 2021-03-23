@@ -406,6 +406,8 @@ function __NeogitStatusRefresh(force)
       refresh_status()
     end
 
+    vim.cmd [[do <nomodeline> User NeogitStatusRefreshed]]
+
     refreshing = false
   end)
 

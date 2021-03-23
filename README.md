@@ -125,6 +125,18 @@ hi def NeogitHunkHeaderHighlight guifg=#cccccc guibg=#4d4d4d
 ```
 You can override them to fit your colorscheme by creating a `syntax/NeogitStatus.vim` in your vim configuration.
 
+## Events
+
+Neogit emits a `NeogitStatusRefreshed` event whenever the status gets reloaded.
+
+You can listen to the event using the following code:
+
+```vim
+autocmd User NeogitStatusRefreshed echom "Hello World!"
+```
+
+Further information can be found under `:h autocmd`.
+
 ## Todo
 
 The todo file does not represent ALL of the missing features. This file just shows the features which I noticed were missing and I have to implement. This file will grow in the future.
