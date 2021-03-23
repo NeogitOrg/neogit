@@ -10,12 +10,4 @@ local neogit = {
   end
 }
 
-neogit.setup {
-  mappings = {
-    status = {
-      ["b"] = ""
-    }
-  }
-}
-
 return neogit
