@@ -781,6 +781,8 @@ local cmd_func_map = {
 }
 
 local function create(kind)
+  kind = kind or "tab"
+
   if status_buffer then
     status_buffer:focus()
     return
