@@ -168,7 +168,9 @@ Further information can be found under `:h autocmd`.
 
 ## Todo
 
-The todo file does not represent ALL of the missing features. This file just shows the features which I noticed were missing and I have to implement. This file will grow in the future.
+**Note: This file is no longer being updated.**
+
+The todo file does not represent ALL of the missing features. This file just shows the features which I noticed were missing and I have to implement.
 
 [TODO](./todo.md)
 
