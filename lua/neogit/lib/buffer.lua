@@ -167,6 +167,9 @@ function Buffer.create(config)
   elseif kind == "split" then
     vim.cmd("below new")
     buffer = Buffer:new(vim.api.nvim_get_current_buf())
+  elseif kind == "vsplit" then
+    vim.cmd("bot vnew")
+    buffer = Buffer:new(vim.api.nvim_get_current_buf())
   elseif kind == "floating" then
     -- Creates the border window
     local vim_height = vim.api.nvim_eval [[&lines]]
