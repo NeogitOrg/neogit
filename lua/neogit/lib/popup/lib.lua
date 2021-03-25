@@ -79,16 +79,24 @@ local function draw_popup(popup)
 
   for i=1,actions_grid_height do
     local result = " "
-    for _, col in pairs(columns) do
+    for index, col in pairs(columns) do
       local item = col.items[i]
+
+      local next_col = columns[index + 1]
+      local has_neighbour = next_col and col.items and item and next_col.items[i]
+
       if item == nil then
-        local key = util.str_right_pad("", col.k_width + 1, " ")
-        local description = util.str_right_pad("", col.d_width + 6, " ")
+        local key = next_col and util.str_right_pad("", col.k_width + 1, " ") or ""
+        local description =  next_col
+          and util.str_right_pad("", col.d_width + 6, " ")
+          or ""
 
         result = result .. key .. description
       else
         local key = util.str_right_pad(item.key, col.k_width + 1, " ")
-        local description = util.str_right_pad(item.description, col.d_width + 6, " ")
+        local description = has_neighbour
+          and util.str_right_pad(item.description, col.d_width + 6, " ")
+          or item.description
 
         result = result .. key .. description
       end
