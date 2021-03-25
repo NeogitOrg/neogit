@@ -95,10 +95,10 @@ local function toggle()
     local line = item ~= nil and item.first or section.first
 
     local on_hunk = item ~= nil and line_is_hunk(vim.fn.getline('.'))
-    
+
 
     if on_hunk then
-      local ignored_sections = { "untracked_files", "unmerged_changes", "stashes" }
+      local ignored_sections = { "untracked_files", "stashes", "unpulled", "unmerged" }
 
       for _, val in pairs(ignored_sections) do
         if val == section.name then
