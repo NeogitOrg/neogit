@@ -23,9 +23,6 @@ local neogit = {
     end
   end,
   setup = function(opts)
-    vim.cmd("hi NeogitNotificationInfo guifg=#80ff95")
-    vim.cmd("hi NeogitNotificationWarning guifg=#fff454")
-    vim.cmd("hi NeogitNotificationError guifg=#c44323")
     config.values = vim.tbl_deep_extend("force", config.values, opts)
     if not config.values.disable_signs then
       signs.setup()
