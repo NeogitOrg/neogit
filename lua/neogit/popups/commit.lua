@@ -1,5 +1,6 @@
 local popup = require("neogit.lib.popup")
 local cli = require("neogit.lib.git.cli")
+local input = require("neogit.lib.input")
 local Buffer = require("neogit.lib.buffer")
 local a = require('neogit.async')
 local uv = require('neogit.async.uv')
@@ -11,22 +12,37 @@ local get_commit_message = a.wrap(function (content, cb)
   Buffer.create {
     name = COMMIT_FILE,
     filetype = "gitcommit",
+    buftype = "",
     modifiable = true,
     readonly = false,
     initialize = function(buffer)
       buffer:set_lines(0, -1, false, content)
+      vim.cmd("w!")
 
-      local mappings = buffer.mmanager.mappings
+      local written = false
 
-      mappings["<c-c><c-c>"] = function()
-        vim.cmd([[
-          silent set buftype=
-          silent g/^#/d
-          silent w!
-          silent bw!
-        ]])
+      _G.__NEOGIT_COMMIT_BUFFER_CB_WRITE = function()
+        written = true
+      end
 
-        cb()
+      _G.__NEOGIT_COMMIT_BUFFER_CB_UNLOAD = function()
+        if written then
+          if input.get_confirmation("Are you sure you want to commit?") then
+            cb()
+          else
+            vim.cmd("1,$d")
+            vim.cmd("w!")
+          end
+        end
+        _G.__NEOGIT_COMMIT_BUFFER_CB_WRITE = nil
+        _G.__NEOGIT_COMMIT_BUFFER_CB_UNLOAD = nil
+      end
+
+      buffer:define_autocmd("BufWritePost", "lua __NEOGIT_COMMIT_BUFFER_CB_WRITE()")
+      buffer:define_autocmd("BufUnload", "lua __NEOGIT_COMMIT_BUFFER_CB_UNLOAD()")
+
+      buffer.mmanager.mappings["q"] = function()
+        buffer:close(true)
       end
     end
   }
