@@ -9,6 +9,7 @@ local neogit = {
   status = status,
   notif = require("neogit.lib.notification"),
   open = function(opts)
+    opts = opts or {}
     if opts[1] ~= nil then
       local popup_name = opts[1]
       local popup = require("neogit.popups." .. popup_name)
