@@ -72,7 +72,6 @@ The create function takes 1 optional argument that can be one of the following v
 | ?            | Open help popup                                  |
 | x            | Discard changes (also supports discarding hunks) |
 | \<C-r>       | Refresh Buffer                                   |
-| \<C-C>\<C-C> | Commit (when writing a commit message)           |
 
 ## Configuration
 
