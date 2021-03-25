@@ -129,16 +129,30 @@ List of status commands:
 * StashPopup
 * BranchPopup
 
+## Notification Highlighting
+
+Neogit defines three highlight groups for the notifications:
+
+```vim
+hi NeogitNotificationInfo guifg=#80ff95
+hi NeogitNotificationWarning guifg=#fff454
+hi NeogitNotificationError guifg=#c44323
+```
+
+You can override them to fit your colorscheme in your vim configuration.
+
 ## Contextual Highlighting
 
 The colors for contextual highlighting are defined with these highlight groups:
-```viml
+
+```vim
 hi def NeogitDiffAddHighlight guibg=#404040
 hi def NeogitDiffDeleteHighlight guibg=#404040
 hi def NeogitDiffContextHighlight ctermbg=4 guibg=#333333
 hi def NeogitHunkHeader guifg=#cccccc guibg=#404040
 hi def NeogitHunkHeaderHighlight guifg=#cccccc guibg=#4d4d4d
 ```
+
 You can override them to fit your colorscheme by creating a `syntax/NeogitStatus.vim` in your vim configuration.
 
 ## Events
