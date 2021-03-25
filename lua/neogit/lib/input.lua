@@ -42,6 +42,14 @@ local function remove_completion_function(id)
   _G.__NEOGIT.completers[id] = nil
 end
 
+function M.get_confirmation(msg, options)
+  options = options or {}
+  options.values = options.values or { "&Yes", "&No" }
+  options.default = options.default or 1
+
+  return vim.fn.confirm(msg, table.concat(options.values, "\n"), options.default) == 1
+end
+
 function M.get_user_input(prompt)
   return user_input_prompt(prompt)
 end
