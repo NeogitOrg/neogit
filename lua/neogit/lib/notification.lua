@@ -3,6 +3,10 @@ local message_history = {}
 local notifications = {}
 local notification_count = 0
 
+vim.api.nvim_command("hi NeogitNotificationInfo guifg=#80ff95")
+vim.api.nvim_command("hi NeogitNotificationWarning guifg=#fff454")
+vim.api.nvim_command("hi NeogitNotificationError guifg=#c44323")
+
 local function create(message, options)
   notification_count = notification_count + 1
 
