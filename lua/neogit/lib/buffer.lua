@@ -125,6 +125,14 @@ function Buffer:place_sign(line, name, group, id)
   return sign_id
 end
 
+function Buffer:get_sign_at_line(line, group)
+  group = group or "*"
+  return vim.fn.sign_getplaced(self.handle, {
+    group = group,
+    lnum = line
+  })[1]
+end
+
 function Buffer:clear_sign_group(group)
   vim.cmd('sign unplace * group='..group..' buffer='..self.handle)
 end

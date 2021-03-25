@@ -74,6 +74,14 @@ You can configure neogit by running the `neogit.setup` function.
 local neogit = require("neogit")
 
 neogit.setup {
+  disable_signs = false,
+  -- customize displayed signs
+  signs = {
+    -- { CLOSED, OPENED }
+    section = { ">", "v" },
+    item = { ">", "v" },
+    hunk = { "", "" },
+  },
   -- override/add mappings
   mappings = {
     -- modify status buffer mappings

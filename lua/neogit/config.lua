@@ -1,6 +1,12 @@
 local M = {}
 
 M.values = {
+  disable_signs = false,
+  signs = {
+    hunk = { "", "" },
+    item = { ">", "v" },
+    section = { ">", "v" }
+  },
   mappings = {
     status = {
       ["q"] = "Close",
@@ -24,7 +30,6 @@ M.values = {
       ["L"] = "LogPopup",
       ["Z"] = "StashPopup",
       ["b"] = "BranchPopup",
-
     }
   }
 }
