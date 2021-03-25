@@ -101,17 +101,18 @@ end
 
 local function parse_command_args(...)
   local args = {...}
-  local kind = 'tab'
+  local tbl = {}
+
   for _, val in pairs(args) do
-    if string.find(val, 'kind=') then
-      kind = string.sub(val, 6)
+    local parts = vim.split(val, "=")
+    if #parts == 1 then
+      table.insert(tbl, parts[1])
+    else
+      tbl[parts[1]] = parts[2]
     end
   end
-  if kind ~= 'tab' and kind ~= 'floating' and kind ~= 'split' then
-    vim.api.nvim_err_writeln('Invalid kind')
-    kind = 'tab'
-  end
-  return kind
+
+  return tbl
 end
 
 return {

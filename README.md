@@ -27,6 +27,7 @@ You can either open neogit by using the `Neogit` command
 ```vim
 :Neogit " uses tab
 :Neogit kind=<kind> " override kind
+:Neogit commit" open commit popup
 ```
 
 or using the lua api:
@@ -34,7 +35,14 @@ or using the lua api:
 ```lua
 local neogit = require('neogit')
 
-neogit.status.create("<kind>")
+-- open using defaults
+neogit.open()
+
+-- open commit popup
+neogit.open({ "commit" })
+
+-- open with split kind
+neogit.open({ kind = "split" })
 ```
 
 The create function takes 1 optional argument that can be one of the following values:
