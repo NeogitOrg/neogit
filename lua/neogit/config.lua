@@ -23,6 +23,7 @@ M.values = {
       ["U"] = "UnstageStaged",
       ["$"] = "CommandHistory",
       ["<c-r>"] = "RefreshBuffer",
+      ["<enter>"] = "GoToFile",
       ["?"] = "HelpPopup",
       ["p"] = "PullPopup",
       ["P"] = "PushPopup",

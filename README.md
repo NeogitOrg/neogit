@@ -79,6 +79,7 @@ The create function takes 1 optional argument that can be one of the following v
 | Z            | Open stash popup                                 |
 | ?            | Open help popup                                  |
 | x            | Discard changes (also supports discarding hunks) |
+| \<enter>     | Go to file                                       |
 | \<C-r>       | Refresh Buffer                                   |
 
 ## Configuration
@@ -124,6 +125,7 @@ List of status commands:
 * Stage (Normal and visual mode)
 * StageUnstaged
 * StageAll
+* GoToFile
 * Unstage (Normal and visual mode)
 * UnstageStaged
 * CommandHistory

@@ -820,6 +820,22 @@ local cmd_func_map = {
   ["CommandHistory"] = function()
     GitCommandHistory:new():show()
   end,
+  ["GoToFile"] = function()
+    local section, item = get_current_section_item()
+
+    if item ~= nil then
+      if section.name ~= "unstaged_changes" and section.name ~= "staged_changes" and section.name ~= "untracked_files" then
+        return
+      end
+
+      local path = item.name
+
+      notif.delete_all()
+      status_buffer:close()
+
+      vim.cmd("e " .. path)
+    end
+  end,
   ["RefreshBuffer"] = function() __NeogitStatusRefresh(true) end,
   ["HelpPopup"] = function ()
     local pos = vim.fn.getpos('.')
