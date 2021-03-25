@@ -34,6 +34,10 @@ function Buffer:lock()
   self:set_option("modifiable", false)
 end
 
+function Buffer:define_autocmd(events, script)
+  vim.cmd(string.format("au %s <buffer=%d> %s", events, self.handle, script))
+end
+
 function Buffer:clear()
   vim.api.nvim_buf_set_lines(self.handle, 0, -1, false, {})
 end
@@ -56,8 +60,11 @@ function Buffer:move_cursor(line)
   end
 end
 
-function Buffer:close()
-  vim.api.nvim_buf_delete(self.handle, {})
+function Buffer:close(force)
+  if force == nil then
+    force = false
+  end
+  vim.api.nvim_buf_delete(self.handle, { force = force })
   if self.border_buffer then
     vim.api.nvim_buf_delete(self.border_buffer, {})
   end
@@ -139,6 +146,10 @@ end
 
 function Buffer:set_filetype(ft)
   vim.cmd("setlocal filetype=" .. ft)
+end
+
+function Buffer:call(f)
+  vim.api.nvim_buf_call(self.handle, f)
 end
 
 function Buffer.exists(name)
@@ -237,7 +248,9 @@ function Buffer.create(config)
   end
 
   -- This sets fold styling for Neogit windows without overriding user styling
-  vim.api.nvim_exec(buffer.handle .. "bufdo setlocal winhl=Folded:NeogitFold", true)
+  buffer:call(function()
+    vim.wo.winhl = "Folded:NeogitFold"
+  end)
 
   return buffer
 end
