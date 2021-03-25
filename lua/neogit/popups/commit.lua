@@ -17,7 +17,7 @@ local get_commit_message = a.wrap(function (content, cb)
     readonly = false,
     initialize = function(buffer)
       buffer:set_lines(0, -1, false, content)
-      vim.cmd("w!")
+      vim.cmd("silent w!")
 
       local written = false
 
@@ -28,10 +28,16 @@ local get_commit_message = a.wrap(function (content, cb)
       _G.__NEOGIT_COMMIT_BUFFER_CB_UNLOAD = function()
         if written then
           if input.get_confirmation("Are you sure you want to commit?") then
+            vim.cmd [[
+              silent g/^#/d
+              silent w!
+            ]]
             cb()
           else
-            vim.cmd("1,$d")
-            vim.cmd("w!")
+            vim.cmd [[
+              silent 1,$d
+              silent w!
+            ]]
           end
         end
         _G.__NEOGIT_COMMIT_BUFFER_CB_WRITE = nil
