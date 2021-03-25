@@ -2,6 +2,8 @@ local config = require("neogit.config")
 local signs = require("neogit.lib.signs")
 local status = require("neogit.status")
 
+local setup_called = false
+
 local neogit = {
   lib = require("neogit.lib"),
   popups = require("neogit.popups"),
@@ -9,6 +11,9 @@ local neogit = {
   status = status,
   notif = require("neogit.lib.notification"),
   open = function(opts)
+    if not setup_called then
+      error("You have to call the setup function before using the plugin")
+    end
     opts = opts or {}
     if opts[1] ~= nil then
       local popup_name = opts[1]
@@ -24,6 +29,7 @@ local neogit = {
     end
   end,
   setup = function(opts)
+    setup_called = true
     config.values = vim.tbl_deep_extend("force", config.values, opts)
     if not config.values.disable_signs then
       signs.setup()

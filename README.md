@@ -20,6 +20,14 @@ You also use in the built-in package manager:
 $ git clone --depth 1 https://github.com/TimUntersberger/neogit $XDG_CONFIG_HOME/nvim/pack/plugins/start/neogit
 ```
 
+Now you have to add the following lines to your `init.lua`
+
+```lua
+local neogit = require('neogit')
+
+neogit.setup {}
+```
+
 ## Usage
 
 You can either open neogit by using the `Neogit` command 
