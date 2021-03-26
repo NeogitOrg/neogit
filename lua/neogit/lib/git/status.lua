@@ -54,7 +54,6 @@ local status = {
 
       local name, original_name
       if orig then
-        print('matches', orig, new)
         name = new
         original_name = orig
       else
