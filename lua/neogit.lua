@@ -2,8 +2,6 @@ local config = require("neogit.config")
 local signs = require("neogit.lib.signs")
 local status = require("neogit.status")
 
-local setup_called = false
-
 local neogit = {
   lib = require("neogit.lib"),
   popups = require("neogit.popups"),
@@ -11,9 +9,6 @@ local neogit = {
   status = status,
   notif = require("neogit.lib.notification"),
   open = function(opts)
-    if not setup_called then
-      error("You have to call the setup function before using the plugin")
-    end
     opts = opts or {}
     if opts[1] ~= nil then
       local popup_name = opts[1]
@@ -29,7 +24,6 @@ local neogit = {
     end
   end,
   setup = function(opts)
-    setup_called = true
     vim.cmd("hi NeogitNotificationInfo guifg=#80ff95")
     vim.cmd("hi NeogitNotificationWarning guifg=#fff454")
     vim.cmd("hi NeogitNotificationError guifg=#c44323")
@@ -39,5 +33,7 @@ local neogit = {
     end
   end
 }
+
+neogit.setup()
 
 return neogit
