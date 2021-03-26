@@ -27,7 +27,7 @@ local neogit = {
     vim.cmd("hi NeogitNotificationInfo guifg=#80ff95")
     vim.cmd("hi NeogitNotificationWarning guifg=#fff454")
     vim.cmd("hi NeogitNotificationError guifg=#c44323")
-    if setup ~= nil then
+    if opts ~= nil then
       config.values = vim.tbl_deep_extend("force", config.values, opts)
     end
     if not config.values.disable_signs then
