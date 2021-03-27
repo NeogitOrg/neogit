@@ -17,6 +17,11 @@ local hunk_header_matcher = vim.regex('^@@.*@@')
 local diff_add_matcher = vim.regex('^+')
 local diff_delete_matcher = vim.regex('^-')
 
+local function line_is_hunk(line)
+  -- This returns a false positive on untracked file entries
+  return not vim.fn.matchlist(line, "^\\(Modified\\|New file\\|Deleted\\|Conflict\\) .*")[1]
+end
+
 local function get_section_idx_for_line(linenr)
   for i, l in pairs(locations) do
     if l.first <= linenr and linenr <= l.last then
@@ -38,6 +43,10 @@ local function get_section_item_idx_for_line(linenr)
   local section_idx = get_section_idx_for_line(linenr)
   local section = locations[section_idx]
 
+  if section == nil then
+    return nil, nil
+  end
+
   for i, item in pairs(status[section.name]) do
     if item.first <= linenr and linenr <= item.last then
       return section_idx, i
@@ -51,6 +60,10 @@ local function get_section_item_for_line(linenr)
   local section_idx, item_idx = get_section_item_idx_for_line(linenr)
   local section = locations[section_idx]
 
+  if section == nil then
+    return nil, nil
+  end
+
   return section, status[section.name][item_idx]
 end
 
@@ -58,8 +71,47 @@ local function get_current_section_item()
   return get_section_item_for_line(vim.fn.line("."))
 end
 
+local function toggle_sign_at_line(line)
+  local sign_info = status_buffer:get_sign_at_line(line, "fold_markers")
+  local sign = sign_info.signs[1]
+
+  if sign ~= nil then
+    local parts = vim.split(sign.name, ":")
+    local new_name = (parts[1] == "NeogitOpen" and "NeogitClosed" or "NeogitOpen") .. ":" .. parts[2]
+    status_buffer:place_sign(line, new_name, 'fold_markers')
+  end
+end
+
 local function toggle()
   vim.cmd("silent! normal za")
+
+  if not config.values.disable_signs then
+    local section, item = get_current_section_item()
+
+    if section == nil then
+      return
+    end
+
+    local line = item ~= nil and item.first or section.first
+
+    local on_hunk = item ~= nil and line_is_hunk(vim.fn.getline('.'))
+
+
+    if on_hunk then
+      local ignored_sections = { "untracked_files", "stashes", "unpulled", "unmerged" }
+
+      for _, val in pairs(ignored_sections) do
+        if val == section.name then
+          return
+        end
+      end
+
+      local hunk = get_current_hunk_of_item(item)
+      line = item.first + hunk.first
+    end
+
+    toggle_sign_at_line(line)
+  end
 end
 
 local function change_to_str(change)
@@ -236,13 +288,22 @@ local function display_status()
           for _,h in ipairs(i.diff_content.hunks) do
             status_buffer:create_fold(i.first + h.first, i.first + h.last)
             status_buffer:open_fold(i.first + h.first)
+            if not config.values.disable_signs then
+              status_buffer:place_sign(i.first + h.first, "NeogitOpen:hunk", "fold_markers")
+            end
           end
         end
         status_buffer:create_fold(i.first, i.last)
+        if not config.values.disable_signs and l.name ~= "untracked_files" then
+          status_buffer:place_sign(i.first, "NeogitClosed:item", "fold_markers")
+        end
       end
     end
     status_buffer:create_fold(l.first, l.last)
     status_buffer:open_fold(l.first)
+    if not config.values.disable_signs then
+      status_buffer:place_sign(l.first, "NeogitOpen:section", "fold_markers")
+    end
   end
 
   vim.fn.winrestview(old_view)
@@ -580,11 +641,6 @@ local unstage_selection = a.sync(function()
   a.wait(cli.apply.reverse.cached.with_patch(patch).call())
 end)
 
-local function line_is_hunk(line)
-  -- This returns a false positive on untracked file entries
-  return not vim.fn.matchlist(line, "^\\(Modified\\|New file\\|Deleted\\|Conflict\\) .*")[1]
-end
-
 local stage = a.sync(function()
   current_operation = "stage"
   local section, item = get_current_section_item()
@@ -598,7 +654,6 @@ local stage = a.sync(function()
   if mode.mode == "V" then
     a.wait(stage_selection())
   else
-
     local on_hunk = line_is_hunk(vim.fn.getline('.'))
 
     if on_hunk and section.name ~= "untracked_files" then
@@ -766,6 +821,22 @@ local cmd_func_map = {
   ["CommandHistory"] = function()
     GitCommandHistory:new():show()
   end,
+  ["GoToFile"] = function()
+    local section, item = get_current_section_item()
+
+    if item ~= nil then
+      if section.name ~= "unstaged_changes" and section.name ~= "staged_changes" and section.name ~= "untracked_files" then
+        return
+      end
+
+      local path = item.name
+
+      notif.delete_all()
+      status_buffer:close()
+
+      vim.cmd("e " .. path)
+    end
+  end,
   ["RefreshBuffer"] = function() __NeogitStatusRefresh(true) end,
   ["HelpPopup"] = function ()
     local pos = vim.fn.getpos('.')
@@ -814,6 +885,8 @@ end
 
 local highlight_group = vim.api.nvim_create_namespace("section-highlight")
 local function update_highlight()
+  if config.values.disable_context_highlighting then return end
+
   vim.api.nvim_buf_clear_namespace(0, highlight_group, 0, -1)
   status_buffer:clear_sign_group('ctx')
 
