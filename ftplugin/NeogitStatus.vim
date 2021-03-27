@@ -16,6 +16,8 @@ setlocal foldtext=NeogitFoldFunction()
 
 au BufWipeout <buffer> lua __NeogitStatusOnClose()
 
-augroup NeogitStatusHighlightUpdater
-autocmd CursorMoved NeogitStatus :lua require'neogit.status'.update_highlight()
-augroup END
+if !luaeval("require'neogit.config'.values.disable_context_highlighting")
+  augroup NeogitStatusHighlightUpdater
+  autocmd CursorMoved NeogitStatus :lua require'neogit.status'.update_highlight()
+  augroup END
+endif

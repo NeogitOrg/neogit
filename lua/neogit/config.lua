@@ -1,6 +1,7 @@
 local M = {}
 
 M.values = {
+  disable_context_highlighting = false,
   disable_signs = false,
   signs = {
     hunk = { "", "" },
