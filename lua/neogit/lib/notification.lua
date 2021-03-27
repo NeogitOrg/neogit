@@ -3,10 +3,6 @@ local message_history = {}
 local notifications = {}
 local notification_count = 0
 
-vim.api.nvim_command("hi NeogitNotificationInfo guifg=#80ff95")
-vim.api.nvim_command("hi NeogitNotificationWarning guifg=#fff454")
-vim.api.nvim_command("hi NeogitNotificationError guifg=#c44323")
-
 local function create(message, options)
   notification_count = notification_count + 1
 
@@ -30,6 +26,9 @@ local function create(message, options)
   local col = vim.api.nvim_get_option("columns") - 3
 
   local buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_buf_call(buf, function() 
+    vim.bo.filetype = "NeogitNotification"
+  end)
 
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, message)
 
@@ -44,6 +43,9 @@ local function create(message, options)
   })
 
   local border_buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_buf_call(border_buf, function() 
+    vim.bo.filetype = "NeogitNotification"
+  end)
   local border_buf_lines = {}
   width = width + 2
 
@@ -81,7 +83,7 @@ local function create(message, options)
   local timer
   local notification = {
     window = window,
-    buffer = buffer,
+    buffer = buf,
     height = height,
     width = width,
     row = row,
