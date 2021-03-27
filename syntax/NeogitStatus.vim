@@ -40,14 +40,16 @@ hi def link NeogitUnpulledFrom Function
 
 hi def link NeogitStash Comment
 
-hi def NeogitDiffAddHighlight guibg=#404040 guifg=#859900
-hi def NeogitDiffDeleteHighlight guibg=#404040 guifg=#dc322f
-hi def NeogitDiffContextHighlight guibg=#333333 guifg=#b2b2b2
+hi def NeogitDiffAddHighlight guibg=#404040
+hi def NeogitDiffDeleteHighlight guibg=#404040
+hi def NeogitDiffContext guibg=#404040
+hi def NeogitDiffContextHighlight ctermbg=4 guibg=#333333
 hi def NeogitHunkHeader guifg=#cccccc guibg=#404040
 hi def NeogitHunkHeaderHighlight guifg=#cccccc guibg=#4d4d4d
 
 hi def NeogitFold guifg=None guibg=None
 
+sign define NeogitDiffContext linehl=NeogitDiffContext
 sign define NeogitDiffContextHighlight linehl=NeogitDiffContextHighlight
 sign define NeogitHunkHeader linehl=NeogitHunkHeader
 sign define NeogitHunkHeaderHighlight linehl=NeogitHunkHeaderHighlight
