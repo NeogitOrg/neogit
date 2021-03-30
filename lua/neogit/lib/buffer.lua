@@ -156,6 +156,18 @@ function Buffer.exists(name)
   return vim.fn.bufnr(name) ~= -1
 end
 
+function Buffer:set_extmark(...)
+  return vim.api.nvim_buf_set_extmark(self.handle, ...)
+end
+
+function Buffer:get_extmark(ns, id)
+  return vim.api.nvim_buf_get_extmark_by_id(self.handle, ns, id, { details = true })
+end
+
+function Buffer:del_extmark(ns, id)
+  return vim.api.nvim_buf_del_extmark(self.handle, ns, id)
+end
+
 function Buffer.create(config)
   local config = config or {}
   local kind = config.kind or "split"

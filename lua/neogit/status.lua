@@ -6,10 +6,12 @@ local util = require("neogit.lib.util")
 local notif = require("neogit.lib.notification")
 local config = require("neogit.config")
 local a = require'neogit.async'
+local repository = require 'neogit.lib.git.repository'
 
 local refreshing = false
 local current_operation = nil
 local status = {}
+local repo = repository.create()
 local locations = {}
 local status_buffer = nil
 
@@ -19,7 +21,26 @@ local diff_delete_matcher = vim.regex('^-')
 
 local function line_is_hunk(line)
   -- This returns a false positive on untracked file entries
-  return not vim.fn.matchlist(line, "^\\(Modified\\|New file\\|Deleted\\|Conflict\\) .*")[1]
+  return not vim.fn.matchlist(line, "^\\(Added\\|Modified\\|New file\\|Deleted\\|Conflict\\) .*")[1]
+end
+
+function StatusFold(lnum)
+  local line = vim.fn.getline(lnum)
+  if line:match('^Untracked') then return '>1' end -- section headers
+  if line:match('^Unstaged') then return '>1' end
+  if line:match('^Staged') then return '>1' end
+  if line:match('^Unpulled') then return '>1' end
+  if line:match('^Unmerged') then return '>1' end
+  if line:match('^Modified') then return '>2' end -- file entries
+  if line:match('^Renamed') then return '>2' end
+  if line:match('^Added') then return '>2' end
+  if line:match('^Deleted') then return '>2' end
+  if line:match('^Updated') then return '>2' end
+  if line:match('^Copied') then return '>2' end
+  if line:match('^@@') then return '>3' end -- diff header
+  if line:match('^[ +-]') then return 3 end -- diff lines
+  if line:match('^%w') then return '=' end -- everything else with text
+  return 0
 end
 
 local function get_section_idx_for_line(linenr)
@@ -47,7 +68,7 @@ local function get_section_item_idx_for_line(linenr)
     return nil, nil
   end
 
-  for i, item in pairs(status[section.name]) do
+  for i, item in pairs(section.files) do
     if item.first <= linenr and linenr <= item.last then
       return section_idx, i
     end
@@ -64,7 +85,7 @@ local function get_section_item_for_line(linenr)
     return nil, nil
   end
 
-  return section, status[section.name][item_idx]
+  return section, section.files[item_idx]
 end
 
 local function get_current_section_item()
@@ -83,7 +104,12 @@ local function toggle_sign_at_line(line)
 end
 
 local function toggle()
-  vim.cmd("silent! normal za")
+  local folded = vim.fn.foldclosed(vim.fn.line('.')) >= 0
+  if folded then
+    vim.cmd("silent! normal zO")
+  else
+    vim.cmd("silent! normal zc")
+  end
 
   if not config.values.disable_signs then
     local section, item = get_current_section_item()
@@ -114,339 +140,201 @@ local function toggle()
   end
 end
 
-local function change_to_str(change)
-  if change.original_name ~= nil then
-    return string.format("%s %s -> %s", change.type, change.original_name, change.name)
-  else
-    return string.format("%s %s", change.type, change.name)
-  end
+local function new_output()
+  return setmetatable({ }, {
+    __index = {
+      append = function (tbl, data)
+        if type(data) == 'string' then table.insert(tbl, data)
+        elseif type(data) == 'table' then
+          for _, r in ipairs(data) do table.insert(tbl, r) end
+        else error('invalid data type') end
+        return tbl
+      end,
+      into_buffer = function (tbl, from, to)
+        status_buffer:set_lines(from, to, false, tbl)
+      end
+    }
+  })
 end
 
-local function display_status()
-  status_buffer:unlock()
-  local old_view = vim.fn.winsaveview()
-  status_buffer:clear_sign_group('hl')
-  status_buffer:clear()
+local mode_to_text = {
+  M = "Modified",
+  N = "New file",
+  A = "Added",
+  D = "Deleted",
+  C = "Copied",
+  U = "Updated",
+  R = "Renamed"
+}
 
-  if status_buffer == nil then
-    return
-  end
-
-  locations = {}
-  local line_idx = 2
-  local output = {
-    "Head: " .. status.head.branch .. " " .. status.head.message
+local size_cache = {
+  untracked = {
+    files = {}
+  },
+  unstaged = {
+    files = {}
+  },
+  staged = {
+    files = {}
+  },
+  stashes = {
+    files = {}
+  },
+  unpulled = {
+    files = {}
+  },
+  unmerged = {
+    files = {}
   }
-  if status.upstream ~= nil then
-    line_idx = line_idx + 1
-    table.insert(output, "Push: " .. status.upstream.branch .. " " .. status.upstream.message)
-  end
-  table.insert(output, "")
-
-  local function write(str)
-    table.insert(output, str)
-    line_idx = line_idx + 1
-  end
-
-  local function write_section(options)
-    local items
-
-    if options.items == nil then
-      items = status[options.name]
-    else
-      items = options.items
-    end
-
-    local len = #items
-
-    if len ~= 0 then
-      if type(options.title) == "string" then
-        write(string.format("%s (%d)", options.title, len))
-      else
-        write(options.title())
-      end
-
-      local location = {
-        name = options.name,
-        first = line_idx,
-        last = 0,
-        files = {}
-      }
-
-      for _, item in pairs(items) do
-        local name
-        local hunks = {}
-        local current_hunk
-
-        if options.display then
-          name = options.display(item)
-        elseif type(item) == "string" then
-          name = item
-        else
-          name = item.name
-        end
-
-        write(name)
-
-        if type(item) == "table" then
-          item.first = line_idx
-        end
-
-        if item.diff_content ~= nil then
-          for _, diff_line in ipairs(item.diff_content.lines) do
-            write(diff_line)
-            if hunk_header_matcher:match_str(diff_line) then
-              if current_hunk ~= nil then
-                current_hunk.last = line_idx - 1
-                table.insert(hunks, current_hunk)
-              end
-              current_hunk = { first = line_idx }
-              status_buffer:place_sign(line_idx, 'NeogitHunkHeader', 'hl')
-            elseif diff_add_matcher:match_str(diff_line) then
-              status_buffer:place_sign(line_idx, 'NeogitDiffAdd', 'hl')
-            elseif diff_delete_matcher:match_str(diff_line) then
-              status_buffer:place_sign(line_idx, 'NeogitDiffDelete', 'hl')
-            end
-          end
-          item.diff_open = true
-        end
-
-
-        if type(item) == "table" then
-          item.last = line_idx
-          if current_hunk ~= nil then
-            current_hunk.last = line_idx
-            table.insert(hunks, current_hunk)
-          end
-        end
-
-        table.insert(location.files, {
-          first = item.first,
-          last = item.last,
-          hunks = hunks
-        })
-      end
-
-
-      location.last = line_idx
-      write("")
-
-      table.insert(locations, location)
-    end
-  end
-
-  write_section({
-    name = "untracked_files",
-    title = "Untracked files"
-  })
-  write_section({
-    name = "unstaged_changes",
-    title = "Unstaged changes",
-    display = change_to_str
-  })
-  write_section({
-    name = "unmerged_changes",
-    title = "Unmerged changes",
-    display = change_to_str
-  })
-  write_section({
-    name = "staged_changes",
-    title = "Staged changes",
-    display = change_to_str
-  })
-  write_section({
-    name = "stashes",
-    title = "Stashes",
-    display = function(stash)
-      return "stash@{" .. stash.idx .. "} " .. stash.name
-    end
-  })
-  if status.upstream ~= nil then
-    write_section({
-      name = "unpulled",
-      title = function()
-        return "Unpulled from " .. status.upstream.branch .. " (" .. #status.unpulled .. ")"
-      end,
-    })
-    write_section({
-      name = "unmerged",
-      title = function()
-        return "Unmerged into " .. status.upstream.branch .. " (" .. #status.unmerged .. ")"
-      end,
-    })
-  end
-
-  status_buffer:set_lines(0, -1, false, output)
-  status_buffer:set_foldlevel(2)
-
-  for _,l in pairs(locations) do
-    local items = status[l.name]
-    if items ~= nil and l.name ~= "stashes" and l.name ~= "unpulled" and l.name ~= "unmerged" then
-      for _, i in pairs(items) do
-        if i.diff_content ~= nil then
-          for _,h in ipairs(i.diff_content.hunks) do
-            status_buffer:create_fold(i.first + h.first, i.first + h.last)
-            status_buffer:open_fold(i.first + h.first)
-            if not config.values.disable_signs then
-              status_buffer:place_sign(i.first + h.first, "NeogitOpen:hunk", "fold_markers")
-            end
-          end
-        end
-        status_buffer:create_fold(i.first, i.last)
-        if not config.values.disable_signs and l.name ~= "untracked_files" then
-          status_buffer:place_sign(i.first, "NeogitClosed:item", "fold_markers")
-        end
-      end
-    end
-    status_buffer:create_fold(l.first, l.last)
-    status_buffer:open_fold(l.first)
-    if not config.values.disable_signs then
-      status_buffer:place_sign(l.first, "NeogitOpen:section", "fold_markers")
-    end
-  end
-
-  vim.fn.winrestview(old_view)
-  status_buffer:lock()
-end
-
-function primitive_move_cursor(line)
-  for _,l in pairs(locations) do
-    if l.first <= line and line <= l.last then
-      vim.api.nvim_win_set_cursor(0, { l.first, 0 })
-      break
-    end
-  end
-end
-
---- TODO: rename
---- basically moves the cursor to the next section if the current one has no more items
---@param name of the current section
---@param name of the next section
---@returns whether the function managed to find the next cursor position
-function contextually_move_cursor(current, next, item_idx)
-  local items = status[current]
-  local items_len = #items
-
-  if items_len == 0 then
-    local staged_changes = status[next]
-    if #staged_changes ~= 0 then
-      vim.api.nvim_win_set_cursor(0, { get_location(next).first + 1, 0 })
-    end
-    return true
-  else
-    local line = get_location(current).first
-    if item_idx > items_len then
-      line = line + items_len
-    else
-      line = line + item_idx
-    end
-    vim.api.nvim_win_set_cursor(0, { line, 0 })
-    return true
-  end
-
-  return false
-end
+}
 
 local function refresh_status()
   if status_buffer == nil then
     return
   end
 
-  for _,x in ipairs({
-    'untracked_files',
-    'unstaged_changes',
-    'unmerged_changes',
-    'staged_changes',
-    'unpulled',
-    'unmerged',
-    'stashes'
-  }) do
-    for _,i in ipairs(status[x]) do
-      i.diff_open = false
-    end
+  status_buffer:unlock()
+  status_buffer:clear_sign_group('hl')
+
+  local output = new_output()
+  output:append(string.format("Head: %s %s", repo.head.branch, repo.head.commit_message))
+  if repo.upstream.branch then
+    output:append(string.format("Push: %s %s", repo.upstream.branch, repo.upstream.commit_message))
   end
+  output:append('')
+  output:into_buffer(0, #output)
+  local buffer_offset = #output
 
-  local line = vim.fn.line(".")
-  local section_idx = get_section_idx_for_line(line)
-  local section = locations[section_idx]
+  locations = {}
 
-  display_status()
+  local function update_section(title, data, key)
+    local line = vim.fn.getline(buffer_offset + 1):match('^(.-) %(%d*%)')
 
-  if section == nil then
-    primitive_move_cursor(line)
-    return
-  end
-
-  local item_idx = line - section.first
-
-  if section.name == "unstaged_changes" then
-    if contextually_move_cursor("unstaged_changes", "staged_changes", item_idx) then
+    if #data.files == 0 then
+      if line and line:match('^'..title) then
+        while line ~= '' do
+          vim.fn.deletebufline('%', buffer_offset + 1)
+          line = vim.fn.getline(buffer_offset + 1)
+        end
+        vim.fn.deletebufline('%', buffer_offset + 1)
+      end
       return
     end
-  elseif section.name == "staged_changes" then
-    if contextually_move_cursor("staged_changes", "unstaged_changes", item_idx) then
-      return
+
+    if line and line:match('^'..title) then
+      -- pass
+    else
+      status_buffer:set_lines(buffer_offset, buffer_offset, false, {string.format('%s (%d)', title, #data.files), ''})
     end
-  elseif section.name == "untracked_files" then
-    if contextually_move_cursor("untracked_files", "staged_changes", item_idx) or
-       contextually_move_cursor("untracked_files", "unstaged_changes", item_idx) then
-     return
-   end
+
+    buffer_offset = buffer_offset + 1
+    if not config.values.disable_signs then
+      status_buffer:place_sign(buffer_offset, "NeogitOpen:section", "fold_markers")
+    end
+
+    local location = {
+      name = key,
+      first = buffer_offset,
+      files = {}
+    }
+
+    for _, f in ipairs(data.files) do
+      local line = vim.fn.getline(buffer_offset + 1)
+      local mode, fname = line:match('^(%w+) (.+)$') -- this check is potentially super dangerous, as it could match on diff lines or section headers just as well
+      while line ~= '' and fname and fname < f.name do
+        -- file in buffer should come before current file to be rendered, so we can safely remove it
+        -- from the buffer.
+        vim.fn.deletebufline('%', buffer_offset + 1, buffer_offset + 1 + size_cache[key].files[fname])
+        line = vim.fn.getline(buffer_offset + 1)
+        mode, fname = line:match('^(%w+) (.+)$')
+      end
+
+      local file_matched = line:match(f.name)
+      if not file_matched then
+        status_buffer:set_lines(buffer_offset, buffer_offset, false, {f.mode and mode_to_text[f.mode]..' '..f.name or f.name})
+      end
+
+      buffer_offset = buffer_offset + 1
+      if not config.values.disable_signs and f.diff then
+        status_buffer:place_sign(buffer_offset, "NeogitClosed:item", "fold_markers")
+      end
+
+      local file = { first = buffer_offset, hunks = {}, __file = f }
+
+      if f.diff then
+        local cached_size = size_cache[key].files[f.name]
+        if file_matched and cached_size then
+          status_buffer:set_lines(buffer_offset, buffer_offset + cached_size, false, f.diff.lines)
+        else
+          status_buffer:set_lines(buffer_offset, buffer_offset, false, f.diff.lines)
+        end
+
+        local hunks = {}
+        local current_hunk = {}
+        local c = buffer_offset + 1
+        for _, line in ipairs(f.diff.lines) do
+          if hunk_header_matcher:match_str(line) then
+            if current_hunk then
+              current_hunk.last = c - 1
+              table.insert(hunks, current_hunk)
+            end
+            current_hunk = { first = c }
+            status_buffer:place_sign(c, 'NeogitHunkHeader', 'hl')
+
+            if not config.values.disable_signs then
+              status_buffer:place_sign(c, "NeogitOpen:hunk", "fold_markers")
+            end
+          elseif diff_add_matcher:match_str(line) then
+            status_buffer:place_sign(c, 'NeogitDiffAdd', 'hl')
+          elseif diff_delete_matcher:match_str(line) then
+            status_buffer:place_sign(c, 'NeogitDiffDelete', 'hl')
+          end
+          c = c + 1
+        end
+
+        current_hunk.last = c - 1
+        table.insert(hunks, current_hunk)
+        file.hunks = hunks
+        buffer_offset = buffer_offset + #f.diff.lines
+        size_cache[key].files[f.name] = #f.diff.lines
+      end
+
+      file.last = buffer_offset
+      table.insert(location.files, file)
+    end
+
+    line = vim.fn.getline(buffer_offset + 1)
+    while line ~= '' and buffer_offset < vim.fn.line('$') do
+      vim.fn.deletebufline('%', buffer_offset + 1)
+      line = vim.fn.getline(buffer_offset + 1)
+    end
+
+    if buffer_offset >= vim.fn.line('$') then
+      status_buffer:set_lines(buffer_offset, buffer_offset, false, {''})
+    end
+
+    location.last = buffer_offset
+    table.insert(locations, location)
+    buffer_offset = buffer_offset + 1
   end
-  primitive_move_cursor(line)
+  update_section('Untracked files', repo.untracked, 'untracked')
+  update_section('Unstaged changes', repo.unstaged, 'unstaged')
+  update_section('Staged changes', repo.staged, 'staged')
+  update_section('Stashes', repo.stashes, 'stashes')
+  update_section('Unpulled changes', repo.unpulled, 'unpulled')
+  update_section('Unmerged changes', repo.unmerged, 'unmerged')
+
+  status_buffer:set_lines(buffer_offset, -1, false, {})
+
+  status_buffer:lock()
+
+  -- After moving stuff around, the cursor could land IN a fold, so we move
+  -- it to the top of the fold to avoid confusion
+  -- TODO: maybe store cursor position in a mark, so it can move with the
+  -- changes; we could then restore cursor position to the mark.
+  local fold_start = vim.fn.foldclosed(vim.fn.line('.'))
+  if fold_start >= 0 then vim.fn.setpos('.', {0, fold_start, 0, 0}) end
 end
-
-local load_diffs = a.sync(function ()
-  local unstaged = {}
-  local staged = {}
-  for _,c in pairs(status.unstaged_changes) do
-    if c.type ~= "Deleted" and c.type ~= "New file" and not c.diff_open and not c.diff_content then
-      table.insert(unstaged, c)
-    end
-  end
-  local unstaged_len = #unstaged
-  for _,c in pairs(status.staged_changes) do
-    if c.type ~= "Deleted" and c.type ~= "New file" and not c.diff_open and not c.diff_content then
-      table.insert(staged, c)
-    end
-  end
-
-  local cmds = {}
-  for _, c in pairs(unstaged) do
-    if c.original_name ~= nil then
-      table.insert(cmds, cli.diff.files(c.original_name, c.name))
-    else
-      table.insert(cmds, cli.diff.files(c.name))
-    end
-  end
-  for _, c in pairs(staged) do
-    if c.original_name ~= nil then
-      table.insert(cmds, cli.diff.cached.files(c.original_name, c.name))
-    else
-      table.insert(cmds, cli.diff.cached.files(c.name))
-    end
-  end
-  local results = { a.wait(git.cli.in_parallel(unpack(cmds)).call()) }
-
-  for i=1,unstaged_len do
-    local name = unstaged[i].name
-    for _,c in pairs(status.unstaged_changes) do
-      if c.name == name then
-        c.diff_content = git.diff.parse(vim.split(results[i], '\n'))
-        break
-      end
-    end
-  end
-  for i=unstaged_len+1,#results do
-    local name = staged[i - unstaged_len].name
-    for _,c in pairs(status.staged_changes) do
-      if c.name == name then
-        c.diff_content = git.diff.parse(vim.split(results[i], '\n'))
-        break
-      end
-    end
-  end
-end)
 
 function __NeogitStatusRefresh(force)
   local function wait(ms)
@@ -460,12 +348,16 @@ function __NeogitStatusRefresh(force)
   a.dispatch(function ()
     refreshing = true
 
-    status = a.wait(git.status.get())
-    if status ~= nil then
-      a.wait(load_diffs())
-      a.wait_for_textlock()
-      refresh_status()
-    end
+    a.wait(repo:update_status())
+    a.wait_all({
+      repo:update_branch_information(),
+      repo:update_stashes(),
+      repo:update_unpulled(),
+      repo:update_unmerged(),
+      repo:load_diffs()
+    })
+    a.wait_for_textlock()
+    refresh_status()
 
     a.wait_for_textlock()
     vim.cmd [[do <nomodeline> User NeogitStatusRefreshed]]
@@ -483,11 +375,11 @@ end
 function get_hunk_of_item_for_line(item, line)
   local hunk
   local lines = {}
-  for _,h in pairs(item.diff_content.hunks) do
+  for _,h in pairs(item.__file.diff.hunks) do
     if item.first + h.first <= line and line <= item.first + h.last then
       hunk = h
       for i=hunk.first,hunk.last do
-        table.insert(lines, item.diff_content.lines[i])
+        table.insert(lines, item.__file.diff.lines[i])
       end
       break
     end
@@ -496,31 +388,6 @@ function get_hunk_of_item_for_line(item, line)
 end
 function get_current_hunk_of_item(item)
   return get_hunk_of_item_for_line(item, vim.fn.line("."))
-end
-
-local function add_change(list, item, diff)
-  local change = nil
-  for _,c in pairs(list) do
-    if c.name == item.name then
-      change = c
-      break
-    end
-  end
-
-  if change then
-    change.diff_content = diff
-  else
-    local new_item = vim.deepcopy(item)
-    new_item.diff_content = diff
-    new_item.diff_open = false
-    table.insert(list, new_item)
-  end
-end
-
-local function remove_change(name, item)
-  status[name] = util.filter(status[name], function(i)
-    return i.name ~= item.name
-  end)
 end
 
 local function generate_patch_from_selection(item, hunk, from, to, reverse)
@@ -540,7 +407,7 @@ local function generate_patch_from_selection(item, hunk, from, to, reverse)
 
   -- + 1 skips the hunk header, since we construct that manually afterwards
   for k = hunk.first + 1, hunk.last do
-    local v = item.diff_content.lines[k]
+    local v = item.diff.lines[k]
     local operand, line = v:match("^([+ -])(.*)")
 
     if operand == "+" or operand == "-" then
@@ -606,7 +473,7 @@ local function get_selection()
   end
 
   if first_section.name ~= last_section.name or
-     first_item.name ~= last_item.name or
+     first_item.__file.name ~= last_item.__file.name or
      first_hunk.first ~= last_hunk.first
   then
     return nil
@@ -627,7 +494,7 @@ end
 
 local stage_selection = a.sync(function()
   local _, item, hunk, from, to = get_selection()
-  local patch = generate_patch_from_selection(item, hunk, from, to)
+  local patch = generate_patch_from_selection(item.__file, hunk, from, to)
   a.wait(cli.apply.cached.with_patch(patch).call())
 end)
 
@@ -636,7 +503,7 @@ local unstage_selection = a.sync(function()
   if from == nil then
     return
   end
-  local patch = generate_patch_from_selection(item, hunk, from, to, true)
+  local patch = generate_patch_from_selection(item.__file, hunk, from, to, true)
   a.wait(cli.apply.reverse.cached.with_patch(patch).call())
 end)
 
@@ -644,7 +511,7 @@ local stage = a.sync(function()
   current_operation = "stage"
   local section, item = get_current_section_item()
 
-  if section == nil or (section.name ~= "unstaged_changes" and section.name ~= "untracked_files" and section.name ~= "unmerged_changes") or item == nil then
+  if section == nil or (section.name ~= "unstaged" and section.name ~= "untracked" and section.name ~= "unmerged") or item == nil then
     return
   end
 
@@ -655,12 +522,12 @@ local stage = a.sync(function()
   else
     local on_hunk = line_is_hunk(vim.fn.getline('.'))
 
-    if on_hunk and section.name ~= "untracked_files" then
+    if on_hunk and section.name ~= "untracked" then
       local hunk = get_current_hunk_of_item(item)
-      local patch = generate_patch_from_selection(item, hunk)
+      local patch = generate_patch_from_selection(item.__file, hunk)
       a.wait(cli.apply.cached.with_patch(patch).call())
     else
-      a.wait(git.status.stage(item.name))
+      a.wait(git.status.stage(item.__file.name))
     end
   end
 
@@ -672,7 +539,7 @@ local unstage = a.sync(function()
   current_operation = "unstage"
   local section, item = get_current_section_item()
 
-  if section == nil or section.name ~= "staged_changes" or item == nil then
+  if section == nil or section.name ~= "staged" or item == nil then
     return
   end
 
@@ -685,10 +552,10 @@ local unstage = a.sync(function()
 
     if on_hunk then
       local hunk = get_current_hunk_of_item(item)
-      local patch = generate_patch_from_selection(item, hunk, nil, nil, true)
+      local patch = generate_patch_from_selection(item.__file, hunk, nil, nil, true)
       a.wait(cli.apply.reverse.cached.with_patch(patch).call())
     else
-      a.wait(git.status.unstage(item.name))
+      a.wait(git.status.unstage(item.__file.name))
     end
   end
 
@@ -777,44 +644,21 @@ local cmd_func_map = {
   ["Stage"] = { "nv", function () a.run(stage) end, true },
   ["StageUnstaged"] = function ()
     a.dispatch(function()
-      for _,c in pairs(status.unstaged_changes) do
-        table.insert(status.staged_changes, c)
-      end
-      status.unstaged_changes = {}
       a.wait(git.status.stage_modified())
-      a.wait_for_textlock()
-      refresh_status()
+      __NeogitStatusRefresh(true)
     end)
   end,
   ["StageAll"] = function ()
     a.dispatch(function()
-      for _,c in pairs(status.unstaged_changes) do
-        table.insert(status.staged_changes, c)
-      end
-      for _,c in pairs(status.untracked_files) do
-        table.insert(status.staged_changes, c)
-      end
-      status.unstaged_changes = {}
-      status.untracked_files = {}
       a.wait(git.status.stage_all())
-      a.wait_for_textlock()
-      refresh_status()
+      __NeogitStatusRefresh(true)
     end)
   end,
   ["Unstage"] = { "nv", function () a.run(unstage) end, true },
   ["UnstageStaged"] = function ()
     a.dispatch(function()
-      for _,c in pairs(status.staged_changes) do
-        if c.type == "new file" then
-          table.insert(status.untracked_files, c)
-        else
-          table.insert(status.unstaged_changes, c)
-        end
-      end
-      status.staged_changes = {}
       a.wait(git.status.unstage_all())
-      a.wait_for_textlock()
-      refresh_status()
+      __NeogitStatusRefresh(true)
     end)
   end,
   ["CommandHistory"] = function()
@@ -888,6 +732,9 @@ local function create(kind)
           mappings[key] = cmd_func_map[val]
         end
       end
+
+      vim.cmd('setlocal foldmethod=expr')
+      vim.cmd('setlocal foldexpr=v:lua.StatusFold(v:lnum)')
 
       __NeogitStatusRefresh(true)
     end

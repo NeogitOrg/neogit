@@ -1,3 +1,7 @@
+local a = require('neogit.async')
+local cli = require('neogit.lib.git.cli')
+local util = require('neogit.lib.util')
+
 local function parse_diff(output)
   local header = {}
   local hunks = {}
@@ -55,5 +59,31 @@ end
 local diff = {
   parse = parse_diff
 }
+
+function diff.register(meta)
+  meta.load_diffs = a.sync(function (repo, filter)
+    local executions = {}
+
+    for _, f in ipairs(repo.unstaged.files) do
+      if f.mode ~= 'D' and f.mode ~= 'F' and (not filter or f.name:match(filter)) then
+        table.insert(executions, a.sync(function (f)
+          local result = a.wait(cli.diff.files(f.name).call())
+          f.diff = parse_diff(util.split(result, '\n'))
+        end)(f))
+      end
+    end
+
+    for _, f in ipairs(repo.staged.files) do
+      if f.mode ~= 'D' and f.mode ~= 'F' and (not filter or f.name:match(filter)) then
+        table.insert(executions, a.sync(function (f)
+          local result = a.wait(cli.diff.cached.files(f.name).call())
+          f.diff = parse_diff(util.split(result, '\n'))
+        end)(f))
+      end
+    end
+
+    a.wait_all(executions)
+  end)
+end
 
 return diff

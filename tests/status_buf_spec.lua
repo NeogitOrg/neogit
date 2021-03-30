@@ -30,7 +30,7 @@ describe('status buffer', function ()
 
     it('can stage a hunk under the cursor of a tracked file', in_prepared_repo(function ()
       vim.fn.setpos('.', {0, 8, 1, 0})
-      act('zajjs')
+      act('zAjjs')
       status.wait_on_current_operation()
       eq('MM a.txt\n', get_git_status('a.txt'))
       eq([[--- a/a.txt
@@ -47,7 +47,7 @@ describe('status buffer', function ()
 
     it('can stage a subsequent hunk under the cursor of a tracked file', in_prepared_repo(function ()
       vim.fn.setpos('.', {0, 8, 1, 0})
-      act('za8js')
+      act('zA8js')
       status.wait_on_current_operation()
       eq('MM a.txt\n', get_git_status('a.txt'))
       eq([[--- a/a.txt
@@ -63,7 +63,7 @@ describe('status buffer', function ()
 
     it('can stage from a selection in a hunk', in_prepared_repo(function ()
       vim.fn.setpos('.', {0, 8, 1, 0})
-      act('zajjjjVs')
+      act('zAjjjjVs')
       status.wait_on_current_operation()
       eq('MM a.txt\n', get_git_status('a.txt'))
       eq([[--- a/a.txt
@@ -90,7 +90,7 @@ describe('status buffer', function ()
 
     it('can unstage a hunk under the cursor of a staged file', in_prepared_repo(function ()
       vim.fn.setpos('.', {0, 24, 1, 0})
-      act('zajju')
+      act('zAjju')
       status.wait_on_current_operation()
       eq('MM b.txt\n', get_git_status('b.txt'))
       eq([[--- a/b.txt
@@ -105,7 +105,7 @@ describe('status buffer', function ()
 
     it('can unstage from a selection in a hunk', in_prepared_repo(function ()
       vim.fn.setpos('.', {0, 24, 1, 0})
-      act('zajjjjVu')
+      act('zAjjjjVu')
       status.wait_on_current_operation()
       eq('MM b.txt\n', get_git_status('b.txt'))
       eq([[--- a/b.txt
@@ -121,7 +121,8 @@ describe('status buffer', function ()
 
     it('can unstage a subsequent hunk from a staged file', in_prepared_repo(function ()
       vim.fn.setpos('.', {0, 24, 1, 0})
-      act('za8ju')
+      local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+      act('zO8ju')
       status.wait_on_current_operation()
       eq('MM b.txt\n', get_git_status('b.txt'))
       eq([[--- a/b.txt

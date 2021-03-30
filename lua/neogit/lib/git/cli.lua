@@ -17,7 +17,8 @@ local configurations = {
     flags = {
       short = "-s",
       branch = "-b",
-      verbose = "-v"
+      verbose = "-v",
+      null_terminated = "-z"
     },
     options = {
       porcelain = "--porcelain",
