@@ -6,11 +6,26 @@ local a = require('neogit.async')
 local uv = require('neogit.async.uv')
 local split = require('neogit.lib.util').split
 
-local COMMIT_FILE = '.git/NEOGIT_COMMIT_EDITMSG'
+local find_root = function()
+  local base_pwd = vim.fn.getcwd()
+  local target = string.byte("/")
+  for idx = #base_pwd, 1, -1 do
+    if base_pwd:byte(idx) == target then
+      local gitpath = base_pwd:sub(1, idx) .. ".git"
+      if vim.fn.isdirectory(gitpath) > 0 then
+        return gitpath
+      end
+    end
+  end
+  return ".git"
+end
+
+local commit_file = function() return find_root() .. '/NEOGIT_COMMIT_EDITMSG' end
 
 local get_commit_message = a.wrap(function (content, cb)
+
   Buffer.create {
-    name = COMMIT_FILE,
+    name = commit_file(),
     filetype = "gitcommit",
     buftype = "",
     modifiable = true,
@@ -82,6 +97,7 @@ local prompt_commit_message = a.sync(function (msg)
 end)
 
 local function create()
+  local COMMIT_FILE = commit_file()
   popup.create(
     "NeogitCommitPopup",
     {
