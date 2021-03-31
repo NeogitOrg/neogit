@@ -596,17 +596,17 @@ local discard = a.sync(function()
       local hunk, lines = get_current_hunk_of_item(item)
       lines[1] = string.format('@@ -%d,%d +%d,%d @@', hunk.index_from, hunk.index_len, hunk.index_from, hunk.disk_len)
       local diff = table.concat(lines, "\n")
-      diff = table.concat({'--- a/'..item.name, '+++ b/'..item.name, diff, ""}, "\n")
+      diff = table.concat({'--- a/'..item.__file.name, '+++ b/'..item.__file.name, diff, ""}, "\n")
       if section.name == "staged_changes" then
         a.wait(cli.apply.reverse.index.with_patch(diff).call())
       else
         a.wait(cli.apply.reverse.with_patch(diff).call())
       end
     elseif section.name == "unstaged_changes" then
-      a.wait(cli.checkout.files(item.name).call())
+      a.wait(cli.checkout.files(item.__file.name).call())
     elseif section.name == "staged_changes" then
       a.wait(cli.reset.files(item.name).call())
-      a.wait(cli.checkout.files(item.name).call())
+      a.wait(cli.checkout.files(item.__file.name).call())
     end
 
   end
