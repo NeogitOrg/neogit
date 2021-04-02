@@ -532,6 +532,21 @@ local discard = a.sync(function()
   __NeogitStatusRefresh(true)
 end)
 
+local function set_folds(to)
+  collect(locations):each(function (l)
+    l.folded = to[1]
+    collect(l.files):each(function (f)
+      f.folded = to[2]
+      if f.hunks then
+        collect(f.hunks):each(function (h)
+          h.folded = to[3]
+        end)
+      end
+    end)
+  end)
+  __NeogitStatusRefresh(true)
+end
+
 local cmd_func_map = {
   ["Close"] = function()
     notif.delete_all()
@@ -540,22 +555,13 @@ local cmd_func_map = {
     end, 0)
   end,
   ["Depth1"] = function()
-    vim.cmd("set foldlevel=0")
-    vim.cmd("norm zz")
+    set_folds({ true, true, false })
   end,
   ["Depth2"] = function()
-    vim.cmd("set foldlevel=1")
-    vim.cmd("norm zz")
+    set_folds({ false, false, true })
   end,
   ["Depth3"] = function()
-    vim.cmd("set foldlevel=1")
-    vim.cmd("set foldlevel=2")
-    vim.cmd("norm zz")
-  end,
-  ["Depth4"] = function()
-    vim.cmd("set foldlevel=1")
-    vim.cmd("set foldlevel=3")
-    vim.cmd("norm zz")
+    set_folds({ false, false, false })
   end,
   ["Toggle"] = toggle,
   ["Discard"] = { "nv", function () a.run(discard) end, true },
