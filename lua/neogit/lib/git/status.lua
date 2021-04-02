@@ -30,6 +30,9 @@ local update_status = a.sync(function (state)
   local untracked_files, unstaged_files, staged_files = {}, {}, {}
   local append_original_path
 
+  local head = {}
+  local upstream = {}
+
   for _, l in ipairs(util.split(result, '\0')) do
     if append_original_path then
       append_original_path(l)
@@ -37,9 +40,9 @@ local update_status = a.sync(function (state)
       local header, value = l:match('# ([%w%.]+) (.+)')
       if header then
         if header == 'branch.head' then
-          state.head.branch = value
+          head.branch = value
         elseif header == 'branch.upstream' then
-          state.upstream.branch = value
+          upstream.branch = value
         end
       else
         local kind, rest = l:match('(.) (.+)')
@@ -87,6 +90,8 @@ local update_status = a.sync(function (state)
     end
   end
 
+  state.head = head
+  state.upstream = upstream
   state.untracked.files = untracked_files
   state.unstaged.files = unstaged_files
   state.staged.files = staged_files
