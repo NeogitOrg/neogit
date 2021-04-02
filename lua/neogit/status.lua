@@ -820,6 +820,18 @@ local cmd_func_map = {
   ["CommandHistory"] = function()
     GitCommandHistory:new():show()
   end,
+  ["TabOpen"] = function()
+    local _, item = get_current_section_item()
+    vim.cmd("tabedit " .. item.name)
+  end,
+  ["VSplitOpen"] = function()
+    local _, item = get_current_section_item()
+    vim.cmd("vsplit " .. item.name)
+  end,
+  ["SplitOpen"] = function()
+    local _, item = get_current_section_item()
+    vim.cmd("split " .. item.name)
+  end,
   ["GoToFile"] = function()
     local section, item = get_current_section_item()
 
