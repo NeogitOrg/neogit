@@ -249,6 +249,11 @@ local function toggle()
   refresh_status()
 end
 
+function __NeogitStatusReset()
+  repo = repository.create()
+  locations = {}
+  __NeogitStatusRefresh(true)
+end
 function __NeogitStatusRefresh(force)
   local function wait(ms)
     vim.wait(ms or 1000, function() return not refreshing end)

@@ -6,7 +6,8 @@ local get_git_status = harness.get_git_status
 local get_git_diff = harness.get_git_diff
 
 local function act(normal_cmd)
-  vim.cmd('normal '..normal_cmd)
+  vim.fn.feedkeys(vim.api.nvim_replace_termcodes(normal_cmd, true, true, true))
+  vim.fn.feedkeys('', 'x') -- flush typeahead
   status.wait_on_current_operation()
 end
 
@@ -15,7 +16,6 @@ describe('status buffer', function ()
     it('can stage an untracked file under the cursor', in_prepared_repo(function ()
       vim.fn.setpos('.', {0, 5, 1, 0})
       act('s')
-      status.wait_on_current_operation()
       local result = get_git_status('untracked.txt')
       eq('A  untracked.txt\n', result)
     end))
@@ -23,15 +23,13 @@ describe('status buffer', function ()
     it('can stage a tracked file under the cursor', in_prepared_repo(function ()
       vim.fn.setpos('.', {0, 8, 1, 0})
       act('s')
-      status.wait_on_current_operation()
       local result = get_git_status('a.txt')
       eq('M  a.txt\n', result)
     end))
 
     it('can stage a hunk under the cursor of a tracked file', in_prepared_repo(function ()
       vim.fn.setpos('.', {0, 8, 1, 0})
-      act('zAjjs')
-      status.wait_on_current_operation()
+      act('<tab>jjs')
       eq('MM a.txt\n', get_git_status('a.txt'))
       eq([[--- a/a.txt
 +++ b/a.txt
@@ -47,8 +45,7 @@ describe('status buffer', function ()
 
     it('can stage a subsequent hunk under the cursor of a tracked file', in_prepared_repo(function ()
       vim.fn.setpos('.', {0, 8, 1, 0})
-      act('zA8js')
-      status.wait_on_current_operation()
+      act('<tab>8js')
       eq('MM a.txt\n', get_git_status('a.txt'))
       eq([[--- a/a.txt
 +++ b/a.txt
@@ -63,8 +60,7 @@ describe('status buffer', function ()
 
     it('can stage from a selection in a hunk', in_prepared_repo(function ()
       vim.fn.setpos('.', {0, 8, 1, 0})
-      act('zAjjjjVs')
-      status.wait_on_current_operation()
+      act('<tab>jjjjVs')
       eq('MM a.txt\n', get_git_status('a.txt'))
       eq([[--- a/a.txt
 +++ b/a.txt
@@ -81,17 +77,15 @@ describe('status buffer', function ()
 
   describe('unstaging files - u', function ()
     it('can unstage a staged file under the cursor', in_prepared_repo(function ()
-      vim.fn.setpos('.', {0, 24, 1, 0})
+      vim.fn.setpos('.', {0, 11, 1, 0})
       act('u')
-      status.wait_on_current_operation()
       local result = get_git_status('b.txt')
       eq(' M b.txt\n', result)
     end))
 
     it('can unstage a hunk under the cursor of a staged file', in_prepared_repo(function ()
-      vim.fn.setpos('.', {0, 24, 1, 0})
-      act('zAjju')
-      status.wait_on_current_operation()
+      vim.fn.setpos('.', {0, 11, 1, 0})
+      act('<tab>jju')
       eq('MM b.txt\n', get_git_status('b.txt'))
       eq([[--- a/b.txt
 +++ b/b.txt
@@ -104,9 +98,8 @@ describe('status buffer', function ()
     end))
 
     it('can unstage from a selection in a hunk', in_prepared_repo(function ()
-      vim.fn.setpos('.', {0, 24, 1, 0})
-      act('zAjjjjVu')
-      status.wait_on_current_operation()
+      vim.fn.setpos('.', {0, 11, 1, 0})
+      act('<tab>jjjjVu')
       eq('MM b.txt\n', get_git_status('b.txt'))
       eq([[--- a/b.txt
 +++ b/b.txt
@@ -120,10 +113,9 @@ describe('status buffer', function ()
     end))
 
     it('can unstage a subsequent hunk from a staged file', in_prepared_repo(function ()
-      vim.fn.setpos('.', {0, 24, 1, 0})
+      vim.fn.setpos('.', {0, 11, 1, 0})
       local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
-      act('zO8ju')
-      status.wait_on_current_operation()
+      act('<tab>8ju')
       eq('MM b.txt\n', get_git_status('b.txt'))
       eq([[--- a/b.txt
 +++ b/b.txt
