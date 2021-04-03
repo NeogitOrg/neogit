@@ -49,6 +49,21 @@ function M.each(tbl, func)
   end
 end
 
+function M.reduce(tbl, func, ...)
+  local acc = {...}
+  tbl:each(function (item)
+    acc = {func(item, unpack(acc))}
+  end)
+  return unpack(acc)
+end
+
+function M.find(tbl, func)
+  for _, item in ipairs(tbl) do
+    if func(item) then return item end
+  end
+  return nil
+end
+
 return setmetatable(M, {
   __call = function (_, tbl)
     return M.new(tbl)

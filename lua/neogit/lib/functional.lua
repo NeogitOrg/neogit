@@ -12,4 +12,21 @@ function M.dot(chain)
   end
 end
 
+function M.compose(...)
+  local funcs = collect({...})
+  return function (...)
+    return funcs:reduce(function (cur, ...)
+      return cur(...)
+    end, ...)
+  end
+end
+M.C = M.compose
+
+function M.eq(a)
+  return function (b)
+    return a == b
+  end
+end
+
+
 return M

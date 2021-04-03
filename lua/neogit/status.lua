@@ -203,10 +203,78 @@ local function draw_buffer()
   locations = new_locations
 end
 
+--- Find the closest section the cursor is encosed by.
+--
+-- @return table, table, table, number, number -
+--  The first 3 values are tables in the shape of {number, string}, where the number is
+--  the relative offset of the found item and the string is it's identifier.
+--  The remaining 2 numbers are the first and last line of the found section.
+local function save_cursor_location()
+  local line = vim.fn.line('.')
+  local section_loc, file_loc, hunk_loc, first, last
+
+  for li, loc in ipairs(locations) do
+    if line == loc.first then
+      section_loc = {li, loc.name}
+      first, last = loc.first, loc.last
+      break
+    elseif line >= loc.first and line <= loc.last then
+      section_loc = {li, loc.name}
+      for fi, file in ipairs(loc.files) do
+        if line == file.first then
+          file_loc = {fi, file.name}
+          first, last = file.first, file.last
+          break
+        elseif line >= file.first and line <= file.last then
+          file_loc = {fi, file.name}
+          for hi, hunk in ipairs(file.hunks) do
+            if line <= hunk.last then
+              hunk_loc = {hi, hunk.hash}
+              first, last = hunk.first, hunk.last
+              break
+            end
+          end
+          break
+        end
+      end
+      break
+    end
+  end
+
+  return section_loc, file_loc, hunk_loc, first, last
+end
+
+local function restore_cursor_location(section_loc, file_loc, hunk_loc)
+  if #locations == 0 then return vim.fn.setpos('.', {0, 1, 0, 0}) end
+  if not section_loc then section_loc = {1, ''} end
+
+  local section = Collection.new(locations):find(function (s) return s.name == section_loc[2] end)
+  if not section then
+    file_loc, hunk_loc = nil, nil
+    section = locations[section_loc[1]] or locations[#locations]
+  end
+  if not file_loc or not section.files or #section.files == 0 then return vim.fn.setpos('.', {0, section.first, 0, 0}) end
+
+  local file = Collection.new(section.files):find(function (f) return f.name == file_loc[2] end)
+  if not file then
+    hunk_loc = nil
+    file = section.files[file_loc[1]] or section.files[#section.files]
+  end
+  if not hunk_loc or not file.hunks or #file.hunks == 0 then return vim.fn.setpos('.', {0, file.first, 0, 0}) end
+
+  local hunk = Collection.new(file.hunks):find(function (h) return h.hash == hunk_loc[2] end)
+    or file.hunks[hunk_loc[1]]
+    or file.hunks[#file.hunks]
+
+  vim.fn.setpos('.', {0, hunk.first, 0, 0})
+end
+
 local function refresh_status()
   if status_buffer == nil then
     return
   end
+
+  local s, f, h = save_cursor_location()
 
   status_buffer:unlock()
 
@@ -214,6 +282,8 @@ local function refresh_status()
   draw_signs()
 
   status_buffer:lock()
+
+  restore_cursor_location(s, f, h)
 end
 
 local function toggle()
@@ -658,33 +728,7 @@ local function update_highlight()
   vim.api.nvim_buf_clear_namespace(0, highlight_group, 0, -1)
   status_buffer:clear_sign_group('ctx')
 
-  local line = vim.fn.line('.')
-  local first, last
-
-  -- This nested madness finds the smallest section the cursor is currently
-  -- enclosed by, based on the locations table created while rendering.
-  for _,loc in ipairs(locations) do
-    if line == loc.first then
-      first, last = loc.first, loc.last
-      break
-    elseif line >= loc.first and line <= loc.last then
-      for _,file in ipairs(loc.files) do
-        if line == file.first then
-          first, last = file.first, file.last
-          break
-        elseif line >= file.first and line <= file.last then
-          for _, hunk in ipairs(file.hunks) do
-            if line <= hunk.last then
-              first, last = hunk.first, hunk.last
-              break
-            end
-          end
-          break
-        end
-      end
-      break
-    end
-  end
+  local _,_,_, first, last = save_cursor_location()
 
   if first == nil or last == nil then
     return
