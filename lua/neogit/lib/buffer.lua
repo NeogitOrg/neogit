@@ -237,8 +237,8 @@ function Buffer.create(config)
     buffer.border_buffer = border_buffer
   end
 
-  vim.cmd("set nonu")
-  vim.cmd("set nornu")
+  vim.cmd("setlocal nonu")
+  vim.cmd("setlocal nornu")
 
   buffer:set_name(config.name)
 
