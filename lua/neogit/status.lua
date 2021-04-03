@@ -9,6 +9,7 @@ local a = require'neogit.async'
 local repository = require 'neogit.lib.git.repository'
 local collect = require 'neogit.lib.collection'
 local F = require 'neogit.lib.functional'
+local LineBuffer = require 'neogit.lib.line_buffer'
 
 local refreshing = false
 local current_operation = nil
@@ -76,23 +77,6 @@ local function get_current_section_item()
   return get_section_item_for_line(vim.fn.line("."))
 end
 
-local function new_output()
-  return setmetatable({ }, {
-    __index = {
-      append = function (tbl, data)
-        if type(data) == 'string' then table.insert(tbl, data)
-        elseif type(data) == 'table' then
-          for _, r in ipairs(data) do table.insert(tbl, r) end
-        else error('invalid data type: ' .. type(data), 2) end
-        return tbl
-      end,
-      into_buffer = function (tbl, from, to)
-        status_buffer:set_lines(from, to, false, tbl)
-      end
-    }
-  })
-end
-
 local mode_to_text = {
   M = "Modified",
   N = "New file",
@@ -134,7 +118,7 @@ local function draw_buffer()
   status_buffer:clear_sign_group('hl')
   status_buffer:clear_sign_group('fold_markers')
 
-  local output = new_output()
+  local output = LineBuffer.new()
   output:append(string.format("Head: %s %s", repo.head.branch, repo.head.commit_message))
   if repo.upstream.branch then
     output:append(string.format("Push: %s %s", repo.upstream.branch, repo.upstream.commit_message))
@@ -215,7 +199,7 @@ local function draw_buffer()
   render_section('Unpulled changes', repo.unpulled, 'unpulled')
   render_section('Unmerged changes', repo.unmerged, 'unmerged')
 
-  output:into_buffer(0, -1)
+  status_buffer:replace_content_with(output)
   locations = new_locations
 end
 
