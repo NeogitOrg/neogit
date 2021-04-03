@@ -7,7 +7,7 @@ local notif = require("neogit.lib.notification")
 local config = require("neogit.config")
 local a = require'neogit.async'
 local repository = require 'neogit.lib.git.repository'
-local collect = require 'neogit.lib.collection'
+local Collection = require 'neogit.lib.collection'
 local F = require 'neogit.lib.functional'
 local LineBuffer = require 'neogit.lib.line_buffer'
 
@@ -100,12 +100,12 @@ local function draw_signs()
   for _, l in ipairs(locations) do
     draw_sign_for_item(l, 'section')
     if not l.folded then
-      collect(l.files)
+      Collection.new(l.files)
         :filter(F.dot('hunks'))
         :each(function (f)
           draw_sign_for_item(f, 'item')
           if not f.folded then
-            collect(f.hunks):each(function (h)
+            Collection.new(f.hunks):each(function (h)
               draw_sign_for_item(h, 'hunk')
             end)
           end
@@ -126,7 +126,7 @@ local function draw_buffer()
   output:append('')
 
   local new_locations = {}
-  local locations_lookup = collect(locations):key_by('name')
+  local locations_lookup = Collection.new(locations):key_by('name')
 
   local function render_section(header, data, key)
     if #data.files == 0 then return end
@@ -140,7 +140,7 @@ local function draw_buffer()
     location.first = #output
 
     if not location.folded then
-      local files_lookup = collect(location.files):key_by('name')
+      local files_lookup = Collection.new(location.files):key_by('name')
       location.files = {}
 
       for _, f in ipairs(data.files) do
@@ -152,7 +152,7 @@ local function draw_buffer()
         file.first = #output
 
         if f.diff and not file.folded then
-          local hunks_lookup = collect(file.hunks):key_by('hash')
+          local hunks_lookup = Collection.new(file.hunks):key_by('hash')
 
           local hunks = {}
           for _, h in ipairs(f.diff.hunks) do
@@ -517,12 +517,12 @@ local discard = a.sync(function()
 end)
 
 local function set_folds(to)
-  collect(locations):each(function (l)
+  Collection.new(locations):each(function (l)
     l.folded = to[1]
-    collect(l.files):each(function (f)
+    Collection.new(l.files):each(function (f)
       f.folded = to[2]
       if f.hunks then
-        collect(f.hunks):each(function (h)
+        Collection.new(f.hunks):each(function (h)
           h.folded = to[3]
         end)
       end

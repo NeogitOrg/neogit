@@ -1,5 +1,9 @@
 local M = {}
 
+function M.new(tbl)
+  return setmetatable(tbl, { __index = M })
+end
+
 --- Convert a table of tables into a new table, where every object is hashed by it's value at `key`.
 --
 -- Example:
@@ -47,6 +51,6 @@ end
 
 return setmetatable(M, {
   __call = function (_, tbl)
-    return setmetatable(tbl, { __index = M })
+    return M.new(tbl)
   end
 })
