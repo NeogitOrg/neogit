@@ -142,7 +142,7 @@ local function draw_buffer()
   output:append('')
 
   local new_locations = {}
-  local locations_lookup = collect(locations):keyBy('name')
+  local locations_lookup = collect(locations):key_by('name')
 
   local function render_section(header, data, key)
     if #data.files == 0 then return end
@@ -156,7 +156,7 @@ local function draw_buffer()
     location.first = #output
 
     if not location.folded then
-      local files_lookup = collect(location.files):keyBy('name')
+      local files_lookup = collect(location.files):key_by('name')
       location.files = {}
 
       for _, f in ipairs(data.files) do
@@ -168,7 +168,7 @@ local function draw_buffer()
         file.first = #output
 
         if f.diff and not file.folded then
-          local hunks_lookup = collect(file.hunks):keyBy('hash')
+          local hunks_lookup = collect(file.hunks):key_by('hash')
 
           local hunks = {}
           for _, h in ipairs(f.diff.hunks) do

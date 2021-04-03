@@ -1,6 +1,16 @@
 local M = {}
 
-function M.keyBy(tbl, key)
+--- Convert a table of tables into a new table, where every object is hashed by it's value at `key`.
+--
+-- Example:
+-- key_by({ { a = "v1", b = 1 }, { a = "v2", b = 2 } })
+--   ==> { v1 = { a = "v1", b = 1 }, v2 = { a = "v2", b = 2 } }
+--
+-- @param tbl table  - The table to be converted
+-- @param key string - Field to get the hashing value from
+--
+-- @return table - New hashed table
+function M.key_by(tbl, key)
   local result = {}
   for _, item in ipairs(tbl) do
     result[item[key]] = item
