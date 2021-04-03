@@ -22,12 +22,6 @@ local hunk_header_matcher = vim.regex('^@@.*@@')
 local diff_add_matcher = vim.regex('^+')
 local diff_delete_matcher = vim.regex('^-')
 
-local function line_is_hunk(line)
-  if line:match('^stash%@') then return false end
-  -- This returns a false positive on untracked file entries
-  return not vim.fn.matchlist(line, "^\\(Renamed\\|Added\\|Modified\\|New file\\|Deleted\\|Conflict\\) .*")[1]
-end
-
 local function get_section_idx_for_line(linenr)
   for i, l in pairs(locations) do
     if l.first <= linenr and linenr <= l.last then
@@ -286,13 +280,18 @@ local function refresh_status()
   restore_cursor_location(s, f, h)
 end
 
+local function current_line_is_hunk()
+  local _,_,h = save_cursor_location()
+  return h ~= nil
+end
+
 local function toggle()
   local section, item = get_current_section_item()
   if section == nil then
     return
   end
 
-  local on_hunk = item ~= nil and line_is_hunk(vim.fn.getline('.'))
+  local on_hunk = item ~= nil and current_line_is_hunk()
 
   if on_hunk then
     local hunk = get_current_hunk_of_item(item)
@@ -492,7 +491,7 @@ local stage = a.sync(function()
   if mode.mode == "V" then
     a.wait(stage_selection())
   else
-    local on_hunk = line_is_hunk(vim.fn.getline('.'))
+    local on_hunk = current_line_is_hunk()
 
     if on_hunk and section.name ~= "untracked" then
       local hunk = get_current_hunk_of_item(item)
@@ -520,7 +519,7 @@ local unstage = a.sync(function()
   if mode.mode == "V" then
     a.wait(unstage_selection())
   else
-    local on_hunk = line_is_hunk(vim.fn.getline('.'))
+    local on_hunk = current_line_is_hunk()
 
     if on_hunk then
       local hunk = get_current_hunk_of_item(item)
@@ -562,7 +561,7 @@ local discard = a.sync(function()
     vim.fn.delete(item.name)
   else
 
-    local on_hunk = line_is_hunk(vim.fn.getline('.'))
+    local on_hunk = current_line_is_hunk()
 
     if on_hunk then
       local hunk, lines = get_current_hunk_of_item(item)
