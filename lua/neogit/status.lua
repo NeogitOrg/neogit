@@ -660,7 +660,7 @@ local cmd_func_map = function ()
       local section, item = get_current_section_item()
 
       if item ~= nil then
-        if section.name ~= "unstaged_changes" and section.name ~= "staged_changes" and section.name ~= "untracked_files" then
+        if section.name ~= "unstaged" and section.name ~= "staged" and section.name ~= "untracked" then
           return
         end
 
