@@ -157,11 +157,9 @@ local function create()
           description = "Commit",
           callback = function(popup)
             a.dispatch(function ()
-              local data = a.wait(uv.read_file(COMMIT_FILE))
+              local data = a.wait(uv.read_lines(COMMIT_FILE))
               local skip_gen = data ~= nil
-              data = data or ''
-              -- we need \r? to support windows
-              data = split(data, '\r?\n')
+              data = data or {}
               a.wait(prompt_commit_message(data, skip_gen))
               local _, code = a.wait(cli.commit.commit_message_file(COMMIT_FILE).args(unpack(popup.get_arguments())).call())
               if code == 0 then
