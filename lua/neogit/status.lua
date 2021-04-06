@@ -1,8 +1,10 @@
 local Buffer = require("neogit.lib.buffer")
+local Diff = require('neogit.diff')
 local GitCommandHistory = require("neogit.buffers.git_command_history")
 local git = require("neogit.lib.git")
 local cli = require('neogit.lib.git.cli')
 local util = require("neogit.lib.util")
+local uv = require("neogit.async.uv")
 local notif = require("neogit.lib.notification")
 local config = require("neogit.config")
 local a = require'neogit.async'
@@ -621,6 +623,20 @@ local cmd_func_map = function ()
     end,
     ["Depth4"] = function()
       set_folds({ false, false, false })
+    end,
+    ["OpenSplitDiff"] = function()
+      a.dispatch(function()
+        local section, item = get_current_section_item()
+
+        if item ~= nil then
+          local lhs_lines = a.wait(uv.read_lines(item.name))
+          local rhs_lines = vim.split(a.wait(cli.show.file(item.name).call()), '\n')
+          a.wait(Diff.open(
+            { lines = lhs_lines, name = item.name .. " [WORKING TREE]" }, 
+            { lines = rhs_lines, name = item.name .. " [HEAD]" }
+          ))
+        end
+      end)
     end,
     ["Toggle"] = toggle,
     ["Discard"] = { "nv", function () a.run(discard) end, true },

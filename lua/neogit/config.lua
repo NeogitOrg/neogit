@@ -17,6 +17,7 @@ M.values = {
       ["4"] = "Depth4",
       ["<tab>"] = "Toggle",
       ["x"] = "Discard",
+      ["D"] = "OpenSplitDiff",
       ["s"] = "Stage",
       ["S"] = "StageUnstaged",
       ["<c-s>"] = "StageAll",
