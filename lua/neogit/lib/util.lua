@@ -99,6 +99,22 @@ local function split(str, sep)
   return vim.split(str, sep)
 end
 
+local function parse_command_args(...)
+  local args = {...}
+  local tbl = {}
+
+  for _, val in pairs(args) do
+    local parts = vim.split(val, "=")
+    if #parts == 1 then
+      table.insert(tbl, parts[1])
+    else
+      tbl[parts[1]] = parts[2]
+    end
+  end
+
+  return tbl
+end
+
 return {
   inspect = inspect,
   time = time,
@@ -111,6 +127,7 @@ return {
   create_fold = create_fold,
   get_keymaps = get_keymaps,
   print_tbl = print_tbl,
-  split = split
+  split = split,
+  parse_command_args = parse_command_args
 }
 

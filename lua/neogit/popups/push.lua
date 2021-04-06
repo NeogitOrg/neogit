@@ -1,4 +1,5 @@
 local popup = require("neogit.lib.popup")
+local status = require 'neogit.status'
 local notif = require("neogit.lib.notification")
 local git = require("neogit.lib.git")
 local a = require('plenary.async_lib')
@@ -10,7 +11,7 @@ local function push_upstream(popup)
     if code == 0 then
       await(a.scheduler())
       notif.create "Pushed to pushremote"
-      __NeogitStatusRefresh(true)
+      status.refresh(true)
     end
   end)
 end

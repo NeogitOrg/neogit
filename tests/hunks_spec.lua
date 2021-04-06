@@ -9,13 +9,15 @@ local function run_with_hunk(hunk, from, to, reverse)
   return generate_patch_from_selection(
     {
       name = 'test.txt',
-      diff_content = { lines = lines }
+      diff = { lines = lines }
     },
     {
       first = 1,
       last = #lines,
       index_from = header_matches[2],
-      index_len = header_matches[3]
+      index_len = header_matches[3],
+      diff_from = 1,
+      diff_to = #lines
     },
     from, to, reverse)
 end

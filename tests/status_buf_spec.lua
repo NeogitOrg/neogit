@@ -1,64 +1,14 @@
 local eq = assert.are.same
 local status = require'neogit.status'
-
--- very naiive implementation, we only use this to generate unique folder names
-math.randomseed(os.clock()^5)
-local function random_string(length)
-	local res = ""
-	for _ = 1, length do
-		res = res .. string.char(math.random(97, 122))
-	end
-	return res
-end
-
-local function prepare_repository(dir)
-  vim.cmd('silent !cp -r tests/.repo/ /tmp/'..dir)
-  vim.cmd('cd /tmp/'..dir)
-  vim.cmd('silent !cp -r .git.orig/ .git/')
-end
-
-local function cleanup_repository(dir)
-  vim.cmd('cd -')
-  vim.cmd('silent !rm -rf /tmp/'..dir)
-end
-
-local function in_prepared_repo(cb)
-  return function ()
-    local dir = 'neogit_test_'..random_string(5)
-    prepare_repository(dir)
-    vim.cmd('Neogit')
-    status.wait_on_refresh()
-    local _, err = pcall(cb)
-    cleanup_repository(dir)
-    if err ~= nil then
-      error(err)
-    end
-  end
-end
+local harness = require'tests.git_harness'
+local in_prepared_repo = harness.in_prepared_repo
+local get_git_status = harness.get_git_status
+local get_git_diff = harness.get_git_diff
 
 local function act(normal_cmd)
-  vim.cmd('normal '..normal_cmd)
+  vim.fn.feedkeys(vim.api.nvim_replace_termcodes(normal_cmd, true, true, true))
+  vim.fn.feedkeys('', 'x') -- flush typeahead
   status.wait_on_current_operation()
-end
-
-local function get_git_status(files)
-  local result = vim.api.nvim_exec('!git status -s --porcelain=1 -- ' .. (files or ''), true)
-  local lines = vim.split(result, '\n')
-  local output = {}
-  for i=3,#lines do
-    table.insert(output, lines[i])
-  end
-  return table.concat(output, '\n')
-end
-
-local function get_git_diff(files, flags)
-  local result = vim.api.nvim_exec('!git diff '..(flags or '')..' -- ' ..(files or ''), true)
-  local lines = vim.split(result, '\n')
-  local output = {}
-  for i=5,#lines do
-    table.insert(output, lines[i])
-  end
-  return table.concat(output, '\n')
 end
 
 describe('status buffer', function ()
@@ -66,7 +16,6 @@ describe('status buffer', function ()
     it('can stage an untracked file under the cursor', in_prepared_repo(function ()
       vim.fn.setpos('.', {0, 5, 1, 0})
       act('s')
-      status.wait_on_current_operation()
       local result = get_git_status('untracked.txt')
       eq('A  untracked.txt\n', result)
     end))
@@ -74,15 +23,13 @@ describe('status buffer', function ()
     it('can stage a tracked file under the cursor', in_prepared_repo(function ()
       vim.fn.setpos('.', {0, 8, 1, 0})
       act('s')
-      status.wait_on_current_operation()
       local result = get_git_status('a.txt')
       eq('M  a.txt\n', result)
     end))
 
     it('can stage a hunk under the cursor of a tracked file', in_prepared_repo(function ()
       vim.fn.setpos('.', {0, 8, 1, 0})
-      act('zajjs')
-      status.wait_on_current_operation()
+      act('<tab>jjs')
       eq('MM a.txt\n', get_git_status('a.txt'))
       eq([[--- a/a.txt
 +++ b/a.txt
@@ -98,8 +45,7 @@ describe('status buffer', function ()
 
     it('can stage a subsequent hunk under the cursor of a tracked file', in_prepared_repo(function ()
       vim.fn.setpos('.', {0, 8, 1, 0})
-      act('za8js')
-      status.wait_on_current_operation()
+      act('<tab>8js')
       eq('MM a.txt\n', get_git_status('a.txt'))
       eq([[--- a/a.txt
 +++ b/a.txt
@@ -114,8 +60,7 @@ describe('status buffer', function ()
 
     it('can stage from a selection in a hunk', in_prepared_repo(function ()
       vim.fn.setpos('.', {0, 8, 1, 0})
-      act('zajjjjVs')
-      status.wait_on_current_operation()
+      act('<tab>jjjjVs')
       eq('MM a.txt\n', get_git_status('a.txt'))
       eq([[--- a/a.txt
 +++ b/a.txt
@@ -132,17 +77,15 @@ describe('status buffer', function ()
 
   describe('unstaging files - u', function ()
     it('can unstage a staged file under the cursor', in_prepared_repo(function ()
-      vim.fn.setpos('.', {0, 24, 1, 0})
+      vim.fn.setpos('.', {0, 11, 1, 0})
       act('u')
-      status.wait_on_current_operation()
       local result = get_git_status('b.txt')
       eq(' M b.txt\n', result)
     end))
 
     it('can unstage a hunk under the cursor of a staged file', in_prepared_repo(function ()
-      vim.fn.setpos('.', {0, 24, 1, 0})
-      act('zajju')
-      status.wait_on_current_operation()
+      vim.fn.setpos('.', {0, 11, 1, 0})
+      act('<tab>jju')
       eq('MM b.txt\n', get_git_status('b.txt'))
       eq([[--- a/b.txt
 +++ b/b.txt
@@ -155,9 +98,8 @@ describe('status buffer', function ()
     end))
 
     it('can unstage from a selection in a hunk', in_prepared_repo(function ()
-      vim.fn.setpos('.', {0, 24, 1, 0})
-      act('zajjjjVu')
-      status.wait_on_current_operation()
+      vim.fn.setpos('.', {0, 11, 1, 0})
+      act('<tab>jjjjVu')
       eq('MM b.txt\n', get_git_status('b.txt'))
       eq([[--- a/b.txt
 +++ b/b.txt
@@ -171,9 +113,9 @@ describe('status buffer', function ()
     end))
 
     it('can unstage a subsequent hunk from a staged file', in_prepared_repo(function ()
-      vim.fn.setpos('.', {0, 24, 1, 0})
-      act('za8ju')
-      status.wait_on_current_operation()
+      vim.fn.setpos('.', {0, 11, 1, 0})
+      local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+      act('<tab>8ju')
       eq('MM b.txt\n', get_git_status('b.txt'))
       eq([[--- a/b.txt
 +++ b/b.txt

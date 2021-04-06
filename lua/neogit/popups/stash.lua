@@ -1,4 +1,5 @@
 local a = require('plenary.async_lib')
+local status = require 'neogit.status'
 local await = a.async
 local popup = require('neogit.lib.popup')
 local stash = require('neogit.lib.git.stash')
@@ -27,7 +28,7 @@ local configuration = {
         callback = function ()
           a.scope(function ()
             await(stash.stash_all())
-            __NeogitStatusRefresh(true)
+            status.refresh(true)
           end)
         end
       },
@@ -37,7 +38,7 @@ local configuration = {
         callback = function ()
           a.scope(function ()
             await(stash.stash_index())
-            __NeogitStatusRefresh(true)
+            status.refresh(true)
           end)
         end
       },
@@ -52,7 +53,7 @@ local configuration = {
           if stash_name then
             a.scope(function ()
               await(stash.pop(stash_name))
-              __NeogitStatusRefresh(true)
+              status.refresh(true)
             end)
           end
         end
@@ -66,7 +67,7 @@ local configuration = {
           if stash_name then
             a.scope(function ()
               await(stash.apply(stash_name))
-              __NeogitStatusRefresh(true)
+              status.refresh(true)
             end)
           end
         end
@@ -80,7 +81,7 @@ local configuration = {
           if stash_name then
             a.scope(function ()
               await(stash.drop(stash_name))
-              __NeogitStatusRefresh(true)
+              status.refresh(true)
             end)
           end
         end

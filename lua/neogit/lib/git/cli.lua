@@ -18,7 +18,8 @@ local configurations = {
     flags = {
       short = "-s",
       branch = "-b",
-      verbose = "-v"
+      verbose = "-v",
+      null_terminated = "-z"
     },
     options = {
       porcelain = "--porcelain",
@@ -69,7 +70,23 @@ local configurations = {
       end
     }
   }),
-  checkout = config({ }),
+  checkout = config({
+    short_opts = {
+      b = '-b',
+    },
+    aliases = {
+      branch = function (tbl)
+        return function (branch)
+          return tbl.args(branch)
+        end
+      end,
+      new_branch = function (tbl)
+        return function (branch)
+          return tbl.b(branch)
+        end
+      end
+    }
+  }),
   apply = config({
     flags = {
       cached = '--cached',
@@ -102,6 +119,13 @@ local configurations = {
   pull = config({
     flags = {
       no_commit = '--no-commit'
+    },
+  }),
+  branch = config({
+    flags = {
+      list = '--list',
+      all = '-a',
+      remotes = '-r'
     },
   }),
   ['read-tree'] = config({
@@ -398,10 +422,12 @@ local meta = {
 
 local cli = setmetatable({
   history = history,
+  git_root = git_root,
   in_parallel = function(...)
     local calls = {...}
     return new_parallel_builder(calls)
-  end
+  end,
+  git_root = git_root
 }, meta)
 
 return cli

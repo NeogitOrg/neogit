@@ -1,3 +1,8 @@
+local a = require('neogit.async')
+local cli = require('neogit.lib.git.cli')
+local util = require('neogit.lib.util')
+local md5 = require 'neogit.lib.md5'
+
 local function parse_diff(output)
   local header = {}
   local hunks = {}
@@ -24,6 +29,7 @@ local function parse_diff(output)
 
   local hunk = nil
 
+  local hunk_content = ''
   for i=1,len do
     local line = hunks[i]
     if not vim.startswith(line, "+++") then
@@ -31,6 +37,8 @@ local function parse_diff(output)
 
       if index_from then
         if hunk ~= nil then
+          hunk.hash = md5.sumhexa(hunk_content)
+          hunk_content = ''
           table.insert(diff.hunks, hunk)
         end
         hunk = {
@@ -38,16 +46,21 @@ local function parse_diff(output)
           index_len = tonumber(index_len) or 1,
           disk_from = tonumber(disk_from),
           disk_len = tonumber(disk_len) or 1,
-          first = i,
-          last = i
+          line = line,
+          diff_from = i,
+          diff_to = i
         }
       else
-        hunk.last = hunk.last + 1
+        hunk_content = hunk_content .. '\n' .. line
+        hunk.diff_to = hunk.diff_to + 1
       end
     end
   end
 
-  table.insert(diff.hunks, hunk)
+  if hunk then 
+    hunk.hash = md5.sumhexa(hunk_content)
+    table.insert(diff.hunks, hunk)
+  end
 
   return diff
 end
@@ -55,5 +68,31 @@ end
 local diff = {
   parse = parse_diff
 }
+
+function diff.register(meta)
+  meta.load_diffs = a.sync(function (repo, filter)
+    local executions = {}
+
+    for _, f in ipairs(repo.unstaged.files) do
+      if f.mode ~= 'D' and f.mode ~= 'F' and (not filter or f.name:match(filter)) then
+        table.insert(executions, a.sync(function (f)
+          local result = a.wait(cli.diff.files(f.name).call())
+          f.diff = parse_diff(util.split(result, '\n'))
+        end)(f))
+      end
+    end
+
+    for _, f in ipairs(repo.staged.files) do
+      if f.mode ~= 'D' and f.mode ~= 'F' and (not filter or f.name:match(filter)) then
+        table.insert(executions, a.sync(function (f)
+          local result = a.wait(cli.diff.cached.files(f.name).call())
+          f.diff = parse_diff(util.split(result, '\n'))
+        end)(f))
+      end
+    end
+
+    a.wait_all(executions)
+  end)
+end
 
 return diff

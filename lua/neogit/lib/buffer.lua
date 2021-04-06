@@ -34,6 +34,10 @@ function Buffer:lock()
   self:set_option("modifiable", false)
 end
 
+function Buffer:define_autocmd(events, script)
+  vim.cmd(string.format("au %s <buffer=%d> %s", events, self.handle, script))
+end
+
 function Buffer:clear()
   vim.api.nvim_buf_set_lines(self.handle, 0, -1, false, {})
 end
@@ -56,8 +60,11 @@ function Buffer:move_cursor(line)
   end
 end
 
-function Buffer:close()
-  vim.api.nvim_buf_delete(self.handle, {})
+function Buffer:close(force)
+  if force == nil then
+    force = false
+  end
+  vim.api.nvim_buf_delete(self.handle, { force = force })
   if self.border_buffer then
     vim.api.nvim_buf_delete(self.border_buffer, {})
   end
@@ -93,6 +100,10 @@ function Buffer:set_foldlevel(level)
   vim.cmd("setlocal foldlevel=" .. level)
 end
 
+function Buffer:replace_content_with(lines)
+  self:set_lines(0, -1, false, lines)
+end
+
 function Buffer:open_fold(line, reset_pos)
   local pos
   if reset_pos == true then
@@ -125,6 +136,14 @@ function Buffer:place_sign(line, name, group, id)
   return sign_id
 end
 
+function Buffer:get_sign_at_line(line, group)
+  group = group or "*"
+  return vim.fn.sign_getplaced(self.handle, {
+    group = group,
+    lnum = line
+  })[1]
+end
+
 function Buffer:clear_sign_group(group)
   vim.cmd('sign unplace * group='..group..' buffer='..self.handle)
 end
@@ -133,8 +152,24 @@ function Buffer:set_filetype(ft)
   vim.cmd("setlocal filetype=" .. ft)
 end
 
+function Buffer:call(f)
+  vim.api.nvim_buf_call(self.handle, f)
+end
+
 function Buffer.exists(name)
   return vim.fn.bufnr(name) ~= -1
+end
+
+function Buffer:set_extmark(...)
+  return vim.api.nvim_buf_set_extmark(self.handle, ...)
+end
+
+function Buffer:get_extmark(ns, id)
+  return vim.api.nvim_buf_get_extmark_by_id(self.handle, ns, id, { details = true })
+end
+
+function Buffer:del_extmark(ns, id)
+  return vim.api.nvim_buf_del_extmark(self.handle, ns, id)
 end
 
 function Buffer.create(config)
@@ -147,6 +182,9 @@ function Buffer.create(config)
     buffer = Buffer:new(vim.api.nvim_get_current_buf())
   elseif kind == "split" then
     vim.cmd("below new")
+    buffer = Buffer:new(vim.api.nvim_get_current_buf())
+  elseif kind == "vsplit" then
+    vim.cmd("bot vnew")
     buffer = Buffer:new(vim.api.nvim_get_current_buf())
   elseif kind == "floating" then
     -- Creates the border window
@@ -199,8 +237,8 @@ function Buffer.create(config)
     buffer.border_buffer = border_buffer
   end
 
-  vim.cmd("set nonu")
-  vim.cmd("set nornu")
+  vim.cmd("setlocal nonu")
+  vim.cmd("setlocal nornu")
 
   buffer:set_name(config.name)
 
@@ -227,6 +265,11 @@ function Buffer.create(config)
   if config.readonly ~= nil and config.readonly then
     buffer:set_option("readonly", true)
   end
+
+  -- This sets fold styling for Neogit windows without overriding user styling
+  buffer:call(function()
+    vim.wo.winhl = "Folded:NeogitFold"
+  end)
 
   return buffer
 end

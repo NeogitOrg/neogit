@@ -1,7 +1,8 @@
 local managers = {}
 
-function __NeogitMappingsManagerCall(id, k)
+local function invoke(id, map_id)
   local manager = managers[id]
+  local k = manager.map_id_to_key[map_id]
   local mapping = manager.mappings[k]
 
   if type(mapping) == "table" then
@@ -11,40 +12,22 @@ function __NeogitMappingsManagerCall(id, k)
   end
 end
 
-local function key_to_vim(k)
-  if k == "tab" then
-    return "<TAB>"
-  end
-  return k
-end
-
-local function map_to_vim(m)
-  local keys = vim.split(m, " ")
-  local combo = ""
-  for _, key in pairs(keys) do
-    local parts = vim.split(key, "-")
-    if parts[1] == "control" then
-      combo = combo .. string.format("<C-%s>", key_to_vim(parts[2]))
-    else
-      combo = combo .. key_to_vim(parts[1])
-    end
-  end
-  return combo
-end
-
 local function build_call_string(id, k)
-  return string.format([[<cmd>lua __NeogitMappingsManagerCall(%d,'%s')<CR>]], id, k)
+  return string.format([[<cmd>lua require 'neogit.lib.mappings_manager'.invoke(%d, %d)<CR>]], id, k)
 end
 
 local function new()
   local id = vim.api.nvim_win_get_buf(0)
   local mappings = {}
+  local map_id_to_key = {}
   local manager = {
     id = id,
     mappings = mappings,
+    map_id_to_key = map_id_to_key,
     register = function()
       for k,mapping in pairs(mappings) do
-        local f_call = build_call_string(id, k)
+        local map_id = #map_id_to_key + 1
+        local f_call = build_call_string(id, map_id)
         if type(mapping) == "table" then
           for _,m in pairs(vim.split(mapping[1], "")) do
             if type(mapping[2]) == "string" then
@@ -52,7 +35,7 @@ local function new()
             elseif mapping[3] and m == "v" then
               f_call = f_call .. "<ESC>"
             end
-            vim.api.nvim_buf_set_keymap(id, m, map_to_vim(k), f_call, {
+            vim.api.nvim_buf_set_keymap(id, m, k, f_call, {
               silent = true,
               noremap = true,
               nowait = true
@@ -62,12 +45,14 @@ local function new()
           if type(mapping) == "string" then
             f_call = mapping
           end
-          vim.api.nvim_buf_set_keymap(id, "n", map_to_vim(k), f_call, {
+          vim.api.nvim_buf_set_keymap(id, "n", k, f_call, {
             silent = true,
             noremap = true,
             nowait = true
           })
         end
+
+        table.insert(map_id_to_key, k)
       end
     end
   }
@@ -84,5 +69,6 @@ end
 return {
   new = new,
   build_call_string = build_call_string,
-  delete = delete
+  delete = delete,
+  invoke = invoke
 }

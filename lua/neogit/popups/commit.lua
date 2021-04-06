@@ -1,5 +1,7 @@
 local popup = require("neogit.lib.popup")
+local status = require 'neogit.status'
 local cli = require("neogit.lib.git.cli")
+local input = require("neogit.lib.input")
 local Buffer = require("neogit.lib.buffer")
 local a = require('neogit.async')
 local async, await = a.async, a.await
@@ -12,51 +14,73 @@ local get_commit_message = a.wrap(function (content, cb)
   Buffer.create {
     name = COMMIT_FILE,
     filetype = "gitcommit",
+    buftype = "",
     modifiable = true,
     readonly = false,
     initialize = function(buffer)
       buffer:set_lines(0, -1, false, content)
+      vim.cmd("silent w!")
 
-      local mappings = buffer.mmanager.mappings
+      local written = false
 
-      mappings["control-c control-c"] = function()
-        vim.cmd([[
-          silent set buftype=
-          silent g/^#/d
-          silent w!
-          silent bw!
-        ]])
+      _G.__NEOGIT_COMMIT_BUFFER_CB_WRITE = function()
+        written = true
+      end
 
-        cb()
+      _G.__NEOGIT_COMMIT_BUFFER_CB_UNLOAD = function()
+        if written then
+          if input.get_confirmation("Are you sure you want to commit?") then
+            vim.cmd [[
+              silent g/^#/d
+              silent w!
+            ]]
+            cb()
+          end
+        end
+
+        -- cleanup global temporary functions
+        _G.__NEOGIT_COMMIT_BUFFER_CB_WRITE = nil
+        _G.__NEOGIT_COMMIT_BUFFER_CB_UNLOAD = nil
+      end
+
+      buffer:define_autocmd("BufWritePost", "lua __NEOGIT_COMMIT_BUFFER_CB_WRITE()")
+      buffer:define_autocmd("BufUnload", "lua __NEOGIT_COMMIT_BUFFER_CB_UNLOAD()")
+
+      buffer.mmanager.mappings["q"] = function()
+        buffer:close(true)
       end
     end
   }
 end)
 
-local prompt_commit_message = async(function (msg)
+-- If skip_gen is true we don't generate the massive git comment. 
+-- This flag should be true when the file already exists
+local prompt_commit_message = async(function (msg, skip_gen)
   local output = {}
 
   if msg and #msg > 0 then
     for _, line in ipairs(msg) do
       table.insert(output, line)
     end
-  else
+  elseif not skip_gen then
     table.insert(output, "")
   end
 
-  table.insert(output, "# Please enter the commit message for your changes. Lines starting")
-  table.insert(output, "# with '#' will be ignored, and an empty message aborts the commit.")
+  if not skip_gen then
+    table.insert(output, "# Please enter the commit message for your changes. Lines starting")
+    table.insert(output, "# with '#' will be ignored, and an empty message aborts the commit.")
 
-  local status_output = await(cli.status.call())
-  status_output = vim.split(status_output, '\n')
+    local status_output = await(cli.status.call())
+    status_output = vim.split(status_output, '\n')
 
-  for _, line in pairs(status_output) do
-    if not vim.startswith(line, "  (") then
-      table.insert(output, "# " .. line)
+    for _, line in pairs(status_output) do
+      if not vim.startswith(line, "  (") then
+        table.insert(output, "# " .. line)
+      end
     end
   end
 
-  await_for_textlock()
+  await(a.scheduler())
   await(get_commit_message(output))
 end)
 
@@ -135,12 +159,15 @@ local function create()
           callback = function(popup)
             a.scope(function ()
               local data = await(uv.read_file(COMMIT_FILE))
-              local old_content = split(data or '', '\n')
-              await(prompt_commit_message(old_content))
+              local skip_gen = data ~= nil
+              data = data or ''
+              -- we need \r? to support windows
+              data = split(data, '\r?\n')
+              await(prompt_commit_message(data, skip_gen))
               local _, code = await(cli.commit.commit_message_file(COMMIT_FILE).args(unpack(popup.get_arguments())).call())
               if code == 0 then
                 await(uv.fs_unlink(COMMIT_FILE))
-                __NeogitStatusRefresh(true)
+                status.refresh(true)
               end
             end)
           end
@@ -155,7 +182,7 @@ local function create()
               local _, code = await(cli.commit.no_edit.amend.call())
               if code == 0 then
                 await(uv.fs_unlink(COMMIT_FILE))
-                __NeogitStatusRefresh(true)
+                status.refresh(true)
               end
             end)
           end
@@ -172,7 +199,7 @@ local function create()
               local _, code = await(cli.commit.commit_message_file(COMMIT_FILE).amend.only.call())
               if code == 0 then
                 await(uv.fs_unlink(COMMIT_FILE))
-                __NeogitStatusRefresh(true)
+                status.refresh(true)
               end
             end)
           end
@@ -189,7 +216,7 @@ local function create()
               local _, code = await(cli.commit.commit_message_file(COMMIT_FILE).amend.call())
               if code == 0 then
                 await(uv.fs_unlink(COMMIT_FILE))
-                __NeogitStatusRefresh(true)
+                status.refresh(true)
               end
             end)
           end

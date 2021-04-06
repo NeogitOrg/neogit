@@ -1,12 +1,13 @@
 local cli = require('neogit.lib.git.cli')
 local a = require('plenary.async_lib')
 local async, await = a.async, a.await
+local util = require('neogit.lib.util')
 
 local function parse(output)
   local result = {}
   for _, line in ipairs(output) do
     local stash_num, stash_desc = line:match('stash@{(%d*)}: (.*)')
-    table.insert(result, { idx = tonumber(stash_num), name = stash_desc})
+    table.insert(result, { idx = tonumber(stash_num), name = line, message = stash_desc})
   end
   return result
 end
@@ -100,6 +101,11 @@ local perform_stash = async(function (include)
   end
 end)
 
+local update_stashes = a.sync(function (state)
+  local result = a.wait(cli.stash.args('list').call())
+  state.stashes.files = parse(util.split(result, '\n'))
+end)
+
 return {
   parse = parse,
   stash_all = async(function ()
@@ -153,6 +159,10 @@ return {
       .drop
       .args(stash)
       .call())
-  end)
+  end),
+
+  register = function (meta)
+    meta.update_stashes = update_stashes
+  end
 
 }

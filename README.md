@@ -20,22 +20,44 @@ You also use in the built-in package manager:
 $ git clone --depth 1 https://github.com/TimUntersberger/neogit $XDG_CONFIG_HOME/nvim/pack/plugins/start/neogit
 ```
 
-## Usage
-
-You can either open neogit by using the `Neogit` command or using the lua api:
+Now you have to add the following lines to your `init.lua`
 
 ```lua
 local neogit = require('neogit')
 
-neogit.status.create(<kind>)
+neogit.setup {}
+```
+
+## Usage
+
+You can either open neogit by using the `Neogit` command 
+
+```vim
+:Neogit " uses tab
+:Neogit kind=<kind> " override kind
+:Neogit commit" open commit popup
+```
+
+or using the lua api:
+
+```lua
+local neogit = require('neogit')
+
+-- open using defaults
+neogit.open()
+
+-- open commit popup
+neogit.open({ "commit" })
+
+-- open with split kind
+neogit.open({ kind = "split" })
 ```
 
 The create function takes 1 optional argument that can be one of the following values:
 
 * tab (default)
-* floating
+* floating (This currently doesn't work with popups)
 * split
-
 
 ## Status Keybindings
 
@@ -44,6 +66,7 @@ The create function takes 1 optional argument that can be one of the following v
 | Tab          | Toggle diff                                      |
 | 1, 2, 3, 4   | Set a foldlevel                                  |
 | $            | Command history                                  |
+| b            | Branch popup                                     |
 | s            | Stage (also supports staging selection/hunk)     |
 | S            | Stage unstaged changes                           |
 | \<C-s>       | Stage Everything                                 |
@@ -56,24 +79,113 @@ The create function takes 1 optional argument that can be one of the following v
 | Z            | Open stash popup                                 |
 | ?            | Open help popup                                  |
 | x            | Discard changes (also supports discarding hunks) |
+| \<enter>     | Go to file                                       |
 | \<C-r>       | Refresh Buffer                                   |
-| \<C-C>\<C-C> | Commit (when writing a commit message)           |
+
+## Configuration
+
+You can configure neogit by running the `neogit.setup` function.
+
+```lua
+local neogit = require("neogit")
+
+neogit.setup {
+  disable_signs = false,
+  disable_context_highlighting = false,
+  -- customize displayed signs
+  signs = {
+    -- { CLOSED, OPENED }
+    section = { ">", "v" },
+    item = { ">", "v" },
+    hunk = { "", "" },
+  },
+  -- override/add mappings
+  mappings = {
+    -- modify status buffer mappings
+    status = {
+      -- Adds a mapping with "B" as key that does the "BranchPopup" command
+      ["B"] = "BranchPopup",
+      -- Removes the default mapping of "s"
+      ["s"] = "",
+    }
+  }
+}
+```
+
+Right now only the status buffer supports custom mappings. The other popups will follow shortly.
+
+List of status commands:
+
+* Close
+* Depth1 (Set foldlevel to 1)
+* Depth2 (Set foldlevel to 2)
+* Depth3 (Set foldlevel to 3)
+* Depth4 (Set foldlevel to 4)
+* Toggle
+* Discard (Normal and visual mode)
+* Stage (Normal and visual mode)
+* StageUnstaged
+* StageAll
+* GoToFile
+* Unstage (Normal and visual mode)
+* UnstageStaged
+* CommandHistory
+* RefreshBuffer
+* HelpPopup
+* PullPopup
+* PushPopup
+* CommitPopup
+* LogPopup
+* StashPopup
+* BranchPopup
+
+## Notification Highlighting
+
+Neogit defines three highlight groups for the notifications:
+
+```vim
+hi NeogitNotificationInfo guifg=#80ff95
+hi NeogitNotificationWarning guifg=#fff454
+hi NeogitNotificationError guifg=#c44323
+```
+
+You can override them to fit your colorscheme in your vim configuration.
 
 ## Contextual Highlighting
 
 The colors for contextual highlighting are defined with these highlight groups:
-```viml
-hi def NeogitDiffAddHighlight guibg=#404040
-hi def NeogitDiffDeleteHighlight guibg=#404040
-hi def NeogitDiffContextHighlight ctermbg=4 guibg=#333333
+
+```vim
+hi def NeogitDiffAddHighlight guibg=#404040 guifg=#859900
+hi def NeogitDiffDeleteHighlight guibg=#404040 guifg=#dc322f
+hi def NeogitDiffContextHighlight guibg=#333333 guifg=#b2b2b2
 hi def NeogitHunkHeader guifg=#cccccc guibg=#404040
 hi def NeogitHunkHeaderHighlight guifg=#cccccc guibg=#4d4d4d
 ```
-You can override them to fit your colorscheme by creating a `syntax/NeogitStatus.vim` in your vim configuration.
+
+You can override them to fit your colorscheme by creating a `syntax/NeogitStatus.vim` in your vim configuration and adding your custom highlights there.
+
+### Disabling Contextual Highlighting
+
+Set `disable_context_highlighting = true` in your call to [`setup`](#configuration) to disable context highlighting altogether.
+
+## Events
+
+Neogit emits a `NeogitStatusRefreshed` event whenever the status gets reloaded.
+
+You can listen to the event using the following code:
+
+```vim
+autocmd User NeogitStatusRefreshed echom "Hello World!"
+```
+
+Further information can be found under `:h autocmd`.
 
 ## Todo
 
-The todo file does not represent ALL of the missing features. This file just shows the features which I noticed were missing and I have to implement. This file will grow in the future.
+**Note: This file is no longer being updated.**
+
+The todo file does not represent ALL of the missing features. This file just shows the features which I noticed were missing and I have to implement.
 
 [TODO](./todo.md)
 

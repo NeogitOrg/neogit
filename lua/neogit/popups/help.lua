@@ -1,9 +1,10 @@
 local popup = require("neogit.lib.popup")
+local status = require 'neogit.status'
 local GitCommandHistory = require("neogit.buffers.git_command_history")
 local Buffer = require("neogit.lib.buffer")
 local git = require("neogit.lib.git")
 
-local function create()
+local function create(pos)
   popup.create(
     "NeogitHelpPopup",
     {},
@@ -24,7 +25,6 @@ local function create()
           description = "Push",
           callback = function(popup)
             require('neogit.popups.push').create()
-            popups.push.create()
           end
         },
       },
@@ -33,8 +33,7 @@ local function create()
           key = "Z",
           description = "Stash",
           callback = function(popup)
-            require('neogit.popups.stash').create()
-            popups.stash.create(vim.fn.getpos('.'))
+            require('neogit.popups.stash').create(popup.env.pos)
           end
         },
       },
@@ -44,7 +43,6 @@ local function create()
           description = "Log",
           callback = function(popup)
             require('neogit.popups.log').create()
-            popups.log.create()
           end
         },
       },
@@ -56,6 +54,15 @@ local function create()
             require('neogit.popups.commit').create()
           end
         },
+      },
+      {
+        {
+          key = "b",
+          description = "Branch",
+          callback = function (popup)
+            require('neogit.popups.branch').create()
+          end
+        }
       },
       {
         {
@@ -71,11 +78,11 @@ local function create()
           key = "<c-r>",
           description = "Refresh Status Buffer",
           callback = function(popup)
-            __NeogitStatusRefresh(true)
+            status.refresh(true)
           end
         },
       },
-    })
+    }, { pos = pos })
 end
 
 return {
