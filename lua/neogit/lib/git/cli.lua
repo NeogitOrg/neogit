@@ -13,6 +13,15 @@ local function config(setup)
 end
 
 local configurations = {
+  show = config({
+    aliases = {
+      file = function(tbl)
+        return function(name)
+          return tbl.args(":" .. name)
+        end
+      end
+    }
+  }),
   status = config({
     flags = {
       short = "-s",
