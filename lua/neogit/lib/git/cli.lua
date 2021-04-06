@@ -17,7 +17,8 @@ local configurations = {
     flags = {
       short = "-s",
       branch = "-b",
-      verbose = "-v"
+      verbose = "-v",
+      null_terminated = "-z"
     },
     options = {
       porcelain = "--porcelain",
@@ -424,7 +425,8 @@ local cli = setmetatable({
   in_parallel = function(...)
     local calls = {...}
     return new_parallel_builder(calls)
-  end
+  end,
+  git_root = git_root
 }, meta)
 
 return cli

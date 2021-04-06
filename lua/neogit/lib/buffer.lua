@@ -100,6 +100,10 @@ function Buffer:set_foldlevel(level)
   vim.cmd("setlocal foldlevel=" .. level)
 end
 
+function Buffer:replace_content_with(lines)
+  self:set_lines(0, -1, false, lines)
+end
+
 function Buffer:open_fold(line, reset_pos)
   local pos
   if reset_pos == true then
@@ -154,6 +158,18 @@ end
 
 function Buffer.exists(name)
   return vim.fn.bufnr(name) ~= -1
+end
+
+function Buffer:set_extmark(...)
+  return vim.api.nvim_buf_set_extmark(self.handle, ...)
+end
+
+function Buffer:get_extmark(ns, id)
+  return vim.api.nvim_buf_get_extmark_by_id(self.handle, ns, id, { details = true })
+end
+
+function Buffer:del_extmark(ns, id)
+  return vim.api.nvim_buf_del_extmark(self.handle, ns, id)
 end
 
 function Buffer.create(config)
@@ -221,8 +237,8 @@ function Buffer.create(config)
     buffer.border_buffer = border_buffer
   end
 
-  vim.cmd("set nonu")
-  vim.cmd("set nornu")
+  vim.cmd("setlocal nonu")
+  vim.cmd("setlocal nornu")
 
   buffer:set_name(config.name)
 

@@ -1,4 +1,5 @@
 local popup = require("neogit.lib.popup")
+local status = require 'neogit.status'
 local cli = require("neogit.lib.git.cli")
 local input = require("neogit.lib.input")
 local Buffer = require("neogit.lib.buffer")
@@ -165,7 +166,7 @@ local function create()
               local _, code = a.wait(cli.commit.commit_message_file(COMMIT_FILE).args(unpack(popup.get_arguments())).call())
               if code == 0 then
                 a.wait(uv.fs_unlink(COMMIT_FILE))
-                __NeogitStatusRefresh(true)
+                status.refresh(true)
               end
             end)
           end
@@ -180,7 +181,7 @@ local function create()
               local _, code = a.wait(cli.commit.no_edit.amend.call())
               if code == 0 then
                 a.wait(uv.fs_unlink(COMMIT_FILE))
-                __NeogitStatusRefresh(true)
+                status.refresh(true)
               end
             end)
           end
@@ -197,7 +198,7 @@ local function create()
               local _, code = a.wait(cli.commit.commit_message_file(COMMIT_FILE).amend.only.call())
               if code == 0 then
                 a.wait(uv.fs_unlink(COMMIT_FILE))
-                __NeogitStatusRefresh(true)
+                status.refresh(true)
               end
             end)
           end
@@ -214,7 +215,7 @@ local function create()
               local _, code = a.wait(cli.commit.commit_message_file(COMMIT_FILE).amend.call())
               if code == 0 then
                 a.wait(uv.fs_unlink(COMMIT_FILE))
-                __NeogitStatusRefresh(true)
+                status.refresh(true)
               end
             end)
           end

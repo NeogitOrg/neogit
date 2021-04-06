@@ -1,6 +1,6 @@
 local managers = {}
 
-function __NeogitMappingsManagerCall(id, map_id)
+local function invoke(id, map_id)
   local manager = managers[id]
   local k = manager.map_id_to_key[map_id]
   local mapping = manager.mappings[k]
@@ -13,7 +13,7 @@ function __NeogitMappingsManagerCall(id, map_id)
 end
 
 local function build_call_string(id, k)
-  return string.format([[<cmd>lua __NeogitMappingsManagerCall(%d, %d)<CR>]], id, k)
+  return string.format([[<cmd>lua require 'neogit.lib.mappings_manager'.invoke(%d, %d)<CR>]], id, k)
 end
 
 local function new()
@@ -69,5 +69,6 @@ end
 return {
   new = new,
   build_call_string = build_call_string,
-  delete = delete
+  delete = delete,
+  invoke = invoke
 }

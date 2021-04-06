@@ -19,87 +19,102 @@ local function marker_to_type(m)
   end
 end
 
-local status = {
-  get = a.sync(function ()
-    local status, stash, unmerged, unpulled, head, upstream = a.wait(git.cli.in_parallel(
-      git.cli.status.porcelain(1).branch,
-      git.cli.stash.args('list'),
-      git.cli.log.oneline.for_range('@{upstream}..'),
-      git.cli.log.oneline.for_range('..@{upstream}'),
-      git.cli.log.max_count(1).pretty('%B'),
-      git.cli.log.max_count(1).pretty('%B').for_range('@{upstream}')
-    ).show_popup(false).call())
+local update_status = a.sync(function (state)
+  local result = a.wait(
+    git.cli.status
+      .porcelain(2)
+      .branch
+      .null_terminated
+      .call())
 
-    if status == nil then return nil end
+  local untracked_files, unstaged_files, staged_files = {}, {}, {}
+  local append_original_path
 
-    local result = {
-      untracked_files = {},
-      unstaged_changes = {},
-      unmerged_changes = {},
-      staged_changes = {},
-      stashes = nil,
-      unpulled = util.map(util.split(unpulled, '\n'), function(x) return { name = x } end),
-      unmerged = util.map(util.split(unmerged, '\n'), function(x) return { name = x } end),
-      head = {
-        message = util.split(head, '\n')[1],
-        branch = ""
-      },
-      upstream = nil
-    }
+  local head = {}
+  local upstream = {}
 
-    result.stashes = git.stash.parse(util.split(stash, '\n'))
-
-    local function insert_change(list, marker, entry)
-      local orig, new = entry:match('^(.-) -> (.*)')
-
-      local name, original_name
-      if orig then
-        name = new
-        original_name = orig
+  for _, l in ipairs(util.split(result, '\0')) do
+    if append_original_path then
+      append_original_path(l)
+    else
+      local header, value = l:match('# ([%w%.]+) (.+)')
+      if header then
+        if header == 'branch.head' then
+          head.branch = value
+        elseif header == 'branch.upstream' then
+          upstream.branch = value
+        end
       else
-        name = entry
-        original_name = nil
-      end
-
-      table.insert(list, {
-        type = marker_to_type(marker),
-        name = name,
-        original_name = original_name,
-        diff_height = 0,
-        diff_content = nil,
-        diff_open = false
-      })
-    end
-
-    for _, line in pairs(util.split(status, '\n')) do
-      local marker, details = line:match('(..) (.*)')
-
-      if marker == "##" then
-        local tokens = vim.split(details, "...", true)
-        result.head.branch = tokens[1]
-        if tokens[2] ~= nil then
-          result.upstream = {
-            branch = vim.split(tokens[2], " ", true)[1],
-            message = vim.split(upstream, '\n')[1]
+        local kind, rest = l:match('(.) (.+)')
+        if kind == '?' then
+          table.insert(untracked_files, {
+            name = rest
+          })
+        elseif kind == '!' then
+          -- we ignore ignored files for now
+        elseif kind == '1' then
+          local mode_staged, mode_unstaged, _, _, _, _, _, _, name = rest:match('(.)(.) (....) (%d+) (%d+) (%d+) (%w+) (%w+) (.+)')
+          if mode_staged ~= '.' then
+            table.insert(staged_files, {
+              mode = mode_staged,
+              name = name
+            })
+          end
+          if mode_unstaged ~= '.' then
+            table.insert(unstaged_files, {
+              mode = mode_unstaged,
+              name = name
+            })
+          end
+        elseif kind == '2' then
+          local mode_staged, mode_unstaged, _, _, _, _, _, _, _, name = rest:match('(.)(.) (....) (%d+) (%d+) (%d+) (%w+) (%w+) (%a%d+) (.+)')
+          local entry = {
+            name = name
           }
-        end
-      elseif marker == "??" then
-        insert_change(result.untracked_files, "A", details)
-      elseif marker == "UU" then
-        insert_change(result.unmerged_changes, "U", details)
-      else
-        local chars = vim.split(marker, "")
-        if chars[1] ~= " " then
-          insert_change(result.staged_changes, chars[1], details)
-        end
-        if chars[2] ~= " " then
-          insert_change(result.unstaged_changes, chars[2], details)
+
+          if mode_staged ~= '.' then
+            entry.mode = mode_staged
+            table.insert(staged_files, entry)
+          end
+          if mode_unstaged ~= '.' then
+            entry.mode = mode_unstaged
+            table.insert(unstaged_files, entry)
+          end
+
+          append_original_path = function (orig)
+            entry.original_name = orig
+            append_original_path = nil
+          end
         end
       end
     end
+  end
 
-    return result
-  end),
+  state.head = head
+  state.upstream = upstream
+  state.untracked.files = untracked_files
+  state.unstaged.files = unstaged_files
+  state.staged.files = staged_files
+end)
+
+local update_branch_information = a.sync(function (state)
+  local task_local = a.sync(function ()
+    local result = a.wait(git.cli.log.max_count(1).pretty('%B').call())
+    state.head.commit_message = util.split(result, '\n')[1]
+  end)()
+
+  local tasks = {task_local}
+  if state.upstream.branch then
+    table.insert(tasks, a.sync(function ()
+      local result = a.wait(git.cli.log.max_count(1).pretty('%B').for_range('@{upstream}').call())
+      state.upstream.commit_message = util.split(result, '\n')[1]
+    end)())
+  end
+
+  a.wait_all(tasks)
+end)
+
+local status = {
   stage = a.sync(function(name)
     a.wait(git.cli.add.files(name).call())
   end),
@@ -117,6 +132,9 @@ local status = {
   end),
 }
 
--- status.stage_range(
+status.register = function (meta)
+  meta.update_status = update_status
+  meta.update_branch_information = update_branch_information
+end
 
 return status
