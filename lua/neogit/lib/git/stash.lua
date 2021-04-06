@@ -101,8 +101,8 @@ local perform_stash = async(function (include)
   end
 end)
 
-local update_stashes = a.sync(function (state)
-  local result = a.wait(cli.stash.args('list').call())
+local update_stashes = async(function (state)
+  local result = await(cli.stash.args('list').call())
   state.stashes.files = parse(util.split(result, '\n'))
 end)
 

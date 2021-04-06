@@ -2,7 +2,7 @@ local popup = require("neogit.lib.popup")
 local status = require 'neogit.status'
 local notif = require("neogit.lib.notification")
 local git = require("neogit.lib.git")
-local a = require('neogit.async')
+local a = require('plenary.async_lib')
 local await = a.await
 
 local function pull_upstream(popup)

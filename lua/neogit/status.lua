@@ -627,21 +627,21 @@ local cmd_func_map = function ()
     ["Discard"] = { "nv", function () a.run(discard) end, true },
     ["Stage"] = { "nv", function () a.run(stage) end, true },
     ["StageUnstaged"] = function ()
-      a.dispatch(function()
-        a.wait(git.status.stage_modified())
+      a.scope(function()
+        await(git.status.stage_modified())
         refresh(true)
       end)
     end,
     ["StageAll"] = function ()
-      a.dispatch(function()
-        a.wait(git.status.stage_all())
+      a.scope(function()
+        await(git.status.stage_all())
         refresh(true)
       end)
     end,
     ["Unstage"] = { "nv", function () a.run(unstage) end, true },
     ["UnstageStaged"] = function ()
-      a.dispatch(function()
-        a.wait(git.status.unstage_all())
+      a.scope(function()
+        await(git.status.unstage_all())
         refresh(true)
       end)
     end,

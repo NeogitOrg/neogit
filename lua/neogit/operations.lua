@@ -1,4 +1,4 @@
-local a = require('neogit.async')
+local a = require('plenary.async_lib')
 -- This is a table to look up pending neogit operations.
 -- An operation is loosely defined as a user-triggered, top-level execution
 -- like "commit", "stash" or "pull".
@@ -24,8 +24,8 @@ function meta.__call(tbl, key, async)
   return function (...)
     local args = {...}
     tbl[k_state][key] = true
-    a.dispatch(function ()
-      a.wait(async(unpack(args)))
+    a.scope(function ()
+      await(async(unpack(args)))
       M[k_state][key] = false
     end)
   end

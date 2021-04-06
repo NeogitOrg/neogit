@@ -87,5 +87,5 @@ local function spawn(options, cb)
 end
 
 return {
-  spawn = a.wrap(spawn)
+  spawn = a.wrap(spawn, 2)
 }

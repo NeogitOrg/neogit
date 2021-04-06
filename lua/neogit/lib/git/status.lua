@@ -3,7 +3,7 @@ local git = {
   stash = require("neogit.lib.git.stash")
 }
 local a = require('plenary.async_lib')
-local async, await = a.async, a.await
+local async, await, await_all = a.async, a.await, a.await_all
 local util = require("neogit.lib.util")
 
 local function marker_to_type(m)
@@ -20,7 +20,7 @@ local function marker_to_type(m)
   end
 end
 
-local update_status = a.sync(function (state)
+local update_status = async(function (state)
   local result = await(
     git.cli.status
       .porcelain(2)
@@ -100,18 +100,18 @@ local update_status = a.sync(function (state)
   state.staged.files = staged_files
 end)
 
-local update_branch_information = a.sync(function (state)
+local update_branch_information = async(function (state)
   local tasks = {}
 
   if state.head.oid ~= '(initial)' then
-    table.insert(tasks, a.sync(function ()
-      local result = a.wait(git.cli.log.max_count(1).pretty('%B').call())
+    table.insert(tasks, async(function ()
+      local result = await(git.cli.log.max_count(1).pretty('%B').call())
       state.head.commit_message = util.split(result, '\n')[1]
     end)())
 
     if state.upstream.branch then
-      table.insert(tasks, a.sync(function ()
-        local result = a.wait(git.cli.log.max_count(1).pretty('%B').for_range('@{upstream}').show_popup(false).call())
+      table.insert(tasks, async(function ()
+        local result = await(git.cli.log.max_count(1).pretty('%B').for_range('@{upstream}').show_popup(false).call())
         state.upstream.commit_message = util.split(result, '\n')[1]
       end)())
     end
@@ -121,8 +121,8 @@ local update_branch_information = a.sync(function (state)
 end)
 
 local status = {
-  stage = a.sync(function(name)
-    a.wait(git.cli.add.files(name).call())
+  stage = async(function(name)
+    await(git.cli.add.files(name).call())
   end),
   stage_modified = async(function()
     await(git.cli.add.update.call())
