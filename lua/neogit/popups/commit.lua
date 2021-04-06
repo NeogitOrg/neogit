@@ -33,13 +33,10 @@ local get_commit_message = a.wrap(function (content, cb)
               silent w!
             ]]
             cb()
-          else
-            vim.cmd [[
-              silent 1,$d
-              silent w!
-            ]]
           end
         end
+
+        -- cleanup global temporary functions
         _G.__NEOGIT_COMMIT_BUFFER_CB_WRITE = nil
         _G.__NEOGIT_COMMIT_BUFFER_CB_UNLOAD = nil
       end
@@ -54,26 +51,30 @@ local get_commit_message = a.wrap(function (content, cb)
   }
 end)
 
-local prompt_commit_message = a.sync(function (msg)
+-- If skip_gen is true we don't generate the massive git comment. 
+-- This flag should be true when the file already exists
+local prompt_commit_message = a.sync(function (msg, skip_gen)
   local output = {}
 
   if msg and #msg > 0 then
     for _, line in ipairs(msg) do
       table.insert(output, line)
     end
-  else
+  elseif not skip_gen then
     table.insert(output, "")
   end
 
-  table.insert(output, "# Please enter the commit message for your changes. Lines starting")
-  table.insert(output, "# with '#' will be ignored, and an empty message aborts the commit.")
+  if not skip_gen then
+    table.insert(output, "# Please enter the commit message for your changes. Lines starting")
+    table.insert(output, "# with '#' will be ignored, and an empty message aborts the commit.")
 
-  local status_output = a.wait(cli.status.call())
-  status_output = vim.split(status_output, '\n')
+    local status_output = a.wait(cli.status.call())
+    status_output = vim.split(status_output, '\n')
 
-  for _, line in pairs(status_output) do
-    if not vim.startswith(line, "  (") then
-      table.insert(output, "# " .. line)
+    for _, line in pairs(status_output) do
+      if not vim.startswith(line, "  (") then
+        table.insert(output, "# " .. line)
+      end
     end
   end
 
@@ -156,8 +157,11 @@ local function create()
           callback = function(popup)
             a.dispatch(function ()
               local data = a.wait(uv.read_file(COMMIT_FILE))
-              local old_content = split(data or '', '\n')
-              a.wait(prompt_commit_message(old_content))
+              local skip_gen = data ~= nil
+              data = data or ''
+              -- we need \r? to support windows
+              data = split(data, '\r?\n')
+              a.wait(prompt_commit_message(data, skip_gen))
               local _, code = a.wait(cli.commit.commit_message_file(COMMIT_FILE).args(unpack(popup.get_arguments())).call())
               if code == 0 then
                 a.wait(uv.fs_unlink(COMMIT_FILE))
