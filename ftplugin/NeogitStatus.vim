@@ -14,7 +14,7 @@ setlocal fillchars=fold:\
 setlocal foldminlines=0
 setlocal foldtext=NeogitFoldFunction()
 
-au BufWipeout <buffer> lua __NeogitStatusOnClose()
+au BufWipeout <buffer> lua require 'neogit.status'.close()
 
 if !luaeval("require'neogit.config'.values.disable_context_highlighting")
   augroup NeogitStatusHighlightUpdater

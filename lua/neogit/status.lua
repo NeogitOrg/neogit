@@ -233,12 +233,12 @@ local function toggle()
   refresh_status()
 end
 
-function __NeogitStatusReset()
+local function reset()
   repo = repository.create()
   locations = {}
-  __NeogitStatusRefresh(true)
+  refresh(true)
 end
-function __NeogitStatusRefresh(force)
+function refresh(force)
   local function wait(ms)
     vim.wait(ms or 1000, function() return not refreshing end)
   end
@@ -270,7 +270,7 @@ function __NeogitStatusRefresh(force)
   return wait
 end
 
-function __NeogitStatusOnClose()
+local function close()
   status_buffer = nil
 end
 
@@ -433,7 +433,7 @@ local stage = a.sync(function()
     end
   end
 
-  __NeogitStatusRefresh(true)
+  refresh(true)
   current_operation = nil
 end)
 
@@ -461,7 +461,7 @@ local unstage = a.sync(function()
     end
   end
 
-  __NeogitStatusRefresh(true)
+  refresh(true)
   current_operation = nil
 end)
 
@@ -513,7 +513,7 @@ local discard = a.sync(function()
 
   end
 
-  __NeogitStatusRefresh(true)
+  refresh(true)
 end)
 
 local function set_folds(to)
@@ -528,95 +528,99 @@ local function set_folds(to)
       end
     end)
   end)
-  __NeogitStatusRefresh(true)
+  refresh(true)
 end
 
-local cmd_func_map = {
-  ["Close"] = function()
-    notif.delete_all()
-    vim.defer_fn(function ()
-      status_buffer:close()
-    end, 0)
-  end,
-  ["Depth1"] = function()
-    set_folds({ true, true, false })
-  end,
-  ["Depth2"] = function()
-    set_folds({ false, false, true })
-  end,
-  ["Depth3"] = function()
-    set_folds({ false, false, false })
-  end,
-  ["Toggle"] = toggle,
-  ["Discard"] = { "nv", function () a.run(discard) end, true },
-  ["Stage"] = { "nv", function () a.run(stage) end, true },
-  ["StageUnstaged"] = function ()
-    a.dispatch(function()
-      a.wait(git.status.stage_modified())
-      __NeogitStatusRefresh(true)
-    end)
-  end,
-  ["StageAll"] = function ()
-    a.dispatch(function()
-      a.wait(git.status.stage_all())
-      __NeogitStatusRefresh(true)
-    end)
-  end,
-  ["Unstage"] = { "nv", function () a.run(unstage) end, true },
-  ["UnstageStaged"] = function ()
-    a.dispatch(function()
-      a.wait(git.status.unstage_all())
-      __NeogitStatusRefresh(true)
-    end)
-  end,
-  ["CommandHistory"] = function()
-    GitCommandHistory:new():show()
-  end,
-  ["TabOpen"] = function()
-    local _, item = get_current_section_item()
-    vim.cmd("tabedit " .. item.name)
-  end,
-  ["VSplitOpen"] = function()
-    local _, item = get_current_section_item()
-    vim.cmd("vsplit " .. item.name)
-  end,
-  ["SplitOpen"] = function()
-    local _, item = get_current_section_item()
-    vim.cmd("split " .. item.name)
-  end,
-  ["GoToFile"] = function()
-    local section, item = get_current_section_item()
-
-    if item ~= nil then
-      if section.name ~= "unstaged_changes" and section.name ~= "staged_changes" and section.name ~= "untracked_files" then
-        return
-      end
-
-      local path = item.name
-
+--- These needs to be a function to avoid a circular dependency
+--  between this module and the popup modules
+local cmd_func_map = function ()
+  return {
+    ["Close"] = function()
       notif.delete_all()
-      status_buffer:close()
+      vim.defer_fn(function ()
+        status_buffer:close()
+      end, 0)
+    end,
+    ["Depth1"] = function()
+      set_folds({ true, true, false })
+    end,
+    ["Depth2"] = function()
+      set_folds({ false, false, true })
+    end,
+    ["Depth3"] = function()
+      set_folds({ false, false, false })
+    end,
+    ["Toggle"] = toggle,
+    ["Discard"] = { "nv", function () a.run(discard) end, true },
+    ["Stage"] = { "nv", function () a.run(stage) end, true },
+    ["StageUnstaged"] = function ()
+      a.dispatch(function()
+        a.wait(git.status.stage_modified())
+        refresh(true)
+      end)
+    end,
+    ["StageAll"] = function ()
+      a.dispatch(function()
+        a.wait(git.status.stage_all())
+        refresh(true)
+      end)
+    end,
+    ["Unstage"] = { "nv", function () a.run(unstage) end, true },
+    ["UnstageStaged"] = function ()
+      a.dispatch(function()
+        a.wait(git.status.unstage_all())
+        refresh(true)
+      end)
+    end,
+    ["CommandHistory"] = function()
+      GitCommandHistory:new():show()
+    end,
+    ["TabOpen"] = function()
+      local _, item = get_current_section_item()
+      vim.cmd("tabedit " .. item.name)
+    end,
+    ["VSplitOpen"] = function()
+      local _, item = get_current_section_item()
+      vim.cmd("vsplit " .. item.name)
+    end,
+    ["SplitOpen"] = function()
+      local _, item = get_current_section_item()
+      vim.cmd("split " .. item.name)
+    end,
+    ["GoToFile"] = function()
+      local section, item = get_current_section_item()
 
-      vim.cmd("e " .. path)
-    end
-  end,
-  ["RefreshBuffer"] = function() __NeogitStatusRefresh(true) end,
-  ["HelpPopup"] = function ()
-    local pos = vim.fn.getpos('.')
-    pos[1] = vim.api.nvim_get_current_buf()
-    require("neogit.popups.help").create(pos)
-  end,
-  ["PullPopup"] = require("neogit.popups.pull").create,
-  ["PushPopup"] = require("neogit.popups.push").create,
-  ["CommitPopup"] = require("neogit.popups.commit").create,
-  ["LogPopup"] = require("neogit.popups.log").create,
-  ["StashPopup"] = function ()
-    local pos = vim.fn.getpos('.')
-    pos[1] = vim.api.nvim_get_current_buf()
-    require("neogit.popups.stash").create(pos)
-  end,
-  ["BranchPopup"] = require("neogit.popups.branch").create,
-}
+      if item ~= nil then
+        if section.name ~= "unstaged_changes" and section.name ~= "staged_changes" and section.name ~= "untracked_files" then
+          return
+        end
+
+        local path = item.name
+
+        notif.delete_all()
+        status_buffer:close()
+
+        vim.cmd("e " .. path)
+      end
+    end,
+    ["RefreshBuffer"] = function() refresh(true) end,
+    ["HelpPopup"] = function ()
+      local pos = vim.fn.getpos('.')
+      pos[1] = vim.api.nvim_get_current_buf()
+      require("neogit.popups.help").create(pos)
+    end,
+    ["PullPopup"] = require("neogit.popups.pull").create,
+    ["PushPopup"] = require("neogit.popups.push").create,
+    ["CommitPopup"] = require("neogit.popups.commit").create,
+    ["LogPopup"] = require("neogit.popups.log").create,
+    ["StashPopup"] = function ()
+      local pos = vim.fn.getpos('.')
+      pos[1] = vim.api.nvim_get_current_buf()
+      require("neogit.popups.stash").create(pos)
+    end,
+    ["BranchPopup"] = require("neogit.popups.branch").create,
+  }
+end
 
 local function create(kind)
   kind = kind or "tab"
@@ -634,14 +638,15 @@ local function create(kind)
       status_buffer = buffer
 
       local mappings = buffer.mmanager.mappings
+      local func_map = cmd_func_map()
 
       for key, val in pairs(config.values.mappings.status) do
         if val ~= "" then
-          mappings[key] = cmd_func_map[val]
+          mappings[key] = func_map[val]
         end
       end
 
-      __NeogitStatusRefresh(true)
+      refresh(true)
     end
   }
 end
@@ -710,5 +715,8 @@ return {
   end,
   wait_on_refresh = function (ms)
     vim.wait(ms or 1000, function() return not refreshing end)
-  end
+  end,
+  reset = reset,
+  refresh = refresh,
+  close = close
 }
