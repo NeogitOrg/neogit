@@ -614,9 +614,12 @@ local cmd_func_map = function ()
       set_folds({ true, true, false })
     end,
     ["Depth2"] = function()
-      set_folds({ false, false, true })
+      set_folds({ false, true, false })
     end,
     ["Depth3"] = function()
+      set_folds({ false, false, true })
+    end,
+    ["Depth4"] = function()
       set_folds({ false, false, false })
     end,
     ["Toggle"] = toggle,
