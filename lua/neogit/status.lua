@@ -113,9 +113,9 @@ local function draw_buffer()
   status_buffer:clear_sign_group('fold_markers')
 
   local output = LineBuffer.new()
-  output:append(string.format("Head: %s %s", repo.head.branch, repo.head.commit_message))
+  output:append(string.format("Head: %s %s", repo.head.branch, repo.head.commit_message or '(no commits)'))
   if repo.upstream.branch then
-    output:append(string.format("Push: %s %s", repo.upstream.branch, repo.upstream.commit_message))
+    output:append(string.format("Push: %s %s", repo.upstream.branch, repo.upstream.commit_message or '(no commits)'))
   end
   output:append('')
 

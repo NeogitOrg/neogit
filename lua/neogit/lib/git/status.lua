@@ -41,6 +41,8 @@ local update_status = a.sync(function (state)
       if header then
         if header == 'branch.head' then
           head.branch = value
+        elseif header == 'branch.oid' then
+          head.oid = value
         elseif header == 'branch.upstream' then
           upstream.branch = value
         end
@@ -98,17 +100,20 @@ local update_status = a.sync(function (state)
 end)
 
 local update_branch_information = a.sync(function (state)
-  local task_local = a.sync(function ()
-    local result = a.wait(git.cli.log.max_count(1).pretty('%B').call())
-    state.head.commit_message = util.split(result, '\n')[1]
-  end)()
+  local tasks = {}
 
-  local tasks = {task_local}
-  if state.upstream.branch then
+  if state.head.oid ~= '(initial)' then
     table.insert(tasks, a.sync(function ()
-      local result = a.wait(git.cli.log.max_count(1).pretty('%B').for_range('@{upstream}').call())
-      state.upstream.commit_message = util.split(result, '\n')[1]
+      local result = a.wait(git.cli.log.max_count(1).pretty('%B').call())
+      state.head.commit_message = util.split(result, '\n')[1]
     end)())
+
+    if state.upstream.branch then
+      table.insert(tasks, a.sync(function ()
+        local result = a.wait(git.cli.log.max_count(1).pretty('%B').for_range('@{upstream}').show_popup(false).call())
+        state.upstream.commit_message = util.split(result, '\n')[1]
+      end)())
+    end
   end
 
   a.wait_all(tasks)
