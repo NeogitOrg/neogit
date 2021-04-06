@@ -1,5 +1,6 @@
 local notif = require("neogit.lib.notification")
-local a = require('neogit.async')
+local a = require('plenary.async_lib')
+local async, await, await_all = a.async, a.await, a.await_all
 local process = require('neogit.process')
 local split = require('neogit.lib.util').split
 
@@ -159,8 +160,8 @@ local configurations = {
   })
 }
 
-local git_root = a.sync(function()
-  return vim.trim(a.wait(process.spawn({cmd = 'git', args = {'rev-parse', '--show-toplevel'}})))
+local git_root = async(function()
+  return vim.trim(await(process.spawn({cmd = 'git', args = {'rev-parse', '--show-toplevel'}})))
 end)
 
 local history = {}
@@ -185,18 +186,18 @@ local function handle_new_cmd(job, popup)
   end
 end
 
-local exec = a.sync(function(cmd, args, cwd, stdin, env, show_popup)
+local exec = async(function(cmd, args, cwd, stdin, env, show_popup)
   args = args or {}
   if show_popup == nil then show_popup = true end
   table.insert(args, 1, cmd)
 
   local time = os.clock()
-  local result, code, errors = a.wait(process.spawn({
+  local result, code, errors = await(process.spawn({
     cmd = 'git',
     args = args,
     env = env,
     input = stdin,
-    cwd = cwd or a.wait(git_root())
+    cwd = cwd or await(git_root())
   }))
   handle_new_cmd({
     cmd =  'git ' .. table.concat(args, ' '),
@@ -324,14 +325,14 @@ local function new_builder(subcommand)
     [k_state] = state,
     [k_config] = configuration,
     [k_command] = subcommand,
-    call = a.sync(function ()
+    call = async(function ()
       local args = {}
       for _,o in ipairs(state.options) do table.insert(args, o) end
       for _,a in ipairs(state.arguments) do table.insert(args, a) end
       if #state.files > 0 then table.insert(args, '--') end
       for _,f in ipairs(state.files) do table.insert(args, f) end
 
-      return a.wait(exec(subcommand, args, state.cwd, state.input, state.env, state.show_popup))
+      return await(exec(subcommand, args, state.cwd, state.input, state.env, state.show_popup))
     end)
   }, mt_builder)
 end
@@ -343,11 +344,11 @@ local function new_parallel_builder(calls)
     cwd = nil
   }
 
-  local call = a.sync(function ()
+  local call = async(function ()
     if #state.calls == 0 then return end
 
     if not state.cwd then
-      state.cwd = a.wait(git_root())
+      state.cwd = await(git_root())
     end
     if not state.cwd or state.cwd == "" then return end
 
@@ -360,7 +361,7 @@ local function new_parallel_builder(calls)
       table.insert(processes, c())
     end
 
-    return a.wait_all(processes)
+    return await_all(processes)
   end)
 
   return setmetatable({

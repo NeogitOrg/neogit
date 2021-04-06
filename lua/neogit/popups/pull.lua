@@ -2,12 +2,13 @@ local popup = require("neogit.lib.popup")
 local notif = require("neogit.lib.notification")
 local git = require("neogit.lib.git")
 local a = require('neogit.async')
+local await = a.await
 
 local function pull_upstream(popup)
-  a.dispatch(function ()
-    local _, code = a.wait(git.cli.pull.no_commit.args(unpack(popup.get_arguments())).call())
+  a.scope(function ()
+    local _, code = await(git.cli.pull.no_commit.args(unpack(popup.get_arguments())).call())
     if code == 0 then
-      a.wait_for_textlock()
+      await(a.scheduler())
       notif.create "Pulled from upstream"
       __NeogitStatusRefresh(true)
     end

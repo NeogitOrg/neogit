@@ -2,7 +2,6 @@ local popup = require("neogit.lib.popup")
 local GitCommandHistory = require("neogit.buffers.git_command_history")
 local Buffer = require("neogit.lib.buffer")
 local git = require("neogit.lib.git")
-local a = require('neogit.async')
 
 local function create()
   popup.create(

@@ -1,6 +1,7 @@
 local cli = require("neogit.lib.git.cli")
 local util = require("neogit.lib.util")
 local a = require('neogit.async')
+local async, await = a.async, a.await
 
 local function parse_log(output)
   output = vim.split(output, '\n')
@@ -29,9 +30,9 @@ local function parse_log(output)
 end
 
 return {
-  list = a.sync(function(options)
+  list = async(function(options)
     options = util.split(options, ' ')
-    local output = a.wait(cli.log.oneline.args(unpack(options)).call())
+    local output = await(cli.log.oneline.args(unpack(options)).call())
     return parse_log(output)
   end),
   parse_log = parse_log

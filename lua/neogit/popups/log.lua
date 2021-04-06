@@ -1,7 +1,8 @@
 local popup = require("neogit.lib.popup")
 local Buffer = require("neogit.lib.buffer")
 local git = require("neogit.lib.git")
-local a = require('neogit.async')
+local a = require('plenary.async_lib')
+local async, await = a.async, a.await
 
 local function commits_to_string(commits)
   local result = {}
@@ -28,8 +29,8 @@ local function commits_to_string(commits)
   return result
 end
 
-local show_in_buffer = a.sync(function (commits)
-  a.wait_for_textlock()
+local show_in_buffer = async(function (commits)
+  await(a.scheduler())
   Buffer.create({
     name = "NeogitLog",
     filetype = "NeogitLog",
@@ -144,9 +145,9 @@ local function create()
           key = "l",
           description = "Log current",
           callback = function(popup)
-            a.dispatch(function ()
-              local commits = a.wait(git.log.list(popup.to_cli()))
-              a.wait(show_in_buffer(commits))
+            a.scope(function ()
+              local commits = await(git.log.list(popup.to_cli()))
+              await(show_in_buffer(commits))
             end)
           end
         },
@@ -159,15 +160,15 @@ local function create()
           key = "h",
           description = "Log HEAD",
           callback = function(popup)
-            a.dispatch(function ()
-              local output = a.wait(
+            a.scope(function ()
+              local output = await(
                 git.cli.log
                   .oneline
                   .args(unpack(popup.get_arguments()))
                   .for_range('HEAD')
                   .call())
               local commits = git.log.parse_log(output)
-              a.wait(show_in_buffer(commits))
+              await(show_in_buffer(commits))
             end)
           end
         },
@@ -177,15 +178,15 @@ local function create()
           key = "L",
           description = "Log local branches",
           callback = function(popup)
-            a.dispatch(function ()
-              local output = a.wait(
+            a.scope(function ()
+              local output = await(
                 git.cli.log
                   .oneline
                   .args(unpack(popup.get_arguments()))
                   .branches
                   .call())
               local commits = git.log.parse_log(output)
-              a.wait(show_in_buffer(commits))
+              await(show_in_buffer(commits))
             end)
           end
         },
@@ -193,8 +194,8 @@ local function create()
           key = "b",
           description = "Log all branches",
           callback = function(popup)
-            a.dispatch(function ()
-              local output = a.wait(
+            a.scope(function ()
+              local output = await(
                 git.cli.log
                   .oneline
                   .args(unpack(popup.get_arguments()))
@@ -202,7 +203,7 @@ local function create()
                   .remotes
                   .call())
               local commits = git.log.parse_log(output)
-              a.wait(show_in_buffer(commits))
+              await(show_in_buffer(commits))
             end)
           end
         },
@@ -210,15 +211,15 @@ local function create()
           key = "a",
           description = "Log all references",
           callback = function(popup)
-            a.dispatch(function ()
-              local output = a.wait(
+            a.scope(function ()
+              local output = await(
                 git.cli.log
                   .oneline
                   .args(unpack(popup.get_arguments()))
                   .all
                   .call())
               local commits = git.log.parse_log(output)
-              a.wait(show_in_buffer(commits))
+              await(show_in_buffer(commits))
             end)
           end
         },

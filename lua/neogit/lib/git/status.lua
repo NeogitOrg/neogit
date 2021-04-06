@@ -2,7 +2,8 @@ local git = {
   cli = require("neogit.lib.git.cli"),
   stash = require("neogit.lib.git.stash")
 }
-local a = require('neogit.async')
+local a = require('plenary.async_lib')
+local async, await = a.async, a.await
 local util = require("neogit.lib.util")
 
 local function marker_to_type(m)
@@ -20,8 +21,8 @@ local function marker_to_type(m)
 end
 
 local status = {
-  get = a.sync(function ()
-    local status, stash, unmerged, unpulled, head, upstream = a.wait(git.cli.in_parallel(
+  get = async(function ()
+    local status, stash, unmerged, unpulled, head, upstream = await(git.cli.in_parallel(
       git.cli.status.porcelain(1).branch,
       git.cli.stash.args('list'),
       git.cli.log.oneline.for_range('@{upstream}..'),
@@ -101,20 +102,20 @@ local status = {
 
     return result
   end),
-  stage = a.sync(function(name)
-    a.wait(git.cli.add.files(name).call())
+  stage = async(function(name)
+    await(git.cli.add.files(name).call())
   end),
-  stage_modified = a.sync(function()
-    a.wait(git.cli.add.update.call())
+  stage_modified = async(function()
+    await(git.cli.add.update.call())
   end),
-  stage_all = a.sync(function()
-    a.wait(git.cli.add.all.call())
+  stage_all = async(function()
+    await(git.cli.add.all.call())
   end),
-  unstage = a.sync(function(name)
-    a.wait(git.cli.reset.files(name).call())
+  unstage = async(function(name)
+    await(git.cli.reset.files(name).call())
   end),
-  unstage_all = a.sync(function()
-    a.wait(git.cli.reset.call())
+  unstage_all = async(function()
+    await(git.cli.reset.call())
   end),
 }
 

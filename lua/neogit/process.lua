@@ -1,4 +1,4 @@
-local async = require'neogit.async'
+local a = require'plenary.async_lib'
 
 local function trim_newlines(s)
   return (string.gsub(s, "^(.-)\n*$", "%1"))
@@ -87,5 +87,5 @@ local function spawn(options, cb)
 end
 
 return {
-  spawn = async.wrap(spawn)
+  spawn = a.wrap(spawn)
 }

@@ -1,5 +1,6 @@
 local uv = vim.loop
-local a = require('neogit.async')
+local a = require('plenary.async_lib')
+local async, await = a.async, a.await
 
 local wrapper = setmetatable({}, {
   __index = function (tbl, action)
@@ -11,12 +12,12 @@ local wrapper = setmetatable({}, {
   end
 })
 
-wrapper.read_file = a.sync(function (file)
-  local err, fd = a.wait(wrapper.fs_open(file, 'r', 438))
+wrapper.read_file = async(function (file)
+  local err, fd = await(wrapper.fs_open(file, 'r', 438))
   if err then return nil end
-  local _, stat = a.wait(wrapper.fs_fstat(fd))
-  local _, data = a.wait(wrapper.fs_read(fd, stat.size, 0))
-  a.wait(wrapper.fs_close(fd))
+  local _, stat = await(wrapper.fs_fstat(fd))
+  local _, data = await(wrapper.fs_read(fd, stat.size, 0))
+  await(wrapper.fs_close(fd))
   return data
 end)
 

@@ -2,6 +2,7 @@ local popup = require("neogit.lib.popup")
 local cli = require("neogit.lib.git.cli")
 local Buffer = require("neogit.lib.buffer")
 local a = require('neogit.async')
+local async, await = a.async, a.await
 local uv = require('neogit.async.uv')
 local split = require('neogit.lib.util').split
 
@@ -32,7 +33,7 @@ local get_commit_message = a.wrap(function (content, cb)
   }
 end)
 
-local prompt_commit_message = a.sync(function (msg)
+local prompt_commit_message = async(function (msg)
   local output = {}
 
   if msg and #msg > 0 then
@@ -46,7 +47,7 @@ local prompt_commit_message = a.sync(function (msg)
   table.insert(output, "# Please enter the commit message for your changes. Lines starting")
   table.insert(output, "# with '#' will be ignored, and an empty message aborts the commit.")
 
-  local status_output = a.wait(cli.status.call())
+  local status_output = await(cli.status.call())
   status_output = vim.split(status_output, '\n')
 
   for _, line in pairs(status_output) do
@@ -55,8 +56,8 @@ local prompt_commit_message = a.sync(function (msg)
     end
   end
 
-  a.wait_for_textlock()
-  a.wait(get_commit_message(output))
+  await_for_textlock()
+  await(get_commit_message(output))
 end)
 
 local function create()
@@ -132,13 +133,13 @@ local function create()
           key = "c",
           description = "Commit",
           callback = function(popup)
-            a.dispatch(function ()
-              local data = a.wait(uv.read_file(COMMIT_FILE))
+            a.scope(function ()
+              local data = await(uv.read_file(COMMIT_FILE))
               local old_content = split(data or '', '\n')
-              a.wait(prompt_commit_message(old_content))
-              local _, code = a.wait(cli.commit.commit_message_file(COMMIT_FILE).args(unpack(popup.get_arguments())).call())
+              await(prompt_commit_message(old_content))
+              local _, code = await(cli.commit.commit_message_file(COMMIT_FILE).args(unpack(popup.get_arguments())).call())
               if code == 0 then
-                a.wait(uv.fs_unlink(COMMIT_FILE))
+                await(uv.fs_unlink(COMMIT_FILE))
                 __NeogitStatusRefresh(true)
               end
             end)
@@ -150,10 +151,10 @@ local function create()
           key = "e",
           description = "Extend",
           callback = function(popup)
-            a.dispatch(function ()
-              local _, code = a.wait(cli.commit.no_edit.amend.call())
+            a.scope(function ()
+              local _, code = await(cli.commit.no_edit.amend.call())
               if code == 0 then
-                a.wait(uv.fs_unlink(COMMIT_FILE))
+                await(uv.fs_unlink(COMMIT_FILE))
                 __NeogitStatusRefresh(true)
               end
             end)
@@ -163,14 +164,14 @@ local function create()
           key = "w",
           description = "Reword",
           callback = function()
-            a.dispatch(function ()
-              local msg = a.wait(cli.log.max_count(1).pretty('%B').call())
+            a.scope(function ()
+              local msg = await(cli.log.max_count(1).pretty('%B').call())
               msg = vim.split(msg, '\n')
 
-              a.wait(prompt_commit_message(msg))
-              local _, code = a.wait(cli.commit.commit_message_file(COMMIT_FILE).amend.only.call())
+              await(prompt_commit_message(msg))
+              local _, code = await(cli.commit.commit_message_file(COMMIT_FILE).amend.only.call())
               if code == 0 then
-                a.wait(uv.fs_unlink(COMMIT_FILE))
+                await(uv.fs_unlink(COMMIT_FILE))
                 __NeogitStatusRefresh(true)
               end
             end)
@@ -180,14 +181,14 @@ local function create()
           key = "a",
           description = "Amend",
           callback = function(popup)
-            a.dispatch(function ()
-              local msg = a.wait(cli.log.max_count(1).pretty('%B').call())
+            a.scope(function ()
+              local msg = await(cli.log.max_count(1).pretty('%B').call())
               msg = vim.split(msg, '\n')
 
-              a.wait(prompt_commit_message(msg))
-              local _, code = a.wait(cli.commit.commit_message_file(COMMIT_FILE).amend.call())
+              await(prompt_commit_message(msg))
+              local _, code = await(cli.commit.commit_message_file(COMMIT_FILE).amend.call())
               if code == 0 then
-                a.wait(uv.fs_unlink(COMMIT_FILE))
+                await(uv.fs_unlink(COMMIT_FILE))
                 __NeogitStatusRefresh(true)
               end
             end)

@@ -4,7 +4,8 @@ local git = require("neogit.lib.git")
 local cli = require('neogit.lib.git.cli')
 local util = require("neogit.lib.util")
 local notif = require("neogit.lib.notification")
-local a = require'neogit.async'
+local a = require('plenary.async_lib')
+local async, await = a.async, a.await
 
 local refreshing = false
 local current_operation = nil
@@ -334,7 +335,7 @@ local function refresh_status()
   primitive_move_cursor(line)
 end
 
-local load_diffs = a.sync(function ()
+local load_diffs = async(function ()
   local unstaged = {}
   local staged = {}
   for _,c in pairs(status.unstaged_changes) do
@@ -364,7 +365,7 @@ local load_diffs = a.sync(function ()
       table.insert(cmds, cli.diff.cached.files(c.name))
     end
   end
-  local results = { a.wait(git.cli.in_parallel(unpack(cmds)).call()) }
+  local results = { await(git.cli.in_parallel(unpack(cmds)).call()) }
 
   for i=1,unstaged_len do
     local name = unstaged[i].name
@@ -395,13 +396,13 @@ function __NeogitStatusRefresh(force)
     return wait
   end
 
-  a.dispatch(function ()
+  a.scope(function ()
     refreshing = true
 
-    status = a.wait(git.status.get())
+    status = await(git.status.get())
     if status ~= nil then
-      a.wait(load_diffs())
-      a.wait_for_textlock()
+      await(load_diffs())
+      await(a.scheduler())
       refresh_status()
     end
 
@@ -560,19 +561,19 @@ local function get_selection()
   return first_section, first_item, first_hunk, first_line - first_hunk.first, last_line - first_hunk.first
 end
 
-local stage_selection = a.sync(function()
+local stage_selection = async(function()
   local _, item, hunk, from, to = get_selection()
   local patch = generate_patch_from_selection(item, hunk, from, to)
-  a.wait(cli.apply.cached.with_patch(patch).call())
+  await(cli.apply.cached.with_patch(patch).call())
 end)
 
-local unstage_selection = a.sync(function()
+local unstage_selection = async(function()
   local _, item, hunk, from, to = get_selection()
   if from == nil then
     return
   end
   local patch = generate_patch_from_selection(item, hunk, from, to, true)
-  a.wait(cli.apply.reverse.cached.with_patch(patch).call())
+  await(cli.apply.reverse.cached.with_patch(patch).call())
 end)
 
 local function line_is_hunk(line)
@@ -580,7 +581,7 @@ local function line_is_hunk(line)
   return not vim.fn.matchlist(line, "^\\(Modified\\|New file\\|Deleted\\|Conflict\\) .*")[1]
 end
 
-local stage = a.sync(function()
+local stage = async(function()
   current_operation = "stage"
   local section, item = get_current_section_item()
 
@@ -591,7 +592,7 @@ local stage = a.sync(function()
   local mode = vim.api.nvim_get_mode()
 
   if mode.mode == "V" then
-    a.wait(stage_selection())
+    await(stage_selection())
   else
 
     local on_hunk = line_is_hunk(vim.fn.getline('.'))
@@ -599,9 +600,9 @@ local stage = a.sync(function()
     if on_hunk and section.name ~= "untracked_files" then
       local hunk = get_current_hunk_of_item(item)
       local patch = generate_patch_from_selection(item, hunk)
-      a.wait(cli.apply.cached.with_patch(patch).call())
+      await(cli.apply.cached.with_patch(patch).call())
     else
-      a.wait(git.status.stage(item.name))
+      await(git.status.stage(item.name))
     end
   end
 
@@ -609,7 +610,7 @@ local stage = a.sync(function()
   current_operation = nil
 end)
 
-local unstage = a.sync(function()
+local unstage = async(function()
   current_operation = "unstage"
   local section, item = get_current_section_item()
 
@@ -620,16 +621,16 @@ local unstage = a.sync(function()
   local mode = vim.api.nvim_get_mode()
 
   if mode.mode == "V" then
-    a.wait(unstage_selection())
+    await(unstage_selection())
   else
     local on_hunk = line_is_hunk(vim.fn.getline('.'))
 
     if on_hunk then
       local hunk = get_current_hunk_of_item(item)
       local patch = generate_patch_from_selection(item, hunk, nil, nil, true)
-      a.wait(cli.apply.reverse.cached.with_patch(patch).call())
+      await(cli.apply.reverse.cached.with_patch(patch).call())
     else
-      a.wait(git.status.unstage(item.name))
+      await(git.status.unstage(item.name))
     end
   end
 
@@ -637,7 +638,7 @@ local unstage = a.sync(function()
   current_operation = nil
 end)
 
-local discard = a.sync(function()
+local discard = async(function()
   local section, item = get_current_section_item()
 
   if section == nil or item == nil then
@@ -655,12 +656,12 @@ local discard = a.sync(function()
     local section, item, hunk, from, to = get_selection()
     local patch = generate_patch_from_selection(item, hunk, from, to, true)
     if section.name == "staged_changes" then
-      a.wait(cli.apply.reverse.index.with_patch(patch).call())
+      await(cli.apply.reverse.index.with_patch(patch).call())
     else
-      a.wait(cli.apply.reverse.with_path(patch).call())
+      await(cli.apply.reverse.with_path(patch).call())
     end
   elseif section.name == "untracked_files" then
-    a.wait_for_textlock()
+    await(a.scheduler())
     vim.fn.delete(item.name)
   else
 
@@ -672,15 +673,15 @@ local discard = a.sync(function()
       local diff = table.concat(lines, "\n")
       diff = table.concat({'--- a/'..item.name, '+++ b/'..item.name, diff, ""}, "\n")
       if section.name == "staged_changes" then
-        a.wait(cli.apply.reverse.index.with_patch(diff).call())
+        await(cli.apply.reverse.index.with_patch(diff).call())
       else
-        a.wait(cli.apply.reverse.with_patch(diff).call())
+        await(cli.apply.reverse.with_patch(diff).call())
       end
     elseif section.name == "unstaged_changes" then
-      a.wait(cli.checkout.files(item.name).call())
+      await(cli.checkout.files(item.name).call())
     elseif section.name == "staged_changes" then
-      a.wait(cli.reset.files(item.name).call())
-      a.wait(cli.checkout.files(item.name).call())
+      await(cli.reset.files(item.name).call())
+      await(cli.checkout.files(item.name).call())
     end
 
   end
@@ -731,18 +732,18 @@ local function create(kind)
       mappings["tab"] = toggle
       mappings["s"] = { "nv", function () a.run(stage) end, true }
       mappings["S"] = function ()
-        a.dispatch(function()
+        a.scope(function()
           for _,c in pairs(status.unstaged_changes) do
             table.insert(status.staged_changes, c)
           end
           status.unstaged_changes = {}
-          a.wait(git.status.stage_modified())
-          a.wait_for_textlock()
+          await(git.status.stage_modified())
+          await(a.scheduler())
           refresh_status()
         end)
       end
       mappings["control-s"] = function ()
-        a.dispatch(function()
+        a.scope(function()
           for _,c in pairs(status.unstaged_changes) do
             table.insert(status.staged_changes, c)
           end
@@ -751,8 +752,8 @@ local function create(kind)
           end
           status.unstaged_changes = {}
           status.untracked_files = {}
-          a.wait(git.status.stage_all())
-          a.wait_for_textlock()
+          await(git.status.stage_all())
+          await(a.scheduler())
           refresh_status()
         end)
       end
@@ -762,7 +763,7 @@ local function create(kind)
       mappings["control-r"] = function() __NeogitStatusRefresh(true) end
       mappings["u"] = { "nv", function () a.run(unstage) end, true }
       mappings["U"] = function ()
-        a.dispatch(function()
+        a.scope(function()
           for _,c in pairs(status.staged_changes) do
             if c.type == "new file" then
               table.insert(status.untracked_files, c)
@@ -771,8 +772,8 @@ local function create(kind)
             end
           end
           status.staged_changes = {}
-          a.wait(git.status.unstage_all())
-          a.wait_for_textlock()
+          await(git.status.unstage_all())
+          await(a.scheduler())
           refresh_status()
         end)
       end
