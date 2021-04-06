@@ -420,6 +420,7 @@ local meta = {
 
 local cli = setmetatable({
   history = history,
+  git_root = git_root,
   in_parallel = function(...)
     local calls = {...}
     return new_parallel_builder(calls)
