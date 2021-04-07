@@ -10,6 +10,5 @@ endfunction
 
 setlocal foldmethod=manual
 setlocal foldlevel=1
-setlocal fillchars=fold:\ 
 setlocal foldminlines=0
 setlocal foldtext=NeogitFoldFunction()
