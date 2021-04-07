@@ -264,7 +264,7 @@ local function restore_cursor_location(section_loc, file_loc, hunk_loc)
   vim.fn.setpos('.', {0, hunk.first, 0, 0})
 end
 
-local function refresh_status()
+local function refresh_status(force_redraw)
   if status_buffer == nil then
     return
   end
@@ -279,6 +279,10 @@ local function refresh_status()
   status_buffer:lock()
 
   restore_cursor_location(s, f, h)
+
+  if force_redraw then
+    vim.cmd('redraw')
+  end
 end
 
 local function current_line_is_hunk()
@@ -320,12 +324,10 @@ function refresh(force)
   run(future(function ()
     refreshing = true
 
-    local time = os.clock()
     if await(cli.git_root()) ~= '' then
       await(repo:update_status())
-      print('reload 1', os.clock() - time)
       await(scheduler())
-      refresh_status()
+      refresh_status(true)
 
       await_all({
         future(function ()
@@ -335,20 +337,17 @@ function refresh(force)
             repo:update_unpulled(),
             repo:update_unmerged(),
           })
-          print('reload info', os.clock() - time)
           await(scheduler())
-          refresh_status()
+          refresh_status(true)
         end),
         future(function ()
           await(repo:load_diffs())
-          print('reload diff', os.clock() - time)
           await(scheduler())
-          refresh_status()
+          refresh_status(true)
         end)
       })
       vim.cmd [[do <nomodeline> User NeogitStatusRefreshed]]
     end
-    print('reload', os.clock() - time)
 
     refreshing = false
   end))
