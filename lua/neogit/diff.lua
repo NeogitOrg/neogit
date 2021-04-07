@@ -31,14 +31,13 @@ function M.close()
   state.open = false
 end
 
-M.open = a.sync(function(lhs_info, rhs_info)
+function M.open(lhs_info, rhs_info)
   if state.open then
     return
   end
 
   state.open = true
 
-  a.wait_for_textlock()
   local vim_height = vim.api.nvim_eval [[&lines]]
   local vim_width = vim.api.nvim_eval [[&columns]]
 
@@ -106,14 +105,13 @@ M.open = a.sync(function(lhs_info, rhs_info)
   state.rhs = { buf = rhs_buf, win = rhs_win }
 
   -- Have to defer this, else the rhs window disappears ??? like what the fuck
-  a.wait_for_textlock()
   vim.defer_fn(function()
     vim.api.nvim_set_current_win(rhs_win)
     vim.cmd [[diffthis]]
     vim.api.nvim_set_current_win(lhs_win)
     vim.cmd [[diffthis]]
   end, 1)
-end)
+end
 
 M.mappings = {
   lhs = {

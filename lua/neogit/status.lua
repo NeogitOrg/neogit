@@ -631,10 +631,11 @@ local cmd_func_map = function ()
         if item ~= nil then
           local lhs_lines = a.wait(uv.read_lines(item.name))
           local rhs_lines = vim.split(a.wait(cli.show.file(item.name).call()), '\n')
-          a.wait(Diff.open(
+          a.wait_for_textlock()
+          Diff.open(
             { lines = lhs_lines, name = item.name .. " [WORKING TREE]" }, 
             { lines = rhs_lines, name = item.name .. " [HEAD]" }
-          ))
+          )
         end
       end)
     end,
