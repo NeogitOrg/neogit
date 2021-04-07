@@ -1,4 +1,5 @@
-local a = require('neogit.async')
+local a = require 'plenary.async_lib'
+local async, await, void = a.async, a.await, a.void
 local status = require 'neogit.status'
 local popup = require('neogit.lib.popup')
 local stash = require('neogit.lib.git.stash')
@@ -24,22 +25,18 @@ local configuration = {
       {
         key = "z",
         description = "both",
-        callback = function ()
-          a.dispatch(function ()
-            a.wait(stash.stash_all())
-            status.refresh(true)
-          end)
-        end
+        callback = void(async(function ()
+          await(stash.stash_all())
+          status.refresh(true)
+        end))
       },
       {
         key = "i",
         description = "index",
-        callback = function ()
-          a.dispatch(function ()
-            a.wait(stash.stash_index())
-            status.refresh(true)
-          end)
-        end
+        callback = void(async(function ()
+          await(stash.stash_index())
+          status.refresh(true)
+        end))
       },
     },
     {
@@ -50,8 +47,8 @@ local configuration = {
           local line = vim.fn.getbufline(popup.env.pos[1], popup.env.pos[2])
           local stash_name = line[1]:match('^(stash@{%d+})')
           if stash_name then
-            a.dispatch(function ()
-              a.wait(stash.pop(stash_name))
+            a.scope(function ()
+              await(stash.pop(stash_name))
               status.refresh(true)
             end)
           end
@@ -64,8 +61,8 @@ local configuration = {
           local line = vim.fn.getbufline(popup.env.pos[1], popup.env.pos[2])
           local stash_name = line[1]:match('^(stash@{%d+})')
           if stash_name then
-            a.dispatch(function ()
-              a.wait(stash.apply(stash_name))
+            a.scope(function ()
+              await(stash.apply(stash_name))
               status.refresh(true)
             end)
           end
@@ -78,8 +75,8 @@ local configuration = {
           local line = vim.fn.getbufline(popup.env.pos[1], popup.env.pos[2])
           local stash_name = line[1]:match('^(stash@{%d+})')
           if stash_name then
-            a.dispatch(function ()
-              a.wait(stash.drop(stash_name))
+            a.scope(function ()
+              await(stash.drop(stash_name))
               status.refresh(true)
             end)
           end
