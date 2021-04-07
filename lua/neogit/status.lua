@@ -320,19 +320,35 @@ function refresh(force)
   run(future(function ()
     refreshing = true
 
+    local time = os.clock()
     if await(cli.git_root()) ~= '' then
       await(repo:update_status())
-      await_all({
-        repo:update_branch_information(),
-        repo:update_stashes(),
-        repo:update_unpulled(),
-        repo:update_unmerged(),
-        repo:load_diffs()
-      })
+      print('reload 1', os.clock() - time)
       await(scheduler())
       refresh_status()
+
+      await_all({
+        future(function ()
+          await_all({
+            repo:update_branch_information(),
+            repo:update_stashes(),
+            repo:update_unpulled(),
+            repo:update_unmerged(),
+          })
+          print('reload info', os.clock() - time)
+          await(scheduler())
+          refresh_status()
+        end),
+        future(function ()
+          await(repo:load_diffs())
+          print('reload diff', os.clock() - time)
+          await(scheduler())
+          refresh_status()
+        end)
+      })
       vim.cmd [[do <nomodeline> User NeogitStatusRefreshed]]
     end
+    print('reload', os.clock() - time)
 
     refreshing = false
   end))
