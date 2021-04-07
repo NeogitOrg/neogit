@@ -58,7 +58,6 @@ M.open = a.sync(function(lhs_info, rhs_info)
   })
 
   vim.api.nvim_buf_set_lines(lhs_buf, 0, -1, false, lhs_info.lines)
-  vim.api.nvim_buf_set_name(lhs_buf, lhs_info.name)
 
   for key, _ in pairs(M.mappings.lhs) do
     local tokens = vim.split(key, " ")
@@ -89,7 +88,6 @@ M.open = a.sync(function(lhs_info, rhs_info)
   })
 
   vim.api.nvim_buf_set_lines(rhs_buf, 0, -1, false, rhs_info.lines)
-  vim.api.nvim_buf_set_name(rhs_buf, rhs_info.name)
 
   for key, _ in pairs(M.mappings.rhs) do
     local tokens = vim.split(key, " ")
