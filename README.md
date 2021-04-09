@@ -6,9 +6,12 @@ A **work-in-progress** Magit clone for Neovim that is geared toward the Vim phil
 
 ## Installation
 
+**NOTE**: We depend on [plenary.nvim](https://github.com/nvim-lua/plenary.nvim), so to use this plugin, you will additionally need to
+require `nvim-lua/plenary.nvim` using your plugin manager of choice, before requiring this plugin.
+
 | Plugin Manager                                       | Command                                                                        |
 |------------------------------------------------------|--------------------------------------------------------------------------------|
-| [Packer](https://github.com/wbthomason/packer.nvim)  | `use 'TimUntersberger/neogit'`                                                 |
+| [Packer](https://github.com/wbthomason/packer.nvim)  | `use { 'TimUntersberger/neogit', requires = 'nvim-lua/plenary.nvim }`          |
 | [Vim-plug](https://github.com/junegunn/vim-plug)     | `Plug 'TimUntersberger/neogit'`                                                |
 | [NeoBundle](https://github.com/Shougo/neobundle.vim) | `NeoBundle 'TimUntersberger/neogit'`                                           |
 | [Vundle](https://github.com/VundleVim/Vundle.vim)    | `Bundle 'TimUntersberger/neogit'`                                              |
