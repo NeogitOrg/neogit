@@ -5,7 +5,8 @@ local cli = require('neogit.lib.git.cli')
 local util = require("neogit.lib.util")
 local notif = require("neogit.lib.notification")
 local config = require("neogit.config")
-local a = require'neogit.async'
+local async = require 'plenary.async_lib'
+local async, await, await_all, future, void, scheduler, run = async.async, async.await, async.await_all, async.future, async.void, async.scheduler, async.run
 local repository = require 'neogit.lib.git.repository'
 local Collection = require 'neogit.lib.collection'
 local F = require 'neogit.lib.functional'
@@ -316,25 +317,25 @@ function refresh(force)
     return wait
   end
 
-  a.dispatch(function ()
+  run(future(function ()
     refreshing = true
 
-    if a.wait(cli.git_root()) ~= '' then
-      a.wait(repo:update_status())
-      a.wait_all({
+    if await(cli.git_root()) ~= '' then
+      await(repo:update_status())
+      await_all({
         repo:update_branch_information(),
         repo:update_stashes(),
         repo:update_unpulled(),
         repo:update_unmerged(),
         repo:load_diffs()
       })
-      a.wait_for_textlock()
+      await(scheduler())
       refresh_status()
       vim.cmd [[do <nomodeline> User NeogitStatusRefreshed]]
     end
 
     refreshing = false
-  end)
+  end))
 
   return wait
 end
@@ -463,22 +464,22 @@ local function get_selection()
   return first_section, first_item, first_hunk, first_line - first_hunk.diff_from, last_line - first_hunk.diff_from
 end
 
-local stage_selection = a.sync(function()
+local stage_selection = async(function()
   local _, item, hunk, from, to = get_selection()
   local patch = generate_patch_from_selection(item, hunk, from, to)
-  a.wait(cli.apply.cached.with_patch(patch).call())
+  await(cli.apply.cached.with_patch(patch).call())
 end)
 
-local unstage_selection = a.sync(function()
+local unstage_selection = async(function()
   local _, item, hunk, from, to = get_selection()
   if from == nil then
     return
   end
   local patch = generate_patch_from_selection(item, hunk, from, to, true)
-  a.wait(cli.apply.reverse.cached.with_patch(patch).call())
+  await(cli.apply.reverse.cached.with_patch(patch).call())
 end)
 
-local stage = a.sync(function()
+local stage = async(function()
   current_operation = "stage"
   local section, item = get_current_section_item()
 
@@ -489,16 +490,15 @@ local stage = a.sync(function()
   local mode = vim.api.nvim_get_mode()
 
   if mode.mode == "V" then
-    a.wait(stage_selection())
+    await(stage_selection())
   else
     local on_hunk = current_line_is_hunk()
-
     if on_hunk and section.name ~= "untracked" then
       local hunk = get_current_hunk_of_item(item)
       local patch = generate_patch_from_selection(item, hunk)
-      a.wait(cli.apply.cached.with_patch(patch).call())
+      await(cli.apply.cached.with_patch(patch).call())
     else
-      a.wait(git.status.stage(item.name))
+      await(git.status.stage(item.name))
     end
   end
 
@@ -506,7 +506,7 @@ local stage = a.sync(function()
   current_operation = nil
 end)
 
-local unstage = a.sync(function()
+local unstage = async(function()
   current_operation = "unstage"
   local section, item = get_current_section_item()
 
@@ -517,16 +517,16 @@ local unstage = a.sync(function()
   local mode = vim.api.nvim_get_mode()
 
   if mode.mode == "V" then
-    a.wait(unstage_selection())
+    await(unstage_selection())
   else
     local on_hunk = current_line_is_hunk()
 
     if on_hunk then
       local hunk = get_current_hunk_of_item(item)
       local patch = generate_patch_from_selection(item, hunk, nil, nil, true)
-      a.wait(cli.apply.reverse.cached.with_patch(patch).call())
+      await(cli.apply.reverse.cached.with_patch(patch).call())
     else
-      a.wait(git.status.unstage(item.name))
+      await(git.status.unstage(item.name))
     end
   end
 
@@ -534,7 +534,7 @@ local unstage = a.sync(function()
   current_operation = nil
 end)
 
-local discard = a.sync(function()
+local discard = async(function()
   local section, item = get_current_section_item()
 
   if section == nil or item == nil then
@@ -552,12 +552,12 @@ local discard = a.sync(function()
     local section, item, hunk, from, to = get_selection()
     local patch = generate_patch_from_selection(item, hunk, from, to, true)
     if section.name == "staged_changes" then
-      a.wait(cli.apply.reverse.index.with_patch(patch).call())
+      await(cli.apply.reverse.index.with_patch(patch).call())
     else
-      a.wait(cli.apply.reverse.with_patch(patch).call())
+      await(cli.apply.reverse.with_patch(patch).call())
     end
   elseif section.name == "untracked_files" then
-    a.wait_for_textlock()
+    await(scheduler())
     vim.fn.delete(item.name)
   else
 
@@ -569,15 +569,15 @@ local discard = a.sync(function()
       local diff = table.concat(lines, "\n")
       diff = table.concat({'--- a/'..item.name, '+++ b/'..item.name, diff, ""}, "\n")
       if section.name == "staged_changes" then
-        a.wait(cli.apply.reverse.index.with_patch(diff).call())
+        await(cli.apply.reverse.index.with_patch(diff).call())
       else
-        a.wait(cli.apply.reverse.with_patch(diff).call())
+        await(cli.apply.reverse.with_patch(diff).call())
       end
     elseif section.name == "unstaged_changes" then
-      a.wait(cli.checkout.files(item.name).call())
+      await(cli.checkout.files(item.name).call())
     elseif section.name == "staged_changes" then
-      a.wait(cli.reset.files(item.name).call())
-      a.wait(cli.checkout.files(item.name).call())
+      await(cli.reset.files(item.name).call())
+      await(cli.checkout.files(item.name).call())
     end
 
   end
@@ -599,6 +599,10 @@ local function set_folds(to)
   end)
   refresh(true)
 end
+
+local command = void(async(function (act)
+  await(act())
+end))
 
 --- These needs to be a function to avoid a circular dependency
 --  between this module and the popup modules
@@ -623,27 +627,21 @@ local cmd_func_map = function ()
       set_folds({ false, false, false })
     end,
     ["Toggle"] = toggle,
-    ["Discard"] = { "nv", function () a.run(discard) end, true },
-    ["Stage"] = { "nv", function () a.run(stage) end, true },
-    ["StageUnstaged"] = function ()
-      a.dispatch(function()
-        a.wait(git.status.stage_modified())
+    ["Discard"] = { "nv", void(discard), true },
+    ["Stage"] = { "nv", void(stage), true },
+    ["StageUnstaged"] = void(async(function ()
+        await(git.status.stage_modified())
         refresh(true)
-      end)
-    end,
-    ["StageAll"] = function ()
-      a.dispatch(function()
-        a.wait(git.status.stage_all())
+    end)),
+    ["StageAll"] = void(async(function()
+        await(git.status.stage_all())
         refresh(true)
-      end)
-    end,
-    ["Unstage"] = { "nv", function () a.run(unstage) end, true },
-    ["UnstageStaged"] = function ()
-      a.dispatch(function()
-        a.wait(git.status.unstage_all())
+    end)),
+    ["Unstage"] = { "nv", void(unstage), true },
+    ["UnstageStaged"] = void(async(function ()
+        await(git.status.unstage_all())
         refresh(true)
-      end)
-    end,
+    end)),
     ["CommandHistory"] = function()
       GitCommandHistory:new():show()
     end,

@@ -1,4 +1,4 @@
-local a = require('neogit.async')
+local async_util = require 'plenary.async_lib'.util
 -- This is a table to look up pending neogit operations.
 -- An operation is loosely defined as a user-triggered, top-level execution
 -- like "commit", "stash" or "pull".
@@ -10,24 +10,19 @@ local a = require('neogit.async')
 -- table. Dependent code can then look up the invoked operation and track it's
 -- execution status.
 
-local k_state = {}
-local M = {
-  [k_state] = {}
-}
+local M = {}
 local meta = {}
 
 function M.wait(key, time)
-  vim.wait(time or 1000, function () return not M[k_state][key] end, 100)
+  if not M[key] then return end
+  async_util.block_on(M[key], time or 1000)
 end
 
-function meta.__call(tbl, key, async)
+function meta.__call(tbl, key, async_func)
   return function (...)
-    local args = {...}
-    tbl[k_state][key] = true
-    a.dispatch(function ()
-      a.wait(async(unpack(args)))
-      M[k_state][key] = false
-    end)
+    local future = async_func(...)
+    tbl[key] = future
+    return future
   end
 end
 
