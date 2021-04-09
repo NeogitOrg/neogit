@@ -269,8 +269,6 @@ local function refresh_status(force_redraw)
     return
   end
 
-  local s, f, h = save_cursor_location()
-
   status_buffer:unlock()
 
   draw_buffer()
@@ -278,11 +276,7 @@ local function refresh_status(force_redraw)
 
   status_buffer:lock()
 
-  restore_cursor_location(s, f, h)
-
-  if force_redraw then
-    vim.cmd('redraw')
-  end
+  vim.cmd('redraw')
 end
 
 local function current_line_is_hunk()
@@ -312,42 +306,57 @@ local function reset()
   locations = {}
   refresh(true)
 end
-function refresh(force)
+function refresh(which)
   local function wait(ms)
     vim.wait(ms or 1000, function() return not refreshing end)
   end
 
-  if refreshing or (status_buffer ~= nil and not force) then
+  if refreshing then
     return wait
   end
 
   run(future(function ()
+    which = which or true
     refreshing = true
 
-    if await(cli.git_root()) ~= '' then
-      await(repo:update_status())
-      await(scheduler())
-      refresh_status(true)
+    await(scheduler())
+    local s, f, h = save_cursor_location()
 
-      await_all({
-        future(function ()
-          await_all({
-            repo:update_branch_information(),
-            repo:update_stashes(),
-            repo:update_unpulled(),
-            repo:update_unmerged(),
-          })
-          await(scheduler())
-          refresh_status(true)
-        end),
-        future(function ()
-          await(repo:load_diffs())
-          await(scheduler())
-          refresh_status(true)
-        end)
-      })
+    if await(cli.git_root()) ~= '' then
+      if which == true or which.status then
+        await(repo:update_status())
+        await(scheduler())
+        refresh_status()
+      end
+
+      local refreshes = {}
+      if which == true or which.branch_information then 
+        table.insert(refreshes, repo:update_branch_information())
+      end
+      if which == true or which.stashes then
+        table.insert(refreshes, repo:update_stashes())
+      end
+      if which == true or which.unpulled then
+        table.insert(refreshes, repo:update_unpulled())
+      end
+      if which == true or which.unmerged then
+        table.insert(refreshes, repo:update_unmerged())
+      end
+      if which == true or which.diffs then
+        local filter = (type(which) == "table" and type(which.diffs) == "table")
+          and which.diffs
+          or nil
+
+        table.insert(refreshes, repo:load_diffs(filter))
+      end
+      await_all(refreshes)
+      await(scheduler())
+      refresh_status()
       vim.cmd [[do <nomodeline> User NeogitStatusRefreshed]]
     end
+
+    await(scheduler())
+    restore_cursor_location(s, f, h)
 
     refreshing = false
   end))
@@ -517,7 +526,7 @@ local stage = async(function()
     end
   end
 
-  refresh(true)
+  refresh({status = true, diffs = {"*:"..item.name}})
   current_operation = nil
 end)
 
@@ -545,7 +554,7 @@ local unstage = async(function()
     end
   end
 
-  refresh(true)
+  refresh({status = true, diffs = {"*:"..item.name}})
   current_operation = nil
 end)
 
@@ -646,16 +655,16 @@ local cmd_func_map = function ()
     ["Stage"] = { "nv", void(stage), true },
     ["StageUnstaged"] = void(async(function ()
         await(git.status.stage_modified())
-        refresh(true)
+        refresh({status = true, diffs = true})
     end)),
     ["StageAll"] = void(async(function()
         await(git.status.stage_all())
-        refresh(true)
+        refresh({status = true, diffs = true})
     end)),
     ["Unstage"] = { "nv", void(unstage), true },
     ["UnstageStaged"] = void(async(function ()
         await(git.status.unstage_all())
-        refresh(true)
+        refresh({status = true, diffs = true})
     end)),
     ["CommandHistory"] = function()
       GitCommandHistory:new():show()
