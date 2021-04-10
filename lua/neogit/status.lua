@@ -2,17 +2,15 @@ local Buffer = require("neogit.lib.buffer")
 local GitCommandHistory = require("neogit.buffers.git_command_history")
 local git = require("neogit.lib.git")
 local cli = require('neogit.lib.git.cli')
-local util = require("neogit.lib.util")
 local notif = require("neogit.lib.notification")
 local config = require("neogit.config")
-local async = require 'plenary.async_lib'
-local async, await, await_all, future, void, scheduler, run = async.async, async.await, async.await_all, async.future, async.void, async.scheduler, async.run
+local a = require 'plenary.async_lib'
+local async, await, await_all, future, void, scheduler, run = a.async, a.await, a.await_all, a.future, a.void, a.scheduler, a.run
 local repository = require 'neogit.lib.git.repository'
 local Collection = require 'neogit.lib.collection'
 local F = require 'neogit.lib.functional'
 local LineBuffer = require 'neogit.lib.line_buffer'
 
-local refreshing = false
 local current_operation = nil
 local status = {}
 local repo = repository.create()
@@ -30,14 +28,6 @@ local function get_section_idx_for_line(linenr)
     end
   end
   return nil
-end
-
-local function get_location(section_name)
-  for _,l in pairs(locations) do
-    if l.name == section_name then
-      return l
-    end
-  end
 end
 
 local function get_section_item_idx_for_line(linenr)
@@ -147,7 +137,7 @@ local function draw_buffer()
         file.first = #output
 
         if f.diff and not file.folded then
-          local hunks_lookup = Collection.new(file.hunks):key_by('hash')
+          local hunks_lookup = Collection.new(file.hunks or {}):key_by('hash')
 
           local hunks = {}
           for _, h in ipairs(f.diff.hunks) do
@@ -264,7 +254,7 @@ local function restore_cursor_location(section_loc, file_loc, hunk_loc)
   vim.fn.setpos('.', {0, hunk.first, 0, 0})
 end
 
-local function refresh_status(force_redraw)
+local function refresh_status()
   if status_buffer == nil then
     return
   end
@@ -278,6 +268,57 @@ local function refresh_status(force_redraw)
 
   vim.cmd('redraw')
 end
+
+local refresh_lock = a.util.Semaphore.new(1)
+local refresh = async(function (which)
+  which = which or true
+
+  local permit = await(refresh_lock:acquire())
+
+  await(scheduler())
+  local s, f, h = save_cursor_location()
+
+  if await(cli.git_root()) ~= '' then
+    if which == true or which.status then
+      await(repo:update_status())
+      await(scheduler())
+      refresh_status()
+    end
+
+    local refreshes = {}
+    if which == true or which.branch_information then
+      table.insert(refreshes, repo:update_branch_information())
+    end
+    if which == true or which.stashes then
+      table.insert(refreshes, repo:update_stashes())
+    end
+    if which == true or which.unpulled then
+      table.insert(refreshes, repo:update_unpulled())
+    end
+    if which == true or which.unmerged then
+      table.insert(refreshes, repo:update_unmerged())
+    end
+    if which == true or which.diffs then
+      local filter = (type(which) == "table" and type(which.diffs) == "table")
+        and which.diffs
+        or nil
+
+      table.insert(refreshes, repo:load_diffs(filter))
+    end
+    await_all(refreshes)
+    await(scheduler())
+    refresh_status()
+    vim.cmd [[do <nomodeline> User NeogitStatusRefreshed]]
+  end
+
+  await(scheduler())
+  if vim.fn.bufname() == 'NeogitStatus' then
+    restore_cursor_location(s, f, h)
+  end
+
+  permit:forget()
+end)
+local dispatch_refresh = void(refresh)
 
 local function current_line_is_hunk()
   local _,_,h = save_cursor_location()
@@ -301,68 +342,12 @@ local function toggle()
   refresh_status()
 end
 
-local function reset()
+local reset = async(function ()
   repo = repository.create()
   locations = {}
-  refresh(true)
-end
-function refresh(which)
-  local function wait(ms)
-    vim.wait(ms or 1000, function() return not refreshing end)
-  end
-
-  if refreshing then
-    return wait
-  end
-
-  run(future(function ()
-    which = which or true
-    refreshing = true
-
-    await(scheduler())
-    local s, f, h = save_cursor_location()
-
-    if await(cli.git_root()) ~= '' then
-      if which == true or which.status then
-        await(repo:update_status())
-        await(scheduler())
-        refresh_status()
-      end
-
-      local refreshes = {}
-      if which == true or which.branch_information then 
-        table.insert(refreshes, repo:update_branch_information())
-      end
-      if which == true or which.stashes then
-        table.insert(refreshes, repo:update_stashes())
-      end
-      if which == true or which.unpulled then
-        table.insert(refreshes, repo:update_unpulled())
-      end
-      if which == true or which.unmerged then
-        table.insert(refreshes, repo:update_unmerged())
-      end
-      if which == true or which.diffs then
-        local filter = (type(which) == "table" and type(which.diffs) == "table")
-          and which.diffs
-          or nil
-
-        table.insert(refreshes, repo:load_diffs(filter))
-      end
-      await_all(refreshes)
-      await(scheduler())
-      refresh_status()
-      vim.cmd [[do <nomodeline> User NeogitStatusRefreshed]]
-    end
-
-    await(scheduler())
-    restore_cursor_location(s, f, h)
-
-    refreshing = false
-  end))
-
-  return wait
-end
+  await(refresh(true))
+end)
+local dispatch_reset = void(reset)
 
 local function close()
   status_buffer = nil
@@ -526,17 +511,17 @@ local stage = async(function()
     end
   end
 
-  refresh({status = true, diffs = {"*:"..item.name}})
+  await(refresh({status = true, diffs = {"*:"..item.name}}))
   current_operation = nil
 end)
 
 local unstage = async(function()
-  current_operation = "unstage"
   local section, item = get_current_section_item()
 
   if section == nil or section.name ~= "staged" or item == nil then
     return
   end
+  current_operation = "unstage"
 
   local mode = vim.api.nvim_get_mode()
 
@@ -554,7 +539,7 @@ local unstage = async(function()
     end
   end
 
-  refresh({status = true, diffs = {"*:"..item.name}})
+  await(refresh({status = true, diffs = {"*:"..item.name}}))
   current_operation = nil
 end)
 
@@ -606,7 +591,7 @@ local discard = async(function()
 
   end
 
-  refresh(true)
+  await(refresh(true))
 end)
 
 local function set_folds(to)
@@ -621,7 +606,7 @@ local function set_folds(to)
       end
     end)
   end)
-  refresh(true)
+  await(refresh(true))
 end
 
 local command = void(async(function (act)
@@ -655,16 +640,16 @@ local cmd_func_map = function ()
     ["Stage"] = { "nv", void(stage), true },
     ["StageUnstaged"] = void(async(function ()
         await(git.status.stage_modified())
-        refresh({status = true, diffs = true})
+        await(refresh({status = true, diffs = true}))
     end)),
     ["StageAll"] = void(async(function()
         await(git.status.stage_all())
-        refresh({status = true, diffs = true})
+        await(refresh({status = true, diffs = true}))
     end)),
     ["Unstage"] = { "nv", void(unstage), true },
     ["UnstageStaged"] = void(async(function ()
         await(git.status.unstage_all())
-        refresh({status = true, diffs = true})
+        await(refresh({status = true, diffs = true}))
     end)),
     ["CommandHistory"] = function()
       GitCommandHistory:new():show()
@@ -697,7 +682,7 @@ local cmd_func_map = function ()
         vim.cmd("e " .. path)
       end
     end,
-    ["RefreshBuffer"] = function() refresh(true) end,
+    ["RefreshBuffer"] = function() dispatch_refresh(true) end,
     ["HelpPopup"] = function ()
       local pos = vim.fn.getpos('.')
       pos[1] = vim.api.nvim_get_current_buf()
@@ -740,7 +725,7 @@ local function create(kind)
         end
       end
 
-      refresh(true)
+      dispatch_refresh(true)
     end
   }
 end
@@ -781,10 +766,9 @@ return {
   wait_on_current_operation = function (ms)
     vim.wait(ms or 1000, function() return not current_operation end)
   end,
-  wait_on_refresh = function (ms)
-    vim.wait(ms or 1000, function() return not refreshing end)
-  end,
   reset = reset,
+  dispatch_reset = dispatch_reset,
   refresh = refresh,
+  dispatch_refresh = dispatch_refresh,
   close = close
 }

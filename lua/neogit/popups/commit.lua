@@ -19,7 +19,6 @@ local read_file = async(function(path)
 
   local err, data = await(uv.fs_read(fd, stat.size, 0))
   assert(not err, err)
-  print(data)
 
   local err = await(uv.fs_close(fd))
   assert(not err, err)
@@ -181,7 +180,7 @@ local function create()
             local _, code = await(cli.commit.commit_message_file(COMMIT_FILE).args(unpack(popup.get_arguments())).call())
             if code == 0 then
               await(uv.fs_unlink(COMMIT_FILE))
-              status.refresh(true)
+              await(status.refresh(true))
             end
           end))
         },
@@ -194,7 +193,7 @@ local function create()
             local _, code = await(cli.commit.no_edit.amend.call())
             if code == 0 then
               await(uv.fs_unlink(COMMIT_FILE))
-              status.refresh(true)
+              await(status.refresh(true))
             end
           end))
         },
@@ -209,7 +208,7 @@ local function create()
             local _, code = await(cli.commit.commit_message_file(COMMIT_FILE).amend.only.call())
             if code == 0 then
               await(uv.fs_unlink(COMMIT_FILE))
-              status.refresh(true)
+              await(status.refresh(true))
             end
           end))
         },
@@ -224,7 +223,7 @@ local function create()
             local _, code = await(cli.commit.commit_message_file(COMMIT_FILE).amend.call())
             if code == 0 then
               await(uv.fs_unlink(COMMIT_FILE))
-              status.refresh(true)
+              await(status.refresh(true))
             end
           end))
         },

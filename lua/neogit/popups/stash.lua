@@ -27,7 +27,7 @@ local configuration = {
         description = "both",
         callback = void(async(function ()
           await(stash.stash_all())
-          status.refresh(true)
+          await(status.refresh(true))
         end))
       },
       {
@@ -35,7 +35,7 @@ local configuration = {
         description = "index",
         callback = void(async(function ()
           await(stash.stash_index())
-          status.refresh(true)
+          await(status.refresh(true))
         end))
       },
     },
@@ -49,7 +49,7 @@ local configuration = {
           if stash_name then
             a.scope(function ()
               await(stash.pop(stash_name))
-              status.refresh(true)
+              await(status.refresh(true))
             end)
           end
         end
@@ -63,7 +63,7 @@ local configuration = {
           if stash_name then
             a.scope(function ()
               await(stash.apply(stash_name))
-              status.refresh(true)
+              await(status.refresh(true))
             end)
           end
         end
@@ -77,7 +77,7 @@ local configuration = {
           if stash_name then
             a.scope(function ()
               await(stash.drop(stash_name))
-              status.refresh(true)
+              await(status.refresh(true))
             end)
           end
         end

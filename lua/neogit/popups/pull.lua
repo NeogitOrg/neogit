@@ -10,7 +10,7 @@ local pull_upstream = void(async(function (popup)
   if code == 0 then
     await(scheduler())
     notif.create "Pulled from upstream"
-    status.refresh(true)
+    await(status.refresh(true))
   end
 end))
 

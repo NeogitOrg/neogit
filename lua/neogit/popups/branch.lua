@@ -19,7 +19,7 @@ local configuration = {
         description = "checkout branch/revision",
         callback = operation('checkout_branch', async(function ()
           await(branch.checkout())
-          status.refresh(true)
+          await(status.refresh(true))
         end))
       },
       {
@@ -27,7 +27,7 @@ local configuration = {
         description = "checkout local branch",
         callback = operation('checkout_local-branch', async(function ()
           await(branch.checkout_local())
-          status.refresh(true)
+          await(status.refresh(true))
         end))
       }
     },
@@ -37,7 +37,7 @@ local configuration = {
         description = "checkout new branch",
         callback = operation('checkout_create-branch', async(function ()
           await(branch.checkout_new())
-          status.refresh(true)
+          await(status.refresh(true))
         end))
       }
     }

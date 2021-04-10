@@ -10,7 +10,7 @@ local push_upstream = void(async(function (popup)
   if code == 0 then
     await(scheduler())
     notif.create "Pushed to pushremote"
-    status.refresh(true)
+    await(status.refresh(true))
   end
 end))
 
