@@ -10,6 +10,7 @@ local repository = require 'neogit.lib.git.repository'
 local Collection = require 'neogit.lib.collection'
 local F = require 'neogit.lib.functional'
 local LineBuffer = require 'neogit.lib.line_buffer'
+local fs = require 'neogit.lib.fs'
 
 local current_operation = nil
 local status = {}
@@ -319,6 +320,18 @@ local refresh = async(function (which)
   permit:forget()
 end)
 local dispatch_refresh = void(refresh)
+
+--- Compatibility endpoint to refresh data from an autocommand.
+--  `fname` should be `<afile>` in this case. This function will take care of
+--  resolving the file name to the path relative to the repository root and
+--  refresh that file's cache data.
+local refresh_viml_compat = void(async(function (fname)
+  if not fname or fname == "" then return end
+
+  local path = await(fs.relpath_from_repository(fname))
+  if not path then return end
+  await(refresh({ status = true, diffs = { "*:" .. path } }))
+end))
 
 local function current_line_is_hunk()
   local _,_,h = save_cursor_location()
@@ -770,5 +783,6 @@ return {
   dispatch_reset = dispatch_reset,
   refresh = refresh,
   dispatch_refresh = dispatch_refresh,
+  refresh_viml_compat = refresh_viml_compat,
   close = close
 }

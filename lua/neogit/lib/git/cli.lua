@@ -181,6 +181,15 @@ local configurations = {
     short_opts = {
       message = '-m'
     }
+  }),
+  ['ls-files'] = config({
+    flags = {
+      others = '--others',
+      deleted = '--deleted',
+      modified = '--modified',
+      cached = '--cached',
+      full_name = '--full-name'
+    },
   })
 }
 
@@ -215,13 +224,19 @@ local exec = async(function(cmd, args, cwd, stdin, env, show_popup)
   if show_popup == nil then show_popup = true end
   table.insert(args, 1, cmd)
 
+  if not cwd then
+    cwd = await(git_root())
+  elseif cwd == '<current>' then
+    cwd = nil
+  end
+
   local time = os.clock()
   local opts = {
     cmd = 'git',
     args = args,
     env = env,
     input = stdin,
-    cwd = cwd or await(git_root())
+    cwd = cwd
   }
   local result, code, errors = await(process.spawn(opts))
   handle_new_cmd({

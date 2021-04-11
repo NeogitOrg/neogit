@@ -5,14 +5,14 @@ function! s:refresh(file)
   if match(bufname(), "^\\(Neogit.*\\|.git/COMMIT_EDITMSG\\)$") == 0
     return
   endif
-  call luaeval('(function() require "neogit.status".dispatch_refresh({ status = true, diffs = {_A}}) end)()', a:file)
+  call luaeval('(function() require "neogit.status".refresh_viml_compat(_A) end)()', a:file)
 endfunction
 
 lua require 'neogit.status'.dispatch_refresh(true)
 
 augroup Neogit
   au!
-  au BufWritePost,BufEnter,FocusGained,ShellCmdPost,VimResume * call <SID>refresh('*:' . expand('<afile>'))
+  au BufWritePost,BufEnter,FocusGained,ShellCmdPost,VimResume * call <SID>refresh(expand('<afile>'))
   au DirChanged * lua vim.defer_fn(function() require 'neogit.status'.dispatch_reset() end, 0)
 augroup END
 
