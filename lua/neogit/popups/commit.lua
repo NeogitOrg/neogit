@@ -4,25 +4,11 @@ local cli = require("neogit.lib.git.cli")
 local input = require("neogit.lib.input")
 local Buffer = require("neogit.lib.buffer")
 local a = require 'plenary.async_lib'
-local async, await, scheduler, void, wrap = a.async, a.await, a.scheduler, a.void, a.wrap
-local uv = a.uv
+local async, await, scheduler, void, wrap, uv = a.async, a.await, a.scheduler, a.void, a.wrap, a.uv
 local split = require('neogit.lib.util').split
+local uv_utils = require 'neogit.lib.uv'
 
 local COMMIT_FILE = '.git/NEOGIT_COMMIT_EDITMSG'
-
-local read_file = async(function(path)
-  local err, fd = await(uv.fs_open(path, "r", 438))
-  if err then return nil end
-
-  local err, stat = await(uv.fs_fstat(fd))
-  assert(not err, err)
-
-  local err, data = await(uv.fs_read(fd, stat.size, 0))
-  assert(not err, err)
-
-  local err = await(uv.fs_close(fd))
-  assert(not err, err)
-end)
 
 local get_commit_message = wrap(function (content, cb)
   Buffer.create {
@@ -171,7 +157,7 @@ local function create()
           key = "c",
           description = "Commit",
           callback = void(async(function (popup)
-            local data = await(read_file(COMMIT_FILE))
+            local _, data = await(uv_utils.read_file(COMMIT_FILE))
             local skip_gen = data ~= nil
             data = data or ''
             -- we need \r? to support windows
