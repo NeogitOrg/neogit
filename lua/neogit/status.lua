@@ -679,7 +679,9 @@ local cmd_func_map = function ()
       local _, item = get_current_section_item()
       vim.cmd("split " .. item.name)
     end,
-    ["GoToFile"] = function()
+    ["GoToFile"] = void(async(function()
+      local repo_root = await(cli.git_root())
+      await(scheduler())
       local section, item = get_current_section_item()
 
       if item ~= nil then
@@ -692,9 +694,11 @@ local cmd_func_map = function ()
         notif.delete_all()
         status_buffer:close()
 
-        vim.cmd("e " .. path)
+        local relpath = vim.fn.fnamemodify(repo_root .. '/' .. path, ':.')
+
+        vim.cmd("e " .. relpath)
       end
-    end,
+    end)),
     ["RefreshBuffer"] = function() dispatch_refresh(true) end,
     ["HelpPopup"] = function ()
       local pos = vim.fn.getpos('.')
