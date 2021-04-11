@@ -1,5 +1,11 @@
-lua require("neogit")
-lua require("neogit.status")
+if exists('g:neovim_loaded')
+  finish
+endif
+let g:neovim_loaded = 1
+
+if !luaeval("require 'neogit.bootstrap'")
+  finish
+endif
 
 function! s:refresh(file)
   if match(bufname(), "^\\(Neogit.*\\|.git/COMMIT_EDITMSG\\)$") == 0
@@ -7,8 +13,6 @@ function! s:refresh(file)
   endif
   call luaeval('(function() require "neogit.status".refresh_viml_compat(_A) end)()', a:file)
 endfunction
-
-lua require 'neogit.status'.dispatch_refresh(true)
 
 augroup Neogit
   au!
