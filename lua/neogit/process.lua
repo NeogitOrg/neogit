@@ -1,10 +1,12 @@
-local async = require'neogit.async'
+local a = require 'plenary.async_lib'
+local wrap = a.wrap
 
 local function trim_newlines(s)
   return (string.gsub(s, "^(.-)\n*$", "%1"))
 end
 
 local function spawn(options, cb)
+  assert(options ~= nil, 'Options parameter must be given')
   assert(options.cmd, 'A command needs to be given!')
 
   local return_code, output, errors = nil, '', ''
@@ -43,7 +45,7 @@ local function spawn(options, cb)
     process_closed = true
     raise_if_fully_closed()
   end)
-  --print('started process', vim.inspect(params), '->', handle, err, '@'..(params.cwd or '')..'@')
+  --print('started process', vim.inspect(params), '->', handle, err, '@'..(params.cwd or '')..'@', options.input)
   if not handle then
     stdout:close()
     stderr:close()
@@ -87,5 +89,5 @@ local function spawn(options, cb)
 end
 
 return {
-  spawn = async.wrap(spawn)
+  spawn = wrap(spawn, 2)
 }

@@ -2,18 +2,17 @@ local popup = require("neogit.lib.popup")
 local status = require 'neogit.status'
 local notif = require("neogit.lib.notification")
 local git = require("neogit.lib.git")
-local a = require('neogit.async')
+local a = require 'plenary.async_lib'
+local async, await, scheduler, void = a.async, a.await, a.scheduler, a.void
 
-local function push_upstream(popup)
-  a.dispatch(function ()
-    local _, code = a.wait(git.cli.push.args(unpack(popup.get_arguments())).call())
-    if code == 0 then
-      a.wait_for_textlock()
-      notif.create "Pushed to pushremote"
-      status.refresh(true)
-    end
-  end)
-end
+local push_upstream = void(async(function (popup)
+  local _, code = await(git.cli.push.args(unpack(popup.get_arguments())).call())
+  if code == 0 then
+    await(scheduler())
+    notif.create "Pushed to pushremote"
+    await(status.refresh(true))
+  end
+end))
 
 local function create()
   popup.create(

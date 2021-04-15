@@ -1,7 +1,9 @@
 local popup = require("neogit.lib.popup")
 local Buffer = require("neogit.lib.buffer")
 local git = require("neogit.lib.git")
-local a = require('neogit.async')
+local a = require 'plenary.async_lib'
+local async, await, void, scheduler = a.async, a.await, a.void, a.scheduler
+
 
 local function commits_to_string(commits)
   local result = {}
@@ -28,8 +30,8 @@ local function commits_to_string(commits)
   return result
 end
 
-local show_in_buffer = a.sync(function (commits)
-  a.wait_for_textlock()
+local show_in_buffer = async(function (commits)
+  await(scheduler())
   Buffer.create({
     name = "NeogitLog",
     filetype = "NeogitLog",
@@ -143,12 +145,10 @@ local function create()
         {
           key = "l",
           description = "Log current",
-          callback = function(popup)
-            a.dispatch(function ()
-              local commits = a.wait(git.log.list(popup.to_cli()))
-              a.wait(show_in_buffer(commits))
-            end)
-          end
+          callback = void(async(function(popup)
+            local commits = await(git.log.list(popup.to_cli()))
+            await(show_in_buffer(commits))
+          end))
         },
         {
           key = "o",
@@ -158,69 +158,61 @@ local function create()
         {
           key = "h",
           description = "Log HEAD",
-          callback = function(popup)
-            a.dispatch(function ()
-              local output = a.wait(
-                git.cli.log
-                  .oneline
-                  .args(unpack(popup.get_arguments()))
-                  .for_range('HEAD')
-                  .call())
-              local commits = git.log.parse_log(output)
-              a.wait(show_in_buffer(commits))
-            end)
-          end
+          callback = void(async(function(popup)
+            local output = await(
+              git.cli.log
+                .oneline
+                .args(unpack(popup.get_arguments()))
+                .for_range('HEAD')
+                .call())
+            local commits = git.log.parse_log(output)
+            await(show_in_buffer(commits))
+          end))
         },
       },
       {
         {
           key = "L",
           description = "Log local branches",
-          callback = function(popup)
-            a.dispatch(function ()
-              local output = a.wait(
-                git.cli.log
-                  .oneline
-                  .args(unpack(popup.get_arguments()))
-                  .branches
-                  .call())
-              local commits = git.log.parse_log(output)
-              a.wait(show_in_buffer(commits))
-            end)
-          end
+          callback = void(async(function(popup)
+            local output = await(
+              git.cli.log
+                .oneline
+                .args(unpack(popup.get_arguments()))
+                .branches
+                .call())
+            local commits = git.log.parse_log(output)
+            await(show_in_buffer(commits))
+          end))
         },
         {
           key = "b",
           description = "Log all branches",
-          callback = function(popup)
-            a.dispatch(function ()
-              local output = a.wait(
-                git.cli.log
-                  .oneline
-                  .args(unpack(popup.get_arguments()))
-                  .branches
-                  .remotes
-                  .call())
-              local commits = git.log.parse_log(output)
-              a.wait(show_in_buffer(commits))
-            end)
-          end
+          callback = void(async(function(popup)
+            local output = await(
+              git.cli.log
+                .oneline
+                .args(unpack(popup.get_arguments()))
+                .branches
+                .remotes
+                .call())
+            local commits = git.log.parse_log(output)
+            await(show_in_buffer(commits))
+          end))
         },
         {
           key = "a",
           description = "Log all references",
-          callback = function(popup)
-            a.dispatch(function ()
-              local output = a.wait(
-                git.cli.log
-                  .oneline
-                  .args(unpack(popup.get_arguments()))
-                  .all
-                  .call())
-              local commits = git.log.parse_log(output)
-              a.wait(show_in_buffer(commits))
-            end)
-          end
+          callback = void(async(function(popup)
+            local output = await(
+              git.cli.log
+                .oneline
+                .args(unpack(popup.get_arguments()))
+                .all
+                .call())
+            local commits = git.log.parse_log(output)
+            await(show_in_buffer(commits))
+          end))
         },
       },
       {

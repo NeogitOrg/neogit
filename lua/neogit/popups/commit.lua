@@ -3,13 +3,14 @@ local status = require 'neogit.status'
 local cli = require("neogit.lib.git.cli")
 local input = require("neogit.lib.input")
 local Buffer = require("neogit.lib.buffer")
-local a = require('neogit.async')
-local uv = require('neogit.async.uv')
+local a = require 'plenary.async_lib'
+local async, await, scheduler, void, wrap, uv = a.async, a.await, a.scheduler, a.void, a.wrap, a.uv
 local split = require('neogit.lib.util').split
+local uv_utils = require 'neogit.lib.uv'
 
 local COMMIT_FILE = '.git/NEOGIT_COMMIT_EDITMSG'
 
-local get_commit_message = a.wrap(function (content, cb)
+local get_commit_message = wrap(function (content, cb)
   Buffer.create {
     name = COMMIT_FILE,
     filetype = "gitcommit",
@@ -50,11 +51,11 @@ local get_commit_message = a.wrap(function (content, cb)
       end
     end
   }
-end)
+end, 2)
 
 -- If skip_gen is true we don't generate the massive git comment. 
 -- This flag should be true when the file already exists
-local prompt_commit_message = a.sync(function (msg, skip_gen)
+local prompt_commit_message = async(function (msg, skip_gen)
   local output = {}
 
   if msg and #msg > 0 then
@@ -69,7 +70,7 @@ local prompt_commit_message = a.sync(function (msg, skip_gen)
     table.insert(output, "# Please enter the commit message for your changes. Lines starting")
     table.insert(output, "# with '#' will be ignored, and an empty message aborts the commit.")
 
-    local status_output = a.wait(cli.status.call())
+    local status_output = await(cli.status.call())
     status_output = vim.split(status_output, '\n')
 
     for _, line in pairs(status_output) do
@@ -79,8 +80,8 @@ local prompt_commit_message = a.sync(function (msg, skip_gen)
     end
   end
 
-  a.wait_for_textlock()
-  a.wait(get_commit_message(output))
+  await(scheduler())
+  await(get_commit_message(output))
 end)
 
 local function create()
@@ -155,70 +156,62 @@ local function create()
         {
           key = "c",
           description = "Commit",
-          callback = function(popup)
-            a.dispatch(function ()
-              local data = a.wait(uv.read_file(COMMIT_FILE))
-              local skip_gen = data ~= nil
-              data = data or ''
-              -- we need \r? to support windows
-              data = split(data, '\r?\n')
-              a.wait(prompt_commit_message(data, skip_gen))
-              local _, code = a.wait(cli.commit.commit_message_file(COMMIT_FILE).args(unpack(popup.get_arguments())).call())
-              if code == 0 then
-                a.wait(uv.fs_unlink(COMMIT_FILE))
-                status.refresh(true)
-              end
-            end)
-          end
+          callback = void(async(function (popup)
+            local _, data = await(uv_utils.read_file(COMMIT_FILE))
+            local skip_gen = data ~= nil
+            data = data or ''
+            -- we need \r? to support windows
+            data = split(data, '\r?\n')
+            await(prompt_commit_message(data, skip_gen))
+            local _, code = await(cli.commit.commit_message_file(COMMIT_FILE).args(unpack(popup.get_arguments())).call())
+            if code == 0 then
+              await(uv.fs_unlink(COMMIT_FILE))
+              await(status.refresh(true))
+            end
+          end))
         },
       },
       {
         {
           key = "e",
           description = "Extend",
-          callback = function(popup)
-            a.dispatch(function ()
-              local _, code = a.wait(cli.commit.no_edit.amend.call())
-              if code == 0 then
-                a.wait(uv.fs_unlink(COMMIT_FILE))
-                status.refresh(true)
-              end
-            end)
-          end
+          callback = void(async(function ()
+            local _, code = await(cli.commit.no_edit.amend.call())
+            if code == 0 then
+              await(uv.fs_unlink(COMMIT_FILE))
+              await(status.refresh(true))
+            end
+          end))
         },
         {
           key = "w",
           description = "Reword",
-          callback = function()
-            a.dispatch(function ()
-              local msg = a.wait(cli.log.max_count(1).pretty('%B').call())
-              msg = vim.split(msg, '\n')
+          callback = void(async(function ()
+            local msg = await(cli.log.max_count(1).pretty('%B').call())
+            msg = vim.split(msg, '\n')
 
-              a.wait(prompt_commit_message(msg))
-              local _, code = a.wait(cli.commit.commit_message_file(COMMIT_FILE).amend.only.call())
-              if code == 0 then
-                a.wait(uv.fs_unlink(COMMIT_FILE))
-                status.refresh(true)
-              end
-            end)
-          end
+            await(prompt_commit_message(msg))
+            local _, code = await(cli.commit.commit_message_file(COMMIT_FILE).amend.only.call())
+            if code == 0 then
+              await(uv.fs_unlink(COMMIT_FILE))
+              await(status.refresh(true))
+            end
+          end))
         },
         {
           key = "a",
           description = "Amend",
-          callback = function(popup)
-            a.dispatch(function ()
-              local msg = a.wait(cli.log.max_count(1).pretty('%B').call())
-              msg = vim.split(msg, '\n')
+          callback = void(async(function ()
+            local msg = await(cli.log.max_count(1).pretty('%B').call())
+            msg = vim.split(msg, '\n')
 
-              a.wait(prompt_commit_message(msg))
-              local _, code = a.wait(cli.commit.commit_message_file(COMMIT_FILE).amend.call())
-              if code == 0 then
-                a.wait(uv.fs_unlink(COMMIT_FILE))
-                status.refresh(true)
-              end
-            end)
-          end
+            await(prompt_commit_message(msg))
+            local _, code = await(cli.commit.commit_message_file(COMMIT_FILE).amend.call())
+            if code == 0 then
+              await(uv.fs_unlink(COMMIT_FILE))
+              await(status.refresh(true))
+            end
+          end))
         },
       },
       {
