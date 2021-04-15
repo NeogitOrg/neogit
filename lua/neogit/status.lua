@@ -633,7 +633,18 @@ local cmd_func_map = function ()
           local rhs_lines = vim.split(a.wait(cli.show.file(item.name).call()), '\n')
           a.wait_for_textlock()
           Diff.open(
-            { lines = lhs_lines, name = item.name .. " [WORKING TREE]" }, 
+            { 
+              lines = lhs_lines, 
+              name = item.name .. " [WORKING TREE]", 
+              on_save = function()
+                local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+                vim.cmd(string.format(":e %s", item.name))
+                vim.api.nvim_buf_set_lines(0, 0, -1, false, lines)
+                vim.cmd(":w")
+                refresh(true)
+                return true
+              end 
+            }, 
             { lines = rhs_lines, name = item.name .. " [HEAD]" }
           )
         end
@@ -783,3 +794,5 @@ return {
   refresh = refresh,
   close = close
 }
+
+
