@@ -24,6 +24,12 @@ local function new()
     id = id,
     mappings = mappings,
     map_id_to_key = map_id_to_key,
+    map = function(mode, key, cb)
+      mappings[key] = { mode, cb }
+    end,
+    delete = function()
+      managers[id] = nil
+    end,
     register = function()
       for k,mapping in pairs(mappings) do
         local map_id = #map_id_to_key + 1
