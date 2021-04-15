@@ -1,5 +1,6 @@
 local M = {}
 local a = require("neogit.async")
+local MappingsManager = require("neogit.lib.mappings_manager")
 
 local state = {
   open = false,
@@ -9,8 +10,45 @@ local state = {
 
 M.state = state
 
-function M.invoke_mapping(name, mode, key)
-  M.mappings[name][mode .. " " .. key]()
+function M.noop()
+end
+
+function M.focus(id)
+  if state[id] then
+    vim.api.nvim_set_current_win(state[id].win)
+  end
+end
+
+function M.save_lhs()
+  if state.open then
+    vim.api.nvim_buf_call(state.lhs.buf, function()
+      vim.bo.buftype = ""
+      if state.lhs.on_save() then
+        M.close()
+      else
+        vim.bo.buftype = "nofile"
+      end
+    end)
+  end
+end
+
+function M.focus_lhs()
+  M.focus("lhs")
+end
+
+function M.focus_rhs()
+  M.focus("rhs")
+end
+
+-- unused
+-- closes the diff view if a different window gets focus
+function M.on_win_leave()
+  if state.open then
+    local win = vim.api.nvim_get_current_win()
+    if win ~= state.lhs.win and win ~= state.rhs.win then
+      M.close()
+    end
+  end
 end
 
 function M.close()
@@ -19,6 +57,7 @@ function M.close()
       vim.cmd [[au! * <buffer>]]
     end)
     vim.api.nvim_win_close(state.lhs.win, false)
+    state.lhs.mmanager.delete()
     state.lhs = nil
   end
   if state.rhs ~= nil then
@@ -26,6 +65,7 @@ function M.close()
       vim.cmd [[au! * <buffer>]]
     end)
     vim.api.nvim_win_close(state.rhs.win, false)
+    state.rhs.mmanager.delete()
     state.rhs = nil
   end
   state.open = false
@@ -47,6 +87,7 @@ function M.open(lhs_info, rhs_info)
   local row = vim_height * 0.15
 
   local lhs_buf = vim.api.nvim_create_buf(false, true)
+  local lhs_mmanager = MappingsManager.new(lhs_buf)
   local lhs_win = vim.api.nvim_open_win(lhs_buf, true, {
     relative = 'editor',
     width = width,
@@ -59,24 +100,17 @@ function M.open(lhs_info, rhs_info)
   vim.api.nvim_buf_set_lines(lhs_buf, 0, -1, false, lhs_info.lines)
 
   for key, _ in pairs(M.mappings.lhs) do
-    local tokens = vim.split(key, " ")
-    local mode = tokens[1]
-    local lhs = tokens[2]
-
-    vim.api.nvim_buf_set_keymap(
-      lhs_buf, 
-      mode, 
-      lhs, 
-      string.format([[:lua require("neogit.diff").invoke_mapping('%s', '%s', '%s')<CR>]], "lhs", mode, lhs),
-      {}
-    )
+    lhs_mmanager.map("n", key, M.mappings.lhs[key])
   end
 
-  state.lhs = { buf = lhs_buf, win = lhs_win }
+  lhs_mmanager.register()
+
+  state.lhs = { buf = lhs_buf, win = lhs_win, mmanager = lhs_mmanager, on_save = lhs_info.on_save or function()end }
 
   local col = col + width + 1
 
   local rhs_buf = vim.api.nvim_create_buf(false, true)
+  local rhs_mmanager = MappingsManager.new(rhs_buf)
   local rhs_win = vim.api.nvim_open_win(rhs_buf, true, {
     relative = 'editor',
     width = width,
@@ -87,22 +121,16 @@ function M.open(lhs_info, rhs_info)
   })
 
   vim.api.nvim_buf_set_lines(rhs_buf, 0, -1, false, rhs_info.lines)
+  vim.bo.readonly = true
+  vim.bo.modifiable = false
 
   for key, _ in pairs(M.mappings.rhs) do
-    local tokens = vim.split(key, " ")
-    local mode = tokens[1]
-    local lhs = tokens[2]
-
-    vim.api.nvim_buf_set_keymap(
-      rhs_buf, 
-      mode, 
-      lhs, 
-      string.format([[:lua require("neogit.diff").invoke_mapping('%s', '%s', '%s')<CR>]], "rhs", mode, lhs),
-      {}
-    )
+    rhs_mmanager.map("n", key, M.mappings.rhs[key])
   end
 
-  state.rhs = { buf = rhs_buf, win = rhs_win }
+  rhs_mmanager.register()
+
+  state.rhs = { buf = rhs_buf, win = rhs_win, mmanager = rhs_mmanager }
 
   -- Have to defer this, else the rhs window disappears ??? like what the fuck
   vim.defer_fn(function()
@@ -115,13 +143,34 @@ end
 
 M.mappings = {
   lhs = {
-    ["n q"] = M.close
+    ["q"] = M.close,
+    ["<c-s>"] = M.save_lhs,
+    ["<c-w>l"] = M.focus_rhs,
+    ["<c-w><c-l>"] = M.focus_rhs,
+    ["<c-w>k"] = M.noop,
+    ["<c-w>j"] = M.noop,
+    ["<c-w>h"] = M.noop,
+    ["<c-w><c-k>"] = M.noop,
+    ["<c-w><c-j>"] = M.noop,
+    ["<c-w><c-h>"] = M.noop,
   },
   rhs = {
-    ["n q"] = M.close
+    ["q"] = M.close,
+    ["<c-w>h"] = M.focus_lhs,
+    ["<c-w><c-h>"] = M.focus_lhs,
+    ["<c-w>l"] = M.noop,
+    ["<c-w>k"] = M.noop,
+    ["<c-w>j"] = M.noop,
+    ["<c-w><c-k>"] = M.noop,
+    ["<c-w><c-j>"] = M.noop,
+    ["<c-w><c-l>"] = M.noop,
   },
 }
 
 D = M
 
 return M
+
+
+
+
