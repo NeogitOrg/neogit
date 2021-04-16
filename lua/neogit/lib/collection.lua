@@ -44,8 +44,8 @@ function M.filter(tbl, func)
 end
 
 function M.each(tbl, func)
-  for _, item in ipairs(tbl) do
-    func(item)
+  for i, item in ipairs(tbl) do
+    func(item, i)
   end
 end
 
@@ -58,8 +58,15 @@ function M.reduce(tbl, func, ...)
 end
 
 function M.find(tbl, func)
-  for _, item in ipairs(tbl) do
-    if func(item) then return item end
+  for i, item in ipairs(tbl) do
+    if func(item, i) then return item, i end
+  end
+  return nil
+end
+
+function M.at(tbl, idx)
+  for i, item in ipairs(tbl) do
+    if i == idx then return item end
   end
   return nil
 end

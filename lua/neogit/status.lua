@@ -309,6 +309,7 @@ local function reset()
   locations = {}
   refresh(true)
 end
+
 function refresh(force)
   local function wait(ms)
     vim.wait(ms or 1000, function() return not refreshing end)
@@ -602,6 +603,9 @@ local function set_folds(to)
   refresh(true)
 end
 
+local function get_next_item(section, item)
+end
+
 --- These needs to be a function to avoid a circular dependency
 --  between this module and the popup modules
 local cmd_func_map = function ()
@@ -626,27 +630,41 @@ local cmd_func_map = function ()
     end,
     ["OpenSplitDiff"] = function()
       a.dispatch(function()
-        local section, item = get_current_section_item()
+        local _, item = get_current_section_item()
 
         if item ~= nil then
+          local _, item_idx = Collection.new(repo.unstaged.files)
+            :map(F.dot("name"))
+            :find(F.eq(item.name))
+
           local lhs_lines = a.wait(uv.read_lines(item.name))
           local rhs_lines = vim.split(a.wait(cli.show.file(item.name).call()), '\n')
           a.wait_for_textlock()
-          Diff.open(
-            { 
-              lines = lhs_lines, 
-              name = item.name .. " [WORKING TREE]", 
-              on_save = function()
-                local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
-                vim.cmd(string.format(":e %s", item.name))
-                vim.api.nvim_buf_set_lines(0, 0, -1, false, lines)
-                vim.cmd(":w")
-                refresh(true)
-                return true
-              end 
-            }, 
-            { lines = rhs_lines, name = item.name .. " [HEAD]" }
-          )
+          Diff.open({
+            lhs_content = lhs_lines, 
+            rhs_content = rhs_lines,
+            go_item = function(inc)
+              local new_idx = item_idx + inc
+              item = Collection.new(repo.unstaged.files):at(new_idx)
+
+              if item == nil then
+                return nil, nil
+              end
+
+              local lhs_lines = a.wait(uv.read_lines(item.name))
+              local rhs_lines = vim.split(a.wait(cli.show.file(item.name).call()), '\n')
+
+              return lhs_lines, rhs_lines
+            end,
+            on_save = function()
+              local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+              vim.cmd(string.format(":e %s", item.name))
+              vim.api.nvim_buf_set_lines(0, 0, -1, false, lines)
+              vim.cmd(":w")
+              refresh(true)
+              return true
+            end 
+          })
         end
       end)
     end,

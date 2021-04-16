@@ -5,7 +5,9 @@ local MappingsManager = require("neogit.lib.mappings_manager")
 local state = {
   open = false,
   lhs = nil,
-  rhs = nil
+  rhs = nil,
+  on_save = function()end,
+  go_item = function()end
 }
 
 M.state = state
@@ -23,13 +25,61 @@ function M.save_lhs()
   if state.open then
     vim.api.nvim_buf_call(state.lhs.buf, function()
       vim.bo.buftype = ""
-      if state.lhs.on_save() then
+      if state.on_save() then
         M.close()
       else
         vim.bo.buftype = "nofile"
       end
     end)
   end
+end
+
+function M.go_file(inc)
+  if state.open then
+    local lhs, rhs = state.go_item(inc)
+
+    if lhs ~= nil and rhs ~= nil then
+      vim.api.nvim_buf_call(state.lhs.buf, function()
+        local ro = vim.bo.readonly
+        local m = vim.bo.modifiable
+        local bt = vim.bo.buftype
+
+        vim.bo.buftype = ""
+        vim.bo.modifiable = true
+        vim.bo.readonly = false
+
+        vim.api.nvim_buf_set_lines(state.lhs.buf, 0, -1, false, lhs)
+
+        vim.bo.buftype = bt
+        vim.bo.modifiable = m
+        vim.bo.readonly = ro
+      end)
+
+      vim.api.nvim_buf_call(state.rhs.buf, function()
+        local ro = vim.bo.readonly
+        local m = vim.bo.modifiable
+        local bt = vim.bo.buftype
+
+        vim.bo.buftype = ""
+        vim.bo.modifiable = true
+        vim.bo.readonly = false
+
+        vim.api.nvim_buf_set_lines(state.rhs.buf, 0, -1, false, rhs)
+
+        vim.bo.buftype = bt
+        vim.bo.modifiable = m
+        vim.bo.readonly = ro
+      end)
+    end
+  end
+end
+
+function M.next_file()
+  M.go_file(1)
+end
+
+function M.prev_file()
+  M.go_file(-1)
 end
 
 function M.focus_lhs()
@@ -71,12 +121,47 @@ function M.close()
   state.open = false
 end
 
-function M.open(lhs_info, rhs_info)
+function open_floating_diff_window(height, width, x, y, border_kind, mappings, content, opts)
+  local border = { "┌", "─", "─", " ", "─", "─", "└", "│" }
+
+  if border_kind == "right" then
+    border = { "─", "─", "┐", "│", "┘", "─", "─", " " }
+  end
+
+  local buf = vim.api.nvim_create_buf(false, true)
+  local mmanager = MappingsManager.new(buf)
+  local win = vim.api.nvim_open_win(buf, true, {
+    relative = 'editor',
+    width = width,
+    height = height,
+    col = x,
+    row = y,
+    border = border
+  })
+
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, content)
+
+  for key, _ in pairs(mappings) do
+    mmanager.map("n", key, mappings[key])
+  end
+
+  mmanager.register()
+
+  return { 
+    buf = buf, 
+    win = win, 
+    mmanager = mmanager, 
+  }
+end
+
+function M.open(opts)
   if state.open then
     return
   end
 
   state.open = true
+  state.on_save = opts.on_save or state.on_save
+  state.go_item = opts.go_item or state.go_item
 
   local vim_height = vim.api.nvim_eval [[&lines]]
   local vim_width = vim.api.nvim_eval [[&columns]]
@@ -86,57 +171,19 @@ function M.open(lhs_info, rhs_info)
   local col = vim_width * 0.1
   local row = vim_height * 0.15
 
-  local lhs_buf = vim.api.nvim_create_buf(false, true)
-  local lhs_mmanager = MappingsManager.new(lhs_buf)
-  local lhs_win = vim.api.nvim_open_win(lhs_buf, true, {
-    relative = 'editor',
-    width = width,
-    height = height,
-    col = col,
-    row = row,
-    border = { "┌", "─", "─", " ", "─", "─", "└", "│" }
-  })
-
-  vim.api.nvim_buf_set_lines(lhs_buf, 0, -1, false, lhs_info.lines)
-
-  for key, _ in pairs(M.mappings.lhs) do
-    lhs_mmanager.map("n", key, M.mappings.lhs[key])
-  end
-
-  lhs_mmanager.register()
-
-  state.lhs = { buf = lhs_buf, win = lhs_win, mmanager = lhs_mmanager, on_save = lhs_info.on_save or function()end }
+  state.lhs = open_floating_diff_window(height, width, col, row, "Left", M.mappings.lhs, opts.lhs_content, opts)
 
   local col = col + width + 1
+  state.rhs = open_floating_diff_window(height, width, col, row, "Right", M.mappings.rhs, opts.rhs_content, opts)
 
-  local rhs_buf = vim.api.nvim_create_buf(false, true)
-  local rhs_mmanager = MappingsManager.new(rhs_buf)
-  local rhs_win = vim.api.nvim_open_win(rhs_buf, true, {
-    relative = 'editor',
-    width = width,
-    height = height,
-    col = col,
-    row = row,
-    border = { "─", "─", "┐", "│", "┘", "─", "─", " " }
-  })
-
-  vim.api.nvim_buf_set_lines(rhs_buf, 0, -1, false, rhs_info.lines)
   vim.bo.readonly = true
   vim.bo.modifiable = false
 
-  for key, _ in pairs(M.mappings.rhs) do
-    rhs_mmanager.map("n", key, M.mappings.rhs[key])
-  end
-
-  rhs_mmanager.register()
-
-  state.rhs = { buf = rhs_buf, win = rhs_win, mmanager = rhs_mmanager }
-
   -- Have to defer this, else the rhs window disappears ??? like what the fuck
   vim.defer_fn(function()
-    vim.api.nvim_set_current_win(rhs_win)
+    vim.api.nvim_set_current_win(state.rhs.win)
     vim.cmd [[diffthis]]
-    vim.api.nvim_set_current_win(lhs_win)
+    vim.api.nvim_set_current_win(state.lhs.win)
     vim.cmd [[diffthis]]
   end, 1)
 end
@@ -145,6 +192,8 @@ M.mappings = {
   lhs = {
     ["q"] = M.close,
     ["<c-s>"] = M.save_lhs,
+    ["]f"] = M.next_file,
+    ["[f"] = M.prev_file,
     ["<c-w>l"] = M.focus_rhs,
     ["<c-w><c-l>"] = M.focus_rhs,
     ["<c-w>k"] = M.noop,
