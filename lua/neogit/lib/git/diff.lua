@@ -1,6 +1,8 @@
-local a = require('neogit.async')
+local a = require 'plenary.async_lib'
+local async, await, await_all = a.async, a.await, a.await_all
 local cli = require('neogit.lib.git.cli')
 local util = require('neogit.lib.util')
+local Collection = require('neogit.lib.collection')
 local md5 = require 'neogit.lib.md5'
 
 local function parse_diff(output)
@@ -69,29 +71,56 @@ local diff = {
   parse = parse_diff
 }
 
+local ItemFilter = {}
+
+function ItemFilter.new (tbl)
+  return setmetatable(tbl, { __index = ItemFilter })
+end
+
+function ItemFilter.accepts (tbl, section, item)
+  for _, f in ipairs(tbl) do
+    if (f.section == "*" or f.section == section)
+      and (f.file == "*" or f.file == item) then
+      return true
+    end
+  end
+
+  return false
+end
+
 function diff.register(meta)
-  meta.load_diffs = a.sync(function (repo, filter)
+  meta.load_diffs = async(function (repo, filter)
+    filter = filter or false
     local executions = {}
 
+    if type(filter) == 'table' then
+      filter = ItemFilter.new(Collection.new(filter):map(function (item)
+        local section, file = item:match("^([^:]+):(.*)$")
+        if not section then error('Invalid filter item: '..item, 3) end
+
+        return { section = section, file = file }
+      end))
+    end
+
     for _, f in ipairs(repo.unstaged.files) do
-      if f.mode ~= 'D' and f.mode ~= 'F' and (not filter or f.name:match(filter)) then
-        table.insert(executions, a.sync(function (f)
-          local result = a.wait(cli.diff.files(f.name).call())
+      if f.mode ~= 'D' and f.mode ~= 'F' and (not filter or filter:accepts('unstaged', f.name)) then
+        table.insert(executions, async(function (f)
+          local result = await(cli.diff.files(f.name).call())
           f.diff = parse_diff(util.split(result, '\n'))
         end)(f))
       end
     end
 
     for _, f in ipairs(repo.staged.files) do
-      if f.mode ~= 'D' and f.mode ~= 'F' and (not filter or f.name:match(filter)) then
-        table.insert(executions, a.sync(function (f)
-          local result = a.wait(cli.diff.cached.files(f.name).call())
+      if f.mode ~= 'D' and f.mode ~= 'F' and (not filter or filter:accepts('staged', f.name)) then
+        table.insert(executions, async(function (f)
+          local result = await(cli.diff.cached.files(f.name).call())
           f.diff = parse_diff(util.split(result, '\n'))
         end)(f))
       end
     end
 
-    a.wait_all(executions)
+    await_all(executions)
   end)
 end
 

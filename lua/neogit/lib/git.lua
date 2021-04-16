@@ -1,5 +1,4 @@
 local cli = require("neogit.lib.git.cli")
-local a = require('neogit.async')
 
 return {
   status = require("neogit.lib.git.status"),

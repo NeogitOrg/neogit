@@ -3,17 +3,16 @@ local Diff = require('neogit.diff')
 local GitCommandHistory = require("neogit.buffers.git_command_history")
 local git = require("neogit.lib.git")
 local cli = require('neogit.lib.git.cli')
-local util = require("neogit.lib.util")
-local uv = require("neogit.async.uv")
 local notif = require("neogit.lib.notification")
 local config = require("neogit.config")
-local a = require'neogit.async'
+local a = require 'plenary.async_lib'
+local async, await, await_all, future, void, scheduler, run = a.async, a.await, a.await_all, a.future, a.void, a.scheduler, a.run
 local repository = require 'neogit.lib.git.repository'
 local Collection = require 'neogit.lib.collection'
 local F = require 'neogit.lib.functional'
 local LineBuffer = require 'neogit.lib.line_buffer'
+local fs = require 'neogit.lib.fs'
 
-local refreshing = false
 local current_operation = nil
 local status = {}
 local repo = repository.create()
@@ -31,14 +30,6 @@ local function get_section_idx_for_line(linenr)
     end
   end
   return nil
-end
-
-local function get_location(section_name)
-  for _,l in pairs(locations) do
-    if l.name == section_name then
-      return l
-    end
-  end
 end
 
 local function get_section_item_idx_for_line(linenr)
@@ -148,7 +139,7 @@ local function draw_buffer()
         file.first = #output
 
         if f.diff and not file.folded then
-          local hunks_lookup = Collection.new(file.hunks):key_by('hash')
+          local hunks_lookup = Collection.new(file.hunks or {}):key_by('hash')
 
           local hunks = {}
           for _, h in ipairs(f.diff.hunks) do
@@ -270,8 +261,6 @@ local function refresh_status()
     return
   end
 
-  local s, f, h = save_cursor_location()
-
   status_buffer:unlock()
 
   draw_buffer()
@@ -279,8 +268,71 @@ local function refresh_status()
 
   status_buffer:lock()
 
-  restore_cursor_location(s, f, h)
+  vim.cmd('redraw')
 end
+
+local refresh_lock = a.util.Semaphore.new(1)
+local refresh = async(function (which)
+  which = which or true
+
+  local permit = await(refresh_lock:acquire())
+
+  await(scheduler())
+  local s, f, h = save_cursor_location()
+
+  if await(cli.git_root()) ~= '' then
+    if which == true or which.status then
+      await(repo:update_status())
+      await(scheduler())
+      refresh_status()
+    end
+
+    local refreshes = {}
+    if which == true or which.branch_information then
+      table.insert(refreshes, repo:update_branch_information())
+    end
+    if which == true or which.stashes then
+      table.insert(refreshes, repo:update_stashes())
+    end
+    if which == true or which.unpulled then
+      table.insert(refreshes, repo:update_unpulled())
+    end
+    if which == true or which.unmerged then
+      table.insert(refreshes, repo:update_unmerged())
+    end
+    if which == true or which.diffs then
+      local filter = (type(which) == "table" and type(which.diffs) == "table")
+        and which.diffs
+        or nil
+
+      table.insert(refreshes, repo:load_diffs(filter))
+    end
+    await_all(refreshes)
+    await(scheduler())
+    refresh_status()
+    vim.cmd [[do <nomodeline> User NeogitStatusRefreshed]]
+  end
+
+  await(scheduler())
+  if vim.fn.bufname() == 'NeogitStatus' then
+    restore_cursor_location(s, f, h)
+  end
+
+  permit:forget()
+end)
+local dispatch_refresh = void(refresh)
+
+--- Compatibility endpoint to refresh data from an autocommand.
+--  `fname` should be `<afile>` in this case. This function will take care of
+--  resolving the file name to the path relative to the repository root and
+--  refresh that file's cache data.
+local refresh_viml_compat = void(async(function (fname)
+  if not fname or fname == "" then return end
+
+  local path = await(fs.relpath_from_repository(fname))
+  if not path then return end
+  await(refresh({ status = true, diffs = { "*:" .. path } }))
+end))
 
 local function current_line_is_hunk()
   local _,_,h = save_cursor_location()
@@ -304,43 +356,12 @@ local function toggle()
   refresh_status()
 end
 
-local function reset()
+local reset = async(function ()
   repo = repository.create()
   locations = {}
-  refresh(true)
-end
-
-function refresh(force)
-  local function wait(ms)
-    vim.wait(ms or 1000, function() return not refreshing end)
-  end
-
-  if refreshing or (status_buffer ~= nil and not force) then
-    return wait
-  end
-
-  a.dispatch(function ()
-    refreshing = true
-
-    if a.wait(cli.git_root()) ~= '' then
-      a.wait(repo:update_status())
-      a.wait_all({
-        repo:update_branch_information(),
-        repo:update_stashes(),
-        repo:update_unpulled(),
-        repo:update_unmerged(),
-        repo:load_diffs()
-      })
-      a.wait_for_textlock()
-      refresh_status()
-      vim.cmd [[do <nomodeline> User NeogitStatusRefreshed]]
-    end
-
-    refreshing = false
-  end)
-
-  return wait
-end
+  await(refresh(true))
+end)
+local dispatch_reset = void(reset)
 
 local function close()
   status_buffer = nil
@@ -466,22 +487,22 @@ local function get_selection()
   return first_section, first_item, first_hunk, first_line - first_hunk.diff_from, last_line - first_hunk.diff_from
 end
 
-local stage_selection = a.sync(function()
+local stage_selection = async(function()
   local _, item, hunk, from, to = get_selection()
   local patch = generate_patch_from_selection(item, hunk, from, to)
-  a.wait(cli.apply.cached.with_patch(patch).call())
+  await(cli.apply.cached.with_patch(patch).call())
 end)
 
-local unstage_selection = a.sync(function()
+local unstage_selection = async(function()
   local _, item, hunk, from, to = get_selection()
   if from == nil then
     return
   end
   local patch = generate_patch_from_selection(item, hunk, from, to, true)
-  a.wait(cli.apply.reverse.cached.with_patch(patch).call())
+  await(cli.apply.reverse.cached.with_patch(patch).call())
 end)
 
-local stage = a.sync(function()
+local stage = async(function()
   current_operation = "stage"
   local section, item = get_current_section_item()
 
@@ -492,52 +513,51 @@ local stage = a.sync(function()
   local mode = vim.api.nvim_get_mode()
 
   if mode.mode == "V" then
-    a.wait(stage_selection())
+    await(stage_selection())
   else
     local on_hunk = current_line_is_hunk()
-
     if on_hunk and section.name ~= "untracked" then
       local hunk = get_current_hunk_of_item(item)
       local patch = generate_patch_from_selection(item, hunk)
-      a.wait(cli.apply.cached.with_patch(patch).call())
+      await(cli.apply.cached.with_patch(patch).call())
     else
-      a.wait(git.status.stage(item.name))
+      await(git.status.stage(item.name))
     end
   end
 
-  refresh(true)
+  await(refresh({status = true, diffs = {"*:"..item.name}}))
   current_operation = nil
 end)
 
-local unstage = a.sync(function()
-  current_operation = "unstage"
+local unstage = async(function()
   local section, item = get_current_section_item()
 
   if section == nil or section.name ~= "staged" or item == nil then
     return
   end
+  current_operation = "unstage"
 
   local mode = vim.api.nvim_get_mode()
 
   if mode.mode == "V" then
-    a.wait(unstage_selection())
+    await(unstage_selection())
   else
     local on_hunk = current_line_is_hunk()
 
     if on_hunk then
       local hunk = get_current_hunk_of_item(item)
       local patch = generate_patch_from_selection(item, hunk, nil, nil, true)
-      a.wait(cli.apply.reverse.cached.with_patch(patch).call())
+      await(cli.apply.reverse.cached.with_patch(patch).call())
     else
-      a.wait(git.status.unstage(item.name))
+      await(git.status.unstage(item.name))
     end
   end
 
-  refresh(true)
+  await(refresh({status = true, diffs = {"*:"..item.name}}))
   current_operation = nil
 end)
 
-local discard = a.sync(function()
+local discard = async(function()
   local section, item = get_current_section_item()
 
   if section == nil or item == nil then
@@ -555,12 +575,12 @@ local discard = a.sync(function()
     local section, item, hunk, from, to = get_selection()
     local patch = generate_patch_from_selection(item, hunk, from, to, true)
     if section.name == "staged_changes" then
-      a.wait(cli.apply.reverse.index.with_patch(patch).call())
+      await(cli.apply.reverse.index.with_patch(patch).call())
     else
-      a.wait(cli.apply.reverse.with_patch(patch).call())
+      await(cli.apply.reverse.with_patch(patch).call())
     end
   elseif section.name == "untracked_files" then
-    a.wait_for_textlock()
+    await(scheduler())
     vim.fn.delete(item.name)
   else
 
@@ -572,20 +592,20 @@ local discard = a.sync(function()
       local diff = table.concat(lines, "\n")
       diff = table.concat({'--- a/'..item.name, '+++ b/'..item.name, diff, ""}, "\n")
       if section.name == "staged_changes" then
-        a.wait(cli.apply.reverse.index.with_patch(diff).call())
+        await(cli.apply.reverse.index.with_patch(diff).call())
       else
-        a.wait(cli.apply.reverse.with_patch(diff).call())
+        await(cli.apply.reverse.with_patch(diff).call())
       end
     elseif section.name == "unstaged_changes" then
-      a.wait(cli.checkout.files(item.name).call())
+      await(cli.checkout.files(item.name).call())
     elseif section.name == "staged_changes" then
-      a.wait(cli.reset.files(item.name).call())
-      a.wait(cli.checkout.files(item.name).call())
+      await(cli.reset.files(item.name).call())
+      await(cli.checkout.files(item.name).call())
     end
 
   end
 
-  refresh(true)
+  await(refresh(true))
 end)
 
 local function set_folds(to)
@@ -600,11 +620,12 @@ local function set_folds(to)
       end
     end)
   end)
-  refresh(true)
+  await(refresh(true))
 end
 
-local function get_next_item(section, item)
-end
+local command = void(async(function (act)
+  await(act())
+end))
 
 --- These needs to be a function to avoid a circular dependency
 --  between this module and the popup modules
@@ -669,27 +690,21 @@ local cmd_func_map = function ()
       end)
     end,
     ["Toggle"] = toggle,
-    ["Discard"] = { "nv", function () a.run(discard) end, true },
-    ["Stage"] = { "nv", function () a.run(stage) end, true },
-    ["StageUnstaged"] = function ()
-      a.dispatch(function()
-        a.wait(git.status.stage_modified())
-        refresh(true)
-      end)
-    end,
-    ["StageAll"] = function ()
-      a.dispatch(function()
-        a.wait(git.status.stage_all())
-        refresh(true)
-      end)
-    end,
-    ["Unstage"] = { "nv", function () a.run(unstage) end, true },
-    ["UnstageStaged"] = function ()
-      a.dispatch(function()
-        a.wait(git.status.unstage_all())
-        refresh(true)
-      end)
-    end,
+    ["Discard"] = { "nv", void(discard), true },
+    ["Stage"] = { "nv", void(stage), true },
+    ["StageUnstaged"] = void(async(function ()
+        await(git.status.stage_modified())
+        await(refresh({status = true, diffs = true}))
+    end)),
+    ["StageAll"] = void(async(function()
+        await(git.status.stage_all())
+        await(refresh({status = true, diffs = true}))
+    end)),
+    ["Unstage"] = { "nv", void(unstage), true },
+    ["UnstageStaged"] = void(async(function ()
+        await(git.status.unstage_all())
+        await(refresh({status = true, diffs = true}))
+    end)),
     ["CommandHistory"] = function()
       GitCommandHistory:new():show()
     end,
@@ -705,7 +720,9 @@ local cmd_func_map = function ()
       local _, item = get_current_section_item()
       vim.cmd("split " .. item.name)
     end,
-    ["GoToFile"] = function()
+    ["GoToFile"] = void(async(function()
+      local repo_root = await(cli.git_root())
+      await(scheduler())
       local section, item = get_current_section_item()
 
       if item ~= nil then
@@ -718,10 +735,12 @@ local cmd_func_map = function ()
         notif.delete_all()
         status_buffer:close()
 
-        vim.cmd("e " .. path)
+        local relpath = vim.fn.fnamemodify(repo_root .. '/' .. path, ':.')
+
+        vim.cmd("e " .. relpath)
       end
-    end,
-    ["RefreshBuffer"] = function() refresh(true) end,
+    end)),
+    ["RefreshBuffer"] = function() dispatch_refresh(true) end,
     ["HelpPopup"] = function ()
       local pos = vim.fn.getpos('.')
       pos[1] = vim.api.nvim_get_current_buf()
@@ -764,7 +783,7 @@ local function create(kind)
         end
       end
 
-      refresh(true)
+      dispatch_refresh(true)
     end
   }
 end
@@ -805,11 +824,11 @@ return {
   wait_on_current_operation = function (ms)
     vim.wait(ms or 1000, function() return not current_operation end)
   end,
-  wait_on_refresh = function (ms)
-    vim.wait(ms or 1000, function() return not refreshing end)
-  end,
   reset = reset,
+  dispatch_reset = dispatch_reset,
   refresh = refresh,
+  dispatch_refresh = dispatch_refresh,
+  refresh_viml_compat = refresh_viml_compat,
   close = close
 }
 

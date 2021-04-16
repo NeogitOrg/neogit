@@ -2,8 +2,10 @@ local git = {
   cli = require("neogit.lib.git.cli"),
   stash = require("neogit.lib.git.stash")
 }
-local a = require('neogit.async')
+local a = require 'plenary.async_lib'
+local async, await, await_all, future = a.async, a.await, a.await_all, a.future
 local util = require("neogit.lib.util")
+local Collection = require('neogit.lib.collection')
 
 local function marker_to_type(m)
   if m == "M" then
@@ -19,8 +21,8 @@ local function marker_to_type(m)
   end
 end
 
-local update_status = a.sync(function (state)
-  local result = a.wait(
+local update_status = async(function (state)
+  local result = await(
     git.cli.status
       .porcelain(2)
       .branch
@@ -29,6 +31,10 @@ local update_status = a.sync(function (state)
 
   local untracked_files, unstaged_files, staged_files = {}, {}, {}
   local append_original_path
+  local old_files_hash = {
+    staged_files = Collection.new(state.staged.files or {}):key_by('name'),
+    unstaged_files = Collection.new(state.unstaged.files or {}):key_by('name')
+  }
 
   local head = {}
   local upstream = {}
@@ -59,13 +65,17 @@ local update_status = a.sync(function (state)
           if mode_staged ~= '.' then
             table.insert(staged_files, {
               mode = mode_staged,
-              name = name
+              name = name,
+              diff = old_files_hash.staged_files[name]
+                and old_files_hash.staged_files[name].diff
             })
           end
           if mode_unstaged ~= '.' then
             table.insert(unstaged_files, {
               mode = mode_unstaged,
-              name = name
+              name = name,
+              diff = old_files_hash.unstaged_files[name]
+                and old_files_hash.unstaged_files[name].diff
             })
           end
         elseif kind == '2' then
@@ -92,6 +102,9 @@ local update_status = a.sync(function (state)
     end
   end
 
+  if head.branch == state.head.branch then head.commit_message = state.head.commit_message end
+  if upstream.branch == state.upstream.branch then upstream.commit_message = state.upstream.commit_message end
+
   state.head = head
   state.upstream = upstream
   state.untracked.files = untracked_files
@@ -99,41 +112,41 @@ local update_status = a.sync(function (state)
   state.staged.files = staged_files
 end)
 
-local update_branch_information = a.sync(function (state)
+local update_branch_information = async(function (state)
   local tasks = {}
 
   if state.head.oid ~= '(initial)' then
-    table.insert(tasks, a.sync(function ()
-      local result = a.wait(git.cli.log.max_count(1).pretty('%B').call())
+    table.insert(tasks, async(function ()
+      local result = await(git.cli.log.max_count(1).pretty('%B').call())
       state.head.commit_message = util.split(result, '\n')[1]
     end)())
 
     if state.upstream.branch then
-      table.insert(tasks, a.sync(function ()
-        local result = a.wait(git.cli.log.max_count(1).pretty('%B').for_range('@{upstream}').show_popup(false).call())
+      table.insert(tasks, async(function ()
+        local result = await(git.cli.log.max_count(1).pretty('%B').for_range('@{upstream}').show_popup(false).call())
         state.upstream.commit_message = util.split(result, '\n')[1]
       end)())
     end
   end
 
-  a.wait_all(tasks)
+  await_all(tasks)
 end)
 
 local status = {
-  stage = a.sync(function(name)
-    a.wait(git.cli.add.files(name).call())
+  stage = async(function(name)
+    await(git.cli.add.files(name).call())
   end),
-  stage_modified = a.sync(function()
-    a.wait(git.cli.add.update.call())
+  stage_modified = async(function()
+    await(git.cli.add.update.call())
   end),
-  stage_all = a.sync(function()
-    a.wait(git.cli.add.all.call())
+  stage_all = async(function()
+    await(git.cli.add.all.call())
   end),
-  unstage = a.sync(function(name)
-    a.wait(git.cli.reset.files(name).call())
+  unstage = async(function(name)
+    await(git.cli.reset.files(name).call())
   end),
-  unstage_all = a.sync(function()
-    a.wait(git.cli.reset.call())
+  unstage_all = async(function()
+    await(git.cli.reset.call())
   end),
 }
 

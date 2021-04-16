@@ -1,3 +1,4 @@
+require 'plenary.async_lib'.tests.add_to_env()
 local eq = assert.are.same
 local operations = require'neogit.operations'
 local harness = require'tests.git_harness'

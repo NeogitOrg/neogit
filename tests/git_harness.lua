@@ -1,4 +1,5 @@
 local status = require'neogit.status'
+local a = require 'plenary.async_lib'
 local M = {}
 
 local project_dir = vim.api.nvim_exec('pwd', true)
@@ -31,7 +32,7 @@ function M.in_prepared_repo(cb)
     local dir = 'neogit_test_'..random_string(5)
     prepare_repository(dir)
     vim.cmd('Neogit')
-    status.wait_on_refresh()
+    a.util.block_on(status.reset())
     local _, err = pcall(cb)
     cleanup_repository(dir)
     if err ~= nil then
