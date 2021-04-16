@@ -58,6 +58,10 @@ end, 2)
 local prompt_commit_message = async(function (msg, skip_gen)
   local output = {}
 
+  if type(msg) == 'string' then
+    msg = { msg }
+  end
+
   if msg and #msg > 0 then
     for _, line in ipairs(msg) do
       table.insert(output, line)
@@ -157,7 +161,7 @@ local function create()
           key = "c",
           description = "Commit",
           callback = void(async(function (popup)
-            local data = await(uv.read_lines(COMMIT_FILE))
+            local data = await(uv_utils.read_lines(COMMIT_FILE))
             local skip_gen = data ~= nil
             data = data or {}
             await(prompt_commit_message(data, skip_gen))

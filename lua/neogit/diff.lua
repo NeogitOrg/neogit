@@ -1,5 +1,6 @@
 local M = {}
-local a = require("neogit.async")
+local a = require 'plenary.async_lib'
+local await, void, async, scheduler = a.await, a.void, a.async, a.scheduler
 local MappingsManager = require("neogit.lib.mappings_manager")
 
 local state = {
@@ -34,11 +35,12 @@ function M.save_lhs()
   end
 end
 
-function M.go_file(inc)
+M.go_file = void(async(function(inc)
   if state.open then
-    local lhs, rhs = state.go_item(inc)
+    local lhs, rhs = await(state.go_item(inc))
 
     if lhs ~= nil and rhs ~= nil then
+      await(scheduler())
       vim.api.nvim_buf_call(state.lhs.buf, function()
         local ro = vim.bo.readonly
         local m = vim.bo.modifiable
@@ -55,6 +57,7 @@ function M.go_file(inc)
         vim.bo.readonly = ro
       end)
 
+      await(scheduler())
       vim.api.nvim_buf_call(state.rhs.buf, function()
         local ro = vim.bo.readonly
         local m = vim.bo.modifiable
@@ -72,7 +75,7 @@ function M.go_file(inc)
       end)
     end
   end
-end
+end))
 
 function M.next_file()
   M.go_file(1)

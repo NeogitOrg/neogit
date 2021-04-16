@@ -1,4 +1,5 @@
 local a = require 'plenary.async_lib'
+local util = require 'neogit.lib.util'
 local async, await, uv = a.async, a.await, a.uv
 
 local M = {}
@@ -19,8 +20,10 @@ M.read_file = async(function(path)
   return nil, data
 end)
 
-M.read_lines = a.sync(function (file)
-  local data = a.wait(wrapper.read_file(file))
+M.read_lines = async(function (file)
+  local err, data = await(M.read_file(file))
+  
+  if err then return err end
 
   if data == nil then
     return nil
@@ -28,7 +31,7 @@ M.read_lines = a.sync(function (file)
 
   -- we need \r? to support windows
   data = util.split(data, '\r?\n')
-  return data
+  return nil, data
 end)
 
 return M

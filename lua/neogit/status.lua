@@ -2,6 +2,7 @@ local Buffer = require("neogit.lib.buffer")
 local Diff = require('neogit.diff')
 local GitCommandHistory = require("neogit.buffers.git_command_history")
 local git = require("neogit.lib.git")
+local uv = require("neogit.lib.uv")
 local cli = require('neogit.lib.git.cli')
 local notif = require("neogit.lib.notification")
 local config = require("neogit.config")
@@ -649,46 +650,47 @@ local cmd_func_map = function ()
     ["Depth4"] = function()
       set_folds({ false, false, false })
     end,
-    ["OpenSplitDiff"] = function()
-      a.dispatch(function()
-        local _, item = get_current_section_item()
+    ["OpenSplitDiff"] = void(async(function()
+      local _, item = get_current_section_item()
 
-        if item ~= nil then
-          local _, item_idx = Collection.new(repo.unstaged.files)
-            :map(F.dot("name"))
-            :find(F.eq(item.name))
+      if item ~= nil then
+        local _, item_idx = Collection.new(repo.unstaged.files)
+          :map(F.dot("name"))
+          :find(F.eq(item.name))
 
-          local lhs_lines = a.wait(uv.read_lines(item.name))
-          local rhs_lines = vim.split(a.wait(cli.show.file(item.name).call()), '\n')
-          a.wait_for_textlock()
-          Diff.open({
-            lhs_content = lhs_lines, 
-            rhs_content = rhs_lines,
-            go_item = function(inc)
-              local new_idx = item_idx + inc
-              item = Collection.new(repo.unstaged.files):at(new_idx)
+        local _, lhs_lines = await(uv.read_lines(item.name))
+        local rhs_lines = vim.split(await(cli.show.file(item.name).call()), '\n')
 
-              if item == nil then
-                return nil, nil
-              end
+        await(scheduler())
+        Diff.open({
+          lhs_content = lhs_lines, 
+          rhs_content = rhs_lines,
+          go_item = async(function(inc)
+            local new_idx = item_idx + inc
+            item = Collection.new(repo.unstaged.files):at(new_idx)
 
-              local lhs_lines = a.wait(uv.read_lines(item.name))
-              local rhs_lines = vim.split(a.wait(cli.show.file(item.name).call()), '\n')
+            if item == nil then
+              return nil, nil
+            end
 
-              return lhs_lines, rhs_lines
-            end,
-            on_save = function()
-              local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
-              vim.cmd(string.format(":e %s", item.name))
-              vim.api.nvim_buf_set_lines(0, 0, -1, false, lines)
-              vim.cmd(":w")
-              refresh(true)
-              return true
-            end 
-          })
-        end
-      end)
-    end,
+            item_idx = new_idx
+
+            local _, lhs_lines = await(uv.read_lines(item.name))
+            local rhs_lines = vim.split(await(cli.show.file(item.name).call()), '\n')
+
+            return lhs_lines, rhs_lines
+          end),
+          on_save = function()
+            local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+            vim.cmd(string.format(":e %s", item.name))
+            vim.api.nvim_buf_set_lines(0, 0, -1, false, lines)
+            vim.cmd(":w")
+            refresh(true)
+            return true
+          end 
+        })
+      end
+    end)),
     ["Toggle"] = toggle,
     ["Discard"] = { "nv", void(discard), true },
     ["Stage"] = { "nv", void(stage), true },
