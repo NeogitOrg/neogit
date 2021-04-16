@@ -7,6 +7,7 @@ local state = {
   open = false,
   lhs = nil,
   rhs = nil,
+  display_kind = "tab", -- "floating" | "tab"
   on_save = function()end,
   go_item = function()end
 }
@@ -162,33 +163,90 @@ function M.open(opts)
     return
   end
 
+  opts.get_lhs_name = opts.get_lhs_name or function()
+    return "[WORKTREE]"
+  end
+
+  opts.get_rhs_name = opts.get_rhs_name or function()
+    return "[HEAD]"
+  end
+
   state.open = true
+  state.display_kind = opts.display_kind or state.display_kind
   state.on_save = opts.on_save or state.on_save
   state.go_item = opts.go_item or state.go_item
 
-  local vim_height = vim.api.nvim_eval [[&lines]]
-  local vim_width = vim.api.nvim_eval [[&columns]]
+  if state.display_kind == "floating" then
+    local vim_height = vim.api.nvim_eval [[&lines]]
+    local vim_width = vim.api.nvim_eval [[&columns]]
 
-  local width = math.floor(vim_width * 0.4)
-  local height = math.floor(vim_height * 0.7)
-  local col = vim_width * 0.1
-  local row = vim_height * 0.15
+    local width = math.floor(vim_width * 0.4)
+    local height = math.floor(vim_height * 0.7)
+    local col = vim_width * 0.1
+    local row = vim_height * 0.15
 
-  state.lhs = open_floating_diff_window(height, width, col, row, "Left", M.mappings.lhs, opts.lhs_content, opts)
+    state.lhs = open_floating_diff_window(height, width, col, row, "Left", M.mappings.lhs, opts.lhs_content, opts)
 
-  local col = col + width + 1
-  state.rhs = open_floating_diff_window(height, width, col, row, "Right", M.mappings.rhs, opts.rhs_content, opts)
+    local col = col + width + 1
+    state.rhs = open_floating_diff_window(height, width, col, row, "Right", M.mappings.rhs, opts.rhs_content, opts)
 
-  vim.bo.readonly = true
-  vim.bo.modifiable = false
+    vim.bo.readonly = true
+    vim.bo.modifiable = false
 
-  -- Have to defer this, else the rhs window disappears ??? like what the fuck
-  vim.defer_fn(function()
-    vim.api.nvim_set_current_win(state.rhs.win)
+    -- Have to defer this, else the rhs window disappears ??? like what the fuck
+    vim.defer_fn(function()
+      vim.api.nvim_set_current_win(state.rhs.win)
+      vim.cmd [[diffthis]]
+      vim.api.nvim_set_current_win(state.lhs.win)
+      vim.cmd [[diffthis]]
+    end, 1)
+  elseif state.display_kind == "tab" then
+    vim.cmd [[tabnew]]
+
+    -- lhs setup
+    state.lhs = {}
+    state.lhs.buf = vim.api.nvim_get_current_buf()
+    state.lhs.win = vim.api.nvim_get_current_win()
+    state.lhs.mmanager = MappingsManager.new()
+
+    vim.api.nvim_buf_set_lines(0, 0, -1, false, opts.lhs_content)
+    -- vim.api.nvim_buf_set_name(0, opts.get_lhs_name())
+
+    vim.bo.buftype = "nofile"
+
+    for key, _ in pairs(M.mappings.lhs) do
+      state.lhs.mmanager.map("n", key, M.mappings.lhs[key])
+    end
+
+    state.lhs.mmanager.register()
+
     vim.cmd [[diffthis]]
+
+    vim.cmd [[vsp | enew]]
+
+    -- rhs setup 
+    state.rhs = {}
+    state.rhs.buf = vim.api.nvim_get_current_buf()
+    state.rhs.win = vim.api.nvim_get_current_win()
+    state.rhs.mmanager = MappingsManager.new()
+
+    vim.api.nvim_buf_set_lines(0, 0, -1, false, opts.rhs_content)
+    -- vim.api.nvim_buf_set_name(0, opts.get_rhs_name())
+
+    vim.bo.buftype = "nofile"
+    vim.bo.readonly = true
+    vim.bo.modifiable = false
+
+    for key, _ in pairs(M.mappings.rhs) do
+      state.rhs.mmanager.map("n", key, M.mappings.rhs[key])
+    end
+
+    state.rhs.mmanager.register()
+
+    vim.cmd [[diffthis]]
+
     vim.api.nvim_set_current_win(state.lhs.win)
-    vim.cmd [[diffthis]]
-  end, 1)
+  end
 end
 
 M.mappings = {

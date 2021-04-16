@@ -664,7 +664,14 @@ local cmd_func_map = function ()
         await(scheduler())
         Diff.open({
           lhs_content = lhs_lines, 
+          get_lhs_name = function()
+            return item.name
+          end,
+          get_rhs_name = function()
+            return item.name
+          end,
           rhs_content = rhs_lines,
+          display_kind = config.values.diff_display_kind,
           go_item = async(function(inc)
             local new_idx = item_idx + inc
             item = Collection.new(repo.unstaged.files):at(new_idx)

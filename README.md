@@ -93,6 +93,8 @@ You can configure neogit by running the `neogit.setup` function.
 local neogit = require("neogit")
 
 neogit.setup {
+  -- Changes the way you want to have the vertical split diff displayed
+  diff_display_kind = "tab", -- "floating" | "tab"
   disable_signs = false,
   disable_context_highlighting = false,
   -- customize displayed signs

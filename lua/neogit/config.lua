@@ -1,6 +1,7 @@
 local M = {}
 
 M.values = {
+  diff_display_kind = "tab",
   disable_context_highlighting = false,
   disable_signs = false,
   signs = {
