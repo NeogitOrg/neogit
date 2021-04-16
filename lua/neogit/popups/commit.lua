@@ -161,7 +161,7 @@ local function create()
           key = "c",
           description = "Commit",
           callback = void(async(function (popup)
-            local data = await(uv_utils.read_lines(COMMIT_FILE))
+            local err, data = await(uv_utils.read_lines(COMMIT_FILE))
             local skip_gen = data ~= nil
             data = data or {}
             await(prompt_commit_message(data, skip_gen))
