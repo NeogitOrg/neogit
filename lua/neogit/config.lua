@@ -37,6 +37,12 @@ M.values = {
       ["L"] = "LogPopup",
       ["Z"] = "StashPopup",
       ["b"] = "BranchPopup",
+    },
+    diff_view = {
+      ["q"] = "Close",
+      ["<c-s>"] = "Save",
+      ["]f"] = "NextFile",
+      ["[f"] = "PrevFile",
     }
   }
 }

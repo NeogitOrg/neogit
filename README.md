@@ -62,7 +62,7 @@ The create function takes 1 optional argument that can be one of the following v
 * floating (This currently doesn't work with popups)
 * split
 
-## Status Keybindings
+## Default Status Keybindings
 
 | Keybinding   | Function                                         |
 |--------------|--------------------------------------------------|
@@ -84,6 +84,15 @@ The create function takes 1 optional argument that can be one of the following v
 | x            | Discard changes (also supports discarding hunks) |
 | \<enter>     | Go to file                                       |
 | \<C-r>       | Refresh Buffer                                   |
+
+## Default Diff View Keybindings
+
+| Keybinding   | Function                                         |
+|--------------|--------------------------------------------------|
+| q            | Close                                            |
+| <c-s>        | Save                                             |
+| ]f           | Next file                                        |
+| [f           | Prev file                                        |
 
 ## Configuration
 
@@ -112,14 +121,14 @@ neogit.setup {
       ["B"] = "BranchPopup",
       -- Removes the default mapping of "s"
       ["s"] = "",
-    }
+    },
+    diff_view = {}
   }
 }
 ```
 
-Right now only the status buffer supports custom mappings. The other popups will follow shortly.
-
-List of status commands:
+<details>
+<summary>Status Commands</summary>
 
 * Close
 * Depth1 (Set foldlevel to 1)
@@ -143,6 +152,19 @@ List of status commands:
 * LogPopup
 * StashPopup
 * BranchPopup
+</details>
+
+<details>
+<summary>Diff View Commands</summary>
+
+* Close
+* Save
+* NextFile
+* CloseFile
+* Noop (Override mapping but don't do anything)
+
+</details>
+
 
 ## Notification Highlighting
 
