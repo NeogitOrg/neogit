@@ -609,7 +609,7 @@ local discard = async(function()
   await(refresh(true))
 end)
 
-local function set_folds(to)
+local set_folds = async(function(to)
   Collection.new(locations):each(function (l)
     l.folded = to[1]
     Collection.new(l.files):each(function (f)
@@ -622,7 +622,7 @@ local function set_folds(to)
     end)
   end)
   await(refresh(true))
-end
+end)
 
 local command = void(async(function (act)
   await(act())
@@ -638,18 +638,18 @@ local cmd_func_map = function ()
         status_buffer:close()
       end, 0)
     end,
-    ["Depth1"] = function()
-      set_folds({ true, true, false })
-    end,
-    ["Depth2"] = function()
-      set_folds({ false, true, false })
-    end,
-    ["Depth3"] = function()
-      set_folds({ false, false, true })
-    end,
-    ["Depth4"] = function()
-      set_folds({ false, false, false })
-    end,
+    ["Depth1"] = void(async(function()
+      await(set_folds({ true, true, false }))
+    end)),
+    ["Depth2"] = void(async(function()
+      await(set_folds({ false, true, false }))
+    end)),
+    ["Depth3"] = void(async(function()
+      await(set_folds({ false, false, true }))
+    end)),
+    ["Depth4"] = void(async(function()
+      await(set_folds({ false, false, false }))
+    end)),
     ["OpenSplitDiff"] = void(async(function()
       local _, item = get_current_section_item()
 
