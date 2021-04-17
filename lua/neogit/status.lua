@@ -689,11 +689,10 @@ local cmd_func_map = function ()
           end),
           on_save = function()
             local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
-            vim.cmd(string.format(":e %s", item.name))
+            vim.cmd(string.format(":sp %s", item.name))
             vim.api.nvim_buf_set_lines(0, 0, -1, false, lines)
-            vim.cmd(":w")
+            vim.cmd(":wq")
             refresh(true)
-            return true
           end 
         })
       end
@@ -840,5 +839,10 @@ return {
   refresh_viml_compat = refresh_viml_compat,
   close = close
 }
+
+
+
+
+
 
 
