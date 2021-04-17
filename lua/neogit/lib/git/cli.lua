@@ -452,8 +452,7 @@ local cli = setmetatable({
     local calls = {...}
     return new_parallel_builder(calls)
   end,
-  git_root = git_root,
-  git_root_sync = void(git_root)
+  git_root = git_root
 }, meta)
 
 return cli

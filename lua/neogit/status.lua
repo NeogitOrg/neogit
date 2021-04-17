@@ -674,7 +674,7 @@ local cmd_func_map = function ()
           display_kind = config.values.diff_display_kind,
           go_item = async(function(inc)
             local new_idx = item_idx + inc
-            item = Collection.new(repo.unstaged.files):at(new_idx)
+            item = Collection.new(repo.unstaged.files)[new_idx]
 
             if item == nil then
               return nil, nil

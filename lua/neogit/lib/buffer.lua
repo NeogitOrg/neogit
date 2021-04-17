@@ -4,7 +4,7 @@ local mappings_manager = require("neogit.lib.mappings_manager")
 
 local Buffer = {
   handle = nil,
-}
+} 
 Buffer.__index = Buffer
 
 function Buffer:new(handle)

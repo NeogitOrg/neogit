@@ -64,13 +64,6 @@ function M.find(tbl, func)
   return nil
 end
 
-function M.at(tbl, idx)
-  for i, item in ipairs(tbl) do
-    if i == idx then return item end
-  end
-  return nil
-end
-
 return setmetatable(M, {
   __call = function (_, tbl)
     return M.new(tbl)
