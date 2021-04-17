@@ -1,4 +1,5 @@
 local M = {}
+local config = require 'neogit.config'
 local a = require 'plenary.async_lib'
 local await, void, async, scheduler = a.await, a.void, a.async, a.scheduler
 local MappingsManager = require("neogit.lib.mappings_manager")
@@ -249,12 +250,16 @@ function M.open(opts)
   end
 end
 
+local cmd_cb_map = {
+  ["NextFile"] = M.next_file,
+  ["PrevFile"] = M.prev_file,
+  ["Save"] = M.save_lhs,
+  ["Close"] = M.close,
+  ["Noop"] = M.close,
+}
+
 M.mappings = {
   lhs = {
-    ["q"] = M.close,
-    ["<c-s>"] = M.save_lhs,
-    ["]f"] = M.next_file,
-    ["[f"] = M.prev_file,
     ["<c-w>l"] = M.focus_rhs,
     ["<c-w><c-l>"] = M.focus_rhs,
     ["<c-w>k"] = M.noop,
@@ -265,7 +270,6 @@ M.mappings = {
     ["<c-w><c-h>"] = M.noop,
   },
   rhs = {
-    ["q"] = M.close,
     ["<c-w>h"] = M.focus_lhs,
     ["<c-w><c-h>"] = M.focus_lhs,
     ["<c-w>l"] = M.noop,
@@ -277,10 +281,12 @@ M.mappings = {
   },
 }
 
+for key, val in pairs(config.values.mappings.diff_view) do
+  local cb = cmd_cb_map[val]
+  M.mappings.lhs[key] = cb
+  M.mappings.rhs[key] = cb
+end
+
 D = M
 
 return M
-
-
-
-
