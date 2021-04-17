@@ -1,6 +1,6 @@
 local notif = require("neogit.lib.notification")
 local a = require 'plenary.async_lib'
-local async, await, await_all = a.async, a.await, a.await_all
+local async, await, await_all, void = a.async, a.await, a.await_all, a.void
 local process = require('neogit.process')
 local split = require('neogit.lib.util').split
 
@@ -452,7 +452,8 @@ local cli = setmetatable({
     local calls = {...}
     return new_parallel_builder(calls)
   end,
-  git_root = git_root
+  git_root = git_root,
+  git_root_sync = void(git_root)
 }, meta)
 
 return cli
