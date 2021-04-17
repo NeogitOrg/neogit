@@ -11,6 +11,7 @@ local Collection = require 'neogit.lib.collection'
 local F = require 'neogit.lib.functional'
 local LineBuffer = require 'neogit.lib.line_buffer'
 local fs = require 'neogit.lib.fs'
+local input = require 'neogit.lib.input'
 
 local current_operation = nil
 local status = {}
@@ -562,9 +563,12 @@ local discard = async(function()
   if section == nil or item == nil then
     return
   end
+  current_operation = "discard"
 
-  local result = vim.fn.confirm("Do you really want to do this?", "&Yes\n&No", 2)
-  if result == 2 then
+  if not input.get_confirmation("Do you really want to do this?", {
+    values = { "&Yes", "&No" },
+    default = 2
+  }) then
     return
   end
 
@@ -573,12 +577,12 @@ local discard = async(function()
   if mode.mode == "V" then
     local section, item, hunk, from, to = get_selection()
     local patch = generate_patch_from_selection(item, hunk, from, to, true)
-    if section.name == "staged_changes" then
+    if section.name == "staged" then
       await(cli.apply.reverse.index.with_patch(patch).call())
     else
       await(cli.apply.reverse.with_patch(patch).call())
     end
-  elseif section.name == "untracked_files" then
+  elseif section.name == "untracked" then
     await(scheduler())
     vim.fn.delete(item.name)
   else
@@ -590,14 +594,14 @@ local discard = async(function()
       lines[1] = string.format('@@ -%d,%d +%d,%d @@', hunk.index_from, hunk.index_len, hunk.index_from, hunk.disk_len)
       local diff = table.concat(lines, "\n")
       diff = table.concat({'--- a/'..item.name, '+++ b/'..item.name, diff, ""}, "\n")
-      if section.name == "staged_changes" then
+      if section.name == "staged" then
         await(cli.apply.reverse.index.with_patch(diff).call())
       else
         await(cli.apply.reverse.with_patch(diff).call())
       end
-    elseif section.name == "unstaged_changes" then
+    elseif section.name == "unstaged" then
       await(cli.checkout.files(item.name).call())
-    elseif section.name == "staged_changes" then
+    elseif section.name == "staged" then
       await(cli.reset.files(item.name).call())
       await(cli.checkout.files(item.name).call())
     end
@@ -605,6 +609,7 @@ local discard = async(function()
   end
 
   await(refresh(true))
+  current_operation = nil
 end)
 
 local function set_folds(to)
