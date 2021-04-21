@@ -1,4 +1,5 @@
 local config = require("neogit.config")
+local lib = require("neogit.lib")
 local signs = require("neogit.lib.signs")
 local status = require("neogit.status")
 
@@ -7,6 +8,8 @@ local neogit = {
   popups = require("neogit.popups"),
   config = config,
   status = status,
+  repo = status.repo,
+  cli = lib.cli,
   notif = require("neogit.lib.notification"),
   open = function(opts)
     opts = opts or {}

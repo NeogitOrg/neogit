@@ -44,6 +44,19 @@ local configurations = {
       end
     }
   }),
+  config = config({
+    flags = {
+      _get = "--get",
+    },
+    aliases = {
+      get = function(tbl)
+        return function(path)
+          tbl._get()
+          return tbl.args(path)
+        end
+      end
+    }
+  }),
   diff = config({
     flags = {
       null_terminated = '-z',
