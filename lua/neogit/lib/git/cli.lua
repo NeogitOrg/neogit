@@ -34,6 +34,19 @@ local configurations = {
       porcelain = "--porcelain",
     },
   }),
+  config = config({
+    flags = {
+      _get = "--get"
+    },
+    aliases = {
+      get = function(tbl)
+        return function(path)
+          tbl._get()
+          return tbl.args(path)
+        end
+      end
+    }
+  }),
   log = config({
     flags = {
       oneline = "--oneline",
@@ -370,19 +383,21 @@ local function new_builder(subcommand)
     env = {}
   }
 
+  local call = async(function ()
+    local args = {}
+    for _,o in ipairs(state.options) do table.insert(args, o) end
+    for _,a in ipairs(state.arguments) do table.insert(args, a) end
+    if #state.files > 0 then table.insert(args, '--') end
+    for _,f in ipairs(state.files) do table.insert(args, f) end
+
+    return await(exec(subcommand, args, state.cwd, state.input, state.env, state.show_popup))
+  end)
+
   return setmetatable({
     [k_state] = state,
     [k_config] = configuration,
     [k_command] = subcommand,
-    call = async(function ()
-      local args = {}
-      for _,o in ipairs(state.options) do table.insert(args, o) end
-      for _,a in ipairs(state.arguments) do table.insert(args, a) end
-      if #state.files > 0 then table.insert(args, '--') end
-      for _,f in ipairs(state.files) do table.insert(args, f) end
-
-      return await(exec(subcommand, args, state.cwd, state.input, state.env, state.show_popup))
-    end)
+    call = call
   }, mt_builder)
 end
 
@@ -393,7 +408,7 @@ local function new_parallel_builder(calls)
     cwd = nil
   }
 
-  local call = async(function ()
+  local call = async(function (cb)
     if #state.calls == 0 then return end
 
     if not state.cwd then
@@ -410,7 +425,13 @@ local function new_parallel_builder(calls)
       table.insert(processes, c())
     end
 
-    return await_all(processes)
+    local res = await_all(processes)
+
+    if cb ~= nil then
+      cb(res)
+    end
+
+    return res
   end)
 
   return setmetatable({

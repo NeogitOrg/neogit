@@ -1,4 +1,5 @@
 local config = require("neogit.config")
+local lib = require("neogit.lib")
 local signs = require("neogit.lib.signs")
 local status = require("neogit.status")
 
@@ -32,6 +33,9 @@ local neogit = {
     end
   end
 }
+
+neogit.repo = status.repo
+neogit.cli = lib.git.cli
 
 neogit.setup()
 

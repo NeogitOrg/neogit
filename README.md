@@ -106,6 +106,8 @@ neogit.setup {
   diff_display_kind = "tab", -- "floating" | "tab"
   disable_signs = false,
   disable_context_highlighting = false,
+  -- This function gets called when the neogit status buffer has finished loading the repostiory metadata for the first time
+  on_init = function() end,
   -- customize displayed signs
   signs = {
     -- { CLOSED, OPENED }

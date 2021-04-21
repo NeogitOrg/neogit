@@ -19,6 +19,7 @@ local status = {}
 local repo = repository.create()
 local locations = {}
 local status_buffer = nil
+local is_initialized = false
 
 local hunk_header_matcher = vim.regex('^@@.*@@')
 local diff_add_matcher = vim.regex('^+')
@@ -318,6 +319,12 @@ local refresh = async(function (which)
   if vim.fn.bufname() == 'NeogitStatus' then
     restore_cursor_location(s, f, h)
   end
+
+  if not is_initialized then
+    config.values.on_init()
+  end
+
+  is_initialized = true
 
   permit:forget()
 end)
@@ -833,6 +840,8 @@ return {
     vim.wait(ms or 1000, function() return not current_operation end)
   end,
   reset = reset,
+  repo = repo,
+  status = status,
   dispatch_reset = dispatch_reset,
   refresh = refresh,
   dispatch_refresh = dispatch_refresh,

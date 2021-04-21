@@ -4,6 +4,7 @@ M.values = {
   diff_display_kind = "tab",
   disable_context_highlighting = false,
   disable_signs = false,
+  on_init = function() end,
   signs = {
     hunk = { "", "" },
     item = { ">", "v" },
