@@ -166,7 +166,7 @@ local function create()
             local _, code = await(cli.commit.commit_message_file(COMMIT_FILE).args(unpack(popup.get_arguments())).call())
             if code == 0 then
               await(uv.fs_unlink(COMMIT_FILE))
-              await(status.refresh(true))
+              await(status.refresh(true, true))
             end
           end))
         },
@@ -179,7 +179,7 @@ local function create()
             local _, code = await(cli.commit.no_edit.amend.call())
             if code == 0 then
               await(uv.fs_unlink(COMMIT_FILE))
-              await(status.refresh(true))
+              await(status.refresh(true, true))
             end
           end))
         },
@@ -209,7 +209,7 @@ local function create()
             local _, code = await(cli.commit.commit_message_file(COMMIT_FILE).amend.call())
             if code == 0 then
               await(uv.fs_unlink(COMMIT_FILE))
-              await(status.refresh(true))
+              await(status.refresh(true, true))
             end
           end))
         },

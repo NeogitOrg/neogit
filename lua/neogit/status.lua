@@ -240,19 +240,18 @@ local function restore_cursor_location(section_loc, file_loc, hunk_loc)
     file_loc, hunk_loc = nil, nil
     section = locations[section_loc[1]] or locations[#locations]
   end
-  if not file_loc or not section.files or #section.files == 0 then return vim.fn.setpos('.', {0, section.first, 0, 0}) end
+  if not file_loc or not section.files or #section.files == 0 or section.folded then return vim.fn.setpos('.', {0, section.first, 0, 0}) end
 
   local file = Collection.new(section.files):find(function (f) return f.name == file_loc[2] end)
   if not file then
     hunk_loc = nil
     file = section.files[file_loc[1]] or section.files[#section.files]
   end
-  if not hunk_loc or not file.hunks or #file.hunks == 0 then return vim.fn.setpos('.', {0, file.first, 0, 0}) end
+  if not hunk_loc or not file.hunks or #file.hunks == 0 or file.folded then return vim.fn.setpos('.', {0, file.first, 0, 0}) end
 
   local hunk = Collection.new(file.hunks):find(function (h) return h.hash == hunk_loc[2] end)
     or file.hunks[hunk_loc[1]]
     or file.hunks[#file.hunks]
-
   vim.fn.setpos('.', {0, hunk.first, 0, 0})
 end
 
@@ -272,7 +271,8 @@ local function refresh_status()
 end
 
 local refresh_lock = a.util.Semaphore.new(1)
-local refresh = async(function (which)
+local refresh = async(function (which, update_cursor_position)
+  update_cursor_position = update_cursor_position or false
   which = which or true
 
   local permit = await(refresh_lock:acquire())
@@ -313,8 +313,8 @@ local refresh = async(function (which)
     vim.cmd [[do <nomodeline> User NeogitStatusRefreshed]]
   end
 
-  await(scheduler())
-  if vim.fn.bufname() == 'NeogitStatus' then
+  if vim.fn.bufname() == 'NeogitStatus' and update_cursor_position then
+    await(scheduler())
     restore_cursor_location(s, f, h)
   end
 
@@ -525,7 +525,7 @@ local stage = async(function()
     end
   end
 
-  await(refresh({status = true, diffs = {"*:"..item.name}}))
+  await(refresh({status = true, diffs = {"*:"..item.name}}, true))
   current_operation = nil
 end)
 
@@ -553,7 +553,7 @@ local unstage = async(function()
     end
   end
 
-  await(refresh({status = true, diffs = {"*:"..item.name}}))
+  await(refresh({status = true, diffs = {"*:"..item.name}}, true))
   current_operation = nil
 end)
 
@@ -608,7 +608,7 @@ local discard = async(function()
 
   end
 
-  await(refresh(true))
+  await(refresh(true, true))
   current_operation = nil
 end)
 
@@ -624,7 +624,7 @@ local set_folds = async(function(to)
       end
     end)
   end)
-  await(refresh(true))
+  await(refresh(true, true))
 end)
 
 local command = void(async(function (act)
@@ -658,16 +658,16 @@ local cmd_func_map = function ()
     ["Stage"] = { "nv", void(stage), true },
     ["StageUnstaged"] = void(async(function ()
         await(git.status.stage_modified())
-        await(refresh({status = true, diffs = true}))
+        await(refresh({status = true, diffs = true}, true))
     end)),
     ["StageAll"] = void(async(function()
         await(git.status.stage_all())
-        await(refresh({status = true, diffs = true}))
+        await(refresh({status = true, diffs = true}, true))
     end)),
     ["Unstage"] = { "nv", void(unstage), true },
     ["UnstageStaged"] = void(async(function ()
         await(git.status.unstage_all())
-        await(refresh({status = true, diffs = true}))
+        await(refresh({status = true, diffs = true}, true))
     end)),
     ["CommandHistory"] = function()
       GitCommandHistory:new():show()
@@ -704,7 +704,7 @@ local cmd_func_map = function ()
         vim.cmd("e " .. relpath)
       end
     end)),
-    ["RefreshBuffer"] = function() dispatch_refresh(true) end,
+    ["RefreshBuffer"] = function() dispatch_refresh(true, true) end,
     ["HelpPopup"] = function ()
       local pos = vim.fn.getpos('.')
       pos[1] = vim.api.nvim_get_current_buf()

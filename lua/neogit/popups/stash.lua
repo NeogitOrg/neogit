@@ -49,7 +49,7 @@ local configuration = {
           if stash_name then
             a.scope(function ()
               await(stash.pop(stash_name))
-              await(status.refresh(true))
+              await(status.refresh(true, true))
             end)
           end
         end
@@ -63,7 +63,7 @@ local configuration = {
           if stash_name then
             a.scope(function ()
               await(stash.apply(stash_name))
-              await(status.refresh(true))
+              await(status.refresh(true, true))
             end)
           end
         end
@@ -77,7 +77,7 @@ local configuration = {
           if stash_name then
             a.scope(function ()
               await(stash.drop(stash_name))
-              await(status.refresh(true))
+              await(status.refresh({ stashes = true }, true))
             end)
           end
         end
