@@ -788,6 +788,7 @@ return {
   wait_on_current_operation = function (ms)
     vim.wait(ms or 1000, function() return not current_operation end)
   end,
+  repo = repo,
   reset = reset,
   dispatch_reset = dispatch_reset,
   refresh = refresh,
