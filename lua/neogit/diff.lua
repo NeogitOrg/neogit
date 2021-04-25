@@ -144,6 +144,9 @@ function open_floating_diff_window(height, width, x, y, border_kind, mappings, c
     border = border
   })
 
+  vim.bo.bufhide = "wipe"
+  vim.bo.buflisted = false
+
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, content)
 
   for key, _ in pairs(mappings) do
@@ -214,6 +217,8 @@ function M.open(opts)
     -- vim.api.nvim_buf_set_name(0, opts.get_lhs_name())
 
     vim.bo.buftype = "nofile"
+    vim.bo.bufhidden = "wipe"
+    vim.bo.buflisted = false
 
     for key, _ in pairs(M.mappings.lhs) do
       state.lhs.mmanager.map("n", key, M.mappings.lhs[key])
@@ -235,6 +240,8 @@ function M.open(opts)
     -- vim.api.nvim_buf_set_name(0, opts.get_rhs_name())
 
     vim.bo.buftype = "nofile"
+    vim.bo.bufhidden = "wipe"
+    vim.bo.buflisted = false
     vim.bo.readonly = true
     vim.bo.modifiable = false
 
