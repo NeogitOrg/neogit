@@ -190,6 +190,11 @@ local configurations = {
       end
     }
   }),
+  ['show-ref'] = config({
+    flags = {
+      verify = '--verify',
+    }
+  }),
   ['update-index'] = config({
     flags = {
       add = '--add',
