@@ -187,6 +187,11 @@ local configurations = {
       remove = '--remove'
     }
   }),
+  ['show-ref'] = config({
+    flags = {
+      verify = '--verify',
+    }
+  }),
   ['update-ref'] = config({
     flags = {
       create_reflog = '--create-reflog'
