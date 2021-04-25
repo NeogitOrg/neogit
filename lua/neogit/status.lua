@@ -313,8 +313,8 @@ local refresh = async(function (which, update_cursor_position)
     vim.cmd [[do <nomodeline> User NeogitStatusRefreshed]]
   end
 
+  await(scheduler())
   if vim.fn.bufname() == 'NeogitStatus' and update_cursor_position then
-    await(scheduler())
     restore_cursor_location(s, f, h)
   end
 
