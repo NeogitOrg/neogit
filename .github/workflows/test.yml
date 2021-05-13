@@ -1,0 +1,24 @@
+name: Tests
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Prepare
+        run: |
+          sudo apt-get update
+          sudo add-apt-repository universe
+          wget https://github.com/neovim/neovim/releases/download/nightly/nvim.appimage
+          chmod u+x nvim.appimage
+          sudo mv nvim.appimage /usr/bin/nvim
+          git clone https://github.com/nvim-lua/plenary.nvim.git ~/.local/share/nvim/site/pack/plenary.nvim/start/plenary.nvim
+
+      - name: Test
+        continue-on-error: true
+        run: |
+          make test

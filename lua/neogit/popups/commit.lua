@@ -163,7 +163,9 @@ local function create()
             -- we need \r? to support windows
             data = split(data, '\r?\n')
             await(prompt_commit_message(data, skip_gen))
-            local _, code = await(cli.commit.commit_message_file(COMMIT_FILE).args(unpack(popup.get_arguments())).call()) --luacheck: ignore
+            local _, code = await(
+              cli.commit.commit_message_file(COMMIT_FILE).args(unpack(popup.get_arguments())).call()
+            )
             if code == 0 then
               await(uv.fs_unlink(COMMIT_FILE))
               await(status.refresh(true))

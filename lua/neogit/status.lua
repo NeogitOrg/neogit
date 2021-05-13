@@ -5,8 +5,7 @@ local cli = require('neogit.lib.git.cli')
 local notif = require("neogit.lib.notification")
 local config = require("neogit.config")
 local a = require 'plenary.async_lib'
-local async, await, await_all, void, scheduler
-  = a.async, a.await, a.await_all, a.future, a.scheduler
+local async, await, await_all, void, scheduler = a.async, a.await, a.await_all, a.void, a.scheduler
 local repository = require 'neogit.lib.git.repository'
 local Collection = require 'neogit.lib.collection'
 local F = require 'neogit.lib.functional'
