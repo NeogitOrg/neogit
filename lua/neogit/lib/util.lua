@@ -14,7 +14,7 @@ end
 
 local function filter(tbl, f)
   local t = {}
-  for k,v in pairs(tbl) do
+  for _,v in pairs(tbl) do
     if f(v) then
       table.insert(t, v)
     end
@@ -124,7 +124,6 @@ return {
   filter = filter,
   str_right_pad = str_right_pad,
   str_count = str_count,
-  create_fold = create_fold,
   get_keymaps = get_keymaps,
   print_tbl = print_tbl,
   split = split,
