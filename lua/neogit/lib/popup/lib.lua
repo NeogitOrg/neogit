@@ -1,5 +1,6 @@
 package.loaded['neogit.lib.popup.lib'] = nil
 
+local a = require 'plenary.async_lib'
 local util = require("neogit.lib.util")
 
 local popups = {}
@@ -331,8 +332,75 @@ local function create_popup(id, switches, options, actions, env)
   )
 end
 
+local function new()
+  local builder = {
+    state = {
+      name = nil,
+      switches = {},
+      options = {},
+      actions = {},
+      env = {}
+    }
+  }
+  
+  function builder.name(name)
+    builder.state.name = name
+  end
+  
+  function builder.env(env)
+    builder.state.env = env
+  end
+
+  function builder.switch(key, cli, description, enabled)
+    if enabled == nil then
+      enabled = true
+    end
+
+    table.insert(builder.switches, {
+      key = key,
+      cli = cli,
+      description = description,
+      enabled = enabled
+    })
+  end
+
+  function builder.option(key, cli, value, description)
+    table.insert(builder.options, {
+      key = key,
+      cli = cli,
+      value = value,
+      description = description,
+    })
+  end
+
+  function builder.action(key, description, callback)
+    table.insert(builder.actions, {
+      key = key,
+      description = description,
+      callback = a.void(a.async(callback))
+    })
+  end
+
+  function builder.build()
+    if builder.state.name == nil then
+      error("A popup needs to have a name!")
+    end
+
+    return create_popup(
+      builder.state.name,
+      builder.state.switches, 
+      builder.state.options, 
+      builder.state.actions, 
+      builder.state.env
+    )
+  end
+
+  return builder
+end
+
 return {
   create = create_popup,
+  new = new,
   toggle = toggle,
   toggle_switch = toggle_popup_switch,
   toggle_option = toggle_popup_option,
