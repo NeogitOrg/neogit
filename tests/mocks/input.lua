@@ -13,7 +13,7 @@ input.get_user_input_with_completion = function (_, _)
 end
 
 input.get_confirmation = function (_, _)
-  return M.confirmed 
+  return M.confirmed
 end
 
 

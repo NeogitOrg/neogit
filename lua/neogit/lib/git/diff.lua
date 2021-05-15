@@ -59,7 +59,7 @@ local function parse_diff(output)
     end
   end
 
-  if hunk then 
+  if hunk then
     hunk.hash = md5.sumhexa(hunk_content)
     table.insert(diff.hunks, hunk)
   end

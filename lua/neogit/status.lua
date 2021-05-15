@@ -5,7 +5,7 @@ local cli = require('neogit.lib.git.cli')
 local notif = require("neogit.lib.notification")
 local config = require("neogit.config")
 local a = require 'plenary.async_lib'
-local async, await, await_all, future, void, scheduler, run = a.async, a.await, a.await_all, a.future, a.void, a.scheduler, a.run
+local async, await, await_all, void, scheduler = a.async, a.await, a.await_all, a.void, a.scheduler
 local repository = require 'neogit.lib.git.repository'
 local Collection = require 'neogit.lib.collection'
 local F = require 'neogit.lib.functional'
@@ -131,7 +131,8 @@ local function draw_buffer()
       location.files = {}
 
       for _, f in ipairs(data.files) do
-        if f.mode and f.original_name then output:append(string.format('%s %s -> %s', mode_to_text[f.mode], f.original_name, f.name))
+        if f.mode and f.original_name then
+          output:append(string.format('%s %s -> %s', mode_to_text[f.mode], f.original_name, f.name))
         elseif f.mode then output:append(string.format('%s %s', mode_to_text[f.mode], f.name))
         else output:append(f.name) end
 
@@ -240,7 +241,9 @@ local function restore_cursor_location(section_loc, file_loc, hunk_loc)
     file_loc, hunk_loc = nil, nil
     section = locations[section_loc[1]] or locations[#locations]
   end
-  if not file_loc or not section.files or #section.files == 0 then return vim.fn.setpos('.', {0, section.first, 0, 0}) end
+  if not file_loc or not section.files or #section.files == 0 then
+    return vim.fn.setpos('.', {0, section.first, 0, 0})
+  end
 
   local file = Collection.new(section.files):find(function (f) return f.name == file_loc[2] end)
   if not file then
@@ -339,6 +342,25 @@ local function current_line_is_hunk()
   return h ~= nil
 end
 
+local function get_hunk_of_item_for_line(item, line)
+  local hunk
+  local lines = {}
+  for _, h in ipairs(item.hunks) do
+    if h.first <= line and line <= h.last then
+      hunk = h
+      for i = hunk.diff_from, hunk.diff_to do
+        table.insert(lines, item.diff.lines[i])
+      end
+      break
+    end
+  end
+  return hunk, lines
+end
+
+local function get_current_hunk_of_item(item)
+  return get_hunk_of_item_for_line(item, vim.fn.line("."))
+end
+
 local function toggle()
   local section, item = get_current_section_item()
   if section == nil then
@@ -365,24 +387,6 @@ local dispatch_reset = void(reset)
 
 local function close()
   status_buffer = nil
-end
-
-function get_hunk_of_item_for_line(item, line)
-  local hunk
-  local lines = {}
-  for _, h in ipairs(item.hunks) do
-    if h.first <= line and line <= h.last then
-      hunk = h
-      for i = hunk.diff_from, hunk.diff_to do
-        table.insert(lines, item.diff.lines[i])
-      end
-      break
-    end
-  end
-  return hunk, lines
-end
-function get_current_hunk_of_item(item)
-  return get_hunk_of_item_for_line(item, vim.fn.line("."))
 end
 
 local function generate_patch_from_selection(item, hunk, from, to, reverse)
@@ -432,7 +436,13 @@ local function generate_patch_from_selection(item, hunk, from, to, reverse)
     end
   end
 
-  local diff_header = string.format("@@ -%d,%d +%d,%d @@", hunk.index_from, len_start, hunk.index_from, len_start + len_offset)
+  local diff_header = string.format(
+                        "@@ -%d,%d +%d,%d @@",
+                        hunk.index_from,
+                        len_start,
+                        hunk.index_from,
+                        len_start + len_offset
+                      )
 
   table.insert(diff_content, 1, diff_header)
   table.insert(diff_content, 1, string.format("+++ b/%s", item.name))
@@ -506,7 +516,9 @@ local stage = async(function()
   current_operation = "stage"
   local section, item = get_current_section_item()
 
-  if section == nil or (section.name ~= "unstaged" and section.name ~= "untracked" and section.name ~= "unmerged") or item == nil then
+  if section == nil
+    or (section.name ~= "unstaged" and section.name ~= "untracked" and section.name ~= "unmerged")
+    or item == nil then
     return
   end
 
@@ -626,10 +638,6 @@ local set_folds = async(function(to)
   end)
   await(refresh(true))
 end)
-
-local command = void(async(function (act)
-  await(act())
-end))
 
 --- These needs to be a function to avoid a circular dependency
 --  between this module and the popup modules

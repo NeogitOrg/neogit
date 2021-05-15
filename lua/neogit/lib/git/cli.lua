@@ -232,7 +232,11 @@ local function handle_new_cmd(job, popup)
 
   if popup and job.code ~= 0 then
     vim.schedule(function ()
-      notif.create({ "Git Error (" .. job.code .. ")!", "", "Press $ to see the git command history." }, { type = "error" })
+      notif.create({
+        "Git Error (" .. job.code .. ")!",
+        "",
+        "Press $ to see the git command history."
+      }, { type = "error" })
     end)
   end
 end
@@ -461,7 +465,6 @@ local cli = setmetatable({
     local calls = {...}
     return new_parallel_builder(calls)
   end,
-  git_root = git_root
 }, meta)
 
 return cli

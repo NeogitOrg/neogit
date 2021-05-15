@@ -3,23 +3,9 @@ local git = {
   stash = require("neogit.lib.git.stash")
 }
 local a = require 'plenary.async_lib'
-local async, await, await_all, future = a.async, a.await, a.await_all, a.future
+local async, await, await_all = a.async, a.await, a.await_all
 local util = require("neogit.lib.util")
 local Collection = require('neogit.lib.collection')
-
-local function marker_to_type(m)
-  if m == "M" then
-    return "Modified"
-  elseif m == "A" then
-    return "New file"
-  elseif m == "D" then
-    return "Deleted"
-  elseif m == "U" then
-    return "Conflict"
-  else
-    return "Unknown"
-  end
-end
 
 local update_status = async(function (state)
   local result = await(
@@ -61,7 +47,8 @@ local update_status = async(function (state)
         elseif kind == '!' then
           -- we ignore ignored files for now
         elseif kind == '1' then
-          local mode_staged, mode_unstaged, _, _, _, _, _, _, name = rest:match('(.)(.) (....) (%d+) (%d+) (%d+) (%w+) (%w+) (.+)')
+          local mode_staged, mode_unstaged, _, _, _, _, _, _, name =
+            rest:match('(.)(.) (....) (%d+) (%d+) (%d+) (%w+) (%w+) (.+)')
           if mode_staged ~= '.' then
             table.insert(staged_files, {
               mode = mode_staged,
@@ -79,7 +66,8 @@ local update_status = async(function (state)
             })
           end
         elseif kind == '2' then
-          local mode_staged, mode_unstaged, _, _, _, _, _, _, _, name = rest:match('(.)(.) (....) (%d+) (%d+) (%d+) (%w+) (%w+) (%a%d+) (.+)')
+          local mode_staged, mode_unstaged, _, _, _, _, _, _, _, name =
+            rest:match('(.)(.) (....) (%d+) (%d+) (%d+) (%w+) (%w+) (%a%d+) (.+)')
           local entry = {
             name = name
           }

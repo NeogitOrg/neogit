@@ -39,8 +39,8 @@ describe('status buffer', function ()
 -It exists so it can be manipulated by the test suite.
 +This is a change made to a tracked file.
  Here are some lines we can change during the tests.
- 
- 
+
+
 ]], get_git_diff('a.txt', '--cached'))
     end))
 
@@ -51,7 +51,7 @@ describe('status buffer', function ()
       eq([[--- a/a.txt
 +++ b/a.txt
 @@ -7,4 +7,5 @@ Here are some lines we can change during the tests.
- 
+
  This is a second block of text to create a second hunk.
  It also has some line we can manipulate.
 +Adding a new line right here!
@@ -70,8 +70,8 @@ describe('status buffer', function ()
  It exists so it can be manipulated by the test suite.
 +This is a change made to a tracked file.
  Here are some lines we can change during the tests.
- 
- 
+
+
 ]], get_git_diff('a.txt', '--cached'))
     end))
   end)
@@ -108,14 +108,13 @@ describe('status buffer', function ()
  This is another test file.
 +Changes here!
  This way, unstaging staged changes can be tested.
- 
- 
+
+
 ]], get_git_diff('b.txt'))
     end))
 
     it('can unstage a subsequent hunk from a staged file', in_prepared_repo(function ()
       vim.fn.setpos('.', {0, 11, 1, 0})
-      local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
       act('<tab>8ju')
       eq('MM b.txt\n', get_git_status('b.txt'))
       eq([[--- a/b.txt
@@ -144,7 +143,7 @@ describe('status buffer', function ()
       eq([[--- a/a.txt
 +++ b/a.txt
 @@ -7,4 +7,5 @@ Here are some lines we can change during the tests.
- 
+
  This is a second block of text to create a second hunk.
  It also has some line we can manipulate.
 +Adding a new line right here!
@@ -152,7 +151,7 @@ describe('status buffer', function ()
 ]], get_git_diff('a.txt'))
     end))
 
-    it('can discard a selection of a hunk', in_prepared_repo(function () 
+    it('can discard a selection of a hunk', in_prepared_repo(function ()
       vim.fn.setpos('.', {0, 8, 1, 0})
       act('<tab>jjjjVx')
       eq(' M a.txt\n', get_git_status('a.txt'))
@@ -162,10 +161,10 @@ describe('status buffer', function ()
  This is a text file under version control.
 -It exists so it can be manipulated by the test suite.
  Here are some lines we can change during the tests.
- 
- 
+
+
 @@ -7,4 +6,5 @@ Here are some lines we can change during the tests.
- 
+
  This is a second block of text to create a second hunk.
  It also has some line we can manipulate.
 +Adding a new line right here!
@@ -211,8 +210,8 @@ describe('status buffer', function ()
  This is another test file.
 -It will have staged changes.
  This way, unstaging staged changes can be tested.
- 
- 
+
+
 @@ -7,3 +6,4 @@ This way, unstaging staged changes can be tested.
  Some more lines down here to force a second hunk.
  I can't think of anything else.
