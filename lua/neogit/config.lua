@@ -25,6 +25,7 @@ M.values = {
       ["<c-s>"] = "StageAll",
       ["u"] = "Unstage",
       ["U"] = "UnstageStaged",
+      ["d"] = "DiffAtFile",
       ["$"] = "CommandHistory",
       ["<c-r>"] = "RefreshBuffer",
       ["<enter>"] = "GoToFile",
@@ -32,6 +33,7 @@ M.values = {
       ["<c-x>"] = "SplitOpen",
       ["<c-t>"] = "TabOpen",
       ["?"] = "HelpPopup",
+      ["D"] = "DiffPopup",
       ["p"] = "PullPopup",
       ["P"] = "PushPopup",
       ["c"] = "CommitPopup",
@@ -41,5 +43,14 @@ M.values = {
     }
   }
 }
+
+function M.ensure_integration(name)
+  if not M.values.integrations[name] then
+    vim.api.nvim_err_writeln(string.format("Neogit: `%s` integration is not enabled", name))
+    return false
+  end
+
+  return true
+end
 
 return M

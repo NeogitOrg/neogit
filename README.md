@@ -85,6 +85,13 @@ The create function takes 1 optional argument that can be one of the following v
 | \<enter>     | Go to file                                       |
 | \<C-r>       | Refresh Buffer                                   |
 
+With `diffview` integration enabled
+
+| Keybinding   | Function                                         |
+|--------------|--------------------------------------------------|
+| d            | Open `diffview.nvim` at hovered file             |
+| D (TODO)     | Open diff popup                                  |
+
 ## Configuration
 
 You can configure neogit by running the `neogit.setup` function.

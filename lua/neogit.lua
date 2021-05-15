@@ -26,6 +26,12 @@ local neogit = {
       status.create(opts.kind or "tab")
     end
   end,
+  reset = status.reset,
+  dispatch_reset = status.dispatch_reset,
+  refresh = status.refresh,
+  dispatch_refresh = status.dispatch_refresh,
+  refresh_viml_compat = status.refresh_viml_compat,
+  close = status.close,
   setup = function(opts)
     if opts ~= nil then
       config.values = vim.tbl_deep_extend("force", config.values, opts)

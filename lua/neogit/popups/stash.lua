@@ -6,18 +6,18 @@ local stash = require('neogit.lib.git.stash')
 
 local configuration = {
   {
-    --{
-      --key = "a",
-      --description = "",
-      --cli = "all",
-      --enabled = false
-    --},
-    --{
-      --key = "u",
-      --description = "",
-      --cli = "include-untracked",
-      --enabled = false
-    --}
+    {
+      key = "a",
+      description = "",
+      cli = "all",
+      enabled = false
+    },
+    {
+      key = "u",
+      description = "",
+      cli = "include-untracked",
+      enabled = false
+    }
   },
   {},
   {

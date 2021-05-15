@@ -338,7 +338,7 @@ local function new()
       name = nil,
       switches = {},
       options = {},
-      actions = {},
+      actions = {{}},
       env = {}
     }
   }
@@ -349,6 +349,10 @@ local function new()
   
   function builder.env(env)
     builder.state.env = env
+  end
+
+  function builder.new_action_row()
+    table.insert(builder.state.actions, {})
   end
 
   function builder.switch(key, cli, description, enabled)
@@ -374,10 +378,10 @@ local function new()
   end
 
   function builder.action(key, description, callback)
-    table.insert(builder.actions, {
+    table.insert(builder.actions[#builder.actions], {
       key = key,
       description = description,
-      callback = a.void(a.async(callback))
+      callback = callback and a.void(a.async(callback)) or function() end
     })
   end
 

@@ -710,6 +710,16 @@ local cmd_func_map = function ()
       pos[1] = vim.api.nvim_get_current_buf()
       require("neogit.popups.help").create(pos)
     end,
+    ["DiffAtFile"] = function()
+      if not config.ensure_integration 'diffview' then
+        return
+      end
+      local dv = require 'neogit.integrations.diffview'
+      local _, item = get_current_section_item()
+
+      dv.open_at_file(item.name)
+    end,
+    ["DiffPopup"] = require("neogit.popups.diff").create,
     ["PullPopup"] = require("neogit.popups.pull").create,
     ["PushPopup"] = require("neogit.popups.push").create,
     ["CommitPopup"] = require("neogit.popups.commit").create,
