@@ -8,6 +8,9 @@ M.values = {
     item = { ">", "v" },
     section = { ">", "v" }
   },
+  integrations = {
+    diffview = false
+  },
   mappings = {
     status = {
       ["q"] = "Close",
