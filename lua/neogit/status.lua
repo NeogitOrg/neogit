@@ -717,7 +717,7 @@ local cmd_func_map = function ()
       local dv = require 'neogit.integrations.diffview'
       local _, item = get_current_section_item()
 
-      dv.open_at_file(item.name)
+      dv.open(item.name)
     end,
     ["DiffPopup"] = require("neogit.popups.diff").create,
     ["PullPopup"] = require("neogit.popups.pull").create,

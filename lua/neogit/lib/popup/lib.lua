@@ -345,14 +345,17 @@ local function new()
   
   function builder.name(name)
     builder.state.name = name
+    return builder
   end
   
   function builder.env(env)
     builder.state.env = env
+    return builder
   end
 
   function builder.new_action_row()
     table.insert(builder.state.actions, {})
+    return builder
   end
 
   function builder.switch(key, cli, description, enabled)
@@ -360,29 +363,35 @@ local function new()
       enabled = true
     end
 
-    table.insert(builder.switches, {
+    table.insert(builder.state.switches, {
       key = key,
       cli = cli,
       description = description,
       enabled = enabled
     })
+
+    return builder
   end
 
   function builder.option(key, cli, value, description)
-    table.insert(builder.options, {
+    table.insert(builder.state.options, {
       key = key,
       cli = cli,
       value = value,
       description = description,
     })
+
+    return builder
   end
 
   function builder.action(key, description, callback)
-    table.insert(builder.actions[#builder.actions], {
+    table.insert(builder.state.actions[#builder.state.actions], {
       key = key,
       description = description,
       callback = callback and a.void(a.async(callback)) or function() end
     })
+
+    return builder
   end
 
   function builder.build()
