@@ -1,3 +1,5 @@
+local a = require 'plenary.async_lib'
+
 local function inspect(x)
   print(vim.inspect(x))
 end
@@ -58,11 +60,18 @@ local function get_keymaps(mode, startswith)
 end
 
 local function time(name, f)
-  local before = vim.fn.reltime()
+  local before = os.clock()
   local res = f()
-  print(name .. " took " .. vim.fn.reltimefloat(vim.fn.reltime(before)) * 1000 .. "ms")
+  print(name .. " took " .. os.clock() - before .. "ms")
   return res
 end
+
+local time_async = a.async(function(name, f)
+  local before = os.clock()
+  local res = a.await(f())
+  print(name .. " took " .. os.clock() - before .. "ms")
+  return res
+end)
 
 local function str_right_pad(str, len, sep)
   return str .. sep:rep(len - #str)
@@ -99,6 +108,12 @@ local function split(str, sep)
   return vim.split(str, sep)
 end
 
+local function split_lines(str)
+  if str == "" then return {} end
+  -- we need \r? to support windows
+  return vim.split(str, '\r?\n')
+end
+
 local function parse_command_args(...)
   local args = {...}
   local tbl = {}
@@ -118,6 +133,7 @@ end
 return {
   inspect = inspect,
   time = time,
+  time_async = time_async,
   slice = slice,
   map = map,
   tbl_longest_str = tbl_longest_str,
@@ -128,6 +144,7 @@ return {
   get_keymaps = get_keymaps,
   print_tbl = print_tbl,
   split = split,
+  split_lines = split_lines,
   parse_command_args = parse_command_args
 }
 

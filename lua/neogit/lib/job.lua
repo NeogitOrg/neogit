@@ -41,7 +41,7 @@ function Job:start()
   self.running = true
   self.stdout = {}
   self.stderr = {}
-  local started_at = vim.fn.reltime()
+  local started_at = os.clock()
 
   local task = self.cmd
 
@@ -55,7 +55,7 @@ function Job:start()
       self.code = code
       self.done = true
       self.running = false
-      self.time = vim.fn.reltimefloat(vim.fn.reltime(started_at)) * 1000
+      self.time = os.clock() - started_at
 
       if type(self.on_exit) == "function" then
         self.on_exit(self)
