@@ -7,7 +7,6 @@ local a = require 'plenary.async_lib'
 local async, await, scheduler, void = a.async, a.await, a.scheduler, a.void
 
 local push_upstream = function (popup)
-  print("CALLED")
   local _, code = await(git.cli.push.args(unpack(popup.get_arguments())).call())
   if code == 0 then
     await(scheduler())

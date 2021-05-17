@@ -360,7 +360,7 @@ local function new()
 
   function builder.switch(key, cli, description, enabled)
     if enabled == nil then
-      enabled = true
+      enabled = false
     end
 
     table.insert(builder.state.switches, {
