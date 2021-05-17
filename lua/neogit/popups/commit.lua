@@ -8,11 +8,13 @@ local async, await, scheduler, void, wrap, uv = a.async, a.await, a.scheduler, a
 local split = require('neogit.lib.util').split
 local uv_utils = require 'neogit.lib.uv'
 
-local COMMIT_FILE = '.git/NEOGIT_COMMIT_EDITMSG'
+local function get_commit_file()
+  return cli.git_dir_path_sync() .. '/' .. 'NEOGIT_COMMIT_EDITMSG'
+end
 
 local get_commit_message = wrap(function (content, cb)
   Buffer.create {
-    name = COMMIT_FILE,
+    name = get_commit_file(),
     filetype = "gitcommit",
     buftype = "",
     modifiable = true,
@@ -157,17 +159,17 @@ local function create()
           key = "c",
           description = "Commit",
           callback = void(async(function (popup)
-            local _, data = await(uv_utils.read_file(COMMIT_FILE))
+            local _, data = await(uv_utils.read_file(get_commit_file()))
             local skip_gen = data ~= nil
             data = data or ''
             -- we need \r? to support windows
             data = split(data, '\r?\n')
             await(prompt_commit_message(data, skip_gen))
             local _, code = await(
-              cli.commit.commit_message_file(COMMIT_FILE).args(unpack(popup.get_arguments())).call()
+              cli.commit.commit_message_file(get_commit_file()).args(unpack(popup.get_arguments())).call()
             )
             if code == 0 then
-              await(uv.fs_unlink(COMMIT_FILE))
+              await(uv.fs_unlink(get_commit_file()))
               await(status.refresh(true))
             end
           end))
@@ -180,7 +182,7 @@ local function create()
           callback = void(async(function ()
             local _, code = await(cli.commit.no_edit.amend.call())
             if code == 0 then
-              await(uv.fs_unlink(COMMIT_FILE))
+              await(uv.fs_unlink(get_commit_file()))
               await(status.refresh(true))
             end
           end))
@@ -193,9 +195,9 @@ local function create()
             msg = vim.split(msg, '\n')
 
             await(prompt_commit_message(msg))
-            local _, code = await(cli.commit.commit_message_file(COMMIT_FILE).amend.only.call())
+            local _, code = await(cli.commit.commit_message_file(get_commit_file()).amend.only.call())
             if code == 0 then
-              await(uv.fs_unlink(COMMIT_FILE))
+              await(uv.fs_unlink(get_commit_file()))
               await(status.refresh(true))
             end
           end))
@@ -208,9 +210,9 @@ local function create()
             msg = vim.split(msg, '\n')
 
             await(prompt_commit_message(msg))
-            local _, code = await(cli.commit.commit_message_file(COMMIT_FILE).amend.call())
+            local _, code = await(cli.commit.commit_message_file(get_commit_file()).amend.call())
             if code == 0 then
-              await(uv.fs_unlink(COMMIT_FILE))
+              await(uv.fs_unlink(get_commit_file()))
               await(status.refresh(true))
             end
           end))

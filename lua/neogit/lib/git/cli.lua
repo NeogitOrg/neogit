@@ -254,6 +254,10 @@ local git_root_sync = function()
   return vim.trim(vim.fn.system("git rev-parse --show-toplevel"))
 end
 
+local git_dir_path_sync = function()
+  return vim.trim(vim.fn.system("git rev-parse --git-dir"))
+end
+
 local history = {}
 
 local function handle_new_cmd(job, popup)
@@ -548,6 +552,7 @@ local cli = setmetatable({
   history = history,
   git_root = git_root,
   git_root_sync = git_root_sync,
+  git_dir_path_sync = git_dir_path_sync,
   in_parallel = function(...)
     local calls = {...}
     return new_parallel_builder(calls)
