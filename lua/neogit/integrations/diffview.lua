@@ -14,7 +14,7 @@ local async, await, scheduler = a.async, a.await, a.scheduler
 
 local old_config
 
-__neogit_diffview_mappings = {
+local M.diffview_mappings = {
   close = function()
     vim.cmd [[tabclose]]
     neogit.dispatch_refresh()
@@ -23,7 +23,7 @@ __neogit_diffview_mappings = {
 }
 
 local function cb(name)
-  return string.format(":lua __neogit_diffview_mappings['%s']()<CR>", name)
+  return string.format(":lua require('neogit.integrations.diffview').diffview_mappings['%s']()<CR>", name)
 end
 
 function M.open(selected_file_name)
