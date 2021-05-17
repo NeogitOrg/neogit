@@ -72,7 +72,7 @@ end)
 
 M.create = async(function ()
   await(scheduler())
-  local name = input.get_user_input_with_completion('branch > ', options)
+  local name = input.get_user_input('branch > ')
   if not name or name == '' then return end
 
   await(cli.branch.name(name).call())
