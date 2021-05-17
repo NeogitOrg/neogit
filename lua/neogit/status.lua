@@ -15,6 +15,7 @@ local input = require 'neogit.lib.input'
 
 local current_operation = nil
 local status = {}
+local prev_autochdir
 local repo = repository.create()
 local locations = {}
 local status_buffer = nil
@@ -387,6 +388,7 @@ local dispatch_reset = void(reset)
 
 local function close()
   status_buffer = nil
+  vim.o.autochdir = prev_autochdir
 end
 
 local function generate_patch_from_selection(item, hunk, from, to, reverse)
@@ -755,6 +757,10 @@ local function create(kind)
     kind = kind,
     initialize = function(buffer)
       status_buffer = buffer
+
+      prev_autochdir = vim.o.autochdir
+
+      vim.o.autochdir = false
 
       local mappings = buffer.mmanager.mappings
       local func_map = cmd_func_map()
