@@ -144,6 +144,11 @@ local configurations = {
       delete = '--delete',
     },
     aliases = {
+      remote = function (tbl)
+        return function (remote)
+          return tbl.prefix(remote)
+        end
+      end,
       to = function (tbl)
         return function (to)
           return tbl.args(to)
@@ -364,6 +369,13 @@ local mt_builder = {
       end
     end
 
+    if action == 'prefix' then
+      return function (x)
+        tbl[k_state].prefix = x
+        return tbl
+      end
+    end
+
     if action == 'env' then
       return function (cfg)
         for k, v in pairs(cfg) do
@@ -447,6 +459,10 @@ local function new_builder(subcommand)
       if #state.files > 0 then table.insert(args, '--') end
       for _,f in ipairs(state.files) do table.insert(args, f) end
 
+      if state.prefix then
+        table.insert(args, 1, state.prefix)
+      end
+
       return await(exec(subcommand, args, state.cwd, state.input, state.env, state.show_popup))
     end),
     call_sync = function()
@@ -455,6 +471,10 @@ local function new_builder(subcommand)
       for _,a in ipairs(state.arguments) do table.insert(args, a) end
       if #state.files > 0 then table.insert(args, '--') end
       for _,f in ipairs(state.files) do table.insert(args, f) end
+
+      if state.prefix then
+        table.insert(args, 1, state.prefix)
+      end
 
       return exec_sync(subcommand, args, state.cwd, state.input, state.env, state.show_popup)
     end

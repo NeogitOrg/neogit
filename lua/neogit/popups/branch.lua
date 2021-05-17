@@ -24,7 +24,9 @@ function M.create()
     end)))
     .action("D", "delete local branch and remote", operation('delete_branch', async(function ()
       local branch = await(branch.delete())
-      await(cli.push.delete.to("origin " .. branch).call())
+      if branch and branch ~= '' then
+        await(cli.push.remote("origin").delete.to(branch).call())
+      end
       await(status.refresh(true))
     end)))
     .action("l", "checkout local branch", operation('checkout_local-branch', async(function ()
