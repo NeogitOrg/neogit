@@ -18,7 +18,8 @@ local function create(message, options)
   options.type = options.type or "info"
   options.delay = options.delay or 2000
 
-  local prev_notification = notifications[notification_count - 1] or {height = 0, row = vim.api.nvim_get_option("lines") - 2}
+  local prev_notification = notifications[notification_count - 1]
+                            or {height = 0, row = vim.api.nvim_get_option("lines") - 2}
   local width = util.tbl_longest_str(message)
   local height = #message
   local padding = 2 + prev_notification.height
@@ -26,7 +27,7 @@ local function create(message, options)
   local col = vim.api.nvim_get_option("columns") - 3
 
   local buf = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_buf_call(buf, function() 
+  vim.api.nvim_buf_call(buf, function()
     vim.bo.filetype = "NeogitNotification"
   end)
 
@@ -43,7 +44,7 @@ local function create(message, options)
   })
 
   local border_buf = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_buf_call(border_buf, function() 
+  vim.api.nvim_buf_call(border_buf, function()
     vim.bo.filetype = "NeogitNotification"
   end)
   local border_buf_lines = {}
@@ -51,7 +52,7 @@ local function create(message, options)
 
   table.insert(border_buf_lines, string.format("╭%s╮", string.rep("─", width)))
 
-  for i=1,height do
+  for _=1,height do
     table.insert(border_buf_lines, string.format("│%s│", string.rep(" ", width)))
   end
 

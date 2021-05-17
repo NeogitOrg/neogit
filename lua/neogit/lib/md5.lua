@@ -36,7 +36,7 @@ local bit_or, bit_and, bit_not, bit_xor, bit_rshift, bit_lshift
 
 local ok, bit = pcall(require, 'bit')
 if ok then
-  bit_or, bit_and, bit_not, bit_xor, bit_rshift, bit_lshift = bit.bor, bit.band, bit.bnot, bit.bxor, bit.rshift, bit.lshift
+  bit_or, bit_and, bit_xor, bit_rshift, bit_lshift = bit.bor, bit.band, bit.bxor, bit.rshift, bit.lshift
 else
   ok, bit = pcall(require, 'bit32')
 
@@ -174,7 +174,7 @@ else
 
       local floor = math.floor
 
-      for i=1, bits do
+      for _=1, bits do
         n = n/2
         n = bit_or(floor(n), high_bit)
       end
@@ -187,7 +187,7 @@ else
         n = bit_not(math.abs(n)) + 1
       end
 
-      for i=1, bits do
+      for _=1, bits do
         n = n*2
       end
       return bit_and(n, 0xFFFFFFFF)
@@ -229,8 +229,6 @@ local function cut_le_str(s,...)
   end
   return r
 end
-
-local swap = function (w) return str2bei(lei2str(w)) end
 
 -- An MD5 mplementation in Lua, requires bitlib (hacked to use LuaBit from above, ugh)
 -- 10/02/2001 jcw@equi4.com
@@ -364,7 +362,10 @@ local function md5_finish(self)
 
   if padLen == 0 then padLen = 64 end
 
-  local s = char(128) .. rep(char(0),padLen-1) .. lei2str(bit_and(8*msgLen, 0xFFFFFFFF)) .. lei2str(math.floor(msgLen/0x20000000))
+  local s = char(128)
+            .. rep(char(0),padLen-1)
+            .. lei2str(bit_and(8*msgLen, 0xFFFFFFFF))
+            .. lei2str(math.floor(msgLen/0x20000000))
   md5_update(self, s)
 
   assert(self.pos % 64 == 0)
@@ -382,7 +383,13 @@ function md5.new()
 end
 
 function md5.tohex(s)
-  return format("%08x%08x%08x%08x", str2bei(sub(s, 1, 4)), str2bei(sub(s, 5, 8)), str2bei(sub(s, 9, 12)), str2bei(sub(s, 13, 16)))
+  return format(
+    "%08x%08x%08x%08x",
+    str2bei(sub(s, 1, 4)),
+    str2bei(sub(s, 5, 8)),
+    str2bei(sub(s, 9, 12)),
+    str2bei(sub(s, 13, 16))
+  )
 end
 
 function md5.sum(s)
