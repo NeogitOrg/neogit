@@ -139,7 +139,7 @@ local configurations = {
       commit_message_file = '--file'
     }
   }),
-  push = config({ 
+  push = config({
     flags = {
       delete = '--delete',
     },
