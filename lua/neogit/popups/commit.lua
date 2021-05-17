@@ -160,17 +160,18 @@ local function create()
           description = "Commit",
           callback = void(async(function (popup)
             await(scheduler())
-            local _, data = await(uv_utils.read_file(get_commit_file()))
+            local commit_file = get_commit_file()
+            local _, data = await(uv_utils.read_file(commit_file))
             local skip_gen = data ~= nil
             data = data or ''
             -- we need \r? to support windows
             data = split(data, '\r?\n')
             await(prompt_commit_message(data, skip_gen))
             local _, code = await(
-              cli.commit.commit_message_file(get_commit_file()).args(unpack(popup.get_arguments())).call()
+              cli.commit.commit_message_file(commit_file).args(unpack(popup.get_arguments())).call()
             )
             if code == 0 then
-              await(uv.fs_unlink(get_commit_file()))
+              await(uv.fs_unlink(commit_file))
               await(status.refresh(true))
             end
           end))
@@ -181,10 +182,11 @@ local function create()
           key = "e",
           description = "Extend",
           callback = void(async(function ()
+            await(scheduler())
+            local commit_file = get_commit_file()
             local _, code = await(cli.commit.no_edit.amend.call())
             if code == 0 then
-              await(scheduler())
-              await(uv.fs_unlink(get_commit_file()))
+              await(uv.fs_unlink(commit_file))
               await(status.refresh(true))
             end
           end))
@@ -193,14 +195,15 @@ local function create()
           key = "w",
           description = "Reword",
           callback = void(async(function ()
+            await(scheduler())
+            local commit_file = get_commit_file()
             local msg = await(cli.log.max_count(1).pretty('%B').call())
             msg = vim.split(msg, '\n')
 
-            await(scheduler())
             await(prompt_commit_message(msg))
-            local _, code = await(cli.commit.commit_message_file(get_commit_file()).amend.only.call())
+            local _, code = await(cli.commit.commit_message_file(commit_file).amend.only.call())
             if code == 0 then
-              await(uv.fs_unlink(get_commit_file()))
+              await(uv.fs_unlink(commit_file))
               await(status.refresh(true))
             end
           end))
