@@ -139,7 +139,18 @@ local configurations = {
       commit_message_file = '--file'
     }
   }),
-  push = config({ }),
+  push = config({ 
+    flags = {
+      delete = '--delete',
+    },
+    aliases = {
+      to = function (tbl)
+        return function (to)
+          return tbl.args(to)
+        end
+      end
+    }
+  }),
   pull = config({
     flags = {
       no_commit = '--no-commit'
@@ -149,8 +160,16 @@ local configurations = {
     flags = {
       list = '--list',
       all = '-a',
+      delete = '-d',
       remotes = '-r'
     },
+    aliases = {
+      name = function (tbl)
+        return function (name)
+          return tbl.args(name)
+        end
+      end
+    }
   }),
   ['read-tree'] = config({
     flags = {

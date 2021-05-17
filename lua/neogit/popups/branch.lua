@@ -1,5 +1,6 @@
 local M = {}
 local status = require 'neogit.status'
+local cli = require 'neogit.lib.git.cli'
 local popup = require('neogit.lib.popup')
 local branch = require('neogit.lib.git.branch')
 local operation = require('neogit.operations')
@@ -11,6 +12,15 @@ function M.create()
     .name('NeogitBranchPopup')
     .action("b", "checkout branch/revision", operation('checkout_branch', async(function ()
       await(branch.checkout())
+      await(status.refresh(true))
+    end)))
+    .action("d", "delete local branch", operation('delete_branch', async(function ()
+      await(branch.delete())
+      await(status.refresh(true))
+    end)))
+    .action("D", "delete local branch and remote", operation('delete_branch', async(function ()
+      local branch = await(branch.delete())
+      await(cli.push.delete.to("origin " .. branch).call())
       await(status.refresh(true))
     end)))
     .action("l", "checkout local branch", operation('checkout_local-branch', async(function ()
