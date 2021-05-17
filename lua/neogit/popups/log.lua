@@ -4,7 +4,6 @@ local git = require("neogit.lib.git")
 local a = require 'plenary.async_lib'
 local async, await, void, scheduler = a.async, a.await, a.void, a.scheduler
 
-
 local function commits_to_string(commits)
   local result = {}
   local previous_level = 0

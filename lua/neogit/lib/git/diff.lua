@@ -5,6 +5,29 @@ local util = require('neogit.lib.util')
 local Collection = require('neogit.lib.collection')
 local md5 = require 'neogit.lib.md5'
 
+local function parse_diff_stats(raw)
+  local stats = {
+    additions = 0,
+    deletios = 0
+  }
+  -- local matches raw:match('1 file changed, (%d+ insertions?%(%+%))?(, )?(%d+ deletions?%(%-%))?')
+  for _, part in ipairs(vim.split(raw, ", ")) do
+    part = vim.trim(part)
+    local additions = part:match("(%d+) insertion.*")
+    local deletions = part:match("(%d+) deletion.*")
+
+    if additions then
+      stats.additions = tonumber(additions)
+    end
+
+    if deletions then
+      stats.deletions = tonumber(deletions)
+    end
+  end
+
+  return stats
+end
+
 local function parse_diff(output)
   local header = {}
   local hunks = {}
@@ -68,7 +91,8 @@ local function parse_diff(output)
 end
 
 local diff = {
-  parse = parse_diff
+  parse = parse_diff,
+  parse_stats = parse_diff_stats
 }
 
 local ItemFilter = {}
@@ -105,8 +129,10 @@ function diff.register(meta)
     for _, f in ipairs(repo.unstaged.files) do
       if f.mode ~= 'D' and f.mode ~= 'F' and (not filter or filter:accepts('unstaged', f.name)) then
         table.insert(executions, async(function (f)
-          local result = await(cli.diff.files(f.name).call())
-          f.diff = parse_diff(util.split(result, '\n'))
+          local raw_diff = await(cli.diff.files(f.name).call())
+          local raw_stats = await(cli.diff.shortstat.files(f.name).call())
+          f.diff = parse_diff(util.split(raw_diff, '\n'))
+          f.diff.stats = parse_diff_stats(raw_stats)
         end)(f))
       end
     end
@@ -114,8 +140,10 @@ function diff.register(meta)
     for _, f in ipairs(repo.staged.files) do
       if f.mode ~= 'D' and f.mode ~= 'F' and (not filter or filter:accepts('staged', f.name)) then
         table.insert(executions, async(function (f)
-          local result = await(cli.diff.cached.files(f.name).call())
-          f.diff = parse_diff(util.split(result, '\n'))
+          local raw_diff = await(cli.diff.cached.files(f.name).call())
+          local raw_stats = await(cli.diff.cached.shortstat.files(f.name).call())
+          f.diff = parse_diff(util.split(raw_diff, '\n'))
+          f.diff.stats = parse_diff_stats(raw_stats)
         end)(f))
       end
     end

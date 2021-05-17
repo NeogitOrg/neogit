@@ -89,5 +89,6 @@ local function spawn(options, cb)
 end
 
 return {
-  spawn = wrap(spawn, 2)
+  spawn = wrap(spawn, 2),
+  spawn_sync = spawn
 }

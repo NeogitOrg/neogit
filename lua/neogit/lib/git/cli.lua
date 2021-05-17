@@ -2,6 +2,7 @@ local notif = require("neogit.lib.notification")
 local a = require 'plenary.async_lib'
 local async, await, await_all = a.async, a.await, a.await_all
 local process = require('neogit.process')
+local Job = require 'neogit.lib.job'
 local split = require('neogit.lib.util').split
 
 local function config(setup)
@@ -14,6 +15,15 @@ local function config(setup)
 end
 
 local configurations = {
+  show = config({
+    aliases = {
+      file = function(tbl)
+        return function(name)
+          return tbl.args(":" .. name)
+        end
+      end
+    }
+  }),
   status = config({
     flags = {
       short = "-s",
@@ -61,6 +71,7 @@ local configurations = {
     flags = {
       null_terminated = '-z',
       cached = '--cached',
+      shortstat = '--shortstat',
       name_only = '--name-only'
     },
   }),
@@ -128,7 +139,23 @@ local configurations = {
       commit_message_file = '--file'
     }
   }),
-  push = config({ }),
+  push = config({
+    flags = {
+      delete = '--delete',
+    },
+    aliases = {
+      remote = function (tbl)
+        return function (remote)
+          return tbl.prefix(remote)
+        end
+      end,
+      to = function (tbl)
+        return function (to)
+          return tbl.args(to)
+        end
+      end
+    }
+  }),
   pull = config({
     flags = {
       no_commit = '--no-commit'
@@ -138,8 +165,16 @@ local configurations = {
     flags = {
       list = '--list',
       all = '-a',
+      delete = '-d',
       remotes = '-r'
     },
+    aliases = {
+      name = function (tbl)
+        return function (name)
+          return tbl.args(name)
+        end
+      end
+    }
   }),
   ['read-tree'] = config({
     flags = {
@@ -215,6 +250,10 @@ local git_root = async(function()
   return vim.trim(await(process.spawn({cmd = 'git', args = {'rev-parse', '--show-toplevel'}})))
 end)
 
+local git_root_sync = function()
+  return vim.trim(vim.fn.system("git rev-parse --show-toplevel"))
+end
+
 local history = {}
 
 local function handle_new_cmd(job, popup)
@@ -273,6 +312,29 @@ local exec = async(function(cmd, args, cwd, stdin, env, show_popup)
   return result, code, errors
 end)
 
+local function exec_sync(cmd, args, cwd, stdin, env, show_popup)
+  args = args or {}
+  if show_popup == nil then show_popup = true end
+  table.insert(args, 1, cmd)
+
+  if not cwd then
+    cwd = git_root_sync()
+  elseif cwd == '<current>' then
+    cwd = nil
+  end
+
+  local cmd = "git " .. table.concat(args, ' ')
+  local job = Job:new(cmd)
+  job.cwd = cwd
+
+  job:start()
+  job:wait()
+
+  handle_new_cmd(job, show_popup)
+
+  return job.stdout, job.code, job.stderr
+end
+
 local k_state = {}
 local k_config = {}
 local k_command = {}
@@ -307,6 +369,13 @@ local mt_builder = {
     if action == 'cwd' then
       return function (cwd)
         tbl[k_state].cwd = cwd
+        return tbl
+      end
+    end
+
+    if action == 'prefix' then
+      return function (x)
+        tbl[k_state].prefix = x
         return tbl
       end
     end
@@ -394,8 +463,25 @@ local function new_builder(subcommand)
       if #state.files > 0 then table.insert(args, '--') end
       for _,f in ipairs(state.files) do table.insert(args, f) end
 
+      if state.prefix then
+        table.insert(args, 1, state.prefix)
+      end
+
       return await(exec(subcommand, args, state.cwd, state.input, state.env, state.show_popup))
-    end)
+    end),
+    call_sync = function()
+      local args = {}
+      for _,o in ipairs(state.options) do table.insert(args, o) end
+      for _,a in ipairs(state.arguments) do table.insert(args, a) end
+      if #state.files > 0 then table.insert(args, '--') end
+      for _,f in ipairs(state.files) do table.insert(args, f) end
+
+      if state.prefix then
+        table.insert(args, 1, state.prefix)
+      end
+
+      return exec_sync(subcommand, args, state.cwd, state.input, state.env, state.show_popup)
+    end
   }, mt_builder)
 end
 
@@ -461,6 +547,7 @@ local meta = {
 local cli = setmetatable({
   history = history,
   git_root = git_root,
+  git_root_sync = git_root_sync,
   in_parallel = function(...)
     local calls = {...}
     return new_parallel_builder(calls)

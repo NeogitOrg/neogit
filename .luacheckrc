@@ -12,6 +12,7 @@ ignore = {
   "542", -- (W542) empty if branch
   "433", -- (W433) shadowing upvalue loop variable
   "421", -- (W421) shadowing definition of variable
+  "611", -- (W611) line contains only whitespace
 }
 
 -- Global objects defined by the C code

@@ -37,6 +37,15 @@ local function create(pos)
       },
       {
         {
+          key = "D",
+          description = "Diff",
+          callback = function (popup)
+            require('neogit.popups.diff').create()
+          end
+        }
+      },
+      {
+        {
           key = "L",
           description = "Log",
           callback = function(popup)
