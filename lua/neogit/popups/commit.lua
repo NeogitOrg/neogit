@@ -53,7 +53,7 @@ local get_commit_message = wrap(function (content, cb)
   }
 end, 2)
 
--- If skip_gen is true we don't generate the massive git comment. 
+-- If skip_gen is true we don't generate the massive git comment.
 -- This flag should be true when the file already exists
 local prompt_commit_message = async(function (msg, skip_gen)
   local output = {}
@@ -163,7 +163,9 @@ local function create()
             -- we need \r? to support windows
             data = split(data, '\r?\n')
             await(prompt_commit_message(data, skip_gen))
-            local _, code = await(cli.commit.commit_message_file(COMMIT_FILE).args(unpack(popup.get_arguments())).call())
+            local _, code = await(
+              cli.commit.commit_message_file(COMMIT_FILE).args(unpack(popup.get_arguments())).call()
+            )
             if code == 0 then
               await(uv.fs_unlink(COMMIT_FILE))
               await(status.refresh(true))

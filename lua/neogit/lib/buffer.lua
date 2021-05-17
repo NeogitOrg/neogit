@@ -216,7 +216,7 @@ function Buffer.create(config)
     end
     vim.api.nvim_buf_set_lines(border_buffer, height - 1, -1, false, { "└" .. string.rep('─', width - 2) .. "┘" })
     -- Creates the content window
-    local width = width - 2 
+    local width = width - 2
     local height = height - 2
     local col = col + 1
     local row = row + 1
