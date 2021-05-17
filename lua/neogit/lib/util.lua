@@ -114,10 +114,6 @@ local function split_lines(str)
   return vim.split(str, '\r?\n')
 end
 
-local function trim(s)
-  return s:gsub('^%s*(.-)%s*$', '%1')
-end
-
 local function parse_command_args(...)
   local args = {...}
   local tbl = {}
@@ -147,7 +143,6 @@ return {
   get_keymaps = get_keymaps,
   print_tbl = print_tbl,
   split = split,
-  trim = trim,
   split_lines = split_lines,
   parse_command_args = parse_command_args
 }

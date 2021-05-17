@@ -1,9 +1,9 @@
 local notif = require("neogit.lib.notification")
 local a = require 'plenary.async_lib'
-local util = require 'neogit.lib.util'
 local async, await, await_all = a.async, a.await, a.await_all
 local process = require('neogit.process')
 local Job = require 'neogit.lib.job'
+local split = require('neogit.lib.util').split
 
 local function config(setup)
   setup = setup or {}
@@ -247,15 +247,15 @@ local configurations = {
 }
 
 local git_root = async(function()
-  return util.trim(await(process.spawn({cmd = 'git', args = {'rev-parse', '--show-toplevel'}})))
+  return vim.trim(await(process.spawn({cmd = 'git', args = {'rev-parse', '--show-toplevel'}})))
 end)
 
 local git_root_sync = function()
-  return util.trim(vim.fn.system("git rev-parse --show-toplevel"))
+  return vim.trim(vim.fn.system("git rev-parse --show-toplevel"))
 end
 
 local git_dir_path_sync = function()
-  return util.trim(vim.fn.system("git rev-parse --git-dir"))
+  return vim.trim(vim.fn.system("git rev-parse --git-dir"))
 end
 
 local history = {}
@@ -306,8 +306,8 @@ local exec = async(function(cmd, args, cwd, stdin, env, show_popup)
   local result, code, errors = await(process.spawn(opts))
   handle_new_cmd({
     cmd =  'git ' .. table.concat(args, ' '),
-    stdout = util.split(result, '\n'),
-    stderr = util.split(errors, '\n'),
+    stdout = split(result, '\n'),
+    stderr = split(errors, '\n'),
     code = code,
     time = os.clock() - time
   }, show_popup)
