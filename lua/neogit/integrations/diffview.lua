@@ -8,9 +8,6 @@ local CView = require'diffview.api.c-view'.CView
 local dv_lib = require'diffview.lib'
 
 local neogit = require 'neogit'
-local util = require 'neogit.lib.util'
-local a = require 'plenary.async_lib'
-local async, await, scheduler = a.async, a.await, a.scheduler
 
 local old_config
 
@@ -61,7 +58,7 @@ function M.open(selected_file_name)
           },
           left_null = item.mode == "A",
           right_null = false,
-          selected = path == selected_file_name
+          selected = item.name == selected_file_name
         }
 
         table.insert(files, file)

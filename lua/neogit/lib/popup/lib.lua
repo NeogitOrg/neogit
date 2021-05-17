@@ -342,7 +342,7 @@ local function new()
       env = {}
     }
   }
- 
+
   function builder.name(name)
     builder.state.name = name
     return builder
@@ -401,9 +401,9 @@ local function new()
 
     return create_popup(
       builder.state.name,
-      builder.state.switches, 
-      builder.state.options, 
-      builder.state.actions, 
+      builder.state.switches,
+      builder.state.options,
+      builder.state.actions,
       builder.state.env
     )
   end

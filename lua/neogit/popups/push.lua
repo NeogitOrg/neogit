@@ -4,7 +4,7 @@ local status = require 'neogit.status'
 local notif = require("neogit.lib.notification")
 local git = require("neogit.lib.git")
 local a = require 'plenary.async_lib'
-local async, await, scheduler, void = a.async, a.await, a.scheduler, a.void
+local await, scheduler = a.await, a.scheduler
 
 local push_upstream = function (popup)
   local _, code = await(git.cli.push.args(unpack(popup.get_arguments())).call())
