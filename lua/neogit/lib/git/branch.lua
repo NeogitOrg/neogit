@@ -70,6 +70,16 @@ M.checkout = async(function ()
   await(cli.checkout.branch(chosen).call())
 end)
 
+M.create = async(function ()
+  await(scheduler())
+  local name = input.get_user_input_with_completion('branch > ', options)
+  if not name or name == '' then return end
+
+  await(cli.branch.name(name).call())
+
+  return name
+end)
+
 M.delete = async(function ()
   local branches = await(get_all_branches())
 
