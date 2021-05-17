@@ -14,7 +14,7 @@ local async, await, scheduler = a.async, a.await, a.scheduler
 
 local old_config
 
-local M.diffview_mappings = {
+M.diffview_mappings = {
   close = function()
     vim.cmd [[tabclose]]
     neogit.dispatch_refresh()
