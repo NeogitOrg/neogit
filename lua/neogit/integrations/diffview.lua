@@ -77,8 +77,8 @@ function M.open(selected_file_name)
     files = files,
     update_files = update_files,
     get_file_data = function(path, side)
-      return side == "left" 
-        and neogit.cli.show.file(path).call_sync() 
+      return side == "left"
+        and neogit.cli.show.file(path).call_sync()
         or nil
     end
   }
