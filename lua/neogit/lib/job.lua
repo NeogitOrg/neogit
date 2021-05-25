@@ -46,6 +46,7 @@ function Job:start()
   local task = self.cmd
 
   if vim.fn.has('win32') == 1 then
+    task = task:gsub("%^", "%^%^")
     task = { 'cmd', '/C', task }
   end
 
