@@ -118,6 +118,11 @@ function Buffer:open_fold(line, reset_pos)
   end
 end
 
+function Buffer:add_highlight(line, col_start, col_end, name, ns_id)
+  local ns_id = ns_id or 0
+  
+  vim.api.nvim_buf_add_highlight(self.handle, ns_id, name, line, col_start, col_end)
+end
 function Buffer:place_sign(line, name, group, id)
   -- Sign IDs should be unique within a group, however there's no downside as
   -- long as we don't want to uniquely identify the placed sign later. Thus,
@@ -252,6 +257,14 @@ function Buffer.create(config)
 
   buffer.mmanager.mappings["q"] = function()
     buffer:close()
+  end
+
+  if config.mappings then
+    for mode, val in pairs(config.mappings) do
+      for key, cb in pairs(val) do
+        buffer.mmanager.mappings[key] = { mode, cb, mode:find("v") ~= nil }
+      end
+    end
   end
 
   config.initialize(buffer)
