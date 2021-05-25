@@ -16,6 +16,10 @@ end
 
 local configurations = {
   show = config({
+    flags = {
+      stat = "--stat",
+      oneline = "--oneline"
+    },
     options = {
       format = "--format"
     },

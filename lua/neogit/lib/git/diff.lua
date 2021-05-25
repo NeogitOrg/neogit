@@ -48,9 +48,24 @@ local function parse_diff(output)
     end
   end
 
+  local file
+  local kind = "modified"
+
+  if #header == 4 then
+    file = header[3]:match("%-%-%- a/(.*)")
+  else
+    kind = header[2]:match("(.*) mode %d+")
+    if kind == "new file" then
+      file = header[5]:match("%+%+%+ b/(.*)")
+    elseif kind == "deleted" then
+      file = header[4]:match("%-%-%- a/(.*)")
+    end
+  end
+
   local diff = {
     lines = hunks,
-    file = header[3]:match("%-%-%- a/(.*)"),
+    file = file,
+    kind = kind,
     hunks = {}
   }
 

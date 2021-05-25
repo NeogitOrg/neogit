@@ -1,5 +1,6 @@
 local popup = require("neogit.lib.popup")
 local Buffer = require("neogit.lib.buffer")
+local CommitView = require("neogit.buffers.commit_view")
 local git = require("neogit.lib.git")
 local a = require 'plenary.async_lib'
 local async, await, void, scheduler = a.async, a.await, a.void, a.scheduler
@@ -34,6 +35,16 @@ local show_in_buffer = async(function (commits)
   Buffer.create({
     name = "NeogitLog",
     filetype = "NeogitLog",
+    mappings = {
+      n = {
+        ["<enter>"] = function(buffer)
+          local line = vim.fn.line '.'
+          inspect(commits[line].hash)
+          buffer:close()
+          CommitView.new(commits[line].hash):open()
+        end
+      }
+    },
     initialize = function(buffer)
       local result = commits_to_string(commits)
       buffer:set_lines(0, -1, false, result)

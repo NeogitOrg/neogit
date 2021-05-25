@@ -6,17 +6,17 @@ local LineBuffer = require('neogit.lib.line_buffer')
 local diff_add_matcher = vim.regex('^+')
 local diff_delete_matcher = vim.regex('^-')
 
--- @class CommitInfoSummaryFile
+-- @class CommitOverviewFile
 -- @field path the path to the file relative to the git root
--- @field insertions how many lines were inserted
--- @field deletions how many lines were deleted
+-- @field changes how many changes were made to the file
+-- @field insertions insertion count visualized as list of `+`
+-- @field deletions deletion count visualized as list of `-`
 
--- @class CommitInfoSummary
--- @field files_changed how many files were changed
--- @field insertions how many lines were inserted
--- @field deletions how many lines were deleted
--- @field files a list of CommitInfoSummaryFile
--- @see CommitInfoSummaryFile
+-- @class CommitOverview
+-- @field summary a short summary about what happened 
+-- @field files a list of CommitOverviewFile
+-- @see CommitOverviewFile
+local CommitOverview = {}
 
 -- @class CommitInfo
 -- @field oid the oid of the commit
@@ -28,9 +28,7 @@ local diff_delete_matcher = vim.regex('^-')
 -- @field committer_date when the committer commited
 -- @field description a list of lines
 -- @field diffs a list of diffs
--- @field summary CommitInfoSummary
 -- @see Diff
--- @see CommitInfoSummary
 local CommitInfo = {}
 
 -- @return the abbreviation of the oid
@@ -39,6 +37,23 @@ function CommitInfo:abbrev()
 end
 
 local M = {}
+
+local function parse_commit_overview(raw)
+  local overview = { 
+    summary = vim.trim(raw[#raw]), 
+    files = {}
+  }
+
+  for i=2,#raw-1 do
+    local file = {}
+    file.path, file.changes, file.insertions, file.deletions = raw[i]:match(" (.*) | (%d+) (%+*)(%-*)")
+    table.insert(overview.files, file)
+  end
+
+  setmetatable(overview, { __index = CommitOverview })
+
+  return overview
+end
 
 local function parse_commit_info(raw_info)
   local idx = 0
@@ -73,28 +88,9 @@ local function parse_commit_info(raw_info)
     table.insert(raw_diff_info, line)
     line = advance()
     if line == nil or vim.startswith(line, "diff") then
-      local diff = diff_lib.parse(raw_diff_info)
-      diff.stats = diff_lib.get_stats(diff.file)
-      table.insert(info.diffs, diff)
+      table.insert(info.diffs, diff_lib.parse(raw_diff_info))
       raw_diff_info = {}
     end
-  end
-
-  info.summary = {
-    files_changed = #info.diffs,
-    insertions = 0,
-    deletions = 0,
-    files = {}
-  }
-
-  for _, diff in ipairs(info.diffs) do
-    info.summary.insertions = info.summary.insertions + diff.stats.additions
-    info.summary.deletions = info.summary.deletions + diff.stats.deletions
-    table.insert(info.summary.files, {
-      path = diff.file,
-      insertions = diff.stats.additions,
-      deletions = diff.stats.deletions
-    })
   end
 
   setmetatable(info, { __index = CommitInfo })
@@ -105,6 +101,7 @@ end
 -- @class CommitViewBuffer
 -- @field is_open whether the buffer is currently shown
 -- @field commit_info CommitInfo
+-- @field commit_overview CommitOverview
 -- @field buffer Buffer
 -- @see CommitInfo
 -- @see Buffer
@@ -116,6 +113,7 @@ function M.new(commit_id)
   local instance = {
     is_open = false,
     commit_info = parse_commit_info(cli.show.format("fuller").args(commit_id).call_sync()),
+    commit_overview = parse_commit_overview(cli.show.stat.oneline.args(commit_id).call_sync()),
     buffer = nil
   }
 
@@ -150,6 +148,7 @@ function M:open()
     initialize = function(buffer)
       local output = LineBuffer.new()
       local info = self.commit_info
+      local overview = self.commit_overview
       local signs = {}
       local highlights = {}
 
@@ -179,16 +178,11 @@ function M:open()
         add_sign 'NeogitCommitViewDescription'
       end
       output:append("")
-      output:append(
-        info.summary.files_changed .. ((info.summary.files_changed > 1) and " files changed, " or " file changed, ") .. 
-        info.summary.insertions .. " insertions(+), " .. 
-        info.summary.deletions .. " deletions(+)"
-      )
-      for _, file in ipairs(info.summary.files) do
-        local changes = file.insertions + file.deletions
+      output:append(overview.summary)
+      for _, file in ipairs(overview.files) do
         output:append(
-          file.path .. " | " .. changes .. 
-          " " .. string.rep("+", file.insertions) .. string.rep("-", file.deletions)
+          file.path .. " | " .. file.changes .. 
+          " " .. file.insertions .. file.deletions
         )
         local from = 0
         local to = #file.path
@@ -197,15 +191,15 @@ function M:open()
         to = from + #tostring(changes)
         add_highlight(from, to, "Number")
         from = to + 1
-        to = from + file.insertions
+        to = from + #file.insertions
         add_highlight(from, to, "NeogitDiffAdd")
         from = to
-        to = from + file.deletions
+        to = from + #file.deletions
         add_highlight(from, to, "NeogitDiffDelete")
       end
       for _, diff in ipairs(info.diffs) do
         output:append("")
-        output:append("<kind> " .. diff.file)
+        output:append(diff.kind .. " " .. diff.file)
         for _, hunk in ipairs(diff.hunks) do
           output:append(diff.lines[hunk.diff_from])
           add_sign 'NeogitHunkHeader'
@@ -238,6 +232,7 @@ function M:open()
   }
 end
 
+-- inspect(parse_commit_overview(cli.show.stat.oneline.args("HEAD").call_sync()))
 -- M.new("HEAD"):open()
 
 return M

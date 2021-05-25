@@ -1,5 +1,6 @@
 local Buffer = require("neogit.lib.buffer")
 local GitCommandHistory = require("neogit.buffers.git_command_history")
+local CommitView = require("neogit.buffers.commit_view")
 local git = require("neogit.lib.git")
 local cli = require('neogit.lib.git.cli')
 local notif = require("neogit.lib.notification")
@@ -335,6 +336,7 @@ local refresh_viml_compat = void(async(function (fname)
 
   local path = await(fs.relpath_from_repository(fname))
   if not path then return end
+  if not config.values.auto_refresh then return end
   await(refresh({ status = true, diffs = { "*:" .. path } }))
 end))
 
@@ -382,6 +384,8 @@ end
 local reset = async(function ()
   repo = repository.create()
   locations = {}
+
+  if not config.values.auto_refresh then return end
   await(refresh(true))
 end)
 local dispatch_reset = void(reset)
@@ -700,18 +704,20 @@ local cmd_func_map = function ()
       local section, item = get_current_section_item()
 
       if item ~= nil then
-        if section.name ~= "unstaged" and section.name ~= "staged" and section.name ~= "untracked" then
+        if section.name == "unstaged" or section.name == "staged" or section.name == "untracked" then
+          local path = item.name
+
+          notif.delete_all()
+          status_buffer:close()
+
+          local relpath = vim.fn.fnamemodify(repo_root .. '/' .. path, ':.')
+
+          vim.cmd("e " .. relpath)
+        elseif section.name == "unpulled" or section.name == "unmerged" then
+          CommitView.new(item.name:match("(.-) ")):open()
+        else
           return
         end
-
-        local path = item.name
-
-        notif.delete_all()
-        status_buffer:close()
-
-        local relpath = vim.fn.fnamemodify(repo_root .. '/' .. path, ':.')
-
-        vim.cmd("e " .. relpath)
       end
     end)),
     ["RefreshBuffer"] = function() dispatch_refresh(true) end,
@@ -806,6 +812,12 @@ end
 return {
   create = create,
   toggle = toggle,
+  disable = function()
+    disabled = true
+  end,
+  enable = function()
+    disabled = false
+  end,
   update_highlight = update_highlight,
   get_status = function() return status end,
   generate_patch_from_selection = generate_patch_from_selection,

@@ -3,6 +3,7 @@ local M = {}
 M.values = {
   disable_context_highlighting = false,
   disable_signs = false,
+  auto_refresh = true,
   signs = {
     hunk = { "", "" },
     item = { ">", "v" },
