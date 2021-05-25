@@ -6,12 +6,15 @@ local Collection = require('neogit.lib.collection')
 local md5 = require 'neogit.lib.md5'
 
 local function parse_diff_stats(raw)
+  if type(raw) == "string" then
+    raw = vim.split(raw, ", ")
+  end
   local stats = {
     additions = 0,
-    deletios = 0
+    deletions = 0
   }
   -- local matches raw:match('1 file changed, (%d+ insertions?%(%+%))?(, )?(%d+ deletions?%(%-%))?')
-  for _, part in ipairs(vim.split(raw, ", ")) do
+  for _, part in ipairs(raw) do
     part = vim.trim(part)
     local additions = part:match("(%d+) insertion.*")
     local deletions = part:match("(%d+) deletion.*")
@@ -47,6 +50,7 @@ local function parse_diff(output)
 
   local diff = {
     lines = hunks,
+    file = header[3]:match("%-%-%- a/(.*)"),
     hunks = {}
   }
 
@@ -92,7 +96,10 @@ end
 
 local diff = {
   parse = parse_diff,
-  parse_stats = parse_diff_stats
+  parse_stats = parse_diff_stats,
+  get_stats = function(name)
+    return parse_diff_stats(cli.diff.shortstat.files(name).call_sync())
+  end
 }
 
 local ItemFilter = {}
