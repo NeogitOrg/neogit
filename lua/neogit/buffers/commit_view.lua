@@ -238,6 +238,6 @@ function M:open()
   }
 end
 
-M.new("HEAD"):open()
+-- M.new("HEAD"):open()
 
 return M
