@@ -50,6 +50,10 @@ function Buffer:set_lines(first, last, strict, lines)
   vim.api.nvim_buf_set_lines(self.handle, first, last, strict, lines)
 end
 
+function Buffer:set_text(first_line, last_line, first_col, last_col, lines)
+  vim.api.nvim_buf_set_text(self.handle, first_line, first_col, last_line, last_col, lines)
+end
+
 function Buffer:move_cursor(line)
   if line < 0 then
     self:focus()
