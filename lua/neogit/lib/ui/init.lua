@@ -12,7 +12,7 @@ end
 
 function Ui._visualize_tree(indent, components)
   for _, c in ipairs(components) do
-    local output = string.rep("  ", indent) .. string.rep.. c.tag
+    local output = string.rep("  ", indent) .. c.tag
     if c.tag == "text" then
       output = output .. " '" .. c.value .. "'"
     end
