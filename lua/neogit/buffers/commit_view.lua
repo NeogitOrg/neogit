@@ -1,10 +1,19 @@
 local Buffer = require("neogit.lib.buffer")
+local Ui = require 'neogit.lib.ui'
+local util = require 'neogit.lib.util'
 local cli = require 'neogit.lib.git.cli'
 local diff_lib = require('neogit.lib.git.diff')
 local LineBuffer = require('neogit.lib.line_buffer')
 
 local diff_add_matcher = vim.regex('^+')
 local diff_delete_matcher = vim.regex('^-')
+
+local text = Ui.text
+local col = Ui.col
+local row = Ui.row
+
+local map = util.map
+local range = util.range
 
 -- @class CommitOverviewFile
 -- @field path the path to the file relative to the git root
@@ -46,7 +55,7 @@ local function parse_commit_overview(raw)
 
   for i=2,#raw-1 do
     local file = {}
-    file.path, file.changes, file.insertions, file.deletions = raw[i]:match(" (.*) | (%d+) (%+*)(%-*)")
+    file.path, file.changes, file.insertions, file.deletions = raw[i]:match(" (.*)%s+|%s+(%d+) (%+*)(%-*)")
     table.insert(overview.files, file)
   end
 
@@ -103,8 +112,10 @@ end
 -- @field commit_info CommitInfo
 -- @field commit_overview CommitOverview
 -- @field buffer Buffer
+-- @field ui Ui
 -- @see CommitInfo
 -- @see Buffer
+-- @see Ui
 
 --- Creates a new CommitViewBuffer
 -- @param commit_id the id of the commit
@@ -128,6 +139,44 @@ function M:close()
   self.buffer = nil
 end
 
+function create_file_component(file)
+  return row({
+    text(file.path, { highlight = "NeogitFilePath" }),
+    text(" | "),
+    text(file.changes, { highlight = "Number" }),
+    text(" "),
+    text(file.insertions, { highlight = "NeogitDiffAdd" }),
+    text(file.deletions, { highlight = "NeogitDiffDelete" }),
+  })
+end
+
+function create_diff_component(diff)
+  return col({
+    text(""),
+    text(diff.kind, " ", diff.file),
+    col(map(diff.hunks, function(hunk) 
+      return create_hunk_component(diff, hunk)
+    end))
+  })
+end
+
+function create_hunk_component(diff, hunk)
+  return col({
+    text(diff.lines[hunk.diff_from], { sign = "NeogitHunkHeader" }),
+    col(map(range(hunk.diff_from + 1, hunk.diff_to), function(i)
+      local l = diff.lines[i]
+      local sign
+      if diff_add_matcher:match_str(l) then
+        sign = 'NeogitDiffAdd'
+      elseif diff_delete_matcher:match_str(l) then
+        sign = 'NeogitDiffDelete'
+      end
+
+      return text(l, { sign = sign })
+    end))
+  })
+end
+
 function M:open()
   if self.is_open then
     return
@@ -146,93 +195,32 @@ function M:open()
       }
     },
     initialize = function(buffer)
-      local output = LineBuffer.new()
       local info = self.commit_info
       local overview = self.commit_overview
-      local signs = {}
-      local highlights = {}
 
-      local function add_sign(name)
-        signs[#output] = name
-      end
+      self.ui = Ui.new(buffer)
 
-      local function add_highlight(from, to, name)
-        table.insert(highlights, { 
-          line = #output - 1, 
-          from = from, 
-          to = to,
-          name = name
-        })
-      end
-      
-      output:append("Commit " .. info:abbrev())
-      add_sign 'NeogitCommitViewHeader'
-      output:append("<remote>/<branch> " .. info.oid)
-      output:append("Author:     " .. info.author_name .. " <" .. info.author_email .. ">")
-      output:append("AuthorDate: " .. info.author_date)
-      output:append("Commit:     " .. info.committer_name .. " <" .. info.committer_email .. ">")
-      output:append("CommitDate: " .. info.committer_date)
-      output:append("")
-      for _, line in ipairs(info.description) do
-        output:append(line)
-        add_sign 'NeogitCommitViewDescription'
-      end
-      output:append("")
-      output:append(overview.summary)
-      for _, file in ipairs(overview.files) do
-        output:append(
-          file.path .. " | " .. file.changes .. 
-          " " .. file.insertions .. file.deletions
-        )
-        local from = 0
-        local to = #file.path
-        add_highlight(from, to, "NeogitFilePath")
-        from = to + 3
-        to = from + #tostring(changes)
-        add_highlight(from, to, "Number")
-        from = to + 1
-        to = from + #file.insertions
-        add_highlight(from, to, "NeogitDiffAdd")
-        from = to
-        to = from + #file.deletions
-        add_highlight(from, to, "NeogitDiffDelete")
-      end
-      for _, diff in ipairs(info.diffs) do
-        output:append("")
-        output:append(diff.kind .. " " .. diff.file)
-        for _, hunk in ipairs(diff.hunks) do
-          output:append(diff.lines[hunk.diff_from])
-          add_sign 'NeogitHunkHeader'
-          for i=hunk.diff_from + 1, hunk.diff_to do
-            local l = diff.lines[i]
-            output:append(l)
-            if diff_add_matcher:match_str(l) then
-              add_sign 'NeogitDiffAdd'
-            elseif diff_delete_matcher:match_str(l) then
-              add_sign 'NeogitDiffDelete'
-            end
-          end
-        end
-      end
-      buffer:replace_content_with(output)
-
-      for line, name in pairs(signs) do
-        buffer:place_sign(line, name, "hl")
-      end
-
-      for _, hi in ipairs(highlights) do
-        buffer:add_highlight(
-          hi.line,
-          hi.from,
-          hi.to,
-          hi.name
-        )
-      end
+      self.ui:render(
+        text("Commit ", info:abbrev(), { sign = "NeogitCommitViewHeader" }),
+        text("<remote>/<branch> ", info.oid),
+        text("Author:     ", info.author_name, " <", info.author_email, ">"),
+        text("AuthorDate: ", info.author_date),
+        text("Commit:     ", info.committer_name, " <", info.committer_email, ">"),
+        text("CommitDate: ", info.committer_date),
+        text(""),
+        col(map(info.description, text), { sign = "NeogitCommitViewDescription" }),
+        text(""),
+        text(overview.summary),
+        col(map(overview.files, create_file_component)),
+        col(map(info.diffs, create_diff_component))
+      )
     end
   }
 end
 
 -- inspect(parse_commit_overview(cli.show.stat.oneline.args("HEAD").call_sync()))
--- M.new("HEAD"):open()
+function TEST()
+  M.new("HEAD"):open()
+end
 
 return M
