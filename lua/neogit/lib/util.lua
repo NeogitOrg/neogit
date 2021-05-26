@@ -14,6 +14,15 @@ local function map(tbl, f)
   return t
 end
 
+local function range(from, to, step)
+  local step = step or 1
+  local t = {}
+  for i=from, to do
+    table.insert(t, i)
+  end
+  return t
+end
+
 local function filter(tbl, f)
   local t = {}
   for _,v in pairs(tbl) do
@@ -136,6 +145,7 @@ return {
   time_async = time_async,
   slice = slice,
   map = map,
+  range = range,
   tbl_longest_str = tbl_longest_str,
   filter = filter,
   str_right_pad = str_right_pad,
