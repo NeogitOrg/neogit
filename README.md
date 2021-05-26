@@ -195,6 +195,10 @@ You can override them to fit your colorscheme by creating a `syntax/NeogitStatus
 
 Set `disable_context_highlighting = true` in your call to [`setup`](#configuration) to disable context highlighting altogether.
 
+## Disabling Commit Confirmation
+
+Set `disable_commit_confirmation = true` in your call to [`setup`](#configuration) to disable the "Are you sure you want to commit?" prompt after saving the commit message buffer.
+
 ## Events
 
 Neogit emits a `NeogitStatusRefreshed` event whenever the status gets reloaded.
