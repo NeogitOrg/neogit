@@ -17,6 +17,19 @@ local function range(from, to, step)
   return t
 end
 
+local function intersperse(tbl, sep)
+  local t = {}
+  local len = #tbl
+  for i=1,len do
+    table.insert(t, tbl[i])
+
+    if i ~= len then
+      table.insert(t, sep)
+    end
+  end
+  return t
+end
+
 local function filter(tbl, f)
   local t = {}
   for _,v in pairs(tbl) do
@@ -144,6 +157,7 @@ return {
   get_keymaps = get_keymaps,
   print_tbl = print_tbl,
   split = split,
+  intersperse = intersperse,
   split_lines = split_lines,
   parse_command_args = parse_command_args
 }
