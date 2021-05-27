@@ -121,6 +121,10 @@ end
 function Ui:render(...)
   self.layout = {...}
   self:_render(0, self.layout, {})
+end
+
+--- Will nnly work if something has been rendered
+function Ui:print_layout_tree()
   Ui.visualize_tree(self.layout)
 end
 
