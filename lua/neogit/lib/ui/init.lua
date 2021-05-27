@@ -12,7 +12,24 @@ end
 
 function Ui._visualize_tree(indent, components)
   for _, c in ipairs(components) do
-    local output = string.rep("  ", indent) .. c.tag
+    local output = string.rep("  ", indent)
+
+    if c.position then
+      local text = ""
+      if c.position.row_start == c.position.row_end then
+        text = c.position.row_start
+      else
+        text = c.position.row_start .. " - " .. c.position.row_end
+      end
+
+      if c.position.col_start then
+        text = text .. " | " .. c.position.col_start .. " - " .. c.position.col_end
+      end
+
+      output = output .. "[" .. text .. "]"
+    end
+
+    output = output .. " " .. c.tag
     if c.tag == "text" then
       output = output .. " '" .. c.value .. "'"
     end
@@ -39,8 +56,12 @@ function Ui:_render(first_line, components, flags)
     local text = ""
 
     for i, c in ipairs(components) do
+      c.position = {}
+      c.position.row_start = curr_line
       if c.tag == "text" then
         col_end = col_start + #c.value
+        c.position.col_start = col_start
+        c.position.col_end = col_end - 1
         text = text .. c.value
         if c.options.highlight then
           table.insert(highlights, {
@@ -56,6 +77,7 @@ function Ui:_render(first_line, components, flags)
       else
         error("The row component does not support having a `" .. c.tag .. "` as child")
       end
+      c.position.row_end = curr_line
     end
 
     self.buf:set_lines(curr_line, curr_line + 1, false, { text })
@@ -71,6 +93,8 @@ function Ui:_render(first_line, components, flags)
     curr_line = curr_line + 1
   else
     for i, c in ipairs(components) do
+      c.position = {}
+      c.position.row_start = curr_line
       if c.tag == "text" then
         self.buf:set_lines(curr_line, curr_line + 1, false, { c.value })
         curr_line = curr_line + 1
@@ -87,16 +111,17 @@ function Ui:_render(first_line, components, flags)
         curr_line = curr_line + self:_render(curr_line, c.children, flags)
         flags.in_row = false
       end
+      c.position.row_end = curr_line - 1
     end
   end
-
 
   return curr_line - first_line
 end
 
 function Ui:render(...)
-  self.layout = {}
-  self:_render(0, {...}, {})
+  self.layout = {...}
+  self:_render(0, self.layout, {})
+  Ui.visualize_tree(self.layout)
 end
 
 function Ui.col(children, options)
