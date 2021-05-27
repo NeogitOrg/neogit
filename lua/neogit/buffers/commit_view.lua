@@ -13,6 +13,7 @@ local col = Ui.col
 local row = Ui.row
 
 local map = util.map
+local intersperse = util.intersperse
 local range = util.range
 
 -- @class CommitOverviewFile
@@ -147,17 +148,16 @@ function create_file_component(file)
     text(" "),
     text(file.insertions, { highlight = "NeogitDiffAdd" }),
     text(file.deletions, { highlight = "NeogitDiffDelete" }),
-  })
+  }, { tag = "CommitViewOverviewFile" })
 end
 
 function create_diff_component(diff)
   return col({
-    text(""),
     text(diff.kind, " ", diff.file),
     col(map(diff.hunks, function(hunk) 
       return create_hunk_component(diff, hunk)
-    end))
-  })
+    end), { tag = "CommitViewDiffHunks" })
+  }, { is_diff = true, tag = "CommitViewDiff" })
 end
 
 function create_hunk_component(diff, hunk)
@@ -174,7 +174,7 @@ function create_hunk_component(diff, hunk)
 
       return text(l, { sign = sign })
     end))
-  })
+  }, { is_hunk = true, tag = "CommitViewDiffHunk"})
 end
 
 function M:open()
@@ -191,6 +191,26 @@ function M:open()
       n = {
         ["q"] = function()
           self:close()
+        end,
+        ["d"] = function()
+          self.ui:print_layout_tree()
+        end,
+        ["<tab>"] = function()
+          local curr_line = vim.api.nvim_win_get_cursor(0)[1]
+          local c = self.ui:get_component_under_cursor()
+          Ui.visualize_component(c)
+          -- local c = self.ui:find_component(function(c)
+          --   local from, to = c:row_range_abs()
+          --   local contains_line = from <= curr_line and curr_line <= to
+
+          --   return (c.options.is_hunk or c.options.is_diff) and contains_line
+          -- end)
+
+          -- if c then
+          --   local child = c.children[2]
+          --   child.options.hidden = not child.options.hidden
+          --   self.ui:update()
+          -- end
         end
       }
     },
@@ -208,17 +228,19 @@ function M:open()
         text("Commit:     ", info.committer_name, " <", info.committer_email, ">"),
         text("CommitDate: ", info.committer_date),
         text(""),
-        col(map(info.description, text), { sign = "NeogitCommitViewDescription" }),
+        col(map(info.description, text), { sign = "NeogitCommitViewDescription", tag = "CommitViewDescription" }),
         text(""),
         text(overview.summary),
-        col(map(overview.files, create_file_component)),
-        col(map(info.diffs, create_diff_component))
+        col(map(overview.files, create_file_component), { tag = "CommitViewOverviewFiles" }),
+        text(""),
+        col(intersperse(map(info.diffs, create_diff_component), text("")), { tag = "CommitViewDiffs" })
       )
+
+      -- self.ui:print_layout_tree()
     end
   }
 end
 
--- inspect(parse_commit_overview(cli.show.stat.oneline.args("HEAD").call_sync()))
 function TEST()
   M.new("HEAD"):open()
 end
