@@ -10,7 +10,7 @@ function Ui.new(buf)
   return this
 end
 
-function Ui._print_component(indent, c)
+function Ui._print_component(indent, c, options)
   local output = string.rep("  ", indent)
   if c.options.hidden then
     output = output .. "(H)"
@@ -46,31 +46,31 @@ function Ui._print_component(indent, c)
   print(output)
 end
 
-function Ui._visualize_tree(indent, components)
+function Ui._visualize_tree(indent, components, options)
   for _, c in ipairs(components) do
-    Ui._print_component(indent, c)
-    if c.tag == "col" or c.tag == "row" then
-      Ui._visualize_tree(indent + 1, c.children)
+    Ui._print_component(indent, c, options)
+    if (c.tag == "col" or c.tag == "row")
+      and not (options.collapse_hidden_components and c.options.hidden)
+      then
+      Ui._visualize_tree(indent + 1, c.children, options)
     end
   end
 end
 
-function Ui._find_component(components, f, biggest)
+function Ui._find_component(components, f, options)
   for _, c in ipairs(components) do
-    if biggest and f(c) then
-      return c
-    end
+    if (options.include_hidden and c.options.hidden) or not c.options.hidden then
+      if c.tag == "col" or c.tag == "row" then
+        local res = Ui._find_component(c.children, f, options)
 
-    if c.tag == "col" or c.tag == "row" then
-      local res = Ui._find_component(c.children, f, biggest)
-
-      if res then
-        return res
+        if res then
+          return res
+        end
       end
-    end
 
-    if not biggest and f(c) then
-      return c
+      if f(c) then
+        return c
+      end
     end
   end
 
@@ -79,8 +79,8 @@ end
 
 
 --- if biggest is true the biggest element gets returned
-function Ui:find_component(f, biggest)
-  return Ui._find_component(self.layout, f, biggest or false)
+function Ui:find_component(f, options)
+  return Ui._find_component(self.layout, f, options or {})
 end
 
 function Ui:get_component_under_cursor()
@@ -88,19 +88,19 @@ function Ui:get_component_under_cursor()
   return self:find_component(function(c)
     local from, to = c:row_range_abs()
     return from <= curr_line and curr_line <= to
-  end, true)
+  end)
 end
 
-function Ui.visualize_component(c)
-  Ui._print_component(0, c)
+function Ui.visualize_component(c, options)
+  Ui._print_component(0, c, options or {})
   if c.tag == "col" or c.tag == "row" then
-    Ui._visualize_tree(1, c.children)
+    Ui._visualize_tree(1, c.children, options or {})
   end
 end
 
-function Ui.visualize_tree(components)
+function Ui.visualize_tree(components, options)
   print("root")
-  Ui._visualize_tree(1, components)
+  Ui._visualize_tree(1, components, options or {})
 end
 
 function Ui:_render(first_line, parent, components, flags)
@@ -114,8 +114,8 @@ function Ui:_render(first_line, parent, components, flags)
     local text = ""
 
     for i, c in ipairs(components) do
+      c.position = {}
       if not c.options.hidden then
-        c.position = {}
         c.parent = parent
         c.position.row_start = curr_line - first_line + 1
         sign = c.options.sign or c.parent.options.sign
@@ -199,19 +199,13 @@ function Ui:update()
   self.buf:lock()
 end
 
-function Ui:hide_component(c)
-  c.options.hidden = true
-
-  self:update()
-end
-
 --- Will only work if something has been rendered
-function Ui:print_layout_tree()
-  Ui.visualize_tree(self.layout)
+function Ui:print_layout_tree(options)
+  Ui.visualize_tree(self.layout, options)
 end
 
 function Ui:debug(...)
-  Ui.visualize_tree({...})
+  Ui.visualize_tree({...}, {})
 end
 
 local default_component_options = {
@@ -232,6 +226,10 @@ function Component:row_range_abs()
   return from, to
 end
 
+function Component:toggle_hidden()
+  self.options.hidden = not self.options.hidden
+end
+
 local function new_comp(x)
   x.options = vim.tbl_extend("force", default_component_options, x.options or {})
   setmetatable(x, { __index = Component })
@@ -249,7 +247,7 @@ end
 function Ui.row(children, options)
   return new_comp({
     tag = "row",
-    children = children,
+    children = children, id = "test",
     options = options
   })
 end
