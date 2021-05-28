@@ -148,7 +148,7 @@ function create_file_component(file)
     text(" "),
     text(file.insertions, { highlight = "NeogitDiffAdd" }),
     text(file.deletions, { highlight = "NeogitDiffDelete" }),
-  }, { tag = "CommitViewOverviewFile" })
+  }, { tag = "OverviewFile" })
 end
 
 function create_diff_component(diff)
@@ -156,8 +156,8 @@ function create_diff_component(diff)
     text(diff.kind, " ", diff.file),
     col(map(diff.hunks, function(hunk) 
       return create_hunk_component(diff, hunk)
-    end), { tag = "CommitViewDiffHunks" })
-  }, { is_diff = true, tag = "CommitViewDiff" })
+    end), { tag = "HunkList" })
+  }, { tag = "Diff" })
 end
 
 function create_hunk_component(diff, hunk)
@@ -173,8 +173,8 @@ function create_hunk_component(diff, hunk)
       end
 
       return text(l, { sign = sign })
-    end))
-  }, { is_hunk = true, tag = "CommitViewDiffHunk"})
+    end), { tag = "HunkContent" })
+  }, { tag = "Hunk"})
 end
 
 function M:open()
@@ -193,24 +193,20 @@ function M:open()
           self:close()
         end,
         ["d"] = function()
-          self.ui:print_layout_tree()
+          self.ui:print_layout_tree { collapse_hidden_components = true }
         end,
         ["<tab>"] = function()
-          local curr_line = vim.api.nvim_win_get_cursor(0)[1]
           local c = self.ui:get_component_under_cursor()
-          Ui.visualize_component(c)
-          -- local c = self.ui:find_component(function(c)
-          --   local from, to = c:row_range_abs()
-          --   local contains_line = from <= curr_line and curr_line <= to
-
-          --   return (c.options.is_hunk or c.options.is_diff) and contains_line
-          -- end)
-
-          -- if c then
-          --   local child = c.children[2]
-          --   child.options.hidden = not child.options.hidden
-          --   self.ui:update()
-          -- end
+          if c then
+            local c = c.parent
+            if c.options.tag == "HunkContent" then
+              c = c.parent
+            end
+            if vim.tbl_contains({ "Diff", "Hunk" }, c.options.tag) then
+              c.children[2]:toggle_hidden()
+              self.ui:update()
+            end
+          end
         end
       }
     },
@@ -228,12 +224,12 @@ function M:open()
         text("Commit:     ", info.committer_name, " <", info.committer_email, ">"),
         text("CommitDate: ", info.committer_date),
         text(""),
-        col(map(info.description, text), { sign = "NeogitCommitViewDescription", tag = "CommitViewDescription" }),
+        col(map(info.description, text), { sign = "NeogitCommitViewDescription", tag = "Description" }),
         text(""),
         text(overview.summary),
-        col(map(overview.files, create_file_component), { tag = "CommitViewOverviewFiles" }),
+        col(map(overview.files, create_file_component), { tag = "OverviewFileList" }),
         text(""),
-        col(intersperse(map(info.diffs, create_diff_component), text("")), { tag = "CommitViewDiffs" })
+        col(intersperse(map(info.diffs, create_diff_component), text("")), { tag = "DiffList" })
       )
 
       -- self.ui:print_layout_tree()
