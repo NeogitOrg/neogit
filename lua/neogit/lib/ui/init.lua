@@ -1,4 +1,4 @@
-local Buffer = require 'neogit.lib.buffer'
+local Component = require 'neogit.lib.ui.component'
 local Ui = {}
 
 function Ui.new(buf)
@@ -22,18 +22,14 @@ function Ui._print_component(indent, c, options)
       text = c.position.row_start .. " - " .. c.position.row_end
     end
 
-    if c.position.col_start then
+    if c.position.col_end ~= -1 then
       text = text .. " | " .. c.position.col_start .. " - " .. c.position.col_end
     end
 
     output = output .. "[" .. text .. "]"
   end
 
-  if c.options.tag then
-    output = output .. " " .. c.options.tag .. "<" .. c.tag .. ">"
-  else
-    output = output .. " " .. c.tag
-  end
+  output = output .. " " .. c:get_tag()
 
   if c.tag == "text" then
     output = output .. " '" .. c.value .. "'"
@@ -41,6 +37,10 @@ function Ui._print_component(indent, c, options)
 
   if c.options.sign then
     output = output .. " sign=" .. c.options.sign
+  end
+
+  if c.options.highlight then
+    output = output .. " highlight=" .. c.options.highlight
   end
 
   print(output)
@@ -77,17 +77,39 @@ function Ui._find_component(components, f, options)
   return nil
 end
 
-
---- if biggest is true the biggest element gets returned
 function Ui:find_component(f, options)
   return Ui._find_component(self.layout, f, options or {})
 end
 
+function Ui._find_components(components, f, result, options)
+  for _, c in ipairs(components) do
+    if c.tag == "col" or c.tag == "row" then
+      Ui._find_components(c.children, f, result, options)
+    end
+
+    if f(c) then
+      table.insert(result, c)
+    end
+  end
+end
+
+function Ui:find_components(f, options)
+  local result = {}
+  Ui._find_components(self.layout, f, result, options or {})
+  return result
+end
+
 function Ui:get_component_under_cursor()
-  local curr_line = vim.api.nvim_win_get_cursor(0)[1]
+  local cursor = vim.api.nvim_win_get_cursor(0)
   return self:find_component(function(c)
-    local from, to = c:row_range_abs()
-    return from <= curr_line and curr_line <= to
+    return c:is_under_cursor(cursor)
+  end)
+end
+
+function Ui:get_component_stack_under_cursor()
+  local cursor = vim.api.nvim_win_get_cursor(0)
+  return self:find_components(function(c)
+    return c:is_under_cursor(cursor)
   end)
 end
 
@@ -110,7 +132,6 @@ function Ui:_render(first_line, parent, components, flags)
     local col_start = 0
     local col_end
     local highlights = {}
-    local sign = nil
     local text = ""
 
     for i, c in ipairs(components) do
@@ -118,8 +139,7 @@ function Ui:_render(first_line, parent, components, flags)
       if not c.options.hidden then
         c.parent = parent
         c.position.row_start = curr_line - first_line + 1
-        sign = c.options.sign or c.parent.options.sign
-        local highlight = c.options.highlight or c.parent.options.highlight
+        local highlight = c:get_highlight()
         if c.tag == "text" then
           col_end = col_start + #c.value
           c.position.col_start = col_start
@@ -146,10 +166,6 @@ function Ui:_render(first_line, parent, components, flags)
       self.buf:add_highlight(curr_line - 1, h.from, h.to, h.name, 0)
     end
 
-    if sign then
-      self.buf:place_sign(curr_line - 1, sign, "hl")
-    end
-
     curr_line = curr_line + 1
   else
     for i, c in ipairs(components) do
@@ -157,17 +173,19 @@ function Ui:_render(first_line, parent, components, flags)
         c.position = {}
         c.parent = parent
         c.position.row_start = curr_line - first_line + 1
-        local sign = c.options.sign or c.parent.options.sign
-        local highlight = c.options.highlight or c.parent.options.highlight
+        c.position.col_start = 0
+        c.position.col_end = -1
+        local sign = c:get_sign()
+        local highlight = c:get_highlight()
         if c.tag == "text" then
           self.buf:set_lines(curr_line - 1, curr_line, false, { c.value })
-          curr_line = curr_line + 1
           if highlight then
-            self.buf:add_highlight(curr_line - 1, 0, -1, highlight, 0)
+            self.buf:add_highlight(curr_line - 1, c.position.col_start, c.position.col_end, highlight, 0)
           end
           if sign then
-            self.buf:place_sign(curr_line - 1, sign, "hl")
+            self.buf:place_sign(curr_line, sign, "hl")
           end
+          curr_line = curr_line + 1
         elseif c.tag == "col" then
           curr_line = curr_line + self:_render(curr_line, c, c.children, flags)
         elseif c.tag == "row" then
@@ -190,11 +208,10 @@ end
 
 function Ui:update()
   self.buf:unlock()
-  local lines_used = self:_render(1, {
+  local lines_used = self:_render(1, Component.new({
     tag = "_root",
-    children = self.layout,
-    options = {}
-  }, self.layout, {})
+    children = self.layout
+  }), self.layout, {})
   self.buf:set_lines(lines_used, -1, false, {})
   self.buf:lock()
 end
@@ -208,36 +225,8 @@ function Ui:debug(...)
   Ui.visualize_tree({...}, {})
 end
 
-local default_component_options = {
-  folded = false,
-  hidden = false
-}
-
-local Component = {}
-
-function Component:row_range_abs()
-  local from = self.position.row_start
-  local to = self.position.row_start
-  if self.parent.tag ~= "_root" then
-    local p_from, p_to = self.parent:row_range_abs()
-    from = from + p_from - 1
-    to = to + p_to - 1
-  end
-  return from, to
-end
-
-function Component:toggle_hidden()
-  self.options.hidden = not self.options.hidden
-end
-
-local function new_comp(x)
-  x.options = vim.tbl_extend("force", default_component_options, x.options or {})
-  setmetatable(x, { __index = Component })
-  return x
-end
-
 function Ui.col(children, options)
-  return new_comp({
+  return Component.new({
     tag = "col",
     children = children,
     options = options
@@ -245,7 +234,7 @@ function Ui.col(children, options)
 end
 
 function Ui.row(children, options)
-  return new_comp({
+  return Component.new({
     tag = "row",
     children = children, id = "test",
     options = options
@@ -263,7 +252,7 @@ function Ui.text(...)
     end
   end
 
-  return new_comp({
+  return Component.new({
     tag = "text",
     value = text,
     options = options
