@@ -1,6 +1,9 @@
 package.loaded['neogit.buffer'] = nil
 
+__BUFFER_AUTOCMD_STORE = {}
+
 local mappings_manager = require("neogit.lib.mappings_manager")
+local Ui = require("neogit.lib.ui")
 
 local Buffer = {
   handle = nil,
@@ -13,6 +16,8 @@ function Buffer:new(handle)
     border = nil,
     mmanager = mappings_manager.new()
   }
+
+  this.ui = Ui.new(this)
 
   setmetatable(this, self)
 
@@ -271,7 +276,21 @@ function Buffer.create(config)
     end
   end
 
-  config.initialize(buffer)
+  if config.initialize then
+    config.initialize(buffer)
+  end
+
+  if config.render then
+    buffer.ui:render(unpack(config.render(buffer)))
+  end
+
+  if config.autocmds then
+    for event, cb in pairs(config.autocmds) do
+      table.insert(__BUFFER_AUTOCMD_STORE, cb)
+      local id = #__BUFFER_AUTOCMD_STORE
+      buffer:define_autocmd(event, string.format("lua __BUFFER_AUTOCMD_STORE[%d]()", id))
+    end
+  end
 
   buffer.mmanager.register()
 
