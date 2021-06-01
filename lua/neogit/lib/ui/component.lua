@@ -22,6 +22,10 @@ function Component:toggle_hidden()
   self.options.hidden = not self.options.hidden
 end
 
+function Component:get_padding_left()
+  return (self.options.padding_left or 0) + (self.parent and self.parent:get_padding_left() or 0)
+end
+
 function Component:is_hidden()
   return self.options.hidden or (self.parent and self.parent:is_hidden())
 end
