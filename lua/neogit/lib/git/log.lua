@@ -4,7 +4,10 @@ local a = require 'plenary.async_lib'
 local async, await = a.async, a.await
 
 local function parse_log(output)
-  output = vim.split(output, '\n')
+  if type(output) == "string" then
+    output = vim.split(output, '\n')
+  end
+
   local output_len = #output
   local commits = {}
 
