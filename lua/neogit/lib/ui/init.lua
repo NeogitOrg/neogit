@@ -135,12 +135,20 @@ function Ui:_render(first_line, parent, components, flags)
     local text = ""
 
     for i, c in ipairs(components) do
-      c.position = {}
+      c.parent = parent
+      c.index = i
       if not c.options.hidden then
-        c.parent = parent
+        c.position = {}
         c.position.row_start = curr_line - first_line + 1
         local highlight = c:get_highlight()
         if c.tag == "text" then
+          if i == 1 then
+            local padding_left = c:get_padding_left()
+            text = text .. (" "):rep(padding_left)
+          else
+            local padding_left = c.options.padding_left or 0
+            text = text .. (" "):rep(padding_left)
+          end
           col_end = col_start + #c.value
           c.position.col_start = col_start
           c.position.col_end = col_end - 1
@@ -169,16 +177,19 @@ function Ui:_render(first_line, parent, components, flags)
     curr_line = curr_line + 1
   else
     for i, c in ipairs(components) do
+      c.parent = parent
+      c.index = i
       if not c.options.hidden then
         c.position = {}
-        c.parent = parent
         c.position.row_start = curr_line - first_line + 1
         c.position.col_start = 0
         c.position.col_end = -1
         local sign = c:get_sign()
         local highlight = c:get_highlight()
         if c.tag == "text" then
-          self.buf:set_lines(curr_line - 1, curr_line, false, { c.value })
+          local padding_left = c:get_padding_left()
+          local text = (" "):rep(padding_left) .. c.value
+          self.buf:set_lines(curr_line - 1, curr_line, false, { text })
           if highlight then
             self.buf:add_highlight(curr_line - 1, c.position.col_start, c.position.col_end, highlight, 0)
           end
@@ -191,9 +202,20 @@ function Ui:_render(first_line, parent, components, flags)
         elseif c.tag == "row" then
           flags.in_row = true
           curr_line = curr_line + self:_render(curr_line, c, c.children, flags)
+          if sign then
+            self.buf:place_sign(curr_line - 1, sign, "hl")
+          end
           flags.in_row = false
         end
         c.position.row_end = curr_line - first_line
+      else
+        if c.tag == "col" then
+          self:_render(curr_line, c, c.children, flags)
+        elseif c.tag == "row" then
+          flags.in_row = true
+          self:_render(curr_line, c, c.children, flags)
+          flags.in_row = false
+        end
       end
     end
   end
