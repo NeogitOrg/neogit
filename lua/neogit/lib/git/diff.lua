@@ -57,7 +57,7 @@ local function parse_diff(output)
     kind = header[2]:match("(.*) mode %d+")
     if kind == "new file" then
       file = header[5]:match("%+%+%+ b/(.*)")
-    elseif kind == "deleted" then
+    elseif kind == "deleted file" then
       file = header[4]:match("%-%-%- a/(.*)")
     end
   end
