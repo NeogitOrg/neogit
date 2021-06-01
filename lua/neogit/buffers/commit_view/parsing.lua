@@ -59,9 +59,9 @@ function M.parse_commit_info(raw_info)
 
   local info = {}
   info.oid = advance():match("commit (%w+)")
-  info.author_name, info.author_email = advance():match("Author:%s*(%w+) <(%w+@%w+%.%w+)>")
+  info.author_name, info.author_email = advance():match("Author:%s*(.+) <(.+)>")
   info.author_date = advance():match("AuthorDate:%s*(.+)")
-  info.committer_name, info.committer_email = advance():match("Commit:%s*(%w+) <(%w+@%w+%.%w+)>")
+  info.committer_name, info.committer_email = advance():match("Commit:%s*(.+) <(.+)>")
   info.committer_date = advance():match("CommitDate:%s*(.+)")
   info.description = {}
   info.diffs = {}
