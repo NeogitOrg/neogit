@@ -11,7 +11,6 @@ local M = {}
 -- @field commit_info CommitInfo
 -- @field commit_overview CommitOverview
 -- @field buffer Buffer
--- @field ui Ui
 -- @see CommitInfo
 -- @see Buffer
 -- @see Ui
@@ -92,10 +91,6 @@ function M:open()
       return ui.CommitView(self.commit_info, self.commit_overview)
     end
   }
-end
-
-function TEST()
-  M.new("HEAD"):open()
 end
 
 return M
