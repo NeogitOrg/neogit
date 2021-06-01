@@ -47,11 +47,13 @@ local configurations = {
       oneline = "--oneline",
       branches = "--branches",
       remotes = "--remotes",
-      all = "--all"
+      all = "--all",
+      graph = "--graph"
     },
     options = {
       pretty = "--pretty",
-      max_count = "--max-count"
+      max_count = "--max-count",
+      format = "--format"
     },
     aliases = {
       for_range = function (tbl)
