@@ -1,56 +1,7 @@
 local popup = require("neogit.lib.popup")
-local Buffer = require("neogit.lib.buffer")
-local CommitView = require("neogit.buffers.commit_view")
+local LogViewBuffer = require 'neogit.buffers.log_view'
 local git = require("neogit.lib.git")
-local a = require 'plenary.async_lib'
-local async, await, void, scheduler = a.async, a.await, a.void, a.scheduler
-
-local function commits_to_string(commits)
-  local result = {}
-  local previous_level = 0
-
-  for _, commit in pairs(commits) do
-    local branch = "*"
-    if previous_level > commit.level then
-      table.insert(result, string.rep(" ", 7) .. string.rep(" |", commit.level + 1) .. "/")
-    elseif previous_level < commit.level then
-      table.insert(result, string.rep(" ", 7) .. string.rep(" |", previous_level + 1) .. "\\")
-    end
-    for _=1,commit.level do
-      branch = "| " .. branch
-    end
-    if commit.remote == "" then
-      table.insert(result, string.format("%s %s %s", commit.hash, branch, commit.message))
-    else
-      table.insert(result, string.format("%s %s %s %s", commit.hash, branch, commit.remote, commit.message))
-    end
-    previous_level = commit.level
-  end
-
-  return result
-end
-
-local show_in_buffer = async(function (commits)
-  await(scheduler())
-  Buffer.create({
-    name = "NeogitLog",
-    filetype = "NeogitLog",
-    mappings = {
-      n = {
-        ["<enter>"] = function(buffer)
-          local line = vim.fn.line '.'
-          inspect(commits[line].hash)
-          buffer:close()
-          CommitView.new(commits[line].hash):open()
-        end
-      }
-    },
-    initialize = function(buffer)
-      local result = commits_to_string(commits)
-      buffer:set_lines(0, -1, false, result)
-    end
-  })
-end)
+local log_lib = require 'neogit.lib.git.log'
 
 local function create()
   popup.create(
@@ -155,10 +106,10 @@ local function create()
         {
           key = "l",
           description = "Log current",
-          callback = void(async(function(popup)
-            local commits = await(git.log.list(popup.to_cli()))
-            await(show_in_buffer(commits))
-          end))
+          callback = function(popup)
+            local output = git.cli.log.args(unpack(popup.get_arguments())).call_sync()
+            LogViewBuffer.new(log_lib.parse_log(output)):open()
+          end
         },
         {
           key = "o",
@@ -168,16 +119,16 @@ local function create()
         {
           key = "h",
           description = "Log HEAD",
-          callback = void(async(function(popup)
-            local output = await(
+          callback = function(popup)
+            local output = 
               git.cli.log
                 .oneline
                 .args(unpack(popup.get_arguments()))
                 .for_range('HEAD')
-                .call())
-            local commits = git.log.parse_log(output)
-            await(show_in_buffer(commits))
-          end))
+                .call_sync()
+
+            LogViewBuffer.new(log_lib.parse_log(output)):open()
+          end
         },
       },
       {
