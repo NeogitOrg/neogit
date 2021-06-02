@@ -268,6 +268,10 @@ function Buffer.create(config)
     buffer:close()
   end
 
+  buffer.mappings = config.mappings or {}
+  buffer.autocmds = config.mappings or {}
+  buffer.render = config.render
+
   if config.mappings then
     for mode, val in pairs(config.mappings) do
       for key, cb in pairs(val) do
