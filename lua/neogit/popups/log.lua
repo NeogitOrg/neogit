@@ -135,45 +135,43 @@ local function create()
         {
           key = "L",
           description = "Log local branches",
-          callback = void(async(function(popup)
-            local output = await(
+          callback = function(popup)
+            local output = 
               git.cli.log
                 .oneline
                 .args(unpack(popup.get_arguments()))
                 .branches
-                .call())
-            local commits = git.log.parse_log(output)
-            await(show_in_buffer(commits))
-          end))
+                .call_sync()
+
+            LogViewBuffer.new(log_lib.parse_log(output)):open()
+          end
         },
         {
           key = "b",
           description = "Log all branches",
-          callback = void(async(function(popup)
-            local output = await(
+          callback = function(popup)
+            local output = 
               git.cli.log
                 .oneline
                 .args(unpack(popup.get_arguments()))
                 .branches
                 .remotes
-                .call())
-            local commits = git.log.parse_log(output)
-            await(show_in_buffer(commits))
-          end))
+                .call_sync()
+            LogViewBuffer.new(log_lib.parse_log(output)):open()
+          end
         },
         {
           key = "a",
           description = "Log all references",
-          callback = void(async(function(popup)
-            local output = await(
+          callback = function(popup)
+            local output = 
               git.cli.log
                 .oneline
                 .args(unpack(popup.get_arguments()))
                 .all
-                .call())
-            local commits = git.log.parse_log(output)
-            await(show_in_buffer(commits))
-          end))
+                .call_sync()
+            LogViewBuffer.new(log_lib.parse_log(output)):open()
+          end
         },
       },
       {
