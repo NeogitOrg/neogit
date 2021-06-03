@@ -60,10 +60,10 @@ function M.open(selected_file_name)
         local file = {
           path = item.name,
           status = item.mode,
-          stats = {
+          stats = (item.diff and item.diff.stats) and {
             additions = item.diff.stats.additions or 0,
             deletions = item.diff.stats.deletions or 0
-          },
+          } or nil,
           left_null = vim.tbl_contains({ "A", "?" }, item.mode),
           right_null = false,
           selected = item.name == selected_file_name
