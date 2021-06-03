@@ -18,8 +18,8 @@ local configurations = {
   show = config({
     aliases = {
       file = function(tbl)
-        return function(name)
-          return tbl.args(":" .. name)
+        return function(name, rev)
+          return tbl.args((rev or "") .. ":" .. name)
         end
       end
     }
