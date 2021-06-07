@@ -714,7 +714,7 @@ local cmd_func_map = function ()
 
           vim.cmd("e " .. relpath)
         elseif section.name == "unpulled" or section.name == "unmerged" then
-          CommitView.new(item.name:match("(.-) ")):open()
+          CommitView.new(item.name:match("(.-) "), true):open()
         else
           return
         end

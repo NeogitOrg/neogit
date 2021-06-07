@@ -18,7 +18,13 @@ local M = {}
 --- Creates a new CommitViewBuffer
 -- @param commit_id the id of the commit
 -- @return CommitViewBuffer
-function M.new(commit_id)
+function M.new(commit_id, notify)
+  local notification
+  if notify then
+    local notif = require 'neogit.lib.notification'
+    notification = notif.create "Parsing commit..."
+  end
+
   local instance = {
     is_open = false,
     commit_info = parser.parse_commit_info(cli.show.format("fuller").args(commit_id).call_sync()),
@@ -26,10 +32,16 @@ function M.new(commit_id)
     buffer = nil
   }
 
+  if notify then
+    notification:delete()
+  end
+
   setmetatable(instance, { __index = M })
 
   return instance
 end
+
+
 
 function M:close()
   self.is_open = false
