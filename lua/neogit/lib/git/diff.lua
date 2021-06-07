@@ -39,7 +39,6 @@ local function parse_diff(output, with_stats)
     hunks = {},
     stats = {}
   }
-  local raw_hunks = {}
   local is_header = true
   local start_idx = 1
 
@@ -73,16 +72,16 @@ local function parse_diff(output, with_stats)
   end
 
   for i=start_idx,#output do
-    table.insert(raw_hunks, output[i])
+    table.insert(diff.lines, output[i])
   end
 
 
-  local len = #raw_hunks
+  local len = #diff.lines
   local hunk = nil
   local hunk_content = ''
 
   for i=1,len do
-    local line = raw_hunks[i]
+    local line = diff.lines[i]
     if not vim.startswith(line, "+++") then
       local index_from, index_len, disk_from, disk_len = line:match('@@ %-(%d+),?(%d*) %+(%d+),?(%d*) @@')
 
