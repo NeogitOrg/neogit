@@ -214,12 +214,14 @@ local function create()
           key = "a",
           description = "Amend",
           callback = void(async(function ()
+            await(scheduler())
+            local commit_file = get_commit_file()
             local msg = await(cli.log.max_count(1).pretty('%B').call())
             msg = vim.split(msg, '\n')
 
             await(scheduler())
             await(prompt_commit_message(msg))
-            local _, code = await(cli.commit.commit_message_file(get_commit_file()).amend.call())
+            local _, code = await(cli.commit.commit_message_file(commit_file).amend.call())
             if code == 0 then
               await(uv.fs_unlink(get_commit_file()))
               await(status.refresh(true))
