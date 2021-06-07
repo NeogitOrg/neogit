@@ -1,12 +1,22 @@
 local Buffer = require("neogit.lib.buffer")
 local Git = require("neogit.lib.git")
+local Ui = require 'neogit.lib.ui'
+local util = require 'neogit.lib.util'
+
+local map = util.map
+
+local Component = Ui.Component
+local text = Ui.text
+local col = Ui.col
+local row = Ui.row
 
 local GitCommandHistory = {}
 GitCommandHistory.__index = GitCommandHistory
 
-function GitCommandHistory:new()
+function GitCommandHistory:new(state)
   local this = {
     buffer = nil,
+    state = state or Git.cli.history,
     open = false
   }
 
@@ -24,40 +34,41 @@ function GitCommandHistory:show()
   self.buffer = Buffer.create {
     name = "NeogitGitCommandHistory",
     filetype = "NeogitGitCommandHistory",
-    initialize = function(buffer)
-      local lines = {}
-      local folds = {}
-      local mappings = buffer.mmanager.mappings
+    mappings = {
+      n = {
+        ["<tab>"] = function()
+          local stack = self.buffer.ui:get_component_stack_under_cursor()
+          local c = stack[#stack]
 
-      mappings["tab"] = ":silent! norm za<CR>"
-
-      for _,cmd in pairs(Git.cli.history) do
-        table.insert(lines, string.format("% 3d %s", cmd.code, cmd.cmd))
-        if #cmd.stderr ~= 0 then
-          local first = #lines
-          for _,line in pairs(cmd.stderr) do
-            table.insert(lines, string.format("  | %s", line))
+          if c then
+            c.children[2]:toggle_hidden()
+            self.buffer.ui:update()
           end
-          local last = #lines
-          table.insert(folds, { first, last })
-        elseif #cmd.stdout ~= 0 then
-          local first = #lines
-          for _,line in pairs(cmd.stdout) do
-            table.insert(lines, string.format("  | %s", line))
-          end
-          local last = #lines
-          table.insert(folds, { first, last })
         end
-      end
-
-      buffer:set_lines(0, -1, false, lines)
-
-      for _,f in pairs(folds) do
-        buffer:create_fold(f[1], f[2])
-      end
-
-      buffer:move_cursor(-1)
-    end
+      }
+    },
+    render = function()
+      return map(self.state, function(item)
+        local is_err = item.code ~= 0
+        local highlight_code = "NeogitCommandCodeNormal"
+        if is_err then
+          highlight_code = "NeogitCommandCodeError"
+        end
+        return col {
+          row { 
+            text.highlight(highlight_code)(string.format("%3d", item.code)), 
+            text.padding_left(1)(item.cmd),
+            text
+              .padding_left(1)
+              .highlight("NeogitCommandTime")(string.format("(%3.3f ms)", item.time))
+          },
+          col
+            .hidden(true)
+            .padding_left("  | ")
+            .highlight("NeogitCommandText")(map(is_err and item.stderr or item.stdout, text))
+        }
+      end)
+    end,
   }
 end
 
