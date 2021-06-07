@@ -102,6 +102,7 @@ local neogit = require("neogit")
 neogit.setup {
   disable_signs = false,
   disable_context_highlighting = false,
+  disable_commit_confirmation = false,
   -- customize displayed signs
   signs = {
     -- { CLOSED, OPENED }
@@ -193,6 +194,10 @@ You can override them to fit your colorscheme by creating a `syntax/NeogitStatus
 ### Disabling Contextual Highlighting
 
 Set `disable_context_highlighting = true` in your call to [`setup`](#configuration) to disable context highlighting altogether.
+
+## Disabling Commit Confirmation
+
+Set `disable_commit_confirmation = true` in your call to [`setup`](#configuration) to disable the "Are you sure you want to commit?" prompt after saving the commit message buffer.
 
 ## Events
 

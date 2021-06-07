@@ -3,6 +3,7 @@ local status = require 'neogit.status'
 local cli = require("neogit.lib.git.cli")
 local input = require("neogit.lib.input")
 local Buffer = require("neogit.lib.buffer")
+local config = require("neogit.config")
 local a = require 'plenary.async_lib'
 local async, await, scheduler, void, wrap, uv = a.async, a.await, a.scheduler, a.void, a.wrap, a.uv
 local split = require('neogit.lib.util').split
@@ -31,7 +32,8 @@ local get_commit_message = wrap(function (content, cb)
 
       _G.__NEOGIT_COMMIT_BUFFER_CB_UNLOAD = function()
         if written then
-          if input.get_confirmation("Are you sure you want to commit?") then
+          if config.values.disable_commit_confirmation or
+              input.get_confirmation("Are you sure you want to commit?") then
             vim.cmd [[
               silent g/^#/d
               silent w!
