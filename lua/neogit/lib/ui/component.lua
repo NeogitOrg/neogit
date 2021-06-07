@@ -59,9 +59,33 @@ function Component:get_highlight()
   return self.options.highlight or (self.parent and self.parent:get_highlight() or nil)
 end
 
-function Component.new(x)
-  x.options = vim.tbl_extend("force", default_component_options, x.options or {})
-  setmetatable(x, { __index = Component })
+function Component.new(f)
+  local x = {}
+  setmetatable(x, { 
+    __call = function(tbl, ...)
+      local x = f(...)
+      local options = x.options
+      if not options then
+        options = vim.tbl_extend("force", default_component_options, tbl)
+      end
+      x.options = options
+      setmetatable(x, { __index = Component })
+      return x
+    end,
+    __index = function(tbl, name)
+      local value = rawget(Component, name)
+
+      if value == nil then
+        value = function(value)
+          local options = vim.deepcopy(tbl)
+          options[name] = value
+          return options
+        end
+      end
+
+      return value
+    end
+  })
   return x
 end
 

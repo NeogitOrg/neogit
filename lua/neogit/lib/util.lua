@@ -9,7 +9,7 @@ _G.inspect = inspect
 local function map(tbl, f)
   local t = {}
   for k,v in pairs(tbl) do
-    t[k] = f(v)
+    t[k] = f(v, k)
   end
   return t
 end
@@ -37,13 +37,7 @@ local function intersperse(tbl, sep)
 end
 
 local function filter(tbl, f)
-  local t = {}
-  for _,v in pairs(tbl) do
-    if f(v) then
-      table.insert(t, v)
-    end
-  end
-  return t
+  return vim.tbl_filter(f, tbl)
 end
 
 local function print_tbl(tbl)

@@ -35,7 +35,6 @@ function M:close()
   self.buffer = nil
 end
 
-
 function M:open()
   if self.is_open then
     return
@@ -56,7 +55,10 @@ function M:open()
         end
 
         self.hovered_component = stack[#stack]
-        self.hovered_component.options.sign = "NeogitLogViewCursorLine"
+
+        if self.hovered_component then
+          self.hovered_component.options.sign = "NeogitLogViewCursorLine"
+        end
 
         self.buffer.ui:update()
       end
@@ -114,93 +116,6 @@ function M:open()
       return ui.LogView(self.data)
     end
   }
-end
-
-local commit_header_pat = "([| *]*)%*([| *]*)commit (%w+)"
-
-local function is_new_commit(line)
-  local s1, s2, oid = line:match(commit_header_pat)
-
-  return s1 ~= nil and s2 ~= nil and oid ~= nil
-end
-
--- @class CommitLogEntry
--- @field oid the object id of the commit
--- @field level the depth of the commit in the graph
--- @field author_name the name of the author
--- @field author_email the email of the author
--- @field author_date when the author commited
--- @field committer_name the name of the committer
--- @field committer_email the email of the committer
--- @field committer_date when the committer commited
--- @field description a list of lines
-
---- parses the provided list of lines into a CommitLogEntry
--- @param raw a list of lines
--- @return CommitLogEntry
-local function parse(raw)
-  local commits = {}
-  local idx = 1
-
-  local function advance()
-    idx = idx + 1
-    return raw[idx]
-  end
-
-  local line = raw[idx]
-  while line do
-    local commit = {}
-    local s1, s2
-
-    s1, s2, commit.oid = line:match(commit_header_pat)
-    commit.level = util.str_count(s1, "|") + util.str_count(s2, "|")
-
-    local start_idx = #s1 + #s2 + 1
-    
-    local function ladvance()
-      local line = advance()
-      return line and line:sub(start_idx + 1, -1) or nil
-    end
-
-    do
-      local line = ladvance()
-
-      if vim.startswith(line, "Merge:") then
-        commit.merge = line
-          :match("Merge:%s*(%w+) (%w+)")
-
-        line = ladvance()
-      end
-
-      commit.author_name, commit.author_email = line
-        :match("Author:%s*(.+) <(.+)>")
-    end
-
-    commit.author_date = ladvance()
-      :match("AuthorDate:%s*(.+)")
-    commit.committer_name, commit.committer_email = ladvance()
-      :match("Commit:%s*(.+) <(.+)>")
-    commit.committer_date = ladvance()
-      :match("CommitDate:%s*(.+)")
-
-    advance()
-
-    commit.description = {}
-    line = advance()
-
-    while line and not is_new_commit(line) do
-      table.insert(commit.description, line:sub(start_idx + 5, -1))
-      line = advance()
-    end
-
-    if line ~= nil then
-      commit.description[#commit.description] = nil
-    end
-
-    table.insert(commits, commit)
-  end
-
-  return commits
 end
 
 return M

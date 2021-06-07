@@ -31,51 +31,58 @@ local function parse_diff_stats(raw)
   return stats
 end
 
-local function parse_diff(output)
-  local header = {}
-  local hunks = {}
-  local is_header = true
-
-  for i=1,#output do
-    if is_header and output[i]:match('^@@.*@@') then
-      is_header = false
-    end
-
-    if is_header then
-      table.insert(header, output[i])
-    else
-      table.insert(hunks, output[i])
-    end
-  end
-
-  local file
-  local kind = "modified"
-
-  if #header == 4 then
-    file = header[3]:match("%-%-%- a/(.*)")
-  else
-    kind = header[2]:match("(.*) mode %d+")
-    if kind == "new file" then
-      file = header[5]:match("%+%+%+ b/(.*)")
-    elseif kind == "deleted file" then
-      file = header[4]:match("%-%-%- a/(.*)")
-    end
-  end
-
+local function parse_diff(output, with_stats)
   local diff = {
-    lines = hunks,
-    file = file,
-    kind = kind,
-    hunks = {}
+    kind = "modified",
+    lines = {},
+    file = "",
+    hunks = {},
+    stats = {}
   }
+  local raw_hunks = {}
+  local is_header = true
+  local start_idx = 1
 
-  local len = #hunks
+  if with_stats then
+    diff.stats = parse_diff_stats(output[1])
+    start_idx = 3
+  end
 
+  do
+    local header = {}
+
+    for i=start_idx,#output do
+      if output[i]:match('^@@.*@@') then
+        start_idx = i
+        break
+      end
+
+      table.insert(header, output[i])
+    end
+
+    if #header == 4 then
+      diff.file = header[3]:match("%-%-%- a/(.*)")
+    else
+      diff.kind = header[2]:match("(.*) mode %d+")
+      if diff.kind == "new file" then
+        diff.file = header[5]:match("%+%+%+ b/(.*)")
+      elseif diff.kind == "deleted file" then
+        diff.file = header[4]:match("%-%-%- a/(.*)")
+      end
+    end
+  end
+
+  for i=start_idx,#output do
+    table.insert(raw_hunks, output[i])
+  end
+
+
+  local len = #raw_hunks
   local hunk = nil
-
   local hunk_content = ''
+
   for i=1,len do
-    local line = hunks[i]
+    local line = raw_hunks[i]
     if not vim.startswith(line, "+++") then
       local index_from, index_len, disk_from, disk_len = line:match('@@ %-(%d+),?(%d*) %+(%d+),?(%d*) @@')
 
