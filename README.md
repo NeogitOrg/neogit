@@ -59,7 +59,7 @@ neogit.open({ kind = "split" })
 The create function takes 1 optional argument that can be one of the following values:
 
 * tab (default)
-* floating (This currently doesn't work with popups)
+* floating (This currently doesn't work with popups. Very instable)
 * split
 
 ## Status Keybindings
