@@ -12,7 +12,7 @@ syn match NeogitStash /stash@{[0-9]*}\ze/
 syn match NeogitUnmergedInto /Unmerged into/ contained
 syn match NeogitUnpulledFrom /Unpulled from/ contained
 
-let b:sections = ["Untracked files", "Unstaged changes", "Unmerged changes", "Staged changes", "Stashes"]
+let b:sections = ["Untracked files", "Unstaged changes", "Unmerged changes", "Unpulled changes", "Staged changes", "Stashes"]
 
 for section in b:sections
   let id = join(split(section, " "), "")
