@@ -129,11 +129,11 @@ function Ui.visualize_tree(components, options)
   Ui._visualize_tree(1, components, options or {})
 end
 
-function Ui:_render(first_line, parent, components, flags)
+function Ui:_render(first_line, first_col, parent, components, flags)
   local curr_line = first_line
   
   if flags.in_row then
-    local col_start = 0
+    local col_start = first_col
     local col_end
     local highlights = {}
     local text = ""
@@ -146,14 +146,10 @@ function Ui:_render(first_line, parent, components, flags)
         c.position.row_start = curr_line - first_line + 1
         local highlight = c:get_highlight()
         if c.tag == "text" then
-          if i == 1 then
-            local padding_left = c:get_padding_left()
-            text = text .. (" "):rep(padding_left)
-          else
-            local padding_left = c.options.padding_left or 0
-            text = text .. (" "):rep(padding_left)
-          end
-          col_end = col_start + #c.value
+          local padding_left = c:get_padding_left(i ~= 1)
+          text = text .. padding_left
+
+          col_end = col_start + #c.value + #padding_left
           c.position.col_start = col_start
           c.position.col_end = col_end - 1
           text = text .. c.value
@@ -165,11 +161,33 @@ function Ui:_render(first_line, parent, components, flags)
             })
           end
           col_start = col_end
+        elseif c.tag == "row" then
+          flags.in_nested_row = true
+          local res = self:_render(curr_line, col_start, c, c.children, flags)
+          flags.in_nested_row = false
+
+          text = text .. res.text
+
+          for _, h in ipairs(res.highlights) do
+            table.insert(highlights, h)
+          end
+
+          col_end = col_start + #res.text
+          c.position.col_start = col_start
+          c.position.col_end = col_end
+          col_start = col_end
         else
           error("The row component does not support having a `" .. c.tag .. "` as child")
         end
         c.position.row_end = c.position.row_start
       end
+    end
+
+    if flags.in_nested_row then
+      return {
+        text = text,
+        highlights = highlights
+      }
     end
 
     self.buf:set_lines(curr_line - 1, curr_line, false, { text })
@@ -192,7 +210,7 @@ function Ui:_render(first_line, parent, components, flags)
         local highlight = c:get_highlight()
         if c.tag == "text" then
           local padding_left = c:get_padding_left()
-          local text = (" "):rep(padding_left) .. c.value
+          local text = padding_left .. c.value
           self.buf:set_lines(curr_line - 1, curr_line, false, { text })
           if highlight then
             self.buf:add_highlight(curr_line - 1, c.position.col_start, c.position.col_end, highlight, 0)
@@ -202,10 +220,10 @@ function Ui:_render(first_line, parent, components, flags)
           end
           curr_line = curr_line + 1
         elseif c.tag == "col" then
-          curr_line = curr_line + self:_render(curr_line, c, c.children, flags)
+          curr_line = curr_line + self:_render(curr_line, 0, c, c.children, flags)
         elseif c.tag == "row" then
           flags.in_row = true
-          curr_line = curr_line + self:_render(curr_line, c, c.children, flags)
+          curr_line = curr_line + self:_render(curr_line, 0, c, c.children, flags)
           if sign then
             self.buf:place_sign(curr_line - 1, sign, "hl")
           end
@@ -214,10 +232,10 @@ function Ui:_render(first_line, parent, components, flags)
         c.position.row_end = curr_line - first_line
       else
         if c.tag == "col" then
-          self:_render(curr_line, c, c.children, flags)
+          self:_render(curr_line, 0, c, c.children, flags)
         elseif c.tag == "row" then
           flags.in_row = true
-          self:_render(curr_line, c, c.children, flags)
+          self:_render(curr_line, 0, c, c.children, flags)
           flags.in_row = false
         end
       end
@@ -235,7 +253,7 @@ end
 
 function Ui:update()
   self.buf:unlock()
-  local lines_used = self:_render(1, Component.new(function()
+  local lines_used = self:_render(1, 0, Component.new(function()
     return {
       tag = "_root",
       children = self.layout
@@ -287,5 +305,7 @@ Ui.text = Component.new(function(...)
     options = options
   }
 end)
+
+Ui.Component = require 'neogit.lib.ui.component'
 
 return Ui

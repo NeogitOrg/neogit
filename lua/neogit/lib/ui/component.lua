@@ -22,8 +22,13 @@ function Component:toggle_hidden()
   self.options.hidden = not self.options.hidden
 end
 
-function Component:get_padding_left()
-  return (self.options.padding_left or 0) + (self.parent and self.parent:get_padding_left() or 0)
+function Component:get_padding_left(recurse)
+  local padding_left = self.options.padding_left or 0
+  local padding_left_text = type(padding_left) == "string" and padding_left or (" "):rep(padding_left)
+  if recurse == false then
+    return padding_left_text
+  end
+  return padding_left_text .. (self.parent and self.parent:get_padding_left() or "")
 end
 
 function Component:is_hidden()
