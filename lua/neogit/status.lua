@@ -641,6 +641,7 @@ local set_folds = async(function(to)
   await(refresh(true))
 end)
 
+
 --- These needs to be a function to avoid a circular dependency
 --  between this module and the popup modules
 local cmd_func_map = function ()
@@ -699,7 +700,7 @@ local cmd_func_map = function ()
       await(scheduler())
       local section, item = get_current_section_item()
 
-      if item ~= nil then
+      if item and section then
         if section.name ~= "unstaged" and section.name ~= "staged" and section.name ~= "untracked" then
           return
         end
@@ -727,7 +728,9 @@ local cmd_func_map = function ()
       local dv = require 'neogit.integrations.diffview'
       local _, item = get_current_section_item()
 
-      dv.open(item.name)
+      if item then
+        dv.open(item.name)
+      end
     end,
     ["DiffPopup"] = require("neogit.popups.diff").create,
     ["PullPopup"] = require("neogit.popups.pull").create,
