@@ -223,7 +223,7 @@ local function create()
             await(prompt_commit_message(msg))
             local _, code = await(cli.commit.commit_message_file(commit_file).amend.call())
             if code == 0 then
-              await(uv.fs_unlink(get_commit_file()))
+              await(uv.fs_unlink(commit_file))
               await(status.refresh(true))
             end
           end))
