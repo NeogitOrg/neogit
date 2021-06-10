@@ -328,7 +328,7 @@ local function exec_sync(cmd, args, cwd, stdin, env, show_popup)
   end
 
   local cmd = "git " .. table.concat(args, ' ')
-  local job = Job:new(cmd)
+  local job = Job.new({ cmd = cmd })
   job.cwd = cwd
 
   job:start()

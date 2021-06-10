@@ -11,24 +11,22 @@ local Job = {
   code = 0,
   running = false,
   done = false,
+  on_stdout = nil,
+  on_stderr = nil,
   on_exit = nil
 }
 
-Job.__index = Job
+local is_win = vim.fn.has('win32') == 1 
 
 --- Creates a new Job
 --@tparam string cmd the command to be executed
 --@tparam function? on_exit a callback that gets called when the job exits
-function Job:new(cmd, on_exit)
-  local this = {
-    cmd = cmd,
-    on_exit = on_exit,
-    cwd = nil
-  }
+function Job.new(options)
+  assert(options.cmd, "A job needs to have a cmd")
 
-  setmetatable(this, self)
+  setmetatable(options, { __index = Job })
 
-  return this
+  return options
 end
 
 --- Starts the job
@@ -45,7 +43,9 @@ function Job:start()
 
   local task = self.cmd
 
-  if vim.fn.has('win32') == 1 then
+  if type(task) == "string"
+    and is_win 
+    then
     task = { 'cmd', '/C', task }
   end
 
@@ -62,19 +62,23 @@ function Job:start()
       end
     end,
     on_stdout = function(_, data)
-      local len = #data - 1
-      for i=1,len do
-        self.stdout[i] = data[i]
+      for i=1,#data-1 do
+        local data = data[i]:gsub("\r", "")
+        if type(self.on_stdout) == "function" then
+          self.on_stdout(data)
+        end
+        table.insert(self.stdout, data)
       end
     end,
     on_stderr = function(_, data)
-      local len = #data - 1
-      for i=1,len do
-        self.stderr[i] = data[i]
+      for i=1,#data-1 do
+        local data = data[i]:gsub("\r", "")
+        if type(self.on_stderr) == "function" then
+          self.on_stderr(data)
+        end
+        table.insert(self.stderr, data)
       end
     end,
-    stderr_buffered = true,
-    stdout_buffered = true
   })
 end
 
@@ -93,7 +97,7 @@ end
 
 function Job.batch(cmds)
   return util.map(cmds, function(cmd)
-    return Job:new(cmd)
+    return Job.new({ cmd = cmd })
   end)
 end
 
@@ -105,6 +109,18 @@ end
 
 function Job.wait_all(jobs)
   vim.fn.jobwait(util.map(jobs, function(job) return job.channel end))
+end
+
+function TEST()
+  Job.new {
+    cmd = "echo hello&echo world",
+    on_stdout = function(data)
+      inspect(data)
+    end,
+    on_exit = function(job)
+      inspect(job.stdout)
+    end
+  }:start()
 end
 
 return Job
