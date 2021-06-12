@@ -198,7 +198,7 @@ local function create()
           callback = void(async(function ()
             await(scheduler())
             local commit_file = get_commit_file()
-            await(do_commit(nil, cli.commit.no_edit.amend.call()))
+            await(do_commit(nil, cli.commit.no_edit.amend))
           end))
         },
         {
