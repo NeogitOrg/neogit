@@ -203,6 +203,7 @@ local function create()
             msg = vim.split(msg, '\n')
 
             await(prompt_commit_message(msg))
+
             local _, code = await(cli.commit.commit_message_file(commit_file).amend.only.call())
             if code == 0 then
               await(uv.fs_unlink(commit_file))
