@@ -811,7 +811,6 @@ M.create = create
 M.toggle = toggle
 M.update_highlight = update_highlight
 M.generate_patch_from_selection = generate_patch_from_selection
-M.repo = repo
 M.reset = reset
 M.dispatch_reset = dispatch_reset
 M.refresh = refresh
