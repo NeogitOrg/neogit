@@ -1,4 +1,5 @@
 local popup = require("neogit.lib.popup")
+local notif = require("neogit.lib.notification")
 local status = require 'neogit.status'
 local cli = require("neogit.lib.git.cli")
 local input = require("neogit.lib.input")
@@ -88,6 +89,24 @@ local prompt_commit_message = async(function (msg, skip_gen)
   await(get_commit_message(output))
 end)
 
+local do_commit = async(function(data, cmd)
+  await(scheduler())
+  local commit_file = get_commit_file()
+  if data then
+    await(prompt_commit_message(data, skip_gen))
+    await(scheduler())
+    local notification = notif.create("Committing...", { delay = 9999 })
+    local _, code = await(cmd.call())
+    await(scheduler())
+    notification:delete()
+    notif.create("Successfully committed!")
+    if code == 0 then
+      await(uv.fs_unlink(commit_file))
+      await(status.refresh(true))
+    end
+  end
+end)
+
 local function create()
   popup.create(
     "NeogitCommitPopup",
@@ -168,14 +187,7 @@ local function create()
             data = data or ''
             -- we need \r? to support windows
             data = split(data, '\r?\n')
-            await(prompt_commit_message(data, skip_gen))
-            local _, code = await(
-              cli.commit.commit_message_file(commit_file).args(unpack(popup.get_arguments())).call()
-            )
-            if code == 0 then
-              await(uv.fs_unlink(commit_file))
-              await(status.refresh(true))
-            end
+            await(do_commit(data, cli.commit.commit_message_file(commit_file).args(unpack(popup.get_arguments()))))
           end))
         },
       },
@@ -186,11 +198,7 @@ local function create()
           callback = void(async(function ()
             await(scheduler())
             local commit_file = get_commit_file()
-            local _, code = await(cli.commit.no_edit.amend.call())
-            if code == 0 then
-              await(uv.fs_unlink(commit_file))
-              await(status.refresh(true))
-            end
+            await(do_commit(nil, cli.commit.no_edit.amend.call()))
           end))
         },
         {
@@ -202,12 +210,7 @@ local function create()
             local msg = await(cli.log.max_count(1).pretty('%B').call())
             msg = vim.split(msg, '\n')
 
-            await(prompt_commit_message(msg))
-            local _, code = await(cli.commit.commit_message_file(commit_file).amend.only.call())
-            if code == 0 then
-              await(uv.fs_unlink(commit_file))
-              await(status.refresh(true))
-            end
+            await(do_commit(msg, cli.commit.commit_message_file(commit_file).amend.only))
           end))
         },
         {
@@ -219,13 +222,7 @@ local function create()
             local msg = await(cli.log.max_count(1).pretty('%B').call())
             msg = vim.split(msg, '\n')
 
-            await(scheduler())
-            await(prompt_commit_message(msg))
-            local _, code = await(cli.commit.commit_message_file(commit_file).amend.call())
-            if code == 0 then
-              await(uv.fs_unlink(commit_file))
-              await(status.refresh(true))
-            end
+            await(do_commit(msg, cli.commit.commit_message_file(commit_file).amend))
           end))
         },
       },
