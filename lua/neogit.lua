@@ -8,7 +8,9 @@ local neogit = {
   popups = require("neogit.popups"),
   config = config,
   status = status,
-  repo = status.repo,
+  get_repo = function()
+    return status.repo
+  end,
   cli = lib.git.cli,
   notif = require("neogit.lib.notification"),
   open = function(opts)

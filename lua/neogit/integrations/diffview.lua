@@ -50,9 +50,10 @@ function M.open(selected_file_name)
 
   local function update_files()
     local files = {}
+    local repo = neogit.get_repo()
     local sections = {
-      working = neogit.repo.unstaged,
-      staged = neogit.repo.staged
+      working = repo.unstaged,
+      staged = repo.staged
     }
     for kind, section in pairs(sections) do
       files[kind] = {}

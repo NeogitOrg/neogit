@@ -13,19 +13,20 @@ local LineBuffer = require 'neogit.lib.line_buffer'
 local fs = require 'neogit.lib.fs'
 local input = require 'neogit.lib.input'
 
-local current_operation = nil
-local status = {}
-local prev_autochdir
-local repo = repository.create()
-local locations = {}
-local status_buffer = nil
+local M = {}
+
+M.current_operation = nil
+M.prev_autochdir = nil
+M.repo = repository.create()
+M.status_buffer = nil
+M.locations = {}
 
 local hunk_header_matcher = vim.regex('^@@.*@@')
 local diff_add_matcher = vim.regex('^+')
 local diff_delete_matcher = vim.regex('^-')
 
 local function get_section_idx_for_line(linenr)
-  for i, l in pairs(locations) do
+  for i, l in pairs(M.locations) do
     if l.first <= linenr and linenr <= l.last then
       return i
     end
@@ -35,7 +36,7 @@ end
 
 local function get_section_item_idx_for_line(linenr)
   local section_idx = get_section_idx_for_line(linenr)
-  local section = locations[section_idx]
+  local section = M.locations[section_idx]
 
   if section == nil then
     return nil, nil
@@ -52,7 +53,7 @@ end
 
 local function get_section_item_for_line(linenr)
   local section_idx, item_idx = get_section_item_idx_for_line(linenr)
-  local section = locations[section_idx]
+  local section = M.locations[section_idx]
 
   if section == nil then
     return nil, nil
@@ -77,15 +78,15 @@ local mode_to_text = {
 
 local function draw_sign_for_item(item, name)
   if item.folded then
-    status_buffer:place_sign(item.first, "NeogitClosed:"..name, "fold_markers")
+    M.status_buffer:place_sign(item.first, "NeogitClosed:"..name, "fold_markers")
   else
-    status_buffer:place_sign(item.first, "NeogitOpen:"..name, "fold_markers")
+    M.status_buffer:place_sign(item.first, "NeogitOpen:"..name, "fold_markers")
   end
 end
 
 local function draw_signs()
   if config.values.disable_signs then return end
-  for _, l in ipairs(locations) do
+  for _, l in ipairs(M.locations) do
     draw_sign_for_item(l, 'section')
     if not l.folded then
       Collection.new(l.files)
@@ -103,18 +104,18 @@ local function draw_signs()
 end
 
 local function draw_buffer()
-  status_buffer:clear_sign_group('hl')
-  status_buffer:clear_sign_group('fold_markers')
+  M.status_buffer:clear_sign_group('hl')
+  M.status_buffer:clear_sign_group('fold_markers')
 
   local output = LineBuffer.new()
-  output:append(string.format("Head: %s %s", repo.head.branch, repo.head.commit_message or '(no commits)'))
-  if repo.upstream.branch then
-    output:append(string.format("Push: %s %s", repo.upstream.branch, repo.upstream.commit_message or '(no commits)'))
+  output:append(string.format("Head: %s %s", M.repo.head.branch, M.repo.head.commit_message or '(no commits)'))
+  if M.repo.upstream.branch then
+    output:append(string.format("Push: %s %s", M.repo.upstream.branch, M.repo.upstream.commit_message or '(no commits)'))
   end
   output:append('')
 
   local new_locations = {}
-  local locations_lookup = Collection.new(locations):key_by('name')
+  local locations_lookup = Collection.new(M.locations):key_by('name')
 
   local function render_section(header, data, key)
     if #data.files == 0 then return end
@@ -148,7 +149,7 @@ local function draw_buffer()
             local current_hunk = hunks_lookup[h.hash] or { folded = false }
 
             output:append(f.diff.lines[h.diff_from])
-            status_buffer:place_sign(#output, 'NeogitHunkHeader', 'hl')
+            M.status_buffer:place_sign(#output, 'NeogitHunkHeader', 'hl')
             current_hunk.first = #output
 
             if not current_hunk.folded then
@@ -156,9 +157,9 @@ local function draw_buffer()
                 local l = f.diff.lines[i]
                 output:append(l)
                 if diff_add_matcher:match_str(l) then
-                  status_buffer:place_sign(#output, 'NeogitDiffAdd', 'hl')
+                  M.status_buffer:place_sign(#output, 'NeogitDiffAdd', 'hl')
                 elseif diff_delete_matcher:match_str(l) then
-                  status_buffer:place_sign(#output, 'NeogitDiffDelete', 'hl')
+                  M.status_buffer:place_sign(#output, 'NeogitDiffDelete', 'hl')
                 end
               end
             end
@@ -181,15 +182,15 @@ local function draw_buffer()
     table.insert(new_locations, location)
   end
 
-  render_section('Untracked files', repo.untracked, 'untracked')
-  render_section('Unstaged changes', repo.unstaged, 'unstaged')
-  render_section('Staged changes', repo.staged, 'staged')
-  render_section('Stashes', repo.stashes, 'stashes')
-  render_section('Unpulled changes', repo.unpulled, 'unpulled')
-  render_section('Unmerged changes', repo.unmerged, 'unmerged')
+  render_section('Untracked files', M.repo.untracked, 'untracked')
+  render_section('Unstaged changes', M.repo.unstaged, 'unstaged')
+  render_section('Staged changes', M.repo.staged, 'staged')
+  render_section('Stashes', M.repo.stashes, 'stashes')
+  render_section('Unpulled changes', M.repo.unpulled, 'unpulled')
+  render_section('Unmerged changes', M.repo.unmerged, 'unmerged')
 
-  status_buffer:replace_content_with(output)
-  locations = new_locations
+  M.status_buffer:replace_content_with(output)
+  M.locations = new_locations
 end
 
 --- Find the closest section the cursor is encosed by.
@@ -202,7 +203,7 @@ local function save_cursor_location()
   local line = vim.fn.line('.')
   local section_loc, file_loc, hunk_loc, first, last
 
-  for li, loc in ipairs(locations) do
+  for li, loc in ipairs(M.locations) do
     if line == loc.first then
       section_loc = {li, loc.name}
       first, last = loc.first, loc.last
@@ -234,13 +235,13 @@ local function save_cursor_location()
 end
 
 local function restore_cursor_location(section_loc, file_loc, hunk_loc)
-  if #locations == 0 then return vim.fn.setpos('.', {0, 1, 0, 0}) end
+  if #M.locations == 0 then return vim.fn.setpos('.', {0, 1, 0, 0}) end
   if not section_loc then section_loc = {1, ''} end
 
-  local section = Collection.new(locations):find(function (s) return s.name == section_loc[2] end)
+  local section = Collection.new(M.locations):find(function (s) return s.name == section_loc[2] end)
   if not section then
     file_loc, hunk_loc = nil, nil
-    section = locations[section_loc[1]] or locations[#locations]
+    section = M.locations[section_loc[1]] or M.locations[#M.locations]
   end
   if not file_loc or not section.files or #section.files == 0 then
     return vim.fn.setpos('.', {0, section.first, 0, 0})
@@ -261,16 +262,16 @@ local function restore_cursor_location(section_loc, file_loc, hunk_loc)
 end
 
 local function refresh_status()
-  if status_buffer == nil then
+  if M.status_buffer == nil then
     return
   end
 
-  status_buffer:unlock()
+  M.status_buffer:unlock()
 
   draw_buffer()
   draw_signs()
 
-  status_buffer:lock()
+  M.status_buffer:lock()
 
   vim.cmd('redraw')
 end
@@ -286,30 +287,30 @@ local refresh = async(function (which)
 
   if await(cli.git_root()) ~= '' then
     if which == true or which.status then
-      await(repo:update_status())
+      await(M.repo:update_status())
       await(scheduler())
       refresh_status()
     end
 
     local refreshes = {}
     if which == true or which.branch_information then
-      table.insert(refreshes, repo:update_branch_information())
+      table.insert(refreshes, M.repo:update_branch_information())
     end
     if which == true or which.stashes then
-      table.insert(refreshes, repo:update_stashes())
+      table.insert(refreshes, M.repo:update_stashes())
     end
     if which == true or which.unpulled then
-      table.insert(refreshes, repo:update_unpulled())
+      table.insert(refreshes, M.repo:update_unpulled())
     end
     if which == true or which.unmerged then
-      table.insert(refreshes, repo:update_unmerged())
+      table.insert(refreshes, M.repo:update_unmerged())
     end
     if which == true or which.diffs then
       local filter = (type(which) == "table" and type(which.diffs) == "table")
         and which.diffs
         or nil
 
-      table.insert(refreshes, repo:load_diffs(filter))
+      table.insert(refreshes, M.repo:load_diffs(filter))
     end
     await_all(refreshes)
     await(scheduler())
@@ -380,15 +381,15 @@ local function toggle()
 end
 
 local reset = async(function ()
-  repo = repository.create()
-  locations = {}
+  M.repo = repository.create()
+  M.locations = {}
   await(refresh(true))
 end)
 local dispatch_reset = void(reset)
 
 local function close()
-  status_buffer = nil
-  vim.o.autochdir = prev_autochdir
+  M.status_buffer = nil
+  vim.o.autochdir = M.prev_autochdir
 end
 
 local function generate_patch_from_selection(item, hunk, from, to, reverse)
@@ -515,7 +516,7 @@ local unstage_selection = async(function()
 end)
 
 local stage = async(function()
-  current_operation = "stage"
+  M.current_operation = "stage"
   local section, item = get_current_section_item()
 
   if section == nil
@@ -540,7 +541,7 @@ local stage = async(function()
   end
 
   await(refresh({status = true, diffs = {"*:"..item.name}}))
-  current_operation = nil
+  M.current_operation = nil
 end)
 
 local unstage = async(function()
@@ -549,7 +550,7 @@ local unstage = async(function()
   if section == nil or section.name ~= "staged" or item == nil then
     return
   end
-  current_operation = "unstage"
+  M.current_operation = "unstage"
 
   local mode = vim.api.nvim_get_mode()
 
@@ -568,7 +569,7 @@ local unstage = async(function()
   end
 
   await(refresh({status = true, diffs = {"*:"..item.name}}))
-  current_operation = nil
+  M.current_operation = nil
 end)
 
 local discard = async(function()
@@ -577,7 +578,7 @@ local discard = async(function()
   if section == nil or item == nil then
     return
   end
-  current_operation = "discard"
+  M.current_operation = "discard"
 
   if not input.get_confirmation("Do you really want to do this?", {
     values = { "&Yes", "&No" },
@@ -623,11 +624,11 @@ local discard = async(function()
   end
 
   await(refresh(true))
-  current_operation = nil
+  M.current_operation = nil
 end)
 
 local set_folds = async(function(to)
-  Collection.new(locations):each(function (l)
+  Collection.new(M.locations):each(function (l)
     l.folded = to[1]
     Collection.new(l.files):each(function (f)
       f.folded = to[2]
@@ -649,7 +650,7 @@ local cmd_func_map = function ()
     ["Close"] = function()
       notif.delete_all()
       vim.defer_fn(function ()
-        status_buffer:close()
+        M.status_buffer:close()
       end, 0)
     end,
     ["Depth1"] = void(async(function()
@@ -708,7 +709,7 @@ local cmd_func_map = function ()
         local path = item.name
 
         notif.delete_all()
-        status_buffer:close()
+        M.status_buffer:close()
 
         local relpath = vim.fn.fnamemodify(repo_root .. '/' .. path, ':.')
 
@@ -749,8 +750,8 @@ end
 local function create(kind)
   kind = kind or "tab"
 
-  if status_buffer then
-    status_buffer:focus()
+  if M.status_buffer then
+    M.status_buffer:focus()
     return
   end
 
@@ -759,9 +760,9 @@ local function create(kind)
     filetype = "NeogitStatus",
     kind = kind,
     initialize = function(buffer)
-      status_buffer = buffer
+      M.status_buffer = buffer
 
-      prev_autochdir = vim.o.autochdir
+      M.prev_autochdir = vim.o.autochdir
 
       vim.o.autochdir = false
 
@@ -784,7 +785,7 @@ local function update_highlight()
   if config.values.disable_context_highlighting then return end
 
   vim.api.nvim_buf_clear_namespace(0, highlight_group, 0, -1)
-  status_buffer:clear_sign_group('ctx')
+  M.status_buffer:clear_sign_group('ctx')
 
   local _,_,_, first, last = save_cursor_location()
 
@@ -795,31 +796,35 @@ local function update_highlight()
   for i=first,last do
     local line = vim.fn.getline(i)
     if hunk_header_matcher:match_str(line) then
-      status_buffer:place_sign(i, 'NeogitHunkHeaderHighlight', 'ctx')
+      M.status_buffer:place_sign(i, 'NeogitHunkHeaderHighlight', 'ctx')
     elseif diff_add_matcher:match_str(line) then
-      status_buffer:place_sign(i, 'NeogitDiffAddHighlight', 'ctx')
+      M.status_buffer:place_sign(i, 'NeogitDiffAddHighlight', 'ctx')
     elseif diff_delete_matcher:match_str(line) then
-      status_buffer:place_sign(i, 'NeogitDiffDeleteHighlight', 'ctx')
+      M.status_buffer:place_sign(i, 'NeogitDiffDeleteHighlight', 'ctx')
     else
-      status_buffer:place_sign(i, 'NeogitDiffContextHighlight', 'ctx')
+      M.status_buffer:place_sign(i, 'NeogitDiffContextHighlight', 'ctx')
     end
   end
 end
 
-return {
-  create = create,
-  toggle = toggle,
-  update_highlight = update_highlight,
-  get_status = function() return status end,
-  generate_patch_from_selection = generate_patch_from_selection,
-  wait_on_current_operation = function (ms)
-    vim.wait(ms or 1000, function() return not current_operation end)
-  end,
-  repo = repo,
-  reset = reset,
-  dispatch_reset = dispatch_reset,
-  refresh = refresh,
-  dispatch_refresh = dispatch_refresh,
-  refresh_viml_compat = refresh_viml_compat,
-  close = close
-}
+M.create = create
+M.toggle = toggle
+M.update_highlight = update_highlight
+M.generate_patch_from_selection = generate_patch_from_selection
+M.repo = repo
+M.reset = reset
+M.dispatch_reset = dispatch_reset
+M.refresh = refresh
+M.dispatch_refresh = dispatch_refresh
+M.refresh_viml_compat = refresh_viml_compat
+M.close = close
+
+function M.get_status()
+  return M.status
+end
+
+function M.wait_on_current_operation(ms)
+  vim.wait(ms or 1000, function() return not current_operation end)
+end
+
+return M
