@@ -4,6 +4,7 @@ local util = require 'neogit.lib.util'
 
 local text = Ui.text
 local col = Ui.col
+local row = Ui.row
 local map = util.map
 local filter = util.filter
 local intersperse = util.intersperse
@@ -68,5 +69,67 @@ M.List = Component.new(function(props)
 
   return container.tag("List")(children)
 end)
+
+M.Grid = Component.new(function(props)
+  local rendered = {}
+  local row_count = #props.items
+  local column_width = 1
+  local gap = props.gap or 0
+
+  for i=1,#props.items do
+    local children = {}
+
+    if i ~= 1 then
+      children = map(range(gap), function() return text "" end)
+    end
+    -- current row
+    local r = props.items[i]
+
+    for j=1,#r do
+      local item = r[j]
+      local c = props.render_item(item)
+
+      if c.tag ~= "text" and c.tag ~= "row" then
+        error("Grid component only supports text and row components for now")
+      end
+
+      local c_width = c:get_width()
+      children[j] = c
+
+      if c_width > column_width then
+        column_width = c_width
+      end
+    end
+
+    rendered[i] = row(children)
+  end
+
+  for i=1,#rendered do
+    -- current row
+    local r = rendered[i]
+
+    for j=1,#r.children do
+      local item = r.children[j]
+      local gap_str = ""
+
+      if j ~= 1 then
+        gap_str = string.rep(" ", gap)
+      end
+
+      if #gap_str > 0 then
+        if item.tag == "text" then
+          item.value = gap_str .. string.format("%" .. column_width .. "s", item.value)
+        elseif item.tag == "row" then
+            table.insert(item.children, 1, text(gap_str))
+        else
+          error()
+        end
+      end
+    end
+  end
+
+  return col(rendered)
+end)
+
 
 return M

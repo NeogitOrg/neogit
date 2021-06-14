@@ -3,7 +3,7 @@ local status = require 'neogit.status'
 local GitCommandHistory = require("neogit.buffers.git_command_history")
 
 local function create(pos)
-  popup.create(
+  popup.deprecated_create(
     "NeogitHelpPopup",
     {},
     {},

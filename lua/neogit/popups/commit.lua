@@ -87,7 +87,7 @@ local prompt_commit_message = async(function (msg, skip_gen)
 end)
 
 local function create()
-  popup.create(
+  popup.deprecated_create(
     "NeogitCommitPopup",
     {
       {

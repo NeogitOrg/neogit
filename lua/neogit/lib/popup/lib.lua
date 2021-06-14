@@ -202,7 +202,6 @@ local function toggle(buf_handle)
   end
 end
 
-
 local function create_popup(id, switches, options, actions, env)
   local function collect_arguments()
     local flags = {}
@@ -269,7 +268,7 @@ local function create_popup(id, switches, options, actions, env)
       buf_handle,
       "n",
       "-" .. switch.key,
-      string.format("<cmd>lua require'neogit.lib.popup'.toggle_switch(%d, '%s')<CR>", buf_handle, switch.key),
+      string.format("<cmd>lua require'neogit.lib.popup.lib'.toggle_switch(%d, '%s')<CR>", buf_handle, switch.key),
       {
         noremap = true,
         silent = true,
@@ -283,7 +282,7 @@ local function create_popup(id, switches, options, actions, env)
       buf_handle,
       "n",
       "=" .. option.key,
-      string.format("<cmd>lua require'neogit.lib.popup'.toggle_option(%d, '%s')<CR>", buf_handle, option.key),
+      string.format("<cmd>lua require'neogit.lib.popup.lib'.toggle_option(%d, '%s')<CR>", buf_handle, option.key),
       {
         noremap = true,
         silent = true,
@@ -298,7 +297,7 @@ local function create_popup(id, switches, options, actions, env)
         buf_handle,
         "n",
         item.key,
-        string.format("<cmd>lua require'neogit.lib.popup'.do_action(%d, '%s')<CR>", buf_handle, item.key),
+        string.format("<cmd>lua require'neogit.lib.popup.lib'.do_action(%d, '%s')<CR>", buf_handle, item.key),
         {
           noremap = true,
           silent = true,
@@ -323,7 +322,7 @@ local function create_popup(id, switches, options, actions, env)
     buf_handle,
     "n",
     "<TAB>",
-    string.format("<cmd>lua require'neogit.lib.popup'.toggle(%d)<CR>", buf_handle),
+    string.format("<cmd>lua require'neogit.lib.popup.lib'.toggle(%d)<CR>", buf_handle),
     {
       noremap = true,
       silent = true,

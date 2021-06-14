@@ -48,6 +48,33 @@ function Component:is_under_cursor(cursor)
   return row_ok and col_ok
 end
 
+function Component:get_width()
+  if self.tag == "text" then
+    return #self.value
+  end
+
+  if self.tag == "row" then
+    local width = 0
+    for i=1,#self.children do
+      width = width + self.children[i]:get_width()
+    end
+    return width
+  end
+
+  if self.tag == "col" then
+    local width = 0
+    for i=1,#self.children do
+      local c_width = self.children[i]:get_width()
+      if c_width > width then
+        width = c_width
+      end
+    end
+    return width
+  end
+
+  error("UNIMPLEMENTED")
+end
+
 function Component:get_tag()
   if self.options.tag then
     return self.options.tag .. "<" .. self.tag .. ">"
@@ -69,10 +96,7 @@ function Component.new(f)
   setmetatable(x, { 
     __call = function(tbl, ...)
       local x = f(...)
-      local options = x.options
-      if not options then
-        options = vim.tbl_extend("force", default_component_options, tbl)
-      end
+      local options = vim.tbl_extend("force", default_component_options, tbl, x.options or {})
       x.options = options
       setmetatable(x, { __index = Component })
       return x

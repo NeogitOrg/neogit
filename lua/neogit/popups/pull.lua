@@ -15,7 +15,7 @@ local pull_upstream = void(async(function (popup)
 end))
 
 local function create()
-  popup.create(
+  popup.deprecated_create(
     "NeogitPullPopup",
     {
       {

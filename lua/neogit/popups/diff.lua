@@ -8,12 +8,16 @@ function M.create()
     return
   end
 
-  return popup.new()
-    .name("NeogitDiffPopup")
-    .action("D", "diff against head", function()
+  local p = popup.builder()
+    :name("NeogitDiffPopup")
+    :action("D", "diff against head", function()
       require 'neogit.integrations.diffview'.open()
     end)
-    .build()
+    :build()
+
+  p:show()
+
+  return p
 end
 
 return M

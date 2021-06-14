@@ -16,16 +16,20 @@ local push_upstream = function (popup)
 end
 
 function M.create()
-  return popup.new()
-    .name("NeogitPushPopup")
-    .switch("f", "force-with-lease", "Force with lease")
-    .switch("F", "force", "Force")
-    .switch("h", "no-verify", "Disable hooks")
-    .switch("d", "dry-run", "Dry run")
-    .action("p", "Push to pushremote", push_upstream)
-    .action("u", "Push to upstream", push_upstream)
-    .action("e", "Push to branch")
-    .build()
+  local p = popup.builder()
+    :name("NeogitPushPopup")
+    :switch("f", "force-with-lease", "Force with lease")
+    :switch("F", "force", "Force")
+    :switch("h", "no-verify", "Disable hooks")
+    :switch("d", "dry-run", "Dry run")
+    :action("p", "Push to pushremote", push_upstream)
+    :action("u", "Push to upstream", push_upstream)
+    :action("e", "Push to branch")
+    :build()
+
+  p:show()
+  
+  return p
 end
 
 return M
