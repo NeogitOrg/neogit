@@ -39,12 +39,10 @@ function Ui._print_component(indent, c, options)
     output = output .. " '" .. c.value .. "'"
   end
 
-  if c.options.sign then
-    output = output .. " sign=" .. c.options.sign
-  end
-
-  if c.options.highlight then
-    output = output .. " highlight=" .. c.options.highlight
+  for k,v in pairs(c.options) do
+    if k ~= "tag" and k ~= "hidden" then
+      output = output .. " " .. k .. "=" .. tostring(v)
+    end
   end
 
   print(output)
@@ -146,10 +144,11 @@ function Ui:_render(first_line, first_col, parent, components, flags)
         c.position.row_start = curr_line - first_line + 1
         local highlight = c:get_highlight()
         if c.tag == "text" then
-          local padding_left = c:get_padding_left(i ~= 1)
-          text = text .. padding_left
+          local padding_left = c:get_padding_left(i == 1)
+          text = padding_left .. text
 
-          col_end = col_start + #c.value + #padding_left
+          col_start = col_start + #padding_left
+          col_end = col_start + #c.value
           c.position.col_start = col_start
           c.position.col_end = col_end - 1
           text = text .. c.value

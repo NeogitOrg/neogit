@@ -91,7 +91,7 @@ local function parse(raw)
 end
 
 local function create()
-  popup.create(
+  popup.deprecated_create(
     "NeogitLogPopup",
     {
       {

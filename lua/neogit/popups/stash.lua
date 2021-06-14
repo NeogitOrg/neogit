@@ -86,7 +86,7 @@ local configuration = {
   }
 }
 local function create(pos)
-  popup.create("NeogitStashPopup", configuration[1], configuration[2], configuration[3], {
+  popup.deprecated_create("NeogitStashPopup", configuration[1], configuration[2], configuration[3], {
     pos = pos
   })
 end

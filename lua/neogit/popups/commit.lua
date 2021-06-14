@@ -108,7 +108,7 @@ local do_commit = async(function(data, cmd, skip_gen)
 end)
 
 local function create()
-  popup.create(
+  popup.deprecated_create(
     "NeogitCommitPopup",
     {
       {

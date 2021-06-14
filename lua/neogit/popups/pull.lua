@@ -24,7 +24,7 @@ local pull_pushremote = void(async(function (popup)
 end))
 
 local function create()
-  popup.create(
+  popup.deprecated_create(
     "NeogitPullPopup",
     {
       {
