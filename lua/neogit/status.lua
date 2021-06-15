@@ -625,6 +625,9 @@ local discard = async(function()
 
   await(refresh(true))
   M.current_operation = nil
+
+  await(scheduler())
+  vim.cmd "checktime"
 end)
 
 local set_folds = async(function(to)
