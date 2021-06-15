@@ -1,6 +1,5 @@
 local eq = assert.are.same
 local status = require'neogit.status'
-
 local harness = require'tests.git_harness'
 local _ = require 'tests.mocks.input'
 local in_prepared_repo = harness.in_prepared_repo
