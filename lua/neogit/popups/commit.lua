@@ -94,16 +94,16 @@ local do_commit = async(function(data, cmd)
   local commit_file = get_commit_file()
   if data then
     await(prompt_commit_message(data, skip_gen))
-    await(scheduler())
-    local notification = notif.create("Committing...", { delay = 9999 })
-    local _, code = await(cmd.call())
-    await(scheduler())
-    notification:delete()
-    notif.create("Successfully committed!")
-    if code == 0 then
-      await(uv.fs_unlink(commit_file))
-      await(status.refresh(true))
-    end
+  end
+  await(scheduler())
+  local notification = notif.create("Committing...", { delay = 9999 })
+  local _, code = await(cmd.call())
+  await(scheduler())
+  notification:delete()
+  notif.create("Successfully committed!")
+  if code == 0 then
+    await(uv.fs_unlink(commit_file))
+    await(status.refresh(true))
   end
 end)
 
@@ -196,8 +196,6 @@ local function create()
           key = "e",
           description = "Extend",
           callback = void(async(function ()
-            await(scheduler())
-            local commit_file = get_commit_file()
             await(do_commit(nil, cli.commit.no_edit.amend))
           end))
         },
