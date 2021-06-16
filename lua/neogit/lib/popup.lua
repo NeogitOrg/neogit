@@ -144,6 +144,14 @@ local Actions = Component.new(function(props)
       items = props.state,
       gap = 1,
       render_item = function(item)
+        if not item.callback then
+          return row.highlight("NeogitPopupActionDisabled") {
+            text(item.key),
+            text " ",
+            text(item.description),
+          }
+        end
+
         return row {
           text.highlight("NeogitPopupActionKey")(item.key),
           text " ",
@@ -190,11 +198,18 @@ function M:show()
 
   for _, group in pairs(self.state.actions) do
     for _, action in pairs(group) do
-      mappings.n[action.key] = function()
-        local ret = action.callback(self)
-        self:close()
-        if type(ret) == "function" then
-          ret()
+      if action.callback then
+        mappings.n[action.key] = function()
+          local ret = action.callback(self)
+          self:close()
+          if type(ret) == "function" then
+            ret()
+          end
+        end
+      else
+        mappings.n[action.key] = function()
+          local notif = require 'neogit.lib.notification'
+          notif.create(action.description .. " has not been implemented yet", { type = "warning" })
         end
       end
     end
