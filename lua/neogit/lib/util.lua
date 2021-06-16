@@ -11,6 +11,10 @@ end
 local function range(from, to, step)
   local step = step or 1
   local t = {}
+  if to == nil then
+    to = from
+    from = 1
+  end
   for i=from, to do
     table.insert(t, i)
   end
