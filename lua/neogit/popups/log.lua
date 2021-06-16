@@ -3,6 +3,8 @@ local LogViewBuffer = require 'neogit.buffers.log_view'
 local git = require("neogit.lib.git")
 local util = require 'neogit.lib.util'
 
+local M = {}
+
 local commit_header_pat = "([| *]*)%*([| *]*)commit (%w+)"
 
 local function is_new_commit(line)
@@ -90,197 +92,68 @@ local function parse(raw)
   return commits
 end
 
-local function create()
-  popup.deprecated_create(
-    "NeogitLogPopup",
-    {
-      {
-        key = "g",
-        description = "Show graph",
-        cli = "graph",
-        enabled = true
-      },
-      {
-        key = "c",
-        description = "Show graph in color",
-        cli = "color",
-        enabled = true,
-        parse = false
-      },
-      {
-        key = "d",
-        description = "Show refnames",
-        cli = "decorate",
-        enabled = true
-      },
-      {
-        key = "S",
-        description = "Show signatures",
-        cli = "show-signature",
-        enabled = false
-      },
-      {
-        key = "u",
-        description = "Show diffs",
-        cli = "patch",
-        enabled = false
-      },
-      {
-        key = "s",
-        description = "Show diffstats",
-        cli = "stat",
-        enabled = false
-      },
-      {
-        key = "D",
-        description = "Simplify by decoration",
-        cli = "simplify-by-decoration",
-        enabled = false
-      },
-      {
-        key = "f",
-        description = "Follow renames when showing single-file log",
-        cli = "follow",
-        enabled = false
-      },
-    },
-    {
-      {
-        key = "n",
-        description = "Limit number of commits",
-        cli = "max-count",
-        value = "256"
-      },
-      {
-        key = "f",
-        description = "Limit to files",
-        cli = "-count",
-        value = ""
-      },
-      {
-        key = "a",
-        description = "Limit to author",
-        cli = "author",
-        value = ""
-      },
-      {
-        key = "g",
-        description = "Search messages",
-        cli = "grep",
-        value = ""
-      },
-      {
-        key = "G",
-        description = "Search changes",
-        cli = "",
-        value = ""
-      },
-      {
-        key = "S",
-        description = "Search occurences",
-        cli = "",
-        value = ""
-      },
-      {
-        key = "L",
-        description = "Trace line evolution",
-        cli = "",
-        value = ""
-      },
-    },
-    {
-      {
-        {
-          key = "l",
-          description = "Log current",
-          callback = function(popup)
-            local output = git.cli.log.args(unpack(popup:get_arguments())).call_sync()
-            LogViewBuffer.new(parse(output)):open()
-          end
-        },
-        {
-          key = "o",
-          description = "Log other",
-          callback = function() end
-        },
-        {
-          key = "h",
-          description = "Log HEAD",
-          callback = function(popup)
-            local output = 
-              git.cli.log
-                .oneline
-                .args(unpack(popup:get_arguments()))
-                .for_range('HEAD')
-                .call_sync()
+function M.create()
+  local p = popup.builder()
+    :name("NeogitLogPopup")
+    :switch("g", "graph", "Show graph", true)
+    :switch("c", "color", "Show graph in color", true, false)
+    :switch("d", "decorate", "Show refnames", true)
+    :switch("S", "show-signature", "Show signatures", false)
+    :switch("u", "patch", "Show diffs", false)
+    :switch("s", "stat", "Show diffstats", false)
+    :switch("D", "simplify-by-decoration", "Simplify by decoration", false)
+    :switch("f", "follow", "Follow renames when showing single-file log", false)
+    :option("n", "max-count", "256", "Limit number of commits")
+    :option("f", "count", "", "Limit to files")
+    :option("a", "author", "", "Limit to author")
+    :option("g", "grep", "", "Search messages")
+    :option("G", "", "", "Search changes")
+    :option("S", "", "", "Search occurences")
+    :option("L", "", "", "Trace line evolution")
+    :action("l", "Log current", function(popup)
+      local output = git.cli.log.args(unpack(popup:get_arguments())).call_sync()
+      LogViewBuffer.new(parse(output)):open()
+    end)
+    :action("o", "Log other")
+    :action("h", "Log HEAD", function(popup) 
+      local output = 
+        git.cli.log
+          .oneline
+          .args(unpack(popup:get_arguments()))
+          .for_range('HEAD')
+          .call_sync()
 
-            LogViewBuffer.new(parse(output)):open()
-          end
-        },
-      },
-      {
-        {
-          key = "L",
-          description = "Log local branches",
-          callback = function(popup)
-            local output = 
-              git.cli.log
-                .oneline
-                .args(unpack(popup:get_arguments()))
-                .branches
-                .call_sync()
+      LogViewBuffer.new(parse(output)):open()
+    end)
+    :new_action_row()
+    :action("b", "Log all branches", function(popup)
+      local output = 
+        git.cli.log
+          .oneline
+          .args(unpack(popup:get_arguments()))
+          .branches
+          .remotes
+          .call_sync()
+      LogViewBuffer.new(parse(output)):open()
+    end)
+    :action("a", "Log all references", function(popup)
+      local output = 
+        git.cli.log
+          .oneline
+          .args(unpack(popup:get_arguments()))
+          .all
+          .call_sync()
+      LogViewBuffer.new(parse(output)):open()
+    end)
+    :new_action_row()
+    :action("r", "Reflog current")
+    :action("O", "Reflog other")
+    :action("H", "Reflog HEAD")
+    :build()
 
-            LogViewBuffer.new(parse(output)):open()
-          end
-        },
-        {
-          key = "b",
-          description = "Log all branches",
-          callback = function(popup)
-            local output = 
-              git.cli.log
-                .oneline
-                .args(unpack(popup:get_arguments()))
-                .branches
-                .remotes
-                .call_sync()
-            LogViewBuffer.new(parse(output)):open()
-          end
-        },
-        {
-          key = "a",
-          description = "Log all references",
-          callback = function(popup)
-            local output = 
-              git.cli.log
-                .oneline
-                .args(unpack(popup:get_arguments()))
-                .all
-                .call_sync()
-            LogViewBuffer.new(parse(output)):open()
-          end
-        },
-      },
-      {
-        {
-          key = "r",
-          description = "Reflog current",
-          callback = function() end
-        },
-        {
-          key = "O",
-          description = "Reflog other",
-          callback = function() end
-        },
-        {
-          key = "H",
-          description = "Reflog HEAD",
-          callback = function() end
-        },
-      }
-    })
+  p:show()
+
+  return p
 end
 
-return {
-  create = create
-}
+return M
