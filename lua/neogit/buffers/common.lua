@@ -129,8 +129,6 @@ M.Grid = Component.new(function(props)
     end
   end
 
-  Ui.visualize_tree(rendered)
-
   return col(rendered)
 end)
 
