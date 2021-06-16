@@ -5,6 +5,8 @@ local git = require("neogit.lib.git")
 local a = require 'plenary.async_lib'
 local async, await, scheduler, void = a.async, a.await, a.scheduler, a.void
 
+local M = {}
+
 local pull_upstream = void(async(function (popup)
   local _, code = await(git.cli.pull.no_commit.args(unpack(popup:get_arguments())).call())
   if code == 0 then
@@ -14,39 +16,18 @@ local pull_upstream = void(async(function (popup)
   end
 end))
 
-local function create()
-  popup.deprecated_create(
-    "NeogitPullPopup",
-    {
-      {
-        key = "r",
-        description = "Rebase local commits",
-        cli = "rebase",
-        enabled = false
-      },
-    },
-    {},
-    {
-      {
-        {
-          key = "p",
-          description = "Pull from pushremote",
-          callback = pull_upstream
-        },
-        {
-          key = "u",
-          description = "Pull from upstream",
-          callback = pull_upstream
-        },
-        {
-          key = "e",
-          description = "Pull from elsewhere",
-          callback = function() end
-        },
-      },
-    })
+function M.create()
+  local p = popup.builder()
+    :name("NeogitPullPopup")
+    :switch("r", "rebase", "Rebase local commits", false)
+    :action("p", "Pull from pushremote", pull_upstream)
+    :action("u", "Pull from upstream", pull_upstream)
+    :action("e", "Pull from elsewhere")
+    :build()
+
+  p:show()
+
+  return p
 end
 
-return {
-  create = create
-}
+return M
