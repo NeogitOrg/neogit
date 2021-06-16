@@ -8,4 +8,5 @@ hi def link NeogitPopupOptionKey Operator
 hi def link NeogitPopupOptionEnabled SpecialChar
 hi def link NeogitPopupOptionDisabled Comment
 
+hi def link NeogitPopupActionDisabled Comment
 hi def link NeogitPopupActionKey Operator
