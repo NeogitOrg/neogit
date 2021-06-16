@@ -34,9 +34,13 @@ function M:new_action_row()
   return self
 end
 
-function M:switch(key, cli, description, enabled)
+function M:switch(key, cli, description, enabled, parse)
   if enabled == nil then
     enabled = false
+  end
+
+  if parse == nil then
+    parse = true
   end
 
   table.insert(self.state.switches, {
@@ -44,7 +48,8 @@ function M:switch(key, cli, description, enabled)
     key = key,
     cli = cli,
     description = description,
-    enabled = enabled
+    enabled = enabled,
+    parse = parse
   })
 
   return self
@@ -66,7 +71,7 @@ function M:action(key, description, callback)
   table.insert(self.state.actions[#self.state.actions], {
     key = key,
     description = description,
-    callback = callback and a.void(a.async(callback)) or function() end
+    callback = callback and a.void(a.async(callback)) or nil
   })
 
   return self
