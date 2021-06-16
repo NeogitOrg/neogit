@@ -116,17 +116,20 @@ M.Grid = Component.new(function(props)
         gap_str = string.rep(" ", gap)
       end
 
-      if #gap_str > 0 then
-        if item.tag == "text" then
-          item.value = gap_str .. string.format("%" .. column_width .. "s", item.value)
-        elseif item.tag == "row" then
-            table.insert(item.children, 1, text(gap_str))
-        else
-          error()
-        end
+      if item.tag == "text" then
+        item.value = gap_str .. string.format("%" .. column_width .. "s", item.value)
+      elseif item.tag == "row" then
+        table.insert(item.children, 1, text(gap_str))
+        local width = item:get_width()
+        local remaining_width = column_width - width + gap
+        table.insert(item.children, text(string.rep(" ", remaining_width)))
+      else
+        error()
       end
     end
   end
+
+  Ui.visualize_tree(rendered)
 
   return col(rendered)
 end)
