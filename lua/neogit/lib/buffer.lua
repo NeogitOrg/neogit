@@ -51,6 +51,14 @@ function Buffer:get_lines(first, last, strict)
   return vim.api.nvim_buf_get_lines(self.handle, first, last, strict)
 end
 
+function Buffer:get_line(line)
+  return vim.fn.getbufline(self.handle, line)
+end
+
+function Buffer:get_current_line(first, last, strict)
+  return self:get_line(vim.fn.getpos(".")[2])
+end
+
 function Buffer:set_lines(first, last, strict, lines)
   vim.api.nvim_buf_set_lines(self.handle, first, last, strict, lines)
 end
