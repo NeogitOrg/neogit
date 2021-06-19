@@ -77,6 +77,18 @@ function M:action(key, description, callback)
   return self
 end
 
+function M:action_if(cond, key, description, callback)
+  if cond then
+    table.insert(self.state.actions[#self.state.actions], {
+      key = key,
+      description = description,
+      callback = callback and a.void(a.async(callback)) or nil
+    })
+  end
+
+  return self
+end
+
 function M:build()
   if self.state.name == nil then
     error("A popup needs to have a name!")
