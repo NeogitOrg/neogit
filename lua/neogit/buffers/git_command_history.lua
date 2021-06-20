@@ -5,7 +5,6 @@ local util = require 'neogit.lib.util'
 
 local map = util.map
 
-local Component = Ui.Component
 local text = Ui.text
 local col = Ui.col
 local row = Ui.row

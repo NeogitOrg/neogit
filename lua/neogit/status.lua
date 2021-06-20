@@ -737,7 +737,7 @@ local cmd_func_map = function ()
     end)),
     ["RefreshBuffer"] = function() dispatch_refresh(true) end,
     ["HelpPopup"] = function ()
-      local line = status_buffer:get_current_line()
+      local line = M.status_buffer:get_current_line()
 
       require("neogit.popups.help").create { 
         get_stash = function()
@@ -765,7 +765,7 @@ local cmd_func_map = function ()
     ["CommitPopup"] = require("neogit.popups.commit").create,
     ["LogPopup"] = require("neogit.popups.log").create,
     ["StashPopup"] = function ()
-      local line = status_buffer:get_current_line()
+      local line = M.status_buffer:get_current_line()
 
       require("neogit.popups.stash").create { 
         name = line[1]:match('^(stash@{%d+})') 

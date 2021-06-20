@@ -1,8 +1,8 @@
 local a = require 'plenary.async_lib'
-local async, await, void = a.async, a.await, a.void
 local status = require 'neogit.status'
 local popup = require('neogit.lib.popup')
-local stash = require('neogit.lib.git.stash')
+
+local await = a.await
 
 local M = {}
 

@@ -55,7 +55,9 @@ M.Hunk = Component.new(function(props)
 end)
 
 M.List = Component.new(function(props)
-  local children = filter(props.items, function(x) return type(x) == "table" end)
+  local children = filter(props.items, function(x) 
+    return type(x) == "table" 
+  end)
 
   if props.separator then
     children = intersperse(children, text(props.separator))
@@ -72,7 +74,6 @@ end)
 
 M.Grid = Component.new(function(props)
   local rendered = {}
-  local row_count = #props.items
   local column_width = 1
   local gap = props.gap or 0
 
@@ -80,7 +81,9 @@ M.Grid = Component.new(function(props)
     local children = {}
 
     if i ~= 1 then
-      children = map(range(gap), function() return text "" end)
+      children = map(range(gap), function() 
+        return text "" 
+      end)
     end
     -- current row
     local r = props.items[i]
@@ -124,7 +127,7 @@ M.Grid = Component.new(function(props)
         local remaining_width = column_width - width + gap
         table.insert(item.children, text(string.rep(" ", remaining_width)))
       else
-        error()
+        error("TODO")
       end
     end
   end

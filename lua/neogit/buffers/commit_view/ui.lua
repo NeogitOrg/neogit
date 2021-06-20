@@ -10,7 +10,6 @@ local col = Ui.col
 local row = Ui.row
 local map = util.map
 local intersperse = util.intersperse
-local range = util.range
 
 function M.OverviewFile(file)
   return row.tag("OverviewFile") {

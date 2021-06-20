@@ -14,7 +14,7 @@ function Ui.new(buf)
   return this
 end
 
-function Ui._print_component(indent, c, options)
+function Ui._print_component(indent, c, _options)
   local output = string.rep("  ", indent)
   if c.options.hidden then
     output = output .. "(H)"
@@ -246,7 +246,9 @@ end
 
 function Ui:render(...)
   self.layout = {...}
-  self.layout = filter(self.layout, function(x) return type(x) == "table" end)
+  self.layout = filter(self.layout, function(x) 
+    return type(x) == "table" 
+  end)
   self:update()
 end
 

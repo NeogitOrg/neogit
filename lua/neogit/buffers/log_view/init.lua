@@ -1,9 +1,6 @@
 local Buffer = require("neogit.lib.buffer")
 local CommitViewBuffer = require 'neogit.buffers.commit_view'
-local cli = require 'neogit.lib.git.cli'
-local util = require 'neogit.lib.util'
 local ui = require 'neogit.buffers.log_view.ui'
-local Ui = require 'neogit.lib.ui'
 
 local M = {}
 
@@ -112,7 +109,7 @@ function M:open()
         end
       }
     },
-    render = function(buffer)
+    render = function()
       return ui.LogView(self.data)
     end
   }

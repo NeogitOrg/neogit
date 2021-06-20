@@ -39,7 +39,6 @@ local function parse_diff(output, with_stats)
     hunks = {},
     stats = {}
   }
-  local is_header = true
   local start_idx = 1
 
   if with_stats then

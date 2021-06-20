@@ -6,9 +6,8 @@ local input = require("neogit.lib.input")
 local Buffer = require("neogit.lib.buffer")
 local config = require("neogit.config")
 local a = require 'plenary.async_lib'
-local async, await, scheduler, void, wrap, uv = a.async, a.await, a.scheduler, a.void, a.wrap, a.uv
+local async, await, scheduler, wrap, uv = a.async, a.await, a.scheduler, a.wrap, a.uv
 local split = require('neogit.lib.util').split
-local notif = require 'neogit.lib.notification'
 local uv_utils = require 'neogit.lib.uv'
 
 local M = {}
@@ -127,7 +126,7 @@ function M.create()
       data = data or ''
       -- we need \r? to support windows
       data = split(data, '\r?\n')
-      await(do_commit(data, cli.commit.commit_message_file(commit_file).args(unpack(popup:get_arguments()))))
+      await(do_commit(data, cli.commit.commit_message_file(commit_file).args(unpack(popup:get_arguments())), skip_gen))
     end)
     :action("e", "Extend", function()
       await(do_commit(nil, cli.commit.no_edit.amend))

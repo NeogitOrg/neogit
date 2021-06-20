@@ -15,7 +15,7 @@ local function range(from, to, step)
     to = from
     from = 1
   end
-  for i=from, to do
+  for i=from, to, step do
     table.insert(t, i)
   end
   return t

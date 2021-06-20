@@ -9,7 +9,6 @@ local row = Ui.row
 local text = Ui.text
 local Component = Ui.Component
 local map = util.map
-local range = util.range
 local List = common.List
 local Grid = common.Grid
 
@@ -236,21 +235,6 @@ function M:show()
 end
 
 M.deprecated_create = require 'neogit.lib.popup.lib'.create
-
-function TEST()
-  M.builder()
-    :name("test")
-    :switch("f", "force-with-lease", "Force with lease")
-    :switch("F", "force", "Force")
-    :switch("h", "no-verify", "Disable hooks")
-    :option("x", "xd", nil, "some test option")
-    :switch("d", "dry-run", "Dry run")
-    :action("p", "Push to pushremote", function()end)
-    :action("u", "Push to upstream", function()end)
-    :action("e", "Push to branch")
-    :build()
-    :show()
-end
 
 return M
 -- return require("neogit.lib.popup.lib")
