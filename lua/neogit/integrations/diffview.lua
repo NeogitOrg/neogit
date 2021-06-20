@@ -8,6 +8,9 @@ local CView = require'diffview.api.c-view'.CView
 local dv_lib = require'diffview.lib'
 
 local neogit = require 'neogit'
+local status = require'neogit.status'
+local a = require 'plenary.async_lib'
+local await, async, void = a.await, a.async, a.void
 
 local old_config
 
@@ -41,27 +44,33 @@ function M.open(selected_file_name)
 
   dv.setup(config)
 
-  local left = Rev:new(RevType.COMMIT, neogit.repo.head.oid)
-  local right = Rev:new(RevType.LOCAL, nil, true)
+  local left = Rev:new(RevType.INDEX)
+  local right = Rev:new(RevType.LOCAL)
   local git_root = neogit.cli.git_root_sync()
 
   local function update_files()
     local files = {}
-    for _, section in ipairs({neogit.repo.unstaged}) do
+    local repo = neogit.get_repo()
+    local sections = {
+      working = repo.unstaged,
+      staged = repo.staged
+    }
+    for kind, section in pairs(sections) do
+      files[kind] = {}
       for _, item in ipairs(section.files) do
         local file = {
           path = item.name,
           status = item.mode,
-          stats = {
+          stats = (item.diff and item.diff.stats) and {
             additions = item.diff.stats.additions or 0,
             deletions = item.diff.stats.deletions or 0
-          },
-          left_null = item.mode == "A",
+          } or nil,
+          left_null = vim.tbl_contains({ "A", "?" }, item.mode),
           right_null = false,
           selected = item.name == selected_file_name
         }
 
-        table.insert(files, file)
+        table.insert(files[kind], file)
       end
     end
     selected_file_name = nil
@@ -76,12 +85,25 @@ function M.open(selected_file_name)
     right = right,
     files = files,
     update_files = update_files,
-    get_file_data = function(path, side)
-      return side == "left"
-        and neogit.cli.show.file(path).call_sync()
-        or nil
+    get_file_data = function(kind, path, side)
+      local args = { path }
+      if kind == "staged" then
+        if side == "left" then
+          table.insert(args, "HEAD")
+        end
+        return neogit.cli.show.file(unpack(args)).call_sync()
+      elseif kind == "working" then
+        return side == "left"
+          and neogit.cli.show.file(path).call_sync()
+          or nil
+      end
     end
   }
+
+  view:on_files_staged(void(async(function (_)
+    await(status.refresh({ status = true, diffs = true }))
+    view:update_files()
+  end)))
 
   dv_lib.add_view(view)
 

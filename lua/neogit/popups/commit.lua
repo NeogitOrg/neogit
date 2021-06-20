@@ -1,8 +1,10 @@
 local popup = require("neogit.lib.popup")
+local notif = require("neogit.lib.notification")
 local status = require 'neogit.status'
 local cli = require("neogit.lib.git.cli")
 local input = require("neogit.lib.input")
 local Buffer = require("neogit.lib.buffer")
+local config = require("neogit.config")
 local a = require 'plenary.async_lib'
 local async, await, scheduler, void, wrap, uv = a.async, a.await, a.scheduler, a.void, a.wrap, a.uv
 local split = require('neogit.lib.util').split
@@ -15,6 +17,7 @@ local function get_commit_file()
   return cli.git_dir_path_sync() .. '/' .. 'NEOGIT_COMMIT_EDITMSG'
 end
 
+-- selene: allow(global_usage)
 local get_commit_message = wrap(function (content, cb)
   local written = false
   Buffer.create {
@@ -29,7 +32,8 @@ local get_commit_message = wrap(function (content, cb)
       end,
       ["BufUnload"] = function()
         if written then
-          if input.get_confirmation("Are you sure you want to commit?") then
+          if config.values.disable_commit_confirmation or
+              input.get_confirmation("Are you sure you want to commit?") then
             vim.cmd [[
               silent g/^#/d
               silent w!
@@ -84,7 +88,7 @@ local prompt_commit_message = async(function (msg, skip_gen)
   await(get_commit_message(output))
 end)
 
-local do_commit = async(function(data, cmd)
+local do_commit = async(function(data, cmd, skip_gen)
   await(scheduler())
   local commit_file = get_commit_file()
   if data then
@@ -112,9 +116,9 @@ function M.create()
     :switch("s", "signoff", "Add Signed-off-by line", false)
     :switch("S", "no-gpg-sign", "Do not sign this commit", false)
     :switch("R", "reset-author", "Claim authorship and reset author date", false)
-    :option("A", "author", "Override the author", "")
-    :option("S", "gpg-sign", "Sign using gpg", "")
-    :option("C", "reuse-message", "Reuse commit message", "")
+    :option("A", "author", "", "Override the author")
+    :option("S", "gpg-sign", "", "Sign using gpg")
+    :option("C", "reuse-message", "", "Reuse commit message")
     :action("c", "Commit", function(popup)
       await(scheduler())
       local commit_file = get_commit_file()

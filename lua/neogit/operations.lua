@@ -16,10 +16,12 @@ local meta = {}
 
 function M.wait(key, time)
   if M[key] == nil then return end
-  vim.fn.wait(time or 1000, function () return M[key] == false end, 100)
+  vim.fn.wait(time or 1000, function () 
+    return M[key] == false 
+  end, 100)
 end
 
-function meta.__call(tbl, key, async_func)
+function meta.__call(_tbl, key, async_func)
   return void(async(function (...)
     M[key] = true
     await(async_func(...))

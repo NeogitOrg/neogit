@@ -25,8 +25,8 @@ local configurations = {
     },
     aliases = {
       file = function(tbl)
-        return function(name)
-          return tbl.args(":" .. name)
+        return function(name, rev)
+          return tbl.args((rev or "") .. ":" .. name)
         end
       end
     }
@@ -296,7 +296,9 @@ end
 
 local exec = async(function(cmd, args, cwd, stdin, env, show_popup)
   args = args or {}
-  if show_popup == nil then show_popup = true end
+  if show_popup == nil then 
+    show_popup = true 
+  end
   table.insert(args, 1, cmd)
 
   if not cwd then
@@ -326,9 +328,11 @@ local exec = async(function(cmd, args, cwd, stdin, env, show_popup)
   return result, code, errors
 end)
 
-local function new_job(cmd, args, cwd, stdin, env, show_popup)
+local function new_job(cmd, args, cwd, _stdin, _env, show_popup)
   args = args or {}
-  if show_popup == nil then show_popup = true end
+  if show_popup == nil then 
+    show_popup = true 
+  end
   table.insert(args, 1, cmd)
 
   if not cwd then
@@ -338,7 +342,7 @@ local function new_job(cmd, args, cwd, stdin, env, show_popup)
   end
 
   local cmd = "git " .. table.concat(args, ' ')
-  local job = Job:new(cmd)
+  local job = Job.new({ cmd = cmd })
   job.cwd = cwd
 
   handle_new_cmd(job, show_popup)
@@ -460,7 +464,9 @@ local mt_builder = {
 
 local function new_builder(subcommand)
   local configuration = configurations[subcommand]
-  if not configuration then error("Command not found") end
+  if not configuration then 
+    error("Command not found") 
+  end
 
   local state = {
     options = {},
@@ -478,10 +484,18 @@ local function new_builder(subcommand)
     [k_command] = subcommand,
     call = async(function ()
       local args = {}
-      for _,o in ipairs(state.options) do table.insert(args, o) end
-      for _,a in ipairs(state.arguments) do table.insert(args, a) end
-      if #state.files > 0 then table.insert(args, '--') end
-      for _,f in ipairs(state.files) do table.insert(args, f) end
+      for _,o in ipairs(state.options) do 
+        table.insert(args, o) 
+      end
+      for _,a in ipairs(state.arguments) do 
+        table.insert(args, a) 
+      end
+      if #state.files > 0 then 
+        table.insert(args, '--') 
+      end
+      for _,f in ipairs(state.files) do 
+        table.insert(args, f) 
+      end
 
       if state.prefix then
         table.insert(args, 1, state.prefix)
@@ -491,10 +505,18 @@ local function new_builder(subcommand)
     end),
     call_sync = function()
       local args = {}
-      for _,o in ipairs(state.options) do table.insert(args, o) end
-      for _,a in ipairs(state.arguments) do table.insert(args, a) end
-      if #state.files > 0 then table.insert(args, '--') end
-      for _,f in ipairs(state.files) do table.insert(args, f) end
+      for _,o in ipairs(state.options) do 
+        table.insert(args, o) 
+      end
+      for _,a in ipairs(state.arguments) do 
+        table.insert(args, a) 
+      end
+      if #state.files > 0 then 
+        table.insert(args, '--') 
+      end
+      for _,f in ipairs(state.files) do 
+        table.insert(args, f) 
+      end
 
       if state.prefix then
         table.insert(args, 1, state.prefix)
@@ -568,7 +590,7 @@ local function new_parallel_builder(calls)
 end
 
 local meta = {
-  __index = function (tbl, key)
+  __index = function (_tbl, key)
     if configurations[key] then
       return new_builder(key)
     end

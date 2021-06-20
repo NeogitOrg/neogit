@@ -9,7 +9,7 @@ for _, m in ipairs(modules) do
   require('neogit.lib.git.'..m).register(meta.__index)
 end
 
-M.create = function (path)
+M.create = function (_path)
   local cache = {
     head = {
       branch = nil,
