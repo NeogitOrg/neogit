@@ -56,10 +56,12 @@ function GitCommandHistory:show()
         return col {
           row { 
             text.highlight(highlight_code)(string.format("%3d", item.code)), 
-            text.padding_left(1)(item.cmd),
-            text
-              .padding_left(1)
-              .highlight("NeogitCommandTime")(string.format("(%3.3f ms)", item.time))
+            text " ",
+            text(item.cmd),
+            text " ",
+            text.highlight("NeogitCommandTime")(string.format("(%3.3f ms)", item.time)),
+            text " ",
+            text.highlight("NeogitCommandTime")(string.format("[%s %d]", is_err and "stderr" or "stdout", is_err and #item.stderr or #item.stdout)),
           },
           col
             .hidden(true)
