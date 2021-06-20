@@ -144,7 +144,7 @@ function Ui:_render(first_line, first_col, parent, components, flags)
         c.position.row_start = curr_line - first_line + 1
         local highlight = c:get_highlight()
         if c.tag == "text" then
-          local padding_left = c:get_padding_left(i == 1)
+          local padding_left = flags.in_nested_row and "" or c:get_padding_left(i == 1)
           text = padding_left .. text
 
           col_start = col_start + #padding_left
@@ -162,12 +162,20 @@ function Ui:_render(first_line, first_col, parent, components, flags)
           col_start = col_end
         elseif c.tag == "row" then
           flags.in_nested_row = true
+          local padding_left = flags.in_nested_row and "" or c:get_padding_left(i == 1)
           local res = self:_render(curr_line, col_start, c, c.children, flags)
           flags.in_nested_row = false
+
+          res.text = padding_left .. res.text
+
+          if c.position.col_end then
+            c.position.col_end = c.position.col_end + #padding_left
+          end
 
           text = text .. res.text
 
           for _, h in ipairs(res.highlights) do
+            h.to = h.to + #padding_left
             table.insert(highlights, h)
           end
 
