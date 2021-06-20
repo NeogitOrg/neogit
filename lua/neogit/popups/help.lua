@@ -12,7 +12,7 @@ local function create(pos)
         {
           key = "p",
           description = "Pull",
-          callback = function(popup)
+          callback = function()
             require('neogit.popups.pull').create()
           end
         },
@@ -21,7 +21,7 @@ local function create(pos)
         {
           key = "P",
           description = "Push",
-          callback = function(popup)
+          callback = function()
             require('neogit.popups.push').create()
           end
         },
@@ -39,7 +39,7 @@ local function create(pos)
         {
           key = "D",
           description = "Diff",
-          callback = function (popup)
+          callback = function ()
             require('neogit.popups.diff').create()
           end
         }
@@ -48,7 +48,7 @@ local function create(pos)
         {
           key = "L",
           description = "Log",
-          callback = function(popup)
+          callback = function()
             require('neogit.popups.log').create()
           end
         },
@@ -57,7 +57,7 @@ local function create(pos)
         {
           key = "c",
           description = "Commit",
-          callback = function(popup)
+          callback = function()
             require('neogit.popups.commit').create()
           end
         },
@@ -66,7 +66,7 @@ local function create(pos)
         {
           key = "b",
           description = "Branch",
-          callback = function (popup)
+          callback = function ()
             require('neogit.popups.branch').create()
           end
         }
@@ -75,7 +75,7 @@ local function create(pos)
         {
           key = "$",
           description = "Git Command History",
-          callback = function(popup)
+          callback = function()
             GitCommandHistory:new():show()
           end
         },
@@ -84,7 +84,7 @@ local function create(pos)
         {
           key = "<c-r>",
           description = "Refresh Status Buffer",
-          callback = function(popup)
+          callback = function()
             status.refresh(true)
           end
         },

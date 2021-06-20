@@ -72,6 +72,7 @@ local perform_stash = async(function (include)
       .args('refs/stash', tree)
       .call())
 
+  -- selene: allow(empty_if)
   if include.worktree and include.index then
     -- disabled because stashing both worktree and index via this function
     -- leaves a malformed stash entry, so reverting the changes is

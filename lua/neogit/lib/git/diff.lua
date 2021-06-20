@@ -120,7 +120,9 @@ function diff.register(meta)
     if type(filter) == 'table' then
       filter = ItemFilter.new(Collection.new(filter):map(function (item)
         local section, file = item:match("^([^:]+):(.*)$")
-        if not section then error('Invalid filter item: '..item, 3) end
+        if not section then 
+          error('Invalid filter item: '..item, 3) 
+        end
 
         return { section = section, file = file }
       end))

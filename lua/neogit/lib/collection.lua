@@ -37,7 +37,9 @@ function M.filter(tbl, func)
   local result = {}
 
   for _, item in ipairs(tbl) do
-    if func(item) then table.insert(result, item) end
+    if func(item) then 
+      table.insert(result, item) 
+    end
   end
 
   return M(result)

@@ -14,6 +14,7 @@ local function get_commit_file()
   return cli.git_dir_path_sync() .. '/' .. 'NEOGIT_COMMIT_EDITMSG'
 end
 
+-- selene: allow(global_usage)
 local get_commit_message = wrap(function (content, cb)
   Buffer.create {
     name = get_commit_file(),
@@ -26,7 +27,6 @@ local get_commit_message = wrap(function (content, cb)
       vim.cmd("silent w!")
 
       local written = false
-
       _G.__NEOGIT_COMMIT_BUFFER_CB_WRITE = function()
         written = true
       end
@@ -89,7 +89,7 @@ local prompt_commit_message = async(function (msg, skip_gen)
   await(get_commit_message(output))
 end)
 
-local do_commit = async(function(data, cmd)
+local do_commit = async(function(data, cmd, skip_gen)
   await(scheduler())
   local commit_file = get_commit_file()
   if data then
@@ -187,7 +187,7 @@ local function create()
             data = data or ''
             -- we need \r? to support windows
             data = split(data, '\r?\n')
-            await(do_commit(data, cli.commit.commit_message_file(commit_file).args(unpack(popup.get_arguments()))))
+            await(do_commit(data, cli.commit.commit_message_file(commit_file).args(unpack(popup.get_arguments())), skip_gen))
           end))
         },
       },

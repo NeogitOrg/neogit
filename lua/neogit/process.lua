@@ -22,8 +22,12 @@ local function spawn(options, cb)
     stdio = {stdin, stdout, stderr},
   }
 
-  if options.cwd then params.cwd = options.cwd end
-  if options.args then params.args = options.args end
+  if options.cwd then 
+    params.cwd = options.cwd 
+  end
+  if options.args then 
+    params.args = options.args 
+  end
   if options.env and #options.env > 0 then
     params.env = {}
     -- setting 'env' completely overrides the parent environment, so we need to

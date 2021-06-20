@@ -6,7 +6,9 @@ function M.dot(chain)
   local parts = collect(util.split(chain, '%.'))
   return function (tbl)
     parts:each(function (p)
-      if tbl then tbl = tbl[p] end
+      if tbl then 
+        tbl = tbl[p] 
+      end
     end)
     return tbl
   end

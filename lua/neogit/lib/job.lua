@@ -108,19 +108,9 @@ function Job.start_all(jobs)
 end
 
 function Job.wait_all(jobs)
-  vim.fn.jobwait(util.map(jobs, function(job) return job.channel end))
-end
-
-function TEST()
-  Job.new {
-    cmd = "echo hello&echo world",
-    on_stdout = function(data)
-      inspect(data)
-    end,
-    on_exit = function(job)
-      inspect(job.stdout)
-    end
-  }:start()
+  vim.fn.jobwait(util.map(jobs, function(job) 
+    return job.channel 
+  end))
 end
 
 return Job

@@ -44,6 +44,7 @@ local update_status = async(function (state)
           table.insert(untracked_files, {
             name = rest
           })
+        -- selene: allow(empty_if)
         elseif kind == '!' then
           -- we ignore ignored files for now
         elseif kind == '1' then
@@ -90,8 +91,12 @@ local update_status = async(function (state)
     end
   end
 
-  if head.branch == state.head.branch then head.commit_message = state.head.commit_message end
-  if upstream.branch == state.upstream.branch then upstream.commit_message = state.upstream.commit_message end
+  if head.branch == state.head.branch then 
+    head.commit_message = state.head.commit_message 
+  end
+  if upstream.branch == state.upstream.branch then 
+    upstream.commit_message = state.upstream.commit_message 
+  end
 
   state.head = head
   state.upstream = upstream

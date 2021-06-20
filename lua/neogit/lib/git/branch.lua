@@ -19,7 +19,9 @@ local function parse_branches(output)
   local other_branches = {}
   for _, b in ipairs(branches) do
     local branch_name = b:match('^  (.+)')
-    if branch_name then table.insert(other_branches, branch_name) end
+    if branch_name then 
+      table.insert(other_branches, branch_name) 
+    end
   end
 
   return other_branches

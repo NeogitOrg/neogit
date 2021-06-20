@@ -1,3 +1,5 @@
+--# selene: allow(parenthese_conditions, multiple_statements, incorrect_standard_library_use)
+
 local md5 = {
   _VERSION     = "md5.lua 1.1.0",
   _DESCRIPTION = "MD5 computation in Lua (5.1-3, LuaJIT)",
@@ -49,7 +51,9 @@ else
     end
 
     local normalize = function(f)
-      return function(a,b) return tobit(f(tobit(a), tobit(b))) end
+      return function(a,b) 
+        return tobit(f(tobit(a), tobit(b))) 
+      end
     end
 
     bit_or, bit_and, bit_xor = normalize(bit.bor), normalize(bit.band), normalize(bit.bxor)
@@ -69,7 +73,7 @@ else
 
     local function expand(t1, t2)
       local big, small = t1, t2
-      if(#big < #small) then
+      if #big < #small then
         big, small = small, big
       end
       -- expand small
@@ -84,7 +88,7 @@ else
       local tbl = to_bits(n)
       local size = math.max(#tbl, 32)
       for i = 1, size do
-        if(tbl[i] == 1) then
+        if tbl[i] == 1 then
           tbl[i] = 0
         else
           tbl[i] = 1
@@ -95,7 +99,7 @@ else
 
     -- defined as local above
     to_bits = function (n)
-      if(n < 0) then
+      if n < 0 then
         -- negative
         return to_bits(bit_not(math.abs(n)) + 1)
       end
@@ -120,7 +124,7 @@ else
 
       local tbl = {}
       for i = 1, #tbl_m do
-        if(tbl_m[i]== 0 and tbl_n[i] == 0) then
+        if tbl_m[i] == 0 and tbl_n[i] == 0 then
           tbl[i] = 0
         else
           tbl[i] = 1
@@ -137,7 +141,7 @@ else
 
       local tbl = {}
       for i = 1, #tbl_m do
-        if(tbl_m[i]== 0 or tbl_n[i] == 0) then
+        if tbl_m[i]== 0 or tbl_n[i] == 0 then
           tbl[i] = 0
         else
           tbl[i] = 1
@@ -154,7 +158,7 @@ else
 
       local tbl = {}
       for i = 1, #tbl_m do
-        if(tbl_m[i] ~= tbl_n[i]) then
+        if tbl_m[i] ~= tbl_n[i] then
           tbl[i] = 1
         else
           tbl[i] = 0
@@ -166,7 +170,7 @@ else
 
     bit_rshift = function(n, bits)
       local high_bit = 0
-      if(n < 0) then
+      if n < 0 then
         -- negative
         n = bit_not(math.abs(n)) + 1
         high_bit = 0x80000000
@@ -182,7 +186,7 @@ else
     end
 
     bit_lshift = function(n, bits)
-      if(n < 0) then
+      if n < 0 then
         -- negative
         n = bit_not(math.abs(n)) + 1
       end
@@ -197,7 +201,9 @@ end
 
 -- convert little-endian 32-bit int to a 4-char string
 local function lei2str(i)
-  local f=function (s) return char( bit_and( bit_rshift(i, s), 255)) end
+  local f=function (s) 
+    return char( bit_and( bit_rshift(i, s), 255)) 
+  end
   return f(0)..f(8)..f(16)..f(24)
 end
 

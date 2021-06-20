@@ -136,7 +136,9 @@ local function draw_buffer()
         if f.mode and f.original_name then
           output:append(string.format('%s %s -> %s', mode_to_text[f.mode], f.original_name, f.name))
         elseif f.mode then output:append(string.format('%s %s', mode_to_text[f.mode], f.name))
-        else output:append(f.name) end
+        else 
+          output:append(f.name) 
+        end
 
         local file = files_lookup[f.name] or { folded = true }
         file.first = #output
@@ -236,9 +238,13 @@ end
 
 local function restore_cursor_location(section_loc, file_loc, hunk_loc)
   if #M.locations == 0 then return vim.fn.setpos('.', {0, 1, 0, 0}) end
-  if not section_loc then section_loc = {1, ''} end
+  if not section_loc then 
+    section_loc = {1, ''} 
+  end
 
-  local section = Collection.new(M.locations):find(function (s) return s.name == section_loc[2] end)
+  local section = Collection.new(M.locations):find(function (s) 
+    return s.name == section_loc[2] 
+  end)
   if not section then
     file_loc, hunk_loc = nil, nil
     section = M.locations[section_loc[1]] or M.locations[#M.locations]
@@ -247,7 +253,9 @@ local function restore_cursor_location(section_loc, file_loc, hunk_loc)
     return vim.fn.setpos('.', {0, section.first, 0, 0})
   end
 
-  local file = Collection.new(section.files):find(function (f) return f.name == file_loc[2] end)
+  local file = Collection.new(section.files):find(function (f) 
+    return f.name == file_loc[2] 
+  end)
   if not file then
     hunk_loc = nil
     file = section.files[file_loc[1]] or section.files[#section.files]
@@ -374,8 +382,11 @@ local function toggle()
   if on_hunk then
     local hunk = get_current_hunk_of_item(item)
     hunk.folded = not hunk.folded
-  elseif item then item.folded = not item.folded
-  else section.folded = not section.folded end
+  elseif item then 
+    item.folded = not item.folded
+  else 
+    section.folded = not section.folded 
+  end
 
   refresh_status()
 end
@@ -826,7 +837,9 @@ function M.get_status()
 end
 
 function M.wait_on_current_operation(ms)
-  vim.wait(ms or 1000, function() return not current_operation end)
+  vim.wait(ms or 1000, function() 
+    return not M.current_operation 
+  end)
 end
 
 return M

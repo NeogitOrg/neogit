@@ -1,7 +1,14 @@
 local M = {}
 
-if not _G.__NEOGIT then _G.__NEOGIT = {} end
-if not _G.__NEOGIT.completers then _G.__NEOGIT.completers = {} end
+-- selene: allow(global_usage)
+if not _G.__NEOGIT then 
+  _G.__NEOGIT = {} 
+end
+
+-- selene: allow(global_usage)
+if not _G.__NEOGIT.completers then 
+  _G.__NEOGIT.completers = {} 
+end
 
 local function user_input_prompt(prompt, default_value, completion_function)
   vim.fn.inputsave()
@@ -9,8 +16,12 @@ local function user_input_prompt(prompt, default_value, completion_function)
   local args = {
     prompt = prompt
   }
-  if default_value then args.default = default_value end
-  if completion_function then args.completion = 'customlist,v:lua.__NEOGIT.completers.'..completion_function end
+  if default_value then 
+    args.default = default_value 
+  end
+  if completion_function then 
+    args.completion = 'customlist,v:lua.__NEOGIT.completers.'..completion_function 
+  end
 
   local status, result = pcall(vim.fn.input, args)
 
@@ -24,6 +35,7 @@ local function make_completion_function(options)
   local id = 'completer'..tostring(COMPLETER_SEQ)
   COMPLETER_SEQ = COMPLETER_SEQ + 1
 
+  -- selene: allow(global_usage)
   _G.__NEOGIT.completers[id] = function (arg_lead)
     local result = {}
     for _, v in ipairs(options) do
@@ -38,6 +50,7 @@ local function make_completion_function(options)
 end
 
 
+-- selene: allow(global_usage)
 local function remove_completion_function(id)
   _G.__NEOGIT.completers[id] = nil
 end
