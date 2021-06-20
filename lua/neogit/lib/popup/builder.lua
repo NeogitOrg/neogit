@@ -29,7 +29,7 @@ function M:env(x)
   return self
 end
 
-function M:new_action_row()
+function M:new_action_group()
   table.insert(self.state.actions, {})
   return self
 end

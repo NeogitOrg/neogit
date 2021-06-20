@@ -352,7 +352,7 @@ local function new()
     return builder
   end
 
-  function builder.new_action_row()
+  function builder.new_action_group()
     table.insert(builder.state.actions, {})
     return builder
   end
