@@ -526,10 +526,18 @@ local function new_builder(subcommand)
     end,
     to_job = function()
       local args = {}
-      for _,o in ipairs(state.options) do table.insert(args, o) end
-      for _,a in ipairs(state.arguments) do table.insert(args, a) end
-      if #state.files > 0 then table.insert(args, '--') end
-      for _,f in ipairs(state.files) do table.insert(args, f) end
+      for _,o in ipairs(state.options) do 
+        table.insert(args, o) 
+      end
+      for _,a in ipairs(state.arguments) do 
+        table.insert(args, a) 
+      end
+      if #state.files > 0 then 
+        table.insert(args, '--') 
+      end
+      for _,f in ipairs(state.files) do 
+        table.insert(args, f) 
+      end
 
       if state.prefix then
         table.insert(args, 1, state.prefix)

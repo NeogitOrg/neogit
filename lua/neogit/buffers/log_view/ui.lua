@@ -7,7 +7,6 @@ local row = Ui.row
 local text = Ui.text
 
 local map = util.map
-local intersperse = util.intersperse
 
 local M = {}
 

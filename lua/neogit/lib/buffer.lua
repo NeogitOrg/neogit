@@ -55,7 +55,7 @@ function Buffer:get_line(line)
   return vim.fn.getbufline(self.handle, line)
 end
 
-function Buffer:get_current_line(first, last, strict)
+function Buffer:get_current_line()
   return self:get_line(vim.fn.getpos(".")[2])
 end
 
@@ -279,7 +279,13 @@ function Buffer.create(config)
   if config.mappings then
     for mode, val in pairs(config.mappings) do
       for key, cb in pairs(val) do
-        buffer.mmanager.mappings[key] = { mode, function() cb(buffer) end, mode:find("v") ~= nil }
+        buffer.mmanager.mappings[key] = { 
+          mode, 
+          function() 
+            cb(buffer) 
+          end, 
+          mode:find("v") ~= nil 
+        }
       end
     end
   end

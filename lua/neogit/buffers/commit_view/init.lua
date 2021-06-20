@@ -2,7 +2,6 @@ local Buffer = require("neogit.lib.buffer")
 local cli = require 'neogit.lib.git.cli'
 local parser = require 'neogit.buffers.commit_view.parsing'
 local ui = require 'neogit.buffers.commit_view.ui'
-local diff_lib = require('neogit.lib.git.diff')
 
 local M = {}
 
@@ -99,7 +98,7 @@ function M:open()
         end
       }
     },
-    render = function(buffer)
+    render = function()
       return ui.CommitView(self.commit_info, self.commit_overview)
     end
   }
