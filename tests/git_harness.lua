@@ -31,9 +31,15 @@ function M.in_prepared_repo(cb)
   return function ()
     local dir = 'neogit_test_'..random_string(5)
     prepare_repository(dir)
-    vim.cmd('Neogit')
+    local _, err = pcall(function()
+      vim.cmd('Neogit')
+    end)
+    if err ~= nil then
+      cleanup_repository(dir)
+      error(err)
+    end
     a.util.block_on(status.reset())
-    local _, err = pcall(cb)
+    _, err = pcall(cb)
     cleanup_repository(dir)
     if err ~= nil then
       error(err)
