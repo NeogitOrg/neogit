@@ -5,7 +5,7 @@ local util = require 'neogit.lib.util'
 
 local M = {}
 
-local commit_header_pat = "([| *]*)%*([| *]*)commit (%w+)"
+local commit_header_pat = "([| *]*)%*?([| *]*)commit (%w+)"
 
 local function is_new_commit(line)
   local s1, s2, oid = line:match(commit_header_pat)
@@ -48,7 +48,7 @@ local function parse(raw)
     
     local function ladvance()
       local line = advance()
-      return line and line:sub(start_idx + 1, -1) or nil
+      return line and line:sub(start_idx, -1) or nil
     end
 
     do
@@ -78,7 +78,7 @@ local function parse(raw)
     line = advance()
 
     while line and not is_new_commit(line) do
-      table.insert(commit.description, line:sub(start_idx + 5, -1))
+      table.insert(commit.description, line:sub(start_idx + 4, -1))
       line = advance()
     end
 
@@ -91,6 +91,8 @@ local function parse(raw)
 
   return commits
 end
+
+-- inspect(parse(git.cli.log.args("--max-count=5", "--graph", "--format=fuller").call_sync()))
 
 function M.create()
   local p = popup.builder()
@@ -111,17 +113,18 @@ function M.create()
     -- :option("S", "", "", "Search occurences")
     -- :option("L", "", "", "Trace line evolution")
     :action("l", "Log current", function(popup)
-      local output = git.cli.log.args(unpack(popup:get_arguments())).call_sync()
+      local output = git.cli.log.format("fuller").args(unpack(popup:get_arguments())).call_sync()
       LogViewBuffer.new(parse(output)):open()
     end)
     :action("o", "Log other")
     :action("h", "Log HEAD", function(popup) 
       local output = 
         git.cli.log
-          .oneline
+          .format("fuller")
           .args(unpack(popup:get_arguments()))
           .for_range('HEAD')
           .call_sync()
+
 
       LogViewBuffer.new(parse(output)):open()
     end)
@@ -129,7 +132,7 @@ function M.create()
     :action("b", "Log all branches", function(popup)
       local output = 
         git.cli.log
-          .oneline
+          .format("fuller")
           .args(unpack(popup:get_arguments()))
           .branches
           .remotes
@@ -139,7 +142,7 @@ function M.create()
     :action("a", "Log all references", function(popup)
       local output = 
         git.cli.log
-          .oneline
+          .format("fuller")
           .args(unpack(popup:get_arguments()))
           .all
           .call_sync()
