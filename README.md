@@ -76,6 +76,7 @@ The create function takes 1 optional argument that can be one of the following v
 | u            | Unstage (also supports staging selection/hunk)   |
 | U            | Unstage staged changes                           |
 | c            | Open commit popup                                |
+| r            | Open rebase popup                                |
 | L            | Open log popup                                   |
 | p            | Open pull popup                                  |
 | P            | Open push popup                                  |

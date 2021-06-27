@@ -82,6 +82,7 @@ local configurations = {
       index = '--index'
     }
   }),
+  rebase = config({}),
   reset = config({
     flags = {
       hard = '--hard',

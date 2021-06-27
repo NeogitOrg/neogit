@@ -36,6 +36,7 @@ M.values = {
       ["?"] = "HelpPopup",
       ["D"] = "DiffPopup",
       ["p"] = "PullPopup",
+      ["r"] = "RebasePopup",
       ["P"] = "PushPopup",
       ["c"] = "CommitPopup",
       ["L"] = "LogPopup",

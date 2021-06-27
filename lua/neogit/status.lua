@@ -749,6 +749,7 @@ local cmd_func_map = function ()
     end,
     ["DiffPopup"] = require("neogit.popups.diff").create,
     ["PullPopup"] = require("neogit.popups.pull").create,
+    ["RebasePopup"] = require("neogit.popups.rebase").create,
     ["PushPopup"] = require("neogit.popups.push").create,
     ["CommitPopup"] = require("neogit.popups.commit").create,
     ["LogPopup"] = require("neogit.popups.log").create,
