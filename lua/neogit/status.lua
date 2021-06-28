@@ -737,9 +737,15 @@ local cmd_func_map = function ()
     end)),
     ["RefreshBuffer"] = function() dispatch_refresh(true) end,
     ["HelpPopup"] = function ()
-      local pos = vim.fn.getpos('.')
-      pos[1] = vim.api.nvim_get_current_buf()
-      require("neogit.popups.help").create(pos)
+      local line = status_buffer:get_current_line()
+
+      require("neogit.popups.help").create { 
+        get_stash = function()
+          return {
+            name = line[1]:match('^(stash@{%d+})') 
+          }
+        end
+      }
     end,
     ["DiffAtFile"] = function()
       if not config.ensure_integration 'diffview' then
@@ -759,9 +765,11 @@ local cmd_func_map = function ()
     ["CommitPopup"] = require("neogit.popups.commit").create,
     ["LogPopup"] = require("neogit.popups.log").create,
     ["StashPopup"] = function ()
-      local pos = vim.fn.getpos('.')
-      pos[1] = vim.api.nvim_get_current_buf()
-      require("neogit.popups.stash").create(pos)
+      local line = status_buffer:get_current_line()
+
+      require("neogit.popups.stash").create { 
+        name = line[1]:match('^(stash@{%d+})') 
+      }
     end,
     ["BranchPopup"] = require("neogit.popups.branch").create,
   }
