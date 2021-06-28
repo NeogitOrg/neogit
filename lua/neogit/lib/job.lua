@@ -46,6 +46,7 @@ function Job:start()
   if type(task) == "string"
     and is_win 
     then
+    task = task:gsub("%^", "%^%^")
     task = { 'cmd', '/C', task }
   end
 

@@ -16,6 +16,9 @@ end
 
 local configurations = {
   show = config({
+    options = {
+      format = "--format"
+    },
     aliases = {
       file = function(tbl)
         return function(name, rev)
