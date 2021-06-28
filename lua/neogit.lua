@@ -29,6 +29,9 @@ local neogit = {
     end
   end,
   reset = status.reset,
+  get_config = function()
+    return config.values
+  end,
   dispatch_reset = status.dispatch_reset,
   refresh = status.refresh,
   dispatch_refresh = status.dispatch_refresh,

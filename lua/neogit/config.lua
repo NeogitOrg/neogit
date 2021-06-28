@@ -4,6 +4,7 @@ M.values = {
   disable_context_highlighting = false,
   disable_signs = false,
   disable_commit_confirmation = false,
+  auto_refresh = true,
   signs = {
     hunk = { "", "" },
     item = { ">", "v" },
