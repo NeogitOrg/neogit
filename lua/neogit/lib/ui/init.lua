@@ -260,6 +260,7 @@ function Ui:render(...)
   self:update()
 end
 
+-- This shouldn't be called often as it completely rewrites the whole buffer
 function Ui:update()
   self.buf:unlock()
   local lines_used = self:_render(1, 0, Component.new(function()
