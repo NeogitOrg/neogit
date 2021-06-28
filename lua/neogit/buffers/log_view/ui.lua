@@ -1,4 +1,5 @@
 local Ui = require 'neogit.lib.ui'
+local Component = require 'neogit.lib.ui.component'
 local util = require 'neogit.lib.util'
 
 local col = Ui.col
@@ -19,7 +20,7 @@ local M = {}
 -- |     feat: improve commit view and ui lib
 -- |
 
-local function Commit(commit)
+M.Commit = Component.new(function(commit)
   return col {
     row { 
       text(("* "):rep(commit.level + 1), { highlight = "Character" }), 
@@ -27,7 +28,7 @@ local function Commit(commit)
       text " ", 
       text(commit.description[1]) 
     },
-    col({
+    col.hidden(true).padding_left((commit.level + 1) * 2) {
       row {
         text "Author:     ",
         text(commit.author_name),
@@ -52,12 +53,12 @@ local function Commit(commit)
       },
       text " ",
       col(map(commit.description, text), { padding_left = 4 })
-    }, { hidden = true, padding_left = (commit.level + 1) * 2 })
+    }
   }
-end
+end)
 
 function M.LogView(data)
-  return map(data, Commit)
+  return map(data, M.Commit)
 end
 
 return M

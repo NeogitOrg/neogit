@@ -1,4 +1,8 @@
 local Component = require 'neogit.lib.ui.component'
+local util = require 'neogit.lib.util'
+
+local filter = util.filter
+
 local Ui = {}
 
 function Ui.new(buf)
@@ -225,15 +229,18 @@ end
 
 function Ui:render(...)
   self.layout = {...}
+  self.layout = filter(self.layout, function(x) return type(x) == "table" end)
   self:update()
 end
 
 function Ui:update()
   self.buf:unlock()
-  local lines_used = self:_render(1, Component.new({
-    tag = "_root",
-    children = self.layout
-  }), self.layout, {})
+  local lines_used = self:_render(1, Component.new(function()
+    return {
+      tag = "_root",
+      children = self.layout
+    }
+  end)(), self.layout, {})
   self.buf:set_lines(lines_used, -1, false, {})
   self.buf:lock()
 end
@@ -247,23 +254,23 @@ function Ui:debug(...)
   Ui.visualize_tree({...}, {})
 end
 
-function Ui.col(children, options)
-  return Component.new({
+Ui.col = Component.new(function(children, options)
+  return {
     tag = "col",
-    children = children,
+    children = filter(children, function(x) return type(x) == "table" end),
     options = options
-  })
-end
+  }
+end)
 
-function Ui.row(children, options)
-  return Component.new({
+Ui.row = Component.new(function(children, options)
+  return {
     tag = "row",
-    children = children, id = "test",
+    children = filter(children, function(x) return type(x) == "table" end),
     options = options
-  })
-end
+  }
+end)
 
-function Ui.text(...)
+Ui.text = Component.new(function(...)
   local text = ""
   local options
   for _, arg in ipairs({...}) do
@@ -274,11 +281,11 @@ function Ui.text(...)
     end
   end
 
-  return Component.new({
+  return {
     tag = "text",
     value = text,
     options = options
-  })
-end
+  }
+end)
 
 return Ui

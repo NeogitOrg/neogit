@@ -81,6 +81,7 @@ local configurations = {
       null_terminated = '-z',
       cached = '--cached',
       shortstat = '--shortstat',
+      patch = '--patch',
       name_only = '--name-only'
     },
   }),
@@ -328,7 +329,7 @@ local exec = async(function(cmd, args, cwd, stdin, env, show_popup)
   return result, code, errors
 end)
 
-local function exec_sync(cmd, args, cwd, _stdin, _env, show_popup)
+local function new_job(cmd, args, cwd, stdin, env, show_popup)
   args = args or {}
   if show_popup == nil then 
     show_popup = true 
@@ -345,10 +346,16 @@ local function exec_sync(cmd, args, cwd, _stdin, _env, show_popup)
   local job = Job.new({ cmd = cmd })
   job.cwd = cwd
 
+  handle_new_cmd(job, show_popup)
+
+  return job
+end
+
+local function exec_sync(cmd, args, cwd, stdin, env, show_popup)
+  local job = new_job(cmd, args, cwd, stdin, env, show_popup)
+
   job:start()
   job:wait()
-
-  handle_new_cmd(job, show_popup)
 
   return job.stdout, job.code, job.stderr
 end
@@ -517,6 +524,19 @@ local function new_builder(subcommand)
       end
 
       return exec_sync(subcommand, args, state.cwd, state.input, state.env, state.show_popup)
+    end,
+    to_job = function()
+      local args = {}
+      for _,o in ipairs(state.options) do table.insert(args, o) end
+      for _,a in ipairs(state.arguments) do table.insert(args, a) end
+      if #state.files > 0 then table.insert(args, '--') end
+      for _,f in ipairs(state.files) do table.insert(args, f) end
+
+      if state.prefix then
+        table.insert(args, 1, state.prefix)
+      end
+
+      return new_job(subcommand, args, state.cwd, state.input, state.env, state.show_popup)
     end
   }, mt_builder)
 end
