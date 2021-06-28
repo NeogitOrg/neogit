@@ -16,6 +16,7 @@ local input = require 'neogit.lib.input'
 
 local M = {}
 
+M.disabled = false
 M.current_operation = nil
 M.prev_autochdir = nil
 M.repo = repository.create()
@@ -74,6 +75,7 @@ local mode_to_text = {
   D = "Deleted",
   C = "Copied",
   U = "Updated",
+  UU = "Both Modified",
   R = "Renamed"
 }
 
@@ -845,6 +847,14 @@ M.refresh = refresh
 M.dispatch_refresh = dispatch_refresh
 M.refresh_viml_compat = refresh_viml_compat
 M.close = close
+
+function M.enable()
+  M.disabled = false
+end
+
+function M.disable()
+  M.disabled = true
+end
 
 function M.get_status()
   return M.status

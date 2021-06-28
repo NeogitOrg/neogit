@@ -329,7 +329,7 @@ local exec = async(function(cmd, args, cwd, stdin, env, show_popup)
   return result, code, errors
 end)
 
-local function new_job(cmd, args, cwd, stdin, env, show_popup)
+local function new_job(cmd, args, cwd, _stdin, _env, show_popup)
   args = args or {}
   if show_popup == nil then 
     show_popup = true 
