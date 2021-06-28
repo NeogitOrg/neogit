@@ -5,7 +5,7 @@ local util = require 'neogit.lib.util'
 
 local M = {}
 
-local commit_header_pat = "([| *]*)%*?([| *]*)commit (%w+)"
+local commit_header_pat = "([| *]*)%*([| *]*)commit (%w+)"
 
 local function is_new_commit(line)
   local s1, s2, oid = line:match(commit_header_pat)
@@ -48,7 +48,7 @@ local function parse(raw)
     
     local function ladvance()
       local line = advance()
-      return line and line:sub(start_idx, -1) or nil
+      return line and line:sub(start_idx + 1, -1) or nil
     end
 
     do
@@ -78,7 +78,7 @@ local function parse(raw)
     line = advance()
 
     while line and not is_new_commit(line) do
-      table.insert(commit.description, line:sub(start_idx + 4, -1))
+      table.insert(commit.description, line:sub(start_idx + 5, -1))
       line = advance()
     end
 
