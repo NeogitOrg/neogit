@@ -297,21 +297,11 @@ Ui.row = Component.new(function(children, options)
   }
 end)
 
-Ui.text = Component.new(function(...)
-  local text = ""
-  local options
-  for _, arg in ipairs({...}) do
-    if type(arg) == "table" then
-      options = arg
-    else
-      text = text .. tostring(arg)
-    end
-  end
-
+Ui.text = Component.new(function(value, options)
   return {
     tag = "text",
-    value = text,
-    options = options
+    value = value or "",
+    options = type(options) == "table" and options or nil
   }
 end)
 
