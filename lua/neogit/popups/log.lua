@@ -194,7 +194,7 @@ local function create()
           key = "l",
           description = "Log current",
           callback = function(popup)
-            local output = git.cli.log.args(unpack(popup.get_arguments())).call_sync()
+            local output = git.cli.log.args(unpack(popup:get_arguments())).call_sync()
             LogViewBuffer.new(parse(output)):open()
           end
         },
@@ -210,7 +210,7 @@ local function create()
             local output = 
               git.cli.log
                 .oneline
-                .args(unpack(popup.get_arguments()))
+                .args(unpack(popup:get_arguments()))
                 .for_range('HEAD')
                 .call_sync()
 
@@ -226,7 +226,7 @@ local function create()
             local output = 
               git.cli.log
                 .oneline
-                .args(unpack(popup.get_arguments()))
+                .args(unpack(popup:get_arguments()))
                 .branches
                 .call_sync()
 
@@ -240,7 +240,7 @@ local function create()
             local output = 
               git.cli.log
                 .oneline
-                .args(unpack(popup.get_arguments()))
+                .args(unpack(popup:get_arguments()))
                 .branches
                 .remotes
                 .call_sync()
@@ -254,7 +254,7 @@ local function create()
             local output = 
               git.cli.log
                 .oneline
-                .args(unpack(popup.get_arguments()))
+                .args(unpack(popup:get_arguments()))
                 .all
                 .call_sync()
             LogViewBuffer.new(parse(output)):open()
