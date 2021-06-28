@@ -89,7 +89,7 @@ M.Grid = Component.new(function(props)
         row_count = l
       end
     end
-    for i=1,row_count do
+    for _=1,row_count do
       table.insert(new_items, {})
     end
     for i=1,#props.items do

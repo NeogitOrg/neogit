@@ -1,8 +1,6 @@
 local M = {}
 
-local status = require 'neogit.status'
 local cli = require 'neogit.lib.git.cli'
-local config = require 'neogit.config'
 local popup = require 'neogit.lib.popup'
 
 function M.create()
