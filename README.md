@@ -59,7 +59,7 @@ neogit.open({ kind = "split" })
 The create function takes 1 optional argument that can be one of the following values:
 
 * tab (default)
-* floating (This currently doesn't work with popups. Very instable)
+* floating (This currently doesn't work with popups. Very unstable)
 * split
 
 ## Status Keybindings
@@ -112,7 +112,7 @@ neogit.setup {
     hunk = { "", "" },
   },
   integrations = {
-    -- Neogit only provides inline diffs. If you want a more traditional way to look at diffs you can use `sindrets/diffview.nvim`.
+    -- Neogit only provides inline diffs. If you want a more traditional way to look at diffs, you can use `sindrets/diffview.nvim`.
     -- The diffview integration enables the diff popup, which is a wrapper around `sindrets/diffview.nvim`.
     --
     -- Requires you to have `sindrets/diffview.nvim` installed.
@@ -139,7 +139,7 @@ neogit.setup {
 }
 ```
 
-Right now only the status buffer supports custom mappings. The other popups will follow shortly.
+Right now, only the status buffer supports custom mappings. The other popups will follow shortly.
 
 List of status commands:
 
