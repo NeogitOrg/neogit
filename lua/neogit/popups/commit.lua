@@ -32,7 +32,7 @@ local get_commit_message = wrap(function (content, cb)
       ["BufUnload"] = function()
         if written then
           if config.values.disable_commit_confirmation or
-              input.get_confirmation("Are you sure you want to commit?") then
+            input.get_confirmation("Are you sure you want to commit?") then
             vim.cmd [[
               silent g/^#/d
               silent w!
@@ -70,6 +70,14 @@ local prompt_commit_message = async(function (msg, skip_gen)
   end
 
   if not skip_gen then
+    local msg_template_path = cli.config.get("commit.template").call_sync()[1]
+    if msg_template_path then
+      local msg_template = uv_utils.read_file_sync(msg_template_path)
+      for _, line in pairs(msg_template) do
+        table.insert(output, line)
+      end
+      table.insert(output, "")
+    end
     table.insert(output, "# Please enter the commit message for your changes. Lines starting")
     table.insert(output, "# with '#' will be ignored, and an empty message aborts the commit.")
 
