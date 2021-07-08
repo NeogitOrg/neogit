@@ -812,6 +812,9 @@ end
 
 local highlight_group = vim.api.nvim_create_namespace("section-highlight")
 local function update_highlight()
+  if not M.status_buffer then 
+    return
+  end
   if config.values.disable_context_highlighting then return end
 
   vim.api.nvim_buf_clear_namespace(0, highlight_group, 0, -1)

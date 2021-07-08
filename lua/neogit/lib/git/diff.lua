@@ -101,7 +101,9 @@ local function parse_diff(output, with_stats)
         }
       else
         hunk_content = hunk_content .. '\n' .. line
-        hunk.diff_to = hunk.diff_to + 1
+        if hunk then 
+          hunk.diff_to = hunk.diff_to + 1
+        end
       end
     end
   end

@@ -24,11 +24,11 @@ end
 
 function M.CommitHeader(info)
   return col {
-    text.sign("NeogitCommitViewHeader")("Commit ", info.oid),
-    text("Author:     ", info.author_name, " <", info.author_email, ">"),
-    text("AuthorDate: ", info.author_date),
-    text("Commit:     ", info.committer_name, " <", info.committer_email, ">"),
-    text("CommitDate: ", info.committer_date),
+    text.sign("NeogitCommitViewHeader")("Commit " .. info.oid),
+    text("Author:     " .. info.author_name .. " <" .. info.author_email .. ">"),
+    text("AuthorDate: " .. info.author_date),
+    text("Commit:     " .. info.committer_name .. " <" .. info.committer_email .. ">"),
+    text("CommitDate: " .. info.committer_date),
   }
 end
 

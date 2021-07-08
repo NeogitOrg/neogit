@@ -22,8 +22,10 @@ function M.parse_commit_overview(raw)
 
   for i=2,#raw-1 do
     local file = {}
-    file.path, file.changes, file.insertions, file.deletions = raw[i]:match(" (.*)%s+|%s+(%d+) (%+*)(%-*)")
-    table.insert(overview.files, file)
+    if raw[i] ~= "" then
+      file.path, file.changes, file.insertions, file.deletions = raw[i]:match(" (.*)%s+|%s+(%d+) (%+*)(%-*)")
+      table.insert(overview.files, file)
+    end
   end
 
   setmetatable(overview, { __index = CommitOverview })
@@ -57,8 +59,15 @@ function M.parse_commit_info(raw_info)
     return raw_info[idx]
   end
 
+  local function peek()
+    return raw_info[idx + 1]
+  end
+
   local info = {}
   info.oid = advance():match("commit (%w+)")
+  if vim.startswith(peek(), "Merge:") then
+    info.merge = advance():match("Merge:%s*(.+) <(.+)>")
+  end
   info.author_name, info.author_email = advance():match("Author:%s*(.+) <(.+)>")
   info.author_date = advance():match("AuthorDate:%s*(.+)")
   info.committer_name, info.committer_email = advance():match("Commit:%s*(.+) <(.+)>")

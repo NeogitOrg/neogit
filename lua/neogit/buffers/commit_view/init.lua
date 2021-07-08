@@ -62,16 +62,16 @@ function M:open()
     kind = "vsplit",
     autocmds = {
       ["CursorMoved"] = function()
-        -- local stack = self.buffer.ui:get_component_stack_under_cursor()
+        local stack = self.buffer.ui:get_component_stack_under_cursor()
 
-        -- if self.hovered_component then
-        --   self.hovered_component.options.highlight = nil
-        -- end
+        if self.hovered_component then
+          self.hovered_component.options.highlight = nil
+        end
 
-        -- self.hovered_component = stack[2] or stack[1]
-        -- self.hovered_component.options.highlight = "Directory"
+        self.hovered_component = stack[2] or stack[1]
+        self.hovered_component.options.highlight = "Directory"
 
-        -- self.buffer.ui:update()
+        self.buffer.ui:update()
       end
     },
     mappings = {

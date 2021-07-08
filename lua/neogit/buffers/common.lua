@@ -30,7 +30,7 @@ M.Diff = Component.new(function(diff)
   end)
 
   return col.tag("Diff") {
-    text(diff.kind, " ", diff.file),
+    text(diff.kind .. " " .. diff.file),
     col.tag("HunkList")(map(hunk_props, M.Hunk))
   }
 end)

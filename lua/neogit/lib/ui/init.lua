@@ -298,7 +298,15 @@ Ui.row = Component.new(function(children, options)
   }
 end)
 
-Ui.text = Component.new(function(value, options)
+Ui.text = Component.new(function(value, options, ...)
+  if ... then
+    error("Too many arguments")
+  end
+
+  vim.validate {
+    options = {options, "table", true}
+  }
+
   return {
     tag = "text",
     value = value or "",

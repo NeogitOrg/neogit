@@ -37,29 +37,11 @@ function M:open()
     return
   end
 
-  self.hovered_component = nil
   self.is_open = true
   self.buffer = Buffer.create {
     name = "NeogitLogView",
     filetype = "NeogitLogView",
     kind = "split",
-    autocmds = {
-      ["CursorMoved"] = function()
-        local stack = self.buffer.ui:get_component_stack_under_cursor()
-
-        if self.hovered_component then
-          self.hovered_component.options.sign = nil
-        end
-
-        self.hovered_component = stack[#stack]
-
-        if self.hovered_component then
-          self.hovered_component.options.sign = "NeogitLogViewCursorLine"
-        end
-
-        self.buffer.ui:update()
-      end
-    },
     mappings = {
       n = {
         ["q"] = function()
