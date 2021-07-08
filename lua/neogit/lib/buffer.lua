@@ -141,7 +141,7 @@ function Buffer:add_highlight(line, col_start, col_end, name, ns_id)
   vim.api.nvim_buf_add_highlight(self.handle, ns_id, name, line, col_start, col_end)
 end
 function Buffer:unplace_sign(id)
-  vim.cmd('sign unplace '..sign_id)
+  vim.cmd('sign unplace ' .. id)
 end
 function Buffer:place_sign(line, name, group, id)
   -- Sign IDs should be unique within a group, however there's no downside as
