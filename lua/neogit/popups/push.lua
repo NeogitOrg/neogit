@@ -7,6 +7,15 @@ local a = require 'plenary.async_lib'
 local await, scheduler = a.await, a.scheduler
 
 local push_upstream = function (popup)
+  local _, code = await(git.cli.push.args(unpack(popup:get_arguments())).args("upstream" .. status.branch).call())
+  if code == 0 then
+    await(scheduler())
+    notif.create "Pushed to upstream"
+    await(status.refresh(true))
+  end
+end
+
+local push_pushremote = function (popup)
   local _, code = await(git.cli.push.args(unpack(popup:get_arguments())).call())
   if code == 0 then
     await(scheduler())
@@ -22,7 +31,7 @@ function M.create()
     :switch("F", "force", "Force")
     :switch("h", "no-verify", "Disable hooks")
     :switch("d", "dry-run", "Dry run")
-    :action("p", "Push to pushremote", push_upstream)
+    :action("p", "Push to pushremote", push_pushremote)
     :action("u", "Push to upstream", push_upstream)
     :action("e", "Push to branch")
     :build()
