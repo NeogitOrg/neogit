@@ -5,7 +5,7 @@ local status = require 'neogit.status'
 local notif = require("neogit.lib.notification")
 local git = require("neogit.lib.git")
 local a = require 'plenary.async_lib'
-local await, scheduler = a.await, a.scheduler
+local await = a.await
 
 local function push_to(popup, name, remote, branch)
   notif.create("Pushing to " .. name)
@@ -37,7 +37,7 @@ function M.create()
     :action("e", "Push to elsewhere", function()
       local remote = input.get_user_input("remote: ")
       local branch = git.branch.prompt_for_branch()
-      pull_from(popup, remote, remote, branch)
+      push_to(popup, remote, remote, branch)
     end)
     :build()
 

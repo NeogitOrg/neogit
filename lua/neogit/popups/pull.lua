@@ -4,7 +4,7 @@ local input = require 'neogit.lib.input'
 local notif = require("neogit.lib.notification")
 local git = require("neogit.lib.git")
 local a = require 'plenary.async_lib'
-local async, await, scheduler, void = a.async, a.await, a.scheduler, a.void
+local await = a.await
 
 local M = {}
 
