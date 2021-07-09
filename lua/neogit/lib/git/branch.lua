@@ -48,7 +48,7 @@ local function prompt_for_branch(options)
   local chosen = input.get_user_input_with_completion('branch > ', options)
   if not chosen or chosen == '' then return nil end
   if not contains(options, chosen) then
-    print('ERROR: Creating a new branch from this dialog is not supported (yet)')
+    print("ERROR: Branch doesn't exit")
     return
   end
   return chosen
@@ -101,5 +101,7 @@ M.checkout_new = async(function ()
     .new_branch(name)
     .call())
 end)
+
+M.prompt_for_branch = prompt_for_branch
 
 return M

@@ -49,7 +49,6 @@ local function make_completion_function(options)
   return id
 end
 
-
 -- selene: allow(global_usage)
 local function remove_completion_function(id)
   _G.__NEOGIT.completers[id] = nil
