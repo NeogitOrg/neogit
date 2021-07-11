@@ -46,6 +46,7 @@ function Job:start()
   if type(task) == "string"
     and is_win 
     then
+    task = task:gsub("%^", "%^%^")
     task = { 'cmd', '/C', task }
   end
 
@@ -55,7 +56,7 @@ function Job:start()
       self.code = code
       self.done = true
       self.running = false
-      self.time = os.clock() - started_at
+      self.time = (os.clock() - started_at) * 1000
 
       if type(self.on_exit) == "function" then
         self.on_exit(self)

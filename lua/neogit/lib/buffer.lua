@@ -1,6 +1,9 @@
 package.loaded['neogit.buffer'] = nil
 
+__BUFFER_AUTOCMD_STORE = {}
+
 local mappings_manager = require("neogit.lib.mappings_manager")
+local Ui = require("neogit.lib.ui")
 
 local Buffer = {
   handle = nil,
@@ -13,6 +16,8 @@ function Buffer:new(handle)
     border = nil,
     mmanager = mappings_manager.new()
   }
+
+  this.ui = Ui.new(this)
 
   setmetatable(this, self)
 
@@ -46,8 +51,20 @@ function Buffer:get_lines(first, last, strict)
   return vim.api.nvim_buf_get_lines(self.handle, first, last, strict)
 end
 
+function Buffer:get_line(line)
+  return vim.fn.getbufline(self.handle, line)
+end
+
+function Buffer:get_current_line()
+  return self:get_line(vim.fn.getpos(".")[2])
+end
+
 function Buffer:set_lines(first, last, strict, lines)
   vim.api.nvim_buf_set_lines(self.handle, first, last, strict, lines)
+end
+
+function Buffer:set_text(first_line, last_line, first_col, last_col, lines)
+  vim.api.nvim_buf_set_text(self.handle, first_line, first_col, last_line, last_col, lines)
 end
 
 function Buffer:move_cursor(line)
@@ -118,6 +135,14 @@ function Buffer:open_fold(line, reset_pos)
   end
 end
 
+function Buffer:add_highlight(line, col_start, col_end, name, ns_id)
+  local ns_id = ns_id or 0
+  
+  vim.api.nvim_buf_add_highlight(self.handle, ns_id, name, line, col_start, col_end)
+end
+function Buffer:unplace_sign(id)
+  vim.cmd('sign unplace ' .. id)
+end
 function Buffer:place_sign(line, name, group, id)
   -- Sign IDs should be unique within a group, however there's no downside as
   -- long as we don't want to uniquely identify the placed sign later. Thus,
@@ -254,7 +279,35 @@ function Buffer.create(config)
     buffer:close()
   end
 
-  config.initialize(buffer)
+  if config.mappings then
+    for mode, val in pairs(config.mappings) do
+      for key, cb in pairs(val) do
+        buffer.mmanager.mappings[key] = { 
+          mode, 
+          function() 
+            cb(buffer) 
+          end, 
+          mode:find("v") ~= nil 
+        }
+      end
+    end
+  end
+
+  if config.initialize then
+    config.initialize(buffer)
+  end
+
+  if config.render then
+    buffer.ui:render(unpack(config.render(buffer)))
+  end
+
+  if config.autocmds then
+    for event, cb in pairs(config.autocmds) do
+      table.insert(__BUFFER_AUTOCMD_STORE, cb)
+      local id = #__BUFFER_AUTOCMD_STORE
+      buffer:define_autocmd(event, string.format("lua __BUFFER_AUTOCMD_STORE[%d]()", id))
+    end
+  end
 
   buffer.mmanager.register()
 

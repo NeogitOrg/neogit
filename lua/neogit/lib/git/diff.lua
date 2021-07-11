@@ -6,12 +6,15 @@ local Collection = require('neogit.lib.collection')
 local md5 = require 'neogit.lib.md5'
 
 local function parse_diff_stats(raw)
+  if type(raw) == "string" then
+    raw = vim.split(raw, ", ")
+  end
   local stats = {
     additions = 0,
-    deletios = 0
+    deletions = 0
   }
   -- local matches raw:match('1 file changed, (%d+ insertions?%(%+%))?(, )?(%d+ deletions?%(%-%))?')
-  for _, part in ipairs(vim.split(raw, ", ")) do
+  for _, part in ipairs(raw) do
     part = vim.trim(part)
     local additions = part:match("(%d+) insertion.*")
     local deletions = part:match("(%d+) deletion.*")
@@ -28,35 +31,56 @@ local function parse_diff_stats(raw)
   return stats
 end
 
-local function parse_diff(output)
-  local header = {}
-  local hunks = {}
-  local is_header = true
+local function parse_diff(output, with_stats)
+  local diff = {
+    kind = "modified",
+    lines = {},
+    file = "",
+    hunks = {},
+    stats = {}
+  }
+  local start_idx = 1
 
-  for i=1,#output do
-    if is_header and output[i]:match('^@@.*@@') then
-      is_header = false
+  if with_stats then
+    diff.stats = parse_diff_stats(output[1])
+    start_idx = 3
+  end
+
+  do
+    local header = {}
+
+    for i=start_idx,#output do
+      if output[i]:match('^@@.*@@') then
+        start_idx = i
+        break
+      end
+
+      table.insert(header, output[i])
     end
 
-    if is_header then
-      table.insert(header, output[i])
+    if #header == 4 then
+      diff.file = header[3]:match("%-%-%- a/(.*)")
     else
-      table.insert(hunks, output[i])
+      diff.kind = header[2]:match("(.*) mode %d+")
+      if diff.kind == "new file" then
+        diff.file = header[5]:match("%+%+%+ b/(.*)")
+      elseif diff.kind == "deleted file" then
+        diff.file = header[4]:match("%-%-%- a/(.*)")
+      end
     end
   end
 
-  local diff = {
-    lines = hunks,
-    hunks = {}
-  }
+  for i=start_idx,#output do
+    table.insert(diff.lines, output[i])
+  end
 
-  local len = #hunks
 
+  local len = #diff.lines
   local hunk = nil
-
   local hunk_content = ''
+
   for i=1,len do
-    local line = hunks[i]
+    local line = diff.lines[i]
     if not vim.startswith(line, "+++") then
       local index_from, index_len, disk_from, disk_len = line:match('@@ %-(%d+),?(%d*) %+(%d+),?(%d*) @@')
 
@@ -77,7 +101,9 @@ local function parse_diff(output)
         }
       else
         hunk_content = hunk_content .. '\n' .. line
-        hunk.diff_to = hunk.diff_to + 1
+        if hunk then 
+          hunk.diff_to = hunk.diff_to + 1
+        end
       end
     end
   end
@@ -92,7 +118,10 @@ end
 
 local diff = {
   parse = parse_diff,
-  parse_stats = parse_diff_stats
+  parse_stats = parse_diff_stats,
+  get_stats = function(name)
+    return parse_diff_stats(cli.diff.shortstat.files(name).call_sync())
+  end
 }
 
 local ItemFilter = {}

@@ -8,14 +8,34 @@ local function map(tbl, f)
   return t
 end
 
-local function filter(tbl, f)
+local function range(from, to, step)
+  local step = step or 1
   local t = {}
-  for _,v in pairs(tbl) do
-    if f(v) then
-      table.insert(t, v)
+  if to == nil then
+    to = from
+    from = 1
+  end
+  for i=from, to, step do
+    table.insert(t, i)
+  end
+  return t
+end
+
+local function intersperse(tbl, sep)
+  local t = {}
+  local len = #tbl
+  for i=1,len do
+    table.insert(t, tbl[i])
+
+    if i ~= len then
+      table.insert(t, sep)
     end
   end
   return t
+end
+
+local function filter(tbl, f)
+  return vim.tbl_filter(f, tbl)
 end
 
 local function print_tbl(tbl)
@@ -127,6 +147,7 @@ return {
   time_async = time_async,
   slice = slice,
   map = map,
+  range = range,
   tbl_longest_str = tbl_longest_str,
   filter = filter,
   str_right_pad = str_right_pad,
@@ -134,6 +155,7 @@ return {
   get_keymaps = get_keymaps,
   print_tbl = print_tbl,
   split = split,
+  intersperse = intersperse,
   split_lines = split_lines,
   parse_command_args = parse_command_args
 }

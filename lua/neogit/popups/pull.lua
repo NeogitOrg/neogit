@@ -1,61 +1,46 @@
 local popup = require("neogit.lib.popup")
 local status = require 'neogit.status'
+local input = require 'neogit.lib.input'
 local notif = require("neogit.lib.notification")
 local git = require("neogit.lib.git")
 local a = require 'plenary.async_lib'
-local async, await, scheduler, void = a.async, a.await, a.scheduler, a.void
+local await = a.await
 
-local pull_upstream = void(async(function (popup)
-  local _, code = await(git.cli.pull.args(unpack(popup.get_arguments())).args("upstream " .. status.repo.head.branch).call())
+local M = {}
+
+local function pull_from(popup, name, remote, branch)
+  notif.create("Pulling from " .. name)
+  local _, code = git.cli.pull.args(unpack(popup:get_arguments())).args(remote .. " " .. branch).call_sync()
   if code == 0 then
-    await(scheduler())
-    notif.create "Pulled from upstream"
+    notif.create("Pulled from " .. name)
     await(status.refresh(true))
   end
-end))
-
-local pull_pushremote = void(async(function (popup)
-  local _, code = await(git.cli.pull.args(unpack(popup.get_arguments())).call())
-  if code == 0 then
-    await(scheduler())
-    notif.create "Pulled from pushremote"
-    await(status.refresh(true))
-  end
-end))
-
-local function create()
-  popup.create(
-    "NeogitPullPopup",
-    {
-      {
-        key = "r",
-        description = "Rebase local commits",
-        cli = "rebase",
-        enabled = false
-      },
-    },
-    {},
-    {
-      {
-        {
-          key = "p",
-          description = "Pull from pushremote",
-          callback = pull_pushremote
-        },
-        {
-          key = "u",
-          description = "Pull from upstream",
-          callback = pull_upstream
-        },
-        {
-          key = "e",
-          description = "Pull from elsewhere",
-          callback = function() end
-        },
-      },
-    })
 end
 
-return {
-  create = create
-}
+local function pull_upstream(popup)
+  pull_from(popup, "upstream", "upstream", status.repo.head.branch)
+end
+
+local function pull_pushremote(popup)
+  pull_from(popup, "pushremote", "origin", status.repo.head.branch)
+end
+
+function M.create()
+  local p = popup.builder()
+    :name("NeogitPullPopup")
+    :switch("r", "rebase", "Rebase local commits", false)
+    :action("p", "Pull from pushremote", pull_pushremote)
+    :action("u", "Pull from upstream", pull_upstream)
+    :action("e", "Pull from elsewhere", function()
+      local remote = input.get_user_input("remote: ")
+      local branch = git.branch.prompt_for_branch()
+      pull_from(popup, remote, remote, branch)
+    end)
+    :build()
+
+  p:show()
+
+  return p
+end
+
+return M

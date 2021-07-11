@@ -1,0 +1,1 @@
+sign define NeogitLogViewCursorLine linehl=CursorLine

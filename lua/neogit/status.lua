@@ -1,5 +1,6 @@
 local Buffer = require("neogit.lib.buffer")
 local GitCommandHistory = require("neogit.buffers.git_command_history")
+local CommitView = require("neogit.buffers.commit_view")
 local git = require("neogit.lib.git")
 local cli = require('neogit.lib.git.cli')
 local notif = require("neogit.lib.notification")
@@ -15,6 +16,7 @@ local input = require 'neogit.lib.input'
 
 local M = {}
 
+M.disabled = false
 M.current_operation = nil
 M.prev_autochdir = nil
 M.repo = repository.create()
@@ -73,6 +75,7 @@ local mode_to_text = {
   D = "Deleted",
   C = "Copied",
   U = "Updated",
+  UU = "Both Modified",
   R = "Renamed"
 }
 
@@ -344,6 +347,7 @@ local refresh_viml_compat = void(async(function (fname)
 
   local path = await(fs.relpath_from_repository(fname))
   if not path then return end
+  if not config.values.auto_refresh then return end
   await(refresh({ status = true, diffs = { "*:" .. path } }))
 end))
 
@@ -394,6 +398,7 @@ end
 local reset = async(function ()
   M.repo = repository.create()
   M.locations = {}
+  if not config.values.auto_refresh then return end
   await(refresh(true))
 end)
 local dispatch_reset = void(reset)
@@ -716,25 +721,33 @@ local cmd_func_map = function ()
       local section, item = get_current_section_item()
 
       if item and section then
-        if section.name ~= "unstaged" and section.name ~= "staged" and section.name ~= "untracked" then
+        if section.name == "unstaged" or section.name == "staged" or section.name == "untracked" then
+          local path = item.name
+
+          notif.delete_all()
+          M.status_buffer:close()
+
+          local relpath = vim.fn.fnamemodify(repo_root .. '/' .. path, ':.')
+
+          vim.cmd("e " .. relpath)
+        elseif section.name == "unpulled" or section.name == "unmerged" then
+          CommitView.new(item.name:match("(.-) "), true):open()
+        else
           return
         end
-
-        local path = item.name
-
-        notif.delete_all()
-        M.status_buffer:close()
-
-        local relpath = vim.fn.fnamemodify(repo_root .. '/' .. path, ':.')
-
-        vim.cmd("e " .. relpath)
       end
     end)),
     ["RefreshBuffer"] = function() dispatch_refresh(true) end,
     ["HelpPopup"] = function ()
-      local pos = vim.fn.getpos('.')
-      pos[1] = vim.api.nvim_get_current_buf()
-      require("neogit.popups.help").create(pos)
+      local line = M.status_buffer:get_current_line()
+
+      require("neogit.popups.help").create { 
+        get_stash = function()
+          return {
+            name = line[1]:match('^(stash@{%d+})') 
+          }
+        end
+      }
     end,
     ["DiffAtFile"] = function()
       if not config.ensure_integration 'diffview' then
@@ -754,9 +767,11 @@ local cmd_func_map = function ()
     ["CommitPopup"] = require("neogit.popups.commit").create,
     ["LogPopup"] = require("neogit.popups.log").create,
     ["StashPopup"] = function ()
-      local pos = vim.fn.getpos('.')
-      pos[1] = vim.api.nvim_get_current_buf()
-      require("neogit.popups.stash").create(pos)
+      local line = M.status_buffer:get_current_line()
+
+      require("neogit.popups.stash").create { 
+        name = line[1]:match('^(stash@{%d+})') 
+      }
     end,
     ["BranchPopup"] = require("neogit.popups.branch").create,
   }
@@ -797,6 +812,9 @@ end
 
 local highlight_group = vim.api.nvim_create_namespace("section-highlight")
 local function update_highlight()
+  if not M.status_buffer then 
+    return
+  end
   if config.values.disable_context_highlighting then return end
 
   vim.api.nvim_buf_clear_namespace(0, highlight_group, 0, -1)
@@ -832,6 +850,14 @@ M.refresh = refresh
 M.dispatch_refresh = dispatch_refresh
 M.refresh_viml_compat = refresh_viml_compat
 M.close = close
+
+function M.enable()
+  M.disabled = false
+end
+
+function M.disable()
+  M.disabled = true
+end
 
 function M.get_status()
   return M.status
