@@ -19,4 +19,14 @@ M.read_file = async(function(path)
   return nil, data
 end)
 
+M.read_file_sync = function(path)
+  local output = {}
+
+  for line in io.lines(path) do
+    table.insert(output, line)
+  end
+
+  return output
+end
+
 return M
