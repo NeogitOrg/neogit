@@ -72,7 +72,7 @@ local prompt_commit_message = async(function (msg, skip_gen)
   if not skip_gen then
     local msg_template_path = cli.config.get("commit.template").call_sync()[1]
     if msg_template_path then
-      local msg_template = uv_utils.read_file_sync(msg_template_path)
+      local msg_template = uv_utils.read_file_sync(vim.fn.glob(msg_template_path))
       for _, line in pairs(msg_template) do
         table.insert(output, line)
       end
