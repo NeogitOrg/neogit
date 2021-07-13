@@ -58,15 +58,19 @@ local function parse_diff(output, with_stats)
       table.insert(header, output[i])
     end
 
-    if #header == 4 then
+    local header_count = #header
+    if header_count == 4 then
       diff.file = header[3]:match("%-%-%- a/(.*)")
-    else
+    elseif header_count == 5 then
       diff.kind = header[2]:match("(.*) mode %d+")
       if diff.kind == "new file" then
         diff.file = header[5]:match("%+%+%+ b/(.*)")
       elseif diff.kind == "deleted file" then
         diff.file = header[4]:match("%-%-%- a/(.*)")
       end
+    else
+      inspect(header)
+      error("TODO")
     end
   end
 
