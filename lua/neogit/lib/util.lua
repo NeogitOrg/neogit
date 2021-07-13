@@ -8,6 +8,17 @@ local function map(tbl, f)
   return t
 end
 
+local function deepcopy(o)
+  local mt = getmetatable(o)
+  local copy = vim.deepcopy(o)
+
+  if mt then
+    setmetatable(copy, mt)
+  end
+
+  return copy
+end
+
 local function range(from, to, step)
   local step = step or 1
   local t = {}
@@ -157,6 +168,7 @@ return {
   split = split,
   intersperse = intersperse,
   split_lines = split_lines,
+  deepcopy = deepcopy,
   parse_command_args = parse_command_args
 }
 

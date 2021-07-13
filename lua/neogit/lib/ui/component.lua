@@ -1,3 +1,5 @@
+local util = require 'neogit.lib.util'
+
 local default_component_options = {
   folded = false,
   hidden = false
@@ -106,7 +108,7 @@ function Component.new(f)
 
       if value == nil then
         value = function(value)
-          local options = vim.deepcopy(tbl)
+          local options = util.deepcopy(tbl)
           options[name] = value
           return options
         end
