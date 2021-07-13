@@ -70,7 +70,7 @@ local function parse_diff(output, with_stats)
       end
     else
       inspect(header)
-      error("TODO")
+      error("TODO: diff parser")
     end
   end
 
