@@ -69,7 +69,7 @@ local function parse_diff(output, with_stats)
         diff.file = header[4]:match("%-%-%- a/(.*)")
       end
     else
-      inspect(header)
+      print(vim.inspect(header))
       print("TODO: diff parser")
     end
   end
