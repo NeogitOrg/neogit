@@ -104,7 +104,7 @@ end)
 
 local update_stashes = async(function (state)
   local result = await(cli.stash.args('list').call())
-  state.stashes.files = parse(util.split(result, '\n'))
+  state.stashes.files = parse(result)
 end)
 
 return {

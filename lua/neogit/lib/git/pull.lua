@@ -11,7 +11,7 @@ local update_unpulled = async(function (state)
   local result = await(
     cli.log.oneline.for_range('..@{upstream}').show_popup(false).call())
 
-  state.unpulled.files = util.map(util.split(result, '\n'), function (x) 
+  state.unpulled.files = util.map(result, function (x) 
     return { name = x } 
   end)
 end)

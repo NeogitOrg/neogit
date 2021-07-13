@@ -16,7 +16,7 @@ M.relpath_from_repository = async(function (path)
     .args(path)
     .show_popup(false)
     .call())
-  return util.split(result, '\n')[1]
+  return result[1]
 end)
 
 return M

@@ -5,24 +5,17 @@ local status = require 'neogit.status'
 local notif = require("neogit.lib.notification")
 local git = require("neogit.lib.git")
 local a = require 'plenary.async_lib'
-local await = a.await
+local await, async, scheduler = a.await, a.async, a.scheduler
 
-local function push_to(popup, name, remote, branch)
+local push_to = async(function(popup, name, remote, branch)
   notif.create("Pushing to " .. name)
-  local _, code = git.cli.push.args(unpack(popup:get_arguments())).args(remote .. " " .. branch).call_sync()
+  local _, code = await(git.cli.push.args(unpack(popup:get_arguments())).args(remote, branch).call())
   if code == 0 then
+    await(scheduler())
     notif.create("Pushed to " .. name)
     await(status.refresh(true))
   end
-end
-
-local function push_upstream(popup)
-  push_to(popup, "upstream", "upstream", status.repo.head.branch)
-end
-
-local function push_pushremote(popup)
-  push_to(popup, "pushremote", "origin", status.repo.head.branch)
-end
+end)
 
 function M.create()
   local p = popup.builder()
@@ -32,8 +25,12 @@ function M.create()
     :switch("u", "set-upstream", "Set the upstream before pushing")
     :switch("h", "no-verify", "Disable hooks")
     :switch("d", "dry-run", "Dry run")
-    :action("p", "Push to pushremote", push_pushremote)
-    :action("u", "Push to upstream", push_upstream)
+    :action("p", "Push to pushremote", function(popup)
+      await(push_to(popup, "pushremote", "origin", status.repo.head.branch))
+    end)
+    :action("u", "Push to upstream", function(popup)
+      await(push_to(popup, "pushremote", "origin", status.repo.head.branch))
+    end)
     :action("e", "Push to elsewhere", function()
       local remote = input.get_user_input("remote: ")
       local branch = git.branch.prompt_for_branch()

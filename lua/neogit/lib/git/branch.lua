@@ -14,8 +14,7 @@ local function contains(table, val)
    return false
 end
 
-local function parse_branches(output)
-  local branches = util.split(output, '\n')
+local function parse_branches(branches)
   local other_branches = {}
   for _, b in ipairs(branches) do
     local branch_name = b:match('^  (.+)')

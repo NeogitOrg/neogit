@@ -88,11 +88,13 @@ local function spawn(options, cb)
   if options.input ~= nil then
     vim.loop.write(stdin, options.input)
   end
-  stdin:close()
 
+  stdin:close()
 end
 
-return {
+local M = {
   spawn = wrap(spawn, 2),
   spawn_sync = spawn
 }
+
+return M

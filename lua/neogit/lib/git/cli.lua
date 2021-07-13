@@ -316,17 +316,21 @@ local exec = async(function(cmd, args, cwd, stdin, env, show_popup)
     input = stdin,
     cwd = cwd
   }
+
   local result, code, errors = await(process.spawn(opts))
+  local stdout = split(result, '\n')
+  local stderr = split(errors, '\n')
+
   handle_new_cmd({
     cmd =  'git ' .. table.concat(args, ' '),
-    stdout = split(result, '\n'),
-    stderr = split(errors, '\n'),
+    stdout = stdout,
+    stderr = stderr,
     code = code,
     time = os.clock() - time
   }, show_popup)
   --print('git', table.concat(args, ' '), '->', code, errors)
 
-  return result, code, errors
+  return stdout, code, stderr
 end)
 
 local function new_job(cmd, args, cwd, _stdin, _env, show_popup)

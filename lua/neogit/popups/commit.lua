@@ -82,7 +82,7 @@ local prompt_commit_message = async(function (msg, skip_gen)
     table.insert(output, "# with '#' will be ignored, and an empty message aborts the commit.")
 
     local status_output = await(cli.status.call())
-    status_output = vim.split(status_output, '\n')
+    status_output = status_output
 
     for _, line in pairs(status_output) do
       if not vim.startswith(line, "  (") then
@@ -143,7 +143,6 @@ function M.create()
       await(scheduler())
       local commit_file = get_commit_file()
       local msg = await(cli.log.max_count(1).pretty('%B').call())
-      msg = vim.split(msg, '\n')
 
       await(do_commit(msg, cli.commit.commit_message_file(commit_file).amend.only))
     end)
@@ -151,7 +150,6 @@ function M.create()
       await(scheduler())
       local commit_file = get_commit_file()
       local msg = await(cli.log.max_count(1).pretty('%B').call())
-      msg = vim.split(msg, '\n')
 
       await(do_commit(msg, cli.commit.commit_message_file(commit_file).amend))
     end)
