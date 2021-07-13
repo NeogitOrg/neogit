@@ -10,15 +10,21 @@ if not _G.__NEOGIT.completers then
   _G.__NEOGIT.completers = {} 
 end
 
-local function user_input_prompt(prompt, default_value, completion_function)
+local function user_input_prompt(prompt, default_value, cancel_value, completion_function)
   vim.fn.inputsave()
 
   local args = {
     prompt = prompt
   }
+
   if default_value then 
     args.default = default_value 
   end
+
+  if cancel_value then 
+    args.cancelreturn = cancel_value 
+  end
+
   if completion_function then 
     args.completion = 'customlist,v:lua.__NEOGIT.completers.'..completion_function 
   end
@@ -62,13 +68,14 @@ function M.get_confirmation(msg, options)
   return vim.fn.confirm(msg, table.concat(options.values, "\n"), options.default) == 1
 end
 
-function M.get_user_input(prompt)
-  return user_input_prompt(prompt)
+function M.get_user_input(prompt, options)
+  options = options or {}
+  return user_input_prompt(prompt, options.default_value, options.cancel_value)
 end
 
 function M.get_user_input_with_completion(prompt, options)
   local completer_id = make_completion_function(options)
-  local result = user_input_prompt(prompt, nil, completer_id)
+  local result = user_input_prompt(prompt, nil, nil, completer_id)
   remove_completion_function(completer_id)
   return result
 end

@@ -101,11 +101,17 @@ function Ui:find_components(f, options)
   return result
 end
 
-function Ui:get_component_under_cursor()
+function Ui:get_component_under_cursor(filter)
   local cursor = vim.api.nvim_win_get_cursor(0)
-  return self:find_component(function(c)
-    return c:is_under_cursor(cursor)
-  end)
+  if filter then
+    return self:find_component(function(c)
+      return c:is_under_cursor(cursor) and filter(c)
+    end)
+  else
+    return self:find_component(function(c)
+      return c:is_under_cursor(cursor)
+    end)
+  end
 end
 
 function Ui:get_component_stack_under_cursor()

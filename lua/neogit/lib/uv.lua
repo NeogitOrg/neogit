@@ -29,4 +29,10 @@ M.read_file_sync = function(path)
   return output
 end
 
+M.write_file_sync = function(path, content)
+  local file = io.open(path, "w")
+  file:write(table.concat(content, "\n"))
+  file:close()
+end
+
 return M
