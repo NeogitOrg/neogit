@@ -103,7 +103,11 @@ local push_to = async(function(popup, name, remote, branch)
   local url_str = construct_url_str(url)
   if not url_str then return end
 
-  local _, code = await(git.cli.push.hide_text(url.password).args(unpack(popup:get_arguments())).args(url_str, branch).call())
+  local cmd = vim.startswith(url.protocol, "http")
+    and git.cli.push.hide_text(url.password).args(unpack(popup:get_arguments())).args(url_str, branch)
+    or git.cli.push.args(unpack(popup:get_arguments())).args(remote, branch)
+
+  local _, code = await(cmd.call())
   if code == 0 then
     await(scheduler())
     notif.create("Pushed to " .. name)
