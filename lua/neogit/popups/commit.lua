@@ -51,7 +51,6 @@ local get_commit_message = wrap(function (content, cb)
     },
     initialize = function(buffer)
       buffer:set_lines(0, -1, false, content)
-      vim.cmd("silent w!")
     end
   }
 end, 2)
