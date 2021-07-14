@@ -21,6 +21,7 @@ M.current_operation = nil
 M.prev_autochdir = nil
 M.repo = repository.create()
 M.status_buffer = nil
+M.commit_view = nil
 M.locations = {}
 
 local hunk_header_matcher = vim.regex('^@@.*@@')
@@ -731,7 +732,11 @@ local cmd_func_map = function ()
 
           vim.cmd("e " .. relpath)
         elseif section.name == "unpulled" or section.name == "unmerged" then
-          CommitView.new(item.name:match("(.-) "), true):open()
+          if M.commit_view and M.commit_view.is_open then
+            M.commit_view:close()
+          end
+          M.commit_view = CommitView.new(item.name:match("(.-) "), true)
+          M.commit_view:open()
         else
           return
         end
