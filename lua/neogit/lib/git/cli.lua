@@ -122,6 +122,19 @@ local configurations = {
       end
     }
   }),
+  remote = config({
+    flags = {
+      push = '--push'
+    },
+    aliases = {
+      get_url = function (tbl)
+        return function(remote)
+          tbl.prefix("get-url")
+          return tbl.args(remote)
+        end
+      end
+    }
+  }),
   apply = config({
     flags = {
       cached = '--cached',
