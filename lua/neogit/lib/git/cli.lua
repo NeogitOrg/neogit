@@ -635,6 +635,7 @@ local meta = {
 
 local cli = setmetatable({
   history = history,
+  insert = handle_new_cmd,
   git_root = git_root,
   git_root_sync = git_root_sync,
   git_dir_path_sync = git_dir_path_sync,
