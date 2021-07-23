@@ -54,7 +54,9 @@ local get_remote_url = async(function(remote)
         end
       end
     elseif vim.startswith(raw_url, "ssh") then
-      error("TODO: ssh protocol")
+      local url = {}
+      url.protocol, url.username, url.rest = raw_url:match("(.*)://(.*)@(.*)")
+      return url
     elseif vim.startswith(raw_url, "git@") then
       local raw_url = raw_url:gsub("www%.", "")
       local url = { protocol = "git_ssh" }
@@ -85,7 +87,7 @@ local construct_url_str = function(url)
 
     return string.format("%s://%s:%s@%s", url.protocol, url.username, url.password, url.rest)
   elseif url.protocol == "ssh" then
-    error("TODO: ssh protocol")
+    return string.format("%s://%s@%s", url.protocol, url.username, url.rest)
   elseif url.protocol == "git_ssh" then
     return string.format("%s@%s", url.username, url.rest)
   else
