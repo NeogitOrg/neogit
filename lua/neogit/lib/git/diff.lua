@@ -70,7 +70,6 @@ local function parse_diff(output, with_stats)
       end
     else
       print(vim.inspect(header))
-      print("TODO: diff parser")
     end
   end
 
