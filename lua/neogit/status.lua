@@ -405,6 +405,7 @@ end)
 local dispatch_reset = void(reset)
 
 local function close()
+  M.status_buffer:close()
   M.status_buffer = nil
   vim.o.autochdir = M.prev_autochdir
 end
