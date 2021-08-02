@@ -633,10 +633,102 @@ local meta = {
   end
 }
 
+local function handle_interactive_password_questions(chan, line)
+  if vim.startswith(line, "Username for ") then
+    local prompt = line:match("(.*:):.*")
+    local value = vim.fn.input {
+      prompt = prompt .. " ",
+      cancelreturn = "__CANCEL__"
+    }
+    if value ~= "__CANCEL__" then
+      vim.fn.chansend(chan, value .. "\n")
+    else
+      vim.fn.chanclose(chan)
+    end
+  elseif vim.startswith(line, "Enter passphrase for") then
+    local prompt = line:match("(.*:).*")
+    local value = vim.fn.inputsecret {
+      prompt = prompt .. " ",
+      cancelreturn = "__CANCEL__"
+    }
+    if value ~= "__CANCEL__" then
+      vim.fn.chansend(chan, value .. "\n")
+    else
+      vim.fn.chanclose(chan)
+    end
+  elseif vim.startswith(line, "Password for ") then
+    local prompt = line:match("(.*:).*")
+    local value = vim.fn.inputsecret {
+      prompt = prompt .. " ",
+      cancelreturn = "__CANCEL__"
+    }
+    if value ~= "__CANCEL__" then
+      vim.fn.chansend(chan, value .. "\n")
+    else
+      vim.fn.chanclose(chan)
+    end
+  else
+    return false
+  end
+
+  return true
+end
+
+
 local cli = setmetatable({
   history = history,
   insert = handle_new_cmd,
   git_root = git_root,
+  interactive_git_cmd = a.wrap(function(cmd, handle_line, cb)
+    handle_line = handle_line or handle_interactive_password_questions
+    -- from: https://stackoverflow.com/questions/48948630/lua-ansi-escapes-pattern
+    local ansi_escape_sequence_pattern = "[\27\155][][()#;?%d]*[A-PRZcf-ntqry=><~]"
+    local stdout = {}
+    local raw_stdout = {}
+    local chan
+    local skip_count = 0
+
+    local started_at = os.clock()
+    chan = vim.fn.jobstart(vim.fn.has('win32') == 1 and { "cmd", "/C", cmd } or cmd, {
+      pty = true,
+      on_stdout = function(_, data)
+        table.insert(raw_stdout, data)
+        local is_end = #data == 1 and data[1] == ""
+        if is_end then
+          return
+        end
+        local data = table.concat(data, "")
+        local data = data:gsub(ansi_escape_sequence_pattern, "")
+        table.insert(stdout, data)
+        local lines = vim.split(data, "\r?[\r\n]")
+
+        for i=1,#lines do
+          if lines[i] ~= "" then
+            if skip_count > 0 then
+              skip_count = skip_count - 1
+            else
+              handle_line(chan, lines[i])
+            end
+          end
+        end
+      end,
+      on_exit = function(_, code)
+        handle_new_cmd {
+          cmd = cmd,
+          raw_cmd = cmd,
+          stdout = stdout,
+          stderr = stdout,
+          code = code,
+          time = (os.clock() - started_at) * 1000
+        }
+
+        cb({
+          code = code,
+          stdout = stdout
+        })
+      end,
+    })
+  end, 3),
   git_root_sync = git_root_sync,
   git_dir_path_sync = git_dir_path_sync,
   in_parallel = function(...)
