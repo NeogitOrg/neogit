@@ -87,6 +87,10 @@ function Buffer:close(force)
   end
 end
 
+function Buffer:is_valid()
+  return vim.api.nvim_buf_is_valid(self.handle)
+end
+
 function Buffer:put(lines, after, follow)
   self:focus()
   vim.api.nvim_put(lines, "l", after, follow)

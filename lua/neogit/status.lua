@@ -404,8 +404,10 @@ local reset = async(function ()
 end)
 local dispatch_reset = void(reset)
 
-local function close()
-  M.status_buffer:close()
+local function close(skip_close)
+  if not skip_close then
+    M.status_buffer:close()
+  end
   M.status_buffer = nil
   vim.o.autochdir = M.prev_autochdir
 end
