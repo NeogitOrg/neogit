@@ -9,7 +9,7 @@ local await, async, scheduler = a.await, a.async, a.scheduler
 
 local M = {}
 
-local pull_from = async(function(popup, name, remote, branch)
+local pull_from = async(function(_popup, name, remote, branch)
   notif.create("Pulling from " .. name)
 
   local res = await(pull_lib.pull_interactive(remote, branch))

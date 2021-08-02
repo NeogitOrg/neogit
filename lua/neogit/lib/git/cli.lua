@@ -645,18 +645,9 @@ local function handle_interactive_password_questions(chan, line)
     else
       vim.fn.chanclose(chan)
     end
-  elseif vim.startswith(line, "Enter passphrase for") then
-    local prompt = line:match("(.*:).*")
-    local value = vim.fn.inputsecret {
-      prompt = prompt .. " ",
-      cancelreturn = "__CANCEL__"
-    }
-    if value ~= "__CANCEL__" then
-      vim.fn.chansend(chan, value .. "\n")
-    else
-      vim.fn.chanclose(chan)
-    end
-  elseif vim.startswith(line, "Password for ") then
+  elseif vim.startswith(line, "Enter passphrase for") 
+    or vim.startswith(line, "Password for") 
+    then
     local prompt = line:match("(.*:).*")
     local value = vim.fn.inputsecret {
       prompt = prompt .. " ",

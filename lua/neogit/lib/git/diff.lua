@@ -1,7 +1,6 @@
 local a = require 'plenary.async_lib'
 local async, await, await_all = a.async, a.await, a.await_all
 local cli = require('neogit.lib.git.cli')
-local util = require('neogit.lib.util')
 local Collection = require('neogit.lib.collection')
 local md5 = require 'neogit.lib.md5'
 

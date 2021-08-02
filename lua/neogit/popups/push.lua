@@ -8,7 +8,7 @@ local git = require("neogit.lib.git")
 local a = require 'plenary.async_lib'
 local await, async, scheduler = a.await, a.async, a.scheduler
 
-local push_to = async(function(popup, name, remote, branch)
+local push_to = async(function(_popup, name, remote, branch)
   notif.create("Pushing to " .. name)
 
   local res = await(push_lib.push_interactive(remote, branch))
