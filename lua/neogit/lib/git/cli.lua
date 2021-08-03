@@ -1,4 +1,5 @@
 local notif = require("neogit.lib.notification")
+local logger = require 'neogit.logger'
 local a = require 'plenary.async_lib'
 local async, await, await_all = a.async, a.await, a.await_all
 local process = require('neogit.process')
@@ -298,6 +299,18 @@ local function handle_new_cmd(job, popup, hidden_text)
     time = job.time
   })
 
+  do
+    local log_fn = logger.debug
+    if job.code > 0 then
+      log_fn = logger.error
+    end
+    log_fn(string.format("Execution of '%s'", job.cmd))
+    if job.code > 0 then
+      log_fn(string.format("  failed with code %d", job.code))
+    end
+    log_fn(string.format("  took %d ms", job.time))
+  end
+
   if popup and job.code ~= 0 then
     vim.schedule(function ()
       notif.create({
@@ -527,6 +540,8 @@ local function new_builder(subcommand)
         table.insert(args, 1, state.prefix)
       end
 
+      logger.debug(string.format("[CLI]: Executing '%s %s'", subcommand, table.concat(args, ' ')))
+
       return await(exec(subcommand, args, state.cwd, state.input, state.env, state.show_popup, state.hide_text))
     end),
     call_sync = function()
@@ -547,6 +562,8 @@ local function new_builder(subcommand)
       if state.prefix then
         table.insert(args, 1, state.prefix)
       end
+
+      logger.debug(string.format("[CLI]: Executing '%s %s'", subcommand, table.concat(args, ' ')))
 
       return exec_sync(subcommand, args, state.cwd, state.input, state.env, state.show_popup, state.hide_text)
     end,
