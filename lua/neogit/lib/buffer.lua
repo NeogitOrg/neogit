@@ -212,6 +212,9 @@ function Buffer.create(config)
   elseif kind == "split" then
     vim.cmd("below new")
     buffer = Buffer:new(vim.api.nvim_get_current_buf())
+  elseif kind == "split_above" then
+    vim.cmd("top new")
+    buffer = Buffer:new(vim.api.nvim_get_current_buf())
   elseif kind == "vsplit" then
     vim.cmd("bot vnew")
     buffer = Buffer:new(vim.api.nvim_get_current_buf())
