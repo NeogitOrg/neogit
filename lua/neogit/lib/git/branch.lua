@@ -2,7 +2,6 @@ local a = require 'plenary.async_lib'
 local async, await, scheduler = a.async, a.await, a.scheduler
 local cli = require('neogit.lib.git.cli')
 local logger = require('neogit.logger')
-local util = require('neogit.lib.util')
 local input = require('neogit.lib.input')
 local M = {}
 
