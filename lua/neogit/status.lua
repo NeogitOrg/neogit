@@ -774,6 +774,7 @@ local cmd_func_map = function ()
     ["PushPopup"] = require("neogit.popups.push").create,
     ["CommitPopup"] = require("neogit.popups.commit").create,
     ["LogPopup"] = require("neogit.popups.log").create,
+    ["ConfigPopup"] = require("neogit.popups.config").create,
     ["StashPopup"] = function ()
       local line = M.status_buffer:get_current_line()
 

@@ -35,6 +35,7 @@ M.values = {
       ["<c-x>"] = "SplitOpen",
       ["<c-t>"] = "TabOpen",
       ["?"] = "HelpPopup",
+      ["C"] = "ConfigPopup",
       ["D"] = "DiffPopup",
       ["p"] = "PullPopup",
       ["r"] = "RebasePopup",
