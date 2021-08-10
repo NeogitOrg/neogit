@@ -648,7 +648,7 @@ local function handle_interactive_password_questions(chan, line)
   elseif vim.startswith(line, "Enter passphrase for") 
     or vim.startswith(line, "Password for") 
     then
-    local prompt = line:match("(.*:).*")
+    local prompt = line:match("(.*:):.*")
     local value = vim.fn.inputsecret {
       prompt = prompt .. " ",
       cancelreturn = "__CANCEL__"
@@ -664,7 +664,6 @@ local function handle_interactive_password_questions(chan, line)
 
   return true
 end
-
 
 local cli = setmetatable({
   history = history,
@@ -682,6 +681,7 @@ local cli = setmetatable({
     local started_at = os.clock()
     chan = vim.fn.jobstart(vim.fn.has('win32') == 1 and { "cmd", "/C", cmd } or cmd, {
       pty = true,
+      width = 100,
       on_stdout = function(_, data)
         table.insert(raw_stdout, data)
         local is_end = #data == 1 and data[1] == ""
@@ -712,7 +712,6 @@ local cli = setmetatable({
           code = code,
           time = (os.clock() - started_at) * 1000
         }
-
         cb({
           code = code,
           stdout = stdout
