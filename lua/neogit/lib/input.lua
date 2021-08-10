@@ -73,6 +73,18 @@ function M.get_user_input(prompt, options)
   return user_input_prompt(prompt, options.default_value, options.cancel_value)
 end
 
+function M.get_secret_user_input(prompt)
+  vim.fn.inputsave()
+
+  local status, result = pcall(vim.fn.inputsecret, prompt)
+
+  vim.fn.inputrestore()
+
+  if not status then return nil end
+
+  return result
+end
+
 function M.get_user_input_with_completion(prompt, options)
   local completer_id = make_completion_function(options)
   local result = user_input_prompt(prompt, nil, nil, completer_id)

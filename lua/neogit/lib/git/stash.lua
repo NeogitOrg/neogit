@@ -1,5 +1,4 @@
 local cli = require('neogit.lib.git.cli')
-local util = require('neogit.lib.util')
 local a = require 'plenary.async_lib'
 local async, await = a.async, a.await
 
@@ -104,7 +103,7 @@ end)
 
 local update_stashes = async(function (state)
   local result = await(cli.stash.args('list').call())
-  state.stashes.files = parse(util.split(result, '\n'))
+  state.stashes.files = parse(result)
 end)
 
 return {

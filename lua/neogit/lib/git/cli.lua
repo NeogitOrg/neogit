@@ -1,4 +1,5 @@
 local notif = require("neogit.lib.notification")
+local logger = require 'neogit.logger'
 local a = require 'plenary.async_lib'
 local async, await, await_all = a.async, a.await, a.await_all
 local process = require('neogit.process')
@@ -119,6 +120,19 @@ local configurations = {
       new_branch = function (tbl)
         return function (branch)
           return tbl.b(branch)
+        end
+      end
+    }
+  }),
+  remote = config({
+    flags = {
+      push = '--push'
+    },
+    aliases = {
+      get_url = function (tbl)
+        return function(remote)
+          tbl.prefix("get-url")
+          return tbl.args(remote)
         end
       end
     }
@@ -272,18 +286,31 @@ end
 
 local history = {}
 
-local function handle_new_cmd(job, popup)
+local function handle_new_cmd(job, popup, hidden_text)
   if popup == nil then
     popup = true
   end
 
   table.insert(history, {
-    cmd = job.cmd,
+    cmd = hidden_text and job.cmd:gsub(hidden_text, string.rep("*", #hidden_text)) or job.cmd,
+    raw_cmd = job.cmd,
     stdout = job.stdout,
     stderr = job.stderr,
     code = job.code,
     time = job.time
   })
+
+  do
+    local log_fn = logger.debug
+    if job.code > 0 then
+      log_fn = logger.error
+    end
+    log_fn(string.format("Execution of '%s'", job.cmd))
+    if job.code > 0 then
+      log_fn(string.format("  failed with code %d", job.code))
+    end
+    log_fn(string.format("  took %d ms", job.time))
+  end
 
   if popup and job.code ~= 0 then
     vim.schedule(function ()
@@ -296,7 +323,7 @@ local function handle_new_cmd(job, popup)
   end
 end
 
-local exec = async(function(cmd, args, cwd, stdin, env, show_popup)
+local exec = async(function(cmd, args, cwd, stdin, env, show_popup, hide_text)
   args = args or {}
   if show_popup == nil then 
     show_popup = true 
@@ -317,20 +344,24 @@ local exec = async(function(cmd, args, cwd, stdin, env, show_popup)
     input = stdin,
     cwd = cwd
   }
+
   local result, code, errors = await(process.spawn(opts))
+  local stdout = split(result, '\n')
+  local stderr = split(errors, '\n')
+
   handle_new_cmd({
     cmd =  'git ' .. table.concat(args, ' '),
-    stdout = split(result, '\n'),
-    stderr = split(errors, '\n'),
+    stdout = stdout,
+    stderr = stderr,
     code = code,
     time = os.clock() - time
-  }, show_popup)
+  }, show_popup, hide_text)
   --print('git', table.concat(args, ' '), '->', code, errors)
 
-  return result, code, errors
+  return stdout, code, stderr
 end)
 
-local function new_job(cmd, args, cwd, _stdin, _env, show_popup)
+local function new_job(cmd, args, cwd, _stdin, _env, show_popup, hide_text)
   args = args or {}
   if show_popup == nil then 
     show_popup = true 
@@ -347,13 +378,13 @@ local function new_job(cmd, args, cwd, _stdin, _env, show_popup)
   local job = Job.new({ cmd = cmd })
   job.cwd = cwd
 
-  handle_new_cmd(job, show_popup)
+  handle_new_cmd(job, show_popup, hide_text)
 
   return job
 end
 
-local function exec_sync(cmd, args, cwd, stdin, env, show_popup)
-  local job = new_job(cmd, args, cwd, stdin, env, show_popup)
+local function exec_sync(cmd, args, cwd, stdin, env, show_popup, hide_text)
+  local job = new_job(cmd, args, cwd, stdin, env, show_popup, hide_text)
 
   job:start()
   job:wait()
@@ -418,6 +449,13 @@ local mt_builder = {
     if action == 'show_popup' then
       return function (show_popup)
         tbl[k_state].show_popup = show_popup
+        return tbl
+      end
+    end
+
+    if action == 'hide_text' then
+      return function (hide_text)
+        tbl[k_state].hide_text = hide_text
         return tbl
       end
     end
@@ -503,7 +541,9 @@ local function new_builder(subcommand)
         table.insert(args, 1, state.prefix)
       end
 
-      return await(exec(subcommand, args, state.cwd, state.input, state.env, state.show_popup))
+      logger.debug(string.format("[CLI]: Executing '%s %s'", subcommand, table.concat(args, ' ')))
+
+      return await(exec(subcommand, args, state.cwd, state.input, state.env, state.show_popup, state.hide_text))
     end),
     call_sync = function()
       local args = {}
@@ -524,7 +564,9 @@ local function new_builder(subcommand)
         table.insert(args, 1, state.prefix)
       end
 
-      return exec_sync(subcommand, args, state.cwd, state.input, state.env, state.show_popup)
+      logger.debug(string.format("[CLI]: Executing '%s %s'", subcommand, table.concat(args, ' ')))
+
+      return exec_sync(subcommand, args, state.cwd, state.input, state.env, state.show_popup, state.hide_text)
     end,
     to_job = function()
       local args = {}

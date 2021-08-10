@@ -25,7 +25,7 @@ local update_status = async(function (state)
   local head = {}
   local upstream = {}
 
-  for _, l in ipairs(util.split(result, '\0')) do
+  for _, l in ipairs(util.split(result[1], '\0')) do
     if append_original_path then
       append_original_path(l)
     else
@@ -111,13 +111,13 @@ local update_branch_information = async(function (state)
   if state.head.oid ~= '(initial)' then
     table.insert(tasks, async(function ()
       local result = await(git.cli.log.max_count(1).pretty('%B').call())
-      state.head.commit_message = util.split(result, '\n')[1]
+      state.head.commit_message = result[1]
     end)())
 
     if state.upstream.branch then
       table.insert(tasks, async(function ()
         local result = await(git.cli.log.max_count(1).pretty('%B').for_range('@{upstream}').show_popup(false).call())
-        state.upstream.commit_message = util.split(result, '\n')[1]
+        state.upstream.commit_message = result[1]
       end)())
     end
   end

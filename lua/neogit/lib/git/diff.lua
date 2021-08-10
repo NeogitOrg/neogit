@@ -1,7 +1,7 @@
 local a = require 'plenary.async_lib'
+local logger = require 'neogit.logger'
 local async, await, await_all = a.async, a.await, a.await_all
 local cli = require('neogit.lib.git.cli')
-local util = require('neogit.lib.util')
 local Collection = require('neogit.lib.collection')
 local md5 = require 'neogit.lib.md5'
 
@@ -69,8 +69,8 @@ local function parse_diff(output, with_stats)
         diff.file = header[4]:match("%-%-%- a/(.*)")
       end
     else
-      inspect(header)
-      error("TODO: diff parser")
+      logger.debug "TODO: diff parser"
+      logger.debug(vim.inspect(header))
     end
   end
 
@@ -166,7 +166,7 @@ function diff.register(meta)
         table.insert(executions, async(function (f)
           local raw_diff = await(cli.diff.files(f.name).call())
           local raw_stats = await(cli.diff.shortstat.files(f.name).call())
-          f.diff = parse_diff(util.split(raw_diff, '\n'))
+          f.diff = parse_diff(raw_diff)
           f.diff.stats = parse_diff_stats(raw_stats)
         end)(f))
       end
@@ -177,7 +177,7 @@ function diff.register(meta)
         table.insert(executions, async(function (f)
           local raw_diff = await(cli.diff.cached.files(f.name).call())
           local raw_stats = await(cli.diff.cached.shortstat.files(f.name).call())
-          f.diff = parse_diff(util.split(raw_diff, '\n'))
+          f.diff = parse_diff(raw_diff)
           f.diff.stats = parse_diff_stats(raw_stats)
         end)(f))
       end

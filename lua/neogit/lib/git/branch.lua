@@ -1,7 +1,7 @@
 local a = require 'plenary.async_lib'
 local async, await, scheduler = a.async, a.await, a.scheduler
 local cli = require('neogit.lib.git.cli')
-local util = require('neogit.lib.util')
+local logger = require('neogit.logger')
 local input = require('neogit.lib.input')
 local M = {}
 
@@ -14,8 +14,7 @@ local function contains(table, val)
    return false
 end
 
-local function parse_branches(output)
-  local branches = util.split(output, '\n')
+local function parse_branches(branches)
   local other_branches = {}
   for _, b in ipairs(branches) do
     local branch_name = b:match('^  (.+)')
@@ -48,7 +47,7 @@ local function prompt_for_branch(options)
   local chosen = input.get_user_input_with_completion('branch > ', options)
   if not chosen or chosen == '' then return nil end
   if not contains(options, chosen) then
-    print("ERROR: Branch doesn't exit")
+    logger.fmt_error("ERROR: Branch '%s' doesn't exit", chosen)
     return
   end
   return chosen

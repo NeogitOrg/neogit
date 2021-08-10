@@ -4,7 +4,7 @@ if exists("b:did_ftplugin")
 endif
 let b:did_ftplugin = 1
 
-au BufWipeout <buffer> lua require 'neogit.status'.close()
+au BufWipeout <buffer> lua require 'neogit.status'.close(true)
 
 if !luaeval("require'neogit.config'.values.disable_context_highlighting")
   augroup NeogitStatusHighlightUpdater

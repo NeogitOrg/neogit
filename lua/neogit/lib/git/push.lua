@@ -11,7 +11,7 @@ local update_unmerged = async(function (state)
   local result = await(
     cli.log.oneline.for_range('@{upstream}..').show_popup(false).call())
 
-  state.unmerged.files = util.map(util.split(result, '\n'), function (x) 
+  state.unmerged.files = util.map(result, function (x) 
     return { name = x } 
   end)
 end)

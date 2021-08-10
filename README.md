@@ -61,6 +61,8 @@ The create function takes 1 optional argument that can be one of the following v
 * tab (default)
 * floating (This currently doesn't work with popups. Very unstable)
 * split
+* split_above
+* vsplit
 
 ## Status Keybindings
 
