@@ -5,6 +5,12 @@ local util = require('neogit.lib.util')
 
 local M = {}
 
+M.push_interactive = a.async(function(remote, branch)
+  local cmd = "git push " .. remote .. " " .. branch
+
+  return a.await(cli.interactive_git_cmd(cmd))
+end)
+
 local update_unmerged = async(function (state)
   if not state.upstream.branch then return end
 

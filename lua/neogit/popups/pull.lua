@@ -3,15 +3,18 @@ local status = require 'neogit.status'
 local input = require 'neogit.lib.input'
 local notif = require("neogit.lib.notification")
 local git = require("neogit.lib.git")
+local pull_lib = require 'neogit.lib.git.pull'
 local a = require 'plenary.async_lib'
 local await, async, scheduler = a.await, a.async, a.scheduler
 
 local M = {}
 
-local pull_from = async(function(popup, name, remote, branch)
+local pull_from = async(function(_popup, name, remote, branch)
   notif.create("Pulling from " .. name)
-  local _, code = await(git.cli.pull.args(unpack(popup:get_arguments())).args(remote, branch).call())
-  if code == 0 then
+
+  local res = await(pull_lib.pull_interactive(remote, branch))
+
+  if res.code == 0 then
     await(scheduler())
     notif.create("Pulled from " .. name)
     await(status.refresh(true))
