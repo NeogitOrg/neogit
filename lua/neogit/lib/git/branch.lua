@@ -1,6 +1,7 @@
 local a = require 'plenary.async_lib'
 local async, await, scheduler = a.async, a.await, a.scheduler
 local cli = require('neogit.lib.git.cli')
+local logger = require('neogit.logger')
 local input = require('neogit.lib.input')
 local M = {}
 
@@ -46,7 +47,7 @@ local function prompt_for_branch(options)
   local chosen = input.get_user_input_with_completion('branch > ', options)
   if not chosen or chosen == '' then return nil end
   if not contains(options, chosen) then
-    print("ERROR: Branch doesn't exit")
+    logger.fmt_error("ERROR: Branch '%s' doesn't exit", chosen)
     return
   end
   return chosen

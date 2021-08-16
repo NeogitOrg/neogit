@@ -1,4 +1,5 @@
 local a = require 'plenary.async_lib'
+local logger = require 'neogit.logger'
 local async, await, await_all = a.async, a.await, a.await_all
 local cli = require('neogit.lib.git.cli')
 local Collection = require('neogit.lib.collection')
@@ -68,8 +69,8 @@ local function parse_diff(output, with_stats)
         diff.file = header[4]:match("%-%-%- a/(.*)")
       end
     else
-      print(vim.inspect(header))
-      print("TODO: diff parser")
+      logger.debug "TODO: diff parser"
+      logger.debug(vim.inspect(header))
     end
   end
 

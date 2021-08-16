@@ -87,6 +87,10 @@ function Buffer:close(force)
   end
 end
 
+function Buffer:is_valid()
+  return vim.api.nvim_buf_is_valid(self.handle)
+end
+
 function Buffer:put(lines, after, follow)
   self:focus()
   vim.api.nvim_put(lines, "l", after, follow)
@@ -208,6 +212,9 @@ function Buffer.create(config)
   elseif kind == "split" then
     vim.cmd("below new")
     buffer = Buffer:new(vim.api.nvim_get_current_buf())
+  elseif kind == "split_above" then
+    vim.cmd("top new")
+    buffer = Buffer:new(vim.api.nvim_get_current_buf())
   elseif kind == "vsplit" then
     vim.cmd("bot vnew")
     buffer = Buffer:new(vim.api.nvim_get_current_buf())
@@ -321,7 +328,11 @@ function Buffer.create(config)
 
   -- This sets fold styling for Neogit windows without overriding user styling
   buffer:call(function()
-    vim.wo.winhl = "Folded:NeogitFold"
+    local hl = vim.wo.winhl
+    if hl ~= "" then
+      hl = hl .. ","
+    end
+    vim.wo.winhl = hl .. "Folded:NeogitFold"
   end)
 
   return buffer
