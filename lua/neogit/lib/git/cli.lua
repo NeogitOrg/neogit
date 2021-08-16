@@ -158,6 +158,7 @@ local configurations = {
     flags = {
       amend = '--amend',
       only = '--only',
+      dry_run = '--dry-run',
       no_edit = '--no-edit'
     },
     options = {

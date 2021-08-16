@@ -69,24 +69,9 @@ local prompt_commit_message = async(function (msg, skip_gen)
   end
 
   if not skip_gen then
-    local msg_template_path = cli.config.get("commit.template").call_sync()[1]
-    if msg_template_path then
-      local msg_template = uv_utils.read_file_sync(vim.fn.glob(msg_template_path))
-      for _, line in pairs(msg_template) do
-        table.insert(output, line)
-      end
-      table.insert(output, "")
-    end
-    table.insert(output, "# Please enter the commit message for your changes. Lines starting")
-    table.insert(output, "# with '#' will be ignored, and an empty message aborts the commit.")
-
-    local status_output = await(cli.status.call())
-    status_output = status_output
-
-    for _, line in pairs(status_output) do
-      if not vim.startswith(line, "  (") then
-        table.insert(output, "# " .. line)
-      end
+    local lines = await(cli.commit.dry_run.call())
+    for _, line in ipairs(lines) do
+      table.insert(output, "# " .. line)
     end
   end
 
