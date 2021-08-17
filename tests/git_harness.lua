@@ -1,5 +1,5 @@
 local status = require'neogit.status'
-local a = require 'plenary.async_lib'
+local a = require 'plenary.async.async'
 local M = {}
 
 local project_dir = vim.api.nvim_exec('pwd', true)
