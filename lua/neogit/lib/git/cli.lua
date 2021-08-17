@@ -685,7 +685,7 @@ local function handle_interactive_password_questions(chan, line)
     or vim.startswith(line, "Password for") 
     then
     logger.debug "[CLI]: Asking for password"
-    local prompt = line:match("(.*:):.*")
+    local prompt = line:match("(.*:?):.*")
     local value = vim.fn.inputsecret {
       prompt = prompt .. " ",
       cancelreturn = "__CANCEL__"
