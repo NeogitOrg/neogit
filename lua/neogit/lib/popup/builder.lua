@@ -1,4 +1,4 @@
-local a = require 'plenary.async_lib'
+local a = require 'plenary.async'
 
 local M = {}
 
@@ -71,7 +71,7 @@ function M:action(key, description, callback)
   table.insert(self.state.actions[#self.state.actions], {
     key = key,
     description = description,
-    callback = callback and a.void(a.async(callback)) or nil
+    callback = callback and a.void(callback) or nil
   })
 
   return self
@@ -82,7 +82,7 @@ function M:action_if(cond, key, description, callback)
     table.insert(self.state.actions[#self.state.actions], {
       key = key,
       description = description,
-      callback = callback and a.void(a.async(callback)) or nil
+      callback = callback and a.void(callback) or nil
     })
   end
 

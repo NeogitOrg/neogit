@@ -1,6 +1,5 @@
-local a = require 'plenary.async_lib'
+local a = require 'plenary.async'
 local logger = require 'neogit.logger'
-local async, await, await_all = a.async, a.await, a.await_all
 local cli = require('neogit.lib.git.cli')
 local Collection = require('neogit.lib.collection')
 local md5 = require 'neogit.lib.md5'
@@ -146,7 +145,7 @@ function ItemFilter.accepts (tbl, section, item)
 end
 
 function diff.register(meta)
-  meta.load_diffs = async(function (repo, filter)
+  meta.load_diffs = function (repo, filter)
     filter = filter or false
     local executions = {}
 
@@ -163,28 +162,28 @@ function diff.register(meta)
 
     for _, f in ipairs(repo.unstaged.files) do
       if f.mode ~= 'D' and f.mode ~= 'F' and (not filter or filter:accepts('unstaged', f.name)) then
-        table.insert(executions, async(function (f)
-          local raw_diff = await(cli.diff.files(f.name).call())
-          local raw_stats = await(cli.diff.shortstat.files(f.name).call())
+        table.insert(executions, function ()
+          local raw_diff = cli.diff.files(f.name).call()
+          local raw_stats = cli.diff.shortstat.files(f.name).call()
           f.diff = parse_diff(raw_diff)
           f.diff.stats = parse_diff_stats(raw_stats)
-        end)(f))
+        end)
       end
     end
 
     for _, f in ipairs(repo.staged.files) do
       if f.mode ~= 'D' and f.mode ~= 'F' and (not filter or filter:accepts('staged', f.name)) then
-        table.insert(executions, async(function (f)
-          local raw_diff = await(cli.diff.cached.files(f.name).call())
-          local raw_stats = await(cli.diff.cached.shortstat.files(f.name).call())
+        table.insert(executions, function ()
+          local raw_diff = cli.diff.cached.files(f.name).call()
+          local raw_stats = cli.diff.cached.shortstat.files(f.name).call()
           f.diff = parse_diff(raw_diff)
           f.diff.stats = parse_diff_stats(raw_stats)
-        end)(f))
+        end)
       end
     end
 
-    await_all(executions)
-  end)
+    a.util.join(executions)
+  end
 end
 
 return diff

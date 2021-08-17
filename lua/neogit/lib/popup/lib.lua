@@ -1,6 +1,6 @@
 package.loaded['neogit.lib.popup.lib'] = nil
 
-local a = require 'plenary.async_lib'
+local a = require 'plenary.async'
 local util = require("neogit.lib.util")
 
 local popups = {}
@@ -387,7 +387,7 @@ local function new()
     table.insert(builder.state.actions[#builder.state.actions], {
       key = key,
       description = description,
-      callback = callback and a.void(a.async(callback)) or function() end
+      callback = callback and a.void(callback) or function() end
     })
 
     return builder

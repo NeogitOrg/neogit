@@ -1,6 +1,4 @@
 local cli = require('neogit.lib.git.cli')
-local a = require 'plenary.async_lib'
-local async, await = a.async, a.await
 
 local function parse(output)
   local result = {}
@@ -15,25 +13,25 @@ local function trim_null_terminator(str)
   return string.gsub(str, "^(.-)%z*$", "%1")
 end
 
-local perform_stash = async(function (include)
+local function perform_stash(include)
   if not include then return end
 
-  local index = await(
+  local index = 
     cli['commit-tree']
       .no_gpg_sign
       .parent('HEAD')
-      .tree(await(cli['write-tree'].call()))
-      .call())
+      .tree(cli['write-tree'].call())
+      .call()
 
-  await(
+  
     cli['read-tree']
       .merge
       .index_output('.git/NEOGIT_TMP_INDEX')
       .args(index)
-      .call())
+      .call()
 
   if include.worktree then
-    local files = await(
+    local files = 
       cli.diff
         .name_only
         .null_terminated
@@ -41,10 +39,10 @@ local perform_stash = async(function (include)
         .env({
           GIT_INDEX_FILE = '.git/NEOGIT_TMP_INDEX'
         })
-        .call())
+        .call()
     files = vim.split(trim_null_terminator(files), '\0')
 
-    await(
+    
       cli['update-index']
         .add
         .remove
@@ -52,114 +50,114 @@ local perform_stash = async(function (include)
         .env({
           GIT_INDEX_FILE = '.git/NEOGIT_TMP_INDEX'
         })
-        .call())
+        .call()
   end
 
-  local tree = await(
+  local tree = 
     cli['commit-tree']
       .no_gpg_sign
       .parents('HEAD', index)
-      .tree(await(cli['write-tree'].call()))
+      .tree(cli['write-tree'].call())
       .env({
         GIT_INDEX_FILE = '.git/NEOGIT_TMP_INDEX'
       })
-      .call())
+      .call()
 
-  await(
+  
     cli['update-ref']
       .create_reflog
       .args('refs/stash', tree)
-      .call())
+      .call()
 
   -- selene: allow(empty_if)
   if include.worktree and include.index then
     -- disabled because stashing both worktree and index via this function
     -- leaves a malformed stash entry, so reverting the changes is
     -- destructive until fixed.
-    --await(
+    --
       --cli.reset
         --.hard
         --.commit('HEAD')
-        --.call())
+        --.call()
   elseif include.index then
-    local diff = await(
+    local diff = 
       cli.diff
         .cached
-        .call()) .. '\n'
+        .call() .. '\n'
 
-    await(
+    
       cli.apply
         .reverse
         .cached
         .input(diff)
-        .call())
-    await(
+        .call()
+    
       cli.apply
         .reverse
         .input(diff)
-        .call())
+        .call()
   end
-end)
+end
 
-local update_stashes = async(function (state)
-  local result = await(cli.stash.args('list').call())
+local function update_stashes(state)
+  local result = cli.stash.args('list').call()
   state.stashes.files = parse(result)
-end)
+end
 
 return {
   parse = parse,
-  stash_all = async(function ()
-    await(cli.stash.call())
+  stash_all = function ()
+    cli.stash.call()
     -- this should work, but for some reason doesn't.
     --return perform_stash({ worktree = true, index = true })
-  end),
+  end,
   stash_index = function ()
     return perform_stash({ worktree = false, index = true })
   end,
 
-  pop = async(function (stash)
-    local _, code = await(cli.stash
+  pop = function (stash)
+    local _, code = cli.stash
       .apply
       .index
       .args(stash)
       .show_popup(false)
-      .call())
+      .call()
 
     if code == 0 then
-      await(cli.stash
+      cli.stash
         .drop
         .args(stash)
-        .call())
+        .call()
     else
-      await(cli.stash
+      cli.stash
         .apply
         .args(stash)
-        .call())
+        .call()
     end
-  end),
+  end,
 
-  apply = async(function (stash)
-    local _, code = await(cli.stash
+  apply = function (stash)
+    local _, code = cli.stash
       .apply
       .index
       .args(stash)
       .show_popup(false)
-      .call())
+      .call()
 
     if code ~= 0 then
-      await(cli.stash
+      cli.stash
         .apply
         .args(stash)
-        .call())
+        .call()
     end
-  end),
+  end,
 
-  drop = async(function (stash)
-    await(cli.stash
+  drop = function (stash)
+    cli.stash
       .drop
       .args(stash)
-      .call())
-  end),
+      .call()
+  end,
 
   register = function (meta)
     meta.update_stashes = update_stashes

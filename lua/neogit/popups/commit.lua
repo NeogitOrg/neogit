@@ -5,8 +5,7 @@ local cli = require("neogit.lib.git.cli")
 local input = require("neogit.lib.input")
 local Buffer = require("neogit.lib.buffer")
 local config = require("neogit.config")
-local a = require 'plenary.async_lib'
-local async, await, scheduler, wrap, uv = a.async, a.await, a.scheduler, a.wrap, a.uv
+local a = require 'plenary.async'
 local split = require('neogit.lib.util').split
 local uv_utils = require 'neogit.lib.uv'
 
@@ -17,7 +16,7 @@ local function get_commit_file()
 end
 
 -- selene: allow(global_usage)
-local get_commit_message = wrap(function (content, cb)
+local get_commit_message = a.wrap(function (content, cb)
   local written = false
   Buffer.create {
     name = get_commit_file(),
@@ -57,7 +56,7 @@ end, 2)
 
 -- If skip_gen is true we don't generate the massive git comment.
 -- This flag should be true when the file already exists
-local prompt_commit_message = async(function (msg, skip_gen)
+local function prompt_commit_message(msg, skip_gen)
   local output = {}
 
   if msg and #msg > 0 then
@@ -69,33 +68,33 @@ local prompt_commit_message = async(function (msg, skip_gen)
   end
 
   if not skip_gen then
-    local lines = await(cli.commit.dry_run.call())
+    local lines = cli.commit.dry_run.call()
     for _, line in ipairs(lines) do
       table.insert(output, "# " .. line)
     end
   end
 
-  await(scheduler())
-  await(get_commit_message(output))
-end)
+  a.util.scheduler()
+  get_commit_message(output)
+end
 
-local do_commit = async(function(data, cmd, skip_gen)
-  await(scheduler())
+local function do_commit(data, cmd, skip_gen)
+  a.util.scheduler()
   local commit_file = get_commit_file()
   if data then
-    await(prompt_commit_message(data, skip_gen))
+    prompt_commit_message(data, skip_gen)
   end
-  await(scheduler())
+  a.util.scheduler()
   local notification = notif.create("Committing...", { delay = 9999 })
-  local _, code = await(cmd.call())
-  await(scheduler())
+  local _, code = cmd.call()
+  a.util.scheduler()
   notification:delete()
   notif.create("Successfully committed!")
   if code == 0 then
-    await(uv.fs_unlink(commit_file))
-    await(status.refresh(true))
+    a.uv.fs_unlink(commit_file)
+    status.refresh(true)
   end
-end)
+end
 
 function M.create()
   local p = popup.builder()
@@ -111,31 +110,31 @@ function M.create()
     :option("S", "gpg-sign", "", "Sign using gpg")
     :option("C", "reuse-message", "", "Reuse commit message")
     :action("c", "Commit", function(popup)
-      await(scheduler())
+      a.util.scheduler()
       local commit_file = get_commit_file()
-      local _, data = await(uv_utils.read_file(commit_file))
+      local _, data = uv_utils.read_file(commit_file)
       local skip_gen = data ~= nil
       data = data or ''
       -- we need \r? to support windows
       data = split(data, '\r?\n')
-      await(do_commit(data, cli.commit.commit_message_file(commit_file).args(unpack(popup:get_arguments())), skip_gen))
+      do_commit(data, cli.commit.commit_message_file(commit_file).args(unpack(popup:get_arguments())), skip_gen)
     end)
     :action("e", "Extend", function()
-      await(do_commit(nil, cli.commit.no_edit.amend))
+      do_commit(nil, cli.commit.no_edit.amend)
     end)
     :action("w", "Reword", function()
-      await(scheduler())
+      a.util.scheduler()
       local commit_file = get_commit_file()
-      local msg = await(cli.log.max_count(1).pretty('%B').call())
+      local msg = cli.log.max_count(1).pretty('%B').call()
 
-      await(do_commit(msg, cli.commit.commit_message_file(commit_file).amend.only))
+      do_commit(msg, cli.commit.commit_message_file(commit_file).amend.only)
     end)
     :action("a", "Amend", function()
-      await(scheduler())
+      a.util.scheduler()
       local commit_file = get_commit_file()
-      local msg = await(cli.log.max_count(1).pretty('%B').call())
+      local msg = cli.log.max_count(1).pretty('%B').call()
 
-      await(do_commit(msg, cli.commit.commit_message_file(commit_file).amend))
+      do_commit(msg, cli.commit.commit_message_file(commit_file).amend)
     end)
     :new_action_group()
     :action("f", "Fixup")

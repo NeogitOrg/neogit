@@ -1,5 +1,4 @@
-local a = require 'plenary.async_lib'
-local async, await, scheduler = a.async, a.await, a.scheduler
+local a = require 'plenary.async'
 local cli = require('neogit.lib.git.cli')
 local logger = require('neogit.logger')
 local input = require('neogit.lib.input')
@@ -26,22 +25,22 @@ local function parse_branches(branches)
   return other_branches
 end
 
-local get_local_branches = async(function ()
-  local branches = await(cli.branch
+local function get_local_branches()
+  local branches = cli.branch
     .list
-    .call())
+    .call()
 
   return parse_branches(branches)
-end)
+end
 
-local get_all_branches = async(function ()
-  local branches = await(cli.branch
+local function get_all_branches()
+  local branches = cli.branch
     .list
     .all
-    .call())
+    .call()
 
   return parse_branches(branches)
-end)
+end
 
 local function prompt_for_branch(options)
   local chosen = input.get_user_input_with_completion('branch > ', options)
@@ -53,53 +52,53 @@ local function prompt_for_branch(options)
   return chosen
 end
 
-M.checkout_local = async(function ()
-  local branches = await(get_local_branches())
+function M.checkout_local()
+  local branches = get_local_branches()
 
-  await(scheduler())
+  a.util.scheduler()
   local chosen = prompt_for_branch(branches)
   if not chosen then return end
-  await(cli.checkout.branch(chosen).call())
-end)
+  cli.checkout.branch(chosen).call()
+end
 
-M.checkout = async(function ()
-  local branches = await(get_all_branches())
+function M.checkout()
+  local branches = get_all_branches()
 
-  await(scheduler())
+  a.util.scheduler()
   local chosen = prompt_for_branch(branches)
   if not chosen then return end
-  await(cli.checkout.branch(chosen).call())
-end)
+  cli.checkout.branch(chosen).call()
+end
 
-M.create = async(function ()
-  await(scheduler())
+function M.create()
+  a.util.scheduler()
   local name = input.get_user_input('branch > ')
   if not name or name == '' then return end
 
-  await(cli.branch.name(name).call())
+  cli.branch.name(name).call()
 
   return name
-end)
+end
 
-M.delete = async(function ()
-  local branches = await(get_all_branches())
+function M.delete()
+  local branches = get_all_branches()
 
-  await(scheduler())
+  a.util.scheduler()
   local chosen = prompt_for_branch(branches)
   if not chosen then return end
-  await(cli.branch.delete.name(chosen).call())
+  cli.branch.delete.name(chosen).call()
 
   return chosen
-end)
+end
 
-M.checkout_new = async(function ()
-  await(scheduler())
+function M.checkout_new()
+  a.util.sutil.cheduler()
   local name = input.get_user_input('branch > ')
   if not name or name == '' then return end
-  await(cli.checkout
+  cli.checkout
     .new_branch(name)
-    .call())
-end)
+    .call()
+end
 
 M.prompt_for_branch = prompt_for_branch
 
