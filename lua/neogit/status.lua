@@ -310,8 +310,6 @@ local function refresh (which)
   a.util.scheduler()
   local s, f, h = save_cursor_location()
 
-  inspect(which)
-
   if cli.git_root() ~= '' then
     if which == true or which.status then
       M.repo:update_status()
