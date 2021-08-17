@@ -99,7 +99,7 @@ function M.open(selected_file_name)
     end
   }
 
-  view:on_files_staged(void(function (_)
+  view:on_files_staged(a.void(function (_)
     status.refresh({ status = true, diffs = true })
     view:update_files()
   end))

@@ -1,6 +1,5 @@
 local cli = require("neogit.lib.git.cli")
 local util = require("neogit.lib.util")
-local a = require 'plenary.async'
 
 local function parse_log(output)
   if type(output) == "string" then

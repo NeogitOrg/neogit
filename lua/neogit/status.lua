@@ -305,23 +305,33 @@ local function refresh (which)
 
     local refreshes = {}
     if which == true or which.branch_information then
-      table.insert(refreshes, function() M.repo:update_branch_information() end)
+      table.insert(refreshes, function() 
+        M.repo:update_branch_information() 
+      end)
     end
     if which == true or which.stashes then
-      table.insert(refreshes, function() M.repo:update_stashes() end)
+      table.insert(refreshes, function() 
+        M.repo:update_stashes() 
+      end)
     end
     if which == true or which.unpulled then
-      table.insert(refreshes, function() M.repo:update_unpulled() end)
+      table.insert(refreshes, function() 
+        M.repo:update_unpulled() 
+      end)
     end
     if which == true or which.unmerged then
-      table.insert(refreshes, function() M.repo:update_unmerged() end)
+      table.insert(refreshes, function() 
+        M.repo:update_unmerged() 
+      end)
     end
     if which == true or which.diffs then
       local filter = (type(which) == "table" and type(which.diffs) == "table")
         and which.diffs
         or nil
 
-      table.insert(refreshes, function() M.repo:load_diffs(filter) end)
+      table.insert(refreshes, function() 
+        M.repo:load_diffs(filter) 
+      end)
     end
     a.util.join(refreshes)
     a.util.scheduler()

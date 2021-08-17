@@ -1,4 +1,3 @@
-local a = require 'plenary.async'
 local status = require 'neogit.status'
 local stash_lib = require 'neogit.lib.git.stash'
 local popup = require('neogit.lib.popup')

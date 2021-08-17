@@ -1,5 +1,4 @@
 local cli = require('neogit.lib.git.cli')
-local a = require 'plenary.async'
 
 local function parse(output)
   local result = {}
@@ -21,7 +20,7 @@ local function perform_stash(include)
     cli['commit-tree']
       .no_gpg_sign
       .parent('HEAD')
-      .tree(await(cli['write-tree'].call()))
+      .tree(cli['write-tree'].call())
       .call()
 
   
@@ -58,7 +57,7 @@ local function perform_stash(include)
     cli['commit-tree']
       .no_gpg_sign
       .parents('HEAD', index)
-      .tree(await(cli['write-tree'].call()))
+      .tree(cli['write-tree'].call())
       .env({
         GIT_INDEX_FILE = '.git/NEOGIT_TMP_INDEX'
       })

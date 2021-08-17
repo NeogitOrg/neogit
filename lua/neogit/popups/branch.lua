@@ -4,7 +4,6 @@ local cli = require 'neogit.lib.git.cli'
 local popup = require('neogit.lib.popup')
 local branch = require('neogit.lib.git.branch')
 local operation = require('neogit.operations')
-local a = require 'plenary.async'
 
 function M.create()
   local p = popup.builder()

@@ -1,4 +1,3 @@
-local a = require 'plenary.async'
 local cli = require 'neogit.lib.git.cli'
 
 local M = {}
