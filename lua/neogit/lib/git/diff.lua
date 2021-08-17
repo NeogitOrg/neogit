@@ -182,7 +182,10 @@ function diff.register(meta)
       end
     end
 
-    a.util.join(executions)
+    -- If executions is an empty array, the join function blocks forever.
+    if #executions > 0 then
+      a.util.join(executions)
+    end
   end
 end
 

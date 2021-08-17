@@ -6,6 +6,7 @@ local cli = require('neogit.lib.git.cli')
 local notif = require("neogit.lib.notification")
 local config = require("neogit.config")
 local a = require 'plenary.async'
+local logger = require 'neogit.logger'
 local repository = require 'neogit.lib.git.repository'
 local Collection = require 'neogit.lib.collection'
 local F = require 'neogit.lib.functional'
@@ -279,8 +280,12 @@ local function refresh_status()
 
   M.status_buffer:unlock()
 
+  logger.debug "Redrawing status buffer"
+
   draw_buffer()
   draw_signs()
+
+  logger.debug "Finished redrawing status buffer"
 
   M.status_buffer:lock()
 
@@ -291,10 +296,21 @@ local refresh_lock = a.control.Semaphore.new(1)
 local function refresh (which)
   which = which or true
 
+  logger.debug "[STATUS BUFFER]: Starting refresh"
+  if refresh_lock.permits == 0 then
+    logger.debug "[STATUS BUFFER]: Refresh lock not available. Aborting refresh"
+    a.util.scheduler()
+    refresh_status()
+    return
+  end
+
   local permit = refresh_lock:acquire()
+  logger.debug "[STATUS BUFFER]: Acquired refresh lock"
 
   a.util.scheduler()
   local s, f, h = save_cursor_location()
+
+  inspect(which)
 
   if cli.git_root() ~= '' then
     if which == true or which.status then
@@ -333,7 +349,9 @@ local function refresh (which)
         M.repo:load_diffs(filter) 
       end)
     end
+    logger.debug(string.format("[STATUS BUFFER]: Running %d refresh(es)", #refreshes))
     a.util.join(refreshes)
+    logger.debug "[STATUS BUFFER]: Refreshes completed"
     a.util.scheduler()
     refresh_status()
     vim.cmd [[do <nomodeline> User NeogitStatusRefreshed]]
@@ -344,8 +362,11 @@ local function refresh (which)
     restore_cursor_location(s, f, h)
   end
 
+  logger.debug "[STATUS BUFFER]: Finished refresh"
+  logger.debug "[STATUS BUFFER]: Refresh lock is now free"
   permit:forget()
 end
+
 local dispatch_refresh = a.void(refresh)
 
 --- Compatibility endpoint to refresh data from an autocommand.
@@ -798,9 +819,12 @@ local function create(kind)
   kind = kind or "tab"
 
   if M.status_buffer then
+    logger.debug "Status buffer already exists. Focusing the existing one"
     M.status_buffer:focus()
     return
   end
+
+  logger.debug "Creating status buffer"
 
   Buffer.create {
     name = "NeogitStatus",
@@ -822,6 +846,7 @@ local function create(kind)
         end
       end
 
+      logger.debug "[STATUS BUFFER]: Dispatching initial render"
       dispatch_refresh(true)
     end
   }
