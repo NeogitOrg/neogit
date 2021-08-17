@@ -92,7 +92,7 @@ function M.delete()
 end
 
 function M.checkout_new()
-  a.util.sutil.cheduler()
+  a.util.scheduler()
   local name = input.get_user_input('branch > ')
   if not name or name == '' then return end
   cli.checkout
