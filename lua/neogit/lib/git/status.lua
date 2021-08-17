@@ -121,7 +121,7 @@ local function update_branch_information(state)
     end
   end
 
-  await_all(tasks)
+  a.util.join(tasks)
 end
 
 local status = {

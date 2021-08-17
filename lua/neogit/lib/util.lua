@@ -1,4 +1,4 @@
-local a = require 'plenary.async.async'
+local a = require 'plenary.async'
 
 local function map(tbl, f)
   local t = {}
@@ -89,12 +89,12 @@ local function time(name, f)
   return res
 end
 
-local time_async = a.async(function(name, f)
+local function time_async(name, f)
   local before = os.clock()
-  local res = a.await(f())
+  local res = a.run(f())
   print(name .. " took " .. os.clock() - before .. "ms")
   return res
-end)
+end
 
 local function str_right_pad(str, len, sep)
   return str .. sep:rep(len - #str)

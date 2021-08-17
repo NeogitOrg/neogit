@@ -611,11 +611,11 @@ local function new_parallel_builder(calls)
     end
 
     local processes = {}
-    for _,c in ipairs(state.calls) do
-      table.insert(processes, c())
+    for _, c in ipairs(state.calls) do
+      table.insert(processes, c)
     end
 
-    return await_all(processes)
+    return a.util.join(processes)
   end
 
   return setmetatable({

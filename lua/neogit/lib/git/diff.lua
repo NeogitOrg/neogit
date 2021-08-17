@@ -182,7 +182,7 @@ function diff.register(meta)
       end
     end
 
-    await_all(executions)
+    a.util.join(executions)
   end
 end
 

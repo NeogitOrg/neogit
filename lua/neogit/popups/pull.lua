@@ -14,7 +14,7 @@ local function pull_from(_popup, name, remote, branch)
   local res = pull_lib.pull_interactive(remote, branch)
 
   if res.code == 0 then
-    a.scheduler()
+    a.util.scheduler()
     notif.create("Pulled from " .. name)
     status.refresh(true)
   end

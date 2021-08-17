@@ -287,49 +287,49 @@ local function refresh_status()
   vim.cmd('redraw')
 end
 
-local refresh_lock = a.util.Semaphore.new(1)
+local refresh_lock = a.control.Semaphore.new(1)
 local function refresh (which)
   which = which or true
 
   local permit = refresh_lock:acquire()
 
-  a.scheduler()
+  a.util.scheduler()
   local s, f, h = save_cursor_location()
 
   if cli.git_root() ~= '' then
     if which == true or which.status then
       M.repo:update_status()
-      a.scheduler()
+      a.util.scheduler()
       refresh_status()
     end
 
     local refreshes = {}
     if which == true or which.branch_information then
-      table.insert(refreshes, M.repo:update_branch_information())
+      table.insert(refreshes, function() M.repo:update_branch_information() end)
     end
     if which == true or which.stashes then
-      table.insert(refreshes, M.repo:update_stashes())
+      table.insert(refreshes, function() M.repo:update_stashes() end)
     end
     if which == true or which.unpulled then
-      table.insert(refreshes, M.repo:update_unpulled())
+      table.insert(refreshes, function() M.repo:update_unpulled() end)
     end
     if which == true or which.unmerged then
-      table.insert(refreshes, M.repo:update_unmerged())
+      table.insert(refreshes, function() M.repo:update_unmerged() end)
     end
     if which == true or which.diffs then
       local filter = (type(which) == "table" and type(which.diffs) == "table")
         and which.diffs
         or nil
 
-      table.insert(refreshes, M.repo:load_diffs(filter))
+      table.insert(refreshes, function() M.repo:load_diffs(filter) end)
     end
-    await_all(refreshes)
-    a.scheduler()
+    a.util.join(refreshes)
+    a.util.scheduler()
     refresh_status()
     vim.cmd [[do <nomodeline> User NeogitStatusRefreshed]]
   end
 
-  a.scheduler()
+  a.util.scheduler()
   if vim.fn.bufname() == 'NeogitStatus' then
     restore_cursor_location(s, f, h)
   end
@@ -617,7 +617,7 @@ local discard = function()
       cli.apply.reverse.with_patch(patch).call()
     end
   elseif section.name == "untracked" then
-    a.scheduler()
+    a.util.scheduler()
     vim.fn.delete(item.name)
   else
 
@@ -645,7 +645,7 @@ local discard = function()
   refresh(true)
   M.current_operation = nil
 
-  a.scheduler()
+  a.util.scheduler()
   vim.cmd "checktime"
 end
 
@@ -720,7 +720,7 @@ local cmd_func_map = function ()
     end,
     ["GoToFile"] = a.void(function()
       local repo_root = cli.git_root()
-      a.scheduler()
+      a.util.scheduler()
       local section, item = get_current_section_item()
 
       if item and section then

@@ -16,7 +16,7 @@ local function get_commit_file()
 end
 
 -- selene: allow(global_usage)
-local get_commit_message = wrap(function (content, cb)
+local get_commit_message = a.wrap(function (content, cb)
   local written = false
   Buffer.create {
     name = get_commit_file(),
@@ -74,20 +74,20 @@ local function prompt_commit_message(msg, skip_gen)
     end
   end
 
-  a.scheduler()
+  a.util.scheduler()
   get_commit_message(output)
 end
 
 local function do_commit(data, cmd, skip_gen)
-  a.scheduler()
+  a.util.scheduler()
   local commit_file = get_commit_file()
   if data then
     prompt_commit_message(data, skip_gen)
   end
-  a.scheduler()
+  a.util.scheduler()
   local notification = notif.create("Committing...", { delay = 9999 })
   local _, code = cmd.call()
-  a.scheduler()
+  a.util.scheduler()
   notification:delete()
   notif.create("Successfully committed!")
   if code == 0 then
@@ -110,7 +110,7 @@ function M.create()
     :option("S", "gpg-sign", "", "Sign using gpg")
     :option("C", "reuse-message", "", "Reuse commit message")
     :action("c", "Commit", function(popup)
-      a.scheduler()
+      a.util.scheduler()
       local commit_file = get_commit_file()
       local _, data = uv_utils.read_file(commit_file)
       local skip_gen = data ~= nil
@@ -123,14 +123,14 @@ function M.create()
       do_commit(nil, cli.commit.no_edit.amend)
     end)
     :action("w", "Reword", function()
-      a.scheduler()
+      a.util.scheduler()
       local commit_file = get_commit_file()
       local msg = cli.log.max_count(1).pretty('%B').call()
 
       do_commit(msg, cli.commit.commit_message_file(commit_file).amend.only)
     end)
     :action("a", "Amend", function()
-      a.scheduler()
+      a.util.scheduler()
       local commit_file = get_commit_file()
       local msg = cli.log.max_count(1).pretty('%B').call()
 

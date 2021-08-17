@@ -15,7 +15,7 @@ local function push_to(_popup, name, remote, branch)
   local res = push_lib.push_interactive(remote, branch)
 
   if res.code == 0 then
-    a.scheduler()
+    a.util.scheduler()
     logger.error("Pushed to " .. name)
     notif.create("Pushed to " .. name)
     status.refresh(true)

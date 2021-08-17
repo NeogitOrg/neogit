@@ -55,7 +55,7 @@ end
 function M.checkout_local()
   local branches = get_local_branches()
 
-  a.scheduler()
+  a.util.scheduler()
   local chosen = prompt_for_branch(branches)
   if not chosen then return end
   cli.checkout.branch(chosen).call()
@@ -64,14 +64,14 @@ end
 function M.checkout()
   local branches = get_all_branches()
 
-  a.scheduler()
+  a.util.scheduler()
   local chosen = prompt_for_branch(branches)
   if not chosen then return end
   cli.checkout.branch(chosen).call()
 end
 
 function M.create()
-  a.scheduler()
+  a.util.scheduler()
   local name = input.get_user_input('branch > ')
   if not name or name == '' then return end
 
@@ -83,7 +83,7 @@ end
 function M.delete()
   local branches = get_all_branches()
 
-  a.scheduler()
+  a.util.scheduler()
   local chosen = prompt_for_branch(branches)
   if not chosen then return end
   cli.branch.delete.name(chosen).call()
@@ -92,7 +92,7 @@ function M.delete()
 end
 
 function M.checkout_new()
-  a.scheduler()
+  a.util.sutil.cheduler()
   local name = input.get_user_input('branch > ')
   if not name or name == '' then return end
   cli.checkout
