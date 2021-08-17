@@ -200,7 +200,7 @@ function M:show()
     for _, action in pairs(group) do
       if action.callback then
         mappings.n[action.key] = function()
-          logger.debug(string.format("Invoking action '%s' of %s popup", action.key, self.state.name))
+          logger.debug(string.format("[POPUP]: Invoking action '%s' of %s", action.key, self.state.name))
           local ret = action.callback(self)
           self:close()
           if type(ret) == "function" then

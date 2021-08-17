@@ -12,6 +12,9 @@ local neogit = {
     return status.repo
   end,
   cli = lib.git.cli,
+  get_log_file_path = function()
+    return vim.fn.stdpath("cache") .. "/neogit.log"
+  end,
   notif = require("neogit.lib.notification"),
   open = function(opts)
     opts = opts or {}

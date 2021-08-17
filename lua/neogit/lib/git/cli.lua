@@ -738,7 +738,7 @@ local cli = setmetatable({
     })
 
     if not chan then
-      logger.error "Failed to start interactive git command"
+      logger.error "[CLI]: Failed to start interactive git command"
     end
   end, 3),
   git_root_sync = git_root_sync,
