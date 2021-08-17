@@ -4,19 +4,24 @@ local input = require 'neogit.lib.input'
 local push_lib = require 'neogit.lib.git.push'
 local status = require 'neogit.status'
 local notif = require("neogit.lib.notification")
+local logger = require 'neogit.logger'
 local git = require("neogit.lib.git")
 local a = require 'plenary.async_lib'
 local await, async, scheduler = a.await, a.async, a.scheduler
 
 local push_to = async(function(_popup, name, remote, branch)
+  logger.debug("Pushing to " .. name)
   notif.create("Pushing to " .. name)
 
   local res = await(push_lib.push_interactive(remote, branch))
 
   if res.code == 0 then
     await(scheduler())
+    logger.error("Pushed to " .. name)
     notif.create("Pushed to " .. name)
     await(status.refresh(true))
+  else
+    logger.error("Failed to push to " .. name)
   end
 end)
 

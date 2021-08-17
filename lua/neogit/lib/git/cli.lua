@@ -697,6 +697,7 @@ local cli = setmetatable({
     local skip_count = 0
 
     local started_at = os.clock()
+    logger.debug "[CLI]: Starting interactive git command"
     chan = vim.fn.jobstart(vim.fn.has('win32') == 1 and { "cmd", "/C", cmd } or cmd, {
       pty = true,
       width = 100,
