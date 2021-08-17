@@ -5,8 +5,7 @@ local git = require("neogit.lib.git")
 local cli = require('neogit.lib.git.cli')
 local notif = require("neogit.lib.notification")
 local config = require("neogit.config")
-local a = require 'plenary.async.async'
-local void, scheduler = a.void, a.scheduler
+local a = require 'plenary.async'
 local repository = require 'neogit.lib.git.repository'
 local Collection = require 'neogit.lib.collection'
 local F = require 'neogit.lib.functional'
@@ -294,13 +293,13 @@ local function refresh (which)
 
   local permit = refresh_lock:acquire()
 
-  scheduler()
+  a.scheduler()
   local s, f, h = save_cursor_location()
 
   if cli.git_root() ~= '' then
     if which == true or which.status then
       M.repo:update_status()
-      scheduler()
+      a.scheduler()
       refresh_status()
     end
 
@@ -325,25 +324,25 @@ local function refresh (which)
       table.insert(refreshes, M.repo:load_diffs(filter))
     end
     await_all(refreshes)
-    scheduler()
+    a.scheduler()
     refresh_status()
     vim.cmd [[do <nomodeline> User NeogitStatusRefreshed]]
   end
 
-  scheduler()
+  a.scheduler()
   if vim.fn.bufname() == 'NeogitStatus' then
     restore_cursor_location(s, f, h)
   end
 
   permit:forget()
 end
-local dispatch_refresh = void(refresh)
+local dispatch_refresh = a.void(refresh)
 
 --- Compatibility endpoint to refresh data from an autocommand.
 --  `fname` should be `<afile>` in this case. This function will take care of
 --  resolving the file name to the path relative to the repository root and
 --  refresh that file's cache data.
-local refresh_viml_compat = void(function (fname)
+local refresh_viml_compat = a.void(function (fname)
   if not fname or fname == "" then return end
 
   local path = fs.relpath_from_repository(fname)
@@ -402,7 +401,7 @@ local reset = function ()
   if not config.values.auto_refresh then return end
   refresh(true)
 end
-local dispatch_reset = void(reset)
+local dispatch_reset = a.void(reset)
 
 local function close(skip_close)
   if not skip_close then
@@ -618,7 +617,7 @@ local discard = function()
       cli.apply.reverse.with_patch(patch).call()
     end
   elseif section.name == "untracked" then
-    scheduler()
+    a.scheduler()
     vim.fn.delete(item.name)
   else
 
@@ -646,7 +645,7 @@ local discard = function()
   refresh(true)
   M.current_operation = nil
 
-  scheduler()
+  a.scheduler()
   vim.cmd "checktime"
 end
 
@@ -676,31 +675,31 @@ local cmd_func_map = function ()
         M.status_buffer:close()
       end, 0)
     end,
-    ["Depth1"] = void(function()
+    ["Depth1"] = a.void(function()
       set_folds({ true, true, false })
     end),
-    ["Depth2"] = void(function()
+    ["Depth2"] = a.void(function()
       set_folds({ false, true, false })
     end),
-    ["Depth3"] = void(function()
+    ["Depth3"] = a.void(function()
       set_folds({ false, false, true })
     end),
-    ["Depth4"] = void(function()
+    ["Depth4"] = a.void(function()
       set_folds({ false, false, false })
     end),
     ["Toggle"] = toggle,
-    ["Discard"] = { "nv", void(discard), true },
-    ["Stage"] = { "nv", void(stage), true },
-    ["StageUnstaged"] = void(function ()
+    ["Discard"] = { "nv", a.void(discard), true },
+    ["Stage"] = { "nv", a.void(stage), true },
+    ["StageUnstaged"] = a.void(function ()
         git.status.stage_modified()
         refresh({status = true, diffs = true})
     end),
-    ["StageAll"] = void(function()
+    ["StageAll"] = a.void(function()
         git.status.stage_all()
         refresh({status = true, diffs = true})
     end),
-    ["Unstage"] = { "nv", void(unstage), true },
-    ["UnstageStaged"] = void(function ()
+    ["Unstage"] = { "nv", a.void(unstage), true },
+    ["UnstageStaged"] = a.void(function ()
         git.status.unstage_all()
         refresh({status = true, diffs = true})
     end),
@@ -719,9 +718,9 @@ local cmd_func_map = function ()
       local _, item = get_current_section_item()
       vim.cmd("split " .. item.name)
     end,
-    ["GoToFile"] = void(function()
+    ["GoToFile"] = a.void(function()
       local repo_root = cli.git_root()
-      scheduler()
+      a.scheduler()
       local section, item = get_current_section_item()
 
       if item and section then
