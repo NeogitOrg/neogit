@@ -652,28 +652,35 @@ local meta = {
 }
 
 local function handle_interactive_password_questions(chan, line)
+  logger.debug(string.format("Matching interactive cmd output: '%s'", line))
   if vim.startswith(line, "Username for ") then
+    logger.debug "[CLI]: Asking for username"
     local prompt = line:match("(.*:):.*")
     local value = vim.fn.input {
       prompt = prompt .. " ",
       cancelreturn = "__CANCEL__"
     }
     if value ~= "__CANCEL__" then
+      logger.debug "[CLI]: Received username"
       vim.fn.chansend(chan, value .. "\n")
     else
+      logger.debug "[CLI]: Cancelling the interactive cmd"
       vim.fn.chanclose(chan)
     end
   elseif vim.startswith(line, "Enter passphrase for") 
     or vim.startswith(line, "Password for") 
     then
+    logger.debug "[CLI]: Asking for password"
     local prompt = line:match("(.*:):.*")
     local value = vim.fn.inputsecret {
       prompt = prompt .. " ",
       cancelreturn = "__CANCEL__"
     }
     if value ~= "__CANCEL__" then
+      logger.debug "[CLI]: Received password"
       vim.fn.chansend(chan, value .. "\n")
     else
+      logger.debug "[CLI]: Cancelling the interactive cmd"
       vim.fn.chanclose(chan)
     end
   else
@@ -697,7 +704,7 @@ local cli = setmetatable({
     local skip_count = 0
 
     local started_at = os.clock()
-    logger.debug "[CLI]: Starting interactive git command"
+    logger.debug(string.format("[CLI]: Starting interactive git cmd '%s'", cmd))
     chan = vim.fn.jobstart(vim.fn.has('win32') == 1 and { "cmd", "/C", cmd } or cmd, {
       pty = true,
       width = 100,
@@ -723,6 +730,7 @@ local cli = setmetatable({
         end
       end,
       on_exit = function(_, code)
+        logger.debug(string.format("[CLI]: Interactive git cmd '%s' exited with code %d", cmd, code))
         handle_new_cmd {
           cmd = cmd,
           raw_cmd = cmd,
@@ -739,7 +747,7 @@ local cli = setmetatable({
     })
 
     if not chan then
-      logger.error "[CLI]: Failed to start interactive git command"
+      logger.error(string.format("[CLI]: Failed to start interactive git cmd ''", cmd))
     end
   end, 3),
   git_root_sync = git_root_sync,
