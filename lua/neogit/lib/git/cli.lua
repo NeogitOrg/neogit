@@ -736,6 +736,10 @@ local cli = setmetatable({
         })
       end,
     })
+
+    if not chan then
+      logger.error "Failed to start interactive git command"
+    end
   end, 3),
   git_root_sync = git_root_sync,
   git_dir_path_sync = git_dir_path_sync,

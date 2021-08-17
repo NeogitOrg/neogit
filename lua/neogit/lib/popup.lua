@@ -2,6 +2,7 @@ local PopupBuilder = require 'neogit.lib.popup.builder'
 local Buffer = require 'neogit.lib.buffer'
 local common = require 'neogit.buffers.common'
 local Ui = require 'neogit.lib.ui'
+local logger = require 'neogit.logger'
 local util = require 'neogit.lib.util'
 
 local col = Ui.col
@@ -199,6 +200,7 @@ function M:show()
     for _, action in pairs(group) do
       if action.callback then
         mappings.n[action.key] = function()
+          logger.debug(string.format("Invoking action '%s' of %s popup", action.key, self.state.name))
           local ret = action.callback(self)
           self:close()
           if type(ret) == "function" then
