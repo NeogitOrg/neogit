@@ -1,4 +1,4 @@
-local a = require 'plenary.async_lib'
+local a = require 'plenary.async.async'
 
 local function map(tbl, f)
   local t = {}

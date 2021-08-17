@@ -4,37 +4,36 @@ local input = require 'neogit.lib.input'
 local notif = require("neogit.lib.notification")
 local git = require("neogit.lib.git")
 local pull_lib = require 'neogit.lib.git.pull'
-local a = require 'plenary.async_lib'
-local await, async, scheduler = a.await, a.async, a.scheduler
+local a = require 'plenary.async'
 
 local M = {}
 
-local pull_from = async(function(_popup, name, remote, branch)
+local function pull_from(_popup, name, remote, branch)
   notif.create("Pulling from " .. name)
 
-  local res = await(pull_lib.pull_interactive(remote, branch))
+  local res = pull_lib.pull_interactive(remote, branch)
 
   if res.code == 0 then
-    await(scheduler())
+    a.scheduler()
     notif.create("Pulled from " .. name)
-    await(status.refresh(true))
+    status.refresh(true)
   end
-end)
+end
 
 function M.create()
   local p = popup.builder()
     :name("NeogitPullPopup")
     :switch("r", "rebase", "Rebase local commits", false)
     :action("p", "Pull from pushremote", function(popup)
-      await(pull_from(popup, "pushremote", "origin", status.repo.head.branch))
+      pull_from(popup, "pushremote", "origin", status.repo.head.branch)
     end)
     :action("u", "Pull from upstream", function(popup)
-      await(pull_from(popup, "upstream", "upstream", status.repo.head.branch))
+      pull_from(popup, "upstream", "upstream", status.repo.head.branch)
     end)
     :action("e", "Pull from elsewhere", function()
       local remote = input.get_user_input("remote: ")
       local branch = git.branch.prompt_for_branch()
-      await(pull_from(popup, remote, remote, branch))
+      pull_from(popup, remote, remote, branch)
     end)
     :build()
 

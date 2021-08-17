@@ -1,7 +1,6 @@
 local notif = require("neogit.lib.notification")
 local logger = require 'neogit.logger'
-local a = require 'plenary.async_lib'
-local async, await, await_all = a.async, a.await, a.await_all
+local a = require 'plenary.async'
 local process = require('neogit.process')
 local Job = require 'neogit.lib.job'
 local split = require('neogit.lib.util').split
@@ -272,9 +271,9 @@ local configurations = {
   })
 }
 
-local git_root = async(function()
-  return vim.trim(await(process.spawn({cmd = 'git', args = {'rev-parse', '--show-toplevel'}})))
-end)
+local function git_root()
+  return vim.trim(process.spawn({cmd = 'git', args = {'rev-parse', '--show-toplevel'}}))
+end
 
 local git_root_sync = function()
   return vim.trim(vim.fn.system("git rev-parse --show-toplevel"))
@@ -323,7 +322,7 @@ local function handle_new_cmd(job, popup, hidden_text)
   end
 end
 
-local exec = async(function(cmd, args, cwd, stdin, env, show_popup, hide_text)
+local function exec(cmd, args, cwd, stdin, env, show_popup, hide_text)
   args = args or {}
   if show_popup == nil then 
     show_popup = true 
@@ -331,7 +330,7 @@ local exec = async(function(cmd, args, cwd, stdin, env, show_popup, hide_text)
   table.insert(args, 1, cmd)
 
   if not cwd then
-    cwd = await(git_root())
+    cwd = git_root()
   elseif cwd == '<current>' then
     cwd = nil
   end
@@ -345,7 +344,7 @@ local exec = async(function(cmd, args, cwd, stdin, env, show_popup, hide_text)
     cwd = cwd
   }
 
-  local result, code, errors = await(process.spawn(opts))
+  local result, code, errors = process.spawn(opts)
   local stdout = split(result, '\n')
   local stderr = split(errors, '\n')
 
@@ -359,7 +358,7 @@ local exec = async(function(cmd, args, cwd, stdin, env, show_popup, hide_text)
   --print('git', table.concat(args, ' '), '->', code, errors)
 
   return stdout, code, stderr
-end)
+end
 
 local function new_job(cmd, args, cwd, _stdin, _env, show_popup, hide_text)
   args = args or {}
@@ -522,7 +521,7 @@ local function new_builder(subcommand)
     [k_state] = state,
     [k_config] = configuration,
     [k_command] = subcommand,
-    call = async(function ()
+    call = function ()
       local args = {}
       for _,o in ipairs(state.options) do 
         table.insert(args, o) 
@@ -543,8 +542,8 @@ local function new_builder(subcommand)
 
       logger.debug(string.format("[CLI]: Executing '%s %s'", subcommand, table.concat(args, ' ')))
 
-      return await(exec(subcommand, args, state.cwd, state.input, state.env, state.show_popup, state.hide_text))
-    end),
+      return exec(subcommand, args, state.cwd, state.input, state.env, state.show_popup, state.hide_text)
+    end,
     call_sync = function()
       local args = {}
       for _,o in ipairs(state.options) do 
@@ -599,11 +598,11 @@ local function new_parallel_builder(calls)
     cwd = nil
   }
 
-  local call = async(function ()
+  local function call()
     if #state.calls == 0 then return end
 
     if not state.cwd then
-      state.cwd = await(git_root())
+      state.cwd = git_root()
     end
     if not state.cwd or state.cwd == "" then return end
 
@@ -617,7 +616,7 @@ local function new_parallel_builder(calls)
     end
 
     return await_all(processes)
-  end)
+  end
 
   return setmetatable({
     call = call

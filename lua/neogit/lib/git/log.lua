@@ -1,7 +1,6 @@
 local cli = require("neogit.lib.git.cli")
 local util = require("neogit.lib.util")
-local a = require 'plenary.async_lib'
-local async, await = a.async, a.await
+local a = require 'plenary.async'
 
 local function parse_log(output)
   if type(output) == "string" then
@@ -33,10 +32,10 @@ local function parse_log(output)
 end
 
 return {
-  list = async(function(options)
+  list = function(options)
     options = util.split(options, ' ')
-    local output = await(cli.log.oneline.args(unpack(options)).call())
+    local output = cli.log.oneline.args(unpack(options)).call()
     return parse_log(output)
-  end),
+  end,
   parse_log = parse_log
 }

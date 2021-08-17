@@ -6,24 +6,23 @@ local status = require 'neogit.status'
 local notif = require("neogit.lib.notification")
 local logger = require 'neogit.logger'
 local git = require("neogit.lib.git")
-local a = require 'plenary.async_lib'
-local await, async, scheduler = a.await, a.async, a.scheduler
+local a = require 'plenary.async'
 
-local push_to = async(function(_popup, name, remote, branch)
+local function push_to(_popup, name, remote, branch)
   logger.debug("Pushing to " .. name)
   notif.create("Pushing to " .. name)
 
-  local res = await(push_lib.push_interactive(remote, branch))
+  local res = push_lib.push_interactive(remote, branch)
 
   if res.code == 0 then
-    await(scheduler())
+    a.scheduler()
     logger.error("Pushed to " .. name)
     notif.create("Pushed to " .. name)
-    await(status.refresh(true))
+    status.refresh(true)
   else
     logger.error("Failed to push to " .. name)
   end
-end)
+end
 
 function M.create()
   local p = popup.builder()
@@ -34,10 +33,10 @@ function M.create()
     :switch("h", "no-verify", "Disable hooks")
     :switch("d", "dry-run", "Dry run")
     :action("p", "Push to pushremote", function(popup)
-      await(push_to(popup, "pushremote", "origin", status.repo.head.branch))
+      push_to(popup, "pushremote", "origin", status.repo.head.branch)
     end)
     :action("u", "Push to upstream", function(popup)
-      await(push_to(popup, "upstream", "upstream", status.repo.head.branch))
+      push_to(popup, "upstream", "upstream", status.repo.head.branch)
     end)
     :action("e", "Push to elsewhere", function()
       local remote = input.get_user_input("remote: ")

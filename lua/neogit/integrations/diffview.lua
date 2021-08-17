@@ -9,8 +9,7 @@ local dv_lib = require'diffview.lib'
 
 local neogit = require 'neogit'
 local status = require'neogit.status'
-local a = require 'plenary.async_lib'
-local await, async, void = a.await, a.async, a.void
+local a = require 'plenary.async'
 
 local old_config
 
@@ -100,10 +99,10 @@ function M.open(selected_file_name)
     end
   }
 
-  view:on_files_staged(void(async(function (_)
-    await(status.refresh({ status = true, diffs = true }))
+  view:on_files_staged(void(function (_)
+    status.refresh({ status = true, diffs = true })
     view:update_files()
-  end)))
+  end))
 
   dv_lib.add_view(view)
 

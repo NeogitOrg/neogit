@@ -1,5 +1,4 @@
-local a = require 'plenary.async_lib'
-local wrap = a.wrap
+local a = require 'plenary.async'
 
 local function trim_newlines(s)
   return (string.gsub(s, "^(.-)\n*$", "%1"))
@@ -93,7 +92,7 @@ local function spawn(options, cb)
 end
 
 local M = {
-  spawn = wrap(spawn, 2),
+  spawn = a.wrap(spawn, 2),
   spawn_sync = spawn
 }
 
