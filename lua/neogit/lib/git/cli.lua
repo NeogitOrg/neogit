@@ -653,7 +653,21 @@ local meta = {
 
 local function handle_interactive_password_questions(chan, line)
   logger.debug(string.format("Matching interactive cmd output: '%s'", line))
-  if vim.startswith(line, "Username for ") then
+  if vim.startswith(line, "Are you sure you want to continue connecting ") then
+    logger.debug "[CLI]: Confirming whether to continue with unauthenticated host"
+    local prompt = line
+    local value = vim.fn.input {
+      prompt = "The authenticity of the host can't be established. " .. prompt .. " ",
+      cancelreturn = "__CANCEL__"
+    }
+    if value ~= "__CANCEL__" then
+      logger.debug "[CLI]: Received answer"
+      vim.fn.chansend(chan, value .. "\n")
+    else
+      logger.debug "[CLI]: Cancelling the interactive cmd"
+      vim.fn.chanclose(chan)
+    end
+  elseif vim.startswith(line, "Username for ") then
     logger.debug "[CLI]: Asking for username"
     local prompt = line:match("(.*:):.*")
     local value = vim.fn.input {
