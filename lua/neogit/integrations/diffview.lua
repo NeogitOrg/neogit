@@ -4,7 +4,7 @@ local dv = require 'diffview'
 local dv_config = require 'diffview.config'
 local Rev = require'diffview.rev'.Rev
 local RevType = require'diffview.rev'.RevType
-local CView = require'diffview.api.c-view'.CView
+local CDiffView = require'diffview.api.views.diff.diff_view'.CDiffView
 local dv_lib = require'diffview.lib'
 
 local neogit = require 'neogit'
@@ -43,8 +43,8 @@ function M.open(selected_file_name)
 
   dv.setup(config)
 
-  local left = Rev:new(RevType.INDEX)
-  local right = Rev:new(RevType.LOCAL)
+  local left = Rev(RevType.INDEX)
+  local right = Rev(RevType.LOCAL)
   local git_root = neogit.cli.git_root_sync()
 
   local function update_files()
@@ -78,7 +78,7 @@ function M.open(selected_file_name)
 
   local files = update_files()
 
-  local view = CView:new {
+  local view = CDiffView({
     git_root = git_root,
     left = left,
     right = right,
@@ -97,7 +97,7 @@ function M.open(selected_file_name)
           or nil
       end
     end
-  }
+  })
 
   view:on_files_staged(a.void(function (_)
     status.refresh({ status = true, diffs = true })
