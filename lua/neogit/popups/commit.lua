@@ -56,7 +56,7 @@ end, 2)
 
 -- If skip_gen is true we don't generate the massive git comment.
 -- This flag should be true when the file already exists
-local function prompt_commit_message(msg, skip_gen)
+local function prompt_commit_message(args, msg, skip_gen)
   local output = {}
 
   if msg and #msg > 0 then
@@ -68,7 +68,7 @@ local function prompt_commit_message(msg, skip_gen)
   end
 
   if not skip_gen then
-    local lines = cli.commit.dry_run.call()
+    local lines = cli.commit.dry_run.args(unpack(args)).call()
     for _, line in ipairs(lines) do
       table.insert(output, "# " .. line)
     end
@@ -78,11 +78,11 @@ local function prompt_commit_message(msg, skip_gen)
   get_commit_message(output)
 end
 
-local function do_commit(data, cmd, skip_gen)
+local function do_commit(popup, data, cmd, skip_gen)
   a.util.scheduler()
   local commit_file = get_commit_file()
   if data then
-    prompt_commit_message(data, skip_gen)
+    prompt_commit_message(popup:get_arguments(), data, skip_gen)
   end
   a.util.scheduler()
   local notification = notif.create("Committing...", { delay = 9999 })
@@ -117,24 +117,24 @@ function M.create()
       data = data or ''
       -- we need \r? to support windows
       data = split(data, '\r?\n')
-      do_commit(data, cli.commit.commit_message_file(commit_file).args(unpack(popup:get_arguments())), skip_gen)
+      do_commit(popup, data, cli.commit.commit_message_file(commit_file).args(unpack(popup:get_arguments())), skip_gen)
     end)
-    :action("e", "Extend", function()
-      do_commit(nil, cli.commit.no_edit.amend)
+    :action("e", "Extend", function(popup)
+      do_commit(popup, nil, cli.commit.no_edit.amend)
     end)
-    :action("w", "Reword", function()
+    :action("w", "Reword", function(popup)
       a.util.scheduler()
       local commit_file = get_commit_file()
       local msg = cli.log.max_count(1).pretty('%B').call()
 
-      do_commit(msg, cli.commit.commit_message_file(commit_file).amend.only)
+      do_commit(popup, msg, cli.commit.commit_message_file(commit_file).amend.only)
     end)
-    :action("a", "Amend", function()
+    :action("a", "Amend", function(popup)
       a.util.scheduler()
       local commit_file = get_commit_file()
       local msg = cli.log.max_count(1).pretty('%B').call()
 
-      do_commit(msg, cli.commit.commit_message_file(commit_file).amend)
+      do_commit(popup, msg, cli.commit.commit_message_file(commit_file).amend)
     end)
     :new_action_group()
     :action("f", "Fixup")
