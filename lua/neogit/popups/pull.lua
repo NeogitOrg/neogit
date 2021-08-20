@@ -8,10 +8,10 @@ local a = require 'plenary.async'
 
 local M = {}
 
-local function pull_from(_popup, name, remote, branch)
+local function pull_from(popup, name, remote, branch)
   notif.create("Pulling from " .. name)
 
-  local res = pull_lib.pull_interactive(remote, branch)
+  local res = pull_lib.pull_interactive(remote, branch, popup:to_cli())
 
   if res.code == 0 then
     a.util.scheduler()

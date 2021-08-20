@@ -8,11 +8,11 @@ local logger = require 'neogit.logger'
 local git = require("neogit.lib.git")
 local a = require 'plenary.async'
 
-local function push_to(_popup, name, remote, branch)
+local function push_to(popup, name, remote, branch)
   logger.debug("Pushing to " .. name)
   notif.create("Pushing to " .. name)
 
-  local res = push_lib.push_interactive(remote, branch)
+  local res = push_lib.push_interactive(remote, branch, popup:to_cli())
 
   if res.code == 0 then
     a.util.scheduler()

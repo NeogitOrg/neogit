@@ -3,8 +3,8 @@ local util = require('neogit.lib.util')
 
 local M = {}
 
-function M.pull_interactive(remote, branch)
-  local cmd = "git pull " .. remote .. " " .. branch
+function M.pull_interactive(remote, branch, args)
+  local cmd = "git pull " .. remote .. " " .. branch .. " " .. args
 
   return cli.interactive_git_cmd(cmd)
 end
