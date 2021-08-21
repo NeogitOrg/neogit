@@ -549,18 +549,19 @@ local function get_selection()
 end
 
 local stage_selection = function()
-  local _, item, hunk, from, to = get_selection()
-  local patch = generate_patch_from_selection(item, hunk, from, to)
-  cli.apply.cached.with_patch(patch).call()
+  local section, item, hunk, from, to = get_selection()
+  if section and from then
+    local patch = generate_patch_from_selection(item, hunk, from, to)
+    cli.apply.cached.with_patch(patch).call()
+  end
 end
 
 local unstage_selection = function()
-  local _, item, hunk, from, to = get_selection()
-  if from == nil then
-    return
+  local section, item, hunk, from, to = get_selection()
+  if section and from then
+    local patch = generate_patch_from_selection(item, hunk, from, to, true)
+    cli.apply.reverse.cached.with_patch(patch).call()
   end
-  local patch = generate_patch_from_selection(item, hunk, from, to, true)
-  cli.apply.reverse.cached.with_patch(patch).call()
 end
 
 local stage = function()
