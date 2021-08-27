@@ -5,6 +5,9 @@ M.values = {
   disable_signs = false,
   disable_commit_confirmation = false,
   auto_refresh = true,
+  commit_popup = {
+      kind = "split",
+  },
   signs = {
     hunk = { "", "" },
     item = { ">", "v" },
