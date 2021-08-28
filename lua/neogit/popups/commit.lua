@@ -22,6 +22,7 @@ local get_commit_message = a.wrap(function (content, cb)
     name = get_commit_file(),
     filetype = "gitcommit",
     buftype = "",
+    kind = config.values.commit_popup.kind,
     modifiable = true,
     readonly = false,
     autocmds = {
