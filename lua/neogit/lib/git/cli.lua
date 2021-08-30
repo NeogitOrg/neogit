@@ -313,11 +313,7 @@ local function handle_new_cmd(job, popup, hidden_text)
 
   if popup and job.code ~= 0 then
     vim.schedule(function ()
-      notif.create({
-        "Git Error (" .. job.code .. ")!",
-        "",
-        "Press $ to see the git command history."
-      }, { type = "error" })
+      notif.create("Git Error (" .. job.code .. "), press $ to see the git command history", vim.log.levels.ERROR)
     end)
   end
 end

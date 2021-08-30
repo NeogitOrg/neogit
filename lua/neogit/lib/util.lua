@@ -55,19 +55,6 @@ local function print_tbl(tbl)
   end
 end
 
-local function tbl_longest_str(tbl)
-  local len = 0
-
-  for _,str in pairs(tbl) do
-    local str_len = #str
-    if str_len > len then
-      len = str_len
-    end
-  end
-
-  return len
-end
-
 local function get_keymaps(mode, startswith)
   local maps = vim.api.nvim_get_keymap(mode)
   if startswith then
@@ -159,7 +146,6 @@ return {
   slice = slice,
   map = map,
   range = range,
-  tbl_longest_str = tbl_longest_str,
   filter = filter,
   str_right_pad = str_right_pad,
   str_count = str_count,
