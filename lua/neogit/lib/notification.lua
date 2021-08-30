@@ -1,27 +1,27 @@
-local util = require("neogit.lib.util")
+local config = require("neogit.config")
 local message_history = {}
 local notifications = {}
 local notification_count = 0
 
-local function create(message, options)
+local function create(message, level, delay)
+  if not level then
+    level = vim.log.levels.INFO
+  end
+
+  if config.values.disable_builtin_notifications then
+    vim.notify(message, level, { title = "Neogit", icon = "" })
+    return nil
+  end
+
+  if not delay then
+    delay = 2000
+  end
+
   notification_count = notification_count + 1
-
-  if type(message) == "string" then
-    message = { message }
-  end
-
-  if type(message) ~= "table" then
-    error("First argument has to be either a table or a string")
-  end
-
-  options = options or {}
-  options.type = options.type or "info"
-  options.delay = options.delay or 2000
-
   local prev_notification = notifications[notification_count - 1]
                             or {height = 0, row = vim.api.nvim_get_option("lines") - 2}
-  local width = util.tbl_longest_str(message)
-  local height = #message
+  local width = #message
+  local height = 1
   local padding = 2 + prev_notification.height
   local row = prev_notification.row - padding
   local col = vim.api.nvim_get_option("columns") - 3
@@ -31,7 +31,7 @@ local function create(message, options)
     vim.bo.filetype = "NeogitNotification"
   end)
 
-  vim.api.nvim_buf_set_lines(buf, 0, -1, false, message)
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, { message })
 
   local window = vim.api.nvim_open_win(buf, false, {
     relative = "editor",
@@ -70,10 +70,10 @@ local function create(message, options)
     style = "minimal"
   })
 
-  if options.type == "info" then
+  if level == vim.log.levels.INFO then
     vim.api.nvim_win_set_option(window, "winhl", "Normal:NeogitNotificationInfo")
     vim.api.nvim_win_set_option(border_win, "winhl", "Normal:NeogitNotificationInfo")
-  elseif options.type == "warning" then
+  elseif level == vim.log.levels.WARN then
     vim.api.nvim_win_set_option(window, "winhl", "Normal:NeogitNotificationWarning")
     vim.api.nvim_win_set_option(border_win, "winhl", "Normal:NeogitNotificationWarning")
   else
@@ -113,7 +113,7 @@ local function create(message, options)
 
       table.insert(message_history, {
         content = message,
-        type = options.type
+        level = level
       })
 
       if vim.fn.winbufnr(window) ~= -1 then
@@ -126,7 +126,7 @@ local function create(message, options)
   table.insert(notifications, notification)
 
   vim.cmd("redraw")
-  timer = vim.defer_fn(notification.delete, options.delay)
+  timer = vim.defer_fn(notification.delete, delay)
 
   return notification
 end

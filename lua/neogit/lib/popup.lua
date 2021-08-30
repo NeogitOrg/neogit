@@ -210,7 +210,7 @@ function M:show()
       else
         mappings.n[action.key] = function()
           local notif = require 'neogit.lib.notification'
-          notif.create(action.description .. " has not been implemented yet", { type = "warning" })
+          notif.create(action.description .. " has not been implemented yet", vim.log.levels.WARN)
         end
       end
     end

@@ -86,10 +86,12 @@ local function do_commit(popup, data, cmd, skip_gen)
     prompt_commit_message(popup:get_arguments(), data, skip_gen)
   end
   a.util.scheduler()
-  local notification = notif.create("Committing...", { delay = 9999 })
+  local notification = notif.create("Committing...", vim.log.levels.INFO, 9999)
   local _, code = cmd.call()
   a.util.scheduler()
-  notification:delete()
+  if notification then
+    notification:delete()
+  end
   notif.create("Successfully committed!")
   if code == 0 then
     a.uv.fs_unlink(commit_file)

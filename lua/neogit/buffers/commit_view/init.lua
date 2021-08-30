@@ -33,7 +33,7 @@ function M.new(commit_id, notify)
     buffer = nil
   }
 
-  if notify then
+  if notification then
     notification:delete()
   end
 
