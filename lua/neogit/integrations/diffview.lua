@@ -2,8 +2,8 @@ local M = {}
 
 local dv = require 'diffview'
 local dv_config = require 'diffview.config'
-local Rev = require'diffview.rev'.Rev
-local RevType = require'diffview.rev'.RevType
+local Rev = require'diffview.git.rev'.Rev
+local RevType = require'diffview.git.rev'.RevType
 local CDiffView = require'diffview.api.views.diff.diff_view'.CDiffView
 local dv_lib = require'diffview.lib'
 
