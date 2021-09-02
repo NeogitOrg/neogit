@@ -70,8 +70,7 @@ local configurations = {
     aliases = {
       get = function(tbl)
         return function(path)
-          tbl._get()
-          return tbl.args(path)
+          return tbl._get.args(path)
         end
       end
     }
