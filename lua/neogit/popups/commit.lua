@@ -58,7 +58,7 @@ end, 2)
 -- If skip_gen is true we don't generate the massive git comment.
 -- This flag should be true when the file already exists
 local function prompt_commit_message(args, msg, skip_gen)
-  local msg_template_path = cli.config.get("commit.template").call_sync()[1]
+  local msg_template_path = cli.config.get("commit.template").show_popup(false).call()[1]
   local output = {}
 
   if msg and #msg > 0 then
