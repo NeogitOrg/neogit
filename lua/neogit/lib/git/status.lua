@@ -121,7 +121,9 @@ local function update_branch_information(state)
     end
   end
 
-  a.util.join(tasks)
+  if #tasks > 0 then
+    a.util.join(tasks)
+  end
 end
 
 local status = {
