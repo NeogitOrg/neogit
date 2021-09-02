@@ -664,7 +664,7 @@ local function handle_interactive_password_questions(chan, line)
     end
   elseif vim.startswith(line, "Username for ") then
     logger.debug "[CLI]: Asking for username"
-    local prompt = line:match("(.*:):.*")
+    local prompt = line:match("(.*:?):.*")
     local value = vim.fn.input {
       prompt = prompt .. " ",
       cancelreturn = "__CANCEL__"
