@@ -58,17 +58,25 @@ end, 2)
 -- If skip_gen is true we don't generate the massive git comment.
 -- This flag should be true when the file already exists
 local function prompt_commit_message(args, msg, skip_gen)
+  local msg_template_path = cli.config.get("commit.template").call_sync()[1]
   local output = {}
 
   if msg and #msg > 0 then
     for _, line in ipairs(msg) do
       table.insert(output, line)
     end
-  elseif not skip_gen then
+  elseif not skip_gen and not msg_template_path then
     table.insert(output, "")
   end
 
   if not skip_gen then
+    if msg_template_path then
+      local msg_template = uv_utils.read_file_sync(vim.fn.glob(msg_template_path))
+      for _, line in pairs(msg_template) do
+        table.insert(output, line)
+      end
+      table.insert(output, "")
+    end
     local lines = cli.commit.dry_run.args(unpack(args)).call()
     for _, line in ipairs(lines) do
       table.insert(output, "# " .. line)
