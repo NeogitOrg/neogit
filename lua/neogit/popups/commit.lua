@@ -71,6 +71,7 @@ local function prompt_commit_message(args, msg, skip_gen)
 
   if not skip_gen then
     if msg_template_path then
+      a.util.scheduler()
       local msg_template = uv_utils.read_file_sync(vim.fn.glob(msg_template_path))
       for _, line in pairs(msg_template) do
         table.insert(output, line)
