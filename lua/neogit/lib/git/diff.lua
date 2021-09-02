@@ -1,4 +1,5 @@
 local a = require 'plenary.async'
+local util = require 'neogit.lib.util'
 local logger = require 'neogit.logger'
 local cli = require('neogit.lib.git.cli')
 local Collection = require('neogit.lib.collection')
@@ -14,7 +15,7 @@ local function parse_diff_stats(raw)
   }
   -- local matches raw:match('1 file changed, (%d+ insertions?%(%+%))?(, )?(%d+ deletions?%(%-%))?')
   for _, part in ipairs(raw) do
-    part = vim.trim(part)
+    part = util.trim(part)
     local additions = part:match("(%d+) insertion.*")
     local deletions = part:match("(%d+) deletion.*")
 

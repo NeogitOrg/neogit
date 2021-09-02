@@ -3,6 +3,7 @@ local logger = require 'neogit.logger'
 local a = require 'plenary.async'
 local process = require('neogit.process')
 local Job = require 'neogit.lib.job'
+local util = require 'neogit.lib.util'
 local split = require('neogit.lib.util').split
 
 local function config(setup)
@@ -272,15 +273,15 @@ local configurations = {
 }
 
 local function git_root()
-  return vim.trim(process.spawn({cmd = 'git', args = {'rev-parse', '--show-toplevel'}}))
+  return util.trim(process.spawn({cmd = 'git', args = {'rev-parse', '--show-toplevel'}}))
 end
 
 local git_root_sync = function()
-  return vim.trim(vim.fn.system("git rev-parse --show-toplevel"))
+  return util.trim(vim.fn.system("git rev-parse --show-toplevel"))
 end
 
 local git_dir_path_sync = function()
-  return vim.trim(vim.fn.system("git rev-parse --git-dir"))
+  return util.trim(vim.fn.system("git rev-parse --git-dir"))
 end
 
 local history = {}

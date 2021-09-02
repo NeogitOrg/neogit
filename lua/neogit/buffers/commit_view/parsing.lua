@@ -1,5 +1,6 @@
 local M = {}
 
+local util = require 'neogit.lib.util'
 local diff_lib = require('neogit.lib.git.diff')
 
 -- @class CommitOverviewFile
@@ -16,7 +17,7 @@ local CommitOverview = {}
 
 function M.parse_commit_overview(raw)
   local overview = { 
-    summary = vim.trim(raw[#raw]), 
+    summary = util.trim(raw[#raw]), 
     files = {}
   }
 
@@ -80,7 +81,7 @@ function M.parse_commit_info(raw_info)
 
   local line = advance()
   while line ~= "" do
-    table.insert(info.description, vim.trim(line))
+    table.insert(info.description, util.trim(line))
     line = advance()
   end
 
