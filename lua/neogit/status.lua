@@ -280,12 +280,12 @@ local function refresh_status()
 
   M.status_buffer:unlock()
 
-  logger.debug "Redrawing status buffer"
+  logger.debug "[STATUS BUFFER]: Redrawing"
 
   draw_buffer()
   draw_signs()
 
-  logger.debug "Finished redrawing status buffer"
+  logger.debug "[STATUS BUFFER]: Finished Redrawing"
 
   M.status_buffer:lock()
 
@@ -320,21 +320,25 @@ local function refresh (which)
     local refreshes = {}
     if which == true or which.branch_information then
       table.insert(refreshes, function() 
+        logger.debug("[STATUS BUFFER]: Refreshing branch information")
         M.repo:update_branch_information() 
       end)
     end
     if which == true or which.stashes then
       table.insert(refreshes, function() 
+        logger.debug("[STATUS BUFFER]: Refreshing stash")
         M.repo:update_stashes() 
       end)
     end
     if which == true or which.unpulled then
       table.insert(refreshes, function() 
+        logger.debug("[STATUS BUFFER]: Refreshing unpulled commits")
         M.repo:update_unpulled() 
       end)
     end
     if which == true or which.unmerged then
       table.insert(refreshes, function() 
+        logger.debug("[STATUS BUFFER]: Refreshing unpushed commits")
         M.repo:update_unmerged() 
       end)
     end
@@ -344,6 +348,7 @@ local function refresh (which)
         or nil
 
       table.insert(refreshes, function() 
+        logger.debug("[STATUS BUFFER]: Refreshing diffs")
         M.repo:load_diffs(filter) 
       end)
     end
@@ -823,13 +828,15 @@ local function create(kind)
     return
   end
 
-  logger.debug "Creating status buffer"
+  logger.debug "[STATUS BUFFER]: Creating..."
 
   Buffer.create {
     name = "NeogitStatus",
     filetype = "NeogitStatus",
     kind = kind,
     initialize = function(buffer)
+      logger.debug "[STATUS BUFFER]: Initializing..."
+
       M.status_buffer = buffer
 
       M.prev_autochdir = vim.o.autochdir
