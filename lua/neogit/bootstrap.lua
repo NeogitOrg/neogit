@@ -13,7 +13,4 @@ if not res then
   return false
 end
 
-require 'neogit'
-require 'neogit.status'.dispatch_refresh(true)
-
 return true
