@@ -96,13 +96,14 @@ local function do_commit(popup, data, cmd, skip_gen)
   end
   a.util.scheduler()
   local notification = notif.create("Committing...", vim.log.levels.INFO, 9999)
-  local _, code = cmd.call()
+  local result = cli.interactive_git_cmd(cmd)
+  inspect(result)
   a.util.scheduler()
   if notification then
     notification:delete()
   end
   notif.create("Successfully committed!")
-  if code == 0 then
+  if result.code == 0 then
     a.uv.fs_unlink(commit_file)
     status.refresh(true)
   end
@@ -129,24 +130,24 @@ function M.create()
       data = data or ''
       -- we need \r? to support windows
       data = split(data, '\r?\n')
-      do_commit(popup, data, cli.commit.commit_message_file(commit_file).args(unpack(popup:get_arguments())), skip_gen)
+      do_commit(popup, data, tostring(cli.commit.commit_message_file(commit_file).args(unpack(popup:get_arguments()))), skip_gen)
     end)
     :action("e", "Extend", function(popup)
-      do_commit(popup, nil, cli.commit.no_edit.amend)
+      do_commit(popup, nil, tostring(cli.commit.no_edit.amend))
     end)
     :action("w", "Reword", function(popup)
       a.util.scheduler()
       local commit_file = get_commit_file()
       local msg = cli.log.max_count(1).pretty('%B').call()
 
-      do_commit(popup, msg, cli.commit.commit_message_file(commit_file).amend.only)
+      do_commit(popup, msg, tostring(cli.commit.commit_message_file(commit_file).amend.only))
     end)
     :action("a", "Amend", function(popup)
       a.util.scheduler()
       local commit_file = get_commit_file()
       local msg = cli.log.max_count(1).pretty('%B').call()
 
-      do_commit(popup, msg, cli.commit.commit_message_file(commit_file).amend)
+      do_commit(popup, msg, tostring(cli.commit.commit_message_file(commit_file).amend))
     end)
     :new_action_group()
     :action("f", "Fixup")

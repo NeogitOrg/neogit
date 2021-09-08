@@ -676,7 +676,7 @@ local function handle_interactive_password_questions(chan, line)
       logger.debug "[CLI]: Cancelling the interactive cmd"
       vim.fn.chanclose(chan)
     end
-  elseif vim.startswith(line, "Enter passphrase for") 
+  elseif vim.startswith(line, "Enter passphrase") 
     or vim.startswith(line, "Password for") 
     then
     logger.debug "[CLI]: Asking for password"
