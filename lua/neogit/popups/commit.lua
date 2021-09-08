@@ -97,7 +97,6 @@ local function do_commit(popup, data, cmd, skip_gen)
   a.util.scheduler()
   local notification = notif.create("Committing...", vim.log.levels.INFO, 9999)
   local result = cli.interactive_git_cmd(cmd)
-  inspect(result)
   a.util.scheduler()
   if notification then
     notification:delete()
