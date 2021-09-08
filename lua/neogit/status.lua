@@ -441,6 +441,7 @@ local function close(skip_close)
   if not skip_close then
     M.status_buffer:close()
   end
+  notif.delete_all()
   M.status_buffer = nil
   vim.o.autochdir = M.prev_autochdir
 end
