@@ -10,8 +10,8 @@ body:
     attributes:
       label: "Description"
       description: "A short description of the problem you are reporting."
-      validations:
-        required: true
+    validations:
+      required: true
   - type: textarea
     attributes:
       label: "Neovim version"
@@ -20,14 +20,14 @@ body:
         NVIM v0.6.0-dev+209-g0603eba6e
       Build type: Release
         LuaJIT 2.1.0-beta3
-      validations:
-        required: true
+    validations:
+      required: true
   - type: input
     attributes:
       label: "Operating system and version"
       placeholder: "macOS 11.5"
-      validations:
-        required: true
+    validations:
+      required: true
   - type: textarea
     attributes:
       label: "Steps to reproduce"
@@ -35,8 +35,8 @@ body:
       placeholder: |
         1. `nvim -nu minimal.lua`
         2. ...
-      validations:
-        required: true
+    validations:
+      required: true
   - type: textarea
     attributes:
       label: "Expected behavior"
@@ -45,8 +45,8 @@ body:
     attributes:
       label: "Actual behavior"
       description: "Observed behavior (may optionally include logs, images, or videos)."
-      validations:
-        required: true
+    validations:
+      required: true
   - type: textarea
     attributes:
       label: "Minimal config"
@@ -86,6 +86,6 @@ body:
         end
         load_plugins()
         require("packer").sync()
-      validations:
-        required: true
+    validations:
+      required: true
 
