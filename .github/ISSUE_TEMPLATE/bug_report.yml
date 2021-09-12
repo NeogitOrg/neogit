@@ -18,7 +18,7 @@ body:
       description: "Output of `nvim --version`"
       placeholder: |
         NVIM v0.6.0-dev+209-g0603eba6e
-      Build type: Release
+        Build type: Release
         LuaJIT 2.1.0-beta3
     validations:
       required: true
