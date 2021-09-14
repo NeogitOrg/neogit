@@ -706,10 +706,7 @@ end
 local cmd_func_map = function ()
   return {
     ["Close"] = function()
-      notif.delete_all()
-      vim.defer_fn(function ()
-        M.status_buffer:close()
-      end, 0)
+      vim.cmd "tabclose"
     end,
     ["Depth1"] = a.void(function()
       set_folds({ true, true, false })
