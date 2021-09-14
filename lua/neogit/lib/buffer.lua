@@ -14,7 +14,8 @@ function Buffer:new(handle)
   local this = {
     handle = handle,
     border = nil,
-    mmanager = mappings_manager.new()
+    mmanager = mappings_manager.new(),
+    kind = nil -- how the buffer was opened. For more information look at the create function
   }
 
   this.ui = Ui.new(this)
@@ -268,6 +269,8 @@ function Buffer.create(config)
     buffer = Buffer:new(content_buffer)
     buffer.border_buffer = border_buffer
   end
+
+  buffer.kind = kind
 
   vim.cmd("setlocal nonu")
   vim.cmd("setlocal nornu")

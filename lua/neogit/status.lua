@@ -706,7 +706,10 @@ end
 local cmd_func_map = function ()
   return {
     ["Close"] = function()
-      vim.cmd "tabclose"
+      if M.status_buffer.kind == "tab" then
+        vim.cmd "1only"
+      end
+      vim.cmd "close"
     end,
     ["Depth1"] = a.void(function()
       set_folds({ true, true, false })
