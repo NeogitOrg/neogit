@@ -34,6 +34,8 @@ function M:new_action_group()
   return self
 end
 
+--@param parse Whether the switch is internal to neogit or should be included in the cli command. 
+--             If `false` we don't include it in the cli comand.
 function M:switch(key, cli, description, enabled, parse)
   if enabled == nil then
     enabled = false

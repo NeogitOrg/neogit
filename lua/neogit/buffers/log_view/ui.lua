@@ -19,10 +19,12 @@ local M = {}
 -- |     feat: improve commit view and ui lib
 -- |
 
-M.Commit = Component.new(function(commit)
+M.Commit = Component.new(function(commit, show_graph)
   return col {
     row { 
-      text(("* "):rep(commit.level + 1), { highlight = "Character" }), 
+      text(show_graph 
+        and ("* "):rep(commit.level + 1) 
+        or "* ", { highlight = "Character" }), 
       text(commit.oid:sub(1, 7), { highlight = "Number" }), 
       text " ", 
       text(commit.description[1]) 
@@ -56,8 +58,10 @@ M.Commit = Component.new(function(commit)
   }
 end)
 
-function M.LogView(data)
-  return map(data, M.Commit)
+function M.LogView(data, show_graph)
+  return map(data, function(row)
+    return M.Commit(row, show_graph) 
+  end)
 end
 
 return M

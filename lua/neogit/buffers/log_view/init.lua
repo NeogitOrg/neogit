@@ -13,8 +13,9 @@ local M = {}
 
 --- Creates a new LogViewBuffer
 -- @param data the data to display
+-- @param show_graph whether we should also render the graph on the left side
 -- @return LogViewBuffer
-function M.new(data)
+function M.new(data, show_graph)
   local instance = {
     is_open = false,
     data = data,
@@ -92,7 +93,7 @@ function M:open()
       }
     },
     render = function()
-      return ui.LogView(self.data)
+      return ui.LogView(self.data, self.show_graph)
     end
   }
 end

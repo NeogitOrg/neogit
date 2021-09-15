@@ -43,6 +43,16 @@ function M:get_arguments()
   return flags
 end
 
+function M:get_parse_arguments()
+  local switches = {}
+  for _, switch in pairs(self.state.switches) do
+    if switch.enabled and switch.parse then
+      switches[switch.cli] = switch.enabled
+    end
+  end
+  return switches
+end
+
 function M:to_cli()
   return table.concat(self:get_arguments(), " ")
 end
