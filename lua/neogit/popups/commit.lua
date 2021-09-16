@@ -20,7 +20,7 @@ local get_commit_message = a.wrap(function (content, cb)
   local written = false
   Buffer.create {
     name = get_commit_file(),
-    filetype = "gitcommit",
+    filetype = "NeogitCommitMessage",
     buftype = "",
     kind = config.values.commit_popup.kind,
     modifiable = true,
