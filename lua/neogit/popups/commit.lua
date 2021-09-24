@@ -51,6 +51,9 @@ local get_commit_message = a.wrap(function (content, cb)
     },
     initialize = function(buffer)
       buffer:set_lines(0, -1, false, content)
+      if not config.values.disable_insert_on_commit then
+        vim.cmd(":startinsert")
+      end
     end
   }
 end, 2)

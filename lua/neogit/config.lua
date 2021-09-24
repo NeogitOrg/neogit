@@ -5,6 +5,7 @@ M.values = {
   disable_signs = false,
   disable_commit_confirmation = false,
   disable_builtin_notifications = false,
+  disable_insert_on_commit = true,
   auto_refresh = true,
   commit_popup = {
       kind = "split",

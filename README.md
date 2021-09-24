@@ -207,6 +207,10 @@ Set `disable_context_highlighting = true` in your call to [`setup`](#configurati
 
 Set `disable_commit_confirmation = true` in your call to [`setup`](#configuration) to disable the "Are you sure you want to commit?" prompt after saving the commit message buffer.
 
+## Disabling Insert On Commit
+
+Set `disable_insert_on_commit = true` in your call to [`setup`](#configuration) to disable automatically changing to insert mode when opening the commit message buffer. (Disabled is the default)
+
 ## Events
 
 Neogit emits a `NeogitStatusRefreshed` event whenever the status gets reloaded.
