@@ -75,7 +75,7 @@ function M.create()
   local name = input.get_user_input('branch > ')
   if not name or name == '' then return end
 
-  cli.branch.name(name).call()
+  cli.interactive_git_cmd(tostring(cli.branch.name(chosen)))
 
   return name
 end
@@ -86,7 +86,8 @@ function M.delete()
   a.util.scheduler()
   local chosen = prompt_for_branch(branches)
   if not chosen then return end
-  cli.branch.delete.name(chosen).call()
+
+  cli.interactive_git_cmd(tostring(cli.branch.delete.name(chosen)))
 
   return chosen
 end
@@ -95,9 +96,8 @@ function M.checkout_new()
   a.util.scheduler()
   local name = input.get_user_input('branch > ')
   if not name or name == '' then return end
-  cli.checkout
-    .new_branch(name)
-    .call()
+
+  cli.interactive_git_cmd(tostring(cli.checkout.new_branch(chosen)))
 end
 
 M.prompt_for_branch = prompt_for_branch
