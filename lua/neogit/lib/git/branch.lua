@@ -75,7 +75,7 @@ function M.create()
   local name = input.get_user_input('branch > ')
   if not name or name == '' then return end
 
-  cli.interactive_git_cmd(tostring(cli.branch.name(chosen)))
+  cli.interactive_git_cmd(tostring(cli.branch.name(name)))
 
   return name
 end
@@ -97,7 +97,7 @@ function M.checkout_new()
   local name = input.get_user_input('branch > ')
   if not name or name == '' then return end
 
-  cli.interactive_git_cmd(tostring(cli.checkout.new_branch(chosen)))
+  cli.interactive_git_cmd(tostring(cli.checkout.new_branch(name)))
 end
 
 M.prompt_for_branch = prompt_for_branch
