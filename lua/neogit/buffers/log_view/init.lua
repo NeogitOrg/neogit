@@ -19,6 +19,7 @@ function M.new(data, show_graph)
   local instance = {
     is_open = false,
     data = data,
+    show_graph = show_graph,
     buffer = nil
   }
 

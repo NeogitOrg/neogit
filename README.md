@@ -173,6 +173,16 @@ List of status commands:
 * StashPopup
 * BranchPopup
 
+### Magit-style keybindings
+
+Neogit uses 'p' for pulling instead of 'F'.
+
+Add the following line to your config to use magit-style keybindings.
+
+```lua
+neogit.config.use_magit_keybindings()
+```
+
 ## Notification Highlighting
 
 Neogit defines three highlight groups for the notifications:
