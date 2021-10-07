@@ -38,6 +38,7 @@ You can either open neogit by using the `Neogit` command
 ```vim
 :Neogit " uses tab
 :Neogit kind=<kind> " override kind
+:Neogit cwd=<cwd> " override cwd
 :Neogit commit" open commit popup
 ```
 
@@ -54,6 +55,9 @@ neogit.open({ "commit" })
 
 -- open with split kind
 neogit.open({ kind = "split" })
+
+-- open home directory
+neogit.open({ cwd = "~" })
 ```
 
 The create function takes 1 optional argument that can be one of the following values:

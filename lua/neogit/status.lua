@@ -444,6 +444,9 @@ local function close(skip_close)
   notif.delete_all()
   M.status_buffer = nil
   vim.o.autochdir = M.prev_autochdir
+  if M.cwd_changed then
+    vim.cmd "cd -"
+  end
 end
 
 local function generate_patch_from_selection(item, hunk, from, to, reverse)
@@ -841,7 +844,7 @@ local cmd_func_map = function ()
   }
 end
 
-local function create(kind)
+local function create(kind, cwd)
   kind = kind or "tab"
 
   if M.status_buffer then
@@ -862,6 +865,11 @@ local function create(kind)
       M.status_buffer = buffer
 
       M.prev_autochdir = vim.o.autochdir
+      M.cwd_changed = true
+
+      if cwd then
+        vim.cmd(string.format("cd %s", cwd))
+      end
 
       vim.o.autochdir = false
 
