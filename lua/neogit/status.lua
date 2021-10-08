@@ -865,9 +865,9 @@ local function create(kind, cwd)
       M.status_buffer = buffer
 
       M.prev_autochdir = vim.o.autochdir
-      M.cwd_changed = true
 
       if cwd then
+        M.cwd_changed = true
         vim.cmd(string.format("cd %s", cwd))
       end
 
