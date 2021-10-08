@@ -112,8 +112,10 @@ local function draw_buffer()
   M.status_buffer:clear_sign_group('fold_markers')
 
   local output = LineBuffer.new()
-  output:append("Hint: [<tab>] toggle diff | [s]tage | [u]nstage | [x] discard | [c]ommit | [?] more help")
-  output:append("")
+  if not config.values.disable_hint then
+    output:append("Hint: [<tab>] toggle diff | [s]tage | [u]nstage | [x] discard | [c]ommit | [?] more help")
+    output:append("")
+  end
   output:append(string.format("Head: %s %s", M.repo.head.branch, M.repo.head.commit_message or '(no commits)'))
   if M.repo.upstream.branch then
     output:append(string.format("Push: %s %s", M.repo.upstream.branch, M.repo.upstream.commit_message or '(no commits)'))
