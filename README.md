@@ -108,6 +108,7 @@ local neogit = require("neogit")
 
 neogit.setup {
   disable_signs = false,
+  disable_hint = false,
   disable_context_highlighting = false,
   disable_commit_confirmation = false,
   auto_refresh = true,
@@ -216,6 +217,9 @@ You can override them to fit your colorscheme by creating a `syntax/NeogitStatus
 ### Disabling Contextual Highlighting
 
 Set `disable_context_highlighting = true` in your call to [`setup`](#configuration) to disable context highlighting altogether.
+
+## Disabling Hint
+Set `disable_hint = true` in your call to [`setup`](#configuration) to hide hints on top of the panel.
 
 ## Disabling Commit Confirmation
 
