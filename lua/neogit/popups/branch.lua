@@ -23,7 +23,7 @@ function M.create()
     :action("D", "delete local branch and remote", operation('delete_branch', function ()
       local branch = branch.delete()
       if branch and branch ~= '' then
-        cli.push.remote("origin").delete.to(branch).call()
+        cli.interactive_git_cmd(tostring(cli.push.remote("origin").delete.to(branch)))
       end
       status.refresh(true)
     end))
