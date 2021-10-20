@@ -663,7 +663,7 @@ local discard = function()
   end
   M.current_operation = "discard"
 
-  if not input.get_confirmation("Do you really want to do this?", {
+  if not input.get_confirmation("Discard '"..item.name.."' ?", {
     values = { "&Yes", "&No" },
     default = 2
   }) then
