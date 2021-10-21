@@ -8,6 +8,7 @@ M.values = {
   disable_builtin_notifications = false,
   disable_insert_on_commit = true,
   auto_refresh = true,
+  kind = "tab",
   commit_popup = {
       kind = "split",
   },

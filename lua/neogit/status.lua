@@ -849,7 +849,7 @@ local cmd_func_map = function ()
 end
 
 local function create(kind, cwd)
-  kind = kind or "tab"
+  kind = kind or config.values.kind
 
   if M.status_buffer then
     logger.debug "Status buffer already exists. Focusing the existing one"

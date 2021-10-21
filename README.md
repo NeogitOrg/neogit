@@ -116,6 +116,8 @@ neogit.setup {
   commit_popup = {
       kind = "split",
   },
+  -- Change the default way of opening neogit
+  kind = "tab"
   -- customize displayed signs
   signs = {
     -- { CLOSED, OPENED }
