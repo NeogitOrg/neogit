@@ -140,6 +140,7 @@ function _TEST()
     stashes = repo.stashes.files,
     unpulled_changes = repo.unpulled.files,
     unmerged_changes = repo.unmerged.files,
+    recent_changes = repo.recent.files,
   }):open()
 end
 

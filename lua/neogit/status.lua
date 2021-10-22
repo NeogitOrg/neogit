@@ -198,6 +198,7 @@ local function draw_buffer()
   render_section('Stashes', M.repo.stashes, 'stashes')
   render_section('Unpulled changes', M.repo.unpulled, 'unpulled')
   render_section('Unmerged changes', M.repo.unmerged, 'unmerged')
+  render_section('Recent commits', M.repo.recent, 'recent')
 
   M.status_buffer:replace_content_with(output)
   M.locations = new_locations
@@ -344,6 +345,12 @@ local function refresh (which)
       table.insert(refreshes, function() 
         logger.debug("[STATUS BUFFER]: Refreshing unpushed commits")
         M.repo:update_unmerged() 
+      end)
+    end
+    if which == true or which.recent then
+      table.insert(refreshes, function()
+        logger.debug("[STATUS BUFFER]: Refreshing recent commits")
+        M.repo:update_recent()
       end)
     end
     if which == true or which.diffs then
