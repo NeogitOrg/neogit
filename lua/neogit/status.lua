@@ -804,11 +804,11 @@ local cmd_func_map = function ()
           local relpath = vim.fn.fnamemodify(repo_root .. '/' .. path, ':.')
 
           vim.cmd("e " .. relpath)
-        elseif section.name == "unpulled" or section.name == "unmerged" then
+        elseif vim.tbl_contains({ "unmerged", "unpulled", "recent", "stashes" }, section.name) then
           if M.commit_view and M.commit_view.is_open then
             M.commit_view:close()
           end
-          M.commit_view = CommitView.new(item.name:match("(.-) "), true)
+          M.commit_view = CommitView.new(item.name:match("(.-):? "), true)
           M.commit_view:open()
         else
           return

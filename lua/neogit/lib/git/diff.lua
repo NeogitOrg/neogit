@@ -50,7 +50,7 @@ local function parse_diff(output, with_stats)
     local header = {}
 
     for i=start_idx,#output do
-      if output[i]:match('^@@.*@@') then
+      if output[i]:match('^@@@*.*@@@*') then
         start_idx = i
         break
       end
@@ -86,7 +86,14 @@ local function parse_diff(output, with_stats)
   for i=1,len do
     local line = diff.lines[i]
     if not vim.startswith(line, "+++") then
-      local index_from, index_len, disk_from, disk_len = line:match('@@ %-(%d+),?(%d*) %+(%d+),?(%d*) @@')
+      local index_from, index_len, disk_from, disk_len
+      if vim.startswith(line, "@@@") then
+        -- Combined diff header
+        index_from, index_len, disk_from, disk_len = line:match('@@@* %-(%d+),?(%d*) .* %+(%d+),?(%d*) @@@*')
+      else
+        -- Normal diff header
+        index_from, index_len, disk_from, disk_len = line:match('@@ %-(%d+),?(%d*) %+(%d+),?(%d*) @@')
+      end
 
       if index_from then
         if hunk ~= nil then
