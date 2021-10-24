@@ -32,11 +32,17 @@ local function parse_log(output)
 end
 
 local function update_recent(state)
-  local result = cli.log.oneline
-    .max_count(config.values.status.recent_commit_count)
-    .show_popup(false).call()
+  local count = config.values.status.recent_commit_count
+  if count < 1 then
+    return
+  end
 
-  state.recent.files = util.map(result, function (x)
+  local result = cli.log.oneline
+    .max_count(count)
+    .show_popup(false)
+    .call()
+
+  state.recent.items = util.map(result, function (x)
     return { name = x }
   end)
 end

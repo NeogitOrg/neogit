@@ -161,7 +161,7 @@ function diff.register(meta)
       end))
     end
 
-    for _, f in ipairs(repo.unstaged.files) do
+    for _, f in ipairs(repo.unstaged.items) do
       if f.mode ~= 'D' and f.mode ~= 'F' and (not filter or filter:accepts('unstaged', f.name)) then
         table.insert(executions, function ()
           local raw_diff = cli.diff.files(f.name).call()
@@ -172,7 +172,7 @@ function diff.register(meta)
       end
     end
 
-    for _, f in ipairs(repo.staged.files) do
+    for _, f in ipairs(repo.staged.items) do
       if f.mode ~= 'D' and f.mode ~= 'F' and (not filter or filter:accepts('staged', f.name)) then
         table.insert(executions, function ()
           local raw_diff = cli.diff.cached.files(f.name).call()

@@ -56,7 +56,7 @@ function M.open(selected_file_name)
     }
     for kind, section in pairs(sections) do
       files[kind] = {}
-      for _, item in ipairs(section.files) do
+      for _, item in ipairs(section.items) do
         local file = {
           path = item.name,
           status = item.mode,

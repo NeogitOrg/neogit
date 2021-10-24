@@ -20,25 +20,25 @@ M.create = function (_path)
       commit_message = ''
     },
     untracked = {
-      files = {}
+      items = {}
     },
     unstaged = {
-      files = {}
+      items = {}
     },
     staged = {
-      files = {}
+      items = {}
     },
     stashes = {
-      files = {}
+      items = {}
     },
     unpulled = {
-      files = {}
+      items = {}
     },
     unmerged = {
-      files = {}
+      items = {}
     },
     recent = {
-      files = {}
+      items = {}
     },
   }
 

@@ -101,11 +101,11 @@ end
 function _load_diffs(repo)
   local cli = require 'neogit.lib.git.cli'
 
-  local unstaged_jobs = map(repo.unstaged.files, function(f)
+  local unstaged_jobs = map(repo.unstaged.items, function(f)
     return cli.diff.shortstat.patch.files(f.name).to_job()
   end)
 
-  local staged_jobs = map(repo.staged.files, function(f)
+  local staged_jobs = map(repo.staged.items, function(f)
     return cli.diff.cached.shortstat.patch.files(f.name).to_job()
   end)
 
@@ -121,11 +121,11 @@ function _load_diffs(repo)
   Job.wait_all(jobs)
 
   for i, j in ipairs(unstaged_jobs) do
-    repo.unstaged.files[i].diff = difflib.parse(j.stdout, true)
+    repo.unstaged.items[i].diff = difflib.parse(j.stdout, true)
   end
 
   for i, j in ipairs(staged_jobs) do
-    repo.staged.files[i].diff = difflib.parse(j.stdout, true)
+    repo.staged.items[i].diff = difflib.parse(j.stdout, true)
   end
 end
 
@@ -134,13 +134,13 @@ function _TEST()
   require('neogit.buffers.status').new({
     head = repo.head,
     upstream = repo.upstream,
-    untracked_files = repo.untracked.files,
-    unstaged_changes = map(repo.unstaged.files, function(f) return f.diff end),
-    staged_changes = map(repo.staged.files, function(f) return f.diff end),
-    stashes = repo.stashes.files,
-    unpulled_changes = repo.unpulled.files,
-    unmerged_changes = repo.unmerged.files,
-    recent_changes = repo.recent.files,
+    untracked_files = repo.untracked.items,
+    unstaged_changes = map(repo.unstaged.items, function(f) return f.diff end),
+    staged_changes = map(repo.staged.items, function(f) return f.diff end),
+    stashes = repo.stashes.items,
+    unpulled_changes = repo.unpulled.items,
+    unmerged_changes = repo.unmerged.items,
+    recent_changes = repo.recent.items,
   }):open()
 end
 

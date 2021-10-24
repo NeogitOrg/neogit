@@ -15,7 +15,7 @@ local function update_unpulled(state)
   local result = 
     cli.log.oneline.for_range('..@{upstream}').show_popup(false).call()
 
-  state.unpulled.files = util.map(result, function (x) 
+  state.unpulled.items = util.map(result, function (x) 
     return { name = x } 
   end)
 end

@@ -126,8 +126,8 @@ local function draw_buffer()
   local locations_lookup = Collection.new(M.locations):key_by('name')
 
   local function render_section(header, data, key)
-    if #data.files == 0 then return end
-    output:append(string.format('%s (%d)', header, #data.files))
+    if #data.items == 0 then return end
+    output:append(string.format('%s (%d)', header, #data.items))
 
     local location = locations_lookup[key] or {
       name = key,
@@ -140,7 +140,7 @@ local function draw_buffer()
       local files_lookup = Collection.new(location.files):key_by('name')
       location.files = {}
 
-      for _, f in ipairs(data.files) do
+      for _, f in ipairs(data.items) do
         if f.mode and f.original_name then
           output:append(string.format('%s %s -> %s', mode_to_text[f.mode], f.original_name, f.name))
         elseif f.mode then output:append(string.format('%s %s', mode_to_text[f.mode], f.name))

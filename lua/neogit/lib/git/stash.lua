@@ -101,7 +101,7 @@ end
 
 local function update_stashes(state)
   local result = cli.stash.args('list').call()
-  state.stashes.files = parse(result)
+  state.stashes.items = parse(result)
 end
 
 return {
