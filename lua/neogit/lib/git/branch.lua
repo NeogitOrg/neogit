@@ -17,8 +17,8 @@ local function parse_branches(branches)
   local other_branches = {}
   for _, b in ipairs(branches) do
     local branch_name = b:match('^  (.+)')
-    if branch_name then 
-      table.insert(other_branches, branch_name) 
+    if branch_name then
+      table.insert(other_branches, branch_name)
     end
   end
 
@@ -50,7 +50,13 @@ local function prompt_for_branch(options)
     logger.fmt_error("ERROR: Branch '%s' doesn't exit", chosen)
     return
   end
-  return chosen
+
+  local truncate_remote_name = chosen:match('.+/.+/(.+)')
+  if truncate_remote_name and truncate_remote_name ~= '' then
+    return truncate_remote_name
+  else
+    return chosen
+  end
 end
 
 function M.checkout_local()
