@@ -4,7 +4,7 @@ local meta = {
   __index = {}
 }
 
-local modules = { 'status', 'diff', 'stash', 'pull', 'push' }
+local modules = { 'status', 'diff', 'stash', 'pull', 'push', 'log' }
 for _, m in ipairs(modules) do
   require('neogit.lib.git.'..m).register(meta.__index)
 end
@@ -20,23 +20,26 @@ M.create = function (_path)
       commit_message = ''
     },
     untracked = {
-      files = {}
+      items = {}
     },
     unstaged = {
-      files = {}
+      items = {}
     },
     staged = {
-      files = {}
+      items = {}
     },
     stashes = {
-      files = {}
+      items = {}
     },
     unpulled = {
-      files = {}
+      items = {}
     },
     unmerged = {
-      files = {}
-    }
+      items = {}
+    },
+    recent = {
+      items = {}
+    },
   }
 
   return setmetatable(cache, meta)

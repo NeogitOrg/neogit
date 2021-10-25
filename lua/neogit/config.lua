@@ -9,8 +9,11 @@ M.values = {
   disable_insert_on_commit = true,
   auto_refresh = true,
   kind = "tab",
+  status = {
+    recent_commit_count = 10,
+  },
   commit_popup = {
-      kind = "split",
+    kind = "split",
   },
   signs = {
     hunk = { "", "" },

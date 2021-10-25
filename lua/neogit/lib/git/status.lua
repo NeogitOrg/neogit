@@ -17,8 +17,8 @@ local function update_status(state)
   local untracked_files, unstaged_files, staged_files = {}, {}, {}
   local append_original_path
   local old_files_hash = {
-    staged_files = Collection.new(state.staged.files or {}):key_by('name'),
-    unstaged_files = Collection.new(state.unstaged.files or {}):key_by('name')
+    staged_files = Collection.new(state.staged.items or {}):key_by('name'),
+    unstaged_files = Collection.new(state.unstaged.items or {}):key_by('name')
   }
 
   local head = {}
@@ -99,9 +99,9 @@ local function update_status(state)
 
   state.head = head
   state.upstream = upstream
-  state.untracked.files = untracked_files
-  state.unstaged.files = unstaged_files
-  state.staged.files = staged_files
+  state.untracked.items = untracked_files
+  state.unstaged.items = unstaged_files
+  state.staged.items = staged_files
 end
 
 local function update_branch_information(state)
