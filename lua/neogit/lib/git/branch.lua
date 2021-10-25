@@ -43,6 +43,7 @@ local function get_all_branches()
 end
 
 local function prompt_for_branch(options)
+  a.util.scheduler()
   local chosen = input.get_user_input_with_completion('branch > ', options)
   if not chosen or chosen == '' then return nil end
   if not contains(options, chosen) then
@@ -101,5 +102,6 @@ function M.checkout_new()
 end
 
 M.prompt_for_branch = prompt_for_branch
+M.get_all_branches = get_all_branches
 
 return M
