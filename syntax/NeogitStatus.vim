@@ -2,7 +2,7 @@ if exists("b:current_syntax")
   finish
 endif
 
-syn match NeogitObjectId /^[a-z0-9]\{7} /
+syn match NeogitObjectId /^[a-z0-9]\{7,}\>/
 syn match NeogitCommitMessage /.*/ contained
 syn match NeogitBranch /\S\+/ contained nextgroup=NeogitCommitMessage
 syn match NeogitRemote /\S\+/ contained nextgroup=NeogitCommitMessage
