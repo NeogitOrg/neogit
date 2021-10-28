@@ -145,14 +145,14 @@ end
 
 function M.setup()
   local cur_hl = get_cur_hl()
-  if hl_store and not is_hl_cleared(cur_hl) and not vim.deep_equal(hl_store, cur_hl) then
+  if not is_hl_cleared(cur_hl) and not vim.deep_equal(hl_store or {}, cur_hl) then
     -- Highlights have been modified somewhere else. Return.
-    hl_store = cur_hl
     return
   end
 
-  local hl_fg_normal = M.get_fg("Normal")
-  local hl_bg_normal = M.get_bg("Normal")
+  local bg = vim.o.bg
+  local hl_fg_normal = M.get_fg("Normal") or (bg == "dark" and "#eeeeee" or "#111111")
+  local hl_bg_normal = M.get_bg("Normal") or (bg == "dark" and "#111111" or "#eeeeee")
 
   -- Generate highlights by lightening for dark color schemes, and darkening
   -- for light color schemes.
