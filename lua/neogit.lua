@@ -1,6 +1,7 @@
 local config = require("neogit.config")
 local lib = require("neogit.lib")
 local signs = require("neogit.lib.signs")
+local hl = require("neogit.lib.hl")
 local status = require("neogit.status")
 
 local neogit = {
@@ -47,6 +48,7 @@ local neogit = {
     if not config.values.disable_signs then
       signs.setup()
     end
+    hl.setup()
   end
 }
 
