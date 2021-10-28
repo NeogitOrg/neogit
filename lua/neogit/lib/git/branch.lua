@@ -46,17 +46,13 @@ local function prompt_for_branch(options)
   a.util.scheduler()
   local chosen = input.get_user_input_with_completion('branch > ', options)
   if not chosen or chosen == '' then return nil end
-  if not contains(options, chosen) then
-    logger.fmt_error("ERROR: Branch '%s' doesn't exit", chosen)
-    return
-  end
 
   local truncate_remote_name = chosen:match('.+/.+/(.+)')
   if truncate_remote_name and truncate_remote_name ~= '' then
     return truncate_remote_name
-  else
-    return chosen
   end
+
+  return chosen
 end
 
 function M.checkout_local()
