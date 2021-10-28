@@ -1,17 +1,7 @@
 local a = require 'plenary.async'
 local cli = require('neogit.lib.git.cli')
-local logger = require('neogit.logger')
 local input = require('neogit.lib.input')
 local M = {}
-
-local function contains(table, val)
-   for i=1,#table do
-      if table[i] == val then
-         return true
-      end
-   end
-   return false
-end
 
 local function parse_branches(branches)
   local other_branches = {}
