@@ -38,7 +38,10 @@ function M.create()
     :action("u", "Push to upstream", function(popup)
       local upstream = git.branch.get_upstream()
       a.util.scheduler()
-      if upstream == nil then logger.error("No upstream set") return end
+      if upstream == nil then
+        logger.error("No upstream set")
+        return
+      end
 
       push_to(popup,
         upstream.remote.." "..upstream.branch,
