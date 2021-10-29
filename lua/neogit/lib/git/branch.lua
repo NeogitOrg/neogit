@@ -46,7 +46,7 @@ local function get_upstream()
   local upstream_text = cli.branch.tracking.call()
 
   for _, branch in ipairs(upstream_text) do
-    local ups_remote, ups_branch = branch:match([[^%*.+%[(.+)/(.+):+.*%].+]])
+    local ups_remote, ups_branch = branch:match([[^%*.+%[(.+)/([^:]+):?.*%].+]])
     if ups_remote and ups_remote ~= "" and ups_branch and ups_branch ~= "" then
       return {remote=ups_remote, branch=ups_branch}
     end
