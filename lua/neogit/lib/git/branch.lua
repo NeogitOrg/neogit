@@ -1,24 +1,14 @@
 local a = require 'plenary.async'
 local cli = require('neogit.lib.git.cli')
-local logger = require('neogit.logger')
 local input = require('neogit.lib.input')
 local M = {}
-
-local function contains(table, val)
-   for i=1,#table do
-      if table[i] == val then
-         return true
-      end
-   end
-   return false
-end
 
 local function parse_branches(branches)
   local other_branches = {}
   for _, b in ipairs(branches) do
     local branch_name = b:match('^  (.+)')
-    if branch_name then 
-      table.insert(other_branches, branch_name) 
+    if branch_name then
+      table.insert(other_branches, branch_name)
     end
   end
 
@@ -43,12 +33,15 @@ local function get_all_branches()
 end
 
 local function prompt_for_branch(options)
+  a.util.scheduler()
   local chosen = input.get_user_input_with_completion('branch > ', options)
   if not chosen or chosen == '' then return nil end
-  if not contains(options, chosen) then
-    logger.fmt_error("ERROR: Branch '%s' doesn't exit", chosen)
-    return
+
+  local truncate_remote_name = chosen:match('.+/.+/(.+)')
+  if truncate_remote_name and truncate_remote_name ~= '' then
+    return truncate_remote_name
   end
+
   return chosen
 end
 
@@ -101,5 +94,6 @@ function M.checkout_new()
 end
 
 M.prompt_for_branch = prompt_for_branch
+M.get_all_branches = get_all_branches
 
 return M
