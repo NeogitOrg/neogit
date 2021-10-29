@@ -191,7 +191,8 @@ local configurations = {
       list = '--list',
       all = '-a',
       delete = '-d',
-      remotes = '-r'
+      remotes = '-r',
+      tracking = '-vv',
     },
     aliases = {
       name = function (tbl)
