@@ -32,6 +32,19 @@ local function get_all_branches()
   return parse_branches(branches)
 end
 
+local function get_upstream()
+  local upstream_text = cli.branch.tracking.call()
+
+  for _, branch in ipairs(upstream_text) do
+    local ups_remote, ups_branch = branch:match([[^%*.+%[(.+)/([^:]+):?.*%].+]])
+    if ups_remote and ups_remote ~= "" and ups_branch and ups_branch ~= "" then
+      return {remote=ups_remote, branch=ups_branch}
+    end
+  end
+
+  return nil
+end
+
 local function prompt_for_branch(options)
   a.util.scheduler()
   local chosen = input.get_user_input_with_completion('branch > ', options)
@@ -95,5 +108,6 @@ end
 
 M.prompt_for_branch = prompt_for_branch
 M.get_all_branches = get_all_branches
+M.get_upstream = get_upstream
 
 return M
