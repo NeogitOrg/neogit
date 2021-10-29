@@ -192,7 +192,8 @@ local configurations = {
       all = '-a',
       delete = '-d',
       remotes = '-r',
-      tracking = '-vv',
+      current = '--show-current',
+      very_verbose = '-vv',
     },
     aliases = {
       name = function (tbl)
@@ -269,7 +270,20 @@ local configurations = {
       cached = '--cached',
       full_name = '--full-name'
     },
-  })
+  }),
+  ['rev-parse'] = config({
+    flags = {
+      revs_only = "--revs-only",
+      no_revs = "--no-revs",
+      flags = "--flags",
+      no_flags = "--no-flags",
+      symbolic = "--symbolic",
+      symbolic_full_name = "--symbolic-full-name",
+    },
+    options = {
+      abbrev_ref = "--abbrev-ref",
+    },
+  }),
 }
 
 local function git_root()
