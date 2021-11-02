@@ -797,13 +797,20 @@ local cmd_func_map = function ()
       if item and section then
         if section.name == "unstaged" or section.name == "staged" or section.name == "untracked" then
           local path = item.name
+          local hunk = get_current_hunk_of_item(item)
 
           notif.delete_all()
           M.status_buffer:close()
 
           local relpath = vim.fn.fnamemodify(repo_root .. '/' .. path, ':.')
 
+          vim.cmd("w")
           vim.cmd("e " .. relpath)
+
+          if hunk then
+            vim.cmd(":" .. hunk.disk_from)
+          end
+
         elseif vim.tbl_contains({ "unmerged", "unpulled", "recent", "stashes" }, section.name) then
           if M.commit_view and M.commit_view.is_open then
             M.commit_view:close()
