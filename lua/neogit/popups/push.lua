@@ -36,11 +36,21 @@ function M.create()
       push_to(popup, "pushremote", "origin", status.repo.head.branch)
     end)
     :action("u", "Push to upstream", function(popup)
-      push_to(popup, "upstream", "upstream", status.repo.head.branch)
+      local upstream = git.branch.get_upstream()
+      a.util.scheduler()
+      if upstream == nil then
+        logger.error("No upstream set")
+        return
+      end
+
+      push_to(popup,
+        upstream.remote.." "..upstream.branch,
+        upstream.remote,
+        upstream.branch)
     end)
-    :action("e", "Push to elsewhere", function()
+    :action("e", "Push to elsewhere", function(popup)
       local remote = input.get_user_input("remote: ")
-      local branch = git.branch.prompt_for_branch()
+      local branch = git.branch.prompt_for_branch(git.branch.get_all_branches())
       push_to(popup, remote, remote, branch)
     end)
     :build()

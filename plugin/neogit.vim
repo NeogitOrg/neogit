@@ -18,6 +18,7 @@ augroup Neogit
   au!
   au BufWritePost,BufEnter,FocusGained,ShellCmdPost,VimResume * call <SID>refresh(expand('<afile>'))
   au DirChanged * lua vim.defer_fn(function() require 'neogit.status'.dispatch_reset() end, 0)
+  au ColorScheme * lua require'neogit.lib.hl'.setup()
 augroup END
 
 command! -nargs=* Neogit lua require'neogit'.open(require'neogit.lib.util'.parse_command_args(<f-args>))<CR>
