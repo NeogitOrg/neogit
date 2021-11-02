@@ -80,6 +80,9 @@ function M:open()
         self.hovered_component.options.highlight = "Directory"
 
         self.buffer.ui:update()
+      end,
+      ["BufUnload"] = function()
+        M.instance.is_open = false
       end
     },
     mappings = {
