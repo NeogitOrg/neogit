@@ -23,6 +23,29 @@ M.values = {
   integrations = {
     diffview = false
   },
+  sections = {
+    untracked = {
+      folded = false
+    },
+    unstaged = {
+      folded = false
+    },
+    staged = {
+      folded = false
+    },
+    stashes = {
+      folded = true
+    },
+    unpulled = {
+      folded = true
+    },
+    unmerged = {
+      folded = false
+    },
+    recent = {
+      folded = true
+    },
+  },
   mappings = {
     status = {
       ["q"] = "Close",
