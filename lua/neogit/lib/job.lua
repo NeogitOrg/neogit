@@ -50,6 +50,9 @@ function Job:start()
     task = { 'cmd', '/C', task }
   end
 
+  local stdout_line_buffer = ""
+  local stderr_line_buffer = ""
+
   self.channel = vim.fn.jobstart(task, {
     cwd = self.cwd,
     on_exit = function(_, code)
@@ -63,6 +66,8 @@ function Job:start()
       end
     end,
     on_stdout = function(_, data)
+      data[1] = stdout_line_buffer .. data[1]
+
       for i=1,#data-1 do
         local data = data[i]:gsub("\r", "")
         if type(self.on_stdout) == "function" then
@@ -70,8 +75,12 @@ function Job:start()
         end
         table.insert(self.stdout, data)
       end
+
+      stdout_line_buffer = data[#data]
     end,
     on_stderr = function(_, data)
+      data[1] = stderr_line_buffer .. data[1]
+
       for i=1,#data-1 do
         local data = data[i]:gsub("\r", "")
         if type(self.on_stderr) == "function" then
@@ -79,6 +88,8 @@ function Job:start()
         end
         table.insert(self.stderr, data)
       end
+
+      stderr_line_buffer = data[#data]
     end,
   })
 end
