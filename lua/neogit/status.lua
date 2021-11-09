@@ -808,7 +808,6 @@ local cmd_func_map = function ()
           M.status_buffer:close()
 
           local relpath = vim.fn.fnamemodify(repo_root .. '/' .. path, ':.')
-          logger.debug "[STATUS BUFFER]: Redrawing"
 
           if vim.fn.bufname() ~= "" then
             vim.cmd("w")
