@@ -808,8 +808,12 @@ local cmd_func_map = function ()
           M.status_buffer:close()
 
           local relpath = vim.fn.fnamemodify(repo_root .. '/' .. path, ':.')
+          logger.debug "[STATUS BUFFER]: Redrawing"
 
-          vim.cmd("w")
+          if vim.fn.bufname() ~= "" then
+            vim.cmd("w")
+          end
+
           vim.cmd("e " .. relpath)
 
           if hunk then
