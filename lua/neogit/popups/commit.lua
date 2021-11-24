@@ -153,7 +153,7 @@ function M.create()
       local commit_file = get_commit_file()
       local msg = cli.log.max_count(1).pretty('%B').call()
 
-      do_commit(popup, msg, tostring(cli.commit.commit_message_file(commit_file).amend))
+      do_commit(popup, msg, tostring(cli.commit.commit_message_file(commit_file).amend), true)
     end)
     :new_action_group()
     :action("f", "Fixup")
