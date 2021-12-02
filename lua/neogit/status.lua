@@ -422,6 +422,9 @@ local function get_hunk_of_item_for_line(item, line)
 end
 
 local function get_current_hunk_of_item(item)
+  if item.hunks == nil then
+    return nil
+  end
   return get_hunk_of_item_for_line(item, vim.fn.line("."))
 end
 
