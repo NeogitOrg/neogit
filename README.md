@@ -63,6 +63,7 @@ neogit.open({ cwd = "~" })
 The create function takes 1 optional argument that can be one of the following values:
 
 * tab (default)
+* replace
 * floating (This currently doesn't work with popups. Very unstable)
 * split
 * split_above
