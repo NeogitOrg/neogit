@@ -92,7 +92,7 @@ end
 
 function M.use_magit_keybindings()
   M.values.mappings.status['F'] = 'PullPopup'
-  M.values.mappings.status['p'] = 'PushPopup'
+  M.values.mappings.status['p'] = ''
 end
 
 return M
