@@ -114,6 +114,7 @@ neogit.setup {
   disable_commit_confirmation = false,
   auto_refresh = true,
   disable_builtin_notifications = false,
+  use_magit_keybindings = false,
   commit_popup = {
       kind = "split",
   },
@@ -205,16 +206,6 @@ List of status commands:
 * StashPopup
 * BranchPopup
 
-### Magit-style keybindings
-
-Neogit uses 'p' for pulling instead of 'F'.
-
-Add the following line to your config to use magit-style keybindings.
-
-```lua
-neogit.config.use_magit_keybindings()
-```
-
 ## Notification Highlighting
 
 Neogit defines three highlight groups for the notifications:
@@ -267,6 +258,12 @@ autocmd User NeogitStatusRefreshed echom "Hello World!"
 ```
 
 Further information can be found under `:h autocmd`.
+
+## Magit-style Keybindings
+
+Neogit uses 'p' for pulling instead of 'F'.
+
+Set `use_magit_keybindings = true` in your call to [`setup`](#configuration) to use magit-style keybindings.
 
 ## Todo
 
