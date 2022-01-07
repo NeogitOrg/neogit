@@ -207,7 +207,10 @@ function Buffer.create(config)
   local kind = config.kind or "split"
   local buffer = nil
 
-  if kind == "tab" then
+  if kind == "replace" then
+    vim.cmd("enew")
+    buffer = Buffer:new(vim.api.nvim_get_current_buf())
+  elseif kind == "tab" then
     vim.cmd("tabnew")
     buffer = Buffer:new(vim.api.nvim_get_current_buf())
   elseif kind == "split" then
