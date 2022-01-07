@@ -7,6 +7,7 @@ M.values = {
   disable_commit_confirmation = false,
   disable_builtin_notifications = false,
   disable_insert_on_commit = true,
+  use_magit_keybindings = false,
   auto_refresh = true,
   kind = "tab",
   status = {

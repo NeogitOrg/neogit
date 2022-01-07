@@ -48,6 +48,9 @@ local neogit = {
     if not config.values.disable_signs then
       signs.setup()
     end
+    if config.values.use_magit_keybindings then
+      config.use_magit_keybindings()
+    end
     hl.setup()
   end
 }
