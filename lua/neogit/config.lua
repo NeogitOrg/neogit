@@ -90,9 +90,4 @@ function M.ensure_integration(name)
   return true
 end
 
-function M.use_magit_keybindings()
-  M.values.mappings.status['F'] = 'PullPopup'
-  M.values.mappings.status['p'] = ''
-end
-
 return M

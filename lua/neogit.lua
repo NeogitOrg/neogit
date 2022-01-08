@@ -49,7 +49,8 @@ local neogit = {
       signs.setup()
     end
     if config.values.use_magit_keybindings then
-      config.use_magit_keybindings()
+      config.values.mappings.status["F"] = "PullPopup"
+      config.values.mappings.status["p"] = ""
     end
     hl.setup()
   end
