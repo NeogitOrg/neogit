@@ -842,7 +842,8 @@ local cmd_func_map = function ()
           return {
             name = line[1]:match('^(stash@{%d+})') 
           }
-        end
+        end,
+        use_magit_keybindings = config.values.use_magit_keybindings
       }
     end,
     ["DiffAtFile"] = function()

@@ -5,9 +5,10 @@ local GitCommandHistory = require("neogit.buffers.git_command_history")
 local M = {}
 
 function M.create(env)
+  local m = env.use_magit_keybindings
   local p = popup.builder()
     :name("NeogitHelpPopup")
-    :action("p", "Pull", function()
+    :action(m and "F" or "p", "Pull", function()
       require('neogit.popups.pull').create()
     end)
     :action("P", "Push", function()
