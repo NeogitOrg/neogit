@@ -36,7 +36,7 @@ CONTENTS                                        *neogit-contents*
 ==============================================================================
 1. Intro                                        *neogit-intro*
 
-Neogit is a magit clone for Neovim that is currerently work in progress.
+Neogit is a magit clone for Neovim that is currently work in progress.
 
 ==============================================================================
 2. Commands                                     *neogit-commands*
