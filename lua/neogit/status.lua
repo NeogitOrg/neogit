@@ -908,7 +908,16 @@ local function create(kind, cwd)
 
       for key, val in pairs(config.values.mappings.status) do
         if val ~= "" then
-          mappings[key] = func_map[val]
+          local func = func_map[val]
+          if func ~= nil then
+            mappings[key] = func
+          elseif type(val) == "function" then
+            mappings[key] = val
+          elseif type(val) == "string" then
+            mappings[key] = function() 
+              vim.cmd(val) 
+            end
+          end
         end
       end
 
