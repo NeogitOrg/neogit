@@ -395,9 +395,10 @@ local dispatch_refresh = a.void(refresh)
 local refresh_viml_compat = a.void(function (fname)
   if not fname or fname == "" then return end
 
+  if not config.values.auto_refresh then return end
+
   local path = fs.relpath_from_repository(fname)
   if not path then return end
-  if not config.values.auto_refresh then return end
   refresh({ status = true, diffs = { "*:" .. path } })
 end)
 
