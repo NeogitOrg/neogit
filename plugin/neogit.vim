@@ -7,6 +7,10 @@ if !luaeval("require 'neogit.bootstrap'")
   finish
 endif
 
+function! neogit#refresh_manually(file)
+  call luaeval('(function() require "neogit.status".refresh_manually(_A) end)()', a:file)
+endfunction
+
 function! s:refresh(file)
   if match(bufname(), "^\\(Neogit.*\\|.git/COMMIT_EDITMSG\\)$") == 0
     return
