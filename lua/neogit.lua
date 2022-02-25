@@ -38,6 +38,7 @@ local neogit = {
   end,
   dispatch_reset = status.dispatch_reset,
   refresh = status.refresh,
+  refresh_manually = status.refresh_manually,
   dispatch_refresh = status.dispatch_refresh,
   refresh_viml_compat = status.refresh_viml_compat,
   close = status.close,
