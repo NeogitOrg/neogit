@@ -267,6 +267,19 @@ Neogit uses 'p' for pulling instead of 'F'.
 
 Set `use_magit_keybindings = true` in your call to [`setup`](#configuration) to use magit-style keybindings.
 
+## Refreshing Neogit
+
+If you would like to refresh Neogit manually, you can use `neogit#refresh_manually` in Vimscript or `require('neogit').refresh_manually` in lua. They both require a single file parameter.
+
+This allows you to refresh Neogit on your own custom events
+
+```vim
+augroup DefaultRefreshEvents
+  au!
+  au BufWritePost,BufEnter,FocusGained,ShellCmdPost,VimResume * call <SID>neogit#refresh_manually(expand('<afile>'))
+augroup END
+```
+
 ## Todo
 
 **Note: This file is no longer being updated.**
