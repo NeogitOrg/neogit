@@ -29,7 +29,7 @@ local neogit = {
         popup.create()
       end
     else
-      status.create(opts.kind or "tab", opts.cwd)
+      status.create(opts.kind, opts.cwd)
     end
   end,
   reset = status.reset,
