@@ -701,8 +701,9 @@ local discard = function()
       cli.apply.reverse.with_patch(patch).call()
     end
   elseif section.name == "untracked" then
+    local repo_root = cli.git_root()
     a.util.scheduler()
-    vim.fn.delete(item.name)
+    vim.fn.delete(repo_root .. '/' .. item.name)
   else
 
     local on_hunk = current_line_is_hunk()
