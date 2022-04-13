@@ -83,9 +83,6 @@ function Buffer:close(force)
     force = false
   end
   vim.api.nvim_buf_delete(self.handle, { force = force })
-  if self.border_buffer then
-    vim.api.nvim_buf_delete(self.border_buffer, {})
-  end
 end
 
 function Buffer:is_valid()
@@ -226,36 +223,10 @@ function Buffer.create(config)
     -- Creates the border window
     local vim_height = vim.api.nvim_eval [[&lines]]
     local vim_width = vim.api.nvim_eval [[&columns]]
-    local width = math.floor(vim_width * 0.8) + 5
-    local height = math.floor(vim_height * 0.7) + 2
-    local col = vim_width * 0.1 - 2
-    local row = vim_height * 0.15 - 1
-
-    local border_buffer = vim.api.nvim_create_buf(false, true)
-    local border_window = vim.api.nvim_open_win(border_buffer, true, {
-      relative = 'editor',
-      width = width,
-      height = height,
-      col = col,
-      row = row,
-      style = 'minimal',
-      focusable = false
-    })
-
-    vim.api.nvim_win_set_cursor(border_window, { 1, 0 })
-
-    vim.wo.winhl = "Normal:Normal"
-
-    vim.api.nvim_buf_set_lines(border_buffer, 0, 1, false, { "┌" .. string.rep('─', width - 2) .. "┐" })
-    for i=2,height-1 do
-      vim.api.nvim_buf_set_lines(border_buffer, i - 1, i, false, { "│" .. string.rep(' ', width - 2) .. "│"})
-    end
-    vim.api.nvim_buf_set_lines(border_buffer, height - 1, -1, false, { "└" .. string.rep('─', width - 2) .. "┘" })
-    -- Creates the content window
-    local width = width - 2
-    local height = height - 2
-    local col = col + 1
-    local row = row + 1
+    local width = math.floor(vim_width * 0.8) + 3
+    local height = math.floor(vim_height * 0.7)
+    local col = vim_width * 0.1 - 1
+    local row = vim_height * 0.15
 
     local content_buffer = vim.api.nvim_create_buf(true, true)
     local content_window = vim.api.nvim_open_win(content_buffer, true, {
@@ -265,12 +236,12 @@ function Buffer.create(config)
       col = col,
       row = row,
       style = 'minimal',
-      focusable = false
+      focusable = false,
+      border = 'single',
     })
 
     vim.api.nvim_win_set_cursor(content_window, { 1, 0 })
     buffer = Buffer:new(content_buffer)
-    buffer.border_buffer = border_buffer
   end
 
   buffer.kind = kind
