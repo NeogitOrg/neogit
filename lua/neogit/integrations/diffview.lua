@@ -6,6 +6,7 @@ local Rev = require'diffview.git.rev'.Rev
 local RevType = require'diffview.git.rev'.RevType
 local CDiffView = require'diffview.api.views.diff.diff_view'.CDiffView
 local dv_lib = require'diffview.lib'
+local dv_utils = require("diffview.utils")
 
 local neogit = require 'neogit'
 local status = require'neogit.status'
@@ -25,24 +26,8 @@ local function cb(name)
   return string.format(":lua require('neogit.integrations.diffview').diffview_mappings['%s']()<CR>", name)
 end
 
-function M.open(selected_file_name)
-  old_config = dv_config.get_config()
 
-  local config = vim.tbl_deep_extend("force", old_config, {
-    key_bindings = {
-      view = {
-        ["q"] = cb("close"),
-        ["<esc>"] = cb("close")
-      },
-      file_panel = {
-        ["q"] = cb("close"),
-        ["<esc>"] = cb("close")
-      }
-    }
-  })
-
-  dv.setup(config)
-
+local function get_local_diff_view(selected_file_name)
   local left = Rev(RevType.INDEX)
   local right = Rev(RevType.LOCAL)
   local git_root = neogit.cli.git_root_sync()
@@ -106,7 +91,42 @@ function M.open(selected_file_name)
 
   dv_lib.add_view(view)
 
-  view:open()
+  return view
+end
+
+function M.open(section_name, item_name)
+  old_config = dv_config.get_config()
+
+  local config = vim.tbl_deep_extend("force", old_config, {
+    key_bindings = {
+      view = {
+        ["q"] = cb("close"),
+        ["<esc>"] = cb("close")
+      },
+      file_panel = {
+        ["q"] = cb("close"),
+        ["<esc>"] = cb("close")
+      }
+    }
+  })
+
+  dv.setup(config)
+
+  local view
+
+  if section_name == "recent" or section_name == "unmerged" then
+    local commit_id = item_name:match("[a-f0-9]+")
+    view = dv_lib.diffview_open(dv_utils.tbl_pack(commit_id.."^.."..commit_id))
+  elseif section_name == "stashes" then
+    local stash_id = item_name:match("stash@{%d+}")
+    view = dv_lib.diffview_open(dv_utils.tbl_pack(stash_id.."^.."..stash_id))
+  else
+    view = get_local_diff_view(item_name)
+  end
+
+  if view then
+    view:open()
+  end
 
   return view
 end
