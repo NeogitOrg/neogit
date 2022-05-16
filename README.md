@@ -251,15 +251,31 @@ Set `disable_insert_on_commit = true` in your call to [`setup`](#configuration) 
 
 ## Events
 
-Neogit emits a `NeogitStatusRefreshed` event whenever the status gets reloaded.
+Neogit emits the following events:
 
-You can listen to the event using the following code:
+| Event                   | Description                      |
+|-------------------------|----------------------------------|
+| `NeogitStatusRefreshed` | Status has been reloaded         |
+| `NeogitCommitComplete`  | Commit has been created          |
+| `NeogitPushComplete`    | Push has completed               |
+
+
+You can listen to the events using the following code:
 
 ```vim
 autocmd User NeogitStatusRefreshed echom "Hello World!"
 ```
 
-Further information can be found under `:h autocmd`.
+Or, if you prefer to configure autocommands via Lua:
+
+```lua
+local group = vim.api.nvim_create_augroup('MyCustomNeogitEvents', { clear = true })
+vim.api.nvim_create_autocmd('User', {
+  pattern = 'NeogitPushComplete',
+  group = group,
+  callback = require('neogit').close,
+})
+```
 
 ## Magit-style Keybindings
 
