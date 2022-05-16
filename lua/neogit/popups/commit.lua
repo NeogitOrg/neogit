@@ -112,6 +112,7 @@ local function do_commit(popup, data, cmd, skip_gen)
   if result.code == 0 then
     a.uv.fs_unlink(commit_file)
     status.refresh(true)
+    vim.cmd([[do <nomodeline> User NeogitCommitComplete]])
   end
 end
 
