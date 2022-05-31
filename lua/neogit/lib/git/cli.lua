@@ -82,7 +82,8 @@ local configurations = {
       cached = '--cached',
       shortstat = '--shortstat',
       patch = '--patch',
-      name_only = '--name-only'
+      name_only = '--name-only',
+      no_ext_diff = "--no-ext-diff"
     },
   }),
   stash = config({

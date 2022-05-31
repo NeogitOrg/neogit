@@ -131,7 +131,7 @@ local diff = {
   parse = parse_diff,
   parse_stats = parse_diff_stats,
   get_stats = function(name)
-    return parse_diff_stats(cli.diff.shortstat.files(name).call_sync())
+    return parse_diff_stats(cli.diff.no_ext_diff.shortstat.files(name).call_sync())
   end
 }
 
@@ -160,8 +160,8 @@ function diff.register(meta)
     if type(filter) == 'table' then
       filter = ItemFilter.new(Collection.new(filter):map(function (item)
         local section, file = item:match("^([^:]+):(.*)$")
-        if not section then 
-          error('Invalid filter item: '..item, 3) 
+        if not section then
+          error('Invalid filter item: '..item, 3)
         end
 
         return { section = section, file = file }
@@ -171,8 +171,8 @@ function diff.register(meta)
     for _, f in ipairs(repo.unstaged.items) do
       if f.mode ~= 'D' and f.mode ~= 'F' and (not filter or filter:accepts('unstaged', f.name)) then
         table.insert(executions, function ()
-          local raw_diff = cli.diff.files(f.name).call()
-          local raw_stats = cli.diff.shortstat.files(f.name).call()
+          local raw_diff = cli.diff.no_ext_diff.files(f.name).call()
+          local raw_stats = cli.diff.no_ext_diff.shortstat.files(f.name).call()
           f.diff = parse_diff(raw_diff)
           f.diff.stats = parse_diff_stats(raw_stats)
         end)
@@ -182,8 +182,8 @@ function diff.register(meta)
     for _, f in ipairs(repo.staged.items) do
       if f.mode ~= 'D' and f.mode ~= 'F' and (not filter or filter:accepts('staged', f.name)) then
         table.insert(executions, function ()
-          local raw_diff = cli.diff.cached.files(f.name).call()
-          local raw_stats = cli.diff.cached.shortstat.files(f.name).call()
+          local raw_diff = cli.diff.no_ext_diff.cached.files(f.name).call()
+          local raw_stats = cli.diff.no_ext_diff.cached.shortstat.files(f.name).call()
           f.diff = parse_diff(raw_diff)
           f.diff.stats = parse_diff_stats(raw_stats)
         end)
