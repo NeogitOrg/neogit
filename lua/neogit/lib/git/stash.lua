@@ -33,6 +33,7 @@ local function perform_stash(include)
   if include.worktree then
     local files = 
       cli.diff
+        .no_ext_diff
         .name_only
         .null_terminated
         .args('HEAD')
@@ -82,6 +83,7 @@ local function perform_stash(include)
   elseif include.index then
     local diff = 
       cli.diff
+        .no_ext_diff
         .cached
         .call() .. '\n'
 
