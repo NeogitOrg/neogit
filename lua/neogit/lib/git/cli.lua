@@ -336,10 +336,11 @@ end
 
 local function exec(cmd, args, cwd, stdin, env, show_popup, hide_text)
   args = args or {}
-  if show_popup == nil then 
-    show_popup = true 
+  if show_popup == nil then
+    show_popup = true
   end
-  table.insert(args, 1, cmd)
+  table.insert(args, 1, "--no-optional-locks")
+  table.insert(args, 2, cmd)
 
   if not cwd then
     cwd = git_root()
