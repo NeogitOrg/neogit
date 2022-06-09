@@ -755,10 +755,7 @@ end
 local cmd_func_map = function ()
   return {
     ["Close"] = function()
-      if M.status_buffer.kind == "tab" then
-        vim.cmd "1only"
-      end
-      vim.cmd "close"
+      M.status_buffer:close()
     end,
     ["Depth1"] = a.void(function()
       set_folds({ true, true, false })
@@ -818,14 +815,14 @@ local cmd_func_map = function ()
 
           local relpath = vim.fn.fnamemodify(repo_root .. '/' .. path, ':.')
 
-          if vim.fn.bufname() ~= "" then
-            vim.cmd("w")
+          if vim.bo.buftype == "" and not vim.bo.readonly and vim.fn.bufname() ~= "" then
+            vim.cmd("update")
           end
 
           vim.cmd("e " .. relpath)
 
           if hunk then
-            vim.cmd(":" .. hunk.disk_from)
+            vim.cmd(tostring(hunk.disk_from))
           end
 
         elseif vim.tbl_contains({ "unmerged", "unpulled", "recent", "stashes" }, section.name) then
