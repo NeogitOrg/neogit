@@ -815,7 +815,7 @@ local cmd_func_map = function ()
 
           local relpath = vim.fn.fnamemodify(repo_root .. '/' .. path, ':.')
 
-          if vim.bo.buftype == "" and not vim.bo.readonly and vim.fn.bufname() ~= "" then
+          if not vim.o.hidden and vim.bo.buftype == "" and not vim.bo.readonly and vim.fn.bufname() ~= "" then
             vim.cmd("update")
           end
 
