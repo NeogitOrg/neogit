@@ -82,6 +82,11 @@ function Buffer:close(force)
   if force == nil then
     force = false
   end
+  if self.kind == "tab" then
+    -- `silent!` as this might throw errors if 'hidden' is disabled.
+    vim.cmd("silent! 1only")
+    vim.cmd("try | tabn # | catch /.*/ | tabp | endtry")
+  end
   vim.api.nvim_buf_delete(self.handle, { force = force })
 end
 
