@@ -120,6 +120,11 @@ local configurations = {
         return function (branch)
           return tbl.b(branch)
         end
+      end,
+      new_branch_with_start_point = function (tbl)
+        return function (branch, start_point)
+          return tbl.args(branch, start_point).b()
+        end
       end
     }
   }),
@@ -195,6 +200,7 @@ local configurations = {
       remotes = '-r',
       current = '--show-current',
       very_verbose = '-vv',
+      move = '-m',
     },
     aliases = {
       name = function (tbl)
@@ -725,7 +731,6 @@ local cli = setmetatable({
     -- from: https://stackoverflow.com/questions/48948630/lua-ansi-escapes-pattern
     local ansi_escape_sequence_pattern = "[\27\155][][()#;?%d]*[A-PRZcf-ntqry=><~]"
     local stdout = {}
-    local raw_stdout = {}
     local chan
     local skip_count = 0
 
@@ -735,7 +740,6 @@ local cli = setmetatable({
       pty = true,
       width = 100,
       on_stdout = function(_, data)
-        table.insert(raw_stdout, data)
         local is_end = #data == 1 and data[1] == ""
         if is_end then
           return

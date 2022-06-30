@@ -15,10 +15,18 @@ local function parse_branches(branches)
   return other_branches
 end
 
-local function get_local_branches()
+function M.get_local_branches()
   local branches = cli.branch
     .list
-    .call()
+    .call_sync()
+
+  return parse_branches(branches)
+end
+
+function M.get_remote_branches()
+  local branches = cli.branch
+    .remotes
+    .call_sync()
 
   return parse_branches(branches)
 end
@@ -27,7 +35,7 @@ function M.get_all_branches()
   local branches = cli.branch
     .list
     .all
-    .call()
+    .call_sync()
 
   return parse_branches(branches)
 end
@@ -64,7 +72,7 @@ function M.prompt_for_branch(options)
 end
 
 function M.checkout_local()
-  local branches = get_local_branches()
+  local branches = M.get_local_branches()
 
   a.util.scheduler()
   local chosen = M.prompt_for_branch(branches)
@@ -109,6 +117,14 @@ function M.checkout_new()
   if not name or name == '' then return end
 
   cli.interactive_git_cmd(tostring(cli.checkout.new_branch(name)))
+end
+
+function M.current()
+  local branch_name = cli.branch.current.call_sync()
+  if #branch_name > 0 then
+    return branch_name[1]
+  end
+  return nil
 end
 
 return M
