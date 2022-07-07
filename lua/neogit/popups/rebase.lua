@@ -1,8 +1,10 @@
-local M = {}
-
 local cli = require("neogit.lib.git.cli")
 local git = require("neogit.lib.git")
 local popup = require("neogit.lib.popup")
+local CommitSelectViewBuffer = require("neogit.buffers.commit_select_view")
+local rebase = require("neogit.lib.git.rebase")
+
+local M = {}
 
 function M.create()
   local p = popup
@@ -14,6 +16,13 @@ function M.create()
     :action("e", "Rebase onto elsewhere", function()
       local branch = git.branch.prompt_for_branch(git.branch.get_all_branches())
       cli.rebase.args(branch).call_sync()
+    end)
+    :action("i", "Interactive", function()
+      local commits = rebase.commits()
+      CommitSelectViewBuffer.new(commits, function(_view, selected)
+        rebase.run_interactive(selected.oid)
+        _view:close()
+      end):open()
     end)
     :build()
 
