@@ -1,8 +1,8 @@
 local M = {}
 
-local Ui = require 'neogit.lib.ui'
-local util = require 'neogit.lib.util'
-local common_ui = require 'neogit.buffers.common'
+local Ui = require("neogit.lib.ui")
+local util = require("neogit.lib.util")
+local common_ui = require("neogit.buffers.common")
 
 local Diff = common_ui.Diff
 local text = Ui.text
@@ -14,9 +14,9 @@ local intersperse = util.intersperse
 function M.OverviewFile(file)
   return row.tag("OverviewFile") {
     text.highlight("NeogitFilePath")(file.path),
-    text " | " ,
+    text(" | "),
     text.highlight("Number")(file.changes),
-    text " " ,
+    text(" "),
     text.highlight("NeogitDiffAdd")(file.insertions),
     text.highlight("NeogitDiffDelete")(file.deletions),
   }
@@ -35,13 +35,13 @@ end
 function M.CommitView(info, overview)
   return {
     M.CommitHeader(info),
-    text "" ,
+    text(""),
     col(map(info.description, text), { sign = "NeogitCommitViewDescription", tag = "Description" }),
-    text "",
+    text(""),
     text(overview.summary),
     col(map(overview.files, M.OverviewFile), { tag = "OverviewFileList" }),
-    text "",
-    col(intersperse(map(info.diffs, Diff), text("")), { tag = "DiffList" })
+    text(""),
+    col(intersperse(map(info.diffs, Diff), text("")), { tag = "DiffList" }),
   }
 end
 

@@ -1,9 +1,9 @@
-local a = require 'plenary.async'
-local util = require 'neogit.lib.util'
-local logger = require 'neogit.logger'
-local cli = require('neogit.lib.git.cli')
-local Collection = require('neogit.lib.collection')
-local md5 = require 'neogit.lib.md5'
+local a = require("plenary.async")
+local util = require("neogit.lib.util")
+local logger = require("neogit.logger")
+local cli = require("neogit.lib.git.cli")
+local Collection = require("neogit.lib.collection")
+local md5 = require("neogit.lib.md5")
 
 local function parse_diff_stats(raw)
   if type(raw) == "string" then
@@ -11,7 +11,7 @@ local function parse_diff_stats(raw)
   end
   local stats = {
     additions = 0,
-    deletions = 0
+    deletions = 0,
   }
   -- local matches raw:match('1 file changed, (%d+ insertions?%(%+%))?(, )?(%d+ deletions?%(%-%))?')
   for _, part in ipairs(raw) do
@@ -37,7 +37,7 @@ local function parse_diff(output, with_stats)
     lines = {},
     file = "",
     hunks = {},
-    stats = {}
+    stats = {},
   }
   local start_idx = 1
 
@@ -49,8 +49,8 @@ local function parse_diff(output, with_stats)
   do
     local header = {}
 
-    for i=start_idx,#output do
-      if output[i]:match('^@@@*.*@@@*') then
+    for i = start_idx, #output do
+      if output[i]:match("^@@@*.*@@@*") then
         start_idx = i
         break
       end
@@ -69,36 +69,35 @@ local function parse_diff(output, with_stats)
         diff.file = header[4]:match("%-%-%- a/(.*)")
       end
     else
-      logger.debug "TODO: diff parser"
+      logger.debug("TODO: diff parser")
       logger.debug(vim.inspect(header))
     end
   end
 
-  for i=start_idx,#output do
+  for i = start_idx, #output do
     table.insert(diff.lines, output[i])
   end
 
-
   local len = #diff.lines
   local hunk = nil
-  local hunk_content = ''
+  local hunk_content = ""
 
-  for i=1,len do
+  for i = 1, len do
     local line = diff.lines[i]
     if not vim.startswith(line, "+++") then
       local index_from, index_len, disk_from, disk_len
       if vim.startswith(line, "@@@") then
         -- Combined diff header
-        index_from, index_len, disk_from, disk_len = line:match('@@@* %-(%d+),?(%d*) .* %+(%d+),?(%d*) @@@*')
+        index_from, index_len, disk_from, disk_len = line:match("@@@* %-(%d+),?(%d*) .* %+(%d+),?(%d*) @@@*")
       else
         -- Normal diff header
-        index_from, index_len, disk_from, disk_len = line:match('@@ %-(%d+),?(%d*) %+(%d+),?(%d*) @@')
+        index_from, index_len, disk_from, disk_len = line:match("@@ %-(%d+),?(%d*) %+(%d+),?(%d*) @@")
       end
 
       if index_from then
         if hunk ~= nil then
           hunk.hash = md5.sumhexa(hunk_content)
-          hunk_content = ''
+          hunk_content = ""
           table.insert(diff.hunks, hunk)
         end
         hunk = {
@@ -108,11 +107,11 @@ local function parse_diff(output, with_stats)
           disk_len = tonumber(disk_len) or 1,
           line = line,
           diff_from = i,
-          diff_to = i
+          diff_to = i,
         }
       else
-        hunk_content = hunk_content .. '\n' .. line
-        if hunk then 
+        hunk_content = hunk_content .. "\n" .. line
+        if hunk then
           hunk.diff_to = hunk.diff_to + 1
         end
       end
@@ -132,19 +131,18 @@ local diff = {
   parse_stats = parse_diff_stats,
   get_stats = function(name)
     return parse_diff_stats(cli.diff.no_ext_diff.shortstat.files(name).call_sync())
-  end
+  end,
 }
 
 local ItemFilter = {}
 
-function ItemFilter.new (tbl)
+function ItemFilter.new(tbl)
   return setmetatable(tbl, { __index = ItemFilter })
 end
 
-function ItemFilter.accepts (tbl, section, item)
+function ItemFilter.accepts(tbl, section, item)
   for _, f in ipairs(tbl) do
-    if (f.section == "*" or f.section == section)
-      and (f.file == "*" or f.file == item) then
+    if (f.section == "*" or f.section == section) and (f.file == "*" or f.file == item) then
       return true
     end
   end
@@ -153,15 +151,15 @@ function ItemFilter.accepts (tbl, section, item)
 end
 
 function diff.register(meta)
-  meta.load_diffs = function (repo, filter)
+  meta.load_diffs = function(repo, filter)
     filter = filter or false
     local executions = {}
 
-    if type(filter) == 'table' then
-      filter = ItemFilter.new(Collection.new(filter):map(function (item)
+    if type(filter) == "table" then
+      filter = ItemFilter.new(Collection.new(filter):map(function(item)
         local section, file = item:match("^([^:]+):(.*)$")
         if not section then
-          error('Invalid filter item: '..item, 3)
+          error("Invalid filter item: " .. item, 3)
         end
 
         return { section = section, file = file }
@@ -169,8 +167,8 @@ function diff.register(meta)
     end
 
     for _, f in ipairs(repo.unstaged.items) do
-      if f.mode ~= 'D' and f.mode ~= 'F' and (not filter or filter:accepts('unstaged', f.name)) then
-        table.insert(executions, function ()
+      if f.mode ~= "D" and f.mode ~= "F" and (not filter or filter:accepts("unstaged", f.name)) then
+        table.insert(executions, function()
           local raw_diff = cli.diff.no_ext_diff.files(f.name).call()
           local raw_stats = cli.diff.no_ext_diff.shortstat.files(f.name).call()
           f.diff = parse_diff(raw_diff)
@@ -180,8 +178,8 @@ function diff.register(meta)
     end
 
     for _, f in ipairs(repo.staged.items) do
-      if f.mode ~= 'D' and f.mode ~= 'F' and (not filter or filter:accepts('staged', f.name)) then
-        table.insert(executions, function ()
+      if f.mode ~= "D" and f.mode ~= "F" and (not filter or filter:accepts("staged", f.name)) then
+        table.insert(executions, function()
           local raw_diff = cli.diff.no_ext_diff.cached.files(f.name).call()
           local raw_stats = cli.diff.no_ext_diff.cached.shortstat.files(f.name).call()
           f.diff = parse_diff(raw_diff)

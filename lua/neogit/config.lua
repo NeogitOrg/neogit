@@ -19,32 +19,32 @@ M.values = {
   signs = {
     hunk = { "", "" },
     item = { ">", "v" },
-    section = { ">", "v" }
+    section = { ">", "v" },
   },
   integrations = {
-    diffview = false
+    diffview = false,
   },
   sections = {
     untracked = {
-      folded = false
+      folded = false,
     },
     unstaged = {
-      folded = false
+      folded = false,
     },
     staged = {
-      folded = false
+      folded = false,
     },
     stashes = {
-      folded = true
+      folded = true,
     },
     unpulled = {
-      folded = true
+      folded = true,
     },
     unmerged = {
-      folded = false
+      folded = false,
     },
     recent = {
-      folded = true
+      folded = true,
     },
   },
   mappings = {
@@ -77,8 +77,8 @@ M.values = {
       ["L"] = "LogPopup",
       ["Z"] = "StashPopup",
       ["b"] = "BranchPopup",
-    }
-  }
+    },
+  },
 }
 
 function M.ensure_integration(name)

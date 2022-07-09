@@ -37,8 +37,8 @@ function M.filter(tbl, func)
   local result = {}
 
   for _, item in ipairs(tbl) do
-    if func(item) then 
-      table.insert(result, item) 
+    if func(item) then
+      table.insert(result, item)
     end
   end
 
@@ -52,22 +52,24 @@ function M.each(tbl, func)
 end
 
 function M.reduce(tbl, func, ...)
-  local acc = {...}
-  tbl:each(function (item)
-    acc = {func(item, unpack(acc))}
+  local acc = { ... }
+  tbl:each(function(item)
+    acc = { func(item, unpack(acc)) }
   end)
   return unpack(acc)
 end
 
 function M.find(tbl, func)
   for _, item in ipairs(tbl) do
-    if func(item) then return item end
+    if func(item) then
+      return item
+    end
   end
   return nil
 end
 
 return setmetatable(M, {
-  __call = function (_, tbl)
+  __call = function(_, tbl)
     return M.new(tbl)
-  end
+  end,
 })

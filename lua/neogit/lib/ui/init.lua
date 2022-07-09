@@ -1,14 +1,14 @@
-local Component = require 'neogit.lib.ui.component'
-local util = require 'neogit.lib.util'
+local Component = require("neogit.lib.ui.component")
+local util = require("neogit.lib.util")
 
 local filter = util.filter
 
 local Ui = {}
 
 function Ui.new(buf)
-  local this = { 
+  local this = {
     buf = buf,
-    layout = {}
+    layout = {},
   }
   setmetatable(this, { __index = Ui })
   return this
@@ -39,7 +39,7 @@ function Ui._print_component(indent, c, _options)
     output = output .. " '" .. c.value .. "'"
   end
 
-  for k,v in pairs(c.options) do
+  for k, v in pairs(c.options) do
     if k ~= "tag" and k ~= "hidden" then
       output = output .. " " .. k .. "=" .. tostring(v)
     end
@@ -51,9 +51,10 @@ end
 function Ui._visualize_tree(indent, components, options)
   for _, c in ipairs(components) do
     Ui._print_component(indent, c, options)
-    if (c.tag == "col" or c.tag == "row")
+    if
+      (c.tag == "col" or c.tag == "row")
       and not (options.collapse_hidden_components and c.options.hidden)
-      then
+    then
       Ui._visualize_tree(indent + 1, c.children, options)
     end
   end
@@ -129,7 +130,7 @@ end
 
 function Ui:_render(first_line, first_col, parent, components, flags)
   local curr_line = first_line
-  
+
   if flags.in_row then
     local col_start = first_col
     local col_end
@@ -156,7 +157,7 @@ function Ui:_render(first_line, first_col, parent, components, flags)
             table.insert(highlights, {
               from = col_start,
               to = col_end,
-              name = highlight
+              name = highlight,
             })
           end
           col_start = col_end
@@ -193,7 +194,7 @@ function Ui:_render(first_line, first_col, parent, components, flags)
     if flags.in_nested_row then
       return {
         text = text,
-        highlights = highlights
+        highlights = highlights,
       }
     end
 
@@ -253,9 +254,9 @@ function Ui:_render(first_line, first_col, parent, components, flags)
 end
 
 function Ui:render(...)
-  self.layout = {...}
-  self.layout = filter(self.layout, function(x) 
-    return type(x) == "table" 
+  self.layout = { ... }
+  self.layout = filter(self.layout, function(x)
+    return type(x) == "table"
   end)
   self:update()
 end
@@ -263,12 +264,18 @@ end
 -- This shouldn't be called often as it completely rewrites the whole buffer
 function Ui:update()
   self.buf:unlock()
-  local lines_used = self:_render(1, 0, Component.new(function()
-    return {
-      tag = "_root",
-      children = self.layout
-    }
-  end)(), self.layout, {})
+  local lines_used = self:_render(
+    1,
+    0,
+    Component.new(function()
+      return {
+        tag = "_root",
+        children = self.layout,
+      }
+    end)(),
+    self.layout,
+    {}
+  )
   self.buf:set_lines(lines_used, -1, false, {})
   self.buf:lock()
 end
@@ -279,22 +286,26 @@ function Ui:print_layout_tree(options)
 end
 
 function Ui:debug(...)
-  Ui.visualize_tree({...}, {})
+  Ui.visualize_tree({ ... }, {})
 end
 
 Ui.col = Component.new(function(children, options)
   return {
     tag = "col",
-    children = filter(children, function(x) return type(x) == "table" end),
-    options = options
+    children = filter(children, function(x)
+      return type(x) == "table"
+    end),
+    options = options,
   }
 end)
 
 Ui.row = Component.new(function(children, options)
   return {
     tag = "row",
-    children = filter(children, function(x) return type(x) == "table" end),
-    options = options
+    children = filter(children, function(x)
+      return type(x) == "table"
+    end),
+    options = options,
   }
 end)
 
@@ -304,16 +315,16 @@ Ui.text = Component.new(function(value, options, ...)
   end
 
   vim.validate {
-    options = {options, "table", true}
+    options = { options, "table", true },
   }
 
   return {
     tag = "text",
     value = value or "",
-    options = type(options) == "table" and options or nil
+    options = type(options) == "table" and options or nil,
   }
 end)
 
-Ui.Component = require 'neogit.lib.ui.component'
+Ui.Component = require("neogit.lib.ui.component")
 
 return Ui

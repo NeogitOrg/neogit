@@ -22,29 +22,33 @@ local M = {}
 ---@param group string Syntax group name.
 ---@param opt HiSpec
 function M.hi(group, opt)
-  vim.cmd(string.format(
-    "hi %s %s guifg=%s guibg=%s gui=%s guisp=%s blend=%s",
-    opt.default and "default" or "",
-    group,
-    opt.fg or "NONE",
-    opt.bg or "NONE",
-    opt.gui or "NONE",
-    opt.sp or "NONE",
-    opt.blend or "NONE"
-  ))
+  vim.cmd(
+    string.format(
+      "hi %s %s guifg=%s guibg=%s gui=%s guisp=%s blend=%s",
+      opt.default and "default" or "",
+      group,
+      opt.fg or "NONE",
+      opt.bg or "NONE",
+      opt.gui or "NONE",
+      opt.sp or "NONE",
+      opt.blend or "NONE"
+    )
+  )
 end
 
 ---@param from string Syntax group name.
 ---@param to string Syntax group name.
 ---@param opt HiLinkSpec
 function M.hi_link(from, to, opt)
-  vim.cmd(string.format(
-    "hi%s %s link %s %s",
-    opt.force and "!" or "",
-    opt.default and "default" or "",
-    from,
-    to or ""
-  ))
+  vim.cmd(
+    string.format(
+      "hi%s %s link %s %s",
+      opt.force and "!" or "",
+      opt.default and "default" or "",
+      from,
+      to or ""
+    )
+  )
 end
 
 ---@param name string Syntax group name.
@@ -99,7 +103,7 @@ function M.get_gui(group_name, trans)
     "standout",
     "underline",
     "undercurl",
-    "strikethrough"
+    "strikethrough",
   }
 
   for _, attr in ipairs(attributes) do

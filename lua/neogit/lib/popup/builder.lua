@@ -1,4 +1,4 @@
-local a = require 'plenary.async'
+local a = require("plenary.async")
 
 local M = {}
 
@@ -8,10 +8,10 @@ function M.new(builder_fn)
       name = nil,
       switches = {},
       options = {},
-      actions = {{}},
+      actions = { {} },
       env = {},
     },
-    builder_fn = builder_fn
+    builder_fn = builder_fn,
   }
 
   setmetatable(instance, { __index = M })
@@ -34,7 +34,7 @@ function M:new_action_group()
   return self
 end
 
---@param parse Whether the switch is internal to neogit or should be included in the cli command. 
+--@param parse Whether the switch is internal to neogit or should be included in the cli command.
 --             If `false` we don't include it in the cli comand.
 function M:switch(key, cli, description, enabled, parse)
   if enabled == nil then
@@ -46,12 +46,12 @@ function M:switch(key, cli, description, enabled, parse)
   end
 
   table.insert(self.state.switches, {
-    id = '-' .. key,
+    id = "-" .. key,
     key = key,
     cli = cli,
     description = description,
     enabled = enabled,
-    parse = parse
+    parse = parse,
   })
 
   return self
@@ -59,7 +59,7 @@ end
 
 function M:option(key, cli, value, description)
   table.insert(self.state.options, {
-    id = '=' .. key,
+    id = "=" .. key,
     key = key,
     cli = cli,
     value = value,
@@ -73,7 +73,7 @@ function M:action(key, description, callback)
   table.insert(self.state.actions[#self.state.actions], {
     key = key,
     description = description,
-    callback = callback and a.void(callback) or nil
+    callback = callback and a.void(callback) or nil,
   })
 
   return self
@@ -84,7 +84,7 @@ function M:action_if(cond, key, description, callback)
     table.insert(self.state.actions[#self.state.actions], {
       key = key,
       description = description,
-      callback = callback and a.void(callback) or nil
+      callback = callback and a.void(callback) or nil,
     })
   end
 

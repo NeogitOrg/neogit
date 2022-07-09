@@ -5,10 +5,12 @@
 --
 -- The module returns true if everything went well, or false if any part of
 -- the initialization failed.
-local res, err = pcall(require, 'plenary')
+local res, err = pcall(require, "plenary")
 if not res then
   print("WARNING: Neogit depends on `nvim-lua/plenary.nvim` to work, but loading the plugin failed!")
-  print("Make sure you add `nvim-lua/plenary.nvim` to your plugin manager BEFORE neogit for everything to work")
+  print(
+    "Make sure you add `nvim-lua/plenary.nvim` to your plugin manager BEFORE neogit for everything to work"
+  )
   print(err) -- TODO: find out how to print the error without raising it AND properly print tabs
   return false
 end

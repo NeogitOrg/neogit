@@ -1,5 +1,5 @@
 local Buffer = require("neogit.lib.buffer")
-local ui = require 'neogit.buffers.branch_select_view.ui'
+local ui = require("neogit.buffers.branch_select_view.ui")
 
 local M = {}
 
@@ -17,7 +17,7 @@ function M.new(branches, action)
   local instance = {
     action = action,
     branches = branches,
-    buffer = nil
+    buffer = nil,
   }
 
   setmetatable(instance, { __index = M })
@@ -45,11 +45,11 @@ function M:open()
           end
           self:close()
         end,
-      }
+      },
     },
     render = function()
-        return ui.View(self.branches)
-    end
+      return ui.View(self.branches)
+    end,
   }
 end
 

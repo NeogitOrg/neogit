@@ -1,6 +1,6 @@
-local Ui = require 'neogit.lib.ui'
-local Component = require 'neogit.lib.ui.component'
-local util = require 'neogit.lib.util'
+local Ui = require("neogit.lib.ui")
+local Component = require("neogit.lib.ui.component")
+local util = require("neogit.lib.util")
 
 local col = Ui.col
 local row = Ui.row
@@ -21,46 +21,44 @@ local M = {}
 
 M.Commit = Component.new(function(commit, show_graph)
   return col {
-    row { 
-      text(show_graph 
-        and ("* "):rep(commit.level + 1) 
-        or "* ", { highlight = "Character" }), 
-      text(commit.oid:sub(1, 7), { highlight = "Number" }), 
-      text " ", 
-      text(commit.description[1]) 
+    row {
+      text(show_graph and ("* "):rep(commit.level + 1) or "* ", { highlight = "Character" }),
+      text(commit.oid:sub(1, 7), { highlight = "Number" }),
+      text(" "),
+      text(commit.description[1]),
     },
     col.hidden(true).padding_left((commit.level + 1) * 2) {
       row {
-        text "Author:     ",
+        text("Author:     "),
         text(commit.author_name),
-        text " <",
+        text(" <"),
         text(commit.author_date),
-        text ">"
+        text(">"),
       },
       row {
-        text "AuthorDate: ",
-        text(commit.author_date)
+        text("AuthorDate: "),
+        text(commit.author_date),
       },
       row {
-        text "Commit:     ",
+        text("Commit:     "),
         text(commit.committer_name),
-        text " <",
+        text(" <"),
         text(commit.committer_date),
-        text ">"
+        text(">"),
       },
       row {
-        text "CommitDate: ",
-        text(commit.committer_date)
+        text("CommitDate: "),
+        text(commit.committer_date),
       },
-      text " ",
-      col(map(commit.description, text), { padding_left = 4 })
-    }
+      text(" "),
+      col(map(commit.description, text), { padding_left = 4 }),
+    },
   }
 end)
 
 function M.LogView(data, show_graph)
   return map(data, function(row)
-    return M.Commit(row, show_graph) 
+    return M.Commit(row, show_graph)
   end)
 end
 

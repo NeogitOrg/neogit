@@ -25,11 +25,11 @@ local function new()
     mappings = mappings,
     map_id_to_key = map_id_to_key,
     register = function()
-      for k,mapping in pairs(mappings) do
+      for k, mapping in pairs(mappings) do
         local map_id = #map_id_to_key + 1
         local f_call = build_call_string(id, map_id)
         if type(mapping) == "table" then
-          for _,m in pairs(vim.split(mapping[1], "")) do
+          for _, m in pairs(vim.split(mapping[1], "")) do
             if type(mapping[2]) == "string" then
               f_call = mapping[2]
             elseif mapping[3] and m == "v" then
@@ -38,7 +38,7 @@ local function new()
             vim.api.nvim_buf_set_keymap(id, m, k, f_call, {
               silent = true,
               noremap = true,
-              nowait = true
+              nowait = true,
             })
           end
         else
@@ -48,13 +48,13 @@ local function new()
           vim.api.nvim_buf_set_keymap(id, "n", k, f_call, {
             silent = true,
             noremap = true,
-            nowait = true
+            nowait = true,
           })
         end
 
         table.insert(map_id_to_key, k)
       end
-    end
+    end,
   }
 
   managers[id] = manager
@@ -70,5 +70,5 @@ return {
   new = new,
   build_call_string = build_call_string,
   delete = delete,
-  invoke = invoke
+  invoke = invoke,
 }

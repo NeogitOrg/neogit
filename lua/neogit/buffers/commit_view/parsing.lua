@@ -1,7 +1,7 @@
 local M = {}
 
-local util = require 'neogit.lib.util'
-local diff_lib = require('neogit.lib.git.diff')
+local util = require("neogit.lib.util")
+local diff_lib = require("neogit.lib.git.diff")
 
 -- @class CommitOverviewFile
 -- @field path the path to the file relative to the git root
@@ -10,18 +10,18 @@ local diff_lib = require('neogit.lib.git.diff')
 -- @field deletions deletion count visualized as list of `-`
 
 -- @class CommitOverview
--- @field summary a short summary about what happened 
+-- @field summary a short summary about what happened
 -- @field files a list of CommitOverviewFile
 -- @see CommitOverviewFile
 local CommitOverview = {}
 
 function M.parse_commit_overview(raw)
-  local overview = { 
-    summary = util.trim(raw[#raw]), 
-    files = {}
+  local overview = {
+    summary = util.trim(raw[#raw]),
+    files = {},
   }
 
-  for i=2,#raw-1 do
+  for i = 2, #raw - 1 do
     local file = {}
     if raw[i] ~= "" then
       file.path, file.changes, file.insertions, file.deletions = raw[i]:match(" (.*)%s+|%s+(%d+) (%+*)(%-*)")
@@ -75,7 +75,7 @@ function M.parse_commit_info(raw_info)
   info.committer_date = advance():match("CommitDate:%s*(.+)")
   info.description = {}
   info.diffs = {}
-  
+
   -- skip empty line
   advance()
 

@@ -1,8 +1,8 @@
-local util = require 'neogit.lib.util'
+local util = require("neogit.lib.util")
 
 local default_component_options = {
   folded = false,
-  hidden = false
+  hidden = false,
 }
 
 local Component = {}
@@ -45,7 +45,7 @@ function Component:is_under_cursor(cursor)
   local col = cursor[2]
   local from, to = self:row_range_abs()
   local row_ok = from <= row and row <= to
-  local col_ok = self.position.col_end == -1 
+  local col_ok = self.position.col_end == -1
     or (self.position.col_start <= col and col <= self.position.col_end)
   return row_ok and col_ok
 end
@@ -57,7 +57,7 @@ function Component:get_width()
 
   if self.tag == "row" then
     local width = 0
-    for i=1,#self.children do
+    for i = 1, #self.children do
       width = width + self.children[i]:get_width()
     end
     return width
@@ -65,7 +65,7 @@ function Component:get_width()
 
   if self.tag == "col" then
     local width = 0
-    for i=1,#self.children do
+    for i = 1, #self.children do
       local c_width = self.children[i]:get_width()
       if c_width > width then
         width = c_width
@@ -95,7 +95,7 @@ end
 
 function Component.new(f)
   local x = {}
-  setmetatable(x, { 
+  setmetatable(x, {
     __call = function(tbl, ...)
       local x = f(...)
       local options = vim.tbl_extend("force", default_component_options, tbl, x.options or {})
@@ -115,7 +115,7 @@ function Component.new(f)
       end
 
       return value
-    end
+    end,
   })
   return x
 end
