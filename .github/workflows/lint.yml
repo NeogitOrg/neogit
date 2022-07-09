@@ -4,7 +4,6 @@ on: [push, pull_request]
 
 jobs:
   selene:
-    name: selene
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
@@ -15,3 +14,11 @@ jobs:
         run: cargo install selene
       - name: Run Selene
         run: make lint
+  stylua:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: JohnnyMorganz/stylua-action@1.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: --color always --check lua/ tests/
