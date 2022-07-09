@@ -1,5 +1,5 @@
 name: Bug report
-description: Report a problem with Telescope
+description: Report a problem with Neogit
 labels: [bug]
 body:
   - type: markdown
