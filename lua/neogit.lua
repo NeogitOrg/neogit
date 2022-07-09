@@ -54,7 +54,16 @@ local neogit = {
       config.values.mappings.status["p"] = ""
     end
     hl.setup()
-  end
+  end,
+  complete = function(arglead)
+    if arglead:find("^kind=") then
+      return { "kind=replace", "kind=tab", "kind=split", "kind=split_above", "kind=vsplit", "kind=floating" }
+    end
+    -- Only complete arguments that start with arglead
+    return vim.tbl_filter(function(arg)
+      return arg:match("^" .. arglead)
+    end, { "kind=", "cwd=", "commit" })
+  end,
 }
 
 neogit.setup()
