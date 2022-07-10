@@ -1,44 +1,44 @@
 local M = {}
 
 local meta = {
-  __index = {}
+  __index = {},
 }
 
-local modules = { 'status', 'diff', 'stash', 'pull', 'push', 'log' }
+local modules = { "status", "diff", "stash", "pull", "push", "log" }
 for _, m in ipairs(modules) do
-  require('neogit.lib.git.'..m).register(meta.__index)
+  require("neogit.lib.git." .. m).register(meta.__index)
 end
 
-M.create = function (_path)
+M.create = function(_path)
   local cache = {
     head = {
       branch = nil,
-      commit_message = ''
+      commit_message = "",
     },
     upstream = {
       breanch = nil,
-      commit_message = ''
+      commit_message = "",
     },
     untracked = {
-      items = {}
+      items = {},
     },
     unstaged = {
-      items = {}
+      items = {},
     },
     staged = {
-      items = {}
+      items = {},
     },
     stashes = {
-      items = {}
+      items = {},
     },
     unpulled = {
-      items = {}
+      items = {},
     },
     unmerged = {
-      items = {}
+      items = {},
     },
     recent = {
-      items = {}
+      items = {},
     },
   }
 

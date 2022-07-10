@@ -1,6 +1,6 @@
-local Ui = require 'neogit.lib.ui'
-local Component = require 'neogit.lib.ui.component'
-local util = require 'neogit.lib.util'
+local Ui = require("neogit.lib.ui")
+local Component = require("neogit.lib.ui.component")
+local util = require("neogit.lib.util")
 
 local text = Ui.text
 local col = Ui.col
@@ -12,11 +12,11 @@ local range = util.range
 
 local M = {}
 
-local diff_add_matcher = vim.regex('^+')
-local diff_delete_matcher = vim.regex('^-')
+local diff_add_matcher = vim.regex("^+")
+local diff_delete_matcher = vim.regex("^-")
 
 M.Diff = Component.new(function(diff)
-  local hunk_props = map(diff.hunks, function(hunk) 
+  local hunk_props = map(diff.hunks, function(hunk)
     local header = diff.lines[hunk.diff_from]
 
     local content = map(range(hunk.diff_from + 1, hunk.diff_to), function(i)
@@ -25,13 +25,13 @@ M.Diff = Component.new(function(diff)
 
     return {
       header = header,
-      content = content
+      content = content,
     }
   end)
 
   return col.tag("Diff") {
     text(diff.kind .. " " .. diff.file),
-    col.tag("HunkList")(map(hunk_props, M.Hunk))
+    col.tag("HunkList")(map(hunk_props, M.Hunk)),
   }
 end)
 
@@ -39,9 +39,9 @@ local HunkLine = Component.new(function(line)
   local sign
 
   if diff_add_matcher:match_str(line) then
-    sign = 'NeogitDiffAdd'
+    sign = "NeogitDiffAdd"
   elseif diff_delete_matcher:match_str(line) then
-    sign = 'NeogitDiffDelete'
+    sign = "NeogitDiffDelete"
   end
 
   return text(line, { sign = sign })
@@ -50,13 +50,13 @@ end)
 M.Hunk = Component.new(function(props)
   return col.tag("Hunk") {
     text.sign("NeogitHunkHeader")(props.header),
-    col.tag("HunkContent")(map(props.content, HunkLine))
+    col.tag("HunkContent")(map(props.content, HunkLine)),
   }
 end)
 
 M.List = Component.new(function(props)
-  local children = filter(props.items, function(x) 
-    return type(x) == "table" 
+  local children = filter(props.items, function(x)
+    return type(x) == "table"
   end)
 
   if props.separator then
@@ -76,25 +76,25 @@ M.Grid = Component.new(function(props)
   props = vim.tbl_extend("force", {
     gap = 0,
     columns = true, -- whether the items represents a list of columns instead of a list of row
-    items = {}
+    items = {},
   }, props)
 
   if props.columns then
     local new_items = {}
     local row_count = 0
-    for i=1,#props.items do
+    for i = 1, #props.items do
       local l = #props.items[i]
 
       if l > row_count then
         row_count = l
       end
     end
-    for _=1,row_count do
+    for _ = 1, row_count do
       table.insert(new_items, {})
     end
-    for i=1,#props.items do
-      for j=1,row_count do
-        local x = props.items[i][j] or text ""
+    for i = 1, #props.items do
+      for j = 1, row_count do
+        local x = props.items[i][j] or text("")
         table.insert(new_items[j], x)
       end
     end
@@ -104,18 +104,18 @@ M.Grid = Component.new(function(props)
   local rendered = {}
   local column_widths = {}
 
-  for i=1,#props.items do
+  for i = 1, #props.items do
     local children = {}
 
     if i ~= 1 then
-      children = map(range(props.gap), function() 
-        return text "" 
+      children = map(range(props.gap), function()
+        return text("")
       end)
     end
     -- current row
     local r = props.items[i]
 
-    for j=1,#r do
+    for j = 1, #r do
       local item = r[j]
       local c = props.render_item(item)
 
@@ -134,11 +134,11 @@ M.Grid = Component.new(function(props)
     rendered[i] = row(children)
   end
 
-  for i=1,#rendered do
+  for i = 1, #rendered do
     -- current row
     local r = rendered[i]
 
-    for j=1,#r.children do
+    for j = 1, #r.children do
       local item = r.children[j]
       local gap_str = ""
       local column_width = column_widths[j]
@@ -162,6 +162,5 @@ M.Grid = Component.new(function(props)
 
   return col(rendered)
 end)
-
 
 return M

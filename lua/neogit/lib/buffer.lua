@@ -1,4 +1,4 @@
-package.loaded['neogit.buffer'] = nil
+package.loaded["neogit.buffer"] = nil
 
 __BUFFER_AUTOCMD_STORE = {}
 
@@ -15,7 +15,7 @@ function Buffer:new(handle)
     handle = handle,
     border = nil,
     mmanager = mappings_manager.new(),
-    kind = nil -- how the buffer was opened. For more information look at the create function
+    kind = nil, -- how the buffer was opened. For more information look at the create function
   }
 
   this.ui = Ui.new(this)
@@ -134,21 +134,21 @@ function Buffer:open_fold(line, reset_pos)
     pos = vim.fn.getpos()
   end
 
-  vim.fn.setpos('.', {self.handle, line, 0, 0})
-  vim.cmd('normal zo')
+  vim.fn.setpos(".", { self.handle, line, 0, 0 })
+  vim.cmd("normal zo")
 
   if reset_pos == true then
-    vim.fn.setpos('.', pos)
+    vim.fn.setpos(".", pos)
   end
 end
 
 function Buffer:add_highlight(line, col_start, col_end, name, ns_id)
   local ns_id = ns_id or 0
-  
+
   vim.api.nvim_buf_add_highlight(self.handle, ns_id, name, line, col_start, col_end)
 end
 function Buffer:unplace_sign(id)
-  vim.cmd('sign unplace ' .. id)
+  vim.cmd("sign unplace " .. id)
 end
 function Buffer:place_sign(line, name, group, id)
   -- Sign IDs should be unique within a group, however there's no downside as
@@ -158,11 +158,11 @@ function Buffer:place_sign(line, name, group, id)
 
   -- There's an equivalent function sign_place() which can automatically use
   -- a free ID, but is considerable slower, so we use the command for now
-  local cmd = 'sign place '..sign_id..' line='..line..' name='..name
+  local cmd = "sign place " .. sign_id .. " line=" .. line .. " name=" .. name
   if group ~= nil then
-    cmd = cmd..' group='..group
+    cmd = cmd .. " group=" .. group
   end
-  cmd = cmd..' buffer='..self.handle
+  cmd = cmd .. " buffer=" .. self.handle
 
   vim.cmd(cmd)
   return sign_id
@@ -172,12 +172,12 @@ function Buffer:get_sign_at_line(line, group)
   group = group or "*"
   return vim.fn.sign_getplaced(self.handle, {
     group = group,
-    lnum = line
+    lnum = line,
   })[1]
 end
 
 function Buffer:clear_sign_group(group)
-  vim.cmd('sign unplace * group='..group..' buffer='..self.handle)
+  vim.cmd("sign unplace * group=" .. group .. " buffer=" .. self.handle)
 end
 
 function Buffer:set_filetype(ft)
@@ -226,8 +226,8 @@ function Buffer.create(config)
     buffer = Buffer:new(vim.api.nvim_get_current_buf())
   elseif kind == "floating" then
     -- Creates the border window
-    local vim_height = vim.api.nvim_eval [[&lines]]
-    local vim_width = vim.api.nvim_eval [[&columns]]
+    local vim_height = vim.api.nvim_eval([[&lines]])
+    local vim_width = vim.api.nvim_eval([[&columns]])
     local width = math.floor(vim_width * 0.8) + 3
     local height = math.floor(vim_height * 0.7)
     local col = vim_width * 0.1 - 1
@@ -235,14 +235,14 @@ function Buffer.create(config)
 
     local content_buffer = vim.api.nvim_create_buf(true, true)
     local content_window = vim.api.nvim_open_win(content_buffer, true, {
-      relative = 'editor',
+      relative = "editor",
       width = width,
       height = height,
       col = col,
       row = row,
-      style = 'minimal',
+      style = "minimal",
       focusable = false,
-      border = 'single',
+      border = "single",
     })
 
     vim.api.nvim_win_set_cursor(content_window, { 1, 0 })
@@ -271,12 +271,12 @@ function Buffer.create(config)
   if config.mappings then
     for mode, val in pairs(config.mappings) do
       for key, cb in pairs(val) do
-        buffer.mmanager.mappings[key] = { 
-          mode, 
-          function() 
-            cb(buffer) 
-          end, 
-          mode:find("v") ~= nil 
+        buffer.mmanager.mappings[key] = {
+          mode,
+          function()
+            cb(buffer)
+          end,
+          mode:find("v") ~= nil,
         }
       end
     end

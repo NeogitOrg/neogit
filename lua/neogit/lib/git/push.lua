@@ -1,5 +1,5 @@
-local cli = require('neogit.lib.git.cli')
-local util = require('neogit.lib.util')
+local cli = require("neogit.lib.git.cli")
+local util = require("neogit.lib.util")
 
 local M = {}
 
@@ -10,13 +10,14 @@ function M.push_interactive(remote, branch, args)
 end
 
 local function update_unmerged(state)
-  if not state.upstream.branch then return end
+  if not state.upstream.branch then
+    return
+  end
 
-  local result =
-    cli.log.oneline.for_range('@{upstream}..').show_popup(false).call()
+  local result = cli.log.oneline.for_range("@{upstream}..").show_popup(false).call()
 
-  state.unmerged.items = util.map(result, function (x) 
-    return { name = x } 
+  state.unmerged.items = util.map(result, function(x)
+    return { name = x }
   end)
 end
 

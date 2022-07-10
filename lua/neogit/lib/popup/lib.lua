@@ -1,6 +1,6 @@
-package.loaded['neogit.lib.popup.lib'] = nil
+package.loaded["neogit.lib.popup.lib"] = nil
 
-local a = require 'plenary.async'
+local a = require("plenary.async")
 local util = require("neogit.lib.util")
 
 local popups = {}
@@ -27,7 +27,7 @@ local function draw_popup(popup)
       col = 6 + #switch.key + #switch.description,
       length = 2 + #switch.cli,
       id = 0,
-      enabled = switch.enabled
+      enabled = switch.enabled,
     }
   end
 
@@ -41,7 +41,7 @@ local function draw_popup(popup)
       col = 6 + #option.key + #option.description,
       length = 3 + #option.cli,
       id = 0,
-      enabled = #option.value ~= 0
+      enabled = #option.value ~= 0,
     }
   end
 
@@ -72,13 +72,13 @@ local function draw_popup(popup)
     end
 
     table.insert(columns, {
-        k_width = k_width,
-        d_width = d_width,
-        items = col
+      k_width = k_width,
+      d_width = d_width,
+      items = col,
     })
   end
 
-  for i=1,actions_grid_height do
+  for i = 1, actions_grid_height do
     local result = " "
     for index, col in pairs(columns) do
       local item = col.items[i]
@@ -88,15 +88,12 @@ local function draw_popup(popup)
 
       if item == nil then
         local key = next_col and util.str_right_pad("", col.k_width + 1, " ") or ""
-        local description =  next_col
-          and util.str_right_pad("", col.d_width + 6, " ")
-          or ""
+        local description = next_col and util.str_right_pad("", col.d_width + 6, " ") or ""
 
         result = result .. key .. description
       else
         local key = util.str_right_pad(item.key, col.k_width + 1, " ")
-        local description = has_neighbour
-          and util.str_right_pad(item.description, col.d_width + 6, " ")
+        local description = has_neighbour and util.str_right_pad(item.description, col.d_width + 6, " ")
           or item.description
 
         result = result .. key .. description
@@ -165,18 +162,18 @@ local function toggle_popup_option(buf_handle, key)
         vim.api.nvim_buf_set_option(buf_handle, "modifiable", false)
       end
 
-      option.value = vim.fn.input({
+      option.value = vim.fn.input {
         prompt = option.cli .. "=",
         default = option.value,
-        cancelreturn = option.value
-      })
+        cancelreturn = option.value,
+      }
 
       h.enabled = #option.value ~= 0
 
       if h.enabled then
         vim.api.nvim_win_set_cursor(0, { h.line, h.col + h.length - 1 })
         vim.api.nvim_buf_set_option(buf_handle, "modifiable", true)
-        vim.api.nvim_put({option.value}, "c", false, false)
+        vim.api.nvim_put({ option.value }, "c", false, false)
         vim.api.nvim_buf_set_option(buf_handle, "modifiable", false)
       end
 
@@ -191,7 +188,7 @@ local function toggle_popup_option(buf_handle, key)
 end
 
 local function toggle(buf_handle)
-  local line = vim.fn.getline('.')
+  local line = vim.fn.getline(".")
   local matches = vim.fn.matchlist(line, "^ \\([-=]\\)\\([a-zA-Z]\\)")
   local is_switch = matches[2] == "-"
   local key = matches[3]
@@ -228,9 +225,9 @@ local function create_popup(id, switches, options, actions, env)
       local flags = collect_arguments()
       return table.concat(flags, " ")
     end,
-    get_arguments = function ()
+    get_arguments = function()
       return collect_arguments()
-    end
+    end,
   }
 
   local buf_handle = vim.fn.bufnr(popup.id)
@@ -268,11 +265,15 @@ local function create_popup(id, switches, options, actions, env)
       buf_handle,
       "n",
       "-" .. switch.key,
-      string.format("<cmd>lua require'neogit.lib.popup.lib'.toggle_switch(%d, '%s')<CR>", buf_handle, switch.key),
+      string.format(
+        "<cmd>lua require'neogit.lib.popup.lib'.toggle_switch(%d, '%s')<CR>",
+        buf_handle,
+        switch.key
+      ),
       {
         noremap = true,
         silent = true,
-        nowait = true
+        nowait = true,
       }
     )
   end
@@ -282,11 +283,15 @@ local function create_popup(id, switches, options, actions, env)
       buf_handle,
       "n",
       "=" .. option.key,
-      string.format("<cmd>lua require'neogit.lib.popup.lib'.toggle_option(%d, '%s')<CR>", buf_handle, option.key),
+      string.format(
+        "<cmd>lua require'neogit.lib.popup.lib'.toggle_option(%d, '%s')<CR>",
+        buf_handle,
+        option.key
+      ),
       {
         noremap = true,
         silent = true,
-        nowait = true
+        nowait = true,
       }
     )
   end
@@ -301,23 +306,17 @@ local function create_popup(id, switches, options, actions, env)
         {
           noremap = true,
           silent = true,
-          nowait = true
+          nowait = true,
         }
       )
     end
   end
 
-  vim.api.nvim_buf_set_keymap(
-    buf_handle,
-    "n",
-    "q",
-    "<cmd>bw<CR>",
-    {
-      noremap = true,
-      silent = true,
-      nowait = true
-    }
-  )
+  vim.api.nvim_buf_set_keymap(buf_handle, "n", "q", "<cmd>bw<CR>", {
+    noremap = true,
+    silent = true,
+    nowait = true,
+  })
   vim.api.nvim_buf_set_keymap(
     buf_handle,
     "n",
@@ -326,7 +325,7 @@ local function create_popup(id, switches, options, actions, env)
     {
       noremap = true,
       silent = true,
-      nowait = true
+      nowait = true,
     }
   )
 end
@@ -337,16 +336,16 @@ local function new()
       name = nil,
       switches = {},
       options = {},
-      actions = {{}},
-      env = {}
-    }
+      actions = { {} },
+      env = {},
+    },
   }
 
   function builder.name(name)
     builder.state.name = name
     return builder
   end
- 
+
   function builder.env(env)
     builder.state.env = env
     return builder
@@ -366,7 +365,7 @@ local function new()
       key = key,
       cli = cli,
       description = description,
-      enabled = enabled
+      enabled = enabled,
     })
 
     return builder
@@ -387,7 +386,7 @@ local function new()
     table.insert(builder.state.actions[#builder.state.actions], {
       key = key,
       description = description,
-      callback = callback and a.void(callback) or function() end
+      callback = callback and a.void(callback) or function() end,
     })
 
     return builder
@@ -416,5 +415,5 @@ return {
   toggle = toggle,
   toggle_switch = toggle_popup_switch,
   toggle_option = toggle_popup_option,
-  do_action = do_action
+  do_action = do_action,
 }

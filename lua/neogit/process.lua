@@ -1,14 +1,14 @@
-local a = require 'plenary.async'
+local a = require("plenary.async")
 
 local function trim_newlines(s)
   return (string.gsub(s, "^(.-)\n*$", "%1"))
 end
 
 local function spawn(options, cb)
-  assert(options ~= nil, 'Options parameter must be given')
-  assert(options.cmd, 'A command needs to be given!')
+  assert(options ~= nil, "Options parameter must be given")
+  assert(options.cmd, "A command needs to be given!")
 
-  local return_code, output, errors = nil, '', ''
+  local return_code, output, errors = nil, "", ""
   local stdin, stdout, stderr = vim.loop.new_pipe(false), vim.loop.new_pipe(false), vim.loop.new_pipe(false)
   local process_closed, stdout_closed, stderr_closed = false, false, false
   local function raise_if_fully_closed()
@@ -18,29 +18,29 @@ local function spawn(options, cb)
   end
 
   local params = {
-    stdio = {stdin, stdout, stderr},
+    stdio = { stdin, stdout, stderr },
   }
 
-  if options.cwd then 
-    params.cwd = options.cwd 
+  if options.cwd then
+    params.cwd = options.cwd
   end
-  if options.args then 
-    params.args = options.args 
+  if options.args then
+    params.args = options.args
   end
   if options.env and #options.env > 0 then
     params.env = {}
     -- setting 'env' completely overrides the parent environment, so we need to
     -- append all variables that are necessary for git to work in addition to
     -- all variables from passed object.
-    table.insert(params.env, string.format('%s=%s', 'HOME', os.getenv('HOME')))
-    table.insert(params.env, string.format('%s=%s', 'GNUPGHOME', os.getenv('GNUPGHOME')))
+    table.insert(params.env, string.format("%s=%s", "HOME", os.getenv("HOME")))
+    table.insert(params.env, string.format("%s=%s", "GNUPGHOME", os.getenv("GNUPGHOME")))
     for k, v in pairs(options.env) do
-      table.insert(params.env, string.format('%s=%s', k, v))
+      table.insert(params.env, string.format("%s=%s", k, v))
     end
   end
 
   local handle, err
-  handle, err = vim.loop.spawn(options.cmd, params, function (code, _)
+  handle, err = vim.loop.spawn(options.cmd, params, function(code, _)
     handle:close()
     --print('finished process', vim.inspect(params), vim.inspect({trim_newlines(output), errors}))
 
@@ -70,7 +70,7 @@ local function spawn(options, cb)
     output = output .. data
   end)
 
-  vim.loop.read_start(stderr, function (err, data)
+  vim.loop.read_start(stderr, function(err, data)
     assert(not err, err)
     if not data then
       stderr:read_stop()
@@ -81,7 +81,7 @@ local function spawn(options, cb)
     end
 
     --print('STDERR', err, data)
-    errors = errors .. (data or '')
+    errors = errors .. (data or "")
   end)
 
   if options.input ~= nil then
@@ -93,7 +93,7 @@ end
 
 local M = {
   spawn = a.wrap(spawn, 2),
-  spawn_sync = spawn
+  spawn_sync = spawn,
 }
 
 return M

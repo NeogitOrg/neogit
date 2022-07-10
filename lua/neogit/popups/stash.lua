@@ -1,11 +1,12 @@
-local status = require 'neogit.status'
-local stash_lib = require 'neogit.lib.git.stash'
-local popup = require('neogit.lib.popup')
+local status = require("neogit.status")
+local stash_lib = require("neogit.lib.git.stash")
+local popup = require("neogit.lib.popup")
 
 local M = {}
 
 function M.create(stash)
-  local p = popup.builder()
+  local p = popup
+    .builder()
     :name("NeogitStashPopup")
     :switch("a", "all", "", false)
     :switch("u", "include-untracked", "", false)

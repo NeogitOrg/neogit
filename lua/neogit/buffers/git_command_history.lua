@@ -1,7 +1,7 @@
 local Buffer = require("neogit.lib.buffer")
 local Git = require("neogit.lib.git")
-local Ui = require 'neogit.lib.ui'
-local util = require 'neogit.lib.util'
+local Ui = require("neogit.lib.ui")
+local util = require("neogit.lib.util")
 
 local map = util.map
 
@@ -16,7 +16,7 @@ function GitCommandHistory:new(state)
   local this = {
     buffer = nil,
     state = state or Git.cli.history,
-    open = false
+    open = false,
   }
 
   setmetatable(this, self)
@@ -43,8 +43,8 @@ function GitCommandHistory:show()
             c.children[2]:toggle_hidden()
             self.buffer.ui:update()
           end
-        end
-      }
+        end,
+      },
     },
     render = function()
       return map(self.state, function(item)
@@ -54,19 +54,25 @@ function GitCommandHistory:show()
           highlight_code = "NeogitCommandCodeError"
         end
         return col {
-          row { 
-            text.highlight(highlight_code)(string.format("%3d", item.code)), 
-            text " ",
+          row {
+            text.highlight(highlight_code)(string.format("%3d", item.code)),
+            text(" "),
             text(item.cmd),
-            text " ",
+            text(" "),
             text.highlight("NeogitCommandTime")(string.format("(%3.3f ms)", item.time)),
-            text " ",
-            text.highlight("NeogitCommandTime")(string.format("[%s %d]", is_err and "stderr" or "stdout", is_err and #item.stderr or #item.stdout)),
+            text(" "),
+            text.highlight("NeogitCommandTime")(
+              string.format(
+                "[%s %d]",
+                is_err and "stderr" or "stdout",
+                is_err and #item.stderr or #item.stdout
+              )
+            ),
           },
           col
             .hidden(true)
             .padding_left("  | ")
-            .highlight("NeogitCommandText")(map(is_err and item.stderr or item.stdout, text))
+            .highlight("NeogitCommandText")(map(is_err and item.stderr or item.stdout, text)),
         }
       end)
     end,

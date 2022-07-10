@@ -19,7 +19,7 @@ local function create(message, level, delay)
 
   notification_count = notification_count + 1
   local prev_notification = notifications[notification_count - 1]
-                            or {height = 0, row = vim.api.nvim_get_option("lines") - 2}
+    or { height = 0, row = vim.api.nvim_get_option("lines") - 2 }
   local width = #message
   local height = 1
   local padding = 2 + prev_notification.height
@@ -40,7 +40,7 @@ local function create(message, level, delay)
     width = width,
     anchor = "SE",
     height = height,
-    style = "minimal"
+    style = "minimal",
   })
 
   local border_buf = vim.api.nvim_create_buf(false, true)
@@ -52,7 +52,7 @@ local function create(message, level, delay)
 
   table.insert(border_buf_lines, string.format("╭%s╮", string.rep("─", width)))
 
-  for _=1,height do
+  for _ = 1, height do
     table.insert(border_buf_lines, string.format("│%s│", string.rep(" ", width)))
   end
 
@@ -67,7 +67,7 @@ local function create(message, level, delay)
     width = width + 3,
     anchor = "SE",
     height = height + 2,
-    style = "minimal"
+    style = "minimal",
   })
 
   if level == vim.log.levels.INFO then
@@ -91,7 +91,7 @@ local function create(message, level, delay)
     col = col,
     border = {
       window = border_win,
-      buffer = border_buf
+      buffer = border_buf,
     },
     content = message,
     delete = function()
@@ -113,14 +113,14 @@ local function create(message, level, delay)
 
       table.insert(message_history, {
         content = message,
-        level = level
+        level = level,
       })
 
       if vim.fn.winbufnr(window) ~= -1 then
         vim.api.nvim_win_close(window, false)
         vim.api.nvim_win_close(border_win, false)
       end
-    end
+    end,
   }
 
   table.insert(notifications, notification)
@@ -139,5 +139,7 @@ return {
     end
     notifications = {}
   end,
-  get_history = function() return message_history end
+  get_history = function()
+    return message_history
+  end,
 }

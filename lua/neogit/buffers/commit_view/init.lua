@@ -1,10 +1,10 @@
 local Buffer = require("neogit.lib.buffer")
-local cli = require 'neogit.lib.git.cli'
-local parser = require 'neogit.buffers.commit_view.parsing'
-local ui = require 'neogit.buffers.commit_view.ui'
+local cli = require("neogit.lib.git.cli")
+local parser = require("neogit.buffers.commit_view.parsing")
+local ui = require("neogit.buffers.commit_view.ui")
 
 local M = {
-  instance = nil
+  instance = nil,
 }
 
 -- @class CommitViewBuffer
@@ -22,15 +22,15 @@ local M = {
 function M.new(commit_id, notify)
   local notification
   if notify then
-    local notif = require 'neogit.lib.notification'
-    notification = notif.create "Parsing commit..."
+    local notif = require("neogit.lib.notification")
+    notification = notif.create("Parsing commit...")
   end
 
   local instance = {
     is_open = false,
     commit_info = parser.parse_commit_info(cli.show.format("fuller").args(commit_id).call_sync()),
     commit_overview = parser.parse_commit_overview(cli.show.stat.oneline.args(commit_id).call_sync()),
-    buffer = nil
+    buffer = nil,
   }
 
   if notification then
@@ -42,14 +42,11 @@ function M.new(commit_id, notify)
   return instance
 end
 
-
-
 function M:close()
   self.is_open = false
   self.buffer:close()
   self.buffer = nil
 end
-
 
 function M:open()
   if M.instance and M.instance.is_open then
@@ -83,7 +80,7 @@ function M:open()
       end,
       ["BufUnload"] = function()
         M.instance.is_open = false
-      end
+      end,
     },
     mappings = {
       n = {
@@ -106,12 +103,12 @@ function M:open()
               self.buffer.ui:update()
             end
           end
-        end
-      }
+        end,
+      },
     },
     render = function()
       return ui.CommitView(self.commit_info, self.commit_overview)
-    end
+    end,
   }
 end
 

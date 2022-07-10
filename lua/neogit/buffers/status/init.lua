@@ -1,5 +1,5 @@
-local Buffer = require 'neogit.lib.buffer'
-local ui = require 'neogit.buffers.status.ui'
+local Buffer = require("neogit.lib.buffer")
+local ui = require("neogit.buffers.status.ui")
 
 local M = {}
 
@@ -14,10 +14,10 @@ function M.new(state)
   local x = {
     is_open = false,
     state = state,
-    buffer = nil
+    buffer = nil,
   }
   setmetatable(x, { __index = M })
-  return x 
+  return x
 end
 
 function M:open(kind)
@@ -34,7 +34,7 @@ function M:open(kind)
     end,
     render = function()
       return ui.Status(self.state)
-    end
+    end,
   }
 end
 

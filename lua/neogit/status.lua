@@ -2,17 +2,17 @@ local Buffer = require("neogit.lib.buffer")
 local GitCommandHistory = require("neogit.buffers.git_command_history")
 local CommitView = require("neogit.buffers.commit_view")
 local git = require("neogit.lib.git")
-local cli = require('neogit.lib.git.cli')
+local cli = require("neogit.lib.git.cli")
 local notif = require("neogit.lib.notification")
 local config = require("neogit.config")
-local a = require 'plenary.async'
-local logger = require 'neogit.logger'
-local repository = require 'neogit.lib.git.repository'
-local Collection = require 'neogit.lib.collection'
-local F = require 'neogit.lib.functional'
-local LineBuffer = require 'neogit.lib.line_buffer'
-local fs = require 'neogit.lib.fs'
-local input = require 'neogit.lib.input'
+local a = require("plenary.async")
+local logger = require("neogit.logger")
+local repository = require("neogit.lib.git.repository")
+local Collection = require("neogit.lib.collection")
+local F = require("neogit.lib.functional")
+local LineBuffer = require("neogit.lib.line_buffer")
+local fs = require("neogit.lib.fs")
+local input = require("neogit.lib.input")
 
 local M = {}
 
@@ -24,9 +24,9 @@ M.status_buffer = nil
 M.commit_view = nil
 M.locations = {}
 
-local hunk_header_matcher = vim.regex('^@@.*@@')
-local diff_add_matcher = vim.regex('^+')
-local diff_delete_matcher = vim.regex('^-')
+local hunk_header_matcher = vim.regex("^@@.*@@")
+local diff_add_matcher = vim.regex("^+")
+local diff_delete_matcher = vim.regex("^-")
 
 local function get_section_idx_for_line(linenr)
   for i, l in pairs(M.locations) do
@@ -77,53 +77,57 @@ local mode_to_text = {
   C = "Copied",
   U = "Updated",
   UU = "Both Modified",
-  R = "Renamed"
+  R = "Renamed",
 }
 
 local function draw_sign_for_item(item, name)
   if item.folded then
-    M.status_buffer:place_sign(item.first, "NeogitClosed:"..name, "fold_markers")
+    M.status_buffer:place_sign(item.first, "NeogitClosed:" .. name, "fold_markers")
   else
-    M.status_buffer:place_sign(item.first, "NeogitOpen:"..name, "fold_markers")
+    M.status_buffer:place_sign(item.first, "NeogitOpen:" .. name, "fold_markers")
   end
 end
 
 local function draw_signs()
-  if config.values.disable_signs then return end
+  if config.values.disable_signs then
+    return
+  end
   for _, l in ipairs(M.locations) do
-    draw_sign_for_item(l, 'section')
+    draw_sign_for_item(l, "section")
     if not l.folded then
-      Collection.new(l.files)
-        :filter(F.dot('hunks'))
-        :each(function (f)
-          draw_sign_for_item(f, 'item')
-          if not f.folded then
-            Collection.new(f.hunks):each(function (h)
-              draw_sign_for_item(h, 'hunk')
-            end)
-          end
-        end)
+      Collection.new(l.files):filter(F.dot("hunks")):each(function(f)
+        draw_sign_for_item(f, "item")
+        if not f.folded then
+          Collection.new(f.hunks):each(function(h)
+            draw_sign_for_item(h, "hunk")
+          end)
+        end
+      end)
     end
   end
 end
 
 local function draw_buffer()
-  M.status_buffer:clear_sign_group('hl')
-  M.status_buffer:clear_sign_group('fold_markers')
+  M.status_buffer:clear_sign_group("hl")
+  M.status_buffer:clear_sign_group("fold_markers")
 
   local output = LineBuffer.new()
   if not config.values.disable_hint then
     output:append("Hint: [<tab>] toggle diff | [s]tage | [u]nstage | [x] discard | [c]ommit | [?] more help")
     output:append("")
   end
-  output:append(string.format("Head: %s %s", M.repo.head.branch, M.repo.head.commit_message or '(no commits)'))
+  output:append(
+    string.format("Head: %s %s", M.repo.head.branch, M.repo.head.commit_message or "(no commits)")
+  )
   if M.repo.upstream.branch then
-    output:append(string.format("Push: %s %s", M.repo.upstream.branch, M.repo.upstream.commit_message or '(no commits)'))
+    output:append(
+      string.format("Push: %s %s", M.repo.upstream.branch, M.repo.upstream.commit_message or "(no commits)")
+    )
   end
-  output:append('')
+  output:append("")
 
   local new_locations = {}
-  local locations_lookup = Collection.new(M.locations):key_by('name')
+  local locations_lookup = Collection.new(M.locations):key_by("name")
 
   local function render_section(header, key)
     local section_config = config.values.sections[key]
@@ -131,40 +135,44 @@ local function draw_buffer()
       return
     end
     local data = M.repo[key]
-    if #data.items == 0 then return end
-    output:append(string.format('%s (%d)', header, #data.items))
+    if #data.items == 0 then
+      return
+    end
+    output:append(string.format("%s (%d)", header, #data.items))
 
-    local location = locations_lookup[key] or {
-      name = key,
-      folded = section_config.folded,
-      files = {}
-    }
+    local location = locations_lookup[key]
+      or {
+        name = key,
+        folded = section_config.folded,
+        files = {},
+      }
     location.first = #output
 
     if not location.folded then
-      local files_lookup = Collection.new(location.files):key_by('name')
+      local files_lookup = Collection.new(location.files):key_by("name")
       location.files = {}
 
       for _, f in ipairs(data.items) do
         if f.mode and f.original_name then
-          output:append(string.format('%s %s -> %s', mode_to_text[f.mode], f.original_name, f.name))
-        elseif f.mode then output:append(string.format('%s %s', mode_to_text[f.mode], f.name))
-        else 
-          output:append(f.name) 
+          output:append(string.format("%s %s -> %s", mode_to_text[f.mode], f.original_name, f.name))
+        elseif f.mode then
+          output:append(string.format("%s %s", mode_to_text[f.mode], f.name))
+        else
+          output:append(f.name)
         end
 
         local file = files_lookup[f.name] or { folded = true }
         file.first = #output
 
         if f.diff and not file.folded then
-          local hunks_lookup = Collection.new(file.hunks or {}):key_by('hash')
+          local hunks_lookup = Collection.new(file.hunks or {}):key_by("hash")
 
           local hunks = {}
           for _, h in ipairs(f.diff.hunks) do
             local current_hunk = hunks_lookup[h.hash] or { folded = false }
 
             output:append(f.diff.lines[h.diff_from])
-            M.status_buffer:place_sign(#output, 'NeogitHunkHeader', 'hl')
+            M.status_buffer:place_sign(#output, "NeogitHunkHeader", "hl")
             current_hunk.first = #output
 
             if not current_hunk.folded then
@@ -172,9 +180,9 @@ local function draw_buffer()
                 local l = f.diff.lines[i]
                 output:append(l)
                 if diff_add_matcher:match_str(l) then
-                  M.status_buffer:place_sign(#output, 'NeogitDiffAdd', 'hl')
+                  M.status_buffer:place_sign(#output, "NeogitDiffAdd", "hl")
                 elseif diff_delete_matcher:match_str(l) then
-                  M.status_buffer:place_sign(#output, 'NeogitDiffDelete', 'hl')
+                  M.status_buffer:place_sign(#output, "NeogitDiffDelete", "hl")
                 end
               end
             end
@@ -193,17 +201,17 @@ local function draw_buffer()
     end
 
     location.last = #output
-    output:append('')
+    output:append("")
     table.insert(new_locations, location)
   end
 
-  render_section('Untracked files', 'untracked')
-  render_section('Unstaged changes', 'unstaged')
-  render_section('Staged changes', 'staged')
-  render_section('Stashes', 'stashes')
-  render_section('Unpulled changes', 'unpulled')
-  render_section('Unmerged changes', 'unmerged')
-  render_section('Recent commits', 'recent')
+  render_section("Untracked files", "untracked")
+  render_section("Unstaged changes", "unstaged")
+  render_section("Staged changes", "staged")
+  render_section("Stashes", "stashes")
+  render_section("Unpulled changes", "unpulled")
+  render_section("Unmerged changes", "unmerged")
+  render_section("Recent commits", "recent")
 
   M.status_buffer:replace_content_with(output)
   M.locations = new_locations
@@ -216,26 +224,26 @@ end
 --  the relative offset of the found item and the string is it's identifier.
 --  The remaining 2 numbers are the first and last line of the found section.
 local function save_cursor_location()
-  local line = vim.fn.line('.')
+  local line = vim.fn.line(".")
   local section_loc, file_loc, hunk_loc, first, last
 
   for li, loc in ipairs(M.locations) do
     if line == loc.first then
-      section_loc = {li, loc.name}
+      section_loc = { li, loc.name }
       first, last = loc.first, loc.last
       break
     elseif line >= loc.first and line <= loc.last then
-      section_loc = {li, loc.name}
+      section_loc = { li, loc.name }
       for fi, file in ipairs(loc.files) do
         if line == file.first then
-          file_loc = {fi, file.name}
+          file_loc = { fi, file.name }
           first, last = file.first, file.last
           break
         elseif line >= file.first and line <= file.last then
-          file_loc = {fi, file.name}
+          file_loc = { fi, file.name }
           for hi, hunk in ipairs(file.hunks) do
             if line <= hunk.last then
-              hunk_loc = {hi, hunk.hash}
+              hunk_loc = { hi, hunk.hash }
               first, last = hunk.first, hunk.last
               break
             end
@@ -251,36 +259,40 @@ local function save_cursor_location()
 end
 
 local function restore_cursor_location(section_loc, file_loc, hunk_loc)
-  if #M.locations == 0 then return vim.fn.setpos('.', {0, 1, 0, 0}) end
-  if not section_loc then 
-    section_loc = {1, ''} 
+  if #M.locations == 0 then
+    return vim.fn.setpos(".", { 0, 1, 0, 0 })
+  end
+  if not section_loc then
+    section_loc = { 1, "" }
   end
 
-  local section = Collection.new(M.locations):find(function (s) 
-    return s.name == section_loc[2] 
+  local section = Collection.new(M.locations):find(function(s)
+    return s.name == section_loc[2]
   end)
   if not section then
     file_loc, hunk_loc = nil, nil
     section = M.locations[section_loc[1]] or M.locations[#M.locations]
   end
   if not file_loc or not section.files or #section.files == 0 then
-    return vim.fn.setpos('.', {0, section.first, 0, 0})
+    return vim.fn.setpos(".", { 0, section.first, 0, 0 })
   end
 
-  local file = Collection.new(section.files):find(function (f) 
-    return f.name == file_loc[2] 
+  local file = Collection.new(section.files):find(function(f)
+    return f.name == file_loc[2]
   end)
   if not file then
     hunk_loc = nil
     file = section.files[file_loc[1]] or section.files[#section.files]
   end
-  if not hunk_loc or not file.hunks or #file.hunks == 0 then return vim.fn.setpos('.', {0, file.first, 0, 0}) end
+  if not hunk_loc or not file.hunks or #file.hunks == 0 then
+    return vim.fn.setpos(".", { 0, file.first, 0, 0 })
+  end
 
-  local hunk = Collection.new(file.hunks):find(function (h) return h.hash == hunk_loc[2] end)
-    or file.hunks[hunk_loc[1]]
-    or file.hunks[#file.hunks]
+  local hunk = Collection.new(file.hunks):find(function(h)
+    return h.hash == hunk_loc[2]
+  end) or file.hunks[hunk_loc[1]] or file.hunks[#file.hunks]
 
-  vim.fn.setpos('.', {0, hunk.first, 0, 0})
+  vim.fn.setpos(".", { 0, hunk.first, 0, 0 })
 end
 
 local function refresh_status()
@@ -290,37 +302,37 @@ local function refresh_status()
 
   M.status_buffer:unlock()
 
-  logger.debug "[STATUS BUFFER]: Redrawing"
+  logger.debug("[STATUS BUFFER]: Redrawing")
 
   draw_buffer()
   draw_signs()
 
-  logger.debug "[STATUS BUFFER]: Finished Redrawing"
+  logger.debug("[STATUS BUFFER]: Finished Redrawing")
 
   M.status_buffer:lock()
 
-  vim.cmd('redraw')
+  vim.cmd("redraw")
 end
 
 local refresh_lock = a.control.Semaphore.new(1)
-local function refresh (which)
+local function refresh(which)
   which = which or true
 
-  logger.debug "[STATUS BUFFER]: Starting refresh"
+  logger.debug("[STATUS BUFFER]: Starting refresh")
   if refresh_lock.permits == 0 then
-    logger.debug "[STATUS BUFFER]: Refresh lock not available. Aborting refresh"
+    logger.debug("[STATUS BUFFER]: Refresh lock not available. Aborting refresh")
     a.util.scheduler()
     refresh_status()
     return
   end
 
   local permit = refresh_lock:acquire()
-  logger.debug "[STATUS BUFFER]: Acquired refresh lock"
+  logger.debug("[STATUS BUFFER]: Acquired refresh lock")
 
   a.util.scheduler()
   local s, f, h = save_cursor_location()
 
-  if cli.git_root() ~= '' then
+  if cli.git_root() ~= "" then
     if which == true or which.status then
       M.repo:update_status()
       a.util.scheduler()
@@ -329,27 +341,27 @@ local function refresh (which)
 
     local refreshes = {}
     if which == true or which.branch_information then
-      table.insert(refreshes, function() 
+      table.insert(refreshes, function()
         logger.debug("[STATUS BUFFER]: Refreshing branch information")
-        M.repo:update_branch_information() 
+        M.repo:update_branch_information()
       end)
     end
     if which == true or which.stashes then
-      table.insert(refreshes, function() 
+      table.insert(refreshes, function()
         logger.debug("[STATUS BUFFER]: Refreshing stash")
-        M.repo:update_stashes() 
+        M.repo:update_stashes()
       end)
     end
     if which == true or which.unpulled then
-      table.insert(refreshes, function() 
+      table.insert(refreshes, function()
         logger.debug("[STATUS BUFFER]: Refreshing unpulled commits")
-        M.repo:update_unpulled() 
+        M.repo:update_unpulled()
       end)
     end
     if which == true or which.unmerged then
-      table.insert(refreshes, function() 
+      table.insert(refreshes, function()
         logger.debug("[STATUS BUFFER]: Refreshing unpushed commits")
-        M.repo:update_unmerged() 
+        M.repo:update_unmerged()
       end)
     end
     if which == true or which.recent then
@@ -359,41 +371,43 @@ local function refresh (which)
       end)
     end
     if which == true or which.diffs then
-      local filter = (type(which) == "table" and type(which.diffs) == "table")
-        and which.diffs
-        or nil
+      local filter = (type(which) == "table" and type(which.diffs) == "table") and which.diffs or nil
 
-      table.insert(refreshes, function() 
+      table.insert(refreshes, function()
         logger.debug("[STATUS BUFFER]: Refreshing diffs")
-        M.repo:load_diffs(filter) 
+        M.repo:load_diffs(filter)
       end)
     end
     logger.debug(string.format("[STATUS BUFFER]: Running %d refresh(es)", #refreshes))
     a.util.join(refreshes)
-    logger.debug "[STATUS BUFFER]: Refreshes completed"
+    logger.debug("[STATUS BUFFER]: Refreshes completed")
     a.util.scheduler()
     refresh_status()
-    vim.cmd [[do <nomodeline> User NeogitStatusRefreshed]]
+    vim.cmd([[do <nomodeline> User NeogitStatusRefreshed]])
   end
 
   a.util.scheduler()
-  if vim.fn.bufname() == 'NeogitStatus' then
+  if vim.fn.bufname() == "NeogitStatus" then
     restore_cursor_location(s, f, h)
   end
 
-  logger.debug "[STATUS BUFFER]: Finished refresh"
-  logger.debug "[STATUS BUFFER]: Refresh lock is now free"
+  logger.debug("[STATUS BUFFER]: Finished refresh")
+  logger.debug("[STATUS BUFFER]: Refresh lock is now free")
   permit:forget()
 end
 
 local dispatch_refresh = a.void(refresh)
 
-local refresh_manually = a.void(function (fname)
-  if not fname or fname == "" then return end
+local refresh_manually = a.void(function(fname)
+  if not fname or fname == "" then
+    return
+  end
 
   local path = fs.relpath_from_repository(fname)
-  if not path then return end
-  refresh({ status = true, diffs = { "*:" .. path } })
+  if not path then
+    return
+  end
+  refresh { status = true, diffs = { "*:" .. path } }
 end)
 
 --- Compatibility endpoint to refresh data from an autocommand.
@@ -401,13 +415,15 @@ end)
 --  resolving the file name to the path relative to the repository root and
 --  refresh that file's cache data.
 local function refresh_viml_compat(fname)
-  if not config.values.auto_refresh then return end
+  if not config.values.auto_refresh then
+    return
+  end
 
   refresh_manually(fname)
 end
 
 local function current_line_is_hunk()
-  local _,_,h = save_cursor_location()
+  local _, _, h = save_cursor_location()
   return h ~= nil
 end
 
@@ -444,19 +460,21 @@ local function toggle()
   if on_hunk then
     local hunk = get_current_hunk_of_item(item)
     hunk.folded = not hunk.folded
-  elseif item then 
+  elseif item then
     item.folded = not item.folded
-  else 
-    section.folded = not section.folded 
+  else
+    section.folded = not section.folded
   end
 
   refresh_status()
 end
 
-local reset = function ()
+local reset = function()
   M.repo = repository.create()
   M.locations = {}
-  if not config.values.auto_refresh then return end
+  if not config.values.auto_refresh then
+    return
+  end
   refresh(true)
 end
 local dispatch_reset = a.void(reset)
@@ -469,7 +487,7 @@ local function close(skip_close)
   M.status_buffer = nil
   vim.o.autochdir = M.prev_autochdir
   if M.cwd_changed then
-    vim.cmd "cd -"
+    vim.cmd("cd -")
   end
 end
 
@@ -498,19 +516,18 @@ local function generate_patch_from_selection(item, hunk, from, to, reverse)
         len_offset = len_offset + (operand == "+" and 1 or -1)
         table.insert(diff_content, v)
       else
-
         -- If we want to apply the patch normally, we need to include every `-` line we skip as a normal line,
         -- since we want to keep that line.
         if not reverse then
           if operand == "-" then
-            table.insert(diff_content, " "..line)
+            table.insert(diff_content, " " .. line)
           end
         -- If we want to apply the patch in reverse, we need to include every `+` line we skip as a normal line, since
         -- it's unchanged as far as the diff is concerned and should not be reversed.
         -- We also need to adapt the original line offset based on if we skip or not
         elseif reverse then
           if operand == "+" then
-            table.insert(diff_content, " "..line)
+            table.insert(diff_content, " " .. line)
           end
           len_start = len_start + (operand == "-" and -1 or 1)
         end
@@ -520,13 +537,8 @@ local function generate_patch_from_selection(item, hunk, from, to, reverse)
     end
   end
 
-  local diff_header = string.format(
-                        "@@ -%d,%d +%d,%d @@",
-                        hunk.index_from,
-                        len_start,
-                        hunk.index_from,
-                        len_start + len_offset
-                      )
+  local diff_header =
+    string.format("@@ -%d,%d +%d,%d @@", hunk.index_from, len_start, hunk.index_from, len_start + len_offset)
 
   table.insert(diff_content, 1, diff_header)
   table.insert(diff_content, 1, string.format("+++ b/%s", item.name))
@@ -534,7 +546,6 @@ local function generate_patch_from_selection(item, hunk, from, to, reverse)
   table.insert(diff_content, "\n")
   return table.concat(diff_content, "\n")
 end
-
 
 --- Validates the current selection and acts accordingly
 --@return nil
@@ -546,11 +557,7 @@ local function get_selection()
   local first_section, first_item = get_section_item_for_line(first_line)
   local last_section, last_item = get_section_item_for_line(last_line)
 
-  if not first_section or
-     not first_item or
-     not last_section or
-     not last_item
-  then
+  if not first_section or not first_item or not last_section or not last_item then
     return nil
   end
 
@@ -561,9 +568,10 @@ local function get_selection()
     return nil
   end
 
-  if first_section.name ~= last_section.name or
-     first_item.name ~= last_item.name or
-     first_hunk.first ~= last_hunk.first
+  if
+    first_section.name ~= last_section.name
+    or first_item.name ~= last_item.name
+    or first_hunk.first ~= last_hunk.first
   then
     return nil
   end
@@ -572,13 +580,15 @@ local function get_selection()
   last_line = last_line - last_item.first
 
   -- both hunks are the same anyway so only have to check one
-  if first_hunk.diff_from == first_line or
-     first_hunk.diff_from == last_line
-  then
+  if first_hunk.diff_from == first_line or first_hunk.diff_from == last_line then
     return nil
   end
 
-  return first_section, first_item, first_hunk, first_line - first_hunk.diff_from, last_line - first_hunk.diff_from
+  return first_section,
+    first_item,
+    first_hunk,
+    first_line - first_hunk.diff_from,
+    last_line - first_hunk.diff_from
 end
 
 local stage_selection = function()
@@ -602,9 +612,11 @@ local stage = function()
   local section, item = get_current_section_item()
   local mode = vim.api.nvim_get_mode()
 
-  if section == nil
+  if
+    section == nil
     or (section.name ~= "unstaged" and section.name ~= "untracked" and section.name ~= "unmerged")
-    or (mode.mode == "V" and item == nil) then
+    or (mode.mode == "V" and item == nil)
+  then
     return
   end
 
@@ -616,9 +628,9 @@ local stage = function()
       if section.name == "unstaged" then
         git.status.stage_modified()
       elseif section.name == "untracked" then
-        local add = git.cli.add;
-        for i,_ in ipairs(section.files) do
-          local item = section.files[i];
+        local add = git.cli.add
+        for i, _ in ipairs(section.files) do
+          local item = section.files[i]
           add.files(item.name)
         end
         add.call()
@@ -628,16 +640,16 @@ local stage = function()
       return
     else
       if on_hunk and section.name ~= "untracked" then
-          local hunk = get_current_hunk_of_item(item)
-          local patch = generate_patch_from_selection(item, hunk)
-          cli.apply.cached.with_patch(patch).call()
-        else
-          git.status.stage(item.name)
-        end
+        local hunk = get_current_hunk_of_item(item)
+        local patch = generate_patch_from_selection(item, hunk)
+        cli.apply.cached.with_patch(patch).call()
+      else
+        git.status.stage(item.name)
+      end
     end
   end
 
-  refresh({status = true, diffs = {"*:"..item.name}})
+  refresh { status = true, diffs = { "*:" .. item.name } }
   M.current_operation = nil
 end
 
@@ -671,7 +683,7 @@ local unstage = function()
     end
   end
 
-  refresh({status = true, diffs = {"*:"..item.name}})
+  refresh { status = true, diffs = { "*:" .. item.name } }
   M.current_operation = nil
 end
 
@@ -683,10 +695,12 @@ local discard = function()
   end
   M.current_operation = "discard"
 
-  if not input.get_confirmation("Discard '"..item.name.."' ?", {
-    values = { "&Yes", "&No" },
-    default = 2
-  }) then
+  if
+    not input.get_confirmation("Discard '" .. item.name .. "' ?", {
+      values = { "&Yes", "&No" },
+      default = 2,
+    })
+  then
     return
   end
 
@@ -703,16 +717,16 @@ local discard = function()
   elseif section.name == "untracked" then
     local repo_root = cli.git_root()
     a.util.scheduler()
-    vim.fn.delete(repo_root .. '/' .. item.name)
+    vim.fn.delete(repo_root .. "/" .. item.name)
   else
-
     local on_hunk = current_line_is_hunk()
 
     if on_hunk then
       local hunk, lines = get_current_hunk_of_item(item)
-      lines[1] = string.format('@@ -%d,%d +%d,%d @@', hunk.index_from, hunk.index_len, hunk.index_from, hunk.disk_len)
+      lines[1] =
+        string.format("@@ -%d,%d +%d,%d @@", hunk.index_from, hunk.index_len, hunk.index_from, hunk.disk_len)
       local diff = table.concat(lines, "\n")
-      diff = table.concat({'--- a/'..item.name, '+++ b/'..item.name, diff, ""}, "\n")
+      diff = table.concat({ "--- a/" .. item.name, "+++ b/" .. item.name, diff, "" }, "\n")
       if section.name == "staged" then
         cli.apply.reverse.index.with_patch(diff).call()
       else
@@ -724,23 +738,22 @@ local discard = function()
       cli.reset.files(item.name).call()
       cli.checkout.files(item.name).call()
     end
-
   end
 
   refresh(true)
   M.current_operation = nil
 
   a.util.scheduler()
-  vim.cmd "checktime"
+  vim.cmd("checktime")
 end
 
 local set_folds = function(to)
-  Collection.new(M.locations):each(function (l)
+  Collection.new(M.locations):each(function(l)
     l.folded = to[1]
-    Collection.new(l.files):each(function (f)
+    Collection.new(l.files):each(function(f)
       f.folded = to[2]
       if f.hunks then
-        Collection.new(f.hunks):each(function (h)
+        Collection.new(f.hunks):each(function(h)
           h.folded = to[3]
         end)
       end
@@ -749,41 +762,40 @@ local set_folds = function(to)
   refresh(true)
 end
 
-
 --- These needs to be a function to avoid a circular dependency
 --  between this module and the popup modules
-local cmd_func_map = function ()
+local cmd_func_map = function()
   return {
     ["Close"] = function()
       M.status_buffer:close()
     end,
     ["Depth1"] = a.void(function()
-      set_folds({ true, true, false })
+      set_folds { true, true, false }
     end),
     ["Depth2"] = a.void(function()
-      set_folds({ false, true, false })
+      set_folds { false, true, false }
     end),
     ["Depth3"] = a.void(function()
-      set_folds({ false, false, true })
+      set_folds { false, false, true }
     end),
     ["Depth4"] = a.void(function()
-      set_folds({ false, false, false })
+      set_folds { false, false, false }
     end),
     ["Toggle"] = toggle,
     ["Discard"] = { "nv", a.void(discard), true },
     ["Stage"] = { "nv", a.void(stage), true },
-    ["StageUnstaged"] = a.void(function ()
-        git.status.stage_modified()
-        refresh({status = true, diffs = true})
+    ["StageUnstaged"] = a.void(function()
+      git.status.stage_modified()
+      refresh { status = true, diffs = true }
     end),
     ["StageAll"] = a.void(function()
-        git.status.stage_all()
-        refresh({status = true, diffs = true})
+      git.status.stage_all()
+      refresh { status = true, diffs = true }
     end),
     ["Unstage"] = { "nv", a.void(unstage), true },
-    ["UnstageStaged"] = a.void(function ()
-        git.status.unstage_all()
-        refresh({status = true, diffs = true})
+    ["UnstageStaged"] = a.void(function()
+      git.status.unstage_all()
+      refresh { status = true, diffs = true }
     end),
     ["CommandHistory"] = function()
       GitCommandHistory:new():show()
@@ -813,7 +825,7 @@ local cmd_func_map = function ()
           notif.delete_all()
           M.status_buffer:close()
 
-          local relpath = vim.fn.fnamemodify(repo_root .. '/' .. path, ':.')
+          local relpath = vim.fn.fnamemodify(repo_root .. "/" .. path, ":.")
 
           if not vim.o.hidden and vim.bo.buftype == "" and not vim.bo.readonly and vim.fn.bufname() ~= "" then
             vim.cmd("update")
@@ -824,7 +836,6 @@ local cmd_func_map = function ()
           if hunk then
             vim.cmd(tostring(hunk.disk_from))
           end
-
         elseif vim.tbl_contains({ "unmerged", "unpulled", "recent", "stashes" }, section.name) then
           if M.commit_view and M.commit_view.is_open then
             M.commit_view:close()
@@ -836,24 +847,26 @@ local cmd_func_map = function ()
         end
       end
     end),
-    ["RefreshBuffer"] = function() dispatch_refresh(true) end,
-    ["HelpPopup"] = function ()
+    ["RefreshBuffer"] = function()
+      dispatch_refresh(true)
+    end,
+    ["HelpPopup"] = function()
       local line = M.status_buffer:get_current_line()
 
-      require("neogit.popups.help").create { 
+      require("neogit.popups.help").create {
         get_stash = function()
           return {
-            name = line[1]:match('^(stash@{%d+})') 
+            name = line[1]:match("^(stash@{%d+})"),
           }
         end,
-        use_magit_keybindings = config.values.use_magit_keybindings
+        use_magit_keybindings = config.values.use_magit_keybindings,
       }
     end,
     ["DiffAtFile"] = function()
-      if not config.ensure_integration 'diffview' then
+      if not config.ensure_integration("diffview") then
         return
       end
-      local dv = require 'neogit.integrations.diffview'
+      local dv = require("neogit.integrations.diffview")
       local section, item = get_current_section_item()
 
       if section and item then
@@ -866,11 +879,11 @@ local cmd_func_map = function ()
     ["PushPopup"] = require("neogit.popups.push").create,
     ["CommitPopup"] = require("neogit.popups.commit").create,
     ["LogPopup"] = require("neogit.popups.log").create,
-    ["StashPopup"] = function ()
+    ["StashPopup"] = function()
       local line = M.status_buffer:get_current_line()
 
-      require("neogit.popups.stash").create { 
-        name = line[1]:match('^(stash@{%d+})') 
+      require("neogit.popups.stash").create {
+        name = line[1]:match("^(stash@{%d+})"),
       }
     end,
     ["BranchPopup"] = require("neogit.popups.branch").create,
@@ -881,19 +894,19 @@ local function create(kind, cwd)
   kind = kind or config.values.kind
 
   if M.status_buffer then
-    logger.debug "Status buffer already exists. Focusing the existing one"
+    logger.debug("Status buffer already exists. Focusing the existing one")
     M.status_buffer:focus()
     return
   end
 
-  logger.debug "[STATUS BUFFER]: Creating..."
+  logger.debug("[STATUS BUFFER]: Creating...")
 
   Buffer.create {
     name = "NeogitStatus",
     filetype = "NeogitStatus",
     kind = kind,
     initialize = function(buffer)
-      logger.debug "[STATUS BUFFER]: Initializing..."
+      logger.debug("[STATUS BUFFER]: Initializing...")
 
       M.status_buffer = buffer
 
@@ -917,45 +930,47 @@ local function create(kind, cwd)
           elseif type(val) == "function" then
             mappings[key] = val
           elseif type(val) == "string" then
-            mappings[key] = function() 
-              vim.cmd(val) 
+            mappings[key] = function()
+              vim.cmd(val)
             end
           end
         end
       end
 
-      logger.debug "[STATUS BUFFER]: Dispatching initial render"
+      logger.debug("[STATUS BUFFER]: Dispatching initial render")
       dispatch_refresh(true)
-    end
+    end,
   }
 end
 
 local highlight_group = vim.api.nvim_create_namespace("section-highlight")
 local function update_highlight()
-  if not M.status_buffer then 
+  if not M.status_buffer then
     return
   end
-  if config.values.disable_context_highlighting then return end
+  if config.values.disable_context_highlighting then
+    return
+  end
 
   vim.api.nvim_buf_clear_namespace(0, highlight_group, 0, -1)
-  M.status_buffer:clear_sign_group('ctx')
+  M.status_buffer:clear_sign_group("ctx")
 
-  local _,_,_, first, last = save_cursor_location()
+  local _, _, _, first, last = save_cursor_location()
 
   if first == nil or last == nil then
     return
   end
 
-  for i=first,last do
+  for i = first, last do
     local line = vim.fn.getline(i)
     if hunk_header_matcher:match_str(line) then
-      M.status_buffer:place_sign(i, 'NeogitHunkHeaderHighlight', 'ctx')
+      M.status_buffer:place_sign(i, "NeogitHunkHeaderHighlight", "ctx")
     elseif diff_add_matcher:match_str(line) then
-      M.status_buffer:place_sign(i, 'NeogitDiffAddHighlight', 'ctx')
+      M.status_buffer:place_sign(i, "NeogitDiffAddHighlight", "ctx")
     elseif diff_delete_matcher:match_str(line) then
-      M.status_buffer:place_sign(i, 'NeogitDiffDeleteHighlight', 'ctx')
+      M.status_buffer:place_sign(i, "NeogitDiffDeleteHighlight", "ctx")
     else
-      M.status_buffer:place_sign(i, 'NeogitDiffContextHighlight', 'ctx')
+      M.status_buffer:place_sign(i, "NeogitDiffContextHighlight", "ctx")
     end
   end
 end
@@ -985,8 +1000,8 @@ function M.get_status()
 end
 
 function M.wait_on_current_operation(ms)
-  vim.wait(ms or 1000, function() 
-    return not M.current_operation 
+  vim.wait(ms or 1000, function()
+    return not M.current_operation
   end)
 end
 

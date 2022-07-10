@@ -1,6 +1,6 @@
 local Buffer = require("neogit.lib.buffer")
-local CommitViewBuffer = require 'neogit.buffers.commit_view'
-local ui = require 'neogit.buffers.log_view.ui'
+local CommitViewBuffer = require("neogit.buffers.commit_view")
+local ui = require("neogit.buffers.log_view.ui")
 
 local M = {}
 
@@ -20,7 +20,7 @@ function M.new(data, show_graph)
     is_open = false,
     data = data,
     show_graph = show_graph,
-    buffer = nil
+    buffer = nil,
   }
 
   setmetatable(instance, { __index = M })
@@ -81,21 +81,21 @@ function M:open()
 
           buffer.ui:update()
           buffer:move_cursor(target.position.row_start)
-          vim.fn.feedkeys "zz"
+          vim.fn.feedkeys("zz")
         end,
         ["<tab>"] = function()
           local stack = self.buffer.ui:get_component_stack_under_cursor()
           local c = stack[#stack]
 
-          c.children[2]:toggle_hidden() 
+          c.children[2]:toggle_hidden()
           self.buffer.ui:update()
-          vim.fn.feedkeys "zz"
-        end
-      }
+          vim.fn.feedkeys("zz")
+        end,
+      },
     },
     render = function()
       return ui.LogView(self.data, self.show_graph)
-    end
+    end,
   }
 end
 
