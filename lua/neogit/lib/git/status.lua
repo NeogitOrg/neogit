@@ -38,6 +38,13 @@ local function update_status(state)
           table.insert(untracked_files, {
             name = rest,
           })
+        elseif kind == "u" then
+          local mode, _, _, _, _, _, _, _, _, name =
+            rest:match("(..) (....) (%d+) (%d+) (%d+) (%d+) (%w+) (%w+) (%w+) (.+)")
+          table.insert(untracked_files, {
+            mode = mode,
+            name = name,
+          })
         -- selene: allow(empty_if)
         elseif kind == "!" then
           -- we ignore ignored files for now
