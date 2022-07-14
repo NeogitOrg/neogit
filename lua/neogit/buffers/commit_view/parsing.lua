@@ -24,7 +24,7 @@ function M.parse_commit_overview(raw)
   for i = 2, #raw - 1 do
     local file = {}
     if raw[i] ~= "" then
-      file.path, file.changes, file.insertions, file.deletions = raw[i]:match(" (.*)%s+|%s+(%d+) (%+*)(%-*)")
+      file.path, file.changes, file.insertions, file.deletions = raw[i]:match(" (.*)%s+|%s+(%d+) ?(%+*)(%-*)")
       table.insert(overview.files, file)
     end
   end
