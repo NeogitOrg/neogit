@@ -12,9 +12,12 @@ hi def NeogitFilePath guifg=#798bf2
 
 hi def NeogitCommitViewHeader guifg=#ffffff guibg=#94bbd1
 
+hi def NeogitDiffHeader gui=bold
+
 sign define NeogitHunkHeader linehl=NeogitHunkHeader
 sign define NeogitHunkHeaderHighlight linehl=NeogitHunkHeaderHighlight
 
+sign define NeogitDiffHeader linehl=NeogitDiffHeader
 sign define NeogitDiffContextHighlight linehl=NeogitDiffContextHighlight
 sign define NeogitDiffAdd linehl=NeogitDiffAdd
 sign define NeogitDiffAddHighlight linehl=NeogitDiffAddHighlight

@@ -36,6 +36,7 @@ local function parse_diff(output, with_stats)
     kind = "modified",
     lines = {},
     file = "",
+    info = {},
     hunks = {},
     stats = {},
   }
@@ -58,19 +59,29 @@ local function parse_diff(output, with_stats)
       table.insert(header, output[i])
     end
 
-    local header_count = #header
-    if header_count == 4 then
-      diff.file = header[3]:match("%-%-%- a/(.*)")
-    elseif header_count == 5 then
-      diff.kind = header[2]:match("(.*) mode %d+")
-      if diff.kind == "new file" then
-        diff.file = header[5]:match("%+%+%+ b/(.*)")
-      elseif diff.kind == "deleted file" then
-        diff.file = header[4]:match("%-%-%- a/(.*)")
-      end
+    if header[2]:match("^similarity index") then
+      diff.kind = "renamed"
+      table.insert(diff.info, header[3])
+      table.insert(diff.info, header[4])
+      diff.file = ("%s -> %s"):format(
+        diff.info[1]:match("rename from (.*)"),
+        diff.info[2]:match("rename to (.*)")
+      )
     else
-      logger.debug("TODO: diff parser")
-      logger.debug(vim.inspect(header))
+      local header_count = #header
+      if header_count == 4 then
+        diff.file = header[3]:match("%-%-%- a/(.*)")
+      elseif header_count == 5 then
+        diff.kind = header[2]:match("(.*) mode %d+")
+        if diff.kind == "new file" then
+          diff.file = header[5]:match("%+%+%+ b/(.*)")
+        elseif diff.kind == "deleted file" then
+          diff.file = header[4]:match("%-%-%- a/(.*)")
+        end
+      else
+        logger.debug("TODO: diff parser")
+        logger.debug(vim.inspect(header))
+      end
     end
   end
 
