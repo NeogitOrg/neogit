@@ -4,6 +4,7 @@ local common = require("neogit.buffers.common")
 local Ui = require("neogit.lib.ui")
 local logger = require("neogit.logger")
 local util = require("neogit.lib.util")
+local config = require("neogit.config")
 
 local col = Ui.col
 local row = Ui.row
@@ -229,7 +230,7 @@ function M:show()
   self.buffer = Buffer.create {
     name = self.state.name,
     filetype = "NeogitPopup",
-    kind = "split",
+    kind = config.values.popup.kind,
     mappings = mappings,
     render = function()
       return {
