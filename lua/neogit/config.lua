@@ -16,6 +16,9 @@ M.values = {
   commit_popup = {
     kind = "split",
   },
+  popup = {
+    kind = "split",
+  },
   signs = {
     hunk = { "", "" },
     item = { ">", "v" },
