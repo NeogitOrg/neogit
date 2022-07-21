@@ -2,12 +2,10 @@ local popup = require("neogit.lib.popup")
 local notif = require("neogit.lib.notification")
 local status = require("neogit.status")
 local cli = require("neogit.lib.git.cli")
-local input = require("neogit.lib.input")
-local Buffer = require("neogit.lib.buffer")
-local config = require("neogit.config")
 local a = require("plenary.async")
 local split = require("neogit.lib.util").split
 local uv_utils = require("neogit.lib.uv")
+local CommitEditorBuffer = require("neogit.buffers.commit_editor")
 
 local M = {}
 
@@ -17,47 +15,7 @@ end
 
 -- selene: allow(global_usage)
 local get_commit_message = a.wrap(function(content, cb)
-  local written = false
-  Buffer.create {
-    name = get_commit_file(),
-    filetype = "NeogitCommitMessage",
-    buftype = "",
-    kind = config.values.commit_popup.kind,
-    modifiable = true,
-    readonly = false,
-    autocmds = {
-      ["BufWritePost"] = function()
-        written = true
-      end,
-      ["BufUnload"] = function()
-        if written then
-          if
-            config.values.disable_commit_confirmation
-            or input.get_confirmation("Are you sure you want to commit?")
-          then
-            vim.cmd([[
-              silent g/^#/d
-              silent w!
-            ]])
-            cb()
-          end
-        end
-      end,
-    },
-    mappings = {
-      n = {
-        ["q"] = function(buffer)
-          buffer:close(true)
-        end,
-      },
-    },
-    initialize = function(buffer)
-      buffer:set_lines(0, -1, false, content)
-      if not config.values.disable_insert_on_commit then
-        vim.cmd(":startinsert")
-      end
-    end,
-  }
+  CommitEditorBuffer.new(content, get_commit_file(), cb):open()
 end, 2)
 
 -- If skip_gen is true we don't generate the massive git comment.

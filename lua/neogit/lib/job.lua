@@ -4,6 +4,7 @@ local util = require("neogit.lib.util")
 
 local Job = {
   cmd = nil,
+  env = {},
   channel = nil,
   stdout = {},
   stderr = {},
@@ -23,6 +24,12 @@ local is_win = vim.fn.has("win32") == 1
 --@tparam function? on_exit a callback that gets called when the job exits
 function Job.new(options)
   assert(options.cmd, "A job needs to have a cmd")
+
+  options.env = options.env or {}
+
+  if not options.env["NVIM"] then
+    options.env["NVIM"] = vim.v.servername
+  end
 
   setmetatable(options, { __index = Job })
 
@@ -50,9 +57,9 @@ function Job:start()
 
   local stdout_line_buffer = ""
   local stderr_line_buffer = ""
-
   self.channel = vim.fn.jobstart(task, {
     cwd = self.cwd,
+    env = self.env,
     on_exit = function(_, code)
       self.code = code
       self.done = true

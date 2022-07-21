@@ -93,7 +93,11 @@ local configurations = {
       index = "--index",
     },
   },
-  rebase = config {},
+  rebase = config {
+    flags = {
+      interactive = "-i",
+    },
+  },
   reset = config {
     flags = {
       hard = "--hard",
@@ -382,7 +386,7 @@ local function exec(cmd, args, cwd, stdin, env, show_popup, hide_text)
   return stdout, code, stderr
 end
 
-local function new_job(cmd, args, cwd, _stdin, _env, show_popup, hide_text)
+local function new_job(cmd, args, cwd, _stdin, env, show_popup, hide_text)
   args = args or {}
   if show_popup == nil then
     show_popup = true
@@ -396,7 +400,8 @@ local function new_job(cmd, args, cwd, _stdin, _env, show_popup, hide_text)
   end
 
   local cmd = "git " .. table.concat(args, " ")
-  local job = Job.new { cmd = cmd }
+  local job = Job.new { cmd = cmd, env = env }
+
   job.cwd = cwd
 
   handle_new_cmd(job, show_popup, hide_text)
