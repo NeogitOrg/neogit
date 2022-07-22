@@ -49,8 +49,10 @@ function M:open()
             config.values.disable_commit_confirmation
             or input.get_confirmation("Are you sure you want to commit?")
           then
+            -- TODO: Get rid of my personal hardcoded char
+            -- TODO: Handle possible need of escaping users char
             vim.cmd([[
-              silent g/^#/d
+              silent g/^\;/d
               silent w!
             ]])
           end

@@ -22,6 +22,7 @@ end, 2)
 -- This flag should be true when the file already exists
 local function prompt_commit_message(args, msg, skip_gen)
   local msg_template_path = cli.config.get("commit.template").show_popup(false).call()[1]
+  local comment_char = cli.config.get("core.commentChar").show_popup(false).call()[1] or "#"
   local output = {}
 
   if msg and #msg > 0 then
@@ -46,8 +47,9 @@ local function prompt_commit_message(args, msg, skip_gen)
       table.insert(output, "")
     end
     local lines = cli.commit.dry_run.args(unpack(args)).call()
+    print(vim.inspect(lines))
     for _, line in ipairs(lines) do
-      table.insert(output, "# " .. line)
+      table.insert(output, comment_char .. " " .. line)
     end
   end
 
