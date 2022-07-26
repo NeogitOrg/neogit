@@ -1,6 +1,7 @@
 local Buffer = require("neogit.lib.buffer")
 local CommitViewBuffer = require("neogit.buffers.commit_view")
 local ui = require("neogit.buffers.log_view.ui")
+local config = require("neogit.config")
 
 local M = {}
 
@@ -90,6 +91,17 @@ function M:open()
           c.children[2]:toggle_hidden()
           self.buffer.ui:update()
           vim.fn.feedkeys("zz")
+        end,
+        ["d"] = function(buffer)
+          if not config.ensure_integration("diffview") then
+            return
+          end
+          local stack = self.buffer.ui:get_component_stack_under_cursor()
+          local c = stack[#stack]
+          buffer:close()
+          local dv = require("neogit.integrations.diffview")
+          local commit_id = self.data[c.position.row_start].oid
+          dv.open("log", commit_id)
         end,
       },
     },

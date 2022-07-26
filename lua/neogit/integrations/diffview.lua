@@ -111,7 +111,7 @@ function M.open(section_name, item_name)
 
   local view
 
-  if section_name == "recent" or section_name == "unmerged" then
+  if section_name == "recent" or section_name == "unmerged" or section_name == "log" then
     local commit_id = item_name:match("[a-f0-9]+")
     view = dv_lib.diffview_open(dv_utils.tbl_pack(commit_id .. "^.." .. commit_id))
   elseif section_name == "stashes" then
