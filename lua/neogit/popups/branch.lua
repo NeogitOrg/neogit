@@ -132,9 +132,11 @@ function M.create()
       "m",
       "rename branch",
       operation("rename_branch", function()
-        local current_branch = branch.current() or ""
+        local current_branch = branch.current()
         local branches = branch.get_local_branches()
-        table.insert(branches, current_branch)
+        if current_branch then
+          table.insert(branches, 1, current_branch)
+        end
 
         BranchSelectViewBuffer.new(branches, function(selected_branch)
           if selected_branch == "" then
