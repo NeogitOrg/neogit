@@ -108,6 +108,11 @@ function M.create()
       "checkout new branch",
       operation("checkout_create-branch", function()
         local branches = format_branches(branch.get_all_branches())
+        local current_branch = branch.current()
+        if current_branch then
+          table.insert(branches, 1, current_branch)
+        end
+
         BranchSelectViewBuffer.new(branches, function(selected_branch)
           if selected_branch == "" then
             return
