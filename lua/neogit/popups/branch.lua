@@ -108,6 +108,11 @@ function M.create()
       "checkout new branch",
       operation("checkout_create-branch", function()
         local branches = format_branches(branch.get_all_branches())
+        local current_branch = branch.current()
+        if current_branch then
+          table.insert(branches, 1, current_branch)
+        end
+
         BranchSelectViewBuffer.new(branches, function(selected_branch)
           if selected_branch == "" then
             return
@@ -127,9 +132,11 @@ function M.create()
       "m",
       "rename branch",
       operation("rename_branch", function()
-        local current_branch = branch.current() or ""
+        local current_branch = branch.current()
         local branches = branch.get_local_branches()
-        table.insert(branches, current_branch)
+        if current_branch then
+          table.insert(branches, 1, current_branch)
+        end
 
         BranchSelectViewBuffer.new(branches, function(selected_branch)
           if selected_branch == "" then
