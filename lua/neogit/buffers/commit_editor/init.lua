@@ -57,7 +57,7 @@ function M:open()
         end
 
         if self.on_unload then
-          self.on_unload()
+          self.on_unload(written)
         end
       end,
     },

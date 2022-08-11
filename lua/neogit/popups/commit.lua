@@ -52,14 +52,17 @@ local function prompt_commit_message(args, msg, skip_gen)
   end
 
   a.util.scheduler()
-  get_commit_message(output)
+  return get_commit_message(output)
 end
 
 local function do_commit(popup, data, cmd, skip_gen)
   a.util.scheduler()
   local commit_file = get_commit_file()
   if data then
-    prompt_commit_message(popup:get_arguments(), data, skip_gen)
+    local ok = prompt_commit_message(popup:get_arguments(), data, skip_gen)
+    if not ok then
+      return
+    end
   end
   a.util.scheduler()
   local notification = notif.create("Committing...", vim.log.levels.INFO, 9999)
@@ -68,8 +71,9 @@ local function do_commit(popup, data, cmd, skip_gen)
   if notification then
     notification:delete()
   end
-  notif.create("Successfully committed!")
+
   if result.code == 0 then
+    notif.create("Successfully committed!")
     a.uv.fs_unlink(commit_file)
     status.refresh(true)
     vim.cmd([[do <nomodeline> User NeogitCommitComplete]])
