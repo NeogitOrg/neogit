@@ -179,6 +179,9 @@ function M:show()
       ["q"] = function()
         self:close()
       end,
+      ["<esc>"] = function()
+        self:close()
+      end,
       ["<tab>"] = function()
         local stack = self.buffer.ui:get_component_stack_under_cursor()
 
