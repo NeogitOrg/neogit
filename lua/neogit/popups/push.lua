@@ -7,6 +7,7 @@ local notif = require("neogit.lib.notification")
 local logger = require("neogit.logger")
 local git = require("neogit.lib.git")
 local a = require("plenary.async")
+local cli = require("neogit.lib.git.cli")
 
 local function push_to(popup, name, remote, branch)
   logger.debug("Pushing to " .. name)
@@ -39,10 +40,18 @@ function M.create()
     end)
     :action("u", "Push to upstream", function(popup)
       local upstream = git.branch.get_upstream()
+      local auto_setup_remote = cli.config.get("push.autoSetupRemote").show_popup(false).call()[1]
       a.util.scheduler()
       if upstream == nil then
-        logger.error("No upstream set")
-        return
+        if auto_setup_remote == "true" then
+          upstream = {
+            branch = status.repo.head.branch,
+            remote = "origin",
+          }
+        else
+          logger.error("No upstream set")
+          return
+        end
       end
 
       push_to(popup, upstream.remote .. " " .. upstream.branch, upstream.remote, upstream.branch)
