@@ -1,6 +1,7 @@
 local git = require("neogit.lib.git")
 local util = require("neogit.lib.util")
 local logger = require("neogit.logger")
+local client = require("neogit.client")
 
 local fmt = string.format
 local fn = vim.fn
@@ -82,42 +83,25 @@ function M.commits()
   return parse(output)
 end
 
--- FIXME: this should be moved to a place that can be reused
-local function get_nvim_remote_editor()
-  local neogit_path = debug.getinfo(1, "S").source:sub(2, -31)
-  local nvim_path = fn.shellescape(vim.v.progpath)
-
-  local runtimepath_cmd = fn.shellescape(fmt("set runtimepath^=%s", fn.fnameescape(neogit_path)))
-  local lua_cmd = fn.shellescape("lua require('neogit.client').client()")
-
-  local shell_cmd = {
-    nvim_path,
-    "--headless",
-    "--clean",
-    "--noplugin",
-    "-n",
-    "-R",
-    "-c",
-    runtimepath_cmd,
-    "-c",
-    lua_cmd,
-  }
-
-  return table.concat(shell_cmd, " ")
-end
-
--- FIXME: this should be moved to a place that can be reused
-local function get_envs_git_editor()
-  local nvim_cmd = get_nvim_remote_editor()
-  return {
-    GIT_SEQUENCE_EDITOR = nvim_cmd,
-    GIT_EDITOR = nvim_cmd,
-  }
-end
-
 function M.run_interactive(commit)
-  local envs = get_envs_git_editor()
+  local envs = client.get_envs_git_editor()
   local job = git.cli.rebase.interactive.env(envs).args(commit).to_job()
+
+  vim.notify("Job: " .. vim.inspect(job))
+
+  job.on_exit = function(j)
+    if j.code > 0 then
+      logger.debug(fmt("Execution of '%s' failed with code %d", j.cmd, j.code))
+    end
+  end
+
+  job:start()
+end
+
+function M.continue()
+  local envs = client.get_envs_git_editor()
+  local job = git.cli.rebase.continue.env(envs).to_job()
+  vim.notify("Job: " .. job)
 
   job.on_exit = function(j)
     if j.code > 0 then

@@ -4,6 +4,43 @@ local fmt = string.format
 
 local M = {}
 
+function M.get_nvim_remote_editor()
+  local Path = require("plenary.path")
+  local neogit_path = debug.getinfo(1, "S").source:sub(2, -#"lua/neogit/client.lua" - 2)
+  print(neogit_path)
+  local nvim_path = fn.shellescape(vim.v.progpath)
+
+  local runtimepath_cmd = fn.shellescape(fmt("set runtimepath^=%s", fn.fnameescape(tostring(neogit_path))))
+  print(runtimepath_cmd, neogit_path)
+  local lua_cmd = fn.shellescape("lua require('neogit.client').client()")
+
+  local shell_cmd = {
+    nvim_path,
+    "--headless",
+    "--clean",
+    "--noplugin",
+    "-n",
+    "-R",
+    "-c",
+    runtimepath_cmd,
+    "-c",
+    lua_cmd,
+  }
+
+  return table.concat(shell_cmd, " ")
+end
+
+-- FIXME: this should be moved to a place that can be reused
+function M.get_envs_git_editor()
+  local nvim_cmd = M.get_nvim_remote_editor()
+  return {
+    GIT_SEQUENCE_EDITOR = nvim_cmd,
+    GIT_EDITOR = nvim_cmd,
+  }
+end
+
+--- Entry point for the headless client.
+--- Starts a server and connects to the parent process rpc, opening an editor
 function M.client()
   local nvim_server = vim.env.NVIM
 
@@ -16,6 +53,7 @@ function M.client()
   rpc_server:send_cmd(lua_cmd)
 end
 
+--- Invoked by the `client` and starts the appropriate file editor
 function M.editor(target, client)
   local editor = require("neogit.editor")
 
@@ -30,6 +68,8 @@ function M.editor(target, client)
   elseif target:find("COMMIT_EDITMSG$") then
     editor.commit_editor(target, send_client_quit)
   else
+    local notif = require("neogit.lib.notification")
+    notif.create(target .. " has not been implemented yet", vim.log.levels.WARN)
     send_client_quit()
   end
 end
