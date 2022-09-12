@@ -7,6 +7,7 @@ function M.new(builder_fn)
     state = {
       name = nil,
       switches = {},
+      _switches = {},
       options = {},
       actions = { {} },
       env = {},
@@ -52,6 +53,14 @@ function M:switch(key, cli, description, enabled, parse)
     description = description,
     enabled = enabled,
     parse = parse,
+  })
+
+  return self
+end
+
+function M:_switch(cli)
+  table.insert(self.state._switches, {
+    cli = cli,
   })
 
   return self

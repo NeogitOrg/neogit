@@ -93,6 +93,7 @@ function M.create()
   local p = popup
     .builder()
     :name("NeogitLogPopup")
+    :_switch("graph")
     :switch("g", "graph", "Show graph", true, false)
     :switch("c", "color", "Show graph in color", true, false)
     :switch("d", "decorate", "Show refnames", true)
@@ -112,7 +113,7 @@ function M.create()
       "l",
       "Log current",
       function(popup)
-        local output = git.cli.log.format("fuller").args("--graph", unpack(popup:get_arguments())).call_sync()
+        local output = git.cli.log.format("fuller").args(unpack(popup:get_arguments())).call_sync()
         local parse_args = popup:get_parse_arguments()
         LogViewBuffer.new(parse(output), parse_args.graph):open()
       end

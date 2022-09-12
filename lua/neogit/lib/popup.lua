@@ -31,6 +31,9 @@ end
 
 function M:get_arguments()
   local flags = {}
+  for _, _switch in pairs(self.state._switches) do
+    table.insert(flags, "--" .. _switch.cli)
+  end
   for _, switch in pairs(self.state.switches) do
     if switch.enabled and switch.parse ~= false then
       table.insert(flags, "--" .. switch.cli)
