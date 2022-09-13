@@ -49,6 +49,9 @@ M.values = {
     recent = {
       folded = true,
     },
+    rebase = {
+      folded = true,
+    },
   },
   mappings = {
     status = {

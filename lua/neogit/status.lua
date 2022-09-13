@@ -138,6 +138,7 @@ local function draw_buffer()
     if #data.items == 0 then
       return
     end
+
     output:append(string.format("%s (%d)", header, #data.items))
 
     local location = locations_lookup[key]
@@ -212,6 +213,7 @@ local function draw_buffer()
   render_section("Unpulled changes", "unpulled")
   render_section("Unmerged changes", "unmerged")
   render_section("Recent commits", "recent")
+  render_section("Rebasing: " .. M.repo.rebase.head, "rebase")
 
   M.status_buffer:replace_content_with(output)
   M.locations = new_locations
@@ -346,6 +348,13 @@ local function refresh(which)
         M.repo:update_branch_information()
       end)
     end
+    if which == true or which.rebase then
+      table.insert(refreshes, function()
+        logger.debug("[STATUS BUFFER]: Refreshing rebase information")
+        M.repo:update_rebase_status()
+      end)
+    end
+
     if which == true or which.stashes then
       table.insert(refreshes, function()
         logger.debug("[STATUS BUFFER]: Refreshing stash")
@@ -725,7 +734,7 @@ local discard = function()
       local hunk, lines = get_current_hunk_of_item(item)
       lines[1] =
         string.format("@@ -%d,%d +%d,%d @@", hunk.index_from, hunk.index_len, hunk.index_from, hunk.disk_len)
-      local diff = table.concat(lines, "\n")
+      local diff = table.concat(lines or {}, "\n")
       diff = table.concat({ "--- a/" .. item.name, "+++ b/" .. item.name, diff, "" }, "\n")
       if section.name == "staged" then
         cli.apply.reverse.index.with_patch(diff).call()

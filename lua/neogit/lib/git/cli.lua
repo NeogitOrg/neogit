@@ -96,6 +96,8 @@ local configurations = {
   rebase = config {
     flags = {
       interactive = "-i",
+      continue = "--continue",
+      abort = "--abort",
     },
   },
   reset = config {

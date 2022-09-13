@@ -59,13 +59,16 @@ local function do_commit(popup, data, cmd, skip_gen)
   a.util.scheduler()
   local commit_file = get_commit_file()
   if data then
+    vim.notify("Reading prompt_commit_message")
     local ok = prompt_commit_message(popup:get_arguments(), data, skip_gen)
     if not ok then
       return
     end
   end
+  vim.notify("Scheduling")
   a.util.scheduler()
   local notification = notif.create("Committing...", vim.log.levels.INFO, 9999)
+  vim.notify("Executing: " .. cmd)
   local result = cli.interactive_git_cmd(cmd)
   a.util.scheduler()
   if notification then
@@ -96,8 +99,10 @@ function M.create()
     :option("C", "reuse-message", "", "Reuse commit message")
     :action("c", "Commit", function(popup)
       a.util.scheduler()
+      vim.notify("Getting commit file")
       local commit_file = get_commit_file()
       local _, data = uv_utils.read_file(commit_file)
+      vim.notify("Read commit data: " .. vim.inspect(data))
       local skip_gen = data ~= nil
       data = data or ""
       -- we need \r? to support windows

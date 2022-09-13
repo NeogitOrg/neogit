@@ -1,4 +1,3 @@
-local git = require("neogit.lib.git")
 local util = require("neogit.lib.util")
 local logger = require("neogit.logger")
 local client = require("neogit.client")
@@ -6,6 +5,7 @@ local client = require("neogit.client")
 local fmt = string.format
 local fn = vim.fn
 
+---@class Rebase: Module
 local M = {}
 
 local commit_header_pat = "([| *]*)%*([| *]*)commit (%w+)"
@@ -78,12 +78,14 @@ local function parse(raw)
 end
 
 function M.commits()
+  local git = require("neogit.lib.git")
   local output = git.cli.log.format("fuller").args("--graph").call_sync()
 
   return parse(output)
 end
 
 function M.run_interactive(commit)
+  local git = require("neogit.lib.git")
   local envs = client.get_envs_git_editor()
   local job = git.cli.rebase.interactive.env(envs).args(commit).to_job()
 
@@ -99,9 +101,9 @@ function M.run_interactive(commit)
 end
 
 function M.continue()
+  local git = require("neogit.lib.git")
   local envs = client.get_envs_git_editor()
   local job = git.cli.rebase.continue.env(envs).to_job()
-  vim.notify("Job: " .. job)
 
   job.on_exit = function(j)
     if j.code > 0 then
@@ -110,6 +112,61 @@ function M.continue()
   end
 
   job:start()
+end
+
+local a = require("plenary.async")
+local uv = require("neogit.lib.uv")
+function M.update_rebase_status(state)
+  vim.notify("Updating rebase status")
+  local cli = require("neogit.lib.git.cli")
+  local root = cli.git_root()
+  print(root)
+  if root == "" then
+    return
+  end
+
+  local rebase = {
+    items = {},
+    head = "",
+  }
+
+  local _, stat = a.uv.fs_stat(root .. "/.git/rebase-merge")
+  local rebase_file = nil
+
+  if stat then
+    rebase_file = root .. "/.git/rebase-merge"
+  else
+    local _, stat = a.uv.fs_stat(root .. "/.git/rebase-apply")
+    if stat then
+      rebase_file = root .. "/.git/rebase-apply"
+    end
+  end
+
+  if rebase_file then
+    print("Found rebase-merge")
+    local err, head = uv.read_file(rebase_file .. "/head-name")
+    if not head then
+      logger.error("Failed to read rebase-merge head: " .. err)
+      return
+    end
+    head = head:match("refs/heads/([^\r\n]+)")
+    rebase.head = head
+
+    local _, todos = uv.read_file(rebase_file .. "/git-rebase-todo")
+
+    -- we need \r? to support windows
+    for line in (todos or ""):gmatch("[^\r\n]+") do
+      if not line:match("^#") then
+        table.insert(rebase.items, { name = line })
+      end
+    end
+  end
+
+  state.rebase = rebase
+end
+
+M.register = function(meta)
+  meta.update_rebase_status = M.update_rebase_status
 end
 
 return M
