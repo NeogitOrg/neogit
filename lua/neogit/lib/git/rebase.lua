@@ -108,6 +108,8 @@ function M.continue()
   job.on_exit = function(j)
     if j.code > 0 then
       logger.debug(fmt("Execution of '%s' failed with code %d", j.cmd, j.code))
+    else
+      status.refresh(true)
     end
   end
 
@@ -117,10 +119,8 @@ end
 local a = require("plenary.async")
 local uv = require("neogit.lib.uv")
 function M.update_rebase_status(state)
-  vim.notify("Updating rebase status")
   local cli = require("neogit.lib.git.cli")
   local root = cli.git_root()
-  print(root)
   if root == "" then
     return
   end
@@ -143,7 +143,6 @@ function M.update_rebase_status(state)
   end
 
   if rebase_file then
-    print("Found rebase-merge")
     local err, head = uv.read_file(rebase_file .. "/head-name")
     if not head then
       logger.error("Failed to read rebase-merge head: " .. err)

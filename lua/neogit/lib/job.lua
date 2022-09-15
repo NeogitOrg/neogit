@@ -36,6 +36,31 @@ function Job.new(options)
   return options
 end
 
+function Job:start_async(stdin)
+  local cb = self.on_exit
+  local a = require("plenary.async")
+
+  local co = a.wrap(
+    vim.schedule_wrap(function(callback)
+      self.on_exit = function()
+        if cb then
+          cb()
+        end
+
+        callback()
+      end
+
+      self:start()
+
+      if stdin then
+        self:write(stdin)
+      end
+    end),
+    1
+  )
+  co()
+end
+
 --- Starts the job
 function Job:start()
   if not self.cmd and not self.running and not self.done then
@@ -61,16 +86,24 @@ function Job:start()
     cwd = self.cwd,
     env = self.env,
     on_exit = function(_, code)
+      if #stdout_line_buffer > 0 then
+        table.insert(self.stdout, stdout_line_buffer)
+      end
+      if #stderr_line_buffer > 0 then
+        table.insert(self.stderr, stderr_line_buffer)
+      end
+
       self.code = code
       self.done = true
       self.running = false
       self.time = (os.clock() - started_at) * 1000
 
       if type(self.on_exit) == "function" then
-        self.on_exit(self)
+        self:on_exit()
       end
     end,
     on_stdout = function(_, data)
+      print("Got: ", vim.inspect(data))
       data[1] = stdout_line_buffer .. data[1]
 
       for i = 1, #data - 1 do
@@ -108,6 +141,7 @@ end
 -- This function also closes stdin so it can only be called once
 --@tparam {string, ...} lines a list of strings
 function Job:write(lines)
+  print("Writing to stdin: ", type(lines), vim.inspect(lines))
   vim.fn.chansend(self.channel, lines)
   vim.fn.chanclose(self.channel, "stdin")
 end

@@ -55,32 +55,49 @@ local function prompt_commit_message(args, msg, skip_gen)
   return get_commit_message(output)
 end
 
-local function do_commit(popup, data, cmd, skip_gen)
+local function do_commit(popup, cmd)
   a.util.scheduler()
-  local commit_file = get_commit_file()
-  if data then
-    vim.notify("Reading prompt_commit_message")
-    local ok = prompt_commit_message(popup:get_arguments(), data, skip_gen)
-    if not ok then
-      return
-    end
-  end
-  vim.notify("Scheduling")
-  a.util.scheduler()
+
   local notification = notif.create("Committing...", vim.log.levels.INFO, 9999)
-  vim.notify("Executing: " .. cmd)
-  local result = cli.interactive_git_cmd(cmd)
+
+  local client = require("neogit.client")
+  local envs = client.get_envs_git_editor()
+
+  -- the passed en does not work if using `call`
+  local _, result = cli.commit.env(envs).args(unpack(popup:get_arguments())):call()
+
   a.util.scheduler()
   if notification then
     notification:delete()
   end
 
-  if result.code == 0 then
+  if result == 0 then
     notif.create("Successfully committed!")
-    a.uv.fs_unlink(commit_file)
-    status.refresh(true)
     vim.cmd([[do <nomodeline> User NeogitCommitComplete]])
   end
+  a.util.scheduler()
+  status.refresh(true)
+  -- local commit_file = get_commit_file()
+  -- if data then
+  --   local ok = prompt_commit_message(popup:get_arguments(), data, skip_gen)
+  --   if not ok then
+  --     return
+  --   end
+  -- end
+  -- a.util.scheduler()
+  -- local notification = notif.create("Committing...", vim.log.levels.INFO, 9999)
+  -- local result = cli.interactive_git_cmd(cmd)
+  -- a.util.scheduler()
+  -- if notification then
+  --   notification:delete()
+  -- end
+  --
+  -- if result.code == 0 then
+  --   notif.create("Successfully committed!")
+  --   a.uv.fs_unlink(commit_file)
+  --   status.refresh(true)
+  --   vim.cmd([[do <nomodeline> User NeogitCommitComplete]])
+  -- end
 end
 
 function M.create()
@@ -98,38 +115,30 @@ function M.create()
     :option("S", "gpg-sign", "", "Sign using gpg")
     :option("C", "reuse-message", "", "Reuse commit message")
     :action("c", "Commit", function(popup)
-      a.util.scheduler()
-      vim.notify("Getting commit file")
-      local commit_file = get_commit_file()
-      local _, data = uv_utils.read_file(commit_file)
-      vim.notify("Read commit data: " .. vim.inspect(data))
-      local skip_gen = data ~= nil
-      data = data or ""
-      -- we need \r? to support windows
-      data = split(data, "\r?\n")
-      do_commit(
-        popup,
-        data,
-        tostring(cli.commit.commit_message_file(commit_file).args(unpack(popup:get_arguments()))),
-        skip_gen
-      )
+      do_commit(popup, cli.commit)
+      -- vim.notify("Getting commit file")
+      -- local commit_file = get_commit_file()
+      -- local _, data = uv_utils.read_file(commit_file)
+      -- vim.notify("Read commit data: " .. vim.inspect(data))
+      -- local skip_gen = data ~= nil
+      -- data = data or ""
+      -- -- we need \r? to support windows
+      -- data = split(data, "\r?\n")
+      -- do_commit(
+      --   popup,
+      --   data,
+      --   tostring(cli.commit.commit_message_file(commit_file).args(unpack(popup:get_arguments()))),
+      --   skip_gen
+      -- )
     end)
     :action("e", "Extend", function(popup)
-      do_commit(popup, nil, tostring(cli.commit.no_edit.amend))
+      do_commit(popup, cli.commit.no_edit.amend)
     end)
     :action("w", "Reword", function(popup)
-      a.util.scheduler()
-      local commit_file = get_commit_file()
-      local msg = cli.log.max_count(1).pretty("%B").call()
-
-      do_commit(popup, msg, tostring(cli.commit.commit_message_file(commit_file).amend.only))
+      do_commit(popup, cli.commit.amend.only)
     end)
     :action("a", "Amend", function(popup)
-      a.util.scheduler()
-      local commit_file = get_commit_file()
-      local msg = cli.log.max_count(1).pretty("%B").call()
-
-      do_commit(popup, msg, tostring(cli.commit.commit_message_file(commit_file).amend), true)
+      do_commit(popup, cli.commit.amend)
     end)
     :new_action_group()
     :action("f", "Fixup")
