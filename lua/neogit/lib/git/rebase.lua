@@ -1,3 +1,4 @@
+local a = require("plenary.async")
 local util = require("neogit.lib.util")
 local logger = require("neogit.logger")
 local client = require("neogit.client")
@@ -5,7 +6,6 @@ local client = require("neogit.client")
 local fmt = string.format
 local fn = vim.fn
 
----@class Rebase: Module
 local M = {}
 
 local commit_header_pat = "([| *]*)%*([| *]*)commit (%w+)"
@@ -37,12 +37,12 @@ local function parse(raw)
     local start_idx = #s1 + #s2 + 1
 
     local function ladvance()
-      local line = advance()
+      local line = advance() or ""
       return line and line:sub(start_idx + 1, -1) or nil
     end
 
     do
-      local line = ladvance()
+      local line = ladvance() or ""
 
       if vim.startswith(line, "Merge:") then
         commit.merge = line:match("Merge:%s*(%w+) (%w+)")
@@ -92,9 +92,13 @@ function M.run_interactive(commit)
   vim.notify("Job: " .. vim.inspect(job))
 
   job.on_exit = function(j)
-    if j.code > 0 then
+    if j.code ~= 0 then
       logger.debug(fmt("Execution of '%s' failed with code %d", j.cmd, j.code))
     end
+    a.run(function()
+      local status = require("neogit.status")
+      status.refresh(true)
+    end, function() end)
   end
 
   job:start()
@@ -106,17 +110,19 @@ function M.continue()
   local job = git.cli.rebase.continue.env(envs).to_job()
 
   job.on_exit = function(j)
-    if j.code > 0 then
+    if j.code ~= 0 then
       logger.debug(fmt("Execution of '%s' failed with code %d", j.cmd, j.code))
     else
-      status.refresh(true)
+      a.run(function()
+        local status = require("neogit.status")
+        status.refresh(true)
+      end, function() end)
     end
   end
 
   job:start()
 end
 
-local a = require("plenary.async")
 local uv = require("neogit.lib.uv")
 function M.update_rebase_status(state)
   local cli = require("neogit.lib.git.cli")

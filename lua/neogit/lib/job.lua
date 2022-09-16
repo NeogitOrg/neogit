@@ -40,25 +40,24 @@ function Job:start_async(stdin)
   local cb = self.on_exit
   local a = require("plenary.async")
 
-  local co = a.wrap(
-    vim.schedule_wrap(function(callback)
-      self.on_exit = function()
-        if cb then
-          cb()
-        end
-
-        callback()
+  local co = a.wrap(function(callback)
+    self.on_exit = vim.schedule_wrap(function()
+      if cb then
+        cb()
       end
 
+      callback(self.stdout, self.code, self.stderr)
+    end)
+
+    vim.schedule(function()
       self:start()
 
       if stdin then
         self:write(stdin)
       end
-    end),
-    1
-  )
-  co()
+    end)
+  end, 1)
+  return co()
 end
 
 --- Starts the job
@@ -69,8 +68,8 @@ function Job:start()
 
   self.done = false
   self.running = true
-  self.stdout = {}
-  self.stderr = {}
+  self.stdout = { "" }
+  self.stderr = { "" }
   local started_at = os.clock()
 
   local task = self.cmd
@@ -80,19 +79,10 @@ function Job:start()
     task = { "cmd", "/C", task }
   end
 
-  local stdout_line_buffer = ""
-  local stderr_line_buffer = ""
   self.channel = vim.fn.jobstart(task, {
     cwd = self.cwd,
     env = self.env,
     on_exit = function(_, code)
-      if #stdout_line_buffer > 0 then
-        table.insert(self.stdout, stdout_line_buffer)
-      end
-      if #stderr_line_buffer > 0 then
-        table.insert(self.stderr, stderr_line_buffer)
-      end
-
       self.code = code
       self.done = true
       self.running = false
@@ -103,31 +93,26 @@ function Job:start()
       end
     end,
     on_stdout = function(_, data)
-      print("Got: ", vim.inspect(data))
-      data[1] = stdout_line_buffer .. data[1]
+      self.stdout[#self.stdout] = self.stdout[#self.stdout] .. data[1]:gsub("[\r\n]", "")
+      for i = 2, #data do
+        local data = data[i]:gsub("[\r\n]", "")
 
-      for i = 1, #data - 1 do
-        local data = data[i]:gsub("\r", "")
         if type(self.on_stdout) == "function" then
           self.on_stdout(data)
         end
         table.insert(self.stdout, data)
       end
-
-      stdout_line_buffer = data[#data]
     end,
     on_stderr = function(_, data)
-      data[1] = stderr_line_buffer .. data[1]
+      self.stderr[#self.stderr] = self.stderr[#self.stderr] .. data[1]:gsub("[\r\n]", "")
 
-      for i = 1, #data - 1 do
-        local data = data[i]:gsub("\r", "")
+      for i = 2, #data do
+        local data = data[i]:gsub("[\r\n]", "")
         if type(self.on_stderr) == "function" then
           self.on_stderr(data)
         end
         table.insert(self.stderr, data)
       end
-
-      stderr_line_buffer = data[#data]
     end,
   })
 end
@@ -141,7 +126,6 @@ end
 -- This function also closes stdin so it can only be called once
 --@tparam {string, ...} lines a list of strings
 function Job:write(lines)
-  print("Writing to stdin: ", type(lines), vim.inspect(lines))
   vim.fn.chansend(self.channel, lines)
   vim.fn.chanclose(self.channel, "stdin")
 end

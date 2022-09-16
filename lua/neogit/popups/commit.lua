@@ -63,8 +63,7 @@ local function do_commit(popup, cmd)
   local client = require("neogit.client")
   local envs = client.get_envs_git_editor()
 
-  -- the passed en does not work if using `call`
-  local _, result = cli.commit.env(envs).args(unpack(popup:get_arguments())):call()
+  local _, result = cmd.env(envs).args(unpack(popup:get_arguments())):call()
 
   a.util.scheduler()
   if notification then

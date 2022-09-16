@@ -39,11 +39,7 @@ local function spawn(options, cb)
       table.insert(params.env, string.format("%s=%s", k, v))
     end
   end
-  if #vim.tbl_filter(function(v)
-    return v == "commit"
-  end, options.args) > 0 then
-    print("Params: ", vim.inspect(params))
-  end
+
   local handle, err
   handle, err = vim.loop.spawn(options.cmd, params, function(code, _)
     handle:close()
