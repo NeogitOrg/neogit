@@ -89,8 +89,6 @@ function M.run_interactive(commit)
   local envs = client.get_envs_git_editor()
   local job = git.cli.rebase.interactive.env(envs).args(commit).to_job()
 
-  vim.notify("Job: " .. vim.inspect(job))
-
   job.on_exit = function(j)
     if j.code ~= 0 then
       logger.debug(fmt("Execution of '%s' failed with code %d", j.cmd, j.code))

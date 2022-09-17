@@ -206,6 +206,7 @@ local function draw_buffer()
     table.insert(new_locations, location)
   end
 
+  render_section("Rebasing: " .. M.repo.rebase.head, "rebase")
   render_section("Untracked files", "untracked")
   render_section("Unstaged changes", "unstaged")
   render_section("Staged changes", "staged")
@@ -213,7 +214,6 @@ local function draw_buffer()
   render_section("Unpulled changes", "unpulled")
   render_section("Unmerged changes", "unmerged")
   render_section("Recent commits", "recent")
-  render_section("Rebasing: " .. M.repo.rebase.head, "rebase")
 
   M.status_buffer:replace_content_with(output)
   M.locations = new_locations
