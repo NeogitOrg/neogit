@@ -143,8 +143,20 @@ function M.update_rebase_status(state)
     rebase.head = head
 
     local _, todos = uv.read_file(rebase_file .. "/git-rebase-todo")
+    local _, done = uv.read_file(rebase_file .. "/done")
 
     -- we need \r? to support windows
+    for line in (done or ""):gmatch("[^\r\n]+") do
+      if not line:match("^#") then
+        table.insert(rebase.items, { name = line, done = true })
+      end
+    end
+    local cur = rebase.items[#rebase.items]
+    if cur then
+      cur.done = false
+      cur.stopped = true
+    end
+
     for line in (todos or ""):gmatch("[^\r\n]+") do
       if not line:match("^#") then
         table.insert(rebase.items, { name = line })

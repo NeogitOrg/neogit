@@ -162,6 +162,10 @@ local function draw_buffer()
           output:append(f.name)
         end
 
+        if f.done then
+          M.status_buffer:place_sign(#output, "NeogitRebaseDone", "hl")
+        end
+
         local file = files_lookup[f.name] or { folded = true }
         file.first = #output
 

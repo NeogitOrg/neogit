@@ -41,10 +41,12 @@ hi def link NeogitUnmergedInto Function
 hi def link NeogitUnpulledFrom Function
 
 hi def link NeogitStash Comment
+hi def link NeogitRebaseDone Comment
 
 hi def NeogitFold guifg=None guibg=None
 
 sign define NeogitDiffContextHighlight linehl=NeogitDiffContextHighlight
+sign define NeogitRebaseDone linehl=NeogitRebaseDone
 sign define NeogitHunkHeader linehl=NeogitHunkHeader
 sign define NeogitHunkHeaderHighlight linehl=NeogitHunkHeaderHighlight
 sign define NeogitDiffAdd linehl=NeogitDiffAdd
