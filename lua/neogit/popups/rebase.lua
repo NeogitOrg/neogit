@@ -12,7 +12,7 @@ function M.create()
   local p = popup
     .builder()
     :name("NeogitRebasePopup")
-    :action_if(status and status.repo.rebase.head, "r", "Continue rebase", function()
+    :action_if(status and status.repo.rebase.head, "c", "Continue rebase", function()
       rebase.continue()
       a.util.scheduler()
       status.refresh(true)
