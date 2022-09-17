@@ -1,3 +1,4 @@
+local a = require("plenary.async")
 local Buffer = require("neogit.lib.buffer")
 local ui = require("neogit.buffers.commit_select_view.ui")
 
@@ -23,7 +24,6 @@ function M:close()
   self.buffer:close()
   self.buffer = nil
 end
-
 function M:open()
   self.buffer = Buffer.create {
     name = "NeogitCommitSelectView",
@@ -34,7 +34,9 @@ function M:open()
         ["<enter>"] = function()
           local pos = line_pos()
           if self.action then
-            self.action(self, self.commits[pos])
+            a.run(function()
+              self.action(self, self.commits[pos])
+            end)
           end
         end,
       },

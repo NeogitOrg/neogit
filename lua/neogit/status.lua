@@ -206,7 +206,9 @@ local function draw_buffer()
     table.insert(new_locations, location)
   end
 
-  render_section("Rebasing: " .. M.repo.rebase.head, "rebase")
+  if M.repo.rebase.head then
+    render_section("Rebasing: " .. M.repo.rebase.head, "rebase")
+  end
   render_section("Untracked files", "untracked")
   render_section("Unstaged changes", "unstaged")
   render_section("Staged changes", "staged")

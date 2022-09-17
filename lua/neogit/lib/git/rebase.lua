@@ -84,41 +84,28 @@ function M.commits()
   return parse(output)
 end
 
+local a = require("plenary.async")
+
 function M.run_interactive(commit)
+  a.util.scheduler()
   local git = require("neogit.lib.git")
   local envs = client.get_envs_git_editor()
-  local job = git.cli.rebase.interactive.env(envs).args(commit).to_job()
+  return git.cli.rebase.interactive.env(envs).args(commit):call()
+end
 
-  job.on_exit = function(j)
-    if j.code ~= 0 then
-      logger.debug(fmt("Execution of '%s' failed with code %d", j.cmd, j.code))
-    end
-    a.run(function()
-      local status = require("neogit.status")
-      status.refresh(true)
-    end, function() end)
-  end
-
-  job:start()
+local function rebase_command(cmd)
+  local envs = client.get_envs_git_editor()
+  return cmd.env(envs).call()
 end
 
 function M.continue()
   local git = require("neogit.lib.git")
-  local envs = client.get_envs_git_editor()
-  local job = git.cli.rebase.continue.env(envs).to_job()
+  return rebase_command(git.cli.rebase.continue)
+end
 
-  job.on_exit = function(j)
-    if j.code ~= 0 then
-      logger.debug(fmt("Execution of '%s' failed with code %d", j.cmd, j.code))
-    else
-      a.run(function()
-        local status = require("neogit.status")
-        status.refresh(true)
-      end, function() end)
-    end
-  end
-
-  job:start()
+function M.skip()
+  local git = require("neogit.lib.git")
+  return rebase_command(git.cli.rebase.skip)
 end
 
 local uv = require("neogit.lib.uv")
@@ -131,7 +118,7 @@ function M.update_rebase_status(state)
 
   local rebase = {
     items = {},
-    head = "",
+    head = nil,
   }
 
   local _, stat = a.uv.fs_stat(root .. "/.git/rebase-merge")

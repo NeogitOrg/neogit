@@ -98,6 +98,7 @@ local configurations = {
       interactive = "-i",
       continue = "--continue",
       abort = "--abort",
+      skip = "--skip",
     },
   },
   reset = config {
