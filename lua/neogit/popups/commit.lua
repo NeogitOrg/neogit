@@ -3,13 +3,8 @@ local notif = require("neogit.lib.notification")
 local status = require("neogit.status")
 local cli = require("neogit.lib.git.cli")
 local a = require("plenary.async")
-local CommitEditorBuffer = require("neogit.buffers.commit_editor")
 
 local M = {}
-
-local function get_commit_file()
-  return cli.git_dir_path_sync() .. "/" .. "NEOGIT_COMMIT_EDITMSG"
-end
 
 local function do_commit(popup, cmd)
   a.util.scheduler()
