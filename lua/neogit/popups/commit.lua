@@ -11,11 +11,6 @@ local function get_commit_file()
   return cli.git_dir_path_sync() .. "/" .. "NEOGIT_COMMIT_EDITMSG"
 end
 
--- selene: allow(global_usage)
-local get_commit_message = a.wrap(function(content, cb)
-  CommitEditorBuffer.new(content, get_commit_file(), cb):open()
-end, 2)
-
 local function do_commit(popup, cmd)
   a.util.scheduler()
 
