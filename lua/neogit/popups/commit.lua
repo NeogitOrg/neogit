@@ -3,8 +3,6 @@ local notif = require("neogit.lib.notification")
 local status = require("neogit.status")
 local cli = require("neogit.lib.git.cli")
 local a = require("plenary.async")
-local split = require("neogit.lib.util").split
-local uv_utils = require("neogit.lib.uv")
 local CommitEditorBuffer = require("neogit.buffers.commit_editor")
 
 local M = {}

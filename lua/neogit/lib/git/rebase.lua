@@ -1,10 +1,6 @@
-local a = require("plenary.async")
 local util = require("neogit.lib.util")
 local logger = require("neogit.logger")
 local client = require("neogit.client")
-
-local fmt = string.format
-local fn = vim.fn
 
 local M = {}
 
