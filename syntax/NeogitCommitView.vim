@@ -15,6 +15,7 @@ hi def NeogitCommitViewHeader guifg=#ffffff guibg=#94bbd1
 hi def NeogitDiffHeader gui=bold
 
 sign define NeogitHunkHeader linehl=NeogitHunkHeader
+sign define NeogitHunkHeader linehl=NeogitHunkHeader
 sign define NeogitHunkHeaderHighlight linehl=NeogitHunkHeaderHighlight
 
 sign define NeogitDiffHeader linehl=NeogitDiffHeader

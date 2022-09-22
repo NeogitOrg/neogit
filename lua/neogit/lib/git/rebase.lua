@@ -1,9 +1,6 @@
-local git = require("neogit.lib.git")
 local util = require("neogit.lib.util")
 local logger = require("neogit.logger")
-
-local fmt = string.format
-local fn = vim.fn
+local client = require("neogit.client")
 
 local M = {}
 
@@ -36,12 +33,12 @@ local function parse(raw)
     local start_idx = #s1 + #s2 + 1
 
     local function ladvance()
-      local line = advance()
+      local line = advance() or ""
       return line and line:sub(start_idx + 1, -1) or nil
     end
 
     do
-      local line = ladvance()
+      local line = ladvance() or ""
 
       if vim.startswith(line, "Merge:") then
         commit.merge = line:match("Merge:%s*(%w+) (%w+)")
@@ -77,55 +74,97 @@ local function parse(raw)
 end
 
 function M.commits()
+  local git = require("neogit.lib.git")
   local output = git.cli.log.format("fuller").args("--graph").call_sync()
 
   return parse(output)
 end
 
--- FIXME: this should be moved to a place that can be reused
-local function get_nvim_remote_editor()
-  local neogit_path = debug.getinfo(1, "S").source:sub(2, -31)
-  local nvim_path = fn.shellescape(vim.v.progpath)
-
-  local runtimepath_cmd = fn.shellescape(fmt("set runtimepath^=%s", fn.fnameescape(neogit_path)))
-  local lua_cmd = fn.shellescape("lua require('neogit.client').client()")
-
-  local shell_cmd = {
-    nvim_path,
-    "--headless",
-    "--clean",
-    "--noplugin",
-    "-n",
-    "-R",
-    "-c",
-    runtimepath_cmd,
-    "-c",
-    lua_cmd,
-  }
-
-  return table.concat(shell_cmd, " ")
-end
-
--- FIXME: this should be moved to a place that can be reused
-local function get_envs_git_editor()
-  local nvim_cmd = get_nvim_remote_editor()
-  return {
-    GIT_SEQUENCE_EDITOR = nvim_cmd,
-    GIT_EDITOR = nvim_cmd,
-  }
-end
+local a = require("plenary.async")
 
 function M.run_interactive(commit)
-  local envs = get_envs_git_editor()
-  local job = git.cli.rebase.interactive.env(envs).args(commit).to_job()
+  a.util.scheduler()
+  local git = require("neogit.lib.git")
+  local envs = client.get_envs_git_editor()
+  return git.cli.rebase.interactive.env(envs).args(commit):call()
+end
 
-  job.on_exit = function(j)
-    if j.code > 0 then
-      logger.debug(fmt("Execution of '%s' failed with code %d", j.cmd, j.code))
+local function rebase_command(cmd)
+  local envs = client.get_envs_git_editor()
+  return cmd.env(envs).call()
+end
+
+function M.continue()
+  local git = require("neogit.lib.git")
+  return rebase_command(git.cli.rebase.continue)
+end
+
+function M.skip()
+  local git = require("neogit.lib.git")
+  return rebase_command(git.cli.rebase.skip)
+end
+
+local uv = require("neogit.lib.uv")
+function M.update_rebase_status(state)
+  local cli = require("neogit.lib.git.cli")
+  local root = cli.git_root()
+  if root == "" then
+    return
+  end
+
+  local rebase = {
+    items = {},
+    head = nil,
+  }
+
+  local _, stat = a.uv.fs_stat(root .. "/.git/rebase-merge")
+  local rebase_file = nil
+
+  if stat then
+    rebase_file = root .. "/.git/rebase-merge"
+  else
+    local _, stat = a.uv.fs_stat(root .. "/.git/rebase-apply")
+    if stat then
+      rebase_file = root .. "/.git/rebase-apply"
     end
   end
 
-  job:start()
+  if rebase_file then
+    local err, head = uv.read_file(rebase_file .. "/head-name")
+    if not head then
+      logger.error("Failed to read rebase-merge head: " .. err)
+      return
+    end
+    head = head:match("refs/heads/([^\r\n]+)")
+    rebase.head = head
+
+    local _, todos = uv.read_file(rebase_file .. "/git-rebase-todo")
+    local _, done = uv.read_file(rebase_file .. "/done")
+
+    -- we need \r? to support windows
+    for line in (done or ""):gmatch("[^\r\n]+") do
+      if not line:match("^#") then
+        table.insert(rebase.items, { name = line, done = true })
+      end
+    end
+    local cur = rebase.items[#rebase.items]
+    if cur then
+      cur.done = false
+      cur.stopped = true
+    end
+
+    for line in (todos or ""):gmatch("[^\r\n]+") do
+      if not line:match("^#") then
+        table.insert(rebase.items, { name = line })
+      end
+    end
+  end
+
+  state.rebase = rebase
+end
+
+M.register = function(meta)
+  meta.update_rebase_status = M.update_rebase_status
 end
 
 return M

@@ -96,6 +96,9 @@ local configurations = {
   rebase = config {
     flags = {
       interactive = "-i",
+      continue = "--continue",
+      abort = "--abort",
+      skip = "--skip",
     },
   },
   reset = config {
@@ -352,6 +355,7 @@ local function exec(cmd, args, cwd, stdin, env, show_popup, hide_text)
   if show_popup == nil then
     show_popup = true
   end
+
   table.insert(args, 1, "--no-optional-locks")
   table.insert(args, 2, cmd)
 
@@ -381,7 +385,6 @@ local function exec(cmd, args, cwd, stdin, env, show_popup, hide_text)
     code = code,
     time = os.clock() - time,
   }, show_popup, hide_text)
-  --print('git', table.concat(args, ' '), '->', code, errors)
 
   return stdout, code, stderr
 end

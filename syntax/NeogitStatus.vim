@@ -1,6 +1,8 @@
 if exists("b:current_syntax")
   finish
 endif
+" Support the rebase todo highlights
+source $VIMRUNTIME/syntax/gitrebase.vim
 
 syn match NeogitObjectId /^[a-z0-9]\{7,}\>/
 syn match NeogitCommitMessage /.*/ contained
@@ -12,7 +14,7 @@ syn match NeogitStash /stash@{[0-9]*}\ze/
 syn match NeogitUnmergedInto /Unmerged into/ contained
 syn match NeogitUnpulledFrom /Unpulled from/ contained
 
-let b:sections = ["Untracked files", "Unstaged changes", "Unmerged changes", "Unpulled changes", "Recent commits", "Staged changes", "Stashes"]
+let b:sections = ["Untracked files", "Unstaged changes", "Unmerged changes", "Unpulled changes", "Recent commits", "Staged changes", "Stashes", "Rebasing"]
 
 for section in b:sections
   let id = join(split(section, " "), "")
@@ -39,15 +41,18 @@ hi def link NeogitUnmergedInto Function
 hi def link NeogitUnpulledFrom Function
 
 hi def link NeogitStash Comment
+hi def link NeogitRebaseDone Comment
 
 hi def NeogitFold guifg=None guibg=None
 
 sign define NeogitDiffContextHighlight linehl=NeogitDiffContextHighlight
+sign define NeogitRebaseDone linehl=NeogitRebaseDone
 sign define NeogitHunkHeader linehl=NeogitHunkHeader
 sign define NeogitHunkHeaderHighlight linehl=NeogitHunkHeaderHighlight
 sign define NeogitDiffAdd linehl=NeogitDiffAdd
 sign define NeogitDiffAddHighlight linehl=NeogitDiffAddHighlight
 sign define NeogitDiffDelete linehl=NeogitDiffDelete
 sign define NeogitDiffDeleteHighlight linehl=NeogitDiffDeleteHighlight
+
 
 "TODO: find a better way to do this

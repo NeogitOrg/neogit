@@ -27,13 +27,14 @@ local function spawn(options, cb)
   if options.args then
     params.args = options.args
   end
-  if options.env and #options.env > 0 then
+  if options.env then
     params.env = {}
     -- setting 'env' completely overrides the parent environment, so we need to
     -- append all variables that are necessary for git to work in addition to
     -- all variables from passed object.
     table.insert(params.env, string.format("%s=%s", "HOME", os.getenv("HOME")))
-    table.insert(params.env, string.format("%s=%s", "GNUPGHOME", os.getenv("GNUPGHOME")))
+    table.insert(params.env, string.format("%s=%s", "GNUPGHOME", os.getenv("GNUPGHOME") or ""))
+    table.insert(params.env, string.format("%s=%s", "NVIM", vim.v.servername))
     for k, v in pairs(options.env) do
       table.insert(params.env, string.format("%s=%s", k, v))
     end
@@ -82,6 +83,7 @@ local function spawn(options, cb)
 
     --print('STDERR', err, data)
     errors = errors .. (data or "")
+    print(errors)
   end)
 
   if options.input ~= nil then

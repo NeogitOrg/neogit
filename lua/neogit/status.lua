@@ -138,6 +138,7 @@ local function draw_buffer()
     if #data.items == 0 then
       return
     end
+
     output:append(string.format("%s (%d)", header, #data.items))
 
     local location = locations_lookup[key]
@@ -159,6 +160,10 @@ local function draw_buffer()
           output:append(string.format("%s %s", mode_to_text[f.mode], f.name))
         else
           output:append(f.name)
+        end
+
+        if f.done then
+          M.status_buffer:place_sign(#output, "NeogitRebaseDone", "hl")
         end
 
         local file = files_lookup[f.name] or { folded = true }
@@ -205,6 +210,9 @@ local function draw_buffer()
     table.insert(new_locations, location)
   end
 
+  if M.repo.rebase.head then
+    render_section("Rebasing: " .. M.repo.rebase.head, "rebase")
+  end
   render_section("Untracked files", "untracked")
   render_section("Unstaged changes", "unstaged")
   render_section("Staged changes", "staged")
@@ -346,6 +354,13 @@ local function refresh(which)
         M.repo:update_branch_information()
       end)
     end
+    if which == true or which.rebase then
+      table.insert(refreshes, function()
+        logger.debug("[STATUS BUFFER]: Refreshing rebase information")
+        M.repo:update_rebase_status()
+      end)
+    end
+
     if which == true or which.stashes then
       table.insert(refreshes, function()
         logger.debug("[STATUS BUFFER]: Refreshing stash")
@@ -725,7 +740,7 @@ local discard = function()
       local hunk, lines = get_current_hunk_of_item(item)
       lines[1] =
         string.format("@@ -%d,%d +%d,%d @@", hunk.index_from, hunk.index_len, hunk.index_from, hunk.disk_len)
-      local diff = table.concat(lines, "\n")
+      local diff = table.concat(lines or {}, "\n")
       diff = table.concat({ "--- a/" .. item.name, "+++ b/" .. item.name, diff, "" }, "\n")
       if section.name == "staged" then
         cli.apply.reverse.index.with_patch(diff).call()

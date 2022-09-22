@@ -7,4 +7,5 @@ return {
   branch = require("neogit.lib.git.branch"),
   cli = cli,
   diff = require("neogit.lib.git.diff"),
+  rebase = require("neogit.lib.git.rebase"),
 }
