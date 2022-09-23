@@ -24,6 +24,8 @@ M.status_buffer = nil
 M.commit_view = nil
 M.locations = {}
 
+M.outdated = {}
+
 local hunk_header_matcher = vim.regex("^@@.*@@")
 local diff_add_matcher = vim.regex("^+")
 local diff_delete_matcher = vim.regex("^-")
@@ -919,6 +921,7 @@ local cmd_func_map = function()
   }
 end
 
+--- Creates a new status buffer
 local function create(kind, cwd)
   kind = kind or config.values.kind
 

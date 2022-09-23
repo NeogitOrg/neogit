@@ -205,7 +205,7 @@ function Buffer:del_extmark(ns, id)
 end
 
 function Buffer.create(config)
-  local config = config or {}
+  config = config or {}
   local kind = config.kind or "split"
   local buffer = nil
 
@@ -228,6 +228,7 @@ function Buffer.create(config)
     -- Creates the border window
     local vim_height = vim.api.nvim_eval([[&lines]])
     local vim_width = vim.api.nvim_eval([[&columns]])
+
     local width = math.floor(vim_width * 0.8) + 3
     local height = math.floor(vim_height * 0.7)
     local col = vim_width * 0.1 - 1
