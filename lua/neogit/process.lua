@@ -67,6 +67,7 @@ local function create_preview_buffer()
   preview_buffer = {
     chan = chan,
     buffer = buffer,
+    current_span = nil,
   }
 end
 
@@ -75,19 +76,29 @@ local function show_preview_buffer()
     create_preview_buffer()
   end
 
-  preview_buffer.buffer:show()
+  -- Jump to end
+
+  local win = preview_buffer.buffer:show()
+  vim.api.nvim_win_call(win, function()
+    vim.cmd("normal! G")
+  end)
 end
 
 local nvim_chan_send = vim.api.nvim_chan_send
 
+---@param process Process
 ---@param data string
-local function append_log(data)
-  data = data:gsub("\n", "\r\n")
-
+local function append_log(process, data)
   if not preview_buffer then
     create_preview_buffer()
   end
 
+  if preview_buffer.current_span ~= process.handle then
+    nvim_chan_send(preview_buffer.chan, string.format("> %s\r\n", process.cmd))
+    preview_buffer.current_span = process.handle
+  end
+
+  data = data:gsub("\n", "\r\n")
   -- Explicitly reset indent
   -- https://github.com/neovim/neovim/issues/14557
   nvim_chan_send(preview_buffer.chan, data)
@@ -220,7 +231,7 @@ local function spawn(options, cb)
     --print('STDOUT', err, data)
     output = output .. data
     vim.schedule(function()
-      append_log(data)
+      append_log(process, data)
     end)
   end)
 
@@ -237,7 +248,7 @@ local function spawn(options, cb)
     --print('STDERR', err, data)
     errors = errors .. (data or "")
     vim.schedule(function()
-      append_log(data)
+      append_log(process, data)
     end)
   end)
 

@@ -114,30 +114,38 @@ function Buffer:hide()
   end
 end
 
+---@return number
 function Buffer:show()
   local windows = vim.fn.win_findbuf(self.handle)
 
   -- Already visible
   if #windows > 0 then
-    return
+    return windows[1]
   end
 
+  local win
   local kind = self.kind
+
   if kind == "replace" then
     self.old_buf = api.nvim_get_current_buf(api.nvim_set_current_buf())
     api.nvim_set_current_buf(self.handle)
+    win = api.nvim_get_current_win()
   elseif kind == "tab" then
     vim.cmd("tabnew")
     api.nvim_set_current_buf(self.handle)
+    win = api.nvim_get_current_win()
   elseif kind == "split" then
     vim.cmd("below split")
     api.nvim_set_current_buf(self.handle)
+    win = api.nvim_get_current_win()
   elseif kind == "split_above" then
     vim.cmd("top split")
     api.nvim_set_current_buf(self.handle)
+    win = api.nvim_get_current_win()
   elseif kind == "vsplit" then
     vim.cmd("bot vsplit")
     api.nvim_set_current_buf(self.handle)
+    win = api.nvim_get_current_win()
   elseif kind == "floating" then
     -- Creates the border window
     local vim_height = vim.o.lines
@@ -160,10 +168,13 @@ function Buffer:show()
     })
 
     vim.api.nvim_win_set_cursor(content_window, { 1, 0 })
+    win = content_window
   end
 
   vim.cmd("setlocal nonu")
   vim.cmd("setlocal nornu")
+
+  return win
 end
 
 function Buffer:is_valid()
@@ -280,6 +291,7 @@ function Buffer:del_extmark(ns, id)
   return vim.api.nvim_buf_del_extmark(self.handle, ns, id)
 end
 
+---@return Buffer
 function Buffer.create(config)
   config = config or {}
   local kind = config.kind or "split"
