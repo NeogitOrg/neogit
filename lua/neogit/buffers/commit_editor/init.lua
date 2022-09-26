@@ -56,6 +56,7 @@ function M:open()
         if self.on_unload then
           self.on_unload(written)
         end
+        require("neogit.process").defer_show_preview_buffers()
       end,
     },
     mappings = {

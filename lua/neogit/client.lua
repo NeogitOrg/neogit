@@ -54,6 +54,8 @@ end
 
 --- Invoked by the `client` and starts the appropriate file editor
 function M.editor(target, client)
+  require("neogit.process").hide_preview_buffers()
+
   local editor = require("neogit.editor")
 
   local rpc_client = RPC.create_connection(client)

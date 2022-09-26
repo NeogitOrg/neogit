@@ -3,6 +3,9 @@ local util = require("neogit.lib.util")
 
 local filter = util.filter
 
+---@class Ui
+---@field buf number
+---@field layout table
 local Ui = {}
 
 function Ui.new(buf)
