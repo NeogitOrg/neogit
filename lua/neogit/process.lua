@@ -35,6 +35,7 @@ local function spawn(options, cb)
     table.insert(params.env, string.format("%s=%s", "HOME", os.getenv("HOME")))
     table.insert(params.env, string.format("%s=%s", "GNUPGHOME", os.getenv("GNUPGHOME") or ""))
     table.insert(params.env, string.format("%s=%s", "NVIM", vim.v.servername))
+    table.insert(params.env, string.format("%s=%s", "PATH", os.getenv("PATH")))
     for k, v in pairs(options.env) do
       table.insert(params.env, string.format("%s=%s", k, v))
     end
