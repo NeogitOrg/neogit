@@ -33,14 +33,16 @@ function Buffer:new(handle)
   return this
 end
 
+---@return number|nil
 function Buffer:focus()
   local windows = vim.fn.win_findbuf(self.handle)
 
   if #windows == 0 then
-    return
+    return nil
   end
 
   vim.fn.win_gotoid(windows[1])
+  return windows[1]
 end
 
 function Buffer:lock()
@@ -99,7 +101,9 @@ function Buffer:close(force)
 end
 
 function Buffer:hide()
-  self:focus()
+  if not self:focus() then
+    return
+  end
 
   if self.kind == "tab" then
     -- `silent!` as this might throw errors if 'hidden' is disabled.

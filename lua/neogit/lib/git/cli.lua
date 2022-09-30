@@ -301,7 +301,7 @@ local configurations = {
 }
 
 local function git_root()
-  return util.trim(process.spawn { cmd = "git", args = { "rev-parse", "--show-toplevel" } })
+  return util.trim(process.spawn { cmd = "git", args = { "rev-parse", "--show-toplevel" }, silent = true })
 end
 
 local git_root_sync = function()
@@ -350,7 +350,7 @@ local function handle_new_cmd(job, popup, hidden_text)
   end
 end
 
-local function exec(cmd, args, cwd, stdin, env, show_popup, hide_text)
+local function exec(cmd, args, cwd, stdin, env, show_popup, hide_text, verbose)
   args = args or {}
   if show_popup == nil then
     show_popup = true
@@ -372,6 +372,7 @@ local function exec(cmd, args, cwd, stdin, env, show_popup, hide_text)
     env = env,
     input = stdin,
     cwd = cwd,
+    verbose = verbose,
   }
 
   local result, code, errors = process.spawn(opts)
@@ -553,7 +554,7 @@ local function new_builder(subcommand)
     [k_state] = state,
     [k_config] = configuration,
     [k_command] = subcommand,
-    call = function()
+    call = function(verbose)
       local args = {}
       for _, o in ipairs(state.options) do
         table.insert(args, o)
@@ -574,9 +575,18 @@ local function new_builder(subcommand)
 
       logger.debug(string.format("[CLI]: Executing '%s %s'", subcommand, table.concat(args, " ")))
 
-      return exec(subcommand, args, state.cwd, state.input, state.env, state.show_popup, state.hide_text)
+      return exec(
+        subcommand,
+        args,
+        state.cwd,
+        state.input,
+        state.env,
+        state.show_popup,
+        state.hide_text,
+        verbose
+      )
     end,
-    call_sync = function()
+    call_sync = function(silent)
       local args = {}
       for _, o in ipairs(state.options) do
         table.insert(args, o)
@@ -597,7 +607,16 @@ local function new_builder(subcommand)
 
       logger.debug(string.format("[CLI]: Executing '%s %s'", subcommand, table.concat(args, " ")))
 
-      return exec_sync(subcommand, args, state.cwd, state.input, state.env, state.show_popup, state.hide_text)
+      return exec_sync(
+        subcommand,
+        args,
+        state.cwd,
+        state.input,
+        state.env,
+        state.show_popup,
+        state.hide_text,
+        silent
+      )
     end,
     to_job = function()
       local args = {}
@@ -760,7 +779,7 @@ local cli = setmetatable({
           return
         end
         local data = table.concat(data, "")
-        local data = data:gsub(ansi_escape_sequence_pattern, "")
+        data = data:gsub(ansi_escape_sequence_pattern, "")
         table.insert(stdout, data)
         local lines = vim.split(data, "\r?[\r\n]")
 

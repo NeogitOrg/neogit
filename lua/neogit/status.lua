@@ -938,7 +938,6 @@ local function create(kind, cwd)
     filetype = "NeogitStatus",
     kind = kind,
     initialize = function(buffer)
-      print("Initializing: ", vim.inspect(buffer))
       logger.debug("[STATUS BUFFER]: Initializing...")
 
       M.status_buffer = buffer

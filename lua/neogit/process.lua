@@ -13,7 +13,7 @@ local M = {}
 ---@field code number|nil
 ---@field buffer Buffer|nil
 ---@field chan number|nil
----@field silent boolean
+---@field silent boolean If true, only stderr will be written to the console buffer
 local Process = {}
 Process.__index = Process
 
@@ -76,12 +76,10 @@ local function show_preview_buffer()
     create_preview_buffer()
   end
 
-  -- Jump to end
-
   local win = preview_buffer.buffer:show()
-  vim.api.nvim_win_call(win, function()
-    vim.cmd("normal! G")
-  end)
+  -- vim.api.nvim_win_call(win, function()
+  --   vim.cmd("normal! G")
+  -- end)
 end
 
 local nvim_chan_send = vim.api.nvim_chan_send
@@ -94,17 +92,19 @@ local function append_log(process, data)
   end
 
   if preview_buffer.current_span ~= process.handle then
-    nvim_chan_send(preview_buffer.chan, string.format("> %s\r\n", process.cmd))
+    nvim_chan_send(preview_buffer.chan, string.format("\r\n> %s\r\n", process.cmd))
     preview_buffer.current_span = process.handle
   end
 
-  data = data:gsub("\n", "\r\n")
   -- Explicitly reset indent
   -- https://github.com/neovim/neovim/issues/14557
+  data = data:gsub("\n", "\r\n")
   nvim_chan_send(preview_buffer.chan, data)
 end
 
+local hide_console = false
 function M.hide_preview_buffers()
+  hide_console = true
   --- Stop all times from opening the buffer
   for _, v in pairs(processes) do
     v:stop_timer()
@@ -119,17 +119,18 @@ function Process:start_timer()
   if self.timer == nil then
     local timer = vim.loop.new_timer()
     timer:start(
-      1000,
+      2000,
       0,
       vim.schedule_wrap(function()
-        if self.code ~= 0 then
-          show_preview_buffer()
-        end
         self.timer = nil
         timer:stop()
         timer:close()
+        if self.code ~= 0 then
+          show_preview_buffer()
+        end
       end)
     )
+    self.timer = timer
   end
 end
 
@@ -140,7 +141,9 @@ function Process:stop_timer()
     self.timer = nil
   end
 end
+
 function M.defer_show_preview_buffers()
+  hide_console = false
   --- Start the timers again, making all proceses show the log buffer on a long
   --- running command
   for _, v in pairs(processes) do
@@ -148,9 +151,22 @@ function M.defer_show_preview_buffers()
   end
 end
 
+---@class SpawnOptions
+---@field cmd string
+---@field cwd string|nil
+---@field args string[]|nil
+---@field env string[]|nil
+---@field input string|nil
+---@field verbose boolean|nil
+
+---Spawns a process
+---@param options SpawnOptions
+---@param cb fun(stdout: string, code: number, stderr: string)
 local function spawn(options, cb)
   assert(options ~= nil, "Options parameter must be given")
   assert(options.cmd, "A command needs to be given!")
+
+  local verbose = options.verbose
 
   local return_code, output, errors = nil, "", ""
   local stdin, stdout, stderr = vim.loop.new_pipe(false), vim.loop.new_pipe(false), vim.loop.new_pipe(false)
@@ -189,21 +205,20 @@ local function spawn(options, cb)
 
   local handle, err
   local process = Process:new(options.cmd .. " " .. table.concat(params.args, " "))
-  process.silent = options.silent or false
 
   handle, err = vim.loop.spawn(options.cmd, params, function(code, _)
     handle:close()
-    --print('finished process', vim.inspect(params), vim.inspect({trim_newlines(output), errors}))
 
     return_code = code
     process.code = code
-    vim.schedule(function()
-      -- Remove process
-      processes[process.handle] = nil
-      if code ~= 0 then
-        show_preview_buffer()
-      end
-    end)
+    -- Remove process
+    processes[process.handle] = nil
+    if process.timer then
+      process:stop_timer()
+    end
+    if verbose and code ~= 0 and not hide_console then
+      vim.schedule(show_preview_buffer)
+    end
     process_closed = true
     raise_if_fully_closed()
   end)
@@ -215,8 +230,11 @@ local function spawn(options, cb)
     error(err)
   end
 
-  process.handle = handle
   processes[handle] = process
+  process.handle = handle
+  if verbose and not hide_console then
+    process:start_timer()
+  end
 
   vim.loop.read_start(stdout, function(err, data)
     assert(not err, err)
@@ -230,9 +248,11 @@ local function spawn(options, cb)
 
     --print('STDOUT', err, data)
     output = output .. data
-    vim.schedule(function()
-      append_log(process, data)
-    end)
+    if verbose then
+      vim.schedule(function()
+        append_log(process, data)
+      end)
+    end
   end)
 
   vim.loop.read_start(stderr, function(err, data)
@@ -247,27 +267,11 @@ local function spawn(options, cb)
 
     --print('STDERR', err, data)
     errors = errors .. (data or "")
+
     vim.schedule(function()
       append_log(process, data)
     end)
   end)
-
-  local timer = vim.loop.new_timer()
-  process.timer = timer
-  timer:start(
-    1000,
-    0,
-    vim.schedule_wrap(function()
-      -- When the process has been running for too long, show the log buffer
-      if not process.silent and process.code ~= 0 then
-        vim.notify("Creating buffer")
-        show_preview_buffer()
-      end
-      process.timer = nil
-      timer:stop()
-      timer:close()
-    end)
-  )
 
   if options.input ~= nil then
     vim.loop.write(stdin, options.input)

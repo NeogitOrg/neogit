@@ -14,7 +14,7 @@ local function do_commit(popup, cmd)
   local client = require("neogit.client")
   local envs = client.get_envs_git_editor()
 
-  local _, result = cmd.env(envs).args(unpack(popup:get_arguments())):call()
+  local _, result = cmd.env(envs).args(unpack(popup:get_arguments())).call(true)
 
   a.util.scheduler()
   if notification then
