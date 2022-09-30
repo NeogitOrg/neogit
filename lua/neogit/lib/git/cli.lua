@@ -586,7 +586,9 @@ local function new_builder(subcommand)
         verbose
       )
     end,
-    call_sync = function(silent)
+    -- Console window is not possible due to using a different execution
+    -- strategy
+    call_sync = function(_)
       local args = {}
       for _, o in ipairs(state.options) do
         table.insert(args, o)
@@ -607,16 +609,7 @@ local function new_builder(subcommand)
 
       logger.debug(string.format("[CLI]: Executing '%s %s'", subcommand, table.concat(args, " ")))
 
-      return exec_sync(
-        subcommand,
-        args,
-        state.cwd,
-        state.input,
-        state.env,
-        state.show_popup,
-        state.hide_text,
-        silent
-      )
+      return exec_sync(subcommand, args, state.cwd, state.input, state.env, state.show_popup, state.hide_text)
     end,
     to_job = function()
       local args = {}

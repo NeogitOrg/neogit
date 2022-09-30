@@ -10,6 +10,8 @@ M.values = {
   use_magit_keybindings = false,
   auto_refresh = true,
   kind = "tab",
+  -- The time after which an output console is shown for slow running commands
+  console_timeout = 2000,
   status = {
     recent_commit_count = 10,
   },

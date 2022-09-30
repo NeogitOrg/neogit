@@ -76,7 +76,7 @@ local function show_preview_buffer()
     create_preview_buffer()
   end
 
-  local win = preview_buffer.buffer:show()
+  preview_buffer.buffer:show()
   -- vim.api.nvim_win_call(win, function()
   --   vim.cmd("normal! G")
   -- end)
@@ -115,11 +115,12 @@ function M.hide_preview_buffers()
   end
 end
 
+local config = require("neogit.config")
 function Process:start_timer()
   if self.timer == nil then
     local timer = vim.loop.new_timer()
     timer:start(
-      2000,
+      config.values.console_timeout,
       0,
       vim.schedule_wrap(function()
         self.timer = nil
