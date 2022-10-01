@@ -836,7 +836,11 @@ local cmd_func_map = function()
       if item and section then
         if section.name == "unstaged" or section.name == "staged" or section.name == "untracked" then
           local path = item.name
-          local hunk = get_current_hunk_of_item(item)
+          local hunk, hunk_lines = get_current_hunk_of_item(item)
+          local cursor_row, cursor_col
+          if hunk then
+            cursor_row, cursor_col = unpack(vim.api.nvim_win_get_cursor(0))
+          end
 
           notif.delete_all()
           M.status_buffer:close()
@@ -850,7 +854,16 @@ local cmd_func_map = function()
           vim.cmd("e " .. relpath)
 
           if hunk then
-            vim.cmd(tostring(hunk.disk_from))
+            local line_offset = cursor_row - hunk.first
+            local row = hunk.disk_from + line_offset - 1
+            for i = 1, line_offset do
+              if string.sub(hunk_lines[i], 1, 1) == "-" then
+                row = row - 1
+              end
+            end
+            -- adjust for diff sign column
+            local col = cursor_col == 0 and 0 or cursor_col - 1
+            vim.api.nvim_win_set_cursor(0, { row, col })
           end
         elseif vim.tbl_contains({ "unmerged", "unpulled", "recent", "stashes" }, section.name) then
           if M.commit_view and M.commit_view.is_open then
