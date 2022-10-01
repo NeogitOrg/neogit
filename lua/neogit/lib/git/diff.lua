@@ -59,7 +59,7 @@ local function parse_diff(output, with_stats)
       table.insert(header, output[i])
     end
 
-    if header[2]:match("^similarity index") then
+    if #header >= 4 and header[2]:match("^similarity index") then
       diff.kind = "renamed"
       table.insert(diff.info, header[3])
       table.insert(diff.info, header[4])
