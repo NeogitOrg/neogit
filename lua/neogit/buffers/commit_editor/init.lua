@@ -31,7 +31,6 @@ function M.new(content, filename, on_unload)
 end
 
 function M:open()
-  local written = false
   self.buffer = Buffer.create {
     name = self.filename,
     filetype = "NeogitCommitMessage",
@@ -40,21 +39,17 @@ function M:open()
     modifiable = true,
     readonly = false,
     autocmds = {
-      ["BufWritePost"] = function()
-        written = true
-      end,
       ["BufUnload"] = function()
-        if written then
-          if
-            config.values.disable_commit_confirmation
-            or input.get_confirmation("Are you sure you want to commit?")
-          then
-            vim.cmd("silent g/^#/d | silent w!")
-          end
+        if
+          not config.values.disable_commit_confirmation
+          and not input.get_confirmation("Are you sure you want to commit?")
+        then
+          vim.cmd("silent %d | silent w!")
+          return
         end
-
+        vim.cmd("silent g/^#/d | silent w!")
         if self.on_unload then
-          self.on_unload(written)
+          self.on_unload()
         end
         require("neogit.process").defer_show_preview_buffers()
       end,
@@ -69,7 +64,7 @@ function M:open()
     initialize = function(buffer)
       buffer:set_lines(0, -1, false, self.content)
       if not config.values.disable_insert_on_commit then
-        vim.cmd(":startinsert")
+        vim.cmd("startinsert")
       end
 
       -- NOTE: This avoids the user having to force to save the contents of the buffer.
