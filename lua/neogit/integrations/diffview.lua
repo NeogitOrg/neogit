@@ -16,7 +16,7 @@ local old_config
 
 M.diffview_mappings = {
   close = function()
-    vim.cmd([[tabclose]])
+    vim.cmd("tabclose")
     neogit.dispatch_refresh()
     dv.setup(old_config)
   end,

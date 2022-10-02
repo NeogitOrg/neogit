@@ -49,10 +49,7 @@ function M:open()
             config.values.disable_commit_confirmation
             or input.get_confirmation("Are you sure you want to commit?")
           then
-            vim.cmd([[
-              silent g/^#/d
-              silent w!
-            ]])
+            vim.cmd("silent g/^#/d | silent w!")
           end
         end
 
@@ -75,7 +72,7 @@ function M:open()
       end
 
       -- NOTE: This avoids the user having to force to save the contents of the buffer.
-      vim.cmd([[silent w!]])
+      vim.cmd("silent w!")
     end,
   }
 end
