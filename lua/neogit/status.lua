@@ -398,7 +398,7 @@ local function refresh(which)
     logger.debug("[STATUS BUFFER]: Refreshes completed")
     a.util.scheduler()
     refresh_status()
-    vim.cmd([[do <nomodeline> User NeogitStatusRefreshed]])
+    vim.cmd("do <nomodeline> User NeogitStatusRefreshed")
   end
 
   a.util.scheduler()
