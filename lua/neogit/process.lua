@@ -36,6 +36,8 @@ local function spawn(options, cb)
     table.insert(params.env, string.format("%s=%s", "GNUPGHOME", os.getenv("GNUPGHOME") or ""))
     table.insert(params.env, string.format("%s=%s", "NVIM", vim.v.servername))
     table.insert(params.env, string.format("%s=%s", "PATH", os.getenv("PATH")))
+    table.insert(params.env, string.format("%s=%s", "SSH_AUTH_SOCK", os.getenv("SSH_AUTH_SOCK") or ""))
+    table.insert(params.env, string.format("%s=%s", "SSH_AGENT_PID", os.getenv("SSH_AGENT_PID") or ""))
     for k, v in pairs(options.env) do
       table.insert(params.env, string.format("%s=%s", k, v))
     end
