@@ -97,7 +97,6 @@ local function update_status(state)
   end
 
   state.head = head
-  print("Setting upstream", vim.inspect(upstream))
   state.upstream = upstream
   state.untracked.items = untracked_files
   state.unstaged.items = unstaged_files

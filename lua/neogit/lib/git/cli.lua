@@ -564,7 +564,6 @@ local function new_builder(subcommand)
         return nil
       end
       local result = p:wait()
-      print("Got result: ", vim.inspect(result))
 
       handle_new_cmd({
         cmd = table.concat(p.cmd, " "),

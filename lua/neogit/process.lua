@@ -219,6 +219,9 @@ function Process:spawn(cb)
   -- An empty table is treated as an array
   self.env = self.env or {}
   self.env.TERM = "xterm-256color"
+  if self.cwd == "<current>" then
+    self.cwd = nil
+  end
 
   local start = vim.loop.hrtime()
   self.start = start
@@ -252,7 +255,6 @@ function Process:spawn(cb)
   end
 
   local function on_exit(_, code)
-    print("Finished command: ", vim.inspect(self.cmd))
     res.stdout = vim.tbl_filter(function(v)
       return v ~= ""
     end, res.stdout)
@@ -277,7 +279,6 @@ function Process:spawn(cb)
       cb(res)
     end
   end
-  print("Running command: ", vim.inspect(self))
 
   local job = vim.fn.jobstart(self.cmd, {
     cwd = self.cwd,
@@ -302,49 +303,6 @@ function Process:spawn(cb)
   if not hide_console then
     self:start_timer()
   end
-
-  -- local params = {
-  --   stdio = { stdin, stdout, stderr },
-  -- }
-  -- if options.env then
-  --   params.env = {}
-  --   -- setting 'env' completely overrides the parent environment, so we need to
-  --   -- append all variables that are necessary for git to work in addition to
-  --   -- all variables from passed object.
-  --   table.insert(params.env, string.format("%s=%s", "HOME", os.getenv("HOME")))
-  --   table.insert(params.env, string.format("%s=%s", "GNUPGHOME", os.getenv("GNUPGHOME") or ""))
-  --   table.insert(params.env, string.format("%s=%s", "NVIM", vim.v.servername))
-  --   table.insert(params.env, string.format("%s=%s", "PATH", os.getenv("PATH")))
-  --   table.insert(params.env, string.format("%s=%s", "SSH_AUTH_SOCK", os.getenv("SSH_AUTH_SOCK") or ""))
-  --   table.insert(params.env, string.format("%s=%s", "SSH_AGENT_PID", os.getenv("SSH_AGENT_PID") or ""))
-  --   for k, v in pairs(options.env) do
-  --     table.insert(params.env, string.format("%s=%s", k, v))
-  --   end
-  -- end
-
-  --handle, err = vim.loop.spawn(options.cmd, params, function(code, _)
-  --  handle:close()
-
-  --  return_code = code
-  --  process.code = code
-  --  -- Remove process
-  --  processes[process.handle] = nil
-  --  if process.timer then
-  --    process:stop_timer()
-  --  end
-  --  if verbose and code ~= 0 and not hide_console then
-  --    vim.schedule(show_preview_buffer)
-  --  end
-  --  process_closed = true
-  --  raise_if_fully_closed()
-  --end)
-  ----print('started process', vim.inspect(params), '->', handle, err, '@'..(params.cwd or '')..'@', options.input)
-  --if not handle then
-  --  stdout:close()
-  --  stderr:close()
-  --  stdin:close()
-  --  error(err)
-  --end
 
   if self.input ~= nil then
     assert(type(self.input) == "string")

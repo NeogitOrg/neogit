@@ -141,7 +141,6 @@ local function draw_buffer()
       return
     end
 
-    print("Section", header, "items", vim.inspect(items))
     output:append(string.format("%s (%d)", header, #data.items))
 
     local location = locations_lookup[key]
@@ -310,7 +309,6 @@ local function refresh_status()
   if M.status_buffer == nil then
     return
   end
-  print("Refreshing status")
 
   M.status_buffer:unlock()
 
@@ -401,7 +399,6 @@ local function refresh(which)
     a.util.join(refreshes)
     logger.debug("[STATUS BUFFER]: Refreshes completed")
     a.util.scheduler()
-    print("====== Finished Refreshed status")
 
     refresh_status()
     vim.cmd("do <nomodeline> User NeogitStatusRefreshed")
