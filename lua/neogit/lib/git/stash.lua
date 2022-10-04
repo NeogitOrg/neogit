@@ -23,13 +23,13 @@ local function perform_stash(include)
   cli["read-tree"].merge.index_output(".git/NEOGIT_TMP_INDEX").args(index).call()
 
   if include.worktree then
-    local files = cli.diff.no_ext_diff.name_only.null_terminated
+    local files = cli.diff.no_ext_diff.name_only
       .args("HEAD")
       .env({
         GIT_INDEX_FILE = ".git/NEOGIT_TMP_INDEX",
       })
       .call()
-    files = vim.split(trim_null_terminator(files), "\0")
+    print("Got files: ", vim.inspect(files))
 
     cli["update-index"].add.remove
       .files(unpack(files))

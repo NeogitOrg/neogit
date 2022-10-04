@@ -3,11 +3,10 @@ local git = {
   stash = require("neogit.lib.git.stash"),
 }
 local a = require("plenary.async")
-local util = require("neogit.lib.util")
 local Collection = require("neogit.lib.collection")
 
 local function update_status(state)
-  local result = git.cli.status.porcelain(2).branch.null_terminated.call()
+  local result = git.cli.status.porcelain(2).branch.call()
 
   local untracked_files, unstaged_files, staged_files = {}, {}, {}
   local append_original_path
@@ -19,7 +18,7 @@ local function update_status(state)
   local head = {}
   local upstream = {}
 
-  for _, l in ipairs(util.split(result[1], "\0")) do
+  for _, l in ipairs(result) do
     if append_original_path then
       append_original_path(l)
     else
@@ -90,14 +89,15 @@ local function update_status(state)
     end
   end
 
-  if head.branch == state.head.branch then
+  if not state.head.branch or head.branch == state.head.branch then
     head.commit_message = state.head.commit_message
   end
-  if upstream.branch == state.upstream.branch then
+  if not upstream.branch or upstream.branch == state.upstream.branch then
     upstream.commit_message = state.upstream.commit_message
   end
 
   state.head = head
+  print("Setting upstream", vim.inspect(upstream))
   state.upstream = upstream
   state.untracked.items = untracked_files
   state.unstaged.items = unstaged_files

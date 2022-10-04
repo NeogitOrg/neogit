@@ -177,6 +177,9 @@ function diff.register(meta)
       end))
     end
 
+    print("diff unstaged:", vim.inspect(repo.unstaged.items))
+    print("diff staged:", vim.inspect(repo.staged.items))
+
     for _, f in ipairs(repo.unstaged.items) do
       if f.mode ~= "D" and f.mode ~= "F" and (not filter or filter:accepts("unstaged", f.name)) then
         table.insert(executions, function()

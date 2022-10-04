@@ -32,12 +32,14 @@ local function parse_log(output)
 end
 
 local function update_recent(state)
+  print("Updating recent")
   local count = config.values.status.recent_commit_count
   if count < 1 then
     return
   end
 
   local result = cli.log.oneline.max_count(count).show_popup(false).call()
+  print("Result: ", vim.inspect(result))
 
   state.recent.items = util.map(result, function(x)
     return { name = x }

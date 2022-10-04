@@ -37,7 +37,6 @@ local configurations = {
       short = "-s",
       branch = "-b",
       verbose = "-v",
-      null_terminated = "-z",
     },
     options = {
       porcelain = "--porcelain",
@@ -78,7 +77,6 @@ local configurations = {
   },
   diff = config {
     flags = {
-      null_terminated = "-z",
       cached = "--cached",
       shortstat = "--shortstat",
       patch = "--patch",
@@ -301,7 +299,11 @@ local configurations = {
 }
 
 local function git_root()
-  return util.trim(process.spawn { cmd = "git", args = { "rev-parse", "--show-toplevel" }, silent = true })
+  return
+    table.concat(
+    process:new({ cmd = { "git", "rev-parse", "--show-toplevel" } }):spawn_blocking().stdout,
+    "\n"
+  )
 end
 
 local git_root_sync = function()
@@ -348,46 +350,6 @@ local function handle_new_cmd(job, popup, hidden_text)
       )
     end)
   end
-end
-
-local function exec(cmd, args, cwd, stdin, env, show_popup, hide_text, verbose)
-  args = args or {}
-  if show_popup == nil then
-    show_popup = true
-  end
-
-  table.insert(args, 1, "--no-optional-locks")
-  table.insert(args, 2, cmd)
-
-  if not cwd then
-    cwd = git_root()
-  elseif cwd == "<current>" then
-    cwd = nil
-  end
-
-  local time = os.clock()
-  local opts = {
-    cmd = "git",
-    args = args,
-    env = env,
-    input = stdin,
-    cwd = cwd,
-    verbose = verbose,
-  }
-
-  local result, code, errors = process.spawn(opts)
-  local stdout = split(result, "\n")
-  local stderr = split(errors, "\n")
-
-  handle_new_cmd({
-    cmd = "git " .. table.concat(args, " "),
-    stdout = stdout,
-    stderr = stderr,
-    code = code,
-    time = os.clock() - time,
-  }, show_popup, hide_text)
-
-  return stdout, code, stderr
 end
 
 local function new_job(cmd, args, cwd, _stdin, env, show_popup, hide_text)
@@ -550,66 +512,69 @@ local function new_builder(subcommand)
     env = {},
   }
 
+  local function to_process(verbose)
+    -- Disable the pager so that the commands dont stop and wait for pagination
+    local cmd = { "git", "--no-pager", "--no-optional-locks", subcommand }
+    for _, o in ipairs(state.options) do
+      table.insert(cmd, o)
+    end
+    for _, a in ipairs(state.arguments) do
+      table.insert(cmd, a)
+    end
+    if #state.files > 0 then
+      table.insert(cmd, "--")
+    end
+    for _, f in ipairs(state.files) do
+      table.insert(cmd, f)
+    end
+
+    if state.prefix then
+      table.insert(cmd, 1, state.prefix)
+    end
+
+    logger.debug(string.format("[CLI]: Executing '%s %s'", subcommand, table.concat(cmd, " ")))
+
+    return process:new { cmd = cmd, cwd = state.cwd, input = state.input, env = state.env, verbose = verbose }
+  end
+
   return setmetatable({
     [k_state] = state,
     [k_config] = configuration,
     [k_command] = subcommand,
+    to_process = to_process,
     call = function(verbose)
-      local args = {}
-      for _, o in ipairs(state.options) do
-        table.insert(args, o)
-      end
-      for _, a in ipairs(state.arguments) do
-        table.insert(args, a)
-      end
-      if #state.files > 0 then
-        table.insert(args, "--")
-      end
-      for _, f in ipairs(state.files) do
-        table.insert(args, f)
-      end
+      local p = to_process(verbose)
+      local result = p:spawn_async()
 
-      if state.prefix then
-        table.insert(args, 1, state.prefix)
-      end
+      handle_new_cmd({
+        cmd = table.concat(p.cmd, " "),
+        stdout = result.stdout,
+        stderr = result.stderr,
+        code = result.code,
+        time = result.time,
+      }, state.show_popup, state.hide_text)
 
-      logger.debug(string.format("[CLI]: Executing '%s %s'", subcommand, table.concat(args, " ")))
-
-      return exec(
-        subcommand,
-        args,
-        state.cwd,
-        state.input,
-        state.env,
-        state.show_popup,
-        state.hide_text,
-        verbose
-      )
+      return result.stdout, result.code, result.stderr
     end,
-    -- Console window is not possible due to using a different execution
-    -- strategy
-    call_sync = function(_)
-      local args = {}
-      for _, o in ipairs(state.options) do
-        table.insert(args, o)
+    call_sync = function(verbose)
+      local p = to_process(verbose)
+      logger.debug(string.format("[CLI]: Executing '%s %s'", subcommand, table.concat(p.cmd, " ")))
+      if not p:spawn() then
+        error("Failed to run command")
+        return nil
       end
-      for _, a in ipairs(state.arguments) do
-        table.insert(args, a)
-      end
-      if #state.files > 0 then
-        table.insert(args, "--")
-      end
-      for _, f in ipairs(state.files) do
-        table.insert(args, f)
-      end
+      local result = p:wait()
+      print("Got result: ", vim.inspect(result))
 
-      if state.prefix then
-        table.insert(args, 1, state.prefix)
-      end
+      handle_new_cmd({
+        cmd = table.concat(p.cmd, " "),
+        stdout = result.stdout,
+        stderr = result.stderr,
+        code = result.code,
+        time = result.time,
+      }, state.show_popup, state.hide_text)
 
-      logger.debug(string.format("[CLI]: Executing '%s %s'", subcommand, table.concat(args, " ")))
-
-      return exec_sync(subcommand, args, state.cwd, state.input, state.env, state.show_popup, state.hide_text)
+      return result.stdout, result.code, result.stderr
     end,
     to_job = function()
       local args = {}
