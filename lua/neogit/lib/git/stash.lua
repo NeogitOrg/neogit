@@ -9,10 +9,6 @@ local function parse(output)
   return result
 end
 
-local function trim_null_terminator(str)
-  return string.gsub(str, "^(.-)%z*$", "%1")
-end
-
 local function perform_stash(include)
   if not include then
     return

@@ -2,9 +2,7 @@ local notif = require("neogit.lib.notification")
 local logger = require("neogit.logger")
 local a = require("plenary.async")
 local process = require("neogit.process")
-local Job = require("neogit.lib.job")
 local util = require("neogit.lib.util")
-local split = require("neogit.lib.util").split
 
 local function config(setup)
   setup = setup or {}
@@ -352,38 +350,6 @@ local function handle_new_cmd(job, popup, hidden_text)
   end
 end
 
-local function new_job(cmd, args, cwd, _stdin, env, show_popup, hide_text)
-  args = args or {}
-  if show_popup == nil then
-    show_popup = true
-  end
-  table.insert(args, 1, cmd)
-
-  if not cwd then
-    cwd = git_root_sync()
-  elseif cwd == "<current>" then
-    cwd = nil
-  end
-
-  local cmd = "git " .. table.concat(args, " ")
-  local job = Job.new { cmd = cmd, env = env }
-
-  job.cwd = cwd
-
-  handle_new_cmd(job, show_popup, hide_text)
-
-  return job
-end
-
-local function exec_sync(cmd, args, cwd, stdin, env, show_popup, hide_text)
-  local job = new_job(cmd, args, cwd, stdin, env, show_popup, hide_text)
-
-  job:start()
-  job:wait()
-
-  return job.stdout, job.code, job.stderr
-end
-
 local k_state = {}
 local k_config = {}
 local k_command = {}
@@ -717,6 +683,7 @@ local cli = setmetatable({
         if is_end then
           return
         end
+
         local data = table.concat(data, "")
         data = data:gsub(ansi_escape_sequence_pattern, "")
         table.insert(stdout, data)

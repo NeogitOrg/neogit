@@ -1,7 +1,5 @@
 local Ui = require("neogit.lib.ui")
 local Component = require("neogit.lib.ui.component")
-local Job = require("neogit.lib.job")
-local difflib = require("neogit.lib.git.diff")
 local util = require("neogit.lib.util")
 local common = require("neogit.buffers.common")
 
@@ -14,16 +12,6 @@ local map = util.map
 local List = common.List
 
 local M = {}
-
-local _mode_to_text = {
-  M = "Modified",
-  N = "New file",
-  A = "Added",
-  D = "Deleted",
-  C = "Copied",
-  U = "Updated",
-  R = "Renamed",
-}
 
 local RemoteHeader = Component.new(function(props)
   return row {
