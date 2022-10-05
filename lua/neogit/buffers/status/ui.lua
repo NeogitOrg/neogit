@@ -99,36 +99,36 @@ function M.Status(state)
   }
 end
 
-function _load_diffs(repo)
-  local cli = require("neogit.lib.git.cli")
+-- function _load_diffs(repo)
+--   local cli = require("neogit.lib.git.cli")
 
-  local unstaged_jobs = map(repo.unstaged.items, function(f)
-    return cli.diff.shortstat.patch.files(f.name).to_job()
-  end)
+--   local unstaged_jobs = map(repo.unstaged.items, function(f)
+--     return cli.diff.shortstat.patch.files(f.name).to_job()
+--   end)
 
-  local staged_jobs = map(repo.staged.items, function(f)
-    return cli.diff.cached.shortstat.patch.files(f.name).to_job()
-  end)
+--   local staged_jobs = map(repo.staged.items, function(f)
+--     return cli.diff.cached.shortstat.patch.files(f.name).to_job()
+--   end)
 
-  local jobs = {}
+--   local jobs = {}
 
-  for _, x in ipairs { unstaged_jobs, staged_jobs } do
-    for _, j in ipairs(x) do
-      table.insert(jobs, j)
-    end
-  end
+--   for _, x in ipairs { unstaged_jobs, staged_jobs } do
+--     for _, j in ipairs(x) do
+--       table.insert(jobs, j)
+--     end
+--   end
 
-  Job.start_all(jobs)
-  Job.wait_all(jobs)
+--   Job.start_all(jobs)
+--   Job.wait_all(jobs)
 
-  for i, j in ipairs(unstaged_jobs) do
-    repo.unstaged.items[i].diff = difflib.parse(j.stdout, true)
-  end
+--   for i, j in ipairs(unstaged_jobs) do
+--     repo.unstaged.items[i].diff = difflib.parse(j.stdout, true)
+--   end
 
-  for i, j in ipairs(staged_jobs) do
-    repo.staged.items[i].diff = difflib.parse(j.stdout, true)
-  end
-end
+--   for i, j in ipairs(staged_jobs) do
+--     repo.staged.items[i].diff = difflib.parse(j.stdout, true)
+--   end
+-- end
 
 function _TEST()
   local repo = require("neogit").repo

@@ -301,7 +301,7 @@ local configurations = {
 local function git_root()
   return
     table.concat(
-    process:new({ cmd = { "git", "rev-parse", "--show-toplevel" } }):spawn_blocking().stdout,
+    process.new({ cmd = { "git", "rev-parse", "--show-toplevel" } }):spawn_blocking().stdout,
     "\n"
   )
 end
@@ -514,12 +514,12 @@ local function new_builder(subcommand)
 
   local function to_process(verbose)
     -- Disable the pager so that the commands dont stop and wait for pagination
-    local cmd = { "git", "--no-pager", "--no-optional-locks", subcommand }
+    local cmd = { "git", "--no-pager", "-c", "color.ui=always", "--no-optional-locks", subcommand }
     for _, o in ipairs(state.options) do
       table.insert(cmd, o)
     end
-    for _, a in ipairs(state.arguments) do
-      table.insert(cmd, a)
+    for _, arg in ipairs(state.arguments) do
+      table.insert(cmd, arg)
     end
     if #state.files > 0 then
       table.insert(cmd, "--")
@@ -534,7 +534,7 @@ local function new_builder(subcommand)
 
     logger.debug(string.format("[CLI]: Executing '%s %s'", subcommand, table.concat(cmd, " ")))
 
-    return process:new { cmd = cmd, cwd = state.cwd, input = state.input, env = state.env, verbose = verbose }
+    return process.new { cmd = cmd, cwd = state.cwd, input = state.input, env = state.env, verbose = verbose }
   end
 
   return setmetatable({
@@ -545,6 +545,8 @@ local function new_builder(subcommand)
     call = function(verbose)
       local p = to_process(verbose)
       local result = p:spawn_async()
+
+      assert(result, "Command did not complete")
 
       handle_new_cmd({
         cmd = table.concat(p.cmd, " "),
@@ -564,6 +566,7 @@ local function new_builder(subcommand)
         return nil
       end
       local result = p:wait()
+      assert(result, "Command did not complete")
 
       handle_new_cmd({
         cmd = table.concat(p.cmd, " "),
@@ -574,27 +577,6 @@ local function new_builder(subcommand)
       }, state.show_popup, state.hide_text)
 
       return result.stdout, result.code, result.stderr
-    end,
-    to_job = function()
-      local args = {}
-      for _, o in ipairs(state.options) do
-        table.insert(args, o)
-      end
-      for _, a in ipairs(state.arguments) do
-        table.insert(args, a)
-      end
-      if #state.files > 0 then
-        table.insert(args, "--")
-      end
-      for _, f in ipairs(state.files) do
-        table.insert(args, f)
-      end
-
-      if state.prefix then
-        table.insert(args, 1, state.prefix)
-      end
-
-      return new_job(subcommand, args, state.cwd, state.input, state.env, state.show_popup)
     end,
   }, mt_builder)
 end

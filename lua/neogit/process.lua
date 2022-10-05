@@ -1,9 +1,6 @@
 local a = require("plenary.async")
 
 local Buffer = require("neogit.lib.buffer")
-local function trim_newlines(s)
-  return (string.gsub(s, "^(.-)\n*$", "%1"))
-end
 
 local function remove_escape_codes(s)
   -- from: https://stackoverflow.com/questions/48948630/lua-ansi-escapes-pattern
@@ -12,11 +9,11 @@ local function remove_escape_codes(s)
 end
 
 ---@class Process
----@field cwd string|nil
 ---@field cmd string[]
+---@field cwd string|nil
 ---@field env table<string, string>|nil
 ---@field verbose boolean If true, stdout will be written to the console buffer
----@field input string|nil
+---@field input string|string[]|nil
 ---@field result ProcessResult|nil
 local Process = {}
 Process.__index = Process
@@ -29,12 +26,11 @@ local processes = {}
 ---@field stderr string[]
 ---@field code number
 ---@field time number seconds
-local ProcessResult = {}
 
 ---@param process Process
 ---@return Process
-function Process:new(process)
-  return setmetatable(process, self)
+function Process.new(process)
+  return setmetatable(process, Process)
 end
 
 local preview_buffer = nil
@@ -143,9 +139,6 @@ function Process:start_timer()
         timer:stop()
         timer:close()
         if not self.result or self.result.code ~= 0 then
-          if not self.verbose then
-            append_log(self, table.concat(self.result.stdout, "\n"))
-          end
           append_log(
             self,
             string.format("Command running for: %.2f ms", (vim.loop.hrtime() - self.start) / 1e6)
@@ -177,7 +170,7 @@ end
 
 --- Blocks until process completes
 ---@param timeout number|nil
----@return ProcessResult
+---@return ProcessResult|nil
 function Process:wait(timeout)
   if not self.job then
     error("Process not started")
@@ -187,22 +180,26 @@ function Process:wait(timeout)
   else
     vim.fn.jobwait { self.job }
   end
-  assert(self.result ~= nil)
+
   return self.result
 end
 
 --- Spawn and await the process
 --- Must be called inside a plenary async context
----@return ProcessResult
+---
+--- Returns nil if spawning fails
+---@return ProcessResult|nil
 function Process:spawn_async()
   return a.wrap(Process.spawn, 2)(self)
 end
 
 --- Spawn and block until the process completes
----@return ProcessResult
-function Process:spawn_blocking()
+--- If timeout is not nil and the process does not complete in time, nil is
+--- returned
+---@return ProcessResult|nil
+function Process:spawn_blocking(timeout)
   self:spawn()
-  return self:wait()
+  return self:wait(timeout)
 end
 
 ---Spawns a process in the background and returns immediately
@@ -225,7 +222,6 @@ function Process:spawn(cb)
 
   local start = vim.loop.hrtime()
   self.start = start
-  self.result = res
 
   local function on_stdout(_, data)
     local d = remove_escape_codes(data[1])
@@ -294,6 +290,9 @@ function Process:spawn(cb)
 
   if job <= 0 then
     error("Failed to start process: ", vim.inspect(self))
+    if cb then
+      cb(nil)
+    end
     return false
   end
 
@@ -305,10 +304,17 @@ function Process:spawn(cb)
   end
 
   if self.input ~= nil then
-    assert(type(self.input) == "string")
-    vim.api.nvim_chan_send(job, self.input)
+    if type(self.input) == "string" then
+      vim.api.nvim_chan_send(job, self.input)
+    elseif type(self.input) == "table" then
+      vim.api.nvim_chan_send(job, table.concat(self.input, "\r\n"))
+    else
+      error("Input must be either nil, string or string{}")
+    end
   end
 
+  -- Send eof
+  vim.api.nvim_chan_send(job, "\04")
   vim.fn.chanclose(job, "stdin")
 
   return true
