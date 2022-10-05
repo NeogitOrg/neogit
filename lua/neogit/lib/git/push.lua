@@ -4,9 +4,7 @@ local util = require("neogit.lib.util")
 local M = {}
 
 function M.push_interactive(remote, branch, args)
-  local cmd = "git push " .. remote .. " " .. branch .. " " .. args
-
-  return cli.interactive_git_cmd(cmd)
+  return cli.push.args(remote or "", branch or "").args(args).call_interactive()
 end
 
 local function update_unmerged(state)

@@ -92,7 +92,7 @@ function M.create()
     return
   end
 
-  cli.interactive_git_cmd(tostring(cli.branch.name(name)))
+  cli.branch.name(name).call_interactive()
 
   return name
 end
@@ -106,7 +106,7 @@ function M.delete()
     return
   end
 
-  cli.interactive_git_cmd(tostring(cli.branch.delete.name(chosen)))
+  cli.branch.delete.name(chosen).call_interactive()
 
   return chosen
 end
@@ -118,7 +118,7 @@ function M.checkout_new()
     return
   end
 
-  cli.interactive_git_cmd(tostring(cli.checkout.new_branch(name)))
+  cli.checkout.new_branch(name).call_interactive()
 end
 
 function M.current()

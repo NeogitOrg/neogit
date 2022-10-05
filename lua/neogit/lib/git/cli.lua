@@ -194,6 +194,9 @@ local configurations = {
     flags = {
       no_commit = "--no-commit",
     },
+    pull = config {
+      flags = {},
+    },
   },
   branch = config {
     flags = {
@@ -364,6 +367,14 @@ local mt_builder = {
         return tbl
       end
     end
+    if action == "arg_list" then
+      return function(args)
+        for _, v in ipairs(args) do
+          table.insert(tbl[k_state].arguments, v)
+        end
+        return tbl
+      end
+    end
 
     if action == "files" or action == "paths" then
       return function(...)
@@ -462,6 +473,61 @@ local mt_builder = {
   end,
 }
 
+---@param p Process
+---@param line string
+local function handle_interactive_password_questions(p, line)
+  process.hide_preview_buffers()
+  logger.debug(string.format("Matching interactive cmd output: '%s'", line))
+  if vim.startswith(line, "Are you sure you want to continue connecting ") then
+    logger.debug("[CLI]: Confirming whether to continue with unauthenticated host")
+    local prompt = line
+    local value = vim.fn.input {
+      prompt = "The authenticity of the host can't be established. " .. prompt .. " ",
+      cancelreturn = "__CANCEL__",
+    }
+    if value ~= "__CANCEL__" then
+      logger.debug("[CLI]: Received answer")
+      p:send(value .. "\r\n")
+    else
+      logger.debug("[CLI]: Cancelling the interactive cmd")
+      p:close_stdin()
+    end
+  elseif vim.startswith(line, "Username for ") then
+    logger.debug("[CLI]: Asking for username")
+    local prompt = line:match("(.*:?):.*")
+    local value = vim.fn.input {
+      prompt = prompt .. " ",
+      cancelreturn = "__CANCEL__",
+    }
+    if value ~= "__CANCEL__" then
+      logger.debug("[CLI]: Received username")
+      p:send(value .. "\r\n")
+    else
+      logger.debug("[CLI]: Cancelling the interactive cmd")
+      p:close_stdin()
+    end
+  elseif vim.startswith(line, "Enter passphrase") or vim.startswith(line, "Password for") then
+    logger.debug("[CLI]: Asking for password")
+    local prompt = line:match("(.*:?):.*")
+    local value = vim.fn.inputsecret {
+      prompt = prompt .. " ",
+      cancelreturn = "__CANCEL__",
+    }
+    if value ~= "__CANCEL__" then
+      logger.debug("[CLI]: Received password")
+      p:send(value .. "\r\n")
+    else
+      logger.debug("[CLI]: Cancelling the interactive cmd")
+      p:close_stdin()
+    end
+  else
+    return false
+  end
+
+  process.defer_show_preview_buffers()
+  return true
+end
+
 local function new_builder(subcommand)
   local configuration = configurations[subcommand]
   if not configuration then
@@ -485,11 +551,15 @@ local function new_builder(subcommand)
       table.insert(cmd, o)
     end
     for _, arg in ipairs(state.arguments) do
-      table.insert(cmd, arg)
+      if arg ~= "" then
+        table.insert(cmd, arg)
+      end
     end
+
     if #state.files > 0 then
       table.insert(cmd, "--")
     end
+
     for _, f in ipairs(state.files) do
       table.insert(cmd, f)
     end
@@ -500,7 +570,7 @@ local function new_builder(subcommand)
 
     logger.debug(string.format("[CLI]: Executing '%s %s'", subcommand, table.concat(cmd, " ")))
 
-    return process.new { cmd = cmd, cwd = state.cwd, input = state.input, env = state.env, verbose = verbose }
+    return process.new { cmd = cmd, cwd = state.cwd, env = state.env, verbose = verbose }
   end
 
   return setmetatable({
@@ -508,9 +578,42 @@ local function new_builder(subcommand)
     [k_config] = configuration,
     [k_command] = subcommand,
     to_process = to_process,
+    call_interactive = function(handle_line)
+      handle_line = handle_line or handle_interactive_password_questions
+      local p = to_process()
+      p.on_line = function(p, line, _)
+        handle_line(p, line)
+      end
+
+      local result = p:spawn_async(function()
+        -- Required since we need to do this before awaiting
+        if state.input then
+          p:send(state.input)
+        end
+        p:close_stdin()
+      end)
+
+      assert(result, "Command did not complete")
+
+      handle_new_cmd({
+        cmd = table.concat(p.cmd, " "),
+        stdout = result.stdout,
+        stderr = result.stderr,
+        code = result.code,
+        time = result.time,
+      }, state.show_popup, state.hide_text)
+
+      return result.stdout, result.code, result.stderr
+    end,
     call = function(verbose)
       local p = to_process(verbose)
-      local result = p:spawn_async()
+      local result = p:spawn_async(function()
+        -- Required since we need to do this before awaiting
+        if state.input then
+          p:send(state.input)
+        end
+        p:close_stdin()
+      end)
 
       assert(result, "Command did not complete")
 
@@ -610,116 +713,10 @@ local meta = {
   end,
 }
 
-local function handle_interactive_password_questions(chan, line)
-  logger.debug(string.format("Matching interactive cmd output: '%s'", line))
-  if vim.startswith(line, "Are you sure you want to continue connecting ") then
-    logger.debug("[CLI]: Confirming whether to continue with unauthenticated host")
-    local prompt = line
-    local value = vim.fn.input {
-      prompt = "The authenticity of the host can't be established. " .. prompt .. " ",
-      cancelreturn = "__CANCEL__",
-    }
-    if value ~= "__CANCEL__" then
-      logger.debug("[CLI]: Received answer")
-      vim.fn.chansend(chan, value .. "\n")
-    else
-      logger.debug("[CLI]: Cancelling the interactive cmd")
-      vim.fn.chanclose(chan)
-    end
-  elseif vim.startswith(line, "Username for ") then
-    logger.debug("[CLI]: Asking for username")
-    local prompt = line:match("(.*:?):.*")
-    local value = vim.fn.input {
-      prompt = prompt .. " ",
-      cancelreturn = "__CANCEL__",
-    }
-    if value ~= "__CANCEL__" then
-      logger.debug("[CLI]: Received username")
-      vim.fn.chansend(chan, value .. "\n")
-    else
-      logger.debug("[CLI]: Cancelling the interactive cmd")
-      vim.fn.chanclose(chan)
-    end
-  elseif vim.startswith(line, "Enter passphrase") or vim.startswith(line, "Password for") then
-    logger.debug("[CLI]: Asking for password")
-    local prompt = line:match("(.*:?):.*")
-    local value = vim.fn.inputsecret {
-      prompt = prompt .. " ",
-      cancelreturn = "__CANCEL__",
-    }
-    if value ~= "__CANCEL__" then
-      logger.debug("[CLI]: Received password")
-      vim.fn.chansend(chan, value .. "\n")
-    else
-      logger.debug("[CLI]: Cancelling the interactive cmd")
-      vim.fn.chanclose(chan)
-    end
-  else
-    return false
-  end
-
-  return true
-end
-
 local cli = setmetatable({
   history = history,
   insert = handle_new_cmd,
   git_root = git_root,
-  interactive_git_cmd = a.wrap(function(cmd, handle_line, cb)
-    handle_line = handle_line or handle_interactive_password_questions
-    -- from: https://stackoverflow.com/questions/48948630/lua-ansi-escapes-pattern
-    local ansi_escape_sequence_pattern = "[\27\155][][()#;?%d]*[A-PRZcf-ntqry=><~]"
-    local stdout = {}
-    local chan
-    local skip_count = 0
-
-    local started_at = os.clock()
-    logger.debug(string.format("[CLI]: Starting interactive git cmd '%s'", cmd))
-    chan = vim.fn.jobstart(vim.fn.has("win32") == 1 and { "cmd", "/C", cmd } or cmd, {
-      pty = true,
-      width = 100,
-      on_stdout = function(_, data)
-        local is_end = #data == 1 and data[1] == ""
-        if is_end then
-          return
-        end
-
-        local data = table.concat(data, "")
-        data = data:gsub(ansi_escape_sequence_pattern, "")
-        table.insert(stdout, data)
-        local lines = vim.split(data, "\r?[\r\n]")
-
-        for i = 1, #lines do
-          if lines[i] ~= "" then
-            if skip_count > 0 then
-              skip_count = skip_count - 1
-            else
-              handle_line(chan, lines[i])
-            end
-          end
-        end
-      end,
-      on_exit = function(_, code)
-        logger.debug(string.format("[CLI]: Interactive git cmd '%s' exited with code %d", cmd, code))
-        handle_new_cmd {
-          cmd = cmd,
-          raw_cmd = cmd,
-          stdout = stdout,
-          stderr = stdout,
-          code = code,
-          time = (os.clock() - started_at) * 1000,
-        }
-        cb {
-          code = code,
-          stdout = stdout,
-        }
-      end,
-    })
-
-    if not chan then
-      logger.error(string.format("[CLI]: Failed to start interactive git cmd ''", cmd))
-    end
-  end, 3),
   git_root_sync = git_root_sync,
   git_dir_path_sync = git_dir_path_sync,
   in_parallel = function(...)
