@@ -490,7 +490,7 @@ local function handle_interactive_password_questions(p, line)
       p:send(value .. "\r\n")
     else
       logger.debug("[CLI]: Cancelling the interactive cmd")
-      p:close_stdin()
+      p:stop()
     end
   elseif vim.startswith(line, "Username for ") then
     logger.debug("[CLI]: Asking for username")
@@ -504,7 +504,7 @@ local function handle_interactive_password_questions(p, line)
       p:send(value .. "\r\n")
     else
       logger.debug("[CLI]: Cancelling the interactive cmd")
-      p:close_stdin()
+      p:stop()
     end
   elseif vim.startswith(line, "Enter passphrase") or vim.startswith(line, "Password for") then
     logger.debug("[CLI]: Asking for password")
@@ -518,9 +518,10 @@ local function handle_interactive_password_questions(p, line)
       p:send(value .. "\r\n")
     else
       logger.debug("[CLI]: Cancelling the interactive cmd")
-      p:close_stdin()
+      p:stop()
     end
   else
+    process.defer_show_preview_buffers()
     return false
   end
 
@@ -580,8 +581,9 @@ local function new_builder(subcommand)
     to_process = to_process,
     call_interactive = function(handle_line)
       handle_line = handle_line or handle_interactive_password_questions
-      local p = to_process()
-      p.on_line = function(p, line, _)
+      local p = to_process(true)
+
+      p.on_partial_line = function(p, line, _)
         handle_line(p, line)
       end
 
@@ -590,7 +592,6 @@ local function new_builder(subcommand)
         if state.input then
           p:send(state.input)
         end
-        p:close_stdin()
       end)
 
       assert(result, "Command did not complete")

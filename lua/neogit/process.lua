@@ -15,7 +15,9 @@ end
 ---@field verbose boolean If true, stdout will be written to the console buffer
 ---@field result ProcessResult|nil
 ---@field job number|nil
+---@field stdin number|nil
 ---@field on_line fun(process: Process, data: string, raw: string) callback on complete lines
+---@field on_partial_line fun(process: Process, data: string, raw: string) callback on complete lines
 local Process = {}
 Process.__index = Process
 
@@ -185,6 +187,12 @@ function Process:wait(timeout)
   return self.result
 end
 
+function Process:stop()
+  if self.job then
+    vim.fn.jobstop(self.job)
+  end
+end
+
 --- Spawn and await the process
 --- Must be called inside a plenary async context
 ---
@@ -210,7 +218,7 @@ function Process:spawn_blocking(timeout)
 end
 
 ---Spawns a process in the background and returns immediately
----@param cb fun(result: ProcessResult)|nil
+---@param cb fun(result: ProcessResult|nil)|nil
 ---@return boolean success
 function Process:spawn(cb)
   ---@type ProcessResult
@@ -230,38 +238,55 @@ function Process:spawn(cb)
   local start = vim.loop.hrtime()
   self.start = start
 
-  local function handle_output(result, on_line)
-    local lbuf = ""
+  local function handle_output(_, result, on_line, on_partial)
+    local raw_last_line = ""
     return function(_, data) -- Complete the previous line
-      lbuf = lbuf .. data[1]
-      local d = remove_escape_codes(lbuf)
-      on_line(d, lbuf)
+      raw_last_line = raw_last_line .. data[1]
 
-      table.insert(result, d)
+      local d = remove_escape_codes(data[1])
 
-      for i = 2, #data - 1 do
+      result[#result] = result[#result] .. d
+
+      on_partial(d, data[1])
+      on_line(result[#result], raw_last_line)
+
+      raw_last_line = ""
+
+      for i = 2, #data do
         d = remove_escape_codes(data[i])
 
-        on_line(d, data[i])
+        on_partial(d, data[i])
+        if i < #data then
+          on_line(d, data[i])
+        else
+          raw_last_line = data[i]
+        end
 
         table.insert(result, d)
       end
-
-      lbuf = data[#data] or ""
     end
   end
 
-  local on_stdout = handle_output(res.stdout, function(line, raw)
+  local on_stdout = handle_output("stdout", res.stdout, function(line, raw)
     if self.verbose then
-      append_log(self, raw .. "\r\n")
+      append_log(self, "\r\n")
     end
     if self.on_line and line ~= "" then
       self.on_line(self, line, raw)
     end
+  end, function(line, raw)
+    if self.verbose then
+      append_log(self, raw)
+    end
+    if self.on_partial_line and line ~= "" then
+      self.on_partial_line(self, line, raw)
+    end
   end)
 
-  local on_stderr = handle_output(res.stderr, function(_, raw)
-    append_log(self, raw .. "\r\n")
+  local on_stderr = handle_output("stderr", res.stderr, function(_, _)
+    append_log(self, "\r\n")
+  end, function(_, raw)
+    append_log(self, raw)
   end)
 
   local function on_exit(_, code)
@@ -279,10 +304,11 @@ function Process:spawn(cb)
     -- Remove self
     processes[self.job] = nil
     self.job = nil
+    self.stdin = nil
     self.result = res
     self:stop_timer()
 
-    if self.verbose and code ~= 0 and not hide_console then
+    if code ~= 0 and not hide_console then
       vim.schedule(show_preview_buffer)
     end
 
@@ -313,6 +339,7 @@ function Process:spawn(cb)
 
   processes[job] = self
   self.job = job
+  self.stdin = job
 
   if not hide_console then
     self:start_timer()
@@ -323,7 +350,8 @@ end
 
 function Process:close_stdin()
   -- Send eof
-  if self.job then
+  if self.stdin then
+    self.stdin = nil
     vim.api.nvim_chan_send(self.job, "\04")
     vim.fn.chanclose(self.job, "stdin")
   end
@@ -332,7 +360,7 @@ end
 --- Send input to the running process
 ---@param data string
 function Process:send(data)
-  if self.job then
+  if self.stdin then
     assert(type(data) == "string", "Data must be of type string")
     vim.api.nvim_chan_send(self.job, data)
   end
