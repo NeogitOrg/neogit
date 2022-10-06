@@ -14,7 +14,8 @@ local function perform_stash(include)
     return
   end
 
-  local index = cli["commit-tree"].no_gpg_sign.parent("HEAD").tree(cli["write-tree"].call()).call()
+  local index =
+    cli["commit-tree"].no_gpg_sign.parent("HEAD").tree(cli["write-tree"].call().stdout).call().stdout
 
   cli["read-tree"].merge.index_output(".git/NEOGIT_TMP_INDEX").args(index).call()
 
@@ -80,9 +81,9 @@ return {
   end,
 
   pop = function(stash)
-    local _, code = cli.stash.apply.index.args(stash).show_popup(false).call()
+    local result = cli.stash.apply.index.args(stash).show_popup(false).call()
 
-    if code == 0 then
+    if result.code == 0 then
       cli.stash.drop.args(stash).call()
     else
       cli.stash.apply.args(stash).call()
@@ -90,9 +91,9 @@ return {
   end,
 
   apply = function(stash)
-    local _, code = cli.stash.apply.index.args(stash).show_popup(false).call()
+    local result = cli.stash.apply.index.args(stash).show_popup(false).call()
 
-    if code ~= 0 then
+    if result.code ~= 0 then
       cli.stash.apply.args(stash).call()
     end
   end,

@@ -75,7 +75,7 @@ end
 
 function M.commits()
   local git = require("neogit.lib.git")
-  local output = git.cli.log.format("fuller").args("--graph").call_sync(true)
+  local output = git.cli.log.format("fuller").args("--graph").call_sync(true).stdout
 
   return parse(output)
 end

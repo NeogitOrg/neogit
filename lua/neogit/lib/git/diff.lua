@@ -180,8 +180,8 @@ function diff.register(meta)
     for _, f in ipairs(repo.unstaged.items) do
       if f.mode ~= "D" and f.mode ~= "F" and (not filter or filter:accepts("unstaged", f.name)) then
         table.insert(executions, function()
-          local raw_diff = cli.diff.no_ext_diff.files(f.name).call()
-          local raw_stats = cli.diff.no_ext_diff.shortstat.files(f.name).call()
+          local raw_diff = cli.diff.no_ext_diff.files(f.name).call().stdout
+          local raw_stats = cli.diff.no_ext_diff.shortstat.files(f.name).call().stdout
           f.diff = parse_diff(raw_diff)
           f.diff.stats = parse_diff_stats(raw_stats)
         end)
@@ -191,8 +191,8 @@ function diff.register(meta)
     for _, f in ipairs(repo.staged.items) do
       if f.mode ~= "D" and f.mode ~= "F" and (not filter or filter:accepts("staged", f.name)) then
         table.insert(executions, function()
-          local raw_diff = cli.diff.no_ext_diff.cached.files(f.name).call()
-          local raw_stats = cli.diff.no_ext_diff.cached.shortstat.files(f.name).call()
+          local raw_diff = cli.diff.no_ext_diff.cached.files(f.name).call().stdout
+          local raw_stats = cli.diff.no_ext_diff.cached.shortstat.files(f.name).call().stdout
           f.diff = parse_diff(raw_diff)
           f.diff.stats = parse_diff_stats(raw_stats)
         end)

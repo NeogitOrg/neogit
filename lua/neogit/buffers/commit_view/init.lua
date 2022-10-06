@@ -28,8 +28,8 @@ function M.new(commit_id, notify)
 
   local instance = {
     is_open = false,
-    commit_info = parser.parse_commit_info(cli.show.format("fuller").args(commit_id).call_sync()),
-    commit_overview = parser.parse_commit_overview(cli.show.stat.oneline.args(commit_id).call_sync()),
+    commit_info = parser.parse_commit_info(cli.show.format("fuller").args(commit_id).call_sync()).stdout,
+    commit_overview = parser.parse_commit_overview(cli.show.stat.oneline.args(commit_id).call_sync()).stdout,
     buffer = nil,
   }
 

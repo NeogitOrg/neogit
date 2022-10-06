@@ -604,7 +604,7 @@ local function new_builder(subcommand)
         time = result.time,
       }, state.show_popup, state.hide_text)
 
-      return result.stdout, result.code, result.stderr
+      return result
     end,
     call = function(verbose)
       local p = to_process(verbose)
@@ -626,7 +626,7 @@ local function new_builder(subcommand)
         time = result.time,
       }, state.show_popup, state.hide_text)
 
-      return result.stdout, result.code, result.stderr
+      return result
     end,
     call_sync = function(verbose)
       local p = to_process(verbose)
@@ -646,7 +646,7 @@ local function new_builder(subcommand)
         time = result.time,
       }, state.show_popup, state.hide_text)
 
-      return result.stdout, result.code, result.stderr
+      return result
     end,
   }, mt_builder)
 end

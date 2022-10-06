@@ -8,7 +8,7 @@ function M.relpath_from_repository(path)
     .args(path)
     .show_popup(false)
     .call()
-  return result[1]
+  return result.stdout[1]
 end
 
 return M

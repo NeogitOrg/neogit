@@ -39,7 +39,7 @@ local function update_recent(state)
 
   local result = cli.log.oneline.max_count(count).show_popup(false).call()
 
-  state.recent.items = util.map(result, function(x)
+  state.recent.items = util.map(result.stdout, function(x)
     return { name = x }
   end)
 end
@@ -47,8 +47,8 @@ end
 return {
   list = function(options)
     options = util.split(options, " ")
-    local output = cli.log.oneline.args(unpack(options)).call()
-    return parse_log(output)
+    local result = cli.log.oneline.args(unpack(options)).call()
+    return parse_log(result.stdout)
   end,
   register = function(meta)
     meta.update_recent = update_recent

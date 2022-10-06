@@ -18,7 +18,7 @@ local function update_status(state)
   local head = {}
   local upstream = {}
 
-  for _, l in ipairs(result) do
+  for _, l in ipairs(result.stdout) do
     if append_original_path then
       append_original_path(l)
     else
@@ -109,13 +109,13 @@ local function update_branch_information(state)
   if state.head.oid ~= "(initial)" then
     table.insert(tasks, function()
       local result = git.cli.log.max_count(1).pretty("%B").call()
-      state.head.commit_message = result[1]
+      state.head.commit_message = result.stdout[1]
     end)
 
     if state.upstream.branch then
       table.insert(tasks, function()
         local result = git.cli.log.max_count(1).pretty("%B").for_range("@{upstream}").show_popup(false).call()
-        state.upstream.commit_message = result[1]
+        state.upstream.commit_message = result.stdout[1]
       end)
     end
   end

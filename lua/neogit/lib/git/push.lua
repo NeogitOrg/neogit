@@ -12,7 +12,7 @@ local function update_unmerged(state)
     return
   end
 
-  local result = cli.log.oneline.for_range("@{upstream}..").show_popup(false).call()
+  local result = cli.log.oneline.for_range("@{upstream}..").show_popup(false).call().stdout
 
   state.unmerged.items = util.map(result, function(x)
     return { name = x }

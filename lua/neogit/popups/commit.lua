@@ -14,14 +14,14 @@ local function do_commit(popup, cmd)
   local client = require("neogit.client")
   local envs = client.get_envs_git_editor()
 
-  local _, result = cmd.env(envs).args(unpack(popup:get_arguments())).call(true)
+  local result = cmd.env(envs).args(unpack(popup:get_arguments())).call(true)
 
   a.util.scheduler()
   if notification then
     notification:delete()
   end
 
-  if result == 0 then
+  if result.code == 0 then
     notif.create("Successfully committed!")
     vim.cmd("do <nomodeline> User NeogitCommitComplete")
   end
