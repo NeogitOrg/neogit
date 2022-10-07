@@ -97,7 +97,10 @@ function Buffer:close(force)
     vim.cmd("silent! 1only")
     vim.cmd("try | tabn # | catch /.*/ | tabp | endtry")
   end
-  vim.api.nvim_buf_delete(self.handle, { force = force })
+
+  if api.nvim_buf_is_valid(self.handle) then
+    vim.api.nvim_buf_delete(self.handle, { force = force })
+  end
 end
 
 function Buffer:hide()
