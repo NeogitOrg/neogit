@@ -29,6 +29,21 @@ local processes = {}
 ---@field stderr string[]
 ---@field code number
 ---@field time number seconds
+local ProcessResult = {}
+
+---Removes empty lines from output
+---@return ProcessResult
+function ProcessResult:trim()
+  self.stdout = vim.tbl_filter(function(v)
+    return v ~= ""
+  end, self.stdout)
+  self.stderr = vim.tbl_filter(function(v)
+    return v ~= ""
+  end, self.stderr)
+
+  return self
+end
+ProcessResult.__index = ProcessResult
 
 ---@param process Process
 ---@return Process
@@ -222,10 +237,10 @@ end
 ---@return boolean success
 function Process:spawn(cb)
   ---@type ProcessResult
-  local res = {
+  local res = setmetatable({
     stdout = { "" },
     stderr = { "" },
-  }
+  }, ProcessResult)
 
   assert(self.job == nil, "Process started twice")
   -- An empty table is treated as an array

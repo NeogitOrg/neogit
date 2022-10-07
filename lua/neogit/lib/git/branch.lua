@@ -16,26 +16,26 @@ local function parse_branches(branches)
 end
 
 function M.get_local_branches()
-  local branches = cli.branch.list.call_sync().stdout
+  local branches = cli.branch.list.call_sync():trim().stdout
 
   return parse_branches(branches)
 end
 
 function M.get_remote_branches()
-  local branches = cli.branch.remotes.call_sync().stdout
+  local branches = cli.branch.remotes.call_sync():trim().stdout
 
   return parse_branches(branches)
 end
 
 function M.get_all_branches()
-  local branches = cli.branch.list.all.call_sync().stdout
+  local branches = cli.branch.list.all.call_sync():trim().stdout
 
   return parse_branches(branches)
 end
 
 function M.get_upstream()
-  local full_name = cli["rev-parse"].abbrev_ref().show_popup(false).args("@{upstream}").call().stdout
-  local current = cli.branch.current.show_popup(false).call().stdout
+  local full_name = cli["rev-parse"].abbrev_ref().show_popup(false).args("@{upstream}").call():trim().stdout
+  local current = cli.branch.current.show_popup(false).call():trim().stdout
 
   if #full_name > 0 and #current > 0 then
     local remote =
@@ -123,7 +123,7 @@ function M.checkout_new()
 end
 
 function M.current()
-  local branch_name = cli.branch.current.call_sync()
+  local branch_name = cli.branch.current.call_sync():trim()
   if #branch_name > 0 then
     return branch_name[1]
   end

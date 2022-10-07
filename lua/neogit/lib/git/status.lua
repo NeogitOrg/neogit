@@ -6,7 +6,7 @@ local a = require("plenary.async")
 local Collection = require("neogit.lib.collection")
 
 local function update_status(state)
-  local result = git.cli.status.porcelain(2).branch.call()
+  local result = git.cli.status.porcelain(2).branch.call():trim()
 
   local untracked_files, unstaged_files, staged_files = {}, {}, {}
   local append_original_path
@@ -19,7 +19,8 @@ local function update_status(state)
   local upstream = {}
 
   for _, l in ipairs(result.stdout) do
-    if append_original_path then
+    if l == "" then
+    elseif append_original_path then
       append_original_path(l)
     else
       local header, value = l:match("# ([%w%.]+) (.+)")
@@ -108,13 +109,14 @@ local function update_branch_information(state)
 
   if state.head.oid ~= "(initial)" then
     table.insert(tasks, function()
-      local result = git.cli.log.max_count(1).pretty("%B").call()
+      local result = git.cli.log.max_count(1).pretty("%B").call():trim()
       state.head.commit_message = result.stdout[1]
     end)
 
     if state.upstream.branch then
       table.insert(tasks, function()
-        local result = git.cli.log.max_count(1).pretty("%B").for_range("@{upstream}").show_popup(false).call()
+        local result =
+          git.cli.log.max_count(1).pretty("%B").for_range("@{upstream}").show_popup(false).call():trim()
         state.upstream.commit_message = result.stdout[1]
       end)
     end

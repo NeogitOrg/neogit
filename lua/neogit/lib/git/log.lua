@@ -156,7 +156,7 @@ local function update_recent(state)
     return
   end
 
-  local result = cli.log.oneline.max_count(count).show_popup(false).call()
+  local result = cli.log.oneline.max_count(count).show_popup(false).call():trim()
 
   state.recent.items = util.map(result.stdout, function(x)
     return { name = x }

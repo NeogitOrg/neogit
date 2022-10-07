@@ -28,7 +28,8 @@ function M.create()
       "l",
       "Log current",
       function(popup)
-        local result = git.cli.log.format("fuller").args("--graph", unpack(popup:get_arguments())).call_sync()
+        local result =
+          git.cli.log.format("fuller").args("--graph", unpack(popup:get_arguments())).call_sync():trim()
         local parse_args = popup:get_parse_arguments()
         LogViewBuffer.new(log.parse(result.stdout), parse_args.graph):open()
       end
@@ -36,18 +37,18 @@ function M.create()
     :action("o", "Log other")
     :action("h", "Log HEAD", function(popup)
       local result =
-        git.cli.log.format("fuller").args(unpack(popup:get_arguments())).for_range("HEAD").call_sync()
+        git.cli.log.format("fuller").args(unpack(popup:get_arguments())).for_range("HEAD").call_sync():trim()
 
       LogViewBuffer.new(log.parse(result.stdout)):open()
     end)
     :new_action_group()
     :action("b", "Log all branches", function(popup)
       local result =
-        git.cli.log.format("fuller").args(unpack(popup:get_arguments())).branches.remotes.call_sync()
+        git.cli.log.format("fuller").args(unpack(popup:get_arguments())).branches.remotes.call_sync():trim()
       LogViewBuffer.new(log.parse(result.stdout)):open()
     end)
     :action("a", "Log all references", function(popup)
-      local result = git.cli.log.format("fuller").args(unpack(popup:get_arguments())).all.call_sync()
+      local result = git.cli.log.format("fuller").args(unpack(popup:get_arguments())).all.call_sync():trim()
       LogViewBuffer.new(log.parse(result.stdout)):open()
     end)
     :new_action_group()

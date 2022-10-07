@@ -74,9 +74,9 @@ local function get_local_diff_view(selected_file_name)
         if side == "left" then
           table.insert(args, "HEAD")
         end
-        return neogit.cli.show.file(unpack(args)).call_sync()
+        return neogit.cli.show.file(unpack(args)).call_sync():trim()
       elseif kind == "working" then
-        return side == "left" and neogit.cli.show.file(path).call_sync() or nil
+        return side == "left" and neogit.cli.show.file(path).call_sync():trim() or nil
       end
     end,
   }

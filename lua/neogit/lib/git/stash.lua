@@ -56,7 +56,7 @@ local function perform_stash(include)
     --.commit('HEAD')
     --.call()
   elseif include.index then
-    local diff = cli.diff.no_ext_diff.cached.call() .. "\n"
+    local diff = cli.diff.no_ext_diff.cached.call():trim().stdout[1] .. "\n"
 
     cli.apply.reverse.cached.input(diff).call()
 
@@ -65,7 +65,7 @@ local function perform_stash(include)
 end
 
 local function update_stashes(state)
-  local result = cli.stash.args("list").call()
+  local result = cli.stash.args("list").call():trim()
   state.stashes.items = parse(result)
 end
 
@@ -81,7 +81,7 @@ return {
   end,
 
   pop = function(stash)
-    local result = cli.stash.apply.index.args(stash).show_popup(false).call()
+    local result = cli.stash.apply.index.args(stash).show_popup(false).call():trim()
 
     if result.code == 0 then
       cli.stash.drop.args(stash).call()
@@ -91,7 +91,7 @@ return {
   end,
 
   apply = function(stash)
-    local result = cli.stash.apply.index.args(stash).show_popup(false).call()
+    local result = cli.stash.apply.index.args(stash).show_popup(false).call():trim()
 
     if result.code ~= 0 then
       cli.stash.apply.args(stash).call()

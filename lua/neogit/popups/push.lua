@@ -40,7 +40,7 @@ function M.create()
     end)
     :action("u", "Push to upstream", function(popup)
       local upstream = git.branch.get_upstream()
-      local result = cli.config.get("push.autoSetupRemote").show_popup(false).call()
+      local result = cli.config.get("push.autoSetupRemote").show_popup(false).call():trim()
       a.util.scheduler()
       if upstream == nil then
         if result.stdout[1] == "true" then
