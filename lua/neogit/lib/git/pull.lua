@@ -9,13 +9,15 @@ end
 
 local function update_unpulled(state)
   if not state.upstream.branch then
-    vim.notify("No upstream branch")
     return
   end
 
   local result = cli.log.oneline.for_range("..@{upstream}").show_popup(false).call()
 
-  state.unpulled.items = util.map(result, function(x)
+  state.unpulled.items = util.filter_map(result, function(x)
+    if x == "" then
+      return
+    end
     return { name = x }
   end)
 end
