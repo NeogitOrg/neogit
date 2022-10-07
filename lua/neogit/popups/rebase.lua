@@ -3,6 +3,7 @@ local git = require("neogit.lib.git")
 local popup = require("neogit.lib.popup")
 local CommitSelectViewBuffer = require("neogit.buffers.commit_select_view")
 local rebase = require("neogit.lib.git.rebase")
+local notif = require("neogit.lib.notification")
 
 local M = {}
 local a = require("plenary.async")
@@ -40,7 +41,9 @@ function M.create()
     :action("i", "Interactive", function()
       local commits = rebase.commits()
       CommitSelectViewBuffer.new(commits, function(_view, selected)
-        rebase.run_interactive(selected.oid)
+        if rebase.run_interactive(selected.oid).code == 0 then
+          notif.create("Rebasing failed. Resolve conflicts before continuing", vim.log.levels.ERROR)
+        end
         a.util.scheduler()
         _view:close()
         status.refresh(true)

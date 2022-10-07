@@ -541,7 +541,7 @@ local function new_builder(subcommand)
     env = {},
   }
 
-  local function to_process(verbose)
+  local function to_process(verbose, external_errors)
     -- Disable the pager so that the commands dont stop and wait for pagination
     local cmd = { "git", "--no-pager", "-c", "color.ui=always", "--no-optional-locks", subcommand }
     for _, o in ipairs(state.options) do
@@ -567,7 +567,13 @@ local function new_builder(subcommand)
 
     logger.debug(string.format("[CLI]: Executing '%s %s'", subcommand, table.concat(cmd, " ")))
 
-    return process.new { cmd = cmd, cwd = state.cwd, env = state.env, verbose = verbose }
+    return process.new {
+      cmd = cmd,
+      cwd = state.cwd,
+      env = state.env,
+      verbose = verbose,
+      external_errors = external_errors,
+    }
   end
 
   return setmetatable({
@@ -602,8 +608,8 @@ local function new_builder(subcommand)
 
       return result
     end,
-    call = function(verbose)
-      local p = to_process(verbose)
+    call = function(verbose, external_errors)
+      local p = to_process(verbose, external_errors)
       local result = p:spawn_async(function()
         -- Required since we need to do this before awaiting
         if state.input then
@@ -624,8 +630,8 @@ local function new_builder(subcommand)
 
       return result
     end,
-    call_sync = function(verbose)
-      local p = to_process(verbose)
+    call_sync = function(verbose, external_errors)
+      local p = to_process(verbose, external_errors)
       logger.debug(string.format("[CLI]: Executing '%s %s'", subcommand, table.concat(p.cmd, " ")))
       if not p:spawn() then
         error("Failed to run command")

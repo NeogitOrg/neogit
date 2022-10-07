@@ -20,7 +20,7 @@ function M.run_interactive(commit)
   a.util.scheduler()
   local git = require("neogit.lib.git")
   local envs = client.get_envs_git_editor()
-  return git.cli.rebase.interactive.env(envs).args(commit):call()
+  return git.cli.rebase.interactive.env(envs).args(commit):call(true, true)
 end
 
 local function rebase_command(cmd)

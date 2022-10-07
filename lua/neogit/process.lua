@@ -18,6 +18,7 @@ end
 ---@field stdin number|nil
 ---@field on_line fun(process: Process, data: string, raw: string) callback on complete lines
 ---@field on_partial_line fun(process: Process, data: string, raw: string) callback on complete lines
+---@field external_errors boolean|nil Tells the process that any errors will be dealt with externally and wont open a console buffer
 local Process = {}
 Process.__index = Process
 
@@ -156,7 +157,7 @@ function Process:start_timer()
         self.timer = nil
         timer:stop()
         timer:close()
-        if not self.result or self.result.code ~= 0 then
+        if not self.result or (self.result.code ~= 0 and not self.external_errors) then
           append_log(
             self,
             string.format("Command running for: %.2f ms", (vim.loop.hrtime() - self.start) / 1e6)
@@ -321,7 +322,7 @@ function Process:spawn(cb)
     self.result = res
     self:stop_timer()
 
-    if code ~= 0 and not hide_console then
+    if code ~= 0 and not hide_console and not self.external_errors then
       vim.schedule(show_preview_buffer)
     end
 
