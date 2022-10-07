@@ -5,11 +5,13 @@ local util = require("neogit.lib.util")
 
 local M = {}
 
-local commit_header_pat = "([| *]*)%*([| *]*)commit (%w+)"
+local commit_header_pat = "([| ]*)(%*?)([| ]*)commit (%w+)"
+-- local commit_header_pat = "([| ]*)%*?([| *]*)commit (%w+)"
 
 local function is_new_commit(line)
-  local s1, s2, oid = line:match(commit_header_pat)
+  local s1, star, s2, oid = line:match(commit_header_pat)
 
+  print(s1, s2, oid)
   return s1 ~= nil and s2 ~= nil and oid ~= nil
 end
 
@@ -33,53 +35,104 @@ local function parse(raw)
 
   local function advance()
     idx = idx + 1
+  end
+
+  local function peek()
+    print("Peeking: ", idx, raw[idx])
     return raw[idx]
   end
 
-  local line = raw[idx]
-  while line do
-    local commit = {}
-    local s1, s2
-
-    s1, s2, commit.oid = line:match(commit_header_pat)
-    commit.level = util.str_count(s1, "|") + util.str_count(s2, "|")
-
-    local start_idx = #s1 + #s2 + 1
-
-    local function ladvance()
-      local line = advance()
-      return line and line:sub(start_idx + 1, -1) or nil
+  while true do
+    local line = peek()
+    if not line then
+      break
     end
 
-    do
-      local line = ladvance()
+    -- print(line)
+    local commit = {}
+    local s1, s2, star
 
-      if vim.startswith(line, "Merge:") then
+    s1, star, s2, commit.oid = line:match(commit_header_pat)
+
+    if not commit.oid or commit.oid == "" then
+      print("Failed to parse line: " .. line)
+      return
+    end
+
+    -- Consume this line
+    advance()
+
+    -- print(s1, s2, commit.oid)
+    commit.level = util.str_count(s1, "|")
+
+    local start_idx = #s1 + #s2 + #star
+
+    print(string.format("line: %q %q %q %q %d", line, s1, star, s2, start_idx))
+
+    local function lpeek()
+      return raw[idx] and raw[idx]:sub(start_idx + 1, -1) or nil
+    end
+
+    local map = {
+      Merge = function()
         commit.merge = line:match("Merge:%s*(%w+) (%w+)")
+      end,
+      Author = function(line)
+        commit.author_name, commit.author_email = line:match("Author:%s*(.+) <(.+)>")
+      end,
+      AuthorDate = function(line)
+        commit.author_date = line:match("AuthorDate:%s*(.+)")
+      end,
+      Commit = function(line)
+        commit.committer_name, commit.committer_email = line:match("Commit:%s*(.+) <(.+)>")
+      end,
+      CommitDate = function(line)
+        commit.committer_date = line:match("CommitDate:%s*(.+)")
+      end,
+    }
 
-        line = ladvance()
+    while true do
+      line = lpeek()
+
+      print(string.format("Line: %q", line))
+      if not line or line:find("^%s*$") then
+        break
       end
 
-      commit.author_name, commit.author_email = line:match("Author:%s*(.+) <(.+)>")
+      local w = line:match("%w+")
+      local handler = map[w]
+      if handler then
+        handler(line)
+      else
+        error(string.format("Unhandled git log header: %q at %q", w, line))
+      end
+
+      advance()
     end
 
-    commit.author_date = ladvance():match("AuthorDate:%s*(.+)")
-    commit.committer_name, commit.committer_email = ladvance():match("Commit:%s*(.+) <(.+)>")
-    commit.committer_date = ladvance():match("CommitDate:%s*(.+)")
+    commit.description = {}
+
+    -- Consume initial whitespace
+    advance()
+
+    while true do
+      line = lpeek()
+
+      print(string.format("Msgline: %q", line))
+      -- The commit message is indented
+      if not line or not line:match("^    ") then
+        print(string.format("Breaking at: %q", line))
+        break
+      end
+
+      local msg = line:gsub("^%s*", "")
+      table.insert(commit.description, msg)
+      advance()
+    end
 
     advance()
 
-    commit.description = {}
-    line = advance()
-
-    while line and not is_new_commit(line) do
-      table.insert(commit.description, line:sub(start_idx + 5, -1))
-      line = advance()
-    end
-
-    if line ~= nil then
-      commit.description[#commit.description] = nil
-    end
+    print(vim.inspect(commit))
 
     table.insert(commits, commit)
   end

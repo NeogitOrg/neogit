@@ -245,7 +245,7 @@ function Process:spawn(cb)
 
       local d = remove_escape_codes(data[1])
 
-      result[#result] = result[#result] .. d
+      result[#result] = remove_escape_codes(result[#result] .. data[1])
 
       on_partial(d, data[1])
       on_line(result[#result], raw_last_line)
@@ -290,16 +290,14 @@ function Process:spawn(cb)
   end)
 
   local function on_exit(_, code)
-    res.stdout = vim.tbl_filter(function(v)
-      return v ~= ""
-    end, res.stdout)
-
-    res.stderr = vim.tbl_filter(function(v)
-      return v ~= ""
-    end, res.stderr)
-
     res.code = code
     res.time = (vim.loop.hrtime() - start) / 1e6
+
+    for _, line in ipairs(res.stdout) do
+      if line ~= remove_escape_codes(line) then
+        error("Escape code not removed at: " .. line)
+      end
+    end
 
     -- Remove self
     processes[self.job] = nil

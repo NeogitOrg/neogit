@@ -10,7 +10,7 @@ describe("process execution", function()
     assert.are.same(result.stdout, {
       "This is a test file",
       "It is intended to be read by cat and returned to neovim using the process api",
-      "Blank lines will be stripped",
+      "",
     })
   end)
   it("process input", function()
@@ -45,13 +45,8 @@ describe("process execution", function()
     p:close_stdin()
     local result = p:wait(1000)
 
-    assert(result)
-    assert.are.same(
-      lines,
-      vim.tbl_filter(function(v)
-        return #v > 0
-      end, input)
-    )
+    assert(result, vim.inspect(result))
+    assert.are.same(lines, input)
   end)
   it("basic command", function()
     local result = process.new({ cmd = { "cat", "process_test" }, cwd = "./tests" }):spawn_blocking(1000)
