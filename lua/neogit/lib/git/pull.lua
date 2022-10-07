@@ -14,10 +14,7 @@ local function update_unpulled(state)
 
   local result = cli.log.oneline.for_range("..@{upstream}").show_popup(false).call():trim()
 
-  state.unpulled.items = util.filter_map(result, function(x)
-    if x == "" then
-      return
-    end
+  state.unpulled.items = util.map(result, function(x)
     return { name = x }
   end)
 end
