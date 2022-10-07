@@ -300,11 +300,7 @@ local configurations = {
 }
 
 local function git_root()
-  return
-    table.concat(
-    process.new({ cmd = { "git", "rev-parse", "--show-toplevel" } }):spawn_blocking().stdout,
-    "\n"
-  )
+  return process.new({ cmd = { "git", "rev-parse", "--show-toplevel" } }):spawn_blocking().stdout[1]
 end
 
 local git_root_sync = function()
