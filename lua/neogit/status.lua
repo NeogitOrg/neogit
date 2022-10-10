@@ -819,6 +819,10 @@ local cmd_func_map = function()
     ["CommandHistory"] = function()
       GitCommandHistory:new():show()
     end,
+    ["Console"] = function()
+      local process = require("neogit.process")
+      process.show_console()
+    end,
     ["TabOpen"] = function()
       local _, item = get_current_section_item()
       vim.cmd("tabedit " .. item.name)

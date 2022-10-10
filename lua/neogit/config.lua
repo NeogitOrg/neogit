@@ -71,6 +71,7 @@ M.values = {
       ["U"] = "UnstageStaged",
       ["d"] = "DiffAtFile",
       ["$"] = "CommandHistory",
+      ["#"] = "Console",
       ["<c-r>"] = "RefreshBuffer",
       ["<enter>"] = "GoToFile",
       ["<c-v>"] = "VSplitOpen",

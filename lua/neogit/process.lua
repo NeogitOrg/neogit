@@ -61,7 +61,7 @@ local function create_preview_buffer()
     return
   end
 
-  local name = "Neogit log"
+  local name = "NeogitConsole"
   local cur = vim.fn.bufnr(name)
   if cur and cur ~= -1 then
     vim.api.nvim_buf_delete(cur, { force = true })
@@ -70,13 +70,13 @@ local function create_preview_buffer()
   local buffer = Buffer.create {
     name = name,
     bufhidden = "hide",
-    filetype = "terminal",
+    filetype = "NeogitConsole",
     kind = "split",
     open = false,
     mappings = {
       n = {
         ["q"] = function(buffer)
-          buffer:close(true)
+          buffer:hide(true)
         end,
       },
     },
@@ -96,15 +96,12 @@ local function create_preview_buffer()
   }
 end
 
-local function show_preview_buffer()
+function Process.show_console()
   if not preview_buffer then
     create_preview_buffer()
   end
 
   preview_buffer.buffer:show()
-  -- vim.api.nvim_win_call(win, function()
-  --   vim.cmd("normal! G")
-  -- end)
 end
 
 local nvim_chan_send = vim.api.nvim_chan_send
@@ -163,7 +160,7 @@ function Process:start_timer()
             self,
             string.format("Command running for: %.2f ms", (vim.loop.hrtime() - self.start) / 1e6)
           )
-          show_preview_buffer()
+          Process.show_console()
         end
       end)
     )
@@ -324,7 +321,8 @@ function Process:spawn(cb)
     self:stop_timer()
 
     if code ~= 0 and not hide_console and not self.external_errors then
-      vim.schedule(show_preview_buffer)
+      append_log(self, string.format("Process exited with code: %d\r\n", code))
+      vim.schedule(Process.show_console)
     end
 
     if cb then
