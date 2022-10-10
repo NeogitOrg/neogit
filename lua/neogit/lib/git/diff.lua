@@ -13,6 +13,7 @@ local function parse_diff_stats(raw)
     additions = 0,
     deletions = 0,
   }
+
   -- local matches raw:match('1 file changed, (%d+ insertions?%(%+%))?(, )?(%d+ deletions?%(%-%))?')
   for _, part in ipairs(raw) do
     part = util.trim(part)
@@ -79,7 +80,6 @@ local function parse_diff(output, with_stats)
           diff.file = header[4]:match("%-%-%- a/(.*)")
         end
       else
-        logger.debug("TODO: diff parser")
         logger.debug(vim.inspect(header))
       end
     end

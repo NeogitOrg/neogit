@@ -477,6 +477,7 @@ local function toggle()
 
   if on_hunk then
     local hunk = get_current_hunk_of_item(item)
+    assert(hunk, "Hunk is nil")
     hunk.folded = not hunk.folded
     vim.api.nvim_win_set_cursor(0, { hunk.first, 0 })
   elseif item then

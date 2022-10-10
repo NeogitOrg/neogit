@@ -1,23 +1,25 @@
 local cli = require("neogit.lib.git.cli")
+local diff_lib = require("neogit.lib.git.diff")
 local util = require("neogit.lib.util")
 local config = require("neogit.config")
 
 local commit_header_pat = "([| ]*)(%*?)([| ]*)commit (%w+)"
 -- local commit_header_pat = "([| ]*)%*?([| *]*)commit (%w+)"
--- @class CommitLogEntry
--- @field oid the object id of the commit
--- @field level the depth of the commit in the graph
--- @field author_name the name of the author
--- @field author_email the email of the author
--- @field author_date when the author commited
--- @field committer_name the name of the committer
--- @field committer_email the email of the committer
--- @field committer_date when the committer commited
--- @field description a list of lines
+---@class CommitLogEntry
+---@field oid string the object id of the commit
+---@field level number the depth of the commit in the graph
+---@field author_name string the name of the author
+---@field author_email string the email of the author
+---@field author_date string when the author commited
+---@field committer_name string the name of the committer
+---@field committer_email string the email of the committer
+---@field committer_date string when the committer commited
+---@field description string a list of lines
+---@field diffs any[]
 
 --- parses the provided list of lines into a CommitLogEntry
 -- @param raw a list of lines
--- @return CommitLogEntry
+-- @return CommitLogEntry[]
 local function parse(raw)
   local commits = {}
   local idx = 1
@@ -80,6 +82,7 @@ local function parse(raw)
     while true do
       line = lpeek()
 
+      print(string.format("Line: %q", line))
       if not line or line:find("^%s*$") then
         break
       end
@@ -96,6 +99,7 @@ local function parse(raw)
     end
 
     commit.description = {}
+    commit.diffs = {}
 
     -- Consume initial whitespace
     advance()
@@ -113,7 +117,43 @@ local function parse(raw)
       advance()
     end
 
+    -- Skip the whitespace after the status
     advance()
+
+    -- Read diffs
+    local current_diff = {}
+    local in_diff = false
+
+    while true do
+      line = lpeek()
+      -- Parse the last diff, if any, and begin a new one
+      if not line or vim.startswith(line, "diff") then
+        -- There was a previous diff, parse it
+        if in_diff then
+          table.insert(commit.diffs, diff_lib.parse(current_diff))
+          current_diff = {}
+        end
+        in_diff = true
+      elseif line == "" then -- A blank line signifies end of diffs
+        -- Parse the last diff, consume the blankline, and exit
+        if in_diff then
+          table.insert(commit.diffs, diff_lib.parse(current_diff))
+          current_diff = {}
+        end
+        advance()
+        break
+      end
+
+      -- Collect each diff separately
+      if line and in_diff then
+        table.insert(current_diff, line)
+      else
+        -- If not in a diff, then the log does not contain diffs
+        break
+      end
+
+      advance()
+    end
 
     table.insert(commits, commit)
   end
