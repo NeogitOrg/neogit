@@ -107,7 +107,7 @@ function M.create()
       "c",
       "checkout new branch",
       operation("checkout_create-branch", function()
-        local branches = format_branches(branch.get_all_branches())
+        local branches = format_branches(branch.get_all_branches(true))
         local current_branch = branch.current()
         if current_branch then
           table.insert(branches, 1, current_branch)

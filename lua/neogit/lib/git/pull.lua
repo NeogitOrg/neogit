@@ -12,7 +12,7 @@ local function update_unpulled(state)
     return
   end
 
-  local result = cli.log.oneline.for_range("..@{upstream}").show_popup(false).call():trim()
+  local result = cli.log.oneline.for_range("..@{upstream}").show_popup(false).call():trim().stdout
 
   state.unpulled.items = util.map(result, function(x)
     return { name = x }

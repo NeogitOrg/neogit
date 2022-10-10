@@ -3,10 +3,15 @@ local cli = require("neogit.lib.git.cli")
 local input = require("neogit.lib.input")
 local M = {}
 
-local function parse_branches(branches)
+local function parse_branches(branches, include_current)
   local other_branches = {}
+  local pattern = "^  (.+)"
+  if include_current then
+    pattern = "^[* ] (.+)"
+  end
+
   for _, b in ipairs(branches) do
-    local branch_name = b:match("^  (.+)")
+    local branch_name = b:match(pattern)
     if branch_name then
       table.insert(other_branches, branch_name)
     end
@@ -15,22 +20,22 @@ local function parse_branches(branches)
   return other_branches
 end
 
-function M.get_local_branches()
+function M.get_local_branches(include_current)
   local branches = cli.branch.list.call_sync():trim().stdout
 
-  return parse_branches(branches)
+  return parse_branches(branches, include_current)
 end
 
-function M.get_remote_branches()
+function M.get_remote_branches(include_current)
   local branches = cli.branch.remotes.call_sync():trim().stdout
 
-  return parse_branches(branches)
+  return parse_branches(branches, include_current)
 end
 
-function M.get_all_branches()
+function M.get_all_branches(include_current)
   local branches = cli.branch.list.all.call_sync():trim().stdout
 
-  return parse_branches(branches)
+  return parse_branches(branches, include_current)
 end
 
 function M.get_upstream()

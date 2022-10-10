@@ -38,6 +38,7 @@ function ProcessResult:trim()
   self.stdout = vim.tbl_filter(function(v)
     return v ~= ""
   end, self.stdout)
+
   self.stderr = vim.tbl_filter(function(v)
     return v ~= ""
   end, self.stderr)
