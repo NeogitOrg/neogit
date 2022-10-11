@@ -19,8 +19,7 @@ local function update_status(state)
   local upstream = {}
 
   for _, l in ipairs(result.stdout) do
-    if l == "" then
-    elseif append_original_path then
+    if append_original_path then
       append_original_path(l)
     else
       local header, value = l:match("# ([%w%.]+) (.+)")

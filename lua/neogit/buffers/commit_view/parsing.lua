@@ -1,7 +1,6 @@
 local M = {}
 
 local util = require("neogit.lib.util")
-local diff_lib = require("neogit.lib.git.diff")
 
 -- @class CommitOverviewFile
 -- @field path the path to the file relative to the git root

@@ -1,11 +1,8 @@
-local util = require("neogit.lib.util")
 local logger = require("neogit.logger")
 local client = require("neogit.client")
 local log = require("neogit.lib.git.log")
 
 local M = {}
-
-local commit_header_pat = "([| *]*)%*([| *]*)commit (%w+)"
 
 function M.commits()
   local git = require("neogit.lib.git")
