@@ -285,14 +285,14 @@ function Process:spawn(cb)
     if self.verbose then
       append_log(self, "\r\n")
     end
-    if self.on_line and line ~= "" then
+    if self.on_line then
       self.on_line(self, line, raw)
     end
   end, function(line, raw)
     if self.verbose then
       append_log(self, raw)
     end
-    if self.on_partial_line and line ~= "" then
+    if self.on_partial_line then
       self.on_partial_line(self, line, raw)
     end
   end)

@@ -3,12 +3,18 @@ local util = require("neogit.lib.util")
 
 local M = {}
 
+---Pushes to the remote and handles password questions
+---@param remote string
+---@param branch string
+---@param args string[]
+---@return ProcessResult
 function M.push_interactive(remote, branch, args)
-  return cli.push.args(remote or "", branch or "").args(args).call_interactive()
+  return cli.push.args(remote or "", branch or "").arg_list(args).call_interactive()
 end
 
 local function update_unmerged(state)
   if not state.upstream.branch then
+    vim.notify("No upstream branch")
     return
   end
 

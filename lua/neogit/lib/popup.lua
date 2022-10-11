@@ -29,6 +29,7 @@ function M.new(state)
   return instance
 end
 
+---@return string[]
 function M:get_arguments()
   local flags = {}
   for _, switch in pairs(self.state.switches) do

@@ -586,7 +586,9 @@ local function new_builder(subcommand)
       local p = to_process(true)
 
       p.on_partial_line = function(p, line, _)
-        handle_line(p, line)
+        if line ~= "" then
+          handle_line(p, line)
+        end
       end
 
       local result = p:spawn_async(function()

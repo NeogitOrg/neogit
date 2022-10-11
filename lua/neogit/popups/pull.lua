@@ -11,7 +11,7 @@ local M = {}
 local function pull_from(popup, name, remote, branch)
   notif.create("Pulling from " .. name)
 
-  local res = pull_lib.pull_interactive(remote, branch, popup:to_cli())
+  local res = pull_lib.pull_interactive(remote, branch, popup:get_arguments())
 
   if res and res.code == 0 then
     a.util.scheduler()

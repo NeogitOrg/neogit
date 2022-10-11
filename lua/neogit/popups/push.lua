@@ -13,7 +13,7 @@ local function push_to(popup, name, remote, branch)
   logger.debug("Pushing to " .. name)
   notif.create("Pushing to " .. name)
 
-  local res = push_lib.push_interactive(remote, branch, popup:to_cli())
+  local res = push_lib.push_interactive(remote, branch, popup:get_arguments())
 
   if res.code == 0 then
     a.util.scheduler()
