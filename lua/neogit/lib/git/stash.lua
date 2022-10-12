@@ -26,6 +26,7 @@ local function perform_stash(include)
         GIT_INDEX_FILE = ".git/NEOGIT_TMP_INDEX",
       })
       .call()
+      :trim()
 
     cli["update-index"].add.remove
       .files(unpack(files))
