@@ -17,7 +17,7 @@ local function pull_from(popup, name, remote, branch)
     a.util.scheduler()
     notif.create("Pulled from " .. name)
   end
-  status.refresh(true)
+  status.refresh(true, "pull_from")
 end
 
 function M.create()

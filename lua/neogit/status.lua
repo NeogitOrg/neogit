@@ -325,18 +325,25 @@ local function refresh_status()
 end
 
 local refresh_lock = a.control.Semaphore.new(1)
-local function refresh(which)
+local lock_holder = nil
+local function refresh(which, reason)
   which = which or true
 
-  logger.debug("[STATUS BUFFER]: Starting refresh")
+  logger.info("[STATUS BUFFER]: Starting refresh")
   if refresh_lock.permits == 0 then
-    logger.debug("[STATUS BUFFER]: Refresh lock not available. Aborting refresh")
+    logger.info(
+      string.format(
+        "[STATUS BUFFER]: Refresh lock not available. Aborting refresh. Lock held by: %q",
+        lock_holder
+      )
+    )
     a.util.scheduler()
     refresh_status()
     return
   end
 
   local permit = refresh_lock:acquire()
+  lock_holder = reason or "unknown"
   logger.debug("[STATUS BUFFER]: Acquired refresh lock")
 
   a.util.scheduler()
@@ -378,6 +385,7 @@ local function refresh(which)
     if which == true or which.unmerged then
       table.insert(refreshes, function()
         logger.debug("[STATUS BUFFER]: Refreshing unpushed commits")
+        print("Enqueuing unmerged")
         M.repo:update_unmerged()
       end)
     end
@@ -409,12 +417,15 @@ local function refresh(which)
     restore_cursor_location(s, f, h)
   end
 
-  logger.debug("[STATUS BUFFER]: Finished refresh")
-  logger.debug("[STATUS BUFFER]: Refresh lock is now free")
+  logger.info("[STATUS BUFFER]: Finished refresh")
+  logger.info("[STATUS BUFFER]: Refresh lock is now free")
+  lock_holder = nil
   permit:forget()
 end
 
-local dispatch_refresh = a.void(refresh)
+local dispatch_refresh = a.void(function(v, reason)
+  refresh(v, reason)
+end)
 
 local refresh_manually = a.void(function(fname)
   if not fname or fname == "" then
@@ -425,7 +436,7 @@ local refresh_manually = a.void(function(fname)
   if not path then
     return
   end
-  refresh { status = true, diffs = { "*:" .. path } }
+  refresh({ status = true, diffs = { "*:" .. path } }, "manually")
 end)
 
 --- Compatibility endpoint to refresh data from an autocommand.
@@ -433,6 +444,7 @@ end)
 --  resolving the file name to the path relative to the repository root and
 --  refresh that file's cache data.
 local function refresh_viml_compat(fname)
+  logger.info("[STATUS BUFFER]: refresh_viml_compat")
   if not config.values.auto_refresh then
     return
   end
@@ -495,7 +507,7 @@ local reset = function()
   if not config.values.auto_refresh then
     return
   end
-  refresh(true)
+  refresh(true, "reset")
 end
 local dispatch_reset = a.void(reset)
 
@@ -655,7 +667,7 @@ local stage = function()
         end
         add.call()
       end
-      refresh(true)
+      refresh(true, "stage")
       M.current_operation = nil
       return
     else
@@ -669,7 +681,8 @@ local stage = function()
     end
   end
 
-  refresh { status = true, diffs = { "*:" .. item.name } }
+  assert(item, "Stage item is nil")
+  refresh({ status = true, diffs = { "*:" .. item.name } }, "stage_finish")
   M.current_operation = nil
 end
 
@@ -687,7 +700,7 @@ local unstage = function()
   else
     if item == nil then
       git.status.unstage_all(".")
-      refresh(true)
+      refresh(true, "unstage")
       M.current_operation = nil
       return
     else
@@ -703,7 +716,8 @@ local unstage = function()
     end
   end
 
-  refresh { status = true, diffs = { "*:" .. item.name } }
+  assert(item, "Unstage item is nil")
+  refresh({ status = true, diffs = { "*:" .. item.name } }, "unstage_finish")
   M.current_operation = nil
 end
 
@@ -760,7 +774,7 @@ local discard = function()
     end
   end
 
-  refresh(true)
+  refresh(true, "discard")
   M.current_operation = nil
 
   a.util.scheduler()
@@ -779,7 +793,7 @@ local set_folds = function(to)
       end
     end)
   end)
-  refresh(true)
+  refresh(true, "set_folds")
 end
 
 --- These needs to be a function to avoid a circular dependency
@@ -806,7 +820,7 @@ local cmd_func_map = function()
     ["Stage"] = { "nv", a.void(stage), true },
     ["StageUnstaged"] = a.void(function()
       git.status.stage_modified()
-      refresh { status = true, diffs = true }
+      refresh({ status = true, diffs = true }, "StageUnstaged")
     end),
     ["StageAll"] = a.void(function()
       git.status.stage_all()
@@ -815,7 +829,7 @@ local cmd_func_map = function()
     ["Unstage"] = { "nv", a.void(unstage), true },
     ["UnstageStaged"] = a.void(function()
       git.status.unstage_all()
-      refresh { status = true, diffs = true }
+      refresh({ status = true, diffs = true }, "UnstageStaged")
     end),
     ["CommandHistory"] = function()
       GitCommandHistory:new():show()

@@ -25,8 +25,11 @@ local function do_commit(popup, cmd)
     notif.create("Successfully committed!")
     vim.cmd("do <nomodeline> User NeogitCommitComplete")
   end
+
   a.util.scheduler()
-  status.refresh(true)
+
+  print("Refreshing status")
+  status.refresh(true, "do_commit")
 end
 
 function M.create()

@@ -307,16 +307,8 @@ function Process:spawn(cb)
     res.code = code
     res.time = (vim.loop.hrtime() - start) / 1e6
 
-    for _, line in ipairs(res.stdout) do
-      if line ~= remove_escape_codes(line) then
-        error("Escape code not removed at: " .. line)
-      end
-    end
-
     -- Remove self
     processes[self.job] = nil
-    self.job = nil
-    self.stdin = nil
     self.result = res
     self:stop_timer()
 
@@ -324,6 +316,9 @@ function Process:spawn(cb)
       append_log(self, string.format("Process exited with code: %d\r\n", code))
       vim.schedule(Process.show_console)
     end
+
+    self.stdin = nil
+    self.job = nil
 
     if cb then
       cb(res)

@@ -39,7 +39,7 @@ function M.create()
       "create branch",
       operation("create_branch", function()
         branch.create()
-        status.refresh(true)
+        status.refresh(true, "create_branch")
       end)
     )
     :action(
