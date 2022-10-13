@@ -13,14 +13,11 @@ function M.push_interactive(remote, branch, args)
 end
 
 local function update_unmerged(state)
-  print("update_unmerged")
   if not state.upstream.branch then
     return
   end
 
-  print("Looking for unmerged with upstream: ", state.upstream.branch)
   local result = cli.log.oneline.for_range("@{upstream}..").show_popup(false).call():trim().stdout
-  print("Got: ", vim.inspect(result))
 
   state.unmerged.items = util.filter_map(result, function(x)
     if x == "" then

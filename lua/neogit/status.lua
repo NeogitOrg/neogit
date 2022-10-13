@@ -385,7 +385,6 @@ local function refresh(which, reason)
     if which == true or which.unmerged then
       table.insert(refreshes, function()
         logger.debug("[STATUS BUFFER]: Refreshing unpushed commits")
-        print("Enqueuing unmerged")
         M.repo:update_unmerged()
       end)
     end
@@ -867,10 +866,7 @@ local cmd_func_map = function()
           notif.delete_all()
           M.status_buffer:close()
 
-          print(string.format("Repo root: %q", repo_root))
-          print("Path: ", repo_root .. "/" .. path)
           local relpath = vim.fn.fnamemodify(repo_root .. "/" .. path, ":.")
-          print("Relpath: ", relpath)
 
           if not vim.o.hidden and vim.bo.buftype == "" and not vim.bo.readonly and vim.fn.bufname() ~= "" then
             vim.cmd("update")

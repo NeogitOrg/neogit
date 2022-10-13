@@ -28,7 +28,6 @@ local function do_commit(popup, cmd)
 
   a.util.scheduler()
 
-  print("Refreshing status")
   status.refresh(true, "do_commit")
 end
 

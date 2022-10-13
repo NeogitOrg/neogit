@@ -82,7 +82,6 @@ local function parse(raw)
     while true do
       line = lpeek()
 
-      print(string.format("Line: %q", line))
       if not line or line:find("^%s*$") then
         break
       end
