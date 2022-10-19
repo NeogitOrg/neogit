@@ -28,20 +28,29 @@ function M.create()
       a.util.scheduler()
       status.refresh(true, "rebase_abort")
     end)
-    :action("p", "Rebase onto master", function()
-      cli.rebase.args("master").call_sync():trim()
-      status.refresh(true, "rebase_master")
-    end)
-    :action("e", "Rebase onto elsewhere", function()
-      local branch = git.branch.prompt_for_branch(git.branch.get_all_branches())
-      cli.rebase.args(branch).call_sync():trim()
-      a.util.scheduler()
-      status.refresh(true, "rebase_elsewhere")
-    end)
+    :action(
+      "p",
+      "Rebase onto master",
+      a.void(function()
+        rebase.rebase_onto("master")
+        a.util.scheduler()
+        status.refresh(true, "rebase_master")
+      end)
+    )
+    :action(
+      "e",
+      "Rebase onto elsewhere",
+      a.void(function()
+        local branch = git.branch.prompt_for_branch(git.branch.get_all_branches())
+        rebase.rebase_onto(branch)
+        a.util.scheduler()
+        status.refresh(true, "rebase_elsewhere")
+      end)
+    )
     :action("i", "Interactive", function()
       local commits = rebase.commits()
       CommitSelectViewBuffer.new(commits, function(_view, selected)
-        if rebase.run_interactive(selected.oid).code == 0 then
+        if rebase.run_interactive(selected.oid).code ~= 0 then
           notif.create("Rebasing failed. Resolve conflicts before continuing", vim.log.levels.ERROR)
         end
         a.util.scheduler()

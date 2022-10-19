@@ -152,6 +152,9 @@ function Process:start_timer()
       config.values.console_timeout,
       0,
       vim.schedule_wrap(function()
+        if not self.timer then
+          return
+        end
         self.timer = nil
         timer:stop()
         timer:close()
@@ -170,9 +173,10 @@ end
 
 function Process:stop_timer()
   if self.timer then
-    self.timer:stop()
-    self.timer:close()
+    local timer = self.timer
     self.timer = nil
+    timer:stop()
+    timer:close()
   end
 end
 
