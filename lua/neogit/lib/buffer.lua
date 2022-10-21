@@ -264,10 +264,6 @@ function Buffer.create(config)
     buffer:set_filetype(config.filetype)
   end
 
-  buffer.mmanager.mappings["q"] = function()
-    buffer:close()
-  end
-
   if config.mappings then
     for mode, val in pairs(config.mappings) do
       for key, cb in pairs(val) do
