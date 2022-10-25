@@ -16,8 +16,7 @@ local function build_call_string(id, k)
   return string.format([[<cmd>lua require 'neogit.lib.mappings_manager'.invoke(%d, %d)<CR>]], id, k)
 end
 
-local function new()
-  local id = vim.api.nvim_win_get_buf(0)
+local function new(id)
   local mappings = {}
   local map_id_to_key = {}
   local manager = {

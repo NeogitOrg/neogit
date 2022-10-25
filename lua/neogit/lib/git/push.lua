@@ -3,10 +3,13 @@ local util = require("neogit.lib.util")
 
 local M = {}
 
+---Pushes to the remote and handles password questions
+---@param remote string
+---@param branch string
+---@param args string[]
+---@return ProcessResult
 function M.push_interactive(remote, branch, args)
-  local cmd = "git push " .. remote .. " " .. branch .. " " .. args
-
-  return cli.interactive_git_cmd(cmd)
+  return cli.push.args(remote or "", branch or "").arg_list(args).call_interactive()
 end
 
 local function update_unmerged(state)
@@ -14,9 +17,12 @@ local function update_unmerged(state)
     return
   end
 
-  local result = cli.log.oneline.for_range("@{upstream}..").show_popup(false).call()
+  local result = cli.log.oneline.for_range("@{upstream}..").show_popup(false).call():trim().stdout
 
-  state.unmerged.items = util.map(result, function(x)
+  state.unmerged.items = util.filter_map(result, function(x)
+    if x == "" then
+      return
+    end
     return { name = x }
   end)
 end

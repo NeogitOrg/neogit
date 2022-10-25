@@ -1,7 +1,5 @@
 local Ui = require("neogit.lib.ui")
 local Component = require("neogit.lib.ui.component")
-local Job = require("neogit.lib.job")
-local difflib = require("neogit.lib.git.diff")
 local util = require("neogit.lib.util")
 local common = require("neogit.buffers.common")
 
@@ -14,16 +12,6 @@ local map = util.map
 local List = common.List
 
 local M = {}
-
-local _mode_to_text = {
-  M = "Modified",
-  N = "New file",
-  A = "Added",
-  D = "Deleted",
-  C = "Copied",
-  U = "Updated",
-  R = "Renamed",
-}
 
 local RemoteHeader = Component.new(function(props)
   return row {
@@ -99,36 +87,36 @@ function M.Status(state)
   }
 end
 
-function _load_diffs(repo)
-  local cli = require("neogit.lib.git.cli")
+-- function _load_diffs(repo)
+--   local cli = require("neogit.lib.git.cli")
 
-  local unstaged_jobs = map(repo.unstaged.items, function(f)
-    return cli.diff.shortstat.patch.files(f.name).to_job()
-  end)
+--   local unstaged_jobs = map(repo.unstaged.items, function(f)
+--     return cli.diff.shortstat.patch.files(f.name).to_job()
+--   end)
 
-  local staged_jobs = map(repo.staged.items, function(f)
-    return cli.diff.cached.shortstat.patch.files(f.name).to_job()
-  end)
+--   local staged_jobs = map(repo.staged.items, function(f)
+--     return cli.diff.cached.shortstat.patch.files(f.name).to_job()
+--   end)
 
-  local jobs = {}
+--   local jobs = {}
 
-  for _, x in ipairs { unstaged_jobs, staged_jobs } do
-    for _, j in ipairs(x) do
-      table.insert(jobs, j)
-    end
-  end
+--   for _, x in ipairs { unstaged_jobs, staged_jobs } do
+--     for _, j in ipairs(x) do
+--       table.insert(jobs, j)
+--     end
+--   end
 
-  Job.start_all(jobs)
-  Job.wait_all(jobs)
+--   Job.start_all(jobs)
+--   Job.wait_all(jobs)
 
-  for i, j in ipairs(unstaged_jobs) do
-    repo.unstaged.items[i].diff = difflib.parse(j.stdout, true)
-  end
+--   for i, j in ipairs(unstaged_jobs) do
+--     repo.unstaged.items[i].diff = difflib.parse(j.stdout, true)
+--   end
 
-  for i, j in ipairs(staged_jobs) do
-    repo.staged.items[i].diff = difflib.parse(j.stdout, true)
-  end
-end
+--   for i, j in ipairs(staged_jobs) do
+--     repo.staged.items[i].diff = difflib.parse(j.stdout, true)
+--   end
+-- end
 
 function _TEST()
   local repo = require("neogit").repo

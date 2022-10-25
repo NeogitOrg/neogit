@@ -1,0 +1,5 @@
+This is a test file
+
+
+It is intended to be read by cat and returned to neovim using the process api
+

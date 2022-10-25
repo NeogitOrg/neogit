@@ -1,3 +1,4 @@
+local api = vim.api
 package.loaded["neogit.buffer"] = nil
 
 __BUFFER_AUTOCMD_STORE = {}
@@ -5,16 +6,23 @@ __BUFFER_AUTOCMD_STORE = {}
 local mappings_manager = require("neogit.lib.mappings_manager")
 local Ui = require("neogit.lib.ui")
 
+---@class Buffer
+---@field handle number
+---@field mmanager any
+---@field ui Ui
+---@field kind string
 local Buffer = {
-  handle = nil,
+  kind = "split",
 }
 Buffer.__index = Buffer
 
+---@param handle number
+---@return Buffer
 function Buffer:new(handle)
   local this = {
     handle = handle,
     border = nil,
-    mmanager = mappings_manager.new(),
+    mmanager = mappings_manager.new(handle),
     kind = nil, -- how the buffer was opened. For more information look at the create function
   }
 
@@ -25,14 +33,16 @@ function Buffer:new(handle)
   return this
 end
 
+---@return number|nil
 function Buffer:focus()
   local windows = vim.fn.win_findbuf(self.handle)
 
   if #windows == 0 then
-    return
+    return nil
   end
 
   vim.fn.win_gotoid(windows[1])
+  return windows[1]
 end
 
 function Buffer:lock()
@@ -87,7 +97,91 @@ function Buffer:close(force)
     vim.cmd("silent! 1only")
     vim.cmd("try | tabn # | catch /.*/ | tabp | endtry")
   end
-  vim.api.nvim_buf_delete(self.handle, { force = force })
+
+  if api.nvim_buf_is_valid(self.handle) then
+    vim.api.nvim_buf_delete(self.handle, { force = force })
+  end
+end
+
+function Buffer:hide()
+  if not self:focus() then
+    return
+  end
+
+  if self.kind == "tab" then
+    -- `silent!` as this might throw errors if 'hidden' is disabled.
+    vim.cmd("silent! 1only")
+    vim.cmd("try | tabn # | catch /.*/ | tabp | endtry")
+  elseif self.kind == "replace" then
+    if self.old_buf and api.nvim_buf_is_loaded(self.old_buf) then
+      api.nvim_set_current_buf(self.old_buf)
+    end
+  else
+    api.nvim_win_close(0, {})
+  end
+end
+
+---@return number
+function Buffer:show()
+  local windows = vim.fn.win_findbuf(self.handle)
+
+  -- Already visible
+  if #windows > 0 then
+    return windows[1]
+  end
+
+  local win
+  local kind = self.kind
+
+  if kind == "replace" then
+    self.old_buf = api.nvim_get_current_buf(api.nvim_set_current_buf())
+    api.nvim_set_current_buf(self.handle)
+    win = api.nvim_get_current_win()
+  elseif kind == "tab" then
+    vim.cmd("tabnew")
+    api.nvim_set_current_buf(self.handle)
+    win = api.nvim_get_current_win()
+  elseif kind == "split" then
+    vim.cmd("below split")
+    api.nvim_set_current_buf(self.handle)
+    win = api.nvim_get_current_win()
+  elseif kind == "split_above" then
+    vim.cmd("top split")
+    api.nvim_set_current_buf(self.handle)
+    win = api.nvim_get_current_win()
+  elseif kind == "vsplit" then
+    vim.cmd("bot vsplit")
+    api.nvim_set_current_buf(self.handle)
+    win = api.nvim_get_current_win()
+  elseif kind == "floating" then
+    -- Creates the border window
+    local vim_height = vim.o.lines
+    local vim_width = vim.o.columns
+
+    local width = math.floor(vim_width * 0.8) + 3
+    local height = math.floor(vim_height * 0.7)
+    local col = vim_width * 0.1 - 1
+    local row = vim_height * 0.15
+
+    local content_window = vim.api.nvim_open_win(self.handle, true, {
+      relative = "editor",
+      width = width,
+      height = height,
+      col = col,
+      row = row,
+      style = "minimal",
+      focusable = false,
+      border = "single",
+    })
+
+    vim.api.nvim_win_set_cursor(content_window, { 1, 0 })
+    win = content_window
+  end
+
+  vim.cmd("setlocal nonu")
+  vim.cmd("setlocal nornu")
+
+  return win
 end
 
 function Buffer:is_valid()
@@ -181,7 +275,7 @@ function Buffer:clear_sign_group(group)
 end
 
 function Buffer:set_filetype(ft)
-  vim.cmd("setlocal filetype=" .. ft)
+  vim.api.nvim_buf_set_option(self.handle, "filetype", ft)
 end
 
 function Buffer:call(f)
@@ -204,55 +298,15 @@ function Buffer:del_extmark(ns, id)
   return vim.api.nvim_buf_del_extmark(self.handle, ns, id)
 end
 
+---@return Buffer
 function Buffer.create(config)
-  local config = config or {}
+  config = config or {}
   local kind = config.kind or "split"
-  local buffer = nil
-
-  if kind == "replace" then
-    vim.cmd("enew")
-    buffer = Buffer:new(vim.api.nvim_get_current_buf())
-  elseif kind == "tab" then
-    vim.cmd("tabnew")
-    buffer = Buffer:new(vim.api.nvim_get_current_buf())
-  elseif kind == "split" then
-    vim.cmd("below new")
-    buffer = Buffer:new(vim.api.nvim_get_current_buf())
-  elseif kind == "split_above" then
-    vim.cmd("top new")
-    buffer = Buffer:new(vim.api.nvim_get_current_buf())
-  elseif kind == "vsplit" then
-    vim.cmd("bot vnew")
-    buffer = Buffer:new(vim.api.nvim_get_current_buf())
-  elseif kind == "floating" then
-    -- Creates the border window
-    local vim_height = vim.api.nvim_eval([[&lines]])
-    local vim_width = vim.api.nvim_eval([[&columns]])
-    local width = math.floor(vim_width * 0.8) + 3
-    local height = math.floor(vim_height * 0.7)
-    local col = vim_width * 0.1 - 1
-    local row = vim_height * 0.15
-
-    local content_buffer = vim.api.nvim_create_buf(true, true)
-    local content_window = vim.api.nvim_open_win(content_buffer, true, {
-      relative = "editor",
-      width = width,
-      height = height,
-      col = col,
-      row = row,
-      style = "minimal",
-      focusable = false,
-      border = "single",
-    })
-
-    vim.api.nvim_win_set_cursor(content_window, { 1, 0 })
-    buffer = Buffer:new(content_buffer)
-  end
-
+  local buffer = Buffer:new(api.nvim_create_buf(false, false))
   buffer.kind = kind
-
-  vim.cmd("setlocal nonu")
-  vim.cmd("setlocal nornu")
+  if config.open ~= false then
+    buffer:show()
+  end
 
   buffer:set_name(config.name)
 
@@ -302,6 +356,7 @@ function Buffer.create(config)
 
   if not config.modifiable then
     buffer:set_option("modifiable", false)
+    buffer:set_option("modified", false)
   end
 
   if config.readonly ~= nil and config.readonly then

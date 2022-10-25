@@ -2,6 +2,7 @@ local Buffer = require("neogit.lib.buffer")
 local cli = require("neogit.lib.git.cli")
 local parser = require("neogit.buffers.commit_view.parsing")
 local ui = require("neogit.buffers.commit_view.ui")
+local log = require("neogit.lib.git.log")
 
 local M = {
   instance = nil,
@@ -28,8 +29,10 @@ function M.new(commit_id, notify)
 
   local instance = {
     is_open = false,
-    commit_info = parser.parse_commit_info(cli.show.format("fuller").args(commit_id).call_sync()),
-    commit_overview = parser.parse_commit_overview(cli.show.stat.oneline.args(commit_id).call_sync()),
+    commit_info = log.parse(cli.show.format("fuller").args(commit_id).call_sync().stdout)[1],
+    commit_overview = parser.parse_commit_overview(
+      cli.show.stat.oneline.args(commit_id).call_sync():trim().stdout
+    ),
     buffer = nil,
   }
 

@@ -9,27 +9,24 @@ local function parse(output)
   return result
 end
 
-local function trim_null_terminator(str)
-  return string.gsub(str, "^(.-)%z*$", "%1")
-end
-
 local function perform_stash(include)
   if not include then
     return
   end
 
-  local index = cli["commit-tree"].no_gpg_sign.parent("HEAD").tree(cli["write-tree"].call()).call()
+  local index =
+    cli["commit-tree"].no_gpg_sign.parent("HEAD").tree(cli["write-tree"].call().stdout).call().stdout
 
   cli["read-tree"].merge.index_output(".git/NEOGIT_TMP_INDEX").args(index).call()
 
   if include.worktree then
-    local files = cli.diff.no_ext_diff.name_only.null_terminated
+    local files = cli.diff.no_ext_diff.name_only
       .args("HEAD")
       .env({
         GIT_INDEX_FILE = ".git/NEOGIT_TMP_INDEX",
       })
       .call()
-    files = vim.split(trim_null_terminator(files), "\0")
+      :trim()
 
     cli["update-index"].add.remove
       .files(unpack(files))
@@ -60,7 +57,7 @@ local function perform_stash(include)
     --.commit('HEAD')
     --.call()
   elseif include.index then
-    local diff = cli.diff.no_ext_diff.cached.call() .. "\n"
+    local diff = cli.diff.no_ext_diff.cached.call():trim().stdout[1] .. "\n"
 
     cli.apply.reverse.cached.input(diff).call()
 
@@ -69,7 +66,7 @@ local function perform_stash(include)
 end
 
 local function update_stashes(state)
-  local result = cli.stash.args("list").call()
+  local result = cli.stash.args("list").call():trim()
   state.stashes.items = parse(result)
 end
 
@@ -85,9 +82,9 @@ return {
   end,
 
   pop = function(stash)
-    local _, code = cli.stash.apply.index.args(stash).show_popup(false).call()
+    local result = cli.stash.apply.index.args(stash).show_popup(false).call():trim()
 
-    if code == 0 then
+    if result.code == 0 then
       cli.stash.drop.args(stash).call()
     else
       cli.stash.apply.args(stash).call()
@@ -95,9 +92,9 @@ return {
   end,
 
   apply = function(stash)
-    local _, code = cli.stash.apply.index.args(stash).show_popup(false).call()
+    local result = cli.stash.apply.index.args(stash).show_popup(false).call():trim()
 
-    if code ~= 0 then
+    if result.code ~= 0 then
       cli.stash.apply.args(stash).call()
     end
   end,

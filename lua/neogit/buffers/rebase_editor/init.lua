@@ -27,6 +27,7 @@ function M:open()
       ["BufUnload"] = function()
         self.on_close()
         vim.cmd("silent w!")
+        require("neogit.process").defer_show_preview_buffers()
       end,
     },
     mappings = {

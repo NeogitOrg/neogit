@@ -4,9 +4,9 @@ local util = require("neogit.lib.util")
 local M = {}
 
 function M.pull_interactive(remote, branch, args)
-  local cmd = "git pull " .. remote .. " " .. branch .. " " .. args
-
-  return cli.interactive_git_cmd(cmd)
+  local client = require("neogit.client")
+  local envs = client.get_envs_git_editor()
+  return cli.pull.env(envs).args(remote or "", branch or "").arg_list(args).call_interactive()
 end
 
 local function update_unpulled(state)
@@ -14,7 +14,7 @@ local function update_unpulled(state)
     return
   end
 
-  local result = cli.log.oneline.for_range("..@{upstream}").show_popup(false).call()
+  local result = cli.log.oneline.for_range("..@{upstream}").show_popup(false).call():trim().stdout
 
   state.unpulled.items = util.map(result, function(x)
     return { name = x }

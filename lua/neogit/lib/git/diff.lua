@@ -13,6 +13,7 @@ local function parse_diff_stats(raw)
     additions = 0,
     deletions = 0,
   }
+
   -- local matches raw:match('1 file changed, (%d+ insertions?%(%+%))?(, )?(%d+ deletions?%(%-%))?')
   for _, part in ipairs(raw) do
     part = util.trim(part)
@@ -79,7 +80,6 @@ local function parse_diff(output, with_stats)
           diff.file = header[4]:match("%-%-%- a/(.*)")
         end
       else
-        logger.debug("TODO: diff parser")
         logger.debug(vim.inspect(header))
       end
     end
@@ -141,7 +141,7 @@ local diff = {
   parse = parse_diff,
   parse_stats = parse_diff_stats,
   get_stats = function(name)
-    return parse_diff_stats(cli.diff.no_ext_diff.shortstat.files(name).call_sync())
+    return parse_diff_stats(cli.diff.no_ext_diff.shortstat.files(name).call_sync():trim())
   end,
 }
 
@@ -180,8 +180,8 @@ function diff.register(meta)
     for _, f in ipairs(repo.unstaged.items) do
       if f.mode ~= "D" and f.mode ~= "F" and (not filter or filter:accepts("unstaged", f.name)) then
         table.insert(executions, function()
-          local raw_diff = cli.diff.no_ext_diff.files(f.name).call()
-          local raw_stats = cli.diff.no_ext_diff.shortstat.files(f.name).call()
+          local raw_diff = cli.diff.no_ext_diff.files(f.name).call():trim().stdout
+          local raw_stats = cli.diff.no_ext_diff.shortstat.files(f.name).call():trim().stdout
           f.diff = parse_diff(raw_diff)
           f.diff.stats = parse_diff_stats(raw_stats)
         end)
@@ -191,8 +191,8 @@ function diff.register(meta)
     for _, f in ipairs(repo.staged.items) do
       if f.mode ~= "D" and f.mode ~= "F" and (not filter or filter:accepts("staged", f.name)) then
         table.insert(executions, function()
-          local raw_diff = cli.diff.no_ext_diff.cached.files(f.name).call()
-          local raw_stats = cli.diff.no_ext_diff.cached.shortstat.files(f.name).call()
+          local raw_diff = cli.diff.no_ext_diff.cached.files(f.name).call():trim().stdout
+          local raw_stats = cli.diff.no_ext_diff.cached.shortstat.files(f.name).call():trim().stdout
           f.diff = parse_diff(raw_diff)
           f.diff.stats = parse_diff_stats(raw_stats)
         end)

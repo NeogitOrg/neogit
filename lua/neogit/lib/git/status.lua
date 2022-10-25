@@ -3,11 +3,10 @@ local git = {
   stash = require("neogit.lib.git.stash"),
 }
 local a = require("plenary.async")
-local util = require("neogit.lib.util")
 local Collection = require("neogit.lib.collection")
 
 local function update_status(state)
-  local result = git.cli.status.porcelain(2).branch.null_terminated.call()
+  local result = git.cli.status.porcelain(2).branch.call():trim()
 
   local untracked_files, unstaged_files, staged_files = {}, {}, {}
   local append_original_path
@@ -19,7 +18,7 @@ local function update_status(state)
   local head = {}
   local upstream = {}
 
-  for _, l in ipairs(util.split(result[1], "\0")) do
+  for _, l in ipairs(result.stdout) do
     if append_original_path then
       append_original_path(l)
     else
@@ -90,10 +89,10 @@ local function update_status(state)
     end
   end
 
-  if head.branch == state.head.branch then
+  if not state.head.branch or head.branch == state.head.branch then
     head.commit_message = state.head.commit_message
   end
-  if upstream.branch == state.upstream.branch then
+  if not upstream.branch or upstream.branch == state.upstream.branch then
     upstream.commit_message = state.upstream.commit_message
   end
 
@@ -109,14 +108,15 @@ local function update_branch_information(state)
 
   if state.head.oid ~= "(initial)" then
     table.insert(tasks, function()
-      local result = git.cli.log.max_count(1).pretty("%B").call()
-      state.head.commit_message = result[1]
+      local result = git.cli.log.max_count(1).pretty("%B").call():trim()
+      state.head.commit_message = result.stdout[1]
     end)
 
     if state.upstream.branch then
       table.insert(tasks, function()
-        local result = git.cli.log.max_count(1).pretty("%B").for_range("@{upstream}").show_popup(false).call()
-        state.upstream.commit_message = result[1]
+        local result =
+          git.cli.log.max_count(1).pretty("%B").for_range("@{upstream}").show_popup(false).call():trim()
+        state.upstream.commit_message = result.stdout[1]
       end)
     end
   end

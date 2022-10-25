@@ -13,13 +13,13 @@ local function push_to(popup, name, remote, branch)
   logger.debug("Pushing to " .. name)
   notif.create("Pushing to " .. name)
 
-  local res = push_lib.push_interactive(remote, branch, popup:to_cli())
+  local res = push_lib.push_interactive(remote, branch, popup:get_arguments())
 
   if res.code == 0 then
     a.util.scheduler()
     logger.error("Pushed to " .. name)
     notif.create("Pushed to " .. name)
-    status.refresh(true)
+    status.refresh(true, "push_to")
     vim.cmd("do <nomodeline> User NeogitPushComplete")
   else
     logger.error("Failed to push to " .. name)
@@ -40,10 +40,10 @@ function M.create()
     end)
     :action("u", "Push to upstream", function(popup)
       local upstream = git.branch.get_upstream()
-      local auto_setup_remote = cli.config.get("push.autoSetupRemote").show_popup(false).call()[1]
+      local result = cli.config.get("push.autoSetupRemote").show_popup(false).call():trim()
       a.util.scheduler()
       if upstream == nil then
-        if auto_setup_remote == "true" then
+        if result.stdout[1] == "true" then
           upstream = {
             branch = status.repo.head.branch,
             remote = "origin",

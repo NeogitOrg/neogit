@@ -39,7 +39,7 @@ function M.create()
       "create branch",
       operation("create_branch", function()
         branch.create()
-        status.refresh(true)
+        status.refresh(true, "create_branch")
       end)
     )
     :action(
@@ -52,7 +52,7 @@ function M.create()
             return
           end
 
-          cli.checkout.branch(selected_branch).call_sync()
+          cli.checkout.branch(selected_branch).call_sync():trim()
           status.dispatch_refresh(true)
         end):open()
       end)
@@ -63,7 +63,7 @@ function M.create()
       operation("delete_branch", function()
         local branches = branch.get_local_branches()
         BranchSelectViewBuffer.new(branches, function(selected_branch)
-          cli.branch.delete.name(selected_branch).call_sync()
+          cli.branch.delete.name(selected_branch).call_sync():trim()
           status.dispatch_refresh(true)
         end):open()
       end)
@@ -83,8 +83,8 @@ function M.create()
             return
           end
 
-          cli.branch.delete.name(branch_name).call_sync()
-          cli.push.remote(remote).delete.to(branch_name).call_sync()
+          cli.branch.delete.name(branch_name).call_sync():trim()
+          cli.push.remote(remote).delete.to(branch_name).call_sync():trim()
           status.dispatch_refresh(true)
         end):open()
       end)
@@ -98,7 +98,7 @@ function M.create()
           if selected_branch == "" then
             return
           end
-          cli.checkout.branch(selected_branch).call_sync()
+          cli.checkout.branch(selected_branch).call_sync():trim()
           status.dispatch_refresh(true)
         end):open()
       end)
@@ -107,7 +107,7 @@ function M.create()
       "c",
       "checkout new branch",
       operation("checkout_create-branch", function()
-        local branches = format_branches(branch.get_all_branches())
+        local branches = format_branches(branch.get_all_branches(true))
         local current_branch = branch.current()
         if current_branch then
           table.insert(branches, 1, current_branch)
@@ -123,7 +123,7 @@ function M.create()
             return
           end
 
-          cli.checkout.new_branch_with_start_point(name, selected_branch).call_sync()
+          cli.checkout.new_branch_with_start_point(name, selected_branch).call_sync():trim()
           status.dispatch_refresh(true)
         end):open()
       end)
@@ -148,7 +148,7 @@ function M.create()
             return
           end
 
-          cli.branch.move.args(selected_branch, new_name).call_sync()
+          cli.branch.move.args(selected_branch, new_name).call_sync():trim()
           status.dispatch_refresh(true)
         end):open()
       end)
