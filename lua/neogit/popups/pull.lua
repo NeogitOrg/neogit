@@ -16,6 +16,7 @@ local function pull_from(popup, name, remote, branch)
   if res.code == 0 then
     a.util.scheduler()
     notif.create("Pulled from " .. name)
+    vim.cmd("do <nomodeline> User NeogitPullComplete")
   end
   status.refresh(true)
 end

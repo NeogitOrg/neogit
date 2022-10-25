@@ -263,7 +263,7 @@ Neogit emits the following events:
 | `NeogitStatusRefreshed` | Status has been reloaded         |
 | `NeogitCommitComplete`  | Commit has been created          |
 | `NeogitPushComplete`    | Push has completed               |
-
+| `NeogitPullComplete`    | Pull has completed               |
 
 You can listen to the events using the following code:
 
