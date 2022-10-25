@@ -1,9 +1,3 @@
--- function! neogit#complete(arglead, ...)
---   return luaeval('require("neogit").complete')(a:arglead)
--- endfunction
-
--- command! -nargs=* -complete=customlist,neogit#complete
---       \ Neogit lua require'neogit'.open(require'neogit.lib.util'.parse_command_args(<f-args>))<CR>
 local M = {}
 local api = vim.api
 
