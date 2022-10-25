@@ -3,7 +3,6 @@ local git = require("neogit.lib.git")
 local popup = require("neogit.lib.popup")
 local CommitSelectViewBuffer = require("neogit.buffers.commit_select_view")
 local rebase = require("neogit.lib.git.rebase")
-local notif = require("neogit.lib.notification")
 
 local M = {}
 local a = require("plenary.async")
