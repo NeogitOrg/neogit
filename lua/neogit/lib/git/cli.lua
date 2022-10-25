@@ -610,8 +610,8 @@ local function new_builder(subcommand)
 
       return result
     end,
-    call = function(verbose, external_errors)
-      local p = to_process(verbose, external_errors)
+    call = function(verbose)
+      local p = to_process(verbose, not state.show_popup)
       local result = p:spawn_async(function()
         -- Required since we need to do this before awaiting
         if state.input then

@@ -101,7 +101,10 @@ function Process.show_console()
     create_preview_buffer()
   end
 
-  preview_buffer.buffer:show()
+  local win = preview_buffer.buffer:show()
+  vim.api.nvim_win_call(win, function()
+    vim.cmd.normal("G")
+  end)
 end
 
 local nvim_chan_send = vim.api.nvim_chan_send

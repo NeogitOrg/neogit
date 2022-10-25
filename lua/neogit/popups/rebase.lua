@@ -50,9 +50,7 @@ function M.create()
     :action("i", "Interactive", function()
       local commits = rebase.commits()
       CommitSelectViewBuffer.new(commits, function(_view, selected)
-        if rebase.run_interactive(selected.oid).code ~= 0 then
-          notif.create("Rebasing failed. Resolve conflicts before continuing", vim.log.levels.ERROR)
-        end
+        rebase.run_interactive(selected.oid)
         a.util.scheduler()
         _view:close()
         status.refresh(true, "rebase_interactive")
