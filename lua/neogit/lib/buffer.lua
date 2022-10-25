@@ -134,7 +134,7 @@ function Buffer:show()
   local kind = self.kind
 
   if kind == "replace" then
-    self.old_buf = api.nvim_get_current_buf(api.nvim_set_current_buf())
+    self.old_buf = api.nvim_get_current_buf()
     api.nvim_set_current_buf(self.handle)
     win = api.nvim_get_current_win()
   elseif kind == "tab" then
