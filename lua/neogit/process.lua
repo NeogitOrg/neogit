@@ -367,7 +367,7 @@ function Process:close_stdin()
   -- Send eof
   if self.stdin then
     self.stdin = nil
-    vim.api.nvim_chan_send(self.job, "\04")
+    -- vim.api.nvim_chan_send(self.job, "\04")
     vim.fn.chanclose(self.job, "stdin")
   end
 end
