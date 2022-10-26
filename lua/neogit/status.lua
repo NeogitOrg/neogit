@@ -447,6 +447,9 @@ local function refresh_viml_compat(fname)
   if not config.values.auto_refresh then
     return
   end
+  if #vim.fs.find(".git/", { upward = true }) == 0 then -- not a git repository
+    return
+  end
 
   refresh_manually(fname)
 end
