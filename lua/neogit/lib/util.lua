@@ -156,8 +156,7 @@ local function split_lines(str)
   return vim.split(str, "\r?\n")
 end
 
-local function parse_command_args(...)
-  local args = { ... }
+local function parse_command_args(args)
   local tbl = {}
 
   for _, val in pairs(args) do

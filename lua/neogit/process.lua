@@ -5,7 +5,7 @@ local Buffer = require("neogit.lib.buffer")
 local function remove_escape_codes(s)
   -- from: https://stackoverflow.com/questions/48948630/lua-ansi-escapes-pattern
 
-  return s:gsub("[\27\155][][()#;?%d]*[A-PRZcf-ntqry=><~]", ""):gsub("[\r\n]", "")
+  return s:gsub("[\27\155][][()#;?%d]*[A-PRZcf-ntqry=><~]", ""):gsub("[\r\n\04\08]", "")
 end
 
 ---@class Process
@@ -101,7 +101,10 @@ function Process.show_console()
     create_preview_buffer()
   end
 
-  preview_buffer.buffer:show()
+  local win = preview_buffer.buffer:show()
+  vim.api.nvim_win_call(win, function()
+    vim.cmd.normal("G")
+  end)
 end
 
 local nvim_chan_send = vim.api.nvim_chan_send

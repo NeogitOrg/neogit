@@ -14,25 +14,29 @@ end
 
 local a = require("plenary.async")
 
+local function rebase_command(cmd)
+  local git = require("neogit.lib.git")
+  cmd = cmd or git.cli.rebase
+  local envs = client.get_envs_git_editor()
+  return cmd.env(envs).show_popup(false).call(true)
+end
+
 function M.run_interactive(commit)
   a.util.scheduler()
   local git = require("neogit.lib.git")
-  local envs = client.get_envs_git_editor()
-  return git.cli.rebase.interactive.env(envs).args(commit):call(true, true)
-end
-
-function M.rebase_onto(branch)
-  local git = require("neogit.lib.git")
-  local envs = client.get_envs_git_editor()
-  local result = git.cli.rebase.env(envs).args(branch).call(true, true)
+  local result = rebase_command(git.cli.interactive.args(commit))
   if result.code ~= 0 then
     notif.create("Rebasing failed. Resolve conflicts before continuing", vim.log.levels.ERROR)
   end
 end
 
-local function rebase_command(cmd)
-  local envs = client.get_envs_git_editor()
-  return cmd.env(envs).call()
+function M.rebase_onto(branch)
+  a.util.scheduler()
+  local git = require("neogit.lib.git")
+  local result = rebase_command(git.cli.rebase.args(branch))
+  if result.code ~= 0 then
+    notif.create("Rebasing failed. Resolve conflicts before continuing", vim.log.levels.ERROR)
+  end
 end
 
 function M.continue()
