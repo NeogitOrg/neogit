@@ -56,7 +56,6 @@ local neogit = {
     hl.setup()
 
     require("neogit.autocmds").setup()
-    require("neogit.commands").setup()
   end,
   complete = function(arglead)
     if arglead:find("^kind=") then
