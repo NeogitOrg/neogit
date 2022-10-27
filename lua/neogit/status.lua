@@ -210,6 +210,7 @@ local function draw_buffer()
     location.last = #output
     output:append("")
     table.insert(new_locations, location)
+    print("Drew: ", vim.inspect(output))
   end
 
   if M.repo.rebase.head then
@@ -331,15 +332,19 @@ local function refresh(which, reason)
 
   logger.info("[STATUS BUFFER]: Starting refresh")
   if refresh_lock.permits == 0 then
-    logger.info(
+    print(
       string.format(
         "[STATUS BUFFER]: Refresh lock not available. Aborting refresh. Lock held by: %q",
         lock_holder
       )
     )
+    --- Undo the deadlock fix
+    --- This is because refresh wont properly wait but return immediately if
+    --- refresh is already in progress. This breaks as waiting for refresh does
+    --- not mean that a status buffer is drawn and ready
     a.util.scheduler()
-    refresh_status()
-    return
+    -- refresh_status()
+    -- return
   end
 
   local permit = refresh_lock:acquire()
@@ -511,6 +516,7 @@ local reset = function()
   end
   refresh(true, "reset")
 end
+
 local dispatch_reset = a.void(reset)
 
 local function close(skip_close)
@@ -646,6 +652,7 @@ local stage = function()
   local section, item = get_current_section_item()
   local mode = vim.api.nvim_get_mode()
 
+  print("Staging item: ", vim.inspect(item))
   if
     section == nil
     or (section.name ~= "unstaged" and section.name ~= "untracked" and section.name ~= "unmerged")
@@ -992,7 +999,7 @@ local function create(kind, cwd)
       end
 
       logger.debug("[STATUS BUFFER]: Dispatching initial render")
-      dispatch_refresh(true)
+      refresh(true, "Buffer.create")
     end,
   }
 end
