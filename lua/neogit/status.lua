@@ -492,6 +492,7 @@ end
 local function toggle()
   local section, item = get_current_section_item()
   if section == nil then
+    print("No section at cursor")
     return
   end
 
@@ -505,10 +506,11 @@ local function toggle()
   elseif item then
     item.folded = not item.folded
   else
-    print("Toggling section: ", vim.inspect(section))
+    print("Toggling section: ", section)
     section.folded = not section.folded
   end
 
+  print("Refreshing toggled status")
   refresh_status()
 end
 
@@ -758,9 +760,13 @@ local discard = function()
   if mode.mode == "V" then
     local section, item, hunk, from, to = get_selection()
     local patch = generate_patch_from_selection(item, hunk, from, to, true)
-    print("Discarding: ", vim.inspect(section), vim.inspect(item), vim.inspect(hunk))
+    print("Discarding V: ",from, to, "Hunk", vim.inspect(hunk))
     if section.name == "staged" then
-      cli.apply.reverse.index.with_patch(patch).call()
+      print("Discarding changed patch: ", vim.inspect(patch))
+      local result = cli.apply.reverse.index.with_patch(patch).call()
+      if result.code ~= 0 then
+        error("Failed to discard" .. vim.inspect(result))
+      end
     else
       cli.apply.reverse.with_patch(patch).call()
     end
