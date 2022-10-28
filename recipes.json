@@ -1,0 +1,6 @@
+{
+  "test": {
+    "cmd": "nvim --headless --noplugin -c \"lua require(\\\"plenary.test_harness\\\").test_directory_command('tests/status_buf_spec.lua {minimal_init = \\\"tests/minimal-init.nvim\\\"}')\"",
+    "kind": "term"
+  }
+}
