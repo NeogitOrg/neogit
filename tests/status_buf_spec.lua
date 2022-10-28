@@ -60,14 +60,15 @@ describe("status buffer", function()
     it(
       "can stage a subsequent hunk under the cursor of a tracked file",
       in_prepared_repo(function()
-        vim.fn.setpos(".", { 0, 8, 1, 0 })
+        print("Staging filenrestne")
+        vim.fn.setpos(".", { 0, 10, 1, 0 })
         act("<tab>8js")
-        eq(" M a.txt\n", get_git_status("a.txt"))
+        eq("MM a.txt\n", get_git_status("a.txt"))
         eq(
           [[--- a/a.txt
 +++ b/a.txt
 @@ -7,4 +7,5 @@ Here are some lines we can change during the tests.
-
+ 
  This is a second block of text to create a second hunk.
  It also has some line we can manipulate.
 +Adding a new line right here!
@@ -276,7 +277,7 @@ describe("status buffer", function()
     it(
       "can discard a selection of a staged file",
       in_prepared_repo(function()
-        vim.fn.setpos(".", { 0, 11, 1, 0 })
+        vim.fn.setpos(".", { 0, 12, 1, 0 })
         act("<tab>jjjjVx")
         eq("M  b.txt\n", get_git_status("b.txt"))
         eq(

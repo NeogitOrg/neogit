@@ -60,6 +60,7 @@ local function get_section_item_for_line(linenr)
   local section_idx, item_idx = get_section_item_idx_for_line(linenr)
   local section = M.locations[section_idx]
 
+  print(string.format("Section for line: %s: %s %s", linenr, vim.inspect(item_idx), vim.inspect(section)))
   if section == nil then
     return nil, nil
   end
@@ -504,6 +505,7 @@ local function toggle()
   elseif item then
     item.folded = not item.folded
   else
+    print("Toggling section: ", vim.inspect(section))
     section.folded = not section.folded
   end
 
@@ -734,8 +736,10 @@ end
 
 local discard = function()
   local section, item = get_current_section_item()
+  print("Discarding: ")
 
   if section == nil or item == nil then
+    print("Item is nil")
     return
   end
   M.current_operation = "discard"
@@ -754,6 +758,7 @@ local discard = function()
   if mode.mode == "V" then
     local section, item, hunk, from, to = get_selection()
     local patch = generate_patch_from_selection(item, hunk, from, to, true)
+    print("Discarding: ", vim.inspect(section), vim.inspect(item), vim.inspect(hunk))
     if section.name == "staged" then
       cli.apply.reverse.index.with_patch(patch).call()
     else
