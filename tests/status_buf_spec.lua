@@ -7,6 +7,7 @@ local get_git_status = harness.get_git_status
 local get_git_diff = harness.get_git_diff
 
 local function act(normal_cmd)
+  print("Feeding key: ", normal_cmd)
   vim.fn.feedkeys(vim.api.nvim_replace_termcodes(normal_cmd, true, true, true))
   vim.fn.feedkeys("", "x") -- flush typeahead
   status.wait_on_current_operation()
@@ -37,9 +38,9 @@ describe("status buffer", function()
     it(
       "can stage a hunk under the cursor of a tracked file",
       in_prepared_repo(function()
-        vim.fn.setpos(".", { 0, 9, 1, 0 })
+        vim.fn.setpos(".", { 0, 10, 1, 0 })
         act("<tab>jjs")
-        eq(" M a.txt\n", get_git_status("a.txt"))
+        eq("MM a.txt\n", get_git_status("a.txt"))
         eq(
           [[--- a/a.txt
 +++ b/a.txt
@@ -48,8 +49,8 @@ describe("status buffer", function()
 -It exists so it can be manipulated by the test suite.
 +This is a change made to a tracked file.
  Here are some lines we can change during the tests.
-
-
+ 
+ 
 ]],
           get_git_diff("a.txt", "--cached")
         )

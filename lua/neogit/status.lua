@@ -308,6 +308,7 @@ end
 
 local function refresh_status()
   if M.status_buffer == nil then
+    print("no status buffer")
     return
   end
 
@@ -327,6 +328,7 @@ end
 
 local refresh_lock = a.control.Semaphore.new(1)
 local lock_holder = nil
+
 local function refresh(which, reason)
   which = which or true
 
@@ -562,9 +564,9 @@ local function generate_patch_from_selection(item, hunk, from, to, reverse)
           if operand == "-" then
             table.insert(diff_content, " " .. line)
           end
-        -- If we want to apply the patch in reverse, we need to include every `+` line we skip as a normal line, since
-        -- it's unchanged as far as the diff is concerned and should not be reversed.
-        -- We also need to adapt the original line offset based on if we skip or not
+          -- If we want to apply the patch in reverse, we need to include every `+` line we skip as a normal line, since
+          -- it's unchanged as far as the diff is concerned and should not be reversed.
+          -- We also need to adapt the original line offset based on if we skip or not
         elseif reverse then
           if operand == "+" then
             table.insert(diff_content, " " .. line)
