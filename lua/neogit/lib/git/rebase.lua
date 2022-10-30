@@ -24,7 +24,7 @@ end
 function M.run_interactive(commit)
   a.util.scheduler()
   local git = require("neogit.lib.git")
-  local result = rebase_command(git.cli.interactive.args(commit))
+  local result = rebase_command(git.cli.rebase.interactive.args(commit))
   if result.code ~= 0 then
     notif.create("Rebasing failed. Resolve conflicts before continuing", vim.log.levels.ERROR)
   end
