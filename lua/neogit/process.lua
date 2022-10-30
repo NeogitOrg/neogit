@@ -307,7 +307,7 @@ function Process:spawn(cb)
 
   -- Prevent blank lines
   local has_line = false
-  local on_stderr = handle_output("stderr", res.stderr, function(_, line)
+  local on_stderr = handle_output("stderr", res.stderr, function(_, _)
     if has_line then
       has_line = false
       append_log(self, "\r\n")
