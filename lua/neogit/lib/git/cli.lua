@@ -592,7 +592,8 @@ local function new_builder(subcommand)
     to_process = to_process,
     call_interactive = function(handle_line)
       handle_line = handle_line or handle_interactive_password_questions
-      local p = to_process(true)
+      local p = to_process(true, false)
+      p.pty = true
 
       p.on_partial_line = function(p, line, _)
         if line ~= "" then
