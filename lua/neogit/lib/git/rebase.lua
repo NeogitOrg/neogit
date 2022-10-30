@@ -19,7 +19,7 @@ local function rebase_command(cmd)
   local git = require("neogit.lib.git")
   cmd = cmd or git.cli.rebase
   local envs = client.get_envs_git_editor()
-  return cmd.env(envs).show_popup(false).call(true)
+  return cmd.env(envs).show_popup(false):in_pty(true).call(true)
 end
 
 function M.run_interactive(commit)

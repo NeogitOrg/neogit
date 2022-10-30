@@ -16,6 +16,7 @@ end
 ---@field result ProcessResult|nil
 ---@field job number|nil
 ---@field stdin number|nil
+---@field pty boolean
 ---@field on_line fun(process: Process, data: string, raw: string) callback on complete lines
 ---@field on_partial_line fun(process: Process, data: string, raw: string) callback on complete lines
 ---@field external_errors boolean|nil Tells the process that any errors will be dealt with externally and wont open a console buffer
@@ -274,7 +275,10 @@ function Process:spawn(cb)
       raw_last_line = ""
 
       for i = 2, #data do
-        d = remove_escape_codes(data[i])
+        local d = data[i]
+        if i ~= data then
+          d = remove_escape_codes(d)
+        end
 
         on_partial(d, data[i])
         if i < #data then
@@ -336,7 +340,7 @@ function Process:spawn(cb)
     cwd = self.cwd,
     env = self.env,
     -- Fake a small standard terminal
-    pty = true,
+    pty = not not self.pty,
     width = 80,
     height = 24,
     on_stdout = on_stdout,
