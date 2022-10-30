@@ -119,9 +119,6 @@ local function append_log(process, data)
       preview_buffer.current_span = process.job
     end
 
-    -- Explicitly reset indent
-    -- https://github.com/neovim/neovim/issues/14557
-    data = data:gsub("\n", "\r\n")
     nvim_chan_send(preview_buffer.chan, data)
   end
 
@@ -308,10 +305,18 @@ function Process:spawn(cb)
     end
   end)
 
-  local on_stderr = handle_output("stderr", res.stderr, function(_, _)
-    append_log(self, "\r\n")
+  -- Prevent blank lines
+  local has_line = false
+  local on_stderr = handle_output("stderr", res.stderr, function(_, line)
+    if has_line then
+      has_line = false
+      append_log(self, "\r\n")
+    end
   end, function(_, raw)
-    append_log(self, raw)
+    if raw ~= "" then
+      has_line = true
+      append_log(self, raw)
+    end
   end)
 
   local function on_exit(_, code)
