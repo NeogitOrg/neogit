@@ -26,6 +26,39 @@ local function cb(name)
   return string.format(":lua require('neogit.integrations.diffview').diffview_mappings['%s']()<CR>", name)
 end
 
+---Resolves a cwd local file to git root relative
+local function root_prefix(git_root, cwd, path)
+  local t = {}
+  for part in string.gmatch(cwd .. "/" .. path, "[^/\\]+") do
+    if part == ".." then
+      if #t > 0 and t[#t] ~= ".." then
+        table.remove(t, #t)
+      else
+        table.insert(t, "..")
+      end
+    else
+      table.insert(t, part)
+    end
+  end
+
+  local git_root_parts = {}
+  for part in git_root:gmatch("[^/\\]+") do
+    table.insert(git_root_parts, part)
+  end
+
+  local s = {}
+  local skipping = true
+  for i = 1, #t do
+    if not skipping or git_root_parts[i] ~= t[i] then
+      table.insert(s, t[i])
+      skipping = false
+    end
+  end
+
+  path = table.concat(s, "/")
+  return path
+end
+
 local function get_local_diff_view(selected_file_name)
   local left = Rev(RevType.INDEX)
   local right = Rev(RevType.LOCAL)
@@ -42,7 +75,9 @@ local function get_local_diff_view(selected_file_name)
       files[kind] = {}
       for _, item in ipairs(section.items) do
         local file = {
-          path = item.name,
+          -- use the repo.cwd instead of current as it may change since the
+          -- status was refreshed
+          path = root_prefix(git_root, repo.cwd, item.name),
           status = item.mode,
           stats = (item.diff and item.diff.stats) and {
             additions = item.diff.stats.additions or 0,
@@ -74,9 +109,9 @@ local function get_local_diff_view(selected_file_name)
         if side == "left" then
           table.insert(args, "HEAD")
         end
-        return neogit.cli.show.file(unpack(args)).call_sync():trim().stdout
+        return neogit.cli.show.file(unpack(args)).call_sync().stdout
       elseif kind == "working" then
-        local fdata = neogit.cli.show.file(path).call_sync():trim().stdout
+        local fdata = neogit.cli.show.file(path).call_sync().stdout
         return side == "left" and fdata
       end
     end,
