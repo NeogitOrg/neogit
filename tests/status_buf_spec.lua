@@ -102,77 +102,78 @@ describe("status buffer", function()
     )
   end)
 
-  -- describe("unstaging files - u", function()
-  --   it(
-  --     "can unstage a staged file under the cursor",
-  --     in_prepared_repo(function()
-  --       vim.fn.setpos(".", { 0, 11, 1, 0 })
-  --       act("u")
-  --       local result = get_git_status("b.txt")
-  --       eq(" M b.txt\n", result)
-  --     end)
-  --   )
+  describe("unstaging files - u", function()
+    it(
+      "can unstage a staged file under the cursor",
+      in_prepared_repo(function()
+        vim.fn.setpos(".", { 0, 13, 1, 0 })
+        act("u")
+        local result = get_git_status("b.txt")
+        eq(" M b.txt\n", result)
+      end)
+    )
 
-  --   it(
-  --     "can unstage a hunk under the cursor of a staged file",
-  --     in_prepared_repo(function()
-  --       vim.fn.setpos(".", { 0, 11, 1, 0 })
-  --       act("<tab>jju")
-  --       eq("MM b.txt\n", get_git_status("b.txt"))
-  --       eq(
-  --         [[--- a/b.txt
-  -- +++ b/b.txt
-  -- @@ -7,3 +7,4 @@ This way, unstaging staged changes can be tested.
-  -- Some more lines down here to force a second hunk.
-  -- I can't think of anything else.
-  -- Duh.
-  -- +And here as well
-  -- ]],
-  --         get_git_diff("b.txt", "--cached")
-  --       )
-  --     end)
-  --   )
+    it(
+      "can unstage a hunk under the cursor of a staged file",
+      in_prepared_repo(function()
+        vim.fn.setpos(".", { 0, 13, 1, 0 })
+        act("<tab>jju")
+        eq("MM b.txt\n", get_git_status("b.txt"))
+        eq(
+          [[--- a/b.txt
++++ b/b.txt
+@@ -7,3 +7,4 @@ This way, unstaging staged changes can be tested.
+ Some more lines down here to force a second hunk.
+ I can't think of anything else.
+ Duh.
++And here as well
+]],
+          get_git_diff("b.txt", "--cached")
+        )
+      end)
+    )
 
-  --   it(
-  --     "can unstage from a selection in a hunk",
-  --     in_prepared_repo(function()
-  --       vim.fn.setpos(".", { 0, 11, 1, 0 })
-  --       act("<tab>jjjjVu")
-  --       eq("MM b.txt\n", get_git_status("b.txt"))
-  --       eq(
-  --         [[--- a/b.txt
-  -- +++ b/b.txt
-  -- @@ -1,4 +1,5 @@
-  -- This is another test file.
-  -- +Changes here!
-  -- This way, unstaging staged changes can be tested.
+    it(
+      "can unstage from a selection in a hunk",
+      in_prepared_repo(function()
+        vim.fn.setpos(".", { 0, 13, 1, 0 })
+        act("<tab>jjjjVu")
+        eq("MM b.txt\n", get_git_status("b.txt"))
+        eq(
+          [[--- a/b.txt
++++ b/b.txt
+@@ -1,4 +1,5 @@
+ This is another test file.
++Changes here!
+ This way, unstaging staged changes can be tested.
+ 
+ 
+]],
+          get_git_diff("b.txt")
+        )
+      end)
+    )
 
-  -- ]],
-  --         get_git_diff("b.txt")
-  --       )
-  --     end)
-  --   )
-
-  --   it(
-  --     "can unstage a subsequent hunk from a staged file",
-  --     in_prepared_repo(function()
-  --       vim.fn.setpos(".", { 0, 11, 1, 0 })
-  --       act("<tab>8ju")
-  --       eq("MM b.txt\n", get_git_status("b.txt"))
-  --       eq(
-  --         [[--- a/b.txt
-  -- +++ b/b.txt
-  -- @@ -7,3 +7,4 @@ This way, unstaging staged changes can be tested.
-  -- Some more lines down here to force a second hunk.
-  -- I can't think of anything else.
-  -- Duh.
-  -- +And here as well
-  -- ]],
-  --         get_git_diff("b.txt")
-  --       )
-  --     end)
-  --   )
-  -- end)
+    it(
+      "can unstage a subsequent hunk from a staged file",
+      in_prepared_repo(function()
+        vim.fn.setpos(".", { 0, 13, 1, 0 })
+        act("<tab>8ju")
+        eq("MM b.txt\n", get_git_status("b.txt"))
+        eq(
+          [[--- a/b.txt
++++ b/b.txt
+@@ -7,3 +7,4 @@ This way, unstaging staged changes can be tested.
+ Some more lines down here to force a second hunk.
+ I can't think of anything else.
+ Duh.
++And here as well
+]],
+          get_git_diff("b.txt")
+        )
+      end)
+    )
+  end)
 
   describe("discarding files - x", function()
     it(
