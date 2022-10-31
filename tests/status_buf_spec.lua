@@ -252,25 +252,26 @@ describe("status buffer", function()
     --   end)
     -- )
 
-    -- it(
-    --   "can discard a hunk of the staged file under the cursor",
-    --   in_prepared_repo(function()
-    --     vim.fn.setpos(".", { 0, 11, 1, 0 })
-    --     act("<tab>jjx")
-    --     eq("M  b.txt\n", get_git_status("b.txt"))
-    --     eq(
-    --       [[--- a/b.txt
-    -- +++ b/b.txt
-    -- @@ -7,3 +7,4 @@ This way, unstaging staged changes can be tested.
-    -- Some more lines down here to force a second hunk.
-    -- I can't think of anything else.
-    -- Duh.
-    -- +And here as well
-    -- ]],
-    --       get_git_diff("b.txt", "--cached")
-    --     )
-    --   end)
-    -- )
+    it(
+      "can discard a hunk of the staged file under the cursor",
+      in_prepared_repo(function()
+        print("Status:", vim.fn.system("git status"))
+        vim.fn.setpos(".", { 0, 13, 1, 0 })
+        act("<tab>jjx")
+        eq("M  b.txt\n", get_git_status("b.txt"))
+        eq(
+          [[--- a/b.txt
++++ b/b.txt
+@@ -7,3 +7,4 @@ This way, unstaging staged changes can be tested.
+ Some more lines down here to force a second hunk.
+ I can't think of anything else.
+ Duh.
++And here as well
+]],
+          get_git_diff("b.txt", "--cached")
+        )
+      end)
+    )
 
     it(
       "can discard a selection of a staged file",
