@@ -752,15 +752,20 @@ local discard = function()
       default = 2,
     })
   then
+    print("Aborting")
     return
   end
 
-  -- TODO: fix nesting
   local mode = vim.api.nvim_get_mode()
+  print("Mode: ", vim.inspect(mode))
+  -- Make sure the index is in sync as git-status skips it
+  cli["update-index"].call()
+  -- TODO: fix nesting
   if mode.mode == "V" then
     local section, item, hunk, from, to = get_selection()
     local patch = generate_patch_from_selection(item, hunk, from, to, true)
-    print("Discarding V: ",from, to, "Hunk", vim.inspect(hunk))
+
+    print("Discarding V: ", from, to, "Hunk", vim.inspect(hunk))
     if section.name == "staged" then
       print("Discarding changed patch: ", vim.inspect(patch))
       local result = cli.apply.reverse.index.with_patch(patch).call()
@@ -779,6 +784,7 @@ local discard = function()
 
     if on_hunk then
       local hunk, lines = get_current_hunk_of_item(item)
+      print("Discarding current hunk", vim.inspect(hunk))
       lines[1] =
         string.format("@@ -%d,%d +%d,%d @@", hunk.index_from, hunk.index_len, hunk.index_from, hunk.disk_len)
       local diff = table.concat(lines or {}, "\n")
@@ -791,6 +797,7 @@ local discard = function()
     elseif section.name == "unstaged" then
       cli.checkout.files(item.name).call()
     elseif section.name == "staged" then
+      print("Discarding file", item.name)
       cli.reset.files(item.name).call()
       cli.checkout.files(item.name).call()
     end

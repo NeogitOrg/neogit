@@ -30,6 +30,7 @@ local configurations = {
       end,
     },
   },
+
   status = config {
     flags = {
       short = "-s",
