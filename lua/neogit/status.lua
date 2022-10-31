@@ -307,7 +307,7 @@ local function restore_cursor_location(section_loc, file_loc, hunk_loc)
   vim.fn.setpos(".", { 0, hunk.first, 0, 0 })
 end
 
-local function refresh_status()
+local function refresh_status_buffer()
   if M.status_buffer == nil then
     print("no status buffer")
     return
@@ -350,6 +350,8 @@ local function refresh(which, reason)
     -- return
   end
 
+  print("Acquire permit")
+
   local permit = refresh_lock:acquire()
   lock_holder = reason or "unknown"
   logger.debug("[STATUS BUFFER]: Acquired refresh lock")
@@ -361,7 +363,7 @@ local function refresh(which, reason)
     if which == true or which.status then
       M.repo:update_status()
       a.util.scheduler()
-      refresh_status()
+      refresh_status_buffer()
     end
 
     local refreshes = {}
@@ -411,11 +413,13 @@ local function refresh(which, reason)
       end)
     end
     logger.debug(string.format("[STATUS BUFFER]: Running %d refresh(es)", #refreshes))
+    print("Joining refreshes")
     a.util.join(refreshes)
+    print("Finisihed")
     logger.debug("[STATUS BUFFER]: Refreshes completed")
     a.util.scheduler()
 
-    refresh_status()
+    refresh_status_buffer()
     vim.cmd("do <nomodeline> User NeogitStatusRefreshed")
   end
 
@@ -511,7 +515,7 @@ local function toggle()
   end
 
   print("Refreshing toggled status")
-  refresh_status()
+  refresh_status_buffer()
 end
 
 local reset = function()
@@ -972,6 +976,7 @@ end
 
 --- Creates a new status buffer
 local function create(kind, cwd)
+  print("status.create")
   kind = kind or config.values.kind
 
   if M.status_buffer then
@@ -980,8 +985,10 @@ local function create(kind, cwd)
     return
   end
 
+  print("Logging")
   logger.debug("[STATUS BUFFER]: Creating...")
 
+  print("Creating status buffer")
   Buffer.create {
     name = "NeogitStatus",
     filetype = "NeogitStatus",
@@ -1003,6 +1010,7 @@ local function create(kind, cwd)
       local mappings = buffer.mmanager.mappings
       local func_map = cmd_func_map()
 
+      print("Setting up mappings")
       for key, val in pairs(config.values.mappings.status) do
         if val ~= "" then
           local func = func_map[val]
@@ -1019,6 +1027,7 @@ local function create(kind, cwd)
       end
 
       logger.debug("[STATUS BUFFER]: Dispatching initial render")
+      print("Refreshing")
       refresh(true, "Buffer.create")
     end,
   }
