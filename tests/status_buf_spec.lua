@@ -242,15 +242,15 @@ describe("status buffer", function()
     --   end)
     -- )
 
-    -- it(
-    --   "can discard the changes of a staged file under the cursor",
-    --   in_prepared_repo(function()
-    --     vim.fn.setpos(".", { 0, 11, 1, 0 })
-    --     act("x")
-    --     local result = get_git_status("b.txt")
-    --     eq("", result)
-    --   end)
-    -- )
+    it(
+      "can discard the changes of a staged file under the cursor",
+      in_prepared_repo(function()
+        vim.fn.setpos(".", { 0, 13, 1, 0 })
+        act("x")
+        local result = get_git_status("b.txt")
+        eq("", result)
+      end)
+    )
 
     it(
       "can discard a hunk of the staged file under the cursor",
