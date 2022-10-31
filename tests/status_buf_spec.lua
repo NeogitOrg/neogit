@@ -7,7 +7,7 @@ local get_git_status = harness.get_git_status
 local get_git_diff = harness.get_git_diff
 
 local function act(normal_cmd)
-  print("Feeding key: ", normal_cmd)
+  print("Feeding keys: ", normal_cmd)
   vim.fn.feedkeys(vim.api.nvim_replace_termcodes(normal_cmd, true, true, true))
   vim.fn.feedkeys("", "x") -- flush typeahead
   status.wait_on_current_operation()

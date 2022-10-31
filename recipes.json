@@ -1,6 +1,10 @@
 {
-  "test": {
-    "cmd": "nvim --headless --noplugin -c \"lua require(\\\"plenary.test_harness\\\").test_directory_command('tests/status_buf_spec.lua {minimal_init = \\\"tests/minimal-init.nvim\\\"}')\"",
+  "test-branches": {
+    "cmd": "nvim --headless --noplugin -c \"lua require(\\\"plenary.test_harness\\\").test_directory_command('tests/branch_popup_spec.lua {minimal_init = \\\"tests/minimal-init.nvim\\\"}')\"",
+    "kind": "term"
+  },
+  "test-all": {
+    "cmd": "nvim --headless --noplugin -c \"lua require(\\\"plenary.test_harness\\\").test_directory_command('tests {minimal_init = \\\"tests/minimal-init.nvim\\\"}')\"",
     "kind": "term"
   }
 }
