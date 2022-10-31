@@ -175,72 +175,73 @@ describe("status buffer", function()
   -- end)
 
   describe("discarding files - x", function()
-    -- it(
-    --   "can discard the changes of a file under the cursor",
-    --   in_prepared_repo(function()
-    --     vim.fn.setpos(".", { 0, 10, 1, 0 })
-    --     act("x")
-    --     local result = get_git_status("a.txt")
-    --     eq("", result)
-    --   end)
-    -- )
+    it(
+      "can discard the changes of a file under the cursor",
+      in_prepared_repo(function()
+        vim.fn.setpos(".", { 0, 10, 1, 0 })
+        act("x")
+        local result = get_git_status("a.txt")
+        eq("", result)
+      end)
+    )
 
-    -- it(
-    --   "can discard a hunk under the cursor",
-    --   in_prepared_repo(function()
-    --     vim.fn.setpos(".", { 0, 8, 1, 0 })
-    --     act("<tab>jjx")
-    --     eq(" M a.txt\n", get_git_status("a.txt"))
-    --     eq(
-    --       [[--- a/a.txt
-    -- +++ b/a.txt
-    -- @@ -7,4 +7,5 @@ Here are some lines we can change during the tests.
+    it(
+      "can discard a hunk under the cursor",
+      in_prepared_repo(function()
+        vim.fn.setpos(".", { 0, 10, 1, 0 })
+        act("<tab>jjx")
+        eq(" M a.txt\n", get_git_status("a.txt"))
+        eq(
+          [[--- a/a.txt
++++ b/a.txt
+@@ -7,4 +7,5 @@ Here are some lines we can change during the tests.
+ 
+ This is a second block of text to create a second hunk.
+ It also has some line we can manipulate.
++Adding a new line right here!
+ Here is some more.
+]],
+          get_git_diff("a.txt")
+        )
+      end)
+    )
 
-    -- This is a second block of text to create a second hunk.
-    -- It also has some line we can manipulate.
-    -- +Adding a new line right here!
-    -- Here is some more.
-    -- ]],
-    --       get_git_diff("a.txt")
-    --     )
-    --   end)
-    -- )
+    it(
+      "can discard a selection of a hunk",
+      in_prepared_repo(function()
+        vim.fn.setpos(".", { 0, 10, 1, 0 })
+        act("<tab>jjjjVx")
+        eq(" M a.txt\n", get_git_status("a.txt"))
+        eq(
+          [[--- a/a.txt
++++ b/a.txt
+@@ -1,5 +1,4 @@
+ This is a text file under version control.
+-It exists so it can be manipulated by the test suite.
+ Here are some lines we can change during the tests.
+ 
+ 
+@@ -7,4 +6,5 @@ Here are some lines we can change during the tests.
+ 
+ This is a second block of text to create a second hunk.
+ It also has some line we can manipulate.
++Adding a new line right here!
+ Here is some more.
+]],
+          get_git_diff("a.txt")
+        )
+      end)
+    )
 
-    -- it(
-    --   "can discard a selection of a hunk",
-    --   in_prepared_repo(function()
-    --     vim.fn.setpos(".", { 0, 8, 1, 0 })
-    --     act("<tab>jjjjVx")
-    --     eq(" M a.txt\n", get_git_status("a.txt"))
-    --     eq(
-    --       [[--- a/a.txt
-    -- +++ b/a.txt
-    -- @@ -1,5 +1,4 @@
-    -- This is a text file under version control.
-    -- -It exists so it can be manipulated by the test suite.
-    -- Here are some lines we can change during the tests.
-
-    -- @@ -7,4 +6,5 @@ Here are some lines we can change during the tests.
-
-    -- This is a second block of text to create a second hunk.
-    -- It also has some line we can manipulate.
-    -- +Adding a new line right here!
-    -- Here is some more.
-    -- ]],
-    --       get_git_diff("a.txt")
-    --     )
-    --   end)
-    -- )
-
-    -- it(
-    --   "can delete an untracked file",
-    --   in_prepared_repo(function()
-    --     vim.fn.setpos(".", { 0, 5, 1, 0 })
-    --     act("x")
-    --     local result = get_git_status("untracked.txt")
-    --     eq("", result)
-    --   end)
-    -- )
+    it(
+      "can delete an untracked file",
+      in_prepared_repo(function()
+        vim.fn.setpos(".", { 0, 7, 1, 0 })
+        act("x")
+        local result = get_git_status("untracked.txt")
+        eq("", result)
+      end)
+    )
 
     it(
       "can discard the changes of a staged file under the cursor",
