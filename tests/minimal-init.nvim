@@ -1,2 +1,3 @@
 set rtp+=.
+echo &rtp
 runtime plugin/neogit.lua
