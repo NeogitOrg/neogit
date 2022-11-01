@@ -3,6 +3,10 @@
     "cmd": "nvim --headless --noplugin -c \"lua require(\\\"plenary.test_harness\\\").test_directory_command('tests/branch_popup_spec.lua {minimal_init = \\\"tests/minimal-init.nvim\\\"}')\"",
     "kind": "term"
   },
+  "test-process": {
+    "cmd": "nvim --headless --noplugin -c \"lua require(\\\"plenary.test_harness\\\").test_directory_command('./tests/process_spec.lua {minimal_init = \\\"tests/minimal-init.nvim\\\"}')\"",
+    "kind": "term"
+  },
   "test-all": {
     "cmd": "nvim --headless --noplugin -c \"lua require(\\\"plenary.test_harness\\\").test_directory_command('tests {minimal_init = \\\"tests/minimal-init.nvim\\\"}')\"",
     "kind": "term"

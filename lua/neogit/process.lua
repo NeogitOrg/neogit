@@ -257,14 +257,16 @@ function Process:spawn(cb)
   local start = vim.loop.hrtime()
   self.start = start
 
-  local function handle_output(_, result, on_line, on_partial)
+  local function handle_output(n, result, on_line, on_partial)
     local raw_last_line = ""
     return function(_, data) -- Complete the previous line
+      print("Got: ", n, vim.inspect(data))
       raw_last_line = raw_last_line .. data[1]
 
       local d = remove_escape_codes(data[1])
 
       result[#result] = remove_escape_codes(result[#result] .. data[1])
+      print("Completed line: ", vim.inspect(result[#result]))
 
       on_partial(d, data[1])
       on_line(result[#result], raw_last_line)
@@ -285,6 +287,7 @@ function Process:spawn(cb)
         end
 
         table.insert(result, d)
+        print("Line: ", vim.inspect(d))
       end
     end
   end
