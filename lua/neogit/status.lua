@@ -748,7 +748,8 @@ local discard = function()
 
   local mode = vim.api.nvim_get_mode()
   -- Make sure the index is in sync as git-status skips it
-  cli["update-index"].refresh.call_sync()
+  -- Do this manually since the `cli` add --no-optional-locks
+  require("neogit.process").new({ cmd = { "git", "update-index", "--refresh" } }):spawn_async()
   -- TODO: fix nesting
   if mode.mode == "V" then
     local section, item, hunk, from, to = get_selection()

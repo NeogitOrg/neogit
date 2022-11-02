@@ -1,3 +1,12 @@
-local s = "commit f3299c0764896688b1e34d5785f257c4b29c90f7 (HEAD -> master, origin/master, origin/HEAD)"
+local result = { "" }
+local job = vim.fn.jobstart({ "cat", "tests/a.txt" }, {
+  on_stdout = function(_, data)
+    print("Got: ", vim.inspect(data))
+    result[#result] = result[#result] .. data[1]
+    for i = 2, #data do
+      result[#result + 1] = data[i]
+    end
+  end,
+})
 
-print(s:match("([| *]*)%*?commit (%w+)"))
+vim.fn.jobwait({ job }, 2000)
