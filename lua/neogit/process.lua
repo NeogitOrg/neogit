@@ -257,7 +257,7 @@ function Process:spawn(cb)
   local start = vim.loop.hrtime()
   self.start = start
 
-  local function handle_output(n, result, on_line, on_partial)
+  local function handle_output(_, result, on_line, on_partial)
     local raw_last_line = ""
     return function(_, data) -- Complete the previous line
       raw_last_line = raw_last_line .. data[1]
