@@ -707,7 +707,7 @@ local unstage = function()
     unstage_selection()
   else
     if item == nil then
-      git.status.unstage_all(".")
+      git.status.unstage_all()
       refresh(true, "unstage")
       M.current_operation = nil
       return

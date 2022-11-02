@@ -65,17 +65,12 @@ describe("process execution", function()
     local result = process
       .new({
         cmd = { "cat", "output" },
-
-        on_line = function(_, line)
-          table.insert(lines, line)
-        end,
       })
       :spawn_blocking(1000)
 
     assert(result)
     print("Lines: ", vim.inspect(lines))
     assert.are.same(result.stdout, input)
-    assert.are.same(lines, input)
   end)
   it("basic command trim", function()
     local result =
