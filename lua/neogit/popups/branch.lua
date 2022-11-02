@@ -47,9 +47,7 @@ function M.create()
       "checkout branch/revision",
       operation("checkout_branch", function()
         local branches = format_branches(branch.get_all_branches())
-        print("Checking out branches: ", vim.inspect(branches))
         BranchSelectViewBuffer.new(branches, function(selected_branch)
-          print("Selected branch: ", selected_branch)
           if selected_branch == "" then
             return
           end

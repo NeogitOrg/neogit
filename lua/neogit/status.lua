@@ -60,7 +60,6 @@ local function get_section_item_for_line(linenr)
   local section_idx, item_idx = get_section_item_idx_for_line(linenr)
   local section = M.locations[section_idx]
 
-  print(string.format("Section for line: %s: %s %s", linenr, vim.inspect(item_idx), vim.inspect(section)))
   if section == nil then
     return nil, nil
   end
@@ -211,7 +210,6 @@ local function draw_buffer()
     location.last = #output
     output:append("")
     table.insert(new_locations, location)
-    print("Drew: ", vim.inspect(output))
   end
 
   if M.repo.rebase.head then
@@ -309,7 +307,6 @@ end
 
 local function refresh_status_buffer()
   if M.status_buffer == nil then
-    print("no status buffer")
     return
   end
 
@@ -335,7 +332,7 @@ local function refresh(which, reason)
 
   logger.info("[STATUS BUFFER]: Starting refresh")
   if refresh_lock.permits == 0 then
-    print(
+    logger.debug(
       string.format(
         "[STATUS BUFFER]: Refresh lock not available. Aborting refresh. Lock held by: %q",
         lock_holder
@@ -349,8 +346,6 @@ local function refresh(which, reason)
     -- refresh_status()
     -- return
   end
-
-  print("Acquire permit")
 
   local permit = refresh_lock:acquire()
   lock_holder = reason or "unknown"
@@ -413,9 +408,7 @@ local function refresh(which, reason)
       end)
     end
     logger.debug(string.format("[STATUS BUFFER]: Running %d refresh(es)", #refreshes))
-    print("Joining refreshes")
     a.util.join(refreshes)
-    print("Finisihed")
     logger.debug("[STATUS BUFFER]: Refreshes completed")
     a.util.scheduler()
 
@@ -496,7 +489,6 @@ end
 local function toggle()
   local section, item = get_current_section_item()
   if section == nil then
-    print("No section at cursor")
     return
   end
 
@@ -510,11 +502,9 @@ local function toggle()
   elseif item then
     item.folded = not item.folded
   else
-    print("Toggling section: ", section)
     section.folded = not section.folded
   end
 
-  print("Refreshing toggled status")
   refresh_status_buffer()
 end
 
@@ -662,7 +652,6 @@ local stage = function()
   local section, item = get_current_section_item()
   local mode = vim.api.nvim_get_mode()
 
-  print("Staging item: ", vim.inspect(item))
   if
     section == nil
     or (section.name ~= "unstaged" and section.name ~= "untracked" and section.name ~= "unmerged")
@@ -742,10 +731,8 @@ end
 
 local discard = function()
   local section, item = get_current_section_item()
-  print("Discarding: ")
 
   if section == nil or item == nil then
-    print("Item is nil")
     return
   end
   M.current_operation = "discard"
@@ -756,12 +743,10 @@ local discard = function()
       default = 2,
     })
   then
-    print("Aborting")
     return
   end
 
   local mode = vim.api.nvim_get_mode()
-  print("Mode: ", vim.inspect(mode))
   -- Make sure the index is in sync as git-status skips it
   cli["update-index"].call()
   -- TODO: fix nesting
@@ -769,9 +754,7 @@ local discard = function()
     local section, item, hunk, from, to = get_selection()
     local patch = generate_patch_from_selection(item, hunk, from, to, true)
 
-    print("Discarding V: ", from, to, "Hunk", vim.inspect(hunk))
     if section.name == "staged" then
-      print("Discarding changed patch: ", vim.inspect(patch))
       local result = cli.apply.reverse.index.with_patch(patch).call()
       if result.code ~= 0 then
         error("Failed to discard" .. vim.inspect(result))
@@ -788,7 +771,6 @@ local discard = function()
 
     if on_hunk then
       local hunk, lines = get_current_hunk_of_item(item)
-      print("Discarding current hunk", vim.inspect(hunk))
       lines[1] =
         string.format("@@ -%d,%d +%d,%d @@", hunk.index_from, hunk.index_len, hunk.index_from, hunk.disk_len)
       local diff = table.concat(lines or {}, "\n")
@@ -801,7 +783,6 @@ local discard = function()
     elseif section.name == "unstaged" then
       cli.checkout.files(item.name).call()
     elseif section.name == "staged" then
-      print("Discarding file", item.name)
       cli.reset.files(item.name).call()
       cli.checkout.files(item.name).call()
     end
@@ -976,7 +957,6 @@ end
 
 --- Creates a new status buffer
 local function create(kind, cwd)
-  print("status.create")
   kind = kind or config.values.kind
 
   if M.status_buffer then
@@ -985,10 +965,8 @@ local function create(kind, cwd)
     return
   end
 
-  print("Logging")
   logger.debug("[STATUS BUFFER]: Creating...")
 
-  print("Creating status buffer")
   Buffer.create {
     name = "NeogitStatus",
     filetype = "NeogitStatus",
@@ -1010,7 +988,6 @@ local function create(kind, cwd)
       local mappings = buffer.mmanager.mappings
       local func_map = cmd_func_map()
 
-      print("Setting up mappings")
       for key, val in pairs(config.values.mappings.status) do
         if val ~= "" then
           local func = func_map[val]
@@ -1027,7 +1004,6 @@ local function create(kind, cwd)
       end
 
       logger.debug("[STATUS BUFFER]: Dispatching initial render")
-      print("Refreshing")
       refresh(true, "Buffer.create")
     end,
   }

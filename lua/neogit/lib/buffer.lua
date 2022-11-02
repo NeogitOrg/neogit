@@ -319,7 +319,6 @@ function Buffer.create(config)
     buffer:set_filetype(config.filetype)
   end
 
-  print("Setting mappings for buffer")
   if config.mappings then
     for mode, val in pairs(config.mappings) do
       for key, cb in pairs(val) do
@@ -334,12 +333,10 @@ function Buffer.create(config)
     end
   end
 
-  print("Intializing buffer config")
   if config.initialize then
     config.initialize(buffer)
   end
 
-  print("Rendering buffer")
   if config.render then
     buffer.ui:render(unpack(config.render(buffer)))
   end
