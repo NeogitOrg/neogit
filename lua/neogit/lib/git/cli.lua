@@ -628,7 +628,9 @@ local function new_builder(subcommand)
         -- Required since we need to do this before awaiting
         if state.input then
           logger.debug("Sending input:" .. vim.inspect(state.input))
-          p:send(state.input)
+          -- Include EOT, otherwise git-apply will not work as expects the
+          -- stream to end
+          p:send(state.input .. "\04")
           p:close_stdin()
         end
       end)
