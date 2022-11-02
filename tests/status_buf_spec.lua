@@ -259,7 +259,7 @@ describe("status buffer", function()
         -- print("Status:", vim.fn.system("git status"))
         vim.fn.setpos(".", { 0, 13, 1, 0 })
         act("<tab>jjx")
-        eq("M  b.txt\n", get_git_status("b.txt"))
+        eq("MM b.txt\n", get_git_status("b.txt"))
         eq(
           [[--- a/b.txt
 +++ b/b.txt
@@ -280,7 +280,7 @@ describe("status buffer", function()
         -- print("Status:", vim.fn.system("git status"))
         vim.fn.setpos(".", { 0, 13, 1, 0 })
         act("<tab>jjjjVx")
-        eq("M  b.txt\n", get_git_status("b.txt"))
+        eq("MM b.txt\n", get_git_status("b.txt"))
         eq(
           [[--- a/b.txt
 +++ b/b.txt
