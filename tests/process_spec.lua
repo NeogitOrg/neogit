@@ -37,8 +37,7 @@ describe("process execution", function()
   it("process input", function()
     local input = { "This is a line", "This is another line", "", "" }
     local p = process.new {
-      cmd = { "cat" },
-      cwd = "./tests",
+      cmd = { "tee", "output" },
     }
 
     p:spawn()
@@ -46,14 +45,12 @@ describe("process execution", function()
     local expecting = {}
     for _, v in ipairs(input) do
       expecting[#expecting + 1] = v
-      -- Cat echoes back
-      expecting[#expecting + 1] = v
     end
 
     print("Sending: ", vim.inspect(table.concat(expecting, "\n")))
     p:send(table.concat(input, "\n"))
-
     p:send("\04")
+
     p:close_stdin()
     p:wait()
 
@@ -61,7 +58,6 @@ describe("process execution", function()
     local result = process
       .new({
         cmd = { "cat", "output" },
-        cwd = "./tests",
 
         on_line = function(_, line)
           table.insert(lines, line)
