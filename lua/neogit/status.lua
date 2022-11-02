@@ -760,7 +760,7 @@ local discard = function()
     logger.debug("Patch:" .. vim.inspect(patch))
 
     if section.name == "staged" then
-      local result = cli.apply.reverse.cached.with_patch(patch).call()
+      local result = cli.apply.reverse.index.with_patch(patch).call()
       if result.code ~= 0 then
         error("Failed to discard" .. vim.inspect(result))
       end
@@ -781,7 +781,7 @@ local discard = function()
       local diff = table.concat(lines or {}, "\n")
       diff = table.concat({ "--- a/" .. item.name, "+++ b/" .. item.name, diff, "" }, "\n")
       if section.name == "staged" then
-        cli.apply.reverse.cached.with_patch(diff).call()
+        cli.apply.reverse.index.with_patch(diff).call()
       else
         cli.apply.reverse.with_patch(diff).call()
       end
