@@ -260,6 +260,7 @@ function Process:spawn(cb)
   local function handle_output(_, result, on_line, on_partial)
     local raw_last_line = ""
     return function(_, data) -- Complete the previous line
+      print("Reading command input: ", vim.inspect(data))
       raw_last_line = raw_last_line .. data[1]
 
       local d = remove_escape_codes(data[1])
@@ -267,6 +268,7 @@ function Process:spawn(cb)
       result[#result] = remove_escape_codes(result[#result] .. data[1])
 
       on_partial(d, data[1])
+      print("Got line completed: ", result[#result], vim.inspect(result))
       on_line(result[#result], raw_last_line)
 
       raw_last_line = ""
@@ -279,6 +281,7 @@ function Process:spawn(cb)
 
         on_partial(d, data[i])
         if i < #data then
+          print("Got line: ", d)
           on_line(d, data[i])
         else
           raw_last_line = data[i]
