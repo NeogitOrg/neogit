@@ -54,6 +54,8 @@ describe("process execution", function()
     p:close_stdin()
     p:wait()
 
+    print("Output:", vim.fn.system("cat output"))
+
     local lines = {}
     local result = process
       .new({
@@ -66,6 +68,7 @@ describe("process execution", function()
       :spawn_blocking(1000)
 
     assert(result)
+    print("Lines: ", vim.inspect(lines))
     assert.are.same(result.stdout, input)
     assert.are.same(lines, input)
   end)
