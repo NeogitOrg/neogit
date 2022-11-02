@@ -35,6 +35,11 @@ describe("process execution", function()
   end)
 
   it("process input", function()
+    local p = process
+      .new({
+        cmd = { "rm", "output" },
+      })
+      :spawn_blocking()
     local input = { "This is a line", "This is another line", "", "" }
     local p = process.new {
       cmd = { "tee", "output" },
