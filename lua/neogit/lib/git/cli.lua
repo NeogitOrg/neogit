@@ -261,6 +261,7 @@ local configurations = {
     flags = {
       add = "--add",
       remove = "--remove",
+      refresh = "--refresh",
     },
   },
   ["show-ref"] = config {

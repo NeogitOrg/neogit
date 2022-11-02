@@ -748,7 +748,7 @@ local discard = function()
 
   local mode = vim.api.nvim_get_mode()
   -- Make sure the index is in sync as git-status skips it
-  cli["update-index"].call()
+  cli["update-index"].refresh.call_sync()
   -- TODO: fix nesting
   if mode.mode == "V" then
     local section, item, hunk, from, to = get_selection()
