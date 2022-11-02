@@ -627,6 +627,7 @@ local function new_builder(subcommand)
       local result = p:spawn_async(function()
         -- Required since we need to do this before awaiting
         if state.input then
+          logger.debug("Sending input:" .. vim.inspect(state.input))
           p:send(state.input)
           p:close_stdin()
         end
