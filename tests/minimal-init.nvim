@@ -1,3 +1,2 @@
 exe "set rtp+=" . getcwd()
-echo &rtp
 runtime plugin/neogit.lua
