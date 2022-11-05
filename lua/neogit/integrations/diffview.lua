@@ -14,6 +14,15 @@ local a = require("plenary.async")
 
 local old_config
 
+local function remove_trailing_blankline(lines)
+  if lines[#lines] ~= "" then
+    error("Git show did not end with a blankline")
+  end
+
+  lines[#lines] = nil
+  return lines
+end
+
 M.diffview_mappings = {
   close = function()
     vim.cmd("tabclose")
@@ -109,9 +118,9 @@ local function get_local_diff_view(selected_file_name)
         if side == "left" then
           table.insert(args, "HEAD")
         end
-        return neogit.cli.show.file(unpack(args)).call_sync().stdout
+        return remove_trailing_blankline(neogit.cli.show.file(unpack(args)).call_sync().stdout)
       elseif kind == "working" then
-        local fdata = neogit.cli.show.file(path).call_sync().stdout
+        local fdata = remove_trailing_blankline(neogit.cli.show.file(path).call_sync().stdout)
         return side == "left" and fdata
       end
     end,
