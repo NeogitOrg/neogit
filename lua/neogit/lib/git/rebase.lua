@@ -5,9 +5,10 @@ local notif = require("neogit.lib.notification")
 
 local M = {}
 
+-- Async
 function M.commits()
   local git = require("neogit.lib.git")
-  local output = git.cli.log.format("fuller").args("--graph").call_sync(true).stdout
+  local output = git.cli.log.format("fuller").args("--graph").call(true).stdout
 
   return log.parse(output)
 end
@@ -18,13 +19,13 @@ local function rebase_command(cmd)
   local git = require("neogit.lib.git")
   cmd = cmd or git.cli.rebase
   local envs = client.get_envs_git_editor()
-  return cmd.env(envs).show_popup(false).call(true)
+  return cmd.env(envs).show_popup(false):in_pty(true).call(true)
 end
 
 function M.run_interactive(commit)
   a.util.scheduler()
   local git = require("neogit.lib.git")
-  local result = rebase_command(git.cli.interactive.args(commit))
+  local result = rebase_command(git.cli.rebase.interactive.args(commit))
   if result.code ~= 0 then
     notif.create("Rebasing failed. Resolve conflicts before continuing", vim.log.levels.ERROR)
   end

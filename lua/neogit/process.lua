@@ -16,6 +16,7 @@ end
 ---@field result ProcessResult|nil
 ---@field job number|nil
 ---@field stdin number|nil
+---@field pty boolean
 ---@field on_line fun(process: Process, data: string, raw: string) callback on complete lines
 ---@field on_partial_line fun(process: Process, data: string, raw: string) callback on complete lines
 ---@field external_errors boolean|nil Tells the process that any errors will be dealt with externally and wont open a console buffer
@@ -118,9 +119,6 @@ local function append_log(process, data)
       preview_buffer.current_span = process.job
     end
 
-    -- Explicitly reset indent
-    -- https://github.com/neovim/neovim/issues/14557
-    data = data:gsub("\n", "\r\n")
     nvim_chan_send(preview_buffer.chan, data)
   end
 
@@ -274,7 +272,10 @@ function Process:spawn(cb)
       raw_last_line = ""
 
       for i = 2, #data do
-        d = remove_escape_codes(data[i])
+        local d = data[i]
+        if i ~= data then
+          d = remove_escape_codes(d)
+        end
 
         on_partial(d, data[i])
         if i < #data then
@@ -304,10 +305,18 @@ function Process:spawn(cb)
     end
   end)
 
+  -- Prevent blank lines
+  local has_line = false
   local on_stderr = handle_output("stderr", res.stderr, function(_, _)
-    append_log(self, "\r\n")
+    if has_line then
+      has_line = false
+      append_log(self, "\r\n")
+    end
   end, function(_, raw)
-    append_log(self, raw)
+    if raw ~= "" then
+      has_line = true
+      append_log(self, raw)
+    end
   end)
 
   local function on_exit(_, code)
@@ -336,7 +345,7 @@ function Process:spawn(cb)
     cwd = self.cwd,
     env = self.env,
     -- Fake a small standard terminal
-    pty = true,
+    pty = not not self.pty,
     width = 80,
     height = 24,
     on_stdout = on_stdout,

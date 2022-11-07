@@ -11,6 +11,9 @@ end
 
 M.create = function(_path)
   local cache = {
+    ---The cwd when this was updated.
+    ---Used to generate absolute paths
+    cwd = ".",
     head = {
       branch = nil,
       commit_message = "",
