@@ -68,6 +68,8 @@ function M.editor(target, client)
     editor.rebase_editor(target, send_client_quit)
   elseif target:find("COMMIT_EDITMSG$") then
     editor.commit_editor(target, send_client_quit)
+  elseif target:find("MERGE_MSG$") then
+    editor.merge_editor(target, send_client_quit)
   else
     local notif = require("neogit.lib.notification")
     notif.create(target .. " has not been implemented yet", vim.log.levels.WARN)
