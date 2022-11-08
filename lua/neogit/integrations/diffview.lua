@@ -2,8 +2,8 @@ local M = {}
 
 local dv = require("diffview")
 local dv_config = require("diffview.config")
-local Rev = require("diffview.git.rev").Rev
-local RevType = require("diffview.git.rev").RevType
+local Rev = require("diffview.vcs.adapters.git.rev").GitRev
+local RevType = require("diffview.vcs.rev").RevType
 local CDiffView = require("diffview.api.views.diff.diff_view").CDiffView
 local dv_lib = require("diffview.lib")
 local dv_utils = require("diffview.utils")
@@ -69,7 +69,7 @@ local function root_prefix(git_root, cwd, path)
 end
 
 local function get_local_diff_view(selected_file_name)
-  local left = Rev(RevType.INDEX)
+  local left = Rev(RevType.STAGE)
   local right = Rev(RevType.LOCAL)
   local git_root = neogit.cli.git_root_sync()
 
@@ -77,6 +77,11 @@ local function get_local_diff_view(selected_file_name)
     local files = {}
     local repo = neogit.get_repo()
     local sections = {
+      conflicting = {
+        items = vim.tbl_filter(function(o)
+          return o.mode and o.mode:sub(2, 2) == "U"
+        end, repo.untracked.items),
+      },
       working = repo.unstaged,
       staged = repo.staged,
     }
@@ -87,7 +92,7 @@ local function get_local_diff_view(selected_file_name)
           -- use the repo.cwd instead of current as it may change since the
           -- status was refreshed
           path = root_prefix(git_root, repo.cwd, item.name),
-          status = item.mode,
+          status = item.mode and item.mode:sub(1, 1),
           stats = (item.diff and item.diff.stats) and {
             additions = item.diff.stats.additions or 0,
             deletions = item.diff.stats.deletions or 0,
