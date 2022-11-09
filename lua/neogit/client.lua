@@ -6,7 +6,7 @@ local M = {}
 
 function M.get_nvim_remote_editor()
   local neogit_path = debug.getinfo(1, "S").source:sub(2, -#"lua/neogit/client.lua" - 2)
-  local nvim_path = vim.v.progpath
+  local nvim_path = fn.shellescape(vim.v.progpath)
 
   local runtimepath_cmd = fn.shellescape(fmt("set runtimepath^=%s", fn.fnameescape(tostring(neogit_path))))
   local lua_cmd = fn.shellescape('lua require("neogit.client").client()')
