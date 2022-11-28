@@ -38,7 +38,6 @@ local function parse(raw)
       break
     end
 
-    -- print(line)
     local commit = {}
     local s1, s2, star
 
@@ -52,7 +51,6 @@ local function parse(raw)
     -- Consume this line
     advance()
 
-    -- print(s1, s2, commit.oid)
     commit.level = util.str_count(s1, "|")
 
     local start_idx = #s1 + #s2 + #star

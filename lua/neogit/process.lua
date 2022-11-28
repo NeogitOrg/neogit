@@ -17,7 +17,6 @@ end
 ---@field job number|nil
 ---@field stdin number|nil
 ---@field pty boolean
----@field on_line fun(process: Process, data: string, raw: string) callback on complete lines
 ---@field on_partial_line fun(process: Process, data: string, raw: string) callback on complete lines
 ---@field external_errors boolean|nil Tells the process that any errors will be dealt with externally and wont open a console buffer
 local Process = {}
@@ -257,19 +256,15 @@ function Process:spawn(cb)
   local start = vim.loop.hrtime()
   self.start = start
 
-  local function handle_output(_, result, on_line, on_partial)
-    local raw_last_line = ""
+  local function handle_output(_, result, on_partial, on_lb)
     return function(_, data) -- Complete the previous line
-      raw_last_line = raw_last_line .. data[1]
-
       local d = remove_escape_codes(data[1])
 
       result[#result] = remove_escape_codes(result[#result] .. data[1])
 
       on_partial(d, data[1])
-      on_line(result[#result], raw_last_line)
-
-      raw_last_line = ""
+      -- If there is only one item of the incomplete lines, the line will be
+      -- completed in later invocations
 
       for i = 2, #data do
         local d = data[i]
@@ -277,11 +272,10 @@ function Process:spawn(cb)
           d = remove_escape_codes(d)
         end
 
-        on_partial(d, data[i])
         if i < #data then
-          on_line(d, data[i])
+          on_lb()
         else
-          raw_last_line = data[i]
+          on_partial(d, data[i])
         end
 
         table.insert(result, d)
@@ -291,17 +285,14 @@ function Process:spawn(cb)
 
   local on_stdout = handle_output("stdout", res.stdout, function(line, raw)
     if self.verbose then
-      append_log(self, "\r\n")
-    end
-    if self.on_line then
-      self.on_line(self, line, raw)
-    end
-  end, function(line, raw)
-    if self.verbose then
       append_log(self, raw)
     end
     if self.on_partial_line then
       self.on_partial_line(self, line, raw)
+    end
+  end, function()
+    if self.verbose then
+      append_log(self, "\r\n")
     end
   end)
 
@@ -341,6 +332,8 @@ function Process:spawn(cb)
     end
   end
 
+  local logger = require("neogit.logger")
+  logger.debug("Spawning: " .. vim.inspect(self.cmd))
   local job = vim.fn.jobstart(self.cmd, {
     cwd = self.cwd,
     env = self.env,

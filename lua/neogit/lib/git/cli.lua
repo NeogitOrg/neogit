@@ -30,6 +30,7 @@ local configurations = {
       end,
     },
   },
+
   status = config {
     flags = {
       short = "-s",
@@ -260,6 +261,7 @@ local configurations = {
     flags = {
       add = "--add",
       remove = "--remove",
+      refresh = "--refresh",
     },
   },
   ["show-ref"] = config {
@@ -625,7 +627,10 @@ local function new_builder(subcommand)
       local result = p:spawn_async(function()
         -- Required since we need to do this before awaiting
         if state.input then
-          p:send(state.input)
+          logger.debug("Sending input:" .. vim.inspect(state.input))
+          -- Include EOT, otherwise git-apply will not work as expects the
+          -- stream to end
+          p:send(state.input .. "\04")
           p:close_stdin()
         end
       end)

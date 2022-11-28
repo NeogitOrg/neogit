@@ -19,6 +19,6 @@ jobs:
           git clone https://github.com/nvim-lua/plenary.nvim.git ~/.local/share/nvim/site/pack/plenary.nvim/start/plenary.nvim
 
       - name: Test
-        continue-on-error: true
+        continue-on-error: false
         run: |
           make test

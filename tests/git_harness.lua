@@ -2,7 +2,7 @@ local status = require("neogit.status")
 local a = require("plenary.async")
 local M = {}
 
-local project_dir = vim.api.nvim_exec("pwd", true)
+local project_dir = vim.fn.getcwd()
 
 -- very naiive implementation, we only use this to generate unique folder names
 local function random_string(length)
@@ -17,14 +17,25 @@ local function random_string(length)
 end
 
 local function prepare_repository(dir)
-  vim.cmd("silent !cp -r tests/.repo/ /tmp/" .. dir)
-  vim.cmd("cd /tmp/" .. dir)
-  vim.cmd("silent !cp -r .git.orig/ .git/")
+  vim.api.nvim_set_current_dir(project_dir)
+  local cmd = string.format(
+    [[
+mkdir -p tmp
+cp -r tests/.repo/ tmp/%s
+cp -r tmp/%s/.git.orig/ tmp/%s/.git/
+]],
+    dir,
+    dir,
+    dir
+  )
+  vim.fn.system(cmd)
+  vim.api.nvim_set_current_dir("tmp/" .. dir)
 end
 
 local function cleanup_repository(dir)
-  vim.cmd("cd " .. project_dir)
-  vim.cmd("silent !rm -rf /tmp/" .. dir)
+  vim.api.nvim_set_current_dir(project_dir)
+
+  vim.fn.system(string.format([[ rm -rf tmp/%s ]], dir))
 end
 
 function M.in_prepared_repo(cb)
@@ -32,7 +43,7 @@ function M.in_prepared_repo(cb)
     local dir = "neogit_test_" .. random_string(5)
     prepare_repository(dir)
     vim.cmd("Neogit")
-    a.util.block_on(status.reset())
+    a.util.block_on(status.reset)
     local _, err = pcall(cb)
     cleanup_repository(dir)
     if err ~= nil then

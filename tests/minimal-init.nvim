@@ -1,2 +1,2 @@
-set rtp+=.
-runtime plugin/neogit.vim
+exe "set rtp+=" . getcwd()
+runtime plugin/neogit.lua

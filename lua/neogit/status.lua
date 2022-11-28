@@ -305,7 +305,7 @@ local function restore_cursor_location(section_loc, file_loc, hunk_loc)
   vim.fn.setpos(".", { 0, hunk.first, 0, 0 })
 end
 
-local function refresh_status()
+local function refresh_status_buffer()
   if M.status_buffer == nil then
     return
   end
@@ -326,20 +326,25 @@ end
 
 local refresh_lock = a.control.Semaphore.new(1)
 local lock_holder = nil
+
 local function refresh(which, reason)
   which = which or true
 
   logger.info("[STATUS BUFFER]: Starting refresh")
   if refresh_lock.permits == 0 then
-    logger.info(
+    logger.debug(
       string.format(
         "[STATUS BUFFER]: Refresh lock not available. Aborting refresh. Lock held by: %q",
         lock_holder
       )
     )
+    --- Undo the deadlock fix
+    --- This is because refresh wont properly wait but return immediately if
+    --- refresh is already in progress. This breaks as waiting for refresh does
+    --- not mean that a status buffer is drawn and ready
     a.util.scheduler()
-    refresh_status()
-    return
+    -- refresh_status()
+    -- return
   end
 
   local permit = refresh_lock:acquire()
@@ -353,7 +358,7 @@ local function refresh(which, reason)
     if which == true or which.status then
       M.repo:update_status()
       a.util.scheduler()
-      refresh_status()
+      refresh_status_buffer()
     end
 
     local refreshes = {}
@@ -407,7 +412,7 @@ local function refresh(which, reason)
     logger.debug("[STATUS BUFFER]: Refreshes completed")
     a.util.scheduler()
 
-    refresh_status()
+    refresh_status_buffer()
     vim.cmd("do <nomodeline> User NeogitStatusRefreshed")
   end
 
@@ -500,7 +505,7 @@ local function toggle()
     section.folded = not section.folded
   end
 
-  refresh_status()
+  refresh_status_buffer()
 end
 
 local reset = function()
@@ -511,6 +516,7 @@ local reset = function()
   end
   refresh(true, "reset")
 end
+
 local dispatch_reset = a.void(reset)
 
 local function close(skip_close)
@@ -556,9 +562,9 @@ local function generate_patch_from_selection(item, hunk, from, to, reverse)
           if operand == "-" then
             table.insert(diff_content, " " .. line)
           end
-        -- If we want to apply the patch in reverse, we need to include every `+` line we skip as a normal line, since
-        -- it's unchanged as far as the diff is concerned and should not be reversed.
-        -- We also need to adapt the original line offset based on if we skip or not
+          -- If we want to apply the patch in reverse, we need to include every `+` line we skip as a normal line, since
+          -- it's unchanged as far as the diff is concerned and should not be reversed.
+          -- We also need to adapt the original line offset based on if we skip or not
         elseif reverse then
           if operand == "+" then
             table.insert(diff_content, " " .. line)
@@ -701,7 +707,7 @@ local unstage = function()
     unstage_selection()
   else
     if item == nil then
-      git.status.unstage_all(".")
+      git.status.unstage_all()
       refresh(true, "unstage")
       M.current_operation = nil
       return
@@ -740,13 +746,24 @@ local discard = function()
     return
   end
 
-  -- TODO: fix nesting
   local mode = vim.api.nvim_get_mode()
+  -- Make sure the index is in sync as git-status skips it
+  -- Do this manually since the `cli` add --no-optional-locks
+  local result
+  require("neogit.process").new({ cmd = { "git", "update-index", "--refresh" } }):spawn_async()
+  logger.debug("Refreshed index: " .. vim.inspect(result))
+  -- TODO: fix nesting
   if mode.mode == "V" then
     local section, item, hunk, from, to = get_selection()
+    logger.debug("Discarding selection hunk:" .. vim.inspect(hunk))
     local patch = generate_patch_from_selection(item, hunk, from, to, true)
+    logger.debug("Patch:" .. vim.inspect(patch))
+
     if section.name == "staged" then
-      cli.apply.reverse.index.with_patch(patch).call()
+      local result = cli.apply.reverse.index.with_patch(patch).call()
+      if result.code ~= 0 then
+        error("Failed to discard" .. vim.inspect(result))
+      end
     else
       cli.apply.reverse.with_patch(patch).call()
     end
@@ -992,7 +1009,7 @@ local function create(kind, cwd)
       end
 
       logger.debug("[STATUS BUFFER]: Dispatching initial render")
-      dispatch_refresh(true)
+      refresh(true, "Buffer.create")
     end,
   }
 end
