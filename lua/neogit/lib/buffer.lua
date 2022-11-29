@@ -302,7 +302,7 @@ end
 function Buffer.create(config)
   config = config or {}
   local kind = config.kind or "split"
-  local buffer = Buffer:new(api.nvim_create_buf(false, false))
+  local buffer = Buffer:new(api.nvim_create_buf(false, false) + 1)
   buffer.kind = kind
 
   if config.open ~= false then
