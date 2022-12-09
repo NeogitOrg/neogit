@@ -17,9 +17,9 @@ local commit_header_pat = "([| ]*)(%*?)([| ]*)commit (%w+)"
 ---@field description string a list of lines
 ---@field diffs any[]
 
---- parses the provided list of lines into a CommitLogEntry
--- @param raw a list of lines
--- @return CommitLogEntry[]
+---Parses the provided list of lines into a CommitLogEntry
+---@param raw string[]
+---@return CommitLogEntry[]
 local function parse(raw)
   local commits = {}
   local idx = 1
@@ -45,7 +45,7 @@ local function parse(raw)
 
     if not commit.oid or commit.oid == "" then
       error("Failed to parse line: " .. line)
-      return
+      return {}
     end
 
     -- Consume this line
@@ -158,6 +158,7 @@ local function parse(raw)
   return commits
 end
 
+---@return CommitLogEntry[]
 local function parse_log(output)
   if type(output) == "string" then
     output = vim.split(output, "\n")
@@ -176,10 +177,15 @@ local function parse_log(output)
 
       local commit = {
         level = util.str_count(level, "|"),
+        --TODO remove
         hash = hash,
+        oid = hash,
         remote = remote or "",
+        --TODO remove
         message = message,
+        description = { message },
       }
+
       table.insert(commits, commit)
     end
   end
@@ -202,7 +208,7 @@ end
 
 return {
   list = function(options)
-    options = util.split(options, " ")
+    options = util.split(options or "", " ")
     local result = cli.log.oneline.args(unpack(options)).call()
     return parse_log(result.stdout)
   end,

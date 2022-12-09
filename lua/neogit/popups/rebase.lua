@@ -50,7 +50,7 @@ function M.create()
       "i",
       "Interactive",
       a.void(function()
-        local commits = rebase.commits()
+        local commits = require("neogit.lib.git.log").list()
         CommitSelectViewBuffer.new(commits, function(_view, selected)
           rebase.run_interactive(selected.oid)
           a.util.scheduler()
