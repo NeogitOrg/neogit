@@ -35,14 +35,15 @@ describe("process execution", function()
   end)
 
   it("process input", function()
+    vim.fn.mkdir("tmp/", "p")
     local p = process
       .new({
-        cmd = { "rm", "output" },
+        cmd = { "rm", "tmp/output" },
       })
       :spawn_blocking()
     local input = { "This is a line", "This is another line", "", "" }
     local p = process.new {
-      cmd = { "tee", "output" },
+      cmd = { "tee", "tmp/output" },
     }
 
     p:spawn()
@@ -59,12 +60,12 @@ describe("process execution", function()
     p:close_stdin()
     p:wait()
 
-    print("Output:", vim.fn.system("cat output"))
+    print("Output:", vim.fn.system("cat tmp/output"))
 
     local lines = {}
     local result = process
       .new({
-        cmd = { "cat", "output" },
+        cmd = { "cat", "tmp/output" },
       })
       :spawn_blocking(1000)
 
