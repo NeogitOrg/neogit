@@ -12,6 +12,7 @@ jobs:
       - name: Prepare
         run: |
           sudo apt-get update
+          sudo apt install libfuse2
           sudo add-apt-repository universe
           wget https://github.com/neovim/neovim/releases/download/nightly/nvim.appimage
           chmod u+x nvim.appimage
