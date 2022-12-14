@@ -31,6 +31,20 @@ local function do_commit(popup, cmd)
   status.refresh(true, "do_commit")
 end
 
+local function commit_special(popup, method)
+  local commits = require("neogit.lib.git.log").list()
+  local CommitSelectViewBuffer = require("neogit.buffers.commit_select_view")
+  local commit = CommitSelectViewBuffer.new(commits):open_async()
+  if not commit then
+    return
+  end
+
+  a.util.scheduler()
+  do_commit(popup, cli.commit.args(method, commit.oid))
+  a.util.scheduler()
+  return commit
+end
+
 function M.create()
   local p = popup
     .builder()
@@ -58,12 +72,30 @@ function M.create()
       do_commit(popup, cli.commit.amend)
     end)
     :new_action_group()
-    :action("f", "Fixup")
-    :action("s", "Squash")
+    :action("f", "Fixup", function(popup)
+      commit_special(popup, "--fixup")
+    end)
+    :action("s", "Squash", function(popup)
+      commit_special(popup, "--squash")
+    end)
     :action("A", "Augment")
     :new_action_group()
-    :action("F", "Instant Fixup")
-    :action("S", "Instant Squash")
+    :action("F", "Instant Fixup", function(popup)
+      local commit = commit_special(popup, "--fixup")
+      if not commit then
+        return
+      end
+
+      require("neogit.lib.git.rebase").rebase_interactive(commit.oid .. "~1", "--autosquash")
+    end)
+    :action("S", "Instant Squash", function(popup)
+      local commit = commit_special(popup, "--squash")
+      if not commit then
+        return
+      end
+
+      require("neogit.lib.git.rebase").rebase_interactive(commit.oid .. "~1", "--autosquash")
+    end)
     :build()
 
   p:show()
