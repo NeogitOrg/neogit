@@ -51,12 +51,16 @@ function M.create()
       "Interactive",
       a.void(function()
         local commits = require("neogit.lib.git.log").list()
-        CommitSelectViewBuffer.new(commits, function(_view, selected)
-          rebase.run_interactive(selected.oid)
-          a.util.scheduler()
-          _view:close()
-          status.refresh(true, "rebase_interactive")
-        end):open()
+
+        local commit = CommitSelectViewBuffer.new(commits):open_async()
+
+        if not commit then
+          return
+        end
+
+        rebase.rebase_interactive(commit.oid)
+        a.util.scheduler()
+        status.refresh(true, "rebase_interactive")
       end)
     )
     :build()
