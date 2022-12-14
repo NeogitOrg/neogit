@@ -207,9 +207,12 @@ local function update_recent(state)
 end
 
 return {
-  list = function(options)
+  ---@param options any
+  ---@param max_count number|nil
+  ---@return CommitLogEntry[]
+  list = function(options, max_count)
     options = util.split(options or "", " ")
-    local result = cli.log.oneline.args(unpack(options)).call()
+    local result = cli.log.oneline.max_count(max_count or 36).args(unpack(options)).call()
     return parse_log(result.stdout)
   end,
   register = function(meta)
