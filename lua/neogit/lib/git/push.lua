@@ -17,14 +17,20 @@ local function update_unmerged(state)
     return
   end
 
-  local result = cli.log.oneline.for_range("@{upstream}..").show_popup(false).call(false, true):trim().stdout
+  -- local result = cli.log.oneline.for_range("@{upstream}..").show_popup(false).call(false, true):trim().stdout
 
-  state.unmerged.items = util.filter_map(result, function(x)
-    if x == "" then
-      return
-    end
-    return { name = x }
+  local result = require("neogit.lib.git.log").list { "@{upstream}.." }
+
+  state.unmerged.items = util.map(result, function(v)
+    return { name = string.format("%s %s", v.oid, v.description[1] or "<empty>"), oid = v.oid, commit = v }
   end)
+
+  -- state.unmerged.items = util.filter_map(result, function(x)
+  --   if x == "" then
+  --     return
+  --   end
+  --   return { name = x }
+  -- end)
 end
 
 function M.register(meta)

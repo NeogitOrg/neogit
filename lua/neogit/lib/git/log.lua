@@ -201,7 +201,7 @@ local function update_recent(state)
     return
   end
 
-  local result = M.list(nil, count)
+  local result = M.list { "--max-count", tostring(count) }
 
   state.recent.items = util.map(result, function(v)
     return { name = string.format("%s %s", v.oid, v.description[1] or "<empty>"), oid = v.oid, commit = v }
@@ -209,11 +209,9 @@ local function update_recent(state)
 end
 
 ---@param options any
----@param max_count number|nil
 ---@return CommitLogEntry[]
-function M.list(options, max_count)
-  options = util.split(options or "", " ")
-  local result = cli.log.oneline.max_count(max_count or 36).args(unpack(options)).call()
+function M.list(options)
+  local result = cli.log.oneline.max_count(36).arg_list(options or {}).call()
   return parse_log(result.stdout)
 end
 
