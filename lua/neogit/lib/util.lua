@@ -1,5 +1,10 @@
 local a = require("plenary.async")
 
+---@generic T: any
+---@generic U: any
+---@param tbl T[]
+---@param f fun(v: T): U
+---@return U[]
 local function map(tbl, f)
   local t = {}
   for k, v in pairs(tbl) do

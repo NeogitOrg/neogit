@@ -193,31 +193,35 @@ local function parse_log(output)
   return commits
 end
 
+local M = {}
+
 local function update_recent(state)
   local count = config.values.status.recent_commit_count
   if count < 1 then
     return
   end
 
-  local result = cli.log.oneline.max_count(count).show_popup(false).call():trim()
+  local result = M.list(nil, count)
 
-  state.recent.items = util.map(result.stdout, function(x)
-    return { name = x }
+  state.recent.items = util.map(result, function(v)
+    return { name = string.format("%s %s", v.oid, v.description[1] or "<empty>"), oid = v.oid, commit = v }
   end)
 end
 
-return {
-  ---@param options any
-  ---@param max_count number|nil
-  ---@return CommitLogEntry[]
-  list = function(options, max_count)
-    options = util.split(options or "", " ")
-    local result = cli.log.oneline.max_count(max_count or 36).args(unpack(options)).call()
-    return parse_log(result.stdout)
-  end,
-  register = function(meta)
-    meta.update_recent = update_recent
-  end,
-  parse_log = parse_log,
-  parse = parse,
-}
+---@param options any
+---@param max_count number|nil
+---@return CommitLogEntry[]
+function M.list(options, max_count)
+  options = util.split(options or "", " ")
+  local result = cli.log.oneline.max_count(max_count or 36).args(unpack(options)).call()
+  return parse_log(result.stdout)
+end
+
+M.parse_log = parse_log
+M.parse = parse
+
+function M.register(meta)
+  meta.update_recent = update_recent
+end
+
+return M

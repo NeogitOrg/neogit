@@ -12,11 +12,10 @@ local function line_pos()
 end
 
 ---Opens a popup for selecting a commit
----@param commits CommitLogEntry[]
+---@param commits CommitLogEntry[]|nil
 ---@return CommitSelectViewBuffer
-function M.new(commits, action)
+function M.new(commits)
   local instance = {
-    action = action,
     commits = commits,
     buffer = nil,
   }
@@ -33,6 +32,14 @@ end
 
 ---@param action fun(commit: CommitLogEntry|nil)|nil
 function M:open(action)
+  local _, item = require("neogit.status").get_current_section_item()
+
+  local commit_at_cursor
+
+  if item and item.commit then
+    commit_at_cursor = item.commit
+  end
+
   self.buffer = Buffer.create {
     name = "NeogitCommitSelectView",
     filetype = "NeogitCommitSelectView",
@@ -46,7 +53,11 @@ function M:open(action)
               self:close()
             end)
 
-            action(self.commits[pos])
+            if pos == 1 and commit_at_cursor then
+              action(commit_at_cursor)
+            else
+              action(self.commits[pos - (commit_at_cursor and 2 or 0)])
+            end
             action = nil
           end
         end,
@@ -61,7 +72,7 @@ function M:open(action)
       end,
     },
     render = function()
-      return ui.View(self.commits)
+      return ui.View(self.commits, commit_at_cursor)
     end,
   }
 end
