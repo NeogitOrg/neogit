@@ -243,8 +243,8 @@ end
 function Process:spawn(cb)
   ---@type ProcessResult
   local res = setmetatable({
-    stdout = { "" },
-    stderr = { "" },
+    stdout = {},
+    stderr = {},
   }, ProcessResult)
 
   assert(self.job == nil, "Process started twice")
@@ -258,58 +258,43 @@ function Process:spawn(cb)
   local start = vim.loop.hrtime()
   self.start = start
 
-  local function handle_output(_, result, on_partial, on_lb)
-    return function(_, data) -- Complete the previous line
-      local d = remove_escape_codes(data[1])
+  local function handle_output(on_partial, on_line)
+    local prev_line = ""
 
-      result[#result] = remove_escape_codes(result[#result] .. data[1])
+    return
+      function(_, lines)
+        -- Complete previous line
+        prev_line = prev_line .. lines[1]
 
-      on_partial(d, data[1])
-      -- If there is only one item of the incomplete lines, the line will be
-      -- completed in later invocations
+        on_partial(remove_escape_codes(lines[1]), lines[1])
 
-      for i = 2, #data do
-        local d = data[i]
-        if i ~= data then
-          d = remove_escape_codes(d)
+        for i = 2, #lines do
+          on_line(remove_escape_codes(prev_line), prev_line)
+          prev_line = ""
+          -- Before pushing a new line, invoke the stdout for components
+          prev_line = lines[i]
+          on_partial(remove_escape_codes(lines[i]), lines[i])
         end
-
-        if i < #data then
-          on_lb()
-        else
-          on_partial(d, data[i])
-        end
-
-        table.insert(result, d)
+      end,
+      function()
+        on_line(remove_escape_codes(prev_line), prev_line)
       end
-    end
   end
 
-  local on_stdout = handle_output("stdout", res.stdout, function(line, raw)
-    if self.verbose then
-      append_log(self, raw)
-    end
+  local on_stdout, stdout_cleanup = handle_output(function(line, raw)
     if self.on_partial_line then
       self.on_partial_line(self, line, raw)
     end
-  end, function()
+  end, function(line, raw)
+    table.insert(res.stdout, line)
     if self.verbose then
-      append_log(self, "\r\n")
+      append_log(self, raw .. "\r\n")
     end
   end)
 
-  -- Prevent blank lines
-  local has_line = false
-  local on_stderr = handle_output("stderr", res.stderr, function(_, _)
-    if has_line then
-      has_line = false
-      append_log(self, "\r\n")
-    end
-  end, function(_, raw)
-    if raw ~= "" then
-      has_line = true
-      append_log(self, raw)
-    end
+  local on_stderr, stderr_cleanup = handle_output(function() end, function(line, raw)
+    table.insert(res.stderr, line)
+    append_log(self, raw .. "\r\n")
   end)
 
   local function on_exit(_, code)
@@ -320,6 +305,9 @@ function Process:spawn(cb)
     processes[self.job] = nil
     self.result = res
     self:stop_timer()
+
+    stdout_cleanup()
+    stderr_cleanup()
 
     if code ~= 0 and not hide_console and not self.external_errors then
       append_log(self, string.format("Process exited with code: %d\r\n", code))
