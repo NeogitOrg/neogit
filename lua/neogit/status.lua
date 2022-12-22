@@ -763,7 +763,7 @@ local discard = function()
   -- Make sure the index is in sync as git-status skips it
   -- Do this manually since the `cli` add --no-optional-locks
   local result
-  require("neogit.process").new({ cmd = { "git", "update-index", "--refresh" } }):spawn_async()
+  require("neogit.process").new({ cmd = { "git", "update-index", "--refresh" }, verbose = true }):spawn_async()
   logger.debug("Refreshed index: " .. vim.inspect(result))
   -- TODO: fix nesting
   if mode.mode == "V" then
