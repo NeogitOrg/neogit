@@ -56,6 +56,9 @@ end
 
 function M.prompt_for_branch(options)
   a.util.scheduler()
+
+  options = options or M.get_local_branches()
+
   local chosen = input.get_user_input_with_completion("branch > ", options)
   if not chosen or chosen == "" then
     return nil
