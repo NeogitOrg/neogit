@@ -35,6 +35,7 @@ function M.create()
     :action("e", "Pull from elsewhere", function(popup)
       local branches = git.branch.get_remote_branches()
 
+      -- Maintain a set with all remotes we got branches for.
       local remote_options_set = {}
       for i, option in ipairs(branches) do
         if i ~= 1 then
@@ -68,17 +69,21 @@ function M.create()
         return
       end
 
+      -- Remove branches not under given remote.
       local branch_options = {}
       for i, option in ipairs(branches) do
         if i ~= 1 then
           local prefix = remote .. "/"
           if option:find("^" .. prefix) ~= nil then
-            table.insert(branch_options, option:sub(prefix:len()+1))
+            table.insert(branch_options, option)
           end
         end
       end
-      local branch = git.branch.prompt_for_branch(branch_options)
 
+      local branch = git.branch.prompt_for_branch(
+        branch_options,
+        { truncate_remote_name_from_options = true }
+      )
       if not branch then
         notif.create("Aborting pull because there is no branch")
         return

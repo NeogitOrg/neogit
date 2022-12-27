@@ -54,19 +54,45 @@ function M.get_upstream()
   end
 end
 
-function M.prompt_for_branch(options)
+function M.prompt_for_branch(options, configuration)
   a.util.scheduler()
 
   options = options or M.get_local_branches()
+  local c = vim.tbl_deep_extend("keep", configuration or {}, {
+    truncate_remote_name = true,
+    truncate_remote_name_from_options = false,
+  })
 
-  local chosen = input.get_user_input_with_completion("branch > ", options)
+  if c.truncate_remote_name_from_options and not c.truncate_remote_name then
+    error("invalid prompt_for_branch configuration, \"truncate_remote_name_from_options\" cannot be \"true\" when \"truncate_remote_name\" is \"false\".")
+    return nil
+  end
+
+  local function truncate_remote_name(branch)
+    local truncated_remote_name = branch:match(".-/(.+)")
+    if truncated_remote_name and truncated_remote_name ~= "" then
+      return truncated_remote_name
+    end
+
+    return branch
+  end
+
+  local final_options = {}
+  for _, option in ipairs(options) do
+    if c.truncate_remote_name_from_options then
+      table.insert(final_options, truncate_remote_name(option))
+    else
+      table.insert(final_options, option)
+    end
+  end
+
+  local chosen = input.get_user_input_with_completion("branch > ", final_options)
   if not chosen or chosen == "" then
     return nil
   end
 
-  local truncate_remote_name = chosen:match(".+/.+/(.+)")
-  if truncate_remote_name and truncate_remote_name ~= "" then
-    return truncate_remote_name
+  if not c.truncate_remote_name_from_options and c.truncate_remote_name then
+    return truncate_remote_name(chosen)
   end
 
   return chosen
