@@ -163,7 +163,9 @@ function Process:start_timer()
             self,
             string.format("Command running for: %.2f ms", (vim.loop.hrtime() - self.start) / 1e6)
           )
-          Process.show_console()
+          if config.values.auto_show_console then
+            Process.show_console()
+          end
         end
       end)
     )

@@ -1,6 +1,5 @@
 local logger = require("neogit.logger")
 local client = require("neogit.client")
-local log = require("neogit.lib.git.log")
 local notif = require("neogit.lib.notification")
 
 local M = {}
