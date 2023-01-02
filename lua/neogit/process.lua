@@ -193,7 +193,11 @@ function Process:start_timer()
         if not self.result or (self.result.code ~= 0 and not self.external_errors) then
           append_log(
             self,
-            string.format("Command running for: %.2f ms", (vim.loop.hrtime() - self.start) / 1e6)
+            string.format(
+              "Command %q running for: %.2f ms",
+              table.concat(self.cmd, " "),
+              (vim.loop.hrtime() - self.start) / 1e6
+            )
           )
           if config.values.auto_show_console then
             Process.show_console()
