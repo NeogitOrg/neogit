@@ -1,4 +1,5 @@
 local a = require("plenary.async")
+local notification = require("neogit.lib.notification")
 
 local Buffer = require("neogit.lib.buffer")
 
@@ -18,7 +19,7 @@ end
 ---@field stdin number|nil
 ---@field pty boolean
 ---@field on_partial_line fun(process: Process, data: string, raw: string) callback on complete lines
----@field external_errors boolean|nil Tells the process that any errors will be dealt with externally and wont open a console buffer
+---@field on_error fun(res: ProcessResult): boolean
 local Process = {}
 Process.__index = Process
 
@@ -28,6 +29,7 @@ local processes = {}
 ---@class ProcessResult
 ---@field stdout string[]
 ---@field stderr string[]
+---@field output string[]
 ---@field code number
 ---@field time number seconds
 local ProcessResult = {}
@@ -190,7 +192,7 @@ function Process:start_timer()
         self.timer = nil
         timer:stop()
         timer:close()
-        if not self.result or (self.result.code ~= 0 and not self.external_errors) then
+        if not self.result or (self.result.code ~= 0) then
           append_log(
             self,
             string.format(
@@ -281,6 +283,7 @@ function Process:spawn(cb)
   local res = setmetatable({
     stdout = {},
     stderr = {},
+    output = {},
   }, ProcessResult)
 
   assert(self.job == nil, "Process started twice")
@@ -323,6 +326,7 @@ function Process:spawn(cb)
     end
   end, function(line, raw)
     table.insert(res.stdout, line)
+    table.insert(res.output, line)
     if self.verbose then
       append_log(self, raw)
     end
@@ -330,6 +334,7 @@ function Process:spawn(cb)
 
   local on_stderr, stderr_cleanup = handle_output(function() end, function(line, raw)
     table.insert(res.stderr, line)
+    table.insert(res.output, line)
     append_log(self, raw)
   end)
 
@@ -345,9 +350,22 @@ function Process:spawn(cb)
     stdout_cleanup()
     stderr_cleanup()
 
-    if code ~= 0 and not hide_console and not self.external_errors then
+    if code ~= 0 and not hide_console then
       append_log(self, string.format("Process exited with code: %d", code))
-      vim.schedule(Process.show_console)
+
+      local output = {}
+      for i = 1, math.min(#res.output, 16) do
+        table.insert(output, "    " .. res.output[i])
+      end
+
+      local message = string.format(
+        "%s:\n\n%s\n\nOpen the console for details",
+        table.concat(self.cmd, " "),
+        table.concat(output, "\n")
+      )
+
+      notification.create(message, vim.log.levels.ERROR)
+      -- vim.schedule(Process.show_console)
     end
 
     self.stdin = nil
