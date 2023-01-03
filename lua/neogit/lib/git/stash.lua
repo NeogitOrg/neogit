@@ -67,7 +67,7 @@ end
 
 local function update_stashes(state)
   local result = cli.stash.args("list").call():trim()
-  state.stashes.items = parse(result)
+  state.stashes.items = parse(result.stdout)
 end
 
 return {
