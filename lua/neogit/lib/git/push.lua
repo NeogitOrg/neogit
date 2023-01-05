@@ -24,13 +24,6 @@ local function update_unmerged(state)
   state.unmerged.items = util.map(result, function(v)
     return { name = string.format("%s %s", v.oid, v.description[1] or "<empty>"), oid = v.oid, commit = v }
   end)
-
-  -- state.unmerged.items = util.filter_map(result, function(x)
-  --   if x == "" then
-  --     return
-  --   end
-  --   return { name = x }
-  -- end)
 end
 
 function M.register(meta)

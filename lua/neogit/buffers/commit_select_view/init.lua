@@ -56,6 +56,7 @@ function M:open(action)
             if pos == 1 and commit_at_cursor then
               action(commit_at_cursor)
             else
+              -- Subtract the top commit and blankline
               action(self.commits[pos - (commit_at_cursor and 2 or 0)])
             end
             action = nil
