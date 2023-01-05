@@ -354,7 +354,8 @@ function Process:spawn(cb)
       append_log(self, string.format("Process exited with code: %d", code))
 
       local output = {}
-      for i = 1, math.min(#res.output, 16) do
+      local start = math.max(#res.output - 16, 1)
+      for i = start, start + 16 do
         table.insert(output, "    " .. res.output[i])
       end
 
