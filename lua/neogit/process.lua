@@ -193,16 +193,17 @@ function Process:start_timer()
         timer:stop()
         timer:close()
         if not self.result or (self.result.code ~= 0) then
-          append_log(
-            self,
-            string.format(
-              "Command %q running for: %.2f ms",
-              table.concat(self.cmd, " "),
-              (vim.loop.hrtime() - self.start) / 1e6
-            )
+          local message = string.format(
+            "Command %q running for: %.2f ms",
+            table.concat(self.cmd, " "),
+            (vim.loop.hrtime() - self.start) / 1e6
           )
+
+          append_log(self, message)
           if config.values.auto_show_console then
             Process.show_console()
+          else
+            notification.create(message .. "\n\nOpen the console for details", vim.log.levels.WARN)
           end
         end
       end)
@@ -326,8 +327,8 @@ function Process:spawn(cb)
     end
   end, function(line, raw)
     table.insert(res.stdout, line)
-    table.insert(res.output, line)
     if self.verbose then
+      table.insert(res.output, line)
       append_log(self, raw)
     end
   end)
