@@ -356,7 +356,7 @@ function Process:spawn(cb)
 
       local output = {}
       local start = math.max(#res.output - 16, 1)
-      for i = start, start + 16 do
+      for i = start, math.min(#res.output, start + 16) do
         table.insert(output, "    " .. res.output[i])
       end
 
