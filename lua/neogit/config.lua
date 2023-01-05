@@ -12,6 +12,8 @@ M.values = {
   kind = "tab",
   -- The time after which an output console is shown for slow running commands
   console_timeout = 2000,
+  -- Automatically show console if a command takes more than console_timeout milliseconds
+  auto_show_console = true,
   status = {
     recent_commit_count = 10,
   },
