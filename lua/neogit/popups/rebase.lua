@@ -58,7 +58,6 @@ function M.create()
         if not commit then
           return
         end
-        print("Rebasing onto: ", commit.oid)
 
         rebase.rebase_interactive(commit.oid, unpack(popup:get_arguments()))
         a.util.scheduler()
