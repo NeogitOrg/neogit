@@ -892,7 +892,6 @@ local cmd_func_map = function()
       local repo_root = cli.git_root()
       a.util.scheduler()
       local section, item = get_current_section_item()
-      print("Section: ", vim.inspect(section), "Item: ", vim.inspect(item))
 
       if item and section then
         if section.name == "unstaged" or section.name == "staged" or section.name == "untracked" then
