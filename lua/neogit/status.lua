@@ -22,9 +22,20 @@ M.prev_autochdir = nil
 M.repo = repository.create()
 M.status_buffer = nil
 M.commit_view = nil
+---@class Section
+---@field first number
+---@field last number
+---@field files StatusItem[]
 M.locations = {}
 
 M.outdated = {}
+
+---@class StatusItem
+---@field name string
+---@field first number
+---@field last number
+---@field oid string|nil optional object id
+---@field commit CommitLogEntry|nil optional object id
 
 local hunk_header_matcher = vim.regex("^@@.*@@")
 local diff_add_matcher = vim.regex("^+")
@@ -56,6 +67,7 @@ local function get_section_item_idx_for_line(linenr)
   return section_idx, nil
 end
 
+---@return Section|nil, StatusItem|nil
 local function get_section_item_for_line(linenr)
   local section_idx, item_idx = get_section_item_idx_for_line(linenr)
   local section = M.locations[section_idx]
@@ -67,6 +79,7 @@ local function get_section_item_for_line(linenr)
   return section, section.files[item_idx]
 end
 
+---@return Section|nil, StatusItem|nil
 local function get_current_section_item()
   return get_section_item_for_line(vim.fn.line("."))
 end
@@ -749,9 +762,9 @@ local discard = function()
   local mode = vim.api.nvim_get_mode()
   -- Make sure the index is in sync as git-status skips it
   -- Do this manually since the `cli` add --no-optional-locks
-  local result
-  require("neogit.process").new({ cmd = { "git", "update-index", "--refresh" } }):spawn_async()
-  logger.debug("Refreshed index: " .. vim.inspect(result))
+  require("neogit.process")
+    .new({ cmd = { "git", "update-index", "-q", "--refresh" }, verbose = true })
+    :spawn_async()
   -- TODO: fix nesting
   if mode.mode == "V" then
     local section, item, hunk, from, to = get_selection()
@@ -859,15 +872,21 @@ local cmd_func_map = function()
     end,
     ["TabOpen"] = function()
       local _, item = get_current_section_item()
-      vim.cmd("tabedit " .. item.name)
+      if item then
+        vim.cmd("tabedit " .. item.name)
+      end
     end,
     ["VSplitOpen"] = function()
       local _, item = get_current_section_item()
-      vim.cmd("vsplit " .. item.name)
+      if item then
+        vim.cmd("vsplit " .. item.name)
+      end
     end,
     ["SplitOpen"] = function()
       local _, item = get_current_section_item()
-      vim.cmd("split " .. item.name)
+      if item then
+        vim.cmd("split " .. item.name)
+      end
     end,
     ["GoToFile"] = a.void(function()
       local repo_root = cli.git_root()
@@ -1056,6 +1075,7 @@ M.refresh = refresh
 M.dispatch_refresh = dispatch_refresh
 M.refresh_viml_compat = refresh_viml_compat
 M.refresh_manually = refresh_manually
+M.get_current_section_item = get_current_section_item
 M.close = close
 
 function M.enable()

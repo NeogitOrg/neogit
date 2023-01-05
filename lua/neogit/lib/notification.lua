@@ -20,8 +20,14 @@ local function create(message, level, delay)
   notification_count = notification_count + 1
   local prev_notification = notifications[notification_count - 1]
     or { height = 0, row = vim.api.nvim_get_option("lines") - 2 }
-  local width = #message
-  local height = 1
+
+  local message = vim.split(message, "\n")
+  local width = 16
+  for _, line in ipairs(message) do
+    width = math.max(width, #line)
+  end
+
+  local height = #message
   local padding = 2 + prev_notification.height
   local row = prev_notification.row - padding
   local col = vim.api.nvim_get_option("columns") - 3
@@ -31,7 +37,7 @@ local function create(message, level, delay)
     vim.bo.filetype = "NeogitNotification"
   end)
 
-  vim.api.nvim_buf_set_lines(buf, 0, -1, false, { message })
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, message)
 
   local window = vim.api.nvim_open_win(buf, false, {
     relative = "editor",

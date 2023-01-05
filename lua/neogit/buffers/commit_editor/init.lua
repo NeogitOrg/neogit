@@ -40,22 +40,23 @@ function M:open()
     modifiable = true,
     readonly = false,
     autocmds = {
-      ["BufWritePost"] = function()
+      ["BufWritePre"] = function()
         written = true
       end,
       ["BufUnload"] = function()
         if written then
           if
-            config.values.disable_commit_confirmation
-            or input.get_confirmation("Are you sure you want to commit?")
+            not config.values.disable_commit_confirmation
+            and not input.get_confirmation("Are you sure you want to commit?")
           then
-            vim.cmd("silent g/^#/d | silent w!")
+            vim.cmd("silent v/^#/d | w!")
           end
         end
 
         if self.on_unload then
           self.on_unload(written)
         end
+
         require("neogit.process").defer_show_preview_buffers()
       end,
     },

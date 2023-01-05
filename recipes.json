@@ -1,6 +1,6 @@
 {
   "test-branches": {
-    "cmd": "nvim --headless --noplugin -c \"lua require(\\\"plenary.test_harness\\\").test_directory_command('tests/branch_popup_spec.lua {minimal_init = \\\"tests/minimal-init.nvim\\\"}')\"",
+    "cmd": "nvim --headless -c \"lua require(\\\"plenary.test_harness\\\").test_directory('tests/branch_popup_spec.lua', {minimal_init = \\\"tests/init.lua\\\", sequential = true })\"",
     "kind": "term",
     "env": {
       "NEOGIT_LOG_CONSOLE": true,
@@ -8,7 +8,7 @@
     }
   },
   "test-process": {
-    "cmd": "nvim --headless --noplugin -c \"lua require(\\\"plenary.test_harness\\\").test_directory_command('./tests/process_spec.lua {minimal_init = \\\"tests/minimal-init.nvim\\\"}')\"",
+    "cmd": "nvim --headless -c \"lua require(\\\"plenary.test_harness\\\").test_directory('./tests/process_spec.lua', {minimal_init = \\\"tests/init.lua\\\", sequential = true })\"",
     "kind": "term",
     "env": {
       "NEOGIT_LOG_CONSOLE": true,
@@ -16,7 +16,7 @@
     }
   },
   "test-all": {
-    "cmd": "nvim --headless --noplugin -c \"lua require(\\\"plenary.test_harness\\\").test_directory_command('tests {minimal_init = \\\"tests/minimal-init.nvim\\\"}')\"",
+    "cmd": "nvim --headless -c \"lua require(\\\"plenary.test_harness\\\").test_directory('tests', {minimal_init = \\\"tests/init.lua\\\", sequential = true })\"",
     "kind": "term",
     "env": {
       "NEOGIT_LOG_CONSOLE": true,
