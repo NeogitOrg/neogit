@@ -43,13 +43,17 @@ function M:open()
       ["BufWritePre"] = function()
         written = true
       end,
-      ["BufUnload"] = function()
+      ["BufUnload"] = function(o)
         if written then
           if
             not config.values.disable_commit_confirmation
             and not input.get_confirmation("Are you sure you want to commit?")
           then
-            vim.cmd("silent v/^#/d | w!")
+            -- Clear the buffer, without filling the register
+            vim.api.nvim_buf_set_lines(o.bufnr, 0, -1, false, {})
+            vim.api.nvim_buf_call(o.bufnr, function()
+              vim.cmd("silent w")
+            end)
           end
         end
 
