@@ -17,9 +17,8 @@ local M = {}
 -- @param filename the filename of buffer
 -- @param on_unload the event dispatched on buffer unload
 -- @return CommitEditorBuffer
-function M.new(content, filename, on_unload)
+function M.new(filename, on_unload)
   local instance = {
-    content = content,
     filename = filename,
     on_unload = on_unload,
     buffer = nil,
@@ -35,6 +34,7 @@ function M:open()
   self.buffer = Buffer.create {
     name = self.filename,
     filetype = "NeogitCommitMessage",
+    load = true,
     buftype = "",
     kind = config.values.commit_popup.kind,
     modifiable = true,
@@ -72,13 +72,11 @@ function M:open()
       },
     },
     initialize = function(buffer)
-      buffer:set_lines(0, -1, false, self.content)
-      if not config.values.disable_insert_on_commit then
-        vim.cmd(":startinsert")
-      end
-
-      -- NOTE: This avoids the user having to force to save the contents of the buffer.
-      vim.cmd("silent w!")
+      vim.api.nvim_buf_call(buffer.handle, function()
+        if not config.values.disable_insert_on_commit then
+          vim.cmd(":startinsert")
+        end
+      end)
     end,
   }
 end
