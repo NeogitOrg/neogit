@@ -50,9 +50,9 @@ function M:open()
             and not input.get_confirmation("Are you sure you want to commit?")
           then
             -- Clear the buffer, without filling the register
-            vim.api.nvim_buf_set_lines(o.bufnr, 0, -1, false, {})
-            vim.api.nvim_buf_call(o.bufnr, function()
-              vim.cmd("silent w")
+            vim.api.nvim_buf_set_lines(o.buf, 0, -1, false, {})
+            vim.api.nvim_buf_call(o.buf, function()
+              vim.cmd("silent w!")
             end)
           end
         end

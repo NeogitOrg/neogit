@@ -341,12 +341,8 @@ function Buffer.create(config)
     buffer.ui:render(unpack(config.render(buffer)))
   end
 
-  if config.autocmds then
-    for event, cb in pairs(config.autocmds) do
-      table.insert(__BUFFER_AUTOCMD_STORE, cb)
-      local id = #__BUFFER_AUTOCMD_STORE
-      buffer:define_autocmd(event, string.format("lua __BUFFER_AUTOCMD_STORE[%d]()", id))
-    end
+  for event, callback in pairs(config.autocmds or {}) do
+    api.nvim_create_autocmd(event, { callback = callback, buffer = buffer.handle })
   end
 
   buffer.mmanager.register()
