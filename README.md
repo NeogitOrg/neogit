@@ -17,7 +17,7 @@ require `nvim-lua/plenary.nvim` using your plugin manager of choice, before requ
 | [Vundle](https://github.com/VundleVim/Vundle.vim)    | `Bundle 'TimUntersberger/neogit'`                                              |
 | [Pathogen](https://github.com/tpope/vim-pathogen)    | `git clone https://github.com/TimUntersberger/neogit.git ~/.vim/bundle/neogit` |
 | [Dein](https://github.com/Shougo/dein.vim)           | `call dein#add('TimUntersberger/neogit')`                                      |
-| [Dep](https://github.com/chiyadev/dep)               | `{'TimUntersberger/neogit', requires = {'nvim-lua/plenary.nvim'}}`                 |
+| [Dep](https://github.com/chiyadev/dep)               | `{'TimUntersberger/neogit', requires = {'nvim-lua/plenary.nvim'}}`             |
 
 You also use in the built-in package manager:
 ```bash
