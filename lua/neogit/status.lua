@@ -829,7 +829,7 @@ local set_folds = function(to)
 end
 
 --- These needs to be a function to avoid a circular dependency
---  between this module and the popup modules
+--- between this module and the popup modules
 local cmd_func_map = function()
   return {
     ["Close"] = function()
@@ -905,7 +905,7 @@ local cmd_func_map = function()
           notif.delete_all()
           M.status_buffer:close()
 
-          local relpath = vim.fn.fnamemodify(repo_root .. "/" .. path, ":.")
+          local relpath = vim.fn.fnamemodify(path, ":.")
 
           if not vim.o.hidden and vim.bo.buftype == "" and not vim.bo.readonly and vim.fn.bufname() ~= "" then
             vim.cmd("update")
