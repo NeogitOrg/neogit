@@ -298,18 +298,41 @@ function Buffer:del_extmark(ns, id)
   return vim.api.nvim_buf_del_extmark(self.handle, ns, id)
 end
 
+local uv_utils = require("neogit.lib.uv")
+
+---@class BufferConfig
+---@field name string
+---@field load boolean
+---@field bufhidden string|nil
+---@field buftype string|nil
+---@field swapfile boolean
+---@field filetype string|nil
 ---@return Buffer
 function Buffer.create(config)
   config = config or {}
   local kind = config.kind or "split"
-  local buffer = Buffer:new(api.nvim_create_buf(false, false))
+  --- This reuses a buffer with the same name
+  local buffer = vim.fn.bufnr(config.name)
+
+  if buffer == -1 then
+    buffer = api.nvim_create_buf(false, false)
+    api.nvim_buf_set_name(buffer, config.name)
+  end
+
+  if config.load then
+    local content = uv_utils.read_file_sync(config.name)
+    api.nvim_buf_set_lines(buffer, 0, -1, false, content)
+    api.nvim_buf_call(buffer, function()
+      vim.cmd("silent w!")
+    end)
+  end
+
+  local buffer = Buffer:new(buffer)
   buffer.kind = kind
 
   if config.open ~= false then
     buffer:show()
   end
-
-  buffer:set_name(config.name)
 
   buffer:set_option("bufhidden", config.bufhidden or "wipe")
   buffer:set_option("buftype", config.buftype or "nofile")
@@ -341,12 +364,8 @@ function Buffer.create(config)
     buffer.ui:render(unpack(config.render(buffer)))
   end
 
-  if config.autocmds then
-    for event, cb in pairs(config.autocmds) do
-      table.insert(__BUFFER_AUTOCMD_STORE, cb)
-      local id = #__BUFFER_AUTOCMD_STORE
-      buffer:define_autocmd(event, string.format("lua __BUFFER_AUTOCMD_STORE[%d]()", id))
-    end
+  for event, callback in pairs(config.autocmds or {}) do
+    api.nvim_create_autocmd(event, { callback = callback, buffer = buffer.handle })
   end
 
   buffer.mmanager.register()
@@ -356,7 +375,7 @@ function Buffer.create(config)
     buffer:set_option("modified", false)
   end
 
-  if config.readonly ~= nil and config.readonly then
+  if config.readonly == true then
     buffer:set_option("readonly", true)
   end
 

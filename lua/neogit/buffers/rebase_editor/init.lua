@@ -2,9 +2,8 @@ local Buffer = require("neogit.lib.buffer")
 
 local M = {}
 
-function M.new(content, filename, on_close)
+function M.new(filename, on_close)
   local instance = {
-    content = content,
     filename = filename,
     on_close = on_close,
     buffer = nil,
@@ -18,6 +17,7 @@ end
 function M:open()
   self.buffer = Buffer.create {
     name = self.filename,
+    load = true,
     filetype = "NeogitRebaseTodo",
     buftype = "",
     kind = "split",
@@ -37,12 +37,6 @@ function M:open()
         end,
       },
     },
-    initialize = function(buffer)
-      buffer:set_lines(0, -1, false, self.content)
-
-      -- NOTE: This avoids the user having to force to save the contents of the buffer.
-      vim.cmd("silent w!")
-    end,
   }
 end
 
