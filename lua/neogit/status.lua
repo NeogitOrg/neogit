@@ -889,7 +889,7 @@ local cmd_func_map = function()
       end
     end,
     ["GoToFile"] = a.void(function()
-      local repo_root = cli.git_root()
+      -- local repo_root = cli.git_root()
       a.util.scheduler()
       local section, item = get_current_section_item()
 
@@ -913,7 +913,7 @@ local cmd_func_map = function()
 
           vim.cmd("e " .. relpath)
 
-          if hunk then
+          if hunk and hunk_lines then
             local line_offset = cursor_row - hunk.first
             local row = hunk.disk_from + line_offset - 1
             for i = 1, line_offset do
