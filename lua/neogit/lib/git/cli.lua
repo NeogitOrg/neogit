@@ -201,7 +201,6 @@ local configurations = {
   },
   branch = config {
     flags = {
-      list = "--list",
       all = "-a",
       delete = "-d",
       remotes = "-r",
@@ -210,6 +209,11 @@ local configurations = {
       move = "-m",
     },
     aliases = {
+      list = function(tbl)
+	return function(sort)
+	  return tbl.args("--sort="..sort)
+	end
+      end,
       name = function(tbl)
         return function(name)
           return tbl.args(name)
