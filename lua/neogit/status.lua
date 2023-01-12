@@ -829,7 +829,7 @@ local set_folds = function(to)
 end
 
 --- These needs to be a function to avoid a circular dependency
---  between this module and the popup modules
+--- between this module and the popup modules
 local cmd_func_map = function()
   return {
     ["Close"] = function()
@@ -889,7 +889,7 @@ local cmd_func_map = function()
       end
     end,
     ["GoToFile"] = a.void(function()
-      local repo_root = cli.git_root()
+      -- local repo_root = cli.git_root()
       a.util.scheduler()
       local section, item = get_current_section_item()
 
@@ -905,7 +905,7 @@ local cmd_func_map = function()
           notif.delete_all()
           M.status_buffer:close()
 
-          local relpath = vim.fn.fnamemodify(repo_root .. "/" .. path, ":.")
+          local relpath = vim.fn.fnamemodify(path, ":.")
 
           if not vim.o.hidden and vim.bo.buftype == "" and not vim.bo.readonly and vim.fn.bufname() ~= "" then
             vim.cmd("update")
@@ -913,7 +913,7 @@ local cmd_func_map = function()
 
           vim.cmd("e " .. relpath)
 
-          if hunk then
+          if hunk and hunk_lines then
             local line_offset = cursor_row - hunk.first
             local row = hunk.disk_from + line_offset - 1
             for i = 1, line_offset do
