@@ -194,9 +194,9 @@ function Process:start_timer()
         timer:close()
         if not self.result or (self.result.code ~= 0) then
           local message = string.format(
-            "Command %q running for: %.2f ms",
+            "Command %q running for more than: %f.1 seconds",
             table.concat(self.cmd, " "),
-            (vim.loop.hrtime() - self.start) / 1e6
+            math.ceil((vim.loop.now() - self.start) * 10) / 10
           )
 
           append_log(self, message)
@@ -295,30 +295,28 @@ function Process:spawn(cb)
     self.cwd = nil
   end
 
-  local start = vim.loop.hrtime()
+  local start = vim.loop.now()
   self.start = start
 
   local function handle_output(on_partial, on_line)
     local prev_line = ""
 
-    return
-      function(_, lines)
-        -- Complete previous line
-        prev_line = prev_line .. lines[1]
+    return function(_, lines)
+      -- Complete previous line
+      prev_line = prev_line .. lines[1]
 
-        on_partial(remove_escape_codes(lines[1]), lines[1])
+      on_partial(remove_escape_codes(lines[1]), lines[1])
 
-        for i = 2, #lines do
-          on_line(remove_escape_codes(prev_line), prev_line)
-          prev_line = ""
-          -- Before pushing a new line, invoke the stdout for components
-          prev_line = lines[i]
-          on_partial(remove_escape_codes(lines[i]), lines[i])
-        end
-      end,
-      function()
+      for i = 2, #lines do
         on_line(remove_escape_codes(prev_line), prev_line)
+        prev_line = ""
+        -- Before pushing a new line, invoke the stdout for components
+        prev_line = lines[i]
+        on_partial(remove_escape_codes(lines[i]), lines[i])
       end
+    end, function()
+      on_line(remove_escape_codes(prev_line), prev_line)
+    end
   end
 
   local on_stdout, stdout_cleanup = handle_output(function(line, raw)
@@ -341,7 +339,7 @@ function Process:spawn(cb)
 
   local function on_exit(_, code)
     res.code = code
-    res.time = (vim.loop.hrtime() - start) / 1e6
+    res.time = (vim.loop.now() - start)
 
     -- Remove self
     processes[self.job] = nil
