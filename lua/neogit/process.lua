@@ -194,7 +194,7 @@ function Process:start_timer()
         timer:close()
         if not self.result or (self.result.code ~= 0) then
           local message = string.format(
-            "Command %q running for more than: %f.1 seconds",
+            "Command %q running for more than: %.1f seconds",
             table.concat(self.cmd, " "),
             math.ceil((vim.loop.now() - self.start) * 10) / 10
           )
