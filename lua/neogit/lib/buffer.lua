@@ -139,7 +139,13 @@ function Buffer:show()
     win = api.nvim_get_current_win()
   elseif kind == "tab" then
     vim.cmd("tabnew")
+    local old_buf = api.nvim_get_current_buf()
     api.nvim_set_current_buf(self.handle)
+
+    vim.schedule(function()
+      pcall(api.nvim_buf_delete, old_buf, { force = false })
+    end)
+
     win = api.nvim_get_current_win()
   elseif kind == "split" then
     vim.cmd("below split")
