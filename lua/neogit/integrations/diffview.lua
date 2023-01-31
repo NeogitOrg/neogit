@@ -145,7 +145,7 @@ function M.open(section_name, item_name)
   old_config = dv_config.get_config()
 
   local config = vim.tbl_deep_extend("force", old_config, {
-    key_bindings = {
+    keymaps = {
       view = {
         ["q"] = cb("close"),
         ["<esc>"] = cb("close"),
