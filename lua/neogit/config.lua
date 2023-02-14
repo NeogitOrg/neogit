@@ -20,6 +20,9 @@ M.values = {
   commit_popup = {
     kind = "split",
   },
+  preview_buffer = {
+    kind = "split",
+  },
   popup = {
     kind = "split",
   },

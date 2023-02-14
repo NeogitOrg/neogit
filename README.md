@@ -127,6 +127,10 @@ neogit.setup {
   commit_popup = {
     kind = "split",
   },
+  -- Change the default way of opening the preview buffer
+  preview_buffer = {
+    kind = "split",
+  },
   -- Change the default way of opening popups
   popup = {
     kind = "split",
