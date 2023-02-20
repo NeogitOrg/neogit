@@ -5,7 +5,6 @@ local Buffer = require("neogit.lib.buffer")
 local config = require("neogit.config")
 local logger = require("neogit.logger")
 
-
 local function remove_escape_codes(s)
   -- from: https://stackoverflow.com/questions/48948630/lua-ansi-escapes-pattern
 
@@ -61,13 +60,13 @@ end
 local preview_buffer = nil
 
 local function create_preview_buffer()
-  kind = config.values.preview_buffer.kind
+  local kind = config.values.preview_buffer.kind
 
   -- May be called multiple times due to scheduling
   if preview_buffer then
     if preview_buffer.buffer then
-        logger.debug("Preview buffer already exists. Focusing the existing one")
-        preview_buffer.buffer:focus()
+      logger.debug("Preview buffer already exists. Focusing the existing one")
+      preview_buffer.buffer:focus()
     end
     return
   end
