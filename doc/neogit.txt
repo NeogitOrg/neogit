@@ -100,6 +100,8 @@ p                       Open pull popup
 
                                                 *neogit_P*
 P                       Open push popup
+                                                *neogit_f*
+f                       Open fetch popup
 ==============================================================================
 4. Highlights                                    *neogit-highlights*
 
