@@ -92,14 +92,20 @@ function Buffer:close(force)
   if force == nil then
     force = false
   end
-  if self.kind == "tab" then
-    -- `silent!` as this might throw errors if 'hidden' is disabled.
-    vim.cmd("silent! 1only")
-    vim.cmd("try | tabn # | catch /.*/ | tabp | endtry")
+
+  if self.kind == "replace" then
+    vim.api.nvim_buf_delete(self.handle, { force = force })
+    return
   end
 
   if api.nvim_buf_is_valid(self.handle) then
-    vim.api.nvim_buf_delete(self.handle, { force = force })
+    local winnr = vim.fn.bufwinnr(self.handle)
+    if winnr ~= -1 then
+      local winid = vim.fn.win_getid(winnr)
+      vim.api.nvim_win_close(winid, force)
+    else
+      vim.api.nvim_buf_delete(self.handle, { force = force })
+    end
   end
 end
 
@@ -242,9 +248,11 @@ function Buffer:add_highlight(line, col_start, col_end, name, ns_id)
 
   vim.api.nvim_buf_add_highlight(self.handle, ns_id, name, line, col_start, col_end)
 end
+
 function Buffer:unplace_sign(id)
   vim.cmd("sign unplace " .. id)
 end
+
 function Buffer:place_sign(line, name, group, id)
   -- Sign IDs should be unique within a group, however there's no downside as
   -- long as we don't want to uniquely identify the placed sign later. Thus,
