@@ -37,6 +37,9 @@ function M:open()
     kind = "split",
     mappings = {
       n = {
+        ["q"] = function()
+          self:close()
+        end,
         ["<enter>"] = function(buffer)
           local current_line = buffer:get_current_line()
           local branch_name = current_line[1]
