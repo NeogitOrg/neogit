@@ -33,7 +33,7 @@ function M:open()
   local written = false
   self.buffer = Buffer.create {
     name = self.filename,
-    filetype = "NeogitCommitMessage",
+    filetype = "gitcommit",
     load = true,
     buftype = "",
     kind = config.values.commit_popup.kind,
