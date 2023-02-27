@@ -33,8 +33,60 @@ function M.create()
       pull_from(popup, "upstream", "upstream", status.repo.head.branch)
     end)
     :action("e", "Pull from elsewhere", function(popup)
-      local remote = input.get_user_input("remote: ")
-      local branch = git.branch.prompt_for_branch()
+      local branches = git.branch.get_remote_branches()
+
+      -- Maintain a set with all remotes we got branches for.
+      local remote_options_set = {}
+      for i, option in ipairs(branches) do
+        if i ~= 1 then
+          local match = option:match("^.-/")
+          if match ~= nil then
+            match = match:sub(1, -2)
+            if not remote_options_set[match] then
+              remote_options_set[match] = true
+            end
+          end
+        end
+      end
+
+      local remote_options = {}
+      local count = 0
+      for k, _ in pairs(remote_options_set) do
+        table.insert(remote_options, k)
+        count = count + 1
+      end
+
+      local remote = nil
+      if count == 1 then
+        remote = remote_options[1]
+        notif.create("Using remote " .. remote .. " because it is the only remote available")
+      else
+        remote = input.get_user_input_with_completion("remote: ", remote_options)
+      end
+
+      if not remote then
+        notif.create("Aborting pull because there is no remote")
+        return
+      end
+
+      -- Remove branches not under given remote.
+      local branch_options = {}
+      for i, option in ipairs(branches) do
+        if i ~= 1 then
+          local prefix = remote .. "/"
+          if option:find("^" .. prefix) ~= nil then
+            table.insert(branch_options, option)
+          end
+        end
+      end
+
+      local branch =
+        git.branch.prompt_for_branch(branch_options, { truncate_remote_name_from_options = true })
+      if not branch then
+        notif.create("Aborting pull because there is no branch")
+        return
+      end
+
       pull_from(popup, remote, remote, branch)
     end)
     :build()
