@@ -64,7 +64,9 @@ function M.prompt_for_branch(options, configuration)
   })
 
   if c.truncate_remote_name_from_options and not c.truncate_remote_name then
-    error("invalid prompt_for_branch configuration, \"truncate_remote_name_from_options\" cannot be \"true\" when \"truncate_remote_name\" is \"false\".")
+    error(
+      'invalid prompt_for_branch configuration, "truncate_remote_name_from_options" cannot be "true" when "truncate_remote_name" is "false".'
+    )
     return nil
   end
 

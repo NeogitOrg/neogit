@@ -80,10 +80,8 @@ function M.create()
         end
       end
 
-      local branch = git.branch.prompt_for_branch(
-        branch_options,
-        { truncate_remote_name_from_options = true }
-      )
+      local branch =
+        git.branch.prompt_for_branch(branch_options, { truncate_remote_name_from_options = true })
       if not branch then
         notif.create("Aborting pull because there is no branch")
         return
