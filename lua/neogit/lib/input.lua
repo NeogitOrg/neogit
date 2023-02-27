@@ -41,7 +41,7 @@ local function make_completion_function(options)
   _G.__NEOGIT.completers[id] = function(arg_lead)
     local result = {}
     for _, v in ipairs(options) do
-      if v:match(arg_lead) then
+      if v:lower():find(arg_lead:lower(), nil, true) then
         table.insert(result, v)
       end
     end
