@@ -85,14 +85,14 @@ local function get_current_section_item()
 end
 
 local mode_to_text = {
-  M = "Modified",
-  N = "New file",
-  A = "Added",
-  D = "Deleted",
-  C = "Copied",
-  U = "Updated",
+  M = "Modified     ",
+  N = "New file     ",
+  A = "Added        ",
+  D = "Deleted      ",
+  C = "Copied       ",
+  U = "Updated      ",
   UU = "Both Modified",
-  R = "Renamed",
+  R = "Renamed      ",
 }
 
 local function draw_sign_for_item(item, name)
@@ -169,10 +169,15 @@ local function draw_buffer()
       location.files = {}
 
       for _, f in ipairs(data.items) do
+        local label = mode_to_text[f.mode]
+        if label and vim.o.columns < 120 then
+          label = vim.trim(label)
+        end
+
         if f.mode and f.original_name then
-          output:append(string.format("%s %s -> %s", mode_to_text[f.mode], f.original_name, f.name))
+          output:append(string.format("%s %s -> %s", label, f.original_name, f.name))
         elseif f.mode then
-          output:append(string.format("%s %s", mode_to_text[f.mode], f.name))
+          output:append(string.format("%s %s", label, f.name))
         else
           output:append(f.name)
         end
