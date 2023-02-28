@@ -28,12 +28,14 @@ end
 ---Reads state from disk
 ---@return table
 function M.read()
-  if not M.enabled() then return {} end
+  if not M.enabled() then
+    return {}
+  end
 
   if not M.filepath():exists() then
     log("Creating file")
-    M.path:touch({ parents = true })
-    M.path:write(vim.mpack.encode({}), "w")
+    M.path:touch { parents = true }
+    M.path:write(vim.mpack.encode {}, "w")
   end
 
   log("Reading file")
@@ -44,7 +46,9 @@ M.state = M.read()
 
 ---Writes state to disk
 function M.write()
-  if not M.enabled() then return end
+  if not M.enabled() then
+    return
+  end
 
   log("Writing file")
   M.path:write(vim.mpack.encode(M.state), "w")
@@ -61,7 +65,9 @@ end
 ---@param key table
 ---@param value any
 function M.set(key, value)
-  if not M.enabled() then return end
+  if not M.enabled() then
+    return
+  end
 
   M.state[gen_key(key)] = value
   M.write()
@@ -72,7 +78,9 @@ end
 ---@param default any
 ---@return any
 function M.get(key, default)
-  if not M.enabled() then return default end
+  if not M.enabled() then
+    return default
+  end
 
   return M.state[gen_key(key)] or default
 end
@@ -80,7 +88,7 @@ end
 ---Reset current state, removing whats written to disk
 function M._reset()
   log("Reset file")
-  M.path:write(vim.mpack.encode({}), "w")
+  M.path:write(vim.mpack.encode {}, "w")
   M.state = {}
 end
 
