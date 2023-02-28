@@ -32,72 +32,82 @@ local function parse_diff_stats(raw)
   return stats
 end
 
-local function parse_diff(output, with_stats)
-  local diff = {
-    kind = "modified",
-    lines = {},
-    file = "",
-    info = {},
-    hunks = {},
-    stats = {},
-  }
+local function build_diff_header(output)
+  local header = {}
   local start_idx = 1
 
-  if with_stats then
-    diff.stats = parse_diff_stats(output[1])
-    start_idx = 3
-  end
-
-  do
-    local header = {}
-
-    for i = start_idx, #output do
-      if output[i]:match("^@@@*.*@@@*") then
-        start_idx = i
-        break
-      end
-
-      table.insert(header, output[i])
+  for i, line in ipairs(output) do
+    if line:match("^@@@*.*@@@*") then
+      start_idx = i
+      break
     end
 
-    if #header >= 4 and header[2]:match("^similarity index") then
-      diff.kind = "renamed"
-      table.insert(diff.info, header[3])
-      table.insert(diff.info, header[4])
-      diff.file = ("%s -> %s"):format(
-        diff.info[1]:match("rename from (.*)"),
-        diff.info[2]:match("rename to (.*)")
-      )
+    table.insert(header, line)
+  end
+
+  return header, start_idx
+end
+
+local function build_type(header)
+  local kind = "modified"
+  local info = {}
+  local file = ""
+  local header_count = #header
+
+  if header_count >= 4 and header[2]:match("^similarity index") then
+    kind = "renamed"
+
+    info = { header[3], header[4] }
+
+    file = ("%s -> %s"):format(
+      info[1]:match("rename from (.*)"),
+      info[2]:match("rename to (.*)")
+    )
+  else
+    if header_count == 4 then
+      -- kind = modified
+      file = header[3]:match("%-%-%- a/(.*)")
+
+    elseif header_count == 5 then
+      kind = header[2]:match("(.*) mode %d+")
+
+      if kind == "new file" then
+        file = header[5]:match("%+%+%+ b/(.*)")
+      elseif kind == "deleted file" then
+        file = header[4]:match("%-%-%- a/(.*)")
+      end
     else
-      local header_count = #header
-      if header_count == 4 then
-        diff.file = header[3]:match("%-%-%- a/(.*)")
-      elseif header_count == 5 then
-        diff.kind = header[2]:match("(.*) mode %d+")
-        if diff.kind == "new file" then
-          diff.file = header[5]:match("%+%+%+ b/(.*)")
-        elseif diff.kind == "deleted file" then
-          diff.file = header[4]:match("%-%-%- a/(.*)")
-        end
-      else
-        logger.debug(vim.inspect(header))
-      end
+      logger.debug(vim.inspect(header))
     end
   end
 
-  for i = start_idx, #output do
-    table.insert(diff.lines, output[i])
+  return kind, info, file
+end
+
+local function build_lines(output, start_idx)
+  local lines = {}
+
+  if start_idx == 1 then
+    lines = output
+  else
+    local insert = table.insert
+    for _, line in ipairs(output) do
+      insert(lines, line)
+    end
   end
 
-  local len = #diff.lines
+  return lines
+end
+
+local function build_hunks(lines)
+  local hunks = {}
   local hunk = nil
   local hunk_content = ""
+  local index_from, index_len, disk_from, disk_len
 
-  for i = 1, len do
-    local line = diff.lines[i]
-    if not vim.startswith(line, "+++") then
-      local index_from, index_len, disk_from, disk_len
-      if vim.startswith(line, "@@@") then
+  for i, line in ipairs(lines) do
+    if not line:match("^%+%+%+") then
+      if line:match("^@@@") then
         -- Combined diff header
         index_from, index_len, disk_from, disk_len = line:match("@@@* %-(%d+),?(%d*) .* %+(%d+),?(%d*) @@@*")
       else
@@ -109,8 +119,9 @@ local function parse_diff(output, with_stats)
         if hunk ~= nil then
           hunk.hash = md5.sumhexa(hunk_content)
           hunk_content = ""
-          table.insert(diff.hunks, hunk)
+          table.insert(hunks, hunk)
         end
+
         hunk = {
           index_from = tonumber(index_from),
           index_len = tonumber(index_len) or 1,
@@ -122,6 +133,7 @@ local function parse_diff(output, with_stats)
         }
       else
         hunk_content = hunk_content .. "\n" .. line
+
         if hunk then
           hunk.diff_to = hunk.diff_to + 1
         end
@@ -131,8 +143,37 @@ local function parse_diff(output, with_stats)
 
   if hunk then
     hunk.hash = md5.sumhexa(hunk_content)
-    table.insert(diff.hunks, hunk)
+    table.insert(hunks, hunk)
   end
+
+  return hunks
+end
+
+local function parse_diff(output)
+  local header, start_idx = build_diff_header(output)
+  local lines = build_lines(output, start_idx)
+  local kind, info, file = build_type(header)
+
+  local mt = {
+    __index = function(self, method)
+      if method == "hunks" then
+        self.hunks = self._hunks()
+        return self.hunks
+      end
+    end
+  }
+
+  local diff = {
+    kind = kind,
+    lines = lines,
+    file = file,
+    info = info,
+    _hunks = function()
+      return build_hunks(lines)
+    end,
+  }
+
+  setmetatable(diff, mt)
 
   return diff
 end
