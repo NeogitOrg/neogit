@@ -5,7 +5,7 @@ local Path = require("plenary.path")
 local M = {}
 
 local function log(message)
-  logger.debug("State: " .. message .. ": '" .. M.filepath():absolute() .. "'")
+  logger.debug("State: " .. message .. ": '" .. M.path:absolute() .. "'")
 end
 
 ---@return Path
@@ -32,7 +32,7 @@ function M.read()
     return {}
   end
 
-  if not M.filepath():exists() then
+  if not M.path:exists() then
     log("Creating file")
     M.path:touch { parents = true }
     M.path:write(vim.mpack.encode {}, "w")
