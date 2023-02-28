@@ -59,15 +59,11 @@ local function build_type(header)
 
     info = { header[3], header[4] }
 
-    file = ("%s -> %s"):format(
-      info[1]:match("rename from (.*)"),
-      info[2]:match("rename to (.*)")
-    )
+    file = ("%s -> %s"):format(info[1]:match("rename from (.*)"), info[2]:match("rename to (.*)"))
   else
     if header_count == 4 then
       -- kind = modified
       file = header[3]:match("%-%-%- a/(.*)")
-
     elseif header_count == 5 then
       kind = header[2]:match("(.*) mode %d+")
 
@@ -160,7 +156,7 @@ local function parse_diff(output)
         self.hunks = self._hunks()
         return self.hunks
       end
-    end
+    end,
   }
 
   local diff = {
