@@ -204,11 +204,11 @@ local function draw_buffer()
               for i = h.diff_from + 1, h.diff_to do
                 local l = f.diff.lines[i]
                 output:append(l)
-                if diff_add_matcher:match_str(l) then
-                  M.status_buffer:place_sign(#output, "NeogitDiffAdd", "hl")
-                elseif diff_delete_matcher:match_str(l) then
-                  M.status_buffer:place_sign(#output, "NeogitDiffDelete", "hl")
-                end
+                -- if add_start == string.sub(l, 1, 1) then
+                --   M.status_buffer:place_sign(#output, "NeogitDiffAdd", "hl")
+                -- elseif del_start == string.sub(l, 1, 1) then
+                --   M.status_buffer:place_sign(#output, "NeogitDiffDelete", "hl")
+                -- end
               end
             end
             current_hunk.last = #output
