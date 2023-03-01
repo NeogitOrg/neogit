@@ -3,7 +3,9 @@ local util = require("neogit.lib.util")
 local logger = require("neogit.logger")
 local cli = require("neogit.lib.git.cli")
 local Collection = require("neogit.lib.collection")
-local md5 = require("neogit.lib.md5")
+
+local sumhexa = require("neogit.lib.md5").sumhexa
+local insert = table.insert
 
 local function parse_diff_stats(raw)
   if type(raw) == "string" then
@@ -36,48 +38,50 @@ local function build_diff_header(output)
   local header = {}
   local start_idx = 1
 
-  for i, line in ipairs(output) do
+  for i = start_idx, #output do
+    local line = output[i]
     if line:match("^@@@*.*@@@*") then
       start_idx = i
       break
     end
 
-    table.insert(header, line)
+    insert(header, line)
   end
 
   return header, start_idx
 end
 
-local function build_type(header)
-  local kind = "modified"
+local function build_file(header, kind)
+  if kind == "modified" then
+    return header[3]:match("%-%-%- a/(.*)")
+  elseif kind == "renamed" then
+    return ("%s -> %s"):format(header[3]:match("rename from (.*)"), header[4]:match("rename to (.*)"))
+  elseif kind == "new file" then
+    return header[5]:match("%+%+%+ b/(.*)")
+  elseif kind == "deleted file" then
+    return header[4]:match("%-%-%- a/(.*)")
+  else
+    return ""
+  end
+end
+
+local function build_kind(header)
+  local kind = ""
   local info = {}
-  local file = ""
   local header_count = #header
 
   if header_count >= 4 and header[2]:match("^similarity index") then
     kind = "renamed"
-
     info = { header[3], header[4] }
-
-    file = ("%s -> %s"):format(info[1]:match("rename from (.*)"), info[2]:match("rename to (.*)"))
+  elseif header_count == 4 then
+    kind = "modified"
+  elseif header_count == 5 then
+    kind = header[2]:match("(.*) mode %d+")
   else
-    if header_count == 4 then
-      -- kind = modified
-      file = header[3]:match("%-%-%- a/(.*)")
-    elseif header_count == 5 then
-      kind = header[2]:match("(.*) mode %d+")
-
-      if kind == "new file" then
-        file = header[5]:match("%+%+%+ b/(.*)")
-      elseif kind == "deleted file" then
-        file = header[4]:match("%-%-%- a/(.*)")
-      end
-    else
-      logger.debug(vim.inspect(header))
-    end
+    logger.debug(vim.inspect(header))
   end
 
-  return kind, info, file
+  return kind, info
 end
 
 local function build_lines(output, start_idx)
@@ -86,9 +90,8 @@ local function build_lines(output, start_idx)
   if start_idx == 1 then
     lines = output
   else
-    local insert = table.insert
-    for _, line in ipairs(output) do
-      insert(lines, line)
+    for i = start_idx, #output do
+      insert(lines, output[i])
     end
   end
 
@@ -99,10 +102,12 @@ local function build_hunks(lines)
   local hunks = {}
   local hunk = nil
   local hunk_content = ""
-  local index_from, index_len, disk_from, disk_len
 
-  for i, line in ipairs(lines) do
+  for i = 1, #lines do
+    local line = lines[i]
     if not line:match("^%+%+%+") then
+      local index_from, index_len, disk_from, disk_len
+
       if line:match("^@@@") then
         -- Combined diff header
         index_from, index_len, disk_from, disk_len = line:match("@@@* %-(%d+),?(%d*) .* %+(%d+),?(%d*) @@@*")
@@ -113,9 +118,9 @@ local function build_hunks(lines)
 
       if index_from then
         if hunk ~= nil then
-          hunk.hash = md5.sumhexa(hunk_content)
+          hunk.hash = sumhexa(hunk_content)
           hunk_content = ""
-          table.insert(hunks, hunk)
+          insert(hunks, hunk)
         end
 
         hunk = {
@@ -138,8 +143,8 @@ local function build_hunks(lines)
   end
 
   if hunk then
-    hunk.hash = md5.sumhexa(hunk_content)
-    table.insert(hunks, hunk)
+    hunk.hash = sumhexa(hunk_content)
+    insert(hunks, hunk)
   end
 
   return hunks
@@ -148,7 +153,8 @@ end
 local function parse_diff(output)
   local header, start_idx = build_diff_header(output)
   local lines = build_lines(output, start_idx)
-  local kind, info, file = build_type(header)
+  local kind, info = build_kind(header)
+  local file = build_file(header, kind)
 
   local mt = {
     __index = function(self, method)
@@ -216,7 +222,7 @@ function diff.register(meta)
 
     for _, f in ipairs(repo.unstaged.items) do
       if f.mode ~= "D" and f.mode ~= "F" and (not filter or filter:accepts("unstaged", f.name)) then
-        table.insert(executions, function()
+        insert(executions, function()
           local raw_diff = cli.diff.no_ext_diff.files(f.name).call():trim().stdout
           local raw_stats = cli.diff.no_ext_diff.shortstat.files(f.name).call():trim().stdout
           f.diff = parse_diff(raw_diff)
