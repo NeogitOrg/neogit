@@ -233,7 +233,7 @@ function diff.register(meta)
 
     for _, f in ipairs(repo.staged.items) do
       if f.mode ~= "D" and f.mode ~= "F" and (not filter or filter:accepts("staged", f.name)) then
-        table.insert(executions, function()
+        insert(executions, function()
           local raw_diff = cli.diff.no_ext_diff.cached.files(f.name).call():trim().stdout
           local raw_stats = cli.diff.no_ext_diff.cached.shortstat.files(f.name).call():trim().stdout
           f.diff = parse_diff(raw_diff)
