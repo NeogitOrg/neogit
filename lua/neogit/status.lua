@@ -41,6 +41,10 @@ local hunk_header_matcher = vim.regex("^@@.*@@")
 local diff_add_matcher = vim.regex("^+")
 local diff_delete_matcher = vim.regex("^-")
 
+local head_start = "@"
+local add_start = "+"
+local del_start = "-"
+
 local function get_section_idx_for_line(linenr)
   for i, l in pairs(M.locations) do
     if l.first <= linenr and linenr <= l.last then
@@ -1056,13 +1060,25 @@ local function update_highlight()
     return
   end
 
+  local win_start = vim.fn.line("w0")
+  local win_end = vim.fn.line("w$")
+
+  if first < win_start then
+    first = win_start
+  end
+
+  if last > win_end then
+    last = win_end
+  end
+
+  local lines = M.status_buffer:get_lines(first - 1, last)
   for i = first, last do
-    local line = vim.fn.getline(i)
-    if hunk_header_matcher:match_str(line) then
+    local start = string.sub(lines[i - first + 1], 1, 1)
+    if start == head_start then
       M.status_buffer:place_sign(i, "NeogitHunkHeaderHighlight", "ctx")
-    elseif diff_add_matcher:match_str(line) then
+    elseif start == add_start then
       M.status_buffer:place_sign(i, "NeogitDiffAddHighlight", "ctx")
-    elseif diff_delete_matcher:match_str(line) then
+    elseif start == del_start then
       M.status_buffer:place_sign(i, "NeogitDiffDeleteHighlight", "ctx")
     else
       M.status_buffer:place_sign(i, "NeogitDiffContextHighlight", "ctx")
