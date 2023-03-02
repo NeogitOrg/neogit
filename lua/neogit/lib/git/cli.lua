@@ -211,7 +211,7 @@ local configurations = {
     aliases = {
       list = function(tbl)
 	return function(sort)
-	  return tbl.args("--sort="..sort)
+	  return tbl.args("--sort=" .. sort)
 	end
       end,
       name = function(tbl)
