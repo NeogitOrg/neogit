@@ -9,6 +9,7 @@ M.values = {
   disable_insert_on_commit = true,
   use_magit_keybindings = false,
   auto_refresh = true,
+  sort_branches = "-committerdate",
   kind = "tab",
   -- The time after which an output console is shown for slow running commands
   console_timeout = 2000,

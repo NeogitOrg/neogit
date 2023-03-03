@@ -3,7 +3,9 @@ local util = require("neogit.lib.util")
 local logger = require("neogit.logger")
 local cli = require("neogit.lib.git.cli")
 local Collection = require("neogit.lib.collection")
-local md5 = require("neogit.lib.md5")
+
+local sumhexa = require("neogit.lib.md5").sumhexa
+local insert = table.insert
 
 local function parse_diff_stats(raw)
   if type(raw) == "string" then
@@ -32,72 +34,81 @@ local function parse_diff_stats(raw)
   return stats
 end
 
-local function parse_diff(output, with_stats)
-  local diff = {
-    kind = "modified",
-    lines = {},
-    file = "",
-    info = {},
-    hunks = {},
-    stats = {},
-  }
+local function build_diff_header(output)
+  local header = {}
   local start_idx = 1
 
-  if with_stats then
-    diff.stats = parse_diff_stats(output[1])
-    start_idx = 3
-  end
-
-  do
-    local header = {}
-
-    for i = start_idx, #output do
-      if output[i]:match("^@@@*.*@@@*") then
-        start_idx = i
-        break
-      end
-
-      table.insert(header, output[i])
-    end
-
-    if #header >= 4 and header[2]:match("^similarity index") then
-      diff.kind = "renamed"
-      table.insert(diff.info, header[3])
-      table.insert(diff.info, header[4])
-      diff.file = ("%s -> %s"):format(
-        diff.info[1]:match("rename from (.*)"),
-        diff.info[2]:match("rename to (.*)")
-      )
-    else
-      local header_count = #header
-      if header_count == 4 then
-        diff.file = header[3]:match("%-%-%- a/(.*)")
-      elseif header_count == 5 then
-        diff.kind = header[2]:match("(.*) mode %d+")
-        if diff.kind == "new file" then
-          diff.file = header[5]:match("%+%+%+ b/(.*)")
-        elseif diff.kind == "deleted file" then
-          diff.file = header[4]:match("%-%-%- a/(.*)")
-        end
-      else
-        logger.debug(vim.inspect(header))
-      end
-    end
-  end
-
   for i = start_idx, #output do
-    table.insert(diff.lines, output[i])
+    local line = output[i]
+    if line:match("^@@@*.*@@@*") then
+      start_idx = i
+      break
+    end
+
+    insert(header, line)
   end
 
-  local len = #diff.lines
+  return header, start_idx
+end
+
+local function build_file(header, kind)
+  if kind == "modified" then
+    return header[3]:match("%-%-%- a/(.*)")
+  elseif kind == "renamed" then
+    return ("%s -> %s"):format(header[3]:match("rename from (.*)"), header[4]:match("rename to (.*)"))
+  elseif kind == "new file" then
+    return header[5]:match("%+%+%+ b/(.*)")
+  elseif kind == "deleted file" then
+    return header[4]:match("%-%-%- a/(.*)")
+  else
+    return ""
+  end
+end
+
+local function build_kind(header)
+  local kind = ""
+  local info = {}
+  local header_count = #header
+
+  if header_count >= 4 and header[2]:match("^similarity index") then
+    kind = "renamed"
+    info = { header[3], header[4] }
+  elseif header_count == 4 then
+    kind = "modified"
+  elseif header_count == 5 then
+    kind = header[2]:match("(.*) mode %d+")
+  else
+    logger.debug(vim.inspect(header))
+  end
+
+  return kind, info
+end
+
+local function build_lines(output, start_idx)
+  local lines = {}
+
+  if start_idx == 1 then
+    lines = output
+  else
+    for i = start_idx, #output do
+      insert(lines, output[i])
+    end
+  end
+
+  return lines
+end
+
+local function build_hunks(lines)
+  local hunks = {}
   local hunk = nil
   local hunk_content = ""
 
-  for i = 1, len do
-    local line = diff.lines[i]
-    if not vim.startswith(line, "+++") then
+  for i = 1, #lines do
+    local line = lines[i]
+    if not line:match("^%+%+%+") then
       local index_from, index_len, disk_from, disk_len
-      if vim.startswith(line, "@@@") then
+
+      if line:match("^@@@") then
         -- Combined diff header
         index_from, index_len, disk_from, disk_len = line:match("@@@* %-(%d+),?(%d*) .* %+(%d+),?(%d*) @@@*")
       else
@@ -107,10 +118,11 @@ local function parse_diff(output, with_stats)
 
       if index_from then
         if hunk ~= nil then
-          hunk.hash = md5.sumhexa(hunk_content)
+          hunk.hash = sumhexa(hunk_content)
           hunk_content = ""
-          table.insert(diff.hunks, hunk)
+          insert(hunks, hunk)
         end
+
         hunk = {
           index_from = tonumber(index_from),
           index_len = tonumber(index_len) or 1,
@@ -122,6 +134,7 @@ local function parse_diff(output, with_stats)
         }
       else
         hunk_content = hunk_content .. "\n" .. line
+
         if hunk then
           hunk.diff_to = hunk.diff_to + 1
         end
@@ -130,9 +143,39 @@ local function parse_diff(output, with_stats)
   end
 
   if hunk then
-    hunk.hash = md5.sumhexa(hunk_content)
-    table.insert(diff.hunks, hunk)
+    hunk.hash = sumhexa(hunk_content)
+    insert(hunks, hunk)
   end
+
+  return hunks
+end
+
+local function parse_diff(output)
+  local header, start_idx = build_diff_header(output)
+  local lines = build_lines(output, start_idx)
+  local kind, info = build_kind(header)
+  local file = build_file(header, kind)
+
+  local mt = {
+    __index = function(self, method)
+      if method == "hunks" then
+        self.hunks = self._hunks()
+        return self.hunks
+      end
+    end,
+  }
+
+  local diff = {
+    kind = kind,
+    lines = lines,
+    file = file,
+    info = info,
+    _hunks = function()
+      return build_hunks(lines)
+    end,
+  }
+
+  setmetatable(diff, mt)
 
   return diff
 end
@@ -179,7 +222,7 @@ function diff.register(meta)
 
     for _, f in ipairs(repo.unstaged.items) do
       if f.mode ~= "D" and f.mode ~= "F" and (not filter or filter:accepts("unstaged", f.name)) then
-        table.insert(executions, function()
+        insert(executions, function()
           local raw_diff = cli.diff.no_ext_diff.files(f.name).call():trim().stdout
           local raw_stats = cli.diff.no_ext_diff.shortstat.files(f.name).call():trim().stdout
           f.diff = parse_diff(raw_diff)
@@ -190,7 +233,7 @@ function diff.register(meta)
 
     for _, f in ipairs(repo.staged.items) do
       if f.mode ~= "D" and f.mode ~= "F" and (not filter or filter:accepts("staged", f.name)) then
-        table.insert(executions, function()
+        insert(executions, function()
           local raw_diff = cli.diff.no_ext_diff.cached.files(f.name).call():trim().stdout
           local raw_stats = cli.diff.no_ext_diff.cached.shortstat.files(f.name).call():trim().stdout
           f.diff = parse_diff(raw_diff)
