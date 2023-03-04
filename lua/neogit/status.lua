@@ -14,6 +14,9 @@ local LineBuffer = require("neogit.lib.line_buffer")
 local fs = require("neogit.lib.fs")
 local input = require("neogit.lib.input")
 
+local api = vim.api
+local fn = vim.fn
+
 local M = {}
 
 M.disabled = false
@@ -37,9 +40,9 @@ M.outdated = {}
 ---@field oid string|nil optional object id
 ---@field commit CommitLogEntry|nil optional object id
 
-local hunk_header_matcher = vim.regex("^@@.*@@")
-local diff_add_matcher = vim.regex("^+")
-local diff_delete_matcher = vim.regex("^-")
+local head_start = "@"
+local add_start = "+"
+local del_start = "-"
 
 local head_start = "@"
 local add_start = "+"
@@ -201,20 +204,14 @@ local function draw_buffer()
             local current_hunk = hunks_lookup[h.hash] or { folded = false }
 
             output:append(f.diff.lines[h.diff_from])
-            M.status_buffer:place_sign(#output, "NeogitHunkHeader", "hl")
             current_hunk.first = #output
 
             if not current_hunk.folded then
               for i = h.diff_from + 1, h.diff_to do
-                local l = f.diff.lines[i]
-                output:append(l)
-                -- if add_start == string.sub(l, 1, 1) then
-                --   M.status_buffer:place_sign(#output, "NeogitDiffAdd", "hl")
-                -- elseif del_start == string.sub(l, 1, 1) then
-                --   M.status_buffer:place_sign(#output, "NeogitDiffDelete", "hl")
-                -- end
+                output:append(f.diff.lines[i])
               end
             end
+
             current_hunk.last = #output
             table.insert(hunks, setmetatable(current_hunk, { __index = h }))
           end
@@ -249,40 +246,48 @@ local function draw_buffer()
   M.locations = new_locations
 end
 
---- Find the closest section the cursor is encosed by.
+--- Find the smallest section the cursor is contained within.
 --
--- @return table, table, table, number, number -
 --  The first 3 values are tables in the shape of {number, string}, where the number is
 --  the relative offset of the found item and the string is it's identifier.
 --  The remaining 2 numbers are the first and last line of the found section.
-local function save_cursor_location()
-  local line = vim.fn.line(".")
+---@param linenr number|nil
+---@return table, table, table, number, number
+local function save_cursor_location(linenr)
+  local line = linenr or vim.fn.line(".")
   local section_loc, file_loc, hunk_loc, first, last
 
   for li, loc in ipairs(M.locations) do
     if line == loc.first then
       section_loc = { li, loc.name }
       first, last = loc.first, loc.last
+
       break
     elseif line >= loc.first and line <= loc.last then
       section_loc = { li, loc.name }
+
       for fi, file in ipairs(loc.files) do
         if line == file.first then
           file_loc = { fi, file.name }
           first, last = file.first, file.last
+
           break
         elseif line >= file.first and line <= file.last then
           file_loc = { fi, file.name }
+
           for hi, hunk in ipairs(file.hunks) do
-            if line <= hunk.last then
+            if line >= hunk.first and line <= hunk.last then
               hunk_loc = { hi, hunk.hash }
               first, last = hunk.first, hunk.last
+
               break
             end
           end
+
           break
         end
       end
+
       break
     end
   end
@@ -988,6 +993,76 @@ local cmd_func_map = function()
   }
 end
 
+-- Sets decoration provider for buffer
+---@param buffer Buffer
+---@return nil
+local function set_decoration_provider(buffer)
+  local decor_ns = api.nvim_create_namespace("NeogitStatusDecor")
+  local context_ns = api.nvim_create_namespace("NeogitStatusContext")
+
+  local function frame_key()
+    return table.concat { fn.line("w0"), fn.line("w$"), fn.getcurpos()[2], buffer:get_changedtick() }
+  end
+
+  local last_frame_key = frame_key()
+
+  local function on_start()
+    return buffer:is_focused() and frame_key() ~= last_frame_key
+  end
+
+  local function on_end()
+    last_frame_key = frame_key()
+  end
+
+  local function on_win()
+    buffer:clear_namespace(decor_ns)
+    buffer:clear_namespace(context_ns)
+
+    -- first and last lines of current context based on cursor position, if available
+    local _, _, _, first, last = save_cursor_location()
+
+    for line = fn.line("w0"), fn.line("w$") do
+      local text = buffer:get_line(line)[1]
+      if text then
+        local highlight
+        local start = string.sub(text, 1, 1)
+        local _, _, hunk, _, _ = save_cursor_location(line)
+
+        if start == head_start then
+          highlight = "NeogitHunkHeader"
+        elseif start == add_start then
+          highlight = "NeogitDiffAdd"
+        elseif start == del_start then
+          highlight = "NeogitDiffDelete"
+        elseif hunk then
+          highlight = "NeogitDiffContext"
+        end
+
+        if highlight then
+          buffer:set_extmark(decor_ns, line - 1, 0, { line_hl_group = highlight, priority = 9 })
+        end
+
+        if
+          not config.values.disable_context_highlighting
+          and first
+          and last
+          and line >= first
+          and line <= last
+        then
+          buffer:set_extmark(
+            context_ns,
+            line - 1,
+            0,
+            { line_hl_group = (highlight or "NeogitDiffContext") .. "Highlight", priority = 10 }
+          )
+        end
+      end
+    end
+  end
+
+  buffer:set_decorations(decor_ns, { on_start = on_start, on_win = on_win, on_end = on_end })
+end
+
 --- Creates a new status buffer
 local function create(kind, cwd)
   kind = kind or config.values.kind
@@ -1036,59 +1111,16 @@ local function create(kind, cwd)
         end
       end
 
+      set_decoration_provider(buffer)
+
       logger.debug("[STATUS BUFFER]: Dispatching initial render")
       refresh(true, "Buffer.create")
     end,
   }
 end
 
-local highlight_group = vim.api.nvim_create_namespace("section-highlight")
-local function update_highlight()
-  if not M.status_buffer then
-    return
-  end
-  if config.values.disable_context_highlighting then
-    return
-  end
-
-  vim.api.nvim_buf_clear_namespace(0, highlight_group, 0, -1)
-  M.status_buffer:clear_sign_group("ctx")
-
-  local _, _, _, first, last = save_cursor_location()
-
-  if first == nil or last == nil then
-    return
-  end
-
-  local win_start = vim.fn.line("w0")
-  local win_end = vim.fn.line("w$")
-
-  if first < win_start then
-    first = win_start
-  end
-
-  if last > win_end then
-    last = win_end
-  end
-
-  local lines = M.status_buffer:get_lines(first - 1, last)
-  for i = first, last do
-    local start = string.sub(lines[i - first + 1], 1, 1)
-    if start == head_start then
-      M.status_buffer:place_sign(i, "NeogitHunkHeaderHighlight", "ctx")
-    elseif start == add_start then
-      M.status_buffer:place_sign(i, "NeogitDiffAddHighlight", "ctx")
-    elseif start == del_start then
-      M.status_buffer:place_sign(i, "NeogitDiffDeleteHighlight", "ctx")
-    else
-      M.status_buffer:place_sign(i, "NeogitDiffContextHighlight", "ctx")
-    end
-  end
-end
-
 M.create = create
 M.toggle = toggle
-M.update_highlight = update_highlight
 M.generate_patch_from_selection = generate_patch_from_selection
 M.reset = reset
 M.dispatch_reset = dispatch_reset
