@@ -98,10 +98,14 @@ local function build_lines(output, start_idx)
   return lines
 end
 
+local function hunk_hash(content)
+  return sumhexa(table.concat(content, "\n"))
+end
+
 local function build_hunks(lines)
   local hunks = {}
   local hunk = nil
-  local hunk_content = ""
+  local hunk_content = {}
 
   for i = 1, #lines do
     local line = lines[i]
@@ -118,8 +122,8 @@ local function build_hunks(lines)
 
       if index_from then
         if hunk ~= nil then
-          hunk.hash = sumhexa(hunk_content)
-          hunk_content = ""
+          hunk.hash = hunk_hash(hunk_content)
+          hunk_content = {}
           insert(hunks, hunk)
         end
 
@@ -133,7 +137,7 @@ local function build_hunks(lines)
           diff_to = i,
         }
       else
-        hunk_content = hunk_content .. "\n" .. line
+        insert(hunk_content, line)
 
         if hunk then
           hunk.diff_to = hunk.diff_to + 1
@@ -143,7 +147,7 @@ local function build_hunks(lines)
   end
 
   if hunk then
-    hunk.hash = sumhexa(hunk_content)
+    hunk.hash = hunk_hash(hunk_content)
     insert(hunks, hunk)
   end
 
@@ -159,7 +163,7 @@ local function parse_diff(output)
   local mt = {
     __index = function(self, method)
       if method == "hunks" then
-        self.hunks = self._hunks()
+        self.hunks = build_hunks(lines)
         return self.hunks
       end
     end,
@@ -170,9 +174,6 @@ local function parse_diff(output)
     lines = lines,
     file = file,
     info = info,
-    _hunks = function()
-      return build_hunks(lines)
-    end,
   }
 
   setmetatable(diff, mt)
