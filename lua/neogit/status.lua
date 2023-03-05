@@ -44,10 +44,6 @@ local head_start = "@"
 local add_start = "+"
 local del_start = "-"
 
-local head_start = "@"
-local add_start = "+"
-local del_start = "-"
-
 local function get_section_idx_for_line(linenr)
   for i, l in pairs(M.locations) do
     if l.first <= linenr and linenr <= l.last then
