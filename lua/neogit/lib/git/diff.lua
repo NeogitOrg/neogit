@@ -220,6 +220,16 @@ function diff.register(meta)
       end))
     end
 
+    for _, f in ipairs(repo.untracked.items) do
+      if not filter or filter:accepts("untracked", f.name) then
+        insert(executions, function()
+          -- Doing a git-diff with untracked files will exit(1) if a difference is observed, which we can ignore.
+          local raw_diff = cli.diff.no_ext_diff.no_index.files("/dev/null", f.name).call_ignoring_exit_code():trim().stdout
+          f.diff = parse_diff(raw_diff)
+        end)
+      end
+    end
+
     for _, f in ipairs(repo.unstaged.items) do
       if f.mode ~= "D" and f.mode ~= "F" and (not filter or filter:accepts("unstaged", f.name)) then
         insert(executions, function()
