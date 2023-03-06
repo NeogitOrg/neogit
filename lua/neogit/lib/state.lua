@@ -4,6 +4,8 @@ local Path = require("plenary.path")
 
 local M = {}
 
+M.loaded = false
+
 local function log(message)
   logger.debug("State: " .. message .. ": '" .. M.path:absolute() .. "'")
 end
@@ -11,18 +13,27 @@ end
 ---@return Path
 function M.filepath()
   local base_path = vim.fn.stdpath("state") .. "/neogit/"
+  local filename = "state"
+
   if config.values.use_per_project_settings then
-    return Path:new(base_path .. vim.loop.cwd():gsub("/", "%%"))
-  else
-    return Path:new(base_path .. "state")
+    filename = vim.loop.cwd():gsub("/", "%%")
   end
+
+  return Path:new(base_path .. filename)
 end
 
-M.path = M.filepath()
+function M.setup()
+  if M.loaded then
+    return
+  end
+
+  M.path = M.filepath()
+  M.loaded = true
+end
 
 ---@return boolean
 function M.enabled()
-  return config.values.remember_settings
+  return M.loaded and config.values.remember_settings
 end
 
 ---Reads state from disk

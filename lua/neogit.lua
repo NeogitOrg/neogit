@@ -4,6 +4,7 @@ local lib = require("neogit.lib")
 local signs = require("neogit.lib.signs")
 local hl = require("neogit.lib.hl")
 local status = require("neogit.status")
+local state = require("neogit.lib.state")
 
 local neogit = {
   lib = require("neogit.lib"),
@@ -57,6 +58,7 @@ local neogit = {
       config.values.mappings.status["p"] = ""
     end
     hl.setup()
+    state.setup()
 
     require("neogit.autocmds").setup()
   end,
