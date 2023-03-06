@@ -81,6 +81,7 @@ local configurations = {
       patch = "--patch",
       name_only = "--name-only",
       no_ext_diff = "--no-ext-diff",
+      no_index = "--no-index",
     },
   },
   stash = config {
@@ -555,7 +556,7 @@ local function new_builder(subcommand)
     env = {},
   }
 
-  local function to_process(verbose, external_errors)
+  local function to_process(verbose, external_errors, ignore_code)
     -- Disable the pager so that the commands don't stop and wait for pagination
     local cmd = { "git", "--no-pager", "-c", "color.ui=always", "--no-optional-locks", subcommand }
     for _, o in ipairs(state.options) do
@@ -588,6 +589,7 @@ local function new_builder(subcommand)
       pty = state.in_pty,
       verbose = verbose,
       external_errors = external_errors,
+      ignore_code = ignore_code,
     }
   end
 
@@ -621,6 +623,22 @@ local function new_builder(subcommand)
         stdout = result.stdout,
         stderr = result.stderr,
         code = result.code,
+        time = result.time,
+      }, state.show_popup, state.hide_text)
+
+      return result
+    end,
+    call_ignoring_exit_code = function(verbose)
+      local p = to_process(verbose, false, true)
+      local result = p:spawn_async()
+
+      assert(result, "Command did not complete")
+
+      handle_new_cmd({
+        cmd = table.concat(p.cmd, " "),
+        stdout = result.stdout,
+        stderr = result.stderr,
+        code = 0,
         time = result.time,
       }, state.show_popup, state.hide_text)
 
