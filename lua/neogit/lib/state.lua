@@ -29,6 +29,7 @@ function M.setup()
 
   M.path = M.filepath()
   M.loaded = true
+  log("Loaded")
 end
 
 ---@return boolean
