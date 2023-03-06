@@ -76,7 +76,7 @@ local function build_kind(header)
   elseif header_count == 4 then
     kind = "modified"
   elseif header_count == 5 then
-    kind = header[2]:match("(.*) mode %d+")
+    kind = header[2]:match("(.*) mode %d+") or header[3]:match("(.*) mode %d+")
   else
     logger.debug(vim.inspect(header))
   end
