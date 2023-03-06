@@ -132,7 +132,7 @@ neogit.setup {
   -- Persist the values of switches/options within and across sessions
   remember_settings = true,
   -- Scope persisted settings on a per-project basis
-  use_per_project_settings = false,
+  use_per_project_settings = true,
   -- Array-like table of settings to never persist. Uses format "Filetype--cli-value"
   --   ie: `{ "NeogitCommitPopup--author", "NeogitCommitPopup--no-verify" }`
   ignored_settings = {},
