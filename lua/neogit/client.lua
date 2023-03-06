@@ -49,7 +49,7 @@ function M.client()
   local lua_cmd = fmt('lua require("neogit.client").editor("%s", "%s")', file_target, client)
 
   if vim.loop.os_uname().sysname == "Windows_NT" then
-    lua_cmd = lua_cmd:gsub("\\","/")
+    lua_cmd = lua_cmd:gsub("\\", "/")
   end
 
   local rpc_server = RPC.create_connection(nvim_server)
