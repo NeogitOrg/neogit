@@ -10,10 +10,14 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
+      - name: Install Quickinstall
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-quickinstall
       - name: Install Selene
         uses: taiki-e/install-action@v2
         with:
-          tool: cargo-quickinstall,selene
+          tool: selene
       - name: Run Selene
         run: make lint
   stylua:
