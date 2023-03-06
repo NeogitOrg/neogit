@@ -69,8 +69,10 @@ function M.set(key, value)
     return
   end
 
-  M.state[gen_key(key)] = value
-  M.write()
+  if not vim.tbl_contains(config.values.ignored_settings, gen_key(key)) then
+    M.state[gen_key(key)] = value
+    M.write()
+  end
 end
 
 ---Get option. If value isn't set, return provided default.

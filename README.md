@@ -129,6 +129,13 @@ neogit.setup {
   console_timeout = 2000,
   -- Automatically show console if a command takes more than console_timeout milliseconds
   auto_show_console = true,
+  -- Persist the values of switches/options within and across sessions
+  remember_settings = true,
+  -- Scope persisted settings on a per-project basis
+  use_per_project_settings = false,
+  -- Array-like table of settings to never persist. Uses format "Filetype--cli-value"
+  --   ie: `{ "NeogitCommitPopup--author", "NeogitCommitPopup--no-verify" }`
+  ignored_settings = {},
   -- Change the default way of opening the commit popup
   commit_popup = {
     kind = "split",

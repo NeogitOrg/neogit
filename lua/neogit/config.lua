@@ -63,6 +63,7 @@ M.values = {
       folded = true,
     },
   },
+  ignored_settings = {},
   mappings = {
     status = {
       ["q"] = "Close",
