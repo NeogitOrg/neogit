@@ -234,7 +234,7 @@ function diff.register(meta)
     end
 
     for _, f in ipairs(repo.unstaged.items) do
-      if f.mode ~= "D" and f.mode ~= "F" and (not filter or filter:accepts("unstaged", f.name)) then
+      if f.mode ~= "F" and (not filter or filter:accepts("unstaged", f.name)) then
         insert(executions, function()
           local raw_diff = cli.diff.no_ext_diff.files(f.name).call():trim().stdout
           local raw_stats = cli.diff.no_ext_diff.shortstat.files(f.name).call():trim().stdout
@@ -245,7 +245,7 @@ function diff.register(meta)
     end
 
     for _, f in ipairs(repo.staged.items) do
-      if f.mode ~= "D" and f.mode ~= "F" and (not filter or filter:accepts("staged", f.name)) then
+      if f.mode ~= "F" and (not filter or filter:accepts("staged", f.name)) then
         insert(executions, function()
           local raw_diff = cli.diff.no_ext_diff.cached.files(f.name).call():trim().stdout
           local raw_stats = cli.diff.no_ext_diff.cached.shortstat.files(f.name).call():trim().stdout
