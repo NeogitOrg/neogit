@@ -11,7 +11,9 @@ jobs:
         with:
           toolchain: stable
       - name: Install Selene
-        uses: taiki-e/install-action@selene
+        uses: taiki-e/install-action
+        with:
+          tool: @selene
       - name: Run Selene
         run: make lint
   stylua:
