@@ -13,7 +13,7 @@ jobs:
       - name: Install Selene
         uses: taiki-e/install-action@v2
         with:
-          tool: selene
+          tool: cargo-quickinstall,selene
       - name: Run Selene
         run: make lint
   stylua:
