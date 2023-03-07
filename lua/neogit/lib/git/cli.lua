@@ -41,6 +41,7 @@ local configurations = {
       porcelain = "--porcelain",
     },
   },
+
   log = config {
     flags = {
       oneline = "--oneline",
@@ -62,6 +63,7 @@ local configurations = {
       end,
     },
   },
+
   config = config {
     flags = {
       _get = "--get",
@@ -74,6 +76,7 @@ local configurations = {
       end,
     },
   },
+
   diff = config {
     flags = {
       cached = "--cached",
@@ -84,6 +87,7 @@ local configurations = {
       no_index = "--no-index",
     },
   },
+
   stash = config {
     flags = {
       apply = "apply",
@@ -91,6 +95,7 @@ local configurations = {
       index = "--index",
     },
   },
+
   rebase = config {
     flags = {
       interactive = "-i",
@@ -99,6 +104,7 @@ local configurations = {
       skip = "--skip",
     },
   },
+
   reset = config {
     flags = {
       hard = "--hard",
@@ -111,6 +117,7 @@ local configurations = {
       end,
     },
   },
+
   checkout = config {
     short_opts = {
       b = "-b",
@@ -133,6 +140,7 @@ local configurations = {
       end,
     },
   },
+
   remote = config {
     flags = {
       push = "--push",
@@ -146,6 +154,7 @@ local configurations = {
       end,
     },
   },
+
   apply = config {
     flags = {
       cached = "--cached",
@@ -158,12 +167,14 @@ local configurations = {
       end,
     },
   },
+
   add = config {
     flags = {
       update = "-u",
       all = "-A",
     },
   },
+
   commit = config {
     flags = {
       amend = "--amend",
@@ -175,6 +186,7 @@ local configurations = {
       commit_message_file = "--file",
     },
   },
+
   push = config {
     flags = {
       delete = "--delete",
@@ -192,6 +204,7 @@ local configurations = {
       end,
     },
   },
+
   pull = config {
     flags = {
       no_commit = "--no-commit",
@@ -200,6 +213,7 @@ local configurations = {
       flags = {},
     },
   },
+
   branch = config {
     flags = {
       all = "-a",
@@ -222,6 +236,7 @@ local configurations = {
       end,
     },
   },
+
   ["read-tree"] = config {
     flags = {
       merge = "-m",
@@ -237,7 +252,9 @@ local configurations = {
       end,
     },
   },
+
   ["write-tree"] = config {},
+
   ["commit-tree"] = config {
     flags = {
       no_gpg_sign = "--no-gpg-sign",
@@ -262,6 +279,7 @@ local configurations = {
       end,
     },
   },
+
   ["update-index"] = config {
     flags = {
       add = "--add",
@@ -269,11 +287,19 @@ local configurations = {
       refresh = "--refresh",
     },
   },
+
   ["show-ref"] = config {
     flags = {
       verify = "--verify",
     },
   },
+
+  ["show-branch"] = config {
+    flags = {
+      all = "--all",
+    },
+  },
+
   ["update-ref"] = config {
     flags = {
       create_reflog = "--create-reflog",
@@ -282,6 +308,7 @@ local configurations = {
       message = "-m",
     },
   },
+
   ["ls-files"] = config {
     flags = {
       others = "--others",
@@ -291,6 +318,7 @@ local configurations = {
       full_name = "--full-name",
     },
   },
+
   ["rev-parse"] = config {
     flags = {
       revs_only = "--revs-only",

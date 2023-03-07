@@ -176,6 +176,15 @@ local function parse_command_args(args)
   return tbl
 end
 
+local function pattern_escape(str)
+  local special_chars = { "(", ")", ".", "%", "+", "-", "*", "?", "[", "^", "$" }
+  for _, char in ipairs(special_chars) do
+    str = str:gsub("%" .. char, "%%" .. char)
+  end
+
+  return str
+end
+
 return {
   time = time,
   time_async = time_async,
@@ -195,4 +204,5 @@ return {
   deepcopy = deepcopy,
   trim = trim,
   parse_command_args = parse_command_args,
+  pattern_escape = pattern_escape,
 }
