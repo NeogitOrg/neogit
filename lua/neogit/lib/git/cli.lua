@@ -295,8 +295,8 @@ local configurations = {
 
   ["show-branch"] = config {
     flags = {
-      all = "--all"
-    }
+      all = "--all",
+    },
   },
 
   ["update-ref"] = config {
