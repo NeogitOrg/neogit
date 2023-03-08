@@ -22,6 +22,7 @@ function M.filepath()
   return Path:new(base_path .. filename)
 end
 
+---Initializes state
 function M.setup()
   if M.loaded then
     return
@@ -29,6 +30,7 @@ function M.setup()
 
   M.path = M.filepath()
   M.loaded = true
+  M.state = M.read()
   log("Loaded")
 end
 
@@ -53,8 +55,6 @@ function M.read()
   log("Reading file")
   return vim.mpack.decode(M.path:read())
 end
-
-M.state = M.read()
 
 ---Writes state to disk
 function M.write()

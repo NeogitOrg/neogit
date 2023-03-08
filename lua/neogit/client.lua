@@ -9,7 +9,7 @@ function M.get_nvim_remote_editor()
   local nvim_path = fn.shellescape(vim.v.progpath)
 
   local runtimepath_cmd = fn.shellescape(fmt("set runtimepath^=%s", fn.fnameescape(tostring(neogit_path))))
-  local lua_cmd = fn.shellescape('lua require("neogit.client").client()')
+  local lua_cmd = fn.shellescape("lua require('neogit.client').client()")
 
   local shell_cmd = {
     nvim_path,
@@ -47,6 +47,10 @@ function M.client()
 
   local client = fn.serverstart()
   local lua_cmd = fmt('lua require("neogit.client").editor("%s", "%s")', file_target, client)
+
+  if vim.loop.os_uname().sysname == "Windows_NT" then
+    lua_cmd = lua_cmd:gsub("\\", "/")
+  end
 
   local rpc_server = RPC.create_connection(nvim_server)
   rpc_server:send_cmd(lua_cmd)
