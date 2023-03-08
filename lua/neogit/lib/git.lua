@@ -8,4 +8,5 @@ return {
   cli = cli,
   diff = require("neogit.lib.git.diff"),
   rebase = require("neogit.lib.git.rebase"),
+  cherry_pick = require("neogit.lib.git.cherry_pick"),
 }

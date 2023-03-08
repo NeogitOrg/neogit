@@ -973,6 +973,15 @@ local cmd_func_map = function()
     ["PushPopup"] = require("neogit.popups.push").create,
     ["CommitPopup"] = require("neogit.popups.commit").create,
     ["LogPopup"] = require("neogit.popups.log").create,
+    ["CherryPickPopup"] = function()
+      local line = M.status_buffer:get_current_line()
+      local hash = line[1]:match("^(%x*)%s")
+      -- TODO: Handle if multiple commits are selected
+      
+      require("neogit.popups.cherry_pick").create {
+        hash = hash,
+      }
+    end,
     ["StashPopup"] = function()
       local line = M.status_buffer:get_current_line()
 
