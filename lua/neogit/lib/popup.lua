@@ -5,6 +5,7 @@ local Ui = require("neogit.lib.ui")
 local logger = require("neogit.logger")
 local util = require("neogit.lib.util")
 local config = require("neogit.config")
+local state = require("neogit.lib.state")
 
 local col = Ui.col
 local row = Ui.row
@@ -86,6 +87,7 @@ function M:toggle_switch(switch)
     return c.options.id == switch.id
   end)
   c.options.highlight = get_highlight_for_switch(switch)
+  state.set({ self.state.name, switch.cli }, switch.enabled)
   self.buffer.ui:update()
 end
 
@@ -100,6 +102,7 @@ function M:set_option(option)
   end)
   c.options.highlight = get_highlight_for_option(option)
   c.children[#c.children].value = option.value
+  state.set({ self.state.name, option.cli }, option.value)
   self.buffer.ui:update()
 end
 
