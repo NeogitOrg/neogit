@@ -6,19 +6,19 @@ local M = {}
 
 local a = require("plenary.async")
 
- function M.pick(commit)
+ function M.pick(commits)
   a.util.scheduler()
 
-  local result = cli["cherry-pick"].args(commit).call()
+  local result = cli["cherry-pick"].arg_list(commits).call()
   if result.code ~= 0 then
     notif.create("Cherry Pick failed. Resolve conflicts before continuing", vim.log.levels.ERROR)
   end
 end
 
-function M.apply(commit)
+function M.apply(commits)
   a.util.scheduler()
 
-  local result = cli["cherry-pick"].no_commit.args(commit).call()
+  local result = cli["cherry-pick"].no_commit.arg_list(commits).call()
   if result.code ~= 0 then
     notif.create("Cherry Pick failed. Resolve conflicts before continuing", vim.log.levels.ERROR)
   end
