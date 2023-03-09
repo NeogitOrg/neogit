@@ -13,7 +13,7 @@ end
 
 ---@return Path
 function M.filepath()
-  local base_path = vim.fs.normalize(vim.fn.stdpath("state") .. "/neogit/")
+  local base_path = vim.fn.stdpath("state") .. "/neogit/"
   local filename = "state"
 
   if config.values.use_per_project_settings then
