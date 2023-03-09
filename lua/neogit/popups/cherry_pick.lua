@@ -8,35 +8,24 @@ local M = {}
 local a = require("plenary.async")
 
 -- .git/sequencer/todo does not exist when there is only one commit left.
+--
 -- And CHERRY_PICK_HEAD does not exist when a conflict happens while picking a series of commits with --no-commit.
-local function pick_in_progress()
-  local todo = fs.git_dir("^todo", "/sequencer$")
-  local picks = {}
-  if todo then
-    picks = fs.line_match(todo, "^pick")
-  end
-
-  return fs.git_dir("CHERRY_PICK_HEAD") or (todo and picks[1])
-end
-
--- .git/sequencer/todo does not exist when there is only one commit left.
 -- And REVERT_HEAD does not exist when a conflict happens while reverting a series of commits with --no-commit.
-local function revert_in_progress()
-  local todo = fs.git_dir("^todo", "/sequencer$")
-  local reverts = {}
-  if todo then
-    reverts = fs.line_match(todo, "^revert")
+--
+local function pick_or_revert_in_progress()
+  local status = require("neogit.status")
+  local pick_or_revert_items = false
+  for _, item in ipairs(status.repo.cherry_pick.items) do
+    if item.name:match("^pick") or item.name:match("^revert") then
+      pick_or_revert_items = true
+      break
+    end
   end
 
-  return fs.git_dir("REVERT_HEAD") or (todo and reverts[1])
-end
-
-local function pick_or_revert_in_progress()
-  return pick_in_progress() or revert_in_progress()
+  return status and (status.repo.cherry_pick.head or pick_or_revert_items)
 end
 
 function M.create(commit)
-  local status = require("neogit.status")
   local p = popup
     .builder()
     :name("NeogitCherryPickPopup")

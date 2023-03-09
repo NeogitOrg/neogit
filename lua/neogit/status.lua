@@ -392,7 +392,12 @@ local function refresh(which, reason)
         M.repo:update_rebase_status()
       end)
     end
-
+    if which == true or which.cherry_pick then
+      table.insert(refreshes, function()
+        logger.debug("[STATUS BUFFER]: Refreshing cherry-pick information")
+        M.repo:update_cherry_pick_status()
+      end)
+    end
     if which == true or which.stashes then
       table.insert(refreshes, function()
         logger.debug("[STATUS BUFFER]: Refreshing stash")
