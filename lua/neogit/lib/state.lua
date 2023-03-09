@@ -1,6 +1,7 @@
 local logger = require("neogit.logger")
 local config = require("neogit.config")
 local Path = require("plenary.path")
+local sumhexa = require("neogit.lib.md5").sumhexa
 
 local M = {}
 
@@ -12,11 +13,11 @@ end
 
 ---@return Path
 function M.filepath()
-  local base_path = vim.fn.stdpath("state") .. "/neogit/"
+  local base_path = vim.fs.normalize(vim.fn.stdpath("state") .. "/neogit/")
   local filename = "state"
 
   if config.values.use_per_project_settings then
-    filename = vim.loop.cwd():gsub("/", "%%")
+    filename = sumhexa(vim.loop.cwd())
   end
 
   return Path:new(base_path .. filename)
