@@ -13,14 +13,10 @@ end
 
 ---@return Path
 function M.filepath()
-  local base_path = vim.fn.stdpath("state") .. "/neogit/"
-  local filename = "state"
-
-  if config.values.use_per_project_settings then
-    filename = sumhexa(vim.loop.cwd())
-  end
-
-  return Path:new(base_path .. filename)
+  local base_path = vim.fn.stdpath("state") .. Path.path.sep .. "neogit"
+  local filename = sumhexa(config.values.use_per_project_settings and vim.loop.cwd() or "state")
+  
+  return Path:new(base_path .. Path.path.sep .. filename)
 end
 
 ---Initializes state
