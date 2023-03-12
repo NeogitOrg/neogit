@@ -19,6 +19,11 @@ function M.filepath()
     filename = vim.loop.cwd():gsub("/", "%%")
   end
 
+  if vim.loop.os_uname().sysname == "Windows_NT" then
+    base_path = base_path:gsub("/", "\\")
+    filename = filename:gsub("\\", "%%")
+  end
+
   return Path:new(base_path .. filename)
 end
 
