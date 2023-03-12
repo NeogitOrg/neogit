@@ -6,7 +6,7 @@ local M = {}
 
 local a = require("plenary.async")
 
- function M.pick(commits)
+function M.pick(commits)
   a.util.scheduler()
 
   local result = cli["cherry-pick"].arg_list(commits).call()

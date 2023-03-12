@@ -28,7 +28,8 @@ end
 
 function M.create(env)
   local status = require("neogit.status")
-  local p = popup.builder()
+  local p = popup
+    .builder()
     :name("NeogitCherryPickPopup")
     :action_if(
       not pick_or_revert_in_progress(status),

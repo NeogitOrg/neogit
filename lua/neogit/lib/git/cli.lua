@@ -310,8 +310,8 @@ local configurations = {
       continue = "--continue",
       skip = "--skip",
       abort = "--abort",
-    }
-  }
+    },
+  },
 }
 
 local function git_root()
