@@ -28,43 +28,56 @@ end
 
 function M.create(env)
   local status = require("neogit.status")
-  local p = popup
-    .builder()
+  local p = popup.builder()
     :name("NeogitCherryPickPopup")
-    :action_if(not pick_or_revert_in_progress(status), "A", "pick", a.void(function(popup)
-      local commits
-      if popup.state.env.commits then
-        commits = util.filter_map(popup.state.env.commits, function(item) return item.oid end)
-      else
-        commits = { CommitSelectViewBuffer.new(log.list()):open_async() }
-      end
+    :action_if(
+      not pick_or_revert_in_progress(status),
+      "A",
+      "pick",
+      a.void(function(popup)
+        local commits
+        if popup.state.env.commits then
+          commits = util.filter_map(popup.state.env.commits, function(item)
+            return item.oid
+          end)
+        else
+          commits = { CommitSelectViewBuffer.new(log.list()):open_async() }
+        end
 
-      if not commits then
-        return
-      end
+        if not commits then
+          return
+        end
 
-      cherry_pick.pick(commits)
+        cherry_pick.pick(commits)
 
-      a.util.scheduler()
-      status.refresh(true, "cherry_pick_pick")
-    end))
-    :action_if(not pick_or_revert_in_progress(status), "a", "apply", a.void(function(popup)
-      local commits
-      if popup.state.env.commits then
-        commits = util.filter_map(popup.state.env.commits, function(item) return item.oid end)
-      else
-        commits = { CommitSelectViewBuffer.new(log.list()):open_async() }
-      end
+        a.util.scheduler()
+        status.refresh(true, "cherry_pick_pick")
+      end)
+    )
+    :action_if(
+      not pick_or_revert_in_progress(status),
+      "a",
+      "apply",
+      a.void(function(popup)
+        local commits
+        if popup.state.env.commits then
+          commits = util.filter_map(popup.state.env.commits, function(item)
+            return item.oid
+          end)
+        else
+          commits = { CommitSelectViewBuffer.new(log.list()):open_async() }
+        end
 
-      if not commits then
-        return
-      end
+        if not commits then
+          return
+        end
 
-      cherry_pick.apply(commits)
+        cherry_pick.apply(commits)
 
-      a.util.scheduler()
-      status.refresh(true, "cherry_pick_apply")
-    end))
+        a.util.scheduler()
+        status.refresh(true, "cherry_pick_apply")
+      end)
+    )
     :action_if(pick_or_revert_in_progress(status), "A", "continue", function()
       cherry_pick.continue()
       a.util.scheduler()

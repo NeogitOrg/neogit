@@ -854,10 +854,8 @@ local set_folds = function(to)
 end
 
 local function cherry_pick()
-  local mode = vim.api.nvim_get_mode()
-
   local selection = nil
-  if mode.mode == "V" then
+  if vim.api.nvim_get_mode().mode == "V" then
     selection = get_selected_commits()
   end
 

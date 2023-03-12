@@ -1,5 +1,4 @@
 local cli = require("neogit.lib.git.cli")
-local Path = require("plenary.path")
 
 local M = {}
 

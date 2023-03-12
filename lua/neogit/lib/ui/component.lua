@@ -50,6 +50,30 @@ function Component:is_under_cursor(cursor)
   return row_ok and col_ok
 end
 
+function Component:is_in_selection(start, stop)
+  if self:is_hidden() then
+    return false
+  end
+
+  local from, to = self:row_range_abs()
+  local row_start = start[1]
+  local row_stop = stop[1]
+
+  local row_ok = from <= row_start
+    and from <= row_stop
+    and to >= row_start
+    and to <= row_stop
+
+  -- TODO: Columns
+  -- local col_start = start[2]
+  -- local col_stop = stop[2]
+
+  local col_ok = self.position.col_end == -1
+  --   or (self.position.col_start <= col and col <= self.position.col_end)
+
+  return row_ok and col_ok
+end
+
 function Component:get_width()
   if self.tag == "text" then
     return #self.value
