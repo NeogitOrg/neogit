@@ -234,6 +234,20 @@ function M:show()
     end
   end
 
+  local items = {}
+
+  if self.state.switches[1] then
+    table.insert(items, Switches { state = self.state.switches })
+  end
+
+  if self.state.options[1] then
+    table.insert(items, Options { state = self.state.options })
+  end
+
+  if self.state.actions[1] then
+    table.insert(items, Actions { state = self.state.actions })
+  end
+
   self.buffer = Buffer.create {
     name = self.state.name,
     filetype = "NeogitPopup",
@@ -243,11 +257,7 @@ function M:show()
       return {
         List {
           separator = "",
-          items = {
-            Switches { state = self.state.switches },
-            Options { state = self.state.options },
-            Actions { state = self.state.actions },
-          },
+          items = items
         },
       }
     end,
