@@ -256,7 +256,7 @@ function M:show()
     after = function(buffer)
       if config.values.popup.kind == "split" then
         vim.api.nvim_buf_call(buffer.handle, function()
-          vim.cmd [[execute "resize" . (line("$") + 1)]]
+          vim.cmd([[execute "resize" . (line("$") + 1)]])
         end)
       end
     end,
@@ -264,7 +264,7 @@ function M:show()
       return {
         List {
           separator = "",
-          items = items
+          items = items,
         },
       }
     end,
