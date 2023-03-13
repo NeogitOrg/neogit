@@ -169,7 +169,19 @@ neogit.setup {
     --   }
     -- }
     --
-    diffview = false
+    diffview = false,
+
+    -- To provide fuzzy-searching for some buffers, telescope can be used.
+    -- Requires you to have 'nvim-telescope/telescope.nvim' installed.
+    --
+    -- use {
+    --   'TimUntersberger/neogit',
+    --   requires = {
+    --     'nvim-lua/plenary.nvim',
+    --     'nvim-telescope/telescope.nvim'
+    --   }
+    -- }
+    telescope = false,
   },
   -- Setting any section to `false` will make the section not render at all
   sections = {
