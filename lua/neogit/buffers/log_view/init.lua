@@ -49,9 +49,11 @@ function M:open()
     mappings = {
       v = {
         ["A"] = function()
-          local stack = self.buffer.ui:get_component_stack_in_selection()
-          local c = stack[#stack]
-          CherryPickPopup.create { commits = { self.data[c.position.row_start] } }
+          print("Not Implemented Yet")
+          -- TODO
+          -- local stack = self.buffer.ui:get_component_stack_in_selection()
+          -- local c = stack[#stack]
+          -- CherryPickPopup.create { commits = { self.data[c.position.row_start] } }
         end,
       },
       n = {

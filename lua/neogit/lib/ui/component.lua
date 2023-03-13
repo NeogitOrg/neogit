@@ -56,10 +56,11 @@ function Component:is_in_selection(start, stop)
   end
 
   local from, to = self:row_range_abs()
+
   local row_start = start[1]
   local row_stop = stop[1]
 
-  local row_ok = from <= row_start and from <= row_stop and to >= row_start and to <= row_stop
+  local row_ok = from >= row_start and from <= row_stop and to >= row_start and to <= row_stop
 
   -- TODO: Columns
   -- local col_start = start[2]
