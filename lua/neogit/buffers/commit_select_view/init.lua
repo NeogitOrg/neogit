@@ -46,6 +46,9 @@ function M:open(action)
     kind = "split",
     mappings = {
       n = {
+        ["q"] = function()
+          self:close()
+        end,
         ["<enter>"] = function()
           local pos = line_pos()
           if action then
