@@ -1,4 +1,5 @@
 local Buffer = require("neogit.lib.buffer")
+local config = require("neogit.config")
 local ui = require("neogit.buffers.branch_select_view.ui")
 
 local M = {}
@@ -31,26 +32,48 @@ function M:close()
 end
 
 function M:open()
-  self.buffer = Buffer.create {
-    name = "NeogitBranchSelectView",
-    filetype = "NeogitBranchSelectView",
-    kind = "split",
-    mappings = {
-      n = {
-        ["<enter>"] = function(buffer)
-          local current_line = buffer:get_current_line()
-          local branch_name = current_line[1]
-          if self.action then
-            self.action(branch_name)
-          end
-          self:close()
-        end,
+  if config.ensure_integration("telescope") then
+    local Finder = require("neogit.lib.finder")
+    local actions = require("telescope.actions")
+    local action_state = require("telescope.actions.state")
+
+    local select_action = function(prompt_bufnr)
+      actions.close(prompt_bufnr)
+      local branch_name = action_state.get_selected_entry()[1]
+      if self.action then
+        self.action(branch_name)
+      end
+    end
+
+    Finder.create()
+      :add_entries(self.branches)
+      :add_select_action(select_action)
+      :find()
+  else
+    self.buffer = Buffer.create {
+      name = "NeogitBranchSelectView",
+      filetype = "NeogitBranchSelectView",
+      kind = "split",
+      mappings = {
+        n = {
+          ["q"] = function()
+            self:close()
+          end,
+          ["<enter>"] = function(buffer)
+            local current_line = buffer:get_current_line()
+            local branch_name = current_line[1]
+            if self.action then
+              self.action(branch_name)
+            end
+            self:close()
+          end,
+        },
       },
-    },
-    render = function()
-      return ui.View(self.branches)
-    end,
-  }
+      render = function()
+        return ui.View(self.branches)
+      end,
+    }
+  end
 end
 
 return M
