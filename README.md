@@ -89,6 +89,7 @@ The create function takes 1 optional argument that can be one of the following v
 | p            | Open pull popup                                  |
 | P            | Open push popup                                  |
 | Z            | Open stash popup                                 |
+| A            | Open cherry pick popup                           |
 | ?            | Open help popup                                  |
 | x            | Discard changes (also supports discarding hunks) |
 | \<enter>     | Go to file                                       |
@@ -233,6 +234,7 @@ List of status commands:
 * LogPopup
 * StashPopup
 * BranchPopup
+* CherryPickPopup (Normal and visual mode)
 
 ## Notification Highlighting
 
