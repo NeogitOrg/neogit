@@ -32,21 +32,7 @@ function M:close()
 end
 
 function M:open()
-  if config.values.integrations.telescope then
-    local Finder = require("neogit.lib.finder")
-    local actions = require("telescope.actions")
-    local action_state = require("telescope.actions.state")
-
-    local select_action = function(prompt_bufnr)
-      actions.close(prompt_bufnr)
-      local branch_name = action_state.get_selected_entry()[1]
-      if self.action then
-        self.action(branch_name)
-      end
-    end
-
-    Finder.create():add_entries(self.branches):add_select_action(select_action):find()
-  else
+  if not config.values.integrations.telescope then
     self.buffer = Buffer.create {
       name = "NeogitBranchSelectView",
       filetype = "NeogitBranchSelectView",
@@ -70,6 +56,20 @@ function M:open()
         return ui.View(self.branches)
       end,
     }
+  else
+    local Finder = require("neogit.lib.finder")
+    local actions = require("telescope.actions")
+    local action_state = require("telescope.actions.state")
+
+    local select_action = function(prompt_bufnr)
+      actions.close(prompt_bufnr)
+      local branch_name = action_state.get_selected_entry()[1]
+      if self.action then
+        self.action(branch_name)
+      end
+    end
+
+    Finder.create():add_entries(self.branches):add_select_action(select_action):find()
   end
 end
 
