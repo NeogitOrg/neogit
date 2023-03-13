@@ -121,6 +121,7 @@ local function get_cur_hl()
   return {
     NeogitHunkHeader = { bg = M.get_bg("NeogitHunkHeader", false) },
     NeogitHunkHeaderHighlight = { bg = M.get_bg("NeogitHunkHeaderHighlight", false) },
+    NeogitDiffContext = { bg = M.get_bg("NeogitDiffContext", false) },
     NeogitDiffContextHighlight = { bg = M.get_bg("NeogitDiffContextHighlight", false) },
     NeogitDiffAddHighlight = {
       bg = M.get_bg("NeogitDiffAddHighlight", false),
@@ -164,11 +165,13 @@ function M.setup()
   local sign = bg_normal.lightness >= 0.5 and -1 or 1
 
   local bg_hunk_header_hl = bg_normal:shade(0.15 * sign)
+  local bg_diff_context = bg_normal:shade(0.09 * sign)
   local bg_diff_context_hl = bg_normal:shade(0.075 * sign)
 
   hl_store = {
     NeogitHunkHeader = { bg = bg_diff_context_hl:to_css() },
     NeogitHunkHeaderHighlight = { bg = bg_hunk_header_hl:to_css() },
+    NeogitDiffContext = { bg = bg_diff_context:to_css() },
     NeogitDiffContextHighlight = { bg = bg_diff_context_hl:to_css() },
     NeogitDiffAddHighlight = {
       bg = M.get_bg("DiffAdd", false) or bg_diff_context_hl:to_css(),

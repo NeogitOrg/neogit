@@ -350,7 +350,7 @@ function Process:spawn(cb)
     stdout_cleanup()
     stderr_cleanup()
 
-    if code ~= 0 and not hide_console then
+    if code ~= 0 and not hide_console and not self.ignore_code then
       append_log(self, string.format("Process exited with code: %d", code))
 
       local output = {}

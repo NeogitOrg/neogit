@@ -119,6 +119,18 @@ function Ui:get_component_stack_under_cursor()
   end)
 end
 
+function Ui:get_component_stack_in_selection()
+  local start = vim.fn.getpos("v")
+  local stop = vim.fn.getpos(".")
+
+  local selection_start = { start[2], start[3] - 1 }
+  local selection_stop = { stop[2], stop[3] - 1 }
+
+  return self:find_components(function(c)
+    return c:is_in_selection(selection_start, selection_stop)
+  end)
+end
+
 function Ui.visualize_component(c, options)
   Ui._print_component(0, c, options or {})
   if c.tag == "col" or c.tag == "row" then

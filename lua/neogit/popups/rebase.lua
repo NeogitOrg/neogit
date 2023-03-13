@@ -1,4 +1,5 @@
 local cli = require("neogit.lib.git.cli")
+local branch = require("neogit.lib.git.branch")
 local git = require("neogit.lib.git")
 local popup = require("neogit.lib.popup")
 local CommitSelectViewBuffer = require("neogit.buffers.commit_select_view")
@@ -30,9 +31,9 @@ function M.create()
     end)
     :action(
       "p",
-      "Rebase onto master",
+      "Rebase onto " .. branch.get_nearest_parent(),
       a.void(function(popup)
-        rebase.rebase_onto("master", popup:get_arguments())
+        rebase.rebase_onto(branch.get_nearest_parent(), popup:get_arguments())
         a.util.scheduler()
         status.refresh(true, "rebase_master")
       end)
