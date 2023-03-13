@@ -9,32 +9,41 @@ local text = Ui.text
 local col = Ui.col
 local row = Ui.row
 
-local GitCommandHistory = {}
-GitCommandHistory.__index = GitCommandHistory
+local M = {}
 
-function GitCommandHistory:new(state)
+function M:new(state)
   local this = {
     buffer = nil,
     state = state or Git.cli.history,
-    open = false,
+    is_open = false,
   }
 
-  setmetatable(this, self)
+  setmetatable(this, { __index = M })
 
   return this
 end
 
-function GitCommandHistory:show()
-  if self.open then
+
+function M:close()
+  self.is_open = false
+  self.buffer:close()
+  self.buffer = nil
+end
+
+function M:show()
+  if self.is_open then
     return
   end
+  self.is_open = true
 
-  self.open = true
   self.buffer = Buffer.create {
     name = "NeogitGitCommandHistory",
     filetype = "NeogitGitCommandHistory",
     mappings = {
       n = {
+        ["q"] = function()
+          self:close()
+        end,
         ["<tab>"] = function()
           local stack = self.buffer.ui:get_component_stack_under_cursor()
           local c = stack[#stack]
@@ -79,4 +88,4 @@ function GitCommandHistory:show()
   }
 end
 
-return GitCommandHistory
+return M
