@@ -45,10 +45,7 @@ function M:open()
       end
     end
 
-    Finder.create()
-      :add_entries(self.branches)
-      :add_select_action(select_action)
-      :find()
+    Finder.create():add_entries(self.branches):add_select_action(select_action):find()
   else
     self.buffer = Buffer.create {
       name = "NeogitBranchSelectView",
