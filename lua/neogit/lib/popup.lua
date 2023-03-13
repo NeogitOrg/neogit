@@ -253,6 +253,11 @@ function M:show()
     filetype = "NeogitPopup",
     kind = config.values.popup.kind,
     mappings = mappings,
+    after = function(buffer)
+      vim.api.nvim_buf_call(buffer.handle, function()
+        vim.cmd [[execute "resize" . (line("$") + 1)]]
+      end)
+    end,
     render = function()
       return {
         List {
