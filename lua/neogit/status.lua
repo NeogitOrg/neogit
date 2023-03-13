@@ -397,7 +397,12 @@ local function refresh(which, reason)
         M.repo:update_rebase_status()
       end)
     end
-
+    if which == true or which.cherry_pick then
+      table.insert(refreshes, function()
+        logger.debug("[STATUS BUFFER]: Refreshing cherry-pick information")
+        M.repo:update_cherry_pick_status()
+      end)
+    end
     if which == true or which.stashes then
       table.insert(refreshes, function()
         logger.debug("[STATUS BUFFER]: Refreshing stash")
@@ -608,6 +613,21 @@ local function generate_patch_from_selection(item, hunk, from, to, reverse)
   table.insert(diff_content, 1, string.format("--- a/%s", item.name))
   table.insert(diff_content, "\n")
   return table.concat(diff_content, "\n")
+end
+
+--- Returns commits in selection
+---@return table
+local function get_selected_commits()
+  local first_line = vim.fn.getpos("v")[2]
+  local last_line = vim.fn.getpos(".")[2]
+
+  local items = {}
+  for line = first_line, last_line do
+    local _, item = get_section_item_for_line(line)
+    table.insert(items, item)
+  end
+
+  return items
 end
 
 --- Validates the current selection and acts accordingly
@@ -838,6 +858,15 @@ local set_folds = function(to)
   refresh(true, "set_folds")
 end
 
+local function cherry_pick()
+  local selection = nil
+  if vim.api.nvim_get_mode().mode == "V" then
+    selection = get_selected_commits()
+  end
+
+  require("neogit.popups.cherry_pick").create { commits = selection }
+end
+
 --- These needs to be a function to avoid a circular dependency
 --- between this module and the popup modules
 local cmd_func_map = function()
@@ -978,6 +1007,7 @@ local cmd_func_map = function()
     ["PushPopup"] = require("neogit.popups.push").create,
     ["CommitPopup"] = require("neogit.popups.commit").create,
     ["LogPopup"] = require("neogit.popups.log").create,
+    ["CherryPickPopup"] = { "nv", a.void(cherry_pick), true },
     ["StashPopup"] = function()
       local line = M.status_buffer:get_current_line()
 
