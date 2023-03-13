@@ -32,7 +32,7 @@ function M:close()
 end
 
 function M:open()
-  if config.ensure_integration("telescope") then
+  if config.values.integrations.telescope then
     local Finder = require("neogit.lib.finder")
     local actions = require("telescope.actions")
     local action_state = require("telescope.actions.state")
