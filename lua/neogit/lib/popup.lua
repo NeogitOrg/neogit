@@ -254,9 +254,11 @@ function M:show()
     kind = config.values.popup.kind,
     mappings = mappings,
     after = function(buffer)
-      vim.api.nvim_buf_call(buffer.handle, function()
-        vim.cmd [[execute "resize" . (line("$") + 1)]]
-      end)
+      if config.values.popup.kind == "split" then
+        vim.api.nvim_buf_call(buffer.handle, function()
+          vim.cmd [[execute "resize" . (line("$") + 1)]]
+        end)
+      end
     end,
     render = function()
       return {
