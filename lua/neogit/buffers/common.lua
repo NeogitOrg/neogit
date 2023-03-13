@@ -12,8 +12,8 @@ local range = util.range
 
 local M = {}
 
-local diff_add_matcher = vim.regex("^+")
-local diff_delete_matcher = vim.regex("^-")
+local diff_add_start = "+"
+local diff_delete_start = "-"
 
 M.Diff = Component.new(function(diff)
   local hunk_props = map(diff.hunks, function(hunk)
@@ -41,9 +41,9 @@ end)
 local HunkLine = Component.new(function(line)
   local sign
 
-  if diff_add_matcher:match_str(line) then
+  if string.sub(line, 1, 1) == diff_add_start then
     sign = "NeogitDiffAdd"
-  elseif diff_delete_matcher:match_str(line) then
+  elseif string.sub(line, 1, 1) == diff_delete_start then
     sign = "NeogitDiffDelete"
   end
 

@@ -89,6 +89,7 @@ The create function takes 1 optional argument that can be one of the following v
 | p            | Open pull popup                                  |
 | P            | Open push popup                                  |
 | Z            | Open stash popup                                 |
+| A            | Open cherry pick popup                           |
 | ?            | Open help popup                                  |
 | x            | Discard changes (also supports discarding hunks) |
 | \<enter>     | Go to file                                       |
@@ -245,6 +246,7 @@ List of status commands:
 * LogPopup
 * StashPopup
 * BranchPopup
+* CherryPickPopup (Normal and visual mode)
 
 ## Notification Highlighting
 
@@ -266,6 +268,7 @@ The colors for contextual highlighting are defined with these highlight groups:
 hi def NeogitDiffAddHighlight guibg=#404040 guifg=#859900
 hi def NeogitDiffDeleteHighlight guibg=#404040 guifg=#dc322f
 hi def NeogitDiffContextHighlight guibg=#333333 guifg=#b2b2b2
+hi def NeogitDiffContext guibg=#262626 guifg=#b2b2b2
 hi def NeogitHunkHeader guifg=#cccccc guibg=#404040
 hi def NeogitHunkHeaderHighlight guifg=#cccccc guibg=#4d4d4d
 ```

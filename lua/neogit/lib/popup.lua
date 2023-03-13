@@ -234,27 +234,41 @@ function M:show()
     end
   end
 
+  local items = {}
+
+  if self.state.switches[1] then
+    table.insert(items, Switches { state = self.state.switches })
+  end
+
+  if self.state.options[1] then
+    table.insert(items, Options { state = self.state.options })
+  end
+
+  if self.state.actions[1] then
+    table.insert(items, Actions { state = self.state.actions })
+  end
+
   self.buffer = Buffer.create {
     name = self.state.name,
     filetype = "NeogitPopup",
     kind = config.values.popup.kind,
     mappings = mappings,
+    after = function(buffer)
+      if config.values.popup.kind == "split" then
+        vim.api.nvim_buf_call(buffer.handle, function()
+          vim.cmd([[execute "resize" . (line("$") + 1)]])
+        end)
+      end
+    end,
     render = function()
       return {
         List {
           separator = "",
-          items = {
-            Switches { state = self.state.switches },
-            Options { state = self.state.options },
-            Actions { state = self.state.actions },
-          },
+          items = items,
         },
       }
     end,
   }
 end
 
-M.deprecated_create = require("neogit.lib.popup.lib").create
-
 return M
--- return require("neogit.lib.popup.lib")

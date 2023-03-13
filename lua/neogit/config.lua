@@ -95,6 +95,7 @@ M.values = {
       ["c"] = "CommitPopup",
       ["L"] = "LogPopup",
       ["Z"] = "StashPopup",
+      ["A"] = "CherryPickPopup",
       ["b"] = "BranchPopup",
     },
   },

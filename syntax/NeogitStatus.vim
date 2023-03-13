@@ -4,7 +4,7 @@ endif
 " Support the rebase todo highlights
 source $VIMRUNTIME/syntax/gitrebase.vim
 
-syn match NeogitObjectId /^[a-z0-9]\{7,}\>/
+syn match NeogitObjectId /^[a-z0-9]\{7,}\>\s/
 syn match NeogitCommitMessage /.*/ contained
 syn match NeogitBranch /\S\+/ contained nextgroup=NeogitCommitMessage
 syn match NeogitRemote /\S\+/ contained nextgroup=NeogitCommitMessage

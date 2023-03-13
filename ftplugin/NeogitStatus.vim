@@ -5,9 +5,3 @@ endif
 let b:did_ftplugin = 1
 
 au BufWipeout <buffer> lua require 'neogit.status'.close(true)
-
-if !luaeval("require'neogit.config'.values.disable_context_highlighting")
-  augroup NeogitStatusHighlightUpdater
-  autocmd CursorMoved <buffer> :lua require'neogit.status'.update_highlight()
-  augroup END
-endif
