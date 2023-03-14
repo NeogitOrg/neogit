@@ -20,7 +20,7 @@ function M:open()
     load = true,
     filetype = "gitrebase",
     buftype = "",
-    kind = "split",
+    kind = config.values.commit_popup.kind,
     modifiable = true,
     readonly = false,
     autocmds = {
