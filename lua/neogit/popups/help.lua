@@ -6,6 +6,7 @@ function M.create(env)
   local m = env.use_magit_keybindings
   local p = popup
     .builder()
+    :group_heading("Commands")
     :name("NeogitHelpPopup")
     :action(m and "F" or "p", "Pull", function()
       require("neogit.popups.pull").create()
