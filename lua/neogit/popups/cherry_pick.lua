@@ -31,10 +31,18 @@ function M.create(env)
   local p = popup
     .builder()
     :name("NeogitCherryPickPopup")
+    -- :switch("F", "ff", "Attempt fast-forward", true)
+    -- :switch("x", "x", "Reference cherry in commit message", false)
+    -- :switch("e", "edit", "Edit commit messages", false)
+    -- :switch("s", "signoff", "Add Signed-off-by lines", false)
+    -- :option("m", "mainline", "", "Replay merge relative to parent")
+    -- :option("s", "strategy", "", "Strategy")
+    -- :option("S", "gpg-sign", "", "Sign using gpg")
+    :group_heading_if(not pick_or_revert_in_progress(status), "Apply here")
     :action_if(
       not pick_or_revert_in_progress(status),
       "A",
-      "pick",
+      "Pick",
       a.void(function(popup)
         local commits
         if popup.state.env.commits then
@@ -45,7 +53,7 @@ function M.create(env)
           commits = { CommitSelectViewBuffer.new(log.list()):open_async() }
         end
 
-        if not commits then
+        if not commits or not commits[1] then
           return
         end
 
@@ -58,7 +66,7 @@ function M.create(env)
     :action_if(
       not pick_or_revert_in_progress(status),
       "a",
-      "apply",
+      "Apply",
       a.void(function(popup)
         local commits
         if popup.state.env.commits then
@@ -69,7 +77,7 @@ function M.create(env)
           commits = { CommitSelectViewBuffer.new(log.list()):open_async() }
         end
 
-        if not commits then
+        if not commits or not commits[1] then
           return
         end
 
@@ -79,6 +87,15 @@ function M.create(env)
         status.refresh(true, "cherry_pick_apply")
       end)
     )
+    :action_if(not pick_or_revert_in_progress(status), "h", "Harvest", false)
+    :action_if(not pick_or_revert_in_progress(status), "m", "Squash", false)
+
+    :new_action_group_if(not pick_or_revert_in_progress(status), "Apply elsewhere")
+    :action_if(not pick_or_revert_in_progress(status), "d", "Donate", false)
+    :action_if(not pick_or_revert_in_progress(status), "n", "Spinout", false)
+    :action_if(not pick_or_revert_in_progress(status), "s", "Spinoff", false)
+
+    :group_heading_if(pick_or_revert_in_progress(status), "Cherry Pick")
     :action_if(pick_or_revert_in_progress(status), "A", "continue", function()
       cherry_pick.continue()
       a.util.scheduler()

@@ -30,21 +30,15 @@ local function parse_remote_branch_name(remote_name)
   return remote, branch_name
 end
 
+-- TODO https://magit.vc/manual/magit/Auxiliary-Branch-Commands.html
 function M.create()
   local p = popup
     .builder()
     :name("NeogitBranchPopup")
-    :action(
-      "n",
-      "create branch",
-      operation("create_branch", function()
-        branch.create()
-        status.refresh(true, "create_branch")
-      end)
-    )
+    :group_heading("Checkout")
     :action(
       "b",
-      "checkout branch/revision",
+      "branch/revision",
       operation("checkout_branch", function()
         local branches = format_branches(branch.get_all_branches())
         BranchSelectViewBuffer.new(branches, function(selected_branch)
@@ -58,54 +52,24 @@ function M.create()
       end)
     )
     :action(
-      "d",
-      "delete local branch",
-      operation("delete_branch", function()
-        local branches = branch.get_local_branches()
-        BranchSelectViewBuffer.new(branches, function(selected_branch)
-          cli.branch.delete.name(selected_branch).call_sync():trim()
-          status.dispatch_refresh(true)
-        end):open()
-      end)
-    )
-    :action(
-      "D",
-      "delete local branch and remote",
-      operation("delete_branch", function()
-        local branches = format_branches(branch.get_remote_branches())
-        BranchSelectViewBuffer.new(branches, function(selected_branch)
-          if selected_branch == "" then
-            return
-          end
-
-          local remote, branch_name = parse_remote_branch_name(selected_branch)
-          if not remote or not branch_name then
-            return
-          end
-
-          cli.branch.delete.name(branch_name).call_sync():trim()
-          cli.push.remote(remote).delete.to(branch_name).call_sync():trim()
-          status.dispatch_refresh(true)
-        end):open()
-      end)
-    )
-    :action(
       "l",
-      "checkout local branch",
+      "local branch",
       operation("checkout_local-branch", function()
         local branches = branch.get_local_branches()
         BranchSelectViewBuffer.new(branches, function(selected_branch)
           if selected_branch == "" then
             return
           end
+
           cli.checkout.branch(selected_branch).call_sync():trim()
           status.dispatch_refresh(true)
         end):open()
       end)
     )
+    :new_action_group()
     :action(
       "c",
-      "checkout new branch",
+      "new branch",
       operation("checkout_create-branch", function()
         local branches = format_branches(branch.get_all_branches(true))
         local current_branch = branch.current()
@@ -123,14 +87,45 @@ function M.create()
             return
           end
 
+          name, _ = name:gsub("%s", "-")
           cli.checkout.new_branch_with_start_point(name, selected_branch).call_sync():trim()
           status.dispatch_refresh(true)
         end):open()
       end)
     )
     :action(
+      "s",
+      "new spin-off",
+      false
+      -- operation("spinoff_branch", function()
+        -- https://github.com/magit/magit/blob/main/lisp/magit-branch.el#L429
+        -- WIP https://magit.vc/manual/2.11.0/magit/The-Branch-Popup.html
+        -- local name = branch.create()
+        -- if not name then
+          -- return
+        -- end
+
+        -- cli.checkout.branch(name).call_sync():trim()
+        -- status.dispatch_refresh(true, "create_and_checkout_branch")
+      -- end,
+    )
+    :action("w", "new worktree", false)
+    :new_action_group("Create")
+    :action(
+      "n",
+      "new branch",
+      operation("create_branch", function()
+        branch.create()
+        status.refresh(true, "create_branch")
+      end)
+    )
+    :action("S", "new spin-out", false)
+    :action("W", "new worktree", false)
+    :new_action_group("Do")
+    :action("C", "configure...", false) -- https://magit.vc/manual/2.11.0/magit/The-Branch-Config-Popup.html
+    :action(
       "m",
-      "rename branch",
+      "rename",
       operation("rename_branch", function()
         local current_branch = branch.current()
         local branches = branch.get_local_branches()
@@ -148,7 +143,69 @@ function M.create()
             return
           end
 
+          new_name, _ = new_name:gsub("%s", "-")
           cli.branch.move.args(selected_branch, new_name).call_sync():trim()
+          status.dispatch_refresh(true)
+        end):open()
+      end)
+    )
+    :action("X", "reset", false)
+    -- :action(
+    --   "d",
+    --   "delete local branch",
+    --   operation("delete_branch", function()
+    --     local branches = branch.get_local_branches()
+    --
+    --     BranchSelectViewBuffer.new(branches, function(selected_branch)
+    --       cli.branch.delete.name(selected_branch).call_sync():trim()
+    --       status.dispatch_refresh(true)
+    --     end):open()
+    --   end)
+    -- )
+    -- :action(
+    --   "D",
+    --   "delete local branch and remote",
+    --   operation("delete_branch", function()
+    --     local branches = format_branches(branch.get_remote_branches())
+    --
+    --     BranchSelectViewBuffer.new(branches, function(selected_branch)
+    --       if selected_branch == "" then
+    --         return
+    --       end
+    --
+    --       local remote, branch_name = parse_remote_branch_name(selected_branch)
+    --       if not remote or not branch_name then
+    --         return
+    --       end
+    --
+    --       cli.branch.delete.name(branch_name).call_sync():trim()
+    --       cli.push.remote(remote).delete.to(branch_name).call_sync():trim()
+    --       status.dispatch_refresh(true)
+    --     end):open()
+    --   end)
+    -- )
+    :action(
+      "D",
+      "delete",
+      operation("delete_branch", function()
+        local branches = format_branches(branch.get_remote_branches())
+        BranchSelectViewBuffer.new(branches, function(selected_branch)
+          if selected_branch == "" then
+            return
+          end
+
+          local remote, branch_name = parse_remote_branch_name(selected_branch)
+          if not branch_name then
+            return
+          end
+
+          cli.branch.delete.name(branch_name).call_sync():trim()
+
+          local delete_remote = input.get_confirmation("Delete remote?", { values = { "&Yes", "&No" }, default = 2 })
+          if remote and delete_remote then
+            cli.push.remote(remote).delete.to(branch_name).call_sync():trim()
+          end
+
           status.dispatch_refresh(true)
         end):open()
       end)
