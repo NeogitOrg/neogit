@@ -6,4 +6,5 @@ return {
   stash = require("neogit.popups.stash"),
   cherry_pick = require("neogit.popups.cherry_pick"),
   help = require("neogit.popups.help"),
+  fetch = require("neogit.popups.fetch"),
 }
