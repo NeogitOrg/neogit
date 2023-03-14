@@ -154,24 +154,25 @@ end)
 
 local Actions = Component.new(function(props)
   return col {
-    text.highlight("NeogitPopupSectionTitle")("Actions"),
     Grid.padding_left(1) {
       items = props.state,
-      gap = 1,
+      gap = 3,
       render_item = function(item)
-        if not item.callback then
+        if item.heading then
+          return row.highlight("NeogitPopupSectionTitle") { text(item.heading) }
+        elseif not item.callback then
           return row.highlight("NeogitPopupActionDisabled") {
             text(item.key),
             text(" "),
             text(item.description),
           }
+        else
+          return row {
+            text.highlight("NeogitPopupActionKey")(item.key),
+            text(" "),
+            text(item.description),
+          }
         end
-
-        return row {
-          text.highlight("NeogitPopupActionKey")(item.key),
-          text(" "),
-          text(item.description),
-        }
       end,
     },
   }
@@ -216,7 +217,9 @@ function M:show()
 
   for _, group in pairs(self.state.actions) do
     for _, action in pairs(group) do
-      if action.callback then
+      if action.heading then
+        -- nothing
+      elseif action.callback then
         mappings.n[action.key] = function()
           logger.debug(string.format("[POPUP]: Invoking action '%s' of %s", action.key, self.state.name))
           local ret = action.callback(self)

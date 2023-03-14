@@ -144,7 +144,7 @@ M.Grid = Component.new(function(props)
     for j = 1, #r.children do
       local item = r.children[j]
       local gap_str = ""
-      local column_width = column_widths[j]
+      local column_width = column_widths[j] or 0
 
       if j ~= 1 then
         gap_str = string.rep(" ", props.gap)
