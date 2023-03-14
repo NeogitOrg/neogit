@@ -1,7 +1,6 @@
 local a = require("plenary.async")
 local cli = require("neogit.lib.git.cli")
 local input = require("neogit.lib.input")
-local util = require("neogit.lib.util")
 local config = require("neogit.config")
 local M = {}
 
@@ -20,22 +19,6 @@ local function parse_branches(branches, include_current)
   end
 
   return other_branches
-end
-
--- https://gist.github.com/joechrysler/6073741
-function M.get_nearest_parent()
-  local head = util.pattern_escape(cli["rev-parse"].abbrev_ref().args("HEAD").call_sync():trim().stdout[1])
-
-  local parent
-  local result = cli["show-branch"].all.call_sync():trim().stdout
-  for _, branch in ipairs(result) do
-    if branch:match("%*") and not branch:match(head) then
-      parent = branch:match("%[(.*)[~%^]?%d*%]")
-      break
-    end
-  end
-
-  return parent
 end
 
 function M.get_local_branches(include_current)
@@ -147,7 +130,7 @@ function M.create()
     return
   end
 
-  cli.branch.name(name).call_interactive()
+  cli.branch.name(name:gsub("%s", "-")).call_interactive()
 
   return name
 end
@@ -173,7 +156,7 @@ function M.checkout_new()
     return
   end
 
-  cli.checkout.new_branch(name).call_interactive()
+  cli.checkout.new_branch(name:gsub("%s", "-")).call_interactive()
 end
 
 function M.current()
