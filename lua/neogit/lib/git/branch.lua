@@ -160,7 +160,7 @@ function M.checkout_new()
 end
 
 function M.current()
-  local branch_name = cli.branch.current.call_sync():trim()
+  local branch_name = cli.branch.current.call_sync():trim().stdout
   if #branch_name > 0 then
     return branch_name[1]
   end
