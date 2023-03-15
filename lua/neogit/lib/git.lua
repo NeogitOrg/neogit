@@ -9,4 +9,5 @@ return {
   diff = require("neogit.lib.git.diff"),
   rebase = require("neogit.lib.git.rebase"),
   cherry_pick = require("neogit.lib.git.cherry_pick"),
+  reset = require("neogit.lib.git.reset"),
 }

@@ -89,7 +89,7 @@ end
 ---@param opts table
 ---@return Finder
 function Finder.create(opts)
-  return Finder:new(opts or default_opts())
+  return Finder:new(vim.tbl_deep_extend("keep", opts, default_opts()))
 end
 
 return Finder
