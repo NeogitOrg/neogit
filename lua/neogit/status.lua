@@ -88,14 +88,14 @@ local function get_current_section_item()
 end
 
 local mode_to_text = {
-  M = "Modified     ",
-  N = "New file     ",
-  A = "Added        ",
-  D = "Deleted      ",
-  C = "Copied       ",
-  U = "Updated      ",
-  UU = "Both Modified",
-  R = "Renamed      ",
+  M = "Modified  ",
+  N = "New File  ",
+  A = "Added     ",
+  D = "Deleted   ",
+  C = "Copied    ",
+  U = "Updated   ",
+  UU = "Both      ",
+  R = "Renamed   ",
 }
 
 local function draw_sign_for_item(item, name)
