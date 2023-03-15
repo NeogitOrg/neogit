@@ -243,6 +243,7 @@ List of status commands:
 * PullPopup
 * PushPopup
 * FetchPopup
+* ResetPopup
 * CommitPopup
 * LogPopup
 * StashPopup

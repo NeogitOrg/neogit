@@ -185,6 +185,16 @@ local function pattern_escape(str)
   return str
 end
 
+local function deduplicate(tbl)
+  local res = {}
+  for _, v in ipairs(tbl) do
+    if not vim.tbl_contains(res, v) then
+      table.insert(res, v)
+    end
+  end
+  return res
+end
+
 return {
   time = time,
   time_async = time_async,
@@ -205,4 +215,5 @@ return {
   trim = trim,
   parse_command_args = parse_command_args,
   pattern_escape = pattern_escape,
+  deduplicate = deduplicate,
 }

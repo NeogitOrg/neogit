@@ -98,6 +98,7 @@ M.values = {
       ["A"] = "CherryPickPopup",
       ["b"] = "BranchPopup",
       ["f"] = "FetchPopup",
+      ["X"] = "ResetPopup",
     },
   },
 }

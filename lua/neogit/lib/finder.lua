@@ -46,7 +46,7 @@ Finder.__index = Finder
 ---@return Finder
 function Finder:new(opts)
   local this = {
-    opts = opts,
+    opts = vim.tbl_deep_extend("keep", opts, default_opts()),
     entries = {},
     select_action = nil,
   }
@@ -76,20 +76,18 @@ end
 
 ---Engages finder
 function Finder:find()
-  pickers
-    .new(self.opts, {
-      finder = finders.new_table { results = self.entries },
-      sorter = sorters.fuzzy_with_index_bias(),
-      attach_mappings = mappings(self.select_action),
-    })
-    :find()
+  pickers.new(self.opts, {
+    finder = finders.new_table { results = self.entries },
+    sorter = sorters.fuzzy_with_index_bias(),
+    attach_mappings = mappings(self.select_action),
+  }):find()
 end
 
 ---Builds Finder instance
 ---@param opts table
 ---@return Finder
 function Finder.create(opts)
-  return Finder:new(opts or default_opts())
+  return Finder:new(opts or {})
 end
 
 return Finder

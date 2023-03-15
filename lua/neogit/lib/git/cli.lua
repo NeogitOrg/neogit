@@ -108,6 +108,10 @@ local configurations = {
   reset = config {
     flags = {
       hard = "--hard",
+      mixed = "--mixed",
+      soft = "--soft",
+      keep = "--keep",
+      merge = "--merge",
     },
     aliases = {
       commit = function(tbl)
@@ -123,6 +127,11 @@ local configurations = {
       b = "-b",
     },
     aliases = {
+      rev = function(tbl)
+        return function(rev)
+          return tbl.args(rev)
+        end
+      end,
       branch = function(tbl)
         return function(branch)
           return tbl.args(branch)
@@ -317,6 +326,8 @@ local configurations = {
       deleted = "--deleted",
       modified = "--modified",
       cached = "--cached",
+      deduplicate = "--deduplicate",
+      exclude_standard = "--exclude-standard",
       full_name = "--full-name",
     },
   },
