@@ -223,7 +223,10 @@ local function draw_buffer()
     end
 
     location.last = #output
-    output:append("")
+
+    if not location.folded then
+      output:append("")
+    end
     table.insert(new_locations, location)
   end
 
