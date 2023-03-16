@@ -192,7 +192,7 @@ local function draw_buffer()
         local file = files_lookup[f.name] or { folded = true }
         file.first = #output
 
-        if f.diff and not file.folded then
+        if not file.folded and f.has_diff then
           local hunks_lookup = Collection.new(file.hunks or {}):key_by("hash")
 
           local hunks = {}
@@ -213,7 +213,7 @@ local function draw_buffer()
           end
 
           file.hunks = hunks
-        elseif f.diff then
+        elseif f.has_diff then
           file.hunks = file.hunks or {}
         end
 

@@ -154,31 +154,22 @@ local function build_hunks(lines)
   return hunks
 end
 
-local function parse_diff(output)
+local function parse_diff(output, raw_stats)
   local header, start_idx = build_diff_header(output)
   local lines = build_lines(output, start_idx)
+  local hunks = build_hunks(lines)
   local kind, info = build_kind(header)
   local file = build_file(header, kind)
+  local stats = parse_diff_stats(raw_stats)
 
-  local mt = {
-    __index = function(self, method)
-      if method == "hunks" then
-        self.hunks = build_hunks(lines)
-        return self.hunks
-      end
-    end,
-  }
-
-  local diff = {
+  return {
     kind = kind,
     lines = lines,
     file = file,
     info = info,
+    stats = stats,
+    hunks = hunks,
   }
-
-  setmetatable(diff, mt)
-
-  return diff
 end
 
 local diff = {
@@ -205,10 +196,24 @@ function ItemFilter.accepts(tbl, section, item)
   return false
 end
 
+local function build_metatable(f, io_fn)
+  setmetatable(f, {
+    __index = function(self, method)
+      if method == "diff" then
+        self.diff = a.util.block_on(function()
+          local raw_diff, raw_stats = io_fn()
+          return parse_diff(raw_diff, raw_stats)
+        end)
+
+        return self.diff
+      end
+    end,
+  })
+end
+
 function diff.register(meta)
   meta.load_diffs = function(repo, filter)
     filter = filter or false
-    local executions = {}
 
     if type(filter) == "table" then
       filter = ItemFilter.new(Collection.new(filter):map(function(item)
@@ -223,41 +228,39 @@ function diff.register(meta)
 
     for _, f in ipairs(repo.untracked.items) do
       if not filter or filter:accepts("untracked", f.name) then
-        insert(executions, function()
-          -- Doing a git-diff with untracked files will exit(1) if a difference is observed, which we can ignore.
-          local raw_diff =
-            cli.diff.no_ext_diff.no_index.files("/dev/null", f.name).call_ignoring_exit_code():trim().stdout
+        f.has_diff = true
 
-          f.diff = parse_diff(raw_diff)
+        -- Doing a git-diff with untracked files will exit(1) if a difference is observed, which we can ignore.
+        build_metatable(f, function()
+          return cli.diff.no_ext_diff.no_index.files("/dev/null", f.name).call_ignoring_exit_code():trim().stdout, {}
         end)
       end
     end
 
     for _, f in ipairs(repo.unstaged.items) do
       if f.mode ~= "F" and (not filter or filter:accepts("unstaged", f.name)) then
-        insert(executions, function()
+        f.has_diff = true
+
+        build_metatable(f, function()
           local raw_diff = cli.diff.no_ext_diff.files(f.name).call():trim().stdout
           local raw_stats = cli.diff.no_ext_diff.shortstat.files(f.name).call():trim().stdout
-          f.diff = parse_diff(raw_diff)
-          f.diff.stats = parse_diff_stats(raw_stats)
+
+          return raw_diff, raw_stats
         end)
       end
     end
 
     for _, f in ipairs(repo.staged.items) do
       if f.mode ~= "F" and (not filter or filter:accepts("staged", f.name)) then
-        insert(executions, function()
+        f.has_diff = true
+
+        build_metatable(f, function()
           local raw_diff = cli.diff.no_ext_diff.cached.files(f.name).call():trim().stdout
           local raw_stats = cli.diff.no_ext_diff.cached.shortstat.files(f.name).call():trim().stdout
-          f.diff = parse_diff(raw_diff)
-          f.diff.stats = parse_diff_stats(raw_stats)
+
+          return raw_diff, raw_stats
         end)
       end
-    end
-
-    -- If executions is an empty array, the join function blocks forever.
-    if #executions > 0 then
-      a.util.join(executions)
     end
   end
 end
