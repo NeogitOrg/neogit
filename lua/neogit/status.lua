@@ -431,11 +431,9 @@ local function refresh(which, reason)
       end)
     end
     if which == true or which.diffs then
-      local filter = (type(which) == "table" and type(which.diffs) == "table") and which.diffs or nil
-
       table.insert(refreshes, function()
         logger.debug("[STATUS BUFFER]: Refreshing diffs")
-        M.repo:load_diffs(filter)
+        M.repo:load_diffs()
       end)
     end
     logger.debug(string.format("[STATUS BUFFER]: Running %d refresh(es)", #refreshes))

@@ -2,7 +2,6 @@ local a = require("plenary.async")
 local util = require("neogit.lib.util")
 local logger = require("neogit.logger")
 local cli = require("neogit.lib.git.cli")
-local Collection = require("neogit.lib.collection")
 
 local sumhexa = require("neogit.lib.md5").sumhexa
 local insert = table.insert
@@ -154,13 +153,13 @@ local function build_hunks(lines)
   return hunks
 end
 
-local function parse_diff(output, raw_stats)
-  local header, start_idx = build_diff_header(output)
-  local lines = build_lines(output, start_idx)
+local function parse_diff(raw_diff, raw_stats)
+  local header, start_idx = build_diff_header(raw_diff)
+  local lines = build_lines(raw_diff, start_idx)
   local hunks = build_hunks(lines)
   local kind, info = build_kind(header)
   local file = build_file(header, kind)
-  local stats = parse_diff_stats(raw_stats)
+  local stats = parse_diff_stats(raw_stats or {})
 
   return {
     kind = kind,
@@ -172,37 +171,15 @@ local function parse_diff(output, raw_stats)
   }
 end
 
-local diff = {
-  parse = parse_diff,
-  parse_stats = parse_diff_stats,
-  get_stats = function(name)
-    return parse_diff_stats(cli.diff.no_ext_diff.shortstat.files(name).call_sync():trim())
-  end,
-}
+local function build_metatable(f, raw_output_fn)
+  f.has_diff = true
 
-local ItemFilter = {}
-
-function ItemFilter.new(tbl)
-  return setmetatable(tbl, { __index = ItemFilter })
-end
-
-function ItemFilter.accepts(tbl, section, item)
-  for _, f in ipairs(tbl) do
-    if (f.section == "*" or f.section == section) and (f.file == "*" or f.file == item) then
-      return true
-    end
-  end
-
-  return false
-end
-
-local function build_metatable(f, io_fn)
   setmetatable(f, {
     __index = function(self, method)
       if method == "diff" then
         self.diff = a.util.block_on(function()
-          local raw_diff, raw_stats = io_fn()
-          return parse_diff(raw_diff, raw_stats)
+          logger.debug("[DIFF] Loading diff for: " .. f.name)
+          return parse_diff(raw_output_fn())
         end)
 
         return self.diff
@@ -211,58 +188,50 @@ local function build_metatable(f, io_fn)
   })
 end
 
-function diff.register(meta)
-  meta.load_diffs = function(repo, filter)
-    filter = filter or false
-
-    if type(filter) == "table" then
-      filter = ItemFilter.new(Collection.new(filter):map(function(item)
-        local section, file = item:match("^([^:]+):(.*)$")
-        if not section then
-          error("Invalid filter item: " .. item, 3)
-        end
-
-        return { section = section, file = file }
-      end))
-    end
-
-    for _, f in ipairs(repo.untracked.items) do
-      if not filter or filter:accepts("untracked", f.name) then
-        f.has_diff = true
-
-        -- Doing a git-diff with untracked files will exit(1) if a difference is observed, which we can ignore.
-        build_metatable(f, function()
-          return cli.diff.no_ext_diff.no_index.files("/dev/null", f.name).call_ignoring_exit_code():trim().stdout, {}
-        end)
-      end
-    end
-
-    for _, f in ipairs(repo.unstaged.items) do
-      if f.mode ~= "F" and (not filter or filter:accepts("unstaged", f.name)) then
-        f.has_diff = true
-
-        build_metatable(f, function()
-          local raw_diff = cli.diff.no_ext_diff.files(f.name).call():trim().stdout
-          local raw_stats = cli.diff.no_ext_diff.shortstat.files(f.name).call():trim().stdout
-
-          return raw_diff, raw_stats
-        end)
-      end
-    end
-
-    for _, f in ipairs(repo.staged.items) do
-      if f.mode ~= "F" and (not filter or filter:accepts("staged", f.name)) then
-        f.has_diff = true
-
-        build_metatable(f, function()
-          local raw_diff = cli.diff.no_ext_diff.cached.files(f.name).call():trim().stdout
-          local raw_stats = cli.diff.no_ext_diff.cached.shortstat.files(f.name).call():trim().stdout
-
-          return raw_diff, raw_stats
-        end)
-      end
-    end
+-- Doing a git-diff with untracked files will exit(1) if a difference is observed, which we can ignore.
+local function raw_untracked(name)
+  return function()
+    return cli.diff.no_ext_diff.no_index.files("/dev/null", name).call_ignoring_exit_code():trim().stdout, {}
   end
 end
 
-return diff
+local function raw_unstaged(name)
+  return function()
+    local diff = cli.diff.no_ext_diff.files(name).call():trim().stdout
+    local stats = cli.diff.no_ext_diff.shortstat.files(name).call():trim().stdout
+
+    return diff, stats
+  end
+end
+
+local function raw_staged(name)
+  return function()
+    local diff = cli.diff.no_ext_diff.cached.files(name).call():trim().stdout
+    local stats = cli.diff.no_ext_diff.cached.shortstat.files(name).call():trim().stdout
+
+    return diff, stats
+  end
+end
+
+return {
+  parse = parse_diff,
+  register = function(meta)
+    meta.load_diffs = function(repo)
+      for _, f in ipairs(repo.untracked.items) do
+        build_metatable(f, raw_untracked(f.name))
+      end
+
+      for _, f in ipairs(repo.unstaged.items) do
+        if f.mode ~= "F" then
+          build_metatable(f, raw_unstaged(f.name))
+        end
+      end
+
+      for _, f in ipairs(repo.staged.items) do
+        if f.mode ~= "F" then
+          build_metatable(f, raw_staged(f.name))
+        end
+      end
+    end
+  end
+}
