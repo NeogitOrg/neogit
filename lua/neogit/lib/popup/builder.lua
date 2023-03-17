@@ -1,4 +1,5 @@
 local a = require("plenary.async")
+local state = require("neogit.lib.state")
 
 local M = {}
 
@@ -50,7 +51,7 @@ function M:switch(key, cli, description, enabled, parse)
     key = key,
     cli = cli,
     description = description,
-    enabled = enabled,
+    enabled = state.get({ self.state.name, cli }, enabled),
     parse = parse,
   })
 
@@ -62,7 +63,7 @@ function M:option(key, cli, value, description)
     id = "=" .. key,
     key = key,
     cli = cli,
-    value = value,
+    value = state.get({ self.state.name, cli }, value),
     description = description,
   })
 
