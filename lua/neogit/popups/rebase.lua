@@ -35,11 +35,11 @@ function M.create()
       :action(
         "p",
         "master", -- use pushremote? ((If there is no pushremote, add ", setting that" suffix))
-        a.void(function(popup)
+        function(popup)
           rebase.rebase_onto("master", popup:get_arguments())
           a.util.scheduler()
           status.refresh(true, "rebase_master")
-        end)
+        end
       )
       :action(
         "u",
@@ -49,18 +49,18 @@ function M.create()
       :action(
         "e",
         "elsewhere",
-        a.void(function(popup)
+        function(popup)
           local branch = git.branch.prompt_for_branch(git.branch.get_all_branches())
           rebase.rebase_onto(branch, popup:get_arguments())
           a.util.scheduler()
           status.refresh(true, "rebase_elsewhere")
-        end)
+        end
       )
       :new_action_group("Rebase")
       :action(
         "i",
         "interactively",
-        a.void(function(popup)
+        function(popup)
           local commits = require("neogit.lib.git.log").list()
 
           local commit = CommitSelectViewBuffer.new(commits):open_async()
@@ -72,7 +72,7 @@ function M.create()
           rebase.rebase_interactive(commit.oid, unpack(popup:get_arguments()))
           a.util.scheduler()
           status.refresh(true, "rebase_interactive")
-        end)
+        end
       )
       :action("s", "a subset", false)
       :new_action_group()
