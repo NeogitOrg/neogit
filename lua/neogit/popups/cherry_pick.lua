@@ -43,7 +43,7 @@ function M.create(env)
       not pick_or_revert_in_progress(status),
       "A",
       "Pick",
-      a.void(function(popup)
+      function(popup)
         local commits
         if popup.state.env.commits then
           commits = util.filter_map(popup.state.env.commits, function(item)
@@ -61,13 +61,13 @@ function M.create(env)
 
         a.util.scheduler()
         status.refresh(true, "cherry_pick_pick")
-      end)
+      end
     )
     :action_if(
       not pick_or_revert_in_progress(status),
       "a",
       "Apply",
-      a.void(function(popup)
+      function(popup)
         local commits
         if popup.state.env.commits then
           commits = util.filter_map(popup.state.env.commits, function(item)
@@ -85,7 +85,7 @@ function M.create(env)
 
         a.util.scheduler()
         status.refresh(true, "cherry_pick_apply")
-      end)
+      end
     )
     :action_if(not pick_or_revert_in_progress(status), "h", "Harvest", false)
     :action_if(not pick_or_revert_in_progress(status), "m", "Squash", false)
