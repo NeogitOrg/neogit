@@ -375,7 +375,7 @@ local function refresh(which, reason)
 
   local permit = refresh_lock:acquire()
   lock_holder = reason or "unknown"
-  logger.debug("[STATUS BUFFER]: Acquired refresh lock")
+  logger.debug("[STATUS BUFFER]: Acquired refresh lock: " .. lock_holder)
 
   a.util.scheduler()
   local s, f, h = save_cursor_location()
