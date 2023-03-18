@@ -810,7 +810,7 @@ local meta = {
       return new_builder(key)
     end
 
-    error("unknown field")
+    error("unknown field: " .. key)
   end,
 }
 
