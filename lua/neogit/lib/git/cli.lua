@@ -18,6 +18,7 @@ local configurations = {
     flags = {
       stat = "--stat",
       oneline = "--oneline",
+      no_patch = "--no-patch",
     },
     options = {
       format = "--format",
@@ -309,6 +310,15 @@ local configurations = {
     flags = {
       all = "--all",
     },
+  },
+
+  reflog = config {
+    flags = {
+      show = "show",
+    },
+    options = {
+      format = "--format"
+    }
   },
 
   ["update-ref"] = config {
