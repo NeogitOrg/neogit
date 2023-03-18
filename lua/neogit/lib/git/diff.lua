@@ -172,8 +172,6 @@ local function parse_diff(raw_diff, raw_stats)
 end
 
 local function build_metatable(f, raw_output_fn)
-  f.has_diff = true
-
   setmetatable(f, {
     __index = function(self, method)
       if method == "diff" then
@@ -186,6 +184,8 @@ local function build_metatable(f, raw_output_fn)
       end
     end,
   })
+
+  f.has_diff = true
 end
 
 -- Doing a git-diff with untracked files will exit(1) if a difference is observed, which we can ignore.
@@ -213,22 +213,47 @@ local function raw_staged(name)
   end
 end
 
+local ItemFilter = require("neogit.lib.item_filter")
+
+local function invalidate_diff(filter, section, item)
+  if not filter or filter:accepts(section, item.name) then
+    logger.debug("[DIFF] Invalidating cached diff for: " .. item.name)
+    item.diff = nil
+  end
+end
+
 return {
   parse = parse_diff,
   register = function(meta)
-    meta.load_diffs = function(repo)
+    meta.load_diffs = function(repo, filter)
+      filter = filter or false
+      if filter and type(filter) == "table" then
+        filter = ItemFilter.create(filter)
+      end
+
       for _, f in ipairs(repo.untracked.items) do
+        invalidate_diff(filter, "untracked", f)
         build_metatable(f, raw_untracked(f.name))
       end
 
       for _, f in ipairs(repo.unstaged.items) do
+        if f.mode == "F" then -- TODO: remove
+          print("DIFF: Mode f: " .. f.name)
+        end
+
         if f.mode ~= "F" then
+          invalidate_diff(filter, "unstaged", f)
           build_metatable(f, raw_unstaged(f.name))
         end
       end
 
       for _, f in ipairs(repo.staged.items) do
+        if f.mode == "F" then -- TODO: remove
+          print("DIFF: Mode f: " .. f.name)
+        end
+
         if f.mode ~= "F" then
+          invalidate_diff(filter, "staged", f)
           build_metatable(f, raw_staged(f.name))
         end
       end
