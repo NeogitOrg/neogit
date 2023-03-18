@@ -187,9 +187,9 @@ end
 
 local function deduplicate(tbl)
   local res = {}
-  for _, v in ipairs(tbl) do
-    if not vim.tbl_contains(res, v) then
-      table.insert(res, v)
+  for i = 1, #tbl do
+    if tbl[i] and not vim.tbl_contains(res, tbl[i]) then
+      table.insert(res, tbl[i])
     end
   end
   return res
