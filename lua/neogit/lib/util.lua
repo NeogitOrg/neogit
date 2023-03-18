@@ -179,7 +179,7 @@ end
 local function pattern_escape(str)
   local special_chars = { "(", ")", ".", "%", "+", "-", "*", "?", "[", "^", "$" }
   for _, char in ipairs(special_chars) do
-    str = str:gsub("%" .. char, "%%" .. char)
+    str, _ = str:gsub("%" .. char, "%%" .. char)
   end
 
   return str
