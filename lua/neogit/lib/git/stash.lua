@@ -70,8 +70,13 @@ local function update_stashes(state)
   state.stashes.items = parse(result.stdout)
 end
 
+local function list()
+  return cli.reflog.show.format("%h").args("stash").call():trim().stdout
+end
+
 return {
   parse = parse,
+  list = list,
   stash_all = function()
     cli.stash.call()
     -- this should work, but for some reason doesn't.

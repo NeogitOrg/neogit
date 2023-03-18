@@ -18,7 +18,7 @@ function M.create()
     :action(
       "m",
       "mixed    (HEAD and index)",
-      a.void(function()
+      function()
         local commit = CommitSelectViewBuffer.new(git.log.list()):open_async()
         if not commit then
           return
@@ -27,12 +27,12 @@ function M.create()
         git.reset.mixed(commit.oid)
         a.util.scheduler()
         status.refresh(true, "reset_mixed")
-      end)
+      end
     )
     :action(
       "s",
       "soft     (HEAD only)",
-      a.void(function()
+      function()
         local commit = CommitSelectViewBuffer.new(git.log.list()):open_async()
         if not commit then
           return
@@ -41,12 +41,12 @@ function M.create()
         git.reset.soft(commit.oid)
         a.util.scheduler()
         status.refresh(true, "reset_soft")
-      end)
+      end
     )
     :action(
       "h",
       "hard     (HEAD, index and files)",
-      a.void(function()
+      function()
         local commit = CommitSelectViewBuffer.new(git.log.list()):open_async()
         if not commit then
           return
@@ -55,12 +55,12 @@ function M.create()
         git.reset.hard(commit.oid)
         a.util.scheduler()
         status.refresh(true, "reset_hard")
-      end)
+      end
     )
     :action(
       "k",
       "keep     (HEAD and index, keeping uncommitted)",
-      a.void(function()
+      function()
         local commit = CommitSelectViewBuffer.new(git.log.list()):open_async()
         if not commit then
           return
@@ -69,7 +69,7 @@ function M.create()
         git.reset.keep(commit.oid)
         a.util.scheduler()
         status.refresh(true, "reset_keep")
-      end)
+      end
     )
     :action("i", "index    (only)", false) -- https://github.com/magit/magit/blob/main/lisp/magit-reset.el#L78
     :action("w", "worktree (only)", false) -- https://github.com/magit/magit/blob/main/lisp/magit-reset.el#L87
@@ -77,8 +77,8 @@ function M.create()
     :action(
       "f",
       "a file",
-      a.void(function()
-        local commit = CommitSelectViewBuffer.new(git.log.list()):open_async()
+      function()
+        local commit = CommitSelectViewBuffer.new(git.log.list_with_stashes()):open_async()
         if not commit then
           return
         end
@@ -99,7 +99,7 @@ function M.create()
           git.reset.file(commit.oid, filepath)
           status.dispatch_refresh(true)
         end):open()
-      end)
+      end
     )
     :build()
 
