@@ -36,7 +36,6 @@ M.values = {
   },
   integrations = {
     diffview = false,
-    telescope = false,
   },
   sections = {
     untracked = {

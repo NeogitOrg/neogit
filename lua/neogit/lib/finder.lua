@@ -84,7 +84,7 @@ function Finder:find()
 end
 
 ---Builds Finder instance
----@param opts table
+---@param opts table|nil
 ---@return Finder
 function Finder.create(opts)
   return Finder:new(opts or {})
