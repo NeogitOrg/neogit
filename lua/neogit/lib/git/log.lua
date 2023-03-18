@@ -1,4 +1,5 @@
 local cli = require("neogit.lib.git.cli")
+local stash = require("neogit.lib.git.stash")
 local diff_lib = require("neogit.lib.git.diff")
 local util = require("neogit.lib.util")
 local config = require("neogit.config")
@@ -212,6 +213,11 @@ end
 ---@return CommitLogEntry[]
 function M.list(options)
   local result = cli.log.oneline.max_count(36).arg_list(options or {}).call()
+  return parse_log(result.stdout)
+end
+
+function M.list_with_stashes()
+  local result = cli.log.oneline.all.max_count(36).arg_list(stash.list()).call():trim()
   return parse_log(result.stdout)
 end
 
