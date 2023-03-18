@@ -20,7 +20,7 @@ function M.create()
     :switch("D", "simplify-by-decoration", "Simplify by decoration", false)
     :switch("f", "follow", "Follow renames when showing single-file log", false)
 
-    -- :switch("r", "reverse", "Reverse order", false)
+    :switch("r", "reverse", "Reverse order", false)
     -- :switch("o", "xxx-order", "Order commits by", false) TODO: Build multi-selector switch
 
     :option("n", "max-count", "256", "Limit number of commits")
