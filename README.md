@@ -6,8 +6,8 @@ A **work-in-progress** [Magit](https://magit.vc) clone for [Neovim](https://neov
 
 ## Installation
 
-**NOTE**: We depend on [plenary.nvim](https://github.com/nvim-lua/plenary.nvim), so to use this plugin, you will additionally need to
-require `nvim-lua/plenary.nvim` using your plugin manager of choice, before requiring this plugin.
+**NOTE**: We depend on [plenary.nvim](https://github.com/nvim-lua/plenary.nvim) and [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim), so to use this plugin, you will additionally need to
+require `nvim-lua/plenary.nvim` and `nvim-telescope/telescope.nvim` using your plugin manager of choice, before requiring this plugin.
 
 | Plugin Manager                                       | Command                                                                        |
 |------------------------------------------------------|--------------------------------------------------------------------------------|
@@ -86,6 +86,7 @@ The create function takes 1 optional argument that can be one of the following v
 | c            | Open commit popup                                |
 | r            | Open rebase popup                                |
 | L            | Open log popup                                   |
+| f            | Open fetch popup                                 |
 | p            | Open pull popup                                  |
 | P            | Open push popup                                  |
 | Z            | Open stash popup                                 |
@@ -138,7 +139,7 @@ neogit.setup {
   -- Array-like table of settings to never persist. Uses format "Filetype--cli-value"
   --   ie: `{ "NeogitCommitPopup--author", "NeogitCommitPopup--no-verify" }`
   ignored_settings = {},
-  -- Change the default way of opening the commit popup
+  -- Change the default way of opening the commit/rebase popup
   commit_popup = {
     kind = "split",
   },
