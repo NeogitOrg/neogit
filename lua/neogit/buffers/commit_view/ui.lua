@@ -41,7 +41,7 @@ function M.CommitView(info, overview)
     text(overview.summary),
     col(map(overview.files, M.OverviewFile), { tag = "OverviewFileList" }),
     text(""),
-    col(intersperse(map(info.diffs, Diff), text("")), { tag = "DiffList" }),
+    col(map(info.diffs, Diff), { tag = "DiffList" }),
   }
 end
 
