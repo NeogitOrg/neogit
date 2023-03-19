@@ -1,4 +1,5 @@
 hi def link NeogitPopupSectionTitle Function
+hi def link NeogitPopupBranchName String
 
 hi def link NeogitPopupSwitchKey Operator
 hi def link NeogitPopupSwitchEnabled SpecialChar

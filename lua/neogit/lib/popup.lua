@@ -6,6 +6,7 @@ local logger = require("neogit.logger")
 local util = require("neogit.lib.util")
 local config = require("neogit.config")
 local state = require("neogit.lib.state")
+local branch = require("neogit.lib.git.branch")
 
 local col = Ui.col
 local row = Ui.row
@@ -259,6 +260,7 @@ function M:show()
     after = function(buffer)
       vim.api.nvim_buf_call(buffer.handle, function()
         vim.cmd([[setlocal nocursorline]])
+        vim.fn.matchadd("NeogitPopupBranchName", branch.current(), 100)
       end)
 
       if config.values.popup.kind == "split" then
