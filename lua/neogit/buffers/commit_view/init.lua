@@ -90,8 +90,8 @@ function M:open()
         ["q"] = function()
           self:close()
         end,
-        ["F10"] = function()
-          self.ui:print_layout_tree { collapse_hidden_components = true }
+        ["<F10>"] = function()
+          self.buffer.ui:print_layout_tree { collapse_hidden_components = true }
         end,
         ["<tab>"] = function()
           local c = self.buffer.ui:get_component_under_cursor()
