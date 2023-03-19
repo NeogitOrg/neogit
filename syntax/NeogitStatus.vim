@@ -4,15 +4,15 @@ endif
 " Support the rebase todo highlights
 source $VIMRUNTIME/syntax/gitrebase.vim
 
-syn match NeogitObjectId /^[a-z0-9]\{7,}\>\s/
-syn match NeogitCommitMessage /.*/ contained
-syn match NeogitBranch /\S\+/ contained nextgroup=NeogitCommitMessage
-syn match NeogitRemote /\S\+/ contained nextgroup=NeogitCommitMessage
-syn match NeogitDiffAdd /.*/ contained
-syn match NeogitDiffDelete /.*/ contained
-syn match NeogitStash /stash@{[0-9]*}\ze/
-syn match NeogitUnmergedInto /Unmerged into/ contained
-syn match NeogitUnpulledFrom /Unpulled from/ contained
+syn match NeogitCommitMessage /.*/                contained
+syn match NeogitBranch        /\S\+/              contained nextgroup=NeogitCommitMessage
+syn match NeogitRemote        /\S\+/              contained nextgroup=NeogitCommitMessage
+syn match NeogitDiffAdd       /.*/                contained
+syn match NeogitDiffDelete    /.*/                contained
+syn match NeogitUnmergedInto  /Unmerged into/     contained
+syn match NeogitUnpulledFrom  /Unpulled from/     contained
+syn match NeogitStash         /stash@{[0-9]*}\ze/
+syn match NeogitObjectId      /^[a-z0-9]\{7,}\>\s/
 
 let b:sections = ["Untracked files", "Unstaged changes", "Unmerged changes", "Unpulled changes", "Recent commits", "Staged changes", "Stashes", "Rebasing"]
 
@@ -23,12 +23,12 @@ for section in b:sections
   execute 'hi def link Neogit' . id . ' Function'
 endfor
 
-syn region NeogitHeadRegion start=/^Head: \zs/ end=/$/ contains=NeogitBranch
-syn region NeogitPushRegion start=/^Push: \zs/ end=/$/ contains=NeogitRemote
+syn region NeogitHeadRegion         start=/^Head: \zs/        end=/$/ contains=NeogitBranch
+syn region NeogitPushRegion         start=/^Push: \zs/        end=/$/ contains=NeogitRemote
 syn region NeogitUnmergedIntoRegion start=/^Unmerged into .*/ end=/$/ contains=NeogitRemote,NeogitUnmergedInto
 syn region NeogitUnpulledFromRegion start=/^Unpulled from .*/ end=/$/ contains=NeogitRemote,NeogitUnpulledFrom
-syn region NeogitDiffAddRegion start=/^+.*$/ end=/$/ contains=NeogitDiffAdd
-syn region NeogitDiffDeleteRegion start=/^-.*$/ end=/$/ contains=NeogitDiffDelete
+syn region NeogitDiffAddRegion      start=/^+.*$/             end=/$/ contains=NeogitDiffAdd
+syn region NeogitDiffDeleteRegion   start=/^-.*$/             end=/$/ contains=NeogitDiffDelete
 
 hi def link NeogitBranch Macro
 hi def link NeogitRemote SpecialChar
