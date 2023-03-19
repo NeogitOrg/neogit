@@ -89,6 +89,7 @@ The create function takes 1 optional argument that can be one of the following v
 | p            | Open pull popup                                  |
 | P            | Open push popup                                  |
 | Z            | Open stash popup                                 |
+| X            | Open reset popup                                 |
 | A            | Open cherry pick popup                           |
 | ?            | Open help popup                                  |
 | x            | Discard changes (also supports discarding hunks) |
