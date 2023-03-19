@@ -32,7 +32,8 @@ function M.create()
       :option("s", "gpg-sign", "", "Sign using gpg", false)
       :option("r", "rebase-merges", "", "Rebase merges", false)
       :group_heading("Rebase " .. (branch.current() and (branch.current() .. " ") or "") .. "onto")
-      :action(
+      :action_if(
+        branch.current() ~= "master",
         "p",
         "master", -- use pushremote? ((If there is no pushremote, add ", setting that" suffix))
         function(popup)
