@@ -131,6 +131,12 @@ function Ui:get_component_stack_in_selection()
   end)
 end
 
+function Ui:get_component_stack_on_line(line)
+  return self:find_components(function(c)
+    return c:is_under_cursor({ line, 0 })
+  end)
+end
+
 function Ui.visualize_component(c, options)
   Ui._print_component(0, c, options or {})
   if c.tag == "col" or c.tag == "row" then
