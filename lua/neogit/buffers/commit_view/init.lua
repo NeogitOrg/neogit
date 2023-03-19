@@ -68,19 +68,8 @@ function M:open()
     name = "NeogitCommitView",
     filetype = "NeogitCommitView",
     kind = "vsplit",
+    context_highlight = true,
     autocmds = {
-      ["CursorMoved"] = function()
-        local stack = self.buffer.ui:get_component_stack_under_cursor()
-
-        if self.hovered_component then
-          self.hovered_component.options.highlight = nil
-        end
-
-        self.hovered_component = stack[2] or stack[1]
-        self.hovered_component.options.highlight = "Directory"
-
-        self.buffer.ui:update()
-      end,
       ["BufUnload"] = function()
         M.instance.is_open = false
       end,
@@ -102,8 +91,10 @@ function M:open()
               c = c.parent
             end
             if vim.tbl_contains({ "Diff", "Hunk" }, c.options.tag) then
+              local first, _ = c:row_range_abs()
               c.children[2]:toggle_hidden()
               self.buffer.ui:update()
+              api.nvim_win_set_cursor(0, { first, 0 })
             end
           end
         end,
