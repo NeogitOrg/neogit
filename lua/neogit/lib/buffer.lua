@@ -418,6 +418,61 @@ function Buffer.create(config)
     vim.wo.winhl = hl .. "Folded:NeogitFold"
   end)
 
+  if config.context_highlight then
+    buffer:call(function()
+      local decor_ns = api.nvim_create_namespace("NeogitBufferViewDecor" .. config.name)
+      local context_ns = api.nvim_create_namespace("NeogitBufferitViewContext" .. config.name)
+
+      local function frame_key()
+        return table.concat { fn.line("w0"), fn.line("w$"), fn.getcurpos()[2], buffer:get_changedtick() }
+      end
+
+      local last_frame_key = frame_key()
+
+      local function on_start()
+        return buffer:is_focused() and frame_key() ~= last_frame_key
+      end
+
+      local function on_end()
+        last_frame_key = frame_key()
+      end
+
+      local function on_win()
+        buffer:clear_namespace(context_ns)
+
+        local stack = buffer.ui:get_component_stack_under_cursor()
+        if not stack then
+          return
+        end
+
+        local hovered_component = stack[2] or stack[1]
+        local first, last = hovered_component:row_range_abs()
+        local top_level = hovered_component.parent and not hovered_component.parent.parent
+
+        for line = fn.line("w0"), fn.line("w$") do
+          if
+            first
+            and last
+            and line >= first
+            and line <= last
+            and not top_level
+          then
+            local sign = buffer.ui:get_component_stack_on_line(line)[1].options.sign
+
+            buffer:set_extmark(
+              context_ns,
+              line - 1,
+              0,
+              { line_hl_group = (sign or "NeogitDiffContext") .. "Highlight", priority = 10 }
+            )
+          end
+        end
+      end
+
+      buffer:set_decorations(decor_ns, { on_start = on_start, on_win = on_win, on_end = on_end })
+    end)
+  end
+
   return buffer
 end
 
