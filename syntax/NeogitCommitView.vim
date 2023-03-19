@@ -20,6 +20,7 @@ sign define NeogitHunkHeaderHighlight linehl=NeogitHunkHeaderHighlight
 
 sign define NeogitDiffHeader linehl=NeogitDiffHeader
 sign define NeogitDiffContextHighlight linehl=NeogitDiffContextHighlight
+sign define NeogitDiffContext linehl=NeogitDiffContext
 sign define NeogitDiffAdd linehl=NeogitDiffAdd
 sign define NeogitDiffAddHighlight linehl=NeogitDiffAddHighlight
 sign define NeogitDiffDelete linehl=NeogitDiffDelete

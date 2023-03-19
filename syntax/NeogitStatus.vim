@@ -46,6 +46,7 @@ hi def link NeogitRebaseDone Comment
 hi def NeogitFold guifg=None guibg=None
 
 sign define NeogitDiffContextHighlight linehl=NeogitDiffContextHighlight
+sign define NeogitDiffContext linehl=NeogitDiffContext
 sign define NeogitRebaseDone linehl=NeogitRebaseDone
 sign define NeogitHunkHeader linehl=NeogitHunkHeader
 sign define NeogitHunkHeaderHighlight linehl=NeogitHunkHeaderHighlight

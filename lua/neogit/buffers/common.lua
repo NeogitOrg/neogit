@@ -45,9 +45,11 @@ local HunkLine = Component.new(function(line)
     sign = "NeogitDiffAdd"
   elseif string.sub(line, 1, 1) == diff_delete_start then
     sign = "NeogitDiffDelete"
+  else
+    sign = "NeogitDiffContext"
   end
 
-  return text(line, { sign = sign })
+  return text(string.sub(line, 3), { sign = sign })
 end)
 
 M.Hunk = Component.new(function(props)
