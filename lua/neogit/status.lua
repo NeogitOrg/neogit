@@ -97,18 +97,6 @@ local mode_to_text = {
 
 local max_len = #"Both Modified"
 
-local file_action = {
-  A = "Added",
-  C = "Copied",
-  D = "Deleted",
-  M = "Modified",
-  R = "Renamed",
-  T = "Changed type",
-  U = "Updated",
-
-  X = "Unknown",
-}
-
 local function draw_sign_for_item(item, name)
   if item.folded then
     M.status_buffer:place_sign(item.first, "NeogitClosed:" .. name, "fold_markers")
