@@ -88,15 +88,17 @@ local function get_current_section_item()
 end
 
 local mode_to_text = {
-  M = "Modified  ",
-  N = "New File  ",
-  A = "Added     ",
-  D = "Deleted   ",
-  C = "Copied    ",
-  U = "Updated   ",
-  UU = "Both      ",
-  R = "Renamed   ",
+  M = "Modified",
+  N = "New file",
+  A = "Added",
+  D = "Deleted",
+  C = "Copied",
+  U = "Updated",
+  UU = "Both Modified",
+  R = "Renamed",
 }
+
+local max_len = #"Both Modified"
 
 local function draw_sign_for_item(item, name)
   if item.folded then
@@ -125,6 +127,27 @@ local function draw_signs()
   end
 end
 
+local function format_mode(mode)
+  if not mode then
+    return ""
+  end
+  local res = mode_to_text[mode]
+  if res then
+    return res
+  end
+
+  local res = mode_to_text[mode:sub(1, 1)]
+  if res then
+    return res .. " by us"
+  end
+
+  return mode
+end
+
+local function pad_right(s, len)
+  return s .. string.rep(" ", math.max(len - #s, 0))
+end
+
 local function draw_buffer()
   M.status_buffer:clear_sign_group("hl")
   M.status_buffer:clear_sign_group("fold_markers")
@@ -134,9 +157,11 @@ local function draw_buffer()
     output:append("Hint: [<tab>] toggle diff | [s]tage | [u]nstage | [x] discard | [c]ommit | [?] more help")
     output:append("")
   end
+
   output:append(
     string.format("Head: %s %s", M.repo.head.branch, M.repo.head.commit_message or "(no commits)")
   )
+
   if M.repo.upstream.branch then
     output:append(
       string.format("Push: %s %s", M.repo.upstream.branch, M.repo.upstream.commit_message or "(no commits)")
@@ -172,7 +197,7 @@ local function draw_buffer()
       location.files = {}
 
       for _, f in ipairs(data.items) do
-        local label = mode_to_text[f.mode]
+        local label = pad_right(format_mode(f.mode), max_len)
         if label and vim.o.columns < 120 then
           label = vim.trim(label)
         end
