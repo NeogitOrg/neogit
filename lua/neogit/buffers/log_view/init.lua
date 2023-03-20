@@ -46,6 +46,7 @@ function M:open()
     name = "NeogitLogView",
     filetype = "NeogitLogView",
     kind = "split",
+    context_highlight = true,
     mappings = {
       v = {
         ["A"] = function()
