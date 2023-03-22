@@ -4,6 +4,10 @@ local parser = require("neogit.buffers.commit_view.parsing")
 local ui = require("neogit.buffers.commit_view.ui")
 local log = require("neogit.lib.git.log")
 
+local CherryPickPopup = require("neogit.popups.cherry_pick")
+
+local api = vim.api
+
 local M = {
   instance = nil,
 }
@@ -76,6 +80,9 @@ function M:open()
     },
     mappings = {
       n = {
+        ["A"] = function()
+          CherryPickPopup.create { commits = { self.commit_info.oid } }
+        end,
         ["q"] = function()
           self:close()
         end,
