@@ -31,7 +31,7 @@ function M.create(env)
   local p = popup
     .builder()
     :name("NeogitCherryPickPopup")
-    -- :switch("F", "ff", "Attempt fast-forward", true)
+    :switch("F", "ff", "Attempt fast-forward", true)
     -- :switch("x", "x", "Reference cherry in commit message", false)
     -- :switch("e", "edit", "Edit commit messages", false)
     -- :switch("s", "signoff", "Add Signed-off-by lines", false)
@@ -57,7 +57,7 @@ function M.create(env)
           return
         end
 
-        cherry_pick.pick(commits)
+        cherry_pick.pick(commits, popup:get_arguments())
 
         a.util.scheduler()
         status.refresh(true, "cherry_pick_pick")
@@ -81,7 +81,7 @@ function M.create(env)
           return
         end
 
-        cherry_pick.apply(commits)
+        cherry_pick.apply(commits, popup:get_arguments())
 
         a.util.scheduler()
         status.refresh(true, "cherry_pick_apply")
