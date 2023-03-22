@@ -18,7 +18,7 @@ function M:open()
   self.buffer = Buffer.create {
     name = self.filename,
     load = true,
-    filetype = "gitrebase",
+    filetype = "NeogitRebaseTodo",
     buftype = "",
     kind = config.values.commit_popup.kind,
     modifiable = true,
