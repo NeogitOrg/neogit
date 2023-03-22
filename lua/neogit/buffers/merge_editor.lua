@@ -18,7 +18,7 @@ function M:open()
   self.buffer = Buffer.create {
     name = self.filename,
     load = true,
-    filetype = "gitcommit",
+    filetype = "NeogitMergeMessage",
     buftype = "",
     kind = "split",
     modifiable = true,
