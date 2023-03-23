@@ -3,7 +3,6 @@ local util = require("neogit.lib.util")
 local logger = require("neogit.logger")
 local cli = require("neogit.lib.git.cli")
 
-local sumhexa = require("neogit.lib.md5").sumhexa
 local insert = table.insert
 
 local function parse_diff_stats(raw)
@@ -98,7 +97,7 @@ local function build_lines(output, start_idx)
 end
 
 local function hunk_hash(content)
-  return sumhexa(table.concat(content, "\n"))
+  return vim.fn.sha256(table.concat(content, "\n"))
 end
 
 local function build_hunks(lines)
