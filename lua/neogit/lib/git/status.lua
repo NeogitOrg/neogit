@@ -137,8 +137,8 @@ local function update_branch_information(state)
 end
 
 local status = {
-  stage = function(name)
-    git.cli.add.files(name).call()
+  stage = function(...)
+    git.cli.add.files(...).call()
   end,
   stage_modified = function()
     git.cli.add.update.call()
@@ -146,8 +146,8 @@ local status = {
   stage_all = function()
     git.cli.add.all.call()
   end,
-  unstage = function(name)
-    git.cli.reset.files(name).call()
+  unstage = function(...)
+    git.cli.reset.files(...).call()
   end,
   unstage_all = function()
     git.cli.reset.call()
