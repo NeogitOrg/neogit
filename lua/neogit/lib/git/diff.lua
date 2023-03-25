@@ -3,6 +3,8 @@ local util = require("neogit.lib.util")
 local logger = require("neogit.logger")
 local cli = require("neogit.lib.git.cli")
 
+local ItemFilter = require("neogit.lib.item_filter")
+
 local insert = table.insert
 
 local function parse_diff_stats(raw)
@@ -212,8 +214,6 @@ local function raw_staged(name)
   end
 end
 
-local ItemFilter = require("neogit.lib.item_filter")
-
 local function invalidate_diff(filter, section, item)
   if not filter or filter:accepts(section, item.name) then
     logger.debug("[DIFF] Invalidating cached diff for: " .. item.name)
@@ -236,10 +236,6 @@ return {
       end
 
       for _, f in ipairs(repo.unstaged.items) do
-        if f.mode == "F" then -- TODO: remove
-          print("DIFF: Mode f: " .. f.name)
-        end
-
         if f.mode ~= "F" then
           invalidate_diff(filter, "unstaged", f)
           build_metatable(f, raw_unstaged(f.name))
@@ -247,10 +243,6 @@ return {
       end
 
       for _, f in ipairs(repo.staged.items) do
-        if f.mode == "F" then -- TODO: remove
-          print("DIFF: Mode f: " .. f.name)
-        end
-
         if f.mode ~= "F" then
           invalidate_diff(filter, "staged", f)
           build_metatable(f, raw_staged(f.name))
