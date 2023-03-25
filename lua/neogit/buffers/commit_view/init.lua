@@ -80,6 +80,49 @@ function M:open()
     },
     mappings = {
       n = {
+        ["{"] = function() -- Goto Previous
+          local function previous_hunk_header(self, line)
+            local c = self.buffer.ui:get_component_on_line(line)
+
+            while c and not vim.tbl_contains({ "Diff", "Hunk" }, c.options.tag) do
+              c = c.parent
+            end
+
+            if c then
+              local first, _ = c:row_range_abs()
+              if vim.fn.line(".") == first then
+                first = previous_hunk_header(self, line - 1)
+              end
+
+              return first
+            end
+          end
+
+          local previous_header = previous_hunk_header(self, vim.fn.line("."))
+          if previous_header then
+            api.nvim_win_set_cursor(0, { previous_header, 0 })
+          end
+        end,
+        ["}"] = function() -- Goto next
+          local c = self.buffer.ui:get_component_under_cursor()
+
+          while c and not vim.tbl_contains({ "Diff", "Hunk" }, c.options.tag) do
+            c = c.parent
+          end
+
+          if c then
+            if c.options.tag == "Diff" then
+              api.nvim_win_set_cursor(0, { vim.fn.line(".") + 1, 0 })
+            else
+              local _, last = c:row_range_abs()
+              if last == vim.fn.line("$") then
+                api.nvim_win_set_cursor(0, { last, 0 })
+              else
+                api.nvim_win_set_cursor(0, { last + 1, 0 })
+              end
+            end
+          end
+        end,
         ["A"] = function()
           CherryPickPopup.create { commits = { self.commit_info.oid } }
         end,

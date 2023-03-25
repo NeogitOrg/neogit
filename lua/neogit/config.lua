@@ -98,6 +98,8 @@ M.values = {
       ["b"] = "BranchPopup",
       ["f"] = "FetchPopup",
       ["X"] = "ResetPopup",
+      ["{"] = "GoToPreviousHunkHeader",
+      ["}"] = "GoToNextHunkHeader",
     },
   },
 }
