@@ -1024,6 +1024,47 @@ local cmd_func_map = function()
         vim.cmd("split " .. item.name)
       end
     end,
+    ["GoToPreviousHunkHeader"] = function()
+      local section, item = get_current_section_item()
+      if section == nil then
+        return
+      end
+
+      local on_hunk = item ~= nil and current_line_is_hunk()
+
+      if on_hunk then
+        local hunk = get_current_hunk_of_item(item)
+
+        if hunk and vim.fn.line(".") == hunk.first then
+          hunk = get_hunk_of_item_for_line(item, vim.fn.line(".") - 1)
+        end
+
+        if hunk then
+          vim.api.nvim_win_set_cursor(0, { hunk.first, 0 })
+        end
+      end
+    end,
+    ["GoToNextHunkHeader"] = function()
+      local section, item = get_current_section_item()
+      if section == nil then
+        return
+      end
+
+      local on_hunk = item ~= nil and current_line_is_hunk()
+
+      if item and not on_hunk then
+        vim.api.nvim_win_set_cursor(0, { vim.fn.line(".") + 1, 0 })
+      elseif on_hunk then
+        local hunk = get_current_hunk_of_item(item)
+        assert(hunk, "Hunk is nil")
+
+        if hunk.last == item.last then
+          vim.api.nvim_win_set_cursor(0, { hunk.last, 0 })
+        else
+          vim.api.nvim_win_set_cursor(0, { hunk.last + 1, 0 })
+        end
+      end
+    end,
     ["GoToFile"] = a.void(function()
       -- local repo_root = cli.git_root()
       a.util.scheduler()

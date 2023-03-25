@@ -225,6 +225,8 @@ List of status commands:
 * StageUnstaged
 * StageAll
 * GoToFile
+* GoToPreviousHunkHeader
+* GoToNextHunkHeader
 * Unstage (Normal and visual mode)
 * UnstageStaged
 * CommandHistory
