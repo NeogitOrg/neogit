@@ -9,6 +9,7 @@ function M.new(builder_fn)
       name = nil,
       switches = {},
       options = {},
+      config = {},
       actions = { {} },
       env = {},
     },
@@ -83,6 +84,18 @@ end
 function M:option(key, cli, value, description)
   table.insert(self.state.options, {
     id = "=" .. key,
+    key = key,
+    cli = cli,
+    value = state.get({ self.state.name, cli }, value),
+    description = description,
+  })
+
+  return self
+end
+
+function M:config(key, cli, value, description)
+  table.insert(self.state.config, {
+    id = key,
     key = key,
     cli = cli,
     value = state.get({ self.state.name, cli }, value),
