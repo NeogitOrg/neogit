@@ -464,12 +464,6 @@ local function refresh(which, reason)
         M.repo:load_diffs(filter)
       end)
     end
-    if which == true or which.config then
-      table.insert(refreshes, function()
-        logger.debug("[STATUS BUFFER]: Refreshing config information")
-        M.repo:update_config()
-      end)
-    end
     logger.debug(string.format("[STATUS BUFFER]: Running %d refresh(es)", #refreshes))
     a.util.join(refreshes)
     logger.debug("[STATUS BUFFER]: Refreshes completed")

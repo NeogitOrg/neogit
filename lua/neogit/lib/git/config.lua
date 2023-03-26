@@ -1,49 +1,49 @@
-local logger = require("neogit.logger")
-local a = require("plenary.async")
-local uv = require("neogit.lib.uv")
+local cli = require("neogit.lib.git.cli")
 
 local M = {}
 
+local function get_type_of_value(value)
+  if value == "true" or value == "false" then
+    return "boolean"
+  elseif tonumber(value) then
+    return "number"
+  else
+    return "string"
+  end
+end
+
+local function config()
+  local result = {}
+
+  for _, option in ipairs(cli.config.list.call_sync():trim().stdout) do
+    local key, value = option:match([[^(.-)=(.*)$]])
+    result[key] = { value = value, type = get_type_of_value(value) }
+  end
+
+  return result
+end
+
 function M.get(key)
-  -- internal, no CLI
+  return config()[key]
+end
+
+function M.get_matching(pattern)
+  local matches = {}
+  for key, value in pairs(config()) do
+    if key:match(pattern) then
+      matches[key] = value
+    end
+  end
+
+  return matches
 end
 
 function M.set(key, value)
-  -- cli
+  cli.config.add(key, value).call_sync()
 end
 
 function M.unset(key)
-   -- cli
-end
-
-function M.update_config(state)
-  local cli = require("neogit.lib.git.cli")
-  local root = cli.git_root()
-  if root == "" then
-    return
-  end
-
-  local config = {}
-
-  local _, config_file = a.uv.fs_stat(root .. "/.git/config")
-  if not config_file then
-    logger.error("[Config] Could not stat .git/config")
-    return
-  end
-
-  local err, config_content = uv.read_file(config_file)
-  if err then
-    logger.error("[Config] Could not read .git/config - " .. err)
-    return
-  end
-
-  P(config_content)
-
-  state.config = config
-end
-
-M.register = function(meta)
-  meta.update_config = M.update_config
+  cli.config.unset(key).call_sync()
 end
 
 return M

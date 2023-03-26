@@ -68,8 +68,21 @@ local configurations = {
   config = config {
     flags = {
       _get = "--get",
+      _add = "--add",
+      _unset = "--unset",
+      list = "--list",
     },
     aliases = {
+      add = function(tbl)
+        return function(key, value)
+          tbl._add.arg_list(key, value)
+        end
+      end,
+      unset = function(tbl)
+        return function(key)
+          tbl._unset.args(key)
+        end
+      end,
       get = function(tbl)
         return function(path)
           return tbl._get.args(path)
