@@ -1186,6 +1186,7 @@ local function set_decoration_provider(buffer)
 
     -- first and last lines of current context based on cursor position, if available
     local _, _, _, first, last = save_cursor_location()
+    local cursor_line = vim.fn.line(".")
 
     for line = fn.line("w0"), fn.line("w$") do
       local text = buffer:get_line(line)[1]
@@ -1196,6 +1197,8 @@ local function set_decoration_provider(buffer)
 
         if start == head_start then
           highlight = "NeogitHunkHeader"
+        elseif line == cursor_line then
+          highlight = "NeogitCursorLine"
         elseif start == add_start then
           highlight = "NeogitDiffAdd"
         elseif start == del_start then
@@ -1214,6 +1217,7 @@ local function set_decoration_provider(buffer)
           and last
           and line >= first
           and line <= last
+          and highlight ~= "NeogitCursorLine"
         then
           buffer:set_extmark(
             context_ns,

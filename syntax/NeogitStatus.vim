@@ -43,6 +43,8 @@ hi def link NeogitUnpulledFrom Function
 hi def link NeogitStash Comment
 hi def link NeogitRebaseDone Comment
 
+hi def link NeogitCursorLine CursorLine
+
 hi def NeogitFold guifg=None guibg=None
 
 sign define NeogitDiffContextHighlight linehl=NeogitDiffContextHighlight
