@@ -211,6 +211,7 @@ local Options = Component.new(function(props)
     text.highlight("NeogitPopupSectionTitle")("Options"),
     col(map(props.state, function(option)
       return row.tag("Option").value(option) {
+        text(" "),
         row.highlight("NeogitPopupOptionKey") {
           text(" ="),
           text(option.key),
@@ -270,12 +271,14 @@ local Actions = Component.new(function(props)
           return row.highlight("NeogitPopupSectionTitle") { text(item.heading) }
         elseif not item.callback then
           return row.highlight("NeogitPopupActionDisabled") {
+            text(" "),
             text(item.key),
             text(" "),
             text(item.description),
           }
         else
           return row {
+            text(" "),
             text.highlight("NeogitPopupActionKey")(item.key),
             text(" "),
             text(item.description),
