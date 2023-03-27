@@ -1041,6 +1041,7 @@ local cmd_func_map = function()
 
         if hunk then
           vim.api.nvim_win_set_cursor(0, { hunk.first, 0 })
+          vim.cmd("normal! zt")
         end
       end
     end,
@@ -1063,6 +1064,7 @@ local cmd_func_map = function()
         else
           vim.api.nvim_win_set_cursor(0, { hunk.last + 1, 0 })
         end
+        vim.cmd("normal! zt")
       end
     end,
     ["GoToFile"] = a.void(function()
