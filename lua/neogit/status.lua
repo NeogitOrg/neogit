@@ -1157,6 +1157,7 @@ local cmd_func_map = function()
     end,
     ["BranchPopup"] = require("neogit.popups.branch").create,
     ["FetchPopup"] = require("neogit.popups.fetch").create,
+    ["RemotePopup"] = require("neogit.popups.remote").create,
     ["ResetPopup"] = require("neogit.popups.reset").create,
   }
 end
