@@ -13,6 +13,9 @@ local row = Ui.row
 local text = Ui.text
 local Component = Ui.Component
 local map = util.map
+local filter_map = util.filter_map
+local build_reverse_lookup = util.build_reverse_lookup
+local intersperse = util.intersperse
 local List = common.List
 local Grid = common.Grid
 
@@ -36,7 +39,11 @@ function M:get_arguments()
   local flags = {}
   for _, switch in pairs(self.state.switches) do
     if switch.enabled and switch.parse ~= false then
-      table.insert(flags, "--" .. switch.cli)
+      if #switch.cli == 1 then
+        table.insert(flags, "-" .. switch.cli)
+      else
+        table.insert(flags, "--" .. switch.cli)
+      end
     end
   end
   for _, option in pairs(self.state.options) do
@@ -82,6 +89,37 @@ local function get_highlight_for_option(option)
   return "NeogitPopupOptionDisabled"
 end
 
+local function get_highlight_for_config(config)
+  if config.value and config.value ~= "" and config.value ~= "unset" then
+    return config.type or "NeogitPopupConfigEnabled"
+  end
+
+  return "NeogitPopupConfigDisabled"
+end
+
+local function construct_config_options(config)
+  local options = filter_map(config.options, function(option)
+    if option == "" then
+      return nil
+    end
+
+    local highlight
+    if config.value == option then
+      highlight = "NeogitPopupConfigEnabled"
+    else
+      highlight = "NeogitPopupConfigDisabled"
+    end
+
+    return text.highlight(highlight)(option)
+  end)
+
+  local value = intersperse(options, text.highlight("NeogitPopupConfigDisabled")("|"))
+  table.insert(value, 1, text.highlight("NeogitPopupConfigDisabled")("["))
+  table.insert(value, #value + 1, text.highlight("NeogitPopupConfigDisabled")("]"))
+
+  return value
+end
+
 function M:toggle_switch(switch)
   switch.enabled = not switch.enabled
   local c = self.buffer.ui:find_component(function(c)
@@ -107,6 +145,45 @@ function M:set_option(option)
   self.buffer.ui:update()
 end
 
+function M:set_config(config)
+  local c = self.buffer.ui:find_component(function(c)
+    return c.options.id == config.id
+  end)
+
+  if config.options then
+    local options = build_reverse_lookup(config.options)
+    local index = options[config.value]
+    config.value = options[(index + 1)] or options[1]
+
+    -- TODO: Set value via CLI
+
+    local value_text = construct_config_options(config)
+
+    -- Remove last n children from row
+    for _, _ in ipairs(value_text) do
+      table.remove(c.children)
+    end
+
+    -- insert new items to row
+    for _, text in ipairs(value_text) do
+      table.insert(c.children, text)
+    end
+  else
+    local result = vim.fn.input {
+      prompt = config.name .. " > ",
+      default = config.value == "unset" and "" or config.value,
+      cancelreturn = config.value,
+    }
+
+    config.value = result == "" and "unset" or result
+
+    c.options.highlight = get_highlight_for_config(config)
+    c.children[#c.children].value = config.value
+  end
+
+  self.buffer.ui:update()
+end
+
 local Switches = Component.new(function(props)
   return col {
     text.highlight("NeogitPopupSectionTitle")("Switches"),
@@ -120,7 +197,7 @@ local Switches = Component.new(function(props)
         text(switch.description),
         text(" ("),
         row.id(switch.id).highlight(get_highlight_for_switch(switch)) {
-          text("--"),
+          text(#switch.cli == 1 and "-" or "--"),
           text(switch.cli),
         },
         text(")"),
@@ -148,6 +225,36 @@ local Options = Component.new(function(props)
           text(option.value or ""),
         },
         text(")"),
+      }
+    end)),
+  }
+end)
+
+local Config = Component.new(function(props)
+  return col {
+    text.highlight("NeogitPopupSectionTitle")("Configuration"),
+    col(map(props.state, function(config)
+      local value
+      if config.options then
+        value = construct_config_options(config)
+      else
+        local value_text
+        if not config.value or config.value == "" then
+          value_text = "unset"
+        else
+          value_text = config.value
+        end
+
+        value = { text.highlight(get_highlight_for_config(config))(value_text) }
+      end
+
+      return row.tag("Config").value(config) {
+        text(" "),
+        row.highlight("NeogitPopupConfigKey") {
+          text(config.key),
+        },
+        text(" " .. config.name .. " "),
+        row.id(config.id) { unpack(value) },
       }
     end)),
   }
@@ -195,6 +302,9 @@ function M:show()
           if x.options.tag == "Switch" then
             self:toggle_switch(x.options.value)
             break
+          elseif x.options.tag == "Config" then
+            self:set_config(x.options.value)
+            break
           elseif x.options.tag == "Option" then
             self:set_option(x.options.value)
             break
@@ -213,6 +323,12 @@ function M:show()
   for _, option in pairs(self.state.options) do
     mappings.n[option.id] = function()
       self:set_option(option)
+    end
+  end
+
+  for _, config in pairs(self.state.config) do
+    mappings.n[config.id] = function()
+      self:set_config(config)
     end
   end
 
@@ -239,6 +355,10 @@ function M:show()
   end
 
   local items = {}
+
+  if self.state.config[1] then
+    table.insert(items, Config { state = self.state.config })
+  end
 
   if self.state.switches[1] then
     table.insert(items, Switches { state = self.state.switches })

@@ -195,6 +195,15 @@ local function deduplicate(tbl)
   return res
 end
 
+local function build_reverse_lookup(tbl)
+  local result = {}
+  for i, v in ipairs(tbl) do
+    table.insert(result, v)
+    result[v] = i
+  end
+  return result
+end
+
 return {
   time = time,
   time_async = time_async,
@@ -216,4 +225,5 @@ return {
   parse_command_args = parse_command_args,
   pattern_escape = pattern_escape,
   deduplicate = deduplicate,
+  build_reverse_lookup = build_reverse_lookup,
 }

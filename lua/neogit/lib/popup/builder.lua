@@ -1,5 +1,6 @@
 local a = require("plenary.async")
 local state = require("neogit.lib.state")
+local config = require("neogit.lib.git.config")
 
 local M = {}
 
@@ -93,13 +94,16 @@ function M:option(key, cli, value, description)
   return self
 end
 
-function M:config(key, cli, value, description)
+function M:config(key, name, options)
+  local c = config.get(name) or { value = "" }
+
   table.insert(self.state.config, {
     id = key,
     key = key,
-    cli = cli,
-    value = state.get({ self.state.name, cli }, value),
-    description = description,
+    name = name,
+    value = c.value,
+    type = c.type,
+    options = options
   })
 
   return self
