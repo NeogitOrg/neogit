@@ -49,7 +49,7 @@ local HunkLine = Component.new(function(line)
     sign = "NeogitDiffContext"
   end
 
-  return text(string.sub(line, 3), { sign = sign })
+  return text(line, { sign = sign })
 end)
 
 M.Hunk = Component.new(function(props)
