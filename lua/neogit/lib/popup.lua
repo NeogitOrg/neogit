@@ -6,7 +6,9 @@ local logger = require("neogit.logger")
 local util = require("neogit.lib.util")
 local config = require("neogit.config")
 local state = require("neogit.lib.state")
+
 local branch = require("neogit.lib.git.branch")
+local config_lib = require("neogit.lib.git.config")
 
 local col = Ui.col
 local row = Ui.row
@@ -154,9 +156,6 @@ function M:set_config(config)
     local options = build_reverse_lookup(config.options)
     local index = options[config.value]
     config.value = options[(index + 1)] or options[1]
-
-    -- TODO: Set value via CLI
-
     local value_text = construct_config_options(config)
 
     -- Remove last n children from row
@@ -181,6 +180,7 @@ function M:set_config(config)
     c.children[#c.children].value = config.value
   end
 
+  config_lib.set(config.name, config.value, config.type)
   self.buffer.ui:update()
 end
 
