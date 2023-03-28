@@ -63,8 +63,15 @@ function M.create()
     end)
     :new_action_group()
     :action("C", "Configure...", false)
-    :action("p", "Prune stale branches", false)
+    :action("p", "Prune stale branches", function()
+      RemoteSelectViewBuffer.new(git.remote.list(), function(selected_remote)
+        git.remote.prune(selected_remote)
+        status.dispatch_refresh(true)
+      end):open()
+    end)
     :action("P", "Prune stale refspecs", false)
+    -- https://github.com/magit/magit/blob/main/lisp/magit-remote.el#L159
+    -- All of something's refspecs are stale.  replace with [d]efault refspec, [r]emove remote, or [a]abort
     :action("b", "Update default branch", false)
     :build()
 

@@ -32,6 +32,13 @@ function M.remove(name)
     notif.create("Couldn't remove remote", vim.log.levels.ERROR)
   else
     notif.create("Removed remote '" .. name .. "'", vim.log.levels.INFO)
+
+function M.prune(name)
+  local result = cli.remote.prune.args(name).call_sync()
+  if result.code ~= 0 then
+    notif.create("Couldn't prune remote", vim.log.levels.ERROR)
+  else
+    notif.create("Pruned remote '" .. name .. "'", vim.log.levels.INFO)
   end
 
   return result
