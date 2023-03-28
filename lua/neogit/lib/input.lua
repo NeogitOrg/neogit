@@ -13,17 +13,14 @@ end
 local function user_input_prompt(prompt, default_value, completion_function)
   vim.fn.inputsave()
 
-  local args = {
-    prompt = prompt,
-  }
-  if default_value then
-    args.default = default_value
-  end
-  if completion_function then
-    args.completion = "customlist,v:lua.__NEOGIT.completers." .. completion_function
-  end
-
-  local status, result = pcall(vim.fn.input, args)
+  local status, result = pcall(
+    vim.fn.input,
+    {
+      prompt = prompt,
+      default = default_value,
+      completion = completion_function and ("customlist,v:lua.__NEOGIT.completers." .. completion_function) or nil
+    }
+  )
 
   vim.fn.inputrestore()
   if not status then
@@ -64,8 +61,8 @@ function M.get_confirmation(msg, options)
   return vim.fn.confirm(msg, table.concat(options.values, "\n"), options.default) == 1
 end
 
-function M.get_user_input(prompt)
-  return user_input_prompt(prompt)
+function M.get_user_input(prompt, default)
+  return user_input_prompt(prompt, default)
 end
 
 function M.get_secret_user_input(prompt)
