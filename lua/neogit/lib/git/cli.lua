@@ -169,6 +169,8 @@ local configurations = {
     flags = {
       push = "--push",
       add = "add",
+      rm = "rm",
+      rename = "rename"
     },
     aliases = {
       get_url = function(tbl)

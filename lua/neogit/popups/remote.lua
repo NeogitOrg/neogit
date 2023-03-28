@@ -1,8 +1,9 @@
--- https://magit.vc/manual/2.11.0/magit/Remotes.html#Remotes
---
 local popup = require("neogit.lib.popup")
 local input = require("neogit.lib.input")
 local git = require("neogit.lib.git")
+local status = require("neogit.status")
+
+local RemoteSelectViewBuffer = require("neogit.buffers.remote_select_view")
 
 local M = {}
 
@@ -16,15 +17,20 @@ function M.create()
     :config("S", "remote.origin.push")
     :config("O", "remote.origin.tagOpt", { "", "--no-tags", "--tags" })
     :group_heading("Actions")
-    :action("a", "Add", function()
+    :action("a", "Add", function(popup)
       local name = input.get_user_input("Remote name: ")
-      -- TODO: Github isn't the default - use existing remote as template
-      local remote_url = input.get_user_input(
-        "Remote url: ",
-        "git@github.com:" .. name .. "/" .. git.branch.current() .. ".git"
-      )
+      if not name then
+        return
+      end
 
-      local result = git.remote.add(name, remote_url)
+      local origin = git.config.get("remote.origin.url").value
+      local host, remote = origin:match("([^:/]+)[^/]+(.-%.git)")
+      local remote_url = input.get_user_input("Remote url: ", host .. ":" .. name .. remote)
+      if not remote_url then
+        return
+      end
+
+      local result = git.remote.add(name, remote_url, popup:get_arguments())
       if result.code ~= 0 then
         return
       end
@@ -38,8 +44,23 @@ function M.create()
         git.config.set("remote.pushDefault", name)
       end
     end)
-    :action("r", "Rename", false)
-    :action("x", "Remove", false)
+    :action("r", "Rename", function()
+      RemoteSelectViewBuffer.new(git.remote.list(), function(selected_remote)
+        local new_name = input.get_user_input("Rename " .. selected_remote .. " to: ")
+        if not new_name or new_name == "" then
+          return
+        end
+
+        git.remote.rename(selected_remote, new_name)
+        status.dispatch_refresh(true)
+      end):open()
+    end)
+    :action("x", "Remove", function()
+      RemoteSelectViewBuffer.new(git.remote.list(), function(selected_remote)
+        git.remote.remove(selected_remote)
+        status.dispatch_refresh(true)
+      end):open()
+    end)
     :new_action_group()
     :action("C", "Configure...", false)
     :action("p", "Prune stale branches", false)
