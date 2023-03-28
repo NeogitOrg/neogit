@@ -41,14 +41,12 @@ function M.create()
     end)
     :action("u", "upstream", function(popup)
       local upstream = git.branch.get_upstream()
-      local result = cli.config.get("push.autoSetupRemote").show_popup(false).call():trim()
+      local result = git.config.get("push.autoSetupRemote").value
       a.util.scheduler()
-      if upstream == nil then
-        if result.stdout[1] == "true" then
-          upstream = {
-            branch = status.repo.head.branch,
-            remote = "origin",
-          }
+
+      if not upstream then
+        if result == "true" then
+          upstream = { branch = status.repo.head.branch, remote = "origin" }
         else
           logger.error("No upstream set")
           return

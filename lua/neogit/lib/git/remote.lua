@@ -4,6 +4,26 @@ local a = require("plenary.async")
 
 local M = {}
 
+local function cleanup_push_variables(remote, new_name)
+  -- https://github.com/magit/magit/blob/main/lisp/magit-remote.el#LL141C32-L141C32
+  local git = require("neogit.lib.git")
+
+  if remote == git.config.get("remote.pushDefault").value then
+    git.config.set("remote.pushDefault", new_name)
+  end
+
+  local variables = git.config.get_matching("^branch%.[^.]*%.pushremote")
+  for key, var in pairs(variables) do
+    if var.value == remote then
+      if new_name then
+        git.config.set(key, new_name)
+      else
+        git.config.unset(key)
+      end
+    end
+  end
+end
+
 function M.add(name, url, args)
   a.util.scheduler()
 
@@ -21,6 +41,7 @@ function M.rename(from, to)
     notif.create("Couldn't rename remote", vim.log.levels.ERROR)
   else
     notif.create("Renamed '" .. from .. "' -> '" .. to .. "'", vim.log.levels.INFO)
+    cleanup_push_variables(from, to)
   end
 
   return result
@@ -32,6 +53,11 @@ function M.remove(name)
     notif.create("Couldn't remove remote", vim.log.levels.ERROR)
   else
     notif.create("Removed remote '" .. name .. "'", vim.log.levels.INFO)
+    cleanup_push_variables(name)
+  end
+
+  return result
+end
 
 function M.prune(name)
   local result = cli.remote.prune.args(name).call_sync()

@@ -180,7 +180,7 @@ function M:set_config(config)
     c.children[#c.children].value = config.value
   end
 
-  config_lib.set(config.name, config.value, config.type)
+  config_lib.set(config.name, config.value)
   self.buffer.ui:update()
 end
 

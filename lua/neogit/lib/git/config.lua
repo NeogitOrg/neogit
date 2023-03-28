@@ -59,13 +59,13 @@ function M.get_matching(pattern)
   return matches
 end
 
-function M.set(key, value, type)
+function M.set(key, value)
   cache_key = nil
 
   if not value or value == "" then
     M.unset(key)
   else
-    cli.config.replace_all(key, value, type).call_sync()
+    cli.config.set(key, value).call_sync()
   end
 end
 

@@ -71,12 +71,11 @@ local configurations = {
       _get = "--get",
       _add = "--add",
       _unset = "--unset",
-      _replace_all = "--replace-all",
     },
     aliases = {
-      replace_all = function(tbl)
+      set = function(tbl)
         return function(key, value)
-          return tbl._replace_all.arg_list({ key, value })
+          return tbl.arg_list({ key, value })
         end
       end,
       unset = function(tbl)
@@ -170,7 +169,8 @@ local configurations = {
       push = "--push",
       add = "add",
       rm = "rm",
-      rename = "rename"
+      rename = "rename",
+      prune = "prune",
     },
     aliases = {
       get_url = function(tbl)
