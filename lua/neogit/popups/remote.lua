@@ -1,9 +1,8 @@
 -- https://magit.vc/manual/2.11.0/magit/Remotes.html#Remotes
 --
 local popup = require("neogit.lib.popup")
+local input = require("neogit.lib.input")
 local git = require("neogit.lib.git")
-local util = require("neogit.lib.util")
-local status = require("neogit.status")
 
 local M = {}
 
@@ -17,7 +16,28 @@ function M.create()
     :config("S", "remote.origin.push")
     :config("O", "remote.origin.tagOpt", { "", "--no-tags", "--tags" })
     :group_heading("Actions")
-    :action("a", "Add", false)
+    :action("a", "Add", function()
+      local name = input.get_user_input("Remote name: ")
+      -- TODO: Github isn't the default - use existing remote as template
+      local remote_url = input.get_user_input(
+        "Remote url: ",
+        "git@github.com:" .. name .. "/" .. git.branch.current() .. ".git"
+      )
+
+      local result = git.remote.add(name, remote_url)
+      if result.code ~= 0 then
+        return
+      end
+
+      local set_default = input.get_confirmation(
+        [[Set 'remote.pushDefault' to "]] .. name .. [["?]],
+        { values = { "&Yes", "&No" }, default = 2 }
+      )
+
+      if set_default then
+        git.config.set("remote.pushDefault", name)
+      end
+    end)
     :action("r", "Rename", false)
     :action("x", "Remove", false)
     :new_action_group()

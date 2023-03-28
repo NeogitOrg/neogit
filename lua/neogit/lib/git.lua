@@ -10,4 +10,6 @@ return {
   rebase = require("neogit.lib.git.rebase"),
   cherry_pick = require("neogit.lib.git.cherry_pick"),
   reset = require("neogit.lib.git.reset"),
+  remote = require("neogit.lib.git.remote"),
+  config = require("neogit.lib.git.config"),
 }

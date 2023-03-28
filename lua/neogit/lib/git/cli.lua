@@ -168,6 +168,7 @@ local configurations = {
   remote = config {
     flags = {
       push = "--push",
+      add = "add",
     },
     aliases = {
       get_url = function(tbl)
