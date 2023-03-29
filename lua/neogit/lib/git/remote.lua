@@ -4,8 +4,8 @@ local a = require("plenary.async")
 
 local M = {}
 
+-- https://github.com/magit/magit/blob/main/lisp/magit-remote.el#LL141C32-L141C32
 local function cleanup_push_variables(remote, new_name)
-  -- https://github.com/magit/magit/blob/main/lisp/magit-remote.el#LL141C32-L141C32
   local git = require("neogit.lib.git")
 
   if remote == git.config.get("remote.pushDefault").value then
@@ -30,6 +30,8 @@ function M.add(name, url, args)
   local result = cli.remote.add.arg_list({ unpack(args), name, url }).call()
   if result.code ~= 0 then
     notif.create("Couldn't add remote", vim.log.levels.ERROR)
+  else
+    notif.create("Added remote '" .. name .. "'", vim.log.levels.INFO)
   end
 
   return result

@@ -73,6 +73,9 @@ function M.create()
     -- https://github.com/magit/magit/blob/main/lisp/magit-remote.el#L159
     -- All of something's refspecs are stale.  replace with [d]efault refspec, [r]emove remote, or [a]abort
     :action("b", "Update default branch", false)
+    -- https://github.com/magit/magit/blob/430a52c4b3f403ba8b0f97b4b67b868298dd60f3/lisp/magit-remote.el#L259
+    :action("z", "Unshallow remote", false)
+    -- https://github.com/magit/magit/blob/430a52c4b3f403ba8b0f97b4b67b868298dd60f3/lisp/magit-remote.el#L291
     :build()
 
   p:show()
