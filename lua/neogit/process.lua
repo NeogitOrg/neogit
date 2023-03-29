@@ -88,6 +88,9 @@ local function create_preview_buffer()
         ["q"] = function(buffer)
           buffer:hide(true)
         end,
+        ["<esc>"] = function(buffer)
+          buffer:hide(true)
+        end,
       },
     },
     autocmds = {
