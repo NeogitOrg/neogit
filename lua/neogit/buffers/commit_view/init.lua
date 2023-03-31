@@ -101,6 +101,7 @@ function M:open()
           local previous_header = previous_hunk_header(self, vim.fn.line("."))
           if previous_header then
             api.nvim_win_set_cursor(0, { previous_header, 0 })
+            vim.cmd("normal! zt")
           end
         end,
         ["}"] = function() -- Goto next
@@ -121,6 +122,7 @@ function M:open()
                 api.nvim_win_set_cursor(0, { last + 1, 0 })
               end
             end
+            vim.cmd("normal! zt")
           end
         end,
         ["A"] = function()
