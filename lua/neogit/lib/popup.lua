@@ -101,18 +101,18 @@ end
 
 local function construct_config_options(config)
   local options = filter_map(config.options, function(option)
-    if option == "" then
-      return nil
+    if option.display == "" then
+      return
     end
 
     local highlight
-    if config.value == option then
+    if config.value == option.value then
       highlight = "NeogitPopupConfigEnabled"
     else
       highlight = "NeogitPopupConfigDisabled"
     end
 
-    return text.highlight(highlight)(option)
+    return text.highlight(highlight)(option.display)
   end)
 
   local value = intersperse(options, text.highlight("NeogitPopupConfigDisabled")("|"))
@@ -122,14 +122,41 @@ local function construct_config_options(config)
   return value
 end
 
+function M:update_component(id, highlight, value)
+  local component = self.buffer.ui:find_component(function(c)
+    return c.options.id == id
+  end)
+
+  assert(component, "Component not found! Cannot update.")
+
+  if highlight then
+    component.options.highlight = highlight
+  end
+
+  if value then
+    if type(value) == "string" then
+      component.children[#component.children].value = value
+    elseif type(value) == "table" then
+      -- Remove last n children from row
+      for _ = 1, #value do
+        table.remove(component.children)
+      end
+
+      -- insert new items to row
+      for _, text in ipairs(value) do
+        table.insert(component.children, text)
+      end
+    end
+  end
+
+  self.buffer.ui:update()
+end
+
 function M:toggle_switch(switch)
   switch.enabled = not switch.enabled
-  local c = self.buffer.ui:find_component(function(c)
-    return c.options.id == switch.id
-  end)
-  c.options.highlight = get_highlight_for_switch(switch)
+
   state.set({ self.state.name, switch.cli }, switch.enabled)
-  self.buffer.ui:update()
+  self:update_component(switch.id, get_highlight_for_switch(switch))
 end
 
 function M:set_option(option)
@@ -138,35 +165,25 @@ function M:set_option(option)
     default = option.value,
     cancelreturn = option.value,
   }
-  local c = self.buffer.ui:find_component(function(c)
-    return c.options.id == option.id
-  end)
-  c.options.highlight = get_highlight_for_option(option)
-  c.children[#c.children].value = option.value
+
   state.set({ self.state.name, option.cli }, option.value)
-  self.buffer.ui:update()
+  self:update_component(option.id, get_highlight_for_option(option), option.value)
 end
 
 function M:set_config(config)
-  local c = self.buffer.ui:find_component(function(c)
-    return c.options.id == config.id
-  end)
-
   if config.options then
-    local options = build_reverse_lookup(config.options)
+    local options = build_reverse_lookup(
+      map(config.options, function(option)
+        return option.value
+      end)
+    )
+
     local index = options[config.value]
     config.value = options[(index + 1)] or options[1]
-    local value_text = construct_config_options(config)
-
-    -- Remove last n children from row
-    for _, _ in ipairs(value_text) do
-      table.remove(c.children)
-    end
-
-    -- insert new items to row
-    for _, text in ipairs(value_text) do
-      table.insert(c.children, text)
-    end
+    self:update_component(config.id, nil, construct_config_options(config))
+  elseif config.callback then
+    config.callback(self, config)
+    -- block here?
   else
     local result = vim.fn.input {
       prompt = config.name .. " > ",
@@ -175,13 +192,21 @@ function M:set_config(config)
     }
 
     config.value = result == "" and "unset" or result
-
-    c.options.highlight = get_highlight_for_config(config)
-    c.children[#c.children].value = config.value
+    self:update_component(config.id, get_highlight_for_config(config), config.value)
   end
 
   config_lib.set(config.name, config.value)
-  self.buffer.ui:update()
+
+  -- Updates passive variables (variables that don't get interacted with directly)
+  for _, var in ipairs(self.state.config) do
+    if var.passive then
+      local c_value = config_lib.get(var.name)
+      if c_value then
+        var.value = c_value.value
+        self:update_component(var.id, nil, var.value)
+      end
+    end
+  end
 end
 
 local Switches = Component.new(function(props)
@@ -213,7 +238,7 @@ local Options = Component.new(function(props)
       return row.tag("Option").value(option) {
         text(" "),
         row.highlight("NeogitPopupOptionKey") {
-          text(" ="),
+          text("="),
           text(option.key),
         },
         text(" "),
@@ -233,7 +258,7 @@ end)
 
 local Config = Component.new(function(props)
   return col {
-    text.highlight("NeogitPopupSectionTitle")("Configuration"),
+    text.highlight("NeogitPopupSectionTitle")("Variables"),
     col(map(props.state, function(config)
       local value
       if config.options then
@@ -252,7 +277,7 @@ local Config = Component.new(function(props)
       return row.tag("Config").value(config) {
         text(" "),
         row.highlight("NeogitPopupConfigKey") {
-          text(config.key),
+          text(not config.passive and config.key or " "),
         },
         text(" " .. config.name .. " "),
         row.id(config.id) { unpack(value) },
@@ -330,8 +355,10 @@ function M:show()
   end
 
   for _, config in pairs(self.state.config) do
-    mappings.n[config.id] = function()
-      self:set_config(config)
+    if not config.passive then
+      mappings.n[config.id] = function()
+        self:set_config(config)
+      end
     end
   end
 

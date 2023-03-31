@@ -3,6 +3,7 @@ local status = require("neogit.status")
 local cli = require("neogit.lib.git.cli")
 local popup = require("neogit.lib.popup")
 local branch = require("neogit.lib.git.branch")
+local git = require("neogit.lib.git")
 local operation = require("neogit.operations")
 local BranchSelectViewBuffer = require("neogit.buffers.branch_select_view")
 local input = require("neogit.lib.input")
@@ -35,6 +36,34 @@ function M.create()
   local p = popup
     .builder()
     :name("NeogitBranchPopup")
+    :config("d", "branch." .. branch.current() .. ".description")
+    :config("u", "branch." .. branch.current() .. ".merge", {
+      callback = function(popup, c)
+        print("TODO - open branch picker")
+      end
+    })
+    :config("m", "branch." .. branch.current() .. ".remote", { passive = true })
+    :config(
+      "r",
+      "branch." .. branch.current() .. ".rebase",
+      {
+        options = {
+          { display = "true", value = "true" },
+          { display = "false", value = "false"},
+          { display = "pull.rebase:" .. git.config.get("pull.rebase").value, value = "" }
+        },
+      }
+    )
+    :config(
+      "p",
+      "branch." .. branch.current() .. ".pushRemote",
+      {
+        options = {
+          { display = "", value = "" },
+          { display = "origin", value = "origin" }
+        }
+      }
+    )
     :group_heading("Checkout")
     :action(
       "b",

@@ -15,7 +15,17 @@ function M.create()
     :config("U", "remote.origin.fetch")
     :config("s", "remote.origin.pushurl")
     :config("S", "remote.origin.push")
-    :config("O", "remote.origin.tagOpt", { "", "--no-tags", "--tags" })
+    :config(
+      "O",
+      "remote.origin.tagOpt",
+      {
+        options =  {
+          { display = "", value = "" },
+          { display = "--no-tags", value = "--no-tags" },
+          { display = "--tags", value = "--tags" },
+        }
+      }
+    )
     :group_heading("Actions")
     :action("a", "Add", function(popup)
       local name = input.get_user_input("Remote name: ")

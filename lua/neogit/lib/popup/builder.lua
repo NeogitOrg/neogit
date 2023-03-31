@@ -97,14 +97,19 @@ end
 function M:config(key, name, options)
   local c = config.get(name) or { value = "" }
 
-  table.insert(self.state.config, {
+  local variable = {
     id = key,
     key = key,
     name = name,
     value = c.value,
     type = c.type,
-    options = options
-  })
+  }
+
+  for k, v in pairs(options or {}) do
+    variable[k] = v
+  end
+
+  table.insert(self.state.config, variable)
 
   return self
 end
