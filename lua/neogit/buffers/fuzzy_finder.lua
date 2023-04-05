@@ -4,19 +4,28 @@ local action_state = require("telescope.actions.state")
 
 local M = {}
 
----@class RemoteSelectViewBuffer
----@field remotes table the remotes list
+local function buffer_height(count)
+  if count < (vim.fn.winheight(0) / 2) then
+    return count
+  else
+    return 0.5
+  end
+end
+
+---@class FuzzyFinderBuffer
+---@field list table list of items to search
 ---@field action function action dispatched by line selection
----@see Finder
---
----Creates a new RemoteSelectViewBuffer
----@param remotes table
+---@field buffer Buffer
+---@field open function
+
+---Creates a new FuzzyFinderBuffer
+---@param list table
 ---@param action function
----@return RemoteSelectViewBuffer
-function M.new(remotes, action)
+---@return FuzzyFinderBuffer
+function M.new(list, action)
   local instance = {
     action = action,
-    remotes = remotes,
+    list = list,
   }
 
   setmetatable(instance, { __index = M })
@@ -24,7 +33,7 @@ function M.new(remotes, action)
   return instance
 end
 
-function M:open()
+function M:open(opts)
   local select_action = function(prompt_bufnr)
     local selection = action_state.get_selected_entry()
     if not selection then
@@ -37,7 +46,12 @@ function M:open()
     end
   end
 
-  Finder.create():add_entries(self.remotes):add_select_action(select_action):find()
+  opts = opts or { layout_config = { height = buffer_height(#self.list) } }
+
+  Finder.create(opts)
+    :add_entries(self.list)
+    :add_select_action(select_action)
+    :find()
 end
 
 return M

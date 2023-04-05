@@ -3,7 +3,7 @@ local input = require("neogit.lib.input")
 local git = require("neogit.lib.git")
 local status = require("neogit.status")
 
-local RemoteSelectViewBuffer = require("neogit.buffers.remote_select_view")
+local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
 local M = {}
 
@@ -19,7 +19,7 @@ function M.create()
       "O",
       "remote.origin.tagOpt",
       {
-        options =  {
+        options = {
           { display = "", value = "" },
           { display = "--no-tags", value = "--no-tags" },
           { display = "--tags", value = "--tags" },
@@ -55,7 +55,7 @@ function M.create()
       end
     end)
     :action("r", "Rename", function()
-      RemoteSelectViewBuffer.new(git.remote.list(), function(selected_remote)
+      FuzzyFinderBuffer.new(git.remote.list(), function(selected_remote)
         local new_name = input.get_user_input("Rename " .. selected_remote .. " to: ")
         if not new_name or new_name == "" then
           return
@@ -66,7 +66,7 @@ function M.create()
       end):open()
     end)
     :action("x", "Remove", function()
-      RemoteSelectViewBuffer.new(git.remote.list(), function(selected_remote)
+      FuzzyFinderBuffer.new(git.remote.list(), function(selected_remote)
         git.remote.remove(selected_remote)
         status.dispatch_refresh(true)
       end):open()
@@ -74,7 +74,7 @@ function M.create()
     :new_action_group()
     :action("C", "Configure...", false)
     :action("p", "Prune stale branches", function()
-      RemoteSelectViewBuffer.new(git.remote.list(), function(selected_remote)
+      FuzzyFinderBuffer.new(git.remote.list(), function(selected_remote)
         git.remote.prune(selected_remote)
         status.dispatch_refresh(true)
       end):open()

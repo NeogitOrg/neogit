@@ -4,7 +4,7 @@ local util = require("neogit.lib.util")
 local status = require("neogit.status")
 
 local CommitSelectViewBuffer = require("neogit.buffers.commit_select_view")
-local FileSelectViewBuffer = require("neogit.buffers.file_select_view")
+local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
 local a = require("plenary.async")
 
@@ -91,7 +91,7 @@ function M.create()
           return
         end
 
-        FileSelectViewBuffer.new(all_files, function(filepath)
+        FuzzyFinderBuffer.new(all_files, function(filepath)
           if filepath == "" then
             return
           end

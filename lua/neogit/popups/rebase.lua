@@ -14,7 +14,6 @@ local function in_rebase(status)
   return status and status.repo.rebase.head
 end
 
--- TODO: When in a rebase, hide ALL controls except
 -- TODO: When rebasing, pressing <cr> on a commit should open it in commit view
 function M.create()
   local status = require("neogit.status")

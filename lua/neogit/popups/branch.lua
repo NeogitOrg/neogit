@@ -5,8 +5,9 @@ local popup = require("neogit.lib.popup")
 local branch = require("neogit.lib.git.branch")
 local git = require("neogit.lib.git")
 local operation = require("neogit.operations")
-local BranchSelectViewBuffer = require("neogit.buffers.branch_select_view")
 local input = require("neogit.lib.input")
+
+local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
 local function format_branches(list)
   local branches = {}
@@ -49,7 +50,7 @@ function M.create()
       {
         options = {
           { display = "true", value = "true" },
-          { display = "false", value = "false"},
+          { display = "false", value = "false" },
           { display = "pull.rebase:" .. git.config.get("pull.rebase").value, value = "" }
         },
       }
@@ -69,12 +70,7 @@ function M.create()
       "b",
       "branch/revision",
       operation("checkout_branch", function()
-        local branches = format_branches(branch.get_all_branches())
-        BranchSelectViewBuffer.new(branches, function(selected_branch)
-          if selected_branch == "" then
-            return
-          end
-
+        FuzzyFinderBuffer.new(format_branches(branch.get_all_branches()), function(selected_branch)
           cli.checkout.branch(selected_branch).call_sync():trim()
           status.dispatch_refresh(true)
         end):open()
@@ -84,12 +80,7 @@ function M.create()
       "l",
       "local branch",
       operation("checkout_local-branch", function()
-        local branches = branch.get_local_branches()
-        BranchSelectViewBuffer.new(branches, function(selected_branch)
-          if selected_branch == "" then
-            return
-          end
-
+        FuzzyFinderBuffer.new(branch.get_local_branches(), function(selected_branch)
           cli.checkout.branch(selected_branch).call_sync():trim()
           status.dispatch_refresh(true)
         end):open()
@@ -100,17 +91,13 @@ function M.create()
       "c",
       "new branch",
       operation("checkout_create-branch", function()
-        local branches = format_branches(branch.get_all_branches(true))
+        local branches = format_branches(branch.get_all_branches(false))
         local current_branch = branch.current()
         if current_branch then
           table.insert(branches, 1, current_branch)
         end
 
-        BranchSelectViewBuffer.new(branches, function(selected_branch)
-          if selected_branch == "" then
-            return
-          end
-
+        FuzzyFinderBuffer.new(branches, function(selected_branch)
           local name = input.get_user_input("branch > ")
           if not name or name == "" then
             return
@@ -127,15 +114,15 @@ function M.create()
       "new spin-off",
       false
       -- operation("spinoff_branch", function()
-        -- https://github.com/magit/magit/blob/main/lisp/magit-branch.el#L429
-        -- WIP https://magit.vc/manual/2.11.0/magit/The-Branch-Popup.html
-        -- local name = branch.create()
-        -- if not name then
-          -- return
-        -- end
+      -- https://github.com/magit/magit/blob/main/lisp/magit-branch.el#L429
+      -- WIP https://magit.vc/manual/2.11.0/magit/The-Branch-Popup.html
+      -- local name = branch.create()
+      -- if not name then
+      -- return
+      -- end
 
-        -- cli.checkout.branch(name).call_sync():trim()
-        -- status.dispatch_refresh(true, "create_and_checkout_branch")
+      -- cli.checkout.branch(name).call_sync():trim()
+      -- status.dispatch_refresh(true, "create_and_checkout_branch")
       -- end,
     )
     :action("w", "new worktree", false)
@@ -162,11 +149,7 @@ function M.create()
           table.insert(branches, 1, current_branch)
         end
 
-        BranchSelectViewBuffer.new(branches, function(selected_branch)
-          if selected_branch == "" then
-            return
-          end
-
+        FuzzyFinderBuffer.new(branches, function(selected_branch)
           local new_name = input.get_user_input("new branch name > ")
           if not new_name or new_name == "" then
             return
@@ -218,11 +201,7 @@ function M.create()
       "delete",
       operation("delete_branch", function()
         local branches = format_branches(branch.get_remote_branches())
-        BranchSelectViewBuffer.new(branches, function(selected_branch)
-          if selected_branch == "" then
-            return
-          end
-
+        FuzzyFinderBuffer.new(branches, function(selected_branch)
           local remote, branch_name = parse_remote_branch_name(selected_branch)
           if not branch_name then
             return
@@ -230,7 +209,11 @@ function M.create()
 
           cli.branch.delete.name(branch_name).call_sync():trim()
 
-          local delete_remote = input.get_confirmation("Delete remote?", { values = { "&Yes", "&No" }, default = 2 })
+          local delete_remote = input.get_confirmation(
+            "Delete remote?",
+            { values = { "&Yes", "&No" }, default = 2 }
+          )
+
           if remote and delete_remote then
             cli.push.remote(remote).delete.to(branch_name).call_sync():trim()
           end
