@@ -94,6 +94,17 @@ function M.create()
     end)
     :new_action_group("Configure")
     :action("C", "Set variables...", false)
+    :config(
+      "r",
+      "branch." .. git.branch.current() .. ".rebase",
+      {
+        options = {
+          { display = "true", value = "true" },
+          { display = "false", value = "false"},
+          { display = "pull.rebase:" .. git.config.get("pull.rebase").value, value = "" }
+        },
+      }
+    )
     :build()
 
   p:show()
