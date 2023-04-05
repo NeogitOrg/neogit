@@ -92,6 +92,12 @@ $                       Command History
                                                 *neogit_<C-r>*
 <C-r>                   Refresh Buffer
 
+                                                *neogit_{*
+{                      Goto previous hunk
+
+                                                *neogit_}*
+}                      Goto next hunk
+
                                                 *neogit_L*
 L                       Open log popup
 
@@ -106,6 +112,9 @@ f                       Open fetch popup
 
                                                 *neogit_X*
 X                       Open reset popup
+
+                                                *neogit_A*
+A                       Open cherry-pick popup
 ==============================================================================
 4. Highlights                                    *neogit-highlights*
 
