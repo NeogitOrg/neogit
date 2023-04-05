@@ -1,4 +1,5 @@
 local Buffer = require("neogit.lib.buffer")
+local config = require("neogit.config")
 
 local M = {}
 
