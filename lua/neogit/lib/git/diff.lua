@@ -6,6 +6,7 @@ local cli = require("neogit.lib.git.cli")
 local ItemFilter = require("neogit.lib.item_filter")
 
 local insert = table.insert
+local sha256 = vim.fn.sha256
 
 local function parse_diff_stats(raw)
   if type(raw) == "string" then
@@ -99,7 +100,7 @@ local function build_lines(output, start_idx)
 end
 
 local function hunk_hash(content)
-  return vim.fn.sha256(table.concat(content, "\n"))
+  return sha256(table.concat(content, "\n"))
 end
 
 local function build_hunks(lines)
