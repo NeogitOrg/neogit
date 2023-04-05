@@ -2,6 +2,7 @@ local Buffer = require("neogit.lib.buffer")
 local ui = require("neogit.buffers.branch_select_view.ui")
 
 local M = {}
+
 --- @class BranchSelectViewBuffer
 --- @field branches table the branches list
 --- @field action function action dispatched by line selection
@@ -18,7 +19,9 @@ function M.new(branches, action)
     branches = branches,
     buffer = nil,
   }
+
   setmetatable(instance, { __index = M })
+
   return instance
 end
 
