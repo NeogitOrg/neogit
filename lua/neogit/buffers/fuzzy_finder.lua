@@ -54,4 +54,21 @@ function M:open(opts)
     :find()
 end
 
+-- Opens finder in such a way that selected value can be returned to the main thread
+-- without the need to use a callback to process the selection.
+function M:open_sync(...)
+  local tx, rx = require("plenary.async.control").channel.oneshot()
+  local result
+
+  self.action = function(selection)
+    result = selection
+    tx()
+  end
+
+  self:open(...)
+
+  rx()
+  return result
+end
+
 return M

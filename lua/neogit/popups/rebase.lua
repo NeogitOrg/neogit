@@ -3,9 +3,11 @@ local cli = require("neogit.lib.git.cli")
 local branch = require("neogit.lib.git.branch")
 local git = require("neogit.lib.git")
 local popup = require("neogit.lib.popup")
-local CommitSelectViewBuffer = require("neogit.buffers.commit_select_view")
 local rebase = require("neogit.lib.git.rebase")
 local input = require("neogit.lib.input")
+
+local CommitSelectViewBuffer = require("neogit.buffers.commit_select_view")
+local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
 local M = {}
 local a = require("plenary.async")
@@ -50,8 +52,9 @@ function M.create()
         "e",
         "elsewhere",
         function(popup)
-          local branch = git.branch.prompt_for_branch(git.branch.get_all_branches())
-          rebase.rebase_onto(branch, popup:get_arguments())
+          local elsewhere = FuzzyFinderBuffer.new(git.branch.get_all_branches()):open_sync()
+
+          rebase.rebase_onto(elsewhere, popup:get_arguments())
           a.util.scheduler()
           status.refresh(true, "rebase_elsewhere")
         end
