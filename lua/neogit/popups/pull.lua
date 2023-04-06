@@ -29,7 +29,7 @@ function M.create()
     :switch("r", "rebase", "Rebase local commits", false)
     -- :switch("a", "autostash", "Autostash", false) -- TODO
     :group_heading("Pull from")
-    :action("p", "pushremote", function(popup)
+    :action("p", "pushRemote", function(popup)
       pull_from(popup, "pushremote", "origin", status.repo.head.branch)
     end)
     :action("u", "upstream", function(popup)
