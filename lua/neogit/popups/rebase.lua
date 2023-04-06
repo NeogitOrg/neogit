@@ -50,7 +50,12 @@ function M.create()
       :action(
         "u",
         "upstream", -- use upstream ((If there is no upstream, add ", setting that" suffix))
-        false
+        function(popup)
+          local upstream = branch.get_upstream()
+          rebase.rebase_onto(upstream.remote .. " " .. upstream.branch, popup:get_arguments())
+          a.util.scheduler()
+          status.refresh(true, "rebase_upstream")
+        end
       )
       :action(
         "e",
