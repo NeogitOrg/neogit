@@ -20,9 +20,13 @@ end
 function M.create()
   local status = require("neogit.status")
   local p = popup.builder():name("NeogitRebasePopup")
+  local base_branch = git.config.get("neogit.baseBranch")
+  base_branch = base_branch and base_branch.value or "master"
 
   if not in_rebase(status) then
-    p:switch("k", "keep-empty", "Keep empty commits", false)
+    p
+      :config("P", "neogit.baseBranch")
+      :switch("k", "keep-empty", "Keep empty commits", false)
       :switch("u", "update-refs", "Update branches", false)
       :switch("d", "committer-date-is-author-date", "Use author date as committer date", false)
       :switch("t", "ignore-date", "Use current time as author date", false)
@@ -34,11 +38,11 @@ function M.create()
       :option("r", "rebase-merges", "", "Rebase merges", false)
       :group_heading("Rebase " .. (branch.current() and (branch.current() .. " ") or "") .. "onto")
       :action_if(
-        branch.current() ~= "master",
+        branch.current() ~= base_branch,
         "p",
-        "master", -- use pushremote? ((If there is no pushremote, add ", setting that" suffix))
+        base_branch,
         function(popup)
-          rebase.rebase_onto("master", popup:get_arguments())
+          rebase.rebase_onto(base_branch, popup:get_arguments())
           a.util.scheduler()
           status.refresh(true, "rebase_master")
         end
