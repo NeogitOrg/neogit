@@ -1,5 +1,6 @@
 local a = require("plenary.async")
 local cli = require("neogit.lib.git.cli")
+local config_lib = require("neogit.lib.git.config")
 local input = require("neogit.lib.input")
 local config = require("neogit.config")
 local M = {}
@@ -44,12 +45,11 @@ function M.get_upstream()
   local current = cli.branch.current.show_popup(false).call():trim().stdout
 
   if #full_name > 0 and #current > 0 then
-    local remote =
-      cli.config.show_popup(false).get(string.format("branch.%s.remote", current[1])).call().stdout
-    if #remote > 0 then
+    local remote = config_lib.get("branch." .. current[1] .. ".remote").value
+    if remote then
       return {
-        remote = remote[1],
-        branch = full_name[1]:sub(#remote[1] + 2, -1),
+        remote = remote,
+        branch = full_name[1]:sub(#remote + 2, -1),
       }
     end
   end
