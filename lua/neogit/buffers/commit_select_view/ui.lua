@@ -8,8 +8,6 @@ local util = require("neogit.lib.util")
 local M = {}
 
 local function render_line(commit)
-  local win_width = vim.fn.winwidth(0)
-
   local content = {
     text(commit.oid:sub(1, 7), { highlight = "Number" }),
     text(" "),
@@ -24,6 +22,7 @@ local function render_line(commit)
       content_length = content_length + #t.value
     end
 
+    local win_width = vim.fn.winwidth(0)
     local date_padding = 15 - #commit.rel_date
     local left_padding = win_width - content_length - #commit.author - #commit.rel_date - date_padding - 8
 
