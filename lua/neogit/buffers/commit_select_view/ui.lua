@@ -13,7 +13,6 @@ local function render_line(commit)
   local content = {
     text(commit.oid:sub(1, 7), { highlight = "Number" }),
     text(" "),
-    -- text(("* "):rep(commit.level + 1), { highlight = "Character" }),
     text(commit.graph, { highlight = "Character" }),
     text(" "),
     text(util.str_truncate(table.concat(commit.description), 100)),
