@@ -50,7 +50,7 @@ function M.create(env)
             return item.oid
           end)
         else
-          commits = { CommitSelectViewBuffer.new(log.list()):open_async() }
+          commits = { CommitSelectViewBuffer.new(log.list_extended()):open_async() }
         end
 
         if not commits or not commits[1] then
@@ -74,7 +74,7 @@ function M.create(env)
             return item.oid
           end)
         else
-          commits = { CommitSelectViewBuffer.new(log.list()):open_async() }
+          commits = { CommitSelectViewBuffer.new(log.list_extended()):open_async() }
         end
 
         if not commits or not commits[1] then

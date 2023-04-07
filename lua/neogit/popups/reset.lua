@@ -19,7 +19,7 @@ function M.create()
       "m",
       "mixed    (HEAD and index)",
       function()
-        local commit = CommitSelectViewBuffer.new(git.log.list()):open_async()
+        local commit = CommitSelectViewBuffer.new(git.log.list_extended()):open_async()
         if not commit then
           return
         end
@@ -33,7 +33,7 @@ function M.create()
       "s",
       "soft     (HEAD only)",
       function()
-        local commit = CommitSelectViewBuffer.new(git.log.list()):open_async()
+        local commit = CommitSelectViewBuffer.new(git.log.list_extended()):open_async()
         if not commit then
           return
         end
@@ -47,7 +47,7 @@ function M.create()
       "h",
       "hard     (HEAD, index and files)",
       function()
-        local commit = CommitSelectViewBuffer.new(git.log.list()):open_async()
+        local commit = CommitSelectViewBuffer.new(git.log.list_extended()):open_async()
         if not commit then
           return
         end
@@ -61,7 +61,7 @@ function M.create()
       "k",
       "keep     (HEAD and index, keeping uncommitted)",
       function()
-        local commit = CommitSelectViewBuffer.new(git.log.list()):open_async()
+        local commit = CommitSelectViewBuffer.new(git.log.list_extended()):open_async()
         if not commit then
           return
         end
@@ -78,7 +78,8 @@ function M.create()
       "f",
       "a file",
       function()
-        local commit = CommitSelectViewBuffer.new(git.log.list_with_stashes()):open_async()
+        local stashes = git.stash.list()
+        local commit = CommitSelectViewBuffer.new(git.log.list_extended({ "--all", unpack(stashes) })):open_async()
         if not commit then
           return
         end

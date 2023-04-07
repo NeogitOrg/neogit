@@ -73,10 +73,8 @@ function M.create()
         "i",
         "interactively",
         function(popup)
-          local commits = require("neogit.lib.git.log").list()
-
+          local commits = require("neogit.lib.git.log").list_extended()
           local commit = CommitSelectViewBuffer.new(commits):open_async()
-
           if not commit then
             return
           end
