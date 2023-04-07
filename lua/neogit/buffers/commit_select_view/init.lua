@@ -1,5 +1,6 @@
 local a = require("plenary.async")
 local Buffer = require("neogit.lib.buffer")
+local util = require("neogit.lib.util")
 local ui = require("neogit.buffers.commit_select_view.ui")
 
 ---@class CommitSelectViewBuffer
@@ -51,17 +52,17 @@ function M:open(action)
         end,
         ["<enter>"] = function()
           local pos = line_pos()
-          if action then
+          local oid = vim.api.nvim_buf_get_lines(0, pos - 1, pos, true)[1]:match("^(.-) ")
+          local commit = util.find(self.commits, function(c)
+            return c.oid and c.oid:match("^" .. oid) and oid ~= ""
+          end)
+
+          if action and commit then
             vim.schedule(function()
               self:close()
             end)
 
-            if pos == 1 and commit_at_cursor then
-              action(commit_at_cursor)
-            else
-              -- Subtract the top commit and blankline
-              action(self.commits[pos - (commit_at_cursor and 2 or 0)])
-            end
+            action(commit)
             action = nil
           end
         end,
@@ -75,6 +76,11 @@ function M:open(action)
         end
       end,
     },
+    after = function(buffer)
+      vim.api.nvim_buf_call(buffer.handle, function()
+        vim.cmd([[execute "resize" . (line("$") + 1)]])
+      end)
+    end,
     render = function()
       return ui.View(self.commits, commit_at_cursor)
     end,
