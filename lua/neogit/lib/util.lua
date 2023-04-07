@@ -161,6 +161,14 @@ local function split_lines(str)
   return vim.split(str, "\r?\n")
 end
 
+local function str_truncate(str, max_length, trailing)
+  if #str > max_length then
+    str = vim.trim(str:sub(1, max_length)) .. (trailing or "...")
+  end
+
+  return str
+end
+
 local function parse_command_args(args)
   local tbl = {}
 
@@ -190,6 +198,17 @@ local function deduplicate(tbl)
   for i = 1, #tbl do
     if tbl[i] and not vim.tbl_contains(res, tbl[i]) then
       table.insert(res, tbl[i])
+    end
+  end
+  return res
+end
+
+local function find(tbl, cond)
+  local res
+  for i = 1, #tbl do
+    if cond(tbl[i]) then
+      res = tbl[i]
+      break
     end
   end
   return res
@@ -226,4 +245,6 @@ return {
   pattern_escape = pattern_escape,
   deduplicate = deduplicate,
   build_reverse_lookup = build_reverse_lookup,
+  str_truncate = str_truncate,
+  find = find,
 }
