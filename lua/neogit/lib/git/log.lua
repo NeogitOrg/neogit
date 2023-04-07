@@ -1,5 +1,4 @@
 local cli = require("neogit.lib.git.cli")
-local stash = require("neogit.lib.git.stash")
 local diff_lib = require("neogit.lib.git.diff")
 local util = require("neogit.lib.util")
 local config = require("neogit.config")
@@ -194,6 +193,43 @@ local function parse_log(output)
   return commits
 end
 
+---@return CommitLogEntry[]
+local function parse_log_extended(output)
+  if type(output) == "string" then
+    output = vim.split(output, "\n")
+  end
+
+  local output_len = #output
+  local commits = {}
+
+  for i = 1, output_len do
+    local level, hash, message, author, rel_date = unpack(vim.split(output[i], "\30"))
+    if level and hash then
+      if rel_date then
+        rel_date, _ = rel_date:gsub(" ago$", "")
+      end
+
+      local commit = {
+        level = util.str_count(level, "|"),
+        graph = level,
+        oid = hash,
+        description = { message },
+        author = author,
+        rel_date = rel_date,
+        -- TODO: Remove
+        hash = hash,
+        message = message,
+      }
+
+      table.insert(commits, commit)
+    elseif level then
+      table.insert(commits, { graph = level })
+    end
+  end
+
+  return commits
+end
+
 local M = {}
 
 local function update_recent(state)
@@ -211,14 +247,17 @@ end
 
 ---@param options any
 ---@return CommitLogEntry[]
-function M.list(options)
-  local result = cli.log.oneline.max_count(36).arg_list(options or {}).call()
-  return parse_log(result.stdout)
+function M.list(options, max)
+  return parse_log(cli.log.oneline.max_count(max or 36).arg_list(options or {}).call():trim().stdout)
 end
 
-function M.list_with_stashes()
-  local result = cli.log.oneline.all.max_count(36).arg_list(stash.list()).call():trim()
-  return parse_log(result.stdout)
+---@param options any
+---@return CommitLogEntry[]
+function M.list_extended(options, max)
+  local format = table.concat({ "", "%H", "%s", "%an", "%cr" }, "%x1E")
+  return parse_log_extended(
+    cli.log.format(format).graph.max_count(max or 350).arg_list(options or {}).call():trim().stdout
+  )
 end
 
 M.parse_log = parse_log
