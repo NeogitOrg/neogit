@@ -9,7 +9,7 @@ local M = {}
 local function length(content)
   local content_length = 0
   for _, t in ipairs(content) do
-    content_length = content_length + #t.value
+    content_length = content_length + vim.fn.strdisplaywidth(t.value)
   end
   return content_length
 end
@@ -30,7 +30,7 @@ local function render_line_right(commit)
   local content = {
     text(" "),
     text(author, { highlight = "Constant" }),
-    text((" "):rep(20 - #author)),
+    text((" "):rep(20 - vim.fn.strdisplaywidth(author))),
     text(commit.rel_date, { highlight = "Special" }),
     text((" "):rep(10 - #commit.rel_date)),
   }
