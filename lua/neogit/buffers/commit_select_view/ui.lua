@@ -38,12 +38,11 @@ local function render_line_right(commit)
   }
 
   if commit.rel_date:match("^%d ") then
-    table.insert(content, text(" " .. commit.rel_date, { highlight = "Special" }))
-    table.insert(content, text((" "):rep(9 - #commit.rel_date)))
-  else
-    table.insert(content, text(commit.rel_date, { highlight = "Special" }))
-    table.insert(content, text((" "):rep(10 - #commit.rel_date)))
+    commit.rel_date = " " .. commit.rel_date
   end
+
+  table.insert(content, text(commit.rel_date, { highlight = "Special" }))
+  table.insert(content, text((" "):rep(10 - #commit.rel_date)))
 
   return content, length(content)
 end
