@@ -61,7 +61,7 @@ function M:open()
         ["q"] = function()
           self:close()
         end,
-        ["F10"] = function()
+        ["<F10>"] = function()
           self.ui:print_layout_tree { collapse_hidden_components = true }
         end,
         ["A"] = function()
