@@ -1,38 +1,63 @@
 local Ui = require("neogit.lib.ui")
+local util = require("neogit.lib.util")
 
 local row = Ui.row
 local text = Ui.text
 
-local util = require("neogit.lib.util")
-
 local M = {}
 
-local function render_line(commit)
+local function length(content)
+  local content_length = 0
+  for _, t in ipairs(content) do
+    content_length = content_length + #t.value
+  end
+  return content_length
+end
+
+local function render_line_left(commit)
   local content = {
-    text(commit.oid:sub(1, 7), { highlight = "Number" }),
+    text(commit.oid:sub(1, 7), { highlight = "Comment" }),
     text(" "),
-    text(commit.graph, { highlight = "Character" }),
+    text(commit.graph, { highlight = "Include" }),
     text(" "),
-    text(util.str_truncate(table.concat(commit.description), 100)),
   }
 
-  if commit.author and commit.rel_date then
-    local content_length = 0
-    for _, t in ipairs(content) do
-      content_length = content_length + #t.value
-    end
+  return content, length(content)
+end
 
-    local win_width = vim.fn.winwidth(0)
-    local date_padding = 15 - #commit.rel_date
-    local left_padding = win_width - content_length - #commit.author - #commit.rel_date - date_padding - 8
+local function render_line_right(commit)
+  local author = util.str_truncate(commit.author, 19, "")
+  local content = {
+    text(" "),
+    text(author, { highlight = "Constant" }),
+    text((" "):rep(20 - #author)),
+    text(commit.rel_date, { highlight = "Special" }),
+    text((" "):rep(10 - #commit.rel_date)),
+  }
 
-    table.insert(content, text((" "):rep(left_padding)))
-    table.insert(content, text(commit.author, { highlight = "String" }))
-    table.insert(content, text((" "):rep(date_padding)))
-    table.insert(content, text(commit.rel_date, { highlight = "Special" }))
-  end
+  return content, length(content)
+end
 
-  return content
+local function render_line(commit)
+  local win_width = vim.fn.winwidth(0)
+
+  local left_content, left_content_length = render_line_left(commit)
+  local right_content, right_content_length = render_line_right(commit)
+
+  local center_spacing = win_width - left_content_length - right_content_length - 6
+
+  local message = util.str_truncate(table.concat(commit.description), center_spacing - 3)
+  table.insert(left_content, text(message))
+  table.insert(left_content, text((" "):rep(center_spacing - #message)))
+
+  return util.merge(left_content, right_content)
+end
+
+local function render_graph_line(commit)
+  return {
+    text((" "):rep(8)),
+    text(commit.graph, { highlight = "Include" })
+  }
 end
 
 function M.View(commits, commit_at_cursor)
@@ -47,13 +72,7 @@ function M.View(commits, commit_at_cursor)
     if commit.oid then
       table.insert(res, row(render_line(commit)))
     else
-      table.insert(
-        res,
-        row {
-          text((" "):rep(8)),
-          text(commit.graph, { highlight = "Character" })
-        }
-      )
+      table.insert(res, row(render_graph_line(commit)))
     end
   end
 

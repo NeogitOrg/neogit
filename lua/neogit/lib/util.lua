@@ -55,6 +55,19 @@ local function deepcopy(o)
   return copy
 end
 
+--- Merge multiple 1-dimensional list-like tables into one, preserving order
+---@param ... table
+---@return table
+local function merge(...)
+  local res = {}
+  for _, tbl in ipairs({ ... }) do
+    for _, item in ipairs(tbl) do
+      table.insert(res, item)
+    end
+  end
+  return res
+end
+
 local function range(from, to, step)
   local step = step or 1
   local t = {}
@@ -247,4 +260,5 @@ return {
   build_reverse_lookup = build_reverse_lookup,
   str_truncate = str_truncate,
   find = find,
+  merge = merge,
 }
