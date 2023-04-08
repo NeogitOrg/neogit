@@ -6,6 +6,14 @@ local text = Ui.text
 
 local M = {}
 
+local function highlight_ref_name(name)
+  if name:match("/") then
+    return "String"
+  else
+    return "Macro"
+  end
+end
+
 local function length(content)
   local content_length = 0
   for _, t in ipairs(content) do
@@ -38,19 +46,44 @@ local function render_line_right(commit)
   return content, length(content)
 end
 
+local function render_line_center(commit, max_width)
+  local content = {}
+
+  if commit.ref_name ~= "" then
+    local ref_name, _ = commit.ref_name:gsub("HEAD %-> ", "")
+    local remote_name, local_name = unpack(vim.split(ref_name, ", "))
+
+    if local_name then
+      table.insert(content, text(local_name, { highlight = highlight_ref_name(local_name) }))
+      table.insert(content, text((" ")))
+
+      max_width = max_width - #local_name - 1
+    end
+
+    if remote_name then
+      table.insert(content, text(remote_name, { highlight = highlight_ref_name(remote_name) }))
+      table.insert(content, text((" ")))
+
+      max_width = max_width - #remote_name - 1
+    end
+  end
+
+  local message = util.str_truncate(table.concat(commit.description), max_width)
+
+  table.insert(content, text(message))
+  table.insert(content, text((" "):rep(max_width - #message)))
+
+  return content
+end
+
 local function render_line(commit)
   local left_content, left_content_length = render_line_left(commit)
   local right_content, right_content_length = render_line_right(commit)
 
-  local win_width = vim.fn.winwidth(0)
-  local center_spacing = win_width - left_content_length - right_content_length - 6
+  local center_spacing = vim.fn.winwidth(0) - 6 - left_content_length - right_content_length
+  local center_content = render_line_center(commit, center_spacing)
 
-  local message = util.str_truncate(table.concat(commit.description), center_spacing)
-
-  table.insert(left_content, text(message))
-  table.insert(left_content, text((" "):rep(center_spacing - #message)))
-
-  return util.merge(left_content, right_content)
+  return util.merge(left_content, center_content, right_content)
 end
 
 local function render_graph_line(commit)

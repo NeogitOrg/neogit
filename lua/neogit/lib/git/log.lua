@@ -203,7 +203,7 @@ local function parse_log_extended(output)
   local commits = {}
 
   for i = 1, output_len do
-    local level, hash, message, author, rel_date = unpack(vim.split(output[i], "\30"))
+    local level, hash, message, author, rel_date, ref_name = unpack(vim.split(output[i], "\30"))
     if level and hash then
       if rel_date then
         rel_date, _ = rel_date:gsub(" ago$", "")
@@ -216,6 +216,7 @@ local function parse_log_extended(output)
         description = { message },
         author = author,
         rel_date = rel_date,
+        ref_name = ref_name,
         -- TODO: Remove
         hash = hash,
         message = message,
@@ -256,10 +257,11 @@ end
 function M.list_extended(options, max)
   -- %H   = Full Hash
   -- %s   = Subject
-  -- %an  = Author Name
+  -- %aN  = Author Name
   -- %cr  = Relative commit date
+  -- %D   = Ref name
   -- %x1E = Hex character to split on (dec \30)
-  local format = table.concat({ "", "%H", "%s", "%an", "%cr" }, "%x1E")
+  local format = table.concat({ "", "%H", "%s", "%aN", "%cr", "%D" }, "%x1E")
 
   return parse_log_extended(
     cli.log.format(format).graph.max_count(max or 350).arg_list(options or {}).call():trim().stdout
