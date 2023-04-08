@@ -176,7 +176,7 @@ end
 
 local function str_truncate(str, max_length, trailing)
   trailing = trailing or "..."
-  if #str > max_length then
+  if vim.fn.strdisplaywidth(str) > max_length then
     str = vim.trim(str:sub(1, max_length - #trailing)) .. (trailing)
   end
   return str
