@@ -254,7 +254,13 @@ end
 ---@param options any
 ---@return CommitLogEntry[]
 function M.list_extended(options, max)
+  -- %H   = Full Hash
+  -- %s   = Subject
+  -- %an  = Author Name
+  -- %cr  = Relative commit date
+  -- %x1E = Hex character to split on (dec \30)
   local format = table.concat({ "", "%H", "%s", "%an", "%cr" }, "%x1E")
+
   return parse_log_extended(
     cli.log.format(format).graph.max_count(max or 350).arg_list(options or {}).call():trim().stdout
   )
