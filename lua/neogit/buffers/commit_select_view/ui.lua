@@ -39,14 +39,14 @@ local function render_line_right(commit)
 end
 
 local function render_line(commit)
-  local win_width = vim.fn.winwidth(0)
-
   local left_content, left_content_length = render_line_left(commit)
   local right_content, right_content_length = render_line_right(commit)
 
+  local win_width = vim.fn.winwidth(0)
   local center_spacing = win_width - left_content_length - right_content_length - 6
 
-  local message = util.str_truncate(table.concat(commit.description), center_spacing - 3)
+  local message = util.str_truncate(table.concat(commit.description), center_spacing)
+
   table.insert(left_content, text(message))
   table.insert(left_content, text((" "):rep(center_spacing - #message)))
 
