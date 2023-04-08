@@ -7,11 +7,7 @@ local text = Ui.text
 local M = {}
 
 local function highlight_ref_name(name)
-  if name:match("/") then
-    return "String"
-  else
-    return "Macro"
-  end
+  return name:match("/") and "String" or "Macro"
 end
 
 local function length(content)
@@ -39,9 +35,15 @@ local function render_line_right(commit)
     text(" "),
     text(author, { highlight = "Constant" }),
     text((" "):rep(20 - vim.fn.strdisplaywidth(author))),
-    text(commit.rel_date, { highlight = "Special" }),
-    text((" "):rep(10 - #commit.rel_date)),
   }
+
+  if commit.rel_date:match("^%d ") then
+    table.insert(content, text(" " .. commit.rel_date, { highlight = "Special" }))
+    table.insert(content, text((" "):rep(9 - #commit.rel_date)))
+  else
+    table.insert(content, text(commit.rel_date, { highlight = "Special" }))
+    table.insert(content, text((" "):rep(10 - #commit.rel_date)))
+  end
 
   return content, length(content)
 end
@@ -80,7 +82,7 @@ local function render_line(commit)
   local left_content, left_content_length = render_line_left(commit)
   local right_content, right_content_length = render_line_right(commit)
 
-  local center_spacing = vim.fn.winwidth(0) - 6 - left_content_length - right_content_length
+  local center_spacing = vim.fn.winwidth(0) - 8 - left_content_length - right_content_length
   local center_content = render_line_center(commit, center_spacing)
 
   return util.merge(left_content, center_content, right_content)
