@@ -117,44 +117,7 @@ function M.get_gui(group_name, trans)
   end
 end
 
-local function get_cur_hl()
-  return {
-    NeogitHunkHeader = { bg = M.get_bg("NeogitHunkHeader", false) },
-    NeogitHunkHeaderHighlight = { bg = M.get_bg("NeogitHunkHeaderHighlight", false) },
-    NeogitDiffContext = { bg = M.get_bg("NeogitDiffContext", false) },
-    NeogitDiffContextHighlight = { bg = M.get_bg("NeogitDiffContextHighlight", false) },
-    NeogitDiffAddHighlight = {
-      bg = M.get_bg("NeogitDiffAddHighlight", false),
-      fg = M.get_fg("NeogitDiffAddHighlight", false),
-      gui = M.get_gui("NeogitDiffAddHighlight", false),
-    },
-    NeogitDiffDeleteHighlight = {
-      bg = M.get_bg("NeogitDiffDeleteHighlight", false),
-      fg = M.get_fg("NeogitDiffDeleteHighlight", false),
-      gui = M.get_gui("NeogitDiffDeleteHighlight", false),
-    },
-  }
-end
-
-local function is_hl_cleared(hl_map)
-  local keys = { "fg", "bg", "gui", "sp", "blend" }
-  for _, hl in pairs(hl_map) do
-    for _, k in ipairs(keys) do
-      if hl[k] then
-        return false
-      end
-    end
-  end
-  return true
-end
-
 function M.setup()
-  local cur_hl = get_cur_hl()
-  if not is_hl_cleared(cur_hl) and not vim.deep_equal(hl_store or {}, cur_hl) then
-    -- Highlights have been modified somewhere else. Return.
-    return
-  end
-
   local bg = vim.o.bg
   local hl_fg_normal = M.get_fg("Normal") or (bg == "dark" and "#eeeeee" or "#111111")
   local hl_bg_normal = M.get_bg("Normal") or (bg == "dark" and "#111111" or "#eeeeee")
@@ -169,24 +132,105 @@ function M.setup()
   local bg_diff_context_hl = bg_normal:shade(0.075 * sign)
 
   hl_store = {
-    NeogitHunkHeader = { bg = bg_diff_context_hl:to_css() },
-    NeogitHunkHeaderHighlight = { bg = bg_hunk_header_hl:to_css() },
-    NeogitDiffContext = { bg = bg_diff_context:to_css() },
-    NeogitDiffContextHighlight = { bg = bg_diff_context_hl:to_css() },
+    NeogitHunkHeader = {
+      bg = bg_diff_context_hl:to_css()
+    },
+    NeogitHunkHeaderHighlight = {
+      bg = bg_hunk_header_hl:to_css()
+    },
+
+    NeogitDiffContext = {
+      bg = bg_diff_context:to_css()
+    },
+    NeogitDiffContextHighlight = {
+      bg = bg_diff_context_hl:to_css()
+    },
+
+    NeogitDiffAdd             = { default = true, link = "DiffAdd" },
     NeogitDiffAddHighlight = {
       bg = M.get_bg("DiffAdd", false) or bg_diff_context_hl:to_css(),
       fg = M.get_fg("DiffAdd", false) or M.get_fg("diffAdded") or hl_fg_normal,
       gui = M.get_gui("DiffAdd", false),
     },
+
+    NeogitDiffDelete          = { default = true, link = "DiffDelete" },
     NeogitDiffDeleteHighlight = {
       bg = M.get_bg("DiffDelete", false) or bg_diff_context_hl:to_css(),
       fg = M.get_fg("DiffDelete", false) or M.get_fg("diffRemoved") or hl_fg_normal,
       gui = M.get_gui("DiffDelete", false),
     },
+
+    NeogitPopupSectionTitle   = { default = true, link = "Function" },
+    NeogitPopupBranchName     = { default = true, link = "String" },
+    NeogitPopupSwitchKey      = { default = true, link = "Operator" },
+    NeogitPopupSwitchEnabled  = { default = true, link = "SpecialChar" },
+    NeogitPopupSwitchDisabled = { default = true, link = "Comment" },
+    NeogitPopupOptionKey      = { default = true, link = "Operator" },
+    NeogitPopupOptionEnabled  = { default = true, link = "SpecialChar" },
+    NeogitPopupOptionDisabled = { default = true, link = "Comment" },
+    NeogitPopupConfigKey      = { default = true, link = "Operator" },
+    NeogitPopupConfigEnabled  = { default = true, link = "SpecialChar" },
+    NeogitPopupConfigDisabled = { default = true, link = "Comment" },
+    NeogitPopupActionDisabled = { default = true, link = "Comment" },
+    NeogitPopupActionKey      = { default = true, link = "Operator" },
+
+
+    NeogitFilePath            = { fg = "#798bf2" },
+    NeogitCommitViewHeader    = { fg = "#0b0d0d", bg = "#94bbd1" },
+    NeogitDiffHeader          = { gui = "bold" },
+
+    NeogitNotificationInfo    = { default = true, link = "DiagnosticInfo" },
+    NeogitNotificationWarning = { default = true, link = "DiagnosticWarn" },
+    NeogitNotificationError   = { default = true, link = "DiagnosticError" },
+
+    NeogitCommandText         = { default = true, link = "Comment" },
+    NeogitCommandTime         = { default = true, link = "Comment" },
+    NeogitCommandCodeNormal   = { default = true, link = "String" },
+    NeogitCommandCodeError    = { default = true, link = "Error" },
+
+    NeogitBranch              = { default = true, link = "Macro" },
+    NeogitRemote              = { default = true, link = "SpecialChar" },
+    NeogitObjectId            = { default = true, link = "Comment" },
+    NeogitUnmergedInto        = { default = true, link = "Function" },
+    NeogitUnpulledFrom        = { default = true, link = "Function" },
+    NeogitStash               = { default = true, link = "Comment" },
+    NeogitRebaseDone          = { default = true, link = "Comment" },
+    NeogitCursorLine          = { default = true, link = "CursorLine" },
+
+    NeogitFold                = { fg = "None", bg = "None", },
+
+    NeogitNormal              = {},
+    NeogitNotification        = {},
+    NeogitDiffHeaderHighlight = {},
+    NeogitCommitMessage       = {},
+
+    NeogitChangeModified      = {},
+    NeogitChangeAdded         = {},
+    NeogitChangeDeleted       = {},
+    NeogitChangeRenamed       = {},
+    NeogitChangeUpdated       = {},
+    NeogitChangeCopied        = {},
+    NeogitChangeBothModified  = {},
+    NeogitChangeNewFile       = {},
+
+    NeogitUntrackedfiles      = { default = true, link = "Function" },
+    NeogitUnstagedchanges     = { default = true, link = "Function" },
+    NeogitUnmergedchanges     = { default = true, link = "Function" },
+    NeogitUnpulledchanges     = { default = true, link = "Function" },
+    NeogitRecentcommits       = { default = true, link = "Function" },
+    NeogitStagedchanges       = { default = true, link = "Function" },
+    NeogitStashes             = { default = true, link = "Function" },
+    NeogitRebasing            = { default = true, link = "Function" },
   }
 
   for group, hl in pairs(hl_store) do
-    M.hi(group, hl)
+    if vim.fn.hlID(group) == 0 then
+      if hl.link then
+        M.hi_link(group, hl.link, hl)
+      else
+        M.hi(group, hl)
+      end
+    end
   end
 end
 
