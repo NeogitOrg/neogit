@@ -1,3 +1,0 @@
-hi link NeogitNotificationInfo DiagnosticInfo
-hi link NeogitNotificationWarning DiagnosticWarn
-hi link NeogitNotificationError DiagnosticError

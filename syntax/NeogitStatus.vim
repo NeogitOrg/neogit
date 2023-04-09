@@ -1,6 +1,7 @@
 if exists("b:current_syntax")
   finish
 endif
+
 " Support the rebase todo highlights
 source $VIMRUNTIME/syntax/gitrebase.vim
 
@@ -20,7 +21,6 @@ for section in b:sections
   let id = join(split(section, " "), "")
   execute 'syn match Neogit' . id . ' /^' . section . '/ contained'
   execute 'syn region Neogit' . id . 'Region start=/^' . section . '\ze.*/ end=/./ contains=Neogit' . id
-  execute 'hi def link Neogit' . id . ' Function'
 endfor
 
 syn region NeogitHeadRegion         start=/^Head: \zs/        end=/$/ contains=NeogitBranch
@@ -30,32 +30,6 @@ syn region NeogitUnpulledFromRegion start=/^Unpulled from .*/ end=/$/ contains=N
 syn region NeogitDiffAddRegion      start=/^+.*$/             end=/$/ contains=NeogitDiffAdd
 syn region NeogitDiffDeleteRegion   start=/^-.*$/             end=/$/ contains=NeogitDiffDelete
 
-hi def link NeogitBranch Macro
-hi def link NeogitRemote SpecialChar
-hi def link NeogitObjectId Comment
-
-hi def link NeogitDiffAdd DiffAdd
-hi def link NeogitDiffDelete DiffDelete
-
-hi def link NeogitUnmergedInto Function
-hi def link NeogitUnpulledFrom Function
-
-hi def link NeogitStash Comment
-hi def link NeogitRebaseDone Comment
-
-hi def link NeogitCursorLine CursorLine
-
-hi def NeogitFold guifg=None guibg=None
-
-sign define NeogitDiffContextHighlight linehl=NeogitDiffContextHighlight
-sign define NeogitDiffContext linehl=NeogitDiffContext
-sign define NeogitRebaseDone linehl=NeogitRebaseDone
-sign define NeogitHunkHeader linehl=NeogitHunkHeader
-sign define NeogitHunkHeaderHighlight linehl=NeogitHunkHeaderHighlight
-sign define NeogitDiffAdd linehl=NeogitDiffAdd
-sign define NeogitDiffAddHighlight linehl=NeogitDiffAddHighlight
-sign define NeogitDiffDelete linehl=NeogitDiffDelete
-sign define NeogitDiffDeleteHighlight linehl=NeogitDiffDeleteHighlight
-
+let b:current_syntax = 1
 
 "TODO: find a better way to do this
