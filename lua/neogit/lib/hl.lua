@@ -15,7 +15,6 @@
 --#endregion
 
 local Color = require("neogit.lib.color").Color
-local api = vim.api
 local hl_store
 local M = {}
 
@@ -36,26 +35,28 @@ function M.hi(group, opt)
   )
 end
 
----@param from string Syntax group name.
----@param to string Syntax group name.
----@param opt HiLinkSpec
-function M.hi_link(from, to, opt)
-  vim.cmd(
-    string.format(
-      "hi%s %s link %s %s",
-      opt.force and "!" or "",
-      opt.default and "default" or "",
-      from,
-      to or ""
-    )
-  )
+---@param name string Syntax group name.
+---@return table|nil
+function M.make_hl_link_attrs(name)
+  local fg = M.get_fg(name, true)
+  local bg = M.get_bg(name, true)
+  local gui = M.get_gui(name, true)
+
+  if fg or bg or gui then
+    return { fg = fg, bg = bg, gui = gui }
+  else
+    return
+  end
 end
 
 ---@param name string Syntax group name.
 ---@param attr string Attribute name.
 ---@param trans boolean Translate the syntax group (follows links).
 function M.get_hl_attr(name, attr, trans)
-  local id = api.nvim_get_hl_id_by_name(name)
+  local id = vim.fn.hlID(name)
+  if id == 0 then
+    return
+  end
   if id and trans then
     id = vim.fn.synIDtrans(id)
   end
@@ -72,7 +73,7 @@ function M.get_hl_attr(name, attr, trans)
 end
 
 ---@param group_name string Syntax group name.
----@param trans boolean Translate the syntax group (follows links). True by default.
+---@param trans boolean|nil Translate the syntax group (follows links). True by default.
 function M.get_fg(group_name, trans)
   if type(trans) ~= "boolean" then
     trans = true
@@ -81,7 +82,7 @@ function M.get_fg(group_name, trans)
 end
 
 ---@param group_name string Syntax group name.
----@param trans boolean Translate the syntax group (follows links). True by default.
+---@param trans boolean|nil Translate the syntax group (follows links). True by default.
 function M.get_bg(group_name, trans)
   if type(trans) ~= "boolean" then
     trans = true
@@ -90,7 +91,7 @@ function M.get_bg(group_name, trans)
 end
 
 ---@param group_name string Syntax group name.
----@param trans boolean Translate the syntax group (follows links). True by default.
+---@param trans boolean|nil Translate the syntax group (follows links). True by default.
 function M.get_gui(group_name, trans)
   if type(trans) ~= "boolean" then
     trans = true
@@ -117,116 +118,160 @@ function M.get_gui(group_name, trans)
   end
 end
 
-function M.setup()
+local did_setup = false
+
+function M.make_palette()
   local bg = vim.o.bg
-  local hl_fg_normal = M.get_fg("Normal") or (bg == "dark" and "#eeeeee" or "#111111")
   local hl_bg_normal = M.get_bg("Normal") or (bg == "dark" and "#111111" or "#eeeeee")
-
-  -- Generate highlights by lightening for dark color schemes, and darkening
-  -- for light color schemes.
   local bg_normal = Color.from_hex(hl_bg_normal)
-  local sign = bg_normal.lightness >= 0.5 and -1 or 1
 
-  local bg_hunk_header_hl = bg_normal:shade(0.15 * sign)
-  local bg_diff_context = bg_normal:shade(0.09 * sign)
-  local bg_diff_context_hl = bg_normal:shade(0.075 * sign)
+  return {
+    bg0        = M.get_bg("Normal"),
+    bg1        = bg_normal:shade(0.019):to_css(),
+    bg2        = bg_normal:shade(0.065):to_css(),
+    bg3        = bg_normal:shade(0.11):to_css(),
+
+    grey       = bg_normal:shade(0.4):to_css(),
+
+    red        = M.get_fg("Error"),
+    bg_red     = Color.from_hex(M.get_fg("Error")):shade(-0.18):to_css(),
+    line_red   = M.get_bg("DiffDelete") or Color.from_hex(M.get_fg("Error")):shade(-0.6):set_saturation(0.4):to_css(),
+
+    orange     = M.get_fg("SpecialChar"),
+    bg_orange  = Color.from_hex(M.get_fg("SpecialChar")):shade(-0.17):to_css(),
+
+    yellow     = M.get_fg("PreProc"),
+    bg_yellow  = Color.from_hex(M.get_fg("PreProc")):shade(-0.17):to_css(),
+
+    green      = M.get_fg("String"),
+    bg_green   = Color.from_hex(M.get_fg("String")):shade(-0.18):to_css(),
+    line_green = M.get_bg("DiffAdd") or Color.from_hex(M.get_fg("String")):shade(-0.72):set_saturation(0.2):to_css(),
+
+    cyan       = M.get_fg("Operator"),
+    bg_cyan    = Color.from_hex(M.get_fg("Operator")):shade(-0.18):to_css(),
+
+    blue       = M.get_fg("Macro"),
+    bg_blue    = Color.from_hex(M.get_fg("Macro")):shade(-0.18):to_css(),
+
+    purple     = M.get_fg("Include"),
+    bg_purple  = Color.from_hex(M.get_fg("Include")):shade(-0.18):to_css(),
+    md_purple  = "#c3a7e5",
+  }
+end
+
+function M.PRINT()
+  local palette = {}
+
+  for name, value in pairs(M.make_palette()) do
+    local reference = Colors[name]
+    local match = (reference and string.lower(reference) == string.lower(value)) and "" or " !!"
+    table.insert(
+      palette,
+      name .. string.rep(" ", 15 - #name) .. value .. "|" .. (reference or "-") .. match
+    )
+  end
+
+  vim.api.nvim_buf_set_lines(0, 0, -1, false, palette)
+  vim.api.nvim_buf_call(0, function()
+    vim.cmd("ColorizerAttachToBuffer")
+    vim.cmd("setl nospell")
+  end)
+end
+
+function M.setup()
+  if did_setup then
+    return
+  end
+  did_setup = true
+
+  local palette = M.make_palette()
 
   hl_store = {
     NeogitHunkHeader = {
-      bg = bg_diff_context_hl:to_css()
+      fg = palette.bg0, bg = palette.grey, gui = "bold"
     },
     NeogitHunkHeaderHighlight = {
-      bg = bg_hunk_header_hl:to_css()
+      fg = palette.bg0, bg = palette.md_purple, gui = "bold"
     },
-
-    NeogitDiffContext = {
-      bg = bg_diff_context:to_css()
+    NeogitDiffContext = { bg = palette.bg1 },
+    NeogitDiffContextHighlight = { bg = palette.bg2 },
+    NeogitDiffAdd = {
+      bg = palette.line_green, fg = palette.bg_green,
     },
-    NeogitDiffContextHighlight = {
-      bg = bg_diff_context_hl:to_css()
-    },
-
-    NeogitDiffAdd             = { default = true, link = "DiffAdd" },
     NeogitDiffAddHighlight = {
-      bg = M.get_bg("DiffAdd", false) or bg_diff_context_hl:to_css(),
-      fg = M.get_fg("DiffAdd", false) or M.get_fg("diffAdded") or hl_fg_normal,
-      gui = M.get_gui("DiffAdd", false),
+      bg = palette.line_green, fg = palette.green
     },
-
-    NeogitDiffDelete          = { default = true, link = "DiffDelete" },
+    NeogitDiffDelete = {
+      bg = palette.line_red, fg = palette.bg_red,
+    },
     NeogitDiffDeleteHighlight = {
-      bg = M.get_bg("DiffDelete", false) or bg_diff_context_hl:to_css(),
-      fg = M.get_fg("DiffDelete", false) or M.get_fg("diffRemoved") or hl_fg_normal,
-      gui = M.get_gui("DiffDelete", false),
+      bg = palette.line_red, fg = palette.red
     },
-
-    NeogitPopupSectionTitle   = { default = true, link = "Function" },
-    NeogitPopupBranchName     = { default = true, link = "String" },
-    NeogitPopupSwitchKey      = { default = true, link = "Operator" },
-    NeogitPopupSwitchEnabled  = { default = true, link = "SpecialChar" },
-    NeogitPopupSwitchDisabled = { default = true, link = "Comment" },
-    NeogitPopupOptionKey      = { default = true, link = "Operator" },
-    NeogitPopupOptionEnabled  = { default = true, link = "SpecialChar" },
-    NeogitPopupOptionDisabled = { default = true, link = "Comment" },
-    NeogitPopupConfigKey      = { default = true, link = "Operator" },
-    NeogitPopupConfigEnabled  = { default = true, link = "SpecialChar" },
-    NeogitPopupConfigDisabled = { default = true, link = "Comment" },
-    NeogitPopupActionDisabled = { default = true, link = "Comment" },
-    NeogitPopupActionKey      = { default = true, link = "Operator" },
-
-
-    NeogitFilePath            = { fg = "#798bf2" },
-    NeogitCommitViewHeader    = { fg = "#0b0d0d", bg = "#94bbd1" },
-    NeogitDiffHeader          = { gui = "bold" },
-
-    NeogitNotificationInfo    = { default = true, link = "DiagnosticInfo" },
-    NeogitNotificationWarning = { default = true, link = "DiagnosticWarn" },
-    NeogitNotificationError   = { default = true, link = "DiagnosticError" },
-
-    NeogitCommandText         = { default = true, link = "Comment" },
-    NeogitCommandTime         = { default = true, link = "Comment" },
-    NeogitCommandCodeNormal   = { default = true, link = "String" },
-    NeogitCommandCodeError    = { default = true, link = "Error" },
-
-    NeogitBranch              = { default = true, link = "Macro" },
-    NeogitRemote              = { default = true, link = "SpecialChar" },
-    NeogitObjectId            = { default = true, link = "Comment" },
-    NeogitUnmergedInto        = { default = true, link = "Function" },
-    NeogitUnpulledFrom        = { default = true, link = "Function" },
-    NeogitStash               = { default = true, link = "Comment" },
-    NeogitRebaseDone          = { default = true, link = "Comment" },
-    NeogitCursorLine          = { default = true, link = "CursorLine" },
-
+    NeogitPopupSectionTitle   = { link = "Function" },
+    NeogitPopupBranchName     = { link = "String" },
+    NeogitPopupSwitchKey      = { fg = palette.purple },
+    NeogitPopupSwitchEnabled  = { link = "SpecialChar" },
+    NeogitPopupSwitchDisabled = { link = "Comment" },
+    NeogitPopupOptionKey      = { fg = palette.purple },
+    NeogitPopupOptionEnabled  = { link = "SpecialChar" },
+    NeogitPopupOptionDisabled = { link = "Comment" },
+    NeogitPopupConfigKey      = { fg = palette.purple },
+    NeogitPopupConfigEnabled  = { link = "SpecialChar" },
+    NeogitPopupConfigDisabled = { link = "Comment" },
+    NeogitPopupActionKey      = { fg = palette.purple },
+    NeogitPopupActionDisabled = { link = "Comment" },
+    NeogitFilePath            = {
+      fg = palette.blue, gui = "italic"
+    },
+    NeogitCommitViewHeader    = {
+      bg = palette.bg_cyan, fg = palette.bg0
+    },
+    NeogitDiffHeader          = {
+      bg = palette.bg3, fg = palette.blue, gui = "bold"
+    },
+    NeogitDiffHeaderHighlight = {
+      bg = palette.bg3, fg = palette.orange, gui = "bold"
+    },
+    NeogitNotificationInfo    = { link = "DiagnosticInfo" },
+    NeogitNotificationWarning = { link = "DiagnosticWarn" },
+    NeogitNotificationError   = { link = "DiagnosticError" },
+    NeogitCommandText         = { link = "Comment" },
+    NeogitCommandTime         = { link = "Comment" },
+    NeogitCommandCodeNormal   = { link = "String" },
+    NeogitCommandCodeError    = { link = "Error" },
+    NeogitBranch              = { fg = palette.orange, gui = "bold" },
+    NeogitRemote              = { fg = palette.green, gui = "bold" },
+    NeogitUnmergedInto        = { link = "Function" },
+    NeogitUnpulledFrom        = { link = "Function" },
+    NeogitObjectId            = { link = "Comment" },
+    NeogitStash               = { link = "Comment" },
+    NeogitRebaseDone          = { link = "Comment" },
+    NeogitCursorLine          = { bg = palette.bg1 },
     NeogitFold                = { fg = "None", bg = "None", },
-
-    NeogitNormal              = {},
-    NeogitNotification        = {},
-    NeogitDiffHeaderHighlight = {},
-    NeogitCommitMessage       = {},
-
-    NeogitChangeModified      = {},
-    NeogitChangeAdded         = {},
-    NeogitChangeDeleted       = {},
-    NeogitChangeRenamed       = {},
-    NeogitChangeUpdated       = {},
-    NeogitChangeCopied        = {},
-    NeogitChangeBothModified  = {},
-    NeogitChangeNewFile       = {},
-
-    NeogitUntrackedfiles      = { default = true, link = "Function" },
-    NeogitUnstagedchanges     = { default = true, link = "Function" },
-    NeogitUnmergedchanges     = { default = true, link = "Function" },
-    NeogitUnpulledchanges     = { default = true, link = "Function" },
-    NeogitRecentcommits       = { default = true, link = "Function" },
-    NeogitStagedchanges       = { default = true, link = "Function" },
-    NeogitStashes             = { default = true, link = "Function" },
-    NeogitRebasing            = { default = true, link = "Function" },
+    NeogitChangeModified      = { fg = palette.bg_blue, gui = "italic,bold" },
+    NeogitChangeAdded         = { fg = palette.bg_green, gui = "italic,bold" },
+    NeogitChangeDeleted       = { fg = palette.bg_red, gui = "italic,bold" },
+    NeogitChangeRenamed       = { fg = palette.bg_purple, gui = "italic,bold" },
+    NeogitChangeUpdated       = { fg = palette.bg_orange, gui = "italic,bold" },
+    NeogitChangeCopied        = { fg = palette.bg_cyan, gui = "italic,bold" },
+    NeogitChangeBothModified  = { fg = palette.bg_yellow, gui = "italic,bold" },
+    NeogitChangeNewFile       = { fg = palette.bg_green, gui = "italic,bold" },
+    NeogitUntrackedfiles      = { fg = palette.bg_purple, gui = "bold" },
+    NeogitUnstagedchanges     = { fg = palette.bg_purple, gui = "bold" },
+    NeogitUnmergedchanges     = { fg = palette.bg_purple, gui = "bold" },
+    NeogitUnpulledchanges     = { fg = palette.bg_purple, gui = "bold" },
+    NeogitRecentcommits       = { fg = palette.bg_purple, gui = "bold" },
+    NeogitStagedchanges       = { fg = palette.bg_purple, gui = "bold" },
+    NeogitStashes             = { fg = palette.bg_purple, gui = "bold" },
+    NeogitRebasing            = { fg = palette.bg_purple, gui = "bold" },
   }
 
   for group, hl in pairs(hl_store) do
     if vim.fn.hlID(group) == 0 then
       if hl.link then
-        M.hi_link(group, hl.link, hl)
+        local attrs = M.make_hl_link_attrs(hl.link) or {}
+        attrs.default = true
+        M.hi(group, vim.tbl_extend("keep", hl, attrs))
       else
         M.hi(group, hl)
       end
