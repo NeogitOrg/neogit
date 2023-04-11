@@ -105,11 +105,6 @@ function Color.from_hex(c)
   )
 end
 
--- ---@return Color
--- function Color:clone()
---   return Color(self.red, self.green, self.blue, self.alpha)
--- end
-
 ---Returns a new shaded color.
 ---@param f number Amount. Float [-1,1].
 ---@return Color
@@ -125,18 +120,6 @@ function Color:shade(f)
   )
 end
 
--- ---Returns a new color that's a linear blend between two colors.
--- ---@param other Color
--- ---@param f number Amount. Float [0,1].
--- function Color:blend(other, f)
---   return Color(
---     (other.red - self.red) * f + self.red,
---     (other.green - self.green) * f + self.green,
---     (other.blue - self.blue) * f + self.blue,
---     self.alpha
---   )
--- end
-
 function Color.test_shade()
   print("-- SHADE TEST -- ")
   local c = Color.from_hex("#98c379")
@@ -146,23 +129,6 @@ function Color.test_shade()
     print(string.format("%-8.1f%s", f, c:shade(f):to_css()))
   end
 end
-
--- function Color.test_blend()
---   print("-- BLEND TEST -- ")
---   local c0 = Color.from_hex("#98c379")
---   local c1 = Color.from_hex("#61afef")
---
---   for i = 0, 10 do
---     local f = (1 / 10) * i
---     print(string.format("%-8.1f%s", f, c0:blend(c1, f):to_css()))
---   end
--- end
-
--- ---Return the RGBA values in a new table.
--- ---@return RGBA
--- function Color:to_rgba()
---   return { red = self.red, green = self.green, blue = self.blue, alpha = self.alpha }
--- end
 
 ---Convert the color to HSV.
 ---@return HSV
@@ -319,68 +285,6 @@ function Color:set_lightness(v)
   self._blue = c.blue
   return self
 end
-
--- ---Copy the values from another color.
--- ---@param c Color
--- function Color:set_from_color(c)
---   self._red = c.red
---   self._green = c.green
---   self._blue = c.blue
---   self._alpha = c.alpha
--- end
-
--- ---@param x RGBA|number[]|number Either an RGBA struct, or a vector, or the value for red.
--- ---@param g number (Optional) Green. Float [0,1].
--- ---@param b number (Optional) Blue. Float [0,1].
--- ---@param a number (Optional) Alpha. Float [0,1].
--- function Color:set_from_rgba(x, g, b, a)
---   if type(x) == "number" then
---     self.red = x
---     self.green = g
---     self.blue = b
---     self.alpha = a or self.alpha
---   elseif type(x.red) == "number" then
---     self.red = x.red
---     self.green = x.green
---     self.blue = x.blue
---     self.alpha = x.alpha
---   else
---     self.red = x[1]
---     self.green = x[2]
---     self.blue = x[3]
---     self.alpha = x[4] or self.alpha
---   end
--- end
-
--- ---@param x HSV|number[]|number Either an HSV struct, or a vector, or the value for hue.
--- ---@param s number (Optional) Saturation. Float [0,1].
--- ---@param v number (Optional) Value Float [0,1].
--- function Color:set_from_hsv(x, s, v)
---   local c
---   if type(x) == "number" then
---     c = Color.from_hsv(x, s, v, self.alpha)
---   elseif type(x.hue) == "number" then
---     c = Color.from_hsv(x.hue, x.saturation, x.value, self.alpha)
---   else
---     c = Color.from_hsv(x[1], x[2], x[3], self.alpha)
---   end
---   self:set_from_color(c)
--- end
-
--- ---@param x HSL|number[]|number Either an HSL struct, or a vector, or the value for hue.
--- ---@param s number (Optional) Saturation. Float [0,1].
--- ---@param l number (Optional) Lightness. Float [0,1].
--- function Color:set_from_hsl(x, s, l)
---   local c
---   if type(x) == "number" then
---     c = Color.from_hsl(x, s, l, self.alpha)
---   elseif type(x.hue) == "number" then
---     c = Color.from_hsl(x.hue, x.saturation, x.lightness, self.alpha)
---   else
---     c = Color.from_hsl(x[1], x[2], x[3], self.alpha)
---   end
---   self:set_from_color(c)
--- end
 
 do
   local getters = {
