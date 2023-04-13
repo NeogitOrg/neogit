@@ -2,9 +2,8 @@ local pickers = require("telescope.pickers")
 local finders = require("telescope.finders")
 local sorters = require("telescope.sorters")
 local actions = require("telescope.actions")
--- local action_state = require "telescope.actions.state"
 
-local function mappings(select_action)
+local function mappings(select_action, allow_multi)
   return function(_, map)
     map({ "i" }, "<cr>", select_action)
     map({ "i" }, "<C-c>", actions.close)
@@ -14,6 +13,11 @@ local function mappings(select_action)
     map({ "i" }, "<down>", actions.move_selection_next)
     map({ "i" }, "<up>", actions.move_selection_previous)
     map({ "i" }, "<C-j>", actions.nop)
+
+    if allow_multi then
+      map({ "i" }, "<tab>", actions.toggle_selection + actions.move_selection_worse)
+      map({ "i" }, "<s-tab>", actions.toggle_selection + actions.move_selection_better)
+    end
 
     return false
   end
@@ -26,6 +30,7 @@ local function default_opts()
       prompt_position = "top",
       preview_cutoff = vim.fn.winwidth(0),
     },
+    allow_multi = false,
     border = false,
     prompt_prefix = " > ",
     previewer = false,
@@ -79,7 +84,7 @@ function Finder:find()
   pickers.new(self.opts, {
     finder = finders.new_table { results = self.entries },
     sorter = sorters.fuzzy_with_index_bias(),
-    attach_mappings = mappings(self.select_action),
+    attach_mappings = mappings(self.select_action, self.opts.allow_multi),
   }):find()
 end
 

@@ -16,11 +16,12 @@ end
 ---@field list table list of items to search
 ---@field action function action dispatched by line selection
 ---@field buffer Buffer
+---@field open_sync function
 ---@field open function
 
 ---Creates a new FuzzyFinderBuffer
 ---@param list table
----@param action function
+---@param action function|nil Action is not required if calling :open_sync()
 ---@return FuzzyFinderBuffer
 function M.new(list, action)
   local instance = {
@@ -34,19 +35,42 @@ function M.new(list, action)
 end
 
 function M:open(opts)
+  opts = opts or {
+    allow_multi = false,
+    layout_config = { height = buffer_height(#self.list) }
+  }
+
+  -- TODO: Look up how telescope does this
   local select_action = function(prompt_bufnr)
-    local selection = action_state.get_selected_entry()
-    if not selection then
+    if not self.action then
+      actions.close(prompt_bufnr)
       return
     end
 
+    local selection = {}
+
+    -- If the Finder doesn't have multi-select enabled, get_multi_selection() will be empty
+    local current_picker = action_state.get_current_picker(prompt_bufnr)
+    for _, item in ipairs(current_picker:get_multi_selection()) do
+      table.insert(selection, item[1])
+    end
+
+    -- Not multi-selection, or nothing selected
+    if not selection[1] then
+      table.insert(selection, action_state.get_selected_entry()[1])
+      if selection[1] == "" then
+        return
+      end
+    end
+
     actions.close(prompt_bufnr)
-    if self.action and selection[1] ~= "" then
+
+    if opts.allow_multi then
+      self.action(selection)
+    else
       self.action(selection[1])
     end
   end
-
-  opts = opts or { layout_config = { height = buffer_height(#self.list) } }
 
   Finder.create(opts)
     :add_entries(self.list)
