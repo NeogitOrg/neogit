@@ -130,7 +130,11 @@ function M:update_component(id, highlight, value)
   assert(component, "Component not found! Cannot update.")
 
   if highlight then
-    component.options.highlight = highlight
+    if component.options.highlight then
+      component.options.highlight = highlight
+    else
+      component.children[1].options.highlight = highlight
+    end
   end
 
   if value then
