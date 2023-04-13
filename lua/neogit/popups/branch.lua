@@ -9,16 +9,16 @@ local input = require("neogit.lib.input")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
--- local function format_branches(list)
---   local branches = {}
---   for _, name in ipairs(list) do
---     local name_formatted = name:match("^remotes/(.*)") or name
---     if not name_formatted:match("^(.*)/HEAD") then
---       table.insert(branches, name_formatted)
---     end
---   end
---   return branches
--- end
+local function format_branches(list)
+  local branches = {}
+  for _, name in ipairs(list) do
+    local name_formatted = name:match("^remotes/(.*)") or name
+    if not name_formatted:match("^(.*)/HEAD") then
+      table.insert(branches, name_formatted)
+    end
+  end
+  return branches
+end
 
 local function parse_remote_branch_name(remote_name)
   local offset = remote_name:find("/")
@@ -70,7 +70,7 @@ function M.create()
       "b",
       "branch/revision",
       operation("checkout_branch", function()
-        local selected_branch = FuzzyFinderBuffer.new(branch.get_all_branches()):open_sync()
+        local selected_branch = FuzzyFinderBuffer.new(format_branches(branch.get_all_branches())):open_sync()
         cli.checkout.branch(selected_branch).call()
         status.dispatch_refresh(true)
       end)
@@ -79,7 +79,7 @@ function M.create()
       "l",
       "local branch",
       operation("checkout_local-branch", function()
-        local selected_branch = FuzzyFinderBuffer.new(branch.get_local_branches()):open_sync()
+        local selected_branch = FuzzyFinderBuffer.new(format_branches(branch.get_local_branches())):open_sync()
         cli.checkout.branch(selected_branch).call()
         status.dispatch_refresh(true)
       end)
@@ -89,7 +89,7 @@ function M.create()
       "c",
       "new branch",
       operation("checkout_create-branch", function()
-        local branches = branch.get_all_branches(false)
+        local branches = format_branches(branch.get_all_branches(false))
         local current_branch = branch.current()
         if current_branch then
           table.insert(branches, 1, current_branch)
@@ -140,9 +140,8 @@ function M.create()
       "m",
       "rename",
       operation("rename_branch", function()
-        local branches = branch.get_local_branches(false)
-
         local current_branch = branch.current()
+        local branches = branch.get_local_branches(false)
         if current_branch then
           table.insert(branches, 1, current_branch)
         end
