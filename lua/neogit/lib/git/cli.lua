@@ -106,6 +106,7 @@ local configurations = {
     flags = {
       apply = "apply",
       drop = "drop",
+      push = "push",
       index = "--index",
     },
   },

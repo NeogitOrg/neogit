@@ -86,6 +86,10 @@ return {
     return perform_stash { worktree = false, index = true }
   end,
 
+  push = function(args, files)
+    cli.stash.push.arg_list(args).files(table.concat(files, " ")).call()
+  end,
+
   pop = function(stash)
     local result = cli.stash.apply.index.args(stash).show_popup(false).call():trim()
 
