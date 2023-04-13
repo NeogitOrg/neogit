@@ -97,16 +97,15 @@ function M.create()
           table.insert(branches, 1, current_branch)
         end
 
-        FuzzyFinderBuffer.new(branches, function(selected_branch)
-          local name = input.get_user_input("branch > ")
-          if not name or name == "" then
-            return
-          end
+        local name = input.get_user_input("branch > ")
+        if not name or name == "" then
+          return
+        end
+        name, _ = name:gsub("%s", "-")
 
-          name, _ = name:gsub("%s", "-")
-          cli.checkout.new_branch_with_start_point(name, selected_branch).call_sync():trim()
-          status.dispatch_refresh(true)
-        end):open()
+        local base_branch = FuzzyFinderBuffer.new(branches):open_sync({ prompt_prefix = " base branch > " })
+        cli.checkout.new_branch_with_start_point(name, base_branch).call_sync():trim()
+        status.refresh(true, "branch_create")
       end)
     )
     :action(
