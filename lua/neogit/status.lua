@@ -437,13 +437,12 @@ local function refresh(which, reason)
         M.repo:update_cherry_pick_status()
       end)
     end
-    if which == true or which.rebase then
+    if which == true or which.merge then
       table.insert(refreshes, function()
         logger.debug("[STATUS BUFFER]: Refreshing merge information")
         M.repo:update_merge_status()
       end)
     end
-
     if which == true or which.stashes then
       table.insert(refreshes, function()
         logger.debug("[STATUS BUFFER]: Refreshing stash")
