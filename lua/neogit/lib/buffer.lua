@@ -148,6 +148,16 @@ function Buffer:show()
   local win
   local kind = self.kind
 
+  if kind == "auto" then
+    if vim.o.columns / 2 > 100 then
+      kind = "vsplit"
+      self.kind = "vsplit"
+    else
+      kind = "split"
+      self.kind = "split"
+    end
+  end
+
   if kind == "replace" then
     self.old_buf = api.nvim_get_current_buf()
     api.nvim_set_current_buf(self.handle)
@@ -155,7 +165,6 @@ function Buffer:show()
   elseif kind == "tab" then
     vim.cmd("tab split")
     api.nvim_set_current_buf(self.handle)
-
     win = api.nvim_get_current_win()
   elseif kind == "split" then
     vim.cmd("below split")
