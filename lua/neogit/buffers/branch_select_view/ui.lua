@@ -7,8 +7,19 @@ local map = util.map
 
 local M = {}
 
+local function format_branches(list)
+  local branches = {}
+  for _, name in ipairs(list) do
+    local name_formatted = name:match("^remotes/(.*)") or name
+    if not name_formatted:match("^(.*)/HEAD") then
+      table.insert(branches, name_formatted)
+    end
+  end
+  return branches
+end
+
 function M.View(branches)
-  return map(branches, function(branch_name)
+  return map(format_branches(branches), function(branch_name)
     return row {
       text(branch_name),
     }

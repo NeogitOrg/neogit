@@ -119,6 +119,13 @@ local configurations = {
     },
   },
 
+  merge = config {
+    flags = {
+      continue = "--continue",
+      abort = "--abort",
+    },
+  },
+
   reset = config {
     flags = {
       hard = "--hard",

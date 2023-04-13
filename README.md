@@ -10,7 +10,7 @@ A **work-in-progress** [Magit](https://magit.vc) clone for [Neovim](https://neov
 require `nvim-lua/plenary.nvim` and `nvim-telescope/telescope.nvim` using your plugin manager of choice, before requiring this plugin.
 
 | Plugin Manager                                       | Command                                                                        |
-|------------------------------------------------------|--------------------------------------------------------------------------------|
+| ---------------------------------------------------- | ------------------------------------------------------------------------------ |
 | [Packer](https://github.com/wbthomason/packer.nvim)  | `use { 'TimUntersberger/neogit', requires = 'nvim-lua/plenary.nvim' }`         |
 | [Vim-plug](https://github.com/junegunn/vim-plug)     | `Plug 'TimUntersberger/neogit'`                                                |
 | [NeoBundle](https://github.com/Shougo/neobundle.vim) | `NeoBundle 'TimUntersberger/neogit'`                                           |
@@ -20,6 +20,7 @@ require `nvim-lua/plenary.nvim` and `nvim-telescope/telescope.nvim` using your p
 | [Dep](https://github.com/chiyadev/dep)               | `{'TimUntersberger/neogit', requires = {'nvim-lua/plenary.nvim'}}`             |
 
 You also use in the built-in package manager:
+
 ```bash
 $ git clone --depth 1 https://github.com/TimUntersberger/neogit $XDG_CONFIG_HOME/nvim/pack/plugins/start/neogit
 ```
@@ -63,12 +64,12 @@ neogit.open({ cwd = "~" })
 
 The create function takes 1 optional argument that can be one of the following values:
 
-* tab (default)
-* replace
-* floating (This currently doesn't work with popups. Very unstable)
-* split
-* split_above
-* vsplit
+- tab (default)
+- replace
+- floating (This currently doesn't work with popups. Very unstable)
+- split
+- split_above
+- vsplit
 
 ## Status Keybindings
 
@@ -85,6 +86,7 @@ The create function takes 1 optional argument that can be one of the following v
 | U            | Unstage staged changes                           |
 | c            | Open commit popup                                |
 | r            | Open rebase popup                                |
+| m            | Open merge popup                                 |
 | L            | Open log popup                                   |
 | f            | Open fetch popup                                 |
 | p            | Open pull popup                                  |
@@ -99,10 +101,10 @@ The create function takes 1 optional argument that can be one of the following v
 
 With `diffview` integration enabled
 
-| Keybinding   | Function                                         |
-|--------------|--------------------------------------------------|
-| d            | Open `diffview.nvim` at hovered file             |
-| D (TODO)     | Open diff popup                                  |
+| Keybinding | Function                             |
+| ---------- | ------------------------------------ |
+| d          | Open `diffview.nvim` at hovered file |
+| D (TODO)   | Open diff popup                      |
 
 ## Configuration
 
@@ -240,6 +242,7 @@ List of status commands:
 * LogPopup
 * StashPopup
 * BranchPopup
+* MergePopup
 * CherryPickPopup (Normal and visual mode)
 
 ## Notification Highlighting
@@ -274,6 +277,7 @@ You can override them to fit your colorscheme by creating a `syntax/NeogitStatus
 Set `disable_context_highlighting = true` in your call to [`setup`](#configuration) to disable context highlighting altogether.
 
 ## Disabling Hint
+
 Set `disable_hint = true` in your call to [`setup`](#configuration) to hide hints on top of the panel.
 
 ## Disabling Commit Confirmation

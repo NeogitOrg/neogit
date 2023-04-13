@@ -9,16 +9,16 @@ local input = require("neogit.lib.input")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
-local function format_branches(list)
-  local branches = {}
-  for _, name in ipairs(list) do
-    local name_formatted = name:match("^remotes/(.*)") or name
-    if not name_formatted:match("^(.*)/HEAD") then
-      table.insert(branches, name_formatted)
-    end
-  end
-  return branches
-end
+-- local function format_branches(list)
+--   local branches = {}
+--   for _, name in ipairs(list) do
+--     local name_formatted = name:match("^remotes/(.*)") or name
+--     if not name_formatted:match("^(.*)/HEAD") then
+--       table.insert(branches, name_formatted)
+--     end
+--   end
+--   return branches
+-- end
 
 local function parse_remote_branch_name(remote_name)
   local offset = remote_name:find("/")
@@ -70,20 +70,18 @@ function M.create()
       "b",
       "branch/revision",
       operation("checkout_branch", function()
-        FuzzyFinderBuffer.new(format_branches(branch.get_all_branches()), function(selected_branch)
-          cli.checkout.branch(selected_branch).call_sync():trim()
-          status.dispatch_refresh(true)
-        end):open()
+        local selected_branch = FuzzyFinderBuffer.new(branch.get_all_branches()):open_sync()
+        cli.checkout.branch(selected_branch).call()
+        status.dispatch_refresh(true)
       end)
     )
     :action(
       "l",
       "local branch",
       operation("checkout_local-branch", function()
-        FuzzyFinderBuffer.new(branch.get_local_branches(), function(selected_branch)
-          cli.checkout.branch(selected_branch).call_sync():trim()
-          status.dispatch_refresh(true)
-        end):open()
+        local selected_branch = FuzzyFinderBuffer.new(branch.get_local_branches()):open_sync()
+        cli.checkout.branch(selected_branch).call()
+        status.dispatch_refresh(true)
       end)
     )
     :new_action_group()
@@ -91,7 +89,7 @@ function M.create()
       "c",
       "new branch",
       operation("checkout_create-branch", function()
-        local branches = format_branches(branch.get_all_branches(false))
+        local branches = branch.get_all_branches(false)
         local current_branch = branch.current()
         if current_branch then
           table.insert(branches, 1, current_branch)
@@ -142,64 +140,28 @@ function M.create()
       "m",
       "rename",
       operation("rename_branch", function()
+        local branches = branch.get_local_branches(false)
+
         local current_branch = branch.current()
-        local branches = branch.get_local_branches()
         if current_branch then
           table.insert(branches, 1, current_branch)
         end
 
-        FuzzyFinderBuffer.new(branches, function(selected_branch)
-          local new_name = input.get_user_input("new branch name > ")
-          if not new_name or new_name == "" then
-            return
-          end
+        local selected_branch = FuzzyFinderBuffer.new(branches):open_sync()
 
-          new_name, _ = new_name:gsub("%s", "-")
-          cli.branch.move.args(selected_branch, new_name).call_sync():trim()
-          status.dispatch_refresh(true)
-        end):open()
+        local new_name = input.get_user_input("new branch name > ")
+        new_name, _ = new_name:gsub("%s", "-")
+
+        cli.branch.move.args(selected_branch, new_name).call()
+        status.dispatch_refresh(true)
       end)
     )
     :action("X", "reset", false)
-    -- :action(
-    --   "d",
-    --   "delete local branch",
-    --   operation("delete_branch", function()
-    --     local branches = branch.get_local_branches()
-    --
-    --     BranchSelectViewBuffer.new(branches, function(selected_branch)
-    --       cli.branch.delete.name(selected_branch).call_sync():trim()
-    --       status.dispatch_refresh(true)
-    --     end):open()
-    --   end)
-    -- )
-    -- :action(
-    --   "D",
-    --   "delete local branch and remote",
-    --   operation("delete_branch", function()
-    --     local branches = format_branches(branch.get_remote_branches())
-    --
-    --     BranchSelectViewBuffer.new(branches, function(selected_branch)
-    --       if selected_branch == "" then
-    --         return
-    --       end
-    --
-    --       local remote, branch_name = parse_remote_branch_name(selected_branch)
-    --       if not remote or not branch_name then
-    --         return
-    --       end
-    --
-    --       cli.branch.delete.name(branch_name).call_sync():trim()
-    --       cli.push.remote(remote).delete.to(branch_name).call_sync():trim()
-    --       status.dispatch_refresh(true)
-    --     end):open()
-    --   end)
-    -- )
     :action(
       "D",
       "delete",
       operation("delete_branch", function()
-        local branches = format_branches(branch.get_remote_branches())
+        local branches = branch.get_remote_branches()
         FuzzyFinderBuffer.new(branches, function(selected_branch)
           local remote, branch_name = parse_remote_branch_name(selected_branch)
           if not branch_name then
