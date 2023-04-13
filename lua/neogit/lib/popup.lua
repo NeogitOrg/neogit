@@ -150,6 +150,8 @@ function M:update_component(id, highlight, value)
       for _, text in ipairs(value) do
         table.insert(component.children, text)
       end
+    else
+      print("Unhandled component value type! (" .. type(value) .. ")")
     end
   end
 
