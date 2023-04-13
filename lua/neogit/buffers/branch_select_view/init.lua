@@ -10,12 +10,10 @@ local M = {}
 -- @see Buffer
 --
 --- Creates a new BranchSelectViewBuffer
--- @param branches
--- @param action
+---@param branches string[]
 -- @return BranchSelectViewBuffer
-function M.new(branches, action)
+function M.new(branches)
   local instance = {
-    action = action,
     branches = branches,
     buffer = nil,
   }
@@ -30,7 +28,8 @@ function M:close()
   self.buffer = nil
 end
 
-function M:open()
+---@param action fun(branch: string|nil)
+function M:open(action)
   self.buffer = Buffer.create {
     name = "NeogitBranchSelectView",
     filetype = "NeogitBranchSelectView",
@@ -40,9 +39,11 @@ function M:open()
         ["<enter>"] = function(buffer)
           local current_line = buffer:get_current_line()
           local branch_name = current_line[1]
-          if self.action then
-            self.action(branch_name)
+
+          if action then
+            action(branch_name)
           end
+
           self:close()
         end,
       },
@@ -52,5 +53,10 @@ function M:open()
     end,
   }
 end
+
+local a = require("plenary.async")
+
+---@type fun(self): string|nil
+M.open_async = a.wrap(M.open, 2)
 
 return M

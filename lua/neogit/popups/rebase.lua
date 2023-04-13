@@ -41,7 +41,8 @@ function M.create()
       "e",
       "Rebase onto elsewhere",
       a.void(function(popup)
-        local branch = git.branch.prompt_for_branch(git.branch.get_all_branches())
+        local BranchSelectViewBuffer = require("neogit.buffers.branch_select_view")
+        local branch = BranchSelectViewBuffer.new(git.branch.get_all_branches()):open_async()
         rebase.rebase_onto(branch, popup:get_arguments())
         a.util.scheduler()
         status.refresh(true, "rebase_elsewhere")

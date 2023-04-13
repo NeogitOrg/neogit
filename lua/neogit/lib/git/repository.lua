@@ -4,7 +4,7 @@ local meta = {
   __index = {},
 }
 
-local modules = { "status", "diff", "stash", "pull", "push", "log", "rebase" }
+local modules = { "status", "diff", "stash", "pull", "push", "log", "rebase", "merge" }
 for _, m in ipairs(modules) do
   require("neogit.lib.git." .. m).register(meta.__index)
 end
@@ -46,6 +46,11 @@ M.create = function(_path)
     rebase = {
       items = {},
       head = "",
+    },
+    merge = {
+      items = {},
+      head = nil,
+      msg = nil,
     },
   }
 

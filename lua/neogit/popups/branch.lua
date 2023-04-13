@@ -7,17 +7,6 @@ local operation = require("neogit.operations")
 local BranchSelectViewBuffer = require("neogit.buffers.branch_select_view")
 local input = require("neogit.lib.input")
 
-local function format_branches(list)
-  local branches = {}
-  for _, name in ipairs(list) do
-    local name_formatted = name:match("^remotes/(.*)") or name
-    if not name_formatted:match("^(.*)/HEAD") then
-      table.insert(branches, name_formatted)
-    end
-  end
-  return branches
-end
-
 local function parse_remote_branch_name(remote_name)
   local offset = remote_name:find("/")
   if not offset then
@@ -46,15 +35,14 @@ function M.create()
       "b",
       "checkout branch/revision",
       operation("checkout_branch", function()
-        local branches = format_branches(branch.get_all_branches())
-        BranchSelectViewBuffer.new(branches, function(selected_branch)
-          if selected_branch == "" then
-            return
-          end
+        local branches = (branch.get_all_branches())
+        local branch = BranchSelectViewBuffer.new(branches):open_async()
+        if not branch then
+          return
+        end
 
-          cli.checkout.branch(selected_branch).call_sync():trim()
-          status.dispatch_refresh(true)
-        end):open()
+        cli.checkout.branch(branch).call():trim()
+        status.dispatch_refresh(true)
       end)
     )
     :action(
@@ -62,31 +50,32 @@ function M.create()
       "delete local branch",
       operation("delete_branch", function()
         local branches = branch.get_local_branches()
-        BranchSelectViewBuffer.new(branches, function(selected_branch)
-          cli.branch.delete.name(selected_branch).call_sync():trim()
-          status.dispatch_refresh(true)
-        end):open()
+        local branch = BranchSelectViewBuffer.new(branches):open_async()
+        if not branch then
+          return
+        end
+        cli.branch.delete.name(branch).call():trim()
+        status.dispatch_refresh(true)
       end)
     )
     :action(
       "D",
       "delete local branch and remote",
       operation("delete_branch", function()
-        local branches = format_branches(branch.get_remote_branches())
-        BranchSelectViewBuffer.new(branches, function(selected_branch)
-          if selected_branch == "" then
-            return
-          end
+        local branches = (branch.get_remote_branches())
+        local branch = BranchSelectViewBuffer.new(branches):open_async()
+        if not branch then
+          return
+        end
 
-          local remote, branch_name = parse_remote_branch_name(selected_branch)
-          if not remote or not branch_name then
-            return
-          end
+        local remote, branch_name = parse_remote_branch_name(branch)
+        if not remote or not branch_name then
+          return
+        end
 
-          cli.branch.delete.name(branch_name).call_sync():trim()
-          cli.push.remote(remote).delete.to(branch_name).call_sync():trim()
-          status.dispatch_refresh(true)
-        end):open()
+        cli.branch.delete.name(branch_name).call_sync():trim()
+        cli.push.remote(remote).delete.to(branch_name).call():trim()
+        status.dispatch_refresh(true)
       end)
     )
     :action(
@@ -94,38 +83,37 @@ function M.create()
       "checkout local branch",
       operation("checkout_local-branch", function()
         local branches = branch.get_local_branches()
-        BranchSelectViewBuffer.new(branches, function(selected_branch)
-          if selected_branch == "" then
-            return
-          end
-          cli.checkout.branch(selected_branch).call_sync():trim()
-          status.dispatch_refresh(true)
-        end):open()
+        local branch = BranchSelectViewBuffer.new(branches):open_async()
+        if not branch then
+          return
+        end
+
+        cli.checkout.branch(branch).call():trim()
+        status.dispatch_refresh(true)
       end)
     )
     :action(
       "c",
       "checkout new branch",
       operation("checkout_create-branch", function()
-        local branches = format_branches(branch.get_all_branches(true))
+        local branches = branch.get_all_branches(true)
         local current_branch = branch.current()
         if current_branch then
           table.insert(branches, 1, current_branch)
         end
 
-        BranchSelectViewBuffer.new(branches, function(selected_branch)
-          if selected_branch == "" then
-            return
-          end
+        local branch = BranchSelectViewBuffer.new(branches):open_async()
+        if not branch then
+          return
+        end
 
-          local name = input.get_user_input("branch > ")
-          if not name or name == "" then
-            return
-          end
+        local name = input.get_user_input("branch > ")
+        if not name or name == "" then
+          return
+        end
 
-          cli.checkout.new_branch_with_start_point(name, selected_branch).call_sync():trim()
-          status.dispatch_refresh(true)
-        end):open()
+        cli.checkout.new_branch_with_start_point(name, branch).call():trim()
+        status.dispatch_refresh(true)
       end)
     )
     :action(
@@ -138,19 +126,18 @@ function M.create()
           table.insert(branches, 1, current_branch)
         end
 
-        BranchSelectViewBuffer.new(branches, function(selected_branch)
-          if selected_branch == "" then
-            return
-          end
+        local branch = BranchSelectViewBuffer.new(branches):open_async()
+        if not branch then
+          return
+        end
 
-          local new_name = input.get_user_input("new branch name > ")
-          if not new_name or new_name == "" then
-            return
-          end
+        local new_name = input.get_user_input("new branch name > ")
+        if not new_name or new_name == "" then
+          return
+        end
 
-          cli.branch.move.args(selected_branch, new_name).call_sync():trim()
-          status.dispatch_refresh(true)
-        end):open()
+        cli.branch.move.args(branch, new_name).call():trim()
+        status.dispatch_refresh(true)
       end)
     )
     :build()

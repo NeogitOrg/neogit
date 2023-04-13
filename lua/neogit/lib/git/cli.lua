@@ -98,6 +98,12 @@ local configurations = {
       skip = "--skip",
     },
   },
+  merge = config {
+    flags = {
+      continue = "--continue",
+      abort = "--abort",
+    },
+  },
   reset = config {
     flags = {
       hard = "--hard",
