@@ -159,25 +159,6 @@ function M.make_palette()
   }
 end
 
-function M.PRINT()
-  local palette = {}
-
-  for name, value in pairs(M.make_palette()) do
-    local reference = Colors[name]
-    local match = (reference and string.lower(reference) == string.lower(value)) and "" or " !!"
-    table.insert(
-      palette,
-      name .. string.rep(" ", 15 - #name) .. value .. "|" .. (reference or "-") .. match
-    )
-  end
-
-  vim.api.nvim_buf_set_lines(0, 0, -1, false, palette)
-  vim.api.nvim_buf_call(0, function()
-    vim.cmd("ColorizerAttachToBuffer")
-    vim.cmd("setl nospell")
-  end)
-end
-
 function M.setup()
   if did_setup then
     return
