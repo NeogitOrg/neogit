@@ -26,6 +26,7 @@ function M.create()
         a.util.scheduler()
         status.refresh(true, "merge_continue")
       end)
+      :build()
   else
     p:switch("f", "ff-only", "Fast-forward only", false)
       :switch("n", "no-ff", "No fast-forward", false)
@@ -53,9 +54,10 @@ function M.create()
       :action("p", "Preview merge")
       :action("s", "Squash merge")
       :action("i", "Dissolve")
+      :build()
   end
 
-  p:build():show()
+  p:show()
 
   return p
 end
