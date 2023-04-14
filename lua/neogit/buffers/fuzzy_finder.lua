@@ -40,27 +40,20 @@ function M:open(opts)
     layout_config = { height = buffer_height(#self.list) }
   }
 
-  -- TODO: Look up how telescope does this
   local select_action = function(prompt_bufnr)
-    if not self.action then
-      actions.close(prompt_bufnr)
-      return
-    end
-
     local selection = {}
 
-    -- If the Finder doesn't have multi-select enabled, get_multi_selection() will be empty
-    local current_picker = action_state.get_current_picker(prompt_bufnr)
-    for _, item in ipairs(current_picker:get_multi_selection()) do
-      table.insert(selection, item[1])
+    local picker = action_state.get_current_picker(prompt_bufnr)
+    if #picker:get_multi_selection() > 0 then
+      for _, item in ipairs(picker:get_multi_selection()) do
+        table.insert(selection, item[1])
+      end
+    else
+      table.insert(selection, action_state.get_selected_entry()[1])
     end
 
-    -- Not multi-selection, or nothing selected
-    if not selection[1] then
-      table.insert(selection, action_state.get_selected_entry()[1])
-      if selection[1] == "" then
-        return
-      end
+    if not selection[1] or selection[1] == "" then
+      return
     end
 
     actions.close(prompt_bufnr)
