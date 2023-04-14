@@ -87,7 +87,7 @@ return {
   end,
 
   push = function(args, files)
-    cli.stash.push.arg_list(args).files(table.concat(files, " ")).call()
+    cli.stash.push.arg_list(args).files(unpack(files)).call()
   end,
 
   pop = function(stash)
