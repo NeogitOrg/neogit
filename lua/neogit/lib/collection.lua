@@ -68,6 +68,19 @@ function M.find(tbl, func)
   return nil
 end
 
+function M.partition(tbl, max)
+  local res = { {} }
+  local i = 1
+  for j, item in ipairs(tbl) do
+    if j % max == 0 then
+      table.insert(res, {})
+      i = i + 1
+    end
+    table.insert(res[i], item)
+  end
+  return res
+end
+
 return setmetatable(M, {
   __call = function(_, tbl)
     return M.new(tbl)
