@@ -92,14 +92,14 @@ function M.create()
           return
         end
 
-        FuzzyFinderBuffer.new(all_files, function(filepath)
-          if filepath == "" then
-            return
-          end
+        local files = FuzzyFinderBuffer.new(all_files):open_sync({ allow_multi = true })
+        if not files[1] then
+          return
+        end
 
-          git.reset.file(commit.oid, filepath)
-          status.dispatch_refresh(true)
-        end):open()
+        git.reset.file(commit.oid, files)
+        a.util.scheduler()
+        status.refresh(true)
       end
     )
     :build()

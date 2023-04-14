@@ -10,6 +10,8 @@ function M.mixed(commit)
   local result = cli.reset.mixed.args(commit).call()
   if result.code ~= 0 then
     notif.create("Reset Failed", vim.log.levels.ERROR)
+  else
+    notif.create("Reset to " .. commit, vim.log.levels.INFO)
   end
 end
 
@@ -19,6 +21,8 @@ function M.soft(commit)
   local result = cli.reset.soft.args(commit).call()
   if result.code ~= 0 then
     notif.create("Reset Failed", vim.log.levels.ERROR)
+  else
+    notif.create("Reset to " .. commit, vim.log.levels.INFO)
   end
 end
 
@@ -28,6 +32,8 @@ function M.hard(commit)
   local result = cli.reset.hard.args(commit).call()
   if result.code ~= 0 then
     notif.create("Reset Failed", vim.log.levels.ERROR)
+  else
+    notif.create("Reset to " .. commit, vim.log.levels.INFO)
   end
 end
 
@@ -37,6 +43,8 @@ function M.keep(commit)
   local result = cli.reset.keep.args(commit).call()
   if result.code ~= 0 then
     notif.create("Reset Failed", vim.log.levels.ERROR)
+  else
+    notif.create("Reset to " .. commit, vim.log.levels.INFO)
   end
 end
 
@@ -46,12 +54,16 @@ end
 -- function M.worktree(commit)
 -- end
 
-function M.file(commit, file)
-  local result = cli.checkout.rev(commit).files(file).call_sync()
+function M.file(commit, files)
+  local result = cli.checkout.rev(commit).files(unpack(files)).call_sync()
   if result.code ~= 0 then
     notif.create("Reset Failed", vim.log.levels.ERROR)
   else
-    notif.create("Reset " .. file, vim.log.levels.info)
+    if #files > 1 then
+      notif.create("Reset " .. #files .. " files", vim.log.levels.info)
+    else
+      notif.create("Reset " .. files[1], vim.log.levels.info)
+    end
   end
 end
 
