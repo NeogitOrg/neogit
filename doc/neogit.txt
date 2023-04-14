@@ -115,6 +115,9 @@ X                       Open reset popup
 
                                                 *neogit_A*
 A                       Open cherry-pick popup
+
+                                                *neogit_m*
+m                       Open merge popup
 ==============================================================================
 4. Highlights                                    *neogit-highlights*
 
