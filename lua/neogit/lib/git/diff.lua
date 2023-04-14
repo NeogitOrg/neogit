@@ -207,8 +207,6 @@ end
 function diff.register(meta)
   meta.load_diffs = function(repo, filter)
     filter = filter or false
-    local executions = {}
-
     if type(filter) == "table" then
       filter = ItemFilter.new(Collection.new(filter):map(function(item)
         local section, file = item:match("^([^:]+):(.*)$")
@@ -220,31 +218,49 @@ function diff.register(meta)
       end))
     end
 
-    for _, f in ipairs(repo.unstaged.items) do
-      if f.mode ~= "D" and f.mode ~= "F" and (not filter or filter:accepts("unstaged", f.name)) then
-        insert(executions, function()
-          local raw_diff = cli.diff.no_ext_diff.files(f.name).call():trim().stdout
-          local raw_stats = cli.diff.no_ext_diff.shortstat.files(f.name).call():trim().stdout
-          f.diff = parse_diff(raw_diff)
-          f.diff.stats = parse_diff_stats(raw_stats)
-        end)
+    -- Execute this amount of git processes at the same time,
+    -- this prevents the to many open files error when the repository has many changes.
+    local max_async_checks = 50
+
+    local unstaged = Collection.new(repo.unstaged.items):partition(max_async_checks)
+    for _, partition in ipairs(unstaged) do
+      local executions = {}
+      for _, f in ipairs(partition) do
+        if f.mode ~= "D" and f.mode ~= "F" and (not filter or filter:accepts("unstaged", f.name)) then
+          insert(executions, function()
+            local raw_diff = cli.diff.no_ext_diff.files(f.name).call():trim().stdout
+            local raw_stats = cli.diff.no_ext_diff.shortstat.files(f.name).call():trim().stdout
+            f.diff = parse_diff(raw_diff)
+            f.diff.stats = parse_diff_stats(raw_stats)
+          end)
+        end
+      end
+
+      -- If executions is an empty array, the join function blocks forever.
+      if #executions > 0 then
+        a.util.join(executions)
       end
     end
 
-    for _, f in ipairs(repo.staged.items) do
-      if f.mode ~= "D" and f.mode ~= "F" and (not filter or filter:accepts("staged", f.name)) then
-        insert(executions, function()
-          local raw_diff = cli.diff.no_ext_diff.cached.files(f.name).call():trim().stdout
-          local raw_stats = cli.diff.no_ext_diff.cached.shortstat.files(f.name).call():trim().stdout
-          f.diff = parse_diff(raw_diff)
-          f.diff.stats = parse_diff_stats(raw_stats)
-        end)
-      end
-    end
+    local staged = Collection.new(repo.staged.items):partition(max_async_checks)
+    for _, partition in ipairs(staged) do
+      local executions = {}
 
-    -- If executions is an empty array, the join function blocks forever.
-    if #executions > 0 then
-      a.util.join(executions)
+      for _, f in ipairs(partition) do
+        if f.mode ~= "D" and f.mode ~= "F" and (not filter or filter:accepts("staged", f.name)) then
+          insert(executions, function()
+            local raw_diff = cli.diff.no_ext_diff.cached.files(f.name).call():trim().stdout
+            local raw_stats = cli.diff.no_ext_diff.cached.shortstat.files(f.name).call():trim().stdout
+            f.diff = parse_diff(raw_diff)
+            f.diff.stats = parse_diff_stats(raw_stats)
+          end)
+        end
+      end
+
+      -- If executions is an empty array, the join function blocks forever.
+      if #executions > 0 then
+        a.util.join(executions)
+      end
     end
   end
 end
