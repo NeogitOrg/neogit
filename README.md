@@ -64,12 +64,13 @@ neogit.open({ cwd = "~" })
 
 The create function takes 1 optional argument that can be one of the following values:
 
-- tab (default)
-- replace
-- floating (This currently doesn't work with popups. Very unstable)
-- split
-- split_above
-- vsplit
+- `tab` (default)
+- `replace`
+- `floating` (This currently doesn't work with popups. Very unstable)
+- `split`
+- `split_above`
+- `vsplit`
+- `auto` (vsplit if window would have 80 cols, otherwise split)
 
 ## Status Keybindings
 

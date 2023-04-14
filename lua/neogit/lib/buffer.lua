@@ -145,18 +145,16 @@ function Buffer:show()
     return windows[1]
   end
 
-  local win
-  local kind = self.kind
-
-  if kind == "auto" then
-    if vim.o.columns / 2 > 100 then
-      kind = "vsplit"
-      self.kind = "vsplit"
-    else
-      kind = "split"
+  if self.kind == "auto" then
+    if vim.o.columns / 2 < 80 then
       self.kind = "split"
+    else
+      self.kind = "vsplit"
     end
   end
+
+  local win
+  local kind = self.kind
 
   if kind == "replace" then
     self.old_buf = api.nvim_get_current_buf()
