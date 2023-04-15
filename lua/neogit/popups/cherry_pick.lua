@@ -39,62 +39,50 @@ function M.create(env)
     -- :option("s", "strategy", "", "Strategy")
     -- :option("S", "gpg-sign", "", "Sign using gpg")
     :group_heading_if(not pick_or_revert_in_progress(status), "Apply here")
-    :action_if(
-      not pick_or_revert_in_progress(status),
-      "A",
-      "Pick",
-      function(popup)
-        local commits
-        if popup.state.env.commits then
-          commits = util.filter_map(popup.state.env.commits, function(item)
-            return item.oid
-          end)
-        else
-          commits = { CommitSelectViewBuffer.new(log.list_extended()):open_async() }
-        end
-
-        if not commits or not commits[1] then
-          return
-        end
-
-        cherry_pick.pick(commits, popup:get_arguments())
-
-        a.util.scheduler()
-        status.refresh(true, "cherry_pick_pick")
+    :action_if(not pick_or_revert_in_progress(status), "A", "Pick", function(popup)
+      local commits
+      if popup.state.env.commits then
+        commits = util.filter_map(popup.state.env.commits, function(item)
+          return item.oid
+        end)
+      else
+        commits = { CommitSelectViewBuffer.new(log.list_extended()):open_async() }
       end
-    )
-    :action_if(
-      not pick_or_revert_in_progress(status),
-      "a",
-      "Apply",
-      function(popup)
-        local commits
-        if popup.state.env.commits then
-          commits = util.filter_map(popup.state.env.commits, function(item)
-            return item.oid
-          end)
-        else
-          commits = { CommitSelectViewBuffer.new(log.list_extended()):open_async() }
-        end
 
-        if not commits or not commits[1] then
-          return
-        end
-
-        cherry_pick.apply(commits, popup:get_arguments())
-
-        a.util.scheduler()
-        status.refresh(true, "cherry_pick_apply")
+      if not commits or not commits[1] then
+        return
       end
-    )
+
+      cherry_pick.pick(commits, popup:get_arguments())
+
+      a.util.scheduler()
+      status.refresh(true, "cherry_pick_pick")
+    end)
+    :action_if(not pick_or_revert_in_progress(status), "a", "Apply", function(popup)
+      local commits
+      if popup.state.env.commits then
+        commits = util.filter_map(popup.state.env.commits, function(item)
+          return item.oid
+        end)
+      else
+        commits = { CommitSelectViewBuffer.new(log.list_extended()):open_async() }
+      end
+
+      if not commits or not commits[1] then
+        return
+      end
+
+      cherry_pick.apply(commits, popup:get_arguments())
+
+      a.util.scheduler()
+      status.refresh(true, "cherry_pick_apply")
+    end)
     :action_if(not pick_or_revert_in_progress(status), "h", "Harvest", false)
     :action_if(not pick_or_revert_in_progress(status), "m", "Squash", false)
-
     :new_action_group_if(not pick_or_revert_in_progress(status), "Apply elsewhere")
     :action_if(not pick_or_revert_in_progress(status), "d", "Donate", false)
     :action_if(not pick_or_revert_in_progress(status), "n", "Spinout", false)
     :action_if(not pick_or_revert_in_progress(status), "s", "Spinoff", false)
-
     :group_heading_if(pick_or_revert_in_progress(status), "Cherry Pick")
     :action_if(pick_or_revert_in_progress(status), "A", "continue", function()
       cherry_pick.continue()

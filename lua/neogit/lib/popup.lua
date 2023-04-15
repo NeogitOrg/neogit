@@ -178,11 +178,9 @@ end
 
 function M:set_config(config)
   if config.options then
-    local options = build_reverse_lookup(
-      map(config.options, function(option)
-        return option.value
-      end)
-    )
+    local options = build_reverse_lookup(map(config.options, function(option)
+      return option.value
+    end))
 
     local index = options[config.value]
     config.value = options[(index + 1)] or options[1]

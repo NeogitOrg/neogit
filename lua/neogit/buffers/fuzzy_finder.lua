@@ -37,7 +37,7 @@ end
 function M:open(opts)
   opts = opts or {
     allow_multi = false,
-    layout_config = { height = buffer_height(#self.list) }
+    layout_config = { height = buffer_height(#self.list) },
   }
 
   local select_action = function(prompt_bufnr)

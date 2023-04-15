@@ -8,24 +8,21 @@ local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 local M = {}
 
 function M.create()
-  local p = popup.builder()
+  local p = popup
+    .builder()
     :name("NeogitRemotePopup")
     :switch("f", "f", "Fetch after add", true)
     :config("u", "remote.origin.url")
     :config("U", "remote.origin.fetch")
     :config("s", "remote.origin.pushurl")
     :config("S", "remote.origin.push")
-    :config(
-      "O",
-      "remote.origin.tagOpt",
-      {
-        options = {
-          { display = "", value = "" },
-          { display = "--no-tags", value = "--no-tags" },
-          { display = "--tags", value = "--tags" },
-        }
-      }
-    )
+    :config("O", "remote.origin.tagOpt", {
+      options = {
+        { display = "", value = "" },
+        { display = "--no-tags", value = "--no-tags" },
+        { display = "--tags", value = "--tags" },
+      },
+    })
     :group_heading("Actions")
     :action("a", "Add", function(popup)
       local name = input.get_user_input("Remote name: ")
@@ -82,9 +79,17 @@ function M.create()
     :action("P", "Prune stale refspecs", false)
     -- https://github.com/magit/magit/blob/main/lisp/magit-remote.el#L159
     -- All of something's refspecs are stale.  replace with [d]efault refspec, [r]emove remote, or [a]abort
-    :action("b", "Update default branch", false)
+    :action(
+      "b",
+      "Update default branch",
+      false
+    )
     -- https://github.com/magit/magit/blob/430a52c4b3f403ba8b0f97b4b67b868298dd60f3/lisp/magit-remote.el#L259
-    :action("z", "Unshallow remote", false)
+    :action(
+      "z",
+      "Unshallow remote",
+      false
+    )
     -- https://github.com/magit/magit/blob/430a52c4b3f403ba8b0f97b4b67b868298dd60f3/lisp/magit-remote.el#L291
     :build()
 

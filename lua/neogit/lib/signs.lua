@@ -3,18 +3,18 @@ local M = {}
 
 local signs = {
   CommitViewDescription = { linehl = "NeogitHunkHeader" },
-  CommitViewHeader      = { linehl = "NeogitCommitViewHeader" },
-  DiffAdd               = { linehl = "NeogitDiffAdd" },
-  DiffAddHighlight      = { linehl = "NeogitDiffAddHighlight" },
-  DiffContext           = { linehl = "NeogitDiffContext" },
-  DiffContextHighlight  = { linehl = "NeogitDiffContextHighlight" },
-  DiffDelete            = { linehl = "NeogitDiffDelete" },
-  DiffDeleteHighlight   = { linehl = "NeogitDiffDeleteHighlight" },
-  DiffHeader            = { linehl = "NeogitDiffHeader" },
-  HunkHeader            = { linehl = "NeogitHunkHeader" },
-  HunkHeaderHighlight   = { linehl = "NeogitHunkHeaderHighlight" },
-  LogViewCursorLine     = { linehl = "NeogitCursorLine" },
-  RebaseDone            = { linehl = "NeogitRebaseDone" },
+  CommitViewHeader = { linehl = "NeogitCommitViewHeader" },
+  DiffAdd = { linehl = "NeogitDiffAdd" },
+  DiffAddHighlight = { linehl = "NeogitDiffAddHighlight" },
+  DiffContext = { linehl = "NeogitDiffContext" },
+  DiffContextHighlight = { linehl = "NeogitDiffContextHighlight" },
+  DiffDelete = { linehl = "NeogitDiffDelete" },
+  DiffDeleteHighlight = { linehl = "NeogitDiffDeleteHighlight" },
+  DiffHeader = { linehl = "NeogitDiffHeader" },
+  HunkHeader = { linehl = "NeogitHunkHeader" },
+  HunkHeaderHighlight = { linehl = "NeogitHunkHeaderHighlight" },
+  LogViewCursorLine = { linehl = "NeogitCursorLine" },
+  RebaseDone = { linehl = "NeogitRebaseDone" },
 }
 
 function M.setup()

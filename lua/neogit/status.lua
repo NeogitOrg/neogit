@@ -732,7 +732,9 @@ end
 
 local stage_selection = function()
   if selection_spans_multiple_items_within_section() then
-    git.status.stage(unpack(map(get_selected_commits(), function(item) return item.name end)))
+    git.status.stage(unpack(map(get_selected_commits(), function(item)
+      return item.name
+    end)))
   else
     local section, item, hunk, from, to = get_selection()
     if section and from then
@@ -744,7 +746,9 @@ end
 
 local unstage_selection = function()
   if selection_spans_multiple_items_within_section() then
-    git.status.unstage(unpack(map(get_selected_commits(), function(item) return item.name end)))
+    git.status.unstage(unpack(map(get_selected_commits(), function(item)
+      return item.name
+    end)))
   else
     local section, item, hunk, from, to = get_selection()
     if section and from then
@@ -854,7 +858,9 @@ end
 ---@param files table
 ---@param section string
 local function discard_selected_files(files, section)
-  local filenames = map(files, function(item) return item.name end)
+  local filenames = map(files, function(item)
+    return item.name
+  end)
 
   logger.debug("[Status] Discarding selected files: " .. table.concat(filenames, ", "))
 
@@ -889,9 +895,8 @@ end
 
 ---Discards hunk
 local function discard_hunk(section, item, lines, hunk)
-  lines[1] = string.format(
-    "@@ -%d,%d +%d,%d @@", hunk.index_from, hunk.index_len, hunk.index_from, hunk.disk_len
-  )
+  lines[1] =
+    string.format("@@ -%d,%d +%d,%d @@", hunk.index_from, hunk.index_len, hunk.index_from, hunk.disk_len)
 
   local diff = table.concat(lines or {}, "\n")
   diff = table.concat({ "--- a/" .. item.name, "+++ b/" .. item.name, diff, "" }, "\n")
@@ -922,9 +927,7 @@ local discard = function()
   local on_hunk = current_line_is_hunk()
   local hunk, lines = get_current_hunk_of_item(item)
 
-  if
-    not input.get_confirmation(discard_message(item, mode), { values = { "&Yes", "&No" }, default = 2 })
-  then
+  if not input.get_confirmation(discard_message(item, mode), { values = { "&Yes", "&No" }, default = 2 }) then
     return
   end
 

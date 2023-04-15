@@ -13,14 +13,12 @@ end
 local function user_input_prompt(prompt, default_value, completion_function)
   vim.fn.inputsave()
 
-  local status, result = pcall(
-    vim.fn.input,
-    {
-      prompt = prompt,
-      default = default_value,
-      completion = completion_function and ("customlist,v:lua.__NEOGIT.completers." .. completion_function) or nil
-    }
-  )
+  local status, result = pcall(vim.fn.input, {
+    prompt = prompt,
+    default = default_value,
+    completion = completion_function and ("customlist,v:lua.__NEOGIT.completers." .. completion_function)
+      or nil,
+  })
 
   vim.fn.inputrestore()
   if not status then

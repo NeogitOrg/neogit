@@ -75,7 +75,7 @@ local configurations = {
     aliases = {
       set = function(tbl)
         return function(key, value)
-          return tbl.arg_list({ key, value })
+          return tbl.arg_list { key, value }
         end
       end,
       unset = function(tbl)
@@ -342,8 +342,8 @@ local configurations = {
       show = "show",
     },
     options = {
-      format = "--format"
-    }
+      format = "--format",
+    },
   },
 
   ["update-ref"] = config {

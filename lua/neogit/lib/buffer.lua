@@ -457,13 +457,7 @@ function Buffer.create(config)
         local top_level = hovered_component.parent and not hovered_component.parent.parent
 
         for line = fn.line("w0"), fn.line("w$") do
-          if
-            first
-            and last
-            and line >= first
-            and line <= last
-            and not top_level
-          then
+          if first and last and line >= first and line <= last and not top_level then
             local sign = buffer.ui:get_component_stack_on_line(line)[1].options.sign
 
             buffer:set_extmark(

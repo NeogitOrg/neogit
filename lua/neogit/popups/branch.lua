@@ -41,30 +41,22 @@ function M.create()
     :config("u", "branch." .. branch.current() .. ".merge", {
       callback = function(popup, c)
         print("TODO - open branch picker")
-      end
+      end,
     })
     :config("m", "branch." .. branch.current() .. ".remote", { passive = true })
-    :config(
-      "r",
-      "branch." .. branch.current() .. ".rebase",
-      {
-        options = {
-          { display = "true", value = "true" },
-          { display = "false", value = "false" },
-          { display = "pull.rebase:" .. git.config.get("pull.rebase").value, value = "" }
-        },
-      }
-    )
-    :config(
-      "p",
-      "branch." .. branch.current() .. ".pushRemote",
-      {
-        options = {
-          { display = "", value = "" },
-          { display = "origin", value = "origin" }
-        }
-      }
-    )
+    :config("r", "branch." .. branch.current() .. ".rebase", {
+      options = {
+        { display = "true", value = "true" },
+        { display = "false", value = "false" },
+        { display = "pull.rebase:" .. git.config.get("pull.rebase").value, value = "" },
+      },
+    })
+    :config("p", "branch." .. branch.current() .. ".pushRemote", {
+      options = {
+        { display = "", value = "" },
+        { display = "origin", value = "origin" },
+      },
+    })
     :group_heading("Checkout")
     :action(
       "b",
@@ -103,7 +95,7 @@ function M.create()
         end
         name, _ = name:gsub("%s", "-")
 
-        local base_branch = FuzzyFinderBuffer.new(branches):open_sync({ prompt_prefix = " base branch > " })
+        local base_branch = FuzzyFinderBuffer.new(branches):open_sync { prompt_prefix = " base branch > " }
         cli.checkout.new_branch_with_start_point(name, base_branch).call_sync():trim()
         status.refresh(true, "branch_create")
       end)
@@ -208,10 +200,8 @@ function M.create()
 
           cli.branch.delete.name(branch_name).call_sync():trim()
 
-          local delete_remote = input.get_confirmation(
-            "Delete remote?",
-            { values = { "&Yes", "&No" }, default = 2 }
-          )
+          local delete_remote =
+            input.get_confirmation("Delete remote?", { values = { "&Yes", "&No" }, default = 2 })
 
           if remote and delete_remote then
             cli.push.remote(remote).delete.to(branch_name).call_sync():trim()

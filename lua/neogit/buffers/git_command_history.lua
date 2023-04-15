@@ -23,7 +23,6 @@ function M:new(state)
   return this
 end
 
-
 function M:close()
   self.is_open = false
   self.buffer:close()

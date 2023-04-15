@@ -24,9 +24,15 @@ end
 function M.CommitHeader(info)
   return col {
     text.sign("NeogitCommitViewHeader")("Commit " .. info.oid),
-    row { text.highlight("Comment")("Author:     "), text(info.author_name .. " <" .. info.author_email .. ">") },
+    row {
+      text.highlight("Comment")("Author:     "),
+      text(info.author_name .. " <" .. info.author_email .. ">"),
+    },
     row { text.highlight("Comment")("AuthorDate: "), text(info.author_date) },
-    row { text.highlight("Comment")("Committer:  "), text(info.committer_name .. " <" .. info.committer_email .. ">") },
+    row {
+      text.highlight("Comment")("Committer:  "),
+      text(info.committer_name .. " <" .. info.committer_email .. ">"),
+    },
     row { text.highlight("Comment")("CommitDate: "), text(info.committer_date) },
   }
 end

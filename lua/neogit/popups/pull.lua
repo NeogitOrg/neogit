@@ -26,7 +26,12 @@ function M.create()
     .builder()
     :name("NeogitPullPopup")
     -- :switch("f", "ff-only", "Fast-forward only", false) -- TODO
-    :switch("r", "rebase", "Rebase local commits", false)
+    :switch(
+      "r",
+      "rebase",
+      "Rebase local commits",
+      false
+    )
     -- :switch("a", "autostash", "Autostash", false) -- TODO
     :group_heading("Pull from")
     :action("p", "pushRemote", function(popup)
@@ -94,17 +99,13 @@ function M.create()
     end)
     :new_action_group("Configure")
     :action("C", "Set variables...", false)
-    :config(
-      "r",
-      "branch." .. git.branch.current() .. ".rebase",
-      {
-        options = {
-          { display = "true", value = "true" },
-          { display = "false", value = "false"},
-          { display = "pull.rebase:" .. git.config.get("pull.rebase").value, value = "" }
-        },
-      }
-    )
+    :config("r", "branch." .. git.branch.current() .. ".rebase", {
+      options = {
+        { display = "true", value = "true" },
+        { display = "false", value = "false" },
+        { display = "pull.rebase:" .. git.config.get("pull.rebase").value, value = "" },
+      },
+    })
     :build()
 
   p:show()

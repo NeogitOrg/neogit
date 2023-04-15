@@ -114,7 +114,7 @@ end
 
 function Ui:get_component_on_line(line)
   return self:find_component(function(c)
-    return c:is_under_cursor({ line, 0 })
+    return c:is_under_cursor { line, 0 }
   end)
 end
 
@@ -139,7 +139,7 @@ end
 
 function Ui:get_component_stack_on_line(line)
   return self:find_components(function(c)
-    return c:is_under_cursor({ line, 0 })
+    return c:is_under_cursor { line, 0 }
   end)
 end
 

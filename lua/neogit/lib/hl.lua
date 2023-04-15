@@ -135,10 +135,8 @@ function M.make_palette()
 
     red = M.get_fg("Error"),
     bg_red = Color.from_hex(M.get_fg("Error")):shade(-0.18):to_css(),
-    line_red = M.get_bg("DiffDelete") or Color.from_hex(M.get_fg("Error"))
-      :shade(-0.6)
-      :set_saturation(0.4)
-      :to_css(),
+    line_red = M.get_bg("DiffDelete")
+      or Color.from_hex(M.get_fg("Error")):shade(-0.6):set_saturation(0.4):to_css(),
 
     orange = M.get_fg("SpecialChar"),
     bg_orange = Color.from_hex(M.get_fg("SpecialChar")):shade(-0.17):to_css(),
@@ -148,10 +146,8 @@ function M.make_palette()
 
     green = M.get_fg("String"),
     bg_green = Color.from_hex(M.get_fg("String")):shade(-0.18):to_css(),
-    line_green = M.get_bg("DiffAdd") or Color.from_hex(M.get_fg("String"))
-      :shade(-0.72)
-      :set_saturation(0.2)
-      :to_css(),
+    line_green = M.get_bg("DiffAdd")
+      or Color.from_hex(M.get_fg("String")):shade(-0.72):set_saturation(0.2):to_css(),
 
     cyan = M.get_fg("Operator"),
     bg_cyan = Color.from_hex(M.get_fg("Operator")):shade(-0.18):to_css(),

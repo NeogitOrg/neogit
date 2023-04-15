@@ -60,7 +60,7 @@ end
 ---@return table
 local function merge(...)
   local res = {}
-  for _, tbl in ipairs({ ... }) do
+  for _, tbl in ipairs { ... } do
     for _, item in ipairs(tbl) do
       table.insert(res, item)
     end
@@ -177,7 +177,7 @@ end
 local function str_truncate(str, max_length, trailing)
   trailing = trailing or "..."
   if vim.fn.strdisplaywidth(str) > max_length then
-    str = vim.trim(str:sub(1, max_length - #trailing)) .. (trailing)
+    str = vim.trim(str:sub(1, max_length - #trailing)) .. trailing
   end
   return str
 end

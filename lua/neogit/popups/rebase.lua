@@ -24,8 +24,7 @@ function M.create()
   base_branch = base_branch and base_branch.value or "master"
 
   if not in_rebase(status) then
-    p
-      :config("P", "neogit.baseBranch")
+    p:config("P", "neogit.baseBranch")
       :switch("k", "keep-empty", "Keep empty commits", false)
       :switch("u", "update-refs", "Update branches", false)
       :switch("d", "committer-date-is-author-date", "Use author date as committer date", false)
@@ -37,16 +36,11 @@ function M.create()
       :option("s", "gpg-sign", "", "Sign using gpg", false)
       :option("r", "rebase-merges", "", "Rebase merges", false)
       :group_heading("Rebase " .. (branch.current() and (branch.current() .. " ") or "") .. "onto")
-      :action_if(
-        branch.current() ~= base_branch,
-        "p",
-        base_branch,
-        function(popup)
-          rebase.rebase_onto(base_branch, popup:get_arguments())
-          a.util.scheduler()
-          status.refresh(true, "rebase_master")
-        end
-      )
+      :action_if(branch.current() ~= base_branch, "p", base_branch, function(popup)
+        rebase.rebase_onto(base_branch, popup:get_arguments())
+        a.util.scheduler()
+        status.refresh(true, "rebase_master")
+      end)
       :action(
         "u",
         "upstream", -- use upstream ((If there is no upstream, add ", setting that" suffix))
@@ -57,33 +51,25 @@ function M.create()
           status.refresh(true, "rebase_upstream")
         end
       )
-      :action(
-        "e",
-        "elsewhere",
-        function(popup)
-          local elsewhere = FuzzyFinderBuffer.new(git.branch.get_all_branches()):open_sync()
+      :action("e", "elsewhere", function(popup)
+        local elsewhere = FuzzyFinderBuffer.new(git.branch.get_all_branches()):open_sync()
 
-          rebase.rebase_onto(elsewhere, popup:get_arguments())
-          a.util.scheduler()
-          status.refresh(true, "rebase_elsewhere")
-        end
-      )
+        rebase.rebase_onto(elsewhere, popup:get_arguments())
+        a.util.scheduler()
+        status.refresh(true, "rebase_elsewhere")
+      end)
       :new_action_group("Rebase")
-      :action(
-        "i",
-        "interactively",
-        function(popup)
-          local commits = require("neogit.lib.git.log").list_extended()
-          local commit = CommitSelectViewBuffer.new(commits):open_async()
-          if not commit then
-            return
-          end
-
-          rebase.rebase_interactive(commit.oid, unpack(popup:get_arguments()))
-          a.util.scheduler()
-          status.refresh(true, "rebase_interactive")
+      :action("i", "interactively", function(popup)
+        local commits = require("neogit.lib.git.log").list_extended()
+        local commit = CommitSelectViewBuffer.new(commits):open_async()
+        if not commit then
+          return
         end
-      )
+
+        rebase.rebase_interactive(commit.oid, unpack(popup:get_arguments()))
+        a.util.scheduler()
+        status.refresh(true, "rebase_interactive")
+      end)
       :action("s", "a subset", false)
       :new_action_group()
       :action("m", "to modify a commit", false)

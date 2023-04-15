@@ -56,14 +56,14 @@ local function render_line_center(commit, max_width)
 
     if local_name then
       table.insert(content, text(local_name, { highlight = highlight_ref_name(local_name) }))
-      table.insert(content, text((" ")))
+      table.insert(content, text(" "))
 
       max_width = max_width - #local_name - 1
     end
 
     if remote_name then
       table.insert(content, text(remote_name, { highlight = highlight_ref_name(remote_name) }))
-      table.insert(content, text((" ")))
+      table.insert(content, text(" "))
 
       max_width = max_width - #remote_name - 1
     end
@@ -90,7 +90,7 @@ end
 local function render_graph_line(commit)
   return {
     text((" "):rep(8)),
-    text(commit.graph, { highlight = "Include" })
+    text(commit.graph, { highlight = "Include" }),
   }
 end
 

@@ -22,7 +22,7 @@ local function update_unmerged(state)
     return {
       name = string.format("%s %s", v.oid, v.description[1] or "<empty>"),
       oid = v.oid,
-      commit = v
+      commit = v,
     }
   end)
 end
