@@ -76,7 +76,6 @@ function M.create()
       :action("w", "to reword a commit", false)
       :action("k", "to remove a commit", false)
       :action("f", "to autosquash", false)
-      :build()
   else
     p:group_heading("Actions")
       :action("r", "Continue", function()
@@ -99,9 +98,9 @@ function M.create()
         a.util.scheduler()
         status.refresh(true, "rebase_abort")
       end)
-      :build()
   end
 
+  p = p:build()
   p:show()
 
   return p
