@@ -33,7 +33,6 @@ function M:env(x)
   return self
 end
 
--- TODO: Add the ability to define action _categories_, to build different vertical sections
 function M:new_action_group(heading)
   table.insert(self.state.actions, { { heading = heading or "" } })
   return self
