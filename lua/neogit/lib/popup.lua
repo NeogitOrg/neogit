@@ -42,11 +42,7 @@ function M:get_arguments()
 
   for _, switch in pairs(self.state.switches) do
     if switch.enabled and switch.parse ~= false then
-      if #switch.cli == 1 then
-        table.insert(flags, "-" .. switch.cli)
-      else
-        table.insert(flags, "--" .. switch.cli)
-      end
+      table.insert(flags, switch.cli_prefix .. switch.cli)
     end
   end
 
