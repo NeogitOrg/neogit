@@ -122,7 +122,7 @@ local did_setup = false
 
 function M.make_palette()
   local bg = vim.o.bg
-  local hl_bg_normal = M.get_bg("Normal") or (bg == "dark" and "#111111" or "#eeeeee")
+  local hl_bg_normal = M.get_bg("Normal") or (bg == "dark" and "#22252A" or "#eeeeee")
   local bg_normal = Color.from_hex(hl_bg_normal)
 
   return {
