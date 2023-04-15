@@ -82,13 +82,16 @@ function M:switch(key, cli, description, enabled, parse)
   return self
 end
 
-function M:option(key, cli, value, description)
+function M:option(key, cli, value, description, opts)
+  opts = opts or {}
+
   table.insert(self.state.options, {
     id = "=" .. key,
     key = key,
     cli = cli,
     value = state.get({ self.state.name, cli }, value),
     description = description,
+    cli_flag = opts.cli_flag or "--",
   })
 
   return self

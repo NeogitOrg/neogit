@@ -39,6 +39,7 @@ end
 ---@return string[]
 function M:get_arguments()
   local flags = {}
+
   for _, switch in pairs(self.state.switches) do
     if switch.enabled and switch.parse ~= false then
       if #switch.cli == 1 then
@@ -48,11 +49,13 @@ function M:get_arguments()
       end
     end
   end
+
   for _, option in pairs(self.state.options) do
     if #option.value ~= 0 and option.parse ~= false then
-      table.insert(flags, "--" .. option.cli .. "=" .. option.value)
+      table.insert(flags, option.cli_flag .. option.cli .. "=" .. option.value)
     end
   end
+
   return flags
 end
 
@@ -249,7 +252,7 @@ local Options = Component.new(function(props)
         text(option.description),
         text(" ("),
         row.id(option.id).highlight(get_highlight_for_option(option)) {
-          text("--"),
+          text(option.cli_flag),
           text(option.cli),
           text("="),
           text(option.value or ""),
