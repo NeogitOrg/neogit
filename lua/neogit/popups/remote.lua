@@ -11,7 +11,7 @@ function M.create()
   local p = popup
     .builder()
     :name("NeogitRemotePopup")
-    :switch("f", "f", "Fetch after add", true)
+    :switch("f", "f", "Fetch after add", { enabled = true, cli_prefix = "-" })
     :config("u", "remote.origin.url")
     :config("U", "remote.origin.fetch")
     :config("s", "remote.origin.pushurl")

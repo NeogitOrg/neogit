@@ -52,7 +52,7 @@ function M:get_arguments()
 
   for _, option in pairs(self.state.options) do
     if #option.value ~= 0 and option.parse ~= false then
-      table.insert(flags, option.cli_flag .. option.cli .. "=" .. option.value)
+      table.insert(flags, option.cli_prefix .. option.cli .. "=" .. option.value)
     end
   end
 
@@ -229,7 +229,7 @@ local Switches = Component.new(function(props)
         text(switch.description),
         text(" ("),
         row.id(switch.id).highlight(get_highlight_for_switch(switch)) {
-          text(#switch.cli == 1 and "-" or "--"),
+          text(switch.cli_prefix),
           text(switch.cli),
         },
         text(")"),
@@ -252,7 +252,7 @@ local Options = Component.new(function(props)
         text(option.description),
         text(" ("),
         row.id(option.id).highlight(get_highlight_for_option(option)) {
-          text(option.cli_flag),
+          text(option.cli_prefix),
           text(option.cli),
           text("="),
           text(option.value or ""),

@@ -59,15 +59,17 @@ function M:group_heading_if(cond, heading)
   return self
 end
 
---@param parse Whether the switch is internal to neogit or should be included in the cli command.
---             If `false` we don't include it in the cli comand.
-function M:switch(key, cli, description, enabled, parse)
-  if enabled == nil then
-    enabled = false
+---@param opts.parse boolean Whether the switch is internal to neogit or should be included in the cli command.
+--                           If `false` we don't include it in the cli comand.
+function M:switch(key, cli, description, opts)
+  opts = opts or {}
+
+  if opts.enabled == nil then
+    opts.enabled = false
   end
 
-  if parse == nil then
-    parse = true
+  if opts.parse == nil then
+    opts.parse = true
   end
 
   table.insert(self.state.switches, {
@@ -75,8 +77,9 @@ function M:switch(key, cli, description, enabled, parse)
     key = key,
     cli = cli,
     description = description,
-    enabled = state.get({ self.state.name, cli }, enabled),
-    parse = parse,
+    enabled = state.get({ self.state.name, cli }, opts.enabled),
+    parse = opts.parse,
+    cli_prefix = opts.cli_prefix or "--"
   })
 
   return self
@@ -91,7 +94,7 @@ function M:option(key, cli, value, description, opts)
     cli = cli,
     value = state.get({ self.state.name, cli }, value),
     description = description,
-    cli_flag = opts.cli_flag or "--",
+    cli_prefix = opts.cli_prefix or "--",
   })
 
   return self
