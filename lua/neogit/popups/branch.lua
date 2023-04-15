@@ -32,7 +32,6 @@ local function parse_remote_branch_name(remote_name)
   return remote, branch_name
 end
 
--- TODO https://magit.vc/manual/magit/Auxiliary-Branch-Commands.html
 function M.create()
   local p = popup
     .builder()
