@@ -25,14 +25,14 @@ function M.create()
   local p = popup
     .builder()
     :name("NeogitPullPopup")
-    -- :switch("f", "ff-only", "Fast-forward only", false) -- TODO
+    :switch("f", "ff-only", "Fast-forward only", false)
     :switch(
       "r",
       "rebase",
       "Rebase local commits",
       false
     )
-    -- :switch("a", "autostash", "Autostash", false) -- TODO
+    :switch("a", "autostash", "Autostash", false)
     :group_heading("Pull from")
     :action("p", "pushRemote", function(popup)
       pull_from(popup, "pushremote", "origin", status.repo.head.branch)
