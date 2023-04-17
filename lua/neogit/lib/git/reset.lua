@@ -48,8 +48,16 @@ function M.keep(commit)
   end
 end
 
--- function M.index(commit)
--- end
+function M.index(commit)
+  a.util.scheduler()
+
+  local result = cli.reset.args(commit, ".").call()
+  if result.code ~= 0 then
+    notif.create("Reset Failed", vim.log.levels.ERROR)
+  else
+    notif.create("Reset to " .. commit, vim.log.levels.INFO)
+  end
+end
 
 -- function M.worktree(commit)
 -- end

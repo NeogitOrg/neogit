@@ -55,7 +55,16 @@ function M.create()
       a.util.scheduler()
       status.refresh(true, "reset_keep")
     end)
-    :action("i", "index    (only)", false) -- https://github.com/magit/magit/blob/main/lisp/magit-reset.el#L78
+    :action("i", "index    (only)", function()
+      local commit = CommitSelectViewBuffer.new(git.log.list_extended()):open_async()
+      if not commit then
+        return
+      end
+
+      git.reset.index(commit.oid)
+      a.util.scheduler()
+      status.refresh(true, "reset_index")
+    end)
     :action("w", "worktree (only)", false) -- https://github.com/magit/magit/blob/main/lisp/magit-reset.el#L87
     :group_heading("")
     :action("f", "a file", function()
