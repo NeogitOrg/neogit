@@ -1,5 +1,6 @@
 local git = require("neogit.lib.git")
 local popup = require("neogit.lib.popup")
+local input = require("neogit.lib.input")
 
 local M = {}
 local a = require("plenary.async")
@@ -16,15 +17,19 @@ function M.create()
 
   if in_merge(status) then
     p:group_heading("Actions")
-      :action("m", "Continue", function()
+      :action("m", "Commit merge", function()
         git.merge.continue()
         a.util.scheduler()
         status.refresh(true, "merge_continue")
       end)
-      :action("a", "Abort", function()
+      :action("a", "Abort merge", function()
+        if not input.get_confirmation("Abort merge?", { values = { "&Yes", "&No" }, default = 2 }) then
+          return
+        end
+
         git.merge.abort()
         a.util.scheduler()
-        status.refresh(true, "merge_continue")
+        status.refresh(true, "merge_abort")
       end)
   else
     p:switch("f", "ff-only", "Fast-forward only", { incompatible = { "no-ff" } })
