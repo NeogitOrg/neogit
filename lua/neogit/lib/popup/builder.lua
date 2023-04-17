@@ -101,6 +101,7 @@ function M:option(key, cli, value, description, opts)
     value = state.get({ self.state.name, cli }, value),
     description = description,
     cli_prefix = opts.cli_prefix or "--",
+    choices = opts.choices,
   })
 
   return self

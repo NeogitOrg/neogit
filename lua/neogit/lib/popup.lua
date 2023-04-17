@@ -175,14 +175,25 @@ function M:toggle_switch(switch)
 end
 
 function M:set_option(option)
-  option.value = vim.fn.input {
-    prompt = option.cli .. "=",
-    default = option.value,
-    cancelreturn = option.value,
-  }
+  local set = function(value)
+    option.value = value
+    state.set({ self.state.name, option.cli }, option.value)
+    self:update_component(option.id, get_highlight_for_option(option), option.value)
+  end
 
-  state.set({ self.state.name, option.cli }, option.value)
-  self:update_component(option.id, get_highlight_for_option(option), option.value)
+  if option.choices then
+    if not option.value or option.value == "" then
+      vim.ui.select(option.choices, { prompt = option.description }, set)
+    else
+      set("")
+    end
+  else
+    set(vim.fn.input {
+      prompt = option.cli .. "=",
+      default = option.value,
+      cancelreturn = option.value,
+    })
+  end
 end
 
 function M:set_config(config)
