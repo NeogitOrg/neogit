@@ -35,10 +35,17 @@ function M.create()
     p:switch("f", "ff-only", "Fast-forward only", { incompatible = { "no-ff" } })
       :switch("n", "no-ff", "No fast-forward", { incompatible = { "ff-only" } })
       :switch("b", "Xignore-space-change", "Ignore changes in amount of whitespace", { cli_prefix = "-" })
-      :switch("w", "Xignore-all-space", "Ignore whirespace when comparing lines", { cli_prefix = "-" })
-      :option("s", "strategy", "", "Strategy")
-      :option("X", "strategy-option", "", "Strategy Option")
-      :option("A", "Xdiff-algorithm", "", "Diff algorithm", { cli_prefix = "-" })
+      :switch("w", "Xignore-all-space", "Ignore whitespace when comparing lines", { cli_prefix = "-" })
+      :option("s", "strategy", "", "Strategy", {
+        choices = { "resolve", "recursive", "octopus", "ours", "subtree" },
+      })
+      :option("X", "strategy-option", "", "Strategy Option", {
+        choices = { "ours", "theirs", "patience" },
+      })
+      :option("A", "Xdiff-algorithm", "", "Diff algorithm", {
+        cli_prefix = "-",
+        choices = { "default", "minimal", "patience", "histogram" },
+      })
       :option("S", "gpg-sign", "", "Sign using gpg")
       :group_heading("Actions")
       :action("m", "Merge", function(popup)
