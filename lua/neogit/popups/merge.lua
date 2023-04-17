@@ -52,6 +52,7 @@ function M.create()
       :new_action_group()
       :action("p", "Preview merge")
       :action("s", "Squash merge")
+      :group_heading("")
       :action("i", "Dissolve")
   end
 
