@@ -1,6 +1,7 @@
 local a = require("plenary.async")
 local state = require("neogit.lib.state")
 local config = require("neogit.lib.git.config")
+local util = require("neogit.lib.util")
 
 local M = {}
 
@@ -72,6 +73,10 @@ function M:switch(key, cli, description, opts)
     opts.parse = true
   end
 
+  if opts.incompatible == nil then
+    opts.incompatible = {}
+  end
+
   table.insert(self.state.switches, {
     id = "-" .. key,
     key = key,
@@ -79,7 +84,8 @@ function M:switch(key, cli, description, opts)
     description = description,
     enabled = state.get({ self.state.name, cli }, opts.enabled),
     parse = opts.parse,
-    cli_prefix = opts.cli_prefix or "--"
+    cli_prefix = opts.cli_prefix or "--",
+    incompatible = util.build_reverse_lookup(opts.incompatible),
   })
 
   return self

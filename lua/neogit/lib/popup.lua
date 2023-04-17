@@ -162,6 +162,16 @@ function M:toggle_switch(switch)
 
   state.set({ self.state.name, switch.cli }, switch.enabled)
   self:update_component(switch.id, get_highlight_for_switch(switch))
+
+  if switch.enabled and #switch.incompatible > 0 then
+    for _, var in ipairs(self.state.switches) do
+      if var.enabled and switch.incompatible[var.cli] then
+        var.enabled = false
+        state.set({ self.state.name, var.cli }, var.enabled)
+        self:update_component(var.id, get_highlight_for_switch(var))
+      end
+    end
+  end
 end
 
 function M:set_option(option)
