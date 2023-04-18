@@ -24,7 +24,7 @@ function M.create()
   base_branch = base_branch and base_branch.value or "master"
 
   if not in_rebase(status) then
-    p:config("P", "neogit.baseBranch")
+    p
       :switch("k", "keep-empty", "Keep empty commits")
       :switch("u", "update-refs", "Update branches")
       :switch("d", "committer-date-is-author-date", "Use author date as committer date")

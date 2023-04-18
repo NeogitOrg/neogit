@@ -8,6 +8,7 @@ local operation = require("neogit.operations")
 local input = require("neogit.lib.input")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
+local BranchConfigPopup = require("neogit.popups.branch_config")
 
 local function format_branches(list)
   local branches = {}
@@ -123,7 +124,11 @@ function M.create()
     :action("S", "new spin-out")
     :action("W", "new worktree")
     :new_action_group("Do")
-    :action("C", "configure...") -- https://magit.vc/manual/2.11.0/magit/The-Branch-Config-Popup.html
+    :action("C", "configure...", function()
+      FuzzyFinderBuffer.new(git.branch.get_local_branches(), function(branch_name)
+        BranchConfigPopup.create(branch_name)
+      end):open()
+    end)
     :action(
       "m",
       "rename",
