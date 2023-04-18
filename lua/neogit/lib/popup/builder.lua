@@ -127,6 +127,14 @@ function M:config(key, name, options)
   return self
 end
 
+function M:config_if(cond, key, name, options)
+  if cond then
+    return self:config(key, name, options)
+  end
+
+  return self
+end
+
 function M:action(key, description, callback)
   if not self.state.keys[key] then
     table.insert(self.state.actions[#self.state.actions], {
