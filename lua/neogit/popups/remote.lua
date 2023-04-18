@@ -4,6 +4,7 @@ local git = require("neogit.lib.git")
 local status = require("neogit.status")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
+local RemoteConfigPopup = require("neogit.popups.remote_config")
 
 local M = {}
 
@@ -69,7 +70,11 @@ function M.create()
       end):open()
     end)
     :new_action_group()
-    :action("C", "Configure...", false)
+    :action("C", "Configure...", function()
+      FuzzyFinderBuffer.new(git.remote.list(), function(remote_name)
+        RemoteConfigPopup.create(remote_name)
+      end):open()
+    end)
     :action("p", "Prune stale branches", function()
       FuzzyFinderBuffer.new(git.remote.list(), function(selected_remote)
         git.remote.prune(selected_remote)
