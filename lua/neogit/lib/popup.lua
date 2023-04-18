@@ -302,11 +302,18 @@ local Config = Component.new(function(props)
         value = { text.highlight(get_highlight_for_config(config))(value_text) }
       end
 
+      local key
+      if config.passive then
+        key = " "
+      elseif #config.key > 1 then
+        key = table.concat(vim.split(config.key, ""), " ")
+      else
+        key = config.key
+      end
+
       return row.tag("Config").value(config) {
         text(" "),
-        row.highlight("NeogitPopupConfigKey") {
-          text(not config.passive and config.key or " "),
-        },
+        row.highlight("NeogitPopupConfigKey") { text(key) },
         text(" " .. config.name .. " "),
         row.id(config.id) { unpack(value) },
       }
