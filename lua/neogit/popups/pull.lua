@@ -93,7 +93,9 @@ function M.create()
       pull_from(popup, remote, remote, branch)
     end)
     :new_action_group("Configure")
-    :action("C", "Set variables...", false)
+    :action("C", "Set variables...", function()
+      require("neogit.popups.branch_config").create()
+    end)
     :config_if(git.branch.current(), "r", "branch." .. (git.branch.current() or "") .. ".rebase", {
       options = {
         { display = "true", value = "true" },

@@ -1,8 +1,6 @@
 local M = {}
-local status = require("neogit.status")
 local popup = require("neogit.lib.popup")
 local git = require("neogit.lib.git")
-local input = require("neogit.lib.input")
 
 local function remotes_for_config()
   local remotes = {
@@ -17,10 +15,12 @@ local function remotes_for_config()
 end
 
 function M.create(branch)
+  branch = branch or git.branch.current()
+
   local p = popup
     .builder()
     :name("NeogitBranchConfigPopup")
-    :config_heading("Configure " .. branch)
+    :config_heading("Configure branch")
     :config("d", "branch." .. branch .. ".description")
     :config("u", "branch." .. branch .. ".merge", {
       callback = function(popup, c)
