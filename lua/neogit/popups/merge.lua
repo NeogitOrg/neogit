@@ -32,7 +32,8 @@ function M.create()
         status.refresh(true, "merge_abort")
       end)
   else
-    p:switch("f", "ff-only", "Fast-forward only", { incompatible = { "no-ff" } })
+    p
+      :switch("f", "ff-only", "Fast-forward only", { incompatible = { "no-ff" } })
       :switch("n", "no-ff", "No fast-forward", { incompatible = { "ff-only" } })
       :switch("b", "Xignore-space-change", "Ignore changes in amount of whitespace", { cli_prefix = "-" })
       :switch("w", "Xignore-all-space", "Ignore whitespace when comparing lines", { cli_prefix = "-" })
@@ -58,14 +59,14 @@ function M.create()
         a.util.scheduler()
         status.refresh(true, "merge")
       end)
-      :action("e", "Merge and edit message")
-      :action("n", "Merge but don't commit")
-      :action("A", "Absorb")
+      :action("e", "Merge and edit message") -- https://github.com/magit/magit/blob/main/lisp/magit-merge.el#L105
+      :action("n", "Merge but don't commit") -- https://github.com/magit/magit/blob/main/lisp/magit-merge.el#L119
+      :action("A", "Absorb") -- https://github.com/magit/magit/blob/main/lisp/magit-merge.el#L158
       :new_action_group()
-      :action("p", "Preview merge")
-      :action("s", "Squash merge")
+      :action("p", "Preview merge") -- https://github.com/magit/magit/blob/main/lisp/magit-merge.el#L225
+      :action("s", "Squash merge") -- -- https://github.com/magit/magit/blob/main/lisp/magit-merge.el#L217
       :group_heading("")
-      :action("i", "Dissolve")
+      :action("i", "Dissolve") -- https://github.com/magit/magit/blob/main/lisp/magit-merge.el#L131
   end
 
   p = p:build()
