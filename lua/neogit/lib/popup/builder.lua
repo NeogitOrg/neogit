@@ -41,7 +41,7 @@ end
 
 function M:new_action_group_if(cond, heading)
   if cond then
-    table.insert(self.state.actions, { { heading = heading or "" } })
+    return self:new_action_group(heading)
   end
 
   return self
@@ -54,7 +54,7 @@ end
 
 function M:group_heading_if(cond, heading)
   if cond then
-    table.insert(self.state.actions[#self.state.actions], { heading = heading })
+    return self:group_heading(heading)
   end
 
   return self
@@ -155,14 +155,8 @@ function M:action(key, description, callback)
 end
 
 function M:action_if(cond, key, description, callback)
-  if cond and not self.state.keys[key] then
-    table.insert(self.state.actions[#self.state.actions], {
-      key = key,
-      description = description,
-      callback = callback and a.void(callback) or nil,
-    })
-
-    self.state.keys[key] = true
+  if cond then
+    return self:action(key, description, callback)
   end
 
   return self
