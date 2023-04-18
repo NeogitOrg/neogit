@@ -48,6 +48,10 @@ function M.get(key)
   return config()[key:lower()]
 end
 
+function M.get_global(key)
+  return cli.config.global.get(key).call_sync():trim().stdout[1]
+end
+
 function M.get_matching(pattern)
   local matches = {}
   for key, value in pairs(config()) do

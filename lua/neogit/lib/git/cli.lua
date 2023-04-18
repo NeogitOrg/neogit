@@ -67,6 +67,7 @@ local configurations = {
 
   config = config {
     flags = {
+      global = "--global",
       list = "--list",
       _get = "--get",
       _add = "--add",
