@@ -8,7 +8,7 @@ local M = {}
 local function cleanup_push_variables(remote, new_name)
   local git = require("neogit.lib.git")
 
-  if remote == git.config.get("remote.pushDefault").value then
+  if remote == (git.config.get("remote.pushDefault") or {}).value then
     git.config.set("remote.pushDefault", new_name)
   end
 
