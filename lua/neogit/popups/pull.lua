@@ -29,10 +29,10 @@ function M.create()
     :switch("r", "rebase", "Rebase local commits")
     :switch("a", "autostash", "Autostash")
     :group_heading("Pull from")
-    :action("p", "pushRemote", function(popup)
+    :action_if(git.branch.current(), "p", "pushRemote", function(popup)
       pull_from(popup, "pushremote", "origin", status.repo.head.branch)
     end)
-    :action("u", "upstream", function(popup)
+    :action_if(git.branch.current(), "u", "upstream", function(popup)
       pull_from(popup, "upstream", "upstream", status.repo.head.branch)
     end)
     :action("e", "elsewhere", function(popup)
@@ -94,7 +94,7 @@ function M.create()
     end)
     :new_action_group("Configure")
     :action("C", "Set variables...", false)
-    :config("r", "branch." .. git.branch.current() .. ".rebase", {
+    :config_if(git.branch.current(), "r", "branch." .. (git.branch.current() or "") .. ".rebase", {
       options = {
         { display = "true", value = "true" },
         { display = "false", value = "false" },
