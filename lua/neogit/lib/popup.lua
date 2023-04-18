@@ -451,7 +451,7 @@ function M:show()
     mappings = mappings,
     after = function()
       vim.cmd([[setlocal nocursorline]])
-      vim.fn.matchadd("NeogitPopupBranchName", self.state.env.branch or branch.current(), 100)
+      vim.fn.matchadd("NeogitPopupBranchName", self.state.env.highlight or branch.current(), 100)
 
       if config.values.popup.kind == "split" then
         vim.cmd([[execute "resize" . (line("$") + 1)]])
