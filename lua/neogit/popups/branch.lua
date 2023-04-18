@@ -32,6 +32,18 @@ local function parse_remote_branch_name(remote_name)
   return remote, branch_name
 end
 
+local function remotes_for_config()
+  local remotes = {
+    { display = "", value = "" },
+  }
+
+  for _, name in ipairs(git.remote.list()) do
+    table.insert(remotes, { display = name, value = name })
+  end
+
+  return remotes
+end
+
 function M.create()
   local p = popup
     .builder()
@@ -50,11 +62,8 @@ function M.create()
         { display = "pull.rebase:" .. git.config.get("pull.rebase").value, value = "" },
       },
     })
-    :config("p", "branch." .. branch.current() .. ".pushRemote", {
-      options = {
-        { display = "", value = "" },
-        { display = "origin", value = "origin" },
-      },
+    :config_if(branch.current(), "p", "branch." .. (branch.current() or "") .. ".pushRemote", {
+      options = remotes_for_config(),
     })
     :group_heading("Checkout")
     :action(
