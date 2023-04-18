@@ -48,6 +48,7 @@ function M.create()
   local p = popup
     .builder()
     :name("NeogitBranchPopup")
+    :switch("r", "recurse-submodules", "Recurse submodules when checking out an existing branch")
     :config_if(branch.current(), "d", "branch." .. (branch.current() or "") .. ".description")
     :config_if(branch.current(), "u", "branch." .. (branch.current() or "") .. ".merge", {
       callback = function(popup, c)
