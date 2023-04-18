@@ -70,6 +70,7 @@ function M.create(branch)
         { display = "default:never", value = "" },
       },
     })
+    :env({ branch = branch })
     :build()
 
   p:show()
