@@ -6,7 +6,7 @@ local M = {}
 
 local function buffer_height(count)
   if count < (vim.fn.winheight(0) / 2) then
-    return count
+    return count + 2
   else
     return 0.5
   end
