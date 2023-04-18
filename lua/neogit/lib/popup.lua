@@ -281,44 +281,49 @@ local Options = Component.new(function(props)
 end)
 
 local Config = Component.new(function(props)
-  return col {
-    text.highlight("NeogitPopupSectionTitle")("Variables"),
-    col(map(props.state, function(config)
-      if config.heading then
-        return row.highlight("NeogitPopupSectionTitle") { text(config.heading) }
-      end
+  local c = {}
 
-      local value
-      if config.options then
-        value = construct_config_options(config)
+  if not props.state[1].heading then
+    table.insert(c, text.highlight("NeogitPopupSectionTitle")("Variables"))
+  end
+
+  table.insert(c, col(map(props.state, function(config)
+    if config.heading then
+      return row.highlight("NeogitPopupSectionTitle") { text(config.heading) }
+    end
+
+    local value
+    if config.options then
+      value = construct_config_options(config)
+    else
+      local value_text
+      if not config.value or config.value == "" then
+        value_text = "unset"
       else
-        local value_text
-        if not config.value or config.value == "" then
-          value_text = "unset"
-        else
-          value_text = config.value
-        end
-
-        value = { text.highlight(get_highlight_for_config(config))(value_text) }
+        value_text = config.value
       end
 
-      local key
-      if config.passive then
-        key = " "
-      elseif #config.key > 1 then
-        key = table.concat(vim.split(config.key, ""), " ")
-      else
-        key = config.key
-      end
+      value = { text.highlight(get_highlight_for_config(config))(value_text) }
+    end
 
-      return row.tag("Config").value(config) {
-        text(" "),
-        row.highlight("NeogitPopupConfigKey") { text(key) },
-        text(" " .. config.name .. " "),
-        row.id(config.id) { unpack(value) },
-      }
-    end)),
-  }
+    local key
+    if config.passive then
+      key = " "
+    elseif #config.key > 1 then
+      key = table.concat(vim.split(config.key, ""), " ")
+    else
+      key = config.key
+    end
+
+    return row.tag("Config").value(config) {
+      text(" "),
+      row.highlight("NeogitPopupConfigKey") { text(key) },
+      text(" " .. config.name .. " "),
+      row.id(config.id) { unpack(value) },
+    }
+  end)))
+
+  return col(c)
 end)
 
 local Actions = Component.new(function(props)

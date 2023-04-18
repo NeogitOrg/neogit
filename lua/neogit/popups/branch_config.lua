@@ -20,6 +20,7 @@ function M.create(branch)
   local p = popup
     .builder()
     :name("NeogitBranchConfigPopup")
+    :config_heading("Configure " .. branch)
     :config("d", "branch." .. branch .. ".description")
     :config("u", "branch." .. branch .. ".merge", {
       callback = function(popup, c)
