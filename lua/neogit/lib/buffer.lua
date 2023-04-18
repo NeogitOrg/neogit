@@ -413,7 +413,7 @@ function Buffer.create(config)
   end
 
   if config.after then
-    config.after(buffer)
+    buffer:call(config.after)
   end
 
   -- This sets fold styling for Neogit windows without overriding user styling

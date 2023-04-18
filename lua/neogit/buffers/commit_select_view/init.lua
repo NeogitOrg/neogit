@@ -76,10 +76,8 @@ function M:open(action)
         end
       end,
     },
-    after = function(buffer)
-      vim.api.nvim_buf_call(buffer.handle, function()
-        vim.cmd([[execute "resize" . (line("$") + 1)]])
-      end)
+    after = function()
+      vim.cmd([[execute "resize" . (line("$") + 1)]])
     end,
     render = function()
       return ui.View(self.commits, commit_at_cursor)
