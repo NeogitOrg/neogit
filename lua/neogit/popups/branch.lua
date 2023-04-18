@@ -54,8 +54,8 @@ function M.create()
         print("TODO - open branch picker")
       end,
     })
-    :config("m", "branch." .. branch.current() .. ".remote", { passive = true })
-    :config("r", "branch." .. branch.current() .. ".rebase", {
+    :config_if(branch.current(), "m", "branch." .. (branch.current() or "") .. ".remote", { passive = true })
+    :config_if(branch.current(), "r", "branch." .. (branch.current() or "") .. ".rebase", {
       options = {
         { display = "true", value = "true" },
         { display = "false", value = "false" },
@@ -108,23 +108,8 @@ function M.create()
         status.refresh(true, "branch_create")
       end)
     )
-    :action(
-      "s",
-      "new spin-off",
-      false
-      -- operation("spinoff_branch", function()
-      -- https://github.com/magit/magit/blob/main/lisp/magit-branch.el#L429
-      -- WIP https://magit.vc/manual/2.11.0/magit/The-Branch-Popup.html
-      -- local name = branch.create()
-      -- if not name then
-      -- return
-      -- end
-
-      -- cli.checkout.branch(name).call_sync():trim()
-      -- status.dispatch_refresh(true, "create_and_checkout_branch")
-      -- end,
-    )
-    :action("w", "new worktree", false)
+    :action("s", "new spin-off") -- https://github.com/magit/magit/blob/main/lisp/magit-branch.el#L429
+    :action("w", "new worktree")
     :new_action_group("Create")
     :action(
       "n",
@@ -134,10 +119,10 @@ function M.create()
         status.refresh(true, "create_branch")
       end)
     )
-    :action("S", "new spin-out", false)
-    :action("W", "new worktree", false)
+    :action("S", "new spin-out")
+    :action("W", "new worktree")
     :new_action_group("Do")
-    :action("C", "configure...", false) -- https://magit.vc/manual/2.11.0/magit/The-Branch-Config-Popup.html
+    :action("C", "configure...") -- https://magit.vc/manual/2.11.0/magit/The-Branch-Config-Popup.html
     :action(
       "m",
       "rename",
