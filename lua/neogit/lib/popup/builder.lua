@@ -107,6 +107,11 @@ function M:option(key, cli, value, description, opts)
   return self
 end
 
+function M:config_heading(heading)
+  table.insert(self.state.config, { heading = heading })
+  return self
+end
+
 function M:config(key, name, options)
   local c = config.get(name) or { value = "" }
 

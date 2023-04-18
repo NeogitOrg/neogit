@@ -284,6 +284,10 @@ local Config = Component.new(function(props)
   return col {
     text.highlight("NeogitPopupSectionTitle")("Variables"),
     col(map(props.state, function(config)
+      if config.heading then
+        return row.highlight("NeogitPopupSectionTitle") { text(config.heading) }
+      end
+
       local value
       if config.options then
         value = construct_config_options(config)
@@ -379,7 +383,9 @@ function M:show()
   end
 
   for _, config in pairs(self.state.config) do
-    if not config.passive then
+    if config.heading then
+      -- nothing
+    elseif not config.passive then
       mappings.n[config.id] = function()
         self:set_config(config)
       end
