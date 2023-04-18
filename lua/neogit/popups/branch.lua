@@ -48,8 +48,8 @@ function M.create()
   local p = popup
     .builder()
     :name("NeogitBranchPopup")
-    :config("d", "branch." .. branch.current() .. ".description")
-    :config("u", "branch." .. branch.current() .. ".merge", {
+    :config_if(branch.current(), "d", "branch." .. (branch.current() or "") .. ".description")
+    :config_if(branch.current(), "u", "branch." .. (branch.current() or "") .. ".merge", {
       callback = function(popup, c)
         print("TODO - open branch picker")
       end,
