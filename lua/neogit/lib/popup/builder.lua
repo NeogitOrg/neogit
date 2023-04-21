@@ -91,6 +91,14 @@ function M:switch(key, cli, description, opts)
   return self
 end
 
+function M:switch_if(cond, key, cli, description, opts)
+  if cond then
+    return self:switch(key, cli, description, opts)
+  end
+
+  return self
+end
+
 function M:option(key, cli, value, description, opts)
   opts = opts or {}
 
@@ -103,6 +111,14 @@ function M:option(key, cli, value, description, opts)
     cli_prefix = opts.cli_prefix or "--",
     choices = opts.choices,
   })
+
+  return self
+end
+
+function M:option_if(cond, key, cli, value, description, opts)
+  if cond then
+    return self:option(key, cli, value, description, opts)
+  end
 
   return self
 end
