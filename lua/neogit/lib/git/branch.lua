@@ -29,7 +29,7 @@ function M.get_local_branches(include_current)
 end
 
 function M.get_remote_branches(include_current)
-  local branches = cli.branch.remotes.call_sync():trim().stdout
+  local branches = cli.branch.remotes.list(config.values.sort_branches).call_sync():trim().stdout
 
   return parse_branches(branches, include_current)
 end
