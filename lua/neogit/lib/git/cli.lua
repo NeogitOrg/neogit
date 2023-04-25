@@ -149,7 +149,15 @@ local configurations = {
     short_opts = {
       b = "-b",
     },
+    flags = {
+      _track = "--track",
+    },
     aliases = {
+      track = function(tbl)
+        return function(branch)
+          return tbl._track.args(branch)
+        end
+      end,
       rev = function(tbl)
         return function(rev)
           return tbl.args(rev)

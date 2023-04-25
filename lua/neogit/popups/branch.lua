@@ -6,6 +6,7 @@ local branch = require("neogit.lib.git.branch")
 local git = require("neogit.lib.git")
 local operation = require("neogit.operations")
 local input = require("neogit.lib.input")
+local util = require("neogit.lib.util")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 local BranchConfigPopup = require("neogit.popups.branch_config")
@@ -82,10 +83,27 @@ function M.create()
       "l",
       "local branch",
       operation("checkout_local-branch", function()
-        FuzzyFinderBuffer.new(branch.get_local_branches(), function(selected_branch)
-          cli.checkout.branch(selected_branch).call_sync():trim()
-          status.dispatch_refresh(true)
-        end):open()
+        local local_branches = branch.get_local_branches()
+        local remote_branches = util.filter_map(branch.get_remote_branches(), function(name)
+          if name:match([[ ]]) then -- removes stuff like 'origin/HEAD -> origin/master'
+            return nil
+          else
+            local branch_name = name:match([[%/(.*)$]])
+            -- Remove remote branches that have a local branch by the same name
+            if branch_name and not vim.tbl_contains(local_branches, branch_name) then
+              return name
+            end
+          end
+        end)
+
+        local target = FuzzyFinderBuffer.new(util.merge(local_branches, remote_branches)):open_sync { prompt_prefix = " branch > " }
+        if target:match([[/]]) then
+          cli.checkout.track(target).call_sync()
+        else
+          cli.checkout.branch(target).call_sync()
+        end
+
+        status.refresh(true, "branch_checkout")
       end)
     )
     :new_action_group()
