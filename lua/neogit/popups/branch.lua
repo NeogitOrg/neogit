@@ -7,6 +7,7 @@ local git = require("neogit.lib.git")
 local operation = require("neogit.operations")
 local input = require("neogit.lib.input")
 local util = require("neogit.lib.util")
+local notif = require("neogit.lib.notification")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 local BranchConfigPopup = require("neogit.popups.branch_config")
@@ -169,7 +170,40 @@ function M.create()
         end):open()
       end)
     )
-    :action("X", "reset", false)
+    :action("X", "reset", function()
+      local repo = require("neogit.status").repo
+      if #repo.staged.items > 0 or #repo.unstaged.items > 0 then
+        local confirmation = input.get_confirmation(
+          "Uncommitted changes will be lost. Proceed?",
+          { values = { "&Yes", "&No" }, default = 2 }
+        )
+        if not confirmation then
+          return
+        end
+      end
+
+      local branches = format_branches(branch.get_all_branches(false))
+      local to = FuzzyFinderBuffer.new(branches):open_sync {
+        prompt_prefix = " reset " .. branch.current() .. " to > "
+      }
+
+      if not to then
+        return
+      end
+
+      -- Reset the current branch to the desired state
+      git.cli.reset.hard.args(to).call_sync()
+
+      -- Update reference
+      local from = git.cli["rev-parse"].symbolic_full_name.args(branch.current()).call_sync():trim().stdout[1]
+      git.cli["update-ref"]
+        .message(string.format("reset: moving to %s", to))
+        .args(from, to)
+        .call_sync()
+
+      notif.create(string.format("Reset '%s'", branch.current()), vim.log.levels.INFO)
+      status.refresh(true, "reset_branch")
+    end)
     -- :action(
     --   "d",
     --   "delete local branch",
@@ -208,7 +242,9 @@ function M.create()
       "D",
       "delete",
       operation("delete_branch", function()
-        local branches = format_branches(branch.get_remote_branches())
+        -- TODO: If branch is checked out:
+        -- Branch gha-routes-js is checked out.  [d]etach HEAD & delete, [c]heckout origin/gha-routes-js & delete, [a]bort
+        local branches = format_branches(branch.get_all_branches())
         FuzzyFinderBuffer.new(branches, function(selected_branch)
           local remote, branch_name = parse_remote_branch_name(selected_branch)
           if not branch_name then

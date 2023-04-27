@@ -359,9 +359,14 @@ local configurations = {
     flags = {
       create_reflog = "--create-reflog",
     },
-    short_opts = {
-      message = "-m",
-    },
+    aliases = {
+      message = function(tbl)
+        return function(text)
+          local escaped_text, _ = text:gsub([["]], [[\"]])
+          return tbl.args("-m", string.format([["%s"]], escaped_text))
+        end
+      end,
+    }
   },
 
   ["ls-files"] = config {
