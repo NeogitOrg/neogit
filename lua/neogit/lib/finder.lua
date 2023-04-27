@@ -81,13 +81,14 @@ end
 
 ---Engages finder
 function Finder:find()
-  pickers
-    .new(self.opts, {
+  pickers.new(
+    self.opts,
+    {
       finder = finders.new_table { results = self.entries },
       sorter = sorters.fuzzy_with_index_bias(),
       attach_mappings = mappings(self.select_action, self.opts.allow_multi),
-    })
-    :find()
+    }
+  ):find()
 end
 
 ---Builds Finder instance
