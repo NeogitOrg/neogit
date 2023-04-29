@@ -33,6 +33,7 @@ end
 
 ---@param action fun(commit: CommitLogEntry|nil)|nil
 function M:open(action)
+  -- TODO: Pass this in as a param instead of reading state from object
   local _, item = require("neogit.status").get_current_section_item()
 
   local commit_at_cursor
