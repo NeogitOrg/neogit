@@ -50,6 +50,9 @@ function M:open(action)
         ["q"] = function()
           self:close()
         end,
+        ["<esc>"] = function()
+          self:close()
+        end,
         ["<enter>"] = function()
           local pos = line_pos()
           local oid = vim.api.nvim_buf_get_lines(0, pos - 1, pos, true)[1]:match("^(.-) ")
