@@ -78,9 +78,13 @@ function M:open(action)
     },
     after = function()
       vim.cmd([[execute "resize" . (line("$") + 1)]])
+
+      if commit_at_cursor then
+        vim.fn.search(commit_at_cursor.oid)
+      end
     end,
     render = function()
-      return ui.View(self.commits, commit_at_cursor)
+      return ui.View(self.commits)
     end,
   }
 end

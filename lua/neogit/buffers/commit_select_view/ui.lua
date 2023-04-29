@@ -94,13 +94,8 @@ local function render_graph_line(commit)
   }
 end
 
-function M.View(commits, commit_at_cursor)
+function M.View(commits)
   local res = {}
-
-  if commit_at_cursor then
-    table.insert(res, row(render_line(commit_at_cursor)))
-    table.insert(res, row {})
-  end
 
   for _, commit in ipairs(commits) do
     if commit.oid then
