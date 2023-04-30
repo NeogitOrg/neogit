@@ -42,9 +42,7 @@ function M.create(env)
     :action_if(not pick_or_revert_in_progress(status), "A", "Pick", function(popup)
       local commits
       if popup.state.env.commits then
-        commits = util.filter_map(popup.state.env.commits, function(item)
-          return item.oid
-        end)
+        commits = popup.state.env.commits
       else
         commits = { CommitSelectViewBuffer.new(log.list_extended()):open_async() }
       end
@@ -61,9 +59,7 @@ function M.create(env)
     :action_if(not pick_or_revert_in_progress(status), "a", "Apply", function(popup)
       local commits
       if popup.state.env.commits then
-        commits = util.filter_map(popup.state.env.commits, function(item)
-          return item.oid
-        end)
+        commits = popup.state.env.commits
       else
         commits = { CommitSelectViewBuffer.new(log.list_extended()):open_async() }
       end

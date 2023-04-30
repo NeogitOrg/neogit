@@ -73,7 +73,7 @@ function M:open()
         ["A"] = function()
           local stack = self.buffer.ui:get_component_stack_under_cursor()
           local c = stack[#stack]
-          CherryPickPopup.create { commits = { self.data[c.position.row_start] } }
+          CherryPickPopup.create { commits = { self.data[c.position.row_start].oid } }
         end,
         ["<enter>"] = function()
           local stack = self.buffer.ui:get_component_stack_under_cursor()
