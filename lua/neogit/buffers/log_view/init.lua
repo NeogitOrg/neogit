@@ -54,8 +54,8 @@ function M:open()
           local commits = util.filter_map(
             self.buffer.ui:get_component_stack_in_linewise_selection(),
             function(c)
-              if c.tag == "col" then
-                return self.data[c.position.row_start].oid
+              if c.tag == "col" and c.options.oid then
+                return c.options.oid
               end
             end
           )

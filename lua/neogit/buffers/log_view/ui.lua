@@ -20,40 +20,43 @@ local M = {}
 -- |
 
 M.Commit = Component.new(function(commit, show_graph)
-  return col {
-    row {
-      text(show_graph and ("* "):rep(commit.level + 1) or "* ", { highlight = "Character" }),
-      text(commit.oid:sub(1, 7), { highlight = "Number" }),
-      text(" "),
-      text(commit.description[1]),
+  return col(
+    {
+      row {
+        text(show_graph and ("* "):rep(commit.level + 1) or "* ", { highlight = "Character" }),
+        text(commit.oid:sub(1, 7), { highlight = "Number" }),
+        text(" "),
+        text(commit.description[1]),
+      },
+      col.hidden(true).padding_left((commit.level + 1) * 2) {
+        row {
+          text("Author:     "),
+          text(commit.author_name),
+          text(" <"),
+          text(commit.author_date),
+          text(">"),
+        },
+        row {
+          text("AuthorDate: "),
+          text(commit.author_date),
+        },
+        row {
+          text("Commit:     "),
+          text(commit.committer_name),
+          text(" <"),
+          text(commit.committer_date),
+          text(">"),
+        },
+        row {
+          text("CommitDate: "),
+          text(commit.committer_date),
+        },
+        text(" "),
+        col(map(commit.description, text), { padding_left = 4 }),
+      },
     },
-    col.hidden(true).padding_left((commit.level + 1) * 2) {
-      row {
-        text("Author:     "),
-        text(commit.author_name),
-        text(" <"),
-        text(commit.author_date),
-        text(">"),
-      },
-      row {
-        text("AuthorDate: "),
-        text(commit.author_date),
-      },
-      row {
-        text("Commit:     "),
-        text(commit.committer_name),
-        text(" <"),
-        text(commit.committer_date),
-        text(">"),
-      },
-      row {
-        text("CommitDate: "),
-        text(commit.committer_date),
-      },
-      text(" "),
-      col(map(commit.description, text), { padding_left = 4 }),
-    },
-  }
+    { oid = commit.oid }
+  )
 end)
 
 function M.LogView(data, show_graph)
