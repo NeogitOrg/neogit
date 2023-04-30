@@ -111,13 +111,12 @@ function M:open()
           self.buffer.ui:update()
           vim.cmd("normal! zz")
         end,
-        ["d"] = function(buffer)
+        ["d"] = function()
           if not config.ensure_integration("diffview") then
             return
           end
 
           local stack = self.buffer.ui:get_component_stack_under_cursor()
-          buffer:close()
           local dv = require("neogit.integrations.diffview")
           dv.open("log", stack[#stack].options.oid)
         end,
