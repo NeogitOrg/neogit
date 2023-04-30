@@ -54,7 +54,7 @@ function M:open()
           local commits = util.filter_map(
             self.buffer.ui:get_component_stack_in_linewise_selection(),
             function(c)
-              if c.tag == "col" and c.options.oid then
+              if c.options.oid then
                 return c.options.oid
               end
             end
@@ -72,13 +72,11 @@ function M:open()
         end,
         ["A"] = function()
           local stack = self.buffer.ui:get_component_stack_under_cursor()
-          local c = stack[#stack]
-          CherryPickPopup.create { commits = { self.data[c.position.row_start].oid } }
+          CherryPickPopup.create { commits = { stack[#stack].options.oid } }
         end,
         ["<enter>"] = function()
           local stack = self.buffer.ui:get_component_stack_under_cursor()
-          local c = stack[#stack]
-          CommitViewBuffer.new(self.data[c.position.row_start].oid):open()
+          CommitViewBuffer.new(stack[#stack].options.oid):open()
         end,
         ["<c-k>"] = function(buffer)
           local stack = self.buffer.ui:get_component_stack_under_cursor()
@@ -117,12 +115,11 @@ function M:open()
           if not config.ensure_integration("diffview") then
             return
           end
+
           local stack = self.buffer.ui:get_component_stack_under_cursor()
-          local c = stack[#stack]
           buffer:close()
           local dv = require("neogit.integrations.diffview")
-          local commit_id = self.data[c.position.row_start].oid
-          dv.open("log", commit_id)
+          dv.open("log", stack[#stack].options.oid)
         end,
       },
     },
