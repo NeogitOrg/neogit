@@ -45,7 +45,7 @@ function M:open()
   self.buffer = Buffer.create {
     name = "NeogitLogView",
     filetype = "NeogitLogView",
-    kind = "split",
+    kind = "tab",
     context_highlight = true,
     mappings = {
       v = {
@@ -98,7 +98,7 @@ function M:open()
 
           buffer.ui:update()
           buffer:move_cursor(target.position.row_start)
-          vim.fn.feedkeys("zz")
+          vim.cmd("normal! zz")
         end,
         ["<tab>"] = function()
           local stack = self.buffer.ui:get_component_stack_under_cursor()
@@ -106,7 +106,7 @@ function M:open()
 
           c.children[2]:toggle_hidden()
           self.buffer.ui:update()
-          vim.fn.feedkeys("zz")
+          vim.cmd("normal! zz")
         end,
         ["d"] = function(buffer)
           if not config.ensure_integration("diffview") then
