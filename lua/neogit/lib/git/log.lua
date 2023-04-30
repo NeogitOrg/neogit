@@ -177,13 +177,12 @@ local function parse_log(output)
 
       local commit = {
         level = util.str_count(level, "|"),
-        --TODO remove
-        hash = hash,
         oid = hash,
         remote = remote or "",
-        --TODO remove
-        message = message,
         description = { message },
+        --TODO remove below here
+        hash = hash,
+        message = message,
       }
 
       table.insert(commits, commit)
@@ -217,7 +216,7 @@ local function parse_log_extended(output)
         author = author,
         rel_date = rel_date,
         ref_name = ref_name,
-        -- TODO: Remove
+        -- TODO: Remove below here
         hash = hash,
         message = message,
       }
