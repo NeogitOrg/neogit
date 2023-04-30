@@ -45,7 +45,7 @@ function M:open(action)
   self.buffer = Buffer.create {
     name = "NeogitCommitSelectView",
     filetype = "NeogitCommitSelectView",
-    kind = "split",
+    kind = "tab",
     mappings = {
       n = {
         ["q"] = function()
@@ -81,8 +81,6 @@ function M:open(action)
       end,
     },
     after = function()
-      vim.cmd([[execute "resize" . (line("$") + 1)]])
-
       if commit_at_cursor then
         vim.fn.search(commit_at_cursor.oid)
       end
