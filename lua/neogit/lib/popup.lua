@@ -250,8 +250,9 @@ local Switches = Component.new(function(props)
     text.highlight("NeogitPopupSectionTitle")("Switches"),
     col(map(props.state, function(switch)
       return row.tag("Switch").value(switch) {
+        text(" "),
         row.highlight("NeogitPopupSwitchKey") {
-          text(" -"),
+          text(switch.key_prefix),
           text(switch.key),
         },
         text(" "),
@@ -274,7 +275,7 @@ local Options = Component.new(function(props)
       return row.tag("Option").value(option) {
         text(" "),
         row.highlight("NeogitPopupOptionKey") {
-          text("="),
+          text(option.key_prefix),
           text(option.key),
         },
         text(" "),

@@ -77,15 +77,24 @@ function M:switch(key, cli, description, opts)
     opts.incompatible = {}
   end
 
+  if opts.key_prefix == nil then
+    opts.key_prefix = "-"
+  end
+
+  if opts.cli_prefix == nil then
+    opts.cli_prefix = "--"
+  end
+
   table.insert(self.state.switches, {
-    id = "-" .. key,
+    id = opts.key_prefix .. key,
     key = key,
+    key_prefix = opts.key_prefix,
     cli = cli,
     cli_base = cli,
     description = description,
     enabled = state.get({ self.state.name, cli }, opts.enabled),
     parse = opts.parse,
-    cli_prefix = opts.cli_prefix or "--",
+    cli_prefix = opts.cli_prefix,
     user_input = opts.user_input,
     incompatible = util.build_reverse_lookup(opts.incompatible),
   })
@@ -104,13 +113,22 @@ end
 function M:option(key, cli, value, description, opts)
   opts = opts or {}
 
+  if opts.key_prefix == nil then
+    opts.key_prefix = "="
+  end
+
+  if opts.cli_prefix == nil then
+    opts.cli_prefix = "--"
+  end
+
   table.insert(self.state.options, {
-    id = "=" .. key,
+    id = opts.key_prefix .. key,
     key = key,
+    key_prefix = opts.key_prefix,
     cli = cli,
     value = state.get({ self.state.name, cli }, value),
     description = description,
-    cli_prefix = opts.cli_prefix or "--",
+    cli_prefix = opts.cli_prefix,
     choices = opts.choices,
   })
 
