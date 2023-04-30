@@ -81,10 +81,12 @@ function M:switch(key, cli, description, opts)
     id = "-" .. key,
     key = key,
     cli = cli,
+    cli_base = cli,
     description = description,
     enabled = state.get({ self.state.name, cli }, opts.enabled),
     parse = opts.parse,
     cli_prefix = opts.cli_prefix or "--",
+    user_input = opts.user_input,
     incompatible = util.build_reverse_lookup(opts.incompatible),
   })
 

@@ -6,6 +6,7 @@ local logger = require("neogit.logger")
 local util = require("neogit.lib.util")
 local config = require("neogit.config")
 local state = require("neogit.lib.state")
+local input = require("neogit.lib.input")
 
 local branch = require("neogit.lib.git.branch")
 local config_lib = require("neogit.lib.git.config")
@@ -160,8 +161,19 @@ end
 function M:toggle_switch(switch)
   switch.enabled = not switch.enabled
 
+  if switch.user_input then
+    if switch.enabled then
+      local value = input.get_user_input(switch.cli_prefix .. switch.cli_base .. ": ")
+      if value then
+        switch.cli = switch.cli_base .. value
+      end
+    else
+      switch.cli = switch.cli_base
+    end
+  end
+
   state.set({ self.state.name, switch.cli }, switch.enabled)
-  self:update_component(switch.id, get_highlight_for_switch(switch))
+  self:update_component(switch.id, get_highlight_for_switch(switch), switch.cli)
 
   if switch.enabled and #switch.incompatible > 0 then
     for _, var in ipairs(self.state.switches) do
