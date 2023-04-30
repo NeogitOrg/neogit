@@ -3,6 +3,7 @@ local CommitViewBuffer = require("neogit.buffers.commit_view")
 local ui = require("neogit.buffers.log_view.ui")
 local config = require("neogit.config")
 local CherryPickPopup = require("neogit.popups.cherry_pick")
+local util = require("neogit.lib.util")
 
 local M = {}
 
@@ -50,11 +51,16 @@ function M:open()
     mappings = {
       v = {
         ["A"] = function()
-          print("Not Implemented Yet")
-          -- TODO
-          -- local stack = self.buffer.ui:get_component_stack_in_selection()
-          -- local c = stack[#stack]
-          -- CherryPickPopup.create { commits = { self.data[c.position.row_start] } }
+          local commits = util.filter_map(
+            self.buffer.ui:get_component_stack_in_linewise_selection(),
+            function(c)
+              if c.tag == "col" then
+                return self.data[c.position.row_start].oid
+              end
+            end
+          )
+
+          CherryPickPopup.create { commits = commits }
         end,
       },
       n = {

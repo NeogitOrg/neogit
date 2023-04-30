@@ -125,15 +125,13 @@ function Ui:get_component_stack_under_cursor()
   end)
 end
 
-function Ui:get_component_stack_in_selection()
-  local start = vim.fn.getpos("v")
-  local stop = vim.fn.getpos(".")
-
-  local selection_start = { start[2], start[3] - 1 }
-  local selection_stop = { stop[2], stop[3] - 1 }
+function Ui:get_component_stack_in_linewise_selection()
+  local range = { vim.fn.getpos("v")[2], vim.fn.getpos(".")[2] }
+  table.sort(range)
+  local start, stop = unpack(range)
 
   return self:find_components(function(c)
-    return c:is_in_selection(selection_start, selection_stop)
+    return c:is_in_linewise_range(start, stop)
   end)
 end
 
