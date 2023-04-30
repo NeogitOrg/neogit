@@ -69,10 +69,9 @@ function M:open()
           local c = stack[#stack]
           CherryPickPopup.create { commits = { self.data[c.position.row_start] } }
         end,
-        ["<enter>"] = function(buffer)
+        ["<enter>"] = function()
           local stack = self.buffer.ui:get_component_stack_under_cursor()
           local c = stack[#stack]
-          buffer:close()
           CommitViewBuffer.new(self.data[c.position.row_start].oid):open()
         end,
         ["<c-k>"] = function(buffer)
