@@ -9,24 +9,34 @@ function M.create()
   local p = popup
     .builder()
     :name("NeogitLogPopup")
+    -- Commit Limiting
+    :option("n", "max-count", "256", "Limit number of commits")
+    :option("A", "author", "", "Limit to author")
+    :option("F", "grep", "", "Search messages")
+    :switch("G", "G", "Search changes", { user_input = true, cli_prefix = "-" })
+    :switch("S", "S", "Search occurrences", { user_input = true, cli_prefix = "-" })
+    :switch("L", "L", "Trace line evolution", { user_input = true, cli_prefix = "-" })
+
+    -- History Simplification
+    :switch("D", "simplify-by-decoration", "Simplify by decoration")
+    -- TODO: Activation should be "--", and should open file-select fuzzy finder, defaulting to the filepath under the
+    -- cursor if there is one. Needs to get passed into #files() down the line, too.
+    -- :option("-", "--", "", "Limit to files")
+    :switch("f", "follow", "Follow renames when showing single-file log")
+
+    -- Commit Ordering
+    -- :switch("o", "xxx-order", "Order commits by", false) TODO: Build multi-selector switch
+    :switch("r", "reverse", "Reverse order")
+
+    -- Formatting
     :switch("g", "graph", "Show graph", { enabled = true, parse = false })
     -- :switch("c", "color", "Show graph in color", { enabled = true, parse = false })
     :switch("d", "decorate", "Show refnames", { enabled = true })
-    :switch("S", "show-signature", "Show signatures")
+    :switch("S", "show-signature", "Show signatures", { key_prefix = "=" })
     -- :switch("h", "header", "Show header", { cli_prefix = "++" }) TODO: Need to figure out how this works
-    :switch("u", "patch", "Show diffs")
+    :switch("p", "patch", "Show diffs")
     :switch("s", "stat", "Show diffstats")
-    :switch("D", "simplify-by-decoration", "Simplify by decoration")
-    :switch("f", "follow", "Follow renames when showing single-file log")
-    :switch("r", "reverse", "Reverse order")
-    -- :switch("o", "xxx-order", "Order commits by", false) TODO: Build multi-selector switch
-    :option("n", "max-count", "256", "Limit number of commits")
-    :option("f", "count", "", "Limit to files")
-    :option("a", "author", "", "Limit to author")
-    :option("g", "grep", "", "Search messages")
-    -- :option("G", "G", "", "Search changes") TODO: Needs to get send in as `-Gsomething`
-    -- :option("S", "S", "", "Search occurrences") `-Ssomething`
-    -- :option("L", "L", "", "Trace line evolution") `-Lsomething`
+
     :group_heading("Log")
     :action("l", "current", function(popup)
       local result =
