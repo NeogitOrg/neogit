@@ -50,7 +50,7 @@ function M.create()
 
       LogViewBuffer.new(log.parse(result.stdout)):open()
     end)
-    :action("r", "related")
+    :action("u", "related")
     :action("o", "other")
     :new_action_group()
     :action("L", "local branches")
