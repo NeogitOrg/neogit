@@ -142,23 +142,6 @@ local function get_local_diff_view(selected_file_name)
 end
 
 function M.open(section_name, item_name)
-  old_config = dv_config.get_config()
-
-  local config = vim.tbl_deep_extend("force", old_config, {
-    keymaps = {
-      view = {
-        ["q"] = cb("close"),
-        ["<esc>"] = cb("close"),
-      },
-      file_panel = {
-        ["q"] = cb("close"),
-        ["<esc>"] = cb("close"),
-      },
-    },
-  })
-
-  dv.setup(config)
-
   local view
 
   if section_name == "recent" or section_name == "unmerged" or section_name == "log" then
