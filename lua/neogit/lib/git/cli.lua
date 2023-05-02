@@ -323,7 +323,7 @@ local git_dir_path_sync = function()
   return util.trim(vim.fn.system("git rev-parse --git-dir"))
 end
 
-local git_is_repository_sync = function ()
+local git_is_repository_sync = function()
   local result = vim.fn.system("git rev-parse --is-inside-work-tree")
   return vim.trim(result) == "true"
 end
