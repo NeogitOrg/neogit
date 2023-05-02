@@ -60,8 +60,8 @@ function M:group_heading_if(cond, heading)
   return self
 end
 
----@param opts.parse boolean Whether the switch is internal to neogit or should be included in the cli command.
---                           If `false` we don't include it in the cli comand.
+---@param opts.internal boolean Whether the switch is internal to neogit or should be included in the cli command.
+--                              If `true` we don't include it in the cli comand.
 function M:switch(key, cli, description, opts)
   opts = opts or {}
 
@@ -69,8 +69,8 @@ function M:switch(key, cli, description, opts)
     opts.enabled = false
   end
 
-  if opts.parse == nil then
-    opts.parse = true
+  if opts.internal == nil then
+    opts.internal = false
   end
 
   if opts.incompatible == nil then
@@ -93,7 +93,7 @@ function M:switch(key, cli, description, opts)
     cli_base = cli,
     description = description,
     enabled = state.get({ self.state.name, cli }, opts.enabled),
-    parse = opts.parse,
+    internal = opts.internal,
     cli_prefix = opts.cli_prefix,
     user_input = opts.user_input,
     incompatible = util.build_reverse_lookup(opts.incompatible),

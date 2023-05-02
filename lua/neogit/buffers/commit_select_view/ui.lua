@@ -30,7 +30,7 @@ local function render_line_left(commit)
 end
 
 local function render_line_right(commit)
-  local author = util.str_truncate(commit.author, 19, "")
+  local author = util.str_truncate(commit.author_name, 19, "")
   local content = {
     text(" "),
     text(author, { highlight = "Constant" }),

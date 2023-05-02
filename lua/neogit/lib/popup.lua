@@ -56,10 +56,10 @@ function M:get_arguments()
   return flags
 end
 
-function M:get_parse_arguments()
+function M:get_internal_arguments()
   local switches = {}
   for _, switch in pairs(self.state.switches) do
-    if switch.enabled and switch.parse then
+    if switch.enabled and switch.internal then
       switches[switch.cli] = switch.enabled
     end
   end
