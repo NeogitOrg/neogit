@@ -240,7 +240,7 @@ local function update_recent(state)
 
   state.recent.items = util.map(result, function(v)
     return {
-      name = string.format("%s %s", v.oid, v.description[1] or "<empty>"),
+      name = string.format("%s %s", v.oid:sub(1, 7), v.description[1] or "<empty>"),
       oid = v.oid,
       commit = v
     }
