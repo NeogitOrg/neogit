@@ -42,13 +42,13 @@ function M:get_arguments()
   local flags = {}
 
   for _, switch in pairs(self.state.switches) do
-    if switch.enabled and switch.parse ~= false then
+    if switch.enabled and not switch.internal then
       table.insert(flags, switch.cli_prefix .. switch.cli)
     end
   end
 
   for _, option in pairs(self.state.options) do
-    if #option.value ~= 0 and option.parse ~= false then
+    if #option.value ~= 0 and not option.internal then
       table.insert(flags, option.cli_prefix .. option.cli .. "=" .. option.value)
     end
   end
