@@ -98,9 +98,10 @@ function M:open()
           local stack = self.buffer.ui:get_component_stack_under_cursor()
           local c = stack[#stack]
 
-          c.children[2]:toggle_hidden()
-          self.buffer.ui:update()
-          vim.cmd("normal! zz")
+          if c.children[2] then
+            c.children[2]:toggle_hidden()
+            self.buffer.ui:update()
+          end
         end,
         ["d"] = function()
           if not config.ensure_integration("diffview") then
