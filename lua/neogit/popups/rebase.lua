@@ -60,7 +60,7 @@ function M.create()
       end)
       :new_action_group("Rebase")
       :action("i", "interactively", function(popup)
-        local commits = require("neogit.lib.git.log").list_extended()
+        local commits = require("neogit.lib.git.log").list()
         local commit = CommitSelectViewBuffer.new(commits):open_async()
         if not commit then
           return

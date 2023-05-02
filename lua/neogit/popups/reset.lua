@@ -16,7 +16,7 @@ function M.create()
     :name("NeogitResetPopup")
     :group_heading("Reset")
     :action("m", "mixed    (HEAD and index)", function()
-      local commit = CommitSelectViewBuffer.new(git.log.list_extended()):open_async()
+      local commit = CommitSelectViewBuffer.new(git.log.list()):open_async()
       if not commit then
         return
       end
@@ -26,7 +26,7 @@ function M.create()
       status.refresh(true, "reset_mixed")
     end)
     :action("s", "soft     (HEAD only)", function()
-      local commit = CommitSelectViewBuffer.new(git.log.list_extended()):open_async()
+      local commit = CommitSelectViewBuffer.new(git.log.list()):open_async()
       if not commit then
         return
       end
@@ -36,7 +36,7 @@ function M.create()
       status.refresh(true, "reset_soft")
     end)
     :action("h", "hard     (HEAD, index and files)", function()
-      local commit = CommitSelectViewBuffer.new(git.log.list_extended()):open_async()
+      local commit = CommitSelectViewBuffer.new(git.log.list()):open_async()
       if not commit then
         return
       end
@@ -46,7 +46,7 @@ function M.create()
       status.refresh(true, "reset_hard")
     end)
     :action("k", "keep     (HEAD and index, keeping uncommitted)", function()
-      local commit = CommitSelectViewBuffer.new(git.log.list_extended()):open_async()
+      local commit = CommitSelectViewBuffer.new(git.log.list()):open_async()
       if not commit then
         return
       end
@@ -56,7 +56,7 @@ function M.create()
       status.refresh(true, "reset_keep")
     end)
     :action("i", "index    (only)", function()
-      local commit = CommitSelectViewBuffer.new(git.log.list_extended()):open_async()
+      local commit = CommitSelectViewBuffer.new(git.log.list()):open_async()
       if not commit then
         return
       end
@@ -68,8 +68,7 @@ function M.create()
     :action("w", "worktree (only)", false) -- https://github.com/magit/magit/blob/main/lisp/magit-reset.el#L87
     :group_heading("")
     :action("f", "a file", function()
-      local stashes = git.stash.list()
-      local commit = CommitSelectViewBuffer.new(git.log.list_extended { "--all", unpack(stashes) })
+      local commit = CommitSelectViewBuffer.new(git.log.list(util.merge({ "--all" }, git.stash.list())))
         :open_async()
       if not commit then
         return
@@ -78,11 +77,12 @@ function M.create()
       local files =
         git.cli["ls-files"].full_name.deleted.modified.exclude_standard.deduplicate.call_sync():trim().stdout
       local diff = git.cli.diff.name_only.args(commit.oid .. "...").call_sync():trim().stdout
-      local all_files = util.deduplicate { unpack(files), unpack(diff) }
+      local all_files = util.deduplicate(util.merge(files, diff))
       if not all_files[1] then
         return
       end
 
+      a.util.scheduler()
       local files = FuzzyFinderBuffer.new(all_files):open_sync { allow_multi = true }
       if not files[1] then
         return

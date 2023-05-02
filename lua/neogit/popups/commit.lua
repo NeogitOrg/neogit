@@ -32,7 +32,7 @@ local function do_commit(popup, cmd)
 end
 
 local function commit_special(popup, method)
-  local commits = require("neogit.lib.git.log").list_extended()
+  local commits = require("neogit.lib.git.log").list()
   local CommitSelectViewBuffer = require("neogit.buffers.commit_select_view")
   local commit = CommitSelectViewBuffer.new(commits):open_async()
   if not commit then
