@@ -41,15 +41,13 @@ end
 function M:get_arguments()
   local flags = {}
 
-  for _, switch in pairs(self.state.switches) do
-    if switch.enabled and not switch.internal then
-      table.insert(flags, switch.cli_prefix .. switch.cli)
+  for _, arg in pairs(self.state.args) do
+    if arg.type == "switch" and arg.enabled and not arg.internal then
+      table.insert(flags, arg.cli_prefix .. arg.cli)
     end
-  end
 
-  for _, option in pairs(self.state.options) do
-    if #option.value ~= 0 and not option.internal then
-      table.insert(flags, option.cli_prefix .. option.cli .. "=" .. option.value)
+    if arg.type == "option" and #arg.value ~= 0 and not arg.internal then
+      table.insert(flags, arg.cli_prefix .. arg.cli .. "=" .. arg.value)
     end
   end
 
@@ -57,13 +55,13 @@ function M:get_arguments()
 end
 
 function M:get_internal_arguments()
-  local switches = {}
-  for _, switch in pairs(self.state.switches) do
-    if switch.enabled and switch.internal then
-      switches[switch.cli] = switch.enabled
+  local args = {}
+  for _, arg in pairs(self.state.args) do
+    if arg.type == "switch" and arg.enabled and arg.internal then
+      args[arg.cli] = true
     end
   end
-  return switches
+  return args
 end
 
 function M:to_cli()
@@ -176,8 +174,8 @@ function M:toggle_switch(switch)
   self:update_component(switch.id, get_highlight_for_switch(switch), switch.cli)
 
   if switch.enabled and #switch.incompatible > 0 then
-    for _, var in ipairs(self.state.switches) do
-      if var.enabled and switch.incompatible[var.cli] then
+    for _, var in ipairs(self.state.args) do
+      if var.type == "switch" and var.enabled and switch.incompatible[var.cli] then
         var.enabled = false
         state.set({ self.state.name, var.cli }, var.enabled)
         self:update_component(var.id, get_highlight_for_switch(var))
@@ -245,51 +243,48 @@ function M:set_config(config)
   end
 end
 
-local Switches = Component.new(function(props)
-  return col {
-    text.highlight("NeogitPopupSectionTitle")("Switches"),
-    col(map(props.state, function(switch)
-      return row.tag("Switch").value(switch) {
-        text(" "),
-        row.highlight("NeogitPopupSwitchKey") {
-          text(switch.key_prefix),
-          text(switch.key),
-        },
-        text(" "),
-        text(switch.description),
-        text(" ("),
-        row.id(switch.id).highlight(get_highlight_for_switch(switch)) {
-          text(switch.cli_prefix),
-          text(switch.cli),
-        },
-        text(")"),
-      }
-    end)),
+local Switch = Component.new(function(switch)
+  return row.tag("Switch").value(switch) {
+    text(" "),
+    row.highlight("NeogitPopupSwitchKey") {
+      text(switch.key_prefix),
+      text(switch.key),
+    },
+    text(" "),
+    text(switch.description),
+    text(" ("),
+    row.id(switch.id).highlight(get_highlight_for_switch(switch)) {
+      text(switch.cli_prefix),
+      text(switch.cli),
+    },
+    text(")"),
   }
 end)
 
-local Options = Component.new(function(props)
+local Option = Component.new(function(option)
+  return row.tag("Option").value(option) {
+    text(" "),
+    row.highlight("NeogitPopupOptionKey") {
+      text(option.key_prefix),
+      text(option.key),
+    },
+    text(" "),
+    text(option.description),
+    text(" ("),
+    row.id(option.id).highlight(get_highlight_for_option(option)) {
+      text(option.cli_prefix),
+      text(option.cli),
+      text("="),
+      text(option.value or ""),
+    },
+    text(")"),
+  }
+end)
+
+local Section = Component.new(function(title, items)
   return col {
-    text.highlight("NeogitPopupSectionTitle")("Options"),
-    col(map(props.state, function(option)
-      return row.tag("Option").value(option) {
-        text(" "),
-        row.highlight("NeogitPopupOptionKey") {
-          text(option.key_prefix),
-          text(option.key),
-        },
-        text(" "),
-        text(option.description),
-        text(" ("),
-        row.id(option.id).highlight(get_highlight_for_option(option)) {
-          text(option.cli_prefix),
-          text(option.cli),
-          text("="),
-          text(option.value or ""),
-        },
-        text(")"),
-      }
-    end)),
+    text.highlight("NeogitPopupSectionTitle")(title),
+    col(items),
   }
 end)
 
@@ -395,15 +390,15 @@ function M:show()
     },
   }
 
-  for _, switch in pairs(self.state.switches) do
-    mappings.n[switch.id] = function()
-      self:toggle_switch(switch)
-    end
-  end
-
-  for _, option in pairs(self.state.options) do
-    mappings.n[option.id] = function()
-      self:set_option(option)
+  for _, arg in pairs(self.state.args) do
+    if arg.id then
+      mappings.n[arg.id] = function()
+        if arg.type == "switch" then
+          self:toggle_switch(arg)
+        elseif arg.type == "option" then
+          self:set_option(arg)
+        end
+      end
     end
   end
 
@@ -445,12 +440,25 @@ function M:show()
     table.insert(items, Config { state = self.state.config })
   end
 
-  if self.state.switches[1] then
-    table.insert(items, Switches { state = self.state.switches })
-  end
+  if self.state.args[1] then
+    local section = {}
+    local name = "Arguments"
+    for _, item in ipairs(self.state.args) do
+      if item.type == "option" then
+        table.insert(section, Option(item))
+      elseif item.type == "switch" then
+        table.insert(section, Switch(item))
+      elseif item.type == "heading" then
+        if section[1] then -- If there are items in the section, flush to items table with current name
+          table.insert(items, Section(name, section))
+          section = {}
+        end
 
-  if self.state.options[1] then
-    table.insert(items, Options { state = self.state.options })
+        name = item.heading
+      end
+    end
+
+    table.insert(items, Section(name, section))
   end
 
   if self.state.actions[1] then

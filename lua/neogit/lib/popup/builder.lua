@@ -9,8 +9,7 @@ function M.new(builder_fn)
   local instance = {
     state = {
       name = nil,
-      switches = {},
-      options = {},
+      args = {},
       config = {},
       actions = { {} },
       env = {},
@@ -92,7 +91,8 @@ function M:switch(key, cli, description, opts)
     value = cli
   end
 
-  table.insert(self.state.switches, {
+  table.insert(self.state.args, {
+    type = "switch",
     id = opts.key_prefix .. key,
     key = key,
     key_prefix = opts.key_prefix,
@@ -128,7 +128,8 @@ function M:option(key, cli, value, description, opts)
     opts.cli_prefix = "--"
   end
 
-  table.insert(self.state.options, {
+  table.insert(self.state.args, {
+    type = "option",
     id = opts.key_prefix .. key,
     key = key,
     key_prefix = opts.key_prefix,
@@ -139,6 +140,11 @@ function M:option(key, cli, value, description, opts)
     choices = opts.choices,
   })
 
+  return self
+end
+
+function M:arg_heading(heading)
+  table.insert(self.state.args, { type = "heading", heading = heading })
   return self
 end
 

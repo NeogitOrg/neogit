@@ -10,7 +10,7 @@ function M.create()
   local p = popup
     .builder()
     :name("NeogitLogPopup")
-    -- Commit Limiting
+    :arg_heading("Commit Limiting")
     :option("n", "max-count", "256", "Limit number of commits")
     :option("A", "author", "", "Limit to author")
     :option("F", "grep", "", "Search messages")
@@ -21,19 +21,16 @@ function M.create()
     :switch("L", "L", "Trace line evolution", { user_input = true, cli_prefix = "-" })
     :switch("m", "no-merges", "Omit merges", { key_prefix = "=" })
     :switch("p", "first-parent", "First parent", { key_prefix = "=" })
-
-    -- History Simplification
+    :arg_heading("History Simplification")
     :switch("D", "simplify-by-decoration", "Simplify by decoration")
     -- TODO: Activation should be "--", and should open file-select fuzzy finder, defaulting to the filepath under the
     -- cursor if there is one. Needs to get passed into #files() down the line, too.
     -- :option("-", "--", "", "Limit to files")
     :switch("f", "follow", "Follow renames when showing single-file log")
-
-    -- Commit Ordering
+    :arg_heading("Commit Ordering")
     -- :switch("o", "xxx-order", "Order commits by", false) TODO: Build multi-selector switch
     :switch("r", "reverse", "Reverse order")
-
-    -- Formatting
+    :arg_heading("Formatting")
     :switch("g", "graph", "Show graph", { enabled = true, internal = true })
     -- :switch("c", "color", "Show graph in color", { enabled = true, internal = true })
     :switch("d", "decorate", "Show refnames", { enabled = true })
@@ -41,7 +38,6 @@ function M.create()
     -- :switch("h", "header", "Show header", { cli_prefix = "++" }) TODO: Need to figure out how this works
     -- :switch("p", "patch", "Show diffs")
     :switch("s", "stat", "Show diffstats")
-
     :group_heading("Log")
     :action("l", "current", function(popup)
       LogViewBuffer.new(
