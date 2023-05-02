@@ -169,40 +169,6 @@ local function parse_log(output)
   local commits = {}
 
   for i = 1, output_len do
-    local level, hash, rest = output[i]:match("([| *]*)([a-zA-Z0-9]+) (.*)")
-    if level ~= nil then
-      local remote, message = rest:match("%((.-)%) (.*)")
-      if remote == nil then
-        message = rest
-      end
-
-      local commit = {
-        level = util.str_count(level, "|"),
-        oid = hash,
-        remote = remote or "",
-        description = { message },
-        --TODO remove below here
-        hash = hash,
-        message = message,
-      }
-
-      table.insert(commits, commit)
-    end
-  end
-
-  return commits
-end
-
----@return CommitLogEntry[]
-local function parse_log_extended(output)
-  if type(output) == "string" then
-    output = vim.split(output, "\n")
-  end
-
-  local output_len = #output
-  local commits = {}
-
-  for i = 1, output_len do
     local level, hash, subject, author_name, rel_date, ref_name, author_date, committer_name, committer_date, committer_email, author_email, body = unpack(vim.split(output[i], "\30"))
 
     if level and hash then
@@ -231,7 +197,10 @@ local function parse_log_extended(output)
 
       table.insert(commits, commit)
     elseif level then
-      table.insert(commits, { graph = level })
+      local graph, _ = level:gsub("%w.+$", "")
+      if graph ~= commits[#commits].graph then
+        table.insert(commits, { graph = graph })
+      end
     end
   end
 
@@ -240,51 +209,48 @@ end
 
 local M = {}
 
+local format = table.concat({
+  "",      -- Padding for Graph
+  "%H",    -- Full Hash
+  "%s",    -- Subject
+  "%aN",   -- Author Name
+  "%cr",   -- Commit Date (Relative)
+  "%D",    -- Ref Name
+  "%ad",   -- Author Date
+  "%cN",   -- Committer Name
+  "%cd",   -- Committer Date
+  "%ce",   -- Committer Email
+  "%ae",   -- Author Email
+  "%b"     -- Body
+}, "%x1E") -- Hex character to split on (dec \30)
+
+---@param options table|nil
+---@return CommitLogEntry[]
+function M.list(options)
+  return parse_log(cli.log.format(format).graph.arg_list(options or {}).call():trim().stdout)
+end
+
 local function update_recent(state)
   local count = config.values.status.recent_commit_count
   if count < 1 then
     return
   end
 
-  local result = M.list { "--max-count", tostring(count) }
+  local result = M.list { "--max-count=" .. tostring(count) }
 
   state.recent.items = util.map(result, function(v)
-    return { name = string.format("%s %s", v.oid, v.description[1] or "<empty>"), oid = v.oid, commit = v }
+    return {
+      name = string.format("%s %s", v.oid, v.description[1] or "<empty>"),
+      oid = v.oid,
+      commit = v
+    }
   end)
 end
-
----@param options any
----@return CommitLogEntry[]
-function M.list(options, max)
-  return parse_log(cli.log.oneline.max_count(max or 36).arg_list(options or {}).call():trim().stdout)
-end
-
----@param options any
----@return CommitLogEntry[]
-function M.list_extended(options, max)
-  -- %H   = Full Hash
-  -- %s   = Subject
-  -- %aN  = Author Name
-  -- %cr  = Relative commit date
-  -- %D   = Ref name
-  -- %ad  = Author Date
-  -- %cN  = Committer Name
-  -- %cd  = Committer Date
-  -- %ce  = Committer Email
-  -- %b   = Body
-  -- %x1E = Hex character to split on (dec \30)
-  local format = table.concat({ "", "%H", "%s", "%aN", "%cr", "%D", "%ad", "%cN", "%cd", "%ce", "%ae", "%b" }, "%x1E")
-
-  return parse_log_extended(
-    cli.log.format(format).graph.max_count(max or 350).arg_list(options or {}).call():trim().stdout
-  )
-end
-
-M.parse_log = parse_log
-M.parse = parse
 
 function M.register(meta)
   meta.update_recent = update_recent
 end
+
+M.parse = parse
 
 return M

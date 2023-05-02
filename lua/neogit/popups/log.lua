@@ -1,6 +1,6 @@
 local popup = require("neogit.lib.popup")
 local git = require("neogit.lib.git")
-local log = require("neogit.lib.git.log")
+local util = require("neogit.lib.util")
 
 local LogViewBuffer = require("neogit.buffers.log_view")
 
@@ -14,9 +14,13 @@ function M.create()
     :option("n", "max-count", "256", "Limit number of commits")
     :option("A", "author", "", "Limit to author")
     :option("F", "grep", "", "Search messages")
+    :option("s", "since", "", "Limit to commits since")
+    :option("u", "until", "", "Limit to commits until")
     :switch("G", "G", "Search changes", { user_input = true, cli_prefix = "-" })
     :switch("S", "S", "Search occurrences", { user_input = true, cli_prefix = "-" })
     :switch("L", "L", "Trace line evolution", { user_input = true, cli_prefix = "-" })
+    :switch("m", "no-merges", "Omit merges", { key_prefix = "=" })
+    :switch("p", "first-parent", "First parent", { key_prefix = "=" })
 
     -- History Simplification
     :switch("D", "simplify-by-decoration", "Simplify by decoration")
@@ -35,31 +39,53 @@ function M.create()
     :switch("d", "decorate", "Show refnames", { enabled = true })
     :switch("S", "show-signature", "Show signatures", { key_prefix = "=" })
     -- :switch("h", "header", "Show header", { cli_prefix = "++" }) TODO: Need to figure out how this works
-    :switch("p", "patch", "Show diffs")
+    -- :switch("p", "patch", "Show diffs")
     :switch("s", "stat", "Show diffstats")
 
     :group_heading("Log")
     :action("l", "current", function(popup)
-      LogViewBuffer.new(git.log.list_extended(popup:get_arguments()), popup:get_internal_arguments()):open()
+      LogViewBuffer.new(
+        git.log.list(popup:get_arguments()),
+        popup:get_internal_arguments()
+      ):open()
     end)
     :action("h", "HEAD", function(popup)
-      local result =
-        git.cli.log.format("fuller").args(unpack(popup:get_arguments())).for_range("HEAD").call_sync()
-
-      LogViewBuffer.new(log.parse(result.stdout)):open()
+      LogViewBuffer.new(
+        git.log.list(util.merge(popup:get_arguments(), { "HEAD" })),
+        popup:get_internal_arguments()
+      ):open()
     end)
     :action("u", "related")
     :action("o", "other")
     :new_action_group()
-    :action("L", "local branches")
+    :action("L", "local branches", function(popup)
+      P(popup:get_arguments())
+      LogViewBuffer.new(
+        git.log.list(util.merge(popup:get_arguments(), {
+          git.branch.current() and "" or "HEAD",
+          "--branches"
+        })),
+        popup:get_internal_arguments()
+      ):open()
+    end)
     :action("b", "all branches", function(popup)
-      local result =
-        git.cli.log.format("fuller").args(unpack(popup:get_arguments())).branches.remotes.call_sync()
-      LogViewBuffer.new(log.parse(result.stdout)):open()
+      LogViewBuffer.new(
+        git.log.list(util.merge(popup:get_arguments(), {
+          git.branch.current() and "" or "HEAD",
+          "--branches",
+          "--remotes"
+        })),
+        popup:get_internal_arguments()
+      ):open()
     end)
     :action("a", "all references", function(popup)
-      local result = git.cli.log.format("fuller").args(unpack(popup:get_arguments())).all.call_sync()
-      LogViewBuffer.new(log.parse(result.stdout)):open()
+      LogViewBuffer.new(
+        git.log.list(util.merge(popup:get_arguments(), {
+          git.branch.current() and "" or "HEAD",
+          "--all"
+        })),
+        popup:get_internal_arguments()
+      ):open()
     end)
     :new_action_group("Reflog")
     :action("r", "current")
