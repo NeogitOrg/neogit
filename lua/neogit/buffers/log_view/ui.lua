@@ -86,7 +86,7 @@ M.Commit = Component.new(function(commit, args)
         row {
           text(args.graph and commit.graph or "", { highlight = "Include" }),
           text(" "),
-          text("Author:     "),
+          text("Author:     ", { highlight = "Comment" }),
           text(commit.author_name),
           text(" <"),
           text(commit.author_email),
@@ -95,13 +95,13 @@ M.Commit = Component.new(function(commit, args)
         row {
           text(args.graph and commit.graph or "", { highlight = "Include" }),
           text(" "),
-          text("AuthorDate: "),
+          text("AuthorDate: ", { highlight = "Comment" }),
           text(commit.author_date),
         },
         row {
           text(args.graph and commit.graph or "", { highlight = "Include" }),
           text(" "),
-          text("Commit:     "),
+          text("Commit:     ", { highlight = "Comment" }),
           text(commit.committer_name),
           text(" <"),
           text(commit.committer_email),
@@ -110,7 +110,7 @@ M.Commit = Component.new(function(commit, args)
         row {
           text(args.graph and commit.graph or "", { highlight = "Include" }),
           text(" "),
-          text("CommitDate: "),
+          text("CommitDate: ", { highlight = "Comment" }),
           text(commit.committer_date),
         },
         row {
