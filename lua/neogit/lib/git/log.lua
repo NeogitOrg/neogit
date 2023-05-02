@@ -4,10 +4,11 @@ local util = require("neogit.lib.util")
 local config = require("neogit.config")
 
 local commit_header_pat = "([| ]*)(%*?)([| ]*)commit (%w+)"
--- local commit_header_pat = "([| ]*)%*?([| *]*)commit (%w+)"
+
 ---@class CommitLogEntry
 ---@field oid string the object id of the commit
 ---@field level number the depth of the commit in the graph
+---@field graph string the graph string
 ---@field author_name string the name of the author
 ---@field author_email string the email of the author
 ---@field author_date string when the author commited
@@ -202,7 +203,8 @@ local function parse_log_extended(output)
   local commits = {}
 
   for i = 1, output_len do
-    local level, hash, message, author, rel_date, ref_name = unpack(vim.split(output[i], "\30"))
+    local level, hash, subject, author_name, rel_date, ref_name, author_date, committer_name, committer_date, committer_email, author_email, body = unpack(vim.split(output[i], "\30"))
+
     if level and hash then
       if rel_date then
         rel_date, _ = rel_date:gsub(" ago$", "")
@@ -212,13 +214,19 @@ local function parse_log_extended(output)
         level = util.str_count(level, "|"),
         graph = level,
         oid = hash,
-        description = { message },
-        author = author,
+        description = { subject, body },
+        author_name = author_name,
+        author_email = author_email,
         rel_date = rel_date,
         ref_name = ref_name,
+        author_date = author_date,
+        committer_date = committer_date,
+        committer_name = committer_name,
+        committer_email = committer_email,
+        body = body,
         -- TODO: Remove below here
         hash = hash,
-        message = message,
+        message = subject,
       }
 
       table.insert(commits, commit)
@@ -259,8 +267,13 @@ function M.list_extended(options, max)
   -- %aN  = Author Name
   -- %cr  = Relative commit date
   -- %D   = Ref name
+  -- %ad  = Author Date
+  -- %cN  = Committer Name
+  -- %cd  = Committer Date
+  -- %ce  = Committer Email
+  -- %b   = Body
   -- %x1E = Hex character to split on (dec \30)
-  local format = table.concat({ "", "%H", "%s", "%aN", "%cr", "%D" }, "%x1E")
+  local format = table.concat({ "", "%H", "%s", "%aN", "%cr", "%D", "%ad", "%cN", "%cd", "%ce", "%ae", "%b" }, "%x1E")
 
   return parse_log_extended(
     cli.log.format(format).graph.max_count(max or 350).arg_list(options or {}).call():trim().stdout

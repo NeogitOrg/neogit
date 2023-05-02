@@ -153,6 +153,8 @@ function Ui.visualize_tree(components, options)
   Ui._visualize_tree(1, components, options or {})
 end
 
+-- TODO: Rewrite this to use a table as a linewise buffer instead of a string, since appending strings in LUA is
+-- expensive compared to inserting into a table. Call table.concat(line) right before appending to buffer.
 function Ui:_render(first_line, first_col, parent, components, flags)
   local curr_line = first_line
 
@@ -174,10 +176,16 @@ function Ui:_render(first_line, first_col, parent, components, flags)
           text = padding_left .. text
 
           col_start = col_start + #padding_left
-          col_end = col_start + #c.value
+          col_end = col_start + c:get_width()
           c.position.col_start = col_start
           c.position.col_end = col_end - 1
-          text = text .. c.value
+
+          if c.options.align_right then
+            text = text .. c.value .. (" "):rep(c.options.align_right - #c.value)
+          else
+            text = text .. c.value
+          end
+
           if highlight then
             table.insert(highlights, {
               from = col_start,
@@ -205,7 +213,7 @@ function Ui:_render(first_line, first_col, parent, components, flags)
             table.insert(highlights, h)
           end
 
-          col_end = col_start + #res.text
+          col_end = col_start + vim.fn.strdisplaywidth(res.text)
           c.position.col_start = col_start
           c.position.col_end = col_end
           col_start = col_end

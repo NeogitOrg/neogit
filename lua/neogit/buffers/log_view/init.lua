@@ -1,48 +1,39 @@
 local Buffer = require("neogit.lib.buffer")
-local CommitViewBuffer = require("neogit.buffers.commit_view")
+local util = require("neogit.lib.util")
 local ui = require("neogit.buffers.log_view.ui")
 local config = require("neogit.config")
+
+local CommitViewBuffer = require("neogit.buffers.commit_view")
 local CherryPickPopup = require("neogit.popups.cherry_pick")
-local util = require("neogit.lib.util")
 
+---@class LogViewBuffer
+---@field commits CommitLogEntry[]
+---@field internal_args table
 local M = {}
+M.__index = M
 
--- @class LogViewBuffer
--- @field is_open whether the buffer is currently shown
--- @field data the dislayed data
--- @field buffer Buffer
--- @see CommitInfo
--- @see Buffer
-
---- Creates a new LogViewBuffer
--- @param data the data to display
--- @param show_graph whether we should also render the graph on the left side
--- @return LogViewBuffer
-function M.new(data, show_graph)
+---Opens a popup for selecting a commit
+---@param commits CommitLogEntry[]|nil
+---@param internal_args table|nil
+---@return LogViewBuffer
+function M.new(commits, internal_args)
   local instance = {
-    is_open = false,
-    data = data,
-    show_graph = show_graph,
+    commits = commits,
+    internal_args = internal_args,
     buffer = nil,
   }
 
-  setmetatable(instance, { __index = M })
+  setmetatable(instance, M)
 
   return instance
 end
 
 function M:close()
-  self.is_open = false
   self.buffer:close()
   self.buffer = nil
 end
 
 function M:open()
-  if self.is_open then
-    return
-  end
-
-  self.is_open = true
   self.buffer = Buffer.create {
     name = "NeogitLogView",
     filetype = "NeogitLogView",
@@ -122,8 +113,20 @@ function M:open()
         end,
       },
     },
+    -- autocmds = {
+    --   ["WinResized"] = function()
+    --     self.buffer.ui:update()
+    --   end,
+    --   ["VimResized"] = function()
+    --     self.buffer.ui:update()
+    --   end,
+    -- },
+    after = function()
+      -- Kind of a hack until we can dynamically resize components
+      vim.cmd([[setlocal nowrap]])
+    end,
     render = function()
-      return ui.LogView(self.data, self.show_graph)
+      return ui.View(self.commits, self.internal_args)
     end,
   }
 end

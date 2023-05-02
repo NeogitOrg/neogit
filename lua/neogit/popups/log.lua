@@ -1,7 +1,8 @@
 local popup = require("neogit.lib.popup")
-local LogViewBuffer = require("neogit.buffers.log_view")
 local git = require("neogit.lib.git")
 local log = require("neogit.lib.git.log")
+
+local LogViewBuffer = require("neogit.buffers.log_view")
 
 local M = {}
 
@@ -29,8 +30,8 @@ function M.create()
     :switch("r", "reverse", "Reverse order")
 
     -- Formatting
-    :switch("g", "graph", "Show graph", { enabled = true, parse = false })
-    -- :switch("c", "color", "Show graph in color", { enabled = true, parse = false })
+    :switch("g", "graph", "Show graph", { enabled = true, internal = true })
+    -- :switch("c", "color", "Show graph in color", { enabled = true, internal = true })
     :switch("d", "decorate", "Show refnames", { enabled = true })
     :switch("S", "show-signature", "Show signatures", { key_prefix = "=" })
     -- :switch("h", "header", "Show header", { cli_prefix = "++" }) TODO: Need to figure out how this works
@@ -39,10 +40,7 @@ function M.create()
 
     :group_heading("Log")
     :action("l", "current", function(popup)
-      local result =
-        git.cli.log.format("fuller").args("--graph", unpack(popup:get_arguments())).call_sync():trim()
-      local parse_args = popup:get_parse_arguments()
-      LogViewBuffer.new(log.parse(result.stdout), parse_args.graph):open()
+      LogViewBuffer.new(git.log.list_extended(popup:get_arguments()), popup:get_internal_arguments()):open()
     end)
     :action("h", "HEAD", function(popup)
       local result =
