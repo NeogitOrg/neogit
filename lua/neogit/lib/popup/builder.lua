@@ -85,11 +85,18 @@ function M:switch(key, cli, description, opts)
     opts.cli_prefix = "--"
   end
 
+  local value
+  if opts.enabled and opts.value then
+    value = cli .. opts.value
+  else
+    value = cli
+  end
+
   table.insert(self.state.switches, {
     id = opts.key_prefix .. key,
     key = key,
     key_prefix = opts.key_prefix,
-    cli = cli,
+    cli = value,
     cli_base = cli,
     description = description,
     enabled = state.get({ self.state.name, cli }, opts.enabled),
