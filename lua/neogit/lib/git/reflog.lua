@@ -3,20 +3,40 @@ local util = require("neogit.lib.util")
 
 local M = {}
 
----@class RefLogEntry
+---@class ReflogEntry
 ---@field oid string the object id of the commit
 ---@field author_name string the name of the author
 ---@field ref_name string the name of the ref
 ---@field ref_subject string the subject of the ref
 
 local function parse(entries)
+  local index = -1
+
   return util.map(entries, function(entry)
-    local hash, author, name, subject = unpack(vim.split(entry, "\30"))
+    index = index + 1
+    local hash, author, name, subject, date = unpack(vim.split(entry, "\30"))
+    local command, message = subject:match([[^(.-): (.*)]])
+
+    if command:match("^pull") then
+      command = "pull"
+    elseif command:match("^merge") then
+      message = command:match("^merge (.*)") .. ": " .. message
+      command = "merge"
+    elseif command:match("^rebase") then
+      local type = command:match("%((.-)%)")
+      command = "rebase " .. type
+    elseif command == "commit (amend)" then
+      command = "amend"
+    end
+
     return {
       oid = hash,
+      index = index,
       author_name = author,
       ref_name = name,
-      ref_subject = subject
+      ref_subject = message,
+      rel_date = date,
+      type = command
     }
   end)
 end
@@ -27,10 +47,11 @@ function M.list(refname, options)
     "%aN",   -- Author Name
     "%gd",   -- Reflog Name
     "%gs",   -- Reflog Subject
+    "%cr",   -- Commit Date (Relative)
   }, "%x1E")
 
   return parse(
-    cli.reflog.show.format(format).arg_list(options or {}).date("raw").args(refname).call():trim().stdout
+    cli.reflog.show.format(format).date("raw").arg_list(options or {}).args(refname, "--").call():trim().stdout
   )
 end
 
