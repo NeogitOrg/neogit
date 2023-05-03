@@ -238,12 +238,14 @@ local function update_recent(state)
 
   local result = M.list { "--max-count=" .. tostring(count) }
 
-  state.recent.items = util.map(result, function(v)
-    return {
-      name = string.format("%s %s", v.oid:sub(1, 7), v.description[1] or "<empty>"),
-      oid = v.oid,
-      commit = v
-    }
+  state.recent.items = util.filter_map(result, function(v)
+    if v.oid then
+      return {
+        name = string.format("%s %s", v.oid:sub(1, 7), v.description[1] or "<empty>"),
+        oid = v.oid,
+        commit = v
+      }
+    end
   end)
 end
 
