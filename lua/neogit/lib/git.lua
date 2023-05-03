@@ -5,6 +5,7 @@ return {
   status = require("neogit.lib.git.status"),
   stash = require("neogit.lib.git.stash"),
   log = require("neogit.lib.git.log"),
+  reflog = require("neogit.lib.git.reflog"),
   branch = require("neogit.lib.git.branch"),
   diff = require("neogit.lib.git.diff"),
   rebase = require("neogit.lib.git.rebase"),

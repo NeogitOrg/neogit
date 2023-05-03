@@ -353,6 +353,13 @@ local configurations = {
     options = {
       format = "--format",
     },
+    aliases = {
+      date = function(tbl)
+        return function(mode)
+          return tbl.args("--date=" .. mode)
+        end
+      end
+    }
   },
 
   ["update-ref"] = config {
