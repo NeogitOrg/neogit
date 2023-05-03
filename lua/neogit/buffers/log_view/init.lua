@@ -53,17 +53,23 @@ function M:open()
 
           CherryPickPopup.create { commits = commits }
         end,
+        ["V"] = function()
+          print("TODO: Revert")
+        end,
       },
       n = {
         ["q"] = function()
           self:close()
         end,
-        ["<F10>"] = function()
-          self.ui:print_layout_tree { collapse_hidden_components = true }
+        ["<esc>"] = function()
+          self:close()
         end,
         ["A"] = function()
           local stack = self.buffer.ui:get_component_stack_under_cursor()
           CherryPickPopup.create { commits = { stack[#stack].options.oid } }
+        end,
+        ["V"] = function()
+          print("TODO: Revert")
         end,
         ["<enter>"] = function()
           local stack = self.buffer.ui:get_component_stack_under_cursor()
