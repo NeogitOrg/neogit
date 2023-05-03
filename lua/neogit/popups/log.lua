@@ -3,6 +3,7 @@ local git = require("neogit.lib.git")
 local util = require("neogit.lib.util")
 
 local LogViewBuffer = require("neogit.buffers.log_view")
+local ReflogViewBuffer = require("neogit.buffers.reflog_view")
 
 local M = {}
 
@@ -88,7 +89,9 @@ function M.create()
     :action("m", "merged")
     :new_action_group("Reflog")
     :action("r", "current")
-    :action("H", "HEAD")
+    :action("H", "HEAD", function(popup)
+      ReflogViewBuffer.new(git.reflog.list("HEAD", popup:get_arguments())):open()
+    end)
     :action("O", "other")
     :new_action_group("Other")
     :action("s", "shortlog")
