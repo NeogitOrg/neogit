@@ -87,6 +87,7 @@ The create function takes 1 optional argument that can be one of the following v
 | c          | Open commit popup                                |
 | r          | Open rebase popup                                |
 | m          | Open merge popup                                 |
+| f          | Open fetch popup                                 |
 | L          | Open log popup                                   |
 | p          | Open pull popup                                  |
 | P          | Open push popup                                  |
@@ -231,6 +232,7 @@ List of status commands:
 - HelpPopup
 - PullPopup
 - PushPopup
+- FetchPopup
 - CommitPopup
 - LogPopup
 - StashPopup
@@ -288,6 +290,7 @@ Neogit emits the following events:
 | `NeogitCommitComplete`  | Commit has been created  |
 | `NeogitPushComplete`    | Push has completed       |
 | `NeogitPullComplete`    | Pull has completed       |
+| `NeogitFetchComplete`   | Fetch has completed      |
 
 You can listen to the events using the following code:
 

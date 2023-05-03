@@ -227,6 +227,7 @@ local configurations = {
       end,
     },
   },
+  fetch = config {},
   ["read-tree"] = config {
     flags = {
       merge = "-m",

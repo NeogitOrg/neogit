@@ -5,4 +5,5 @@ return {
   pull = require("neogit.popups.pull"),
   stash = require("neogit.popups.stash"),
   help = require("neogit.popups.help"),
+  fetch = require("neogit.popups.fetch"),
 }
