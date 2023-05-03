@@ -4,6 +4,7 @@ local util = require("neogit.lib.util")
 
 local LogViewBuffer = require("neogit.buffers.log_view")
 local ReflogViewBuffer = require("neogit.buffers.reflog_view")
+local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
 local M = {}
 
@@ -88,11 +89,18 @@ function M.create()
     :action("T", "matching tags")
     :action("m", "merged")
     :new_action_group("Reflog")
-    :action("r", "current")
+    :action("r", "current", function(popup)
+      ReflogViewBuffer.new(git.reflog.list(git.branch.current(), popup:get_arguments())):open()
+    end)
     :action("H", "HEAD", function(popup)
       ReflogViewBuffer.new(git.reflog.list("HEAD", popup:get_arguments())):open()
     end)
-    :action("O", "other")
+    :action("O", "other", function(popup)
+      local branch = FuzzyFinderBuffer.new(git.branch.get_local_branches()):open_sync()
+      if branch then
+        ReflogViewBuffer.new(git.reflog.list(branch, popup:get_arguments())):open()
+      end
+    end)
     :new_action_group("Other")
     :action("s", "shortlog")
     :build()
