@@ -7,7 +7,6 @@ local notif = require("neogit.lib.notification")
 local logger = require("neogit.logger")
 local git = require("neogit.lib.git")
 local a = require("plenary.async")
-local cli = require("neogit.lib.git.cli")
 
 local function push_to(popup, name, remote, branch)
   logger.debug("Pushing to " .. name)

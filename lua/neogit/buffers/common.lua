@@ -99,7 +99,8 @@ M.CommitEntry = Component.new(function(commit, args)
   end
 
   if commit.rel_date:match(" years?,") then
-    commit.rel_date, _ = commit.rel_date:gsub(" years?,", "y") .. " "
+    commit.rel_date, _ = commit.rel_date:gsub(" years?,", "y")
+    commit.rel_date = commit.rel_date .. " "
   elseif commit.rel_date:match("^%d ") then
     commit.rel_date = " " .. commit.rel_date
   end

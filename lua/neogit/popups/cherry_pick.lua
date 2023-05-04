@@ -3,7 +3,6 @@ local cherry_pick = require("neogit.lib.git.cherry_pick")
 local popup = require("neogit.lib.popup")
 local CommitSelectViewBuffer = require("neogit.buffers.commit_select_view")
 local log = require("neogit.lib.git.log")
-local util = require("neogit.lib.util")
 
 local M = {}
 local a = require("plenary.async")

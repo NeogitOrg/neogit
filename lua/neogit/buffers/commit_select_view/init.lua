@@ -1,16 +1,11 @@
 local a = require("plenary.async")
 local Buffer = require("neogit.lib.buffer")
-local util = require("neogit.lib.util")
 local ui = require("neogit.buffers.commit_select_view.ui")
 
 ---@class CommitSelectViewBuffer
 ---@field commits CommitLogEntry[]
 local M = {}
 M.__index = M
-
-local function line_pos()
-  return vim.fn.getpos(".")[2]
-end
 
 ---Opens a popup for selecting a commit
 ---@param commits CommitLogEntry[]|nil

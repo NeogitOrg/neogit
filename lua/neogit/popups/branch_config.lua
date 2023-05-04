@@ -23,9 +23,9 @@ function M.create(branch)
     :config_heading("Configure branch")
     :config("d", "branch." .. branch .. ".description")
     :config("u", "branch." .. branch .. ".merge", {
-      callback = function(popup, c)
-        print("TODO - open branch picker")
-      end,
+      -- callback = function(popup, c)
+      --   print("TODO - open branch picker")
+      -- end,
     })
     :config("m", "branch." .. branch .. ".remote", { passive = true })
     :config("r", "branch." .. branch .. ".rebase", {

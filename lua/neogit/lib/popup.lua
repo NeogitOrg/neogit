@@ -406,6 +406,7 @@ function M:show()
   end
 
   for _, config in pairs(self.state.config) do
+    -- selene: allow(empty_if)
     if config.heading then
       -- nothing
     elseif not config.passive then
@@ -417,6 +418,7 @@ function M:show()
 
   for _, group in pairs(self.state.actions) do
     for _, action in pairs(group) do
+      -- selene: allow(empty_if)
       if action.heading then
         -- nothing
       elseif action.callback then

@@ -54,9 +54,9 @@ function M.create()
     :switch("r", "recurse-submodules", "Recurse submodules when checking out an existing branch")
     :config_if(branch.current(), "d", "branch." .. (branch.current() or "") .. ".description")
     :config_if(branch.current(), "u", "branch." .. (branch.current() or "") .. ".merge", {
-      callback = function(popup, c)
-        print("TODO - open branch picker")
-      end,
+      -- callback = function(popup, c)
+      --   print("TODO - open branch picker")
+      -- end,
     })
     :config_if(branch.current(), "m", "branch." .. (branch.current() or "") .. ".remote", { passive = true })
     :config_if(branch.current(), "r", "branch." .. (branch.current() or "") .. ".rebase", {
