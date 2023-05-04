@@ -155,26 +155,23 @@ M.CommitEntry = Component.new(function(commit, args)
   end
 
   return col({
-    row(
-      {
-        text(commit.oid:sub(1, 7), { highlight = "Comment" }),
-        text(" "),
-        text(args.graph and commit.graph or "", { highlight = "Include" }),
-        text(" "),
-        unpack(ref),
-        text(commit.description[1]),
-      },
-      {
-        virtual_text = {
-          { " ", "Constant" },
-          {
-            util.str_clamp(commit.author_name, 30 - (#commit.rel_date > 10 and #commit.rel_date or 10)),
-            "Constant",
-          },
-          { util.str_min_width(commit.rel_date, 10), "Special" },
+    row({
+      text(commit.oid:sub(1, 7), { highlight = "Comment" }),
+      text(" "),
+      text(args.graph and commit.graph or "", { highlight = "Include" }),
+      text(" "),
+      unpack(ref),
+      text(commit.description[1]),
+    }, {
+      virtual_text = {
+        { " ", "Constant" },
+        {
+          util.str_clamp(commit.author_name, 30 - (#commit.rel_date > 10 and #commit.rel_date or 10)),
+          "Constant",
         },
-      }
-    ),
+        { util.str_min_width(commit.rel_date, 10), "Special" },
+      },
+    }),
     details,
   }, { oid = commit.oid })
 end)
