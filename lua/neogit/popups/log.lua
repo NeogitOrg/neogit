@@ -72,7 +72,6 @@ function M.create()
     :action("o", "other")
     :new_action_group()
     :action("L", "local branches", function(popup)
-      P(popup:get_arguments())
       LogViewBuffer.new(
         git.log.list(util.merge(popup:get_arguments(), {
           git.branch.current() and "" or "HEAD",
