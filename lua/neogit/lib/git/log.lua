@@ -172,6 +172,8 @@ local function parse_log(output)
     local level, hash, subject, author_name, rel_date, ref_name, author_date, committer_name, committer_date, committer_email, author_email, body =
       unpack(vim.split(output[i], "\30"))
 
+    local graph = util.trim(level:match("([_|/\\ %*]+)"))
+
     if level and hash then
       if rel_date then
         rel_date, _ = rel_date:gsub(" ago$", "")
@@ -179,7 +181,7 @@ local function parse_log(output)
 
       local commit = {
         level = util.str_count(level, "|"),
-        graph = level,
+        graph = graph,
         oid = hash,
         description = { subject, body },
         author_name = author_name,
@@ -198,7 +200,6 @@ local function parse_log(output)
 
       table.insert(commits, commit)
     elseif level then
-      local graph, _ = level:gsub("%w.+$", "")
       if graph ~= commits[#commits].graph then
         table.insert(commits, { graph = graph })
       end

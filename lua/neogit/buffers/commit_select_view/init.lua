@@ -43,6 +43,9 @@ function M:open(action)
     kind = "tab",
     mappings = {
       n = {
+        ["<tab>"] = function()
+          -- no-op
+        end,
         ["q"] = function()
           self:close()
         end,
