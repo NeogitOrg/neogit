@@ -191,6 +191,10 @@ local function str_truncate(str, max_length, trailing)
   return str
 end
 
+local function str_clamp(str, len, sep)
+  return str_min_width(str_truncate(str, len - 1, ""), len, sep or " ")
+end
+
 local function parse_command_args(args)
   local tbl = {}
 
@@ -271,4 +275,5 @@ return {
   find = find,
   merge = merge,
   str_min_width = str_min_width,
+  str_clamp = str_clamp,
 }
