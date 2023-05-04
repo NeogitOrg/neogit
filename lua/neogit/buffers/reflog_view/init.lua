@@ -83,7 +83,6 @@ function M:open()
       },
     },
     after = function()
-      -- Kind of a hack until we can dynamically resize components
       vim.cmd([[setlocal nowrap]])
     end,
     render = function()

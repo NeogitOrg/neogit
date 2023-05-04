@@ -39,7 +39,7 @@ M.Entry = Component.new(function(entry, total)
         },
         { virtual_text = {
           { " ", "Constant" },
-          { util.str_clamp(entry.author_name, 20 - #tostring(date_number)), "Constant" },
+          -- { util.str_clamp(entry.author_name, 20 - #tostring(date_number)), "Constant" },
           { date_number .. date_quantifier:sub(1, 1), "Special" }
         } }),
     },
