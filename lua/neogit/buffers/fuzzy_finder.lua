@@ -65,10 +65,7 @@ function M:open(opts)
     end
   end
 
-  Finder.create(opts)
-    :add_entries(self.list)
-    :add_select_action(select_action)
-    :find()
+  Finder.create(opts):add_entries(self.list):add_select_action(select_action):find()
 end
 
 -- Opens finder in such a way that selected value can be returned to the main thread

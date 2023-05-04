@@ -358,8 +358,8 @@ local configurations = {
         return function(mode)
           return tbl.args("--date=" .. mode)
         end
-      end
-    }
+      end,
+    },
   },
 
   ["update-ref"] = config {
@@ -373,7 +373,7 @@ local configurations = {
           return tbl.args("-m", string.format([["%s"]], escaped_text))
         end
       end,
-    }
+    },
   },
 
   ["ls-files"] = config {

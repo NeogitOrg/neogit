@@ -96,7 +96,9 @@ function M.create()
       false
     )
     -- https://github.com/magit/magit/blob/430a52c4b3f403ba8b0f97b4b67b868298dd60f3/lisp/magit-remote.el#L291
-    :env({ highlight = "origin" })
+    :env({
+      highlight = "origin",
+    })
     :build()
 
   p:show()

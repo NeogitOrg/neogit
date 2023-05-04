@@ -169,7 +169,8 @@ local function parse_log(output)
   local commits = {}
 
   for i = 1, output_len do
-    local level, hash, subject, author_name, rel_date, ref_name, author_date, committer_name, committer_date, committer_email, author_email, body = unpack(vim.split(output[i], "\30"))
+    local level, hash, subject, author_name, rel_date, ref_name, author_date, committer_name, committer_date, committer_email, author_email, body =
+      unpack(vim.split(output[i], "\30"))
 
     if level and hash then
       if rel_date then
@@ -210,18 +211,18 @@ end
 local M = {}
 
 local format = table.concat({
-  "",      -- Padding for Graph
-  "%H",    -- Full Hash
-  "%s",    -- Subject
-  "%aN",   -- Author Name
-  "%cr",   -- Commit Date (Relative)
-  "%D",    -- Ref Name
-  "%ad",   -- Author Date
-  "%cN",   -- Committer Name
-  "%cd",   -- Committer Date
-  "%ce",   -- Committer Email
-  "%ae",   -- Author Email
-  "%b"     -- Body
+  "", -- Padding for Graph
+  "%H", -- Full Hash
+  "%s", -- Subject
+  "%aN", -- Author Name
+  "%cr", -- Commit Date (Relative)
+  "%D", -- Ref Name
+  "%ad", -- Author Date
+  "%cN", -- Committer Name
+  "%cd", -- Committer Date
+  "%ce", -- Committer Email
+  "%ae", -- Author Email
+  "%b", -- Body
 }, "%x1E") -- Hex character to split on (dec \30)
 
 ---@param options table|nil
@@ -243,7 +244,7 @@ local function update_recent(state)
       return {
         name = string.format("%s %s", v.oid:sub(1, 7), v.description[1] or "<empty>"),
         oid = v.oid,
-        commit = v
+        commit = v,
       }
     end
   end)

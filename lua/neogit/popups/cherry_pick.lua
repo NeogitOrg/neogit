@@ -38,7 +38,10 @@ function M.create(env)
     -- :option("m", "mainline", "", "Replay merge relative to parent")
     -- :option("s", "strategy", "", "Strategy")
     -- :option("S", "gpg-sign", "", "Sign using gpg")
-    :group_heading_if(not pick_or_revert_in_progress(status), "Apply here")
+    :group_heading_if(
+      not pick_or_revert_in_progress(status),
+      "Apply here"
+    )
     :action_if(not pick_or_revert_in_progress(status), "A", "Pick", function(popup)
       local commits
       if popup.state.env.commits then

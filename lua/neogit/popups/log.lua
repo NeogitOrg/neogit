@@ -28,30 +28,45 @@ function M.create()
     -- TODO: Activation should be "--", and should open file-select fuzzy finder, defaulting to the filepath under the
     -- cursor if there is one. Needs to get passed into #files() down the line, too.
     -- :option("-", "--", "", "Limit to files")
-    :switch("f", "follow", "Follow renames when showing single-file log")
+    :switch(
+      "f",
+      "follow",
+      "Follow renames when showing single-file log"
+    )
     :arg_heading("Commit Ordering")
     -- :switch("o", "xxx-order", "Order commits by", false) TODO: Build multi-selector switch
-    :switch("r", "reverse", "Reverse order")
+    :switch(
+      "r",
+      "reverse",
+      "Reverse order"
+    )
     :arg_heading("Formatting")
     :switch("g", "graph", "Show graph", { enabled = true, internal = true })
     -- :switch("c", "color", "Show graph in color", { enabled = true, internal = true })
-    :switch("d", "decorate", "Show refnames", { enabled = true })
+    :switch(
+      "d",
+      "decorate",
+      "Show refnames",
+      { enabled = true }
+    )
     :switch("S", "show-signature", "Show signatures", { key_prefix = "=" })
     -- :switch("h", "header", "Show header", { cli_prefix = "++" }) TODO: Need to figure out how this works
     -- :switch("p", "patch", "Show diffs")
-    :switch("s", "stat", "Show diffstats")
+    :switch(
+      "s",
+      "stat",
+      "Show diffstats"
+    )
     :group_heading("Log")
     :action("l", "current", function(popup)
-      LogViewBuffer.new(
-        git.log.list(popup:get_arguments()),
-        popup:get_internal_arguments()
-      ):open()
+      LogViewBuffer.new(git.log.list(popup:get_arguments()), popup:get_internal_arguments()):open()
     end)
     :action("h", "HEAD", function(popup)
       LogViewBuffer.new(
         git.log.list(util.merge(popup:get_arguments(), { "HEAD" })),
         popup:get_internal_arguments()
-      ):open()
+      )
+        :open()
     end)
     :action("u", "related")
     :action("o", "other")
@@ -61,7 +76,7 @@ function M.create()
       LogViewBuffer.new(
         git.log.list(util.merge(popup:get_arguments(), {
           git.branch.current() and "" or "HEAD",
-          "--branches"
+          "--branches",
         })),
         popup:get_internal_arguments()
       ):open()
@@ -71,7 +86,7 @@ function M.create()
         git.log.list(util.merge(popup:get_arguments(), {
           git.branch.current() and "" or "HEAD",
           "--branches",
-          "--remotes"
+          "--remotes",
         })),
         popup:get_internal_arguments()
       ):open()
@@ -80,7 +95,7 @@ function M.create()
       LogViewBuffer.new(
         git.log.list(util.merge(popup:get_arguments(), {
           git.branch.current() and "" or "HEAD",
-          "--all"
+          "--all",
         })),
         popup:get_internal_arguments()
       ):open()

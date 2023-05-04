@@ -36,22 +36,28 @@ local function parse(entries)
       ref_name = name,
       ref_subject = message,
       rel_date = date,
-      type = command
+      type = command,
     }
   end)
 end
 
 function M.list(refname, options)
   local format = table.concat({
-    "%h",    -- Full Hash
-    "%aN",   -- Author Name
-    "%gd",   -- Reflog Name
-    "%gs",   -- Reflog Subject
-    "%cr",   -- Commit Date (Relative)
+    "%h", -- Full Hash
+    "%aN", -- Author Name
+    "%gd", -- Reflog Name
+    "%gs", -- Reflog Subject
+    "%cr", -- Commit Date (Relative)
   }, "%x1E")
 
   return parse(
-    cli.reflog.show.format(format).date("raw").arg_list(options or {}).args(refname, "--").call():trim().stdout
+    cli.reflog.show
+      .format(format)
+      .date("raw")
+      .arg_list(options or {})
+      .args(refname, "--")
+      .call()
+      :trim().stdout
   )
 end
 

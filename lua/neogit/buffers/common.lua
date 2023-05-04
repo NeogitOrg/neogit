@@ -84,11 +84,17 @@ M.CommitEntry = Component.new(function(commit, args)
     local remote_name, local_name = unpack(vim.split(ref_name, ", "))
 
     if local_name then
-      table.insert(ref, text(local_name .. " ", { highlight = local_name:match("/") and "String" or "Macro" }))
+      table.insert(
+        ref,
+        text(local_name .. " ", { highlight = local_name:match("/") and "String" or "Macro" })
+      )
     end
 
     if remote_name then
-      table.insert(ref, text(remote_name .. " ", { highlight = remote_name:match("/") and "String" or "Macro" }))
+      table.insert(
+        ref,
+        text(remote_name .. " ", { highlight = remote_name:match("/") and "String" or "Macro" })
+      )
     end
   end
 
@@ -134,45 +140,47 @@ M.CommitEntry = Component.new(function(commit, args)
       row {
         text(args.graph and commit.graph or "", { highlight = "Include" }),
       },
-      col(map(
-        commit.description,
-        function(line)
+      col(
+        map(commit.description, function(line)
           return row {
             text(args.graph and commit.graph or "", { highlight = "Include" }),
             text(" "),
-            text(line)
+            text(line),
           }
-        end
-      ), { highlight = "String" }),
+        end),
+        { highlight = "String" }
+      ),
     }
   end
 
-  return col(
-    {
-      row(
-        {
-          text(commit.oid:sub(1, 7), { highlight = "Comment" }),
-          text(" "),
-          text(args.graph and commit.graph or "", { highlight = "Include" }),
-          text(" "),
-          unpack(ref),
-          text(commit.description[1]),
-        },
-        { virtual_text = {
+  return col({
+    row(
+      {
+        text(commit.oid:sub(1, 7), { highlight = "Comment" }),
+        text(" "),
+        text(args.graph and commit.graph or "", { highlight = "Include" }),
+        text(" "),
+        unpack(ref),
+        text(commit.description[1]),
+      },
+      {
+        virtual_text = {
           { " ", "Constant" },
-          { util.str_clamp(commit.author_name, 30 - (#commit.rel_date > 10 and #commit.rel_date or 10)), "Constant" },
+          {
+            util.str_clamp(commit.author_name, 30 - (#commit.rel_date > 10 and #commit.rel_date or 10)),
+            "Constant",
+          },
           { util.str_min_width(commit.rel_date, 10), "Special" },
-        } }
-      ),
-      details
-    },
-    { oid = commit.oid }
-  )
+        },
+      }
+    ),
+    details,
+  }, { oid = commit.oid })
 end)
 
 M.CommitGraph = Component.new(function(commit)
   return col.padding_left(8) {
-    row { text(commit.graph, { highlight = "Include" }) }
+    row { text(commit.graph, { highlight = "Include" }) },
   }
 end)
 

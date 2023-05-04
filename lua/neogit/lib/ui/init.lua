@@ -270,14 +270,11 @@ function Ui:_render(first_line, first_col, parent, components, flags)
           end
           if c.options.virtual_text then
             local ns = self.buf:create_namespace("NeogitBufferVirtualText")
-            self.buf:set_extmark(
-              ns, curr_line - 2, 0,
-              {
-                hl_mode = "combine",
-                virt_text = c.options.virtual_text,
-                virt_text_pos = "right_align"
-              }
-            )
+            self.buf:set_extmark(ns, curr_line - 2, 0, {
+              hl_mode = "combine",
+              virt_text = c.options.virtual_text,
+              virt_text_pos = "right_align",
+            })
           end
           flags.in_row = false
         end

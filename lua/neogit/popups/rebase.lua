@@ -24,8 +24,7 @@ function M.create()
   base_branch = base_branch and base_branch.value or "master"
 
   if not in_rebase(status) then
-    p
-      :switch("k", "keep-empty", "Keep empty commits")
+    p:switch("k", "keep-empty", "Keep empty commits")
       :switch("u", "update-refs", "Update branches")
       :switch("d", "committer-date-is-author-date", "Use author date as committer date")
       :switch("t", "ignore-date", "Use current time as author date")

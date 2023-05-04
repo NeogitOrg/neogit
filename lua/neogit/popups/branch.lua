@@ -97,7 +97,8 @@ function M.create()
           end
         end)
 
-        local target = FuzzyFinderBuffer.new(util.merge(local_branches, remote_branches)):open_sync { prompt_prefix = " branch > " }
+        local target = FuzzyFinderBuffer.new(util.merge(local_branches, remote_branches))
+          :open_sync { prompt_prefix = " branch > " }
         if target:match([[/]]) then
           cli.checkout.track(target).call_sync()
         else
@@ -184,7 +185,7 @@ function M.create()
 
       local branches = format_branches(branch.get_all_branches(false))
       local to = FuzzyFinderBuffer.new(branches):open_sync {
-        prompt_prefix = " reset " .. branch.current() .. " to > "
+        prompt_prefix = " reset " .. branch.current() .. " to > ",
       }
 
       if not to then
@@ -196,10 +197,7 @@ function M.create()
 
       -- Update reference
       local from = git.cli["rev-parse"].symbolic_full_name.args(branch.current()).call_sync():trim().stdout[1]
-      git.cli["update-ref"]
-        .message(string.format("reset: moving to %s", to))
-        .args(from, to)
-        .call_sync()
+      git.cli["update-ref"].message(string.format("reset: moving to %s", to)).args(from, to).call_sync()
 
       notif.create(string.format("Reset '%s'", branch.current()), vim.log.levels.INFO)
       status.refresh(true, "reset_branch")
