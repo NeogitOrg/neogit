@@ -133,6 +133,15 @@ local function str_right_pad(str, len, sep)
   return str .. sep:rep(len - #str)
 end
 
+local function str_min_width(str, len, sep)
+  local length = vim.fn.strdisplaywidth(str)
+  if length > len then
+    return str
+  end
+
+  return str .. string.rep(sep or " ", len - length)
+end
+
 local function slice(tbl, s, e)
   local pos, new = 1, {}
 
@@ -261,4 +270,5 @@ return {
   str_truncate = str_truncate,
   find = find,
   merge = merge,
+  str_min_width = str_min_width,
 }

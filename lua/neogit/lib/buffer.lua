@@ -303,6 +303,10 @@ function Buffer:clear_namespace(namespace)
   api.nvim_buf_clear_namespace(self.handle, namespace, 0, -1)
 end
 
+function Buffer:create_namespace(name)
+  return api.nvim_create_namespace(name)
+end
+
 function Buffer:set_filetype(ft)
   api.nvim_buf_set_option(self.handle, "filetype", ft)
 end
