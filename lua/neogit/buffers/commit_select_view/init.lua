@@ -55,11 +55,8 @@ function M:open(action)
           self:close()
         end,
         ["<enter>"] = function()
-          local pos = line_pos()
-          local oid = vim.api.nvim_buf_get_lines(0, pos - 1, pos, true)[1]:match("^(.-) ")
-          local commit = util.find(self.commits, function(c)
-            return c.oid and c.oid:match("^" .. oid) and oid ~= ""
-          end)
+          local stack = self.buffer.ui:get_component_stack_under_cursor()
+          local commit = stack[#stack].options.oid
 
           if action and commit then
             vim.schedule(function()
@@ -84,6 +81,7 @@ function M:open(action)
       if commit_at_cursor then
         vim.fn.search(commit_at_cursor.oid)
       end
+      vim.cmd([[setlocal nowrap]])
     end,
     render = function()
       return ui.View(self.commits)

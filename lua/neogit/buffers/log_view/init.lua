@@ -120,16 +120,7 @@ function M:open()
         end,
       },
     },
-    -- autocmds = {
-    --   ["WinResized"] = function()
-    --     self.buffer.ui:update()
-    --   end,
-    --   ["VimResized"] = function()
-    --     self.buffer.ui:update()
-    --   end,
-    -- },
     after = function()
-      -- Kind of a hack until we can dynamically resize components
       vim.cmd([[setlocal nowrap]])
     end,
     render = function()

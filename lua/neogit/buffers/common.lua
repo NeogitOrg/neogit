@@ -77,6 +77,105 @@ M.List = Component.new(function(props)
   return container.tag("List")(children)
 end)
 
+M.CommitEntry = Component.new(function(commit, args)
+  local ref = {}
+  if commit.ref_name ~= "" then
+    local ref_name, _ = commit.ref_name:gsub("HEAD %-> ", "")
+    local remote_name, local_name = unpack(vim.split(ref_name, ", "))
+
+    if local_name then
+      table.insert(ref, text(local_name .. " ", { highlight = local_name:match("/") and "String" or "Macro" }))
+    end
+
+    if remote_name then
+      table.insert(ref, text(remote_name .. " ", { highlight = remote_name:match("/") and "String" or "Macro" }))
+    end
+  end
+
+  if commit.rel_date:match(" years?,") then
+    commit.rel_date, _ = commit.rel_date:gsub(" years?,", "y") .. " "
+  elseif commit.rel_date:match("^%d ") then
+    commit.rel_date = " " .. commit.rel_date
+  end
+
+  local details
+  if args.details then
+    details = col.hidden(true).padding_left(8) {
+      row {
+        text(args.graph and commit.graph or "", { highlight = "Include" }),
+        text(" "),
+        text("Author:     ", { highlight = "Comment" }),
+        text(commit.author_name),
+        text(" <"),
+        text(commit.author_email),
+        text(">"),
+      },
+      row {
+        text(args.graph and commit.graph or "", { highlight = "Include" }),
+        text(" "),
+        text("AuthorDate: ", { highlight = "Comment" }),
+        text(commit.author_date),
+      },
+      row {
+        text(args.graph and commit.graph or "", { highlight = "Include" }),
+        text(" "),
+        text("Commit:     ", { highlight = "Comment" }),
+        text(commit.committer_name),
+        text(" <"),
+        text(commit.committer_email),
+        text(">"),
+      },
+      row {
+        text(args.graph and commit.graph or "", { highlight = "Include" }),
+        text(" "),
+        text("CommitDate: ", { highlight = "Comment" }),
+        text(commit.committer_date),
+      },
+      row {
+        text(args.graph and commit.graph or "", { highlight = "Include" }),
+      },
+      col(map(
+        commit.description,
+        function(line)
+          return row {
+            text(args.graph and commit.graph or "", { highlight = "Include" }),
+            text(" "),
+            text(line)
+          }
+        end
+      ), { highlight = "String" }),
+    }
+  end
+
+  return col(
+    {
+      row(
+        {
+          text(commit.oid:sub(1, 7), { highlight = "Comment" }),
+          text(" "),
+          text(args.graph and commit.graph or "", { highlight = "Include" }),
+          text(" "),
+          unpack(ref),
+          text(commit.description[1]),
+        },
+        { virtual_text = {
+          { " ", "Constant" },
+          { util.str_clamp(commit.author_name, 30 - (#commit.rel_date > 10 and #commit.rel_date or 10)), "Constant" },
+          { util.str_min_width(commit.rel_date, 10), "Special" },
+        } }
+      ),
+      details
+    },
+    { oid = commit.oid }
+  )
+end)
+
+M.CommitGraph = Component.new(function(commit)
+  return col.padding_left(8) {
+    row { text(commit.graph, { highlight = "Include" }) }
+  }
+end)
+
 M.Grid = Component.new(function(props)
   props = vim.tbl_extend("force", {
     gap = 0,
