@@ -82,7 +82,7 @@ function M.update_rebase_status(state)
     local _, todos = uv.read_file(rebase_file .. "/git-rebase-todo")
     local _, done = uv.read_file(rebase_file .. "/done")
 
-    local current = 1
+    local current = 0
     -- we need \r? to support windows
     for line in (done or ""):gmatch("[^\r\n]+") do
       if not line:match("^#") then
