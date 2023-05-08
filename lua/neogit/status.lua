@@ -188,7 +188,11 @@ local function draw_buffer()
       return
     end
 
-    output:append(string.format("%s (%d)", header, #data.items))
+    if data.current then
+      output:append(string.format("%s (%d/%d)", header, data.current, #data.items))
+    else
+      output:append(string.format("%s (%d)", header, #data.items))
+    end
 
     local location = locations_lookup[key]
       or {
