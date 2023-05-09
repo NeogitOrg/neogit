@@ -451,7 +451,7 @@ function Buffer.create(config)
       local function on_win()
         buffer:clear_namespace(context_ns)
 
-        -- TODO: this is WAY to slow to be called so frequently
+        -- TODO: this is WAY to slow to be called so frequently, especially in a large buffer
         local stack = buffer.ui:get_component_stack_under_cursor()
         if not stack then
           return
