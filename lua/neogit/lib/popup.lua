@@ -198,11 +198,14 @@ function M:set_option(option)
       set("")
     end
   else
-    set(vim.fn.input {
-      prompt = option.cli .. "=",
-      default = option.value,
-      cancelreturn = option.value,
-    })
+    local input =
+      vim.fn.input { prompt = option.cli .. "=", default = option.value, cancelreturn = option.value }
+
+    if option.default and input == "" then
+      set(option.default)
+    else
+      set(input)
+    end
   end
 end
 

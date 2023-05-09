@@ -138,6 +138,7 @@ function M:option(key, cli, value, description, opts)
     description = description,
     cli_prefix = opts.cli_prefix,
     choices = opts.choices,
+    default = opts.default,
   })
 
   return self
