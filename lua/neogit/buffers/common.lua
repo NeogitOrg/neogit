@@ -77,6 +77,16 @@ M.List = Component.new(function(props)
   return container.tag("List")(children)
 end)
 
+local function build_graph(graph)
+  if type(graph) == "table" then
+    return util.map(graph, function(g)
+      return text(g.text, { highlight = "NeogitGraph" .. g.color })
+    end)
+  else
+    return { text(graph, { highlight = "Include" }) }
+  end
+end
+
 M.CommitEntry = Component.new(function(commit, args)
   local ref = {}
   if commit.ref_name ~= "" then
@@ -105,49 +115,41 @@ M.CommitEntry = Component.new(function(commit, args)
     commit.rel_date = " " .. commit.rel_date
   end
 
+  local graph = args.graph and build_graph(commit.graph) or { text("") }
+
   local details
   if args.details then
     details = col.hidden(true).padding_left(8) {
-      row {
-        text(args.graph and commit.graph or "", { highlight = "Include" }),
+      row(util.merge(graph, {
         text(" "),
         text("Author:     ", { highlight = "Comment" }),
         text(commit.author_name),
         text(" <"),
         text(commit.author_email),
         text(">"),
-      },
-      row {
-        text(args.graph and commit.graph or "", { highlight = "Include" }),
+      })),
+      row(util.merge(graph, {
         text(" "),
         text("AuthorDate: ", { highlight = "Comment" }),
         text(commit.author_date),
-      },
-      row {
-        text(args.graph and commit.graph or "", { highlight = "Include" }),
+      })),
+      row(util.merge(graph, {
         text(" "),
         text("Commit:     ", { highlight = "Comment" }),
         text(commit.committer_name),
         text(" <"),
         text(commit.committer_email),
         text(">"),
-      },
-      row {
-        text(args.graph and commit.graph or "", { highlight = "Include" }),
+      })),
+      row(util.merge(graph, {
         text(" "),
         text("CommitDate: ", { highlight = "Comment" }),
         text(commit.committer_date),
-      },
-      row {
-        text(args.graph and commit.graph or "", { highlight = "Include" }),
-      },
+      })),
+      row(graph),
       col(
         map(commit.description, function(line)
-          return row {
-            text(args.graph and commit.graph or "", { highlight = "Include" }),
-            text(" "),
-            text(line),
-          }
+          return row(util.merge(graph, { text(" "), text(line) }))
         end),
         { highlight = "String" }
       ),
@@ -155,31 +157,34 @@ M.CommitEntry = Component.new(function(commit, args)
   end
 
   return col({
-    row({
-      text(commit.oid:sub(1, 7), { highlight = "Comment" }),
-      text(" "),
-      text(args.graph and commit.graph or "", { highlight = "Include" }),
-      text(" "),
-      unpack(ref),
-      text(commit.description[1]),
-    }, {
-      virtual_text = {
-        { " ", "Constant" },
-        {
-          util.str_clamp(commit.author_name, 30 - (#commit.rel_date > 10 and #commit.rel_date or 10)),
-          "Constant",
+    row(
+      util.merge(
+        { text(commit.oid:sub(1, 7), { highlight = "Comment" }), text(" ") },
+        graph,
+        { text(" ") },
+        ref,
+        { text(commit.description[1]) }
+      ),
+      {
+        virtual_text = {
+          { " ", "Constant" },
+          {
+            util.str_clamp(
+              commit.author_name,
+              30 - (#commit.rel_date > 10 and #commit.rel_date or 10)
+            ),
+            "Constant",
+          },
+          { util.str_min_width(commit.rel_date, 10), "Special" },
         },
-        { util.str_min_width(commit.rel_date, 10), "Special" },
-      },
-    }),
+      }
+    ),
     details,
   }, { oid = commit.oid })
 end)
 
-M.CommitGraph = Component.new(function(commit)
-  return col.padding_left(8) {
-    row { text(commit.graph, { highlight = "Include" }) },
-  }
+M.CommitGraph = Component.new(function(commit, args)
+  return col.padding_left(8) { row(build_graph(commit.graph)) }
 end)
 
 M.Grid = Component.new(function(props)

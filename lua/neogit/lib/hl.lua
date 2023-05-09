@@ -170,6 +170,26 @@ function M.setup()
   local palette = M.make_palette()
 
   hl_store = {
+    NeogitGraphRed = { fg = palette.red },
+    NeogitGraphWhite = { fg = palette.white },
+    NeogitGraphOrange = { fg = palette.orange },
+    NeogitGraphYellow = { fg = palette.yellow },
+    NeogitGraphGreen = { fg = palette.green },
+    NeogitGraphCyan = { fg = palette.cyan },
+    NeogitGraphBlue = { fg = palette.blue },
+    NeogitGraphPurple = { fg = palette.purple },
+    NeogitGraphGray = { fg = palette.grey },
+
+    NeogitGraphBoldRed = { fg = palette.red, gui = "bold" },
+    NeogitGraphBoldWhite = { fg = palette.white, gui = "bold" },
+    NeogitGraphBoldOrange = { fg = palette.orange, gui = "bold" },
+    NeogitGraphBoldYellow = { fg = palette.yellow, gui = "bold" },
+    NeogitGraphBoldGreen = { fg = palette.green, gui = "bold" },
+    NeogitGraphBoldCyan = { fg = palette.cyan, gui = "bold" },
+    NeogitGraphBoldBlue = { fg = palette.blue, gui = "bold" },
+    NeogitGraphBoldPurple = { fg = palette.purple, gui = "bold" },
+    NeogitGraphBoldGray = { fg = palette.grey, gui = "bold" },
+
     NeogitHunkHeader = {
       fg = palette.bg0,
       bg = palette.grey,

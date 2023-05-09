@@ -42,7 +42,7 @@ function M.create()
     )
     :arg_heading("Formatting")
     :switch("g", "graph", "Show graph", { enabled = true, internal = true })
-    -- :switch("c", "color", "Show graph in color", { enabled = true, internal = true })
+    :switch("c", "color", "Show graph in color")
     :switch(
       "d",
       "decorate",

@@ -160,7 +160,7 @@ local function parse(raw)
 end
 
 ---@return CommitLogEntry[]
-local function parse_log(output)
+local function parse_log(output, colored_graph)
   if type(output) == "string" then
     output = vim.split(output, "\n")
   end
@@ -172,7 +172,12 @@ local function parse_log(output)
     local level, hash, subject, author_name, rel_date, ref_name, author_date, committer_name, committer_date, committer_email, author_email, body =
       unpack(vim.split(output[i], "\30"))
 
-    local graph = util.trim(level:match("([_|/\\ %*]+)"))
+    local graph
+    if colored_graph then
+      graph = colored_graph[i]
+    else
+      graph = util.trim(level:match("([_|/\\ %*]+)"))
+    end
 
     if level and hash then
       if rel_date then
@@ -229,7 +234,15 @@ local format = table.concat({
 ---@param options table|nil
 ---@return CommitLogEntry[]
 function M.list(options)
-  return parse_log(cli.log.format(format).graph.arg_list(options or {}).call():trim().stdout)
+  local graph
+  if vim.tbl_contains(options, "--color") then
+    graph = util.map(cli.log.format("%x00").graph.color.arg_list(options or {}).call():trim().stdout_raw, function(line)
+      return require("neogit.lib.ansi").parse(util.trim(line))
+    end)
+  end
+
+  local output = cli.log.format(format).graph.arg_list(options or {}).call():trim()
+  return parse_log(output.stdout, graph)
 end
 
 local function update_recent(state)

@@ -50,6 +50,7 @@ local configurations = {
       remotes = "--remotes",
       all = "--all",
       graph = "--graph",
+      color = "--color",
     },
     options = {
       pretty = "--pretty",
