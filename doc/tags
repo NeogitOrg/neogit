@@ -24,14 +24,9 @@ neogit_p	neogit.txt	/*neogit_p*
 neogit_s	neogit.txt	/*neogit_s*
 neogit_u	neogit.txt	/*neogit_u*
 neogit_x	neogit.txt	/*neogit_x*
-<<<<<<< HEAD
-neogit_f	neogit.txt	/*neogit_f*
 neogit_X	neogit.txt	/*neogit_X*
 neogit_A	neogit.txt	/*neogit_A*
 neogit_m	neogit.txt	/*neogit_m*
 neogit_}	neogit.txt	/*neogit_}*
 neogit_{	neogit.txt	/*neogit_{*
-||||||| efc1764
-=======
 neogit_f	neogit.txt	/*neogit_f*
->>>>>>> 632cf8074689177311d5a78cf7fef03dbc223756
