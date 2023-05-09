@@ -1,4 +1,5 @@
 local api = vim.api
+local fn = vim.fn
 package.loaded["neogit.buffer"] = nil
 
 __BUFFER_AUTOCMD_STORE = {}
@@ -35,14 +36,22 @@ end
 
 ---@return number|nil
 function Buffer:focus()
-  local windows = vim.fn.win_findbuf(self.handle)
+  local windows = fn.win_findbuf(self.handle)
 
   if #windows == 0 then
     return nil
   end
 
-  vim.fn.win_gotoid(windows[1])
+  fn.win_gotoid(windows[1])
   return windows[1]
+end
+
+function Buffer:is_focused()
+  return api.nvim_win_get_buf(0) == self.handle
+end
+
+function Buffer:get_changedtick()
+  return api.nvim_buf_get_changedtick(self.handle)
 end
 
 function Buffer:lock()
@@ -55,27 +64,27 @@ function Buffer:define_autocmd(events, script)
 end
 
 function Buffer:clear()
-  vim.api.nvim_buf_set_lines(self.handle, 0, -1, false, {})
+  api.nvim_buf_set_lines(self.handle, 0, -1, false, {})
 end
 
 function Buffer:get_lines(first, last, strict)
-  return vim.api.nvim_buf_get_lines(self.handle, first, last, strict)
+  return api.nvim_buf_get_lines(self.handle, first, last, strict)
 end
 
 function Buffer:get_line(line)
-  return vim.fn.getbufline(self.handle, line)
+  return fn.getbufline(self.handle, line)
 end
 
 function Buffer:get_current_line()
-  return self:get_line(vim.fn.getpos(".")[2])
+  return self:get_line(fn.getpos(".")[2])
 end
 
 function Buffer:set_lines(first, last, strict, lines)
-  vim.api.nvim_buf_set_lines(self.handle, first, last, strict, lines)
+  api.nvim_buf_set_lines(self.handle, first, last, strict, lines)
 end
 
 function Buffer:set_text(first_line, last_line, first_col, last_col, lines)
-  vim.api.nvim_buf_set_text(self.handle, first_line, first_col, last_line, last_col, lines)
+  api.nvim_buf_set_text(self.handle, first_line, first_col, last_line, last_col, lines)
 end
 
 function Buffer:move_cursor(line)
@@ -94,17 +103,17 @@ function Buffer:close(force)
   end
 
   if self.kind == "replace" then
-    vim.api.nvim_buf_delete(self.handle, { force = force })
+    api.nvim_buf_delete(self.handle, { force = force })
     return
   end
 
   if api.nvim_buf_is_valid(self.handle) then
-    local winnr = vim.fn.bufwinnr(self.handle)
+    local winnr = fn.bufwinnr(self.handle)
     if winnr ~= -1 then
-      local winid = vim.fn.win_getid(winnr)
-      vim.api.nvim_win_close(winid, force)
+      local winid = fn.win_getid(winnr)
+      api.nvim_win_close(winid, force)
     else
-      vim.api.nvim_buf_delete(self.handle, { force = force })
+      api.nvim_buf_delete(self.handle, { force = force })
     end
   end
 end
@@ -129,11 +138,19 @@ end
 
 ---@return number
 function Buffer:show()
-  local windows = vim.fn.win_findbuf(self.handle)
+  local windows = fn.win_findbuf(self.handle)
 
   -- Already visible
   if #windows > 0 then
     return windows[1]
+  end
+
+  if self.kind == "auto" then
+    if vim.o.columns / 2 < 80 then
+      self.kind = "split"
+    else
+      self.kind = "vsplit"
+    end
   end
 
   local win
@@ -146,7 +163,6 @@ function Buffer:show()
   elseif kind == "tab" then
     vim.cmd("tab split")
     api.nvim_set_current_buf(self.handle)
-
     win = api.nvim_get_current_win()
   elseif kind == "split" then
     vim.cmd("below split")
@@ -170,7 +186,7 @@ function Buffer:show()
     local col = vim_width * 0.1 - 1
     local row = vim_height * 0.15
 
-    local content_window = vim.api.nvim_open_win(self.handle, true, {
+    local content_window = api.nvim_open_win(self.handle, true, {
       relative = "editor",
       width = width,
       height = height,
@@ -181,7 +197,7 @@ function Buffer:show()
       border = "single",
     })
 
-    vim.api.nvim_win_set_cursor(content_window, { 1, 0 })
+    api.nvim_win_set_cursor(content_window, { 1, 0 })
     win = content_window
   end
 
@@ -192,12 +208,12 @@ function Buffer:show()
 end
 
 function Buffer:is_valid()
-  return vim.api.nvim_buf_is_valid(self.handle)
+  return api.nvim_buf_is_valid(self.handle)
 end
 
 function Buffer:put(lines, after, follow)
   self:focus()
-  vim.api.nvim_put(lines, "l", after, follow)
+  api.nvim_put(lines, "l", after, follow)
 end
 
 function Buffer:create_fold(first, last)
@@ -210,15 +226,15 @@ function Buffer:unlock()
 end
 
 function Buffer:get_option(name)
-  vim.api.nvim_buf_get_option(self.handle, name)
+  api.nvim_buf_get_option(self.handle, name)
 end
 
 function Buffer:set_option(name, value)
-  vim.api.nvim_buf_set_option(self.handle, name, value)
+  api.nvim_buf_set_option(self.handle, name, value)
 end
 
 function Buffer:set_name(name)
-  vim.api.nvim_buf_set_name(self.handle, name)
+  api.nvim_buf_set_name(self.handle, name)
 end
 
 function Buffer:set_foldlevel(level)
@@ -232,21 +248,21 @@ end
 function Buffer:open_fold(line, reset_pos)
   local pos
   if reset_pos == true then
-    pos = vim.fn.getpos()
+    pos = fn.getpos()
   end
 
-  vim.fn.setpos(".", { self.handle, line, 0, 0 })
+  fn.setpos(".", { self.handle, line, 0, 0 })
   vim.cmd("normal zo")
 
   if reset_pos == true then
-    vim.fn.setpos(".", pos)
+    fn.setpos(".", pos)
   end
 end
 
 function Buffer:add_highlight(line, col_start, col_end, name, ns_id)
   local ns_id = ns_id or 0
 
-  vim.api.nvim_buf_add_highlight(self.handle, ns_id, name, line, col_start, col_end)
+  api.nvim_buf_add_highlight(self.handle, ns_id, name, line, col_start, col_end)
 end
 
 function Buffer:unplace_sign(id)
@@ -273,7 +289,7 @@ end
 
 function Buffer:get_sign_at_line(line, group)
   group = group or "*"
-  return vim.fn.sign_getplaced(self.handle, {
+  return fn.sign_getplaced(self.handle, {
     group = group,
     lnum = line,
   })[1]
@@ -283,28 +299,40 @@ function Buffer:clear_sign_group(group)
   vim.cmd("sign unplace * group=" .. group .. " buffer=" .. self.handle)
 end
 
+function Buffer:clear_namespace(namespace)
+  api.nvim_buf_clear_namespace(self.handle, namespace, 0, -1)
+end
+
+function Buffer:create_namespace(name)
+  return api.nvim_create_namespace(name)
+end
+
 function Buffer:set_filetype(ft)
-  vim.api.nvim_buf_set_option(self.handle, "filetype", ft)
+  api.nvim_buf_set_option(self.handle, "filetype", ft)
 end
 
 function Buffer:call(f)
-  vim.api.nvim_buf_call(self.handle, f)
+  api.nvim_buf_call(self.handle, f)
 end
 
 function Buffer.exists(name)
-  return vim.fn.bufnr(name) ~= -1
+  return fn.bufnr(name) ~= -1
 end
 
 function Buffer:set_extmark(...)
-  return vim.api.nvim_buf_set_extmark(self.handle, ...)
+  return api.nvim_buf_set_extmark(self.handle, ...)
 end
 
 function Buffer:get_extmark(ns, id)
-  return vim.api.nvim_buf_get_extmark_by_id(self.handle, ns, id, { details = true })
+  return api.nvim_buf_get_extmark_by_id(self.handle, ns, id, { details = true })
 end
 
 function Buffer:del_extmark(ns, id)
-  return vim.api.nvim_buf_del_extmark(self.handle, ns, id)
+  return api.nvim_buf_del_extmark(self.handle, ns, id)
+end
+
+function Buffer:set_decorations(namespace, opts)
+  return api.nvim_set_decoration_provider(namespace, opts)
 end
 
 local uv_utils = require("neogit.lib.uv")
@@ -321,7 +349,7 @@ function Buffer.create(config)
   config = config or {}
   local kind = config.kind or "split"
   --- This reuses a buffer with the same name
-  local buffer = vim.fn.bufnr(config.name)
+  local buffer = fn.bufnr(config.name)
 
   if buffer == -1 then
     buffer = api.nvim_create_buf(false, false)
@@ -389,7 +417,7 @@ function Buffer.create(config)
   end
 
   if config.after then
-    config.after(buffer)
+    buffer:call(config.after)
   end
 
   -- This sets fold styling for Neogit windows without overriding user styling
@@ -400,6 +428,56 @@ function Buffer.create(config)
     end
     vim.wo.winhl = hl .. "Folded:NeogitFold"
   end)
+
+  if config.context_highlight then
+    buffer:call(function()
+      local decor_ns = api.nvim_create_namespace("NeogitBufferViewDecor" .. config.name)
+      local context_ns = api.nvim_create_namespace("NeogitBufferitViewContext" .. config.name)
+
+      local function frame_key()
+        return table.concat { fn.line("w0"), fn.line("w$"), fn.getcurpos()[2], buffer:get_changedtick() }
+      end
+
+      local last_frame_key = frame_key()
+
+      local function on_start()
+        return buffer:is_focused() and frame_key() ~= last_frame_key
+      end
+
+      local function on_end()
+        last_frame_key = frame_key()
+      end
+
+      local function on_win()
+        buffer:clear_namespace(context_ns)
+
+        -- TODO: this is WAY to slow to be called so frequently, especially in a large buffer
+        local stack = buffer.ui:get_component_stack_under_cursor()
+        if not stack then
+          return
+        end
+
+        local hovered_component = stack[2] or stack[1]
+        local first, last = hovered_component:row_range_abs()
+        local top_level = hovered_component.parent and not hovered_component.parent.parent
+
+        for line = fn.line("w0"), fn.line("w$") do
+          if first and last and line >= first and line <= last and not top_level then
+            local sign = buffer.ui:get_component_stack_on_line(line)[1].options.sign
+
+            buffer:set_extmark(
+              context_ns,
+              line - 1,
+              0,
+              { line_hl_group = (sign or "NeogitDiffContext") .. "Highlight", priority = 10 }
+            )
+          end
+        end
+      end
+
+      buffer:set_decorations(decor_ns, { on_start = on_start, on_win = on_win, on_end = on_end })
+    end)
+  end
 
   return buffer
 end
