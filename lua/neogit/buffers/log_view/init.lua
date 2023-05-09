@@ -38,7 +38,7 @@ function M:open()
     name = "NeogitLogView",
     filetype = "NeogitLogView",
     kind = "tab",
-    context_highlight = true,
+    context_highlight = false,
     mappings = {
       v = {
         ["A"] = function()
