@@ -234,6 +234,8 @@ local format = table.concat({
 ---@param options table|nil
 ---@return CommitLogEntry[]
 function M.list(options)
+  options = options or {}
+
   local graph
   if vim.tbl_contains(options, "--color") then
     graph = util.map(cli.log.format("%x00").graph.color.arg_list(options or {}).call():trim().stdout_raw, function(line)
