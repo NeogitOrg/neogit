@@ -74,10 +74,9 @@ function M.create()
       "b",
       "branch/revision",
       operation("checkout_branch", function()
-        FuzzyFinderBuffer.new(format_branches(branch.get_all_branches()), function(selected_branch)
-          cli.checkout.branch(selected_branch).call_sync():trim()
-          status.dispatch_refresh(true)
-        end):open()
+        local selected_branch = FuzzyFinderBuffer.new(format_branches(branch.get_all_branches())):open_sync()
+        cli.checkout.branch(selected_branch).call_sync():trim()
+        status.dispatch_refresh(true)
       end)
     )
     :action(
@@ -159,16 +158,15 @@ function M.create()
           table.insert(branches, 1, current_branch)
         end
 
-        FuzzyFinderBuffer.new(branches, function(selected_branch)
-          local new_name = input.get_user_input("new branch name > ")
-          if not new_name or new_name == "" then
-            return
-          end
+        local selected_branch = FuzzyFinderBuffer.new(branches):open_sync()
+        local new_name = input.get_user_input("new branch name > ")
+        if not new_name or new_name == "" then
+          return
+        end
 
-          new_name, _ = new_name:gsub("%s", "-")
-          cli.branch.move.args(selected_branch, new_name).call_sync():trim()
-          status.dispatch_refresh(true)
-        end):open()
+        new_name, _ = new_name:gsub("%s", "-")
+        cli.branch.move.args(selected_branch, new_name).call_sync():trim()
+        status.dispatch_refresh(true)
       end)
     )
     :action("X", "reset", function()
@@ -243,23 +241,22 @@ function M.create()
         -- TODO: If branch is checked out:
         -- Branch gha-routes-js is checked out.  [d]etach HEAD & delete, [c]heckout origin/gha-routes-js & delete, [a]bort
         local branches = format_branches(branch.get_all_branches())
-        FuzzyFinderBuffer.new(branches, function(selected_branch)
-          local remote, branch_name = parse_remote_branch_name(selected_branch)
-          if not branch_name then
-            return
-          end
+        local selected_branch = FuzzyFinderBuffer.new(branches):open_sync()
+        local remote, branch_name = parse_remote_branch_name(selected_branch)
+        if not branch_name then
+          return
+        end
 
-          cli.branch.delete.name(branch_name).call_sync():trim()
+        cli.branch.delete.name(branch_name).call_sync():trim()
 
-          local delete_remote =
-            input.get_confirmation("Delete remote?", { values = { "&Yes", "&No" }, default = 2 })
+        local delete_remote =
+          input.get_confirmation("Delete remote?", { values = { "&Yes", "&No" }, default = 2 })
 
-          if remote and delete_remote then
-            cli.push.remote(remote).delete.to(branch_name).call_sync():trim()
-          end
+        if remote and delete_remote then
+          cli.push.remote(remote).delete.to(branch_name).call_sync():trim()
+        end
 
-          status.dispatch_refresh(true)
-        end):open()
+        status.dispatch_refresh(true)
       end)
     )
     :build()
