@@ -77,8 +77,8 @@ end
 return {
   parse = parse,
   list = list,
-  stash_all = function()
-    cli.stash.call()
+  stash_all = function(args)
+    cli.stash.arg_list(args).call()
     -- this should work, but for some reason doesn't.
     --return perform_stash({ worktree = true, index = true })
   end,
