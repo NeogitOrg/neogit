@@ -95,8 +95,13 @@ M.values = {
       ["c"] = "CommitPopup",
       ["L"] = "LogPopup",
       ["Z"] = "StashPopup",
+      ["A"] = "CherryPickPopup",
       ["b"] = "BranchPopup",
       ["f"] = "FetchPopup",
+      ["X"] = "ResetPopup",
+      ["M"] = "RemotePopup",
+      ["{"] = "GoToPreviousHunkHeader",
+      ["}"] = "GoToNextHunkHeader",
     },
   },
 }

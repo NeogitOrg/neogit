@@ -12,8 +12,8 @@ local range = util.range
 
 local M = {}
 
-local diff_add_matcher = vim.regex("^+")
-local diff_delete_matcher = vim.regex("^-")
+local diff_add_start = "+"
+local diff_delete_start = "-"
 
 M.Diff = Component.new(function(diff)
   local hunk_props = map(diff.hunks, function(hunk)
@@ -41,10 +41,12 @@ end)
 local HunkLine = Component.new(function(line)
   local sign
 
-  if diff_add_matcher:match_str(line) then
+  if string.sub(line, 1, 1) == diff_add_start then
     sign = "NeogitDiffAdd"
-  elseif diff_delete_matcher:match_str(line) then
+  elseif string.sub(line, 1, 1) == diff_delete_start then
     sign = "NeogitDiffDelete"
+  else
+    sign = "NeogitDiffContext"
   end
 
   return text(line, { sign = sign })
@@ -73,6 +75,116 @@ M.List = Component.new(function(props)
   end
 
   return container.tag("List")(children)
+end)
+
+local function build_graph(graph)
+  if type(graph) == "table" then
+    return util.map(graph, function(g)
+      return text(g.text, { highlight = "NeogitGraph" .. g.color })
+    end)
+  else
+    return { text(graph, { highlight = "Include" }) }
+  end
+end
+
+M.CommitEntry = Component.new(function(commit, args)
+  local ref = {}
+  if commit.ref_name ~= "" then
+    local ref_name, _ = commit.ref_name:gsub("HEAD %-> ", "")
+    local remote_name, local_name = unpack(vim.split(ref_name, ", "))
+
+    if local_name then
+      table.insert(
+        ref,
+        text(local_name .. " ", { highlight = local_name:match("/") and "String" or "Macro" })
+      )
+    end
+
+    if remote_name then
+      table.insert(
+        ref,
+        text(remote_name .. " ", { highlight = remote_name:match("/") and "String" or "Macro" })
+      )
+    end
+  end
+
+  if commit.rel_date:match(" years?,") then
+    commit.rel_date, _ = commit.rel_date:gsub(" years?,", "y")
+    commit.rel_date = commit.rel_date .. " "
+  elseif commit.rel_date:match("^%d ") then
+    commit.rel_date = " " .. commit.rel_date
+  end
+
+  local graph = args.graph and build_graph(commit.graph) or { text("") }
+
+  local details
+  if args.details then
+    details = col.hidden(true).padding_left(8) {
+      row(util.merge(graph, {
+        text(" "),
+        text("Author:     ", { highlight = "Comment" }),
+        text(commit.author_name),
+        text(" <"),
+        text(commit.author_email),
+        text(">"),
+      })),
+      row(util.merge(graph, {
+        text(" "),
+        text("AuthorDate: ", { highlight = "Comment" }),
+        text(commit.author_date),
+      })),
+      row(util.merge(graph, {
+        text(" "),
+        text("Commit:     ", { highlight = "Comment" }),
+        text(commit.committer_name),
+        text(" <"),
+        text(commit.committer_email),
+        text(">"),
+      })),
+      row(util.merge(graph, {
+        text(" "),
+        text("CommitDate: ", { highlight = "Comment" }),
+        text(commit.committer_date),
+      })),
+      row(graph),
+      col(
+        map(commit.description, function(line)
+          return row(util.merge(graph, { text(" "), text(line) }))
+        end),
+        { highlight = "String" }
+      ),
+    }
+  end
+
+  return col({
+    row(
+      util.merge(
+        { text(commit.oid:sub(1, 7), { highlight = "Comment" }), text(" ") },
+        graph,
+        { text(" ") },
+        ref,
+        { text(commit.description[1]) }
+      ),
+      {
+        virtual_text = {
+          { " ", "Constant" },
+          {
+            util.str_clamp(
+              commit.author_name,
+              30 - (#commit.rel_date > 10 and #commit.rel_date or 10)
+            ),
+            "Constant",
+          },
+          { util.str_min_width(commit.rel_date, 10), "Special" },
+        },
+      }
+    ),
+    details,
+  }, { oid = commit.oid })
+end)
+
+M.CommitGraph = Component.new(function(commit, args)
+  return col.padding_left(8) { row(build_graph(commit.graph)) }
 end)
 
 M.Grid = Component.new(function(props)
@@ -144,7 +256,7 @@ M.Grid = Component.new(function(props)
     for j = 1, #r.children do
       local item = r.children[j]
       local gap_str = ""
-      local column_width = column_widths[j]
+      local column_width = column_widths[j] or 0
 
       if j ~= 1 then
         gap_str = string.rep(" ", props.gap)

@@ -25,14 +25,17 @@ function M.create()
   local p = popup
     .builder()
     :name("NeogitPullPopup")
-    :switch("r", "rebase", "Rebase local commits", false)
-    :action("p", "Pull from pushremote", function(popup)
+    :switch("f", "ff-only", "Fast-forward only")
+    :switch("r", "rebase", "Rebase local commits")
+    :switch("a", "autostash", "Autostash")
+    :group_heading("Pull from")
+    :action_if(git.branch.current(), "p", "pushRemote", function(popup)
       pull_from(popup, "pushremote", "origin", status.repo.head.branch)
     end)
-    :action("u", "Pull from upstream", function(popup)
+    :action_if(git.branch.current(), "u", "upstream", function(popup)
       pull_from(popup, "upstream", "upstream", status.repo.head.branch)
     end)
-    :action("e", "Pull from elsewhere", function(popup)
+    :action("e", "elsewhere", function(popup)
       local branches = git.branch.get_remote_branches()
 
       -- Maintain a set with all remotes we got branches for.
@@ -89,6 +92,17 @@ function M.create()
 
       pull_from(popup, remote, remote, branch)
     end)
+    :new_action_group("Configure")
+    :action("C", "Set variables...", function()
+      require("neogit.popups.branch_config").create()
+    end)
+    :config_if(git.branch.current(), "r", "branch." .. (git.branch.current() or "") .. ".rebase", {
+      options = {
+        { display = "true", value = "true" },
+        { display = "false", value = "false" },
+        { display = "pull.rebase:" .. git.config.get("pull.rebase").value, value = "" },
+      },
+    })
     :build()
 
   p:show()

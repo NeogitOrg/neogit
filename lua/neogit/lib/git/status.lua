@@ -5,6 +5,20 @@ local git = {
 local a = require("plenary.async")
 local Collection = require("neogit.lib.collection")
 
+local function update_file(file, mode, name)
+  local mt, diff, has_diff
+  if file then
+    mt = getmetatable(file)
+    has_diff = file.has_diff
+
+    if rawget(file, "diff") then
+      diff = file.diff
+    end
+  end
+
+  return setmetatable({ mode = mode, name = name, has_diff = has_diff, diff = diff }, mt or {})
+end
+
 local function update_status(state)
   -- git-status outputs files relative to the cwd.
   --
@@ -52,19 +66,13 @@ local function update_status(state)
       elseif kind == "1" then
         local mode_staged, mode_unstaged, _, _, _, _, _, _, name =
           rest:match("(.)(.) (....) (%d+) (%d+) (%d+) (%w+) (%w+) (.+)")
+
         if mode_staged ~= "." then
-          table.insert(staged_files, {
-            mode = mode_staged,
-            name = name,
-            diff = old_files_hash.staged_files[name] and old_files_hash.staged_files[name].diff,
-          })
+          table.insert(staged_files, update_file(old_files_hash.staged_files[name], mode_staged, name))
         end
+
         if mode_unstaged ~= "." then
-          table.insert(unstaged_files, {
-            mode = mode_unstaged,
-            name = name,
-            diff = old_files_hash.unstaged_files[name] and old_files_hash.unstaged_files[name].diff,
-          })
+          table.insert(unstaged_files, update_file(old_files_hash.unstaged_files[name], mode_unstaged, name))
         end
       elseif kind == "2" then
         local mode_staged, mode_unstaged, _, _, _, _, _, _, _, name, orig_name =
@@ -77,6 +85,7 @@ local function update_status(state)
           entry.mode = mode_staged
           table.insert(staged_files, entry)
         end
+
         if mode_unstaged ~= "." then
           entry.mode = mode_unstaged
           table.insert(unstaged_files, entry)
@@ -128,8 +137,8 @@ local function update_branch_information(state)
 end
 
 local status = {
-  stage = function(name)
-    git.cli.add.files(name).call()
+  stage = function(...)
+    git.cli.add.files(...).call()
   end,
   stage_modified = function()
     git.cli.add.update.call()
@@ -137,8 +146,8 @@ local status = {
   stage_all = function()
     git.cli.add.all.call()
   end,
-  unstage = function(name)
-    git.cli.reset.files(name).call()
+  unstage = function(...)
+    git.cli.reset.files(...).call()
   end,
   unstage_all = function()
     git.cli.reset.call()

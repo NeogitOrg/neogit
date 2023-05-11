@@ -55,6 +55,19 @@ local function deepcopy(o)
   return copy
 end
 
+--- Merge multiple 1-dimensional list-like tables into one, preserving order
+---@param ... table
+---@return table
+local function merge(...)
+  local res = {}
+  for _, tbl in ipairs { ... } do
+    for _, item in ipairs(tbl) do
+      table.insert(res, item)
+    end
+  end
+  return res
+end
+
 local function range(from, to, step)
   local step = step or 1
   local t = {}
@@ -120,6 +133,15 @@ local function str_right_pad(str, len, sep)
   return str .. sep:rep(len - #str)
 end
 
+local function str_min_width(str, len, sep)
+  local length = vim.fn.strdisplaywidth(str)
+  if length > len then
+    return str
+  end
+
+  return str .. string.rep(sep or " ", len - length)
+end
+
 local function slice(tbl, s, e)
   local pos, new = 1, {}
 
@@ -161,6 +183,18 @@ local function split_lines(str)
   return vim.split(str, "\r?\n")
 end
 
+local function str_truncate(str, max_length, trailing)
+  trailing = trailing or "..."
+  if vim.fn.strdisplaywidth(str) > max_length then
+    str = vim.trim(str:sub(1, max_length - #trailing)) .. trailing
+  end
+  return str
+end
+
+local function str_clamp(str, len, sep)
+  return str_min_width(str_truncate(str, len - 1, ""), len, sep or " ")
+end
+
 local function parse_command_args(args)
   local tbl = {}
 
@@ -174,6 +208,45 @@ local function parse_command_args(args)
   end
 
   return tbl
+end
+
+local function pattern_escape(str)
+  local special_chars = { "(", ")", ".", "%", "+", "-", "*", "?", "[", "^", "$" }
+  for _, char in ipairs(special_chars) do
+    str, _ = str:gsub("%" .. char, "%%" .. char)
+  end
+
+  return str
+end
+
+local function deduplicate(tbl)
+  local res = {}
+  for i = 1, #tbl do
+    if tbl[i] and not vim.tbl_contains(res, tbl[i]) then
+      table.insert(res, tbl[i])
+    end
+  end
+  return res
+end
+
+local function find(tbl, cond)
+  local res
+  for i = 1, #tbl do
+    if cond(tbl[i]) then
+      res = tbl[i]
+      break
+    end
+  end
+  return res
+end
+
+local function build_reverse_lookup(tbl)
+  local result = {}
+  for i, v in ipairs(tbl) do
+    table.insert(result, v)
+    result[v] = i
+  end
+  return result
 end
 
 return {
@@ -195,4 +268,12 @@ return {
   deepcopy = deepcopy,
   trim = trim,
   parse_command_args = parse_command_args,
+  pattern_escape = pattern_escape,
+  deduplicate = deduplicate,
+  build_reverse_lookup = build_reverse_lookup,
+  str_truncate = str_truncate,
+  find = find,
+  merge = merge,
+  str_min_width = str_min_width,
+  str_clamp = str_clamp,
 }

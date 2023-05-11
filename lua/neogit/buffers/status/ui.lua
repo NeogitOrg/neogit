@@ -118,8 +118,9 @@ end
 --   end
 -- end
 
-function _TEST()
-  local repo = require("neogit").repo
+function M._TEST()
+  local repo = require("neogit.lib.git.repository").create()
+
   require("neogit.buffers.status")
     .new({
       head = repo.head,

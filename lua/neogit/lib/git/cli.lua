@@ -18,6 +18,7 @@ local configurations = {
     flags = {
       stat = "--stat",
       oneline = "--oneline",
+      no_patch = "--no-patch",
     },
     options = {
       format = "--format",
@@ -41,6 +42,7 @@ local configurations = {
       porcelain = "--porcelain",
     },
   },
+
   log = config {
     flags = {
       oneline = "--oneline",
@@ -48,6 +50,7 @@ local configurations = {
       remotes = "--remotes",
       all = "--all",
       graph = "--graph",
+      color = "--color",
     },
     options = {
       pretty = "--pretty",
@@ -62,11 +65,26 @@ local configurations = {
       end,
     },
   },
+
   config = config {
     flags = {
+      global = "--global",
+      list = "--list",
       _get = "--get",
+      _add = "--add",
+      _unset = "--unset",
     },
     aliases = {
+      set = function(tbl)
+        return function(key, value)
+          return tbl.arg_list { key, value }
+        end
+      end,
+      unset = function(tbl)
+        return function(key)
+          return tbl._unset.args(key)
+        end
+      end,
       get = function(tbl)
         return function(path)
           return tbl._get.args(path)
@@ -74,6 +92,7 @@ local configurations = {
       end,
     },
   },
+
   diff = config {
     flags = {
       cached = "--cached",
@@ -81,15 +100,19 @@ local configurations = {
       patch = "--patch",
       name_only = "--name-only",
       no_ext_diff = "--no-ext-diff",
+      no_index = "--no-index",
     },
   },
+
   stash = config {
     flags = {
       apply = "apply",
       drop = "drop",
+      push = "push",
       index = "--index",
     },
   },
+
   rebase = config {
     flags = {
       interactive = "-i",
@@ -98,15 +121,21 @@ local configurations = {
       skip = "--skip",
     },
   },
+
   merge = config {
     flags = {
       continue = "--continue",
       abort = "--abort",
     },
   },
+
   reset = config {
     flags = {
       hard = "--hard",
+      mixed = "--mixed",
+      soft = "--soft",
+      keep = "--keep",
+      merge = "--merge",
     },
     aliases = {
       commit = function(tbl)
@@ -116,11 +145,25 @@ local configurations = {
       end,
     },
   },
+
   checkout = config {
     short_opts = {
       b = "-b",
     },
+    flags = {
+      _track = "--track",
+    },
     aliases = {
+      track = function(tbl)
+        return function(branch)
+          return tbl._track.args(branch)
+        end
+      end,
+      rev = function(tbl)
+        return function(rev)
+          return tbl.args(rev)
+        end
+      end,
       branch = function(tbl)
         return function(branch)
           return tbl.args(branch)
@@ -138,9 +181,14 @@ local configurations = {
       end,
     },
   },
+
   remote = config {
     flags = {
       push = "--push",
+      add = "add",
+      rm = "rm",
+      rename = "rename",
+      prune = "prune",
     },
     aliases = {
       get_url = function(tbl)
@@ -151,6 +199,7 @@ local configurations = {
       end,
     },
   },
+
   apply = config {
     flags = {
       cached = "--cached",
@@ -163,12 +212,14 @@ local configurations = {
       end,
     },
   },
+
   add = config {
     flags = {
       update = "-u",
       all = "-A",
     },
   },
+
   commit = config {
     flags = {
       amend = "--amend",
@@ -180,6 +231,7 @@ local configurations = {
       commit_message_file = "--file",
     },
   },
+
   push = config {
     flags = {
       delete = "--delete",
@@ -197,6 +249,7 @@ local configurations = {
       end,
     },
   },
+
   pull = config {
     flags = {
       no_commit = "--no-commit",
@@ -205,6 +258,7 @@ local configurations = {
       flags = {},
     },
   },
+
   branch = config {
     flags = {
       all = "-a",
@@ -227,7 +281,9 @@ local configurations = {
       end,
     },
   },
+
   fetch = config {},
+
   ["read-tree"] = config {
     flags = {
       merge = "-m",
@@ -243,7 +299,9 @@ local configurations = {
       end,
     },
   },
+
   ["write-tree"] = config {},
+
   ["commit-tree"] = config {
     flags = {
       no_gpg_sign = "--no-gpg-sign",
@@ -268,6 +326,7 @@ local configurations = {
       end,
     },
   },
+
   ["update-index"] = config {
     flags = {
       add = "--add",
@@ -275,28 +334,61 @@ local configurations = {
       refresh = "--refresh",
     },
   },
+
   ["show-ref"] = config {
     flags = {
       verify = "--verify",
     },
   },
+
+  ["show-branch"] = config {
+    flags = {
+      all = "--all",
+    },
+  },
+
+  reflog = config {
+    flags = {
+      show = "show",
+    },
+    options = {
+      format = "--format",
+    },
+    aliases = {
+      date = function(tbl)
+        return function(mode)
+          return tbl.args("--date=" .. mode)
+        end
+      end,
+    },
+  },
+
   ["update-ref"] = config {
     flags = {
       create_reflog = "--create-reflog",
     },
-    short_opts = {
-      message = "-m",
+    aliases = {
+      message = function(tbl)
+        return function(text)
+          local escaped_text, _ = text:gsub([["]], [[\"]])
+          return tbl.args("-m", string.format([["%s"]], escaped_text))
+        end
+      end,
     },
   },
+
   ["ls-files"] = config {
     flags = {
       others = "--others",
       deleted = "--deleted",
       modified = "--modified",
       cached = "--cached",
+      deduplicate = "--deduplicate",
+      exclude_standard = "--exclude-standard",
       full_name = "--full-name",
     },
   },
+
   ["rev-parse"] = config {
     flags = {
       revs_only = "--revs-only",
@@ -308,6 +400,15 @@ local configurations = {
     },
     options = {
       abbrev_ref = "--abbrev-ref",
+    },
+  },
+
+  ["cherry-pick"] = config {
+    flags = {
+      no_commit = "--no-commit",
+      continue = "--continue",
+      skip = "--skip",
+      abort = "--abort",
     },
   },
 }
@@ -567,7 +668,7 @@ local function new_builder(subcommand)
     env = {},
   }
 
-  local function to_process(verbose, external_errors)
+  local function to_process(verbose, external_errors, ignore_code)
     -- Disable the pager so that the commands don't stop and wait for pagination
     local cmd = { "git", "--no-pager", "-c", "color.ui=always", "--no-optional-locks", subcommand }
     for _, o in ipairs(state.options) do
@@ -600,6 +701,7 @@ local function new_builder(subcommand)
       pty = state.in_pty,
       verbose = verbose,
       external_errors = external_errors,
+      ignore_code = ignore_code,
     }
   end
 
@@ -633,6 +735,22 @@ local function new_builder(subcommand)
         stdout = result.stdout,
         stderr = result.stderr,
         code = result.code,
+        time = result.time,
+      }, state.show_popup, state.hide_text)
+
+      return result
+    end,
+    call_ignoring_exit_code = function(verbose)
+      local p = to_process(verbose, false, true)
+      local result = p:spawn_async()
+
+      assert(result, "Command did not complete")
+
+      handle_new_cmd({
+        cmd = table.concat(p.cmd, " "),
+        stdout = result.stdout,
+        stderr = result.stderr,
+        code = 0,
         time = result.time,
       }, state.show_popup, state.hide_text)
 
@@ -754,7 +872,7 @@ local meta = {
       return new_builder(key)
     end
 
-    error("unknown field")
+    error("unknown field: " .. key)
   end,
 }
 

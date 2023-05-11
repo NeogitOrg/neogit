@@ -50,9 +50,23 @@ function Component:is_under_cursor(cursor)
   return row_ok and col_ok
 end
 
+function Component:is_in_linewise_range(start, stop)
+  if self:is_hidden() then
+    return false
+  end
+
+  local from, to = self:row_range_abs()
+  return from >= start and from <= stop and to >= start and to <= stop
+end
+
 function Component:get_width()
   if self.tag == "text" then
-    return #self.value
+    local width = vim.fn.strdisplaywidth(self.value)
+    if self.options.align_right then
+      return width + (self.options.align_right - width)
+    else
+      return width
+    end
   end
 
   if self.tag == "row" then

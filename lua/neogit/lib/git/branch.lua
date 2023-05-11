@@ -1,5 +1,6 @@
 local a = require("plenary.async")
 local cli = require("neogit.lib.git.cli")
+local config_lib = require("neogit.lib.git.config")
 local input = require("neogit.lib.input")
 local config = require("neogit.config")
 local M = {}
@@ -28,7 +29,7 @@ function M.get_local_branches(include_current)
 end
 
 function M.get_remote_branches(include_current)
-  local branches = cli.branch.remotes.call_sync():trim().stdout
+  local branches = cli.branch.remotes.list(config.values.sort_branches).call_sync():trim().stdout
 
   return parse_branches(branches, include_current)
 end
@@ -44,12 +45,11 @@ function M.get_upstream()
   local current = cli.branch.current.show_popup(false).call():trim().stdout
 
   if #full_name > 0 and #current > 0 then
-    local remote =
-      cli.config.show_popup(false).get(string.format("branch.%s.remote", current[1])).call().stdout
-    if #remote > 0 then
+    local remote = config_lib.get("branch." .. current[1] .. ".remote").value
+    if remote then
       return {
-        remote = remote[1],
-        branch = full_name[1]:sub(#remote[1] + 2, -1),
+        remote = remote,
+        branch = full_name[1]:sub(#remote + 2, -1),
       }
     end
   end
@@ -130,7 +130,7 @@ function M.create()
     return
   end
 
-  cli.branch.name(name).call_interactive()
+  cli.branch.name(name:gsub("%s", "-")).call_interactive()
 
   return name
 end
@@ -156,11 +156,11 @@ function M.checkout_new()
     return
   end
 
-  cli.checkout.new_branch(name).call_interactive()
+  cli.checkout.new_branch(name:gsub("%s", "-")).call_interactive()
 end
 
 function M.current()
-  local branch_name = cli.branch.current.call_sync():trim()
+  local branch_name = cli.branch.current.call_sync():trim().stdout
   if #branch_name > 0 then
     return branch_name[1]
   end

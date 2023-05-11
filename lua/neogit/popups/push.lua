@@ -7,7 +7,6 @@ local notif = require("neogit.lib.notification")
 local logger = require("neogit.logger")
 local git = require("neogit.lib.git")
 local a = require("plenary.async")
-local cli = require("neogit.lib.git.cli")
 
 local function push_to(popup, name, remote, branch)
   logger.debug("Pushing to " .. name)
@@ -35,19 +34,18 @@ function M.create()
     :switch("u", "set-upstream", "Set the upstream before pushing")
     :switch("h", "no-verify", "Disable hooks")
     :switch("d", "dry-run", "Dry run")
-    :action("p", "Push to pushremote", function(popup)
+    :group_heading("Push " .. ((git.branch.current() and (git.branch.current() .. " ")) or "") .. "to")
+    :action("p", "pushRemote", function(popup)
       push_to(popup, "pushremote", "origin", status.repo.head.branch)
     end)
-    :action("u", "Push to upstream", function(popup)
+    :action("u", "upstream", function(popup)
       local upstream = git.branch.get_upstream()
-      local result = cli.config.get("push.autoSetupRemote").show_popup(false).call():trim()
+      local result = git.config.get("push.autoSetupRemote").value
       a.util.scheduler()
-      if upstream == nil then
-        if result.stdout[1] == "true" then
-          upstream = {
-            branch = status.repo.head.branch,
-            remote = "origin",
-          }
+
+      if not upstream then
+        if result == "true" then
+          upstream = { branch = status.repo.head.branch, remote = "origin" }
         else
           logger.error("No upstream set")
           return
@@ -56,14 +54,18 @@ function M.create()
 
       push_to(popup, upstream.remote .. " " .. upstream.branch, upstream.remote, upstream.branch)
     end)
-    :action("e", "Push to elsewhere", function(popup)
+    :action("e", "elsewhere", function(popup)
       local remote = input.get_user_input("remote: ")
       push_to(popup, remote, remote, status.repo.head.branch)
     end)
-    :action("o", "Push another branch", function(popup)
+    :action("o", "another branch", function(popup)
       local remote = input.get_user_input("remote: ")
       local branch = git.branch.prompt_for_branch(git.branch.get_all_branches())
       push_to(popup, remote, remote, branch)
+    end)
+    :new_action_group("Configure")
+    :action("C", "Set variables...", function()
+      require("neogit.popups.branch_config").create()
     end)
     :build()
 

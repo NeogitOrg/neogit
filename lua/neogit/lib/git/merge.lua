@@ -1,52 +1,38 @@
 local logger = require("neogit.logger")
 local client = require("neogit.client")
 local notif = require("neogit.lib.notification")
+local cli = require("neogit.lib.git.cli")
+local branch_lib = require("neogit.lib.git.branch")
 
 local M = {}
 
 local a = require("plenary.async")
 
 local function merge_command(cmd)
-  local git = require("neogit.lib.git")
-  cmd = cmd or git.cli.rebase
   local envs = client.get_envs_git_editor()
   return cmd.env(envs).show_popup(true):in_pty(true).call(true)
 end
 
-function M.rebase_interactive(...)
-  a.util.scheduler()
-  local git = require("neogit.lib.git")
-  local result = merge_command(git.cli.merge.interactive.args(...))
-  if result.code ~= 0 then
-    notif.create("Rebasing failed. Resolve conflicts before continuing", vim.log.levels.ERROR)
-  end
-  a.util.scheduler()
-  local status = require("neogit.status")
-  status.refresh(true, "rebase_interactive")
-end
-
 function M.merge(branch, args)
   a.util.scheduler()
-  local git = require("neogit.lib.git")
-  local result = merge_command(git.cli.merge.args(branch).arg_list(args))
+  local result = merge_command(cli.merge.args(branch).arg_list(args))
   if result.code ~= 0 then
-    notif.create("Rebasing failed. Resolve conflicts before continuing", vim.log.levels.ERROR)
+    notif.create("Merging failed. Resolve conflicts before continuing", vim.log.levels.ERROR)
+  else
+    notif.create("Merged '" .. branch .. "' into '" .. branch_lib.current() .. "'", vim.log.levels.INFO)
   end
 end
 
 function M.continue()
-  local git = require("neogit.lib.git")
-  return merge_command(git.cli.merge.continue)
+  return merge_command(cli.merge.continue)
 end
 
 function M.abort()
-  local git = require("neogit.lib.git")
-  return merge_command(git.cli.merge.abort)
+  return merge_command(cli.merge.abort)
 end
 
 local uv = require("neogit.lib.uv")
 function M.update_merge_status(state)
-  local cli = require("neogit.lib.git.cli")
   local root = cli.git_root()
   if root == "" then
     return
@@ -61,8 +47,7 @@ function M.update_merge_status(state)
   local mfile = root .. "/.git/MERGE_HEAD"
   local _, stat = a.uv.fs_stat(mfile)
 
-  -- Find the rebase progress files
-
+  -- Find the merge progress files
   if not stat then
     return
   end
