@@ -45,7 +45,7 @@ local function config()
 end
 
 function M.get(key)
-  return config()[key:lower()]
+  return config()[key:lower()] or {}
 end
 
 function M.get_global(key)

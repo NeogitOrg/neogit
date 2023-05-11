@@ -20,8 +20,7 @@ end
 function M.create()
   local status = require("neogit.status")
   local p = popup.builder():name("NeogitRebasePopup")
-  local base_branch = git.config.get("neogit.baseBranch")
-  base_branch = base_branch and base_branch.value or "master"
+  local base_branch = git.config.get("neogit.baseBranch").value or "master"
 
   if not in_rebase(status) then
     p:switch("k", "keep-empty", "Keep empty commits")

@@ -44,7 +44,7 @@ function M.create()
       a.util.scheduler()
 
       if not upstream then
-        if result == "true" then
+        if result and result == "true" then
           upstream = { branch = status.repo.head.branch, remote = "origin" }
         else
           logger.error("No upstream set")
