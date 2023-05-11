@@ -4,10 +4,11 @@ local util = require("neogit.lib.util")
 local config = require("neogit.config")
 
 local commit_header_pat = "([| ]*)(%*?)([| ]*)commit (%w+)"
--- local commit_header_pat = "([| ]*)%*?([| *]*)commit (%w+)"
+
 ---@class CommitLogEntry
 ---@field oid string the object id of the commit
 ---@field level number the depth of the commit in the graph
+---@field graph string the graph string
 ---@field author_name string the name of the author
 ---@field author_email string the email of the author
 ---@field author_date string when the author commited
@@ -159,7 +160,7 @@ local function parse(raw)
 end
 
 ---@return CommitLogEntry[]
-local function parse_log(output)
+local function parse_log(output, colored_graph)
   if type(output) == "string" then
     output = vim.split(output, "\n")
   end
@@ -168,25 +169,45 @@ local function parse_log(output)
   local commits = {}
 
   for i = 1, output_len do
-    local level, hash, rest = output[i]:match("([| *]*)([a-zA-Z0-9]+) (.*)")
-    if level ~= nil then
-      local remote, message = rest:match("%((.-)%) (.*)")
-      if remote == nil then
-        message = rest
+    local level, hash, subject, author_name, rel_date, ref_name, author_date, committer_name, committer_date, committer_email, author_email, body =
+      unpack(vim.split(output[i], "\30"))
+
+    local graph
+    if colored_graph then
+      graph = colored_graph[i]
+    else
+      graph = util.trim(level:match("([_|/\\ %*]+)"))
+    end
+
+    if level and hash then
+      if rel_date then
+        rel_date, _ = rel_date:gsub(" ago$", "")
       end
 
       local commit = {
         level = util.str_count(level, "|"),
-        --TODO remove
-        hash = hash,
+        graph = graph,
         oid = hash,
-        remote = remote or "",
-        --TODO remove
-        message = message,
-        description = { message },
+        description = { subject, body },
+        author_name = author_name,
+        author_email = author_email,
+        rel_date = rel_date,
+        ref_name = ref_name,
+        author_date = author_date,
+        committer_date = committer_date,
+        committer_name = committer_name,
+        committer_email = committer_email,
+        body = body,
+        -- TODO: Remove below here
+        hash = hash,
+        message = subject,
       }
 
       table.insert(commits, commit)
+    elseif level then
+      if graph ~= commits[#commits].graph then
+        table.insert(commits, { graph = graph })
+      end
     end
   end
 
@@ -195,31 +216,63 @@ end
 
 local M = {}
 
+local format = table.concat({
+  "", -- Padding for Graph
+  "%H", -- Full Hash
+  "%s", -- Subject
+  "%aN", -- Author Name
+  "%cr", -- Commit Date (Relative)
+  "%D", -- Ref Name
+  "%ad", -- Author Date
+  "%cN", -- Committer Name
+  "%cd", -- Committer Date
+  "%ce", -- Committer Email
+  "%ae", -- Author Email
+  "%b", -- Body
+}, "%x1E") -- Hex character to split on (dec \30)
+
+---@param options table|nil
+---@return CommitLogEntry[]
+function M.list(options)
+  options = options or {}
+
+  local graph
+  if vim.tbl_contains(options, "--color") then
+    graph = util.map(
+      cli.log.format("%x00").graph.color.arg_list(options or {}).call():trim().stdout_raw,
+      function(line)
+        return require("neogit.lib.ansi").parse(util.trim(line))
+      end
+    )
+  end
+
+  local output = cli.log.format(format).graph.arg_list(options or {}).call():trim()
+  return parse_log(output.stdout, graph)
+end
+
 local function update_recent(state)
   local count = config.values.status.recent_commit_count
   if count < 1 then
     return
   end
 
-  local result = M.list { "--max-count", tostring(count) }
+  local result = M.list { "--max-count=" .. tostring(count) }
 
-  state.recent.items = util.map(result, function(v)
-    return { name = string.format("%s %s", v.oid, v.description[1] or "<empty>"), oid = v.oid, commit = v }
+  state.recent.items = util.filter_map(result, function(v)
+    if v.oid then
+      return {
+        name = string.format("%s %s", v.oid:sub(1, 7), v.description[1] or "<empty>"),
+        oid = v.oid,
+        commit = v,
+      }
+    end
   end)
 end
-
----@param options any
----@return CommitLogEntry[]
-function M.list(options)
-  local result = cli.log.oneline.max_count(36).arg_list(options or {}).call()
-  return parse_log(result.stdout)
-end
-
-M.parse_log = parse_log
-M.parse = parse
 
 function M.register(meta)
   meta.update_recent = update_recent
 end
+
+M.parse = parse
 
 return M

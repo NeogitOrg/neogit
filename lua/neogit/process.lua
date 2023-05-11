@@ -30,6 +30,7 @@ local processes = {}
 
 ---@class ProcessResult
 ---@field stdout string[]
+---@field stdout_raw string[]
 ---@field stderr string[]
 ---@field output string[]
 ---@field code number
@@ -284,6 +285,7 @@ function Process:spawn(cb)
   ---@type ProcessResult
   local res = setmetatable({
     stdout = {},
+    stdout_raw = {},
     stderr = {},
     output = {},
   }, ProcessResult)
@@ -326,6 +328,7 @@ function Process:spawn(cb)
     end
   end, function(line, raw)
     table.insert(res.stdout, line)
+    table.insert(res.stdout_raw, raw)
     if self.verbose then
       table.insert(res.output, line)
       append_log(self, raw)
@@ -350,7 +353,7 @@ function Process:spawn(cb)
     stdout_cleanup()
     stderr_cleanup()
 
-    if code ~= 0 and not hide_console then
+    if code ~= 0 and not hide_console and not self.ignore_code then
       append_log(self, string.format("Process exited with code: %d", code))
 
       local output = {}
