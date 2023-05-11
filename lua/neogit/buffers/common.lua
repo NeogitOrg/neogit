@@ -169,10 +169,7 @@ M.CommitEntry = Component.new(function(commit, args)
         virtual_text = {
           { " ", "Constant" },
           {
-            util.str_clamp(
-              commit.author_name,
-              30 - (#commit.rel_date > 10 and #commit.rel_date or 10)
-            ),
+            util.str_clamp(commit.author_name, 30 - (#commit.rel_date > 10 and #commit.rel_date or 10)),
             "Constant",
           },
           { util.str_min_width(commit.rel_date, 10), "Special" },

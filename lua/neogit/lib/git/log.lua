@@ -238,9 +238,12 @@ function M.list(options)
 
   local graph
   if vim.tbl_contains(options, "--color") then
-    graph = util.map(cli.log.format("%x00").graph.color.arg_list(options or {}).call():trim().stdout_raw, function(line)
-      return require("neogit.lib.ansi").parse(util.trim(line))
-    end)
+    graph = util.map(
+      cli.log.format("%x00").graph.color.arg_list(options or {}).call():trim().stdout_raw,
+      function(line)
+        return require("neogit.lib.ansi").parse(util.trim(line))
+      end
+    )
   end
 
   local output = cli.log.format(format).graph.arg_list(options or {}).call():trim()

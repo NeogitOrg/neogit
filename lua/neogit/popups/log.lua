@@ -43,12 +43,7 @@ function M.create()
     :arg_heading("Formatting")
     :switch("g", "graph", "Show graph", { enabled = true, internal = true })
     :switch("c", "color", "Show graph in color")
-    :switch(
-      "d",
-      "decorate",
-      "Show refnames",
-      { enabled = true }
-    )
+    :switch("d", "decorate", "Show refnames", { enabled = true })
     :switch("S", "show-signature", "Show signatures", { key_prefix = "=" })
     -- :switch("h", "header", "Show header", { cli_prefix = "++" }) TODO: Need to figure out how this works
     -- :switch("p", "patch", "Show diffs")
