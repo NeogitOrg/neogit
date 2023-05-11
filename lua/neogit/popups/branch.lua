@@ -63,7 +63,7 @@ function M.create()
       options = {
         { display = "true", value = "true" },
         { display = "false", value = "false" },
-        { display = "pull.rebase:" .. git.config.get("pull.rebase").value, value = "" },
+        { display = "pull.rebase:" .. (git.config.get("pull.rebase").value or ""), value = "" },
       },
     })
     :config_if(branch.current(), "p", "branch." .. (branch.current() or "") .. ".pushRemote", {

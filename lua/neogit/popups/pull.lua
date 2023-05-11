@@ -100,7 +100,7 @@ function M.create()
       options = {
         { display = "true", value = "true" },
         { display = "false", value = "false" },
-        { display = "pull.rebase:" .. git.config.get("pull.rebase").value, value = "" },
+        { display = "pull.rebase:" .. (git.config.get("pull.rebase").value or ""), value = "" },
       },
     })
     :build()
