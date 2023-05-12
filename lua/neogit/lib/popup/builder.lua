@@ -163,7 +163,10 @@ function M:config_heading(heading)
 end
 
 function M:config(key, name, options)
-  local c = config.get(name) or { value = "" }
+  local c = config.get(name)
+  if c.value == nil then
+    c.value = ""
+  end
 
   local variable = {
     id = key,
