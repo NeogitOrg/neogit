@@ -16,7 +16,7 @@ function M.create()
     :name("NeogitResetPopup")
     :group_heading("Reset")
     :action("m", "mixed    (HEAD and index)", function()
-      local commit = CommitSelectViewBuffer.new(git.log.list()):open_async()
+      local commit = CommitSelectViewBuffer.new(git.log.list({ "--max-count=256" })):open_async()
       if not commit then
         return
       end
@@ -26,7 +26,7 @@ function M.create()
       status.refresh(true, "reset_mixed")
     end)
     :action("s", "soft     (HEAD only)", function()
-      local commit = CommitSelectViewBuffer.new(git.log.list()):open_async()
+      local commit = CommitSelectViewBuffer.new(git.log.list({ "--max-count=256" })):open_async()
       if not commit then
         return
       end
@@ -36,7 +36,7 @@ function M.create()
       status.refresh(true, "reset_soft")
     end)
     :action("h", "hard     (HEAD, index and files)", function()
-      local commit = CommitSelectViewBuffer.new(git.log.list()):open_async()
+      local commit = CommitSelectViewBuffer.new(git.log.list({ "--max-count=256" })):open_async()
       if not commit then
         return
       end
@@ -46,7 +46,7 @@ function M.create()
       status.refresh(true, "reset_hard")
     end)
     :action("k", "keep     (HEAD and index, keeping uncommitted)", function()
-      local commit = CommitSelectViewBuffer.new(git.log.list()):open_async()
+      local commit = CommitSelectViewBuffer.new(git.log.list({ "--max-count=256" })):open_async()
       if not commit then
         return
       end
@@ -56,7 +56,7 @@ function M.create()
       status.refresh(true, "reset_keep")
     end)
     :action("i", "index    (only)", function()
-      local commit = CommitSelectViewBuffer.new(git.log.list()):open_async()
+      local commit = CommitSelectViewBuffer.new(git.log.list({ "--max-count=256" })):open_async()
       if not commit then
         return
       end
@@ -68,7 +68,7 @@ function M.create()
     :action("w", "worktree (only)", false) -- https://github.com/magit/magit/blob/main/lisp/magit-reset.el#L87
     :group_heading("")
     :action("f", "a file", function()
-      local commit = CommitSelectViewBuffer.new(git.log.list(util.merge({ "--all" }, git.stash.list())))
+      local commit = CommitSelectViewBuffer.new(git.log.list(util.merge({ "--max-count=256", "--all" }, git.stash.list())))
         :open_async()
       if not commit then
         return
