@@ -44,7 +44,13 @@ function M.create(branch)
       options = {
         { display = "true", value = "true" },
         { display = "false", value = "false" },
-        { display = "global:" .. git.config.get_global("pull.rebase"), value = "" },
+        {
+          display = "global:" .. git.config.get_global("pull.rebase"),
+          value = "",
+          condition = function()
+            return git.config.get_global("pull.rebase") ~= ""
+          end,
+        },
       },
     })
     :config("P", "remote.pushDefault", {
