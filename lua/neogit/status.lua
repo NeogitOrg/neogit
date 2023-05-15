@@ -1044,13 +1044,18 @@ local cmd_func_map = function()
     end,
     ["GoToPreviousHunkHeader"] = function()
       local section, item = get_current_section_item()
-      if section == nil then
+      if not section then
         return
       end
 
-      local on_hunk = item ~= nil and current_line_is_hunk()
+      local on_hunk = item and current_line_is_hunk()
 
-      if on_hunk then
+      if item and not on_hunk then
+        local _, prev_item = get_section_item_for_line(vim.fn.line(".") - 1)
+        if prev_item then
+          vim.api.nvim_win_set_cursor(0, { prev_item.hunks[#prev_item.hunks].first, 0 })
+        end
+      elseif on_hunk then
         local hunk = get_current_hunk_of_item(item)
 
         if hunk and vim.fn.line(".") == hunk.first then
@@ -1060,25 +1065,34 @@ local cmd_func_map = function()
         if hunk then
           vim.api.nvim_win_set_cursor(0, { hunk.first, 0 })
           vim.cmd("normal! zt")
+        else
+          local _, prev_item = get_section_item_for_line(vim.fn.line(".") - 2)
+          if prev_item then
+            vim.api.nvim_win_set_cursor(0, { prev_item.hunks[#prev_item.hunks].first, 0 })
+          end
         end
       end
     end,
     ["GoToNextHunkHeader"] = function()
       local section, item = get_current_section_item()
-      if section == nil then
+      if not section then
         return
       end
 
-      local on_hunk = item ~= nil and current_line_is_hunk()
+      local on_hunk = item and current_line_is_hunk()
 
       if item and not on_hunk then
         vim.api.nvim_win_set_cursor(0, { vim.fn.line(".") + 1, 0 })
       elseif on_hunk then
         local hunk = get_current_hunk_of_item(item)
         assert(hunk, "Hunk is nil")
+        assert(item, "Item is nil")
 
         if hunk.last == item.last then
-          vim.api.nvim_win_set_cursor(0, { hunk.last, 0 })
+          local _, next_item = get_section_item_for_line(hunk.last + 1)
+          if next_item then
+            vim.api.nvim_win_set_cursor(0, { next_item.first + 1, 0 })
+          end
         else
           vim.api.nvim_win_set_cursor(0, { hunk.last + 1, 0 })
         end
