@@ -271,7 +271,4 @@ function M:show()
   }
 end
 
-M.deprecated_create = require("neogit.lib.popup.lib").create
-
 return M
--- return require("neogit.lib.popup.lib")

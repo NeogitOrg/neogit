@@ -112,10 +112,32 @@ function Ui:get_component_under_cursor()
   end)
 end
 
+function Ui:get_component_on_line(line)
+  return self:find_component(function(c)
+    return c:is_under_cursor { line, 0 }
+  end)
+end
+
 function Ui:get_component_stack_under_cursor()
   local cursor = vim.api.nvim_win_get_cursor(0)
   return self:find_components(function(c)
     return c:is_under_cursor(cursor)
+  end)
+end
+
+function Ui:get_component_stack_in_linewise_selection()
+  local range = { vim.fn.getpos("v")[2], vim.fn.getpos(".")[2] }
+  table.sort(range)
+  local start, stop = unpack(range)
+
+  return self:find_components(function(c)
+    return c:is_in_linewise_range(start, stop)
+  end)
+end
+
+function Ui:get_component_stack_on_line(line)
+  return self:find_components(function(c)
+    return c:is_under_cursor { line, 0 }
   end)
 end
 
@@ -131,6 +153,8 @@ function Ui.visualize_tree(components, options)
   Ui._visualize_tree(1, components, options or {})
 end
 
+-- TODO: Rewrite this to use a table as a linewise buffer instead of a string, since appending strings in LUA is
+-- expensive compared to inserting into a table. Call table.concat(line) right before appending to buffer.
 function Ui:_render(first_line, first_col, parent, components, flags)
   local curr_line = first_line
 
@@ -152,10 +176,16 @@ function Ui:_render(first_line, first_col, parent, components, flags)
           text = padding_left .. text
 
           col_start = col_start + #padding_left
-          col_end = col_start + #c.value
+          col_end = col_start + c:get_width()
           c.position.col_start = col_start
           c.position.col_end = col_end - 1
-          text = text .. c.value
+
+          if c.options.align_right then
+            text = text .. c.value .. (" "):rep(c.options.align_right - #c.value)
+          else
+            text = text .. c.value
+          end
+
           if highlight then
             table.insert(highlights, {
               from = col_start,
@@ -183,7 +213,7 @@ function Ui:_render(first_line, first_col, parent, components, flags)
             table.insert(highlights, h)
           end
 
-          col_end = col_start + #res.text
+          col_end = col_start + vim.fn.strdisplaywidth(res.text)
           c.position.col_start = col_start
           c.position.col_end = col_end
           col_start = col_end
@@ -237,6 +267,14 @@ function Ui:_render(first_line, first_col, parent, components, flags)
           curr_line = curr_line + self:_render(curr_line, 0, c, c.children, flags)
           if sign then
             self.buf:place_sign(curr_line - 1, sign, "hl")
+          end
+          if c.options.virtual_text then
+            local ns = self.buf:create_namespace("NeogitBufferVirtualText")
+            self.buf:set_extmark(ns, curr_line - 2, 0, {
+              hl_mode = "combine",
+              virt_text = c.options.virtual_text,
+              virt_text_pos = "right_align",
+            })
           end
           flags.in_row = false
         end
