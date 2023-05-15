@@ -98,6 +98,9 @@ function M.create()
 
       require("neogit.lib.git.rebase").rebase_interactive(commit .. "~1", "--autosquash")
     end)
+    :env({
+      highlight = "HEAD",
+    })
     :build()
 
   p:show()
