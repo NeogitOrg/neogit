@@ -802,6 +802,27 @@ local function new_builder(subcommand)
 
       return result
     end,
+    call_sync_ignoring_exit_code = function(verbose, external_errors)
+      local p = to_process(verbose, external_errors, true)
+      logger.debug(string.format("[CLI]: Executing '%s %s'", subcommand, table.concat(p.cmd, " ")))
+      if not p:spawn() then
+        error("Failed to run command")
+        return nil
+      end
+
+      local result = p:wait()
+      assert(result, "Command did not complete")
+
+      handle_new_cmd({
+        cmd = table.concat(p.cmd, " "),
+        stdout = result.stdout,
+        stderr = result.stderr,
+        code = 0,
+        time = result.time,
+      }, state.show_popup, state.hide_text)
+
+      return result
+    end,
   }, mt_builder)
 end
 
