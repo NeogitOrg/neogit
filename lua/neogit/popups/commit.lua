@@ -40,7 +40,7 @@ local function commit_special(popup, method)
   end
 
   a.util.scheduler()
-  do_commit(popup, cli.commit.args(method, commit.oid))
+  do_commit(popup, cli.commit.args(method, commit))
   a.util.scheduler()
   return commit
 end
@@ -88,7 +88,7 @@ function M.create()
         return
       end
 
-      require("neogit.lib.git.rebase").rebase_interactive(commit.oid .. "~1", "--autosquash")
+      require("neogit.lib.git.rebase").rebase_interactive(commit .. "~1", "--autosquash")
     end)
     :action("S", "Instant Squash", function(popup)
       local commit = commit_special(popup, "--squash")
@@ -96,7 +96,7 @@ function M.create()
         return
       end
 
-      require("neogit.lib.git.rebase").rebase_interactive(commit.oid .. "~1", "--autosquash")
+      require("neogit.lib.git.rebase").rebase_interactive(commit .. "~1", "--autosquash")
     end)
     :build()
 

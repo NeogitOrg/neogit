@@ -21,7 +21,7 @@ function M.create()
         return
       end
 
-      git.reset.mixed(commit.oid)
+      git.reset.mixed(commit)
       a.util.scheduler()
       status.refresh(true, "reset_mixed")
     end)
@@ -31,7 +31,7 @@ function M.create()
         return
       end
 
-      git.reset.soft(commit.oid)
+      git.reset.soft(commit)
       a.util.scheduler()
       status.refresh(true, "reset_soft")
     end)
@@ -41,7 +41,7 @@ function M.create()
         return
       end
 
-      git.reset.hard(commit.oid)
+      git.reset.hard(commit)
       a.util.scheduler()
       status.refresh(true, "reset_hard")
     end)
@@ -51,7 +51,7 @@ function M.create()
         return
       end
 
-      git.reset.keep(commit.oid)
+      git.reset.keep(commit)
       a.util.scheduler()
       status.refresh(true, "reset_keep")
     end)
@@ -61,7 +61,7 @@ function M.create()
         return
       end
 
-      git.reset.index(commit.oid)
+      git.reset.index(commit)
       a.util.scheduler()
       status.refresh(true, "reset_index")
     end)
@@ -76,7 +76,7 @@ function M.create()
 
       local files =
         git.cli["ls-files"].full_name.deleted.modified.exclude_standard.deduplicate.call_sync():trim().stdout
-      local diff = git.cli.diff.name_only.args(commit.oid .. "...").call_sync():trim().stdout
+      local diff = git.cli.diff.name_only.args(commit .. "...").call_sync():trim().stdout
       local all_files = util.deduplicate(util.merge(files, diff))
       if not all_files[1] then
         return
@@ -88,7 +88,7 @@ function M.create()
         return
       end
 
-      git.reset.file(commit.oid, files)
+      git.reset.file(commit, files)
       a.util.scheduler()
       status.refresh(true)
     end)

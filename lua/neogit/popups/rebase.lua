@@ -64,7 +64,7 @@ function M.create()
           return
         end
 
-        rebase.rebase_interactive(commit.oid, unpack(popup:get_arguments()))
+        rebase.rebase_interactive(commit, unpack(popup:get_arguments()))
         a.util.scheduler()
         status.refresh(true, "rebase_interactive")
       end)
