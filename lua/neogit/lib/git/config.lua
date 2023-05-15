@@ -49,7 +49,7 @@ function M.get(key)
 end
 
 function M.get_global(key)
-  return cli.config.global.get(key).call_sync():trim().stdout[1]
+  return cli.config.global.get(key).call_sync_ignoring_exit_code():trim().stdout[1] or ""
 end
 
 function M.get_matching(pattern)
