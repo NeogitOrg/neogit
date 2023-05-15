@@ -246,6 +246,12 @@ function M.list(options)
     )
   end
 
+  if not vim.tbl_contains(options, function(item)
+    return item:match("%-%-max-count=%d+")
+  end) then
+    table.insert(options, "--max-count=256")
+  end
+
   local output = cli.log.format(format).graph.arg_list(options or {}).call():trim()
   return parse_log(output.stdout, graph)
 end
