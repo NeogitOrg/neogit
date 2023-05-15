@@ -103,6 +103,10 @@ local function construct_config_options(config)
       return
     end
 
+    if option.condition and not option.condition() then
+      return
+    end
+
     local highlight
     if config.value == option.value then
       highlight = "NeogitPopupConfigEnabled"
@@ -211,7 +215,11 @@ end
 
 function M:set_config(config)
   if config.options then
-    local options = build_reverse_lookup(map(config.options, function(option)
+    local options = build_reverse_lookup(filter_map(config.options, function(option)
+      if option.condition and not option.condition() then
+        return
+      end
+
       return option.value
     end))
 
