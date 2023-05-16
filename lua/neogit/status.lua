@@ -881,6 +881,49 @@ local cmd_func_map = function()
     ["Close"] = function()
       M.status_buffer:close()
     end,
+    ["InitRepo"] = a.void(function ()
+      local directory = vim.fn.input({
+        prompt = "Create repository in: ",
+        text = "",
+        cancelreturn = "",
+        completion = "dir"
+      })
+      if directory == "" then
+        return
+      end
+
+      -- git init doesn't understand ~
+      if string.find(directory, "~") == 1 then
+        directory = os.getenv("HOME") .. string.sub(directory, 2)
+      end
+
+      if vim.fn.isdirectory(directory) == 0 then
+        notif.create("You entered an invalid directory", vim.log.levels.ERROR)
+        return
+      end
+
+      M.cwd_changed = true
+      vim.cmd(string.format("cd %s", directory))
+
+      if cli.git_is_repository_sync() then
+        local reinitialize = vim.fn.input({
+          prompt = string.format("Reinitialize existing repository %s? (y or n) ", directory),
+          text = "n",
+          cancelreturn = "n"
+        })
+        if reinitialize ~= "y" then
+          return
+        end
+      end
+
+      vim.fn.system("git init " .. directory)
+      if vim.v.shell_error ~= 0 then
+        notif.create("git init returned an error", vim.log.levels.ERROR)
+        return
+      end
+
+      refresh(true, "InitRepo")
+    end),
     ["Depth1"] = a.void(function()
       set_folds { true, true, false }
     end),
