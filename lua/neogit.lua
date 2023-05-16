@@ -26,8 +26,22 @@ local neogit = {
     opts = opts or {}
 
     if not cli.git_is_repository_sync() then
-      notification.create("The current working directory is not a git repository", vim.log.levels.ERROR)
-      return
+      local create = vim.fn.input({
+        prompt = string.format("Create repository in %s? (y or n) ", vim.fn.getcwd()),
+        text = "n",
+        cancelreturn = "n"
+      })
+
+      if create ~= "y" then
+        notification.create("The current working directory is not a git repository", vim.log.levels.ERROR)
+        return
+      end
+
+      vim.fn.system("git init " .. vim.fn.getcwd())
+      if vim.v.shell_error ~= 0 then
+        notification.create("git init returned an error", vim.log.levels.ERROR)
+        return
+      end
     end
 
     if opts[1] ~= nil then
