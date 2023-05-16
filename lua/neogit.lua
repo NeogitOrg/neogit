@@ -37,11 +37,7 @@ local neogit = {
         return
       end
 
-      vim.fn.system("git init " .. vim.fn.getcwd())
-      if vim.v.shell_error ~= 0 then
-        notification.create("git init returned an error", vim.log.levels.ERROR)
-        return
-      end
+      lib.git.init.create(vim.fn.getcwd(), true)
     end
 
     if opts[1] ~= nil then
