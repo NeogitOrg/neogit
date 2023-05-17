@@ -859,45 +859,7 @@ local discard = function()
   vim.cmd("checktime")
 end
 
-local init_repo = function()
-  local directory = vim.fn.input {
-    prompt = "Create repository in: ",
-    text = "",
-    cancelreturn = "",
-    completion = "dir",
-  }
-  if directory == "" then
-    return
-  end
-
-  -- git init doesn't understand ~
-  if string.find(directory, "~") == 1 then
-    directory = os.getenv("HOME") .. string.sub(directory, 2)
-  end
-
-  if vim.fn.isdirectory(directory) == 0 then
-    notif.create("You entered an invalid directory", vim.log.levels.ERROR)
-    return
-  end
-
-  M.cwd_changed = true
-  vim.cmd(string.format("cd %s", directory))
-
-  if cli.git_is_repository_sync() then
-    local reinitialize = vim.fn.input {
-      prompt = string.format("Reinitialize existing repository %s? (y or n) ", directory),
-      text = "n",
-      cancelreturn = "n",
-    }
-    if reinitialize ~= "y" then
-      return
-    end
-  end
-
-  git.init.create(directory)
-
-  refresh(true, "InitRepo")
-end
+local init_repo = git.init.init_repo
 
 local set_folds = function(to)
   Collection.new(M.locations):each(function(l)

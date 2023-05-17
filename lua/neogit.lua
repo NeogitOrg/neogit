@@ -5,6 +5,7 @@ local signs = require("neogit.lib.signs")
 local hl = require("neogit.lib.hl")
 local status = require("neogit.status")
 local state = require("neogit.lib.state")
+local input = require("neogit.lib.input")
 
 local cli = require("neogit.lib.git.cli")
 local notification = require("neogit.lib.notification")
@@ -26,18 +27,16 @@ local neogit = {
     opts = opts or {}
 
     if not cli.git_is_repository_sync() then
-      local create = vim.fn.input({
-        prompt = string.format("Create repository in %s? (y or n) ", vim.fn.getcwd()),
-        text = "n",
-        cancelreturn = "n"
-      })
-
-      if create ~= "y" then
+      if
+          input.get_confirmation(string.format("Create repository in %s? (y or n)", vim.fn.getcwd()), {
+            default = 2,
+          })
+      then
+        lib.git.init.create(vim.fn.getcwd(), true)
+      else
         notification.create("The current working directory is not a git repository", vim.log.levels.ERROR)
         return
       end
-
-      lib.git.init.create(vim.fn.getcwd(), true)
     end
 
     if opts[1] ~= nil then
