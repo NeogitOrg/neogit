@@ -216,7 +216,6 @@ end
 --                              where 'display' is what is shown to the user, and 'value' is what gets used by the cli.
 --                              A 'condition' key with function value can also be present in the option, which controls if the option gets shown by returning boolean.
 ---@param options.passive boolean Controls if this config setting can be manipulated directly, or if it is managed by git, and should just be shown in UI
----@param 
 ---@return self
 function M:config(key, name, options)
   local c = config.get(name) or { value = "" }
@@ -249,7 +248,6 @@ function M:config_if(cond, key, name, options)
 
   return self
 end
-
 
 ---@param key string Key for user to hit that runs action
 ---@param description string Description of action in UI
