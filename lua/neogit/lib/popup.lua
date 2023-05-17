@@ -37,6 +37,10 @@ function M.new(state)
   return instance
 end
 
+-- Returns a table of strings, each representing a toggled option/switch in the popup. Filters out internal arguments.
+-- Formatted for consumption by cli:
+-- Option: --name=value
+-- Switch: --name
 ---@return string[]
 function M:get_arguments()
   local flags = {}
@@ -54,6 +58,9 @@ function M:get_arguments()
   return flags
 end
 
+-- Returns a table of key/value pairs, where the key is the name of the switch, and value is `true`, for all
+-- enabled arguments that are NOT for cli consumption (internal use only).
+---@return table
 function M:get_internal_arguments()
   local args = {}
   for _, arg in pairs(self.state.args) do
@@ -64,15 +71,20 @@ function M:get_internal_arguments()
   return args
 end
 
+-- Combines all cli arguments into a single string.
+---@return string
 function M:to_cli()
   return table.concat(self:get_arguments(), " ")
 end
 
+-- Closes the popup buffer
 function M:close()
   self.buffer:close()
   self.buffer = nil
 end
 
+-- Determines the correct highlight group for a switch based on it's state.
+---@return string
 local function get_highlight_for_switch(switch)
   if switch.enabled then
     return "NeogitPopupSwitchEnabled"
@@ -81,6 +93,8 @@ local function get_highlight_for_switch(switch)
   return "NeogitPopupSwitchDisabled"
 end
 
+-- Determines the correct highlight group for an option based on it's state.
+---@return string
 local function get_highlight_for_option(option)
   if option.value ~= nil and option.value ~= "" then
     return "NeogitPopupOptionEnabled"
@@ -89,6 +103,8 @@ local function get_highlight_for_option(option)
   return "NeogitPopupOptionDisabled"
 end
 
+-- Determines the correct highlight group for a config based on it's type and state.
+---@return string
 local function get_highlight_for_config(config)
   if config.value and config.value ~= "" and config.value ~= "unset" then
     return config.type or "NeogitPopupConfigEnabled"
@@ -97,6 +113,8 @@ local function get_highlight_for_config(config)
   return "NeogitPopupConfigDisabled"
 end
 
+-- Builds config component to be rendered
+---@return table
 local function construct_config_options(config)
   local options = filter_map(config.options, function(option)
     if option.display == "" then
@@ -120,6 +138,10 @@ local function construct_config_options(config)
   return value
 end
 
+---@param id integer ID of component to be updated
+---@param highlight string New highlight group for value
+---@param value string|table New value to display
+---@return nil
 function M:update_component(id, highlight, value)
   local component = self.buffer.ui:find_component(function(c)
     return c.options.id == id
@@ -149,16 +171,20 @@ function M:update_component(id, highlight, value)
         table.insert(component.children, text)
       end
     else
-      print("Unhandled component value type! (" .. type(value) .. ")")
+      logger.debug(string.format("[POPUP]: Unhandled component value type! (%s)", type(value)))
     end
   end
 
   self.buffer.ui:update()
 end
 
+-- Toggle a switch on/off
+---@param switch table
+---@return nil
 function M:toggle_switch(switch)
   switch.enabled = not switch.enabled
 
+  -- If a switch depends on user input, i.e. `-Gsomething`, prompt user to get input
   if switch.user_input then
     if switch.enabled then
       local value = input.get_user_input(switch.cli_prefix .. switch.cli_base .. ": ")
@@ -170,9 +196,11 @@ function M:toggle_switch(switch)
     end
   end
 
+  -- Update internal state and UI.
   state.set({ self.state.name, switch.cli }, switch.enabled)
   self:update_component(switch.id, get_highlight_for_switch(switch), switch.cli)
 
+  -- Ensure that other switches that are incompatible with this one are disabled
   if switch.enabled and #switch.incompatible > 0 then
     for _, var in ipairs(self.state.args) do
       if var.type == "switch" and var.enabled and switch.incompatible[var.cli] then
@@ -184,6 +212,9 @@ function M:toggle_switch(switch)
   end
 end
 
+-- Toggle an option on/off and set it's value
+---@param option table
+---@return nil
 function M:set_option(option)
   local set = function(value)
     option.value = value
@@ -191,6 +222,7 @@ function M:set_option(option)
     self:update_component(option.id, get_highlight_for_option(option), option.value)
   end
 
+  -- Prompt user to select from predetermined choices
   if option.choices then
     if not option.value or option.value == "" then
       vim.ui.select(option.choices, { prompt = option.description }, set)
@@ -198,9 +230,12 @@ function M:set_option(option)
       set("")
     end
   else
+    -- ...Otherwise get the value via input.
     local input =
       vim.fn.input { prompt = option.cli .. "=", default = option.value, cancelreturn = option.value }
 
+    -- If the option specifies a default value, and the user set the value to be empty, defer to default value.
+    -- This is handy to prevent the user from accidently loading thousands of log entries by accident.
     if option.default and input == "" then
       set(option.default)
     else
@@ -209,8 +244,12 @@ function M:set_option(option)
   end
 end
 
+-- Set a config value
+---@param config table
+---@return nil
 function M:set_config(config)
   if config.options then
+    -- For config's that offer predetermined options to choose from.
     local options = build_reverse_lookup(map(config.options, function(option)
       return option.value
     end))
@@ -222,6 +261,7 @@ function M:set_config(config)
     config.callback(self, config)
     -- block here?
   else
+    -- For config's that require user input
     local result = vim.fn.input {
       prompt = config.name .. " > ",
       default = config.value == "unset" and "" or config.value,
@@ -232,6 +272,7 @@ function M:set_config(config)
     self:update_component(config.id, get_highlight_for_config(config), config.value)
   end
 
+  -- Update config value via CLI
   config_lib.set(config.name, config.value)
 
   -- Updates passive variables (variables that don't get interacted with directly)
