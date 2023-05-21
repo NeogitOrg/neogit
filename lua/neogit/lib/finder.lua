@@ -7,23 +7,23 @@ local actions = require("telescope.actions")
 
 local function mappings(select_action, allow_multi)
   return function(_, map)
-    local available_actions = {
-      ["select"] = select_action,
-      ["close"] = actions.close,
-      ["next"] = actions.move_selection_next,
-      ["previous"] = actions.move_selection_previous,
-      ["nop"] = actions.nop,
-      ["multiselect_toggle_next"] = actions.toggle_selection + actions.move_selection_worse,
-      ["multiselect_toggle_previous"] = actions.toggle_selection + actions.move_selection_better
+    local commands = {
+      ["Select"] = select_action,
+      ["Close"] = actions.close,
+      ["Next"] = actions.move_selection_next,
+      ["Previous"] = actions.move_selection_previous,
+      ["NOP"] = actions.nop,
+      ["MultiselectToggleNext"] = actions.toggle_selection + actions.move_selection_worse,
+      ["MultiselectTogglePrevious"] = actions.toggle_selection + actions.move_selection_better
     }
 
-    for mapping, action in pairs(config.values.mappings.finder) do
-      if action:match("^multiselect") then
+    for mapping, command in pairs(config.values.mappings.finder) do
+      if command:match("^Multiselect") then
         if allow_multi then
-          map({ "i" }, mapping, available_actions[action])
+          map({ "i" }, mapping, commands[command])
         end
       else
-        map({ "i" }, mapping, available_actions[action])
+        map({ "i" }, mapping, commands[command])
       end
     end
 
