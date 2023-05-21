@@ -208,15 +208,19 @@ neogit.setup {
       ["B"] = "BranchPopup",
       -- Removes the default mapping of "s"
       ["s"] = "",
+      ...
+    },
+    -- Modify fuzzy-finder buffer mappings
+    finder = {
+      -- Binds <cr> to trigger select action
+      ["<cr>"] = "select",
+      ...
     }
   }
 }
 ```
 
-Right now, only the status buffer supports custom mappings.
-
-List of status commands:
-
+### List of status commands:
 * Close
 * Depth1 (Set foldlevel to 1)
 * Depth2 (Set foldlevel to 2)
@@ -245,6 +249,15 @@ List of status commands:
 * BranchPopup
 * MergePopup
 * CherryPickPopup (Normal and visual mode)
+
+### List of fuzzy-finder commands:
+* Select
+* Close
+* Next
+* Previous
+* NOP
+* MultiselectToggleNext
+* MultiselectTogglePrevious
 
 ## Notification Highlighting
 
