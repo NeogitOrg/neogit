@@ -3,6 +3,8 @@ local input = require("neogit.lib.input")
 local git = require("neogit.lib.git")
 local status = require("neogit.status")
 
+local a = require("plenary.async")
+
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 local RemoteConfigPopup = require("neogit.popups.remote_config")
 
@@ -53,33 +55,48 @@ function M.create()
       end
     end)
     :action("r", "Rename", function()
-      FuzzyFinderBuffer.new(git.remote.list(), function(selected_remote)
-        local new_name = input.get_user_input("Rename " .. selected_remote .. " to: ")
-        if not new_name or new_name == "" then
-          return
-        end
+      local selected_remote = FuzzyFinderBuffer.new(git.remote.list()):open_sync()
+      if not selected_remote then
+        return
+      end
 
-        git.remote.rename(selected_remote, new_name)
-        status.dispatch_refresh(true)
-      end):open()
+      local new_name = input.get_user_input("Rename " .. selected_remote .. " to: ")
+      if not new_name or new_name == "" then
+        return
+      end
+
+      git.remote.rename(selected_remote, new_name)
+      a.util.scheduler()
+      status.refresh(true, "rename_remote")
     end)
     :action("x", "Remove", function()
-      FuzzyFinderBuffer.new(git.remote.list(), function(selected_remote)
-        git.remote.remove(selected_remote)
-        status.dispatch_refresh(true)
-      end):open()
+      local selected_remote = FuzzyFinderBuffer.new(git.remote.list()):open_sync()
+      if not selected_remote then
+        return
+      end
+
+      git.remote.remove(selected_remote)
+      a.util.scheduler()
+      status.refresh(true, "remove_remote")
     end)
     :new_action_group()
     :action("C", "Configure...", function()
-      FuzzyFinderBuffer.new(git.remote.list(), function(remote_name)
-        RemoteConfigPopup.create(remote_name)
-      end):open()
+      local remote_name = FuzzyFinderBuffer.new(git.remote.list()):open_sync()
+      if not remote_name then
+        return
+      end
+
+      RemoteConfigPopup.create(remote_name)
     end)
     :action("p", "Prune stale branches", function()
-      FuzzyFinderBuffer.new(git.remote.list(), function(selected_remote)
-        git.remote.prune(selected_remote)
-        status.dispatch_refresh(true)
-      end):open()
+      local selected_remote = FuzzyFinderBuffer.new(git.remote.list()):open_sync()
+      if not selected_remote then
+        return
+      end
+
+      git.remote.prune(selected_remote)
+      a.util.scheduler()
+      status.refresh(true, "prune_remote")
     end)
     :action("P", "Prune stale refspecs", false)
     -- https://github.com/magit/magit/blob/main/lisp/magit-remote.el#L159

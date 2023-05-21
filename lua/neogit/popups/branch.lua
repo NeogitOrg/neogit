@@ -144,9 +144,12 @@ function M.create()
     :action("W", "new worktree")
     :new_action_group("Do")
     :action("C", "Configure...", function()
-      FuzzyFinderBuffer.new(git.branch.get_local_branches(true), function(branch_name)
-        BranchConfigPopup.create(branch_name)
-      end):open()
+      local branch_name = FuzzyFinderBuffer.new(git.branch.get_local_branches(true)):open_sync()
+      if not branch_name then
+        return
+      end
+
+      BranchConfigPopup.create(branch_name)
     end)
     :action(
       "m",
