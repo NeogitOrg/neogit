@@ -14,7 +14,7 @@ local function mappings(select_action, allow_multi)
       ["Previous"] = actions.move_selection_previous,
       ["NOP"] = actions.nop,
       ["MultiselectToggleNext"] = actions.toggle_selection + actions.move_selection_worse,
-      ["MultiselectTogglePrevious"] = actions.toggle_selection + actions.move_selection_better
+      ["MultiselectTogglePrevious"] = actions.toggle_selection + actions.move_selection_better,
     }
 
     for mapping, command in pairs(config.values.mappings.finder) do

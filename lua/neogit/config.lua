@@ -75,7 +75,7 @@ M.values = {
       ["<up>"] = "Previous",
       ["<tab>"] = "MultiselectToggleNext",
       ["<s-tab>"] = "MultiselectTogglePrevious",
-      ["<c-j>"] = "NOP"
+      ["<c-j>"] = "NOP",
     },
     status = {
       ["q"] = "Close",
