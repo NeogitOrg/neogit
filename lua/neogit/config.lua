@@ -65,6 +65,18 @@ M.values = {
   },
   ignored_settings = {},
   mappings = {
+    finder = {
+      ["<cr>"] = "select",
+      ["<c-c>"] = "close",
+      ["<esc>"] = "close",
+      ["<c-n>"] = "next",
+      ["<c-p>"] = "previous",
+      ["<down>"] = "next",
+      ["<up>"] = "previous",
+      ["<tab>"] = "multiselect_toggle_next",
+      ["<s-tab>"] = "multiselect_toggle_previous",
+      ["<c-j>"] = "nop"
+    },
     status = {
       ["q"] = "Close",
       ["I"] = "InitRepo",

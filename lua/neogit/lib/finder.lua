@@ -1,3 +1,5 @@
+local config = require("neogit.config")
+
 local pickers = require("telescope.pickers")
 local finders = require("telescope.finders")
 local sorters = require("telescope.sorters")
@@ -5,18 +7,24 @@ local actions = require("telescope.actions")
 
 local function mappings(select_action, allow_multi)
   return function(_, map)
-    map({ "i" }, "<cr>", select_action)
-    map({ "i" }, "<C-c>", actions.close)
-    map({ "i" }, "<C-n>", actions.move_selection_next)
-    map({ "i" }, "<C-p>", actions.move_selection_previous)
-    map({ "i" }, "<esc>", actions.close)
-    map({ "i" }, "<down>", actions.move_selection_next)
-    map({ "i" }, "<up>", actions.move_selection_previous)
-    map({ "i" }, "<C-j>", actions.nop)
+    local available_actions = {
+      ["select"] = select_action,
+      ["close"] = actions.close,
+      ["next"] = actions.move_selection_next,
+      ["previous"] = actions.move_selection_previous,
+      ["nop"] = actions.nop,
+      ["multiselect_toggle_next"] = actions.toggle_selection + actions.move_selection_worse,
+      ["multiselect_toggle_previous"] = actions.toggle_selection + actions.move_selection_better
+    }
 
-    if allow_multi then
-      map({ "i" }, "<tab>", actions.toggle_selection + actions.move_selection_worse)
-      map({ "i" }, "<s-tab>", actions.toggle_selection + actions.move_selection_better)
+    for mapping, action in pairs(config.values.mappings.finder) do
+      if action:match("^multiselect") then
+        if allow_multi then
+          map({ "i" }, mapping, available_actions[action])
+        end
+      else
+        map({ "i" }, mapping, available_actions[action])
+      end
     end
 
     return false
