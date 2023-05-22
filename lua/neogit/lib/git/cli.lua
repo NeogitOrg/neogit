@@ -31,9 +31,7 @@ local configurations = {
     },
   },
 
-  init = config {
-
-  },
+  init = config {},
 
   status = config {
     flags = {

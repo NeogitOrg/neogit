@@ -28,9 +28,9 @@ local neogit = {
 
     if not cli.git_is_repository_sync(opts.cwd) then
       if
-          input.get_confirmation(string.format("Create repository in %s? (y or n)", opts.cwd or vim.fn.getcwd()), {
-            default = 2,
-          })
+        input.get_confirmation(string.format("Create repository in %s? (y or n)", opts.cwd or vim.fn.getcwd()), {
+          default = 2,
+        })
       then
         lib.git.init.create(opts.cwd or vim.fn.getcwd(), true)
       else

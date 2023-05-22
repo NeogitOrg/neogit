@@ -26,9 +26,7 @@ M.init_repo = function()
   end
 
   -- git init doesn't understand ~
-  if string.find(directory, "~") == 1 then
-    directory = os.getenv("HOME") .. string.sub(directory, 2)
-  end
+  directory = vim.fn.fnamemodify(directory, ":p")
 
   if vim.fn.isdirectory(directory) == 0 then
     notif.create("You entered an invalid directory", vim.log.levels.ERROR)
@@ -37,10 +35,10 @@ M.init_repo = function()
 
   if cli.git_is_repository_sync() then
     if
-        not input.get_confirmation(
-          string.format("Reinitialize existing repository %s? (y or n) ", directory),
-          { default = 2 }
-        )
+      not input.get_confirmation(
+        string.format("Reinitialize existing repository %s? (y or n) ", directory),
+        { default = 2 }
+      )
     then
       return
     end
