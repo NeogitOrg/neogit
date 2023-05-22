@@ -26,13 +26,13 @@ local neogit = {
   open = function(opts)
     opts = opts or {}
 
-    if not cli.git_is_repository_sync() then
+    if not cli.git_is_repository_sync(opts.cwd) then
       if
-          input.get_confirmation(string.format("Create repository in %s? (y or n)", vim.fn.getcwd()), {
+          input.get_confirmation(string.format("Create repository in %s? (y or n)", opts.cwd or vim.fn.getcwd()), {
             default = 2,
           })
       then
-        lib.git.init.create(vim.fn.getcwd(), true)
+        lib.git.init.create(opts.cwd or vim.fn.getcwd(), true)
       else
         notification.create("The current working directory is not a git repository", vim.log.levels.ERROR)
         return
