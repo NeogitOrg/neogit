@@ -201,40 +201,6 @@ function M.create()
       notif.create(string.format("Reset '%s'", branch.current()), vim.log.levels.INFO)
       status.refresh(true, "reset_branch")
     end)
-    -- :action(
-    --   "d",
-    --   "delete local branch",
-    --   operation("delete_branch", function()
-    --     local branches = branch.get_local_branches()
-    --
-    --     BranchSelectViewBuffer.new(branches, function(selected_branch)
-    --       cli.branch.delete.name(selected_branch).call_sync():trim()
-    --       status.dispatch_refresh(true)
-    --     end):open()
-    --   end)
-    -- )
-    -- :action(
-    --   "D",
-    --   "delete local branch and remote",
-    --   operation("delete_branch", function()
-    --     local branches = format_branches(branch.get_remote_branches())
-    --
-    --     BranchSelectViewBuffer.new(branches, function(selected_branch)
-    --       if selected_branch == "" then
-    --         return
-    --       end
-    --
-    --       local remote, branch_name = parse_remote_branch_name(selected_branch)
-    --       if not remote or not branch_name then
-    --         return
-    --       end
-    --
-    --       cli.branch.delete.name(branch_name).call_sync():trim()
-    --       cli.push.remote(remote).delete.to(branch_name).call_sync():trim()
-    --       status.dispatch_refresh(true)
-    --     end):open()
-    --   end)
-    -- )
     :action(
       "D",
       "delete",
