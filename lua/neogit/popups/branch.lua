@@ -209,21 +209,23 @@ function M.create()
         -- Branch gha-routes-js is checked out.  [d]etach HEAD & delete, [c]heckout origin/gha-routes-js & delete, [a]bort
         local branches = format_branches(branch.get_all_branches())
         local selected_branch = FuzzyFinderBuffer.new(branches):open_sync()
-        local remote, branch_name = parse_remote_branch_name(selected_branch)
-        if not branch_name then
+        if not selected_branch then
           return
         end
 
-        cli.branch.delete.name(branch_name).call_sync():trim()
+        local remote, branch_name = parse_remote_branch_name(selected_branch)
+        if remote then
+          cli.branch.delete.name(branch_name).call_sync():trim()
 
-        local delete_remote =
-          input.get_confirmation("Delete remote?", { values = { "&Yes", "&No" }, default = 2 })
-
-        if remote and delete_remote then
-          cli.push.remote(remote).delete.to(branch_name).call_sync():trim()
+          if input.get_confirmation("Delete remote?", { values = { "&Yes", "&No" }, default = 2 }) then
+            cli.push.remote(remote).delete.to(branch_name).call_sync():trim()
+          end
+        else
+          cli.branch.delete.name(selected_branch).call_sync():trim()
         end
 
-        status.dispatch_refresh(true)
+        notif.create(string.format("Deleted branch '%s'", branch_name or selected_branch), vim.log.levels.INFO)
+        status.refresh(true, "delete_branch")
       end)
     )
     :build()
