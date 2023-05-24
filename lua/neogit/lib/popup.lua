@@ -225,10 +225,9 @@ function M:set_config(config)
 
     local index = options[config.value]
     config.value = options[(index + 1)] or options[1]
-    self:update_component(config.id, nil, construct_config_options(config))
   elseif config.callback then
     config.callback(self, config)
-    -- block here?
+    return
   else
     local result = vim.fn.input {
       prompt = config.name .. " > ",
@@ -237,12 +236,14 @@ function M:set_config(config)
     }
 
     config.value = result == "" and "unset" or result
-    self:update_component(config.id, get_highlight_for_config(config), config.value)
   end
 
   config_lib.set(config.name, config.value)
 
-  -- Updates passive variables (variables that don't get interacted with directly)
+  self:repaint_config()
+end
+
+function M:repaint_config()
   for _, var in ipairs(self.state.config) do
     if var.passive then
       local c_value = config_lib.get(var.name)
@@ -250,6 +251,10 @@ function M:set_config(config)
         var.value = c_value.value
         self:update_component(var.id, nil, var.value)
       end
+    elseif var.options then
+      self:update_component(var.id, nil, construct_config_options(var))
+    else
+      self:update_component(var.id, get_highlight_for_config(var), var.value)
     end
   end
 end
