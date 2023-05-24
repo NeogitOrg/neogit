@@ -130,6 +130,6 @@ function Finder.test()
   f:find()
 end
 
-Finder.test()
+-- Finder.test()
 
 return Finder
