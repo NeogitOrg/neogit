@@ -26,7 +26,7 @@ end
 local function parse_remote_branch_name(remote_name)
   local offset = remote_name:find("/")
   if not offset then
-    return nil, nil
+    return nil, remote_name
   end
 
   local remote = remote_name:sub(1, offset - 1)
@@ -214,17 +214,13 @@ function M.create()
         end
 
         local remote, branch_name = parse_remote_branch_name(selected_branch)
-        if remote then
-          cli.branch.delete.name(branch_name).call_sync():trim()
+        cli.branch.delete.name(branch_name).call_sync():trim()
 
-          if input.get_confirmation("Delete remote?", { values = { "&Yes", "&No" }, default = 2 }) then
-            cli.push.remote(remote).delete.to(branch_name).call_sync():trim()
-          end
-        else
-          cli.branch.delete.name(selected_branch).call_sync():trim()
+        if remote and input.get_confirmation("Delete remote?", { values = { "&Yes", "&No" }, default = 2 }) then
+          cli.push.remote(remote).delete.to(branch_name).call_sync():trim()
         end
 
-        notif.create(string.format("Deleted branch '%s'", branch_name or selected_branch), vim.log.levels.INFO)
+        notif.create(string.format("Deleted branch '%s'", branch_name), vim.log.levels.INFO)
         status.refresh(true, "delete_branch")
       end)
     )
