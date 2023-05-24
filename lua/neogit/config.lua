@@ -6,6 +6,7 @@ M.values = {
   disable_signs = false,
   disable_commit_confirmation = false,
   disable_builtin_notifications = false,
+  use_telescope = false,
   disable_insert_on_commit = true,
   use_per_project_settings = true,
   remember_settings = true,
@@ -75,7 +76,7 @@ M.values = {
       ["<up>"] = "Previous",
       ["<tab>"] = "MultiselectToggleNext",
       ["<s-tab>"] = "MultiselectTogglePrevious",
-      ["<c-j>"] = "NOP"
+      ["<c-j>"] = "NOP",
     },
     status = {
       ["q"] = "Close",

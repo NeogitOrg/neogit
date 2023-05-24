@@ -125,6 +125,8 @@ neogit.setup {
   -- Sorting keys: https://git-scm.com/docs/git-for-each-ref#_options
   sort_branches = "-committerdate",
   disable_builtin_notifications = false,
+  -- If enabled, use telescope for menu selection rather than vim.ui.select
+  use_telescope = false,
   use_magit_keybindings = false,
   -- Change the default way of opening neogit
   kind = "tab",
@@ -218,6 +220,7 @@ neogit.setup {
 ```
 
 ### List of status commands:
+
 - Close
 - Depth1 (Set foldlevel to 1)
 - Depth2 (Set foldlevel to 2)
@@ -243,13 +246,14 @@ neogit.setup {
 - BranchPopup
 
 ### List of fuzzy-finder commands:
-* Select
-* Close
-* Next
-* Previous
-* NOP
-* MultiselectToggleNext
-* MultiselectTogglePrevious
+
+- Select
+- Close
+- Next
+- Previous
+- NOP
+- MultiselectToggleNext
+- MultiselectTogglePrevious
 
 ## Notification Highlighting
 
