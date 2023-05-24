@@ -1,11 +1,7 @@
 local config = require("neogit.config")
 
-local pickers = require("telescope.pickers")
-local finders = require("telescope.finders")
-local sorters = require("telescope.sorters")
-local actions = require("telescope.actions")
-
 local function mappings(select_action, allow_multi)
+  local actions = require("telescope.actions")
   return function(_, map)
     local commands = {
       ["Select"] = select_action,
@@ -14,7 +10,7 @@ local function mappings(select_action, allow_multi)
       ["Previous"] = actions.move_selection_previous,
       ["NOP"] = actions.nop,
       ["MultiselectToggleNext"] = actions.toggle_selection + actions.move_selection_worse,
-      ["MultiselectTogglePrevious"] = actions.toggle_selection + actions.move_selection_better
+      ["MultiselectTogglePrevious"] = actions.toggle_selection + actions.move_selection_better,
     }
 
     for mapping, command in pairs(config.values.mappings.finder) do
@@ -89,13 +85,28 @@ end
 
 ---Engages finder
 function Finder:find()
-  pickers
-    .new(self.opts, {
-      finder = finders.new_table { results = self.entries },
-      sorter = sorters.fuzzy_with_index_bias(),
-      attach_mappings = mappings(self.select_action, self.opts.allow_multi),
-    })
-    :find()
+  if config.values.use_telescope then
+    local pickers = require("telescope.pickers")
+    local finders = require("telescope.finders")
+    local sorters = require("telescope.sorters")
+
+    pickers
+      .new(self.opts, {
+        finder = finders.new_table { results = self.entries },
+        sorter = sorters.fuzzy_with_index_bias(),
+        attach_mappings = mappings(self.select_action, self.opts.allow_multi),
+      })
+      :find()
+  else
+    vim.ui.select(self.entries, {
+      prompt = "Select: ",
+      format_item = function(entry)
+        return entry
+      end,
+    }, function(item)
+      self.select_action(item)
+    end)
+  end
 end
 
 ---Builds Finder instance
@@ -104,5 +115,21 @@ end
 function Finder.create(opts)
   return Finder:new(opts or {})
 end
+
+--- Example usage
+function Finder.test()
+  local f = Finder:create()
+  f:add_entries { "a", "b", "c" }
+  f:add_select_action(function(item)
+    if item then
+      print("Got item: ", vim.inspect(item))
+    else
+      print("Aborted")
+    end
+  end)
+  f:find()
+end
+
+Finder.test()
 
 return Finder
