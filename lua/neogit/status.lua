@@ -904,7 +904,7 @@ local function discard_hunk(section, item, lines, hunk)
 
   local diff = table.concat(lines or {}, "\n")
   diff = table.concat({ "--- a/" .. item.name, "+++ b/" .. item.name, diff, "" }, "\n")
-  if section.name == "staged" then
+  if section == "staged" then
     cli.apply.reverse.index.with_patch(diff).call()
   else
     cli.apply.reverse.with_patch(diff).call()
