@@ -167,43 +167,4 @@ function M.current()
   return nil
 end
 
-local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
-local util = require("neogit.lib.util")
-
-function M.merge_config(branch)
-  local local_branches = M.get_local_branches()
-  local remote_branches = util.filter_map(M.get_remote_branches(), function(name)
-    if name:match([[ ]]) then -- removes stuff like 'origin/HEAD -> origin/master'
-      return nil
-    else
-      return name
-    end
-  end)
-
-  local branches = util.merge(local_branches, remote_branches)
-
-  return a.void(function(popup, c)
-    local target = FuzzyFinderBuffer.new(branches):open_sync { prompt_prefix = "Upstream: " }
-    if not target then
-      return
-    end
-
-    local merge_value, remote_value
-    if target:match([[/]]) then
-      local target_remote, target_branch = unpack(vim.split(target, [[/]]))
-      merge_value = "refs/heads/" .. target_branch
-      remote_value = target_remote
-    else
-      merge_value = "refs/heads/" .. target
-      remote_value = "."
-    end
-
-    config_lib.set("branch." .. branch .. ".merge", merge_value)
-    config_lib.set("branch." .. branch .. ".remote", remote_value)
-
-    c.value = merge_value
-    popup:repaint_config()
-  end)
-end
-
 return M
