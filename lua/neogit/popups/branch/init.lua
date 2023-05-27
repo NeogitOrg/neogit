@@ -47,6 +47,8 @@ local function remotes_for_config()
   return remotes
 end
 
+local actions = require("neogit.actions.branch")
+
 function M.create()
   local p = popup
     .builder()
