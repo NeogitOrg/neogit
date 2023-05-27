@@ -1,6 +1,4 @@
 local Finder = require("neogit.lib.finder")
-local actions = require("telescope.actions")
-local action_state = require("telescope.actions.state")
 
 local function buffer_height(count)
   if count < (vim.fn.winheight(0) / 2) then
