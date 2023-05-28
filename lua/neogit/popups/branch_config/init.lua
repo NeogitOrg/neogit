@@ -1,4 +1,5 @@
 local M = {}
+
 local popup = require("neogit.lib.popup")
 local git = require("neogit.lib.git")
 local actions = require("neogit.popups.branch_config.actions")
@@ -11,7 +12,7 @@ function M.create(branch)
     :name("NeogitBranchConfigPopup")
     :config_heading("Configure branch")
     :config("d", "branch." .. branch .. ".description")
-    :config("u", "branch." .. branch .. ".merge", { callback = git.branch.merge_config(branch) })
+    :config("u", "branch." .. branch .. ".merge", { callback = actions.merge_config(branch) })
     :config("m", "branch." .. branch .. ".remote", { passive = true })
     :config("r", "branch." .. branch .. ".rebase", {
       options = {

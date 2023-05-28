@@ -1,6 +1,5 @@
 local M = {}
 
-local a = require("plenary.async")
 local status = require("neogit.status")
 local git = require("neogit.lib.git")
 local input = require("neogit.lib.input")
@@ -31,18 +30,6 @@ local function parse_remote_branch_name(remote_name)
   local branch_name = remote_name:sub(offset + 1, remote_name:len())
 
   return remote, branch_name
-end
-
-function M.remotes_for_config()
-  local remotes = {
-    { display = "", value = "" },
-  }
-
-  for _, name in ipairs(git.remote.list()) do
-    table.insert(remotes, { display = name, value = name })
-  end
-
-  return remotes
 end
 
 function M.checkout_branch_revision()
@@ -177,42 +164,6 @@ function M.delete_branch()
 
   notif.create(string.format("Deleted branch '%s'", branch_name), vim.log.levels.INFO)
   status.refresh(true, "delete_branch")
-end
-
-function M.merge_config(branch)
-  local local_branches = git.branch.get_local_branches()
-  local remote_branches = util.filter_map(git.branch.get_remote_branches(), function(name)
-    if name:match([[ ]]) then -- removes stuff like 'origin/HEAD -> origin/master'
-      return nil
-    else
-      return name
-    end
-  end)
-
-  local branches = util.merge(local_branches, remote_branches)
-
-  return a.void(function(popup, c)
-    local target = FuzzyFinderBuffer.new(branches):open_sync { prompt_prefix = "Upstream: " }
-    if not target then
-      return
-    end
-
-    local merge_value, remote_value
-    if target:match([[/]]) then
-      local target_remote, target_branch = unpack(vim.split(target, [[/]]))
-      merge_value = "refs/heads/" .. target_branch
-      remote_value = target_remote
-    else
-      merge_value = "refs/heads/" .. target
-      remote_value = "."
-    end
-
-    git.config.set("branch." .. branch .. ".merge", merge_value)
-    git.config.set("branch." .. branch .. ".remote", remote_value)
-
-    c.value = merge_value
-    popup:repaint_config()
-  end)
 end
 
 return M

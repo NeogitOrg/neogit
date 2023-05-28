@@ -3,6 +3,7 @@ local M = {}
 local popup = require("neogit.lib.popup")
 local git = require("neogit.lib.git")
 local actions = require("neogit.popups.branch.actions")
+local config_actions = require("neogit.popups.branch_config.actions")
 
 function M.create()
   local current_branch = git.branch.current()
@@ -13,7 +14,7 @@ function M.create()
     :switch("r", "recurse-submodules", "Recurse submodules when checking out an existing branch")
     :config_if(current_branch, "d", "branch." .. (current_branch or "") .. ".description")
     :config_if(current_branch, "u", "branch." .. (current_branch or "") .. ".merge", {
-      callback = actions.merge_config(current_branch),
+      callback = config_actions.merge_config(current_branch),
     })
     :config_if(current_branch, "m", "branch." .. (current_branch or "") .. ".remote", { passive = true })
     :config_if(current_branch, "r", "branch." .. (current_branch or "") .. ".rebase", {
@@ -24,7 +25,7 @@ function M.create()
       },
     })
     :config_if(current_branch, "p", "branch." .. (current_branch or "") .. ".pushRemote", {
-      options = actions.remotes_for_config(),
+      options = config_actions.remotes_for_config(),
     })
     :group_heading("Checkout")
     :action("b", "branch/revision", actions.checkout_branch_revision)
