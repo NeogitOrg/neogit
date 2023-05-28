@@ -4,6 +4,7 @@ return {
   cli = cli,
   status = require("neogit.lib.git.status"),
   stash = require("neogit.lib.git.stash"),
+  fetch = require("neogit.lib.git.fetch"),
   log = require("neogit.lib.git.log"),
   reflog = require("neogit.lib.git.reflog"),
   branch = require("neogit.lib.git.branch"),
