@@ -180,17 +180,19 @@ M.CommitEntry = Component.new(function(commit, args)
   }, { oid = commit.oid })
 end)
 
-M.CommitGraph = Component.new(function(commit, args)
+M.CommitGraph = Component.new(function(commit, _)
   return col.padding_left(8) { row(build_graph(commit.graph)) }
 end)
 
 M.Grid = Component.new(function(props)
   props = vim.tbl_extend("force", {
+    -- Gap between columns
     gap = 0,
     columns = true, -- whether the items represents a list of columns instead of a list of row
     items = {},
   }, props)
 
+  --- Transpose
   if props.columns then
     local new_items = {}
     local row_count = 0
@@ -219,11 +221,13 @@ M.Grid = Component.new(function(props)
   for i = 1, #props.items do
     local children = {}
 
-    if i ~= 1 then
-      children = map(range(props.gap), function()
-        return text("")
-      end)
-    end
+    -- TODO: seems to be a leftover from when the grid was column major
+    -- if i ~= 1 then
+    --   children = map(range(props.gap), function()
+    --     return text("")
+    --   end)
+    -- end
+
     -- current row
     local r = props.items[i]
 
@@ -238,6 +242,7 @@ M.Grid = Component.new(function(props)
       local c_width = c:get_width()
       children[j] = c
 
+      -- Compute the maximum element width of each column to pad all columns to the same vertical line
       if c_width > (column_widths[j] or 0) then
         column_widths[j] = c_width
       end
@@ -250,11 +255,13 @@ M.Grid = Component.new(function(props)
     -- current row
     local r = rendered[i]
 
+    -- Draw each column of the current row
     for j = 1, #r.children do
       local item = r.children[j]
       local gap_str = ""
       local column_width = column_widths[j] or 0
 
+      -- Intersperse each column item with a gap
       if j ~= 1 then
         gap_str = string.rep(" ", props.gap)
       end

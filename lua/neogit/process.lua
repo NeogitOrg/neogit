@@ -21,7 +21,7 @@ end
 ---@field stdin number|nil
 ---@field pty boolean
 ---@field on_partial_line fun(process: Process, data: string, raw: string) callback on complete lines
----@field on_error fun(res: ProcessResult): boolean
+---@field on_error (fun(res: ProcessResult): boolean)|boolean|nil Intercept the error externally, returning true prevents the error from being logged
 local Process = {}
 Process.__index = Process
 
@@ -356,22 +356,25 @@ function Process:spawn(cb)
     stdout_cleanup()
     stderr_cleanup()
 
+    -- TODO: Replace ignore_code with on_error callback
     if code ~= 0 and not hide_console and not self.ignore_code then
-      append_log(self, string.format("Process exited with code: %d", code))
+      if not self.on_error or not self.on_error(res) then
+        append_log(self, string.format("Process exited with code: %d", code))
 
-      local output = {}
-      local start = math.max(#res.output - 16, 1)
-      for i = start, math.min(#res.output, start + 16) do
-        table.insert(output, "    " .. res.output[i])
+        local output = {}
+        local start = math.max(#res.output - 16, 1)
+        for i = start, math.min(#res.output, start + 16) do
+          table.insert(output, "    " .. res.output[i])
+        end
+
+        local message = string.format(
+          "%s:\n\n%s\n\nOpen the console for details",
+          table.concat(self.cmd, " "),
+          table.concat(output, "\n")
+        )
+
+        notification.create(message, vim.log.levels.ERROR)
       end
-
-      local message = string.format(
-        "%s:\n\n%s\n\nOpen the console for details",
-        table.concat(self.cmd, " "),
-        table.concat(output, "\n")
-      )
-
-      notification.create(message, vim.log.levels.ERROR)
       -- vim.schedule(Process.show_console)
     end
 
