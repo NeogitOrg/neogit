@@ -1,32 +1,11 @@
--- https://magit.vc/manual/2.11.0/magit/Cherry-Picking.html#Cherry-Picking
-local cherry_pick = require("neogit.lib.git.cherry_pick")
 local popup = require("neogit.lib.popup")
-local CommitSelectViewBuffer = require("neogit.buffers.commit_select_view")
-local log = require("neogit.lib.git.log")
+local actions = require("neogit.popups.cherry_pick.actions")
 
 local M = {}
-local a = require("plenary.async")
-
--- .git/sequencer/todo does not exist when there is only one commit left.
---
--- And CHERRY_PICK_HEAD does not exist when a conflict happens while picking a series of commits with --no-commit.
--- And REVERT_HEAD does not exist when a conflict happens while reverting a series of commits with --no-commit.
---
-local function pick_or_revert_in_progress(status)
-  local pick_or_revert_todo = false
-
-  for _, item in ipairs(status.repo.cherry_pick.items) do
-    if item.name:match("^pick") or item.name:match("^revert") then
-      pick_or_revert_todo = true
-      break
-    end
-  end
-
-  return status and (status.repo.cherry_pick.head or pick_or_revert_todo)
-end
 
 function M.create(env)
-  local status = require("neogit.status")
+  local in_progress = actions.pick_or_revert_in_progress()
+
   local p = popup
     .builder()
     :name("NeogitCherryPickPopup")
@@ -37,66 +16,19 @@ function M.create(env)
     -- :option("m", "mainline", "", "Replay merge relative to parent")
     -- :option("s", "strategy", "", "Strategy")
     -- :option("S", "gpg-sign", "", "Sign using gpg")
-    :group_heading_if(
-      not pick_or_revert_in_progress(status),
-      "Apply here"
-    )
-    :action_if(not pick_or_revert_in_progress(status), "A", "Pick", function(popup)
-      local commits
-      if popup.state.env.commits then
-        commits = popup.state.env.commits
-      else
-        commits = { CommitSelectViewBuffer.new(log.list({ "--max-count=256" })):open_async() }
-      end
-
-      if not commits or not commits[1] then
-        return
-      end
-
-      cherry_pick.pick(commits, popup:get_arguments())
-
-      a.util.scheduler()
-      status.refresh(true, "cherry_pick_pick")
-    end)
-    :action_if(not pick_or_revert_in_progress(status), "a", "Apply", function(popup)
-      local commits
-      if popup.state.env.commits then
-        commits = popup.state.env.commits
-      else
-        commits = { CommitSelectViewBuffer.new(log.list({ "--max-count=256" })):open_async() }
-      end
-
-      if not commits or not commits[1] then
-        return
-      end
-
-      cherry_pick.apply(commits, popup:get_arguments())
-
-      a.util.scheduler()
-      status.refresh(true, "cherry_pick_apply")
-    end)
-    :action_if(not pick_or_revert_in_progress(status), "h", "Harvest", false)
-    :action_if(not pick_or_revert_in_progress(status), "m", "Squash", false)
-    :new_action_group_if(not pick_or_revert_in_progress(status), "Apply elsewhere")
-    :action_if(not pick_or_revert_in_progress(status), "d", "Donate", false)
-    :action_if(not pick_or_revert_in_progress(status), "n", "Spinout", false)
-    :action_if(not pick_or_revert_in_progress(status), "s", "Spinoff", false)
-    :group_heading_if(pick_or_revert_in_progress(status), "Cherry Pick")
-    :action_if(pick_or_revert_in_progress(status), "A", "continue", function()
-      cherry_pick.continue()
-      a.util.scheduler()
-      status.refresh(true, "cherry_pick_continue")
-    end)
-    :action_if(pick_or_revert_in_progress(status), "s", "skip", function()
-      cherry_pick.skip()
-      a.util.scheduler()
-      status.refresh(true, "cherry_pick_skip")
-    end)
-    :action_if(pick_or_revert_in_progress(status), "a", "abort", function()
-      cherry_pick.abort()
-      a.util.scheduler()
-      status.refresh(true, "cherry_pick_abort")
-    end)
+    :group_heading_if(not in_progress, "Apply here")
+    :action_if(not in_progress, "A", "Pick", actions.pick)
+    :action_if(not in_progress, "a", "Apply", actions.apply)
+    :action_if(not in_progress, "h", "Harvest")
+    :action_if(not in_progress, "m", "Squash")
+    :new_action_group_if(not in_progress, "Apply elsewhere")
+    :action_if(not in_progress, "d", "Donate")
+    :action_if(not in_progress, "n", "Spinout")
+    :action_if(not in_progress, "s", "Spinoff")
+    :group_heading_if(in_progress, "Cherry Pick")
+    :action_if(in_progress, "A", "continue", actions.continue)
+    :action_if(in_progress, "s", "skip", actions.skip)
+    :action_if(in_progress, "a", "abort", actions.abort)
     :env({ commits = env.commits })
     :build()
 
