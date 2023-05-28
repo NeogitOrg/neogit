@@ -1,18 +1,7 @@
 local M = {}
 local popup = require("neogit.lib.popup")
 local git = require("neogit.lib.git")
-
-local function remotes_for_config()
-  local remotes = {
-    { display = "", value = "" },
-  }
-
-  for _, name in ipairs(git.remote.list()) do
-    table.insert(remotes, { display = name, value = name })
-  end
-
-  return remotes
-end
+local actions = require("neogit.popups.branch_config.actions")
 
 function M.create(branch)
   branch = branch or git.branch.current()
@@ -31,9 +20,7 @@ function M.create(branch)
         { display = "pull.rebase:" .. (git.config.get("pull.rebase").value or ""), value = "" },
       },
     })
-    :config("p", "branch." .. branch .. ".pushRemote", {
-      options = remotes_for_config(),
-    })
+    :config("p", "branch." .. branch .. ".pushRemote", { options = actions.remotes_for_config() })
     :config_heading("")
     :config_heading("Configure repository defaults")
     :config("R", "pull.rebase", {
@@ -49,9 +36,7 @@ function M.create(branch)
         },
       },
     })
-    :config("P", "remote.pushDefault", {
-      options = remotes_for_config(),
-    })
+    :config("P", "remote.pushDefault", { options = actions.remotes_for_config() })
     :config("b", "neogit.baseBranch")
     :config_heading("")
     :config_heading("Configure branch creation")
