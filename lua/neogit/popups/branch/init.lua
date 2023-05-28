@@ -2,7 +2,6 @@ local M = {}
 
 local popup = require("neogit.lib.popup")
 local git = require("neogit.lib.git")
-
 local actions = require("neogit.popups.branch.actions")
 
 function M.create()
@@ -14,7 +13,7 @@ function M.create()
     :switch("r", "recurse-submodules", "Recurse submodules when checking out an existing branch")
     :config_if(current_branch, "d", "branch." .. (current_branch or "") .. ".description")
     :config_if(current_branch, "u", "branch." .. (current_branch or "") .. ".merge", {
-      callback = actions.merge_config(current_branch)
+      callback = actions.merge_config(current_branch),
     })
     :config_if(current_branch, "m", "branch." .. (current_branch or "") .. ".remote", { passive = true })
     :config_if(current_branch, "r", "branch." .. (current_branch or "") .. ".rebase", {
@@ -32,7 +31,7 @@ function M.create()
     :action("l", "local branch", actions.checkout_local_branch)
     :new_action_group()
     :action("c", "new branch", actions.checkout_create_branch)
-    :action("s", "new spin-off") -- https://github.com/magit/magit/blob/main/lisp/magit-branch.el#L429
+    :action("s", "new spin-off")
     :action("w", "new worktree")
     :new_action_group("Create")
     :action("n", "new branch", actions.create_branch)
