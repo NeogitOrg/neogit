@@ -859,6 +859,8 @@ local discard = function()
   vim.cmd("checktime")
 end
 
+local init_repo = git.init.init_repo
+
 local set_folds = function(to)
   Collection.new(M.locations):each(function(l)
     l.folded = to[1]
@@ -881,6 +883,7 @@ local cmd_func_map = function()
     ["Close"] = function()
       M.status_buffer:close()
     end,
+    ["InitRepo"] = a.void(init_repo),
     ["Depth1"] = a.void(function()
       set_folds { true, true, false }
     end),
@@ -1113,6 +1116,7 @@ local function update_highlight()
   end
 end
 
+M.init_repo = init_repo
 M.create = create
 M.toggle = toggle
 M.update_highlight = update_highlight

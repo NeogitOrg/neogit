@@ -1,5 +1,6 @@
 local popup = require("neogit.lib.popup")
 local status = require("neogit.status")
+local git = require("neogit.lib.git")
 
 local M = {}
 
@@ -19,6 +20,9 @@ function M.create(env)
     end)
     :action("L", "Log", function()
       require("neogit.popups.log").create()
+    end)
+    :action("I", "Initialize Repo", function()
+      git.init.init_repo()
     end)
     :action("r", "Rebase", function()
       require("neogit.popups.rebase").create()

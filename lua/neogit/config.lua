@@ -67,6 +67,7 @@ M.values = {
   mappings = {
     status = {
       ["q"] = "Close",
+      ["I"] = "InitRepo",
       ["1"] = "Depth1",
       ["2"] = "Depth2",
       ["3"] = "Depth3",
