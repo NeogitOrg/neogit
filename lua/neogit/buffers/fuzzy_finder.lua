@@ -1,6 +1,7 @@
 local Finder = require("neogit.lib.finder")
 local actions = require("telescope.actions")
 local action_state = require("telescope.actions.state")
+local a = require("plenary.async")
 
 local M = {}
 
@@ -71,18 +72,13 @@ end
 -- Opens finder in such a way that selected value can be returned to the main thread
 -- without the need to use a callback to process the selection.
 function M:open_sync(...)
-  local tx, rx = require("plenary.async.control").channel.oneshot()
-  local result
-
-  self.action = function(selection)
-    result = selection
-    tx()
+  local args = { ... }
+  local function f(cb)
+    self.action = cb
+    self:open(table.unpack(args))
   end
 
-  self:open(...)
-
-  rx()
-  return result
+  return a.wrap(f, 1)()
 end
 
 return M
