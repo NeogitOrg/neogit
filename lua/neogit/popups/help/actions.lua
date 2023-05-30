@@ -35,6 +35,7 @@ M.popups = function(env)
     ["FetchPopup"] = require("neogit.popups.fetch").create,
     ["ResetPopup"] = require("neogit.popups.reset").create,
     ["RemotePopup"] = require("neogit.popups.remote").create,
+    ["InitRepo"] = require("neogit.lib.git").init.init_repo,
     ["StashPopup"] = function()
       require("neogit.popups.stash").create(env.get_stash())
     end,
