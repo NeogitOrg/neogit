@@ -32,6 +32,8 @@ local configurations = {
     },
   },
 
+  init = config {},
+
   status = config {
     flags = {
       short = "-s",
@@ -675,7 +677,7 @@ local function new_builder(subcommand)
     env = {},
   }
 
-  local function to_process(verbose, external_errors, ignore_code)
+  local function to_process(verbose, suppress_error, ignore_code)
     -- Disable the pager so that the commands don't stop and wait for pagination
     local cmd = { "git", "--no-pager", "-c", "color.ui=always", "--no-optional-locks", subcommand }
     for _, o in ipairs(state.options) do
@@ -707,8 +709,8 @@ local function new_builder(subcommand)
       env = state.env,
       pty = state.in_pty,
       verbose = verbose,
-      external_errors = external_errors,
       ignore_code = ignore_code,
+      on_error = suppress_error,
     }
   end
 

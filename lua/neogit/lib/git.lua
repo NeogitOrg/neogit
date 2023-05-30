@@ -2,6 +2,7 @@ local cli = require("neogit.lib.git.cli")
 
 return {
   cli = cli,
+  init = require("neogit.lib.git.init"),
   status = require("neogit.lib.git.status"),
   stash = require("neogit.lib.git.stash"),
   fetch = require("neogit.lib.git.fetch"),

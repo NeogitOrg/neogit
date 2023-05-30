@@ -358,7 +358,7 @@ function Process:spawn(cb)
 
     -- TODO: Replace ignore_code with on_error callback
     if code ~= 0 and not hide_console and not self.ignore_code then
-      if not self.on_error or not self.on_error(res) then
+      if not self.on_error or (type(self.on_error) == "function" and not self.on_error(res)) then
         append_log(self, string.format("Process exited with code: %d", code))
 
         local output = {}

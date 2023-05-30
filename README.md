@@ -222,6 +222,7 @@ neogit.setup {
 
 ### List of status commands:
 * Close
+* InitRepo
 * Depth1 (Set foldlevel to 1)
 * Depth2 (Set foldlevel to 2)
 * Depth3 (Set foldlevel to 3)

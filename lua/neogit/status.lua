@@ -989,6 +989,7 @@ local cmd_func_map = function()
     ["Close"] = function()
       M.status_buffer:close()
     end,
+    ["InitRepo"] = a.void(git.init.init_repo),
     ["Depth1"] = a.void(function()
       set_folds { true, true, false }
     end),
