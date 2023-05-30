@@ -1,75 +1,87 @@
-local git = require("neogit.lib.git")
 local popup = require("neogit.lib.popup")
-local input = require("neogit.lib.input")
+local actions = require("neogit.popups.merge.actions")
 
 local M = {}
-local a = require("plenary.async")
-
-local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
-
-local function in_merge(status)
-  return status and status.repo.merge.head
-end
 
 function M.create()
-  local status = require("neogit.status")
-  local p = popup.builder():name("NeogitMergePopup")
-
-  if in_merge(status) then
-    p:group_heading("Actions")
-      :action("m", "Commit merge", function()
-        git.merge.continue()
-        a.util.scheduler()
-        status.refresh(true, "merge_continue")
-      end)
-      :action("a", "Abort merge", function()
-        if not input.get_confirmation("Abort merge?", { values = { "&Yes", "&No" }, default = 2 }) then
-          return
-        end
-
-        git.merge.abort()
-        a.util.scheduler()
-        status.refresh(true, "merge_abort")
-      end)
-  else
-    p
-      :switch("f", "ff-only", "Fast-forward only", { incompatible = { "no-ff" } })
-      :switch("n", "no-ff", "No fast-forward", { incompatible = { "ff-only" } })
-      :switch("b", "Xignore-space-change", "Ignore changes in amount of whitespace", { cli_prefix = "-" })
-      :switch("w", "Xignore-all-space", "Ignore whitespace when comparing lines", { cli_prefix = "-" })
-      :option("s", "strategy", "", "Strategy", {
+  local in_merge = actions.in_merge()
+  local p = popup
+    .builder()
+    :name("NeogitMergePopup")
+    :group_heading_if(in_merge, "Actions")
+    :action_if(in_merge, "m", "Commit merge", actions.commit)
+    :action_if(in_merge, "a", "Abort merge", actions.abort)
+    :switch_if(
+      not in_merge,
+      "f",
+      "ff-only",
+      "Fast-forward only",
+      { incompatible = { "no-ff" } }
+    )
+    :switch_if(
+      not in_merge,
+      "n",
+      "no-ff",
+      "No fast-forward",
+      { incompatible = { "ff-only" } }
+    )
+    :switch_if(
+      not in_merge,
+      "b",
+      "Xignore-space-change",
+      "Ignore changes in amount of whitespace",
+      { cli_prefix = "-" }
+    )
+    :switch_if(
+      not in_merge,
+      "w",
+      "Xignore-all-space",
+      "Ignore whitespace when comparing lines",
+      { cli_prefix = "-" }
+    )
+    :option_if(
+      not in_merge,
+      "s",
+      "strategy",
+      "",
+      "Strategy",
+      {
         choices = { "resolve", "recursive", "octopus", "ours", "subtree" },
-      })
-      :option("X", "strategy-option", "", "Strategy Option", {
+      }
+    )
+    :option_if(
+      not in_merge,
+      "X",
+      "strategy-option",
+      "",
+      "Strategy Option",
+      {
         choices = { "ours", "theirs", "patience" },
-      })
-      :option("A", "Xdiff-algorithm", "", "Diff algorithm", {
-        cli_prefix = "-",
+      }
+    )
+    :option_if(
+      not in_merge,
+      "A",
+      "Xdiff-algorithm",
+      "",
+      "Diff algorithm",
+      {
+        cli_prefix = " - ",
         choices = { "default", "minimal", "patience", "histogram" },
-      })
-      :option("S", "gpg-sign", "", "Sign using gpg")
-      :group_heading("Actions")
-      :action("m", "Merge", function(popup)
-        local branch = FuzzyFinderBuffer.new(git.branch.get_all_branches()):open_sync()
-        if not branch then
-          return
-        end
-
-        git.merge.merge(branch, popup:get_arguments())
-        a.util.scheduler()
-        status.refresh(true, "merge")
-      end)
-      :action("e", "Merge and edit message") -- https://github.com/magit/magit/blob/main/lisp/magit-merge.el#L105
-      :action("n", "Merge but don't commit") -- https://github.com/magit/magit/blob/main/lisp/magit-merge.el#L119
-      :action("A", "Absorb") -- https://github.com/magit/magit/blob/main/lisp/magit-merge.el#L158
-      :new_action_group()
-      :action("p", "Preview merge") -- https://github.com/magit/magit/blob/main/lisp/magit-merge.el#L225
-      :action("s", "Squash merge") -- -- https://github.com/magit/magit/blob/main/lisp/magit-merge.el#L217
-      :group_heading("")
-      :action("i", "Dissolve") -- https://github.com/magit/magit/blob/main/lisp/magit-merge.el#L131
-  end
-
-  p = p:build()
+      }
+    )
+    :option_if(not in_merge, "S", "gpg-sign", "", "Sign using gpg")
+    :group_heading_if(not in_merge, "Actions")
+    :action_if(not in_merge, "m", "Merge", actions.merge)
+    :action_if(not in_merge, "e", "Merge and edit message") -- https://github.com/magit/magit/blob/main/lisp/magit-merge.el#L105
+    :action_if(not in_merge, "n", "Merge but don't commit") -- https://github.com/magit/magit/blob/main/lisp/magit-merge.el#L119
+    :action_if(not in_merge, "A", "Absorb") -- https://github.com/magit/magit/blob/main/lisp/magit-merge.el#L158
+    :new_action_group_if(not in_merge, "")
+    :action_if(not in_merge, "p", "Preview merge") -- https://github.com/magit/magit/blob/main/lisp/magit-merge.el#L225
+    :action_if(not in_merge, "s", "Squash merge") -- -- https://github.com/magit/magit/blob/main/lisp/magit-merge.el#L217
+    :group_heading_if(not in_merge, "")
+    :action_if(not in_merge, "i", "Dissolve") -- https://github.com/magit/magit/blob/main/lisp/magit-merge.el#L131
+    :build()
   p:show()
 
   return p
