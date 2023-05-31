@@ -1,7 +1,5 @@
-local cli = require("neogit.lib.git.cli")
-
 return {
-  cli = cli,
+  cli = require("neogit.lib.git.cli"),
   init = require("neogit.lib.git.init"),
   status = require("neogit.lib.git.status"),
   stash = require("neogit.lib.git.stash"),
@@ -16,4 +14,5 @@ return {
   reset = require("neogit.lib.git.reset"),
   remote = require("neogit.lib.git.remote"),
   config = require("neogit.lib.git.config"),
+  pull = require("neogit.lib.git.pull"),
 }
