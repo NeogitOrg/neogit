@@ -263,7 +263,7 @@ local function update_recent(state)
     return
   end
 
-  local result = M.list({ "--max-count=", tostring(count) }, false)
+  local result = M.list({ "--max-count=" .. tostring(count) }, false)
 
   state.recent.items = util.filter_map(result, function(v)
     if v.oid then
