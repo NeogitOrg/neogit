@@ -7,15 +7,19 @@ local M = {}
 
 local function parse_branches(branches, include_current)
   local other_branches = {}
-  local pattern = "^  (.+)"
-  if include_current then
-    pattern = "^[* ] (.+)"
-  end
+
+  local remotes = "^remotes/(.*)"
+  local head = "^(.*)/HEAD"
+  local ref = " %-> "
+  local pattern = include_current and "^[* ] (.+)" or "^  (.+)"
 
   for _, b in ipairs(branches) do
     local branch_name = b:match(pattern)
     if branch_name then
-      table.insert(other_branches, branch_name)
+      local name = branch_name:match(remotes) or branch_name
+      if name and not name:match(ref) and not name:match(head) then
+        table.insert(other_branches, name)
+      end
     end
   end
 

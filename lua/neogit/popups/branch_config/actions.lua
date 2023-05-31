@@ -20,14 +20,7 @@ end
 
 function M.merge_config(branch)
   local local_branches = git.branch.get_local_branches()
-  local remote_branches = util.filter_map(git.branch.get_remote_branches(), function(name)
-    if name:match([[ ]]) then -- removes stuff like 'origin/HEAD -> origin/master'
-      return nil
-    else
-      return name
-    end
-  end)
-
+  local remote_branches = git.branch.get_remote_branches()
   local branches = util.merge(local_branches, remote_branches)
 
   return a.void(function(popup, c)
