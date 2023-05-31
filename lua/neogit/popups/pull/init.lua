@@ -1,108 +1,54 @@
 local popup = require("neogit.lib.popup")
-local status = require("neogit.status")
-local input = require("neogit.lib.input")
-local notif = require("neogit.lib.notification")
+local actions = require("neogit.popups.pull.actions")
 local git = require("neogit.lib.git")
-local pull_lib = require("neogit.lib.git.pull")
-local a = require("plenary.async")
 
 local M = {}
 
-local function pull_from(popup, name, remote, branch)
-  notif.create("Pulling from " .. name)
+local function pushRemote_description()
+  local current = git.branch.current()
+  local pushRemote = actions.pushRemote()
 
-  local res = pull_lib.pull_interactive(remote, branch, popup:get_arguments())
-
-  if res and res.code == 0 then
-    a.util.scheduler()
-    notif.create("Pulled from " .. name)
-    vim.cmd("do <nomodeline> User NeogitPullComplete")
+  if current and pushRemote then
+    return pushRemote .. "/" .. current
+  elseif current then
+    return "pushRemote, setting that"
   end
-  status.refresh(true, "pull_from")
+end
+
+local function upstream_description()
+  local upstream = git.branch.get_upstream_sync()
+
+  if upstream then
+    return upstream.remote .. "/" .. upstream.branch
+  else
+    return "@{upstream}, creating it"
+  end
 end
 
 function M.create()
+  local current = git.branch.current()
+
   local p = popup
     .builder()
     :name("NeogitPullPopup")
-    :switch("f", "ff-only", "Fast-forward only")
-    :switch("r", "rebase", "Rebase local commits")
-    :switch("a", "autostash", "Autostash")
-    :group_heading("Pull from")
-    :action_if(git.branch.current(), "p", "pushRemote", function(popup)
-      pull_from(popup, "pushremote", "origin", status.repo.head.branch)
-    end)
-    :action_if(git.branch.current(), "u", "upstream", function(popup)
-      pull_from(popup, "upstream", "upstream", status.repo.head.branch)
-    end)
-    :action("e", "elsewhere", function(popup)
-      local branches = git.branch.get_remote_branches()
-
-      -- Maintain a set with all remotes we got branches for.
-      local remote_options_set = {}
-      for i, option in ipairs(branches) do
-        if i ~= 1 then
-          local match = option:match("^.-/")
-          if match ~= nil then
-            match = match:sub(1, -2)
-            if not remote_options_set[match] then
-              remote_options_set[match] = true
-            end
-          end
-        end
-      end
-
-      local remote_options = {}
-      local count = 0
-      for k, _ in pairs(remote_options_set) do
-        table.insert(remote_options, k)
-        count = count + 1
-      end
-
-      local remote = nil
-      if count == 1 then
-        remote = remote_options[1]
-        notif.create("Using remote " .. remote .. " because it is the only remote available")
-      else
-        remote = input.get_user_input_with_completion("remote: ", remote_options)
-      end
-
-      if not remote then
-        notif.create("Aborting pull because there is no remote")
-        return
-      end
-
-      -- Remove branches not under given remote.
-      local branch_options = {}
-      for i, option in ipairs(branches) do
-        if i ~= 1 then
-          local prefix = remote .. "/"
-          if option:find("^" .. prefix) ~= nil then
-            table.insert(branch_options, option)
-          end
-        end
-      end
-
-      local branch =
-        git.branch.prompt_for_branch(branch_options, { truncate_remote_name_from_options = true })
-      if not branch then
-        notif.create("Aborting pull because there is no branch")
-        return
-      end
-
-      pull_from(popup, remote, remote, branch)
-    end)
-    :new_action_group("Configure")
-    :action("C", "Set variables...", function()
-      require("neogit.popups.branch_config").create()
-    end)
-    :config_if(git.branch.current(), "r", "branch." .. (git.branch.current() or "") .. ".rebase", {
+    :config_if(current, "r", "branch." .. (current or "") .. ".rebase", {
       options = {
         { display = "true", value = "true" },
         { display = "false", value = "false" },
         { display = "pull.rebase:" .. (git.config.get("pull.rebase").value or ""), value = "" },
       },
     })
+    :switch("f", "ff-only", "Fast-forward only")
+    :switch("r", "rebase", "Rebase local commits")
+    :switch("a", "autostash", "Autostash")
+    :group_heading_if(current, "Pull into " .. current .. " from")
+    :group_heading_if(not current, "Pull from")
+    :action_if(current, "p", pushRemote_description(), actions.from_pushremote)
+    :action_if(current, "u", upstream_description(), actions.from_upstream)
+    :action("e", "elsewhere", actions.from_elsewhere)
+    :new_action_group("Configure")
+    :action("C", "Set variables...", actions.configure)
+    :env({ highlight = current })
     :build()
 
   p:show()
