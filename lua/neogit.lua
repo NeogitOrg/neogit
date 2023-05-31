@@ -25,7 +25,7 @@ local neogit = {
   open = function(opts)
     opts = opts or {}
 
-    if not cli.git_is_repository_sync() then
+    if not cli.git_is_repository_sync(opts.cwd) then
       notification.create("The current working directory is not a git repository", vim.log.levels.ERROR)
       return
     end

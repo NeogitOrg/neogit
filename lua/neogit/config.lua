@@ -6,6 +6,7 @@ M.values = {
   disable_signs = false,
   disable_commit_confirmation = false,
   disable_builtin_notifications = false,
+  use_telescope = false,
   disable_insert_on_commit = true,
   use_per_project_settings = true,
   remember_settings = true,
@@ -65,6 +66,18 @@ M.values = {
   },
   ignored_settings = {},
   mappings = {
+    finder = {
+      ["<cr>"] = "Select",
+      ["<c-c>"] = "Close",
+      ["<esc>"] = "Close",
+      ["<c-n>"] = "Next",
+      ["<c-p>"] = "Previous",
+      ["<down>"] = "Next",
+      ["<up>"] = "Previous",
+      ["<tab>"] = "MultiselectToggleNext",
+      ["<s-tab>"] = "MultiselectTogglePrevious",
+      ["<c-j>"] = "NOP",
+    },
     status = {
       ["q"] = "Close",
       ["1"] = "Depth1",

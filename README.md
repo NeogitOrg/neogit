@@ -125,6 +125,8 @@ neogit.setup {
   -- Sorting keys: https://git-scm.com/docs/git-for-each-ref#_options
   sort_branches = "-committerdate",
   disable_builtin_notifications = false,
+  -- If enabled, use telescope for menu selection rather than vim.ui.select
+  use_telescope = false,
   use_magit_keybindings = false,
   -- Change the default way of opening neogit
   kind = "tab",
@@ -205,14 +207,19 @@ neogit.setup {
       ["B"] = "BranchPopup",
       -- Removes the default mapping of "s"
       ["s"] = "",
+      ...
+    },
+    -- Modify fuzzy-finder buffer mappings
+    finder = {
+      -- Binds <cr> to trigger select action
+      ["<cr>"] = "select",
+      ...
     }
   }
 }
 ```
 
-Right now, only the status buffer supports custom mappings.
-
-List of status commands:
+### List of status commands:
 
 - Close
 - Depth1 (Set foldlevel to 1)
@@ -237,6 +244,16 @@ List of status commands:
 - LogPopup
 - StashPopup
 - BranchPopup
+
+### List of fuzzy-finder commands:
+
+- Select
+- Close
+- Next
+- Previous
+- NOP
+- MultiselectToggleNext
+- MultiselectTogglePrevious
 
 ## Notification Highlighting
 

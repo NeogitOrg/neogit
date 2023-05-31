@@ -9,7 +9,7 @@ local function create(message, level, delay)
   end
 
   if config.values.disable_builtin_notifications then
-    vim.notify(message, level, { title = "Neogit", icon = "" })
+    vim.notify(message, level, { title = "Neogit", icon = "󰊢" })
     return nil
   end
 
