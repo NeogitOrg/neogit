@@ -1,6 +1,6 @@
-local popup = require("neogit.lib.popup")
 local actions = require("neogit.popups.pull.actions")
 local git = require("neogit.lib.git")
+local popup = require("neogit.lib.popup")
 
 local M = {}
 

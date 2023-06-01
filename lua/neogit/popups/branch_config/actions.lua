@@ -1,10 +1,10 @@
-local M = {}
-
-local git = require("neogit.lib.git")
 local a = require("plenary.async")
+local git = require("neogit.lib.git")
 local util = require("neogit.lib.util")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
+
+local M = {}
 
 function M.remotes_for_config()
   local remotes = {
@@ -24,7 +24,7 @@ function M.merge_config(branch)
   local branches = util.merge(local_branches, remote_branches)
 
   return a.void(function(popup, c)
-    local target = FuzzyFinderBuffer.new(branches):open_sync { prompt_prefix = "Upstream: " }
+    local target = FuzzyFinderBuffer.new(branches):open_sync { prompt_prefix = "Upstream > " }
     if not target then
       return
     end

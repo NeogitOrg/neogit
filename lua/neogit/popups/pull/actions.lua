@@ -1,12 +1,12 @@
-local M = {}
-
-local status = require("neogit.status")
-local input = require("neogit.lib.input")
-local notif = require("neogit.lib.notification")
-local git = require("neogit.lib.git")
 local a = require("plenary.async")
+local git = require("neogit.lib.git")
+local logger = require("neogit.logger")
+local notif = require("neogit.lib.notification")
+local status = require("neogit.status")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
+
+local M = {}
 
 local function pull_from(args, remote, branch, opts)
   opts = opts or {}
