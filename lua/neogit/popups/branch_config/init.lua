@@ -5,7 +5,7 @@ local git = require("neogit.lib.git")
 local actions = require("neogit.popups.branch_config.actions")
 
 function M.create(branch)
-  branch = branch or git.branch.current()
+  branch = branch or git.repo.head.branch
 
   local p = popup
     .builder()

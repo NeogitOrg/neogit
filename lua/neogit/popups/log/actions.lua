@@ -15,13 +15,14 @@ function M.log_head(popup)
   LogViewBuffer.new(
     git.log.list(util.merge(popup:get_arguments(), { "HEAD" })),
     popup:get_internal_arguments()
-  ):open()
+  )
+    :open()
 end
 
 function M.log_local_branches(popup)
   LogViewBuffer.new(
     git.log.list(util.merge(popup:get_arguments(), {
-      git.branch.current() and "" or "HEAD",
+      git.repo.head.branch and "" or "HEAD",
       "--branches",
     })),
     popup:get_internal_arguments()
@@ -31,7 +32,7 @@ end
 function M.log_all_branches(popup)
   LogViewBuffer.new(
     git.log.list(util.merge(popup:get_arguments(), {
-      git.branch.current() and "" or "HEAD",
+      git.repo.head.branch and "" or "HEAD",
       "--branches",
       "--remotes",
     })),
@@ -42,7 +43,7 @@ end
 function M.log_all_references(popup)
   LogViewBuffer.new(
     git.log.list(util.merge(popup:get_arguments(), {
-      git.branch.current() and "" or "HEAD",
+      git.repo.head.branch and "" or "HEAD",
       "--all",
     })),
     popup:get_internal_arguments()
@@ -50,7 +51,7 @@ function M.log_all_references(popup)
 end
 
 function M.reflog_current(popup)
-  ReflogViewBuffer.new(git.reflog.list(git.branch.current(), popup:get_arguments())):open()
+  ReflogViewBuffer.new(git.reflog.list(git.repo.head.branch, popup:get_arguments())):open()
 end
 
 function M.reflog_head(popup)

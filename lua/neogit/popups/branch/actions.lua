@@ -38,7 +38,8 @@ function M.checkout_local_branch()
     end
   end)
 
-  local target = FuzzyFinderBuffer.new(util.merge(local_branches, remote_branches)):open_sync { prompt_prefix = " branch > " }
+  local target = FuzzyFinderBuffer.new(util.merge(local_branches, remote_branches))
+    :open_sync { prompt_prefix = " branch > " }
   if target:match([[/]]) then
     git.cli.checkout.track(target).call_sync()
   elseif target then
@@ -50,7 +51,7 @@ end
 
 function M.checkout_create_branch()
   local branches = git.branch.get_all_branches(false)
-  local current_branch = git.branch.current()
+  local current_branch = git.repo.head.branch
   if current_branch then
     table.insert(branches, 1, current_branch)
   end
@@ -81,7 +82,7 @@ function M.configure_branch()
 end
 
 function M.rename_branch()
-  local current_branch = git.branch.current()
+  local current_branch = git.repo.head.branch
   local branches = git.branch.get_local_branches()
   if current_branch then
     table.insert(branches, 1, current_branch)
@@ -112,7 +113,7 @@ function M.reset_branch()
 
   local branches = git.branch.get_all_branches(false)
   local to = FuzzyFinderBuffer.new(branches):open_sync {
-    prompt_prefix = " reset " .. git.branch.current() .. " to > ",
+    prompt_prefix = " reset " .. git.repo.head.branch .. " to > ",
   }
 
   if not to then
@@ -123,10 +124,10 @@ function M.reset_branch()
   git.cli.reset.hard.args(to).call_sync()
 
   -- Update reference
-  local from = git.cli["rev-parse"].symbolic_full_name.args(git.branch.current()).call_sync():trim().stdout[1]
+  local from = git.cli["rev-parse"].symbolic_full_name.args(git.repo.head.branch).call_sync():trim().stdout[1]
   git.cli["update-ref"].message(string.format("reset: moving to %s", to)).args(from, to).call_sync()
 
-  notif.create(string.format("Reset '%s'", git.branch.current()), vim.log.levels.INFO)
+  notif.create(string.format("Reset '%s'", git.repo.head.branch), vim.log.levels.INFO)
   status.refresh(true, "reset_branch")
 end
 
