@@ -7,7 +7,6 @@ local notif = require("neogit.lib.notification")
 local config = require("neogit.config")
 local a = require("plenary.async")
 local logger = require("neogit.logger")
-local repository = require("neogit.lib.git.repository")
 local Collection = require("neogit.lib.collection")
 local F = require("neogit.lib.functional")
 local LineBuffer = require("neogit.lib.line_buffer")
@@ -21,11 +20,13 @@ local fn = vim.fn
 local M = {}
 
 M.disabled = false
+
 M.current_operation = nil
 M.prev_autochdir = nil
-M.repo = repository.create()
+M.repo = git.repo
 M.status_buffer = nil
 M.commit_view = nil
+
 ---@class Section
 ---@field first number
 ---@field last number
@@ -389,7 +390,7 @@ local refresh_lock = a.control.Semaphore.new(1)
 local lock_holder = nil
 
 local function refresh(which, reason)
-  which = which or true
+  -- which = which or true
 
   logger.info("[STATUS BUFFER]: Starting refresh")
   if refresh_lock.permits == 0 then
@@ -416,74 +417,7 @@ local function refresh(which, reason)
   local s, f, h = save_cursor_location()
 
   if cli.git_root() ~= "" then
-    if which == true or which.status then
-      M.repo:update_status()
-      a.util.scheduler()
-      refresh_status_buffer()
-    end
-
-    local refreshes = {}
-    if which == true or which.branch_information then
-      table.insert(refreshes, function()
-        logger.debug("[STATUS BUFFER]: Refreshing branch information")
-        M.repo:update_branch_information()
-      end)
-    end
-    if which == true or which.rebase then
-      table.insert(refreshes, function()
-        logger.debug("[STATUS BUFFER]: Refreshing rebase information")
-        M.repo:update_rebase_status()
-      end)
-    end
-    if which == true or which.cherry_pick then
-      table.insert(refreshes, function()
-        logger.debug("[STATUS BUFFER]: Refreshing cherry-pick information")
-        M.repo:update_cherry_pick_status()
-      end)
-    end
-    if which == true or which.merge then
-      table.insert(refreshes, function()
-        logger.debug("[STATUS BUFFER]: Refreshing merge information")
-        M.repo:update_merge_status()
-      end)
-    end
-    if which == true or which.stashes then
-      table.insert(refreshes, function()
-        logger.debug("[STATUS BUFFER]: Refreshing stash")
-        M.repo:update_stashes()
-      end)
-    end
-    if which == true or which.unpulled then
-      table.insert(refreshes, function()
-        logger.debug("[STATUS BUFFER]: Refreshing unpulled commits")
-        M.repo:update_unpulled()
-      end)
-    end
-    if which == true or which.unmerged then
-      table.insert(refreshes, function()
-        logger.debug("[STATUS BUFFER]: Refreshing unpushed commits")
-        M.repo:update_unmerged()
-      end)
-    end
-    if which == true or which.recent then
-      table.insert(refreshes, function()
-        logger.debug("[STATUS BUFFER]: Refreshing recent commits")
-        M.repo:update_recent()
-      end)
-    end
-    if which == true or which.diffs then
-      local filter = (type(which) == "table" and type(which.diffs) == "table") and which.diffs or nil
-
-      table.insert(refreshes, function()
-        logger.debug("[STATUS BUFFER]: Refreshing diffs")
-        M.repo:load_diffs(filter)
-      end)
-    end
-    logger.debug(string.format("[STATUS BUFFER]: Running %d refresh(es)", #refreshes))
-    a.util.join(refreshes)
-    logger.debug("[STATUS BUFFER]: Refreshes completed")
-    a.util.scheduler()
-
+    M.repo:refresh(which)
     refresh_status_buffer()
     vim.cmd("do <nomodeline> User NeogitStatusRefreshed")
   end
@@ -581,7 +515,7 @@ local function toggle()
 end
 
 local reset = function()
-  M.repo = repository.create()
+  M.repo = git.repo:reset()
   M.locations = {}
   if not config.values.auto_refresh then
     return
@@ -844,18 +778,18 @@ local unstage = function()
   M.current_operation = nil
 end
 
+local function update_index()
+  require("neogit.process")
+    .new({ cmd = { "git", "update-index", "-q", "--refresh" }, verbose = true })
+    :spawn_async()
+end
+
 local function discard_message(item, mode)
   if mode.mode == "V" then
     return "Discard selection?"
   else
     return "Discard '" .. item.name .. "' ?"
   end
-end
-
-local function update_index()
-  require("neogit.process")
-    .new({ cmd = { "git", "update-index", "-q", "--refresh" }, verbose = true })
-    :spawn_async()
 end
 
 ---Discards selected files
