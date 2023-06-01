@@ -45,7 +45,9 @@ local function update_status(state)
       elseif header == "branch.oid" then
         head.oid = value
       elseif header == "branch.upstream" then
+        local remote, _ = vim.split(value, "/")
         upstream.branch = value
+        upstream.remote = remote
       end
     else
       local kind, rest = l:match("(.) (.+)")

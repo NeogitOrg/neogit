@@ -19,7 +19,8 @@ M.create = function(_path)
       commit_message = "",
     },
     upstream = {
-      breanch = nil,
+      remote = nil,
+      branch = nil,
       commit_message = "",
     },
     untracked = {
