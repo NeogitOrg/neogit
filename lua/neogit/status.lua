@@ -1204,7 +1204,7 @@ local function set_decoration_provider(buffer)
 end
 
 --- Creates a new status buffer
-local function create(kind, cwd)
+function M.create(kind, cwd)
   kind = kind or config.values.kind
 
   if M.status_buffer then
@@ -1259,7 +1259,6 @@ local function create(kind, cwd)
   }
 end
 
-M.create = create
 M.toggle = toggle
 M.generate_patch_from_selection = generate_patch_from_selection
 M.reset = reset
