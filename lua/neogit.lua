@@ -16,7 +16,7 @@ local neogit = {
   config = config,
   status = status,
   get_repo = function()
-    return status.repo
+    return require("neogit.lib.git").repo
   end,
   cli = lib.git.cli,
   get_log_file_path = function()
