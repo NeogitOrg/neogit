@@ -48,14 +48,14 @@ function M.from_pushremote(popup)
       end
     end
 
-    git.config.set("branch." .. status.repo.head.branch .. ".pushRemote", pushRemote)
+    git.config.set("branch." .. git.repo.head.branch .. ".pushRemote", pushRemote)
   end
 
-  pull_from(popup:get_arguments(), pushRemote, status.repo.head.branch)
+  pull_from(popup:get_arguments(), pushRemote, git.repo.head.branch)
 end
 
 function M.from_upstream(popup)
-  local upstream = status.repo.upstream.branch
+  local upstream = git.repo.upstream.branch
   local set_upstream
 
   if not upstream then

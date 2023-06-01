@@ -1,12 +1,11 @@
 local actions = require("neogit.popups.pull.actions")
 local git = require("neogit.lib.git")
 local popup = require("neogit.lib.popup")
-local status = require("neogit.status")
 
 local M = {}
 
 local function pushRemote_description()
-  local current = status.repo.head.branch
+  local current = git.repo.head.branch
   local pushRemote = git.config.get("branch." .. current .. ".pushRemote").value
 
   if current and pushRemote then
@@ -17,7 +16,7 @@ local function pushRemote_description()
 end
 
 local function upstream_description()
-  local upstream = status.repo.upstream.branch
+  local upstream = git.repo.upstream.branch
 
   if upstream then
     return upstream
@@ -27,7 +26,7 @@ local function upstream_description()
 end
 
 function M.create()
-  local current = status.repo.head.branch
+  local current = git.repo.head.branch
 
   local p = popup
     .builder()

@@ -48,21 +48,21 @@ function M.to_pushremote(popup)
       end
     end
 
-    git.config.set("branch." .. status.repo.head.branch .. ".pushRemote", pushRemote)
+    git.config.set("branch." .. git.repo.head.branch .. ".pushRemote", pushRemote)
   end
 
-  push_to(popup:get_arguments(), pushRemote, status.repo.head.branch)
+  push_to(popup:get_arguments(), pushRemote, git.repo.head.branch)
 end
 
 function M.to_upstream(popup)
-  local upstream = status.repo.upstream.branch
+  local upstream = git.repo.upstream.branch
   local remote, branch, set_upstream
 
   if upstream then
     remote, branch = unpack(vim.split(upstream, "/"))
   else
     set_upstream = true
-    branch = status.repo.head.branch
+    branch = git.repo.head.branch
 
     local result = git.config.get("push.autoSetupRemote").value
     if result and result == "true" then

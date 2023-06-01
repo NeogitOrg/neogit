@@ -12,8 +12,8 @@ local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 local M = {}
 local a = require("plenary.async")
 
-local function in_rebase(status)
-  return status and status.repo.rebase.head
+local function in_rebase()
+  return git.repo.rebase.head
 end
 
 -- TODO: When rebasing, pressing <cr> on a commit should open it in commit view
@@ -22,7 +22,7 @@ function M.create()
   local p = popup.builder():name("NeogitRebasePopup")
   local base_branch = git.config.get("neogit.baseBranch").value or "master"
 
-  if not in_rebase(status) then
+  if not in_rebase() then
     p:switch("k", "keep-empty", "Keep empty commits")
       :switch("u", "update-refs", "Update branches")
       :switch("d", "committer-date-is-author-date", "Use author date as committer date")

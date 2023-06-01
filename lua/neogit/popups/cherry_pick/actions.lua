@@ -10,17 +10,16 @@ local CommitSelectViewBuffer = require("neogit.buffers.commit_select_view")
 -- And REVERT_HEAD does not exist when a conflict happens while reverting a series of commits with --no-commit.
 --
 function M.pick_or_revert_in_progress()
-  local status = require("neogit.status")
   local pick_or_revert_todo = false
 
-  for _, item in ipairs(status.repo.cherry_pick.items) do
+  for _, item in ipairs(git.repo.cherry_pick.items) do
     if item.name:match("^pick") or item.name:match("^revert") then
       pick_or_revert_todo = true
       break
     end
   end
 
-  return status and (status.repo.cherry_pick.head or pick_or_revert_todo)
+  return git.repo.cherry_pick.head or pick_or_revert_todo
 end
 
 function M.pick(popup)

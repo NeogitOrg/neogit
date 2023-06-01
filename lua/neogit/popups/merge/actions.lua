@@ -8,8 +8,7 @@ local a = require("plenary.async")
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
 function M.in_merge()
-  local status = require("neogit.status")
-  return status and status.repo.merge.head
+  return git.repo.merge.head
 end
 
 function M.commit()
