@@ -1,27 +1,30 @@
 local popup = require("neogit.lib.popup")
 local status = require("neogit.status")
 local input = require("neogit.lib.input")
-local notif = require("neogit.lib.notification")
-local git = require("neogit.lib.git")
-local pull_lib = require("neogit.lib.git.pull")
 local a = require("plenary.async")
 
 local M = {}
 
 local function pull_from(popup, name, remote, branch)
-  notif.create("Pulling from " .. name)
+  local pull_lib = require("neogit.lib.git.pull")
+  local notif = require("neogit.lib.notification")
+  notif.create(string.format("Pulling from %q", name))
 
   local res = pull_lib.pull_interactive(remote, branch, popup:get_arguments())
 
   if res and res.code == 0 then
     a.util.scheduler()
-    notif.create("Pulled from " .. name)
-    vim.cmd("do <nomodeline> User NeogitPullComplete")
+    notif.create(string.format("Pulled from %q", name))
+    vim.api.nvim_exec_autocmds("User", { pattern = "NeogitPullComplete", modeline = false })
   end
+
   status.refresh(true, "pull_from")
 end
 
 function M.create()
+  local notif = require("neogit.lib.notification")
+  local git = require("neogit.lib.git")
+
   local p = popup
     .builder()
     :name("NeogitPullPopup")
@@ -30,7 +33,17 @@ function M.create()
       pull_from(popup, "pushremote", "origin", status.repo.head.branch)
     end)
     :action("u", "Pull from upstream", function(popup)
-      pull_from(popup, "upstream", "upstream", status.repo.head.branch)
+      local upstream = git.branch.get_upstream()
+
+      if upstream == nil then
+        require("neogit.lib.notification").create(
+          string.format("No upstream set for branch %q", status.repo.head.branch),
+          vim.log.levels.ERROR
+        )
+        return
+      end
+      local name = upstream.remote .. "/" .. upstream.branch
+      pull_from(popup, name, upstream.remote, upstream.branch)
     end)
     :action("e", "Pull from elsewhere", function(popup)
       local branches = git.branch.get_remote_branches()
