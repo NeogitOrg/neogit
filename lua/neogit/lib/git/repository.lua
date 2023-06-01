@@ -161,6 +161,7 @@ function M.refresh(self, lib)
 end
 
 if not M.initialized then
+  logger.debug("[REPO]: Initializing Repository")
   M.initialized = true
 
   setmetatable(M, meta)
