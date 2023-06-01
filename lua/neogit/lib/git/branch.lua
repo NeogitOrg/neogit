@@ -44,7 +44,10 @@ function M.get_all_branches(include_current)
   return parse_branches(branches, include_current)
 end
 
-function parse_upstream(full_name, current)
+function M.get_upstream()
+  local full_name = cli["rev-parse"].abbrev_ref().show_popup(false).args("@{upstream}").call():trim().stdout
+  local current = cli.branch.current.show_popup(false).call():trim().stdout
+
   if #full_name > 0 and #current > 0 then
     local remote = config_lib.get("branch." .. current[1] .. ".remote").value
     if remote then
@@ -54,26 +57,6 @@ function parse_upstream(full_name, current)
       }
     end
   end
-end
-
-function M.get_upstream_sync()
-  local full_name =
-    cli["rev-parse"].abbrev_ref().show_popup(false).args("@{upstream}").call_sync_ignoring_exit_code():trim().stdout
-
-  local current =
-    cli.branch.current.show_popup(false).call():trim().call_sync_ignoring_exit_code():trim().stdout
-
-  return parse_upstream(full_name, current)
-end
-
-function M.get_upstream()
-  local full_name =
-    cli["rev-parse"].abbrev_ref().show_popup(false).args("@{upstream}").call():trim().stdout
-
-  local current =
-    cli.branch.current.show_popup(false).call():trim().stdout
-
-  return parse_upstream(full_name, current)
 end
 
 function M.prompt_for_branch(options, configuration)
@@ -184,6 +167,14 @@ function M.current()
   local branch_name = cli.branch.current.call_sync():trim().stdout
   if #branch_name > 0 then
     return branch_name[1]
+  end
+  return nil
+end
+
+function M.pushRemote()
+  local current = M.current()
+  if current then
+    return config_lib.get("branch." .. current .. ".pushRemote").value
   end
   return nil
 end
