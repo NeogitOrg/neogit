@@ -1,31 +1,34 @@
-local M = {}
 local popup = require("neogit.lib.popup")
-local input = require("neogit.lib.input")
-local push_lib = require("neogit.lib.git.push")
 local status = require("neogit.status")
-local notif = require("neogit.lib.notification")
-local logger = require("neogit.logger")
+local actions = require("neogit.popups.push.actions")
 local git = require("neogit.lib.git")
-local a = require("plenary.async")
 
-local function push_to(popup, name, remote, branch)
-  logger.debug("Pushing to " .. name)
-  notif.create("Pushing to " .. name)
+local M = {}
 
-  local res = push_lib.push_interactive(remote, branch, popup:get_arguments())
+local function pushRemote_description()
+  local current = status.repo.head.branch
+  local pushRemote = git.config.get("branch." .. current .. ".pushRemote").value
 
-  if res.code == 0 then
-    a.util.scheduler()
-    logger.error("Pushed to " .. name)
-    notif.create("Pushed to " .. name)
-    status.refresh(true, "push_to")
-    vim.cmd("do <nomodeline> User NeogitPushComplete")
+  if current and pushRemote then
+    return pushRemote .. "/" .. current
+  elseif current then
+    return "pushRemote, setting that"
+  end
+end
+
+local function upstream_description()
+  local upstream = status.repo.upstream.branch
+
+  if upstream then
+    return upstream
   else
-    logger.error("Failed to push to " .. name)
+    return "@{upstream}, creating it"
   end
 end
 
 function M.create()
+  local current = status.repo.head.branch
+
   local p = popup
     .builder()
     :name("NeogitPushPopup")
@@ -34,39 +37,18 @@ function M.create()
     :switch("u", "set-upstream", "Set the upstream before pushing")
     :switch("h", "no-verify", "Disable hooks")
     :switch("d", "dry-run", "Dry run")
-    :group_heading("Push " .. ((git.branch.current() and (git.branch.current() .. " ")) or "") .. "to")
-    :action("p", "pushRemote", function(popup)
-      push_to(popup, "pushremote", "origin", status.repo.head.branch)
-    end)
-    :action("u", "upstream", function(popup)
-      local upstream = git.branch.get_upstream()
-      local result = git.config.get("push.autoSetupRemote").value
-      a.util.scheduler()
-
-      if not upstream then
-        if result and result == "true" then
-          upstream = { branch = status.repo.head.branch, remote = "origin" }
-        else
-          logger.error("No upstream set")
-          return
-        end
-      end
-
-      push_to(popup, upstream.remote .. " " .. upstream.branch, upstream.remote, upstream.branch)
-    end)
-    :action("e", "elsewhere", function(popup)
-      local remote = input.get_user_input("remote: ")
-      push_to(popup, remote, remote, status.repo.head.branch)
-    end)
-    :action("o", "another branch", function(popup)
-      local remote = input.get_user_input("remote: ")
-      local branch = git.branch.prompt_for_branch(git.branch.get_all_branches())
-      push_to(popup, remote, remote, branch)
-    end)
+    :group_heading("Push " .. ((current and (current .. " ")) or "") .. "to")
+    :action("p", pushRemote_description(), actions.to_pushremote)
+    :action("u", upstream_description(), actions.to_upstream)
+    :action("e", "elsewhere", actions.to_elsewhere)
+    :new_action_group("Push")
+    :action("o", "another branch", actions.push_other)
+    :action("r", "explicit refspecs")
+    :action("m", "matching branches")
+    :action("T", "a tag")
+    :action("t", "all tags")
     :new_action_group("Configure")
-    :action("C", "Set variables...", function()
-      require("neogit.popups.branch_config").create()
-    end)
+    :action("C", "Set variables...", actions.configure)
     :build()
 
   p:show()
