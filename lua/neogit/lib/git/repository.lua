@@ -45,11 +45,11 @@ M.create = function(_path)
     },
     rebase = {
       items = {},
-      head = "",
+      head = nil,
     },
     cherry_pick = {
       items = {},
-      head = "",
+      head = nil,
     },
     merge = {
       items = {},
