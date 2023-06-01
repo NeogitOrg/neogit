@@ -15,4 +15,5 @@ return {
   remote = require("neogit.lib.git.remote"),
   config = require("neogit.lib.git.config"),
   pull = require("neogit.lib.git.pull"),
+  push = require("neogit.lib.git.push"),
 }
