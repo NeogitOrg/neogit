@@ -16,7 +16,7 @@ local function pushRemote_description()
 end
 
 local function upstream_description()
-  local upstream = git.repo.upstream.branch
+  local upstream = git.repo.upstream.ref
 
   if upstream then
     return upstream

@@ -100,8 +100,7 @@ function M.rename_branch()
 end
 
 function M.reset_branch()
-  local repo = require("neogit.status").repo
-  if #repo.staged.items > 0 or #repo.unstaged.items > 0 then
+  if #git.repo.staged.items > 0 or #git.repo.unstaged.items > 0 then
     local confirmation = input.get_confirmation(
       "Uncommitted changes will be lost. Proceed?",
       { values = { "&Yes", "&No" }, default = 2 }

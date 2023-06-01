@@ -163,9 +163,9 @@ local function draw_buffer()
     string.format("Head: %s %s", git.repo.head.branch, git.repo.head.commit_message or "(no commits)")
   )
 
-  if git.repo.upstream.branch then
+  if git.repo.upstream.ref then
     output:append(
-      string.format("Push: %s %s", git.repo.upstream.branch, git.repo.upstream.commit_message or "(no commits)")
+      string.format("Push: %s %s", git.repo.upstream.ref, git.repo.upstream.commit_message or "(no commits)")
     )
   end
 

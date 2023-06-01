@@ -55,7 +55,7 @@ function M.to_pushremote(popup)
 end
 
 function M.to_upstream(popup)
-  local upstream = git.repo.upstream.branch
+  local upstream = git.repo.upstream.ref
   local remote, branch, set_upstream
 
   if upstream then

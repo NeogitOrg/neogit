@@ -20,18 +20,18 @@ function M.fetch_from_pushremote(popup)
   fetch_from(
     "pushremote",
     "origin",
-    require("neogit.status").repo.head.branch,
+    git.repo.head.branch,
     popup:get_arguments()
   )
 end
 
 function M.fetch_from_upstream(popup)
-  local upstream = git.branch.get_upstream()
+  local upstream = git.repo.upstream.ref
   if not upstream then
     return
   end
 
-  fetch_from(upstream.remote, upstream.remote, "", popup:get_arguments())
+  fetch_from(git.repo.upstream.ref, git.repo.upstream.remote, "", popup:get_arguments())
 end
 
 function M.fetch_from_all_remotes(popup)

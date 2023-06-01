@@ -14,7 +14,7 @@ function M.push_interactive(remote, branch, args)
 end
 
 local function update_unmerged(state)
-  if not state.upstream.branch then
+  if not state.upstream.ref then
     return
   end
 
