@@ -36,9 +36,16 @@ end
 function M.from_pushremote(popup)
   local pushRemote = git.branch.pushRemote()
   if not pushRemote then
-    pushRemote = FuzzyFinderBuffer.new(git.remote.list()):open_sync { prompt_prefix = "set pushRemote > " }
-    if not pushRemote then
-      return
+    local remotes = git.remote.list()
+
+    if #remotes == 1 then
+      pushRemote = remotes[1]
+    else
+      pushRemote = FuzzyFinderBuffer.new(remotes):open_sync { prompt_prefix = "set pushRemote > " }
+      if not pushRemote then
+        logger.error("No upstream set")
+        return
+      end
     end
 
     git.config.set("branch." .. status.repo.head.branch .. ".pushRemote", pushRemote)
@@ -54,7 +61,7 @@ function M.from_upstream(popup)
   if not upstream then
     set_upstream = true
     upstream = FuzzyFinderBuffer.new(git.branch.get_remote_branches()):open_sync {
-      prompt_prefix = "set upstream > "
+      prompt_prefix = "set upstream > ",
     }
 
     if not upstream then
@@ -67,7 +74,8 @@ function M.from_upstream(popup)
 end
 
 function M.from_elsewhere(popup)
-  local target = FuzzyFinderBuffer.new(git.branch.get_remote_branches()):open_sync { prompt_prefix = "pull > " }
+  local target = FuzzyFinderBuffer.new(git.branch.get_remote_branches())
+    :open_sync { prompt_prefix = "pull > " }
   if not target then
     return
   end
