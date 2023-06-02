@@ -1,1 +1,0 @@
--- gitignore interface
