@@ -492,7 +492,18 @@ function M:show()
     mappings = mappings,
     after = function()
       vim.cmd([[setlocal nocursorline]])
-      vim.fn.matchadd("NeogitPopupBranchName", self.state.env.highlight or branch.current(), 100)
+
+      if self.state.env.highlight then
+        for _, text in ipairs(self.state.env.highlight) do
+          vim.fn.matchadd("NeogitPopupBranchName", text, 100)
+        end
+      else
+        vim.fn.matchadd("NeogitPopupBranchName", git.repo.head.branch, 100)
+      end
+
+      for _, text in ipairs(self.state.env.bold or {}) do
+        vim.fn.matchadd("NeogitPopupBold", text, 100)
+      end
 
       if config.values.popup.kind == "split" then
         vim.cmd([[execute "resize" . (line("$") + 1)]])

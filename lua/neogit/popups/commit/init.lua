@@ -30,7 +30,7 @@ function M.create()
     :new_action_group()
     :action("F", "Instant Fixup", actions.instant_fixup)
     :action("S", "Instant Squash", actions.instant_squash)
-    :env({ highlight = "HEAD" })
+    :env({ highlight = { "HEAD" } })
     :build()
 
   p:show()

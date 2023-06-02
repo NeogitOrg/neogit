@@ -17,7 +17,7 @@ function M.create(remote)
         { display = "--tags", value = "--tags" },
       },
     })
-    :env({ highlight = remote })
+    :env({ highlight = { remote } })
     :build()
 
   p:show()

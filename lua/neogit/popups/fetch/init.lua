@@ -29,7 +29,12 @@ function M.create()
     :action("m", "submodules")
     :new_action_group("Configure")
     :action("C", "Set variables...", actions.set_variables)
-    :env({ highlight = git.branch.pushRemote() })
+    :env(
+      {
+        highlight = { git.branch.pushRemote() },
+        bold = { "pushRemote", "@{upstream}" }
+      }
+    )
     :build()
 
   p:show()

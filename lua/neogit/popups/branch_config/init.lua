@@ -58,7 +58,7 @@ function M.create(branch)
         { display = "default:never", value = "" },
       },
     })
-    :env({ highlight = branch })
+    :env({ highlight = { branch } })
     :build()
 
   p:show()

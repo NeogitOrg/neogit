@@ -48,7 +48,12 @@ function M.create()
     :action("e", "elsewhere", actions.from_elsewhere)
     :new_action_group("Configure")
     :action("C", "Set variables...", actions.configure)
-    :env({ highlight = current })
+    :env(
+      {
+        highlight = { current, git.repo.upstream.ref, git.branch.pushRemote_ref() },
+        bold = { "pushRemote", "@{upstream}" }
+      }
+    )
     :build()
 
   p:show()
