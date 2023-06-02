@@ -8,8 +8,7 @@ local config = require("neogit.config")
 local state = require("neogit.lib.state")
 local input = require("neogit.lib.input")
 
-local branch = require("neogit.lib.git.branch")
-local config_lib = require("neogit.lib.git.config")
+local git = require("neogit.lib.git")
 
 local col = Ui.col
 local row = Ui.row
@@ -238,7 +237,7 @@ function M:set_config(config)
     config.value = result == "" and "unset" or result
   end
 
-  config_lib.set(config.name, config.value)
+  git.config.set(config.name, config.value)
 
   self:repaint_config()
 end
@@ -246,7 +245,7 @@ end
 function M:repaint_config()
   for _, var in ipairs(self.state.config) do
     if var.passive then
-      local c_value = config_lib.get(var.name)
+      local c_value = git.config.get(var.name)
       if c_value then
         var.value = c_value.value
         self:update_component(var.id, nil, var.value)
