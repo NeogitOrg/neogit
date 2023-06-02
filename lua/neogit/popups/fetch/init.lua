@@ -4,11 +4,11 @@ local popup = require("neogit.lib.popup")
 
 local M = {}
 
-local function pushRemote_description()
+local function pushRemote_label()
   return git.branch.pushRemote() or "pushRemote, setting that"
 end
 
-local function upstream_description()
+local function upstream_label()
   return git.repo.upstream.remote or "@{upstream}, creating it"
 end
 
@@ -19,8 +19,8 @@ function M.create()
     :switch("p", "prune", "Prune deleted branches")
     :switch("t", "tags", "Fetch all tags")
     :group_heading("Fetch from")
-    :action("p", pushRemote_description(), actions.fetch_from_pushremote)
-    :action("u", upstream_description(), actions.fetch_from_upstream)
+    :action("p", pushRemote_label(), actions.fetch_from_pushremote)
+    :action("u", upstream_label(), actions.fetch_from_upstream)
     :action("e", "elsewhere", actions.fetch_from_elsewhere)
     :action("a", "all remotes", actions.fetch_from_all_remotes)
     :new_action_group("Fetch")

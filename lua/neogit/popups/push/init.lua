@@ -4,27 +4,6 @@ local git = require("neogit.lib.git")
 
 local M = {}
 
-local function pushRemote_description()
-  local current = git.repo.head.branch
-  local pushRemote = git.config.get("branch." .. current .. ".pushRemote").value
-
-  if current and pushRemote then
-    return pushRemote .. "/" .. current
-  elseif current then
-    return "pushRemote, setting that"
-  end
-end
-
-local function upstream_description()
-  local upstream = git.repo.upstream.ref
-
-  if upstream then
-    return upstream
-  else
-    return "@{upstream}, creating it"
-  end
-end
-
 function M.create()
   local current = git.repo.head.branch
 
@@ -37,8 +16,8 @@ function M.create()
     :switch("h", "no-verify", "Disable hooks")
     :switch("d", "dry-run", "Dry run")
     :group_heading("Push " .. ((current and (current .. " ")) or "") .. "to")
-    :action("p", pushRemote_description(), actions.to_pushremote)
-    :action("u", upstream_description(), actions.to_upstream)
+    :action("p", git.branch.pushRemote_label(), actions.to_pushremote)
+    :action("u", git.branch.upstream_label(), actions.to_upstream)
     :action("e", "elsewhere", actions.to_elsewhere)
     :new_action_group("Push")
     :action("o", "another branch", actions.push_other)

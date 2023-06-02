@@ -171,12 +171,29 @@ function M.current()
   return nil
 end
 
-function M.pushRemote(current)
-  current = current or require("neogit.lib.git").repo.head.branch
-  if current then
-    return config_lib.get("branch." .. current .. ".pushRemote").value
+function M.pushRemote(branch)
+  branch = branch or require("neogit.lib.git").repo.head.branch
+
+  if branch then
+    return config_lib.get("branch." .. branch .. ".pushRemote").value
   end
-  return nil
+end
+
+function M.pushRemote_ref()
+  local branch = require("neogit.lib.git").repo.head.branch
+  local pushRemote = M.pushRemote()
+
+  if branch and pushRemote then
+    return pushRemote .. "/" .. branch
+  end
+end
+
+function M.pushRemote_label()
+  return M.pushRemote_ref() or "pushRemote, setting that"
+end
+
+function M.upstream_label()
+  return require("neogit.lib.git").repo.upstream.ref or "@{upstream}, creating it"
 end
 
 return M
