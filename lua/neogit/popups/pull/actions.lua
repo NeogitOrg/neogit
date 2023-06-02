@@ -43,7 +43,7 @@ function M.from_pushremote(popup)
     else
       pushRemote = FuzzyFinderBuffer.new(remotes):open_sync { prompt_prefix = "set pushRemote > " }
       if not pushRemote then
-        logger.error("No upstream set")
+        logger.error("No pushremote set")
         return
       end
     end
