@@ -5,6 +5,7 @@ local actions = require("neogit.popups.rebase.actions")
 local M = {}
 
 function M.create()
+  local branch = git.repo.head.branch
   local in_rebase = git.repo.rebase.head
   local base_branch = actions.base_branch()
 
@@ -26,8 +27,8 @@ function M.create()
     :switch_if(not in_rebase, "h", "no-verify", "Disable hooks")
     :option_if(not in_rebase, "s", "gpg-sign", "", "Sign using gpg")
     :option_if(not in_rebase, "r", "rebase-merges", "", "Rebase merges")
-    :group_heading_if(not in_rebase, "Rebase " .. (git.repo.head.branch and (git.repo.head.branch .. " ") or "") .. "onto")
-    :action_if(not in_rebase and git.repo.head.branch ~= base_branch, "p", base_branch, actions.onto_base)
+    :group_heading_if(not in_rebase, "Rebase " .. (branch and (branch .. " ") or "") .. "onto")
+    :action_if(not in_rebase and branch ~= base_branch, "p", base_branch, actions.onto_base)
     :action_if(not in_rebase, "u", git.repo.upstream.ref or "@{upstream}, creating it", actions.onto_upstream)
     :action_if(not in_rebase, "e", "elsewhere", actions.onto_elsewhere)
     :new_action_group_if(not in_rebase, "Rebase")
