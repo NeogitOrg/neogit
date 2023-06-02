@@ -171,8 +171,8 @@ function M.current()
   return nil
 end
 
-function M.pushRemote()
-  local current = M.current()
+function M.pushRemote(current)
+  current = current or require("neogit.lib.git").repo.head.branch
   if current then
     return config_lib.get("branch." .. current .. ".pushRemote").value
   end

@@ -6,7 +6,7 @@ local M = {}
 
 local function pushRemote_description()
   local current = git.repo.head.branch
-  local pushRemote = git.config.get("branch." .. current .. ".pushRemote").value
+  local pushRemote = git.branch.pushRemote()
 
   if current and pushRemote then
     return pushRemote .. "/" .. current
