@@ -1,1 +1,0 @@
--- https://magit.vc/manual/2.11.0/magit/Reverting.html#Reverting
