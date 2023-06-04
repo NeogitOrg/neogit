@@ -24,7 +24,7 @@ local function fetch_from(name, remote, branch, args)
   end
 end
 
-function M.fetch_from_pushremote(popup)
+function M.fetch_pushremote(popup)
   local pushRemote = git.branch.pushRemote()
   if not pushRemote then
     local remotes = git.remote.list()
@@ -57,7 +57,7 @@ function M.upstream()
   end
 end
 
-function M.fetch_from_upstream(popup)
+function M.fetch_upstream(popup)
   local upstream = M.upstream()
 
   if upstream then
@@ -65,14 +65,14 @@ function M.fetch_from_upstream(popup)
   end
 end
 
-function M.fetch_from_all_remotes(popup)
+function M.fetch_all_remotes(popup)
   local args = popup:get_arguments()
   table.insert(args, "--all")
 
   fetch_from("all remotes", "", "", args)
 end
 
-function M.fetch_from_elsewhere(popup)
+function M.fetch_elsewhere(popup)
   local remote = FuzzyFinderBuffer.new(git.remote.list()):open_sync { prompt_prefix = "remote > " }
   if not remote then
     logger.error("No remote selected")
