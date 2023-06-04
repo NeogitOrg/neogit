@@ -44,7 +44,7 @@ end
 -- end
 
 function M.a_file()
-  local commits = git.log.list(util.merge({ "--max-count=256", "--all" }, git.stash.list()))
+  local commits = git.log.list(util.merge({ "--max-count=256", "--all" }, git.stash.list_refs()))
 
   local commit = CommitSelectViewBuffer.new(commits):open_async()
   if not commit then

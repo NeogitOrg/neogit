@@ -1,13 +1,7 @@
 local cli = require("neogit.lib.git.cli")
+local util = require("neogit.lib.util")
 
-local function parse(output)
-  local result = {}
-  for _, line in ipairs(output) do
-    local stash_num, stash_desc = line:match("stash@{(%d*)}: (.*)")
-    table.insert(result, { idx = tonumber(stash_num), name = line, message = stash_desc })
-  end
-  return result
-end
+local M = {}
 
 local function perform_stash(include)
   if not include then
@@ -65,12 +59,7 @@ local function perform_stash(include)
   end
 end
 
-local function update_stashes(state)
-  local result = cli.stash.args("list").call():trim()
-  state.stashes.items = parse(result.stdout)
-end
-
-local function list()
+function M.list_refs()
   local result = cli.reflog.show.format("%h").args("stash").call_ignoring_exit_code():trim()
   if result.code > 0 then
     return {}
@@ -79,48 +68,58 @@ local function list()
   end
 end
 
-return {
-  parse = parse,
+function M.stash_all(args)
+  cli.stash.arg_list(args).call()
+  -- this should work, but for some reason doesn't.
+  --return perform_stash({ worktree = true, index = true })
+end
 
-  list = list,
+function M.stash_index()
+  return perform_stash { worktree = false, index = true }
+end
 
-  stash_all = function(args)
-    cli.stash.arg_list(args).call()
-    -- this should work, but for some reason doesn't.
-    --return perform_stash({ worktree = true, index = true })
-  end,
+function M.push(args, files)
+  cli.stash.push.arg_list(args).files(unpack(files)).call()
+end
 
-  stash_index = function()
-    return perform_stash { worktree = false, index = true }
-  end,
+function M.pop(stash)
+  local result = cli.stash.apply.index.args(stash).show_popup(false).call()
 
-  push = function(args, files)
-    cli.stash.push.arg_list(args).files(unpack(files)).call()
-  end,
-
-  pop = function(stash)
-    local result = cli.stash.apply.index.args(stash).show_popup(false).call()
-
-    if result.code == 0 then
-      cli.stash.drop.args(stash).call()
-    else
-      cli.stash.apply.args(stash).call()
-    end
-  end,
-
-  apply = function(stash)
-    local result = cli.stash.apply.index.args(stash).show_popup(false).call()
-
-    if result.code ~= 0 then
-      cli.stash.apply.args(stash).call()
-    end
-  end,
-
-  drop = function(stash)
+  if result.code == 0 then
     cli.stash.drop.args(stash).call()
-  end,
+  else
+    cli.stash.apply.args(stash).call()
+  end
+end
 
-  register = function(meta)
-    meta.update_stashes = update_stashes
-  end,
-}
+function M.apply(stash)
+  local result = cli.stash.apply.index.args(stash).show_popup(false).call()
+
+  if result.code ~= 0 then
+    cli.stash.apply.args(stash).call()
+  end
+end
+
+function M.drop(stash)
+  cli.stash.drop.args(stash).call()
+end
+
+function M.list()
+  return cli.stash.args("list").call():trim().stdout
+end
+
+function M.register(meta)
+  meta.update_stashes = function(state)
+    state.stashes.items = util.map(M.list(), function(line)
+      local idx, message = line:match("stash@{(%d*)}: (.*)")
+
+      return {
+        idx = tonumber(idx),
+        name = line,
+        message = message
+      }
+    end)
+  end
+end
+
+return M
