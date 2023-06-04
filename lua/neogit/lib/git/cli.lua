@@ -284,7 +284,19 @@ local configurations = {
     },
   },
 
-  fetch = config {},
+  fetch = config {
+    options = {
+      recurse_submodules = "--recurse-submodules",
+      verbose = "--verbose",
+    },
+    aliases = {
+      jobs = function(tbl)
+        return function(n)
+          return tbl.args("--jobs=" .. tostring(n))
+        end
+      end,
+    },
+  },
 
   ["read-tree"] = config {
     flags = {
@@ -388,6 +400,16 @@ local configurations = {
       deduplicate = "--deduplicate",
       exclude_standard = "--exclude-standard",
       full_name = "--full-name",
+    },
+  },
+
+  ["ls-remote"] = config {
+    aliases = {
+      remote = function(tbl)
+        return function(remote)
+          return tbl.args(remote)
+        end
+      end,
     },
   },
 
