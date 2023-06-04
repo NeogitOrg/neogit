@@ -4,8 +4,6 @@ local popup = require("neogit.lib.popup")
 local M = {}
 
 function M.create(stash)
-  local target = stash and stash.name
-
   local p = popup
     .builder()
     :name("NeogitStashPopup")
@@ -22,10 +20,10 @@ function M.create(stash)
     :action("I", "index")
     :action("W", "worktree")
     :action("r", "to wip ref")
-    :new_action_group_if(target, "Use")
-    :action_if(target, "p", "pop", actions.pop)
-    :action_if(target, "a", "apply", actions.apply)
-    :action_if(target, "d", "drop", actions.drop)
+    :new_action_group("Use")
+    :action("p", "pop", actions.pop)
+    :action("a", "apply", actions.apply)
+    :action("d", "drop", actions.drop)
     :new_action_group("Inspect")
     :action("l", "List")
     :action("v", "Show")
