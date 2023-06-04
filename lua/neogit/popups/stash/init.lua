@@ -7,8 +7,9 @@ function M.create(stash)
   local p = popup
     .builder()
     :name("NeogitStashPopup")
-    :switch("u", "include-untracked", "Also save untracked files")
-    :switch("a", "all", "Also save untracked and ignored files")
+    -- TODO:
+    -- :switch("u", "include-untracked", "Also save untracked files")
+    -- :switch("a", "all", "Also save untracked and ignored files")
     :group_heading("Stash")
     :action("z", "both", actions.both)
     :action("i", "index", actions.index)

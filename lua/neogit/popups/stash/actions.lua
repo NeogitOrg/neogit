@@ -29,22 +29,32 @@ function M.push(popup)
   status.refresh(true, "stash_push")
 end
 
+local function use(action, stash)
+  local name
+
+  if stash and stash.name then
+    name = stash.name
+  else
+    name = FuzzyFinderBuffer.new(git.stash.list()):open_sync()
+  end
+
+  if name then
+    git.stash[action](name)
+    a.util.scheduler()
+    status.refresh(true, "stash_" .. action)
+  end
+end
+
 function M.pop(popup)
-  git.stash.pop(popup.state.env.stash.name)
-  a.util.scheduler()
-  status.refresh(true, "stash_pop")
+  use("pop", popup.state.env.stash)
 end
 
 function M.apply(popup)
-  git.stash.apply(popup.state.env.stash.name)
-  a.util.scheduler()
-  status.refresh(true, "stash_apply")
+  use("apply", popup.state.env.stash)
 end
 
 function M.drop(popup)
-  git.stash.drop(popup.state.env.stash.name)
-  a.util.scheduler()
-  status.refresh(true, "stash_drop")
+  use("drop", popup.state.env.stash)
 end
 
 return M
