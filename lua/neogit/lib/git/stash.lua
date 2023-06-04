@@ -81,12 +81,15 @@ end
 
 return {
   parse = parse,
+
   list = list,
+
   stash_all = function(args)
     cli.stash.arg_list(args).call()
     -- this should work, but for some reason doesn't.
     --return perform_stash({ worktree = true, index = true })
   end,
+
   stash_index = function()
     return perform_stash { worktree = false, index = true }
   end,
@@ -96,7 +99,7 @@ return {
   end,
 
   pop = function(stash)
-    local result = cli.stash.apply.index.args(stash).show_popup(false).call():trim()
+    local result = cli.stash.apply.index.args(stash).show_popup(false).call()
 
     if result.code == 0 then
       cli.stash.drop.args(stash).call()
@@ -106,7 +109,7 @@ return {
   end,
 
   apply = function(stash)
-    local result = cli.stash.apply.index.args(stash).show_popup(false).call():trim()
+    local result = cli.stash.apply.index.args(stash).show_popup(false).call()
 
     if result.code ~= 0 then
       cli.stash.apply.args(stash).call()
