@@ -4,6 +4,7 @@ return {
   init = require("neogit.lib.git.init"),
   status = require("neogit.lib.git.status"),
   stash = require("neogit.lib.git.stash"),
+  files = require("neogit.lib.git.files"),
   fetch = require("neogit.lib.git.fetch"),
   log = require("neogit.lib.git.log"),
   reflog = require("neogit.lib.git.reflog"),
