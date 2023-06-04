@@ -71,7 +71,12 @@ local function update_stashes(state)
 end
 
 local function list()
-  return cli.reflog.show.format("%h").args("stash").call():trim().stdout
+  local result = cli.reflog.show.format("%h").args("stash").call_ignoring_exit_code():trim()
+  if result.code > 0 then
+    return {}
+  else
+    return result.stdout
+  end
 end
 
 return {
