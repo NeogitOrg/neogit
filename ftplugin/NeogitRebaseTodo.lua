@@ -3,11 +3,6 @@ if vim.b.did_ftplugin then
 end
 
 vim.cmd.source("$VIMRUNTIME/ftplugin/gitrebase.vim")
-vim.cmd([[exec 'norm! gg']])
-
-if vim.fn.prevnonblank(".") ~= vim.fn.line(".") then
-  vim.cmd([[startinsert]])
-end
 
 local parser = vim.treesitter.language.get_lang("gitrebase")
 if parser then

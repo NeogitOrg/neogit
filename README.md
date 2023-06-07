@@ -299,6 +299,8 @@ Set `disable_commit_confirmation = true` in your call to [`setup`](#configuratio
 
 Set `disable_insert_on_commit = true` in your call to [`setup`](#configuration) to disable automatically changing to insert mode when opening the commit message buffer. (Disabled is the default)
 
+Set `disable_insert_on_commit = "auto"` to enter insert mode _if_ the commit message is empty - otherwise stay in normal mode.
+
 ## Events
 
 Neogit emits the following events:
