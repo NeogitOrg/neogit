@@ -75,7 +75,7 @@ function M:open_sync(...)
   local args = { ... }
   local function f(cb)
     self.action = cb
-    self:open(table.unpack(args))
+    self:open(unpack(args))
   end
 
   return a.wrap(f, 1)()
