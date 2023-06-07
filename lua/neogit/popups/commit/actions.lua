@@ -22,7 +22,7 @@ local function do_commit(popup, cmd)
 
   if result.code == 0 then
     notif.create("Successfully committed!")
-    vim.cmd("do <nomodeline> User NeogitCommitComplete")
+    vim.api.nvim_exec_autocmds("User", { pattern = "NeogitCommitComplete", modeline = false })
   end
 
   a.util.scheduler()

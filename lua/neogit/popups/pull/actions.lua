@@ -27,7 +27,7 @@ local function pull_from(args, remote, branch, opts)
     notif.create("Pulled from " .. name)
     logger.debug("Pulled from " .. name)
     status.refresh(true, "pull_from")
-    vim.cmd("do <nomodeline> User NeogitPullComplete")
+    vim.api.nvim_exec_autocmds("User", { pattern = "NeogitPullComplete", modeline = false })
   else
     logger.error("Failed to pull from " .. name)
   end

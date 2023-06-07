@@ -18,7 +18,7 @@ local function fetch_from(name, remote, branch, args)
     notif.create("Fetched from " .. name)
     logger.debug("Fetched from " .. name)
     status.refresh(true, "fetch_from")
-    vim.cmd("do <nomodeline> User NeogitFetchComplete")
+    vim.api.nvim_exec_autocmds("User", { pattern = "NeogitFetchComplete", modeline = false })
   else
     logger.error("Failed to fetch from " .. name)
   end

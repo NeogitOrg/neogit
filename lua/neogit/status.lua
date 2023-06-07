@@ -417,7 +417,7 @@ local function refresh(which, reason)
   if cli.git_root() ~= "" then
     git.repo:refresh(which)
     refresh_status_buffer()
-    vim.cmd("do <nomodeline> User NeogitStatusRefreshed")
+    vim.api.nvim_exec_autocmds("User", { pattern = "NeogitStatusRefreshed", modeline = false })
   end
 
   a.util.scheduler()

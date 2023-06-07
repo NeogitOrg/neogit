@@ -27,7 +27,7 @@ local function push_to(args, remote, branch, opts)
     logger.error("Pushed to " .. name)
     notif.create("Pushed to " .. name)
     status.refresh(true, "push_to")
-    vim.cmd("do <nomodeline> User NeogitPushComplete")
+    vim.api.nvim_exec_autocmds("User", { pattern = "NeogitPushComplete", modeline = false })
   else
     logger.error("Failed to push to " .. name)
   end
