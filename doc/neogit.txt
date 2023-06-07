@@ -106,7 +106,6 @@ p                       Open pull popup
 
                                                 *neogit_P*
 P                       Open push popup
-<<<<<<< HEAD
 
                                                 *neogit_f*
 f                       Open fetch popup
@@ -119,11 +118,6 @@ A                       Open cherry-pick popup
 
                                                 *neogit_m*
 m                       Open merge popup
-||||||| efc1764
-=======
-                                                *neogit_f*
-f                       Open fetch popup
->>>>>>> 632cf8074689177311d5a78cf7fef03dbc223756
 ==============================================================================
 4. Highlights                                    *neogit-highlights*
 
