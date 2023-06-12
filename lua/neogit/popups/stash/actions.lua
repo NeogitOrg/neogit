@@ -35,7 +35,7 @@ local function use(action, stash)
   if stash and stash.name then
     name = stash.name
   else
-    name = FuzzyFinderBuffer.new(git.stash.list()):open_async()
+    name = FuzzyFinderBuffer.new(git.stash.list()):open_async():match("(stash@{%d+})")
   end
 
   if name then

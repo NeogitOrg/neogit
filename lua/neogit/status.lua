@@ -470,6 +470,10 @@ local function current_line_is_hunk()
 end
 
 local function get_hunk_of_item_for_line(item, line)
+  if item.hunks == nil then
+    return nil
+  end
+
   local hunk
   local lines = {}
   for _, h in ipairs(item.hunks) do
