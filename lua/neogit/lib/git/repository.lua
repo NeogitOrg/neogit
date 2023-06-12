@@ -55,7 +55,7 @@ end
 local meta = {
   __index = function(self, method)
     return self.state[method]
-  end
+  end,
 }
 
 local M = {}
@@ -140,7 +140,6 @@ function M.refresh(self, lib)
         self.lib.update_diffs(self.state, filter)
       end)
     end
-
   else
     logger.debug("[REPO]: Refreshing ALL")
     self.lib.update_status(self.state)
@@ -175,7 +174,7 @@ if not M.initialized then
     "log",
     "rebase",
     "cherry_pick",
-    "merge"
+    "merge",
   }
 
   for _, m in ipairs(modules) do
