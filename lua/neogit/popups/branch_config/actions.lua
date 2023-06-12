@@ -24,7 +24,7 @@ function M.merge_config(branch)
   local branches = util.merge(local_branches, remote_branches)
 
   return a.void(function(popup, c)
-    local target = FuzzyFinderBuffer.new(branches):open_sync { prompt_prefix = "Upstream > " }
+    local target = FuzzyFinderBuffer.new(branches):open_async { prompt_prefix = "Upstream > " }
     if not target then
       return
     end

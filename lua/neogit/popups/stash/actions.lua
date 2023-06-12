@@ -19,7 +19,7 @@ function M.index(popup)
 end
 
 function M.push(popup)
-  local files = FuzzyFinderBuffer.new(git.files.all()):open_sync { allow_multi = true }
+  local files = FuzzyFinderBuffer.new(git.files.all()):open_async { allow_multi = true }
   if not files or not files[1] then
     return
   end
@@ -35,7 +35,7 @@ local function use(action, stash)
   if stash and stash.name then
     name = stash.name
   else
-    name = FuzzyFinderBuffer.new(git.stash.list()):open_sync()
+    name = FuzzyFinderBuffer.new(git.stash.list()):open_async()
   end
 
   if name then

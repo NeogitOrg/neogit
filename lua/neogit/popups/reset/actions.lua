@@ -57,7 +57,7 @@ function M.a_file()
   end
 
   a.util.scheduler()
-  local files = FuzzyFinderBuffer.new(files):open_sync { allow_multi = true }
+  local files = FuzzyFinderBuffer.new(files):open_async { allow_multi = true }
   if not files[1] then
     return
   end

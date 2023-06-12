@@ -4,7 +4,7 @@ local M = {
   value = "",
 }
 
-FuzzyFinderBuffer.open_sync = function()
+FuzzyFinderBuffer.open_async = function()
   return M.value
 end
 

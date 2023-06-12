@@ -41,7 +41,7 @@ function M.add(popup)
 end
 
 function M.rename(_)
-  local selected_remote = FuzzyFinderBuffer.new(git.remote.list()):open_sync()
+  local selected_remote = FuzzyFinderBuffer.new(git.remote.list()):open_async()
   if not selected_remote then
     return
   end
@@ -58,7 +58,7 @@ function M.rename(_)
 end
 
 function M.remove(_)
-  local selected_remote = FuzzyFinderBuffer.new(git.remote.list()):open_sync()
+  local selected_remote = FuzzyFinderBuffer.new(git.remote.list()):open_async()
   if not selected_remote then
     return
   end
@@ -70,7 +70,7 @@ function M.remove(_)
 end
 
 function M.configure(_)
-  local remote_name = FuzzyFinderBuffer.new(git.remote.list()):open_sync()
+  local remote_name = FuzzyFinderBuffer.new(git.remote.list()):open_async()
   if not remote_name then
     return
   end
@@ -79,7 +79,7 @@ function M.configure(_)
 end
 
 function M.prune_branches(_)
-  local selected_remote = FuzzyFinderBuffer.new(git.remote.list()):open_sync()
+  local selected_remote = FuzzyFinderBuffer.new(git.remote.list()):open_async()
   if not selected_remote then
     return
   end

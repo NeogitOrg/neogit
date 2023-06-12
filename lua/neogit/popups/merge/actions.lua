@@ -28,7 +28,7 @@ function M.abort()
 end
 
 function M.merge(popup)
-  local branch = FuzzyFinderBuffer.new(git.branch.get_all_branches()):open_sync()
+  local branch = FuzzyFinderBuffer.new(git.branch.get_all_branches()):open_async()
   if not branch then
     return
   end

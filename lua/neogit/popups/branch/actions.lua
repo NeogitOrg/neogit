@@ -22,7 +22,7 @@ local function parse_remote_branch_name(remote_name)
 end
 
 function M.checkout_branch_revision()
-  local selected_branch = FuzzyFinderBuffer.new(git.branch.get_all_branches()):open_sync()
+  local selected_branch = FuzzyFinderBuffer.new(git.branch.get_all_branches()):open_async()
   git.cli.checkout.branch(selected_branch).call_sync():trim()
 
   status.refresh(true, "checkout_branch")
@@ -39,7 +39,7 @@ function M.checkout_local_branch()
   end)
 
   local target = FuzzyFinderBuffer.new(util.merge(local_branches, remote_branches))
-    :open_sync { prompt_prefix = " branch > " }
+    :open_async { prompt_prefix = " branch > " }
   if target:match([[/]]) then
     git.cli.checkout.track(target).call_sync()
   elseif target then
@@ -62,7 +62,7 @@ function M.checkout_create_branch()
   end
   name, _ = name:gsub("%s", "-")
 
-  local base_branch = FuzzyFinderBuffer.new(branches):open_sync { prompt_prefix = " base branch > " }
+  local base_branch = FuzzyFinderBuffer.new(branches):open_async { prompt_prefix = " base branch > " }
   git.cli.checkout.new_branch_with_start_point(name, base_branch).call_sync():trim()
   status.refresh(true, "branch_create")
 end
@@ -73,7 +73,7 @@ function M.create_branch()
 end
 
 function M.configure_branch()
-  local branch_name = FuzzyFinderBuffer.new(git.branch.get_local_branches(true)):open_sync()
+  local branch_name = FuzzyFinderBuffer.new(git.branch.get_local_branches(true)):open_async()
   if not branch_name then
     return
   end
@@ -88,7 +88,7 @@ function M.rename_branch()
     table.insert(branches, 1, current_branch)
   end
 
-  local selected_branch = FuzzyFinderBuffer.new(branches):open_sync()
+  local selected_branch = FuzzyFinderBuffer.new(branches):open_async()
   local new_name = input.get_user_input("new branch name > ")
   if not new_name or new_name == "" then
     return
@@ -111,7 +111,7 @@ function M.reset_branch()
   end
 
   local branches = git.branch.get_all_branches(false)
-  local to = FuzzyFinderBuffer.new(branches):open_sync {
+  local to = FuzzyFinderBuffer.new(branches):open_async {
     prompt_prefix = " reset " .. git.repo.head.branch .. " to > ",
   }
 
@@ -134,7 +134,7 @@ function M.delete_branch()
   -- TODO: If branch is checked out:
   -- Branch gha-routes-js is checked out.  [d]etach HEAD & delete, [c]heckout origin/gha-routes-js & delete, [a]bort
   local branches = git.branch.get_all_branches()
-  local selected_branch = FuzzyFinderBuffer.new(branches):open_sync()
+  local selected_branch = FuzzyFinderBuffer.new(branches):open_async()
   if not selected_branch then
     return
   end

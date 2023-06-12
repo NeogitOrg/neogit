@@ -41,7 +41,7 @@ function M.to_pushremote(popup)
     if #remotes == 1 then
       pushRemote = remotes[1]
     else
-      pushRemote = FuzzyFinderBuffer.new(remotes):open_sync { prompt_prefix = "set pushRemote > " }
+      pushRemote = FuzzyFinderBuffer.new(remotes):open_async { prompt_prefix = "set pushRemote > " }
       if not pushRemote then
         logger.error("No upstream set")
         return
@@ -68,7 +68,7 @@ function M.to_upstream(popup)
     if result and result == "true" then
       remote = "origin"
     else
-      remote = FuzzyFinderBuffer.new(git.remote.list()):open_sync { prompt_prefix = "remote > " }
+      remote = FuzzyFinderBuffer.new(git.remote.list()):open_async { prompt_prefix = "remote > " }
       if not remote then
         logger.error("No upstream set")
         return
@@ -81,7 +81,7 @@ end
 
 function M.to_elsewhere(popup)
   local target = FuzzyFinderBuffer.new(git.branch.get_remote_branches())
-    :open_sync { prompt_prefix = "push > " }
+    :open_async { prompt_prefix = "push > " }
   if not target then
     return
   end
@@ -96,7 +96,7 @@ function M.push_other(popup)
   table.insert(sources, "ORIG_HEAD")
   table.insert(sources, "FETCH_HEAD")
 
-  local source = FuzzyFinderBuffer.new(sources):open_sync {
+  local source = FuzzyFinderBuffer.new(sources):open_async {
     prompt_prefix = "push > ",
   }
   if not source then
@@ -109,7 +109,7 @@ function M.push_other(popup)
   end
 
   local destination = FuzzyFinderBuffer.new(destinations)
-    :open_sync { prompt_prefix = "push " .. source .. " to > " }
+    :open_async { prompt_prefix = "push " .. source .. " to > " }
   if not destination then
     return
   end
