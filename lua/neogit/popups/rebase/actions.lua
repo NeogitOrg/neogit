@@ -26,7 +26,7 @@ function M.onto_upstream(popup)
 end
 
 function M.onto_elsewhere(popup)
-  local target = FuzzyFinderBuffer.new(git.branch.get_all_branches()):open_sync()
+  local target = FuzzyFinderBuffer.new(git.branch.get_all_branches()):open_async()
   if not target then
     return
   end

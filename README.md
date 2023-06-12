@@ -128,6 +128,8 @@ neogit.setup {
   -- Sorting keys: https://git-scm.com/docs/git-for-each-ref#_options
   sort_branches = "-committerdate",
   disable_builtin_notifications = false,
+  -- If enabled, use telescope for menu selection rather than vim.ui.select
+  use_telescope = false,
   use_magit_keybindings = false,
   -- Change the default way of opening neogit
   kind = "tab",

@@ -247,7 +247,11 @@ function M.list(options, show_popup)
     )
   end
 
-  if not vim.tbl_contains(options, function(item) return item:match("%-%-max%-count=%d+") end, { predicate = true }) then
+  if
+    not vim.tbl_contains(options, function(item)
+      return item:match("%-%-max%-count=%d+")
+    end, { predicate = true })
+  then
     table.insert(options, "--max-count=256")
   end
 

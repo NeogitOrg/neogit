@@ -41,7 +41,7 @@ function M.from_pushremote(popup)
     if #remotes == 1 then
       pushRemote = remotes[1]
     else
-      pushRemote = FuzzyFinderBuffer.new(remotes):open_sync { prompt_prefix = "set pushRemote > " }
+      pushRemote = FuzzyFinderBuffer.new(remotes):open_async { prompt_prefix = "set pushRemote > " }
       if not pushRemote then
         logger.error("No pushremote set")
         return
@@ -60,7 +60,7 @@ function M.from_upstream(popup)
 
   if not upstream then
     set_upstream = true
-    upstream = FuzzyFinderBuffer.new(git.branch.get_remote_branches()):open_sync {
+    upstream = FuzzyFinderBuffer.new(git.branch.get_remote_branches()):open_async {
       prompt_prefix = "set upstream > ",
     }
 
@@ -75,7 +75,7 @@ end
 
 function M.from_elsewhere(popup)
   local target = FuzzyFinderBuffer.new(git.branch.get_remote_branches())
-    :open_sync { prompt_prefix = "pull > " }
+    :open_async { prompt_prefix = "pull > " }
   if not target then
     return
   end

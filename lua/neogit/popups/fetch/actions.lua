@@ -29,7 +29,7 @@ function M.fetch_pushremote(popup)
   if not pushRemote then
     local remotes = git.remote.list()
 
-    pushRemote = FuzzyFinderBuffer.new(remotes):open_sync { prompt_prefix = "set pushRemote > " }
+    pushRemote = FuzzyFinderBuffer.new(remotes):open_async { prompt_prefix = "set pushRemote > " }
     if not pushRemote then
       logger.error("No pushremote set")
       return
@@ -73,7 +73,7 @@ function M.fetch_all_remotes(popup)
 end
 
 function M.fetch_elsewhere(popup)
-  local remote = FuzzyFinderBuffer.new(git.remote.list()):open_sync { prompt_prefix = "remote > " }
+  local remote = FuzzyFinderBuffer.new(git.remote.list()):open_async { prompt_prefix = "remote > " }
   if not remote then
     logger.error("No remote selected")
     return
@@ -88,7 +88,7 @@ end
 --   git@
 
 function M.fetch_another_branch(popup)
-  local remote = FuzzyFinderBuffer.new(git.remote.list()):open_sync { prompt_prefix = "remote > " }
+  local remote = FuzzyFinderBuffer.new(git.remote.list()):open_async { prompt_prefix = "remote > " }
   if not remote then
     return
   end
@@ -97,7 +97,7 @@ function M.fetch_another_branch(popup)
     return branch:match("^" .. remote .. "/(.*)")
   end)
 
-  local branch = FuzzyFinderBuffer.new(branches):open_sync {
+  local branch = FuzzyFinderBuffer.new(branches):open_async {
     prompt_prefix = remote .. "/{branch} > ",
   }
   if not branch then
@@ -108,7 +108,7 @@ function M.fetch_another_branch(popup)
 end
 
 function M.fetch_refspec(popup)
-  local remote = FuzzyFinderBuffer.new(git.remote.list()):open_sync { prompt_prefix = "remote > " }
+  local remote = FuzzyFinderBuffer.new(git.remote.list()):open_async { prompt_prefix = "remote > " }
   if not remote then
     return
   end
@@ -118,7 +118,7 @@ function M.fetch_refspec(popup)
     return vim.split(ref, "\t")[2]
   end)
 
-  local refspec = FuzzyFinderBuffer.new(refspecs):open_sync { prompt_prefix = "refspec > " }
+  local refspec = FuzzyFinderBuffer.new(refspecs):open_async { prompt_prefix = "refspec > " }
   if not refspec then
     return
   end
