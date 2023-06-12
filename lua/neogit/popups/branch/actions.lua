@@ -23,6 +23,10 @@ end
 
 function M.checkout_branch_revision()
   local selected_branch = FuzzyFinderBuffer.new(git.branch.get_all_branches()):open_async()
+  if not selected_branch then
+    return
+  end
+
   git.cli.checkout.branch(selected_branch).call_sync():trim()
 
   status.refresh(true, "checkout_branch")
@@ -38,8 +42,14 @@ function M.checkout_local_branch()
     end
   end)
 
-  local target = FuzzyFinderBuffer.new(util.merge(local_branches, remote_branches))
-    :open_async { prompt_prefix = " branch > " }
+  local target = FuzzyFinderBuffer.new(util.merge(local_branches, remote_branches)):open_async {
+    prompt_prefix = " branch > "
+  }
+
+  if not target then
+    return
+  end
+
   if target:match([[/]]) then
     git.cli.checkout.track(target).call_sync()
   elseif target then
@@ -63,6 +73,10 @@ function M.checkout_create_branch()
   name, _ = name:gsub("%s", "-")
 
   local base_branch = FuzzyFinderBuffer.new(branches):open_async { prompt_prefix = " base branch > " }
+  if not base_branch then
+    return
+  end
+
   git.cli.checkout.new_branch_with_start_point(name, base_branch).call_sync():trim()
   status.refresh(true, "branch_create")
 end
@@ -89,6 +103,10 @@ function M.rename_branch()
   end
 
   local selected_branch = FuzzyFinderBuffer.new(branches):open_async()
+  if not selected_branch then
+    return
+  end
+
   local new_name = input.get_user_input("new branch name > ")
   if not new_name or new_name == "" then
     return
