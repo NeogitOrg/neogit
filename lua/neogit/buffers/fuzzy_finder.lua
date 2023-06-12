@@ -38,18 +38,6 @@ function M:open(opts, action)
   Finder.create(opts):add_entries(self.list):find(action)
 end
 
--- -- Opens finder in such a way that selected value can be returned to the main thread
--- -- without the need to use a callback to process the selection.
--- function M:open_sync(...)
---   local args = { ... }
---   local function f(cb)
---     self.action = cb
---     self:open(unpack(args))
---   end
---
---   return a.wrap(f, 1)()
--- end
-
 ---@param opts FinderOpts
 ---@return any|nil
 --- Asynchronously prompt the user for the selection, and return the selected item or nil if aborted.
