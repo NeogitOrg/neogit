@@ -155,7 +155,7 @@ function M:update_component(id, highlight, value)
   if highlight then
     if component.options.highlight then
       component.options.highlight = highlight
-    else
+    elseif component.children then
       component.children[1].options.highlight = highlight
     end
   end
