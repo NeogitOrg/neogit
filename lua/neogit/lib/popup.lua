@@ -268,7 +268,11 @@ function M:set_config(config)
       cancelreturn = config.value,
     }
 
-    config.value = result == "" and "unset" or result
+    if not result or result == "" then
+      config.value = "unset"
+    else
+      config.value = result
+    end
   end
 
   git.config.set(config.name, config.value)

@@ -67,6 +67,11 @@ function M.set(key, value)
   cache_key = nil
 
   if not value or value == "" or value == "unset" then
+    -- Unsetting a value that isn't set results in an error.
+    if M.get(key).value == nil then
+      return
+    end
+
     M.unset(key)
   else
     cli.config.set(key, value).call_sync()
