@@ -253,7 +253,7 @@ function M:set_config(config)
         return
       end
 
-      return option.value
+      return option.value == "unset" and "" or option.value
     end))
 
     local index = options[config.value]
