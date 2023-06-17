@@ -700,11 +700,12 @@ local function new_builder(subcommand)
   }
 
   local function to_process(verbose, suppress_error, ignore_code)
-    -- Disable the pager so that the commands don't stop and wait for pagination
-    local cmd = { "git", "--no-pager", "-c", "color.ui=always", "--no-optional-locks", subcommand }
+    local cmd = {}
+
     for _, o in ipairs(state.options) do
       table.insert(cmd, o)
     end
+
     for _, arg in ipairs(state.arguments) do
       if arg ~= "" then
         table.insert(cmd, arg)
@@ -722,6 +723,9 @@ local function new_builder(subcommand)
     if state.prefix then
       table.insert(cmd, 1, state.prefix)
     end
+
+    -- Disable the pager so that the commands don't stop and wait for pagination
+    cmd = util.merge({ "git", "--no-pager", "-c", "color.ui=always", "--no-optional-locks", subcommand }, cmd)
 
     logger.debug(string.format("[CLI]: Executing '%s %s'", subcommand, table.concat(cmd, " ")))
 
