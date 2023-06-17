@@ -1,9 +1,10 @@
 local config = require("neogit.config")
-local async = require("plenary.async")
+local a = require("plenary.async")
 
 local function telescope_mappings(on_select, allow_multi)
   local action_state = require("telescope.actions.state")
   local actions = require("telescope.actions")
+
   --- Lift the picker select action to a item select action
   local function select_action(prompt_bufnr)
     local selection = {}
@@ -30,7 +31,6 @@ local function telescope_mappings(on_select, allow_multi)
     end
   end
 
-  local actions = require("telescope.actions")
   return function(_, map)
     local commands = {
       ["Select"] = select_action,
@@ -150,7 +150,7 @@ end
 
 ---@type async fun(self: Finder): any|nil
 --- Asynchronously prompt the user for the selection, and return the selected item or nil if aborted.
-Finder.find_async = async.wrap(Finder.find, 2)
+Finder.find_async = a.wrap(Finder.find, 2)
 
 ---Builds Finder instance
 ---@param opts table|nil
@@ -161,7 +161,7 @@ end
 
 --- Example usage
 function Finder.test()
-  async.run(function()
+  a.run(function()
     local f = Finder:create()
     f:add_entries { "a", "b", "c" }
 

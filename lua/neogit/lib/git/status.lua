@@ -45,7 +45,11 @@ local function update_status(state)
       elseif header == "branch.oid" then
         head.oid = value
       elseif header == "branch.upstream" then
-        upstream.branch = value
+        upstream.ref = value
+
+        local remote, branch = unpack(vim.split(value, "/"))
+        upstream.remote = remote
+        upstream.branch = branch
       end
     else
       local kind, rest = l:match("(.) (.+)")
@@ -101,7 +105,8 @@ local function update_status(state)
   if not state.head.branch or head.branch == state.head.branch then
     head.commit_message = state.head.commit_message
   end
-  if not upstream.branch or upstream.branch == state.upstream.branch then
+
+  if not upstream.ref or upstream.ref == state.upstream.ref then
     upstream.commit_message = state.upstream.commit_message
   end
 
@@ -122,7 +127,7 @@ local function update_branch_information(state)
       state.head.commit_message = result.stdout[1]
     end)
 
-    if state.upstream.branch then
+    if state.upstream.ref then
       table.insert(tasks, function()
         local result =
           git.cli.log.max_count(1).pretty("%B").for_range("@{upstream}").show_popup(false).call():trim()

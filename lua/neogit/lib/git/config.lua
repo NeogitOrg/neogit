@@ -45,11 +45,11 @@ local function config()
 end
 
 function M.get(key)
-  return config()[key:lower()]
+  return config()[key:lower()] or {}
 end
 
 function M.get_global(key)
-  return cli.config.global.get(key).call_sync():trim().stdout[1]
+  return cli.config.global.get(key).call_sync_ignoring_exit_code():trim().stdout[1] or ""
 end
 
 function M.get_matching(pattern)
@@ -67,6 +67,11 @@ function M.set(key, value)
   cache_key = nil
 
   if not value or value == "" or value == "unset" then
+    -- Unsetting a value that isn't set results in an error.
+    if M.get(key).value == nil then
+      return
+    end
+
     M.unset(key)
   else
     cli.config.set(key, value).call_sync()

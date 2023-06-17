@@ -233,8 +233,9 @@ local format = table.concat({
 
 ---@param options table|nil
 ---@return CommitLogEntry[]
-function M.list(options)
+function M.list(options, show_popup)
   options = options or {}
+  show_popup = show_popup or false
 
   local graph
   if vim.tbl_contains(options, "--color") then
@@ -246,7 +247,15 @@ function M.list(options)
     )
   end
 
-  local output = cli.log.format(format).graph.arg_list(options or {}).call():trim()
+  if
+    not vim.tbl_contains(options, function(item)
+      return item:match("%-%-max%-count=%d+")
+    end, { predicate = true })
+  then
+    table.insert(options, "--max-count=256")
+  end
+
+  local output = cli.log.format(format).graph.arg_list(options or {}).show_popup(show_popup).call():trim()
   return parse_log(output.stdout, graph)
 end
 
@@ -256,7 +265,7 @@ local function update_recent(state)
     return
   end
 
-  local result = M.list { "--max-count=" .. tostring(count) }
+  local result = M.list({ "--max-count=" .. tostring(count) }, false)
 
   state.recent.items = util.filter_map(result, function(v)
     if v.oid then

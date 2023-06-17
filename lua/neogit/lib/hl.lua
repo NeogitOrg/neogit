@@ -228,6 +228,9 @@ function M.setup()
     NeogitPopupBranchName = {
       link = "String",
     },
+    NeogitPopupBold = {
+      gui = "bold",
+    },
     NeogitPopupSwitchKey = {
       fg = palette.purple,
     },

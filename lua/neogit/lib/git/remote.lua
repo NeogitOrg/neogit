@@ -8,12 +8,11 @@ local M = {}
 local function cleanup_push_variables(remote, new_name)
   local git = require("neogit.lib.git")
 
-  if remote == (git.config.get("remote.pushDefault") or {}).value then
+  if remote == git.config.get("remote.pushDefault").value then
     git.config.set("remote.pushDefault", new_name)
   end
 
-  local variables = git.config.get_matching("^branch%.[^.]*%.pushremote")
-  for key, var in pairs(variables) do
+  for key, var in pairs(git.config.get_matching("^branch%.[^.]*%.push[Rr]emote")) do
     if var.value == remote then
       if new_name then
         git.config.set(key, new_name)
