@@ -3,6 +3,11 @@ local logger = require("neogit.logger")
 
 local M = {}
 
+---@class ConfigEntry
+---@field value string
+---@field type string
+
+---@type table<string, ConfigEntry>
 local config_cache = {}
 local cache_key = nil
 
@@ -44,6 +49,7 @@ local function config()
   return config_cache
 end
 
+---@return ConfigEntry|nil
 function M.get(key)
   return config()[key:lower()] or {}
 end
