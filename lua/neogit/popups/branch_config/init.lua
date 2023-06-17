@@ -29,10 +29,10 @@ function M.create(branch)
         { display = "true", value = "true" },
         { display = "false", value = "false" },
         {
-          display = "global:" .. git.config.get_global("pull.rebase"),
+          display = "global:" .. git.config.get_global("pull.rebase").value,
           value = "",
           condition = function()
-            return git.config.get_global("pull.rebase") ~= ""
+            return git.config.get_global("pull.rebase").value ~= nil
           end,
         },
       },
