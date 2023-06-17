@@ -48,14 +48,12 @@ function M.get_upstream()
   local full_name = cli["rev-parse"].abbrev_ref().show_popup(false).args("@{upstream}").call():trim().stdout
   local current = cli.branch.current.show_popup(false).call():trim().stdout
 
-  print("Current branch: " .. vim.inspect(current))
-
   if #full_name > 0 and #current > 0 then
-    local remote = config_lib.get("branch." .. current[1] .. ".remote")
+    local remote = config_lib.get("branch." .. current[1] .. ".remote").value
 
     if remote then
       return {
-        remote = remote.value,
+        remote = remote,
         branch = full_name[1]:sub(#remote + 2, -1),
       }
     end
