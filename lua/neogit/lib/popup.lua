@@ -174,7 +174,7 @@ function M:update_component(id, highlight, value)
         table.insert(component.children, text)
       end
     else
-      print("Unhandled component value type! (" .. type(value) .. ")")
+      logger.error(string.format("[POPUP]: Unhandled component value type! (%s)", type(value)))
     end
   end
 
