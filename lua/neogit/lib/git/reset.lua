@@ -59,6 +59,12 @@ function M.index(commit)
   end
 end
 
+--   "Reset the worktree to COMMIT. Keep the `HEAD' and index as-is."
+--
+--   (magit-wip-commit-before-change nil " before reset")
+--   (magit-with-temp-index commit nil (magit-call-git "checkout-index" "--all" "--force"))
+--   (magit-wip-commit-after-apply nil " after reset")
+--
 -- function M.worktree(commit)
 -- end
 

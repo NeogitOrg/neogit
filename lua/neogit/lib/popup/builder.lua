@@ -218,7 +218,10 @@ end
 ---@param options.passive boolean Controls if this config setting can be manipulated directly, or if it is managed by git, and should just be shown in UI
 ---@return self
 function M:config(key, name, options)
-  local c = config.get(name) or { value = "" }
+  local c = config.get(name)
+  if c.value == nil then
+    c.value = "unset"
+  end
 
   local variable = {
     id = key,
