@@ -80,6 +80,7 @@ M.values = {
     },
     status = {
       ["q"] = "Close",
+      ["I"] = "InitRepo",
       ["1"] = "Depth1",
       ["2"] = "Depth2",
       ["3"] = "Depth3",
@@ -108,8 +109,13 @@ M.values = {
       ["c"] = "CommitPopup",
       ["L"] = "LogPopup",
       ["Z"] = "StashPopup",
+      ["A"] = "CherryPickPopup",
       ["b"] = "BranchPopup",
       ["f"] = "FetchPopup",
+      ["X"] = "ResetPopup",
+      ["M"] = "RemotePopup",
+      ["{"] = "GoToPreviousHunkHeader",
+      ["}"] = "GoToNextHunkHeader",
     },
   },
 }
