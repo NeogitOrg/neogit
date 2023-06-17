@@ -60,74 +60,6 @@ function M.get_upstream()
   end
 end
 
-function M.prompt_for_branch(options, configuration)
-  a.util.scheduler()
-
-  options = options or M.get_local_branches()
-  local c = vim.tbl_deep_extend("keep", configuration or {}, {
-    truncate_remote_name = true,
-    truncate_remote_name_from_options = false,
-  })
-
-  if c.truncate_remote_name_from_options and not c.truncate_remote_name then
-    error(
-      'invalid prompt_for_branch configuration, "truncate_remote_name_from_options" cannot be "true" when "truncate_remote_name" is "false".'
-    )
-    return nil
-  end
-
-  local function truncate_remote_name(branch)
-    local truncated_remote_name = branch:match(".-/(.+)")
-    if truncated_remote_name and truncated_remote_name ~= "" then
-      return truncated_remote_name
-    end
-
-    return branch
-  end
-
-  local final_options = {}
-  for _, option in ipairs(options) do
-    if c.truncate_remote_name_from_options then
-      table.insert(final_options, truncate_remote_name(option))
-    else
-      table.insert(final_options, option)
-    end
-  end
-
-  local chosen = input.get_user_input_with_completion("branch > ", final_options)
-  if not chosen or chosen == "" then
-    return nil
-  end
-
-  if not c.truncate_remote_name_from_options and c.truncate_remote_name then
-    return truncate_remote_name(chosen)
-  end
-
-  return chosen
-end
-
-function M.checkout_local()
-  local branches = M.get_local_branches()
-
-  a.util.scheduler()
-  local chosen = M.prompt_for_branch(branches)
-  if not chosen then
-    return
-  end
-  cli.checkout.branch(chosen).call()
-end
-
-function M.checkout()
-  local branches = M.get_all_branches()
-
-  a.util.scheduler()
-  local chosen = M.prompt_for_branch(branches)
-  if not chosen then
-    return
-  end
-  cli.checkout.branch(chosen).call()
-end
-
 function M.create()
   a.util.scheduler()
   local name = input.get_user_input("branch > ")
@@ -138,30 +70,6 @@ function M.create()
   cli.branch.name(name:gsub("%s", "-")).call_interactive()
 
   return name
-end
-
-function M.delete()
-  local branches = M.get_all_branches()
-
-  a.util.scheduler()
-  local chosen = M.prompt_for_branch(branches)
-  if not chosen then
-    return
-  end
-
-  cli.branch.delete.name(chosen).call_interactive()
-
-  return chosen
-end
-
-function M.checkout_new()
-  a.util.scheduler()
-  local name = input.get_user_input("branch > ")
-  if not name or name == "" then
-    return
-  end
-
-  cli.checkout.new_branch(name:gsub("%s", "-")).call_interactive()
 end
 
 function M.current()
