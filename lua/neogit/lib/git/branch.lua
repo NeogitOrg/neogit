@@ -73,11 +73,16 @@ function M.create()
 end
 
 function M.current()
-  local branch_name = cli.branch.current.call_sync():trim().stdout
-  if #branch_name > 0 then
-    return branch_name[1]
+  local head = require("neogit.lib.git").repo.head.branch
+  if head then
+    return head
+  else
+    local branch_name = cli.branch.current.call_sync():trim().stdout
+    if #branch_name > 0 then
+      return branch_name[1]
+    end
+    return nil
   end
-  return nil
 end
 
 function M.pushRemote(branch)
@@ -88,8 +93,8 @@ function M.pushRemote(branch)
   end
 end
 
-function M.pushRemote_ref()
-  local branch = require("neogit.lib.git").repo.head.branch
+function M.pushRemote_ref(branch)
+  branch = branch or require("neogit.lib.git").repo.head.branch
   local pushRemote = M.pushRemote()
 
   if branch and pushRemote then
