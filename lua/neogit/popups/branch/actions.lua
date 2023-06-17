@@ -9,14 +9,14 @@ local notif = require("neogit.lib.notification")
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 local BranchConfigPopup = require("neogit.popups.branch_config")
 
-local function parse_remote_branch_name(remote_name)
-  local offset = remote_name:find("/")
+local function parse_remote_branch_name(ref)
+  local offset = ref:find("/")
   if not offset then
-    return nil, remote_name
+    return nil, ref
   end
 
-  local remote = remote_name:sub(1, offset - 1)
-  local branch_name = remote_name:sub(offset + 1, remote_name:len())
+  local remote = ref:sub(1, offset - 1)
+  local branch_name = ref:sub(offset + 1, ref:len())
 
   return remote, branch_name
 end
@@ -43,7 +43,7 @@ function M.checkout_local_branch()
   end)
 
   local target = FuzzyFinderBuffer.new(util.merge(local_branches, remote_branches)):open_async {
-    prompt_prefix = " branch > "
+    prompt_prefix = " branch > ",
   }
 
   if not target then
@@ -158,13 +158,22 @@ function M.delete_branch()
   end
 
   local remote, branch_name = parse_remote_branch_name(selected_branch)
-  git.cli.branch.delete.name(branch_name).call_sync():trim()
 
-  if remote and input.get_confirmation("Delete remote?", { values = { "&Yes", "&No" }, default = 2 }) then
+  if
+    remote
+    and branch_name
+    and input.get_confirmation(
+      "Delete remote branch '" .. remote .. "/" .. branch_name .. "'?",
+      { values = { "&Yes", "&No" }, default = 2 }
+    )
+  then
     git.cli.push.remote(remote).delete.to(branch_name).call_sync():trim()
+    notif.create(string.format("Deleted remote branch '%s/%s'", remote, branch_name), vim.log.levels.INFO)
+  elseif branch_name then
+    git.cli.branch.delete.name(branch_name).call_sync():trim()
+    notif.create(string.format("Deleted branch '%s'", branch_name), vim.log.levels.INFO)
   end
 
-  notif.create(string.format("Deleted branch '%s'", branch_name), vim.log.levels.INFO)
   status.refresh(true, "delete_branch")
 end
 
