@@ -12,7 +12,7 @@ end
 ---@field list table list of items to search
 ---@field action function action dispatched by line selection
 ---@field buffer Buffer
----@field open_sync function
+---@field open_async function
 ---@field open function
 local M = {}
 
@@ -36,23 +36,6 @@ function M:open(opts, action)
   }
 
   Finder.create(opts):add_entries(self.list):find(action)
-end
-
--- Opens finder in such a way that selected value can be returned to the main thread
--- without the need to use a callback to process the selection.
-function M:open_sync(...)
-  local tx, rx = require("plenary.async.control").channel.oneshot()
-  local result
-
-  self.action = function(selection)
-    result = selection
-    tx()
-  end
-
-  self:open(...)
-
-  rx()
-  return result
 end
 
 ---@param opts FinderOpts
