@@ -105,7 +105,7 @@ end
 -- Determines the correct highlight group for a config based on it's type and state.
 ---@return string
 local function get_highlight_for_config(config)
-  if config.value and config.value ~= "" and config.value ~= "unset" then
+  if config.value and config.value ~= "" then
     return config.type or "NeogitPopupConfigEnabled"
   end
 
@@ -160,22 +160,20 @@ function M:update_component(id, highlight, value)
     end
   end
 
-  if value then
-    if type(value) == "string" then
-      component.children[#component.children].value = value
-    elseif type(value) == "table" then
-      -- Remove last n children from row
-      for _ = 1, #value do
-        table.remove(component.children)
-      end
-
-      -- insert new items to row
-      for _, text in ipairs(value) do
-        table.insert(component.children, text)
-      end
-    else
-      logger.error(string.format("[POPUP]: Unhandled component value type! (%s)", type(value)))
+  if type(value) == "string" then
+    component.children[#component.children].value = value == "" and "unset" or value
+  elseif type(value) == "table" then
+    -- Remove last n children from row
+    for _ = 1, #value do
+      table.remove(component.children)
     end
+
+    -- insert new items to row
+    for _, text in ipairs(value) do
+      table.insert(component.children, text)
+    end
+  else
+    logger.error(string.format("[POPUP]: Unhandled component value type! (%s)", type(value)))
   end
 
   self.buffer.ui:update()
@@ -253,7 +251,7 @@ function M:set_config(config)
         return
       end
 
-      return option.value == "unset" and "" or option.value
+      return option.value
     end))
 
     local index = options[config.value]
@@ -264,15 +262,11 @@ function M:set_config(config)
   else
     local result = vim.fn.input {
       prompt = config.name .. " > ",
-      default = config.value == "unset" and "" or config.value,
+      default = config.value,
       cancelreturn = config.value,
     }
 
-    if not result or result == "" then
-      config.value = "unset"
-    else
-      config.value = result
-    end
+    config.value = result
   end
 
   git.config.set(config.name, config.value)
@@ -283,9 +277,9 @@ end
 function M:repaint_config()
   for _, var in ipairs(self.state.config) do
     if var.passive then
-      local c_value = git.config.get(var.name)
+      local c_value = git.config.get(var.name).value
       if c_value then
-        var.value = c_value.value
+        var.value = c_value
         self:update_component(var.id, nil, var.value)
       end
     elseif var.options then

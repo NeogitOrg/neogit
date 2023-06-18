@@ -219,9 +219,6 @@ end
 ---@return self
 function M:config(key, name, options)
   local c = config.get(name)
-  if c.value == nil then
-    c.value = "unset"
-  end
 
   local variable = {
     id = key,
