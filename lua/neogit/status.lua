@@ -227,7 +227,7 @@ local function draw_buffer()
         local file = files_lookup[f.name] or { folded = true }
         file.first = #output
 
-        if f.diff and not file.folded then
+        if not file.folded and f.has_diff then
           local hunks_lookup = Collection.new(file.hunks or {}):key_by("hash")
 
           local hunks = {}
@@ -235,26 +235,20 @@ local function draw_buffer()
             local current_hunk = hunks_lookup[h.hash] or { folded = false }
 
             output:append(f.diff.lines[h.diff_from])
-            M.status_buffer:place_sign(#output, "NeogitHunkHeader", "hl")
             current_hunk.first = #output
 
             if not current_hunk.folded then
               for i = h.diff_from + 1, h.diff_to do
-                local l = f.diff.lines[i]
-                output:append(l)
-                if diff_add_matcher:match_str(l) then
-                  M.status_buffer:place_sign(#output, "NeogitDiffAdd", "hl")
-                elseif diff_delete_matcher:match_str(l) then
-                  M.status_buffer:place_sign(#output, "NeogitDiffDelete", "hl")
-                end
+                output:append(f.diff.lines[i])
               end
             end
+
             current_hunk.last = #output
             table.insert(hunks, setmetatable(current_hunk, { __index = h }))
           end
 
           file.hunks = hunks
-        elseif f.diff then
+        elseif f.has_diff then
           file.hunks = file.hunks or {}
         end
 
@@ -264,7 +258,10 @@ local function draw_buffer()
     end
 
     location.last = #output
-    output:append("")
+
+    if not location.folded then
+      output:append("")
+    end
     table.insert(new_locations, location)
   end
 
@@ -465,6 +462,10 @@ local function current_line_is_hunk()
 end
 
 local function get_hunk_of_item_for_line(item, line)
+  if item.hunks == nil then
+    return nil
+  end
+
   local hunk
   local lines = {}
   for _, h in ipairs(item.hunks) do
