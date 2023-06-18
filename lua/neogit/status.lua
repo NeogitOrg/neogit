@@ -7,7 +7,6 @@ local notif = require("neogit.lib.notification")
 local config = require("neogit.config")
 local a = require("plenary.async")
 local logger = require("neogit.logger")
-local repository = require("neogit.lib.git.repository")
 local Collection = require("neogit.lib.collection")
 local F = require("neogit.lib.functional")
 local LineBuffer = require("neogit.lib.line_buffer")
@@ -17,11 +16,12 @@ local input = require("neogit.lib.input")
 local M = {}
 
 M.disabled = false
+
 M.current_operation = nil
 M.prev_autochdir = nil
-M.repo = repository.create()
 M.status_buffer = nil
 M.commit_view = nil
+
 ---@class Section
 ---@field first number
 ---@field last number
@@ -156,17 +156,17 @@ local function draw_buffer()
   end
 
   output:append(
-    string.format("Head: %s %s", M.repo.head.branch, M.repo.head.commit_message or "(no commits)")
+    string.format("Head: %s %s", git.repo.head.branch, git.repo.head.commit_message or "(no commits)")
   )
 
-  if M.repo.upstream.branch then
+  if git.repo.upstream.ref then
     output:append(
-      string.format("Push: %s %s", M.repo.upstream.branch, M.repo.upstream.commit_message or "(no commits)")
+      string.format("Push: %s %s", git.repo.upstream.ref, git.repo.upstream.commit_message or "(no commits)")
     )
   end
 
-  if M.repo.merge.head then
-    output:append(string.format("Merge: %s", M.repo.merge.msg or "(no message)"))
+  if git.repo.merge.head then
+    output:append(string.format("Merge: %s", git.repo.merge.msg or "(no message)"))
   end
 
   output:append("")
@@ -179,7 +179,7 @@ local function draw_buffer()
     if section_config == false then
       return
     end
-    local data = M.repo[key]
+    local data = git.repo[key]
     if #data.items == 0 then
       return
     end
@@ -264,8 +264,8 @@ local function draw_buffer()
     table.insert(new_locations, location)
   end
 
-  if M.repo.rebase.head then
-    render_section("Rebasing: " .. M.repo.rebase.head, "rebase")
+  if git.repo.rebase.head then
+    render_section("Rebasing: " .. git.repo.rebase.head, "rebase")
   end
   render_section("Untracked files", "untracked")
   render_section("Unstaged changes", "unstaged")
@@ -380,9 +380,8 @@ local refresh_lock = a.control.Semaphore.new(1)
 local lock_holder = nil
 
 local function refresh(which, reason)
-  which = which or true
-
   logger.info("[STATUS BUFFER]: Starting refresh")
+
   if refresh_lock.permits == 0 then
     logger.debug(
       string.format(
@@ -407,70 +406,7 @@ local function refresh(which, reason)
   local s, f, h = save_cursor_location()
 
   if cli.git_root() ~= "" then
-    if which == true or which.status then
-      M.repo:update_status()
-      a.util.scheduler()
-      refresh_status_buffer()
-    end
-
-    local refreshes = {}
-    if which == true or which.branch_information then
-      table.insert(refreshes, function()
-        logger.debug("[STATUS BUFFER]: Refreshing branch information")
-        M.repo:update_branch_information()
-      end)
-    end
-    if which == true or which.rebase then
-      table.insert(refreshes, function()
-        logger.debug("[STATUS BUFFER]: Refreshing rebase information")
-        M.repo:update_rebase_status()
-      end)
-    end
-
-    if which == true or which.rebase then
-      table.insert(refreshes, function()
-        logger.debug("[STATUS BUFFER]: Refreshing merge information")
-        M.repo:update_merge_status()
-      end)
-    end
-
-    if which == true or which.stashes then
-      table.insert(refreshes, function()
-        logger.debug("[STATUS BUFFER]: Refreshing stash")
-        M.repo:update_stashes()
-      end)
-    end
-    if which == true or which.unpulled then
-      table.insert(refreshes, function()
-        logger.debug("[STATUS BUFFER]: Refreshing unpulled commits")
-        M.repo:update_unpulled()
-      end)
-    end
-    if which == true or which.unmerged then
-      table.insert(refreshes, function()
-        logger.debug("[STATUS BUFFER]: Refreshing unpushed commits")
-        M.repo:update_unmerged()
-      end)
-    end
-    if which == true or which.recent then
-      table.insert(refreshes, function()
-        logger.debug("[STATUS BUFFER]: Refreshing recent commits")
-        M.repo:update_recent()
-      end)
-    end
-    if which == true or which.diffs then
-      local filter = (type(which) == "table" and type(which.diffs) == "table") and which.diffs or nil
-
-      table.insert(refreshes, function()
-        logger.debug("[STATUS BUFFER]: Refreshing diffs")
-        M.repo:load_diffs(filter)
-      end)
-    end
-    logger.debug(string.format("[STATUS BUFFER]: Running %d refresh(es)", #refreshes))
-    a.util.join(refreshes)
-    logger.debug("[STATUS BUFFER]: Refreshes completed")
-    a.util.scheduler()
-
+    git.repo:refresh(which)
     refresh_status_buffer()
     vim.cmd("do <nomodeline> User NeogitStatusRefreshed")
   end
@@ -568,7 +504,7 @@ local function toggle()
 end
 
 local reset = function()
-  M.repo = repository.create()
+  git.repo:reset()
   M.locations = {}
   if not config.values.auto_refresh then
     return
@@ -858,8 +794,6 @@ local discard = function()
   a.util.scheduler()
   vim.cmd("checktime")
 end
-
-local init_repo = git.init.init_repo
 
 local set_folds = function(to)
   Collection.new(M.locations):each(function(l)
