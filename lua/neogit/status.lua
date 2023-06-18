@@ -37,9 +37,9 @@ M.outdated = {}
 ---@field oid string|nil optional object id
 ---@field commit CommitLogEntry|nil optional object id
 
-local hunk_header_matcher = vim.regex("^@@.*@@")
-local diff_add_matcher = vim.regex("^+")
-local diff_delete_matcher = vim.regex("^-")
+local head_start = "@"
+local add_start = "+"
+local del_start = "-"
 
 local function get_section_idx_for_line(linenr)
   for i, l in pairs(M.locations) do
@@ -975,6 +975,80 @@ local cmd_func_map = function()
   }
 end
 
+-- Sets decoration provider for buffer
+---@param buffer Buffer
+---@return nil
+local function set_decoration_provider(buffer)
+  local decor_ns = api.nvim_create_namespace("NeogitStatusDecor")
+  local context_ns = api.nvim_create_namespace("NeogitStatusContext")
+
+  local function frame_key()
+    return table.concat { fn.line("w0"), fn.line("w$"), fn.getcurpos()[2], buffer:get_changedtick() }
+  end
+
+  local last_frame_key = frame_key()
+
+  local function on_start()
+    return buffer:is_focused() and frame_key() ~= last_frame_key
+  end
+
+  local function on_end()
+    last_frame_key = frame_key()
+  end
+
+  local function on_win()
+    buffer:clear_namespace(decor_ns)
+    buffer:clear_namespace(context_ns)
+
+    -- first and last lines of current context based on cursor position, if available
+    local _, _, _, first, last = save_cursor_location()
+    local cursor_line = vim.fn.line(".")
+
+    for line = fn.line("w0"), fn.line("w$") do
+      local text = buffer:get_line(line)[1]
+      if text then
+        local highlight
+        local start = string.sub(text, 1, 1)
+        local _, _, hunk, _, _ = save_cursor_location(line)
+
+        if start == head_start then
+          highlight = "NeogitHunkHeader"
+        elseif line == cursor_line then
+          highlight = "NeogitCursorLine"
+        elseif start == add_start then
+          highlight = "NeogitDiffAdd"
+        elseif start == del_start then
+          highlight = "NeogitDiffDelete"
+        elseif hunk then
+          highlight = "NeogitDiffContext"
+        end
+
+        if highlight then
+          buffer:set_extmark(decor_ns, line - 1, 0, { line_hl_group = highlight, priority = 9 })
+        end
+
+        if
+          not config.values.disable_context_highlighting
+          and first
+          and last
+          and line >= first
+          and line <= last
+          and highlight ~= "NeogitCursorLine"
+        then
+          buffer:set_extmark(
+            context_ns,
+            line - 1,
+            0,
+            { line_hl_group = (highlight or "NeogitDiffContext") .. "Highlight", priority = 10 }
+          )
+        end
+      end
+    end
+  end
+
+  buffer:set_decorations(decor_ns, { on_start = on_start, on_win = on_win, on_end = on_end })
+end
+
 --- Creates a new status buffer
 local function create(kind, cwd)
   kind = kind or config.values.kind
@@ -1023,43 +1097,14 @@ local function create(kind, cwd)
         end
       end
 
+      set_decoration_provider(buffer)
+
       logger.debug("[STATUS BUFFER]: Dispatching initial render")
       refresh(true, "Buffer.create")
     end,
   }
 end
 
-local highlight_group = vim.api.nvim_create_namespace("section-highlight")
-local function update_highlight()
-  if not M.status_buffer then
-    return
-  end
-  if config.values.disable_context_highlighting then
-    return
-  end
-
-  vim.api.nvim_buf_clear_namespace(0, highlight_group, 0, -1)
-  M.status_buffer:clear_sign_group("ctx")
-
-  local _, _, _, first, last = save_cursor_location()
-
-  if first == nil or last == nil then
-    return
-  end
-
-  for i = first, last do
-    local line = vim.fn.getline(i)
-    if hunk_header_matcher:match_str(line) then
-      M.status_buffer:place_sign(i, "NeogitHunkHeaderHighlight", "ctx")
-    elseif diff_add_matcher:match_str(line) then
-      M.status_buffer:place_sign(i, "NeogitDiffAddHighlight", "ctx")
-    elseif diff_delete_matcher:match_str(line) then
-      M.status_buffer:place_sign(i, "NeogitDiffDeleteHighlight", "ctx")
-    else
-      M.status_buffer:place_sign(i, "NeogitDiffContextHighlight", "ctx")
-    end
-  end
-end
 
 M.init_repo = init_repo
 M.create = create
