@@ -1,16 +1,15 @@
 local M = {}
 
 local util = require("neogit.lib.util")
+local NONE = function() end
 
 local status_mappings = vim.tbl_add_reverse_lookup(require("neogit.config").values.mappings.status)
 
 local function present(commands)
-  local presenter = util.map(vim.tbl_keys(commands), function(cmd)
-    return {
-      name = cmd,
-      key = status_mappings[cmd],
-      fn = commands[cmd],
-    }
+  local presenter = util.map(commands, function(command)
+    local cmd, name, fn = unpack(command)
+
+    return { name = name, key = status_mappings[cmd], fn = fn }
   end)
 
   table.sort(presenter, function(a, b)
@@ -21,48 +20,62 @@ local function present(commands)
 end
 
 M.popups = function(env)
+  local popups = require("neogit.popups")
+
   return present {
-    ["HelpPopup"] = require("neogit.popups.help").create,
-    ["DiffPopup"] = require("neogit.popups.diff").create,
-    ["PullPopup"] = require("neogit.popups.pull").create,
-    ["RebasePopup"] = require("neogit.popups.rebase").create,
-    ["MergePopup"] = require("neogit.popups.merge").create,
-    ["PushPopup"] = require("neogit.popups.push").create,
-    ["CommitPopup"] = require("neogit.popups.commit").create,
-    ["LogPopup"] = require("neogit.popups.log").create,
-    ["CherryPickPopup"] = require("neogit.popups.cherry_pick").create,
-    ["BranchPopup"] = require("neogit.popups.branch").create,
-    ["FetchPopup"] = require("neogit.popups.fetch").create,
-    ["ResetPopup"] = require("neogit.popups.reset").create,
-    ["RemotePopup"] = require("neogit.popups.remote").create,
-    ["InitRepo"] = require("neogit.lib.git").init.init_repo,
-    ["StashPopup"] = function()
-      require("neogit.popups.stash").create(env.get_stash())
-    end,
-    ["CommandHistory"] = function()
-      require("neogit.buffers.git_command_history"):new():show()
-    end,
+    { "HelpPopup", "Help", popups.help.create },
+    { "DiffPopup", "Diff", popups.diff.create },
+    { "PullPopup", "Pull", popups.pull.create },
+    { "RebasePopup", "Rebase", popups.rebase.create },
+    { "MergePopup", "Merge", popups.merge.create },
+    { "PushPopup", "Push", popups.push.create },
+    { "CommitPopup", "Commit", popups.commit.create },
+    { "LogPopup", "Log", popups.log.create },
+    { "CherryPickPopup", "Apply", popups.cherry_pick.create },
+    { "BranchPopup", "Branch", popups.branch.create },
+    { "FetchPopup", "Fetch", popups.fetch.create },
+    { "ResetPopup", "Reset", popups.reset.create },
+    { "RemotePopup", "Remote", popups.remote.create },
+    { "InitRepo", "Init", require("neogit.lib.git").init.init_repo },
+    {
+      "StashPopup",
+      "Stash",
+      function()
+        popups.stash.create(env.get_stash())
+      end,
+    },
+    {
+      "CommandHistory",
+      "History",
+      function()
+        require("neogit.buffers.git_command_history"):new():show()
+      end,
+    },
   }
 end
 
 M.actions = function()
   return present {
-    ["Stage"] = function() end,
-    ["StageUnstaged"] = function() end,
-    ["StageAll"] = function() end,
-    ["Unstage"] = function() end,
-    ["UnstageStaged"] = function() end,
-    ["Discard"] = function() end,
+    { "Stage", "Stage", NONE },
+    { "StageUnstaged", "Stage-Unstaged", NONE },
+    { "StageAll", "Stage all", NONE },
+    { "Unstage", "Unstage", NONE },
+    { "UnstageStaged", "Unstage-Staged", NONE },
+    { "Discard", "Discard", NONE },
   }
 end
 
 M.essential = function()
   return present {
-    ["RefreshBuffer"] = function()
-      require("neogit.status").refresh(true, "user_refresh")
-    end,
-    ["GoToFile"] = function() end,
-    ["Toggle"] = function() end,
+    {
+      "RefreshBuffer",
+      "Refresh",
+      function()
+        require("neogit.status").refresh(true, "user_refresh")
+      end,
+    },
+    { "GoToFile", "Go to file", NONE },
+    { "Toggle", "Toggle", NONE },
   }
 end
 
