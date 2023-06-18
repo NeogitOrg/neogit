@@ -9,7 +9,6 @@ local text = Ui.text
 local col = Ui.col
 local row = Ui.row
 local map = util.map
-local intersperse = util.intersperse
 
 function M.OverviewFile(file)
   return row.tag("OverviewFile") {
@@ -25,10 +24,16 @@ end
 function M.CommitHeader(info)
   return col {
     text.sign("NeogitCommitViewHeader")("Commit " .. info.oid),
-    text("Author:     " .. info.author_name .. " <" .. info.author_email .. ">"),
-    text("AuthorDate: " .. info.author_date),
-    text("Commit:     " .. info.committer_name .. " <" .. info.committer_email .. ">"),
-    text("CommitDate: " .. info.committer_date),
+    row {
+      text.highlight("Comment")("Author:     "),
+      text(info.author_name .. " <" .. info.author_email .. ">"),
+    },
+    row { text.highlight("Comment")("AuthorDate: "), text(info.author_date) },
+    row {
+      text.highlight("Comment")("Committer:  "),
+      text(info.committer_name .. " <" .. info.committer_email .. ">"),
+    },
+    row { text.highlight("Comment")("CommitDate: "), text(info.committer_date) },
   }
 end
 
@@ -41,7 +46,7 @@ function M.CommitView(info, overview)
     text(overview.summary),
     col(map(overview.files, M.OverviewFile), { tag = "OverviewFileList" }),
     text(""),
-    col(intersperse(map(info.diffs, Diff), text("")), { tag = "DiffList" }),
+    col(map(info.diffs, Diff), { tag = "DiffList" }),
   }
 end
 
