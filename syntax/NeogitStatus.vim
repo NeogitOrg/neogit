@@ -29,3 +29,5 @@ syn region NeogitUnmergedIntoRegion start=/^Unmerged into .*/ end=/$/ contains=N
 syn region NeogitUnpulledFromRegion start=/^Unpulled from .*/ end=/$/ contains=NeogitRemote,NeogitUnpulledFrom
 syn region NeogitDiffAddRegion      start=/^+.*$/             end=/$/ contains=NeogitDiffAdd
 syn region NeogitDiffDeleteRegion   start=/^-.*$/             end=/$/ contains=NeogitDiffDelete
+
+let b:current_syntax = 1
