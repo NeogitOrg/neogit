@@ -280,40 +280,48 @@ local function draw_buffer()
   M.locations = new_locations
 end
 
---- Find the closest section the cursor is encosed by.
+--- Find the smallest section the cursor is contained within.
 --
--- @return table, table, table, number, number -
 --  The first 3 values are tables in the shape of {number, string}, where the number is
 --  the relative offset of the found item and the string is it's identifier.
 --  The remaining 2 numbers are the first and last line of the found section.
-local function save_cursor_location()
-  local line = vim.fn.line(".")
+---@param linenr number|nil
+---@return table, table, table, number, number
+local function save_cursor_location(linenr)
+  local line = linenr or vim.fn.line(".")
   local section_loc, file_loc, hunk_loc, first, last
 
   for li, loc in ipairs(M.locations) do
     if line == loc.first then
       section_loc = { li, loc.name }
       first, last = loc.first, loc.last
+
       break
     elseif line >= loc.first and line <= loc.last then
       section_loc = { li, loc.name }
+
       for fi, file in ipairs(loc.files) do
         if line == file.first then
           file_loc = { fi, file.name }
           first, last = file.first, file.last
+
           break
         elseif line >= file.first and line <= file.last then
           file_loc = { fi, file.name }
+
           for hi, hunk in ipairs(file.hunks) do
-            if line <= hunk.last then
+            if line >= hunk.first and line <= hunk.last then
               hunk_loc = { hi, hunk.hash }
               first, last = hunk.first, hunk.last
+
               break
             end
           end
+
           break
         end
       end
+
       break
     end
   end
