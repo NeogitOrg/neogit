@@ -203,6 +203,7 @@ function M:toggle_switch(switch)
   state.set({ self.state.name, switch.cli }, switch.enabled)
   self:update_component(switch.id, get_highlight_for_switch(switch), switch.cli)
 
+  -- Ensure that other switches that are incompatible with this one are disabled
   if switch.enabled and #switch.incompatible > 0 then
     for _, var in ipairs(self.state.args) do
       if var.type == "switch" and var.enabled and switch.incompatible[var.cli] then
@@ -246,7 +247,14 @@ function M:set_option(option)
   end
 end
 
+-- TODO: Move the "unset" logic strictly to the view layer, the internal state should never
+-- hold that as a value
+--
+-- Set a config value
+---@param config table
+---@return nil
 function M:set_config(config)
+  -- For config's that offer predetermined options to choose from.
   if config.options then
     local options = build_reverse_lookup(filter_map(config.options, function(option)
       if option.condition and not option.condition() then
@@ -262,6 +270,7 @@ function M:set_config(config)
     config.callback(self, config)
     return
   else
+    -- For config's that require user input
     local result = vim.fn.input {
       prompt = config.name .. " > ",
       default = config.value == "unset" and "" or config.value,
