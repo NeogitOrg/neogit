@@ -13,6 +13,10 @@ local LineBuffer = require("neogit.lib.line_buffer")
 local fs = require("neogit.lib.fs")
 local input = require("neogit.lib.input")
 
+local map = require("neogit.lib.util").map
+local api = vim.api
+local fn = vim.fn
+
 local M = {}
 
 M.disabled = false
