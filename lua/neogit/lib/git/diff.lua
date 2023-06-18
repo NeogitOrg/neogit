@@ -225,7 +225,7 @@ end
 return {
   parse = parse_diff,
   register = function(meta)
-    meta.load_diffs = function(repo, filter)
+    meta.update_diffs = function(repo, filter)
       filter = filter or false
       if filter and type(filter) == "table" then
         filter = ItemFilter.create(filter)

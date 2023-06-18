@@ -10,7 +10,7 @@ function M.pull_interactive(remote, branch, args)
 end
 
 local function update_unpulled(state)
-  if not state.upstream.branch then
+  if not state.upstream.ref then
     return
   end
 

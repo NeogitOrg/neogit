@@ -1,10 +1,11 @@
-local cli = require("neogit.lib.git.cli")
-
 return {
+  repo = require("neogit.lib.git.repository"),
+  cli = require("neogit.lib.git.cli"),
   init = require("neogit.lib.git.init"),
-  cli = cli,
   status = require("neogit.lib.git.status"),
   stash = require("neogit.lib.git.stash"),
+  files = require("neogit.lib.git.files"),
+  fetch = require("neogit.lib.git.fetch"),
   log = require("neogit.lib.git.log"),
   reflog = require("neogit.lib.git.reflog"),
   branch = require("neogit.lib.git.branch"),
@@ -15,4 +16,6 @@ return {
   reset = require("neogit.lib.git.reset"),
   remote = require("neogit.lib.git.remote"),
   config = require("neogit.lib.git.config"),
+  pull = require("neogit.lib.git.pull"),
+  push = require("neogit.lib.git.push"),
 }
