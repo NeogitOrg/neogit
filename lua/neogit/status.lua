@@ -596,6 +596,37 @@ local function generate_patch_from_selection(item, hunk, from, to, reverse)
   return table.concat(diff_content, "\n")
 end
 
+--- Returns commits in selection
+---@return table
+local function get_selected_commits()
+  local first_line = vim.fn.getpos("v")[2]
+  local last_line = vim.fn.getpos(".")[2]
+
+  local items = {}
+  for line = first_line, last_line do
+    local _, item = get_section_item_for_line(line)
+    table.insert(items, item)
+  end
+
+  return items
+end
+
+---Determines if selection contains multiple files
+---@return boolean
+local function selection_spans_multiple_items_within_section()
+  local first_line = vim.fn.getpos("v")[2]
+  local last_line = vim.fn.getpos(".")[2]
+
+  local first_section, first_item = get_section_item_for_line(first_line)
+  local last_section, last_item = get_section_item_for_line(last_line)
+
+  if not first_section or not last_section then
+    return false
+  end
+
+  return (first_section.name == last_section.name) and (first_item.name ~= last_item.name)
+end
+
 --- Validates the current selection and acts accordingly
 --@return nil
 --@return number, number
@@ -641,18 +672,30 @@ local function get_selection()
 end
 
 local stage_selection = function()
-  local section, item, hunk, from, to = get_selection()
-  if section and from then
-    local patch = generate_patch_from_selection(item, hunk, from, to)
-    cli.apply.cached.with_patch(patch).call()
+  if selection_spans_multiple_items_within_section() then
+    git.status.stage(unpack(map(get_selected_commits(), function(item)
+      return item.name
+    end)))
+  else
+    local section, item, hunk, from, to = get_selection()
+    if section and from then
+      local patch = generate_patch_from_selection(item, hunk, from, to)
+      cli.apply.cached.with_patch(patch).call()
+    end
   end
 end
 
 local unstage_selection = function()
-  local section, item, hunk, from, to = get_selection()
-  if section and from then
-    local patch = generate_patch_from_selection(item, hunk, from, to, true)
-    cli.apply.reverse.cached.with_patch(patch).call()
+  if selection_spans_multiple_items_within_section() then
+    git.status.unstage(unpack(map(get_selected_commits(), function(item)
+      return item.name
+    end)))
+  else
+    local section, item, hunk, from, to = get_selection()
+    if section and from then
+      local patch = generate_patch_from_selection(item, hunk, from, to, true)
+      cli.apply.reverse.cached.with_patch(patch).call()
+    end
   end
 end
 
@@ -738,68 +781,111 @@ local unstage = function()
   M.current_operation = nil
 end
 
-local discard = function()
-  local section, item = get_current_section_item()
-
-  if section == nil or item == nil then
-    return
-  end
-  M.current_operation = "discard"
-
-  if
-    not input.get_confirmation("Discard '" .. item.name .. "' ?", {
-      values = { "&Yes", "&No" },
-      default = 2,
-    })
-  then
-    return
-  end
-
-  local mode = vim.api.nvim_get_mode()
-  -- Make sure the index is in sync as git-status skips it
-  -- Do this manually since the `cli` add --no-optional-locks
+local function update_index()
   require("neogit.process")
     .new({ cmd = { "git", "update-index", "-q", "--refresh" }, verbose = true })
     :spawn_async()
-  -- TODO: fix nesting
+end
+
+local function discard_message(item, mode)
   if mode.mode == "V" then
-    local section, item, hunk, from, to = get_selection()
-    logger.debug("Discarding selection hunk:" .. vim.inspect(hunk))
-    local patch = generate_patch_from_selection(item, hunk, from, to, true)
-    logger.debug("Patch:" .. vim.inspect(patch))
-
-    if section.name == "staged" then
-      local result = cli.apply.reverse.index.with_patch(patch).call()
-      if result.code ~= 0 then
-        error("Failed to discard" .. vim.inspect(result))
-      end
-    else
-      cli.apply.reverse.with_patch(patch).call()
-    end
-  elseif section.name == "untracked" then
-    local repo_root = cli.git_root()
-    a.util.scheduler()
-    vim.fn.delete(repo_root .. "/" .. item.name)
+    return "Discard selection?"
   else
-    local on_hunk = current_line_is_hunk()
+    return "Discard '" .. item.name .. "' ?"
+  end
+end
 
-    if on_hunk then
-      local hunk, lines = get_current_hunk_of_item(item)
-      lines[1] =
-        string.format("@@ -%d,%d +%d,%d @@", hunk.index_from, hunk.index_len, hunk.index_from, hunk.disk_len)
-      local diff = table.concat(lines or {}, "\n")
-      diff = table.concat({ "--- a/" .. item.name, "+++ b/" .. item.name, diff, "" }, "\n")
-      if section.name == "staged" then
-        cli.apply.reverse.index.with_patch(diff).call()
-      else
-        cli.apply.reverse.with_patch(diff).call()
-      end
-    elseif section.name == "unstaged" then
-      cli.checkout.files(item.name).call()
-    elseif section.name == "staged" then
-      cli.reset.files(item.name).call()
-      cli.checkout.files(item.name).call()
+---Discards selected files
+---@param files table
+---@param section string
+local function discard_selected_files(files, section)
+  local filenames = map(files, function(item)
+    return item.name
+  end)
+
+  logger.debug("[Status] Discarding selected files: " .. table.concat(filenames, ", "))
+
+  if section == "untracked" then
+    a.util.scheduler()
+    for _, file in ipairs(filenames) do
+      vim.fn.delete(cli.git_root() .. "/" .. file)
     end
+  elseif section == "unstaged" then
+    cli.checkout.files(unpack(filenames)).call()
+  elseif section == "staged" then
+    cli.reset.files(unpack(filenames)).call()
+    cli.checkout.files(unpack(filenames)).call()
+  end
+end
+
+---Discards selected lines
+local function discard_selection(section, item, hunk, from, to)
+  logger.debug("Discarding selection hunk:" .. vim.inspect(hunk))
+  local patch = generate_patch_from_selection(item, hunk, from, to, true)
+  logger.debug("Patch:" .. vim.inspect(patch))
+
+  if section.name == "staged" then
+    local result = cli.apply.reverse.index.with_patch(patch).call()
+    if result.code ~= 0 then
+      error("Failed to discard" .. vim.inspect(result))
+    end
+  else
+    cli.apply.reverse.with_patch(patch).call()
+  end
+end
+
+---Discards hunk
+local function discard_hunk(section, item, lines, hunk)
+  lines[1] =
+    string.format("@@ -%d,%d +%d,%d @@", hunk.index_from, hunk.index_len, hunk.index_from, hunk.disk_len)
+
+  local diff = table.concat(lines or {}, "\n")
+  diff = table.concat({ "--- a/" .. item.name, "+++ b/" .. item.name, diff, "" }, "\n")
+  if section == "staged" then
+    cli.apply.reverse.index.with_patch(diff).call()
+  else
+    cli.apply.reverse.with_patch(diff).call()
+  end
+end
+
+local discard = function()
+  local section, item = get_current_section_item()
+  if section == nil or item == nil then
+    return
+  end
+
+  M.current_operation = "discard"
+
+  local mode = vim.api.nvim_get_mode()
+
+  -- These all need to be captured _before_ the get_confirmation() call, since that
+  -- seems to effect how vim determines what's selected
+  local multi_file = selection_spans_multiple_items_within_section()
+  local files = get_selected_commits()
+
+  local selection = { get_selection() }
+
+  local on_hunk = current_line_is_hunk()
+  local hunk, lines = get_current_hunk_of_item(item)
+
+  if not input.get_confirmation(discard_message(item, mode), { values = { "&Yes", "&No" }, default = 2 }) then
+    return
+  end
+
+  -- Make sure the index is in sync as git-status skips it
+  -- Do this manually since the `cli` add --no-optional-locks
+  update_index()
+
+  if mode.mode == "V" then
+    if multi_file then
+      discard_selected_files(files, section.name)
+    else
+      discard_selection(unpack(selection))
+    end
+  elseif on_hunk then
+    discard_hunk(section.name, item, lines, hunk)
+  else
+    discard_selected_files({ item }, section.name)
   end
 
   refresh(true, "discard")
