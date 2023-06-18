@@ -92,6 +92,12 @@ $                       Command History
                                                 *neogit_<C-r>*
 <C-r>                   Refresh Buffer
 
+                                                *neogit_{*
+{                      Goto previous hunk
+
+                                                *neogit_}*
+}                      Goto next hunk
+
                                                 *neogit_L*
 L                       Open log popup
 
