@@ -832,7 +832,7 @@ local cmd_func_map = function()
     ["Close"] = function()
       M.status_buffer:close()
     end,
-    ["InitRepo"] = a.void(init_repo),
+    ["InitRepo"] = a.void(git.init.init_repo),
     ["Depth1"] = a.void(function()
       set_folds { true, true, false }
     end),
@@ -1034,6 +1034,8 @@ local cmd_func_map = function()
     end,
     ["BranchPopup"] = require("neogit.popups.branch").create,
     ["FetchPopup"] = require("neogit.popups.fetch").create,
+    ["RemotePopup"] = require("neogit.popups.remote").create,
+    ["ResetPopup"] = require("neogit.popups.reset").create,
   }
 end
 
@@ -1112,7 +1114,7 @@ local function set_decoration_provider(buffer)
 end
 
 --- Creates a new status buffer
-local function create(kind, cwd)
+function M.create(kind, cwd)
   kind = kind or config.values.kind
 
   if M.status_buffer then
@@ -1167,11 +1169,7 @@ local function create(kind, cwd)
   }
 end
 
-
-M.init_repo = init_repo
-M.create = create
 M.toggle = toggle
-M.update_highlight = update_highlight
 M.generate_patch_from_selection = generate_patch_from_selection
 M.reset = reset
 M.dispatch_reset = dispatch_reset
