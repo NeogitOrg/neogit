@@ -4,8 +4,8 @@ local logger = require("neogit.logger")
 local M = {}
 
 ---@class ConfigEntry
----@field value string
----@field type string
+---@field value string|nil
+---@field type string|nil
 
 ---@type table<string, ConfigEntry>
 local config_cache = {}
