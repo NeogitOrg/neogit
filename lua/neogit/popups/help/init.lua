@@ -9,11 +9,11 @@ function M.create(env)
 
   local popups = actions.popups(env)
   for i, cmd in ipairs(popups) do
-    if i == math.ceil(#popups / 2) then
+    p = p:action(cmd.key, cmd.name, cmd.fn)
+
+    if i == math.floor(#popups / 2) then
       p = p:new_action_group()
     end
-
-    p = p:action(cmd.key, cmd.name, cmd.fn)
   end
 
   p = p:new_action_group():new_action_group("Applying changes")
