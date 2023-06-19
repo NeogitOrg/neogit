@@ -16,10 +16,10 @@ local old_config
 
 local function remove_trailing_blankline(lines)
   if lines[#lines] ~= "" then
-    error("Git show did not end with a blankline")
+    lines[#lines + 1] = nil
+  else
+    lines[#lines] = nil
   end
-
-  lines[#lines] = nil
   return lines
 end
 
