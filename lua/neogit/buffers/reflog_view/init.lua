@@ -5,6 +5,7 @@ local config = require("neogit.config")
 
 local CommitViewBuffer = require("neogit.buffers.commit_view")
 local CherryPickPopup = require("neogit.popups.cherry_pick")
+local RevertPopup = require("neogit.popups.revert")
 
 ---@class ReflogViewBuffer
 ---@field entries ReflogEntry[]
@@ -49,8 +50,17 @@ function M:open()
 
           CherryPickPopup.create { commits = commits }
         end,
-        ["V"] = function()
-          print("TODO: Revert")
+        ["_"] = function()
+          local commits = util.filter_map(
+            self.buffer.ui:get_component_stack_in_linewise_selection(),
+            function(c)
+              if c.options.oid then
+                return c.options.oid
+              end
+            end
+          )
+
+          RevertPopup.create { commits = commits }
         end,
       },
       n = {
@@ -64,8 +74,9 @@ function M:open()
           local stack = self.buffer.ui:get_component_stack_under_cursor()
           CherryPickPopup.create { commits = { stack[#stack].options.oid } }
         end,
-        ["V"] = function()
-          print("TODO: Revert")
+        ["_"] = function()
+          local stack = self.buffer.ui:get_component_stack_under_cursor()
+          RevertPopup.create { commits = { stack[#stack].options.oid } }
         end,
         ["<enter>"] = function()
           local stack = self.buffer.ui:get_component_stack_under_cursor()
