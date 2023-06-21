@@ -108,6 +108,7 @@ M.values = {
       ["P"] = "PushPopup",
       ["c"] = "CommitPopup",
       ["L"] = "LogPopup",
+      ["_"] = "RevertPopup",
       ["Z"] = "StashPopup",
       ["A"] = "CherryPickPopup",
       ["b"] = "BranchPopup",

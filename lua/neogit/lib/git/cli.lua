@@ -148,6 +148,8 @@ local configurations = {
     },
   },
 
+  revert = config {},
+
   checkout = config {
     short_opts = {
       b = "-b",

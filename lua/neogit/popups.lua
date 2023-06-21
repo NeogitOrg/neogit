@@ -12,5 +12,6 @@ return {
   rebase = require("neogit.popups.rebase"),
   remote = require("neogit.popups.remote"),
   reset = require("neogit.popups.reset"),
+  revert = require("neogit.popups.revert"),
   stash = require("neogit.popups.stash"),
 }

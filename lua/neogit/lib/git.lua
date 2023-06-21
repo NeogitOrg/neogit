@@ -14,6 +14,7 @@ return {
   merge = require("neogit.lib.git.merge"),
   cherry_pick = require("neogit.lib.git.cherry_pick"),
   reset = require("neogit.lib.git.reset"),
+  revert = require("neogit.lib.git.revert"),
   remote = require("neogit.lib.git.remote"),
   config = require("neogit.lib.git.config"),
   pull = require("neogit.lib.git.pull"),
