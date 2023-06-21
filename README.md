@@ -95,6 +95,7 @@ The create function takes 1 optional argument that can be one of the following v
 | Z            | Open stash popup                                 |
 | X            | Open reset popup                                 |
 | A            | Open cherry pick popup                           |
+| _            | Open revert popup                                |
 | ?            | Open help popup                                  |
 | x            | Discard changes (also supports discarding hunks) |
 | \<enter>     | Go to file                                       |
@@ -252,6 +253,7 @@ neogit.setup {
 * BranchPopup
 * MergePopup
 * CherryPickPopup (Normal and visual mode)
+* RevertPopup (Normal and visual mode)
 
 ### List of fuzzy-finder commands:
 * Select
