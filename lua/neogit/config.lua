@@ -64,7 +64,12 @@ M.values = {
       folded = true,
     },
   },
-  ignored_settings = {},
+  ignored_settings = {
+    "NeogitPushPopup--force-with-lease",
+    "NeogitPushPopup--force",
+    "NeogitCommitPopup--allow-empty",
+    "NeogitRevertPopup--no-edit", -- TODO: Fix incompatible switches with default enables
+  },
   mappings = {
     finder = {
       ["<cr>"] = "Select",
