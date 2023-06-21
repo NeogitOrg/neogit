@@ -1,6 +1,4 @@
 local RPC = require("neogit.lib.rpc")
-local notif = require("neogit.lib.notification")
-local a = require("plenary.async")
 local fn = vim.fn
 local fmt = string.format
 
@@ -86,6 +84,9 @@ end
 ---@param cmd any
 ---@param opts table
 function M.wrap(cmd, opts)
+  local notif = require("neogit.lib.notification")
+  local a = require("plenary.async")
+
   a.util.scheduler()
 
   local notification = notif.create(opts.msg.setup, vim.log.levels.INFO, 9999)
