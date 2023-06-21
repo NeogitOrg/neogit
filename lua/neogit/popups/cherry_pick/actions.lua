@@ -4,22 +4,6 @@ local a = require("plenary.async")
 local git = require("neogit.lib.git")
 local CommitSelectViewBuffer = require("neogit.buffers.commit_select_view")
 
--- .git/sequencer/todo does not exist when there is only one commit left.
---
--- And CHERRY_PICK_HEAD does not exist when a conflict happens while picking a series of commits with --no-commit.
--- And REVERT_HEAD does not exist when a conflict happens while reverting a series of commits with --no-commit.
---
-function M.pick_or_revert_in_progress()
-  local pick_or_revert_todo = false
-
-  for _, item in ipairs(git.repo.cherry_pick.items) do
-    if item.name:match("^pick") or item.name:match("^revert") then
-      pick_or_revert_todo = true
-      break
-    end
-  end
-
-  return git.repo.cherry_pick.head or pick_or_revert_todo
 end
 
 function M.pick(popup)

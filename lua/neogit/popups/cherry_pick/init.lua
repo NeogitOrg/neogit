@@ -4,7 +4,7 @@ local actions = require("neogit.popups.cherry_pick.actions")
 local M = {}
 
 function M.create(env)
-  local in_progress = actions.pick_or_revert_in_progress()
+  local in_progress = require("neogit.lib.git.sequencer").pick_or_revert_in_progress()
 
   local p = popup
     .builder()

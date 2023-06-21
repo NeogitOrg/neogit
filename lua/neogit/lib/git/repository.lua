@@ -40,7 +40,7 @@ local function empty_state()
       items = {},
       head = nil,
     },
-    cherry_pick = {
+    sequencer = {
       items = {},
       head = nil,
     },
@@ -173,7 +173,7 @@ if not M.initialized then
     "push",
     "log",
     "rebase",
-    "cherry_pick",
+    "sequencer",
     "merge",
   }
 

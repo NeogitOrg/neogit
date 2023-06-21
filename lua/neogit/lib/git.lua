@@ -17,6 +17,7 @@ return {
   revert = require("neogit.lib.git.revert"),
   remote = require("neogit.lib.git.remote"),
   config = require("neogit.lib.git.config"),
+  sequencer = require("neogit.lib.git.sequencer"),
   pull = require("neogit.lib.git.pull"),
   push = require("neogit.lib.git.push"),
 }
