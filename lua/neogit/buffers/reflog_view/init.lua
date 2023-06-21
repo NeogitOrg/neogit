@@ -60,7 +60,8 @@ function M:open()
             end
           )
 
-          RevertPopup.create { commits = commits }
+          print("Multiple commits not yet implimented")
+          -- RevertPopup.create(commits)
         end,
       },
       n = {
@@ -76,7 +77,7 @@ function M:open()
         end,
         ["_"] = function()
           local stack = self.buffer.ui:get_component_stack_under_cursor()
-          RevertPopup.create { commits = { stack[#stack].options.oid } }
+          RevertPopup.create(stack[#stack].options.oid)
         end,
         ["<enter>"] = function()
           local stack = self.buffer.ui:get_component_stack_under_cursor()
