@@ -4,9 +4,9 @@ local a = require("plenary.async")
 local git = require("neogit.lib.git")
 local CommitSelectViewBuffer = require("neogit.buffers.commit_select_view")
 
-end
-
-function M.pick(popup)
+---@param popup any
+---@return table
+local function get_commits(popup)
   local commits
   if popup.state.env.commits then
     commits = popup.state.env.commits
@@ -14,10 +14,16 @@ function M.pick(popup)
     commits = { CommitSelectViewBuffer.new(git.log.list { "--max-count=256" }):open_async() }
   end
 
-  if not commits or not commits[1] then
+  return commits or {}
+end
+
+function M.pick(popup)
+  local commits = get_commits(popup)
+  if not commits[1] then
     return
   end
 
+  a.util.scheduler()
   git.cherry_pick.pick(commits, popup:get_arguments())
 
   a.util.scheduler()
@@ -25,17 +31,12 @@ function M.pick(popup)
 end
 
 function M.apply(popup)
-  local commits
-  if popup.state.env.commits then
-    commits = popup.state.env.commits
-  else
-    commits = { CommitSelectViewBuffer.new(git.log.list { "--max-count=256" }):open_async() }
-  end
-
-  if not commits or not commits[1] then
+  local commits = get_commits(popup)
+  if not commits[1] then
     return
   end
 
+  a.util.scheduler()
   git.cherry_pick.apply(commits, popup:get_arguments())
 
   a.util.scheduler()
