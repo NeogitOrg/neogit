@@ -3,7 +3,7 @@ local popup = require("neogit.lib.popup")
 
 local M = {}
 
-function M.create(commit)
+function M.create(commits)
   local p = popup
     .builder()
     :name("NeogitRevertPopup")
@@ -17,7 +17,7 @@ function M.create(commit)
     -- :option("S", "gpg-sign", "", "Sign using gpg")
     :action("_", "Revert commit", actions.commits) -- TODO: Support multiple commits
     :action("v", "Revert changes")
-    :env({ commit = commit })
+    :env({ commits = commits })
     :build()
 
   p:show()
