@@ -263,11 +263,18 @@ local configurations = {
     },
   },
 
+  cherry = config {
+    flags = {
+      verbose = "-v",
+    },
+  },
+
   branch = config {
     flags = {
       all = "-a",
       delete = "-d",
       remotes = "-r",
+      force = "--force",
       current = "--show-current",
       very_verbose = "-vv",
       move = "-m",

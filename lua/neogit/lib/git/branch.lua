@@ -3,6 +3,7 @@ local cli = require("neogit.lib.git.cli")
 local config_lib = require("neogit.lib.git.config")
 local input = require("neogit.lib.input")
 local config = require("neogit.config")
+
 local M = {}
 
 local function parse_branches(branches, include_current)
@@ -58,6 +59,10 @@ function M.get_upstream()
       }
     end
   end
+end
+
+function M.isUnmerged(branch, base)
+  return cli.cherry.arg_list({ base or "master", branch }).call_sync():trim().stdout[1] ~= nil
 end
 
 function M.create()

@@ -30,7 +30,7 @@ M.Diff = Component.new(function(diff)
   end)
 
   return col.tag("Diff") {
-    text(diff.kind .. " " .. diff.file, { sign = "NeogitDiffHeader" }),
+    text(string.format("%s %s", diff.kind, diff.file), { sign = "NeogitDiffHeader" }),
     col.tag("DiffContent") {
       col.tag("DiffInfo")(map(diff.info, text)),
       col.tag("HunkList")(map(hunk_props, M.Hunk)),
