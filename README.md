@@ -11,6 +11,7 @@ require `nvim-lua/plenary.nvim` and `nvim-telescope/telescope.nvim` using your p
 
 | Plugin Manager                                       | Command                                                                        |
 | ---------------------------------------------------- | ------------------------------------------------------------------------------ |
+| [Lazy](https://github.com/folke/lazy.nvim)           | `return { 'TimUntersberger/neogit', dependencies = 'nvim-lua/plenary.nvim' }`  |
 | [Packer](https://github.com/wbthomason/packer.nvim)  | `use { 'TimUntersberger/neogit', requires = 'nvim-lua/plenary.nvim' }`         |
 | [Vim-plug](https://github.com/junegunn/vim-plug)     | `Plug 'TimUntersberger/neogit'`                                                |
 | [NeoBundle](https://github.com/Shougo/neobundle.vim) | `NeoBundle 'TimUntersberger/neogit'`                                           |
