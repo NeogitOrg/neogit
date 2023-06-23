@@ -3,6 +3,7 @@ local cli = require("neogit.lib.git.cli")
 local parser = require("neogit.buffers.commit_view.parsing")
 local ui = require("neogit.buffers.commit_view.ui")
 local log = require("neogit.lib.git.log")
+local config = require("neogit.config")
 
 local CherryPickPopup = require("neogit.popups.cherry_pick")
 
@@ -71,7 +72,7 @@ function M:open()
   self.buffer = Buffer.create {
     name = "NeogitCommitView",
     filetype = "NeogitCommitView",
-    kind = "vsplit",
+    kind = config.values.commit_view.kind,
     context_highlight = true,
     autocmds = {
       ["BufUnload"] = function()

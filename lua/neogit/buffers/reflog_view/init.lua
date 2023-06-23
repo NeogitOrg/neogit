@@ -34,7 +34,7 @@ function M:open()
   self.buffer = Buffer.create {
     name = "NeogitReflogView",
     filetype = "NeogitReflogView",
-    kind = "tab",
+    kind = config.values.reflog_view.kind,
     context_highlight = true,
     mappings = {
       v = {

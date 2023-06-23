@@ -1,4 +1,5 @@
 local Buffer = require("neogit.lib.buffer")
+local config = require("neogit.config")
 
 local M = {}
 
@@ -20,7 +21,7 @@ function M:open()
     load = true,
     filetype = "NeogitMergeMessage",
     buftype = "",
-    kind = "split",
+    kind = config.values.merge_editor.kind,
     modifiable = true,
     readonly = false,
     autocmds = {

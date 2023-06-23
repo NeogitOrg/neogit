@@ -21,7 +21,7 @@ function M:open()
     load = true,
     filetype = "NeogitRebaseTodo",
     buftype = "",
-    kind = config.values.commit_popup.kind,
+    kind = config.values.rebase_editor.kind,
     modifiable = true,
     readonly = false,
     autocmds = {

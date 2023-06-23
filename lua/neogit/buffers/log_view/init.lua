@@ -38,7 +38,7 @@ function M:open()
   self.buffer = Buffer.create {
     name = "NeogitLogView",
     filetype = "NeogitLogView",
-    kind = "tab",
+    kind = config.values.log_view.kind,
     context_highlight = false,
     mappings = {
       v = {
