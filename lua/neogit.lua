@@ -41,8 +41,6 @@ local setup = function(opts)
   signs.setup()
   state.setup()
   watcher.setup()
-
-  require("neogit.autocmds").setup()
 end
 
 ---@param opts OpenOpts
