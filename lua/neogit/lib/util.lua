@@ -1,4 +1,5 @@
 local a = require("plenary.async")
+local uv = vim.loop
 
 ---@generic T: any
 ---@generic U: any
@@ -249,6 +250,23 @@ local function build_reverse_lookup(tbl)
   return result
 end
 
+--- Debounces a function on the trailing edge.
+---
+--- @generic F: function
+--- @param ms number Timeout in ms
+--- @param fn F Function to debounce
+--- @return F Debounced function.
+local function debounce_trailing(ms, fn)
+  local timer = assert(uv.new_timer())
+  return function(...)
+    local argv = { ... }
+    timer:start(ms, 0, function()
+      timer:stop()
+      fn(unpack(argv))
+    end)
+  end
+end
+
 return {
   time = time,
   time_async = time_async,
@@ -276,4 +294,5 @@ return {
   merge = merge,
   str_min_width = str_min_width,
   str_clamp = str_clamp,
+  debounce_trailing = debounce_trailing,
 }
