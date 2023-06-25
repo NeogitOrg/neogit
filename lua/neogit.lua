@@ -6,6 +6,7 @@ local hl = require("neogit.lib.hl")
 local status = require("neogit.status")
 local state = require("neogit.lib.state")
 local input = require("neogit.lib.input")
+local watcher = require("neogit.watcher")
 local logger = require("neogit.logger")
 
 local cli = require("neogit.lib.git.cli")
@@ -39,6 +40,7 @@ local setup = function(opts)
   hl.setup()
   signs.setup()
   state.setup()
+  watcher.setup()
 
   require("neogit.autocmds").setup()
 end
@@ -47,14 +49,14 @@ end
 local open = function(opts)
   opts = opts or {}
 
-  if opts.cwd and not opts.no_expand then
-    opts.cwd = vim.fn.expand(opts.cwd)
-  end
-
   if not did_setup then
     notification.create("Neogit has not been setup!", vim.log.levels.ERROR)
     logger.error("Neogit not setup!")
     return
+  end
+
+  if opts.cwd and not opts.no_expand then
+    opts.cwd = vim.fn.expand(opts.cwd)
   end
 
   if not cli.git_is_repository_sync(opts.cwd) then
@@ -70,6 +72,8 @@ local open = function(opts)
       return
     end
   end
+
+  require("neogit.lib.git").repo:refresh()
 
   if opts[1] ~= nil then
     local popup_name = opts[1]
