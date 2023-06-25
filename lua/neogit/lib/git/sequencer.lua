@@ -1,9 +1,8 @@
 local M = {}
 
 local a = require("plenary.async")
-local cli = require("neogit.lib.git.cli")
 local logger = require("neogit.logger")
-local uv = require("neogit.lib.uv")
+local Path = require("plenary.path")
 
 -- .git/sequencer/todo does not exist when there is only one commit left.
 --
@@ -25,38 +24,22 @@ function M.pick_or_revert_in_progress()
 end
 
 function M.update_sequencer_status(state)
-  local root = cli.git_root()
-  if root == "" then
-    return
-  end
-
   local sequencer = { items = {}, head = nil }
 
-  local _, stat_revert_head = a.uv.fs_stat(root .. "/.git/REVERT_HEAD")
-  local _, stat_cherry_pick_head = a.uv.fs_stat(root .. "/.git/CHERRY_PICK_HEAD")
+  local revert_head = Path.new(state.git_root .. "/.git/REVERT_HEAD")
+  local cherry_head = Path.new(state.git_root .. "/.git/CHERRY_PICK_HEAD")
 
-  if stat_cherry_pick_head then
+  if cherry_head:exists() then
     sequencer.head = "CHERRY_PICK_HEAD"
     sequencer.cherry_pick = true
-  elseif stat_revert_head then
+  elseif revert_head:exists() then
     sequencer.head = "REVERT_HEAD"
     sequencer.revert = true
   end
 
-  local todo_file = root .. "/.git/sequencer/todo"
-  local _, stat_todo = a.uv.fs_stat(todo_file)
-
-  if stat_todo then
-    local err, todo = uv.read_file(todo_file)
-    if not todo then
-      logger.error("[sequencer] Failed to read .git/sequencer/todo: " .. err)
-      return
-    end
-
-    local _, todos = uv.read_file(todo_file)
-
-    -- we need \r? to support windows
-    for line in (todos or ""):gmatch("[^\r\n]+") do
+  local todo = Path.new(state.git_root .. "/.git/sequencer/todo")
+  if todo:exists() then
+    for line in todo:iter() do
       if not line:match("^#") then
         table.insert(sequencer.items, { name = line })
       end

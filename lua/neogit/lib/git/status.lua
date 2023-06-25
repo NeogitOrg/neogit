@@ -26,7 +26,7 @@ local function update_status(state)
   -- cwd may change after the status is refreshed and used, especially if using
   -- rooter plugins with lsp integration
   local cwd = vim.fn.getcwd()
-  local result = git.cli.status.porcelain(2).branch.call():trim()
+  local result = git.cli.status.porcelain(2).branch.call_sync():trim()
 
   local untracked_files, unstaged_files, staged_files = {}, {}, {}
   local old_files_hash = {
@@ -119,25 +119,15 @@ local function update_status(state)
 end
 
 local function update_branch_information(state)
-  local tasks = {}
-
   if state.head.oid ~= "(initial)" then
-    table.insert(tasks, function()
-      local result = git.cli.log.max_count(1).pretty("%B").call():trim()
-      state.head.commit_message = result.stdout[1]
-    end)
+    local result = git.cli.log.max_count(1).pretty("%B").call_sync():trim()
+    state.head.commit_message = result.stdout[1]
 
     if state.upstream.ref then
-      table.insert(tasks, function()
-        local result =
-          git.cli.log.max_count(1).pretty("%B").for_range("@{upstream}").show_popup(false).call():trim()
-        state.upstream.commit_message = result.stdout[1]
-      end)
+      local result =
+        git.cli.log.max_count(1).pretty("%B").for_range("@{upstream}").show_popup(false).call_sync():trim()
+      state.upstream.commit_message = result.stdout[1]
     end
-  end
-
-  if #tasks > 0 then
-    a.util.join(tasks)
   end
 end
 

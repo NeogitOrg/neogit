@@ -3,6 +3,7 @@ local client = require("neogit.client")
 local notif = require("neogit.lib.notification")
 local cli = require("neogit.lib.git.cli")
 local branch_lib = require("neogit.lib.git.branch")
+local Path = require("plenary.path")
 
 local M = {}
 
@@ -31,40 +32,23 @@ function M.abort()
   return merge_command(cli.merge.abort)
 end
 
-local uv = require("neogit.lib.uv")
 function M.update_merge_status(state)
-  local root = cli.git_root()
-  if root == "" then
+  if state.git_root == "" then
     return
   end
 
-  local merge = {
-    items = {},
-    head = nil,
-    msg = "",
-  }
+  local merge = { items = {}, head = nil, msg = "" }
 
-  local mfile = root .. "/.git/MERGE_HEAD"
-  local _, stat = a.uv.fs_stat(mfile)
-
-  -- Find the merge progress files
-  if not stat then
+  local merge_head = Path.new(state.git_root .. "/.git/MERGE_HEAD")
+  if not merge_head:exists() then
     return
   end
 
-  local err, head = uv.read_file(mfile)
-  if not head then
-    logger.error("Failed to read merge head: " .. err)
-    return
-  end
-  head = head:match("([^\r\n]+)")
-  merge.head = head
+  merge.head = merge_head:read():match("([^\r\n]+)")
 
-  local _, msg = uv.read_file(root .. "/.git/MERGE_MSG")
-
-  -- we need \r? to support windows
-  if msg then
-    merge.msg = msg:match("([^\r\n]+)")
+  local message = Path.new(state.git_root .. "/.git/MERGE_MSG")
+  if message:exists() then
+    merge.msg = message:read():match("([^\r\n]+)") -- we need \r? to support windows
   end
 
   state.merge = merge
