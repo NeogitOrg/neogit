@@ -68,7 +68,7 @@ function M.update_rebase_status(state)
   end
 
   if rebase_file then
-    local head = rebase_file:joinpath("/head-name")
+    local head = rebase_file:joinpath("head-name")
     if not head:exists() then
       logger.error("Failed to read rebase-merge head")
       return
@@ -76,8 +76,8 @@ function M.update_rebase_status(state)
 
     rebase.head = head:read():match("refs/heads/([^\r\n]+)")
 
-    local todo = rebase_file:joinpath("/git-rebase-todo")
-    local done = rebase_file:joinpath("/done")
+    local todo = rebase_file:joinpath("git-rebase-todo")
+    local done = rebase_file:joinpath("done")
     local current = 0
     for line in done:iter() do
       if not line:match("^#") then
