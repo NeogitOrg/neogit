@@ -1,6 +1,5 @@
 local M = {}
 
-local status = require("neogit.status")
 local git = require("neogit.lib.git")
 local input = require("neogit.lib.input")
 local util = require("neogit.lib.util")
@@ -28,8 +27,7 @@ M.checkout_branch_revision = operation("checkout_branch_revision", function(popu
     return
   end
 
-  git.cli.checkout.branch(selected_branch).arg_list(popup:get_arguments()).call_sync():trim()
-  status.refresh(true, "checkout_branch")
+  git.cli.checkout.branch(selected_branch).arg_list(popup:get_arguments()).call_sync()
 end)
 
 M.checkout_local_branch = operation("checkout_local_branch", function(popup)
@@ -55,8 +53,6 @@ M.checkout_local_branch = operation("checkout_local_branch", function(popup)
   elseif target then
     git.cli.checkout.branch(target).arg_list(popup:get_arguments()).call_sync()
   end
-
-  status.refresh(true, "branch_checkout")
 end)
 
 M.checkout_create_branch = operation("checkout_create_branch", function()
@@ -78,12 +74,10 @@ M.checkout_create_branch = operation("checkout_create_branch", function()
   end
 
   git.cli.checkout.new_branch_with_start_point(name, base_branch).call_sync():trim()
-  status.refresh(true, "branch_create")
 end)
 
 M.create_branch = operation("create_branch", function()
   git.branch.create()
-  status.refresh(true, "create_branch")
 end)
 
 M.configure_branch = operation("configure_branch", function()
@@ -114,7 +108,6 @@ M.rename_branch = operation("rename_branch", function()
 
   new_name, _ = new_name:gsub("%s", "-")
   git.cli.branch.move.args(selected_branch, new_name).call_sync():trim()
-  status.refresh(true, "rename_branch")
 end)
 
 M.reset_branch = operation("reset_branch", function()
@@ -145,7 +138,6 @@ M.reset_branch = operation("reset_branch", function()
   git.cli["update-ref"].message(string.format("reset: moving to %s", to)).args(from, to).call_sync()
 
   notif.create(string.format("Reset '%s'", git.repo.head.branch), vim.log.levels.INFO)
-  status.refresh(true, "reset_branch")
 end)
 
 M.delete_branch = operation("delete_branch", function()
@@ -185,8 +177,6 @@ M.delete_branch = operation("delete_branch", function()
       notif.create(string.format("Deleted branch '%s'", branch_name), vim.log.levels.INFO)
     end
   end
-
-  status.refresh(true, "delete_branch")
 end)
 
 return M

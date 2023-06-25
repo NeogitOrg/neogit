@@ -23,9 +23,6 @@ function M.rebase_interactive(commit, args)
   else
     notif.create("Rebased successfully", vim.log.levels.INFO)
   end
-  a.util.scheduler()
-  local status = require("neogit.status")
-  status.refresh(true, "rebase_interactive")
 end
 
 function M.rebase_onto(branch, args)

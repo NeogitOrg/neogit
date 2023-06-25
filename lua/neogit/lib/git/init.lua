@@ -49,8 +49,7 @@ M.init_repo = function()
   vim.cmd(string.format("cd %s", directory))
 
   M.create(directory)
-
-  status.refresh(true, "InitRepo")
+  status.refresh()
 end
 
 return M

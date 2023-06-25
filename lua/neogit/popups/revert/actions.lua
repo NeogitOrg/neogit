@@ -26,8 +26,6 @@ function M.commits(popup)
   end
 
   git.revert.commits(commits, popup:get_arguments())
-  a.util.scheduler()
-  require("neogit.status").refresh(true, "revert_commits")
 end
 
 return M

@@ -1,6 +1,5 @@
 local a = require("plenary.async")
 local git = require("neogit.lib.git")
-local status = require("neogit.status")
 local util = require("neogit.lib.util")
 
 local CommitSelectViewBuffer = require("neogit.buffers.commit_select_view")
@@ -15,8 +14,6 @@ local function reset(type)
   end
 
   git.reset[type](commit)
-  a.util.scheduler()
-  status.refresh(true, "reset_" .. type)
 end
 
 function M.mixed()
@@ -63,8 +60,6 @@ function M.a_file()
   end
 
   git.reset.file(commit, files)
-  a.util.scheduler()
-  status.refresh(true, "reset_file")
 end
 
 return M
