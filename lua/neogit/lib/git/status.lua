@@ -20,12 +20,6 @@ local function update_file(file, mode, name)
 end
 
 local function update_status(state)
-  -- git-status outputs files relative to the cwd.
-  --
-  -- Save the working directory to allow resolution to absolute paths since the
-  -- cwd may change after the status is refreshed and used, especially if using
-  -- rooter plugins with lsp integration
-  local cwd = vim.fn.getcwd()
   local result = git.cli.status.porcelain(2).branch.call_sync():trim()
 
   local untracked_files, unstaged_files, staged_files = {}, {}, {}
@@ -110,7 +104,6 @@ local function update_status(state)
     upstream.commit_message = state.upstream.commit_message
   end
 
-  state.cwd = cwd
   state.head = head
   state.upstream = upstream
   state.untracked.items = untracked_files

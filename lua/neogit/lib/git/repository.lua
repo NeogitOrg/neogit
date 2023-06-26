@@ -1,12 +1,16 @@
 local a = require("plenary.async")
 local logger = require("neogit.logger")
 
+-- git-status outputs files relative to the cwd.
+--
+-- Save the working directory to allow resolution to absolute paths since the
+-- cwd may change after the status is refreshed and used, especially if using
+-- rooter plugins with lsp integration
 local function empty_state()
   return {
-    ---The cwd when this was updated.
-    ---Used to generate absolute paths
-    cwd = ".",
-    git_root = nil,
+    cwd = vim.fn.getcwd(),
+    git_root = require("neogit.lib.git.cli").git_root(),
+    rev_toplevel = nil,
     head = {
       branch = nil,
       commit_message = "",
