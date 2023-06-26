@@ -1,9 +1,7 @@
-local logger = require("neogit.logger")
 local client = require("neogit.client")
 local notif = require("neogit.lib.notification")
 local cli = require("neogit.lib.git.cli")
 local branch_lib = require("neogit.lib.git.branch")
-local Path = require("plenary.path")
 
 local M = {}
 
@@ -40,14 +38,14 @@ function M.update_merge_status(state)
 
   state.merge = { head = nil, msg = "" }
 
-  local merge_head = Path.new(state.git_root .. "/.git/MERGE_HEAD")
+  local merge_head = state.git_path("MERGE_HEAD")
   if not merge_head:exists() then
     return
   end
 
   state.merge.head = merge_head:read():match("([^\r\n]+)")
 
-  local message = Path.new(state.git_root .. "/.git/MERGE_MSG")
+  local message = state.git_path("MERGE_MSG")
   if message:exists() then
     state.merge.msg = message:read():match("([^\r\n]+)") -- we need \r? to support windows
   end

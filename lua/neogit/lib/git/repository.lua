@@ -1,62 +1,38 @@
 local a = require("plenary.async")
 local logger = require("neogit.logger")
-local util = require("neogit.lib.util")
 
 -- git-status outputs files relative to the cwd.
 --
 -- Save the working directory to allow resolution to absolute paths since the
 -- cwd may change after the status is refreshed and used, especially if using
 -- rooter plugins with lsp integration
+-- stylua: ignore start
 local function empty_state()
+  local root = require("neogit.lib.git.cli").git_root()
+  local Path = require("plenary.path")
+
   return {
-    cwd = vim.fn.getcwd(),
-    git_root = require("neogit.lib.git.cli").git_root(),
+    git_path     = function(path)
+      return Path.new(root):joinpath(".git", path)
+    end,
+    cwd          = vim.fn.getcwd(),
+    git_root     = root,
     rev_toplevel = nil,
-    head = {
-      branch = nil,
-      commit_message = "",
-    },
-    upstream = {
-      remote = nil,
-      branch = nil,
-      commit_message = "",
-    },
-    untracked = {
-      items = {},
-    },
-    unstaged = {
-      items = {},
-    },
-    staged = {
-      items = {},
-    },
-    stashes = {
-      items = {},
-    },
-    unpulled = {
-      items = {},
-    },
-    unmerged = {
-      items = {},
-    },
-    recent = {
-      items = {},
-    },
-    rebase = {
-      items = {},
-      head = nil,
-    },
-    sequencer = {
-      items = {},
-      head = nil,
-    },
-    merge = {
-      items = {},
-      head = nil,
-      msg = nil,
-    },
+    head         = { branch = nil, commit_message = "" },
+    upstream     = { remote = nil, branch = nil, commit_message = "" },
+    untracked    = { items  = {} },
+    unstaged     = { items  = {} },
+    staged       = { items  = {} },
+    stashes      = { items  = {} },
+    unpulled     = { items  = {} },
+    unmerged     = { items  = {} },
+    recent       = { items  = {} },
+    rebase       = { items  = {}, head = nil },
+    sequencer    = { items  = {}, head = nil },
+    merge        = { items  = {}, head = nil, msg= nil },
   }
 end
+-- stylua: ignore end
 
 local meta = {
   __index = function(self, method)

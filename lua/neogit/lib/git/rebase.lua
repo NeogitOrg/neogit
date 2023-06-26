@@ -5,7 +5,6 @@ local notif = require("neogit.lib.notification")
 local M = {}
 
 local a = require("plenary.async")
-local Path = require("plenary.path")
 
 -- TODO: client.wrap()
 local function rebase_command(cmd)
@@ -55,8 +54,8 @@ function M.update_rebase_status(state)
   state.rebase = { items = {}, head = nil, current = nil }
 
   local rebase_file
-  local rebase_merge = Path:new(state.git_root .. "/.git/rebase-merge")
-  local rebase_apply = Path:new(state.git_root .. "/.git/rebase-apply")
+  local rebase_merge = state.git_path("rebase-merge")
+  local rebase_apply = state.git_path("rebase-apply")
 
   if rebase_merge:exists() then
     rebase_file = rebase_merge

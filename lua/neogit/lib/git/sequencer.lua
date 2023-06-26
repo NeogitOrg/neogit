@@ -1,7 +1,5 @@
 local M = {}
 
-local Path = require("plenary.path")
-
 -- .git/sequencer/todo does not exist when there is only one commit left.
 --
 -- And CHERRY_PICK_HEAD does not exist when a conflict happens while picking a series of commits with --no-commit.
@@ -24,8 +22,8 @@ end
 function M.update_sequencer_status(state)
   state.sequencer = { items = {}, head = nil }
 
-  local revert_head = Path.new(state.git_root .. "/.git/REVERT_HEAD")
-  local cherry_head = Path.new(state.git_root .. "/.git/CHERRY_PICK_HEAD")
+  local revert_head = state.git_path("REVERT_HEAD")
+  local cherry_head = state.git_path("CHERRY_PICK_HEAD")
 
   if cherry_head:exists() then
     state.sequencer.head = "CHERRY_PICK_HEAD"
@@ -35,7 +33,7 @@ function M.update_sequencer_status(state)
     state.sequencer.revert = true
   end
 
-  local todo = Path.new(state.git_root .. "/.git/sequencer/todo")
+  local todo = state.git_path("sequencer/todo")
   if todo:exists() then
     for line in todo:iter() do
       if not line:match("^#") then
