@@ -47,15 +47,16 @@ end
 local open = function(opts)
   opts = opts or {}
 
+  if opts.cwd and not opts.no_expand then
+    opts.cwd = vim.fn.expand(opts.cwd)
+  end
+
   if not did_setup then
     notification.create("Neogit has not been setup!", vim.log.levels.ERROR)
     logger.error("Neogit not setup!")
     return
   end
 
-  if opts.cwd and not opts.no_expand then
-    opts.cwd = vim.fn.expand(opts.cwd)
-  end
 
   if not cli.git_is_repository_sync(opts.cwd) then
     if
@@ -71,7 +72,7 @@ local open = function(opts)
     end
   end
 
-  require("neogit.lib.git").repo:refresh()
+  require("neogit.lib.git").repo:dispatch_refresh({ source = "open" })
 
   if opts[1] ~= nil then
     local popup_name = opts[1]
