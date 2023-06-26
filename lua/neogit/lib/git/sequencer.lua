@@ -1,7 +1,5 @@
 local M = {}
 
-local a = require("plenary.async")
-local logger = require("neogit.logger")
 local Path = require("plenary.path")
 
 -- .git/sequencer/todo does not exist when there is only one commit left.
@@ -24,29 +22,27 @@ function M.pick_or_revert_in_progress()
 end
 
 function M.update_sequencer_status(state)
-  local sequencer = { items = {}, head = nil }
+  state.sequencer = { items = {}, head = nil }
 
   local revert_head = Path.new(state.git_root .. "/.git/REVERT_HEAD")
   local cherry_head = Path.new(state.git_root .. "/.git/CHERRY_PICK_HEAD")
 
   if cherry_head:exists() then
-    sequencer.head = "CHERRY_PICK_HEAD"
-    sequencer.cherry_pick = true
+    state.sequencer.head = "CHERRY_PICK_HEAD"
+    state.sequencer.cherry_pick = true
   elseif revert_head:exists() then
-    sequencer.head = "REVERT_HEAD"
-    sequencer.revert = true
+    state.sequencer.head = "REVERT_HEAD"
+    state.sequencer.revert = true
   end
 
   local todo = Path.new(state.git_root .. "/.git/sequencer/todo")
   if todo:exists() then
     for line in todo:iter() do
       if not line:match("^#") then
-        table.insert(sequencer.items, { name = line })
+        table.insert(state.sequencer.items, { name = line })
       end
     end
   end
-
-  state.sequencer = sequencer
 end
 
 M.register = function(meta)

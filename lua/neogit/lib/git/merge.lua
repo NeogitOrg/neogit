@@ -37,21 +37,19 @@ function M.update_merge_status(state)
     return
   end
 
-  local merge = { items = {}, head = nil, msg = "" }
+  state.merge = { head = nil, msg = "" }
 
   local merge_head = Path.new(state.git_root .. "/.git/MERGE_HEAD")
   if not merge_head:exists() then
     return
   end
 
-  merge.head = merge_head:read():match("([^\r\n]+)")
+  state.merge.head = merge_head:read():match("([^\r\n]+)")
 
   local message = Path.new(state.git_root .. "/.git/MERGE_MSG")
   if message:exists() then
-    merge.msg = message:read():match("([^\r\n]+)") -- we need \r? to support windows
+    state.merge.msg = message:read():match("([^\r\n]+)") -- we need \r? to support windows
   end
-
-  state.merge = merge
 end
 
 M.register = function(meta)

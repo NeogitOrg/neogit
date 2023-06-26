@@ -51,11 +51,7 @@ function M.update_rebase_status(state)
     return
   end
 
-  local rebase = {
-    items = {},
-    head = nil,
-    current = nil,
-  }
+  state.rebase = { items = {}, head = nil, current = nil }
 
   local rebase_file
   local rebase_merge = Path:new(state.git_root .. "/.git/rebase-merge")
@@ -74,34 +70,35 @@ function M.update_rebase_status(state)
       return
     end
 
-    rebase.head = head:read():match("refs/heads/([^\r\n]+)")
+    state.rebase.head = head:read():match("refs/heads/([^\r\n]+)")
 
     local todo = rebase_file:joinpath("git-rebase-todo")
     local done = rebase_file:joinpath("done")
     local current = 0
-    for line in done:iter() do
-      if not line:match("^#") then
-        current = current + 1
-        table.insert(rebase.items, { name = line, done = true })
+
+    if done:exists() then
+      for line in done:iter() do
+        if not line:match("^#") then
+          current = current + 1
+          table.insert(state.rebase.items, { name = line, done = true })
+        end
       end
     end
 
-    rebase.current = current
-
-    local cur = rebase.items[#rebase.items]
+    local cur = state.rebase.items[#state.rebase.items]
     if cur then
       cur.done = false
       cur.stopped = true
     end
 
-    for line in todo:iter() do
-      if not line:match("^#") then
-        table.insert(rebase.items, { name = line })
+    if todo:exists() then
+      for line in todo:iter() do
+        if not line:match("^#") then
+          table.insert(state.rebase.items, { name = line })
+        end
       end
     end
   end
-
-  state.rebase = rebase
 end
 
 M.register = function(meta)
