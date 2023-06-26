@@ -1,5 +1,6 @@
 local a = require("plenary.async")
 local logger = require("neogit.logger")
+local util = require("neogit.lib.util")
 
 -- git-status outputs files relative to the cwd.
 --
@@ -72,48 +73,53 @@ function M.reset(self)
   self.state = empty_state()
 end
 
-M.dispatch_refresh = a.void(function(...)
-  a.util.scheduler()
-  M.refresh(...)
-end)
-
 local refresh_lock = a.control.Semaphore.new(1)
+local lock_holder
 
-function M.refresh(self, callback)
-  logger.debug("[REPO]: Refreshing START")
+M.dispatch_refresh = a.void(function(self, opts)
+  opts = opts or {}
 
   if refresh_lock.permits == 0 then
-    logger.debug("[REPO]: Refresh lock not available. Aborting refresh.")
+    logger.debug(string.format("[REPO]: Refreshing ABORTED - refresh_lock held by %s", lock_holder))
     return
   end
 
+  lock_holder = opts.source or "UNKNOWN"
+  logger.info(string.format("[REPO]: Acquiring refresh lock (source: %s)", lock_holder))
   local permit = refresh_lock:acquire()
-  logger.debug("[REPO]: Acquired refresh lock")
 
-  self.state.git_root = require("neogit.lib.git.cli").git_root()
+  a.util.scheduler()
+  M._refresh(self, opts)
+
+  logger.info("[REPO]: freeing refresh lock")
+  lock_holder = nil
+  permit:forget()
+end)
+
+function M._refresh(self, opts)
+  logger.info(string.format("[REPO]: Refreshing START (source: %s)", opts.source or "UNKNOWN"))
+
   if self.state.git_root == "" then
-    logger.debug("[REPO]: Refreshing ABORTED")
+    logger.info("[REPO]: Refreshing ABORTED - No git_root")
     return
   end
 
   self.lib.update_status(self.state)
 
   for name, fn in pairs(self.lib) do
-    logger.debug(string.format("[REPO]: Refreshing %s", name))
+    logger.info(string.format("[REPO]: Refreshing %s", name))
     fn(self.state)
   end
+  logger.info("[REPO]: Refreshes completed")
 
-  logger.debug("[REPO]: Refreshes completed")
-  permit:forget()
-  logger.info("[REPO]: Refresh lock is now free")
-
-  if callback then
-    callback()
+  if opts.callback then
+    logger.info("[REPO]: Running Callback")
+    opts.callback()
   end
 end
 
 if not M.initialized then
-  logger.debug("[REPO]: Initializing Repository")
+  logger.info("[REPO]: Initializing Repository")
   M.initialized = true
 
   setmetatable(M, meta)
