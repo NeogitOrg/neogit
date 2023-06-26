@@ -256,10 +256,20 @@ end
 ---@return self
 function M:action(key, description, callback)
   if not self.state.keys[key] then
+    local action
+
+    if callback then
+      action = a.void(function(...)
+        callback(...)
+
+        git.repo:dispatch_refresh(require("neogit.status").dispatch_refresh)
+      end)
+    end
+
     table.insert(self.state.actions[#self.state.actions], {
       key = key,
       description = description,
-      callback = callback and a.void(callback) or nil,
+      callback = action,
     })
 
     self.state.keys[key] = true

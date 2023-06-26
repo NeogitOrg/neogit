@@ -84,7 +84,7 @@ local function get_section_item_for_line(linenr)
 end
 
 ---@return Section|nil, StatusItem|nil
-local function get_current_section_item()
+function M.get_current_section_item()
   return get_section_item_for_line(vim.fn.line("."))
 end
 
@@ -385,37 +385,13 @@ local function refresh_status_buffer()
   vim.cmd("redraw")
 end
 
-local refresh_lock = a.control.Semaphore.new(1)
-local lock_holder = nil
-
-local function refresh(which, reason)
+function M.refresh()
   logger.info("[STATUS BUFFER]: Starting refresh")
-
-  if refresh_lock.permits == 0 then
-    logger.debug(
-      string.format(
-        "[STATUS BUFFER]: Refresh lock not available. Aborting refresh. Lock held by: %q",
-        lock_holder
-      )
-    )
-    --- Undo the deadlock fix
-    --- This is because refresh wont properly wait but return immediately if
-    --- refresh is already in progress. This breaks as waiting for refresh does
-    --- not mean that a status buffer is drawn and ready
-    a.util.scheduler()
-    -- refresh_status()
-    -- return
-  end
-
-  local permit = refresh_lock:acquire()
-  lock_holder = reason or "unknown"
-  logger.debug("[STATUS BUFFER]: Acquired refresh lock: " .. lock_holder)
 
   a.util.scheduler()
   local s, f, h = save_cursor_location()
 
-  if cli.git_root() ~= "" then
-    git.repo:refresh(which)
+  if git.repo.git_root ~= "" then
     refresh_status_buffer()
     vim.api.nvim_exec_autocmds("User", { pattern = "NeogitStatusRefreshed", modeline = false })
   end
@@ -426,17 +402,13 @@ local function refresh(which, reason)
   end
 
   logger.info("[STATUS BUFFER]: Finished refresh")
-
-  lock_holder = nil
-  permit:forget()
-  logger.info("[STATUS BUFFER]: Refresh lock is now free")
 end
 
-local dispatch_refresh = a.void(function(v, reason)
-  refresh(v, reason)
+M.dispatch_refresh = a.void(function()
+  M.refresh()
 end)
 
-local refresh_manually = a.void(function(fname)
+M.refresh_manually = a.void(function(fname)
   if not fname or fname == "" then
     return
   end
@@ -445,23 +417,21 @@ local refresh_manually = a.void(function(fname)
   if not path then
     return
   end
-  refresh({ status = true, diffs = { "*:" .. path } }, "manually")
+
+  M.refresh()
 end)
 
 --- Compatibility endpoint to refresh data from an autocommand.
 --  `fname` should be `<afile>` in this case. This function will take care of
 --  resolving the file name to the path relative to the repository root and
 --  refresh that file's cache data.
-local function refresh_viml_compat(fname)
+function M.refresh_viml_compat(fname)
   logger.info("[STATUS BUFFER]: refresh_viml_compat")
-  if not config.values.auto_refresh then
-    return
-  end
   if #vim.fs.find(".git/", { upward = true }) == 0 then -- not a git repository
     return
   end
 
-  refresh_manually(fname)
+  M.refresh_manually(fname)
 end
 
 local function current_line_is_hunk()
@@ -495,8 +465,8 @@ local function get_current_hunk_of_item(item)
   return get_hunk_of_item_for_line(item, vim.fn.line("."))
 end
 
-local function toggle()
-  local section, item = get_current_section_item()
+function M.toggle()
+  local section, item = M.get_current_section_item()
   if section == nil then
     return
   end
@@ -517,18 +487,15 @@ local function toggle()
   refresh_status_buffer()
 end
 
-local reset = function()
+M.reset = function()
   git.repo:reset()
   M.locations = {}
-  if not config.values.auto_refresh then
-    return
-  end
-  refresh(true, "reset")
+  M.refresh(true, "reset")
 end
 
-local dispatch_reset = a.void(reset)
+M.dispatch_reset = a.void(M.reset)
 
-local function close(skip_close)
+function M.close(skip_close)
   if not skip_close then
     M.status_buffer:close()
   end
@@ -540,7 +507,7 @@ local function close(skip_close)
   end
 end
 
-local function generate_patch_from_selection(item, hunk, from, to, reverse)
+function M.generate_patch_from_selection(item, hunk, from, to, reverse)
   reverse = reverse or false
   from = from or 1
   to = to or hunk.diff_to - hunk.diff_from
@@ -679,7 +646,7 @@ local stage_selection = function()
   else
     local section, item, hunk, from, to = get_selection()
     if section and from then
-      local patch = generate_patch_from_selection(item, hunk, from, to)
+      local patch = M.generate_patch_from_selection(item, hunk, from, to)
       cli.apply.cached.with_patch(patch).call()
     end
   end
@@ -693,7 +660,7 @@ local unstage_selection = function()
   else
     local section, item, hunk, from, to = get_selection()
     if section and from then
-      local patch = generate_patch_from_selection(item, hunk, from, to, true)
+      local patch = M.generate_patch_from_selection(item, hunk, from, to, true)
       cli.apply.reverse.cached.with_patch(patch).call()
     end
   end
@@ -701,7 +668,7 @@ end
 
 local stage = function()
   M.current_operation = "stage"
-  local section, item = get_current_section_item()
+  local section, item = M.get_current_section_item()
   local mode = vim.api.nvim_get_mode()
 
   if
@@ -727,13 +694,13 @@ local stage = function()
         end
         add.call()
       end
-      refresh(true, "stage")
+      M.refresh(true, "stage")
       M.current_operation = nil
       return
     else
       if on_hunk and section.name ~= "untracked" then
         local hunk = get_current_hunk_of_item(item)
-        local patch = generate_patch_from_selection(item, hunk)
+        local patch = M.generate_patch_from_selection(item, hunk)
         cli.apply.cached.with_patch(patch).call()
       else
         git.status.stage(item.name)
@@ -742,12 +709,11 @@ local stage = function()
   end
 
   assert(item, "Stage item is nil")
-  refresh({ status = true, diffs = { "*:" .. item.name } }, "stage_finish")
   M.current_operation = nil
 end
 
 local unstage = function()
-  local section, item = get_current_section_item()
+  local section, item = M.get_current_section_item()
   local mode = vim.api.nvim_get_mode()
 
   if section == nil or section.name ~= "staged" or (mode.mode == "V" and item == nil) then
@@ -760,7 +726,7 @@ local unstage = function()
   else
     if item == nil then
       git.status.unstage_all()
-      refresh(true, "unstage")
+      M.refresh()
       M.current_operation = nil
       return
     else
@@ -768,7 +734,7 @@ local unstage = function()
 
       if on_hunk then
         local hunk = get_current_hunk_of_item(item)
-        local patch = generate_patch_from_selection(item, hunk, nil, nil, true)
+        local patch = M.generate_patch_from_selection(item, hunk, nil, nil, true)
         cli.apply.reverse.cached.with_patch(patch).call()
       else
         git.status.unstage(item.name)
@@ -777,7 +743,7 @@ local unstage = function()
   end
 
   assert(item, "Unstage item is nil")
-  refresh({ status = true, diffs = { "*:" .. item.name } }, "unstage_finish")
+  M.refresh()
   M.current_operation = nil
 end
 
@@ -821,7 +787,7 @@ end
 ---Discards selected lines
 local function discard_selection(section, item, hunk, from, to)
   logger.debug("Discarding selection hunk:" .. vim.inspect(hunk))
-  local patch = generate_patch_from_selection(item, hunk, from, to, true)
+  local patch = M.generate_patch_from_selection(item, hunk, from, to, true)
   logger.debug("Patch:" .. vim.inspect(patch))
 
   if section.name == "staged" then
@@ -849,7 +815,7 @@ local function discard_hunk(section, item, lines, hunk)
 end
 
 local discard = function()
-  local section, item = get_current_section_item()
+  local section, item = M.get_current_section_item()
   if section == nil or item == nil then
     return
   end
@@ -888,7 +854,7 @@ local discard = function()
     discard_selected_files({ item }, section.name)
   end
 
-  refresh(true, "discard")
+  M.refresh()
   M.current_operation = nil
 
   a.util.scheduler()
@@ -907,7 +873,7 @@ local set_folds = function(to)
       end
     end)
   end)
-  refresh(true, "set_folds")
+  M.refresh()
 end
 
 local function cherry_pick()
@@ -939,21 +905,18 @@ local cmd_func_map = function()
     ["Depth4"] = a.void(function()
       set_folds { false, false, false }
     end),
-    ["Toggle"] = toggle,
+    ["Toggle"] = M.toggle,
     ["Discard"] = { "nv", a.void(discard), true },
     ["Stage"] = { "nv", a.void(stage), true },
     ["StageUnstaged"] = a.void(function()
       git.status.stage_modified()
-      refresh({ status = true, diffs = true }, "StageUnstaged")
     end),
     ["StageAll"] = a.void(function()
       git.status.stage_all()
-      refresh { status = true, diffs = true }
     end),
     ["Unstage"] = { "nv", a.void(unstage), true },
     ["UnstageStaged"] = a.void(function()
       git.status.unstage_all()
-      refresh({ status = true, diffs = true }, "UnstageStaged")
     end),
     ["CommandHistory"] = function()
       GitCommandHistory:new():show()
@@ -963,25 +926,25 @@ local cmd_func_map = function()
       process.show_console()
     end,
     ["TabOpen"] = function()
-      local _, item = get_current_section_item()
+      local _, item = M.get_current_section_item()
       if item then
         vim.cmd("tabedit " .. item.name)
       end
     end,
     ["VSplitOpen"] = function()
-      local _, item = get_current_section_item()
+      local _, item = M.get_current_section_item()
       if item then
         vim.cmd("vsplit " .. item.name)
       end
     end,
     ["SplitOpen"] = function()
-      local _, item = get_current_section_item()
+      local _, item = M.get_current_section_item()
       if item then
         vim.cmd("split " .. item.name)
       end
     end,
     ["GoToPreviousHunkHeader"] = function()
-      local section, item = get_current_section_item()
+      local section, item = M.get_current_section_item()
       if not section then
         return
       end
@@ -1012,7 +975,7 @@ local cmd_func_map = function()
       end
     end,
     ["GoToNextHunkHeader"] = function()
-      local section, item = get_current_section_item()
+      local section, item = M.get_current_section_item()
       if not section then
         return
       end
@@ -1040,7 +1003,7 @@ local cmd_func_map = function()
     ["GoToFile"] = a.void(function()
       -- local repo_root = cli.git_root()
       a.util.scheduler()
-      local section, item = get_current_section_item()
+      local section, item = M.get_current_section_item()
 
       if item and section then
         if section.name == "unstaged" or section.name == "staged" or section.name == "untracked" then
@@ -1086,7 +1049,7 @@ local cmd_func_map = function()
       end
     end),
     ["RefreshBuffer"] = function()
-      dispatch_refresh(true)
+      M.dispatch_refresh()
     end,
     ["HelpPopup"] = function()
       local line = M.status_buffer:get_current_line()
@@ -1105,7 +1068,7 @@ local cmd_func_map = function()
         return
       end
       local dv = require("neogit.integrations.diffview")
-      local section, item = get_current_section_item()
+      local section, item = M.get_current_section_item()
 
       if section and item then
         dv.open(section.name, item.name)
@@ -1265,21 +1228,10 @@ function M.create(kind, cwd)
       set_decoration_provider(buffer)
 
       logger.debug("[STATUS BUFFER]: Dispatching initial render")
-      refresh(true, "Buffer.create")
+      M.refresh()
     end,
   }
 end
-
-M.toggle = toggle
-M.generate_patch_from_selection = generate_patch_from_selection
-M.reset = reset
-M.dispatch_reset = dispatch_reset
-M.refresh = refresh
-M.dispatch_refresh = dispatch_refresh
-M.refresh_viml_compat = refresh_viml_compat
-M.refresh_manually = refresh_manually
-M.get_current_section_item = get_current_section_item
-M.close = close
 
 function M.enable()
   M.disabled = false

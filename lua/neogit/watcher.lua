@@ -6,7 +6,10 @@ local config = require("neogit.config")
 local logger = require("neogit.logger")
 local util = require("neogit.lib.util")
 local status = require("neogit.status")
+local git = require("neogit.lib.git")
+
 local Path = require("plenary.path")
+local a = require("plenary.async")
 
 M.watcher = {}
 
@@ -34,9 +37,12 @@ function M.watch_git_dir(gitdir)
     return
   end
 
-  local watch_gitdir_handler_db = util.debounce_trailing(100, function()
-    status.dispatch_refresh()
-  end)
+  local watch_gitdir_handler_db = util.debounce_trailing(
+    100,
+    a.void(function()
+      git.repo:dispatch_refresh(status.dispatch_refresh)
+    end)
+  )
 
   logger.debug("[WATCHER] Watching git dir: " .. gitdir)
 
@@ -55,12 +61,11 @@ function M.watch_git_dir(gitdir)
     )
 
     if filename:match("%.lock$") then
-      logger.debug("%s (ignoring)", info)
+      logger.debug(string.format("%s (ignoring)", info))
       return
     end
 
     logger.debug(info)
-
     watch_gitdir_handler_db()
   end)
 

@@ -68,8 +68,23 @@ function M.reset(self)
   self.state = empty_state()
 end
 
-function M.refresh(self)
+M.dispatch_refresh = a.void(function(...)
+  a.util.scheduler()
+  M.refresh(...)
+end)
+
+local refresh_lock = a.control.Semaphore.new(1)
+
+function M.refresh(self, callback)
   logger.debug("[REPO]: Refreshing START")
+
+  if refresh_lock.permits == 0 then
+    logger.debug("[REPO]: Refresh lock not available. Aborting refresh.")
+    return
+  end
+
+  local permit = refresh_lock:acquire()
+  logger.debug("[REPO]: Acquired refresh lock")
 
   self.state.git_root = require("neogit.lib.git.cli").git_root()
   if self.state.git_root == "" then
@@ -85,6 +100,12 @@ function M.refresh(self)
   end
 
   logger.debug("[REPO]: Refreshes completed")
+  permit:forget()
+  logger.info("[REPO]: Refresh lock is now free")
+
+  if callback then
+    callback()
+  end
 end
 
 if not M.initialized then
