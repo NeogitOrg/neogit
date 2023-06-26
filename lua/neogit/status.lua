@@ -373,7 +373,7 @@ local function refresh_status_buffer()
 
   M.status_buffer:unlock()
 
-  logger.debug("[STATUS BUFFER]: Redrawing")
+  logger.debug("[STATUS BUFFER]: Starting Redrawing")
 
   draw_buffer()
   draw_signs()
@@ -774,7 +774,7 @@ local function discard_selected_files(files, section)
   if section == "untracked" then
     a.util.scheduler()
     for _, file in ipairs(filenames) do
-      vim.fn.delete(cli.git_root() .. "/" .. file)
+      vim.fn.delete(string.format("%s/%s", git.repo.git_root, file))
     end
   elseif section == "unstaged" then
     cli.checkout.files(unpack(filenames)).call()
