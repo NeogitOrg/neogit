@@ -73,30 +73,7 @@ function M.reset(self)
   self.state = empty_state()
 end
 
-local refresh_lock = a.control.Semaphore.new(1)
-local lock_holder
-
-M.dispatch_refresh = a.void(function(self, opts)
-  opts = opts or {}
-
-  if refresh_lock.permits == 0 then
-    logger.debug(string.format("[REPO]: Refreshing ABORTED - refresh_lock held by %s", lock_holder))
-    return
-  end
-
-  lock_holder = opts.source or "UNKNOWN"
-  logger.info(string.format("[REPO]: Acquiring refresh lock (source: %s)", lock_holder))
-  local permit = refresh_lock:acquire()
-
-  a.util.scheduler()
-  M._refresh(self, opts)
-
-  logger.info("[REPO]: freeing refresh lock")
-  lock_holder = nil
-  permit:forget()
-end)
-
-function M._refresh(self, opts)
+local function _refresh(self, opts)
   logger.info(string.format("[REPO]: Refreshing START (source: %s)", opts.source or "UNKNOWN"))
 
   if self.state.git_root == "" then
@@ -117,6 +94,29 @@ function M._refresh(self, opts)
     opts.callback()
   end
 end
+
+local refresh_lock = a.control.Semaphore.new(1)
+local lock_holder
+
+M.dispatch_refresh = a.void(function(self, opts)
+  opts = opts or {}
+
+  if refresh_lock.permits == 0 then
+    logger.debug(string.format("[REPO]: Refreshing ABORTED - refresh_lock held by %s", lock_holder))
+    return
+  end
+
+  lock_holder = opts.source or "UNKNOWN"
+  logger.info(string.format("[REPO]: Acquiring refresh lock (source: %s)", lock_holder))
+  local permit = refresh_lock:acquire()
+
+  a.util.scheduler()
+  _refresh(self, opts)
+
+  logger.info("[REPO]: freeing refresh lock")
+  lock_holder = nil
+  permit:forget()
+end)
 
 if not M.initialized then
   logger.info("[REPO]: Initializing Repository")
