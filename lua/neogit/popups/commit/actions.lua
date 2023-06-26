@@ -24,10 +24,6 @@ local function do_commit(popup, cmd)
     notif.create("Successfully committed!")
     vim.api.nvim_exec_autocmds("User", { pattern = "NeogitCommitComplete", modeline = false })
   end
-
-  a.util.scheduler()
-
-  require("neogit.status").refresh(true, "do_commit")
 end
 
 local function commit_special(popup, method)

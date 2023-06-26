@@ -68,13 +68,7 @@ end
 
 M.essential = function()
   return present {
-    {
-      "RefreshBuffer",
-      "Refresh",
-      function()
-        require("neogit.status").refresh(true, "user_refresh")
-      end,
-    },
+    { "RefreshBuffer", "Refresh", require("neogit.status").refresh },
     { "GoToFile", "Go to file", NONE },
     { "Toggle", "Toggle", NONE },
   }

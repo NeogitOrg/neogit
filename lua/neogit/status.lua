@@ -490,7 +490,7 @@ end
 M.reset = function()
   git.repo:reset()
   M.locations = {}
-  M.refresh(true, "reset")
+  M.refresh()
 end
 
 M.dispatch_reset = a.void(M.reset)
@@ -694,7 +694,7 @@ local stage = function()
         end
         add.call()
       end
-      M.refresh(true, "stage")
+      M.refresh()
       M.current_operation = nil
       return
     else
