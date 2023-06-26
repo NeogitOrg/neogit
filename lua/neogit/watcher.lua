@@ -48,26 +48,30 @@ function M.watch_git_dir(gitdir)
 
   local w = assert(uv.new_fs_event())
 
-  w:start(gitdir, {}, function(err, filename, events)
-    if err then
-      logger.error("[WATCHER] Git dir update error: %s", err)
-      return
-    end
+  w:start(
+    gitdir,
+    {},
+    a.void(function(err, filename, events)
+      if err then
+        logger.error("[WATCHER] Git dir update error: %s", err)
+        return
+      end
 
-    local info = string.format(
-      "[WATCHER] Git dir update: '%s' %s",
-      filename,
-      vim.inspect(events, { indent = "", newline = " " })
-    )
+      local info = string.format(
+        "[WATCHER] Git dir update: '%s' %s",
+        filename,
+        vim.inspect(events, { indent = "", newline = " " })
+      )
 
-    if filename:match("%.lock$") then
-      logger.debug(string.format("%s (ignoring)", info))
-      return
-    end
+      if filename:match("%.lock$") then
+        logger.debug(string.format("%s (ignoring)", info))
+        return
+      end
 
-    logger.debug(info)
-    watch_gitdir_handler_db()
-  end)
+      logger.debug(info)
+      watch_gitdir_handler_db()
+    end)
+  )
 
   return w
 end
