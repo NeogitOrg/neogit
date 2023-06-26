@@ -7,7 +7,6 @@ local M = {}
 function M.commits(commits, args)
   client.wrap(cli.revert.args(table.concat(commits, " ")).arg_list(args), {
     autocmd = "NeogitRevertComplete",
-    refresh = "do_revert",
     msg = {
       setup = "Reverting...",
       success = "Reverted!",
