@@ -1,6 +1,7 @@
 local a = require("plenary.async")
 local Buffer = require("neogit.lib.buffer")
 local ui = require("neogit.buffers.commit_select_view.ui")
+local config = require("neogit.config")
 
 ---@class CommitSelectViewBuffer
 ---@field commits CommitLogEntry[]
@@ -40,7 +41,7 @@ function M:open(action)
   self.buffer = Buffer.create {
     name = "NeogitCommitSelectView",
     filetype = "NeogitCommitSelectView",
-    kind = "tab",
+    kind = config.values.commit_select_view.kind,
     mappings = {
       n = {
         ["<tab>"] = function()

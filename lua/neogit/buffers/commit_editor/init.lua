@@ -36,7 +36,7 @@ function M:open()
     filetype = "NeogitCommitMessage",
     load = true,
     buftype = "",
-    kind = config.values.commit_popup.kind,
+    kind = config.values.commit_editor.kind,
     modifiable = true,
     readonly = false,
     autocmds = {
