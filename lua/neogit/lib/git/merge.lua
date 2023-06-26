@@ -9,6 +9,7 @@ local M = {}
 
 local a = require("plenary.async")
 
+-- TODO: client.wrap()
 local function merge_command(cmd)
   local envs = client.get_envs_git_editor()
   return cmd.env(envs).show_popup(true):in_pty(true).call(true)

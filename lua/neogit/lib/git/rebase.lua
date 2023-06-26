@@ -7,6 +7,7 @@ local M = {}
 local a = require("plenary.async")
 local Path = require("plenary.path")
 
+-- TODO: client.wrap()
 local function rebase_command(cmd)
   local git = require("neogit.lib.git")
   cmd = cmd or git.cli.rebase

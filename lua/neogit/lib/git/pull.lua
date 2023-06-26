@@ -3,6 +3,7 @@ local util = require("neogit.lib.util")
 
 local M = {}
 
+-- TODO: client.wrap()
 function M.pull_interactive(remote, branch, args)
   local client = require("neogit.client")
   local envs = client.get_envs_git_editor()
