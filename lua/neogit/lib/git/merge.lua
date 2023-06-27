@@ -36,7 +36,7 @@ function M.update_merge_status(state)
     return
   end
 
-  state.merge = { head = nil, msg = "" }
+  state.merge = { head = nil, msg = "", items = {} }
 
   local merge_head = state.git_path("MERGE_HEAD")
   if not merge_head:exists() then
