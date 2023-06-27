@@ -72,14 +72,10 @@ function M.update_rebase_status(state)
 
     state.rebase.head = head:read():match("refs/heads/([^\r\n]+)")
 
-    local todo = rebase_file:joinpath("git-rebase-todo")
     local done = rebase_file:joinpath("done")
-    local current = 0
-
     if done:exists() then
       for line in done:iter() do
-        if not line:match("^#") then
-          current = current + 1
+        if line:match("^[^#]") and line ~= "" then
           table.insert(state.rebase.items, { name = line, done = true })
         end
       end
@@ -89,11 +85,13 @@ function M.update_rebase_status(state)
     if cur then
       cur.done = false
       cur.stopped = true
+      state.rebase.current = #state.rebase.items
     end
 
+    local todo = rebase_file:joinpath("git-rebase-todo")
     if todo:exists() then
       for line in todo:iter() do
-        if not line:match("^#") then
+        if line:match("^[^#]") and line ~= "" then
           table.insert(state.rebase.items, { name = line })
         end
       end
