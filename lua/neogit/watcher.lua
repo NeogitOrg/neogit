@@ -14,7 +14,7 @@ local a = require("plenary.async")
 M.watcher = {}
 
 local function git_dir()
-  return Path.new(require("neogit.lib.git").repo.cwd .. "/.git"):absolute()
+  return Path.new(require("neogit.lib.git").repo.git_root, ".git"):absolute()
 end
 
 function M.setup()
