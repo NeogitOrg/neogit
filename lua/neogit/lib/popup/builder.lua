@@ -295,6 +295,7 @@ function M:build()
     error("A popup needs to have a name!")
   end
 
+  logger.debug(string.format("[BUILDER] Building %s Popup", self.state.name))
   return self.builder_fn(self.state)
 end
 
