@@ -284,7 +284,19 @@ local configurations = {
     },
   },
 
-  fetch = config {},
+  fetch = config {
+    options = {
+      recurse_submodules = "--recurse-submodules",
+      verbose = "--verbose",
+    },
+    aliases = {
+      jobs = function(tbl)
+        return function(n)
+          return tbl.args("--jobs=" .. tostring(n))
+        end
+      end,
+    },
+  },
 
   ["read-tree"] = config {
     flags = {
@@ -388,6 +400,16 @@ local configurations = {
       deduplicate = "--deduplicate",
       exclude_standard = "--exclude-standard",
       full_name = "--full-name",
+    },
+  },
+
+  ["ls-remote"] = config {
+    aliases = {
+      remote = function(tbl)
+        return function(remote)
+          return tbl.args(remote)
+        end
+      end,
     },
   },
 
@@ -677,12 +699,13 @@ local function new_builder(subcommand)
     env = {},
   }
 
-  local function to_process(verbose, suppress_error)
-    -- Disable the pager so that the commands don't stop and wait for pagination
-    local cmd = { "git", "--no-pager", "-c", "color.ui=always", "--no-optional-locks", subcommand }
+  local function to_process(verbose, suppress_error, ignore_code)
+    local cmd = {}
+
     for _, o in ipairs(state.options) do
       table.insert(cmd, o)
     end
+
     for _, arg in ipairs(state.arguments) do
       if arg ~= "" then
         table.insert(cmd, arg)
@@ -701,6 +724,9 @@ local function new_builder(subcommand)
       table.insert(cmd, 1, state.prefix)
     end
 
+    -- Disable the pager so that the commands don't stop and wait for pagination
+    cmd = util.merge({ "git", "--no-pager", "-c", "color.ui=always", "--no-optional-locks", subcommand }, cmd)
+
     logger.debug(string.format("[CLI]: Executing '%s %s'", subcommand, table.concat(cmd, " ")))
 
     return process.new {
@@ -709,6 +735,7 @@ local function new_builder(subcommand)
       env = state.env,
       pty = state.in_pty,
       verbose = verbose,
+      ignore_code = ignore_code,
       on_error = suppress_error,
     }
   end
@@ -749,7 +776,7 @@ local function new_builder(subcommand)
       return result
     end,
     call_ignoring_exit_code = function(verbose)
-      local p = to_process(verbose, false)
+      local p = to_process(verbose, false, true)
       local result = p:spawn_async()
 
       assert(result, "Command did not complete")
@@ -805,6 +832,27 @@ local function new_builder(subcommand)
         stdout = result.stdout,
         stderr = result.stderr,
         code = result.code,
+        time = result.time,
+      }, state.show_popup, state.hide_text)
+
+      return result
+    end,
+    call_sync_ignoring_exit_code = function(verbose, external_errors)
+      local p = to_process(verbose, external_errors, true)
+      logger.debug(string.format("[CLI]: Executing '%s %s'", subcommand, table.concat(p.cmd, " ")))
+      if not p:spawn() then
+        error("Failed to run command")
+        return nil
+      end
+
+      local result = p:wait()
+      assert(result, "Command did not complete")
+
+      handle_new_cmd({
+        cmd = table.concat(p.cmd, " "),
+        stdout = result.stdout,
+        stderr = result.stderr,
+        code = 0,
         time = result.time,
       }, state.show_popup, state.hide_text)
 

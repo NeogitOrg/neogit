@@ -8,8 +8,7 @@ local config = require("neogit.config")
 local state = require("neogit.lib.state")
 local input = require("neogit.lib.input")
 
-local branch = require("neogit.lib.git.branch")
-local config_lib = require("neogit.lib.git.config")
+local git = require("neogit.lib.git")
 
 local col = Ui.col
 local row = Ui.row
@@ -121,6 +120,10 @@ local function construct_config_options(config)
       return
     end
 
+    if option.condition and not option.condition() then
+      return
+    end
+
     local highlight
     if config.value == option.value then
       highlight = "NeogitPopupConfigEnabled"
@@ -152,7 +155,7 @@ function M:update_component(id, highlight, value)
   if highlight then
     if component.options.highlight then
       component.options.highlight = highlight
-    else
+    elseif component.children then
       component.children[1].options.highlight = highlight
     end
   end
@@ -171,7 +174,7 @@ function M:update_component(id, highlight, value)
         table.insert(component.children, text)
       end
     else
-      logger.debug(string.format("[POPUP]: Unhandled component value type! (%s)", type(value)))
+      logger.error(string.format("[POPUP]: Unhandled component value type! (%s)", type(value)))
     end
   end
 
@@ -244,22 +247,28 @@ function M:set_option(option)
   end
 end
 
+-- TODO: Move the "unset" logic strictly to the view layer, the internal state should never
+-- hold that as a value
+--
 -- Set a config value
 ---@param config table
 ---@return nil
 function M:set_config(config)
+  -- For config's that offer predetermined options to choose from.
   if config.options then
-    -- For config's that offer predetermined options to choose from.
-    local options = build_reverse_lookup(map(config.options, function(option)
-      return option.value
+    local options = build_reverse_lookup(filter_map(config.options, function(option)
+      if option.condition and not option.condition() then
+        return
+      end
+
+      return option.value == "unset" and "" or option.value
     end))
 
     local index = options[config.value]
     config.value = options[(index + 1)] or options[1]
-    self:update_component(config.id, nil, construct_config_options(config))
   elseif config.callback then
     config.callback(self, config)
-    -- block here?
+    return
   else
     -- For config's that require user input
     local result = vim.fn.input {
@@ -268,21 +277,30 @@ function M:set_config(config)
       cancelreturn = config.value,
     }
 
-    config.value = result == "" and "unset" or result
-    self:update_component(config.id, get_highlight_for_config(config), config.value)
+    if not result or result == "" then
+      config.value = "unset"
+    else
+      config.value = result
+    end
   end
 
-  -- Update config value via CLI
-  config_lib.set(config.name, config.value)
+  git.config.set(config.name, config.value)
 
-  -- Updates passive variables (variables that don't get interacted with directly)
+  self:repaint_config()
+end
+
+function M:repaint_config()
   for _, var in ipairs(self.state.config) do
     if var.passive then
-      local c_value = config_lib.get(var.name)
+      local c_value = git.config.get(var.name)
       if c_value then
         var.value = c_value.value
         self:update_component(var.id, nil, var.value)
       end
+    elseif var.options then
+      self:update_component(var.id, nil, construct_config_options(var))
+    else
+      self:update_component(var.id, get_highlight_for_config(var), var.value)
     end
   end
 end
@@ -521,7 +539,18 @@ function M:show()
     mappings = mappings,
     after = function()
       vim.cmd([[setlocal nocursorline]])
-      vim.fn.matchadd("NeogitPopupBranchName", self.state.env.highlight or branch.current(), 100)
+
+      if self.state.env.highlight then
+        for _, text in ipairs(self.state.env.highlight) do
+          vim.fn.matchadd("NeogitPopupBranchName", text, 100)
+        end
+      else
+        vim.fn.matchadd("NeogitPopupBranchName", git.repo.head.branch, 100)
+      end
+
+      for _, text in ipairs(self.state.env.bold or {}) do
+        vim.fn.matchadd("NeogitPopupBold", text, 100)
+      end
 
       if config.values.popup.kind == "split" then
         vim.cmd([[execute "resize" . (line("$") + 1)]])
