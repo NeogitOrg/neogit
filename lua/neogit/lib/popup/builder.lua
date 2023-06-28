@@ -262,7 +262,10 @@ function M:action(key, description, callback)
       action = a.void(function(...)
         callback(...)
 
-        git.repo:dispatch_refresh { callback = require("neogit.status").dispatch_refresh, source = "action" }
+        git.repo:dispatch_refresh {
+          callback = require("neogit.status").dispatch_refresh,
+          source = "action",
+        }
       end)
     end
 
