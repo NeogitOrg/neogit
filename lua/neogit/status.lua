@@ -694,7 +694,6 @@ local stage = function()
         end
         add.call()
       end
-      M.refresh()
       M.current_operation = nil
       return
     else
@@ -726,7 +725,6 @@ local unstage = function()
   else
     if item == nil then
       git.status.unstage_all()
-      M.refresh()
       M.current_operation = nil
       return
     else
@@ -743,7 +741,6 @@ local unstage = function()
   end
 
   assert(item, "Unstage item is nil")
-  M.refresh()
   M.current_operation = nil
 end
 
@@ -854,7 +851,6 @@ local discard = function()
     discard_selected_files({ item }, section.name)
   end
 
-  M.refresh()
   M.current_operation = nil
 
   a.util.scheduler()
@@ -893,30 +889,46 @@ local cmd_func_map = function()
       M.status_buffer:close()
     end,
     ["InitRepo"] = a.void(git.init.init_repo),
-    ["Depth1"] = a.void(function()
-      set_folds { true, true, false }
-    end),
-    ["Depth2"] = a.void(function()
-      set_folds { false, true, false }
-    end),
-    ["Depth3"] = a.void(function()
-      set_folds { false, false, true }
-    end),
-    ["Depth4"] = a.void(function()
-      set_folds { false, false, false }
-    end),
+    ["Depth1"] = a.void(function() set_folds { true, true, false } end),
+    ["Depth2"] = a.void(function() set_folds { false, true, false } end),
+    ["Depth3"] = a.void(function() set_folds { false, false, true } end),
+    ["Depth4"] = a.void(function() set_folds { false, false, false } end),
     ["Toggle"] = M.toggle,
-    ["Discard"] = { "nv", a.void(discard), true },
-    ["Stage"] = { "nv", a.void(stage), true },
+    ["Discard"] = {
+      "nv",
+      a.void(function()
+        discard()
+        M.update()
+      end),
+      true
+    },
+    ["Stage"] = {
+      "nv",
+      a.void(function()
+        stage()
+        M.update()
+      end),
+      true
+    },
     ["StageUnstaged"] = a.void(function()
       git.status.stage_modified()
+      M.update()
     end),
     ["StageAll"] = a.void(function()
       git.status.stage_all()
+      M.update()
     end),
-    ["Unstage"] = { "nv", a.void(unstage), true },
+    ["Unstage"] = {
+      "nv",
+      a.void(function()
+        unstage()
+        M.update()
+      end),
+      true
+    },
     ["UnstageStaged"] = a.void(function()
       git.status.unstage_all()
+      M.update()
     end),
     ["CommandHistory"] = function()
       GitCommandHistory:new():show()
@@ -1231,6 +1243,10 @@ function M.create(kind, cwd)
       M.refresh()
     end,
   }
+end
+
+function M.update()
+  git.repo:dispatch_refresh({ source = "status", callback = M.dispatch_refresh })
 end
 
 function M.enable()
