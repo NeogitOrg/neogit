@@ -232,10 +232,10 @@ end
 return {
   parse = parse_diff,
   register = function(meta)
-    meta.update_diffs = function(repo, filter)
-      filter = filter or false
-      if filter and type(filter) == "table" then
-        filter = ItemFilter.create(filter)
+    meta.update_diffs = function(repo)
+      local filter
+      if repo.invalidate[1] then
+        filter = ItemFilter.create(repo.invalidate)
       end
 
       for _, f in ipairs(repo.untracked.items) do

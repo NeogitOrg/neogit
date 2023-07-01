@@ -18,6 +18,7 @@ local function empty_state()
     cwd          = vim.fn.getcwd(),
     git_root     = root,
     rev_toplevel = nil,
+    invalidate   = {},
     head         = { branch = nil, commit_message = "" },
     upstream     = { branch = nil, commit_message = "", remote = nil },
     untracked    = { items = {} },
@@ -47,6 +48,14 @@ M.lib = {}
 
 function M.reset(self)
   self.state = empty_state()
+end
+
+-- Invalidates a cached diff for a file
+function M.invalidate(self, ...)
+  local files = { ... }
+  for _, path in ipairs(files) do
+    table.insert(self.state.invalidate, string.format("*:%s", path))
+  end
 end
 
 local function _refresh(self, opts)
