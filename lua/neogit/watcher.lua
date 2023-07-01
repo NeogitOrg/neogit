@@ -38,7 +38,7 @@ function M.watch_git_dir(gitdir)
   end
 
   local watch_gitdir_handler_db = util.debounce_trailing(
-    100,
+    300,
     a.void(function()
       git.repo:dispatch_refresh { callback = status.dispatch_refresh, source = "watcher" }
     end)
