@@ -8,4 +8,10 @@ function M.update()
     :spawn_async()
 end
 
+function M.register(meta)
+  meta.update_index = function(state)
+    state.index.timestamp = state.index_stat()
+  end
+end
+
 return M

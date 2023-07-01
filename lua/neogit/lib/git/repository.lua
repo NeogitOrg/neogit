@@ -15,10 +15,17 @@ local function empty_state()
     git_path     = function(path)
       return Path.new(root):joinpath(".git", path)
     end,
+    index_stat   = function()
+      local index = Path.new(root):joinpath(".git", "index")
+      if index:exists() then
+        return index:_stat().mtime.sec
+      end
+    end,
     cwd          = vim.fn.getcwd(),
     git_root     = root,
     rev_toplevel = nil,
     invalidate   = {},
+    index        = { timestamp = 0 },
     head         = { branch = nil, commit_message = "" },
     upstream     = { branch = nil, commit_message = "", remote = nil },
     untracked    = { items = {} },
@@ -120,7 +127,8 @@ if not M.initialized then
   setmetatable(M, meta)
 
   local modules = {
-    "status",
+    "status", -- Needs to be first
+    "index",
     "diff",
     "stash",
     "pull",
