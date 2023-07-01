@@ -2,7 +2,6 @@ local git = {
   cli = require("neogit.lib.git.cli"),
   stash = require("neogit.lib.git.stash"),
 }
-local a = require("plenary.async")
 local Collection = require("neogit.lib.collection")
 
 local function update_file(file, mode, name)
@@ -124,27 +123,31 @@ local function update_branch_information(state)
   end
 end
 
-local status = {
-  stage = function(...)
-    git.cli.add.files(...).call()
-  end,
-  stage_modified = function()
-    git.cli.add.update.call()
-  end,
-  stage_all = function()
-    git.cli.add.all.call()
-  end,
-  unstage = function(...)
-    git.cli.reset.files(...).call()
-  end,
-  unstage_all = function()
-    git.cli.reset.call()
-  end,
-}
+local M = {}
 
-status.register = function(meta)
+function M.stage(...)
+  git.cli.add.files(...).call()
+end
+
+function M.stage_modified()
+  git.cli.add.update.call()
+end
+
+function M.stage_all()
+  git.cli.add.all.call()
+end
+
+function M.unstage(...)
+  git.cli.reset.files(...).call()
+end
+
+function M.unstage_all()
+  git.cli.reset.call()
+end
+
+function M.register(meta)
   meta.update_status = update_status
   meta.update_branch_information = update_branch_information
 end
 
-return status
+return M
