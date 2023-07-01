@@ -63,7 +63,11 @@ function M.watch_git_dir(gitdir)
         vim.inspect(events, { indent = "", newline = " " })
       )
 
-      if filename:match("%.lock$") then
+      -- stylua: ignore
+      if
+        filename:match("%.lock$") or
+        filename:match("COMMIT_EDITMSG")
+      then
         logger.debug(string.format("%s (ignoring)", info))
         return
       end
