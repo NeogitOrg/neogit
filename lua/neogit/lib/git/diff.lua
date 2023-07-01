@@ -215,15 +215,14 @@ local function raw_staged(name)
   end
 end
 
--- TODO: each item should track if it's been modified, and that should be used to invalidate the cached diff.
--- So, something like,
--- diff = { has_diff = true, invalid = true }
---
--- Would necissitate rebuilding the diff, but
--- diff = { has_diff = true, invalid = false }
---
--- would not. If `has_diff` is false, it shouldn't be counted either.
+-- When there is _no_ filter, invalidate all diffs
+-- When there _is_ a filter, only invalidate matching items
+-- And, of course, don't worry about items that haven't loaded diffs
 local function invalidate_diff(filter, section, item)
+  if not rawget(item, "diff") then
+    return
+  end
+
   if not filter or filter:accepts(section, item.name) then
     logger.debug(string.format("[DIFF] Invalidating diff for: %s", item.name))
     item.diff = nil
