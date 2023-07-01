@@ -19,6 +19,7 @@ function M.log_head(popup)
     :open()
 end
 
+-- TODO: Verify if branch is nil or empty with detatched head
 function M.log_local_branches(popup)
   LogViewBuffer.new(
     git.log.list(util.merge(popup:get_arguments(), {
