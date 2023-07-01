@@ -47,9 +47,7 @@ local function update_status(state)
     else
       local kind, rest = l:match("(.) (.+)")
       if kind == "?" then
-        table.insert(untracked_files, {
-          name = rest,
-        })
+        table.insert(untracked_files, { name = rest })
       elseif kind == "u" then
         local mode, _, _, _, _, _, _, _, _, name =
           rest:match("(..) (....) (%d+) (%d+) (%d+) (%d+) (%w+) (%w+) (%w+) (.+)")
