@@ -225,7 +225,7 @@ end
 -- would not. If `has_diff` is false, it shouldn't be counted either.
 local function invalidate_diff(filter, section, item)
   if not filter or filter:accepts(section, item.name) then
-    logger.debug("[DIFF] Invalidating cached diff for: " .. item.name)
+    logger.debug(string.format("[DIFF] Invalidating diff for: %s", item.name))
     item.diff = nil
   end
 end

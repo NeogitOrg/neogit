@@ -40,6 +40,7 @@ function M.watch_git_dir(gitdir)
   local watch_gitdir_handler_db = util.debounce_trailing(
     300,
     a.void(function()
+      logger.debug("[WATCHER] Dispatching Refresh")
       git.repo:dispatch_refresh { callback = status.dispatch_refresh, source = "watcher" }
     end)
   )

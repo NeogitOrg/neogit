@@ -53,20 +53,30 @@ local function _refresh(self, opts)
   logger.info(string.format("[REPO]: Refreshing START (source: %s)", opts.source or "UNKNOWN"))
 
   if self.state.git_root == "" then
-    logger.info("[REPO]: Refreshing ABORTED - No git_root")
+    logger.debug("[REPO]: Refreshing ABORTED - No git_root")
     return
   end
 
-  self.lib.update_status(self.state)
+  -- stylua: ignore
+  if
+    self.state.index.timestamp == self.state.index_stat() and
+    opts.source == "watcher"
+  then
+    logger.debug("[REPO]: Refreshing ABORTED - .git/index hasn't been modified since last refresh")
+    return
+  end
 
   for name, fn in pairs(self.lib) do
-    logger.info(string.format("[REPO]: Refreshing %s", name))
+    logger.trace(string.format("[REPO]: Refreshing %s", name))
     fn(self.state)
   end
+
+  self.state.invalidate = {}
+
   logger.info("[REPO]: Refreshes completed")
 
   if opts.callback then
-    logger.info("[REPO]: Running Callback")
+    logger.debug("[REPO]: Running refresh callback")
     opts.callback()
   end
 end
@@ -83,13 +93,13 @@ M.dispatch_refresh = a.void(function(self, opts)
   end
 
   lock_holder = opts.source or "UNKNOWN"
-  logger.info(string.format("[REPO]: Acquiring refresh lock (source: %s)", lock_holder))
+  logger.debug(string.format("[REPO]: Acquiring refresh lock (source: %s)", lock_holder))
   local permit = refresh_lock:acquire()
 
   a.util.scheduler()
   _refresh(self, opts)
 
-  logger.info("[REPO]: freeing refresh lock")
+  logger.debug("[REPO]: freeing refresh lock")
   lock_holder = nil
   permit:forget()
 end)
