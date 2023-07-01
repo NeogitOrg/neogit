@@ -744,12 +744,6 @@ local unstage = function()
   M.current_operation = nil
 end
 
-local function update_index()
-  require("neogit.process")
-    .new({ cmd = { "git", "update-index", "-q", "--refresh" }, verbose = true })
-    :spawn_async()
-end
-
 local function discard_message(item, mode)
   if mode.mode == "V" then
     return "Discard selection?"
@@ -835,9 +829,7 @@ local discard = function()
     return
   end
 
-  -- Make sure the index is in sync as git-status skips it
-  -- Do this manually since the `cli` add --no-optional-locks
-  update_index()
+  git.index.update()
 
   if mode.mode == "V" then
     if multi_file then
