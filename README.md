@@ -4,6 +4,10 @@
 
 A **work-in-progress** [Magit](https://magit.vc) clone for [Neovim](https://neovim.io) that is geared toward the Vim philosophy.
 
+## Notice
+
+Neogit has moved to an organization at <https://github.com/NeogitOrg/neogit/issues> to ensure the longevity of this project and ensure that it is more accessible to collaborators.
+
 ## Installation
 
 **NOTE**: We depend on [plenary.nvim](https://github.com/nvim-lua/plenary.nvim), so to use this plugin, you will additionally need to
