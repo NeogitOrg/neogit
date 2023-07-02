@@ -1,25 +1,21 @@
 local Buffer = require("neogit.lib.buffer")
 local util = require("neogit.lib.util")
-local ui = require("neogit.buffers.log_view.ui")
+local ui = require("neogit.buffers.reflog_view.ui")
 local config = require("neogit.config")
 
 local CommitViewBuffer = require("neogit.buffers.commit_view")
 local CherryPickPopup = require("neogit.popups.cherry_pick")
 
----@class LogViewBuffer
----@field commits CommitLogEntry[]
----@field internal_args table
+---@class ReflogViewBuffer
+---@field entries ReflogEntry[]
 local M = {}
 M.__index = M
 
----Opens a popup for selecting a commit
----@param commits CommitLogEntry[]|nil
----@param internal_args table|nil
----@return LogViewBuffer
-function M.new(commits, internal_args)
+---@param entries ReflogEntry[]|nil
+---@return ReflogViewBuffer
+function M.new(entries)
   local instance = {
-    commits = commits,
-    internal_args = internal_args,
+    entries = entries,
     buffer = nil,
   }
 
@@ -35,10 +31,10 @@ end
 
 function M:open()
   self.buffer = Buffer.create {
-    name = "NeogitLogView",
-    filetype = "NeogitLogView",
+    name = "NeogitReflogView",
+    filetype = "NeogitReflogView",
     kind = "tab",
-    context_highlight = false,
+    context_highlight = true,
     mappings = {
       v = {
         ["A"] = function()
@@ -75,40 +71,6 @@ function M:open()
           local stack = self.buffer.ui:get_component_stack_under_cursor()
           CommitViewBuffer.new(stack[#stack].options.oid):open()
         end,
-        ["<c-k>"] = function(buffer)
-          local stack = self.buffer.ui:get_component_stack_under_cursor()
-          local c = stack[#stack]
-          c.children[2].options.hidden = true
-
-          local t_idx = math.max(c.index - 1, 1)
-          local target = c.parent.children[t_idx]
-          target.children[2].options.hidden = false
-
-          buffer.ui:update()
-          self.buffer:move_cursor(target.position.row_start)
-        end,
-        ["<c-j>"] = function(buffer)
-          local stack = self.buffer.ui:get_component_stack_under_cursor()
-          local c = stack[#stack]
-          c.children[2].options.hidden = true
-
-          local t_idx = math.min(c.index + 1, #c.parent.children)
-          local target = c.parent.children[t_idx]
-          target.children[2].options.hidden = false
-
-          buffer.ui:update()
-          buffer:move_cursor(target.position.row_start)
-          vim.cmd("normal! zz")
-        end,
-        ["<tab>"] = function()
-          local stack = self.buffer.ui:get_component_stack_under_cursor()
-          local c = stack[#stack]
-
-          if c.children[2] then
-            c.children[2]:toggle_hidden()
-            self.buffer.ui:update()
-          end
-        end,
         ["d"] = function()
           if not config.ensure_integration("diffview") then
             return
@@ -124,7 +86,7 @@ function M:open()
       vim.cmd([[setlocal nowrap]])
     end,
     render = function()
-      return ui.View(self.commits, self.internal_args)
+      return ui.View(self.entries)
     end,
   }
 end
