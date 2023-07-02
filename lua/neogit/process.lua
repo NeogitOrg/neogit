@@ -66,7 +66,7 @@ local function create_preview_buffer()
   -- May be called multiple times due to scheduling
   if preview_buffer then
     if preview_buffer.buffer then
-      logger.debug("Preview buffer already exists. Focusing the existing one")
+      logger.trace("[PROCESS] Preview buffer already exists. Focusing the existing one")
       preview_buffer.buffer:focus()
     end
     return
