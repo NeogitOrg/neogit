@@ -187,6 +187,7 @@ local function build_metatable(f, raw_output_fn)
     end,
   })
 
+  logger.trace("[DIFF] Adding metatable for: " .. f.name)
   f.has_diff = true
 end
 
