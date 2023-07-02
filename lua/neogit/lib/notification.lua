@@ -3,6 +3,7 @@ local message_history = {}
 local notifications = {}
 local notification_count = 0
 
+---@param message string
 local function create(message, level, delay)
   if not level then
     level = vim.log.levels.INFO
@@ -22,6 +23,7 @@ local function create(message, level, delay)
     or { height = 0, row = vim.api.nvim_get_option("lines") - 2 }
 
   local message = vim.split(message, "\n")
+
   local width = 16
   for _, line in ipairs(message) do
     width = math.max(width, #line)
