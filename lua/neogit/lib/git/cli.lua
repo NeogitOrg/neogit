@@ -147,8 +147,7 @@ local configurations = {
     aliases = {
       get_url = function(tbl)
         return function(remote)
-          tbl.prefix("get-url")
-          return tbl.args(remote)
+          return tbl.args("get-url", remote)
         end
       end,
     },
