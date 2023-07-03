@@ -4,6 +4,10 @@
 
 A **work-in-progress** [Magit](https://magit.vc) clone for [Neovim](https://neovim.io) that is geared toward the Vim philosophy.
 
+## Notice
+
+Neogit has moved to an organization at <https://github.com/NeogitOrg/neogit/issues> to ensure the longevity of this project and ensure that it is more accessible to collaborators.
+
 ## Installation
 
 **NOTE**: We depend on [plenary.nvim](https://github.com/nvim-lua/plenary.nvim) and [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim), so to use this plugin, you will additionally need to
@@ -11,19 +15,19 @@ require `nvim-lua/plenary.nvim` and `nvim-telescope/telescope.nvim` using your p
 
 | Plugin Manager                                       | Command                                                                        |
 | ---------------------------------------------------- | ------------------------------------------------------------------------------ |
-| [Lazy](https://github.com/folke/lazy.nvim)           | `return { 'TimUntersberger/neogit', dependencies = 'nvim-lua/plenary.nvim' }`  |
-| [Packer](https://github.com/wbthomason/packer.nvim)  | `use { 'TimUntersberger/neogit', requires = 'nvim-lua/plenary.nvim' }`         |
-| [Vim-plug](https://github.com/junegunn/vim-plug)     | `Plug 'TimUntersberger/neogit'`                                                |
-| [NeoBundle](https://github.com/Shougo/neobundle.vim) | `NeoBundle 'TimUntersberger/neogit'`                                           |
-| [Vundle](https://github.com/VundleVim/Vundle.vim)    | `Bundle 'TimUntersberger/neogit'`                                              |
-| [Pathogen](https://github.com/tpope/vim-pathogen)    | `git clone https://github.com/TimUntersberger/neogit.git ~/.vim/bundle/neogit` |
-| [Dein](https://github.com/Shougo/dein.vim)           | `call dein#add('TimUntersberger/neogit')`                                      |
-| [Dep](https://github.com/chiyadev/dep)               | `{'TimUntersberger/neogit', requires = {'nvim-lua/plenary.nvim'}}`             |
+| [Lazy](https://github.com/folke/lazy.nvim)           | `return { 'NeogitOrg/neogit', dependencies = 'nvim-lua/plenary.nvim' }`  |
+| [Packer](https://github.com/wbthomason/packer.nvim)  | `use { 'NeogitOrg/neogit', requires = 'nvim-lua/plenary.nvim' }`         |
+| [Vim-plug](https://github.com/junegunn/vim-plug)     | `Plug 'NeogitOrg/neogit'`                                                |
+| [NeoBundle](https://github.com/Shougo/neobundle.vim) | `NeoBundle 'NeogitOrg/neogit'`                                           |
+| [Vundle](https://github.com/VundleVim/Vundle.vim)    | `Bundle 'NeogitOrg/neogit'`                                              |
+| [Pathogen](https://github.com/tpope/vim-pathogen)    | `git clone https://github.com/NeogitOrg/neogit.git ~/.vim/bundle/neogit` |
+| [Dein](https://github.com/Shougo/dein.vim)           | `call dein#add('NeogitOrg/neogit')`                                      |
+| [Dep](https://github.com/chiyadev/dep)               | `{'NeogitOrg/neogit', requires = {'nvim-lua/plenary.nvim'}}`             |
 
 You also use in the built-in package manager:
 
 ```bash
-$ git clone --depth 1 https://github.com/TimUntersberger/neogit $XDG_CONFIG_HOME/nvim/pack/plugins/start/neogit
+$ git clone --depth 1 https://github.com/NeogitOrg/neogit $XDG_CONFIG_HOME/nvim/pack/plugins/start/neogit
 ```
 
 Now you have to add the following lines to your `init.lua`

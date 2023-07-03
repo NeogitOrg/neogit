@@ -10,6 +10,36 @@ local input = require("neogit.lib.input")
 local cli = require("neogit.lib.git.cli")
 local notification = require("neogit.lib.notification")
 
+local function notify_move()
+  local async = require("plenary.async")
+  async.run(function()
+    local Path = require("plenary.path")
+    local path = debug.getinfo(1, "S").source:sub(2)
+    local path = Path:new(path):parent():parent():absolute()
+
+    local git = require("neogit.lib.git")
+
+    local url = git.cli.config.get("remote.origin.url").cwd(path).call():trim().stdout[1]
+    if url then
+      url = string.lower(url)
+    end
+
+    -- Warn on misconfigured remotes as well
+    if not url or string.match(url, "timuntersberger/neogit") then
+      vim.defer_fn(function()
+        notification.create(
+          [[Neogit has moved to an organization at <https://github.com/NeogitOrg/neogit/issues> to ensure the longevity of this project and ensure that it is more accessible to collaborators.
+
+Please update your plugin configuration or remote :)
+          ]],
+          vim.log.levels.WARN,
+          5000
+        )
+      end, 1000)
+    end
+  end)
+end
+
 local neogit = {
   lib = require("neogit.lib"),
   popups = require("neogit.popups"),
@@ -28,9 +58,12 @@ local neogit = {
 
     if not cli.git_is_repository_sync(opts.cwd) then
       if
-        input.get_confirmation(string.format("Create repository in %s? (y or n)", opts.cwd or vim.fn.getcwd()), {
-          default = 2,
-        })
+        input.get_confirmation(
+          string.format("Create repository in %s? (y or n)", opts.cwd or vim.fn.getcwd()),
+          {
+            default = 2,
+          }
+        )
       then
         lib.git.init.create(opts.cwd or vim.fn.getcwd(), true)
       else
@@ -65,6 +98,7 @@ local neogit = {
   refresh_viml_compat = status.refresh_viml_compat,
   close = status.close,
   setup = function(opts)
+    notify_move()
     if opts ~= nil then
       config.values = vim.tbl_deep_extend("force", config.values, opts)
     end
