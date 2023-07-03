@@ -114,6 +114,8 @@ M.values = {
       ["f"] = "FetchPopup",
       ["X"] = "ResetPopup",
       ["M"] = "RemotePopup",
+      ["{"] = "GoToPreviousHunkHeader",
+      ["}"] = "GoToNextHunkHeader",
     },
   },
 }
