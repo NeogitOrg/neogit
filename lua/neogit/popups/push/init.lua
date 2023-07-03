@@ -27,12 +27,10 @@ function M.create()
     :action("t", "all tags")
     :new_action_group("Configure")
     :action("C", "Set variables...", actions.configure)
-    :env(
-      {
-        highlight = { current, git.repo.upstream.ref, git.branch.pushRemote_ref() },
-        bold = { "pushRemote", "@{upstream}" }
-      }
-    )
+    :env({
+      highlight = { current, git.repo.upstream.ref, git.branch.pushRemote_ref() },
+      bold = { "pushRemote", "@{upstream}" },
+    })
     :build()
 
   p:show()
