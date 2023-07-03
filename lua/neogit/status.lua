@@ -881,10 +881,18 @@ local cmd_func_map = function()
       M.status_buffer:close()
     end,
     ["InitRepo"] = a.void(git.init.init_repo),
-    ["Depth1"] = a.void(function() set_folds { true, true, false } end),
-    ["Depth2"] = a.void(function() set_folds { false, true, false } end),
-    ["Depth3"] = a.void(function() set_folds { false, false, true } end),
-    ["Depth4"] = a.void(function() set_folds { false, false, false } end),
+    ["Depth1"] = a.void(function()
+      set_folds { true, true, false }
+    end),
+    ["Depth2"] = a.void(function()
+      set_folds { false, true, false }
+    end),
+    ["Depth3"] = a.void(function()
+      set_folds { false, false, true }
+    end),
+    ["Depth4"] = a.void(function()
+      set_folds { false, false, false }
+    end),
     ["Toggle"] = M.toggle,
     ["Discard"] = {
       "nv",
@@ -892,7 +900,7 @@ local cmd_func_map = function()
         discard()
         M.update()
       end),
-      true
+      true,
     },
     ["Stage"] = {
       "nv",
@@ -900,7 +908,7 @@ local cmd_func_map = function()
         stage()
         M.update()
       end),
-      true
+      true,
     },
     ["StageUnstaged"] = a.void(function()
       git.status.stage_modified()
@@ -916,7 +924,7 @@ local cmd_func_map = function()
         unstage()
         M.update()
       end),
-      true
+      true,
     },
     ["UnstageStaged"] = a.void(function()
       git.status.unstage_all()
@@ -1238,7 +1246,7 @@ function M.create(kind, cwd)
 end
 
 function M.update()
-  git.repo:dispatch_refresh({ source = "status", callback = M.dispatch_refresh })
+  git.repo:dispatch_refresh { source = "status", callback = M.dispatch_refresh }
 end
 
 function M.enable()
