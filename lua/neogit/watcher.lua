@@ -38,7 +38,7 @@ function M.watch_git_dir(gitdir)
   end
 
   local watch_gitdir_handler_db = util.debounce_trailing(
-    300,
+    200,
     a.void(function()
       logger.debug("[WATCHER] Dispatching Refresh")
       git.repo:dispatch_refresh { callback = status.dispatch_refresh, source = "watcher" }
@@ -54,7 +54,7 @@ function M.watch_git_dir(gitdir)
     {},
     a.void(function(err, filename, events)
       if err then
-        logger.error("[WATCHER] Git dir update error: %s", err)
+        logger.error(string.format("[WATCHER] Git dir update error: %s", err))
         return
       end
 
@@ -64,17 +64,14 @@ function M.watch_git_dir(gitdir)
         vim.inspect(events, { indent = "", newline = " " })
       )
 
-      -- stylua: ignore
-      if
-        filename:match("%.lock$") or
-        filename:match("COMMIT_EDITMSG")
-      then
-        logger.debug(string.format("%s (ignoring)", info))
+      if filename:match("%.lock$") then
         return
       end
 
       logger.debug(info)
-      watch_gitdir_handler_db()
+      if filename:match("^index$") or filename:match("HEAD$") then
+        watch_gitdir_handler_db()
+      end
     end)
   )
 
