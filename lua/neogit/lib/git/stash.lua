@@ -116,7 +116,7 @@ function M.register(meta)
       return {
         idx = tonumber(idx),
         name = line,
-        message = message
+        message = message,
       }
     end)
   end

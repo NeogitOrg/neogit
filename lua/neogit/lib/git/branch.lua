@@ -61,7 +61,7 @@ function M.get_upstream()
   end
 end
 
-function M.isUnmerged(branch, base)
+function M.is_unmerged(branch, base)
   return cli.cherry.arg_list({ base or "master", branch }).call_sync():trim().stdout[1] ~= nil
 end
 

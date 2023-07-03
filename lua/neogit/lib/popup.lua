@@ -201,6 +201,7 @@ function M:toggle_switch(switch)
   state.set({ self.state.name, switch.cli }, switch.enabled)
   self:update_component(switch.id, get_highlight_for_switch(switch), switch.cli)
 
+  -- Ensure that other switches that are incompatible with this one are disabled
   if switch.enabled and #switch.incompatible > 0 then
     for _, var in ipairs(self.state.args) do
       if var.type == "switch" and var.enabled and switch.incompatible[var.cli] then
@@ -244,6 +245,9 @@ function M:set_option(option)
   end
 end
 
+-- Set a config value
+---@param config table
+---@return nil
 function M:set_config(config)
   if config.options then
     local options = build_reverse_lookup(filter_map(config.options, function(option)

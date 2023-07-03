@@ -20,7 +20,11 @@ end
 
 -- TODO: Set upstream if unset
 function M.onto_upstream(popup)
-  git.rebase.rebase_onto(git.repo.upstream.remote .. " " .. git.repo.upstream.branch, popup:get_arguments())
+  git.rebase.rebase_onto(
+    string.format("refs/remotes/%s/%s", git.repo.upstream.remote, git.repo.upstream.branch),
+    popup:get_arguments()
+  )
+
   a.util.scheduler()
   status.refresh(true, "rebase_upstream")
 end

@@ -4,6 +4,16 @@ local actions = require("neogit.popups.log.actions")
 local M = {}
 
 function M.create()
+  -- TODO: Activation should be "--", and should open file-select fuzzy finder, defaulting to the filepath under the cursor if there is one. Needs to get passed into #files() down the line, too.
+  -- :option("-", "--", "", "Limit to files")
+
+  -- TODO: Build multi-selector switch
+  -- :switch("o", "xxx-order", "Order commits by", false)
+
+  -- TODO: Need to figure out how this works
+  -- :switch("h", "header", "Show header", { cli_prefix = "++" })
+  -- :switch("p", "patch", "Show diffs")
+
   local p = popup
     .builder()
     :name("NeogitLogPopup")
@@ -20,20 +30,14 @@ function M.create()
     :switch("p", "first-parent", "First parent", { key_prefix = "=" })
     :arg_heading("History Simplification")
     :switch("D", "simplify-by-decoration", "Simplify by decoration")
-    -- TODO: Activation should be "--", and should open file-select fuzzy finder, defaulting to the filepath under the
-    -- cursor if there is one. Needs to get passed into #files() down the line, too.
-    -- :option("-", "--", "", "Limit to files")
     :switch("f", "follow", "Follow renames when showing single-file log")
     :arg_heading("Commit Ordering")
-    -- :switch("o", "xxx-order", "Order commits by", false) TODO: Build multi-selector switch
     :switch("r", "reverse", "Reverse order")
     :arg_heading("Formatting")
     :switch("g", "graph", "Show graph", { enabled = true, internal = true })
     :switch("c", "color", "Show graph in color")
     :switch("d", "decorate", "Show refnames", { enabled = true })
     :switch("S", "show-signature", "Show signatures", { key_prefix = "=" })
-    -- :switch("h", "header", "Show header", { cli_prefix = "++" }) TODO: Need to figure out how this works
-    -- :switch("p", "patch", "Show diffs")
     :switch("s", "stat", "Show diffstats")
     :group_heading("Log")
     :action("l", "current", actions.log_current)
