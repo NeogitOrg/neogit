@@ -51,14 +51,14 @@ function M:open()
           CherryPickPopup.create { commits = commits }
         end,
         ["_"] = function()
-          local commits = util.filter_map(
-            self.buffer.ui:get_component_stack_in_linewise_selection(),
-            function(c)
-              if c.options.oid then
-                return c.options.oid
-              end
-            end
-          )
+          -- local commits = util.filter_map(
+          --   self.buffer.ui:get_component_stack_in_linewise_selection(),
+          --   function(c)
+          --     if c.options.oid then
+          --       return c.options.oid
+          --     end
+          --   end
+          -- )
 
           print("Multiple commits not yet implimented")
           -- RevertPopup.create(commits)

@@ -22,28 +22,28 @@ M.values = {
     recent_commit_count = 10,
   },
   commit_popup = {
-    kind = "split"
+    kind = "split",
   },
   commit_editor = {
-    kind = "split"
+    kind = "split",
   },
   commit_select_view = {
-    kind = "tab"
+    kind = "tab",
   },
   commit_view = {
-    kind = "vsplit"
+    kind = "vsplit",
   },
   log_view = {
-    kind = "tab"
+    kind = "tab",
   },
   rebase_editor = {
-    kind = "split"
+    kind = "split",
   },
   reflog_view = {
-    kind = "tab"
+    kind = "tab",
   },
   merge_editor = {
-    kind = "split"
+    kind = "split",
   },
   preview_buffer = {
     kind = "split",
