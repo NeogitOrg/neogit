@@ -6,16 +6,18 @@ local M = {}
 function M.create(env)
   local in_progress = require("neogit.lib.git.sequencer").pick_or_revert_in_progress()
 
+  -- TODO
+  -- :switch("x", "x", "Reference cherry in commit message", { cli_prefix = "-" })
+  -- :switch("e", "edit", "Edit commit messages", false)
+  -- :switch("s", "signoff", "Add Signed-off-by lines", false)
+  -- :option("m", "mainline", "", "Replay merge relative to parent")
+  -- :option("s", "strategy", "", "Strategy")
+  -- :option("S", "gpg-sign", "", "Sign using gpg")
+
   local p = popup
     .builder()
     :name("NeogitCherryPickPopup")
     :switch("F", "ff", "Attempt fast-forward", { enabled = true })
-    -- :switch("x", "x", "Reference cherry in commit message", { cli_prefix = "-" })
-    -- :switch("e", "edit", "Edit commit messages", false)
-    -- :switch("s", "signoff", "Add Signed-off-by lines", false)
-    -- :option("m", "mainline", "", "Replay merge relative to parent")
-    -- :option("s", "strategy", "", "Strategy")
-    -- :option("S", "gpg-sign", "", "Sign using gpg")
     :group_heading_if(not in_progress, "Apply here")
     :action_if(not in_progress, "A", "Pick", actions.pick)
     :action_if(not in_progress, "a", "Apply", actions.apply)

@@ -170,7 +170,7 @@ function M.delete_branch()
     git.cli.push.remote(remote).delete.to(branch_name).call_sync():trim()
     notif.create(string.format("Deleted remote branch '%s/%s'", remote, branch_name), vim.log.levels.INFO)
   elseif branch_name then
-    if git.branch.isUnmerged(branch_name) then
+    if git.branch.is_unmerged(branch_name) then
       if
         input.get_confirmation(
           "'" .. branch_name .. "' contains unmerged commits! Are you sure you want to delete it?",

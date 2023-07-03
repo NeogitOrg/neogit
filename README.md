@@ -10,7 +10,7 @@ Neogit has moved to an organization at <https://github.com/NeogitOrg/neogit/issu
 
 ## Installation
 
-**NOTE**: We depend on [plenary.nvim](https://github.com/nvim-lua/plenary.nvim) and [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim), so to use this plugin, you will additionally need to
+**NOTE**: We depend on [plenary.nvim](https://github.com/nvim-lua/plenary.nvim) and, optionally, [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim), so to use this plugin, you will additionally need to
 require `nvim-lua/plenary.nvim` and `nvim-telescope/telescope.nvim` using your plugin manager of choice, before requiring this plugin.
 
 | Plugin Manager                                       | Command                                                                        |
@@ -150,7 +150,7 @@ neogit.setup {
   -- Array-like table of settings to never persist. Uses format "Filetype--cli-value"
   --   ie: `{ "NeogitCommitPopup--author", "NeogitCommitPopup--no-verify" }`
   ignored_settings = {},
-  -- Change the default way of opening the commit/rebase popup
+  -- Change the default way of opening the commit popup
   commit_popup = {
     kind = "split",
   },
