@@ -82,6 +82,7 @@ local function _refresh(self, opts)
     return
   end
 
+  self.lib.update_status(self.state)
   for name, fn in pairs(self.lib) do
     logger.trace(string.format("[REPO]: Refreshing %s", name))
     fn(self.state)
@@ -127,7 +128,7 @@ if not M.initialized then
   setmetatable(M, meta)
 
   local modules = {
-    "status", -- Needs to be first
+    "status",
     "index",
     "diff",
     "stash",
