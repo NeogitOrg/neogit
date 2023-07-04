@@ -63,20 +63,22 @@ function M.to_upstream(popup)
   else
     set_upstream = true
     branch = git.repo.head.branch
+    local remotes = git.remote.list()
 
-    local result = git.config.get("push.autoSetupRemote").value
-    if result and result == "true" then
+    if git.config.get("push.autoSetupRemote").value == "true" then
       remote = "origin"
+    elseif #remotes == 1 then
+      remote = remotes[1]
     else
-      remote = FuzzyFinderBuffer.new(git.remote.list()):open_async { prompt_prefix = "remote > " }
-      if not remote then
-        logger.error("No upstream set")
-        return
-      end
+      remote = FuzzyFinderBuffer.new(remotes):open_async { prompt_prefix = "remote > " }
     end
   end
 
-  push_to(popup:get_arguments(), remote, branch, { set_upstream = set_upstream })
+  if remote then
+    push_to(popup:get_arguments(), remote, branch, { set_upstream = set_upstream })
+  else
+    logger.error("No upstream set")
+  end
 end
 
 function M.to_elsewhere(popup)
