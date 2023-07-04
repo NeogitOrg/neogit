@@ -5,6 +5,7 @@ local git = require("neogit.lib.git")
 local input = require("neogit.lib.input")
 local util = require("neogit.lib.util")
 local notif = require("neogit.lib.notification")
+local operation = require("neogit.operations")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 local BranchConfigPopup = require("neogit.popups.branch_config")
@@ -21,18 +22,17 @@ local function parse_remote_branch_name(ref)
   return remote, branch_name
 end
 
-function M.checkout_branch_revision()
+M.checkout_branch_revision = operation("checkout_branch_revision", function(popup)
   local selected_branch = FuzzyFinderBuffer.new(git.branch.get_all_branches()):open_async()
   if not selected_branch then
     return
   end
 
-  git.cli.checkout.branch(selected_branch).call_sync():trim()
-
+  git.cli.checkout.branch(selected_branch).arg_list(popup:get_arguments()).call_sync():trim()
   status.refresh(true, "checkout_branch")
-end
+end)
 
-function M.checkout_local_branch()
+M.checkout_local_branch = operation("checkout_local_branch", function(popup)
   local local_branches = git.branch.get_local_branches()
   local remote_branches = util.filter_map(git.branch.get_remote_branches(), function(name)
     local branch_name = name:match([[%/(.*)$]])
@@ -51,15 +51,15 @@ function M.checkout_local_branch()
   end
 
   if target:match([[/]]) then
-    git.cli.checkout.track(target).call_sync()
+    git.cli.checkout.track(target).arg_list(popup:get_arguments()).call_sync()
   elseif target then
-    git.cli.checkout.branch(target).call_sync()
+    git.cli.checkout.branch(target).arg_list(popup:get_arguments()).call_sync()
   end
 
   status.refresh(true, "branch_checkout")
-end
+end)
 
-function M.checkout_create_branch()
+M.checkout_create_branch = operation("checkout_create_branch", function()
   local branches = git.branch.get_all_branches(false)
   local current_branch = git.repo.head.branch
   if current_branch then
@@ -79,23 +79,23 @@ function M.checkout_create_branch()
 
   git.cli.checkout.new_branch_with_start_point(name, base_branch).call_sync():trim()
   status.refresh(true, "branch_create")
-end
+end)
 
-function M.create_branch()
+M.create_branch = operation("create_branch", function()
   git.branch.create()
   status.refresh(true, "create_branch")
-end
+end)
 
-function M.configure_branch()
+M.configure_branch = operation("configure_branch", function()
   local branch_name = FuzzyFinderBuffer.new(git.branch.get_local_branches(true)):open_async()
   if not branch_name then
     return
   end
 
   BranchConfigPopup.create(branch_name)
-end
+end)
 
-function M.rename_branch()
+M.rename_branch = operation("rename_branch", function()
   local current_branch = git.repo.head.branch
   local branches = git.branch.get_local_branches()
   if current_branch then
@@ -115,9 +115,9 @@ function M.rename_branch()
   new_name, _ = new_name:gsub("%s", "-")
   git.cli.branch.move.args(selected_branch, new_name).call_sync():trim()
   status.refresh(true, "rename_branch")
-end
+end)
 
-function M.reset_branch()
+M.reset_branch = operation("reset_branch", function()
   if #git.repo.staged.items > 0 or #git.repo.unstaged.items > 0 then
     local confirmation = input.get_confirmation(
       "Uncommitted changes will be lost. Proceed?",
@@ -146,9 +146,9 @@ function M.reset_branch()
 
   notif.create(string.format("Reset '%s'", git.repo.head.branch), vim.log.levels.INFO)
   status.refresh(true, "reset_branch")
-end
+end)
 
-function M.delete_branch()
+M.delete_branch = operation("delete_branch", function()
   -- TODO: If branch is checked out:
   -- Branch gha-routes-js is checked out.  [d]etach HEAD & delete, [c]heckout origin/gha-routes-js & delete, [a]bort
   local branches = git.branch.get_all_branches()
@@ -187,6 +187,6 @@ function M.delete_branch()
   end
 
   status.refresh(true, "delete_branch")
-end
+end)
 
 return M
