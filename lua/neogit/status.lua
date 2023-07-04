@@ -1203,9 +1203,9 @@ function M.get_status()
 end
 
 function M.wait_on_current_operation(ms)
-  -- vim.wait(ms or 1000, function()
-  --   return not M.current_operation
-  -- end)
+  vim.wait(ms or 1000, function()
+    return not M.current_operation
+  end)
 end
 
 return M
