@@ -13,7 +13,8 @@ local LineBuffer = require("neogit.lib.line_buffer")
 local fs = require("neogit.lib.fs")
 local input = require("neogit.lib.input")
 
-local map = require("neogit.lib.util").map
+local util = require("neogit.lib.util")
+local map = util.map
 local api = vim.api
 local fn = vim.fn
 
@@ -145,10 +146,6 @@ local function format_mode(mode)
   return mode
 end
 
-local function pad_right(s, len)
-  return s .. string.rep(" ", math.max(len - #s, 0))
-end
-
 local function draw_buffer()
   M.status_buffer:clear_sign_group("hl")
   M.status_buffer:clear_sign_group("fold_markers")
@@ -207,7 +204,7 @@ local function draw_buffer()
       location.files = {}
 
       for _, f in ipairs(data.items) do
-        local label = pad_right(format_mode(f.mode), max_len)
+        local label = util.pad_right(format_mode(f.mode), max_len)
         if label and vim.o.columns < 120 then
           label = vim.trim(label)
         end

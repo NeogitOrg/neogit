@@ -267,6 +267,14 @@ local function debounce_trailing(ms, fn)
   end
 end
 
+-- Ensure a string is a minimum width
+---@param s string
+---@param len integer
+---@return string
+local function pad_right(s, len)
+  return s .. string.rep(" ", math.max(len - #s, 0))
+end
+
 return {
   time = time,
   time_async = time_async,
@@ -295,4 +303,5 @@ return {
   str_min_width = str_min_width,
   str_clamp = str_clamp,
   debounce_trailing = debounce_trailing,
+  pad_right = pad_right,
 }
