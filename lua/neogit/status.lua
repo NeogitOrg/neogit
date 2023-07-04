@@ -33,8 +33,6 @@ M.commit_view = nil
 ---@field files StatusItem[]
 M.locations = {}
 
-M.outdated = {}
-
 ---@class StatusItem
 ---@field name string
 ---@field first number
@@ -415,7 +413,7 @@ M.refresh_manually = a.void(function(fname)
     return
   end
 
-  M.refresh()
+  git.repo:dispatch_refresh { callback = M.refresh }
 end)
 
 --- Compatibility endpoint to refresh data from an autocommand.
@@ -587,8 +585,7 @@ local stage_selection = function()
   else
     local section, item, hunk, from, to = get_selection()
     if section and from then
-      local patch = git.index.generate_patch(item, hunk, from, to)
-      git.index.apply(patch, { cached = true })
+      git.index.apply(git.index.generate_patch(item, hunk, from, to), { cached = true })
     end
   end
 end
@@ -601,8 +598,7 @@ local unstage_selection = function()
   else
     local section, item, hunk, from, to = get_selection()
     if section and from then
-      local patch = git.index.generate_patch(item, hunk, from, to, true)
-      git.index.apply(patch, { reverse = true, cached = true })
+      git.index.apply(git.index.generate_patch(item, hunk, from, to, true), { reverse = true, cached = true })
     end
   end
 end
@@ -1002,7 +998,8 @@ local cmd_func_map = function()
       end
     end),
     ["RefreshBuffer"] = function()
-      M.dispatch_refresh()
+      notif.create("Refreshing Status")
+      git.repo:dispatch_refresh { callback = M.dispatch_refresh }
     end,
     ["HelpPopup"] = function()
       local line = M.status_buffer:get_current_line()
@@ -1196,10 +1193,6 @@ end
 
 function M.disable()
   M.disabled = true
-end
-
-function M.get_status()
-  return M.status
 end
 
 function M.wait_on_current_operation(ms)
