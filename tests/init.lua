@@ -15,10 +15,7 @@ end
 ensure_installed("nvim-lua/plenary.nvim")
 ensure_installed("nvim-telescope/telescope.nvim")
 
-require('plenary.test_harness').test_directory(
-  "./tests//",
-  {
-    minimal_init = "tests/minimal_init.lua",
-    sequential = true
-  }
-)
+require("plenary.test_harness").test_directory("./tests//", {
+  minimal_init = "tests/minimal_init.lua",
+  sequential = true,
+})
