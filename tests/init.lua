@@ -12,8 +12,14 @@ local function ensure_installed(repo)
   end
 end
 
-ensure_installed("nvim-lua/plenary.nvim")
-ensure_installed("nvim-telescope/telescope.nvim")
+if os.getenv("CI") then
+  vim.opt.runtimepath:prepend(vim.fn.getcwd())
+  vim.cmd([[runtime! plugin/plenary.vim]])
+  vim.cmd([[runtime! plugin/neogit.lua]])
+else
+  ensure_installed("nvim-lua/plenary.nvim")
+  ensure_installed("nvim-telescope/telescope.nvim")
+end
 
 require("plenary.test_harness").test_directory("./tests//", {
   minimal_init = "tests/minimal_init.lua",
