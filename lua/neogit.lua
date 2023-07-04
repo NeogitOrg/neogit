@@ -25,7 +25,7 @@ local function notify_move()
     end
 
     -- Warn on misconfigured remotes as well
-    if not url or string.match(url, "timuntersberger/neogit") then
+    if url and string.match(url, "timuntersberger/neogit") then
       vim.defer_fn(function()
         notification.create(
           [[Neogit has moved to an organization at <https://github.com/NeogitOrg/neogit/issues> to ensure the longevity of this project and ensure that it is more accessible to collaborators.
