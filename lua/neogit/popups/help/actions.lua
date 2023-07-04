@@ -35,6 +35,7 @@ M.popups = function(env)
     { "BranchPopup", "Branch", popups.branch.create },
     { "FetchPopup", "Fetch", popups.fetch.create },
     { "ResetPopup", "Reset", popups.reset.create },
+    { "RevertPopup", "Revert", popups.revert.create },
     { "RemotePopup", "Remote", popups.remote.create },
     { "InitRepo", "Init", require("neogit.lib.git").init.init_repo },
     {
