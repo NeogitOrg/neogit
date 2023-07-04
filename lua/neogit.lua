@@ -57,7 +57,6 @@ local open = function(opts)
     return
   end
 
-
   if not cli.git_is_repository_sync(opts.cwd) then
     if
       input.get_confirmation(
@@ -72,7 +71,7 @@ local open = function(opts)
     end
   end
 
-  require("neogit.lib.git").repo:dispatch_refresh({ source = "open" })
+  require("neogit.lib.git").repo:dispatch_refresh { source = "open" }
 
   if opts[1] ~= nil then
     local popup_name = opts[1]
