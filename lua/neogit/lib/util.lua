@@ -176,6 +176,36 @@ local function parse_command_args(args)
   return tbl
 end
 
+local async = require("plenary.async")
+local function timeout_cb(f, timeout, on_timeout, cb)
+  local done = false
+
+  local result = nil
+
+  local function finish()
+    if not done then
+      done = true
+      cb(result and unpack(result))
+    end
+  end
+
+  async.run(function()
+    require("plenary.async.util").scheduler()
+    result = { f() }
+  end, finish)
+
+  vim.defer_fn(function()
+    if not done and on_timeout then
+      on_timeout()
+    end
+    finish()
+  end, timeout)
+end
+
+---@generic T
+---@type fun(f: (fun(): T), timeout: number, on_timeout: fun()|nil): T|nil
+local timeout = async.wrap(timeout_cb, 4)
+
 return {
   time = time,
   time_async = time_async,
@@ -195,4 +225,5 @@ return {
   deepcopy = deepcopy,
   trim = trim,
   parse_command_args = parse_command_args,
+  timeout = timeout,
 }

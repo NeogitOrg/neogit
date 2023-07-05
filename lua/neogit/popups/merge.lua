@@ -16,9 +16,11 @@ function M.create()
       status.refresh(true, "merge_continue")
     end)
     :action_if(status and status.repo.merge.head, "a", "Abort merge", function()
+      print("Aborting merge")
       merge.abort()
       a.util.scheduler()
-      status.refresh(true, "merge_continue")
+      print("Aborted merge")
+      status.refresh(true, "merge_abort")
     end)
     :action(
       "m",

@@ -384,7 +384,7 @@ local function refresh(which, reason)
 
   logger.info("[STATUS BUFFER]: Starting refresh")
   if refresh_lock.permits == 0 then
-    logger.debug(
+    logger.warn(
       string.format(
         "[STATUS BUFFER]: Refresh lock not available. Aborting refresh. Lock held by: %q",
         lock_holder
@@ -413,61 +413,104 @@ local function refresh(which, reason)
       refresh_status_buffer()
     end
 
+    logger.debug("[STATUS BUFFER]: Refreshing " .. vim.inspect(which))
+
     local refreshes = {}
     if which == true or which.branch_information then
-      table.insert(refreshes, function()
-        logger.debug("[STATUS BUFFER]: Refreshing branch information")
-        M.repo:update_branch_information()
-      end)
+      table.insert(refreshes, {
+        "branch",
+        function()
+          logger.debug("[STATUS BUFFER]: Refreshing branch information")
+          M.repo:update_branch_information()
+        end,
+      })
     end
     if which == true or which.rebase then
-      table.insert(refreshes, function()
-        logger.debug("[STATUS BUFFER]: Refreshing rebase information")
-        M.repo:update_rebase_status()
-      end)
+      table.insert(refreshes, {
+        "rebase",
+        function()
+          logger.debug("[STATUS BUFFER]: Refreshing rebase information")
+          M.repo:update_rebase_status()
+        end,
+      })
     end
 
-    if which == true or which.rebase then
-      table.insert(refreshes, function()
-        logger.debug("[STATUS BUFFER]: Refreshing merge information")
-        M.repo:update_merge_status()
-      end)
+    if which == true or which.merge then
+      table.insert(refreshes, {
+        "merge",
+        function()
+          logger.debug("[STATUS BUFFER]: Refreshing merge information")
+          print("Refreshing merge status")
+          M.repo:update_merge_status()
+        end,
+      })
     end
 
     if which == true or which.stashes then
-      table.insert(refreshes, function()
-        logger.debug("[STATUS BUFFER]: Refreshing stash")
-        M.repo:update_stashes()
-      end)
+      table.insert(refreshes, {
+        "stash",
+        function()
+          logger.debug("[STATUS BUFFER]: Refreshing stash")
+          M.repo:update_stashes()
+        end,
+      })
     end
     if which == true or which.unpulled then
-      table.insert(refreshes, function()
-        logger.debug("[STATUS BUFFER]: Refreshing unpulled commits")
-        M.repo:update_unpulled()
-      end)
+      table.insert(refreshes, {
+        "unpulled",
+        function()
+          logger.debug("[STATUS BUFFER]: Refreshing unpulled commits")
+          M.repo:update_unpulled()
+        end,
+      })
     end
     if which == true or which.unmerged then
-      table.insert(refreshes, function()
-        logger.debug("[STATUS BUFFER]: Refreshing unpushed commits")
-        M.repo:update_unmerged()
-      end)
+      table.insert(refreshes, {
+        "unmerged",
+        function()
+          logger.debug("[STATUS BUFFER]: Refreshing unpushed commits")
+          M.repo:update_unmerged()
+        end,
+      })
     end
     if which == true or which.recent then
-      table.insert(refreshes, function()
-        logger.debug("[STATUS BUFFER]: Refreshing recent commits")
-        M.repo:update_recent()
-      end)
+      table.insert(refreshes, {
+        "recent",
+        function()
+          logger.debug("[STATUS BUFFER]: Refreshing recent commits")
+          M.repo:update_recent()
+        end,
+      })
     end
     if which == true or which.diffs then
       local filter = (type(which) == "table" and type(which.diffs) == "table") and which.diffs or nil
 
-      table.insert(refreshes, function()
-        logger.debug("[STATUS BUFFER]: Refreshing diffs")
-        M.repo:load_diffs(filter)
+      table.insert(refreshes, {
+        "diffs",
+        function()
+          logger.debug("[STATUS BUFFER]: Refreshing diffs")
+          M.repo:load_diffs(filter)
+        end,
+      })
+    end
+
+    logger.debug(string.format("[STATUS BUFFER]: Running %d refresh(es)", #refreshes))
+    local util = require("neogit.lib.util")
+
+    for i, v in ipairs(refreshes) do
+      refreshes[i] = util.timeout(v[2], 1000, function()
+        logger.warn(string.format("[STATUS BUFFER]: [%s] refresh task timed out %q", reason, v[1]))
       end)
     end
-    logger.debug(string.format("[STATUS BUFFER]: Running %d refresh(es)", #refreshes))
-    a.util.join(refreshes)
+
+    if #refreshes > 0 then
+      a.util.join(refreshes)
+    else
+      logger.info(
+        string.format("[STATUS BUFFER]: [%s] No refreshes to run: %s", reason, vim.inspect(refreshes))
+      )
+    end
+
     logger.debug("[STATUS BUFFER]: Refreshes completed")
     a.util.scheduler()
 

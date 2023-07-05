@@ -63,23 +63,22 @@ function M.update_merge_status(state)
 
   -- Find the rebase progress files
 
-  if not stat then
-    return
-  end
+  if stat then
+    local err, head = uv.read_file(mfile)
+    if not head then
+      logger.error("Failed to read merge head: " .. err)
+      return
+    end
+    head = head:match("([^\r\n]+)")
+    print("Got merge head: " .. head)
+    merge.head = head
 
-  local err, head = uv.read_file(mfile)
-  if not head then
-    logger.error("Failed to read merge head: " .. err)
-    return
-  end
-  head = head:match("([^\r\n]+)")
-  merge.head = head
+    local _, msg = uv.read_file(root .. "/.git/MERGE_MSG")
 
-  local _, msg = uv.read_file(root .. "/.git/MERGE_MSG")
-
-  -- we need \r? to support windows
-  if msg then
-    merge.msg = msg:match("([^\r\n]+)")
+    -- we need \r? to support windows
+    if msg then
+      merge.msg = msg:match("([^\r\n]+)")
+    end
   end
 
   state.merge = merge
