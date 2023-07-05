@@ -34,4 +34,9 @@
 
 ## Highlighting
 
-## Jobs
+## Process
+Rewrite process to use `vim.system` instead of `vim.fn.jobstart`
+https://github.com/neovim/neovim/commit/c0952e62fd0ee16a3275bb69e0de04c836b39015
+https://github.com/neovim/neovim/blob/1de82e16c1216e1dbe22cf7a8ec9ea9e9e69b631/runtime/lua/vim/_editor.lua#L84
+https://github.com/nvim-treesitter/nvim-treesitter/pull/4921/files
+https://github.com/neovim/neovim/pull/23827
