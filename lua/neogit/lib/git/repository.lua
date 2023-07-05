@@ -112,8 +112,8 @@ M.dispatch_refresh = a.void(function(self, opts)
     self.state.invalidate = {}
 
     logger.info("[REPO]: Refreshes completed - freeing refresh lock")
-    lock_holder = nil
     permit:forget()
+    lock_holder = nil
 
     if opts.callback then
       logger.debug("[REPO]: Running refresh callback")
