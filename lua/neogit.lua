@@ -42,6 +42,13 @@ Please update your plugin configuration or remote :)
   end)
 end
 
+---@class OpenOpts
+---@field cwd string|nil
+---TODO: popup enum
+---@field [1] string|nil
+---@field kind string|nil
+---@field no_expand boolean|nil
+
 local neogit = {
   lib = require("neogit.lib"),
   popups = require("neogit.popups"),
@@ -55,8 +62,13 @@ local neogit = {
     return vim.fn.stdpath("cache") .. "/neogit.log"
   end,
   notif = require("neogit.lib.notification"),
+  ---@param opts OpenOpts
   open = function(opts)
     opts = opts or {}
+
+    if opts.cwd and not opts.no_expand then
+      opts.cwd = vim.fn.expand(opts.cwd)
+    end
 
     if not cli.git_is_repository_sync(opts.cwd) then
       if
