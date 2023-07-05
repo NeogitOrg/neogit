@@ -65,11 +65,16 @@ function M.invalidate(self, ...)
   end
 end
 
-local function _refresh(self, opts)
+local refresh_lock = a.control.Semaphore.new(1)
+local lock_holder
+
+M.dispatch_refresh = a.void(function(self, opts)
+  opts = opts or {}
+
   logger.info(string.format("[REPO]: Refreshing START (source: %s)", opts.source or "UNKNOWN"))
 
-  if self.state.git_root == "" then
-    logger.debug("[REPO]: Refreshing ABORTED - No git_root")
+  if refresh_lock.permits == 0 then
+    logger.debug(string.format("[REPO]: Refreshing ABORTED - refresh_lock held by %s", lock_holder))
     return
   end
 
@@ -82,30 +87,8 @@ local function _refresh(self, opts)
     return
   end
 
-  self.lib.update_status(self.state)
-  for name, fn in pairs(self.lib) do
-    logger.trace(string.format("[REPO]: Refreshing %s", name))
-    fn(self.state)
-  end
-
-  self.state.invalidate = {}
-
-  logger.info("[REPO]: Refreshes completed")
-
-  if opts.callback then
-    logger.debug("[REPO]: Running refresh callback")
-    opts.callback()
-  end
-end
-
-local refresh_lock = a.control.Semaphore.new(1)
-local lock_holder
-
-M.dispatch_refresh = a.void(function(self, opts)
-  opts = opts or {}
-
-  if refresh_lock.permits == 0 then
-    logger.debug(string.format("[REPO]: Refreshing ABORTED - refresh_lock held by %s", lock_holder))
+  if self.state.git_root == "" then
+    logger.debug("[REPO]: Refreshing ABORTED - No git_root")
     return
   end
 
@@ -114,11 +97,29 @@ M.dispatch_refresh = a.void(function(self, opts)
   local permit = refresh_lock:acquire()
 
   a.util.scheduler()
-  _refresh(self, opts)
+  -- Status needs to run first because other update fn's depend on it
+  self.lib.update_status(self.state)
 
-  logger.debug("[REPO]: freeing refresh lock")
-  lock_holder = nil
-  permit:forget()
+  local updates = {}
+  for name, fn in pairs(self.lib) do
+    table.insert(updates, function()
+      logger.trace(string.format("[REPO]: Refreshing %s", name))
+      fn(self.state)
+    end)
+  end
+
+  a.util.run_all(updates, function()
+    self.state.invalidate = {}
+
+    logger.info("[REPO]: Refreshes completed - freeing refresh lock")
+    lock_holder = nil
+    permit:forget()
+
+    if opts.callback then
+      logger.debug("[REPO]: Running refresh callback")
+      opts.callback()
+    end
+  end)
 end)
 
 if not M.initialized then
