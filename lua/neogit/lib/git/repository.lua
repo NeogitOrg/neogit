@@ -98,14 +98,17 @@ M.dispatch_refresh = a.void(function(self, opts)
 
   a.util.scheduler()
   -- Status needs to run first because other update fn's depend on it
+  logger.trace("[REPO]: Refreshing %s", "update_status")
   self.lib.update_status(self.state)
 
   local updates = {}
   for name, fn in pairs(self.lib) do
-    table.insert(updates, function()
-      logger.trace(string.format("[REPO]: Refreshing %s", name))
-      fn(self.state)
-    end)
+    if name ~= "update_status" then
+      table.insert(updates, function()
+        logger.trace(string.format("[REPO]: Refreshing %s", name))
+        fn(self.state)
+      end)
+    end
   end
 
   a.util.run_all(updates, function()
