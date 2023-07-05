@@ -19,7 +19,9 @@ local function notify_move()
 
     local git = require("neogit.lib.git")
 
-    local url = git.cli.config.get("remote.origin.url").cwd(path).call():trim().stdout[1]
+    local url = git.cli.config.get("remote.origin.url").cwd(path).show_popup(false).call():trim().stdout
+    local url = url and url[1]
+
     if url then
       url = string.lower(url)
     end
