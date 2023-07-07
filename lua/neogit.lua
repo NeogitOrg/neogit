@@ -10,38 +10,6 @@ local input = require("neogit.lib.input")
 local cli = require("neogit.lib.git.cli")
 local notification = require("neogit.lib.notification")
 
-local function notify_move()
-  local async = require("plenary.async")
-  async.run(function()
-    local Path = require("plenary.path")
-    local path = debug.getinfo(1, "S").source:sub(2)
-    local path = Path:new(path):parent():parent():absolute()
-
-    local git = require("neogit.lib.git")
-
-    local url = git.cli.config.get("remote.origin.url").cwd(path).show_popup(false).call():trim().stdout
-    local url = url and url[1]
-
-    if url then
-      url = string.lower(url)
-    end
-
-    -- Warn on misconfigured remotes as well
-    if url and string.match(url, "timuntersberger/neogit") then
-      vim.defer_fn(function()
-        notification.create(
-          [[Neogit has moved to an organization at <https://github.com/NeogitOrg/neogit/issues> to ensure the longevity of this project and ensure that it is more accessible to collaborators.
-
-Please update your plugin configuration or remote :)
-          ]],
-          vim.log.levels.WARN,
-          5000
-        )
-      end, 1000)
-    end
-  end)
-end
-
 ---@class OpenOpts
 ---@field cwd string|nil
 ---TODO: popup enum
@@ -112,7 +80,6 @@ local neogit = {
   refresh_viml_compat = status.refresh_viml_compat,
   close = status.close,
   setup = function(opts)
-    notify_move()
     if opts ~= nil then
       config.values = vim.tbl_deep_extend("force", config.values, opts)
     end
