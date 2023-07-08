@@ -55,6 +55,15 @@ function M:open()
               vim.cmd("silent w!")
             end)
           end
+        else
+          -- Check if the buffer is modified, and confirm exit if so
+          vim.api.nvim_buf_call(o.buf, function()
+            if vim.opt.modified:get() then
+              if not input.get_confirmation("Discard this commit?") then
+                -- Cancel the BufUnload here?
+              end
+            end
+          end)
         end
 
         if self.on_unload then
