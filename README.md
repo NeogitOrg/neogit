@@ -43,10 +43,13 @@ neogit.setup {}
 You can either open neogit by using the `Neogit` command
 
 ```vim
-:Neogit " uses tab
-:Neogit kind=<kind> " override kind
-:Neogit cwd=<cwd> " override cwd
-:Neogit commit" open commit popup
+:Neogit " Open the status buffer in a new tab
+:Neogit cwd=<cwd> " Use a different repository path
+:Neogit cwd=%:p:h " Uses the repository of the current file
+
+:Neogit kind=<kind> " Open specified popup directly
+
+:Neogit commit " Open commit popup
 ```
 
 or using the lua api:
