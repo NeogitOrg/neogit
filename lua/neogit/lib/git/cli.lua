@@ -70,6 +70,7 @@ local configurations = {
 
   config = config {
     flags = {
+      _local = "--local",
       global = "--global",
       list = "--list",
       _get = "--get",
@@ -486,15 +487,15 @@ local function handle_new_cmd(job, popup, hidden_text)
   })
 
   do
-    local log_fn = logger.debug
+    local log_fn = logger.trace
     if job.code > 0 then
       log_fn = logger.error
     end
-    log_fn(string.format("Execution of '%s'", job.cmd))
     if job.code > 0 then
-      log_fn(string.format("  failed with code %d", job.code))
+      log_fn(string.format("[CLI] Execution of '%s' failed with code %d after %d ms", job.cmd, job.code, job.time))
+    else
+      log_fn(string.format("[CLI] Execution of '%s' succeeded in %d ms", job.cmd, job.time))
     end
-    log_fn(string.format("  took %d ms", job.time))
   end
 
   if popup and job.code ~= 0 then
@@ -735,7 +736,7 @@ local function new_builder(subcommand)
     -- Disable the pager so that the commands don't stop and wait for pagination
     cmd = util.merge({ "git", "--no-pager", "-c", "color.ui=always", "--no-optional-locks", subcommand }, cmd)
 
-    logger.debug(string.format("[CLI]: Executing '%s %s'", subcommand, table.concat(cmd, " ")))
+    logger.trace(string.format("[CLI]: Executing '%s': '%s'", subcommand, table.concat(cmd, " ")))
 
     return process.new {
       cmd = cmd,
@@ -826,7 +827,7 @@ local function new_builder(subcommand)
     end,
     call_sync = function(verbose, external_errors)
       local p = to_process(verbose, external_errors)
-      logger.debug(string.format("[CLI]: Executing '%s %s'", subcommand, table.concat(p.cmd, " ")))
+
       if not p:spawn() then
         error("Failed to run command")
         return nil
@@ -847,7 +848,7 @@ local function new_builder(subcommand)
     end,
     call_sync_ignoring_exit_code = function(verbose, external_errors)
       local p = to_process(verbose, external_errors, true)
-      logger.debug(string.format("[CLI]: Executing '%s %s'", subcommand, table.concat(p.cmd, " ")))
+
       if not p:spawn() then
         error("Failed to run command")
         return nil

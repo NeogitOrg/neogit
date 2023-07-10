@@ -7,7 +7,7 @@ local M = {}
 M.loaded = false
 
 local function log(message)
-  logger.debug("State: " .. message .. ": '" .. M.path:absolute() .. "'")
+  logger.debug(string.format("[STATE]: %s: '%s'", message, M.path:absolute()))
 end
 
 ---@return Path

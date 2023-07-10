@@ -1,7 +1,9 @@
 local a = require("plenary.async")
+local git = require("neogit.lib.git")
 local state = require("neogit.lib.state")
 local config = require("neogit.lib.git.config")
 local util = require("neogit.lib.util")
+local logger = require("neogit.logger")
 
 local M = {}
 
@@ -218,14 +220,15 @@ end
 ---@param options.passive boolean Controls if this config setting can be manipulated directly, or if it is managed by git, and should just be shown in UI
 ---@return self
 function M:config(key, name, options)
-  local c = config.get(name)
+  local entry = config.get(name)
 
   local variable = {
     id = key,
     key = key,
     name = name,
-    value = c.value,
-    type = c.type,
+    entry = entry,
+    value = entry.value or "",
+    type = entry:type(),
   }
 
   for k, v in pairs(options or {}) do

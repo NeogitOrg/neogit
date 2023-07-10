@@ -9,7 +9,7 @@ local M = {}
 ---@return table
 local function get_commits(popup)
   local commits
-  if popup.state.env.commits then
+  if popup.state.env.commits[1] then
     commits = popup.state.env.commits
   else
     commits = { CommitSelectViewBuffer.new(git.log.list { "--max-count=256" }):open_async() }

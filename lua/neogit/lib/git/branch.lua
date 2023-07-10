@@ -50,12 +50,12 @@ function M.get_upstream()
   local current = cli.branch.current.show_popup(false).call():trim().stdout
 
   if #full_name > 0 and #current > 0 then
-    local remote = config_lib.get("branch." .. current[1] .. ".remote").value
+    local remote = config_lib.get("branch." .. current[1] .. ".remote")
 
-    if remote then
+    if remote:is_set() then
       return {
-        remote = remote,
-        branch = full_name[1]:sub(#remote + 2, -1),
+        remote = remote.value,
+        branch = full_name[1]:sub(#remote.value + 2, -1),
       }
     end
   end
@@ -94,7 +94,10 @@ function M.pushRemote(branch)
   branch = branch or require("neogit.lib.git").repo.head.branch
 
   if branch then
-    return config_lib.get("branch." .. branch .. ".pushRemote").value
+    local remote = config_lib.get("branch." .. branch .. ".pushRemote")
+    if remote:is_set() then
+      return remote.value
+    end
   end
 end
 

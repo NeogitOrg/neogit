@@ -130,7 +130,7 @@ function Finder:find(on_select)
     pickers
       .new(self.opts, {
         finder = finders.new_table { results = self.entries },
-        sorter = sorters.fuzzy_with_index_bias(),
+        sorter = config.values.telescope_sorter() or sorters.fuzzy_with_index_bias(),
         attach_mappings = telescope_mappings(on_select, self.opts.allow_multi),
       })
       :find()

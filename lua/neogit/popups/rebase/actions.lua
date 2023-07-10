@@ -9,7 +9,8 @@ local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 local M = {}
 
 function M.base_branch()
-  return git.config.get("neogit.baseBranch").value or "master"
+  local value = git.config.get("neogit.baseBranch")
+  return value:is_set() and value.value or "master"
 end
 
 function M.onto_base(popup)

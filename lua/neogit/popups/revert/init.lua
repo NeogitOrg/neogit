@@ -19,7 +19,7 @@ function M.create(commits)
     :switch("E", "no-edit", "Don't edit commit messages", { incompatible = { "edit" } })
     :action("_", "Revert commit", actions.commits) -- TODO: Support multiple commits
     :action("v", "Revert changes")
-    :env({ commits = commits })
+    :env({ commits = commits or {} })
     :build()
 
   p:show()

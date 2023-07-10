@@ -7,6 +7,7 @@ M.values = {
   disable_commit_confirmation = false,
   disable_builtin_notifications = false,
   use_telescope = false,
+  telescope_sorter = function() return nil end,
   disable_insert_on_commit = true,
   use_per_project_settings = true,
   remember_settings = true,
@@ -20,9 +21,6 @@ M.values = {
   auto_show_console = true,
   status = {
     recent_commit_count = 10,
-  },
-  commit_popup = {
-    kind = "split",
   },
   commit_editor = {
     kind = "split",

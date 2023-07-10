@@ -161,7 +161,21 @@ function M:update_component(id, highlight, value)
   end
 
   if type(value) == "string" then
-    component.children[#component.children].value = value == "" and "unset" or value
+    local new
+    if value == "" then
+      local last_child = component.children[#component.children - 1]
+      if last_child and last_child.value == "=" then
+        -- Check if this is a CLI option - the value should get blanked out for these
+        new = ""
+      else
+        -- If the component is NOT a cli option, use "unset" string
+        new = "unset"
+      end
+    else
+      new = value
+    end
+
+    component.children[#component.children].value = new
   elseif type(value) == "table" then
     -- Remove last n children from row
     for _ = 1, #value do
@@ -232,8 +246,11 @@ function M:set_option(option)
     end
   else
     -- ...Otherwise get the value via input.
-    local input =
-      vim.fn.input { prompt = option.cli .. "=", default = option.value, cancelreturn = option.value }
+    local input = vim.fn.input {
+      prompt = option.cli .. "=",
+      default = option.value,
+      cancelreturn = option.value
+    }
 
     -- If the option specifies a default value, and the user set the value to be empty, defer to default value.
     -- This is handy to prevent the user from accidently loading thousands of log entries by accident.
@@ -249,7 +266,6 @@ end
 ---@param config table
 ---@return nil
 function M:set_config(config)
-  -- For config's that offer predetermined options to choose from.
   if config.options then
     local options = build_reverse_lookup(filter_map(config.options, function(option)
       if option.condition and not option.condition() then
@@ -259,10 +275,10 @@ function M:set_config(config)
       return option.value
     end))
 
-    local index = options[config.value]
+    local index = options[config.value or ""]
     config.value = options[(index + 1)] or options[1]
-  elseif config.callback then
-    config.callback(self, config)
+  elseif config.fn then
+    config.fn(self, config)
     return
   else
     local result = vim.fn.input {
@@ -277,14 +293,18 @@ function M:set_config(config)
   git.config.set(config.name, config.value)
 
   self:repaint_config()
+
+  if config.callback then
+    config.callback(self, config)
+  end
 end
 
 function M:repaint_config()
   for _, var in ipairs(self.state.config) do
     if var.passive then
-      local c_value = git.config.get(var.name).value
-      if c_value then
-        var.value = c_value
+      local c_value = git.config.get(var.name)
+      if c_value:is_set() then
+        var.value = c_value.value
         self:update_component(var.id, nil, var.value)
       end
     elseif var.options then

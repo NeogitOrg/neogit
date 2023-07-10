@@ -5,35 +5,71 @@ local M = {}
 
 ---@class ConfigEntry
 ---@field value string
----@field type string
+---@field name string
+---@field scope string Global/System/Local
+local ConfigEntry = {}
+ConfigEntry.__index = ConfigEntry
 
----@type table<string, ConfigEntry>
-local config_cache = {}
-local cache_key = nil
-
-local function make_cache_key()
-  local stat = vim.loop.fs_stat(cli.git_root() .. "/.git/config")
-  if stat then
-    return stat.mtime.sec
-  end
+---@param name string
+---@return ConfigEntry
+function ConfigEntry.new(name, value, scope)
+  return setmetatable({
+    name = name,
+    value = value or "",
+    scope = scope,
+  }, ConfigEntry)
 end
 
-local function get_type_of_value(value)
-  if value == "true" or value == "false" then
+-- ---@return string
+-- function ConfigEntry:value()
+--   return self._value or ""
+-- end
+
+---@return string
+function ConfigEntry:type()
+  if self.value == "true" or self.value == "false" then
     return "boolean"
-  elseif tonumber(value) then
+  elseif tonumber(self.value) then
     return "number"
   else
     return "string"
   end
 end
 
+---@return boolean
+function ConfigEntry:is_set()
+  return self.value ~= ""
+end
+
+---@return nil
+function ConfigEntry:update(value)
+  if not value or value == "" then
+    if self:is_set() then
+      M.unset(self.name)
+    end
+  else
+    M.set(self.name, value)
+  end
+end
+
+---@type table<string, ConfigEntry>
+local config_cache = {}
+local cache_key = nil
+local git_root = cli.git_root()
+
+local function make_cache_key()
+  local stat = vim.loop.fs_stat(git_root .. "/.git/config")
+  if stat then
+    return stat.mtime.sec
+  end
+end
+
 local function build_config()
   local result = {}
 
-  for _, option in ipairs(cli.config.list.call_sync():trim().stdout) do
+  for _, option in ipairs(cli.config.list._local.call_sync():trim().stdout) do
     local key, value = option:match([[^(.-)=(.*)$]])
-    result[key] = { value = value, type = get_type_of_value(value) }
+    result[key] = ConfigEntry.new(key, value, "local")
   end
 
   return result
@@ -51,17 +87,13 @@ end
 
 ---@return ConfigEntry
 function M.get(key)
-  return config()[key:lower()] or {}
+  return config()[key:lower()] or ConfigEntry.new(key, "", "local")
 end
 
 ---@return ConfigEntry
 function M.get_global(key)
   local result = cli.config.global.get(key).call_sync_ignoring_exit_code():trim().stdout[1]
-  if result then
-    return { value = result, type = get_type_of_value(result) }
-  else
-    return {}
-  end
+  return ConfigEntry.new(key, result, "global")
 end
 
 function M.get_matching(pattern)
@@ -79,11 +111,6 @@ function M.set(key, value)
   cache_key = nil
 
   if not value or value == "" then
-    -- Unsetting a value that isn't set results in an error.
-    if M.get(key).value == nil then
-      return
-    end
-
     M.unset(key)
   else
     cli.config.set(key, value).call_sync()
@@ -91,6 +118,11 @@ function M.set(key, value)
 end
 
 function M.unset(key)
+  -- Unsetting a value that isn't set results in an error.
+  if not M.get(key):is_set() then
+    return
+  end
+
   cache_key = nil
   cli.config.unset(key).call_sync()
 end

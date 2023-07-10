@@ -6,15 +6,18 @@ local M = {}
 
 function M.create()
   local current = git.repo.head.branch
+  local show_config = current ~= "" and current ~= "(detached)"
+  local pull_rebase_entry = git.config.get("pull.rebase")
+  local pull_rebase = pull_rebase_entry:is_set() and pull_rebase_entry.value or "false"
 
   local p = popup
     .builder()
     :name("NeogitPullPopup")
-    :config_if(current, "r", "branch." .. (current or "") .. ".rebase", {
+    :config_if(show_config, "r", "branch." .. (current or "") .. ".rebase", {
       options = {
         { display = "true", value = "true" },
         { display = "false", value = "false" },
-        { display = "pull.rebase:" .. (git.config.get("pull.rebase").value or ""), value = "" },
+        { display = "pull.rebase:" .. pull_rebase, value = "" },
       },
     })
     :switch("f", "ff-only", "Fast-forward only")
