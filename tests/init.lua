@@ -1,8 +1,7 @@
 local function ensure_installed(repo)
   local name = repo:match(".+/(.+)$")
 
-  local cwd = vim.fn.getcwd()
-  local install_path = cwd .. "/tmp/" .. name
+  local install_path = "/tmp/neogit/" .. name
 
   vim.opt.runtimepath:prepend(install_path)
 
@@ -21,7 +20,7 @@ else
   ensure_installed("nvim-telescope/telescope.nvim")
 end
 
-require("plenary.test_harness").test_directory("./tests//", {
+require("plenary.test_harness").test_directory("tests", {
   minimal_init = "tests/minimal_init.lua",
   sequential = true,
 })
