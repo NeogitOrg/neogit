@@ -1,7 +1,9 @@
 local a = require("plenary.async")
+local git = require("neogit.lib.git")
 local state = require("neogit.lib.state")
 local config = require("neogit.lib.git.config")
 local util = require("neogit.lib.util")
+local logger = require("neogit.logger")
 
 local M = {}
 

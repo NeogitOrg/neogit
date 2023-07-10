@@ -53,7 +53,11 @@ function M.generate_patch(item, hunk, from, to, reverse)
     end
   end
 
-  table.insert(diff_content, 1, string.format("@@ -%d,%d +%d,%d @@", hunk.index_from, len_start, hunk.index_from, len_start + len_offset))
+  table.insert(
+    diff_content,
+    1,
+    string.format("@@ -%d,%d +%d,%d @@", hunk.index_from, len_start, hunk.index_from, len_start + len_offset)
+  )
   table.insert(diff_content, 1, string.format("+++ b/%s", item.name))
   table.insert(diff_content, 1, string.format("--- a/%s", item.name))
   table.insert(diff_content, "\n")
