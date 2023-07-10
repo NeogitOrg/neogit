@@ -7,7 +7,9 @@ M.values = {
   disable_commit_confirmation = false,
   disable_builtin_notifications = false,
   use_telescope = false,
-  telescope_sorter = function() return nil end,
+  telescope_sorter = function()
+    return nil
+  end,
   disable_insert_on_commit = true,
   use_per_project_settings = true,
   remember_settings = true,

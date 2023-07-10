@@ -32,6 +32,7 @@ end
 function M.log_other(popup)
   local branch = FuzzyFinderBuffer.new(git.branch.get_local_branches()):open_async()
   if branch then
+    -- stylua: ignore
     LogViewBuffer.new(
       git.log.list(util.merge(popup:get_arguments(), { branch })),
       popup:get_internal_arguments()

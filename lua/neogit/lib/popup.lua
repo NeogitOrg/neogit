@@ -249,7 +249,7 @@ function M:set_option(option)
     local input = vim.fn.input {
       prompt = option.cli .. "=",
       default = option.value,
-      cancelreturn = option.value
+      cancelreturn = option.value,
     }
 
     -- If the option specifies a default value, and the user set the value to be empty, defer to default value.

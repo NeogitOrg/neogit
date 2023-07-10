@@ -492,7 +492,9 @@ local function handle_new_cmd(job, popup, hidden_text)
       log_fn = logger.error
     end
     if job.code > 0 then
-      log_fn(string.format("[CLI] Execution of '%s' failed with code %d after %d ms", job.cmd, job.code, job.time))
+      log_fn(
+        string.format("[CLI] Execution of '%s' failed with code %d after %d ms", job.cmd, job.code, job.time)
+      )
     else
       log_fn(string.format("[CLI] Execution of '%s' succeeded in %d ms", job.cmd, job.time))
     end

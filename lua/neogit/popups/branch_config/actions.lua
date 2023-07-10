@@ -25,6 +25,7 @@ function M.update_pull_rebase()
       return c.tag == "text" and c.value:match("^pull%.rebase:") and c.index == 6
     end)
 
+    -- stylua: ignore
     component.value = string.format(
       "pull.rebase:%s",
       c.value == "" and c.options[3].display:match("global:(.*)$") or c.value
