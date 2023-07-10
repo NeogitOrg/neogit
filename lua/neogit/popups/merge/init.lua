@@ -18,14 +18,14 @@ function M.create()
       "b",
       "Xignore-space-change",
       "Ignore changes in amount of whitespace",
-      { cli_prefix = " - " }
+      { cli_prefix = "-" }
     )
     :switch_if(
       not in_merge,
       "w",
       "Xignore-all-space",
       "Ignore whitespace when comparing lines",
-      { cli_prefix = " - " }
+      { cli_prefix = "-" }
     )
     :option_if(not in_merge, "s", "strategy", "", "Strategy", {
       choices = { "resolve", "recursive", "octopus", "ours", "subtree" },

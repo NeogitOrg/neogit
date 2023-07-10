@@ -249,6 +249,7 @@ end
 ---@param config table
 ---@return nil
 function M:set_config(config)
+  -- For config's that offer predetermined options to choose from.
   if config.options then
     local options = build_reverse_lookup(filter_map(config.options, function(option)
       if option.condition and not option.condition() then
