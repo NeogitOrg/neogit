@@ -1,6 +1,5 @@
 local M = {}
 
-local a = require("plenary.async")
 local git = require("neogit.lib.git")
 local CommitSelectViewBuffer = require("neogit.buffers.commit_select_view")
 

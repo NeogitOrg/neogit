@@ -3,8 +3,6 @@ local M = {}
 local git = require("neogit.lib.git")
 local input = require("neogit.lib.input")
 
-local a = require("plenary.async")
-
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
 function M.in_merge()

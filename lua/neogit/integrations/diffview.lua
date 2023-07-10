@@ -9,7 +9,6 @@ local dv_lib = require("diffview.lib")
 local dv_utils = require("diffview.utils")
 
 local neogit = require("neogit")
-local status = require("neogit.status")
 local a = require("plenary.async")
 
 local old_config
