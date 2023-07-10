@@ -13,6 +13,7 @@ neogit_$	neogit.txt	/*neogit_$*
 neogit_<C-r>	neogit.txt	/*neogit_<C-r>*
 neogit_<C-s>	neogit.txt	/*neogit_<C-s>*
 neogit_<tab>	neogit.txt	/*neogit_<tab>*
+neogit_<cr>	neogit.txt	/*neogit_<cr>*
 neogit_L	neogit.txt	/*neogit_L*
 neogit_P	neogit.txt	/*neogit_P*
 neogit_S	neogit.txt	/*neogit_S*
@@ -30,3 +31,10 @@ neogit_m	neogit.txt	/*neogit_m*
 neogit_}	neogit.txt	/*neogit_}*
 neogit_{	neogit.txt	/*neogit_{*
 neogit_f	neogit.txt	/*neogit_f*
+neogit__	neogit.txt	/*neogit__*
+neogit_M	neogit.txt	/*neogit_M*
+neogit_?	neogit.txt	/*neogit_?*
+neogit_b	neogit.txt	/*neogit_b*
+neogit_c	neogit.txt	/*neogit_c*
+neogit_r	neogit.txt	/*neogit_r*
+neogit_Z	neogit.txt	/*neogit_Z*

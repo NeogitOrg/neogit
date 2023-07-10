@@ -68,6 +68,9 @@ U                       Unstage staged changes
                                                 *neogit_x*
 x                       Discard changes (also supports discarding hunks)
 
+                                                *neogit_<cr>*
+<cr>                    Goto item at cursor
+
                                                 *neogit_d*
 Diff maps ~
                                                 *neogit_<tab>*
@@ -93,10 +96,10 @@ $                       Command History
 <C-r>                   Refresh Buffer
 
                                                 *neogit_{*
-{                      Goto previous hunk
+{                       Goto previous hunk
 
                                                 *neogit_}*
-}                      Goto next hunk
+}                       Goto next hunk
 
                                                 *neogit_L*
 L                       Open log popup
@@ -118,6 +121,27 @@ A                       Open cherry-pick popup
 
                                                 *neogit_m*
 m                       Open merge popup
+
+                                                *neogit__*
+_                       Open revert popup
+
+                                                *neogit_M*
+M                       Open remotes popup
+
+                                                *neogit_?*
+?                       Open help popup
+
+                                                *neogit_b*
+b                       Open branch popup
+
+                                                *neogit_c*
+c                       Open commit popup
+
+                                                *neogit_r*
+r                       Open rebase popup
+
+                                                *neogit_Z*
+Z                       Open stash popup
 ==============================================================================
 4. Highlights                                    *neogit-highlights*
 
