@@ -2,8 +2,25 @@ local M = {}
 
 local CommitSelectViewBuffer = require("neogit.buffers.commit_select_view")
 local git = require("neogit.lib.git")
--- local a = require("plenary.async")
 local client = require("neogit.client")
+local input = require("neogit.lib.input")
+
+local function confirm_modifications()
+  if
+    #git.repo.unmerged.items < 1
+    and not input.get_confirmation(
+      string.format(
+        "This commit has already been published to %s, do you really want to modify it?",
+        git.repo.upstream.ref
+      ),
+      { values = { "&Yes", "&No" }, default = 2 }
+    )
+  then
+    return false
+  end
+
+  return true
+end
 
 local function do_commit(popup, cmd)
   client.wrap(cmd.arg_list(popup:get_arguments()), {
@@ -22,9 +39,7 @@ local function commit_special(popup, method)
     return
   end
 
-  -- a.util.scheduler()
   do_commit(popup, git.cli.commit.args(method, commit))
-  -- a.util.scheduler()
 
   return commit
 end
@@ -34,14 +49,26 @@ function M.commit(popup)
 end
 
 function M.extend(popup)
+  if not confirm_modifications() then
+    return
+  end
+
   do_commit(popup, git.cli.commit.no_edit.amend)
 end
 
 function M.reword(popup)
+  if not confirm_modifications() then
+    return
+  end
+
   do_commit(popup, git.cli.commit.amend.only)
 end
 
 function M.amend(popup)
+  if not confirm_modifications() then
+    return
+  end
+
   do_commit(popup, git.cli.commit.amend)
 end
 
