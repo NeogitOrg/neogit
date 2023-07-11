@@ -4,6 +4,8 @@ local config_lib = require("neogit.lib.git.config")
 local input = require("neogit.lib.input")
 local config = require("neogit.config")
 
+local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
+
 local M = {}
 
 local function parse_branches(branches, include_current)
@@ -112,6 +114,26 @@ end
 
 function M.pushRemote_label()
   return M.pushRemote_ref() or "pushRemote, setting that"
+end
+
+function M.set_pushRemote()
+  local remotes = require("neogit.lib.git").remote.list()
+
+  local pushRemote
+  if #remotes == 1 then
+    pushRemote = remotes[1]
+  else
+    pushRemote = FuzzyFinderBuffer.new(remotes):open_async { prompt_prefix = "set pushRemote > " }
+  end
+
+  if pushRemote then
+    config_lib.set(
+      string.format("branch.%s.pushRemote", require("neogit.lib.git").repo.head.branch),
+      pushRemote
+    )
+  end
+
+  return pushRemote
 end
 
 function M.upstream_label()

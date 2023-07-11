@@ -36,22 +36,12 @@ end
 function M.to_pushremote(popup)
   local pushRemote = git.branch.pushRemote()
   if not pushRemote then
-    local remotes = git.remote.list()
-
-    if #remotes == 1 then
-      pushRemote = remotes[1]
-    else
-      pushRemote = FuzzyFinderBuffer.new(remotes):open_async { prompt_prefix = "set pushRemote > " }
-      if not pushRemote then
-        logger.error("No upstream set")
-        return
-      end
-    end
-
-    git.config.set("branch." .. git.repo.head.branch .. ".pushRemote", pushRemote)
+    pushRemote = git.branch.set_pushRemote()
   end
 
-  push_to(popup:get_arguments(), pushRemote, git.repo.head.branch)
+  if pushRemote then
+    push_to(popup:get_arguments(), pushRemote, git.repo.head.branch)
+  end
 end
 
 function M.to_upstream(popup)

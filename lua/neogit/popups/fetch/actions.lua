@@ -27,39 +27,16 @@ end
 function M.fetch_pushremote(popup)
   local pushRemote = git.branch.pushRemote()
   if not pushRemote then
-    local remotes = git.remote.list()
-
-    pushRemote = FuzzyFinderBuffer.new(remotes):open_async { prompt_prefix = "set pushRemote > " }
-    if not pushRemote then
-      logger.error("No pushremote set")
-      return
-    end
-
-    git.config.set("branch." .. git.repo.head.branch .. ".pushRemote", pushRemote)
+    pushRemote = git.branch.set_pushRemote()
   end
 
-  fetch_from(pushRemote, pushRemote, "", popup:get_arguments())
-end
-
-function M.upstream()
-  local upstream = git.repo.upstream.remote
-  if upstream then
-    return upstream
-  end
-
-  local remotes = git.remote.list()
-  if #remotes == 1 then
-    return remotes[1]
-  elseif vim.tbl_contains(remotes, "origin") then
-    return "origin"
-  else
-    return nil
+  if pushRemote then
+    fetch_from(pushRemote, pushRemote, "", popup:get_arguments())
   end
 end
 
 function M.fetch_upstream(popup)
-  local upstream = M.upstream()
-
+  local upstream = git.branch.upstream_remote()
   if upstream then
     fetch_from(upstream, upstream, "", popup:get_arguments())
   end

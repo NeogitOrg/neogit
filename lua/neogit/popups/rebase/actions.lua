@@ -19,6 +19,22 @@ function M.onto_base(popup)
   status.refresh(true, "rebase_master")
 end
 
+function M.onto_pushRemote(popup)
+  local pushRemote = git.branch.pushRemote()
+  if not pushRemote then
+    pushRemote = git.branch.set_pushRemote()
+  end
+
+  if pushRemote then
+    git.rebase.rebase_onto(
+      string.format("refs/remotes/%s/%s", pushRemote, git.branch.current()),
+      popup:get_arguments()
+    )
+  end
+
+  status.refresh(true, "rebase_pushremote")
+end
+
 -- TODO: Set upstream if unset
 function M.onto_upstream(popup)
   git.rebase.rebase_onto(
