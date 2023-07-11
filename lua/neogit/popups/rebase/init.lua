@@ -40,7 +40,12 @@ function M.create()
     :action_if(not in_rebase, "w", "to reword a commit")
     :action_if(not in_rebase, "k", "to remove a commit")
     :action_if(not in_rebase, "f", "to autosquash")
-    :env({ highlight = { branch, git.repo.upstream.ref }, bold = { "@{upstream}" } })
+    :env(
+      {
+        highlight = { branch, git.repo.upstream.ref },
+        bold = { "@{upstream}", "pushRemote" }
+      }
+    )
     :build()
 
   p:show()
