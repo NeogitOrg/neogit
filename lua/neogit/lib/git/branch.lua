@@ -131,10 +131,7 @@ function M.upstream_remote()
   if not remote then
     local remotes = git.remote.list()
 
-    if
-      git.config.get("push.autoSetupRemote").value == "true" and
-      vim.tbl_contains(remotes, "origin")
-    then
+    if git.config.get("push.autoSetupRemote").value == "true" and vim.tbl_contains(remotes, "origin") then
       remote = "origin"
     elseif #remotes == 1 then
       remote = remotes[1]
