@@ -35,6 +35,10 @@ function M.onto_pushRemote(popup)
   status.refresh(true, "rebase_pushremote")
 end
 
+function M.onto_pushRemote(popup)
+  git.rebase.rebase_onto(git.branch.pushRemote(), popup:get_arguments())
+end
+
 -- TODO: Set upstream if unset
 function M.onto_upstream(popup)
   git.rebase.rebase_onto(
