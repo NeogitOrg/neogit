@@ -137,8 +137,14 @@ neogit.setup {
   -- Sorting keys: https://git-scm.com/docs/git-for-each-ref#_options
   sort_branches = "-committerdate",
   disable_builtin_notifications = false,
-  -- If enabled, use telescope for menu selection rather than vim.ui.select
+  -- If enabled, use telescope for menu selection rather than vim.ui.select.
+  -- Allows multi-select and some things that vim.ui.select doesn't.
   use_telescope = false,
+  -- Allows a different telescope sorter. Defaults to 'fuzzy_with_index_bias'. The example
+  -- below will use the native fzf sorter instead.
+  telescope_sorter = function()
+    return require("telescope").extensions.fzf.native_fzf_sorter()
+  end,
   use_magit_keybindings = false,
   -- Change the default way of opening neogit
   kind = "tab",
