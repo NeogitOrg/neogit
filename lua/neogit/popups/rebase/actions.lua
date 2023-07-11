@@ -30,43 +30,47 @@ function M.onto_pushRemote(popup)
       string.format("refs/remotes/%s/%s", pushRemote, git.branch.current()),
       popup:get_arguments()
     )
-  end
 
-  a.util.scheduler()
-  status.refresh(true, "rebase_pushremote")
+    a.util.scheduler()
+    status.refresh(true, "rebase_pushremote")
+  end
 end
 
--- TODO: Set upstream if unset
 function M.onto_upstream(popup)
-  git.rebase.rebase_onto(
-    string.format("refs/remotes/%s/%s", git.repo.upstream.remote, git.repo.upstream.branch),
-    popup:get_arguments()
-  )
+  local upstream
+  if git.repo.upstream.ref then
+    upstream = string.format("refs/remotes/%s", git.repo.upstream.ref)
+  else
+    local target = FuzzyFinderBuffer.new(git.branch.get_remote_branches()):open_async()
 
+    if not target then
+      return
+    end
+
+    upstream = string.format("refs/remotes/%s", target)
+  end
+
+  git.rebase.rebase_onto(upstream, popup:get_arguments())
   a.util.scheduler()
   status.refresh(true, "rebase_upstream")
 end
 
 function M.onto_elsewhere(popup)
   local target = FuzzyFinderBuffer.new(git.branch.get_all_branches()):open_async()
-  if not target then
-    return
+  if target then
+    git.rebase.rebase_onto(target, popup:get_arguments())
+    a.util.scheduler()
+    status.refresh(true, "rebase_elsewhere")
   end
-
-  git.rebase.rebase_onto(target, popup:get_arguments())
-  a.util.scheduler()
-  status.refresh(true, "rebase_elsewhere")
 end
 
 function M.interactively(popup)
   local commit = CommitSelectViewBuffer.new(git.log.list()):open_async()
-  if not commit then
-    return
+  if commit then
+    git.rebase.rebase_interactive(commit, popup:get_arguments())
+    a.util.scheduler()
+    status.refresh(true, "rebase_interactive")
   end
-
-  git.rebase.rebase_interactive(commit, unpack(popup:get_arguments()))
-  a.util.scheduler()
-  status.refresh(true, "rebase_interactive")
 end
 
 function M.continue()
