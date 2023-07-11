@@ -1113,7 +1113,10 @@ local cmd_func_map = function()
     end,
     ["DiffPopup"] = require("neogit.popups.diff").create,
     ["PullPopup"] = require("neogit.popups.pull").create,
-    ["RebasePopup"] = require("neogit.popups.rebase").create,
+    ["RebasePopup"] = function()
+      local line = M.status_buffer:get_current_line()
+      require("neogit.popups.rebase").create { line[1]:match("^(%x%x%x%x%x%x%x+)") }
+    end,
     ["MergePopup"] = require("neogit.popups.merge").create,
     ["PushPopup"] = require("neogit.popups.push").create,
     ["CommitPopup"] = require("neogit.popups.commit").create,

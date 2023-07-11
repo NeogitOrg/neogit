@@ -13,10 +13,10 @@ local function rebase_command(cmd)
   return cmd.env(envs).show_popup(true):in_pty(true).call(true)
 end
 
-function M.rebase_interactive(...)
+function M.rebase_interactive(commit, args)
   a.util.scheduler()
   local git = require("neogit.lib.git")
-  local result = rebase_command(git.cli.rebase.interactive.args(...))
+  local result = rebase_command(git.cli.rebase.interactive.args(commit).arg_list(args))
   if result.code ~= 0 then
     notif.create("Rebasing failed. Resolve conflicts before continuing", vim.log.levels.ERROR)
   else
