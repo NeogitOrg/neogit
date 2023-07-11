@@ -53,15 +53,7 @@ function M.to_upstream(popup)
   else
     set_upstream = true
     branch = git.repo.head.branch
-    local remotes = git.remote.list()
-
-    if git.config.get("push.autoSetupRemote").value == "true" then
-      remote = "origin"
-    elseif #remotes == 1 then
-      remote = remotes[1]
-    else
-      remote = FuzzyFinderBuffer.new(remotes):open_async { prompt_prefix = "remote > " }
-    end
+    remote = git.branch.upstream_remote()
   end
 
   if remote then

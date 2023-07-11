@@ -42,7 +42,6 @@ function M.onto_upstream(popup)
     upstream = string.format("refs/remotes/%s", git.repo.upstream.ref)
   else
     local target = FuzzyFinderBuffer.new(git.branch.get_remote_branches()):open_async()
-
     if not target then
       return
     end

@@ -124,4 +124,26 @@ function M.upstream_label()
   return require("neogit.lib.git").repo.upstream.ref or "@{upstream}, creating it"
 end
 
+function M.upstream_remote()
+  local git = require("neogit.lib.git")
+  local remote = git.repo.upstream.remote
+
+  if not remote then
+    local remotes = git.remote.list()
+
+    if
+      git.config.get("push.autoSetupRemote").value == "true" and
+      vim.tbl_contains(remotes, "origin")
+    then
+      remote = "origin"
+    elseif #remotes == 1 then
+      remote = remotes[1]
+    else
+      remote = FuzzyFinderBuffer.new(remotes):open_async { prompt_prefix = "remote > " }
+    end
+  end
+
+  return remote
+end
+
 return M
