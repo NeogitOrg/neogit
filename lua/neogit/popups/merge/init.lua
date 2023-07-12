@@ -34,7 +34,7 @@ function M.create()
       choices = { "ours", "theirs", "patience" },
     })
     :option_if(not in_merge, "A", "Xdiff-algorithm", "", "Diff algorithm", {
-      cli_prefix = " - ",
+      cli_prefix = "-",
       choices = { "default", "minimal", "patience", "histogram" },
     })
     :option_if(not in_merge, "S", "gpg-sign", "", "Sign using gpg")
@@ -49,6 +49,7 @@ function M.create()
     :group_heading_if(not in_merge, "")
     :action_if(not in_merge, "i", "Dissolve") -- https://github.com/magit/magit/blob/main/lisp/magit-merge.el#L131
     :build()
+
   p:show()
 
   return p
