@@ -90,9 +90,7 @@ function M.wrap(cmd, opts)
   a.util.scheduler()
 
   local notification = notif.create(opts.msg.setup, vim.log.levels.INFO, 9999)
-
-  local envs = M.client.get_envs_git_editor()
-  local result = cmd.env(envs):in_pty(true).call(true):trim()
+  local result = cmd.env(M.get_envs_git_editor()):in_pty(true).call(true):trim()
 
   a.util.scheduler()
   if notification then
