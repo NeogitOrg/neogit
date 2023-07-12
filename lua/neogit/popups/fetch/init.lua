@@ -5,7 +5,7 @@ local popup = require("neogit.lib.popup")
 local M = {}
 
 function M.create()
-  local upstream = actions.upstream()
+  local upstream = git.branch.upstream_remote()
 
   local p = popup
     .builder()
@@ -23,7 +23,7 @@ function M.create()
     :action("m", "submodules", actions.fetch_submodules)
     :new_action_group("Configure")
     :action("C", "Set variables...", actions.set_variables)
-    :env({ highlight = { git.branch.pushRemote() }, bold = { "pushRemote" } })
+    :env({ highlight = { git.branch.pushRemote(), upstream }, bold = { "pushRemote" } })
     :build()
 
   p:show()
