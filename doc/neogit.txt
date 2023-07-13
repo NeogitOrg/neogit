@@ -79,8 +79,6 @@ Diff maps ~
 
                                                 *neogit-commit-maps*
 Commit maps ~
-                                                *neogit_c*
-c                       Open commit popup
 
 <C-C><C-C>              Commit (when writing a commit message)
 
