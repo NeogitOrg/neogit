@@ -31,43 +31,24 @@ function M.abort()
   return merge_command(cli.merge.abort)
 end
 
-local uv = require("neogit.lib.uv")
 function M.update_merge_status(state)
-  local root = cli.git_root()
-  if root == "" then
+  if state.git_root == "" then
     return
   end
 
-  local merge = {
-    items = {},
-    head = nil,
-    msg = "",
-  }
+  state.merge = { head = nil, msg = "", items = {} }
 
-  local mfile = root .. "/.git/MERGE_HEAD"
-  local _, stat = a.uv.fs_stat(mfile)
-
-  -- Find the merge progress files
-  if not stat then
+  local merge_head = state.git_path("MERGE_HEAD")
+  if not merge_head:exists() then
     return
   end
 
-  local err, head = uv.read_file(mfile)
-  if not head then
-    logger.error("Failed to read merge head: " .. err)
-    return
+  state.merge.head = merge_head:read():match("([^\r\n]+)")
+
+  local message = state.git_path("MERGE_MSG")
+  if message:exists() then
+    state.merge.msg = message:read():match("([^\r\n]+)") -- we need \r? to support windows
   end
-  head = head:match("([^\r\n]+)")
-  merge.head = head
-
-  local _, msg = uv.read_file(root .. "/.git/MERGE_MSG")
-
-  -- we need \r? to support windows
-  if msg then
-    merge.msg = msg:match("([^\r\n]+)")
-  end
-
-  state.merge = merge
 end
 
 M.register = function(meta)

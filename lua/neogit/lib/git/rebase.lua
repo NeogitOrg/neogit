@@ -48,69 +48,57 @@ function M.skip()
   return rebase_command(git.cli.rebase.skip)
 end
 
-local uv = require("neogit.lib.uv")
 function M.update_rebase_status(state)
-  local cli = require("neogit.lib.git.cli")
-  local root = cli.git_root()
-  if root == "" then
+  if state.git_root == "" then
     return
   end
 
-  local rebase = {
-    items = {},
-    head = nil,
-  }
+  state.rebase = { items = {}, head = nil, current = nil }
 
-  local _, stat = a.uv.fs_stat(root .. "/.git/rebase-merge")
-  local rebase_file = nil
+  local rebase_file
+  local rebase_merge = state.git_path("rebase-merge")
+  local rebase_apply = state.git_path("rebase-apply")
 
-  -- Find the rebase progress files
-  if stat then
-    rebase_file = root .. "/.git/rebase-merge"
-  else
-    local _, stat = a.uv.fs_stat(root .. "/.git/rebase-apply")
-    if stat then
-      rebase_file = root .. "/.git/rebase-apply"
-    end
+  if rebase_merge:exists() then
+    rebase_file = rebase_merge
+  elseif rebase_apply:exists() then
+    rebase_file = rebase_apply
   end
 
   if rebase_file then
-    local err, head = uv.read_file(rebase_file .. "/head-name")
-    if not head then
-      logger.error("Failed to read rebase-merge head: " .. err)
+    local head = rebase_file:joinpath("head-name")
+    if not head:exists() then
+      logger.error("Failed to read rebase-merge head")
       return
     end
-    head = head:match("refs/heads/([^\r\n]+)")
-    rebase.head = head
 
-    local _, todos = uv.read_file(rebase_file .. "/git-rebase-todo")
-    local _, done = uv.read_file(rebase_file .. "/done")
+    state.rebase.head = head:read():match("refs/heads/([^\r\n]+)")
 
-    local current = 0
-    -- we need \r? to support windows
-    for line in (done or ""):gmatch("[^\r\n]+") do
-      if not line:match("^#") then
-        current = current + 1
-        table.insert(rebase.items, { name = line, done = true })
+    local done = rebase_file:joinpath("done")
+    if done:exists() then
+      for line in done:iter() do
+        if line:match("^[^#]") and line ~= "" then
+          table.insert(state.rebase.items, { name = line, done = true })
+        end
       end
     end
 
-    rebase.current = current
-
-    local cur = rebase.items[#rebase.items]
+    local cur = state.rebase.items[#state.rebase.items]
     if cur then
       cur.done = false
       cur.stopped = true
+      state.rebase.current = #state.rebase.items
     end
 
-    for line in (todos or ""):gmatch("[^\r\n]+") do
-      if not line:match("^#") then
-        table.insert(rebase.items, { name = line })
+    local todo = rebase_file:joinpath("git-rebase-todo")
+    if todo:exists() then
+      for line in todo:iter() do
+        if line:match("^[^#]") and line ~= "" then
+          table.insert(state.rebase.items, { name = line })
+        end
       end
     end
   end
-
-  state.rebase = rebase
 end
 
 M.register = function(meta)
