@@ -6,6 +6,7 @@ local log = require("neogit.lib.git.log")
 local config = require("neogit.config")
 
 local CherryPickPopup = require("neogit.popups.cherry_pick")
+local RevertPopup = require("neogit.popups.revert")
 
 local api = vim.api
 
@@ -128,6 +129,9 @@ function M:open()
         end,
         ["A"] = function()
           CherryPickPopup.create { commits = { self.commit_info.oid } }
+        end,
+        ["_"] = function()
+          RevertPopup.create { commits = { self.commit_info.oid } }
         end,
         ["q"] = function()
           self:close()

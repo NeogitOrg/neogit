@@ -1131,7 +1131,7 @@ local cmd_func_map = function()
     end,
     ["RevertPopup"] = function()
       local line = M.status_buffer:get_current_line()
-      require("neogit.popups.revert").create { line[1]:match("^(%x%x%x%x%x%x%x+)") }
+      require("neogit.popups.revert").create { commits = { line[1]:match("^(%x%x%x%x%x%x%x+)") } }
     end,
     ["BranchPopup"] = require("neogit.popups.branch").create,
     ["FetchPopup"] = require("neogit.popups.fetch").create,

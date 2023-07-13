@@ -3,7 +3,7 @@ local popup = require("neogit.lib.popup")
 
 local M = {}
 
-function M.create(commits)
+function M.create(env)
   -- TODO: enabled = true needs to check if incompatible switch is toggled in internal state, and not apply.
   --       if you enable 'no edit', and revert, next time you load the popup both will be enabled
   --
@@ -19,7 +19,7 @@ function M.create(commits)
     :switch("E", "no-edit", "Don't edit commit messages", { incompatible = { "edit" } })
     :action("_", "Revert commit", actions.commits) -- TODO: Support multiple commits
     :action("v", "Revert changes")
-    :env({ commits = commits or {} })
+    :env({ commits = env.commits or {} })
     :build()
 
   p:show()
