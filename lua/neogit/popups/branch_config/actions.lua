@@ -7,12 +7,16 @@ local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 local M = {}
 
 function M.remotes_for_config()
-  local remotes = {
-    { display = "", value = "" },
-  }
-
+  local remotes = {}
   for _, name in ipairs(git.remote.list()) do
     table.insert(remotes, { display = name, value = name })
+  end
+
+  local pushDefault = git.config.get("remote.pushDefault")
+  if pushDefault:is_set() then
+    table.insert(remotes, { display = "remote.pushDefault:" .. pushDefault.value, value = "" })
+  else
+    table.insert(remotes, { display = "", value = "" })
   end
 
   return remotes
