@@ -1,15 +1,12 @@
 local a = require("plenary.async")
 local Buffer = require("neogit.lib.buffer")
 local ui = require("neogit.buffers.commit_select_view.ui")
+local config = require("neogit.config")
 
 ---@class CommitSelectViewBuffer
 ---@field commits CommitLogEntry[]
 local M = {}
 M.__index = M
-
-local function line_pos()
-  return vim.fn.getpos(".")[2]
-end
 
 ---Opens a popup for selecting a commit
 ---@param commits CommitLogEntry[]|nil
@@ -32,6 +29,7 @@ end
 
 ---@param action fun(commit: CommitLogEntry|nil)|nil
 function M:open(action)
+  -- TODO: Pass this in as a param instead of reading state from object
   local _, item = require("neogit.status").get_current_section_item()
 
   local commit_at_cursor
@@ -43,22 +41,28 @@ function M:open(action)
   self.buffer = Buffer.create {
     name = "NeogitCommitSelectView",
     filetype = "NeogitCommitSelectView",
-    kind = "split",
+    kind = config.values.commit_select_view.kind,
     mappings = {
       n = {
+        ["<tab>"] = function()
+          -- no-op
+        end,
+        ["q"] = function()
+          self:close()
+        end,
+        ["<esc>"] = function()
+          self:close()
+        end,
         ["<enter>"] = function()
-          local pos = line_pos()
-          if action then
+          local stack = self.buffer.ui:get_component_stack_under_cursor()
+          local commit = stack[#stack].options.oid
+
+          if action and commit then
             vim.schedule(function()
               self:close()
             end)
 
-            if pos == 1 and commit_at_cursor then
-              action(commit_at_cursor)
-            else
-              -- Subtract the top commit and blankline
-              action(self.commits[pos - (commit_at_cursor and 2 or 0)])
-            end
+            action(commit)
             action = nil
           end
         end,
@@ -72,8 +76,14 @@ function M:open(action)
         end
       end,
     },
+    after = function()
+      if commit_at_cursor then
+        vim.fn.search(commit_at_cursor.oid)
+      end
+      vim.cmd([[setlocal nowrap]])
+    end,
     render = function()
-      return ui.View(self.commits, commit_at_cursor)
+      return ui.View(self.commits)
     end,
   }
 end

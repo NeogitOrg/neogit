@@ -10,8 +10,8 @@ Neogit has moved to an organization at <https://github.com/NeogitOrg/neogit/issu
 
 ## Installation
 
-**NOTE**: We depend on [plenary.nvim](https://github.com/nvim-lua/plenary.nvim), so to use this plugin, you will additionally need to
-require `nvim-lua/plenary.nvim` using your plugin manager of choice, before requiring this plugin.
+**NOTE**: We depend on [plenary.nvim](https://github.com/nvim-lua/plenary.nvim) and, optionally, [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim), so to use this plugin, you will additionally need to
+require `nvim-lua/plenary.nvim` and `nvim-telescope/telescope.nvim` using your plugin manager of choice, before requiring this plugin.
 
 | Plugin Manager                                       | Command                                                                        |
 | ---------------------------------------------------- | ------------------------------------------------------------------------------ |
@@ -72,38 +72,42 @@ neogit.open({ cwd = "~" })
 
 The create function takes 1 optional argument that can be one of the following values:
 
-- tab (default)
-- replace
-- floating (This currently doesn't work with popups. Very unstable)
-- split
-- split_above
-- vsplit
+- `tab` (default)
+- `replace`
+- `floating` (This currently doesn't work with popups. Very unstable)
+- `split`
+- `split_above`
+- `vsplit`
+- `auto` (vsplit if window would have 80 cols, otherwise split)
 
 ## Status Keybindings
 
-| Keybinding | Function                                         |
-| ---------- | ------------------------------------------------ |
-| Tab        | Toggle diff                                      |
-| 1, 2, 3, 4 | Set a foldlevel                                  |
-| $          | Command history                                  |
-| b          | Branch popup                                     |
-| s          | Stage (also supports staging selection/hunk)     |
-| S          | Stage unstaged changes                           |
-| \<C-s>     | Stage Everything                                 |
-| u          | Unstage (also supports staging selection/hunk)   |
-| U          | Unstage staged changes                           |
-| c          | Open commit popup                                |
-| r          | Open rebase popup                                |
-| m          | Open merge popup                                 |
-| f          | Open fetch popup                                 |
-| L          | Open log popup                                   |
-| p          | Open pull popup                                  |
-| P          | Open push popup                                  |
-| Z          | Open stash popup                                 |
-| ?          | Open help popup                                  |
-| x          | Discard changes (also supports discarding hunks) |
-| \<enter>   | Go to file                                       |
-| \<C-r>     | Refresh Buffer                                   |
+| Keybinding   | Function                                         |
+|--------------|--------------------------------------------------|
+| Tab          | Toggle diff                                      |
+| 1, 2, 3, 4   | Set a foldlevel                                  |
+| $            | Command history                                  |
+| b            | Branch popup                                     |
+| s            | Stage (also supports staging selection/hunk)     |
+| S            | Stage unstaged changes                           |
+| \<C-s>       | Stage Everything                                 |
+| u            | Unstage (also supports staging selection/hunk)   |
+| U            | Unstage staged changes                           |
+| c            | Open commit popup                                |
+| r            | Open rebase popup                                |
+| m            | Open merge popup                                 |
+| L            | Open log popup                                   |
+| f            | Open fetch popup                                 |
+| p            | Open pull popup                                  |
+| P            | Open push popup                                  |
+| Z            | Open stash popup                                 |
+| X            | Open reset popup                                 |
+| A            | Open cherry pick popup                           |
+| _            | Open revert popup                                |
+| ?            | Open help popup                                  |
+| x            | Discard changes (also supports discarding hunks) |
+| \<enter>     | Go to file                                       |
+| \<C-r>       | Refresh Buffer                                   |
 
 With `diffview` integration enabled
 
@@ -133,6 +137,14 @@ neogit.setup {
   -- Sorting keys: https://git-scm.com/docs/git-for-each-ref#_options
   sort_branches = "-committerdate",
   disable_builtin_notifications = false,
+  -- If enabled, use telescope for menu selection rather than vim.ui.select.
+  -- Allows multi-select and some things that vim.ui.select doesn't.
+  use_telescope = false,
+  -- Allows a different telescope sorter. Defaults to 'fuzzy_with_index_bias'. The example
+  -- below will use the native fzf sorter instead.
+  telescope_sorter = function()
+    return require("telescope").extensions.fzf.native_fzf_sorter()
+  end,
   use_magit_keybindings = false,
   -- Change the default way of opening neogit
   kind = "tab",
@@ -179,7 +191,7 @@ neogit.setup {
     --   }
     -- }
     --
-    diffview = false
+    diffview = false,
   },
   -- Setting any section to `false` will make the section not render at all
   sections = {
@@ -213,39 +225,58 @@ neogit.setup {
       ["B"] = "BranchPopup",
       -- Removes the default mapping of "s"
       ["s"] = "",
+      ...
+    },
+    -- Modify fuzzy-finder buffer mappings
+    finder = {
+      -- Binds <cr> to trigger select action
+      ["<cr>"] = "select",
+      ...
     }
   }
 }
 ```
 
-Right now, only the status buffer supports custom mappings.
+### List of status commands:
+* Close
+* InitRepo
+* Depth1 (Set foldlevel to 1)
+* Depth2 (Set foldlevel to 2)
+* Depth3 (Set foldlevel to 3)
+* Depth4 (Set foldlevel to 4)
+* Toggle
+* Discard (Normal and visual mode)
+* Stage (Normal and visual mode)
+* StageUnstaged
+* StageAll
+* GoToFile
+* GoToPreviousHunkHeader
+* GoToNextHunkHeader
+* Unstage (Normal and visual mode)
+* UnstageStaged
+* CommandHistory
+* RefreshBuffer
+* HelpPopup
+* PullPopup
+* PushPopup
+* FetchPopup
+* ResetPopup
+* CommitPopup
+* LogPopup
+* StashPopup
+* BranchPopup
+* MergePopup
+* CherryPickPopup (Normal and visual mode)
+* RevertPopup (Normal and visual mode)
 
-List of status commands:
-
-- Close
-- InitRepo
-- Depth1 (Set foldlevel to 1)
-- Depth2 (Set foldlevel to 2)
-- Depth3 (Set foldlevel to 3)
-- Depth4 (Set foldlevel to 4)
-- Toggle
-- Discard (Normal and visual mode)
-- Stage (Normal and visual mode)
-- StageUnstaged
-- StageAll
-- GoToFile
-- Unstage (Normal and visual mode)
-- UnstageStaged
-- CommandHistory
-- RefreshBuffer
-- HelpPopup
-- PullPopup
-- PushPopup
-- FetchPopup
-- CommitPopup
-- LogPopup
-- StashPopup
-- BranchPopup
+### List of fuzzy-finder commands:
+* Select
+* Close
+* Next
+* Previous
+* NOP
+* MultiselectToggleNext
+* MultiselectTogglePrevious
 
 ## Notification Highlighting
 
@@ -267,6 +298,7 @@ The colors for contextual highlighting are defined with these highlight groups:
 hi def NeogitDiffAddHighlight guibg=#404040 guifg=#859900
 hi def NeogitDiffDeleteHighlight guibg=#404040 guifg=#dc322f
 hi def NeogitDiffContextHighlight guibg=#333333 guifg=#b2b2b2
+hi def NeogitDiffContext guibg=#262626 guifg=#b2b2b2
 hi def NeogitHunkHeader guifg=#cccccc guibg=#404040
 hi def NeogitHunkHeaderHighlight guifg=#cccccc guibg=#4d4d4d
 ```
@@ -289,17 +321,19 @@ Set `disable_commit_confirmation = true` in your call to [`setup`](#configuratio
 
 Set `disable_insert_on_commit = true` in your call to [`setup`](#configuration) to disable automatically changing to insert mode when opening the commit message buffer. (Disabled is the default)
 
+Set `disable_insert_on_commit = "auto"` to enter insert mode _if_ the commit message is empty - otherwise stay in normal mode.
+
 ## Events
 
 Neogit emits the following events:
 
-| Event                   | Description              |
-| ----------------------- | ------------------------ |
-| `NeogitStatusRefreshed` | Status has been reloaded |
-| `NeogitCommitComplete`  | Commit has been created  |
-| `NeogitPushComplete`    | Push has completed       |
-| `NeogitPullComplete`    | Pull has completed       |
-| `NeogitFetchComplete`   | Fetch has completed      |
+| Event                   | Description                      |
+|-------------------------|----------------------------------|
+| `NeogitStatusRefreshed` | Status has been reloaded         |
+| `NeogitCommitComplete`  | Commit has been created          |
+| `NeogitPushComplete`    | Push has completed               |
+| `NeogitPullComplete`    | Pull has completed               |
+| `NeogitFetchComplete`   | Fetch has completed              |
 
 You can listen to the events using the following code:
 

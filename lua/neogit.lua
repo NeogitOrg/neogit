@@ -23,7 +23,7 @@ local neogit = {
   config = config,
   status = status,
   get_repo = function()
-    return status.repo
+    return require("neogit.lib.git").repo
   end,
   cli = lib.git.cli,
   get_log_file_path = function()
@@ -83,14 +83,14 @@ local neogit = {
     if opts ~= nil then
       config.values = vim.tbl_deep_extend("force", config.values, opts)
     end
-    if not config.values.disable_signs then
-      signs.setup()
-    end
+
     if config.values.use_magit_keybindings then
       config.values.mappings.status["F"] = "PullPopup"
       config.values.mappings.status["p"] = ""
     end
+
     hl.setup()
+    signs.setup()
     state.setup()
 
     require("neogit.autocmds").setup()

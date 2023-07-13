@@ -3,6 +3,11 @@ local cli = require("neogit.lib.git.cli")
 local parser = require("neogit.buffers.commit_view.parsing")
 local ui = require("neogit.buffers.commit_view.ui")
 local log = require("neogit.lib.git.log")
+local config = require("neogit.config")
+
+local CherryPickPopup = require("neogit.popups.cherry_pick")
+
+local api = vim.api
 
 local M = {
   instance = nil,
@@ -67,31 +72,68 @@ function M:open()
   self.buffer = Buffer.create {
     name = "NeogitCommitView",
     filetype = "NeogitCommitView",
-    kind = "vsplit",
+    kind = config.values.commit_view.kind,
+    context_highlight = true,
     autocmds = {
-      ["CursorMoved"] = function()
-        local stack = self.buffer.ui:get_component_stack_under_cursor()
-
-        if self.hovered_component then
-          self.hovered_component.options.highlight = nil
-        end
-
-        self.hovered_component = stack[2] or stack[1]
-        self.hovered_component.options.highlight = "Directory"
-
-        self.buffer.ui:update()
-      end,
       ["BufUnload"] = function()
         M.instance.is_open = false
       end,
     },
     mappings = {
       n = {
+        ["{"] = function() -- Goto Previous
+          local function previous_hunk_header(self, line)
+            local c = self.buffer.ui:get_component_on_line(line)
+
+            while c and not vim.tbl_contains({ "Diff", "Hunk" }, c.options.tag) do
+              c = c.parent
+            end
+
+            if c then
+              local first, _ = c:row_range_abs()
+              if vim.fn.line(".") == first then
+                first = previous_hunk_header(self, line - 1)
+              end
+
+              return first
+            end
+          end
+
+          local previous_header = previous_hunk_header(self, vim.fn.line("."))
+          if previous_header then
+            api.nvim_win_set_cursor(0, { previous_header, 0 })
+            vim.cmd("normal! zt")
+          end
+        end,
+        ["}"] = function() -- Goto next
+          local c = self.buffer.ui:get_component_under_cursor()
+
+          while c and not vim.tbl_contains({ "Diff", "Hunk" }, c.options.tag) do
+            c = c.parent
+          end
+
+          if c then
+            if c.options.tag == "Diff" then
+              api.nvim_win_set_cursor(0, { vim.fn.line(".") + 1, 0 })
+            else
+              local _, last = c:row_range_abs()
+              if last == vim.fn.line("$") then
+                api.nvim_win_set_cursor(0, { last, 0 })
+              else
+                api.nvim_win_set_cursor(0, { last + 1, 0 })
+              end
+            end
+            vim.cmd("normal! zt")
+          end
+        end,
+        ["A"] = function()
+          CherryPickPopup.create { commits = { self.commit_info.oid } }
+        end,
         ["q"] = function()
           self:close()
         end,
-        ["F10"] = function()
-          self.ui:print_layout_tree { collapse_hidden_components = true }
+        ["<F10>"] = function()
+          self.buffer.ui:print_layout_tree { collapse_hidden_components = true }
         end,
         ["<tab>"] = function()
           local c = self.buffer.ui:get_component_under_cursor()
@@ -102,8 +144,10 @@ function M:open()
               c = c.parent
             end
             if vim.tbl_contains({ "Diff", "Hunk" }, c.options.tag) then
+              local first, _ = c:row_range_abs()
               c.children[2]:toggle_hidden()
               self.buffer.ui:update()
+              api.nvim_win_set_cursor(0, { first, 0 })
             end
           end
         end,

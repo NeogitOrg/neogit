@@ -5,6 +5,20 @@ local git = {
 local a = require("plenary.async")
 local Collection = require("neogit.lib.collection")
 
+local function update_file(file, mode, name)
+  local mt, diff, has_diff
+  if file then
+    mt = getmetatable(file)
+    has_diff = file.has_diff
+
+    if rawget(file, "diff") then
+      diff = file.diff
+    end
+  end
+
+  return setmetatable({ mode = mode, name = name, has_diff = has_diff, diff = diff }, mt or {})
+end
+
 local function update_status(state)
   -- git-status outputs files relative to the cwd.
   --
@@ -31,7 +45,11 @@ local function update_status(state)
       elseif header == "branch.oid" then
         head.oid = value
       elseif header == "branch.upstream" then
-        upstream.branch = value
+        upstream.ref = value
+
+        local remote, branch = unpack(vim.split(value, "/"))
+        upstream.remote = remote
+        upstream.branch = branch
       end
     else
       local kind, rest = l:match("(.) (.+)")
@@ -52,19 +70,13 @@ local function update_status(state)
       elseif kind == "1" then
         local mode_staged, mode_unstaged, _, _, _, _, _, _, name =
           rest:match("(.)(.) (....) (%d+) (%d+) (%d+) (%w+) (%w+) (.+)")
+
         if mode_staged ~= "." then
-          table.insert(staged_files, {
-            mode = mode_staged,
-            name = name,
-            diff = old_files_hash.staged_files[name] and old_files_hash.staged_files[name].diff,
-          })
+          table.insert(staged_files, update_file(old_files_hash.staged_files[name], mode_staged, name))
         end
+
         if mode_unstaged ~= "." then
-          table.insert(unstaged_files, {
-            mode = mode_unstaged,
-            name = name,
-            diff = old_files_hash.unstaged_files[name] and old_files_hash.unstaged_files[name].diff,
-          })
+          table.insert(unstaged_files, update_file(old_files_hash.unstaged_files[name], mode_unstaged, name))
         end
       elseif kind == "2" then
         local mode_staged, mode_unstaged, _, _, _, _, _, _, _, name, orig_name =
@@ -77,6 +89,7 @@ local function update_status(state)
           entry.mode = mode_staged
           table.insert(staged_files, entry)
         end
+
         if mode_unstaged ~= "." then
           entry.mode = mode_unstaged
           table.insert(unstaged_files, entry)
@@ -92,7 +105,8 @@ local function update_status(state)
   if not state.head.branch or head.branch == state.head.branch then
     head.commit_message = state.head.commit_message
   end
-  if not upstream.branch or upstream.branch == state.upstream.branch then
+
+  if not upstream.ref or upstream.ref == state.upstream.ref then
     upstream.commit_message = state.upstream.commit_message
   end
 
@@ -113,7 +127,7 @@ local function update_branch_information(state)
       state.head.commit_message = result.stdout[1]
     end)
 
-    if state.upstream.branch then
+    if state.upstream.ref then
       table.insert(tasks, function()
         local result =
           git.cli.log.max_count(1).pretty("%B").for_range("@{upstream}").show_popup(false).call():trim()
@@ -128,8 +142,8 @@ local function update_branch_information(state)
 end
 
 local status = {
-  stage = function(name)
-    git.cli.add.files(name).call()
+  stage = function(...)
+    git.cli.add.files(...).call()
   end,
   stage_modified = function()
     git.cli.add.update.call()
@@ -137,8 +151,8 @@ local status = {
   stage_all = function()
     git.cli.add.all.call()
   end,
-  unstage = function(name)
-    git.cli.reset.files(name).call()
+  unstage = function(...)
+    git.cli.reset.files(...).call()
   end,
   unstage_all = function()
     git.cli.reset.call()

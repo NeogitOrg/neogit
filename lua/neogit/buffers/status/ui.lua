@@ -46,9 +46,9 @@ function M.Status(state)
             branch = state.head.branch,
             msg = state.head.commit_message,
           },
-          state.upstream.branch and RemoteHeader {
+          state.upstream.ref and RemoteHeader {
             name = "Upstream",
-            branch = state.upstream.branch,
+            branch = state.upstream.ref,
             msg = state.upstream.commit_message,
           },
         },
@@ -118,8 +118,9 @@ end
 --   end
 -- end
 
-function _TEST()
-  local repo = require("neogit").repo
+function M._TEST()
+  local repo = require("neogit.lib.git.repository").create()
+
   require("neogit.buffers.status")
     .new({
       head = repo.head,

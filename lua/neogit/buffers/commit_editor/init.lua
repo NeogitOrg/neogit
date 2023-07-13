@@ -36,7 +36,7 @@ function M:open()
     filetype = "NeogitCommitMessage",
     load = true,
     buftype = "",
-    kind = config.values.commit_popup.kind,
+    kind = config.values.commit_editor.kind,
     modifiable = true,
     readonly = false,
     autocmds = {
@@ -73,7 +73,11 @@ function M:open()
     },
     initialize = function(buffer)
       vim.api.nvim_buf_call(buffer.handle, function()
-        if not config.values.disable_insert_on_commit then
+        local disable_insert = config.values.disable_insert_on_commit
+        if
+          (disable_insert == "auto" and vim.fn.prevnonblank(".") ~= vim.fn.line("."))
+          or not disable_insert
+        then
           vim.cmd(":startinsert")
         end
       end)

@@ -13,32 +13,43 @@ local function act(normal_cmd)
   status.wait_on_current_operation()
 end
 
+local function find(text)
+  for index, line in ipairs(vim.api.nvim_buf_get_lines(0, 0, -1, true)) do
+    if line:match(text) then
+      vim.api.nvim_win_set_cursor(0, { index, 0 })
+      -- print(">" .. tostring(index) .. " " .. line)
+      break
+      -- else
+      --   print(tostring(index) .. " " .. line)
+    end
+  end
+end
+
 describe("status buffer", function()
   describe("staging files - s", function()
     it(
       "can stage an untracked file under the cursor",
       in_prepared_repo(function()
-        vim.fn.setpos(".", { 0, 5, 1, 0 })
+        find("untracked%.txt")
         act("s")
-        local result = get_git_status("untracked.txt")
-        eq("A  untracked.txt\n", result)
+        eq("A  untracked.txt\n", get_git_status("untracked.txt"))
       end)
     )
 
     it(
       "can stage a tracked file under the cursor",
       in_prepared_repo(function()
-        vim.fn.setpos(".", { 0, 8, 1, 0 })
+        find("Modified a%.txt")
+        eq(" M a.txt\n", get_git_status("a.txt"))
         act("s")
-        local result = get_git_status("a.txt")
-        eq(" M a.txt\n", result)
+        eq("M  a.txt\n", get_git_status("a.txt"))
       end)
     )
 
     it(
       "can stage a hunk under the cursor of a tracked file",
       in_prepared_repo(function()
-        vim.fn.setpos(".", { 0, 10, 1, 0 })
+        find("Modified a%.txt")
         act("<tab>jjs")
         eq("MM a.txt\n", get_git_status("a.txt"))
         eq(
@@ -60,7 +71,7 @@ describe("status buffer", function()
     it(
       "can stage a subsequent hunk under the cursor of a tracked file",
       in_prepared_repo(function()
-        vim.fn.setpos(".", { 0, 10, 1, 0 })
+        find("Modified a%.txt")
         act("<tab>8js")
         eq("MM a.txt\n", get_git_status("a.txt"))
         eq(
@@ -81,7 +92,7 @@ describe("status buffer", function()
     it(
       "can stage from a selection in a hunk",
       in_prepared_repo(function()
-        vim.fn.setpos(".", { 0, 10, 1, 0 })
+        find("Modified a%.txt")
         act("<tab>jjjjVs")
         -- eq("M  a.txt\n", get_git_status("a.txt"))
         eq(
@@ -105,17 +116,17 @@ describe("status buffer", function()
     it(
       "can unstage a staged file under the cursor",
       in_prepared_repo(function()
-        vim.fn.setpos(".", { 0, 13, 1, 0 })
+        find("Modified b%.txt")
+        eq("M  b.txt\n", get_git_status("b.txt"))
         act("u")
-        local result = get_git_status("b.txt")
-        eq(" M b.txt\n", result)
+        eq(" M b.txt\n", get_git_status("b.txt"))
       end)
     )
 
     it(
       "can unstage a hunk under the cursor of a staged file",
       in_prepared_repo(function()
-        vim.fn.setpos(".", { 0, 13, 1, 0 })
+        find("Modified b%.txt")
         act("<tab>jju")
         eq("MM b.txt\n", get_git_status("b.txt"))
         eq(
@@ -135,7 +146,7 @@ describe("status buffer", function()
     it(
       "can unstage from a selection in a hunk",
       in_prepared_repo(function()
-        vim.fn.setpos(".", { 0, 13, 1, 0 })
+        find("Modified b%.txt")
         act("<tab>jjjjVu")
         eq("MM b.txt\n", get_git_status("b.txt"))
         eq(
@@ -156,7 +167,7 @@ describe("status buffer", function()
     it(
       "can unstage a subsequent hunk from a staged file",
       in_prepared_repo(function()
-        vim.fn.setpos(".", { 0, 13, 1, 0 })
+        find("Modified b%.txt")
         act("<tab>8ju")
         eq("MM b.txt\n", get_git_status("b.txt"))
         eq(
@@ -178,17 +189,16 @@ describe("status buffer", function()
     it(
       "can discard the changes of a file under the cursor",
       in_prepared_repo(function()
-        vim.fn.setpos(".", { 0, 10, 1, 0 })
+        find("Modified a%.txt")
         act("x")
-        local result = get_git_status("a.txt")
-        eq("", result)
+        eq("", get_git_status("a.txt"))
       end)
     )
 
     it(
       "can discard a hunk under the cursor",
       in_prepared_repo(function()
-        vim.fn.setpos(".", { 0, 10, 1, 0 })
+        find("Modified a%.txt")
         act("<tab>jjx")
         eq(" M a.txt\n", get_git_status("a.txt"))
         eq(
@@ -209,7 +219,7 @@ describe("status buffer", function()
     it(
       "can discard a selection of a hunk",
       in_prepared_repo(function()
-        vim.fn.setpos(".", { 0, 10, 1, 0 })
+        find("Modified a%.txt")
         act("<tab>jjjjVx")
         eq(" M a.txt\n", get_git_status("a.txt"))
         eq(
@@ -236,28 +246,25 @@ describe("status buffer", function()
     it(
       "can delete an untracked file",
       in_prepared_repo(function()
-        vim.fn.setpos(".", { 0, 7, 1, 0 })
+        find("untracked%.txt")
         act("x")
-        local result = get_git_status("untracked.txt")
-        eq("", result)
+        eq("", get_git_status("untracked.txt"))
       end)
     )
 
     it(
       "can discard the changes of a staged file under the cursor",
       in_prepared_repo(function()
-        vim.fn.setpos(".", { 0, 13, 1, 0 })
+        find("Modified b%.txt")
         act("x")
-        local result = get_git_status("b.txt")
-        eq("", result)
+        eq("", get_git_status("b.txt"))
       end)
     )
 
     it(
       "can discard a hunk of the staged file under the cursor",
       in_prepared_repo(function()
-        -- print("Status:", vim.fn.system("git status"))
-        vim.fn.setpos(".", { 0, 13, 1, 0 })
+        find("Modified b%.txt")
         act("<tab>jjx")
         eq("M  b.txt\n", get_git_status("b.txt"))
         eq(
@@ -277,8 +284,7 @@ describe("status buffer", function()
     it(
       "can discard a selection of a staged file",
       in_prepared_repo(function()
-        -- print("Status:", vim.fn.system("git status"))
-        vim.fn.setpos(".", { 0, 13, 1, 0 })
+        find("Modified b%.txt")
         act("<tab>jjjjVx")
         eq("M  b.txt\n", get_git_status("b.txt"))
         eq(

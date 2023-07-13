@@ -43,6 +43,9 @@ function M:show()
         ["q"] = function()
           self:close()
         end,
+        ["<esc>"] = function()
+          self:close()
+        end,
         ["<tab>"] = function()
           local stack = self.buffer.ui:get_component_stack_under_cursor()
           local c = stack[#stack]
@@ -55,27 +58,34 @@ function M:show()
       },
     },
     render = function()
+      local win_width = vim.fn.winwidth(0)
+
       return map(self.state, function(item)
         local is_err = item.code ~= 0
+
+        local code = string.format("%3d", item.code)
+        local command, _ = item.cmd:gsub(" %-%-no%-pager %-c color%.ui=always %-%-no%-optional%-locks", "")
+        local time = string.format("(%3.3f ms)", item.time)
+        local stdio = string.format("[%s %3d]", "stdout", #item.stdout)
+
         local highlight_code = "NeogitCommandCodeNormal"
+
         if is_err then
+          stdio = string.format("[%s %d]", "stderr", #item.stderr)
           highlight_code = "NeogitCommandCodeError"
         end
+
+        local spacing = string.rep(" ", win_width - #code - #command - #time - #stdio - 6)
+
         return col {
           row {
-            text.highlight(highlight_code)(string.format("%3d", item.code)),
+            text.highlight(highlight_code)(code),
             text(" "),
-            text(item.cmd),
+            text(command),
+            text(spacing),
+            text.highlight("NeogitCommandTime")(time),
             text(" "),
-            text.highlight("NeogitCommandTime")(string.format("(%3.3f ms)", item.time)),
-            text(" "),
-            text.highlight("NeogitCommandTime")(
-              string.format(
-                "[%s %d]",
-                is_err and "stderr" or "stdout",
-                is_err and #item.stderr or #item.stdout
-              )
-            ),
+            text.highlight("NeogitCommandTime")(stdio),
           },
           col
             .hidden(true)

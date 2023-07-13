@@ -6,6 +6,10 @@ M.values = {
   disable_signs = false,
   disable_commit_confirmation = false,
   disable_builtin_notifications = false,
+  use_telescope = false,
+  telescope_sorter = function()
+    return nil
+  end,
   disable_insert_on_commit = true,
   use_per_project_settings = true,
   remember_settings = true,
@@ -20,7 +24,25 @@ M.values = {
   status = {
     recent_commit_count = 10,
   },
-  commit_popup = {
+  commit_editor = {
+    kind = "split",
+  },
+  commit_select_view = {
+    kind = "tab",
+  },
+  commit_view = {
+    kind = "vsplit",
+  },
+  log_view = {
+    kind = "tab",
+  },
+  rebase_editor = {
+    kind = "split",
+  },
+  reflog_view = {
+    kind = "tab",
+  },
+  merge_editor = {
     kind = "split",
   },
   preview_buffer = {
@@ -63,8 +85,25 @@ M.values = {
       folded = true,
     },
   },
-  ignored_settings = {},
+  ignored_settings = {
+    "NeogitPushPopup--force-with-lease",
+    "NeogitPushPopup--force",
+    "NeogitCommitPopup--allow-empty",
+    "NeogitRevertPopup--no-edit", -- TODO: Fix incompatible switches with default enables
+  },
   mappings = {
+    finder = {
+      ["<cr>"] = "Select",
+      ["<c-c>"] = "Close",
+      ["<esc>"] = "Close",
+      ["<c-n>"] = "Next",
+      ["<c-p>"] = "Previous",
+      ["<down>"] = "Next",
+      ["<up>"] = "Previous",
+      ["<tab>"] = "MultiselectToggleNext",
+      ["<s-tab>"] = "MultiselectTogglePrevious",
+      ["<c-j>"] = "NOP",
+    },
     status = {
       ["q"] = "Close",
       ["I"] = "InitRepo",
@@ -95,9 +134,15 @@ M.values = {
       ["P"] = "PushPopup",
       ["c"] = "CommitPopup",
       ["L"] = "LogPopup",
+      ["_"] = "RevertPopup",
       ["Z"] = "StashPopup",
+      ["A"] = "CherryPickPopup",
       ["b"] = "BranchPopup",
       ["f"] = "FetchPopup",
+      ["X"] = "ResetPopup",
+      ["M"] = "RemotePopup",
+      ["{"] = "GoToPreviousHunkHeader",
+      ["}"] = "GoToNextHunkHeader",
     },
   },
 }

@@ -2,10 +2,11 @@ local a = require("plenary.async")
 local util = require("neogit.lib.util")
 local logger = require("neogit.logger")
 local cli = require("neogit.lib.git.cli")
-local Collection = require("neogit.lib.collection")
 
-local sumhexa = require("neogit.lib.md5").sumhexa
+local ItemFilter = require("neogit.lib.item_filter")
+
 local insert = table.insert
+local sha256 = vim.fn.sha256
 
 local function parse_diff_stats(raw)
   if type(raw) == "string" then
@@ -76,7 +77,7 @@ local function build_kind(header)
   elseif header_count == 4 then
     kind = "modified"
   elseif header_count == 5 then
-    kind = header[2]:match("(.*) mode %d+")
+    kind = header[2]:match("(.*) mode %d+") or header[3]:match("(.*) mode %d+")
   else
     logger.debug(vim.inspect(header))
   end
@@ -98,10 +99,14 @@ local function build_lines(output, start_idx)
   return lines
 end
 
+local function hunk_hash(content)
+  return sha256(table.concat(content, "\n"))
+end
+
 local function build_hunks(lines)
   local hunks = {}
   local hunk = nil
-  local hunk_content = ""
+  local hunk_content = {}
 
   for i = 1, #lines do
     local line = lines[i]
@@ -118,8 +123,8 @@ local function build_hunks(lines)
 
       if index_from then
         if hunk ~= nil then
-          hunk.hash = sumhexa(hunk_content)
-          hunk_content = ""
+          hunk.hash = hunk_hash(hunk_content)
+          hunk_content = {}
           insert(hunks, hunk)
         end
 
@@ -133,7 +138,7 @@ local function build_hunks(lines)
           diff_to = i,
         }
       else
-        hunk_content = hunk_content .. "\n" .. line
+        insert(hunk_content, line)
 
         if hunk then
           hunk.diff_to = hunk.diff_to + 1
@@ -143,110 +148,107 @@ local function build_hunks(lines)
   end
 
   if hunk then
-    hunk.hash = sumhexa(hunk_content)
+    hunk.hash = hunk_hash(hunk_content)
     insert(hunks, hunk)
   end
 
   return hunks
 end
 
-local function parse_diff(output)
-  local header, start_idx = build_diff_header(output)
-  local lines = build_lines(output, start_idx)
+local function parse_diff(raw_diff, raw_stats)
+  local header, start_idx = build_diff_header(raw_diff)
+  local lines = build_lines(raw_diff, start_idx)
+  local hunks = build_hunks(lines)
   local kind, info = build_kind(header)
   local file = build_file(header, kind)
+  local stats = parse_diff_stats(raw_stats or {})
 
-  local mt = {
-    __index = function(self, method)
-      if method == "hunks" then
-        self.hunks = self._hunks()
-        return self.hunks
-      end
-    end,
-  }
-
-  local diff = {
+  return {
     kind = kind,
     lines = lines,
     file = file,
     info = info,
-    _hunks = function()
-      return build_hunks(lines)
-    end,
+    stats = stats,
+    hunks = hunks,
   }
-
-  setmetatable(diff, mt)
-
-  return diff
 end
 
-local diff = {
+local function build_metatable(f, raw_output_fn)
+  setmetatable(f, {
+    __index = function(self, method)
+      if method == "diff" then
+        self.diff = a.util.block_on(function()
+          logger.debug("[DIFF] Loading diff for: " .. f.name)
+          return parse_diff(raw_output_fn())
+        end)
+
+        return self.diff
+      end
+    end,
+  })
+
+  f.has_diff = true
+end
+
+-- Doing a git-diff with untracked files will exit(1) if a difference is observed, which we can ignore.
+local function raw_untracked(name)
+  return function()
+    return cli.diff.no_ext_diff.no_index.files("/dev/null", name).call_ignoring_exit_code():trim().stdout, {}
+  end
+end
+
+local function raw_unstaged(name)
+  return function()
+    local diff = cli.diff.no_ext_diff.files(name).call():trim().stdout
+    local stats = cli.diff.no_ext_diff.shortstat.files(name).call():trim().stdout
+
+    return diff, stats
+  end
+end
+
+local function raw_staged(name)
+  return function()
+    local diff = cli.diff.no_ext_diff.cached.files(name).call():trim().stdout
+    local stats = cli.diff.no_ext_diff.cached.shortstat.files(name).call():trim().stdout
+
+    return diff, stats
+  end
+end
+
+local function invalidate_diff(filter, section, item)
+  if not filter or filter:accepts(section, item.name) then
+    logger.debug("[DIFF] Invalidating cached diff for: " .. item.name)
+    item.diff = nil
+  end
+end
+
+return {
   parse = parse_diff,
-  parse_stats = parse_diff_stats,
-  get_stats = function(name)
-    return parse_diff_stats(cli.diff.no_ext_diff.shortstat.files(name).call_sync():trim())
+  register = function(meta)
+    meta.update_diffs = function(repo, filter)
+      filter = filter or false
+      if filter and type(filter) == "table" then
+        filter = ItemFilter.create(filter)
+      end
+
+      for _, f in ipairs(repo.untracked.items) do
+        invalidate_diff(filter, "untracked", f)
+        build_metatable(f, raw_untracked(f.name))
+      end
+
+      for _, f in ipairs(repo.unstaged.items) do
+        if f.mode ~= "F" then
+          invalidate_diff(filter, "unstaged", f)
+          build_metatable(f, raw_unstaged(f.name))
+        end
+      end
+
+      for _, f in ipairs(repo.staged.items) do
+        if f.mode ~= "F" then
+          invalidate_diff(filter, "staged", f)
+          build_metatable(f, raw_staged(f.name))
+        end
+      end
+    end
   end,
 }
-
-local ItemFilter = {}
-
-function ItemFilter.new(tbl)
-  return setmetatable(tbl, { __index = ItemFilter })
-end
-
-function ItemFilter.accepts(tbl, section, item)
-  for _, f in ipairs(tbl) do
-    if (f.section == "*" or f.section == section) and (f.file == "*" or f.file == item) then
-      return true
-    end
-  end
-
-  return false
-end
-
-function diff.register(meta)
-  meta.load_diffs = function(repo, filter)
-    filter = filter or false
-    local executions = {}
-
-    if type(filter) == "table" then
-      filter = ItemFilter.new(Collection.new(filter):map(function(item)
-        local section, file = item:match("^([^:]+):(.*)$")
-        if not section then
-          error("Invalid filter item: " .. item, 3)
-        end
-
-        return { section = section, file = file }
-      end))
-    end
-
-    for _, f in ipairs(repo.unstaged.items) do
-      if f.mode ~= "D" and f.mode ~= "F" and (not filter or filter:accepts("unstaged", f.name)) then
-        insert(executions, function()
-          local raw_diff = cli.diff.no_ext_diff.files(f.name).call():trim().stdout
-          local raw_stats = cli.diff.no_ext_diff.shortstat.files(f.name).call():trim().stdout
-          f.diff = parse_diff(raw_diff)
-          f.diff.stats = parse_diff_stats(raw_stats)
-        end)
-      end
-    end
-
-    for _, f in ipairs(repo.staged.items) do
-      if f.mode ~= "D" and f.mode ~= "F" and (not filter or filter:accepts("staged", f.name)) then
-        insert(executions, function()
-          local raw_diff = cli.diff.no_ext_diff.cached.files(f.name).call():trim().stdout
-          local raw_stats = cli.diff.no_ext_diff.cached.shortstat.files(f.name).call():trim().stdout
-          f.diff = parse_diff(raw_diff)
-          f.diff.stats = parse_diff_stats(raw_stats)
-        end)
-      end
-    end
-
-    -- If executions is an empty array, the join function blocks forever.
-    if #executions > 0 then
-      a.util.join(executions)
-    end
-  end
-end
-
-return diff

@@ -20,27 +20,26 @@ local function prepare_repository(dir)
   vim.api.nvim_set_current_dir(project_dir)
   local cmd = string.format(
     [[
-mkdir -p tmp
-cp -r tests/.repo/ tmp/%s
-cp -r tmp/%s/.git.orig/ tmp/%s/.git/
+cp -r tests/.repo/ %s
+cp -r %s/.git.orig/ %s/.git/
 ]],
     dir,
     dir,
     dir
   )
   vim.fn.system(cmd)
-  vim.api.nvim_set_current_dir("tmp/" .. dir)
+  vim.api.nvim_set_current_dir(dir)
 end
 
 local function cleanup_repository(dir)
   vim.api.nvim_set_current_dir(project_dir)
 
-  vim.fn.system(string.format([[ rm -rf tmp/%s ]], dir))
+  vim.fn.system(string.format([[ rm -rf %s ]], dir))
 end
 
 function M.in_prepared_repo(cb)
   return function()
-    local dir = "neogit_test_" .. random_string(5)
+    local dir = "/tmp/neogit_test_" .. random_string(5)
     prepare_repository(dir)
     vim.cmd("Neogit")
     a.util.block_on(status.reset)

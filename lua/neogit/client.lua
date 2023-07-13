@@ -81,4 +81,31 @@ function M.editor(target, client)
   end
 end
 
+---@param cmd any
+---@param opts table
+function M.wrap(cmd, opts)
+  local notif = require("neogit.lib.notification")
+  local a = require("plenary.async")
+
+  a.util.scheduler()
+
+  local notification = notif.create(opts.msg.setup, vim.log.levels.INFO, 9999)
+  local result = cmd.env(M.get_envs_git_editor()):in_pty(true).call(true):trim()
+
+  a.util.scheduler()
+  if notification then
+    notification:delete()
+  end
+
+  if result.code == 0 then
+    notif.create(opts.msg.success)
+    vim.api.nvim_exec_autocmds("User", { pattern = opts.autocmd, modeline = false })
+  else
+    notif.create(opts.msg.fail)
+  end
+
+  a.util.scheduler()
+  require("neogit.status").refresh(true, opts.refresh)
+end
+
 return M
