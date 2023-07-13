@@ -540,62 +540,6 @@ local function close(skip_close)
   end
 end
 
-local function generate_patch_from_selection(item, hunk, from, to, reverse)
-  reverse = reverse or false
-  from = from or 1
-  to = to or hunk.diff_to - hunk.diff_from
-
-  if from > to then
-    from, to = to, from
-  end
-  from = from + hunk.diff_from
-  to = to + hunk.diff_from
-
-  local diff_content = {}
-  local len_start = hunk.index_len
-  local len_offset = 0
-
-  -- + 1 skips the hunk header, since we construct that manually afterwards
-  for k = hunk.diff_from + 1, hunk.diff_to do
-    local v = item.diff.lines[k]
-    local operand, line = v:match("^([+ -])(.*)")
-
-    if operand == "+" or operand == "-" then
-      if from <= k and k <= to then
-        len_offset = len_offset + (operand == "+" and 1 or -1)
-        table.insert(diff_content, v)
-      else
-        -- If we want to apply the patch normally, we need to include every `-` line we skip as a normal line,
-        -- since we want to keep that line.
-        if not reverse then
-          if operand == "-" then
-            table.insert(diff_content, " " .. line)
-          end
-          -- If we want to apply the patch in reverse, we need to include every `+` line we skip as a normal line, since
-          -- it's unchanged as far as the diff is concerned and should not be reversed.
-          -- We also need to adapt the original line offset based on if we skip or not
-        elseif reverse then
-          if operand == "+" then
-            table.insert(diff_content, " " .. line)
-          end
-          len_start = len_start + (operand == "-" and -1 or 1)
-        end
-      end
-    else
-      table.insert(diff_content, v)
-    end
-  end
-
-  local diff_header =
-    string.format("@@ -%d,%d +%d,%d @@", hunk.index_from, len_start, hunk.index_from, len_start + len_offset)
-
-  table.insert(diff_content, 1, diff_header)
-  table.insert(diff_content, 1, string.format("+++ b/%s", item.name))
-  table.insert(diff_content, 1, string.format("--- a/%s", item.name))
-  table.insert(diff_content, "\n")
-  return table.concat(diff_content, "\n")
-end
-
 --- Returns commits in selection
 ---@return table
 local function get_selected_commits()
@@ -679,8 +623,7 @@ local stage_selection = function()
   else
     local section, item, hunk, from, to = get_selection()
     if section and from then
-      local patch = generate_patch_from_selection(item, hunk, from, to)
-      cli.apply.cached.with_patch(patch).call()
+      git.index.apply(git.index.generate_patch(item, hunk, from, to), { cached = true })
     end
   end
 end
@@ -693,8 +636,7 @@ local unstage_selection = function()
   else
     local section, item, hunk, from, to = get_selection()
     if section and from then
-      local patch = generate_patch_from_selection(item, hunk, from, to, true)
-      cli.apply.reverse.cached.with_patch(patch).call()
+      git.index.apply(git.index.generate_patch(item, hunk, from, to, true), { reverse = true, cached = true })
     end
   end
 end
@@ -720,12 +662,7 @@ local stage = function()
       if section.name == "unstaged" then
         git.status.stage_modified()
       elseif section.name == "untracked" then
-        local add = git.cli.add
-        for i, _ in ipairs(section.files) do
-          local item = section.files[i]
-          add.files(item.name)
-        end
-        add.call()
+        git.index.add(map(section.files, function(item) return item.name end))
       end
       refresh(true, "stage")
       M.current_operation = nil
@@ -733,8 +670,7 @@ local stage = function()
     else
       if on_hunk and section.name ~= "untracked" then
         local hunk = get_current_hunk_of_item(item)
-        local patch = generate_patch_from_selection(item, hunk)
-        cli.apply.cached.with_patch(patch).call()
+        git.index.apply(git.index.generate_patch(item, hunk), { cached = true })
       else
         git.status.stage(item.name)
       end
@@ -768,8 +704,10 @@ local unstage = function()
 
       if on_hunk then
         local hunk = get_current_hunk_of_item(item)
-        local patch = generate_patch_from_selection(item, hunk, nil, nil, true)
-        cli.apply.reverse.cached.with_patch(patch).call()
+        git.index.apply(
+          git.index.generate_patch(item, hunk, nil, nil, true),
+          { reverse = true, cached = true }
+        )
       else
         git.status.unstage(item.name)
       end
@@ -779,12 +717,6 @@ local unstage = function()
   assert(item, "Unstage item is nil")
   refresh({ status = true, diffs = { "*:" .. item.name } }, "unstage_finish")
   M.current_operation = nil
-end
-
-local function update_index()
-  require("neogit.process")
-    .new({ cmd = { "git", "update-index", "-q", "--refresh" }, verbose = true })
-    :spawn_async()
 end
 
 local function discard_message(item, mode)
@@ -811,26 +743,26 @@ local function discard_selected_files(files, section)
       vim.fn.delete(cli.git_root() .. "/" .. file)
     end
   elseif section == "unstaged" then
-    cli.checkout.files(unpack(filenames)).call()
+    git.index.checkout(filenames)
   elseif section == "staged" then
-    cli.reset.files(unpack(filenames)).call()
-    cli.checkout.files(unpack(filenames)).call()
+    git.index.reset(filenames)
+    git.index.checkout(filenames)
   end
 end
 
 ---Discards selected lines
 local function discard_selection(section, item, hunk, from, to)
   logger.debug("Discarding selection hunk:" .. vim.inspect(hunk))
-  local patch = generate_patch_from_selection(item, hunk, from, to, true)
+  local patch = git.index.generate_patch(item, hunk, from, to, true)
   logger.debug("Patch:" .. vim.inspect(patch))
 
   if section.name == "staged" then
-    local result = cli.apply.reverse.index.with_patch(patch).call()
+    local result = git.index.apply(patch, { reverse = true, index = true })
     if result.code ~= 0 then
       error("Failed to discard" .. vim.inspect(result))
     end
   else
-    cli.apply.reverse.with_patch(patch).call()
+    git.index.apply(patch, { reverse = true })
   end
 end
 
@@ -842,9 +774,9 @@ local function discard_hunk(section, item, lines, hunk)
   local diff = table.concat(lines or {}, "\n")
   diff = table.concat({ "--- a/" .. item.name, "+++ b/" .. item.name, diff, "" }, "\n")
   if section == "staged" then
-    cli.apply.reverse.index.with_patch(diff).call()
+    git.index.apply(diff, { reverse = true, index = true })
   else
-    cli.apply.reverse.with_patch(diff).call()
+    git.index.apply(diff, { reverse = true })
   end
 end
 
@@ -874,7 +806,7 @@ local discard = function()
 
   -- Make sure the index is in sync as git-status skips it
   -- Do this manually since the `cli` add --no-optional-locks
-  update_index()
+  git.index.update()
 
   if mode.mode == "V" then
     if multi_file then
@@ -1271,7 +1203,6 @@ function M.create(kind, cwd)
 end
 
 M.toggle = toggle
-M.generate_patch_from_selection = generate_patch_from_selection
 M.reset = reset
 M.dispatch_reset = dispatch_reset
 M.refresh = refresh
