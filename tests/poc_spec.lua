@@ -15,6 +15,7 @@ describe("proof of concept", function()
   end)
 
   it("has access to buffers", function()
+    require("neogit").setup()
     vim.cmd("Neogit")
     -- 1 is the neogit buffer just opened
     -- 2 The hidden console buffer
