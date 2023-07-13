@@ -4,30 +4,18 @@ local notif = require("neogit.lib.notification")
 local CommitSelectViewBuffer = require("neogit.buffers.commit_select_view")
 local git = require("neogit.lib.git")
 local a = require("plenary.async")
+local client = require("neogit.client")
 
 local function do_commit(popup, cmd)
-  a.util.scheduler()
-
-  local notification = notif.create("Committing...", vim.log.levels.INFO, 9999)
-
-  local client = require("neogit.client")
-  local envs = client.get_envs_git_editor()
-
-  local result = cmd.env(envs).args(unpack(popup:get_arguments())):in_pty(true).call(true):trim()
-
-  a.util.scheduler()
-  if notification then
-    notification:delete()
-  end
-
-  if result.code == 0 then
-    notif.create("Successfully committed!")
-    vim.api.nvim_exec_autocmds("User", { pattern = "NeogitCommitComplete", modeline = false })
-  end
-
-  a.util.scheduler()
-
-  require("neogit.status").refresh(true, "do_commit")
+  client.wrap(cmd.arg_list(popup:get_arguments()), {
+    autocmd = "NeogitCommitComplete",
+    refresh = "do_commit",
+    msg = {
+      setup = "Committing...",
+      success = "Committed!",
+      fail = "Couldn't commit"
+    }
+  })
 end
 
 local function commit_special(popup, method)

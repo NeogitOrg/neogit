@@ -67,7 +67,9 @@ function M:open()
     mappings = {
       n = {
         ["q"] = function(buffer)
-          buffer:close(true)
+          if written or input.get_confirmation("Commit message isn't saved. Abort?") then
+            buffer:close(true)
+          end
         end,
       },
     },
