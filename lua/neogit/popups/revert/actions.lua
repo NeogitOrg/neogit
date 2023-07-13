@@ -1,5 +1,4 @@
 local a = require("plenary.async")
-local status = require("neogit.status")
 local git = require("neogit.lib.git")
 local CommitSelectViewBuffer = require("neogit.buffers.commit_select_view")
 
@@ -28,7 +27,7 @@ function M.commits(popup)
 
   git.revert.commits(commits, popup:get_arguments())
   a.util.scheduler()
-  status.refresh(true, "revert_commits")
+  require("neogit.status").refresh(true, "revert_commits")
 end
 
 return M
