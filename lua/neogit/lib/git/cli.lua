@@ -3,6 +3,7 @@ local logger = require("neogit.logger")
 local a = require("plenary.async")
 local process = require("neogit.process")
 local util = require("neogit.lib.util")
+local Path = require("plenary.path")
 
 local function config(setup)
   setup = setup or {}
@@ -446,8 +447,14 @@ local configurations = {
   },
 }
 
+-- TODO: Consider returning a Path object, since consumers of this function tend to need that anyways.
 local function git_root()
-  return process.new({ cmd = { "git", "rev-parse", "--show-toplevel" } }):spawn_blocking().stdout[1]
+  local dir = Path.new(".git")
+  if dir:exists() and dir:is_dir() then
+    return process.new({ cmd = { "git", "rev-parse", "--show-toplevel" } }):spawn_blocking().stdout[1]
+  else
+    return ""
+  end
 end
 
 local git_root_sync = function()
