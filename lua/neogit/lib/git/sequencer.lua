@@ -1,10 +1,5 @@
 local M = {}
 
-local a = require("plenary.async")
-local cli = require("neogit.lib.git.cli")
-local logger = require("neogit.logger")
-local uv = require("neogit.lib.uv")
-
 -- .git/sequencer/todo does not exist when there is only one commit left.
 --
 -- And CHERRY_PICK_HEAD does not exist when a conflict happens while picking a series of commits with --no-commit.
