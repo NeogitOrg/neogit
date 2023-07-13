@@ -662,7 +662,9 @@ local stage = function()
       if section.name == "unstaged" then
         git.status.stage_modified()
       elseif section.name == "untracked" then
-        git.index.add(map(section.files, function(item) return item.name end))
+        git.index.add(map(section.files, function(item)
+          return item.name
+        end))
       end
       refresh(true, "stage")
       M.current_operation = nil
