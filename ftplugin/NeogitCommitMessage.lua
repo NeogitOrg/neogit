@@ -4,8 +4,8 @@ end
 
 vim.cmd.source("$VIMRUNTIME/ftplugin/gitcommit.vim")
 
-local parser = vim.treesitter.language.get_lang("gitcommit")
-if parser then
-  vim.treesitter.start(0, parser)
+local ok, _ = pcall(vim.treesitter.language.inspect, "gitcommit")
+if ok then
+  vim.treesitter.start(0, "gitcommit")
   vim.cmd([[au BufUnload <buffer> lua vim.treesitter.stop(0)]])
 end
