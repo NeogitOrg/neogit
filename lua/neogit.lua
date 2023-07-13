@@ -52,7 +52,12 @@ local open = function(opts)
   end
 
   if not did_setup then
-    setup(opts)
+    notification.create(
+      "Neogit has not been setup!",
+      vim.log.levels.ERROR
+    )
+    logger.error("Neogit not setup!")
+    return
   end
 
   if not cli.git_is_repository_sync(opts.cwd) then
