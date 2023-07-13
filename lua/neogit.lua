@@ -6,6 +6,7 @@ local hl = require("neogit.lib.hl")
 local status = require("neogit.status")
 local state = require("neogit.lib.state")
 local input = require("neogit.lib.input")
+local logger = require("neogit.logger")
 
 local cli = require("neogit.lib.git.cli")
 local notification = require("neogit.lib.notification")
@@ -17,7 +18,84 @@ local notification = require("neogit.lib.notification")
 ---@field kind string|nil
 ---@field no_expand boolean|nil
 
-local neogit = {
+local did_setup = false
+
+local setup = function(opts)
+  if did_setup then
+    logger.debug("Already did setup!")
+    return
+  end
+  did_setup = true
+
+  if opts ~= nil then
+    config.values = vim.tbl_deep_extend("force", config.values, opts)
+  end
+
+  if config.values.use_magit_keybindings then
+    config.values.mappings.status["F"] = "PullPopup"
+    config.values.mappings.status["p"] = ""
+  end
+
+  hl.setup()
+  signs.setup()
+  state.setup()
+
+  require("neogit.autocmds").setup()
+end
+
+---@param opts OpenOpts
+local open = function(opts)
+  opts = opts or {}
+
+  if opts.cwd and not opts.no_expand then
+    opts.cwd = vim.fn.expand(opts.cwd)
+  end
+
+  if not did_setup then
+    setup(opts)
+  end
+
+  if not cli.git_is_repository_sync(opts.cwd) then
+    if
+      input.get_confirmation(
+        string.format("Initialize repository in %s?", opts.cwd or vim.fn.getcwd()),
+        { values = { "&Yes", "&No" }, default = 2 }
+      )
+    then
+      lib.git.init.create(opts.cwd or vim.fn.getcwd(), true)
+    else
+      notification.create("The current working directory is not a git repository", vim.log.levels.ERROR)
+      return
+    end
+  end
+
+  if opts[1] ~= nil then
+    local popup_name = opts[1]
+    local has_pop, popup = pcall(require, "neogit.popups." .. popup_name)
+
+    if not has_pop then
+      vim.api.nvim_err_writeln("Invalid popup '" .. popup_name .. "'")
+    else
+      popup.create()
+    end
+  else
+    a.run(function()
+      status.create(opts.kind, opts.cwd)
+    end)
+  end
+end
+
+local complete = function(arglead)
+  if arglead:find("^kind=") then
+    return { "kind=replace", "kind=tab", "kind=split", "kind=split_above", "kind=vsplit", "kind=floating" }
+  end
+  -- Only complete arguments that start with arglead
+  return vim.tbl_filter(function(arg)
+    return arg:match("^" .. arglead)
+  end, { "kind=", "cwd=", "commit" })
+end
+
+return {
   lib = require("neogit.lib"),
   popups = require("neogit.popups"),
   config = config,
@@ -30,45 +108,7 @@ local neogit = {
     return vim.fn.stdpath("cache") .. "/neogit.log"
   end,
   notif = require("neogit.lib.notification"),
-  ---@param opts OpenOpts
-  open = function(opts)
-    opts = opts or {}
-
-    if opts.cwd and not opts.no_expand then
-      opts.cwd = vim.fn.expand(opts.cwd)
-    end
-
-    if not cli.git_is_repository_sync(opts.cwd) then
-      if
-        input.get_confirmation(
-          string.format("Create repository in %s? (y or n)", opts.cwd or vim.fn.getcwd()),
-          {
-            default = 2,
-          }
-        )
-      then
-        lib.git.init.create(opts.cwd or vim.fn.getcwd(), true)
-      else
-        notification.create("The current working directory is not a git repository", vim.log.levels.ERROR)
-        return
-      end
-    end
-
-    if opts[1] ~= nil then
-      local popup_name = opts[1]
-      local has_pop, popup = pcall(require, "neogit.popups." .. popup_name)
-
-      if not has_pop then
-        vim.api.nvim_err_writeln("Invalid popup '" .. popup_name .. "'")
-      else
-        popup.create()
-      end
-    else
-      a.run(function()
-        status.create(opts.kind, opts.cwd)
-      end)
-    end
-  end,
+  open = open,
   reset = status.reset,
   get_config = function()
     return config.values
@@ -79,33 +119,6 @@ local neogit = {
   dispatch_refresh = status.dispatch_refresh,
   refresh_viml_compat = status.refresh_viml_compat,
   close = status.close,
-  setup = function(opts)
-    if opts ~= nil then
-      config.values = vim.tbl_deep_extend("force", config.values, opts)
-    end
-
-    if config.values.use_magit_keybindings then
-      config.values.mappings.status["F"] = "PullPopup"
-      config.values.mappings.status["p"] = ""
-    end
-
-    hl.setup()
-    signs.setup()
-    state.setup()
-
-    require("neogit.autocmds").setup()
-  end,
-  complete = function(arglead)
-    if arglead:find("^kind=") then
-      return { "kind=replace", "kind=tab", "kind=split", "kind=split_above", "kind=vsplit", "kind=floating" }
-    end
-    -- Only complete arguments that start with arglead
-    return vim.tbl_filter(function(arg)
-      return arg:match("^" .. arglead)
-    end, { "kind=", "cwd=", "commit" })
-  end,
+  setup = setup,
+  complete = complete,
 }
-
-neogit.setup()
-
-return neogit
