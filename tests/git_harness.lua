@@ -72,6 +72,18 @@ function M.get_git_diff(files, flags)
   return table.concat(output, "\n")
 end
 
+function M.get_git_rev(rev)
+  local result = vim.api.nvim_exec("!git rev-parse " .. rev, true)
+  local lines = vim.split(result, "\n")
+  return lines[3]
+end
+
+function M.get_git_config(var)
+  local result = vim.api.nvim_exec("!git config --get --local " .. var, true)
+  local lines = vim.split(result, "\n")
+  return lines[3]
+end
+
 function M.get_git_branches()
   local result = vim.api.nvim_exec("!git branch --list --all", true)
   local lines = vim.split(result, "\n")

@@ -3,3 +3,14 @@
 	filemode = true
 	bare = false
 	logallrefupdates = true
+[remote "origin"]
+	url = git@github.com:NeogitOrg/neogit.git
+	fetch = +refs/heads/*:refs/remotes/origin/*
+[remote "fake"]
+	url = git@github.com:NeogitOrgFake/neogit.git
+	fetch = +refs/heads/*:refs/remotes/fake/*
+[branch "master"]
+	remote = origin
+	pushRemote = origin
+	merge = refs/heads/master
+	rebase = true
