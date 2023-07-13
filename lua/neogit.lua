@@ -52,10 +52,7 @@ local open = function(opts)
   end
 
   if not did_setup then
-    notification.create(
-      "Neogit has not been setup!",
-      vim.log.levels.ERROR
-    )
+    notification.create("Neogit has not been setup!", vim.log.levels.ERROR)
     logger.error("Neogit not setup!")
     return
   end
