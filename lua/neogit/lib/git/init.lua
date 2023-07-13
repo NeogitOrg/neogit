@@ -36,8 +36,8 @@ M.init_repo = function()
   if cli.git_is_repository_sync() then
     if
       not input.get_confirmation(
-        string.format("Reinitialize existing repository %s? (y or n) ", directory),
-        { default = 2 }
+        string.format("Reinitialize existing repository %s?", directory),
+        { values = { "&Yes", "&No" }, default = 2 }
       )
     then
       return
