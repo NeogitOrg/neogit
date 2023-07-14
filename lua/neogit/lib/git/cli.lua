@@ -448,7 +448,8 @@ local configurations = {
 
 -- TODO: Consider returning a Path object, since consumers of this function tend to need that anyways.
 local function git_root()
-  local process = process.new({ cmd = { "git", "rev-parse", "--show-toplevel" } }):spawn_blocking()
+  local process =
+    process.new({ cmd = { "git", "rev-parse", "--show-toplevel" }, ignore_code = true }):spawn_blocking()
 
   if process ~= nil and process.code == 0 then
     return process.stdout[1]
