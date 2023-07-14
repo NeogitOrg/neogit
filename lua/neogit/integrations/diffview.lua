@@ -144,18 +144,19 @@ end
 function M.open(section_name, item_name)
   old_config = dv_config.get_config()
 
-  local config = vim.tbl_deep_extend("force", old_config, {
-    keymaps = {
-      view = {
-        ["q"] = cb("close"),
-        ["<esc>"] = cb("close"),
-      },
-      file_panel = {
-        ["q"] = cb("close"),
-        ["<esc>"] = cb("close"),
-      },
-    },
-  })
+  local config = dv_config.get_config()
+
+  local view_maps = {
+    ["q"] = cb("close"),
+    ["<esc>"] = cb("close"),
+  }
+  local file_panel_maps = {
+    ["q"] = cb("close"),
+    ["<esc>"] = cb("close"),
+  }
+
+  config.keymaps.view = dv_config.extend_keymaps(view_maps, config.keymaps.view or {})
+  config.keymaps.file_panel = dv_config.extend_keymaps(file_panel_maps, config.keymaps.file_panel or {})
 
   dv.setup(config)
 
