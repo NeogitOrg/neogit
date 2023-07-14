@@ -44,7 +44,7 @@ function M.in_prepared_repo(cb)
     require("neogit").setup()
     vim.cmd("Neogit")
     a.util.block_on(status.reset)
-    local _, err = pcall(cb)
+    local _, err = pcall(cb, dir)
     cleanup_repository(dir)
     if err ~= nil then
       error(err)
