@@ -49,7 +49,9 @@ function M.to_upstream(popup)
   local remote, branch, set_upstream
 
   if upstream then
-    remote, branch = unpack(vim.split(upstream, "/"))
+    local split = vim.split(upstream, "/")
+    remote = split[1]
+    branch = table.concat(split, "/", 2)
   else
     set_upstream = true
     branch = git.repo.head.branch
@@ -70,7 +72,10 @@ function M.to_elsewhere(popup)
     return
   end
 
-  local remote, branch = unpack(vim.split(target, "/"))
+  local split = vim.split(target, "/")
+  local remote = split[1]
+  local branch = table.concat(split, "/", 2)
+
   push_to(popup:get_arguments(), remote, branch)
 end
 
