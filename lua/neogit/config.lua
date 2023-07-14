@@ -56,9 +56,12 @@ M.values = {
     item = { ">", "v" },
     section = { ">", "v" },
   },
-  integrations = {
-    diffview = false,
-  },
+  integrations = setmetatable({}, {
+    __index = function(_, key)
+      local ok, value = pcall(require, key)
+      return ok and value or false
+    end,
+  }),
   sections = {
     untracked = {
       folded = false,
