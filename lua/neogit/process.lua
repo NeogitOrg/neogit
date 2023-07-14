@@ -101,12 +101,10 @@ local function create_preview_buffer()
     },
   }
 
-  local chan = vim.api.nvim_open_term(buffer.handle, {})
-
   preview_buffer = {
-    chan = chan,
     buffer = buffer,
     current_span = nil,
+    content = "",
   }
 end
 
@@ -140,14 +138,14 @@ end
 function Process.show_console()
   create_preview_buffer()
 
+  vim.api.nvim_chan_send(vim.api.nvim_open_term(preview_buffer.buffer.handle, {}), preview_buffer.content)
   local win = preview_buffer.buffer:show()
   scroll_to_end(win)
+  vim.cmd.stopinsert() -- Ensures we're not in insert mode
   -- vim.api.nvim_win_call(win, function()
   --   vim.cmd.normal("G")
   -- end)
 end
-
-local nvim_chan_send = vim.api.nvim_chan_send
 
 ---@param process Process
 ---@param data string
@@ -158,11 +156,12 @@ local function append_log(process, data)
     end
 
     if preview_buffer.current_span ~= process.job then
-      nvim_chan_send(preview_buffer.chan, string.format("> %s\r\n", table.concat(process.cmd, " ")))
+      preview_buffer.content = preview_buffer.content
+        .. string.format("> %s\r\n", table.concat(process.cmd, " "))
       preview_buffer.current_span = process.job
     end
 
-    nvim_chan_send(preview_buffer.chan, data .. "\r\n")
+    preview_buffer.content = preview_buffer.content .. data .. "\r\n"
   end
 
   vim.schedule(function()
