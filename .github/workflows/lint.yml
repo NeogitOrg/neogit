@@ -14,13 +14,10 @@ jobs:
           path: ~/.cargo/bin/selene
 
       - uses: actions/checkout@v1
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
       - name: Compare the cached Selene version against crates.io
         id: check-selene-cache
         run: |
-          CRATES_IO_SELENE_VERSION="$(cargo search selene --limit=1 --color=never | awk 'NR==1{gsub(/"/, "", $3); print $3}')"
+          CRATES_IO_SELENE_VERSION=$(curl -s -L0 https://crates.io/api/v1/crates/selene  | jq -r '.crate.max_stable_version')
           CACHED_SELENE_VERSION="$((selene --version || printf "INVALID_VERSION") | awk '{print $2}')"
 
           printf "Crates IO Selene Version: %s\n" "${CRATES_IO_SELENE_VERSION}"
@@ -34,6 +31,10 @@ jobs:
 
           printf "cache-valid=%s\n" "${CACHED_SELENE_VALID}" >> "${GITHUB_OUTPUT}"
 
+      - uses: actions-rs/toolchain@v1
+        if: ${{ steps.check-selene-cache.outputs.cache-valid != 'true'}}
+        with:
+          toolchain: stable
       - name: Install Selene
         if: ${{ steps.check-selene-cache.outputs.cache-valid != 'true'}}
         run: cargo install selene --force
