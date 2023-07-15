@@ -1,11 +1,13 @@
 require("plenary.async").tests.add_to_env()
+local util = require("tests.util.util")
 local eq = assert.are.same
 
 local process = require("neogit.process")
 
 describe("process execution", function()
   it("basic command", function()
-    local result = process.new({ cmd = { "cat", "process_test" }, cwd = "./tests" }):spawn_blocking(1000)
+    local result =
+      process.new({ cmd = { "cat", "process_test" }, cwd = util.get_test_files_dir() }):spawn_blocking(1000)
     assert(result)
     assert.are.same(result.stdout, {
       "This is a test file",
@@ -17,7 +19,8 @@ describe("process execution", function()
     })
   end)
   it("can cat a file", function()
-    local result = process.new({ cmd = { "cat", "a.txt" }, cwd = "./tests" }):spawn_blocking(1000)
+    local result =
+      process.new({ cmd = { "cat", "a.txt" }, cwd = util.get_test_files_dir() }):spawn_blocking(1000)
 
     assert(result)
     assert.are.same(result.stdout, {
@@ -74,8 +77,10 @@ describe("process execution", function()
     assert.are.same(result.stdout, input)
   end)
   it("basic command trim", function()
-    local result =
-      process.new({ cmd = { "cat", "process_test" }, cwd = "./tests" }):spawn_blocking(1000):trim()
+    local result = process
+      .new({ cmd = { "cat", "process_test" }, cwd = util.get_test_files_dir() })
+      :spawn_blocking(1000)
+      :trim()
     assert(result)
     assert.are.same(result.stdout, {
       "This is a test file",

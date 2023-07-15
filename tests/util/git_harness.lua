@@ -2,7 +2,7 @@ local status = require("neogit.status")
 local a = require("plenary.async")
 local M = {}
 
-local project_dir = vim.fn.getcwd()
+local project_dir = require("tests.util.util").project_dir
 
 -- very naiive implementation, we only use this to generate unique folder names
 local function random_string(length)
