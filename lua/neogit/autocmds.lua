@@ -1,11 +1,10 @@
 local M = {}
 
 local api = vim.api
-M.group = api.nvim_create_augroup("Neogit", { clear = true })
-
 local a = require("plenary.async")
 local status = require("neogit.status")
 local fs = require("neogit.lib.fs")
+local group = require("neogit").autocmd_group
 
 function M.setup()
   api.nvim_create_autocmd({ "BufWritePost", "ShellCmdPost", "VimResume" }, {
@@ -28,7 +27,7 @@ function M.setup()
         status.refresh({ status = true, diffs = { "*:" .. path } }, string.format("%s:%s", o.event, o.file))
       end, function() end)
     end,
-    group = M.group,
+    group = group,
   })
 end
 
