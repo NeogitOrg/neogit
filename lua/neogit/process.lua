@@ -101,53 +101,26 @@ local function create_preview_buffer()
     },
   }
 
-  local chan = vim.api.nvim_open_term(buffer.handle, {})
-
   preview_buffer = {
-    chan = chan,
     buffer = buffer,
     current_span = nil,
+    content = "",
   }
-end
-
---from https://github.com/stevearc/overseer.nvim/blob/82ed207195b58a73b9f7d013d6eb3c7d78674ac9/lua/overseer/util.lua#L119
----@param win number
-local function scroll_to_end(win)
-  local bufnr = vim.api.nvim_win_get_buf(win)
-  local lnum = vim.api.nvim_buf_line_count(bufnr)
-  local last_line = vim.api.nvim_buf_get_lines(bufnr, -2, -1, true)[1]
-  -- Hack: terminal buffers add a bunch of empty lines at the end. We need to ignore them so that
-  -- we don't end up scrolling off the end of the useful output.
-  -- This has the unfortunate effect that we may not end up tailing the output as more arrives
-  if vim.bo[bufnr].buftype == "terminal" then
-    local half_height = math.floor(vim.api.nvim_win_get_height(win) / 2)
-    for i = lnum, 1, -1 do
-      local prev_line = vim.api.nvim_buf_get_lines(bufnr, i - 1, i, true)[1]
-      if prev_line ~= "" then
-        -- Only scroll back if we detect a lot of padding lines, and the total real output is
-        -- small. Otherwise the padding may be legit
-        if lnum - i >= half_height and i < half_height then
-          lnum = i
-          last_line = prev_line
-        end
-        break
-      end
-    end
-  end
-  vim.api.nvim_win_set_cursor(win, { lnum, vim.api.nvim_strwidth(last_line) })
 end
 
 function Process.show_console()
   create_preview_buffer()
 
-  local win = preview_buffer.buffer:show()
-  scroll_to_end(win)
+  vim.api.nvim_chan_send(vim.api.nvim_open_term(preview_buffer.buffer.handle, {}), preview_buffer.content)
+  preview_buffer.buffer:show()
+  -- Scroll to the end of viewable text
+  vim.cmd.startinsert()
+  vim.defer_fn(vim.cmd.stopinsert, 50)
+
   -- vim.api.nvim_win_call(win, function()
   --   vim.cmd.normal("G")
   -- end)
 end
-
-local nvim_chan_send = vim.api.nvim_chan_send
 
 ---@param process Process
 ---@param data string
@@ -158,11 +131,12 @@ local function append_log(process, data)
     end
 
     if preview_buffer.current_span ~= process.job then
-      nvim_chan_send(preview_buffer.chan, string.format("> %s\r\n", table.concat(process.cmd, " ")))
+      preview_buffer.content = preview_buffer.content
+        .. string.format("> %s\r\n", table.concat(process.cmd, " "))
       preview_buffer.current_span = process.job
     end
 
-    nvim_chan_send(preview_buffer.chan, data .. "\r\n")
+    preview_buffer.content = preview_buffer.content .. data .. "\r\n"
   end
 
   vim.schedule(function()
