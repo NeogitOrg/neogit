@@ -11,11 +11,11 @@ inspired by Magit, such as the branch keybindings.
 ## Architecture
 
 - [`./lua/neogit/`]
-  - [`./lua/neogit/lib/`] Contains various git and filesystem abtractions
-  - [`./lua/neogit/lib/git/`] High level git wrappers for commont commands such as branches, fetch. These are also used to
+  - [`./lua/neogit/lib/`] Contains various git and filesystem abstractions
+  - [`./lua/neogit/lib/git/`] High level git wrappers for common commands such as branches, fetch. These are also used to
     supply the status buffer
   - [`./lua/neogit/lib/git/cli.lua`] Builder like pattern for constructing git cli invocations
-  - [`./lua/neogit/lib/git/repository.lua`] Modules from `git/` for updating the statusbuffer
+  - [`./lua/neogit/lib/git/repository.lua`] Modules from `git/` for updating the status buffer
   - [`./lua/neogit.lua`]
 
 Neogit uses its own UI drawing library for drawing columns and rows of text.
