@@ -126,37 +126,37 @@ function M.make_palette()
   local bg_normal = Color.from_hex(hl_bg_normal)
 
   return {
-    bg0 = M.get_bg("Normal"),
+    bg0 = M.get_bg("Normal") or "#22252A",
     bg1 = bg_normal:shade(0.019):to_css(),
     bg2 = bg_normal:shade(0.065):to_css(),
     bg3 = bg_normal:shade(0.11):to_css(),
 
     grey = bg_normal:shade(0.4):to_css(),
 
-    red = M.get_fg("Error"),
-    bg_red = Color.from_hex(M.get_fg("Error")):shade(-0.18):to_css(),
+    red = M.get_fg("Error") or "#E06C75",
+    bg_red = Color.from_hex(M.get_fg("Error") or "#E06C75"):shade(-0.18):to_css(),
     line_red = M.get_bg("DiffDelete")
-      or Color.from_hex(M.get_fg("Error")):shade(-0.6):set_saturation(0.4):to_css(),
+      or Color.from_hex(M.get_fg("Error") or "#E06C75"):shade(-0.6):set_saturation(0.4):to_css(),
 
-    orange = M.get_fg("SpecialChar"),
-    bg_orange = Color.from_hex(M.get_fg("SpecialChar")):shade(-0.17):to_css(),
+    orange = M.get_fg("SpecialChar") or "#ffcb6b",
+    bg_orange = Color.from_hex(M.get_fg("SpecialChar") or "#ffcb6b"):shade(-0.17):to_css(),
 
-    yellow = M.get_fg("PreProc"),
-    bg_yellow = Color.from_hex(M.get_fg("PreProc")):shade(-0.17):to_css(),
+    yellow = M.get_fg("PreProc") or "#FFE082",
+    bg_yellow = Color.from_hex(M.get_fg("PreProc") or "#FFE082"):shade(-0.17):to_css(),
 
-    green = M.get_fg("String"),
-    bg_green = Color.from_hex(M.get_fg("String")):shade(-0.18):to_css(),
+    green = M.get_fg("String") or "#C3E88D",
+    bg_green = Color.from_hex(M.get_fg("String") or "#C3E88D"):shade(-0.18):to_css(),
     line_green = M.get_bg("DiffAdd")
-      or Color.from_hex(M.get_fg("String")):shade(-0.72):set_saturation(0.2):to_css(),
+      or Color.from_hex(M.get_fg("String") or "#C3E88D"):shade(-0.72):set_saturation(0.2):to_css(),
 
-    cyan = M.get_fg("Operator"),
-    bg_cyan = Color.from_hex(M.get_fg("Operator")):shade(-0.18):to_css(),
+    cyan = M.get_fg("Operator") or "#89ddff",
+    bg_cyan = Color.from_hex(M.get_fg("Operator") or "#89ddff"):shade(-0.18):to_css(),
 
-    blue = M.get_fg("Macro"),
-    bg_blue = Color.from_hex(M.get_fg("Macro")):shade(-0.18):to_css(),
+    blue = M.get_fg("Macro") or "#82AAFF",
+    bg_blue = Color.from_hex(M.get_fg("Macro") or "#82AAFF"):shade(-0.18):to_css(),
 
-    purple = M.get_fg("Include"),
-    bg_purple = Color.from_hex(M.get_fg("Include")):shade(-0.18):to_css(),
+    purple = M.get_fg("Include") or "#C792EA",
+    bg_purple = Color.from_hex(M.get_fg("Include") or "#C792EA"):shade(-0.18):to_css(),
     md_purple = "#c3a7e5",
   }
 end
