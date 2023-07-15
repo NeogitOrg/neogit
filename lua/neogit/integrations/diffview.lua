@@ -146,17 +146,20 @@ function M.open(section_name, item_name)
 
   local config = dv_config.get_config()
 
-  local view_maps = {
-    ["q"] = cb("close"),
-    ["<esc>"] = cb("close"),
-  }
-  local file_panel_maps = {
-    ["q"] = cb("close"),
-    ["<esc>"] = cb("close"),
+  local keymaps = {
+    view = {
+      ["q"] = cb("close"),
+      ["<esc>"] = cb("close"),
+    },
+    file_panel = {
+      ["q"] = cb("close"),
+      ["<esc>"] = cb("close"),
+    },
   }
 
-  config.keymaps.view = dv_config.extend_keymaps(view_maps, config.keymaps.view or {})
-  config.keymaps.file_panel = dv_config.extend_keymaps(file_panel_maps, config.keymaps.file_panel or {})
+  for key, keymap in pairs(keymaps) do
+    config.keymaps[key] = dv_config.extend_keymaps(keymap, config.keymaps[key] or {})
+  end
 
   dv.setup(config)
 
