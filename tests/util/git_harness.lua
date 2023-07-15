@@ -16,7 +16,11 @@ local function random_string(length)
   return res
 end
 
-local function prepare_repository(dir)
+function M.prepare_repository(dir)
+  if dir == nil then
+    dir = "/tmp/neogit_test_" .. random_string(5)
+  end
+
   vim.api.nvim_set_current_dir(project_dir)
   local cmd = string.format(
     [[
@@ -29,9 +33,11 @@ cp -r %s/.git.orig/ %s/.git/
   )
   vim.fn.system(cmd)
   vim.api.nvim_set_current_dir(dir)
+
+  return dir
 end
 
-local function cleanup_repository(dir)
+function M.cleanup_repository(dir)
   vim.api.nvim_set_current_dir(project_dir)
 
   vim.fn.system(string.format([[ rm -rf %s ]], dir))
@@ -39,13 +45,12 @@ end
 
 function M.in_prepared_repo(cb)
   return function()
-    local dir = "/tmp/neogit_test_" .. random_string(5)
-    prepare_repository(dir)
+    local dir = M.prepare_repository()
     require("neogit").setup()
     vim.cmd("Neogit")
     a.util.block_on(status.reset)
     local _, err = pcall(cb, dir)
-    cleanup_repository(dir)
+    M.cleanup_repository(dir)
     if err ~= nil then
       error(err)
     end

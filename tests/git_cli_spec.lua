@@ -1,6 +1,6 @@
 local eq = assert.are.same
 local git_cli = require("neogit.lib.git.cli")
-local git_harness = require("tests.git_harness")
+local git_harness = require("tests.util.git_harness")
 local in_prepared_repo = git_harness.in_prepared_repo
 
 describe("git cli", function()

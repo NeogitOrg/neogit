@@ -1,6 +1,6 @@
 local eq = assert.are.same
 local status = require("neogit.status")
-local harness = require("tests.git_harness")
+local harness = require("tests.util.git_harness")
 local _ = require("tests.mocks.input")
 local in_prepared_repo = harness.in_prepared_repo
 local get_git_status = harness.get_git_status
@@ -60,8 +60,8 @@ describe("status buffer", function()
 -It exists so it can be manipulated by the test suite.
 +This is a change made to a tracked file.
  Here are some lines we can change during the tests.
- 
- 
+
+
 ]],
           get_git_diff("a.txt", "--cached")
         )
@@ -78,7 +78,7 @@ describe("status buffer", function()
           [[--- a/a.txt
 +++ b/a.txt
 @@ -7,4 +7,5 @@ Here are some lines we can change during the tests.
- 
+
  This is a second block of text to create a second hunk.
  It also has some line we can manipulate.
 +Adding a new line right here!
@@ -103,8 +103,8 @@ describe("status buffer", function()
  It exists so it can be manipulated by the test suite.
 +This is a change made to a tracked file.
  Here are some lines we can change during the tests.
- 
- 
+
+
 ]],
           get_git_diff("a.txt", "--cached")
         )
@@ -156,8 +156,8 @@ describe("status buffer", function()
  This is another test file.
 +Changes here!
  This way, unstaging staged changes can be tested.
- 
- 
+
+
 ]],
           get_git_diff("b.txt")
         )
@@ -205,7 +205,7 @@ describe("status buffer", function()
           [[--- a/a.txt
 +++ b/a.txt
 @@ -7,4 +7,5 @@ Here are some lines we can change during the tests.
- 
+
  This is a second block of text to create a second hunk.
  It also has some line we can manipulate.
 +Adding a new line right here!
@@ -229,10 +229,10 @@ describe("status buffer", function()
  This is a text file under version control.
 -It exists so it can be manipulated by the test suite.
  Here are some lines we can change during the tests.
- 
- 
+
+
 @@ -7,4 +6,5 @@ Here are some lines we can change during the tests.
- 
+
  This is a second block of text to create a second hunk.
  It also has some line we can manipulate.
 +Adding a new line right here!
@@ -294,8 +294,8 @@ describe("status buffer", function()
  This is another test file.
 -It will have staged changes.
  This way, unstaging staged changes can be tested.
- 
- 
+
+
 @@ -7,3 +6,4 @@ This way, unstaging staged changes can be tested.
  Some more lines down here to force a second hunk.
  I can't think of anything else.
