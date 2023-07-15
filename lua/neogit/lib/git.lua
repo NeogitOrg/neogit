@@ -20,4 +20,5 @@ return {
   sequencer = require("neogit.lib.git.sequencer"),
   pull = require("neogit.lib.git.pull"),
   push = require("neogit.lib.git.push"),
+  index = require("neogit.lib.git.index"),
 }
