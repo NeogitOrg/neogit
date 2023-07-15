@@ -30,7 +30,7 @@ function M.new(filename, on_unload)
 end
 
 function M:open()
-  local written = false
+  local should_commit = false
   self.buffer = Buffer.create {
     name = self.filename,
     filetype = "NeogitCommitMessage",
@@ -40,25 +40,25 @@ function M:open()
     modifiable = true,
     readonly = false,
     autocmds = {
-      ["BufWritePre"] = function()
-        written = true
-      end,
       ["BufUnload"] = function(o)
-        if written then
+        local buf = Buffer.create {
+          name = o.buf,
+        }
+        if not should_commit and buf:get_option("modified") then
           if
             not config.values.disable_commit_confirmation
             and not input.get_confirmation("Are you sure you want to commit?")
           then
             -- Clear the buffer, without filling the register
-            vim.api.nvim_buf_set_lines(o.buf, 0, -1, false, {})
-            vim.api.nvim_buf_call(o.buf, function()
+            buf:set_lines(0, -1, false, {})
+            buf:call(function()
               vim.cmd("silent w!")
             end)
           end
         end
 
-        if self.on_unload then
-          self.on_unload(written)
+        if self.on_unload and not should_commit then
+          self.on_unload(true)
         end
 
         require("neogit.process").defer_show_preview_buffers()
@@ -67,13 +67,10 @@ function M:open()
     mappings = {
       n = {
         ["q"] = function(buffer)
-          if buffer:get_option("modified") then
-            require("neogit.lib.notification").create(
-              "Commit message has not been saved! Try `:w`.",
-              vim.log.levels.WARN
-            )
-          else
-            self:close()
+          if not buffer:get_option("modified") then
+            buffer:close(true)
+          elseif input.get_confirmation("Commit message hasn't been saved. Abort?") then
+            should_commit = true
             buffer:close(true)
           end
         end,
