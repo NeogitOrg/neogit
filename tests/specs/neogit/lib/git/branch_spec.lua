@@ -33,12 +33,24 @@ describe("git branch lib", function()
       table.insert(branches, "second-branch")
 
       require("neogit").setup()
-
-      print("Branches:\n  " .. vim.inspect(branches))
     end)
 
     it("properly detects all local branches", function()
       local branches_detected = gb.get_local_branches(true)
+      print("Branches:\n  " .. vim.inspect(branches))
+      print("Branches Detected:\n  " .. vim.inspect(branches_detected))
+      assert.True(util.lists_equal(branches, branches_detected))
+    end)
+
+    it("properly detects all branches but the current branch", function()
+      vim.fn.system("git checkout master")
+      if vim.v.shell_error ~= 0 then
+        error("Failed to checkout master branch!")
+      end
+      util.remove_item_from_table(branches, "master")
+
+      local branches_detected = gb.get_local_branches(false)
+      print("Branches:\n  " .. vim.inspect(branches))
       print("Branches Detected:\n  " .. vim.inspect(branches_detected))
       assert.True(util.lists_equal(branches, branches_detected))
     end)
