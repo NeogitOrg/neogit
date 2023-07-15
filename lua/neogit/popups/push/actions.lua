@@ -49,9 +49,7 @@ function M.to_upstream(popup)
   local remote, branch, set_upstream
 
   if upstream then
-    local split = vim.split(upstream, "/")
-    remote = split[1]
-    branch = table.concat(split, "/", 2)
+    remote, branch = upstream:match("^([^/]*)/(.*)$")
   else
     set_upstream = true
     branch = git.repo.head.branch
@@ -66,17 +64,14 @@ function M.to_upstream(popup)
 end
 
 function M.to_elsewhere(popup)
-  local target = FuzzyFinderBuffer.new(git.branch.get_remote_branches())
-    :open_async { prompt_prefix = "push > " }
-  if not target then
-    return
+  local target = FuzzyFinderBuffer.new(git.branch.get_remote_branches()):open_async {
+    prompt_prefix = "push > ",
+  }
+
+  if target then
+    local remote, branch = target:match("^([^/]*)/(.*)$")
+    push_to(popup:get_arguments(), remote, branch)
   end
-
-  local split = vim.split(target, "/")
-  local remote = split[1]
-  local branch = table.concat(split, "/", 2)
-
-  push_to(popup:get_arguments(), remote, branch)
 end
 
 function M.push_other(popup)
