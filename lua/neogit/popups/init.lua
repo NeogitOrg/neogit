@@ -5,7 +5,8 @@ local M = {}
 --- Creates a curried function which will open the popup with the given name when called
 --- Extra arguments are supplied to popup.`create()`
 function M.open(name, get_args)
-  return function()
+  local async = require("plenary.async")
+  return async.void(function()
     local ok, value = pcall(require, "neogit.popups." .. name)
     if ok then
       assert(value)
@@ -20,7 +21,7 @@ function M.open(name, get_args)
       local notification = require("neogit.lib.notification")
       notification.create(string.format("No such popup: %q", name), vim.log.levels.ERROR)
     end
-  end
+  end)
 end
 
 --- Returns an array useful for creating mappings for the available popups
@@ -28,57 +29,80 @@ end
 function M.mappings_table()
   local config = require("neogit.config")
   return {
-    ["HelpPopup"] = M.open("help", function()
-      local status = require("neogit.status")
-      local line = status.status_buffer:get_current_line()
-
-      return {
-        get_stash = function()
-          return {
-            name = line[1]:match("^(stash@{%d+})"),
-          }
-        end,
-        use_magit_keybindings = config.values.use_magit_keybindings,
-      }
-    end),
-    ["DiffPopup"] = M.open("diff"),
-    ["PullPopup"] = M.open("pull"),
-    ["RebasePopup"] = M.open("rebase", function()
-      local status = require("neogit.status")
-      local line = status.status_buffer:get_current_line()
-      return { line[1]:match("^(%x%x%x%x%x%x%x+)") }
-    end),
-    ["MergePopup"] = M.open("merge"),
-    ["PushPopup"] = M.open("push"),
-    ["CommitPopup"] = M.open("commit"),
-    ["LogPopup"] = M.open("log"),
-    ["CherryPickPopup"] = M.open("cherry_pick", function()
-      local selection = nil
-
-      if vim.api.nvim_get_mode().mode == "V" then
+    {
+      "HelpPopup",
+      "Help",
+      M.open("help", function()
         local status = require("neogit.status")
-        selection = status.get_selected_commits()
-      end
+        local line = status.status_buffer:get_current_line()
 
-      return { commits = selection }
-    end),
-    -- { "nv", a.void(cherry_pick), true },
-    ["StashPopup"] = M.open("stash", function()
-      local status = require("neogit.status")
-      local line = status.status_buffer:get_current_line()
-      return {
-        name = line[1]:match("^(stash@{%d+})"),
-      }
-    end),
-    ["RevertPopup"] = M.open("revert", function()
-      local status = require("neogit.status")
-      local line = status.status_buffer:get_current_line()
-      return { commits = { line[1]:match("^(%x%x%x%x%x%x%x+)") } }
-    end),
-    ["BranchPopup"] = M.open("branch"),
-    ["FetchPopup"] = M.open("fetch"),
-    ["RemotePopup"] = M.open("remote"),
-    ["ResetPopup"] = M.open("reset"),
+        return {
+          get_stash = function()
+            return {
+              name = line[1]:match("^(stash@{%d+})"),
+            }
+          end,
+          use_magit_keybindings = config.values.use_magit_keybindings,
+        }
+      end),
+    },
+    { "DiffPopup", "Diff", M.open("diff") },
+    { "PullPopup", "Pull", M.open("pull") },
+    {
+      "RebasePopup",
+      "Rebase",
+      M.open("rebase", function()
+        local status = require("neogit.status")
+        local line = status.status_buffer:get_current_line()
+        return { line[1]:match("^(%x%x%x%x%x%x%x+)") }
+      end),
+    },
+    { "MergePopup", "Merge", M.open("merge") },
+    { "PushPopup", "Push", M.open("push") },
+    { "CommitPopup", "Commit", M.open("commit") },
+    { "LogPopup", "Log", M.open("log") },
+    {
+      "CherryPickPopup",
+      "Cherry Pick",
+      {
+        "nv",
+        M.open("cherry_pick", function()
+          local selection = nil
+
+          if vim.api.nvim_get_mode().mode == "V" then
+            local status = require("neogit.status")
+            selection = status.get_selected_commits()
+          end
+
+          return { commits = selection }
+        end),
+        true,
+      },
+    },
+    {
+      "StashPopup",
+      "Stash",
+      M.open("stash", function()
+        local status = require("neogit.status")
+        local line = status.status_buffer:get_current_line()
+        return {
+          name = line[1]:match("^(stash@{%d+})"),
+        }
+      end),
+    },
+    {
+      "RevertPopup",
+      "Revert",
+      M.open("revert", function()
+        local status = require("neogit.status")
+        local line = status.status_buffer:get_current_line()
+        return { commits = { line[1]:match("^(%x%x%x%x%x%x%x+)") } }
+      end),
+    },
+    { "BranchPopup", "Branch", M.open("branch") },
+    { "FetchPopup", "Fetch", M.open("fetch") },
+    { "RemotePopup", "Remote", M.open("remote") },
+    { "ResetPopup", "Reset", M.open("reset") },
   }
 end
 

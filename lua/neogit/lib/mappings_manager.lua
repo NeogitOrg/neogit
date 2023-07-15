@@ -4,7 +4,7 @@ local managers = {}
 
 ---@class MappingTable
 ---@field [1] string mode
----@field [2] string|function command
+---@field [2] string|function func
 ---@field [3] boolean Escape visual mode
 
 ---@class MappingsManager

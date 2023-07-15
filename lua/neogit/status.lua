@@ -1109,7 +1109,15 @@ local cmd_func_map = function()
 
   local popups = require("neogit.popups")
   --- Load the popups from the centralized popup file
-  return vim.tbl_extend("error", mappings, popups.mappings_table())
+  for _, v in ipairs(popups.mappings_table()) do
+    --- { name, display_name, mapping }
+    if mappings[v[1]] then
+      error("Neogit: Mapping '" .. v[1] .. "' is already in use!")
+    end
+
+    mappings[v[1]] = v[3]
+  end
+  return mappings
 end
 
 -- Sets decoration provider for buffer

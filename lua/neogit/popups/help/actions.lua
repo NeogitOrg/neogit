@@ -9,6 +9,11 @@ local function present(commands)
   local presenter = util.map(commands, function(command)
     local cmd, name, fn = unpack(command)
 
+    --- Handle the longer table mapping form (mode, func, esc)
+    if type(fn) == "table" then
+      fn = fn[2]
+    end
+
     return { name = name, key = status_mappings[cmd], fn = fn }
   end)
 
@@ -22,35 +27,19 @@ end
 M.popups = function(env)
   local popups = require("neogit.popups")
 
-  return present {
-    { "HelpPopup", "Help", popups.open("help") },
-    { "DiffPopup", "Diff", popups.open("diff") },
-    { "PullPopup", "Pull", popups.open("pull") },
-    { "RebasePopup", "Rebase", popups.open("rebase") },
-    { "MergePopup", "Merge", popups.open("merge") },
-    { "PushPopup", "Push", popups.open("push") },
-    { "CommitPopup", "Commit", popups.open("commit") },
-    { "LogPopup", "Log", popups.open("log") },
-    { "CherryPickPopup", "Apply", popups.open("cherry_pick") },
-    { "BranchPopup", "Branch", popups.open("branch") },
-    { "FetchPopup", "Fetch", popups.open("fetch") },
-    { "ResetPopup", "Reset", popups.open("reset") },
-    { "RevertPopup", "Revert", popups.open("revert") },
-    { "RemotePopup", "Remote", popups.open("remote") },
-    { "InitRepo", "Init", require("neogit.lib.git").init.init_repo },
+  local items = vim.list_extend({
     {
-      "StashPopup",
-      "Stash",
-      popups.open("stash", env.get_stash),
-    },
-    {
+
       "CommandHistory",
       "History",
       function()
         require("neogit.buffers.git_command_history"):new():show()
       end,
     },
-  }
+    { "InitRepo", "Init", require("neogit.lib.git").init.init_repo },
+  }, popups.mappings_table())
+
+  return present(items)
 end
 
 M.actions = function()
