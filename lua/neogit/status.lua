@@ -922,6 +922,7 @@ end
 --- These needs to be a function to avoid a circular dependency
 --- between this module and the popup modules
 local cmd_func_map = function()
+  local popups = require("neogit.popups")
   return {
     ["Close"] = function()
       M.status_buffer:close()
@@ -1085,21 +1086,13 @@ local cmd_func_map = function()
         end
       end
     end),
+
     ["RefreshBuffer"] = function()
       dispatch_refresh(true)
     end,
-    ["HelpPopup"] = function()
-      local line = M.status_buffer:get_current_line()
 
-      require("neogit.popups.help").create {
-        get_stash = function()
-          return {
-            name = line[1]:match("^(stash@{%d+})"),
-          }
-        end,
-        use_magit_keybindings = config.values.use_magit_keybindings,
-      }
-    end,
+    -- INTEGRATIONS --
+
     ["DiffAtFile"] = function()
       if not config.ensure_integration("diffview") then
         return
@@ -1111,32 +1104,46 @@ local cmd_func_map = function()
         dv.open(section.name, item.name)
       end
     end,
-    ["DiffPopup"] = require("neogit.popups.diff").create,
-    ["PullPopup"] = require("neogit.popups.pull").create,
-    ["RebasePopup"] = function()
-      local line = M.status_buffer:get_current_line()
-      require("neogit.popups.rebase").create { line[1]:match("^(%x%x%x%x%x%x%x+)") }
-    end,
-    ["MergePopup"] = require("neogit.popups.merge").create,
-    ["PushPopup"] = require("neogit.popups.push").create,
-    ["CommitPopup"] = require("neogit.popups.commit").create,
-    ["LogPopup"] = require("neogit.popups.log").create,
-    ["CherryPickPopup"] = { "nv", a.void(cherry_pick), true },
-    ["StashPopup"] = function()
+
+    --- POPUPS ---
+
+    ["HelpPopup"] = popups.open("help", function()
       local line = M.status_buffer:get_current_line()
 
-      require("neogit.popups.stash").create {
+      return {
+        get_stash = function()
+          return {
+            name = line[1]:match("^(stash@{%d+})"),
+          }
+        end,
+        use_magit_keybindings = config.values.use_magit_keybindings,
+      }
+    end),
+    ["DiffPopup"] = popups.open("diff"),
+    ["PullPopup"] = popups.open("pull"),
+    ["RebasePopup"] = popups.open("rebase", function()
+      local line = M.status_buffer:get_current_line()
+      return { line[1]:match("^(%x%x%x%x%x%x%x+)") }
+    end),
+    ["MergePopup"] = popups.open("merge"),
+    ["PushPopup"] = popups.open("push"),
+    ["CommitPopup"] = popups.open("commit"),
+    ["LogPopup"] = popups.open("log"),
+    ["CherryPickPopup"] = { "nv", a.void(cherry_pick), true },
+    ["StashPopup"] = popups.open("stash", function()
+      local line = M.status_buffer:get_current_line()
+      return {
         name = line[1]:match("^(stash@{%d+})"),
       }
-    end,
-    ["RevertPopup"] = function()
+    end),
+    ["RevertPopup"] = popups.open("revert", function()
       local line = M.status_buffer:get_current_line()
-      require("neogit.popups.revert").create { commits = { line[1]:match("^(%x%x%x%x%x%x%x+)") } }
-    end,
-    ["BranchPopup"] = require("neogit.popups.branch").create,
-    ["FetchPopup"] = require("neogit.popups.fetch").create,
-    ["RemotePopup"] = require("neogit.popups.remote").create,
-    ["ResetPopup"] = require("neogit.popups.reset").create,
+      return { commits = { line[1]:match("^(%x%x%x%x%x%x%x+)") } }
+    end),
+    ["BranchPopup"] = popups.open("branch"),
+    ["FetchPopup"] = popups.open("fetch"),
+    ["RemotePopup"] = popups.open("remote"),
+    ["ResetPopup"] = popups.open("reset"),
   }
 end
 

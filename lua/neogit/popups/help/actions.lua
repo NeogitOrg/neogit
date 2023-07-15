@@ -23,27 +23,25 @@ M.popups = function(env)
   local popups = require("neogit.popups")
 
   return present {
-    { "HelpPopup", "Help", popups.help.create },
-    { "DiffPopup", "Diff", popups.diff.create },
-    { "PullPopup", "Pull", popups.pull.create },
-    { "RebasePopup", "Rebase", popups.rebase.create },
-    { "MergePopup", "Merge", popups.merge.create },
-    { "PushPopup", "Push", popups.push.create },
-    { "CommitPopup", "Commit", popups.commit.create },
-    { "LogPopup", "Log", popups.log.create },
-    { "CherryPickPopup", "Apply", popups.cherry_pick.create },
-    { "BranchPopup", "Branch", popups.branch.create },
-    { "FetchPopup", "Fetch", popups.fetch.create },
-    { "ResetPopup", "Reset", popups.reset.create },
-    { "RevertPopup", "Revert", popups.revert.create },
-    { "RemotePopup", "Remote", popups.remote.create },
+    { "HelpPopup", "Help", popups.open("help") },
+    { "DiffPopup", "Diff", popups.open("diff") },
+    { "PullPopup", "Pull", popups.open("pull") },
+    { "RebasePopup", "Rebase", popups.open("rebase") },
+    { "MergePopup", "Merge", popups.open("merge") },
+    { "PushPopup", "Push", popups.open("push") },
+    { "CommitPopup", "Commit", popups.open("commit") },
+    { "LogPopup", "Log", popups.open("log") },
+    { "CherryPickPopup", "Apply", popups.open("cherry_pick") },
+    { "BranchPopup", "Branch", popups.open("branch") },
+    { "FetchPopup", "Fetch", popups.open("fetch") },
+    { "ResetPopup", "Reset", popups.open("reset") },
+    { "RevertPopup", "Revert", popups.open("revert") },
+    { "RemotePopup", "Remote", popups.open("remote") },
     { "InitRepo", "Init", require("neogit.lib.git").init.init_repo },
     {
       "StashPopup",
       "Stash",
-      function()
-        popups.stash.create(env.get_stash())
-      end,
+      popups.open("stash", env.get_stash),
     },
     {
       "CommandHistory",
