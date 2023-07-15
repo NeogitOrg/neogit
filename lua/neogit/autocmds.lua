@@ -1,7 +1,7 @@
 local M = {}
 
 local api = vim.api
-local group = api.nvim_create_augroup("Neogit", { clear = true })
+M.group = api.nvim_create_augroup("Neogit", { clear = true })
 
 local a = require("plenary.async")
 local status = require("neogit.status")
@@ -28,7 +28,7 @@ function M.setup()
         status.refresh({ status = true, diffs = { "*:" .. path } }, string.format("%s:%s", o.event, o.file))
       end, function() end)
     end,
-    group = group,
+    group = M.group,
   })
 end
 
