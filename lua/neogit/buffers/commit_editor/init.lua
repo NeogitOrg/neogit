@@ -67,7 +67,15 @@ function M:open()
     mappings = {
       n = {
         ["q"] = function(buffer)
-          buffer:close(true)
+          if buffer:get_option("modified") then
+            require("neogit.lib.notification").create(
+              "Commit message has not been saved! Try `:w`.",
+              vim.log.levels.WARN
+            )
+          else
+            self:close()
+            buffer:close(true)
+          end
         end,
       },
     },
