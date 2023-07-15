@@ -1,6 +1,17 @@
 local managers = {}
 
-local function invoke(id, map_id)
+---@alias Mapping string|function|MappingTable
+
+---@class MappingTable
+---@field [1] string mode
+---@field [2] string|function command
+---@field [3] boolean Escape visual mode
+
+---@class MappingsManager
+---@field mappings table<string, Mapping>
+local MappingsManager = {}
+
+function MappingsManager.invoke(id, map_id)
   local manager = managers[id]
   local k = manager.map_id_to_key[map_id]
   local mapping = manager.mappings[k]
@@ -12,11 +23,16 @@ local function invoke(id, map_id)
   end
 end
 
-local function build_call_string(id, k)
+function MappingsManager.build_call_string(id, k)
   return string.format([[<cmd>lua require 'neogit.lib.mappings_manager'.invoke(%d, %d)<CR>]], id, k)
 end
 
-local function new(id)
+function MappingsManager.delete(id)
+  managers[id] = nil
+end
+
+---@return MappingsManager
+function MappingsManager.new(id)
   local mappings = {}
   local map_id_to_key = {}
   local manager = {
@@ -26,7 +42,7 @@ local function new(id)
     register = function()
       for k, mapping in pairs(mappings) do
         local map_id = #map_id_to_key + 1
-        local f_call = build_call_string(id, map_id)
+        local f_call = MappingsManager.build_call_string(id, map_id)
         if type(mapping) == "table" then
           for _, m in pairs(vim.split(mapping[1], "")) do
             if type(mapping[2]) == "string" then
@@ -61,13 +77,4 @@ local function new(id)
   return manager
 end
 
-local function delete(id)
-  managers[id] = nil
-end
-
-return {
-  new = new,
-  build_call_string = build_call_string,
-  delete = delete,
-  invoke = invoke,
-}
+return MappingsManager

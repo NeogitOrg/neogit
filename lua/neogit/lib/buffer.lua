@@ -9,7 +9,7 @@ local Ui = require("neogit.lib.ui")
 
 ---@class Buffer
 ---@field handle number
----@field mmanager any
+---@field mmanager MappingsManager
 ---@field ui Ui
 ---@field kind string
 local Buffer = {

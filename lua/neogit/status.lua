@@ -611,6 +611,8 @@ local function get_selected_commits()
   return items
 end
 
+M.get_selectet_commits = get_selected_commits
+
 ---Determines if selection contains multiple files
 ---@return boolean
 local function selection_spans_multiple_items_within_section()
@@ -922,8 +924,7 @@ end
 --- These needs to be a function to avoid a circular dependency
 --- between this module and the popup modules
 local cmd_func_map = function()
-  local popups = require("neogit.popups")
-  return {
+  local mappings = {
     ["Close"] = function()
       M.status_buffer:close()
     end,
@@ -1104,47 +1105,11 @@ local cmd_func_map = function()
         dv.open(section.name, item.name)
       end
     end,
-
-    --- POPUPS ---
-
-    ["HelpPopup"] = popups.open("help", function()
-      local line = M.status_buffer:get_current_line()
-
-      return {
-        get_stash = function()
-          return {
-            name = line[1]:match("^(stash@{%d+})"),
-          }
-        end,
-        use_magit_keybindings = config.values.use_magit_keybindings,
-      }
-    end),
-    ["DiffPopup"] = popups.open("diff"),
-    ["PullPopup"] = popups.open("pull"),
-    ["RebasePopup"] = popups.open("rebase", function()
-      local line = M.status_buffer:get_current_line()
-      return { line[1]:match("^(%x%x%x%x%x%x%x+)") }
-    end),
-    ["MergePopup"] = popups.open("merge"),
-    ["PushPopup"] = popups.open("push"),
-    ["CommitPopup"] = popups.open("commit"),
-    ["LogPopup"] = popups.open("log"),
-    ["CherryPickPopup"] = { "nv", a.void(cherry_pick), true },
-    ["StashPopup"] = popups.open("stash", function()
-      local line = M.status_buffer:get_current_line()
-      return {
-        name = line[1]:match("^(stash@{%d+})"),
-      }
-    end),
-    ["RevertPopup"] = popups.open("revert", function()
-      local line = M.status_buffer:get_current_line()
-      return { commits = { line[1]:match("^(%x%x%x%x%x%x%x+)") } }
-    end),
-    ["BranchPopup"] = popups.open("branch"),
-    ["FetchPopup"] = popups.open("fetch"),
-    ["RemotePopup"] = popups.open("remote"),
-    ["ResetPopup"] = popups.open("reset"),
   }
+
+  local popups = require("neogit.popups")
+  --- Load the popups from the centralized popup file
+  return vim.tbl_extend("error", mappings, popups.mappings_table())
 end
 
 -- Sets decoration provider for buffer
@@ -1237,6 +1202,7 @@ function M.create(kind, cwd)
     name = "NeogitStatus",
     filetype = "NeogitStatus",
     kind = kind,
+    ---@param buffer Buffer
     initialize = function(buffer)
       logger.debug("[STATUS BUFFER]: Initializing...")
 
