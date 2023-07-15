@@ -574,20 +574,15 @@ function M:show()
         },
       }
     end,
-  }
-
-  -- Closes the window if it loses focus and it is a floating buffer
-  if self.buffer.kind == "floating" then
-    vim.api.nvim_create_autocmd("WinLeave", {
-      callback = function(win)
-        if win.buf == self.buffer.handle then
+    autocmds = {
+      ["WinLeave"] = function()
+        if self.buffer.kind == "floating" then
           -- We pcall this because it's possible the window was closed by a command invocation, e.g. "cc" for commits
-          pcall(self.close)
+          pcall(self.close, self)
         end
       end,
-      once = true,
-    })
-  end
+    },
+  }
 end
 
 return M
