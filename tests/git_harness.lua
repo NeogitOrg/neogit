@@ -40,6 +40,10 @@ end
 function M.in_prepared_repo(cb)
   return function()
     local dir = "/tmp/neogit_test_" .. random_string(5)
+    if vim.loop.os_uname().sysname == "Darwin" then
+      dir = "/private" .. dir
+    end
+
     prepare_repository(dir)
     require("neogit").setup()
     vim.cmd("Neogit")
