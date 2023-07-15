@@ -184,7 +184,7 @@ neogit.setup {
     --
     -- Requires you to have `sindrets/diffview.nvim` installed.
     -- use {
-    --   'TimUntersberger/neogit',
+    --   'NeogitOrg/neogit',
     --   requires = {
     --     'nvim-lua/plenary.nvim',
     --     'sindrets/diffview.nvim'
