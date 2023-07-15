@@ -31,11 +31,25 @@ Opening a view is typically done through a *popup* which allows you to configure
 
 These reside inside [`./lua/neogit/popups/`], and are split into `init.lua` and `actions.lua` for the setup and keybindings, and the git commands to execute, likewise intended to get an overview of the options and keybindings for the popup in `init.lua` without concerning yourself with the git commands and parsing in `actions.lua`.
 
+## Getting Started
+
+If you are using [Lazy.nvim](`https://github.com/folke/lazy.nvim`) you can configure it to prefer sourcing plugins from
+a local directory instead of from git. 
+
+Simply clone Neogit to your project directory of choice to be able to use your local changes. See [`lazy-spec`](https://github.com/folke/lazy.nvim#-plugin-spec) and [`lazy-configuration`](https://github.com/folke/lazy.nvim#%EF%B8%8F-configuration) for details.
+
 ## Code Standards
 
 ### Testing
 
 Neogit is tested using [Plenary](https://github.com/nvim-lua/plenary.nvim#plenarytest_harness).
+
+It uses a *Busted* style testing, where each lua file inside [`./tests/{test_name}_spec.lua`] is run.
+
+When adding new functionality we strongly encourage you to add a test spec to ensure that the feature works and remains
+working when new functionality is tacked on.
+
+If you find or fix a bug, it is desired that you add a test case for the bug to ensure it does not occur again in the future, and remains *fixed*.
 
 A [Makefile](./Makefile) is set up to run tests.
 
