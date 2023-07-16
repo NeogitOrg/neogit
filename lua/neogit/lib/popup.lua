@@ -78,8 +78,10 @@ end
 
 -- Closes the popup buffer
 function M:close()
-  self.buffer:close()
-  self.buffer = nil
+  if self.buffer then
+    self.buffer:close()
+    self.buffer = nil
+  end
 end
 
 -- Determines the correct highlight group for a switch based on it's state.

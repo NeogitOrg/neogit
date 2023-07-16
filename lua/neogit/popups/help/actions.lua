@@ -24,7 +24,7 @@ local function present(commands)
   return presenter
 end
 
-M.popups = function(env)
+M.popups = function()
   local popups = require("neogit.popups")
 
   local items = vim.list_extend({
