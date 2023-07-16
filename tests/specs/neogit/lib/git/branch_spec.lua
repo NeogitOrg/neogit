@@ -53,9 +53,5 @@ describe("git branch lib", function()
       print("Branches Detected:\n  " .. vim.inspect(branches_detected))
       assert.True(util.lists_equal(branches, branches_detected))
     end)
-
-    after_each(function()
-      branches = {}
-    end)
   end)
 end)
