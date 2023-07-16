@@ -1,8 +1,7 @@
 # Contributing
 
-Contributions and Pull Requests are very welcome. If you are planning to implement a larger feature please open an issue
-prior to minimize the risk of multiple people working on the same thing simultaneously; or to discuss some specifics of
-the feature.
+Contributions of all kinds are very welcome. If you are planning to implement a larger feature please open an issue
+prior to minimize the risk of duplicate work, or to discuss some specifics of the feature; such as keybindings.
 
 `Neogit` draws heavy inspiration from [`Magit`](https://magit.vc/), but aims to be its own thing. Many of our features
 are inspired by `Magit`, such as the branch keybindings.
