@@ -81,6 +81,19 @@ function M.mappings_table()
         true,
       },
     },
+    { "BranchPopup", "Branch", M.open("branch") },
+    { "FetchPopup", "Fetch", M.open("fetch") },
+    { "ResetPopup", "Reset", M.open("reset") },
+    {
+      "RevertPopup",
+      "Revert",
+      M.open("revert", function(f)
+        local status = require("neogit.status")
+        local line = status.status_buffer:get_current_line()
+        f { commits = { line[1]:match("^(%x%x%x%x%x%x%x+)") } }
+      end),
+    },
+    { "RemotePopup", "Remote", M.open("remote") },
     {
       "StashPopup",
       "Stash",
@@ -92,19 +105,6 @@ function M.mappings_table()
         }
       end),
     },
-    {
-      "RevertPopup",
-      "Revert",
-      M.open("revert", function(f)
-        local status = require("neogit.status")
-        local line = status.status_buffer:get_current_line()
-        f { commits = { line[1]:match("^(%x%x%x%x%x%x%x+)") } }
-      end),
-    },
-    { "BranchPopup", "Branch", M.open("branch") },
-    { "FetchPopup", "Fetch", M.open("fetch") },
-    { "RemotePopup", "Remote", M.open("remote") },
-    { "ResetPopup", "Reset", M.open("reset") },
   }
 end
 
