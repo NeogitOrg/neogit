@@ -20,7 +20,11 @@ local notification = require("neogit.lib.notification")
 
 local did_setup = false
 
-local setup = function(opts)
+local setup = function(opts, setup_highlights)
+  if setup_highlights == nil then
+    setup_highlights = (#vim.api.nvim_list_uis() ~= 0)
+  end
+
   if did_setup then
     logger.debug("Already did setup!")
     return
@@ -36,7 +40,11 @@ local setup = function(opts)
     config.values.mappings.status["p"] = ""
   end
 
-  hl.setup()
+  -- If we're in headless mode we want to skip setting up highlights,
+  if setup_highlights then
+    hl.setup()
+  end
+
   signs.setup()
   state.setup()
 
