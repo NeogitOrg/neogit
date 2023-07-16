@@ -7,7 +7,7 @@ local M = {}
 function M.create(env)
   local p = popup.builder():name("NeogitHelpPopup"):group_heading("Commands")
 
-  local popups = actions.popups(env)
+  local popups = actions.popups()
   for i, cmd in ipairs(popups) do
     p = p:action(cmd.key, cmd.name, cmd.fn)
 

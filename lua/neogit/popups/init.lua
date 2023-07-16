@@ -32,15 +32,7 @@ function M.mappings_table()
       "HelpPopup",
       "Help",
       M.open("help", function(f)
-        local status = require("neogit.status")
-        local line = status.status_buffer:get_current_line()
-
         f {
-          get_stash = function()
-            return {
-              name = line[1]:match("^(stash@{%d+})"),
-            }
-          end,
           use_magit_keybindings = config.values.use_magit_keybindings,
         }
       end),
