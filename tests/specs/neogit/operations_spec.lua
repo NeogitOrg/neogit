@@ -1,7 +1,7 @@
 require("plenary.async").tests.add_to_env()
 local eq = assert.are.same
 local operations = require("neogit.operations")
-local harness = require("tests.git_harness")
+local harness = require("tests.util.git_harness")
 local in_prepared_repo = harness.in_prepared_repo
 local get_current_branch = harness.get_current_branch
 
