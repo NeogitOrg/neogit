@@ -4,16 +4,16 @@ Contributions and Pull Requests are very welcome. If you are planning to impleme
 prior to minimize the risk of multiple people working on the same thing simultaneously; or to discuss some specifics of
 the feature.
 
-`Neogit` draws heavy inspiration from [`Magit`](https://magit.vc/), but aims to be its own thing. Many of our features are
-inspired by `Magit`, such as the branch keybindings.
+`Neogit` draws heavy inspiration from [`Magit`](https://magit.vc/), but aims to be its own thing. Many of our features
+are inspired by `Magit`, such as the branch keybindings.
 
 
 ## Architecture
 
 - [`./lua/neogit/`]
   - [`./lua/neogit/lib/`] Contains various git and filesystem abstractions
-  - [`./lua/neogit/lib/git/`] High level git wrappers for common commands such as branches, fetch. These are also used to
-    supply the status buffer
+  - [`./lua/neogit/lib/git/`] High level git wrappers for common commands such as branches, fetch. These are also used
+  to supply the status buffer
   - [`./lua/neogit/lib/git/cli.lua`] Builder like pattern for constructing git cli invocations
   - [`./lua/neogit/lib/git/repository.lua`] Modules from `git/` for updating the status buffer
   - [`./lua/neogit/popups/`] Contains all the popups and keybindings
@@ -30,45 +30,46 @@ commands and actions.
 
 Opening a view is typically done through a *popup* which allows you to configure options before invoking the view.
 
-These reside inside [`./lua/neogit/popups/`], and are split into `init.lua` and `actions.lua` for the setup and keybindings, and the git commands to execute, likewise intended to get an overview of the options and keybindings for the popup in `init.lua` without concerning yourself with the git commands and parsing in `actions.lua`.
+These reside inside [`./lua/neogit/popups/`], and are split into `init.lua` and `actions.lua` for the setup and
+keybindings, and the git commands to execute, likewise intended to get an overview of the options and keybindings for
+the popup in `init.lua` without concerning yourself with the git commands and parsing in `actions.lua`.
 
 To access your new popup through a keybinding, add it to the table in [`./lua/neogit/popups/init.lua`] inside
 `mappings_table`. This will enable you to access the popup through both the status buffer and help popup.
 
 ## Getting Started
 
-If you are using [Lazy.nvim](`https://github.com/folke/lazy.nvim`) you can configure it to prefer sourcing plugins from
+If you are using [`Lazy.nvim`](https://github.com/folke/lazy.nvim) you can configure it to prefer sourcing plugins from
 a local directory instead of from git. 
 
-Simply clone `Neogit` to your project directory of choice to be able to use your local changes. See [`lazy-spec`](https://github.com/folke/lazy.nvim#-plugin-spec) and [`lazy-configuration`](https://github.com/folke/lazy.nvim#%EF%B8%8F-configuration) for details.
+Simply clone `Neogit` to your project directory of choice to be able to use your local changes. See
+[`lazy-spec`](https://github.com/folke/lazy.nvim#-plugin-spec) and
+[`lazy-configuration`](https://github.com/folke/lazy.nvim#%EF%B8%8F-configuration) for details.
 
 ## Code Standards
 
 ### Testing
 
-`Neogit` is tested using [Plenary](https://github.com/nvim-lua/plenary.nvim#plenarytest_harness).
+`Neogit` is tested using [`Plenary`](https://github.com/nvim-lua/plenary.nvim#plenarytest_harness).
 
 It uses a *Busted* style testing, where each lua file inside [`./tests/{test_name}_spec.lua`] is run.
 
 When adding new functionality we strongly encourage you to add a test spec to ensure that the feature works and remains
 working when new functionality is tacked on.
 
-If you find or fix a bug, it is desired that you add a test case for the bug to ensure it does not occur again in the future, and remains *fixed*.
+If you find or fix a bug, it is desired that you add a test case for the bug to ensure it does not occur again in the
+future, and remains *fixed*.
 
-A [Makefile](./Makefile) is set up to run tests.
+A [`Makefile`](./Makefile) is set up to run tests.
 
-```sh
-make test
-```
+```sh make test ```
 
 ### Linting
 
 Additionally, linting is enforced using `selene` to catch common errors, most of which are also caught by
 `lua-language-server`.
 
-```sh
-make lint
-```
+```sh make lint ```
 
 ### Formatting
 
