@@ -1,7 +1,9 @@
+local util = require("tests.util.util")
+
 local function ensure_installed(repo)
   local name = repo:match(".+/(.+)$")
 
-  local install_path = "/tmp/neogit/" .. name
+  local install_path = util.neogit_test_base_dir .. name
 
   vim.opt.runtimepath:prepend(install_path)
 
