@@ -11,7 +11,7 @@ function M.setup_bare_repo()
     return bare_repo_path
   end
 
-  local workspace_dir = util.create_temp_dir()
+  local workspace_dir = util.create_temp_dir("base-dir")
   print("BASE DIR: " .. workspace_dir)
   vim.api.nvim_set_current_dir(project_dir)
   util.system("cp -r tests/.repo " .. workspace_dir)
@@ -25,7 +25,7 @@ function M.setup_bare_repo()
     git commit -m "temp commit to be soft unstaged later"
   ]])
 
-  bare_repo_path = util.create_temp_dir()
+  bare_repo_path = util.create_temp_dir("bare-dir")
 
   print("BARE DIR: " .. bare_repo_path)
   util.system(string.format("git clone --bare %s %s", workspace_dir, bare_repo_path))
@@ -36,7 +36,7 @@ end
 function M.prepare_repository()
   M.setup_bare_repo()
 
-  local working_dir = util.create_temp_dir()
+  local working_dir = util.create_temp_dir("working-dir")
   vim.api.nvim_set_current_dir(working_dir)
   util.system(string.format("git clone %s %s", bare_repo_path, working_dir))
   util.system("git reset --soft HEAD~1")
