@@ -7,10 +7,9 @@ local util = require("tests.util.util")
 describe("git branch lib", function()
   describe("local branches", function()
     local branches = {}
-    local repo_dir = nil
 
     before_each(function()
-      repo_dir = git_harness.prepare_repository()
+      git_harness.prepare_repository()
       plenary_async.util.block_on(status.reset)
 
       branches = {
@@ -56,7 +55,6 @@ describe("git branch lib", function()
     end)
 
     after_each(function()
-      repo_dir = nil
       branches = {}
     end)
   end)
