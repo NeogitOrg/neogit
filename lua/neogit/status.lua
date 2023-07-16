@@ -598,7 +598,7 @@ end
 
 --- Returns commits in selection
 ---@return table
-local function get_selected_commits()
+function M.get_selected_commits()
   local first_line = vim.fn.getpos("v")[2]
   local last_line = vim.fn.getpos(".")[2]
 
@@ -610,8 +610,6 @@ local function get_selected_commits()
 
   return items
 end
-
-M.get_selectet_commits = get_selected_commits
 
 ---Determines if selection contains multiple files
 ---@return boolean
@@ -675,7 +673,7 @@ end
 
 local stage_selection = function()
   if selection_spans_multiple_items_within_section() then
-    git.status.stage(unpack(map(get_selected_commits(), function(item)
+    git.status.stage(unpack(map(M.get_selected_commits(), function(item)
       return item.name
     end)))
   else
@@ -689,7 +687,7 @@ end
 
 local unstage_selection = function()
   if selection_spans_multiple_items_within_section() then
-    git.status.unstage(unpack(map(get_selected_commits(), function(item)
+    git.status.unstage(unpack(map(M.get_selected_commits(), function(item)
       return item.name
     end)))
   else
@@ -863,7 +861,7 @@ local discard = function()
   -- These all need to be captured _before_ the get_confirmation() call, since that
   -- seems to effect how vim determines what's selected
   local multi_file = selection_spans_multiple_items_within_section()
-  local files = get_selected_commits()
+  local files = M.get_selected_commits()
 
   local selection = { get_selection() }
 
