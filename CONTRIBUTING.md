@@ -3,8 +3,8 @@
 Contributions of all kinds are very welcome. If you are planning to implement a larger feature please open an issue
 prior to minimize the risk of duplicate work, or to discuss some specifics of the feature; such as keybindings.
 
-`Neogit` draws heavy inspiration from [`Magit`](https://magit.vc/), but aims to be its own thing. Many of our features
-are inspired by `Magit`, such as the branch keybindings.
+Neogit draws heavy inspiration from [Magit](https://magit.vc/), but aims to be its own thing. Many of our features
+are inspired by Magit, such as the branch keybindings.
 
 
 ## Architecture
@@ -22,7 +22,7 @@ are inspired by `Magit`, such as the branch keybindings.
 
 ### Making a new view
 
-`Neogit`'s views, such as the `commit` buffer, `log` graph buffer, etc are located in [`./lua/neogit/buffers/`]. They
+Neogit's views, such as the `commit` buffer, `log` graph buffer, etc are located in [`./lua/neogit/buffers/`]. They
 are split in a `init.lua` for creating the buffer and setting up keymaps and actions, and `ui.lua` for rendering the
 buffer. The split is such that it is easier to get an overview of how the buffer will *look* without the clutter of git
 commands and actions.
@@ -41,7 +41,7 @@ To access your new popup through a keybinding, add it to the table in [`./lua/ne
 If you are using [`Lazy.nvim`](https://github.com/folke/lazy.nvim) you can configure it to prefer sourcing plugins from
 a local directory instead of from git. 
 
-Simply clone `Neogit` to your project directory of choice to be able to use your local changes. See
+Simply clone *Neogit* to your project directory of choice to be able to use your local changes. See
 [`lazy-spec`](https://github.com/folke/lazy.nvim#-plugin-spec) and
 [`lazy-configuration`](https://github.com/folke/lazy.nvim#%EF%B8%8F-configuration) for details.
 
@@ -49,7 +49,7 @@ Simply clone `Neogit` to your project directory of choice to be able to use your
 
 ### Testing
 
-`Neogit` is tested using [`Plenary`](https://github.com/nvim-lua/plenary.nvim#plenarytest_harness).
+Neogit is tested using [`Plenary`](https://github.com/nvim-lua/plenary.nvim#plenarytest_harness).
 
 It uses a *Busted* style testing, where each lua file inside [`./tests/{test_name}_spec.lua`] is run.
 
