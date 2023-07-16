@@ -8,10 +8,7 @@ describe("git branch lib", function()
   describe("local branches", function()
     local branches = {}
 
-    before_each(function()
-      git_harness.prepare_repository()
-      plenary_async.util.block_on(status.reset)
-
+    local function setup_local_git_branches()
       branches = {
         "test-branch",
         "tester",
@@ -30,7 +27,12 @@ describe("git branch lib", function()
 
       table.insert(branches, "master")
       table.insert(branches, "second-branch")
+    end
 
+    before_each(function()
+      git_harness.prepare_repository()
+      plenary_async.util.block_on(status.reset)
+      setup_local_git_branches()
       require("neogit").setup()
     end)
 
