@@ -4,8 +4,8 @@ local M = {}
 ---@param f nil|fun(create: fun(...)): any
 --- Creates a curried function which will open the popup with the given name when called
 function M.open(name, f)
-  f = f or function(f)
-    f()
+  f = f or function(c)
+    c()
   end
 
   return function()
