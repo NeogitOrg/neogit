@@ -16,8 +16,12 @@ function M.add(popup)
   end
 
   local origin = git.config.get("remote.origin.url").value
-  local host, remote = origin:match("([^:/]+)[^/]+(.-%.git)")
-  local remote_url = input.get_user_input("Remote url: ", host .. ":" .. name .. remote)
+  local host, _, remote = origin:match("([^:/]+)[:/]([^/]+)/(.+)")
+
+  remote = remote:gsub("%.git$", "")
+  local msg = string.format("%s:%s/%s", host, name, remote)
+
+  local remote_url = input.get_user_input("Remote url: ", msg)
   if not remote_url then
     return
   end
