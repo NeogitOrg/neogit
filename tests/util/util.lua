@@ -43,7 +43,7 @@ end
 ---@param error_msg string? The error message to be emitted on command failure
 ---@return string The output of the system command
 function M.system(cmd, ignore_err, error_msg)
-  if ignore_err ~= nil then
+  if ignore_err == nil then
     ignore_err = false
   end
 
