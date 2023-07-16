@@ -56,7 +56,6 @@ describe("git branch lib", function()
     end)
 
     after_each(function()
-      git_harness.cleanup_repository(repo_dir)
       repo_dir = nil
       branches = {}
     end)
