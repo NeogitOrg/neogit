@@ -11,8 +11,8 @@ function M.open(name, f)
   return function()
     local ok, value = pcall(require, "neogit.popups." .. name)
     if ok then
-      assert(value)
-      assert(value.create)
+      assert(value, "popup is not nil")
+      assert(value.create, "popup has create function")
 
       f(value.create)
     else

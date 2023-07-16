@@ -912,15 +912,6 @@ local set_folds = function(to)
   refresh(true, "set_folds")
 end
 
-local function cherry_pick()
-  local selection = nil
-  if vim.api.nvim_get_mode().mode == "V" then
-    selection = get_selected_commits()
-  end
-
-  require("neogit.popups.cherry_pick").create { commits = selection }
-end
-
 --- These needs to be a function to avoid a circular dependency
 --- between this module and the popup modules
 local cmd_func_map = function()
