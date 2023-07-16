@@ -4,8 +4,8 @@ Contributions and Pull Requests are very welcome. If you are planning to impleme
 prior to minimize the risk of multiple people working on the same thing simultaneously; or to discuss some specifics of
 the feature.
 
-Neogit draws heavy inspiration from [Magit](https://magit.vc/), but aims to be its own thing. Many of our features are
-inspired by Magit, such as the branch keybindings.
+`Neogit` draws heavy inspiration from [`Magit`](https://magit.vc/), but aims to be its own thing. Many of our features are
+inspired by `Magit`, such as the branch keybindings.
 
 
 ## Architecture
@@ -16,13 +16,14 @@ inspired by Magit, such as the branch keybindings.
     supply the status buffer
   - [`./lua/neogit/lib/git/cli.lua`] Builder like pattern for constructing git cli invocations
   - [`./lua/neogit/lib/git/repository.lua`] Modules from `git/` for updating the status buffer
-  - [`./lua/neogit.lua`]
+  - [`./lua/neogit/popups/`] Contains all the popups and keybindings
+  - [`./lua/neogit/buffers/`] Contains all the buffer views, such as `commit_editor` or `log_view`
 
-Neogit uses its own UI drawing library for drawing columns and rows of text.
+`Neogit` uses its own UI drawing library for drawing columns and rows of text.
 
 ### Making a new view
 
-Neogit's views, such as the `commit` buffer, `log` graph buffer, etc are located in [`./lua/neogit/buffers/`]. They
+`Neogit`'s views, such as the `commit` buffer, `log` graph buffer, etc are located in [`./lua/neogit/buffers/`]. They
 are split in a `init.lua` for creating the buffer and setting up keymaps and actions, and `ui.lua` for rendering the
 buffer. The split is such that it is easier to get an overview of how the buffer will *look* without the clutter of git
 commands and actions.
@@ -31,18 +32,21 @@ Opening a view is typically done through a *popup* which allows you to configure
 
 These reside inside [`./lua/neogit/popups/`], and are split into `init.lua` and `actions.lua` for the setup and keybindings, and the git commands to execute, likewise intended to get an overview of the options and keybindings for the popup in `init.lua` without concerning yourself with the git commands and parsing in `actions.lua`.
 
+To access your new popup through a keybinding, add it to the table in [`./lua/neogit/popups/init.lua`] inside
+`mappings_table`. This will enable you to access the popup through both the status buffer and help popup.
+
 ## Getting Started
 
 If you are using [Lazy.nvim](`https://github.com/folke/lazy.nvim`) you can configure it to prefer sourcing plugins from
 a local directory instead of from git. 
 
-Simply clone Neogit to your project directory of choice to be able to use your local changes. See [`lazy-spec`](https://github.com/folke/lazy.nvim#-plugin-spec) and [`lazy-configuration`](https://github.com/folke/lazy.nvim#%EF%B8%8F-configuration) for details.
+Simply clone `Neogit` to your project directory of choice to be able to use your local changes. See [`lazy-spec`](https://github.com/folke/lazy.nvim#-plugin-spec) and [`lazy-configuration`](https://github.com/folke/lazy.nvim#%EF%B8%8F-configuration) for details.
 
 ## Code Standards
 
 ### Testing
 
-Neogit is tested using [Plenary](https://github.com/nvim-lua/plenary.nvim#plenarytest_harness).
+`Neogit` is tested using [Plenary](https://github.com/nvim-lua/plenary.nvim#plenarytest_harness).
 
 It uses a *Busted* style testing, where each lua file inside [`./tests/{test_name}_spec.lua`] is run.
 
