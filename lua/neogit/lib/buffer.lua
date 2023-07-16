@@ -401,8 +401,9 @@ function Buffer.create(config)
     buffer.ui:render(unpack(config.render(buffer)))
   end
 
+  local neogit_augroup = require("neogit").autocmd_group
   for event, callback in pairs(config.autocmds or {}) do
-    api.nvim_create_autocmd(event, { callback = callback, buffer = buffer.handle })
+    api.nvim_create_autocmd(event, { callback = callback, buffer = buffer.handle, group = neogit_augroup })
   end
 
   buffer.mmanager.register()

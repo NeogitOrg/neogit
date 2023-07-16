@@ -278,6 +278,10 @@ local function lists_equal(l1, l2)
   return true
 end
 
+local function pad_right(s, len)
+  return s .. string.rep(" ", math.max(len - #s, 0))
+end
+
 return {
   time = time,
   time_async = time_async,
@@ -307,4 +311,5 @@ return {
   str_clamp = str_clamp,
   remove_item_from_table = remove_item_from_table,
   lists_equal = lists_equal,
+  pad_right = pad_right,
 }

@@ -66,7 +66,7 @@ local function create_preview_buffer()
   -- May be called multiple times due to scheduling
   if preview_buffer then
     if preview_buffer.buffer then
-      logger.debug("Preview buffer already exists. Focusing the existing one")
+      logger.trace("[PROCESS] Preview buffer already exists. Focusing the existing one")
       preview_buffer.buffer:focus()
     end
     return
@@ -360,7 +360,7 @@ function Process:spawn(cb)
     end
   end
 
-  logger.debug("Spawning: " .. vim.inspect(self.cmd))
+  logger.trace("[PROCESS] Spawning: " .. vim.inspect(self.cmd))
   local job = vim.fn.jobstart(self.cmd, {
     cwd = self.cwd,
     env = self.env,

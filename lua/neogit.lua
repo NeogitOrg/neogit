@@ -123,4 +123,5 @@ return {
   close = status.close,
   setup = setup,
   complete = complete,
+  autocmd_group = vim.api.nvim_create_augroup("Neogit", { clear = false }),
 }

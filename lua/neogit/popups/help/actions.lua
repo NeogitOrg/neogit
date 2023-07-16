@@ -4,9 +4,7 @@ local util = require("neogit.lib.util")
 local NONE = function() end
 
 -- Using deep extend this way creates a copy of the mapping values
-local status_mappings = vim.tbl_add_reverse_lookup(
-  vim.tbl_deep_extend("force", require("neogit.config").values.mappings.status, {})
-)
+local status_mappings = require("neogit.config").get_reversed_status_maps()
 
 local function present(commands)
   local presenter = util.map(commands, function(command)

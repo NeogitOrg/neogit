@@ -42,7 +42,7 @@ function M.create(commit)
     :action_if(not in_rebase, "f", "to autosquash")
     :env({
       commit = commit,
-      highlight = { branch, git.repo.upstream.ref },
+      highlight = { branch, git.repo.upstream.ref, base_branch },
       bold = { "@{upstream}", "pushRemote" },
     })
     :build()

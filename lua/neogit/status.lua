@@ -12,6 +12,7 @@ local F = require("neogit.lib.functional")
 local LineBuffer = require("neogit.lib.line_buffer")
 local fs = require("neogit.lib.fs")
 local input = require("neogit.lib.input")
+local util = require("neogit.lib.util")
 
 local map = require("neogit.lib.util").map
 local api = vim.api
@@ -145,17 +146,28 @@ local function format_mode(mode)
   return mode
 end
 
-local function pad_right(s, len)
-  return s .. string.rep(" ", math.max(len - #s, 0))
-end
-
 local function draw_buffer()
   M.status_buffer:clear_sign_group("hl")
   M.status_buffer:clear_sign_group("fold_markers")
 
   local output = LineBuffer.new()
   if not config.values.disable_hint then
-    output:append("Hint: [<tab>] toggle diff | [s]tage | [u]nstage | [x] discard | [c]ommit | [?] more help")
+    local reversed_status_map = config.get_reversed_status_maps()
+
+    local function hint_label(map_name, hint)
+      return "[" .. reversed_status_map[map_name] .. "] " .. hint
+    end
+
+    local hints = {
+      hint_label("Toggle", "toggle diff"),
+      hint_label("Stage", "stage"),
+      hint_label("Unstage", "unstage"),
+      hint_label("Discard", "discard"),
+      hint_label("CommitPopup", "commit"),
+      hint_label("HelpPopup", "help"),
+    }
+
+    output:append("Hint: " .. table.concat(hints, " | "))
     output:append("")
   end
 
@@ -207,7 +219,7 @@ local function draw_buffer()
       location.files = {}
 
       for _, f in ipairs(data.items) do
-        local label = pad_right(format_mode(f.mode), max_len)
+        local label = util.pad_right(format_mode(f.mode), max_len)
         if label and vim.o.columns < 120 then
           label = vim.trim(label)
         end
