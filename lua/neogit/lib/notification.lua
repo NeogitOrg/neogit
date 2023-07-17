@@ -3,6 +3,11 @@ local message_history = {}
 local notifications = {}
 local notification_count = 0
 
+local levels = {}
+for k, v in pairs(vim.log.levels) do
+  table.insert(levels, v, k)
+end
+
 ---@param message string
 local function create(message, level, delay)
   if not level then
@@ -122,6 +127,7 @@ local function create(message, level, delay)
       table.insert(message_history, {
         content = message,
         level = level,
+        kind = levels[level],
       })
 
       if vim.fn.winbufnr(window) ~= -1 then

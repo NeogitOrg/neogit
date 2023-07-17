@@ -11,3 +11,12 @@ end, {
     return neogit.complete(arglead)
   end,
 })
+
+api.nvim_create_user_command("NeogitMessages", function()
+  for _, message in ipairs(require("neogit.lib.notification").get_history()) do
+    print(string.format("[%s]: %s", message.kind, table.concat(message.content, " - ")))
+  end
+end, {
+  nargs = "*",
+  desc = "Prints neogit message history",
+})
