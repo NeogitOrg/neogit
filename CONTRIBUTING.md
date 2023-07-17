@@ -45,6 +45,21 @@ Simply clone *Neogit* to your project directory of choice to be able to use your
 [`lazy-spec`](https://github.com/folke/lazy.nvim#-plugin-spec) and
 [`lazy-configuration`](https://github.com/folke/lazy.nvim#%EF%B8%8F-configuration) for details.
 
+### Logging
+
+Logging is a useful tool for inspecting what happens in the code and in what order. Neogit uses
+[`Plenary`](https://github.com/nvim-lua/plenary.nvim) for logging.
+
+Export the environment variables `NEOGIT_LOG_CONSOLE="sync"` to enable logging, and `NEOGIT_LOG_LEVEL="debug"` for more
+verbose logging.
+
+```lua
+local logger = require("neogit.logger")
+
+logger.fmt_info("This is a log message: %d", 2)
+logger.fmt_debug("This is a verbose log message: %q", status)
+```
+
 ## Code Standards
 
 ### Testing
