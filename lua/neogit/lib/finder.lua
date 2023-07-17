@@ -46,13 +46,15 @@ local function telescope_mappings(on_select, allow_multi)
       ["MultiselectTogglePrevious"] = actions.toggle_selection + actions.move_selection_better,
     }
 
-    for mapping, command in pairs(config.values.mappings.finder) do
-      if command:match("^Multiselect") then
-        if allow_multi then
+    for command, mappings in pairs(config.values.mappings.finder) do
+      for _, mapping in ipairs(mappings) do
+        if command:match("^Multiselect") then
+          if allow_multi then
+            map({ "i" }, mapping, commands[command])
+          end
+        else
           map({ "i" }, mapping, commands[command])
         end
-      else
-        map({ "i" }, mapping, commands[command])
       end
     end
 

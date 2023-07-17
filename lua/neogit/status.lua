@@ -152,10 +152,11 @@ local function draw_buffer()
 
   local output = LineBuffer.new()
   if not config.values.disable_hint then
-    local reversed_status_map = config.get_reversed_status_maps()
+    local status_map = config.values.mappings.status
 
     local function hint_label(map_name, hint)
-      return "[" .. reversed_status_map[map_name] .. "] " .. hint
+      local key = status_map[map_name]
+      return "[" .. key .. "] " .. hint
     end
 
     local hints = {
@@ -1193,18 +1194,10 @@ function M.create(kind, cwd)
       local mappings = buffer.mmanager.mappings
       local func_map = cmd_func_map()
 
-      for key, val in pairs(config.values.mappings.status) do
-        if val ~= "" then
-          local func = func_map[val]
-          if func ~= nil then
-            mappings[key] = func
-          elseif type(val) == "function" then
-            mappings[key] = val
-          elseif type(val) == "string" then
-            mappings[key] = function()
-              vim.cmd(val)
-            end
-          end
+      for cmd, key in pairs(config.values.mappings.status) do
+        local func = func_map[cmd]
+        if func ~= nil then
+          mappings[key] = func
         end
       end
 
