@@ -118,8 +118,6 @@ function M.get_gui(group_name, trans)
   end
 end
 
-local did_setup = false
-
 function M.make_palette()
   local bg = vim.o.bg
   local hl_bg_normal = M.get_bg("Normal") or (bg == "dark" and "#22252A" or "#eeeeee")
@@ -162,11 +160,6 @@ function M.make_palette()
 end
 
 function M.setup()
-  if did_setup then
-    return
-  end
-  did_setup = true
-
   local palette = M.make_palette()
 
   hl_store = {

@@ -8,6 +8,11 @@ local status = require("neogit.status")
 local fs = require("neogit.lib.fs")
 
 function M.setup()
+  api.nvim_create_autocmd({ "ColorScheme" }, {
+    callback = require("neogit.lib.hl").setup,
+    group = group,
+  })
+
   api.nvim_create_autocmd({ "BufWritePost", "ShellCmdPost", "VimResume" }, {
     callback = function(o)
       -- Skip update if the buffer is not open
