@@ -7,7 +7,7 @@ local process = require("neogit.process")
 describe("process execution", function()
   it("basic command", function()
     local result =
-      process.new({ cmd = { "cat", "process_test" }, cwd = util.get_test_files_dir() }):spawn_blocking(1000)
+      process.new({ cmd = { "cat", "process_test" }, cwd = util.get_fixtures_dir() }):spawn_blocking(1000)
     assert(result)
     assert.are.same(result.stdout, {
       "This is a test file",
@@ -20,7 +20,7 @@ describe("process execution", function()
   end)
   it("can cat a file", function()
     local result =
-      process.new({ cmd = { "cat", "a.txt" }, cwd = util.get_test_files_dir() }):spawn_blocking(1000)
+      process.new({ cmd = { "cat", "a.txt" }, cwd = util.get_fixtures_dir() }):spawn_blocking(1000)
 
     assert(result)
     assert.are.same(result.stdout, {
@@ -78,7 +78,7 @@ describe("process execution", function()
   end)
   it("basic command trim", function()
     local result = process
-      .new({ cmd = { "cat", "process_test" }, cwd = util.get_test_files_dir() })
+      .new({ cmd = { "cat", "process_test" }, cwd = util.get_fixtures_dir() })
       :spawn_blocking(1000)
       :trim()
     assert(result)

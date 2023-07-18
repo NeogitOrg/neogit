@@ -52,7 +52,7 @@ If you have a generic utility function _only_ relevant for tests then it should 
 
 ### Where should raw content files go?
 
-Raw content files that you want to test against should go into `tests/test_files`. If you have a raw file you'd like to use against in git, then you'll need to add it to the git repository within `tests/.repo`. This can be done by changing directory into `tests/.repo` and renaming `.git.orig` to `.git` then adding any relevant changes to that repository. Once you're done, make sure you rename `.git` back to `.git.org`.
+Raw content files that you want to test against should go into `tests/fixtures`. If you have a raw file you'd like to use against in git, then you'll need to add it to the git repository within `tests/.repo`. This can be done by changing directory into `tests/.repo` and renaming `.git.orig` to `.git` then adding any relevant changes to that repository. Once you're done, make sure you rename `.git` back to `.git.org`.
 
 As a note the above is likely to become deprecated when a improved declarative lua git repository creation is made.
 
