@@ -210,7 +210,11 @@ function M.validate_config()
       and not vim.tbl_contains({ "split", "vsplit", "tab", "floating", "auto" }, val)
     then
       err(
-        string.format("Expected %s to be one of 'split', 'vsplit', 'tab', 'floating', or 'auto', got '%s'", name, val)
+        string.format(
+          "Expected %s to be one of 'split', 'vsplit', 'tab', 'floating', or 'auto', got '%s'",
+          name,
+          val
+        )
       )
     end
   end
@@ -322,15 +326,11 @@ function M.validate_config()
     end
 
     -- Validate mappings.finder
-    local valid_finder_commands = {
-      "Select",
-      "Close",
-      "Next",
-      "Previous",
-      "MultiselectToggleNext",
-      "MultiselectTogglePrevious",
-      "NOP",
-    }
+    local valid_finder_commands = {}
+
+    for cmd, _ in pairs(M.get_default_values().mappings.finder) do
+      table.insert(valid_finder_commands, cmd)
+    end
 
     local function validate_finder_map(command, key_binds)
       if
@@ -362,46 +362,12 @@ function M.validate_config()
     end
 
     -- Validate mappings.status
-    local valid_status_commands = {
-      "Close",
-      "InitRepo",
-      "Depth1",
-      "Depth2",
-      "Depth3",
-      "Depth4",
-      "Toggle",
-      "Discard",
-      "Stage",
-      "StageUnstaged",
-      "StageAll",
-      "Unstage",
-      "UnstageStaged",
-      "DiffAtFile",
-      "CommandHistory",
-      "Console",
-      "RefreshBuffer",
-      "GoToFile",
-      "VSplitOpen",
-      "SplitOpen",
-      "TabOpen",
-      "HelpPopup",
-      "DiffPopup",
-      "PullPopup",
-      "RebasePopup",
-      "MergePopup",
-      "PushPopup",
-      "CommitPopup",
-      "LogPopup",
-      "RevertPopup",
-      "StashPopup",
-      "CherryPickPopup",
-      "BranchPopup",
-      "FetchPopup",
-      "ResetPopup",
-      "RemotePopup",
-      "GoToPreviousHunkHeader",
-      "GoToNextHunkHeader",
-    }
+    local valid_status_commands = {}
+
+    for cmd, _ in pairs(M.get_default_values().mappings.status) do
+      table.insert(valid_status_commands, cmd)
+    end
+
     if validate_type(config.mappings.status, "mappings.status", "table") then
       for command, key in pairs(config.mappings.status) do
         if
