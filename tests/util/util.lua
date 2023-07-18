@@ -27,22 +27,25 @@ end
 
 M.neogit_test_base_dir = "/tmp/neogit-testing/"
 
+local function is_macos()
+  return vim.loop.os_uname().sysname == "Darwin"
+end
+
 ---Create a temporary directory for use
 ---@param suffix string? The suffix to be appended to the temp directory, ideally avoid spaces in your suffix
 ---@return string The path to the temporary directory
 function M.create_temp_dir(suffix)
-  if suffix == nil then
-    suffix = ""
+  suffix = "neogit-" .. (suffix or "")
+
+  local cmd
+  if is_macos() then
+    cmd = string.format("mktemp -d -t %s", suffix)
   else
-    suffix = "-" .. suffix
+    cmd = string.format("mktemp -d --suffix=%s", suffix)
   end
 
-  if not vim.loop.fs_stat("/tmp/neogit-testing") then
-    M.system("mkdir " .. M.neogit_test_base_dir)
-  end
-  local tmp_dir =
-    vim.trim(M.system(string.format("mktemp -d --suffix=%s -p %s", suffix, M.neogit_test_base_dir)))
-  return tmp_dir
+  local prefix = is_macos() and "/private" or ""
+  return prefix .. vim.trim(M.system(cmd))
 end
 
 return M
