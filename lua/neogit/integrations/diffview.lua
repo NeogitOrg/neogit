@@ -142,20 +142,24 @@ local function get_local_diff_view(selected_file_name)
 end
 
 function M.open(section_name, item_name)
-  old_config = dv_config.get_config()
+  old_config = vim.deepcopy(dv_config.get_config())
 
-  local config = vim.tbl_deep_extend("force", old_config, {
-    keymaps = {
-      view = {
-        ["q"] = cb("close"),
-        ["<esc>"] = cb("close"),
-      },
-      file_panel = {
-        ["q"] = cb("close"),
-        ["<esc>"] = cb("close"),
-      },
+  local config = dv_config.get_config()
+
+  local keymaps = {
+    view = {
+      ["q"] = cb("close"),
+      ["<esc>"] = cb("close"),
     },
-  })
+    file_panel = {
+      ["q"] = cb("close"),
+      ["<esc>"] = cb("close"),
+    },
+  }
+
+  for key, keymap in pairs(keymaps) do
+    config.keymaps[key] = dv_config.extend_keymaps(keymap, config.keymaps[key] or {})
+  end
 
   dv.setup(config)
 
@@ -174,7 +178,6 @@ function M.open(section_name, item_name)
   if view then
     view:open()
   end
-
   return view
 end
 
