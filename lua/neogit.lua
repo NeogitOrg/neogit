@@ -35,11 +35,16 @@ local setup = function(opts)
     config.values.mappings.status["PullPopup"] = "F"
   end
 
-  hl.setup()
-  signs.setup()
-  state.setup()
+  local config_ok, err_msg = config.validate_config()
+  if not config_ok then
+    error("\n" .. err_msg)
+  else
+    hl.setup()
+    signs.setup()
+    state.setup()
 
-  require("neogit.autocmds").setup()
+    require("neogit.autocmds").setup()
+  end
 end
 
 ---@param opts OpenOpts
