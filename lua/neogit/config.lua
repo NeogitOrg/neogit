@@ -11,7 +11,6 @@ function M.get_default_values()
     disable_signs = false,
     disable_commit_confirmation = false,
     disable_builtin_notifications = false,
-    use_telescope = false,
     telescope_sorter = function()
       return nil
     end,
@@ -429,7 +428,6 @@ function M.validate_config()
     validate_type(config.disable_signs, "disable_signs", "boolean")
     validate_type(config.disable_commit_confirmation, "disable_commit_confirmation", "boolean")
     validate_type(config.disable_builtin_notifications, "disable_builtin_notifications", "boolean")
-    validate_type(config.use_telescope, "use_telescope", "boolean")
     validate_type(config.telescope_sorter, "telescope_sorter", "function")
     validate_type(config.use_per_project_settings, "use_per_project_settings", "boolean")
     validate_type(config.remember_settings, "remember_settings", "boolean")

@@ -36,11 +36,6 @@ describe("Neogit config", function()
         assert.False(require("neogit.config").validate_config())
       end)
 
-      it("should return invalid when use_telescope isn't a boolean", function()
-        config.values.use_telescope = "not a boolean"
-        assert.False(require("neogit.config").validate_config())
-      end)
-
       it("should return invalid when telescope_sorter isn't a function", function()
         config.values.telescope_sorter = "not a function"
         assert.False(require("neogit.config").validate_config())
