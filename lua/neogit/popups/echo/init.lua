@@ -1,3 +1,5 @@
+--- This popup is for unit testing purposes and is not associated to any git command.
+
 local popup = require("neogit.lib.popup")
 local actions = require("neogit.popups.echo.actions")
 

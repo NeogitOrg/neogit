@@ -17,7 +17,7 @@ function M.open(name, f)
       f(value.create)
     else
       local notification = require("neogit.lib.notification")
-      notification.create(string.format("No such popup: %q", name), vim.log.levels.ERROR)
+      notification.create(string.format("Failed to load popup: %q\n%s", name, value), vim.log.levels.ERROR)
     end
   end
 end
@@ -26,7 +26,7 @@ end
 ---@return table<string, Mapping>
 function M.mappings_table()
   local config = require("neogit.config")
-  local async = require("plenary.async")
+
   return {
     {
       "HelpPopup",
@@ -57,19 +57,16 @@ function M.mappings_table()
       "Cherry Pick",
       {
         "nv",
-        M.open(
-          "cherry_pick",
-          async.void(function(f)
-            local selection = nil
+        M.open("cherry_pick", function(f)
+          local selection = nil
 
-            if vim.api.nvim_get_mode().mode == "V" then
-              local status = require("neogit.status")
-              selection = status.get_selected_commits()
-            end
+          if vim.api.nvim_get_mode().mode == "V" then
+            local status = require("neogit.status")
+            selection = status.get_selected_commits()
+          end
 
-            f { commits = selection }
-          end)
-        ),
+          f { commits = selection }
+        end),
         true,
       },
     },
