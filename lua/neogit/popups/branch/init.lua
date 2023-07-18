@@ -6,7 +6,7 @@ local actions = require("neogit.popups.branch.actions")
 local config_actions = require("neogit.popups.branch_config.actions")
 
 function M.create()
-  local current_branch = git.repo.head.branch or ""
+  local current_branch = git.branch.current()
   local show_config = current_branch ~= "" and current_branch ~= "(detached)"
   local pull_rebase_entry = git.config.get("pull.rebase")
   local pull_rebase = pull_rebase_entry:is_set() and pull_rebase_entry.value or "false"
