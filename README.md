@@ -137,9 +137,6 @@ neogit.setup {
   -- Sorting keys: https://git-scm.com/docs/git-for-each-ref#_options
   sort_branches = "-committerdate",
   disable_builtin_notifications = false,
-  -- If enabled, use telescope for menu selection rather than vim.ui.select.
-  -- Allows multi-select and some things that vim.ui.select doesn't.
-  use_telescope = false,
   -- Allows a different telescope sorter. Defaults to 'fuzzy_with_index_bias'. The example
   -- below will use the native fzf sorter instead.
   telescope_sorter = function()
@@ -178,7 +175,12 @@ neogit.setup {
     item = { ">", "v" },
     hunk = { "", "" },
   },
+  -- Integrations are auto-detected, and enabled if available, but can be disabled by setting to "false"
   integrations = {
+    -- If enabled, use telescope for menu selection rather than vim.ui.select.
+    -- Allows multi-select and some things that vim.ui.select doesn't.
+    telescope = false,
+
     -- Neogit only provides inline diffs. If you want a more traditional way to look at diffs, you can use `sindrets/diffview.nvim`.
     -- The diffview integration enables the diff popup, which is a wrapper around `sindrets/diffview.nvim`.
     --

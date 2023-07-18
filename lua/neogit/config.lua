@@ -10,7 +10,6 @@ M.values = {
   disable_signs = false,
   disable_commit_confirmation = false,
   disable_builtin_notifications = false,
-  use_telescope = false,
   telescope_sorter = function()
     return nil
   end,

@@ -122,7 +122,7 @@ end
 ---Engages finder and invokes `on_select` with the item or items, or nil if aborted
 ---@param on_select fun(item: any|nil)
 function Finder:find(on_select)
-  if config.values.use_telescope then
+  if config.ensure_integration("telescope") then
     local pickers = require("telescope.pickers")
     local finders = require("telescope.finders")
     local sorters = require("telescope.sorters")
