@@ -66,11 +66,6 @@ describe("Neogit config", function()
         assert.False(require("neogit.config").validate_config())
       end)
 
-      it("should return invalid when use_magit_keybindings isn't a boolean", function()
-        config.values.use_magit_keybindings = "not a boolean"
-        assert.False(require("neogit.config").validate_config())
-      end)
-
       it("should return invalid when auto_refresh isn't a boolean", function()
         config.values.auto_refresh = "not a boolean"
         assert.False(require("neogit.config").validate_config())

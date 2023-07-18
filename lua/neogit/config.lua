@@ -18,7 +18,6 @@ function M.get_default_values()
     disable_insert_on_commit = true,
     use_per_project_settings = true,
     remember_settings = true,
-    use_magit_keybindings = false,
     auto_refresh = true,
     sort_branches = "-committerdate",
     kind = "tab",
@@ -434,7 +433,6 @@ function M.validate_config()
     validate_type(config.telescope_sorter, "telescope_sorter", "function")
     validate_type(config.use_per_project_settings, "use_per_project_settings", "boolean")
     validate_type(config.remember_settings, "remember_settings", "boolean")
-    validate_type(config.use_magit_keybindings, "use_magit_keybindings", "boolean")
     validate_type(config.auto_refresh, "auto_refresh", "boolean")
     validate_type(config.sort_branches, "sort_branches", "string")
     validate_type(config.console_timeout, "console_timeout", "number")

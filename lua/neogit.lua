@@ -31,10 +31,6 @@ local setup = function(opts)
     config.values = vim.tbl_deep_extend("force", config.values, opts)
   end
 
-  if config.values.use_magit_keybindings then
-    config.values.mappings.status["PullPopup"] = "F"
-  end
-
   local config_ok, err_msg = config.validate_config()
   if not config_ok then
     error("\n" .. err_msg)
