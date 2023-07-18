@@ -25,6 +25,10 @@ function Buffer:new(handle)
     border = nil,
     mmanager = mappings_manager.new(handle),
     kind = nil, -- how the buffer was opened. For more information look at the create function
+    line_buffer = {},
+    hl_buffer = {},
+    sign_buffer = {},
+    ext_buffer = {},
   }
 
   this.ui = Ui.new(this)
@@ -81,6 +85,46 @@ end
 
 function Buffer:set_lines(first, last, strict, lines)
   api.nvim_buf_set_lines(self.handle, first, last, strict, lines)
+end
+
+function Buffer:set_line_buffer(line)
+  table.insert(self.line_buffer, line)
+end
+
+function Buffer:add_highlight_buffer(...)
+  table.insert(self.hl_buffer, { ... })
+end
+
+function Buffer:place_sign_buffer(...)
+  table.insert(self.sign_buffer, { ... })
+end
+
+function Buffer:set_extmark_buffer(...)
+  table.insert(self.ext_buffer, { ... })
+end
+
+function Buffer:resize(length)
+  api.nvim_buf_set_lines(self.handle, length, -1, false, {})
+end
+
+function Buffer:flush_buffers()
+  api.nvim_buf_set_lines(self.handle, 0, -1, false, self.line_buffer)
+  self.line_buffer = {}
+
+  for _, sign in ipairs(self.sign_buffer) do
+    self:place_sign(unpack(sign))
+  end
+  self.sign_buffer = {}
+
+  for _, hl in ipairs(self.hl_buffer) do
+    self:add_highlight(unpack(hl))
+  end
+  self.hl_buffer = {}
+
+  for _, ext in ipairs(self.ext_buffer) do
+    self:set_extmark(unpack(ext))
+  end
+  self.ext_buffer = {}
 end
 
 function Buffer:set_text(first_line, last_line, first_col, last_col, lines)
