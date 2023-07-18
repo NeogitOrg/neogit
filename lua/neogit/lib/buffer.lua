@@ -226,7 +226,7 @@ function Buffer:unlock()
 end
 
 function Buffer:get_option(name)
-  api.nvim_buf_get_option(self.handle, name)
+  return api.nvim_buf_get_option(self.handle, name)
 end
 
 function Buffer:set_option(name, value)
