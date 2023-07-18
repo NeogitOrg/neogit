@@ -51,10 +51,10 @@ Neogit is a magit clone for Neovim that is currently work in progress.
 Staging/unstaging maps ~
 
                                                 *neogit_s*
-s                       Stage (also supports staging selection/hunk) 
+s                       Stage (also supports staging selection/hunk)
 
                                                 *neogit_S*
-S                       Stage unstage changes
+S                       Stage unstaged changes
 
                                                 *neogit_<C-s>*
 <C-s>                   Stage Everything
@@ -79,8 +79,6 @@ Diff maps ~
 
                                                 *neogit-commit-maps*
 Commit maps ~
-                                                *neogit_c*
-c                       Open commit popup
 
 <C-C><C-C>              Commit (when writing a commit message)
 

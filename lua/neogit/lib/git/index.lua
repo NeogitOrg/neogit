@@ -1,3 +1,4 @@
+local cli = require("neogit.lib.git.cli")
 local M = {}
 
 ---Generates a patch that can be applied to index
@@ -65,14 +66,13 @@ function M.generate_patch(item, hunk, from, to, reverse)
   return table.concat(diff_content, "\n")
 end
 
----comment
 ---@param patch string diff generated with M.generate_patch
 ---@param opts table
 ---@return table
 function M.apply(patch, opts)
   opts = opts or { reverse = false, cached = false, index = false }
 
-  local cmd = require("neogit.lib.git.cli").apply
+  local cmd = cli.apply
 
   if opts.reverse then
     cmd = cmd.reverse
@@ -87,6 +87,18 @@ function M.apply(patch, opts)
   end
 
   return cmd.with_patch(patch).call()
+end
+
+function M.add(files)
+  return cli.add.files(unpack(files)).call()
+end
+
+function M.checkout(files)
+  return cli.checkout.files(unpack(files)).call()
+end
+
+function M.reset(files)
+  return cli.reset.files(unpack(files)).call()
 end
 
 -- Make sure the index is in sync as git-status skips it

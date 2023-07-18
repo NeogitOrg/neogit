@@ -124,7 +124,11 @@ local function create(message, level, delay)
         end
       end
 
-      table.insert(message_history, { content = message, level = level, kind = levels[level] })
+      table.insert(message_history, {
+        content = message,
+        level = level,
+        kind = levels[level],
+      })
 
       if vim.fn.winbufnr(window) ~= -1 then
         vim.api.nvim_win_close(window, false)

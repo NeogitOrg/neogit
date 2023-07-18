@@ -9,7 +9,7 @@ local Ui = require("neogit.lib.ui")
 
 ---@class Buffer
 ---@field handle number
----@field mmanager any
+---@field mmanager MappingsManager
 ---@field ui Ui
 ---@field kind string
 local Buffer = {
@@ -226,7 +226,7 @@ function Buffer:unlock()
 end
 
 function Buffer:get_option(name)
-  api.nvim_buf_get_option(self.handle, name)
+  return api.nvim_buf_get_option(self.handle, name)
 end
 
 function Buffer:set_option(name, value)
@@ -401,8 +401,9 @@ function Buffer.create(config)
     buffer.ui:render(unpack(config.render(buffer)))
   end
 
+  local neogit_augroup = require("neogit").autocmd_group
   for event, callback in pairs(config.autocmds or {}) do
-    api.nvim_create_autocmd(event, { callback = callback, buffer = buffer.handle })
+    api.nvim_create_autocmd(event, { callback = callback, buffer = buffer.handle, group = neogit_augroup })
   end
 
   buffer.mmanager.register()

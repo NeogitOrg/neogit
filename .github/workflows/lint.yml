@@ -6,12 +6,47 @@ jobs:
   selene:
     runs-on: ubuntu-latest
     steps:
+      - name: Restore Cached Selene
+        id: cache-selene-restore
+        uses: actions/cache@v3
+        with:
+          key: ${{ runner.os }}-selene
+          path: ~/.cargo/bin/selene
+
       - uses: actions/checkout@v1
+      - name: Compare the cached Selene version against crates.io
+        id: check-selene-cache
+        run: |
+          CRATES_IO_SELENE_VERSION=$(curl -s -L0 https://crates.io/api/v1/crates/selene  | jq -r '.crate.max_stable_version')
+          CACHED_SELENE_VERSION="$((selene --version || printf "INVALID_VERSION") | awk '{print $2}')"
+
+          printf "Crates IO Selene Version: %s\n" "${CRATES_IO_SELENE_VERSION}"
+          printf "Cached Selene Version:    %s\n" "${CACHED_SELENE_VERSION}"
+
+          CACHED_SELENE_VALID=false
+          if [[ "${CRATES_IO_SELENE_VERSION}" == "${CACHED_SELENE_VERSION}" ]]; then
+            CACHED_SELENE_VALID=true
+            printf "Cache is valid!\n"
+          fi
+
+          printf "cache-valid=%s\n" "${CACHED_SELENE_VALID}" >> "${GITHUB_OUTPUT}"
+
       - uses: actions-rs/toolchain@v1
+        if: ${{ steps.check-selene-cache.outputs.cache-valid != 'true'}}
         with:
           toolchain: stable
       - name: Install Selene
-        run: cargo install selene
+        if: ${{ steps.check-selene-cache.outputs.cache-valid != 'true'}}
+        run: cargo install selene --force
+
+      - name: Save New Selene Build to Cache
+        if: ${{ steps.check-selene-cache.outputs.cache-valid != 'true'}}
+        id: cache-selene-save
+        uses: actions/cache/save@v3
+        with:
+          key: ${{ runner.os }}-selene
+          path: ~/.cargo/bin/selene
+
       - name: Run Selene
         run: make lint
   stylua:

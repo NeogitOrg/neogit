@@ -1,12 +1,15 @@
 local M = {}
 
+function M.get_reversed_status_maps()
+  return vim.tbl_add_reverse_lookup(vim.tbl_deep_extend("force", M.values.mappings.status, {}))
+end
+
 M.values = {
   disable_hint = false,
   disable_context_highlighting = false,
   disable_signs = false,
   disable_commit_confirmation = false,
   disable_builtin_notifications = false,
-  use_telescope = false,
   telescope_sorter = function()
     return nil
   end,
@@ -56,9 +59,12 @@ M.values = {
     item = { ">", "v" },
     section = { ">", "v" },
   },
-  integrations = {
-    diffview = false,
-  },
+  integrations = setmetatable({}, {
+    __index = function(_, key)
+      local ok, value = pcall(require, key)
+      return ok and value or false
+    end,
+  }),
   sections = {
     untracked = {
       folded = false,

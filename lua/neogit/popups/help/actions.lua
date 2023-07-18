@@ -3,11 +3,17 @@ local M = {}
 local util = require("neogit.lib.util")
 local NONE = function() end
 
-local status_mappings = vim.tbl_add_reverse_lookup(require("neogit.config").values.mappings.status)
+-- Using deep extend this way creates a copy of the mapping values
+local status_mappings = require("neogit.config").get_reversed_status_maps()
 
 local function present(commands)
   local presenter = util.map(commands, function(command)
     local cmd, name, fn = unpack(command)
+
+    --- Handle the longer table mapping form (mode, func, esc)
+    if type(fn) == "table" then
+      fn = fn[2]
+    end
 
     return { name = name, key = status_mappings[cmd], fn = fn }
   end)
@@ -19,40 +25,22 @@ local function present(commands)
   return presenter
 end
 
-M.popups = function(env)
+M.popups = function()
   local popups = require("neogit.popups")
 
-  return present {
-    { "HelpPopup", "Help", popups.help.create },
-    { "DiffPopup", "Diff", popups.diff.create },
-    { "PullPopup", "Pull", popups.pull.create },
-    { "RebasePopup", "Rebase", popups.rebase.create },
-    { "MergePopup", "Merge", popups.merge.create },
-    { "PushPopup", "Push", popups.push.create },
-    { "CommitPopup", "Commit", popups.commit.create },
-    { "LogPopup", "Log", popups.log.create },
-    { "CherryPickPopup", "Apply", popups.cherry_pick.create },
-    { "BranchPopup", "Branch", popups.branch.create },
-    { "FetchPopup", "Fetch", popups.fetch.create },
-    { "ResetPopup", "Reset", popups.reset.create },
-    { "RevertPopup", "Revert", popups.revert.create },
-    { "RemotePopup", "Remote", popups.remote.create },
-    { "InitRepo", "Init", require("neogit.lib.git").init.init_repo },
+  local items = vim.list_extend({
     {
-      "StashPopup",
-      "Stash",
-      function()
-        popups.stash.create(env.get_stash())
-      end,
-    },
-    {
+
       "CommandHistory",
       "History",
       function()
         require("neogit.buffers.git_command_history"):new():show()
       end,
     },
-  }
+    { "InitRepo", "Init", require("neogit.lib.git").init.init_repo },
+  }, popups.mappings_table())
+
+  return present(items)
 end
 
 M.actions = function()

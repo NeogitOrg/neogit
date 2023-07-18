@@ -2,7 +2,6 @@ local Buffer = require("neogit.lib.buffer")
 local GitCommandHistory = require("neogit.buffers.git_command_history")
 local CommitView = require("neogit.buffers.commit_view")
 local git = require("neogit.lib.git")
-local cli = require("neogit.lib.git.cli")
 local notif = require("neogit.lib.notification")
 local config = require("neogit.config")
 local a = require("plenary.async")
@@ -150,7 +149,22 @@ local function draw_buffer()
 
   local output = LineBuffer.new()
   if not config.values.disable_hint then
-    output:append("Hint: [<tab>] toggle diff | [s]tage | [u]nstage | [x] discard | [c]ommit | [?] more help")
+    local reversed_status_map = config.get_reversed_status_maps()
+
+    local function hint_label(map_name, hint)
+      return "[" .. reversed_status_map[map_name] .. "] " .. hint
+    end
+
+    local hints = {
+      hint_label("Toggle", "toggle diff"),
+      hint_label("Stage", "stage"),
+      hint_label("Unstage", "unstage"),
+      hint_label("Discard", "discard"),
+      hint_label("CommitPopup", "commit"),
+      hint_label("HelpPopup", "help"),
+    }
+
+    output:append("Hint: " .. table.concat(hints, " | "))
     output:append("")
   end
 
@@ -504,7 +518,7 @@ end
 
 --- Returns commits in selection
 ---@return table
-local function get_selected_commits()
+function M.get_selected_commits()
   local first_line = vim.fn.getpos("v")[2]
   local last_line = vim.fn.getpos(".")[2]
 
@@ -579,7 +593,7 @@ end
 
 local stage_selection = function()
   if selection_spans_multiple_items_within_section() then
-    git.status.stage(unpack(map(get_selected_commits(), function(item)
+    git.status.stage(unpack(map(M.get_selected_commits(), function(item)
       return item.name
     end)))
   else
@@ -592,7 +606,7 @@ end
 
 local unstage_selection = function()
   if selection_spans_multiple_items_within_section() then
-    git.status.unstage(unpack(map(get_selected_commits(), function(item)
+    git.status.unstage(unpack(map(M.get_selected_commits(), function(item)
       return item.name
     end)))
   else
@@ -624,20 +638,16 @@ local stage = function()
       if section.name == "unstaged" then
         git.status.stage_modified()
       elseif section.name == "untracked" then
-        local add = git.cli.add
-        for i, _ in ipairs(section.files) do
-          local item = section.files[i]
-          add.files(item.name)
-        end
-        add.call()
+        git.index.add(map(section.files, function(item)
+          return item.name
+        end))
       end
       M.current_operation = nil
       return
     else
       if on_hunk and section.name ~= "untracked" then
         local hunk = get_current_hunk_of_item(item)
-        local patch = git.index.generate_patch(item, hunk)
-        git.index.apply(patch, { cached = true })
+        git.index.apply(git.index.generate_patch(item, hunk), { cached = true })
       else
         git.status.stage(item.name)
       end
@@ -669,8 +679,10 @@ local unstage = function()
 
       if on_hunk then
         local hunk = get_current_hunk_of_item(item)
-        local patch = git.index.generate_patch(item, hunk, nil, nil, true)
-        git.index.apply(patch, { reverse = true, cached = true })
+        git.index.apply(
+          git.index.generate_patch(item, hunk, nil, nil, true),
+          { reverse = true, cached = true }
+        )
       else
         git.status.unstage(item.name)
       end
@@ -705,10 +717,10 @@ local function discard_selected_files(files, section)
       vim.fn.delete(string.format("%s/%s", git.repo.git_root, file))
     end
   elseif section == "unstaged" then
-    cli.checkout.files(unpack(filenames)).call()
+    git.index.checkout(filenames)
   elseif section == "staged" then
-    cli.reset.files(unpack(filenames)).call()
-    cli.checkout.files(unpack(filenames)).call()
+    git.index.reset(filenames)
+    git.index.checkout(filenames)
   end
 end
 
@@ -755,7 +767,7 @@ local discard = function()
   -- These all need to be captured _before_ the get_confirmation() call, since that
   -- seems to effect how vim determines what's selected
   local multi_file = selection_spans_multiple_items_within_section()
-  local files = get_selected_commits()
+  local files = M.get_selected_commits()
 
   local selection = { get_selection() }
 
@@ -766,6 +778,8 @@ local discard = function()
     return
   end
 
+  -- Make sure the index is in sync as git-status skips it
+  -- Do this manually since the `cli` add --no-optional-locks
   git.index.update()
 
   if mode.mode == "V" then
@@ -801,19 +815,10 @@ local set_folds = function(to)
   M.refresh()
 end
 
-local function cherry_pick()
-  local selection = nil
-  if vim.api.nvim_get_mode().mode == "V" then
-    selection = get_selected_commits()
-  end
-
-  require("neogit.popups.cherry_pick").create { commits = selection }
-end
-
 --- These needs to be a function to avoid a circular dependency
 --- between this module and the popup modules
 local cmd_func_map = function()
-  return {
+  local mappings = {
     ["Close"] = function()
       M.status_buffer:close()
     end,
@@ -997,22 +1002,14 @@ local cmd_func_map = function()
         end
       end
     end),
+
     ["RefreshBuffer"] = function()
       notif.create("Refreshing Status")
       git.repo:dispatch_refresh { callback = M.dispatch_refresh }
     end,
-    ["HelpPopup"] = function()
-      local line = M.status_buffer:get_current_line()
 
-      require("neogit.popups.help").create {
-        get_stash = function()
-          return {
-            name = line[1]:match("^(stash@{%d+})"),
-          }
-        end,
-        use_magit_keybindings = config.values.use_magit_keybindings,
-      }
-    end,
+    -- INTEGRATIONS --
+
     ["DiffAtFile"] = function()
       if not config.ensure_integration("diffview") then
         return
@@ -1024,33 +1021,19 @@ local cmd_func_map = function()
         dv.open(section.name, item.name)
       end
     end,
-    ["DiffPopup"] = require("neogit.popups.diff").create,
-    ["PullPopup"] = require("neogit.popups.pull").create,
-    ["RebasePopup"] = function()
-      local line = M.status_buffer:get_current_line()
-      require("neogit.popups.rebase").create { line[1]:match("^(%x%x%x%x%x%x%x+)") }
-    end,
-    ["MergePopup"] = require("neogit.popups.merge").create,
-    ["PushPopup"] = require("neogit.popups.push").create,
-    ["CommitPopup"] = require("neogit.popups.commit").create,
-    ["LogPopup"] = require("neogit.popups.log").create,
-    ["CherryPickPopup"] = { "nv", a.void(cherry_pick), true },
-    ["StashPopup"] = function()
-      local line = M.status_buffer:get_current_line()
-
-      require("neogit.popups.stash").create {
-        name = line[1]:match("^(stash@{%d+})"),
-      }
-    end,
-    ["RevertPopup"] = function()
-      local line = M.status_buffer:get_current_line()
-      require("neogit.popups.revert").create { commits = { line[1]:match("^(%x%x%x%x%x%x%x+)") } }
-    end,
-    ["BranchPopup"] = require("neogit.popups.branch").create,
-    ["FetchPopup"] = require("neogit.popups.fetch").create,
-    ["RemotePopup"] = require("neogit.popups.remote").create,
-    ["ResetPopup"] = require("neogit.popups.reset").create,
   }
+
+  local popups = require("neogit.popups")
+  --- Load the popups from the centralized popup file
+  for _, v in ipairs(popups.mappings_table()) do
+    --- { name, display_name, mapping }
+    if mappings[v[1]] then
+      error("Neogit: Mapping '" .. v[1] .. "' is already in use!")
+    end
+
+    mappings[v[1]] = v[3]
+  end
+  return mappings
 end
 
 -- Sets decoration provider for buffer
@@ -1143,6 +1126,7 @@ function M.create(kind, cwd)
     name = "NeogitStatus",
     filetype = "NeogitStatus",
     kind = kind,
+    ---@param buffer Buffer
     initialize = function(buffer)
       logger.debug("[STATUS BUFFER]: Initializing...")
 

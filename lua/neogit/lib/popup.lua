@@ -78,8 +78,10 @@ end
 
 -- Closes the popup buffer
 function M:close()
-  self.buffer:close()
-  self.buffer = nil
+  if self.buffer then
+    self.buffer:close()
+    self.buffer = nil
+  end
 end
 
 -- Determines the correct highlight group for a switch based on it's state.
@@ -574,6 +576,14 @@ function M:show()
         },
       }
     end,
+    autocmds = {
+      ["WinLeave"] = function()
+        if self.buffer.kind == "floating" then
+          -- We pcall this because it's possible the window was closed by a command invocation, e.g. "cc" for commits
+          pcall(self.close, self)
+        end
+      end,
+    },
   }
 end
 
