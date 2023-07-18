@@ -18,7 +18,7 @@ Applied to a stashes name on the status buffer
 ### NeogitFold
 Folded text highlight
 
-## Status Buffer item's git status
+## Status Buffer item's git status (left of the filepath)
 ### NeogitChangeModified
 ### NeogitChangeAdded
 ### NeogitChangeDeleted
@@ -28,33 +28,38 @@ Folded text highlight
 ### NeogitChangeBothModified
 ### NeogitChangeNewFile
 
-## Status Buffer Section header
-### NeogitUntrackedfiles
-### NeogitUnstagedchanges
-### NeogitUnmergedchanges
-### NeogitUnpulledchanges
-### NeogitRecentcommits
-### NeogitStagedchanges
-### NeogitStashes
-### NeogitRebasing
+## Status Buffer Section headers
+These are at the top of every section on the status buffer.
+
+- NeogitUntrackedfiles
+- NeogitUnstagedchanges
+- NeogitUnmergedchanges
+- NeogitUnpulledchanges
+- NeogitRecentcommits
+- NeogitStagedchanges
+- NeogitStashes
+- NeogitRebasing
+
 
 ## Signs - Line Highlights
-### NeogitHunkHeader
-### NeogitHunkHeaderHighlight
-### NeogitDiffContext
-### NeogitDiffContextHighlight
-### NeogitDiffAdd
-### NeogitDiffAddHighlight
-### NeogitDiffDelete
-### NeogitDiffDeleteHighlight
-### NeogitDiffHeader
-### NeogitDiffHeaderHighlight
+Used to highlight different sections of the status buffer or commit buffer. Will apply background to entire line.
+
+- NeogitHunkHeader
+- NeogitHunkHeaderHighlight
+- NeogitDiffContext
+- NeogitDiffContextHighlight
+- NeogitDiffAdd
+- NeogitDiffAddHighlight
+- NeogitDiffDelete
+- NeogitDiffDeleteHighlight
+- NeogitDiffHeader
+- NeogitDiffHeaderHighlight
 
 ### NeogitRebaseDone
 Current position marker in rebase todo
 
 ### NeogitCursorLine
-
+Adaptive cursor-line highlight.
 
 ## Commit Buffer
 ### NeogitFilePath
