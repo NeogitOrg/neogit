@@ -207,10 +207,10 @@ function M.validate_config()
   local function validate_kind(val, name)
     if
       validate_type(val, name, "string")
-      and not vim.tbl_contains({ "split", "vsplit", "tab", "floating" }, val)
+      and not vim.tbl_contains({ "split", "vsplit", "tab", "floating", "auto" }, val)
     then
       err(
-        string.format("Expected %s to be one of 'split', 'vsplit', 'tab', or 'floating', got '%s'", name, val)
+        string.format("Expected %s to be one of 'split', 'vsplit', 'tab', 'floating', or 'auto', got '%s'", name, val)
       )
     end
   end
@@ -267,7 +267,7 @@ function M.validate_config()
   end
 
   local function validate_integrations()
-    local valid_integrations = { "diffview" }
+    local valid_integrations = { "diffview", "telescope" }
     if not validate_type(config.integrations, "integrations", "table") or #config.integrations == 0 then
       return
     end
