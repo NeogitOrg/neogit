@@ -223,17 +223,19 @@ neogit.setup {
   mappings = {
     -- modify status buffer mappings
     status = {
-      -- Adds a mapping with "B" as key that does the "BranchPopup" command
-      ["B"] = "BranchPopup",
-      -- Removes the default mapping of "s"
-      ["s"] = "",
+      -- Set the "B" key to invoke BranchPopup in the status buffer
+      ["BranchPopup"] = "B",
+      -- Removes the default mapping of "Stage"
+      ["Stage"] = "",
       ...
     },
     -- Modify fuzzy-finder buffer mappings
     finder = {
       -- Binds <cr> to trigger select action
-      ["<cr>"] = "select",
-      ...
+      ["Select"] = { "<cr>" }
+      -- Binds <c-c> and q to quit
+      ["Quit"] = { "<c-c>", "q" }
+      I...
     }
   }
 }
