@@ -240,7 +240,7 @@ function Ui:_render(first_line, first_col, parent, components, flags)
       self.buf:set_line_buffer(table.concat(text))
 
       for _, h in ipairs(highlights) do
-        self.buf:add_highlight_buffer(curr_line - 1, h.from, h.to, h.name, 0)
+        self.buf:add_highlight_buffer(curr_line - 1, h.from, h.to, h.name)
       end
 
       curr_line = curr_line + 1
@@ -263,7 +263,7 @@ function Ui:_render(first_line, first_col, parent, components, flags)
             self.buf:set_line_buffer(table.concat { c:get_padding_left(), c.value })
 
             if highlight then
-              self.buf:add_highlight_buffer(curr_line - 1, c.position.col_start, c.position.col_end, highlight, 0)
+              self.buf:add_highlight_buffer(curr_line - 1, c.position.col_start, c.position.col_end, highlight)
             end
 
             if sign then
