@@ -25,6 +25,7 @@ function Buffer:new(handle)
     border = nil,
     mmanager = mappings_manager.new(handle),
     kind = nil, -- how the buffer was opened. For more information look at the create function
+    namespace = api.nvim_create_namespace("neogit-buffer-" .. handle),
     line_buffer = {},
     hl_buffer = {},
     sign_buffer = {},
@@ -108,6 +109,8 @@ function Buffer:resize(length)
 end
 
 function Buffer:flush_buffers()
+  self:clear_namespace(self.namespace)
+
   api.nvim_buf_set_lines(self.handle, 0, -1, false, self.line_buffer)
   self.line_buffer = {}
 
@@ -304,7 +307,7 @@ function Buffer:open_fold(line, reset_pos)
 end
 
 function Buffer:add_highlight(line, col_start, col_end, name, ns_id)
-  local ns_id = ns_id or 0
+  local ns_id = ns_id or self.namespace
 
   api.nvim_buf_add_highlight(self.handle, ns_id, name, line, col_start, col_end)
 end
