@@ -5,7 +5,7 @@ local git = require("neogit.lib.git")
 local M = {}
 
 function M.create()
-  local current = git.repo.head.branch
+  local current = git.branch.current()
 
   local p = popup
     .builder()

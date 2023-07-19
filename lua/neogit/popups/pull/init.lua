@@ -5,7 +5,7 @@ local popup = require("neogit.lib.popup")
 local M = {}
 
 function M.create()
-  local current = git.repo.head.branch
+  local current = git.branch.current()
   local show_config = current ~= "" and current ~= "(detached)"
   local pull_rebase_entry = git.config.get("pull.rebase")
   local pull_rebase = pull_rebase_entry:is_set() and pull_rebase_entry.value or "false"
