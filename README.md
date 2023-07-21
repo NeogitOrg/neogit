@@ -149,6 +149,13 @@ neogit.setup {
   console_timeout = 2000,
   -- Automatically show console if a command takes more than console_timeout milliseconds
   auto_show_console = true,
+  -- Options for the Status buffer
+  status = {
+    -- The number of recent commits to show
+    recent_commit_count = 10
+    -- Whether or not to incldue author info (name, email) in recent commits
+    recent_commit_include_author_info = false
+  },
   -- Persist the values of switches/options within and across sessions
   remember_settings = true,
   -- Scope persisted settings on a per-project basis

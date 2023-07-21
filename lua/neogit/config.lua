@@ -26,6 +26,7 @@ M.values = {
   auto_show_console = true,
   status = {
     recent_commit_count = 10,
+    recent_commit_include_author_info = false,
   },
   commit_editor = {
     kind = "split",

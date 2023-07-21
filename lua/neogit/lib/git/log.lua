@@ -269,14 +269,16 @@ local function update_recent(state)
 
   state.recent.items = util.filter_map(result, function(v)
     if v.oid then
+      local recent_commit = {
+        v.oid:sub(1, 7),
+      }
+      if config.values.status.recent_commit_include_author_info then
+        table.insert(recent_commit, string.format("[%s] <%s>", v.author_name, v.author_email))
+      end
+
+      table.insert(recent_commit, v.description[1] or "<empty>")
       return {
-        name = string.format(
-          "%s [%s] <%s> %s",
-          v.oid:sub(1, 7),
-          v.author_name,
-          v.author_email,
-          v.description[1] or "<empty>"
-        ),
+        name = table.concat(recent_commit, " "),
         oid = v.oid,
         commit = v,
       }
