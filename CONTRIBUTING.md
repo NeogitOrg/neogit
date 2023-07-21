@@ -66,7 +66,7 @@ logger.fmt_debug("This is a verbose log message: %q", status)
 
 Neogit is tested using [`Plenary`](https://github.com/nvim-lua/plenary.nvim#plenarytest_harness).
 
-It uses a *Busted* style testing, where each lua file inside [`./tests/{test_name}_spec.lua`] is run.
+It uses a *Busted* style testing, where each lua file inside [`./tests/specs/{test_name}_spec.lua`] is run.
 
 When adding new functionality we strongly encourage you to add a test spec to ensure that the feature works and remains
 working when new functionality is tacked on.
@@ -77,6 +77,8 @@ future, and remains *fixed*.
 A [`Makefile`](./Makefile) is set up to run tests.
 
 ```sh make test ```
+
+See [the test documentation for more details](./tests/README.md).
 
 ### Linting
 
