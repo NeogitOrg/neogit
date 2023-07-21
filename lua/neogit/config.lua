@@ -154,41 +154,14 @@ end
 M.values = M.get_default_values()
 
 ---Validates the config
----@return boolean false if the config is invalid
----@return string all error messages emitted during validation
+---@return { [string]: string } all error messages emitted during validation
 function M.validate_config()
   local config = M.values
 
-  ---@type boolean
-  local validation_ok = true
-  ---@type string[]
+  ---@type { [string]: string }
   local errors = {}
-  local function err(msg)
-    validation_ok = false
-    table.insert(errors, msg)
-  end
-
-  local function present_errors()
-    local header = "====Neogit Configuration Errors===="
-    local header_message = {
-      "Neogit has NOT been setup!",
-      "You have a misconfiguration in your Neogit setup!",
-      'Validate that your configuration passed to `require("neogit").setup()` is valid!',
-    }
-    local header_sep = function()
-      local sep = ""
-      for _ = 0, string.len(header), 1 do
-        sep = sep .. "-"
-      end
-
-      return sep
-    end
-    if validation_ok then
-      return ""
-    else
-      return string.format("%s\n%s\n%s\n", header, table.concat(header_message, "\n"), header_sep())
-        .. table.concat(errors, "\n")
-    end
+  local function err(value, msg)
+    errors[value] = msg
   end
 
   ---Checks if a variable is the correct, type if not it calls err with an error string
@@ -197,7 +170,7 @@ function M.validate_config()
   ---@param expected_type type
   local function validate_type(value, name, expected_type)
     if type(value) ~= expected_type then
-      err(string.format("Expected '%s' to be of type '%s', got '%s'", name, expected_type, type(value)))
+      err(name, string.format("Expected `%s` to be of type '%s', got '%s'", name, expected_type, type(value)))
       return false
     end
     return true
@@ -210,8 +183,9 @@ function M.validate_config()
       and not vim.tbl_contains({ "split", "vsplit", "tab", "floating", "auto" }, val)
     then
       err(
+        name,
         string.format(
-          "Expected %s to be one of 'split', 'vsplit', 'tab', 'floating', or 'auto', got '%s'",
+          "Expected `%s` to be one of 'split', 'vsplit', 'tab', 'floating', or 'auto', got '%s'",
           name,
           val
         )
@@ -225,17 +199,20 @@ function M.validate_config()
     end
 
     local function validate_signs_table(tbl_name, tbl)
+      tbl_name = string.format("signs.%s", tbl_name)
       if type(tbl) ~= "table" then
-        err(string.format("Expected signs.%s to be of type 'table'!", tbl_name))
+        err(tbl_name, string.format("Expected `%s` to be of type 'table'!", tbl_name))
       else
         if #tbl ~= 2 then
           err(
-            string.format("Expected for signs.%s to %s elements, it had %s elements!", tbl_name, #tbl, #tbl)
+            tbl_name,
+            string.format("Expected for `%s` to be %s elements, it had %s elements!", tbl_name, #tbl, #tbl)
           )
         elseif type(tbl[1]) ~= "string" then
           err(
+            tbl_name,
             string.format(
-              "Expected element one of signs.%s to be of type 'string', it was of type '%s'",
+              "Expected element one of `%s` to be of type 'string', it was of type '%s'",
               tbl_name,
               tbl[1],
               type(tbl[1])
@@ -243,8 +220,9 @@ function M.validate_config()
           )
         elseif type(tbl[2]) ~= "string" then
           err(
+            tbl_name,
             string.format(
-              "Expected element two of signs.%s to be of type 'string', it was of type '%s'",
+              "Expected element two of `%s` to be of type 'string', it was of type '%s'",
               tbl_name,
               tbl[2],
               type(tbl[2])
@@ -263,10 +241,10 @@ function M.validate_config()
     local err_msg = "Expected either a string with value 'auto' or a boolean value"
     if type(config.disable_insert_on_commit) == "string" then
       if config.disable_insert_on_commit ~= "auto" then
-        err(err_msg)
+        err("disable_insert_on_commit", err_msg)
       end
     elseif type(config.disable_insert_on_commit) ~= "boolean" then
-      err(err_msg)
+      err("disable_insert_on_commit", err_msg)
     end
   end
 
@@ -278,6 +256,7 @@ function M.validate_config()
     for integration_name, _ in pairs(config.integrations) do
       if not vim.tbl_contains(valid_integrations, integration_name) then
         err(
+          "valid_integrations." .. integration_name,
           string.format(
             "Expected a valid integration, received '%s', which is not a supported integration! Valid integrations: ",
             integration_name,
@@ -309,6 +288,7 @@ function M.validate_config()
         local match_pattern = ".+%-%-.+"
         if not string.match(setting, match_pattern) then
           err(
+            "ignored_settings",
             string.format(
               "An ignored_settings setting did not match %s (format: filetype--flag), setting was: %s",
               match_pattern,
@@ -342,6 +322,7 @@ function M.validate_config()
 
       if not vim.tbl_contains(valid_finder_commands, command) then
         err(
+          "mappings.finder['%s']",
           string.format(
             "Expected a valid finder command, got '%s'. Valid finder commands: { %s }",
             command,
@@ -372,12 +353,13 @@ function M.validate_config()
       for command, key in pairs(config.mappings.status) do
         if
           validate_type(command, "mappings.status -> " .. vim.inspect(command), "string")
-          and validate_type(key, "mappings.status." .. command, "string")
+          and validate_type(key, string.format("mappings.status['%s']", command), "string")
         then
           if not vim.tbl_contains(valid_status_commands, command) then
             err(
+              string.format("mappings.status['%s']", command),
               string.format(
-                "Expected a valid status command, got '%s'. Valid finder commands: { %s }",
+                "Expected a valid status command, got '%s'. Valid status commands: { %s }",
                 command,
                 table.concat(valid_status_commands, ", ")
               )
@@ -400,7 +382,7 @@ function M.validate_config()
     validate_type(config.auto_refresh, "auto_refresh", "boolean")
     validate_type(config.sort_branches, "sort_branches", "string")
     validate_type(config.console_timeout, "console_timeout", "number")
-    validate_kind(config.kind)
+    validate_kind(config.kind, "kind")
     validate_type(config.auto_show_console, "auto_show_console", "boolean")
     if validate_type(config.status, "status", "table") then
       validate_type(config.status.recent_commit_count, "status.recent_commit_count", "number")
@@ -450,7 +432,7 @@ function M.validate_config()
     validate_mappings()
   end
 
-  return unpack { validation_ok, present_errors() }
+  return errors
 end
 
 function M.ensure_integration(name)

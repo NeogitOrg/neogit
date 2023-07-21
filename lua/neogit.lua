@@ -31,14 +31,37 @@ local setup = function(opts)
     config.values = vim.tbl_deep_extend("force", config.values, opts)
   end
 
-  local config_ok, err_msg = config.validate_config()
-  if not config_ok then
-    error("\n" .. err_msg)
+  local config_errs = config.validate_config()
+  if vim.tbl_count(config_errs) > 0 then
+    local header = "====Neogit Configuration Errors===="
+    local header_message = {
+      "Neogit has NOT been setup!",
+      "You have a misconfiguration in your Neogit setup!",
+      'Validate that your configuration passed to `require("neogit").setup()` is valid!',
+    }
+    local header_sep = ""
+    for _ = 0, string.len(header), 1 do
+      header_sep = header_sep .. "-"
+    end
+
+    local config_errs_message = {}
+    for config_key, err in pairs(config_errs) do
+      table.insert(config_errs_message, string.format("Config value: `%s` had error -> %s", config_key, err))
+    end
+    error(
+      string.format(
+        "\n%s\n%s\n%s\n%s",
+        header,
+        table.concat(header_message, "\n"),
+        header_sep,
+        table.concat(config_errs_message, "\n")
+      ),
+      vim.log.levels.ERROR
+    )
   else
     hl.setup()
     signs.setup()
     state.setup()
-
     require("neogit.autocmds").setup()
   end
 end
