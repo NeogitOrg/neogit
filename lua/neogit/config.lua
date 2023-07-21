@@ -237,14 +237,15 @@ function M.validate_config()
     validate_signs_table("section", config.signs.section)
   end
 
-  local function validate_disable_insert_on_commit()
-    local err_msg = "Expected either a string with value 'auto' or a boolean value"
-    if type(config.disable_insert_on_commit) == "string" then
-      if config.disable_insert_on_commit ~= "auto" then
-        err("disable_insert_on_commit", err_msg)
+  local function validate_trinary_auto(value, name)
+    local err_msg =
+      string.format("Expected '%s' to be either a string with value 'auto' or a boolean value", name)
+    if type(value) == "string" then
+      if value ~= "auto" then
+        err(name, err_msg)
       end
-    elseif type(config.disable_insert_on_commit) ~= "boolean" then
-      err("disable_insert_on_commit", err_msg)
+    elseif type(value) ~= "boolean" then
+      err(name, err_msg)
     end
   end
 
@@ -388,7 +389,7 @@ function M.validate_config()
       validate_type(config.status.recent_commit_count, "status.recent_commit_count", "number")
     end
     validate_signs()
-    validate_disable_insert_on_commit()
+    validate_trinary_auto(config.disable_insert_on_commit, "disable_insert_on_commit")
     -- Commit Editor
     if validate_type(config.commit_editor, "commit_editor", "table") then
       validate_kind(config.commit_editor.kind, "commit_editor")
