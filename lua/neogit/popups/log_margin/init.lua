@@ -6,8 +6,15 @@ function M.create()
   local p = popup
     .builder()
     :name("NeogitLogMarginPopup")
-    :switch("n", "max-count", "Prune deleted branches")
-    :switch("o", "order", "Order commits by")
+    :option("n", "max-count", "256", "Limit number of commits", { default = "256" })
+    :config("o", "order", {
+      options = {
+        { display = "", value = "" },
+        { display = "--topo", value = "--topo" },
+        { display = "--author-date", value = "--author-date" },
+        { display = "--date", value = "--date" },
+      },
+    })
     :switch("g", "graph", "Show graph")
     :switch("c", "color", "Show graph in color")
     :switch("d", "refnames", "Show refnames")
