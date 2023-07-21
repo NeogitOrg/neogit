@@ -237,10 +237,10 @@ function Ui:_render(first_line, first_col, parent, components, flags)
     end
 
     if not flags.hidden then
-      self.buf:set_line_buffer(table.concat(text))
+      self.buf:buffered_set_line(table.concat(text))
 
       for _, h in ipairs(highlights) do
-        self.buf:add_highlight_buffer(curr_line - 1, h.from, h.to, h.name)
+        self.buf:buffered_add_highlight(curr_line - 1, h.from, h.to, h.name)
       end
 
       curr_line = curr_line + 1
@@ -260,10 +260,10 @@ function Ui:_render(first_line, first_col, parent, components, flags)
 
         if c.tag == "text" then
           if not flags.hidden then
-            self.buf:set_line_buffer(table.concat { c:get_padding_left(), c.value })
+            self.buf:buffered_set_line(table.concat { c:get_padding_left(), c.value })
 
             if highlight then
-              self.buf:add_highlight_buffer(
+              self.buf:buffered_add_highlight(
                 curr_line - 1,
                 c.position.col_start,
                 c.position.col_end,
@@ -272,7 +272,7 @@ function Ui:_render(first_line, first_col, parent, components, flags)
             end
 
             if sign then
-              self.buf:place_sign_buffer(curr_line, sign, "hl")
+              self.buf:buffered_place_sign(curr_line, sign, "hl")
             end
 
             curr_line = curr_line + 1
@@ -284,12 +284,12 @@ function Ui:_render(first_line, first_col, parent, components, flags)
           curr_line = curr_line + self:_render(curr_line, 0, c, c.children, flags)
 
           if not flags.hidden and sign then
-            self.buf:place_sign_buffer(curr_line - 1, sign, "hl")
+            self.buf:buffered_place_sign(curr_line - 1, sign, "hl")
           end
 
           if not flags.hidden and c.options.virtual_text then
             local ns = self.buf:create_namespace("NeogitBufferVirtualText")
-            self.buf:set_extmark_buffer(ns, curr_line - 2, 0, {
+            self.buf:buffered_set_extmark(ns, curr_line - 2, 0, {
               hl_mode = "combine",
               virt_text = c.options.virtual_text,
               virt_text_pos = "right_align",

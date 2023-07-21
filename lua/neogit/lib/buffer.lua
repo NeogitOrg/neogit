@@ -88,19 +88,19 @@ function Buffer:set_lines(first, last, strict, lines)
   api.nvim_buf_set_lines(self.handle, first, last, strict, lines)
 end
 
-function Buffer:set_line_buffer(line)
+function Buffer:buffered_set_line(line)
   table.insert(self.line_buffer, line)
 end
 
-function Buffer:add_highlight_buffer(...)
+function Buffer:buffered_add_highlight(...)
   table.insert(self.hl_buffer, { ... })
 end
 
-function Buffer:place_sign_buffer(...)
+function Buffer:buffered_place_sign(...)
   table.insert(self.sign_buffer, { ... })
 end
 
-function Buffer:set_extmark_buffer(...)
+function Buffer:buffered_set_extmark(...)
   table.insert(self.ext_buffer, { ... })
 end
 
