@@ -1030,7 +1030,7 @@ local cmd_func_map = function()
     -- INTEGRATIONS --
 
     ["DiffAtFile"] = function()
-      if not config.ensure_integration("diffview") then
+      if not config.ensure_integration("diffview", true) then
         return
       end
       local dv = require("neogit.integrations.diffview")

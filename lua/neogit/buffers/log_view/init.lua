@@ -122,7 +122,7 @@ function M:open()
           end
         end,
         ["d"] = function()
-          if not config.ensure_integration("diffview") then
+          if not config.ensure_integration("diffview", true) then
             return
           end
 

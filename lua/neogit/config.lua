@@ -153,9 +153,16 @@ M.values = {
   },
 }
 
-function M.ensure_integration(name)
+---@param name string
+---@param required boolean
+function M.ensure_integration(name, required)
   if not M.values.integrations[name] then
-    vim.api.nvim_err_writeln(string.format("Neogit: `%s` integration is not enabled", name))
+    if required == true then
+      require("neogit.lib.notification").create(
+        string.format("Neogit: `%s` integration is not enabled", name),
+        vim.log.levels.ERROR
+      )
+    end
     return false
   end
 

@@ -84,7 +84,7 @@ function M:open()
           CommitViewBuffer.new(stack[#stack].options.oid):open()
         end,
         ["d"] = function()
-          if not config.ensure_integration("diffview") then
+          if not config.ensure_integration("diffview", true) then
             return
           end
 

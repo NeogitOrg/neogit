@@ -4,7 +4,7 @@ local config = require("neogit.config")
 local popup = require("neogit.lib.popup")
 
 function M.create()
-  if not config.ensure_integration("diffview") then
+  if not config.ensure_integration("diffview", true) then
     return
   end
 
