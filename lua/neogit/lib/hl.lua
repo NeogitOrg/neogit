@@ -155,6 +155,8 @@ function M.setup()
     NeogitUnmergedInto = { link = "Function" },
     NeogitUnpulledFrom = { link = "Function" },
     NeogitObjectId = { link = "Comment" },
+    NeogitCommitAuthor = { fg = palette.cyan },
+    NeogitCommitAuthorEmail = { fg = palette.green },
     NeogitStash = { link = "Comment" },
     NeogitRebaseDone = { link = "Comment" },
     NeogitCursorLine = { bg = palette.bg1 },

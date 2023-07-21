@@ -270,7 +270,13 @@ local function update_recent(state)
   state.recent.items = util.filter_map(result, function(v)
     if v.oid then
       return {
-        name = string.format("%s %s", v.oid:sub(1, 7), v.description[1] or "<empty>"),
+        name = string.format(
+          "%s [%s] <%s> %s",
+          v.oid:sub(1, 7),
+          v.author_name,
+          v.author_email,
+          v.description[1] or "<empty>"
+        ),
         oid = v.oid,
         commit = v,
       }

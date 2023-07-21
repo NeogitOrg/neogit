@@ -13,6 +13,8 @@ syn match NeogitDiffDelete    /.*/                contained
 syn match NeogitUnmergedInto  /Unmerged into/     contained
 syn match NeogitUnpulledFrom  /Unpulled from/     contained
 syn match NeogitStash         /stash@{[0-9]*}\ze/
+syn match NeogitCommitAuthorEmail /<.\+@.\+>/ nextgroup=NeogitCommitMessage
+syn match NeogitCommitAuthor /\[.*\]/ nextgroup=NeogitCommitAuthorEmail
 syn match NeogitObjectId      /^[a-z0-9]\{7,}\>\s/
 
 let b:sections = ["Untracked files", "Unstaged changes", "Unmerged changes", "Unpulled changes", "Recent commits", "Staged changes", "Stashes", "Rebasing"]
