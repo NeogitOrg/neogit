@@ -289,7 +289,7 @@ function Buffer:set_foldlevel(level)
 end
 
 function Buffer:replace_content_with(lines)
-  self:set_lines(0, -1, false, lines)
+  api.nvim_buf_set_lines(self.handle, 0, -1, false, lines)
 end
 
 function Buffer:open_fold(line, reset_pos)
