@@ -13,6 +13,22 @@ local function map(tbl, f)
   return t
 end
 
+---@generic T: any
+---@param tbl T[][]
+---@return T[]
+--- Flattens one level of lists
+local function flatten(tbl)
+  local t = {}
+
+  for _, v in ipairs(tbl) do
+    for _, v in ipairs(v) do
+      table.insert(t, v)
+    end
+  end
+
+  return t
+end
+
 ---@param tbl any[]
 ---@param f fun(v: any) -> any|nil
 ---@return any[]
@@ -288,6 +304,7 @@ return {
   clamp = clamp,
   slice = slice,
   map = map,
+  flatten = flatten,
   filter_map = filter_map,
   range = range,
   filter = filter,

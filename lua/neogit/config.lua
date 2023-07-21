@@ -1,7 +1,19 @@
 local M = {}
 
+---@return table<string, string[]>
+--- Returns a map of commands, mapped to the list of keys which trigger them.
 function M.get_reversed_status_maps()
-  return vim.tbl_add_reverse_lookup(vim.tbl_deep_extend("force", M.values.mappings.status, {}))
+  local result = {}
+  for k, v in pairs(M.values.mappings.status) do
+    local current = result[v]
+    if current then
+      table.insert(current, k)
+    else
+      result[v] = { k }
+    end
+  end
+
+  return result
 end
 
 M.values = {

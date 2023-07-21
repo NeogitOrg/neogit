@@ -15,8 +15,12 @@ local function present(commands)
       fn = fn[2]
     end
 
-    return { name = name, key = status_mappings[cmd], fn = fn }
+    return util.map(status_mappings[cmd] or {}, function(key)
+      return { name = name, key = key, fn = fn }
+    end)
   end)
+
+  presenter = util.flatten(presenter)
 
   table.sort(presenter, function(a, b)
     return a.key:lower() < b.key:lower()
