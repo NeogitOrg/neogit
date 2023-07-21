@@ -4,8 +4,8 @@ M.project_dir = vim.fn.getcwd()
 
 ---Returns the path to the raw test files directory
 ---@return string The path to the project directory
-function M.get_test_files_dir()
-  return M.project_dir .. "/tests/test_files/"
+function M.get_fixtures_dir()
+  return M.project_dir .. "/tests/fixtures/"
 end
 
 ---Runs a system command and errors if it fails
