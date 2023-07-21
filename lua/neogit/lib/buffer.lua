@@ -277,13 +277,19 @@ function Buffer:place_sign(line, name, group, id)
 
   -- There's an equivalent function sign_place() which can automatically use
   -- a free ID, but is considerable slower, so we use the command for now
-  local cmd = "sign place " .. sign_id .. " line=" .. line .. " name=" .. name
-  if group ~= nil then
-    cmd = cmd .. " group=" .. group
-  end
-  cmd = cmd .. " buffer=" .. self.handle
+  local cmd = {
+    string.format("sign place %d", sign_id),
+    string.format("line=%d", line),
+    string.format("name=%s", name),
+  }
 
-  vim.cmd(cmd)
+  if group then
+    table.insert(cmd, string.format("group=%s", group))
+  end
+
+  table.insert(cmd, string.format("buffer=%d", self.handle))
+
+  vim.cmd(table.concat(cmd, " "))
   return sign_id
 end
 
@@ -296,7 +302,7 @@ function Buffer:get_sign_at_line(line, group)
 end
 
 function Buffer:clear_sign_group(group)
-  vim.cmd("sign unplace * group=" .. group .. " buffer=" .. self.handle)
+  vim.cmd(string.format("sign unplace * group=%s buffer=%s", group, self.handle))
 end
 
 function Buffer:clear_namespace(namespace)
