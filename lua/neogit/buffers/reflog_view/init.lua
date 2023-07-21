@@ -84,7 +84,10 @@ function M:open()
           CommitViewBuffer.new(stack[#stack].options.oid):open()
         end,
         ["d"] = function()
-          if not config.ensure_integration("diffview", true) then
+          if not config.check_integration("diffview") then
+            require("neogit.lib.notification").create_error(
+              "Diffview integration must be enabled for reflog diff"
+            )
             return
           end
 

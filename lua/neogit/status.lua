@@ -1030,9 +1030,11 @@ local cmd_func_map = function()
     -- INTEGRATIONS --
 
     ["DiffAtFile"] = function()
-      if not config.ensure_integration("diffview", true) then
+      if not config.check_integration("diffview") then
+        require("neogit.lib.notification").error("Diffview integration is not enabled")
         return
       end
+
       local dv = require("neogit.integrations.diffview")
       local section, item = get_current_section_item()
 
