@@ -76,8 +76,9 @@ future, and remains *fixed*.
 
 A [`Makefile`](./Makefile) is set up to run tests.
 
-```sh make test ```
-
+```sh
+make test
+```
 See [the test documentation for more details](./tests/README.md).
 
 ### Linting
