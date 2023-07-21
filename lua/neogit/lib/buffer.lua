@@ -111,7 +111,9 @@ function Buffer:close(force)
     local winnr = fn.bufwinnr(self.handle)
     if winnr ~= -1 then
       local winid = fn.win_getid(winnr)
-      api.nvim_win_close(winid, force)
+      if not pcall(api.nvim_win_close, winid, force) then
+        vim.cmd("b#")
+      end
     else
       api.nvim_buf_delete(self.handle, { force = force })
     end
