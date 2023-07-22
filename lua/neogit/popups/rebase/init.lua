@@ -5,7 +5,7 @@ local actions = require("neogit.popups.rebase.actions")
 local M = {}
 
 function M.create(commit)
-  local branch = git.repo.head.branch
+  local branch = git.branch.current()
   local in_rebase = git.repo.rebase.head
   local base_branch = actions.base_branch()
 

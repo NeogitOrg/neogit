@@ -130,7 +130,7 @@ function M:open()
         ["A"] = function()
           CherryPickPopup.create { commits = { self.commit_info.oid } }
         end,
-        ["_"] = function()
+        ["v"] = function()
           RevertPopup.create { commits = { self.commit_info.oid } }
         end,
         ["q"] = function()
