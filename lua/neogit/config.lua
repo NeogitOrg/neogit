@@ -94,6 +94,7 @@ M.values = {
   ignored_settings = {
     "NeogitPushPopup--force-with-lease",
     "NeogitPushPopup--force",
+    "NeogitPullPopup--rebase",
     "NeogitCommitPopup--allow-empty",
     "NeogitRevertPopup--no-edit", -- TODO: Fix incompatible switches with default enables
   },
