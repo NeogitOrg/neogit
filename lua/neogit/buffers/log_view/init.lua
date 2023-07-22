@@ -54,7 +54,7 @@ function M:open()
 
           CherryPickPopup.create { commits = commits }
         end,
-        ["_"] = function()
+        ["v"] = function()
           -- local commits = util.filter_map(
           --   self.buffer.ui:get_component_stack_in_linewise_selection(),
           --   function(c)
@@ -79,7 +79,7 @@ function M:open()
           local stack = self.buffer.ui:get_component_stack_under_cursor()
           CherryPickPopup.create { commits = { stack[#stack].options.oid } }
         end,
-        ["_"] = function()
+        ["v"] = function()
           local stack = self.buffer.ui:get_component_stack_under_cursor()
           RevertPopup.create { commits = { stack[#stack].options.oid } }
         end,

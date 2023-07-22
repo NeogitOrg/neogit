@@ -17,8 +17,8 @@ function M.create(env)
     :option("m", "mainline", "", "Replay merge relative to parent")
     :switch("e", "edit", "Edit commit messages", { enabled = true, incompatible = { "no-edit" } })
     :switch("E", "no-edit", "Don't edit commit messages", { incompatible = { "edit" } })
-    :action("_", "Revert commit", actions.commits) -- TODO: Support multiple commits
-    :action("v", "Revert changes")
+    :action("v", "Revert commit", actions.commits) -- TODO: Support multiple commits
+    :action("V", "Revert changes")
     :env({ commits = env.commits or {} })
     :build()
 
