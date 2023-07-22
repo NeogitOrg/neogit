@@ -8,20 +8,17 @@ local util = require("neogit.lib.util")
 local status = require("neogit.status")
 local git = require("neogit.lib.git")
 
-local Path = require("plenary.path")
 local a = require("plenary.async")
 
 M.watcher = {}
 
-local function git_dir()
-  return Path.new(require("neogit.lib.git").repo.git_root, ".git"):absolute()
-end
+function M.setup(gitdir)
+  if M.watcher[gitdir] then
+    logger.debug(string.format("[WATCHER] for '%s' already setup! Bailing.", gitdir))
+    return
+  end
 
-function M.setup()
-  local gitdir = git_dir()
-  local watcher = M.watch_git_dir(gitdir)
-
-  M.watcher[gitdir] = watcher
+  M.watcher[gitdir] = M.watch_git_dir(gitdir)
 end
 
 -- Adapted from https://github.com/lewis6991/gitsigns.nvim/blob/main/lua/gitsigns/manager.lua#L575
@@ -29,11 +26,6 @@ end
 --- @return uv_fs_event_t?
 function M.watch_git_dir(gitdir)
   if not config.values.auto_refresh then
-    return
-  end
-
-  if M.watcher[gitdir] then
-    logger.debug(string.format("[WATCHER] for '%s' already setup! Bailing.", gitdir))
     return
   end
 

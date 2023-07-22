@@ -12,6 +12,8 @@ local logger = require("neogit.logger")
 local cli = require("neogit.lib.git.cli")
 local notification = require("neogit.lib.notification")
 
+local Path = require("plenary.path")
+
 ---@class OpenOpts
 ---@field cwd string|nil
 ---TODO: popup enum
@@ -40,7 +42,6 @@ local setup = function(opts)
   hl.setup()
   signs.setup()
   state.setup()
-  watcher.setup()
 end
 
 ---@param opts OpenOpts
@@ -83,6 +84,8 @@ local open = function(opts)
       popup.create()
     end
   else
+    watcher.setup(Path.new(opts.cwd, ".git"):absolute())
+
     a.run(function()
       status.create(opts.kind, opts.cwd)
     end)
