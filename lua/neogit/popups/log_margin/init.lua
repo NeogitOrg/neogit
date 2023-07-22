@@ -6,7 +6,7 @@ function M.create()
   local p = popup
     .builder()
     :name("NeogitLogMarginPopup")
-    :option("n", "max-count", "256", "Limit number of commits", { default = "256" })
+    :config("n", "neogit.status.commits")
     :config("o", "neogit.status.order", {
       prefix = "--",
       suffix = "-order",
@@ -17,9 +17,9 @@ function M.create()
         { display = "date", value = "--date" },
       },
     })
-    :switch("g", "graph", "Show graph")
-    :switch("c", "color", "Show graph in color")
-    :switch("d", "refnames", "Show refnames")
+    :config("g", "neogit.status.graph")
+    :config("c", "neogit.status.color")
+    :config("d", "neogit.status.refnames")
     :group_heading("Margin")
     :action("L", "visibility", "toggle visibility")
     :action("l", "style", "cycle style")
