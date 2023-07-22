@@ -140,6 +140,14 @@ local function construct_config_options(config)
   table.insert(value, 1, text.highlight("NeogitPopupConfigDisabled")("["))
   table.insert(value, #value + 1, text.highlight("NeogitPopupConfigDisabled")("]"))
 
+  if config.prefix then
+    table.insert(value, 1, text.highlight("NeogitPopupConfigDisabled")(config.prefix))
+  end
+
+  if config.suffix then
+    table.insert(value, text.highlight("NeogitPopupConfigDisabled")(config.suffix))
+  end
+
   return value
 end
 

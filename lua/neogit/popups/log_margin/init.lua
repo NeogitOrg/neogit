@@ -7,12 +7,14 @@ function M.create()
     .builder()
     :name("NeogitLogMarginPopup")
     :option("n", "max-count", "256", "Limit number of commits", { default = "256" })
-    :config("o", "order", {
+    :config("o", "neogit.status.order", {
+      prefix = "--",
+      suffix = "-order",
       options = {
         { display = "", value = "" },
-        { display = "--topo", value = "--topo" },
-        { display = "--author-date", value = "--author-date" },
-        { display = "--date", value = "--date" },
+        { display = "topo", value = "--topo" },
+        { display = "author-date", value = "--author-date" },
+        { display = "date", value = "--date" },
       },
     })
     :switch("g", "graph", "Show graph")
