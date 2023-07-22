@@ -24,5 +24,5 @@ end
 
 require("plenary.test_harness").test_directory("tests/specs", {
   minimal_init = "tests/minimal_init.lua",
-  -- sequential = true,
+  sequential = true,
 })
