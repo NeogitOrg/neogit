@@ -94,7 +94,7 @@ function M.mappings_table()
         }
       end),
     },
-    { "LogMarginPopup", "LogMargin", M.open("log_margin") },
+    { "LogMarginPopup", "Log (margin)", M.open("log_margin") },
   }
 end
 
