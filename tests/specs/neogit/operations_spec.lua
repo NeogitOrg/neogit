@@ -40,7 +40,7 @@ describe("branch popup", function()
   it(
     "can create a new branch",
     in_prepared_repo(function()
-      input.value = "branch-from-test"
+      input.values = { "branch-from-test" }
       act("bc<cr><cr>")
       operations.wait("checkout_create_branch")
       eq("branch-from-test", get_current_branch())

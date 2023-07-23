@@ -24,9 +24,10 @@ local function cleanup_push_variables(remote, new_name)
 end
 
 function M.add(name, url, args)
+  print("Adding remote", name, url, vim.inspect(args))
   a.util.scheduler()
 
-  local result = cli.remote.add.arg_list({ unpack(args), name, url }).call()
+  local result = cli.remote.add.arg_list(args).args(name, url).call()
   if result.code ~= 0 then
     notif.create("Couldn't add remote", vim.log.levels.ERROR)
   else
@@ -73,6 +74,10 @@ end
 
 function M.list()
   return cli.remote.call_sync():trim().stdout
+end
+
+function M.get_url(name)
+  return cli.remote.get_url(name).call():trim().stdout
 end
 
 return M
