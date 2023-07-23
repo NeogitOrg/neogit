@@ -175,11 +175,11 @@ neogit.setup {
     item = { ">", "v" },
     hunk = { "", "" },
   },
-  -- Integrations are auto-detected, and enabled if available, but can be disabled by setting to "false"
+  -- Each Integration is auto-detected through plugin presence. Disabled by setting to `false`
   integrations = {
     -- If enabled, use telescope for menu selection rather than vim.ui.select.
     -- Allows multi-select and some things that vim.ui.select doesn't.
-    telescope = false,
+    telescope = nil,
 
     -- Neogit only provides inline diffs. If you want a more traditional way to look at diffs, you can use `sindrets/diffview.nvim`.
     -- The diffview integration enables the diff popup, which is a wrapper around `sindrets/diffview.nvim`.
@@ -193,7 +193,7 @@ neogit.setup {
     --   }
     -- }
     --
-    diffview = false,
+    diffview = nil,
   },
   -- Setting any section to `false` will make the section not render at all
   sections = {

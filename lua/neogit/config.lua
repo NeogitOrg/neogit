@@ -59,12 +59,10 @@ M.values = {
     item = { ">", "v" },
     section = { ">", "v" },
   },
-  integrations = setmetatable({}, {
-    __index = function(_, key)
-      local ok, value = pcall(require, key)
-      return ok and value or false
-    end,
-  }),
+  integrations = {
+    telescope = nil,
+    diffview = nil,
+  },
   sections = {
     untracked = {
       folded = false,
@@ -153,13 +151,20 @@ M.values = {
   },
 }
 
-function M.ensure_integration(name)
-  if not M.values.integrations[name] then
-    vim.api.nvim_err_writeln(string.format("Neogit: `%s` integration is not enabled", name))
-    return false
+---@param name string
+---@return boolean
+function M.check_integration(name)
+  local logger = require("neogit.logger")
+  local enabled = M.values.integrations[name]
+
+  if enabled == nil or enabled == "auto" then
+    local success, _ = pcall(require, name)
+    logger.fmt_info("[CONFIG] Found auto integration '%s = %s'", name, success)
+    return success
   end
 
-  return true
+  logger.fmt_info("[CONFIG] Found explicit integration '%s' = %s", name, enabled)
+  return enabled
 end
 
 return M
