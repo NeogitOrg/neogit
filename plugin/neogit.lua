@@ -13,7 +13,7 @@ end, {
 })
 
 api.nvim_create_user_command("NeogitRepoState", function()
-  vim.print(require("neogit.lib.git").repo.state)
+  vim.print(require("neogit.lib.git").repo)
 end, {
   nargs = "*",
   desc = "Open Neogit Repo State",

@@ -6,13 +6,10 @@ local hl = require("neogit.lib.hl")
 local status = require("neogit.status")
 local state = require("neogit.lib.state")
 local input = require("neogit.lib.input")
-local watcher = require("neogit.watcher")
 local logger = require("neogit.logger")
 
 local cli = require("neogit.lib.git.cli")
 local notification = require("neogit.lib.notification")
-
-local Path = require("plenary.path")
 
 ---@class OpenOpts
 ---@field cwd string|nil
@@ -41,7 +38,6 @@ local setup = function(opts)
 
   hl.setup()
   signs.setup()
-  state.setup()
 end
 
 ---@param opts OpenOpts
@@ -72,7 +68,7 @@ local open = function(opts)
     end
   end
 
-  require("neogit.lib.git").repo:dispatch_refresh { source = "open" }
+  state.setup()
 
   if opts[1] ~= nil then
     local popup_name = opts[1]
@@ -84,8 +80,6 @@ local open = function(opts)
       popup.create()
     end
   else
-    watcher.setup(Path.new(opts.cwd, ".git"):absolute())
-
     a.run(function()
       status.create(opts.kind, opts.cwd)
     end)

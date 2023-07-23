@@ -11,6 +11,8 @@ local F = require("neogit.lib.functional")
 local LineBuffer = require("neogit.lib.line_buffer")
 local fs = require("neogit.lib.fs")
 local input = require("neogit.lib.input")
+local Path = require("plenary.path")
+local watcher = require("neogit.watcher")
 
 local util = require("neogit.lib.util")
 local map = util.map
@@ -504,15 +506,19 @@ end
 
 M.dispatch_reset = a.void(M.reset)
 
+-- TODO: Close Watcher, repo?
 function M.close(skip_close)
   if not skip_close then
     M.status_buffer:close()
   end
   notif.delete_all()
+  watcher.stop(Path.new(require("neogit.lib.git").repo.git_root, ".git"):absolute())
   M.status_buffer = nil
+  M.cwd = nil
   vim.o.autochdir = M.prev_autochdir
   if M.cwd_changed then
-    vim.cmd("cd -")
+    vim.loop.chdir(M.cwd_reset)
+    M.cwd_reset = nil
   end
 end
 
@@ -1126,18 +1132,25 @@ function M.create(kind, cwd)
     name = "NeogitStatus",
     filetype = "NeogitStatus",
     kind = kind,
+    after = function()
+      -- require("neogit.lib.git").repo:dispatch_refresh { source = "open" }
+    end,
     ---@param buffer Buffer
     initialize = function(buffer)
       logger.debug("[STATUS BUFFER]: Initializing...")
 
       M.status_buffer = buffer
-
       M.prev_autochdir = vim.o.autochdir
 
       if cwd then
         M.cwd_changed = true
-        vim.cmd(string.format("cd %s", cwd))
+        M.cwd_reset = vim.loop.cwd()
+        vim.loop.chdir(cwd)
       end
+      M.cwd = vim.loop.cwd()
+
+      require("neogit.lib.git").repo:dispatch_refresh { source = "open" }
+      watcher.setup(Path.new(require("neogit.lib.git").repo.git_root, ".git"):absolute())
 
       vim.o.autochdir = false
 

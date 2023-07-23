@@ -235,8 +235,8 @@ return {
   register = function(meta)
     meta.update_diffs = function(repo)
       local filter
-      if repo.invalidate[1] then
-        filter = ItemFilter.create(repo.invalidate)
+      if repo.invalid[1] then
+        filter = ItemFilter.create(repo.invalid)
       end
 
       for _, f in ipairs(repo.untracked.items) do

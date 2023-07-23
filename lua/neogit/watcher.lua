@@ -1,30 +1,20 @@
 local M = {}
 
+M.watcher = {}
+
 local uv = vim.loop
 
 local config = require("neogit.config")
 local logger = require("neogit.logger")
 local util = require("neogit.lib.util")
-local status = require("neogit.status")
 local git = require("neogit.lib.git")
 
 local a = require("plenary.async")
 
-M.watcher = {}
-
-function M.setup(gitdir)
-  if M.watcher[gitdir] then
-    logger.debug(string.format("[WATCHER] for '%s' already setup! Bailing.", gitdir))
-    return
-  end
-
-  M.watcher[gitdir] = M.watch_git_dir(gitdir)
-end
-
 -- Adapted from https://github.com/lewis6991/gitsigns.nvim/blob/main/lua/gitsigns/manager.lua#L575
 --- @param gitdir string
 --- @return uv_fs_event_t?
-function M.watch_git_dir(gitdir)
+local function start(gitdir)
   if not config.values.auto_refresh then
     return
   end
@@ -33,7 +23,7 @@ function M.watch_git_dir(gitdir)
     200,
     a.void(function()
       logger.debug("[WATCHER] Dispatching Refresh")
-      git.repo:dispatch_refresh { callback = status.dispatch_refresh, source = "watcher" }
+      git.repo:dispatch_refresh { callback = require("neogit.status").dispatch_refresh, source = "watcher" }
     end)
   )
 
@@ -72,6 +62,25 @@ function M.watch_git_dir(gitdir)
   )
 
   return w
+end
+
+function M.stop(gitdir)
+  local watcher = M.watcher[gitdir]
+  if watcher then
+    watcher:stop()
+    M.watcher[gitdir] = nil
+
+    logger.debug("[WATCHER] Stopped watching git dir: " .. gitdir)
+  end
+end
+
+function M.setup(gitdir)
+  if M.watcher[gitdir] then
+    logger.debug(string.format("[WATCHER] for '%s' already setup", gitdir))
+    return
+  end
+
+  M.watcher[gitdir] = start(gitdir)
 end
 
 return M

@@ -124,7 +124,7 @@ end
 local M = {}
 
 function M.stage(...)
-  require("neogit.lib.git.repository"):invalidate(...)
+  require("neogit.lib.git").repo:invalidate(...)
   git.cli.add.files(...).call()
 end
 
@@ -137,7 +137,7 @@ function M.stage_all()
 end
 
 function M.unstage(...)
-  require("neogit.lib.git.repository"):invalidate(...)
+  require("neogit.lib.git").repo:invalidate(...)
   git.cli.reset.files(...).call()
 end
 
