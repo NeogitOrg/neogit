@@ -155,8 +155,7 @@ local function draw_buffer()
     local status_map = config.values.mappings.status
 
     local function hint_label(map_name, hint)
-      local key = status_map[map_name]
-      return "[" .. key .. "] " .. hint
+      return string.format("[%s] %s", status_map[map_name], hint)
     end
 
     local hints = {
