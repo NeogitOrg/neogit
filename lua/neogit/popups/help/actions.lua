@@ -3,7 +3,6 @@ local M = {}
 local util = require("neogit.lib.util")
 local NONE = function() end
 
--- Using deep extend this way creates a copy of the mapping values
 local status_mappings = require("neogit.config").get_copy().mappings.status
 
 local function present(commands)
