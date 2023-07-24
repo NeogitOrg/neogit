@@ -24,7 +24,6 @@ local function cleanup_push_variables(remote, new_name)
 end
 
 function M.add(name, url, args)
-  print("Adding remote", name, url, vim.inspect(args))
   a.util.scheduler()
 
   local result = cli.remote.add.arg_list(args).args(name, url).call()
