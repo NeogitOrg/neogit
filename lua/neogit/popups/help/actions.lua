@@ -7,7 +7,7 @@ local NONE = function() end
 local status_mappings = require("neogit.config").get_reversed_status_maps()
 
 local function present(commands)
-  local presenter = util.map(commands, function(command)
+  local presenter = util.filter_map(commands, function(command)
     local cmd, name, fn = unpack(command)
 
     --- Handle the longer table mapping form (mode, func, esc)
@@ -15,9 +15,12 @@ local function present(commands)
       fn = fn[2]
     end
 
-    return util.map(status_mappings[cmd] or {}, function(key)
-      return { name = name, key = key, fn = fn }
-    end)
+    local keymap = status_mappings[cmd]
+    if keymap and #keymap > 0 then
+      return { { name = name, key = table.concat(keymap, " "), fn = fn } }
+    else
+      return { { name = name, key = "<unmapped>", fn = fn } }
+    end
   end)
 
   presenter = util.flatten(presenter)

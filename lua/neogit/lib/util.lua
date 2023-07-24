@@ -29,12 +29,14 @@ local function flatten(tbl)
   return t
 end
 
----@param tbl any[]
----@param f fun(v: any) -> any|nil
----@return any[]
-local function filter_map(tbl, f)
+---@generic T: any
+---@generic U: any
+---@param list T[]
+---@param f fun(v: T): U|nil
+---@return U[]
+local function filter_map(list, f)
   local t = {}
-  for _, v in ipairs(tbl) do
+  for _, v in ipairs(list) do
     v = f(v)
     if v ~= nil then
       table.insert(t, v)

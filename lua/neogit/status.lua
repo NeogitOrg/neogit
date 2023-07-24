@@ -155,9 +155,9 @@ local function draw_buffer()
     local reversed_status_map = config.get_reversed_status_maps()
 
     local function hint_label(map_name, hint)
-      local key = reversed_status_map[map_name]
-      if key and key[1] then
-        return string.format("[%s] %s", key[1], hint)
+      local keys = reversed_status_map[map_name]
+      if keys and #keys > 0 then
+        return string.format("[%s] %s", table.concat(keys, " "), hint)
       else
         return string.format("[<unmapped>] %s", hint)
       end
