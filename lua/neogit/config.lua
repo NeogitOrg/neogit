@@ -5,11 +5,14 @@ local M = {}
 function M.get_reversed_status_maps()
   local result = {}
   for k, v in pairs(M.values.mappings.status) do
-    local current = result[v]
-    if current then
-      table.insert(current, k)
-    else
-      result[v] = { k }
+    -- If `v == false` the mapping is disabled
+    if v then
+      local current = result[v]
+      if current then
+        table.insert(current, k)
+      else
+        result[v] = { k }
+      end
     end
   end
 

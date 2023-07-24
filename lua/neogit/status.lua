@@ -1169,7 +1169,7 @@ function M.create(kind, cwd)
       local func_map = cmd_func_map()
 
       for key, val in pairs(config.values.mappings.status) do
-        if val ~= "" then
+        if val and val ~= "" then
           local func = func_map[val]
           if func ~= nil then
             mappings[key] = func
