@@ -134,6 +134,15 @@ local function update_branch_information(state)
         state.upstream.commit_message = result.stdout[1]
       end)
     end
+
+    local pushRemote = require("neogit.lib.git").branch.pushRemote_ref()
+    if pushRemote then
+      table.insert(tasks, function()
+        local result =
+          git.cli.log.max_count(1).pretty("%B").for_range(pushRemote).show_popup(false).call():trim()
+        state.pushRemote.commit_message = result.stdout[1]
+      end)
+    end
   end
 
   if #tasks > 0 then
