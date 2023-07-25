@@ -200,12 +200,13 @@ local function draw_buffer()
   local new_locations = {}
   local locations_lookup = Collection.new(M.locations):key_by("name")
 
-  local function render_section(header, key)
+  local function render_section(header, key, data)
     local section_config = config.values.sections[key]
     if section_config == false then
       return
     end
-    local data = git.repo[key]
+
+    data = data or git.repo[key]
     if #data.items == 0 then
       return
     end
@@ -298,8 +299,14 @@ local function draw_buffer()
 
   local upstream = git.branch.upstream()
   if upstream then
-    render_section(string.format("Unpulled from %s", upstream), "unpulled")
-    render_section(string.format("Unmerged into %s", upstream), "unmerged")
+    render_section(string.format("Unpulled from %s", upstream), "unpulled", git.repo.upstream.unpulled)
+    render_section(string.format("Unmerged into %s", upstream), "unmerged", git.repo.upstream.unmerged)
+  end
+
+  local pushRemote = git.branch.pushRemote_ref()
+  if pushRemote then
+    render_section(string.format("Unpulled from %s", pushRemote), "unpulled", git.repo.pushRemote.unpulled)
+    render_section(string.format("Unpushed to %s", pushRemote), "unmerged", git.repo.pushRemote.unmerged)
   end
 
   render_section("Recent commits", "recent")
