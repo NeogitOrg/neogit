@@ -120,8 +120,12 @@ function M.set_pushRemote()
   return pushRemote
 end
 
+function M.upstream()
+  return require("neogit.lib.git").repo.upstream.ref
+end
+
 function M.upstream_label()
-  return require("neogit.lib.git").repo.upstream.ref or "@{upstream}, creating it"
+  return M.upstream() or "@{upstream}, creating it"
 end
 
 function M.upstream_remote()
