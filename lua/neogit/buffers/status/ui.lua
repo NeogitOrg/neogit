@@ -133,8 +133,8 @@ function M._TEST()
         return f.diff
       end),
       stashes = repo.stashes.items,
-      unpulled_changes = repo.unpulled.items,
-      unmerged_changes = repo.unmerged.items,
+      unpulled_changes = repo.upstream.unpulled.items,
+      unmerged_changes = repo.upstream.unmerged.items,
       recent_changes = repo.recent.items,
     })
     :open()
