@@ -172,17 +172,27 @@ local function draw_buffer()
   end
 
   output:append(
-    string.format("Head: %s %s", git.repo.head.branch, git.repo.head.commit_message or "(no commits)")
+    string.format("Head:     %s %s", git.repo.head.branch, git.repo.head.commit_message or "(no commits)")
   )
 
   if git.repo.upstream.ref then
     output:append(
-      string.format("Push: %s %s", git.repo.upstream.ref, git.repo.upstream.commit_message or "(no commits)")
+      string.format(
+        "Merge:    %s %s",
+        git.repo.upstream.ref,
+        git.repo.upstream.commit_message or "(no commits)"
+      )
     )
   end
 
-  if git.repo.merge.head then
-    output:append(string.format("Merge: %s", git.repo.merge.msg or "(no message)"))
+  if git.branch.pushRemote_ref() then
+    output:append(
+      string.format(
+        "Push:     %s %s",
+        git.branch.pushRemote_ref(),
+        git.repo.pushRemote.commit_message or "(does not exist)"
+      )
+    )
   end
 
   output:append("")
@@ -280,12 +290,18 @@ local function draw_buffer()
   if git.repo.rebase.head then
     render_section("Rebasing: " .. git.repo.rebase.head, "rebase")
   end
+
   render_section("Untracked files", "untracked")
   render_section("Unstaged changes", "unstaged")
   render_section("Staged changes", "staged")
   render_section("Stashes", "stashes")
-  render_section("Unpulled changes", "unpulled")
-  render_section("Unmerged changes", "unmerged")
+
+  local upstream = git.branch.upstream()
+  if upstream then
+    render_section(string.format("Unpulled from %s", upstream), "unpulled")
+    render_section(string.format("Unmerged into %s", upstream), "unmerged")
+  end
+
   render_section("Recent commits", "recent")
 
   M.status_buffer:replace_content_with(output)
