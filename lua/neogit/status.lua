@@ -285,8 +285,14 @@ local function draw_buffer()
   render_section("Unstaged changes", "unstaged")
   render_section("Staged changes", "staged")
   render_section("Stashes", "stashes")
-  render_section("Unpulled changes", "unpulled")
-  render_section("Unmerged changes", "unmerged")
+
+  local upstream = git.branch.upstream()
+  if upstream then
+    render_section(string.format("Unpulled from %s", upstream), "unpulled")
+    render_section(string.format("Unmerged into %s", upstream), "unmerged")
+    fn.matchadd("NeogitPopupBranchName", upstream, 100)
+  end
+
   render_section("Recent commits", "recent")
 
   M.status_buffer:replace_content_with(output)
