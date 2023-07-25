@@ -89,7 +89,7 @@ end
 
 function M.pushRemote_ref(branch)
   branch = branch or require("neogit.lib.git").repo.head.branch
-  local pushRemote = M.pushRemote()
+  local pushRemote = M.pushRemote(branch)
 
   if branch and pushRemote then
     return pushRemote .. "/" .. branch
