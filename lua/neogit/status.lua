@@ -280,6 +280,7 @@ local function draw_buffer()
   if git.repo.rebase.head then
     render_section("Rebasing: " .. git.repo.rebase.head, "rebase")
   end
+
   render_section("Untracked files", "untracked")
   render_section("Unstaged changes", "unstaged")
   render_section("Staged changes", "staged")
