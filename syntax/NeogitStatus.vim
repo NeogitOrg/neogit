@@ -25,6 +25,7 @@ endfor
 
 syn region NeogitHeadRegion         start=/^Head: \zs/        end=/$/ contains=NeogitBranch
 syn region NeogitPushRegion         start=/^Push: \zs/        end=/$/ contains=NeogitRemote
+syn region NeogitMergeRegion        start=/^Merge: \zs/       end=/$/ contains=NeogitRemote
 syn region NeogitUnmergedIntoRegion start=/^Unmerged into .*/ end=/$/ contains=NeogitRemote,NeogitUnmergedInto
 syn region NeogitUnpulledFromRegion start=/^Unpulled from .*/ end=/$/ contains=NeogitRemote,NeogitUnpulledFrom
 syn region NeogitDiffAddRegion      start=/^+.*$/             end=/$/ contains=NeogitDiffAdd
