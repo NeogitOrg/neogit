@@ -76,10 +76,16 @@ M.values = {
     stashes = {
       folded = true,
     },
-    unpulled = {
+    unpulled_upstream = {
       folded = true,
     },
-    unmerged = {
+    unmerged_upstream = {
+      folded = false,
+    },
+    unpulled_pushremote = {
+      folded = true,
+    },
+    unmerged_pushremote = {
       folded = false,
     },
     recent = {
