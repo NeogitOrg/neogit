@@ -303,7 +303,9 @@ local function draw_buffer()
   render_section("Stashes", "stashes")
 
   local pushRemote = git.branch.pushRemote_ref()
-  if pushRemote then
+  local upstream = git.branch.upstream()
+
+  if pushRemote and upstream ~= pushRemote then
     render_section(
       string.format("Unpulled from %s", pushRemote),
       "unpulled_pushRemote",
@@ -316,7 +318,6 @@ local function draw_buffer()
     )
   end
 
-  local upstream = git.branch.upstream()
   if upstream then
     render_section(
       string.format("Unpulled from %s", upstream),
