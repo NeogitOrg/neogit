@@ -297,16 +297,32 @@ local function draw_buffer()
   render_section("Staged changes", "staged")
   render_section("Stashes", "stashes")
 
-  local upstream = git.branch.upstream()
-  if upstream then
-    render_section(string.format("Unpulled from %s", upstream), "unpulled", git.repo.upstream.unpulled)
-    render_section(string.format("Unmerged into %s", upstream), "unmerged", git.repo.upstream.unmerged)
-  end
-
   local pushRemote = git.branch.pushRemote_ref()
   if pushRemote then
-    render_section(string.format("Unpulled from %s", pushRemote), "unpulled", git.repo.pushRemote.unpulled)
-    render_section(string.format("Unpushed to %s", pushRemote), "unmerged", git.repo.pushRemote.unmerged)
+    render_section(
+      string.format("Unpulled from %s", pushRemote),
+      "unpulled_pushremote",
+      git.repo.pushRemote.unpulled
+    )
+    render_section(
+      string.format("Unpushed to %s", pushRemote),
+      "unmerged_pushremote",
+      git.repo.pushRemote.unmerged
+    )
+  end
+
+  local upstream = git.branch.upstream()
+  if upstream then
+    render_section(
+      string.format("Unpulled from %s", upstream),
+      "unpulled_upstream",
+      git.repo.upstream.unpulled
+    )
+    render_section(
+      string.format("Unmerged into %s", upstream),
+      "unmerged_upstream",
+      git.repo.upstream.unmerged
+    )
   end
 
   render_section("Recent commits", "recent")
