@@ -82,10 +82,10 @@ M.values = {
     unmerged_upstream = {
       folded = false,
     },
-    unpulled_pushremote = {
+    unpulled_pushRemote = {
       folded = true,
     },
-    unmerged_pushremote = {
+    unmerged_pushRemote = {
       folded = false,
     },
     recent = {

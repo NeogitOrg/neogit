@@ -306,12 +306,12 @@ local function draw_buffer()
   if pushRemote then
     render_section(
       string.format("Unpulled from %s", pushRemote),
-      "unpulled_pushremote",
+      "unpulled_pushRemote",
       git.repo.pushRemote.unpulled
     )
     render_section(
       string.format("Unpushed to %s", pushRemote),
-      "unmerged_pushremote",
+      "unmerged_pushRemote",
       git.repo.pushRemote.unmerged
     )
   end
