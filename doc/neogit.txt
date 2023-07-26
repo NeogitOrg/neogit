@@ -143,5 +143,122 @@ Z                       Open stash popup
 ==============================================================================
 4. Highlights                                    *neogit-highlights*
 
+The following highlight groups are defined by this plugin. If you set any of
+these yourself before the plugin loads, that will be respected. If they do not
+exist, they will be created with sensible defaults based on your colorscheme.
 
- vim:tw=78:ts=8:ft=help
+GENERAL
+STATUS BUFFER
+NeogitBranch                Header showing currently checked out branch
+NeogitRemote                Header showing current branch's remote (if set)
+NeogitObjectId              Object's SHA hash
+NeogitStash                 Stash name
+NeogitFold                  Folded text highlight
+NeogitRebaseDone            Current position within rebase
+
+
+STATUS BUFFER SECTION HEADERS
+NeogitUnpushedTo
+NeogitUnmergedInto
+NeogitUnpulledFrom
+NeogitUntrackedfiles
+NeogitUnstagedchanges
+NeogitUnmergedchanges
+NeogitUnpulledchanges
+NeogitRecentcommits
+NeogitStagedchanges
+NeogitStashes
+NeogitRebasing
+
+
+STATUS BUFFER FILE
+Applied to the label on the left of filenames.
+
+NeogitChangeModified
+NeogitChangeAdded
+NeogitChangeDeleted
+NeogitChangeRenamed
+NeogitChangeUpdated
+NeogitChangeCopied
+NeogitChangeBothModified
+NeogitChangeNewFile
+
+
+SIGNS FOR LINE HIGHLIGHTING
+Used to highlight different sections of the status buffer or commit buffer. Will to entire line.
+
+NeogitHunkHeader
+NeogitDiffContext
+NeogitDiffAdd
+NeogitDiffDelete
+NeogitDiffHeader
+
+
+SIGNS FOR LINE HIGHLIGHTING CURRENT CONTEXT
+These are essential an accented version of the above highlight groups. Only
+applies to the current context the cursor is within.
+
+NeogitHunkHeaderHighlight
+NeogitDiffContextHighlight
+NeogitDiffAddHighlight
+NeogitDiffDeleteHighlight
+NeogitDiffHeaderHighlight
+NeogitCursorLine            Applies a "fake" cursorline highlight because
+                            signs will otherwise take precedence over normal CursorLine HL group
+
+COMMIT BUFFER
+NeogitFilePath              Applied to filepath
+NeogitCommitViewHeader
+
+
+LOG VIEW BUFFER
+NeogitGraphRed              Used when --colors is enabled for graph
+NeogitGraphOrange
+NeogitGraphYellow
+NeogitGraphGreen
+NeogitGraphBlue
+NeogitGraphPurple
+
+NeogitGraphRedBold          (Same as above, but bold)
+NeogitGraphOrangeBold
+NeogitGraphYellowBold
+NeogitGraphGreenBold
+NeogitGraphBlueBold
+NeogitGraphPurpleBold
+
+
+POPUPS
+NeogitPopupSectionTitle    Applied to all section headers
+NeogitPopupBranchName      Applied to the current branch name for emphasis
+NeogitPopupBold            Applied on "@{upstream}" and "pushRemote" for
+                           emphasis (but less emphasis than BranchName)
+
+NeogitPopupSwitchKey       Applied to the key that will toggle switch
+NeogitPopupSwitchEnabled   Applied to the flag if enabled
+NeogitPopupSwitchDisabled  Applied to the flag if disabled
+
+NeogitPopupOptionKey       Applied to the key that will trigger option
+NeogitPopupOptionEnabled   Applied if option is set
+NeogitPopupOptionDisabled  Applied if option has no value
+
+NeogitPopupConfigKey       Applied to the key that triggers config
+NeogitPopupConfigEnabled   Applied to enabled config value
+NeogitPopupConfigDisabled  Applied to config without value
+
+NeogitPopupActionKey       Applied to key that triggers function
+NeogitPopupActionDisabled  Applied to key when function is unimplemented
+
+
+NOTIFICATIONS
+NeogitNotificationInfo     Linked to DiagnosticInfo by default
+NeogitNotificationWarning  Linked to DiagnosticWarning by default
+NeogitNotificationError    Linked to DiagnosticError by default
+
+
+COMMAND HISTORY BUFFER
+NeogitCommandText          Git command that was run
+NeogitCommandTime          Execution time
+NeogitCommandCodeNormal    Applied to a successful command's exit status (zero)
+NeogitCommandCodeError     When command exits with non-zero status
+
+vim:tw=78:ts=8:ft=help
