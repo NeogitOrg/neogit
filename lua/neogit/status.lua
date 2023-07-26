@@ -171,8 +171,13 @@ local function draw_buffer()
     output:append("")
   end
 
+  -- stylua: ignore
   output:append(
-    string.format("Head:     %s %s", git.repo.head.branch, git.repo.head.commit_message or "(no commits)")
+    string.format(
+      "Head:     %s %s",
+      git.repo.head.branch,
+      git.repo.head.commit_message or "(no commits)"
+    )
   )
 
   if git.repo.upstream.ref then
