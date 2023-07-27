@@ -153,6 +153,7 @@ function M.setup()
     NeogitBranch = { fg = palette.orange, bold = true },
     NeogitRemote = { fg = palette.green, bold = true },
     NeogitUnmergedInto = { fg = palette.bg_purple, bold = true },
+    NeogitUnpushedTo = { fg = palette.bg_purple, bold = true },
     NeogitUnpulledFrom = { fg = palette.bg_purple, bold = true },
     NeogitObjectId = { link = "Comment" },
     NeogitStash = { link = "Comment" },

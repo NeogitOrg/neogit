@@ -171,8 +171,13 @@ local function draw_buffer()
     output:append("")
   end
 
+  -- stylua: ignore
   output:append(
-    string.format("Head:     %s %s", git.repo.head.branch, git.repo.head.commit_message or "(no commits)")
+    string.format(
+      "Head:     %s %s",
+      git.repo.head.branch,
+      git.repo.head.commit_message or "(no commits)"
+    )
   )
 
   if git.repo.upstream.ref then
@@ -200,12 +205,13 @@ local function draw_buffer()
   local new_locations = {}
   local locations_lookup = Collection.new(M.locations):key_by("name")
 
-  local function render_section(header, key)
+  local function render_section(header, key, data)
     local section_config = config.values.sections[key]
     if section_config == false then
       return
     end
-    local data = git.repo[key]
+
+    data = data or git.repo[key]
     if #data.items == 0 then
       return
     end
@@ -296,10 +302,33 @@ local function draw_buffer()
   render_section("Staged changes", "staged")
   render_section("Stashes", "stashes")
 
+  local pushRemote = git.branch.pushRemote_ref()
   local upstream = git.branch.upstream()
+
+  if pushRemote and upstream ~= pushRemote then
+    render_section(
+      string.format("Unpulled from %s", pushRemote),
+      "unpulled_pushRemote",
+      git.repo.pushRemote.unpulled
+    )
+    render_section(
+      string.format("Unpushed to %s", pushRemote),
+      "unmerged_pushRemote",
+      git.repo.pushRemote.unmerged
+    )
+  end
+
   if upstream then
-    render_section(string.format("Unpulled from %s", upstream), "unpulled")
-    render_section(string.format("Unmerged into %s", upstream), "unmerged")
+    render_section(
+      string.format("Unpulled from %s", upstream),
+      "unpulled_upstream",
+      git.repo.upstream.unpulled
+    )
+    render_section(
+      string.format("Unmerged into %s", upstream),
+      "unmerged_upstream",
+      git.repo.upstream.unmerged
+    )
   end
 
   render_section("Recent commits", "recent")
