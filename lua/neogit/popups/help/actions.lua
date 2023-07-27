@@ -7,7 +7,7 @@ local NONE = function() end
 local status_mappings = require("neogit.config").get_reversed_status_maps()
 
 local function present(commands)
-  local presenter = util.filter_map(commands, function(command)
+  local presenter = util.map(commands, function(command)
     local cmd, name, fn = unpack(command)
 
     --- Handle the longer table mapping form (mode, func, esc)
