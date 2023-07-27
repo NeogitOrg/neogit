@@ -415,6 +415,8 @@ local function render_action(action)
   local items = {
     text(" "),
   }
+
+  -- selene: allow(empty_if)
   if action.keys == nil then
     -- Action group heading
   elseif #action.keys == 0 then
