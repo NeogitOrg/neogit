@@ -1,2 +1,5 @@
 .luacheckcache
 tmp/
+
+# Generated files
+doc/tags
