@@ -28,7 +28,6 @@ local setup = function(opts)
   did_setup = true
 
   if opts ~= nil then
-    print("Setting up neogit with options", vim.inspect(opts))
     config.values = vim.tbl_deep_extend("force", config.values, opts)
   end
 
