@@ -564,7 +564,7 @@ function M:show()
         vim.fn.matchadd("NeogitPopupBold", text, 100)
       end
 
-      if config.values.popup.kind == "split" then
+      if config.values.popup.kind == "split" or config.values.popup.kind == "split_above" then
         vim.cmd([[execute "resize" . (line("$") + 1)]])
       end
     end,
