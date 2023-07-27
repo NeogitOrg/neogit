@@ -411,6 +411,29 @@ local Config = Component.new(function(props)
   return col(c)
 end)
 
+local function render_action(action)
+  local items = {
+    text(" "),
+  }
+
+  -- selene: allow(empty_if)
+  if action.keys == nil then
+    -- Action group heading
+  elseif #action.keys == 0 then
+    table.insert(items, text.highlight("NeogitPopupActionDisabled")("_"))
+  else
+    for i, key in ipairs(action.keys) do
+      table.insert(items, text.highlight("NeogitPopupActionKey")(key))
+      if i < #action.keys then
+        table.insert(items, text(","))
+      end
+    end
+  end
+  table.insert(items, text(" "))
+  table.insert(items, text(action.description))
+  return items
+end
+
 local Actions = Component.new(function(props)
   return col {
     Grid.padding_left(1) {
@@ -420,19 +443,9 @@ local Actions = Component.new(function(props)
         if item.heading then
           return row.highlight("NeogitPopupSectionTitle") { text(item.heading) }
         elseif not item.callback then
-          return row.highlight("NeogitPopupActionDisabled") {
-            text(" "),
-            text(item.key),
-            text(" "),
-            text(item.description),
-          }
+          return row.highlight("NeogitPopupActionDisabled")(render_action(item))
         else
-          return row {
-            text(" "),
-            text.highlight("NeogitPopupActionKey")(item.key),
-            text(" "),
-            text(item.description),
-          }
+          return row(render_action(item))
         end
       end,
     },
@@ -496,18 +509,22 @@ function M:show()
       if action.heading then
         -- nothing
       elseif action.callback then
-        mappings.n[action.key] = function()
-          logger.debug(string.format("[POPUP]: Invoking action '%s' of %s", action.key, self.state.name))
-          local ret = action.callback(self)
-          self:close()
-          if type(ret) == "function" then
-            ret()
+        for _, key in ipairs(action.keys) do
+          mappings.n[key] = function()
+            logger.debug(string.format("[POPUP]: Invoking action '%s' of %s", key, self.state.name))
+            local ret = action.callback(self)
+            self:close()
+            if type(ret) == "function" then
+              ret()
+            end
           end
         end
       else
-        mappings.n[action.key] = function()
-          local notif = require("neogit.lib.notification")
-          notif.create(action.description .. " has not been implemented yet", vim.log.levels.WARN)
+        for _, key in ipairs(action.keys) do
+          mappings.n[key] = function()
+            local notif = require("neogit.lib.notification")
+            notif.create(action.description .. " has not been implemented yet", vim.log.levels.WARN)
+          end
         end
       end
     end

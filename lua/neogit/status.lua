@@ -155,7 +155,12 @@ local function draw_buffer()
     local reversed_status_map = config.get_reversed_status_maps()
 
     local function hint_label(map_name, hint)
-      return "[" .. reversed_status_map[map_name] .. "] " .. hint
+      local keys = reversed_status_map[map_name]
+      if keys and #keys > 0 then
+        return string.format("[%s] %s", table.concat(keys, " "), hint)
+      else
+        return string.format("[<unmapped>] %s", hint)
+      end
     end
 
     local hints = {
@@ -1211,7 +1216,7 @@ function M.create(kind, cwd)
       local func_map = cmd_func_map()
 
       for key, val in pairs(config.values.mappings.status) do
-        if val ~= "" then
+        if val and val ~= "" then
           local func = func_map[val]
           if func ~= nil then
             mappings[key] = func

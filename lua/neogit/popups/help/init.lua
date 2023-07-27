@@ -9,7 +9,7 @@ function M.create(env)
 
   local popups = actions.popups()
   for i, cmd in ipairs(popups) do
-    p = p:action(cmd.key, cmd.name, cmd.fn)
+    p = p:action(cmd.keys, cmd.name, cmd.fn)
 
     if i == math.floor(#popups / 2) then
       p = p:new_action_group()
@@ -18,12 +18,12 @@ function M.create(env)
 
   p = p:new_action_group():new_action_group("Applying changes")
   for _, cmd in ipairs(actions.actions()) do
-    p = p:action(cmd.key, cmd.name, cmd.fn)
+    p = p:action(cmd.keys, cmd.name, cmd.fn)
   end
 
   p = p:new_action_group():new_action_group("Essential commands")
   for _, cmd in ipairs(actions.essential()) do
-    p = p:action(cmd.key, cmd.name, cmd.fn)
+    p = p:action(cmd.keys, cmd.name, cmd.fn)
   end
 
   p = p:env(env):build()
