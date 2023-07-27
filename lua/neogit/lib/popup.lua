@@ -411,6 +411,27 @@ local Config = Component.new(function(props)
   return col(c)
 end)
 
+local function render_action(action)
+  local items = {
+    text(" "),
+  }
+  if action.keys == nil then
+    -- Action group heading
+  elseif #action.keys == 0 then
+    table.insert(items, text.highlight("NeogitPopupActionDisabled")("_"))
+  else
+    for i, key in ipairs(action.keys) do
+      table.insert(items, text.highlight("NeogitPopupActionKey")(key))
+      if i < #action.keys then
+        table.insert(items, text(","))
+      end
+    end
+  end
+  table.insert(items, text(" "))
+  table.insert(items, text(action.description))
+  return items
+end
+
 local Actions = Component.new(function(props)
   return col {
     Grid.padding_left(1) {
@@ -420,33 +441,9 @@ local Actions = Component.new(function(props)
         if item.heading then
           return row.highlight("NeogitPopupSectionTitle") { text(item.heading) }
         elseif not item.callback then
-          local items = {
-            text(" "),
-          }
-          for i, key in ipairs(item.keys or {}) do
-            table.insert(items, key)
-            if i < #item.keys then
-              table.insert(items, text(","))
-            end
-          end
-
-          table.insert(items, text(" "))
-          table.insert(items, text(item.description))
-
-          return row.highlight("NeogitPopupActionDisabled")(items)
+          return row.highlight("NeogitPopupActionDisabled")(render_action(item))
         else
-          local items = {
-            text(" "),
-          }
-          for i, key in ipairs(item.keys) do
-            table.insert(items, text.highlight("NeogitPopupActionKey")(key))
-            if i < #item.keys then
-              table.insert(items, text(","))
-            end
-          end
-          table.insert(items, text(" "))
-          table.insert(items, text(item.description))
-          return row(items)
+          return row(render_action(item))
         end
       end,
     },

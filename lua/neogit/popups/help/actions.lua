@@ -19,7 +19,7 @@ local function present(commands)
     if keymap and #keymap > 0 then
       return { { name = name, keys = keymap, cmp = table.concat(keymap):lower(), fn = fn } }
     else
-      return { { name = name, keys = { "<unmapped>" }, cmp = "", fn = fn } }
+      return { { name = name, keys = {}, cmp = "", fn = fn } }
     end
   end)
 
