@@ -27,10 +27,7 @@ local setup = function(opts)
   end
   did_setup = true
 
-  if opts ~= nil then
-    config.values = vim.tbl_deep_extend("force", config.values, opts)
-  end
-
+  config.setup(opts)
   hl.setup()
   signs.setup()
   state.setup()
