@@ -22,6 +22,24 @@ local function parse_remote_branch_name(ref)
   return remote, branch_name
 end
 
+M.spin_off_branch = operation("spin_off_branch", function()
+  if #git.repo.staged.items > 0 or #git.repo.unstaged.items > 0 then
+    notif.create("Staying on current branch as there are uncommitted changes.", vim.log.levels.INFO)
+    return
+  end
+
+  local name = git.branch.create()
+
+  local upstream = git.repo.upstream.ref
+  if upstream then
+    git.cli.reset.hard.args(upstream).call_sync()
+  end
+
+  git.cli.checkout.branch(name).call_sync()
+
+  status.refresh(true, "spin_off_branch")
+end)
+
 M.checkout_branch_revision = operation("checkout_branch_revision", function(popup)
   local selected_branch = FuzzyFinderBuffer.new(git.branch.get_all_branches()):open_async()
   if not selected_branch then
