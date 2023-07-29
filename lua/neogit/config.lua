@@ -34,7 +34,6 @@ function M.get_default_values()
     disable_insert_on_commit = true,
     use_per_project_settings = true,
     remember_settings = true,
-    use_magit_keybindings = false,
     auto_refresh = true,
     sort_branches = "-committerdate",
     kind = "tab",
