@@ -1,7 +1,5 @@
-local a = require("plenary.async")
 local cli = require("neogit.lib.git.cli")
 local config_lib = require("neogit.lib.git.config")
-local input = require("neogit.lib.input")
 local config = require("neogit.config")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
@@ -51,16 +49,8 @@ function M.is_unmerged(branch, base)
   return cli.cherry.arg_list({ base or "master", branch }).call_sync():trim().stdout[1] ~= nil
 end
 
-function M.create()
-  a.util.scheduler()
-  local name = input.get_user_input("branch > ")
-  if not name or name == "" then
-    return
-  end
-
-  cli.branch.name(name:gsub("%s", "-")).call_interactive()
-
-  return name
+function M.create(name)
+  cli.branch.name(name).call_interactive()
 end
 
 function M.current()
@@ -73,6 +63,13 @@ function M.current()
       return branch_name[1]
     end
     return nil
+  end
+end
+
+function M.current_full_name()
+  local current = M.current()
+  if current then
+    return cli["rev-parse"].symbolic_full_name.args(current).call_sync():trim().stdout[1]
   end
 end
 
