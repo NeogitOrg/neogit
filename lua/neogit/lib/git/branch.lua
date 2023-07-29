@@ -58,7 +58,8 @@ function M.create()
     return
   end
 
-  cli.branch.name(name:gsub("%s", "-")).call_interactive()
+  name = name:gsub("%s", "-")
+  cli.branch.name(name).call_interactive()
 
   return name
 end
