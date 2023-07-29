@@ -5,6 +5,8 @@ local harness = require("tests.util.git_harness")
 local in_prepared_repo = harness.in_prepared_repo
 local get_current_branch = harness.get_current_branch
 local get_git_branches = harness.get_git_branches
+local get_git_rev = harness.get_git_rev
+local util = require("tests.util.util")
 
 local FuzzyFinderBuffer = require("tests.mocks.fuzzy_finder")
 local status = require("neogit.status")
@@ -56,6 +58,51 @@ describe("branch popup", function()
       operations.wait("create_branch")
       eq("master", get_current_branch())
       assert.True(vim.tbl_contains(get_git_branches(), "branch-from-test-create"))
+    end)
+  )
+
+  it(
+    "can rename a branch",
+    in_prepared_repo(function()
+      FuzzyFinderBuffer.value = "second-branch"
+      input.value = "second-branch-renamed"
+
+      act("bm<cr><cr>")
+      operations.wait("rename_branch")
+      eq(true, vim.tbl_contains(get_git_branches(), "second-branch-renamed"))
+      eq(false, vim.tbl_contains(get_git_branches(), "second-branch"))
+    end)
+  )
+
+  it(
+    "can reset a branch",
+    in_prepared_repo(function()
+      util.system([[
+        git config user.email "test@neogit-test.test"
+        git config user.name "Neogit Test"
+        ]])
+
+      FuzzyFinderBuffer.value = "second-branch"
+
+      util.system("git commit --allow-empty -m 'test'")
+      assert.are.Not.same("e2c2a1c0e5858a690c1dc13edc1fd5de103409d9", get_git_rev("HEAD"))
+
+      act("bXy<cr>")
+      operations.wait("reset_branch")
+      assert.are.same("e2c2a1c0e5858a690c1dc13edc1fd5de103409d9", get_git_rev("HEAD"))
+
+      assert.are.same('e2c2a1c HEAD@{0}: "reset: moving to second-branch"\n', util.system("git reflog -n1"))
+    end)
+  )
+
+  it(
+    "can delete a branch",
+    in_prepared_repo(function()
+      FuzzyFinderBuffer.value = "second-branch"
+
+      act("bD<cr>")
+      operations.wait("delete_branch")
+      eq(false, vim.tbl_contains(get_git_branches(), "second-branch"))
     end)
   )
 end)
