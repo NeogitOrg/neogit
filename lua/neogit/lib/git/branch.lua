@@ -67,8 +67,9 @@ function M.current()
 end
 
 function M.current_full_name()
-  if M.current() then
-    return cli["rev-parse"].symbolic_full_name.args(M.current()).call_sync():trim().stdout[1]
+  local current = M.current()
+  if current then
+    return cli["rev-parse"].symbolic_full_name.args(current).call_sync():trim().stdout[1]
   end
 end
 
