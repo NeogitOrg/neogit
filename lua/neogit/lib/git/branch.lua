@@ -50,7 +50,7 @@ function M.is_unmerged(branch, base)
 end
 
 function M.create(name)
-  cli.branch.name(name).call()
+  cli.branch.name(name).call_interactive()
 end
 
 function M.current()

@@ -4,6 +4,7 @@ local operations = require("neogit.operations")
 local harness = require("tests.util.git_harness")
 local in_prepared_repo = harness.in_prepared_repo
 local get_current_branch = harness.get_current_branch
+local get_git_branches = harness.get_git_branches
 
 local FuzzyFinderBuffer = require("tests.mocks.fuzzy_finder")
 local status = require("neogit.status")
@@ -44,6 +45,17 @@ describe("branch popup", function()
       act("bc<cr><cr>")
       operations.wait("checkout_create_branch")
       eq("branch-from-test", get_current_branch())
+    end)
+  )
+
+  it(
+    "can create a new branch without checking it out",
+    in_prepared_repo(function()
+      input.value = "branch-from-test-create"
+      act("bn<cr><cr>")
+      operations.wait("create_branch")
+      eq("master", get_current_branch())
+      assert.True(vim.tbl_contains(get_git_branches(), "branch-from-test-create"))
     end)
   )
 end)
