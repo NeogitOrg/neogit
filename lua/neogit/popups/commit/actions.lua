@@ -8,11 +8,12 @@ local a = require("plenary.async")
 
 local function confirm_modifications()
   if
-    #git.repo.unmerged.items < 1
+    git.branch.upstream()
+    and #git.repo.upstream.unmerged.items < 1
     and not input.get_confirmation(
       string.format(
         "This commit has already been published to %s, do you really want to modify it?",
-        git.repo.upstream.ref
+        git.branch.upstream()
       ),
       { values = { "&Yes", "&No" }, default = 2 }
     )

@@ -61,7 +61,7 @@ function M:group_heading(heading)
   return self
 end
 
--- Conditionally adds new heading to current column within actions section of popup
+---Conditionally adds new heading to current column within actions section of popup
 ---@param cond boolean
 ---@param heading string
 ---@return self
@@ -250,20 +250,28 @@ function M:config_if(cond, key, name, options)
   return self
 end
 
----@param key string Key for user to hit that runs action
+---@param keys string|string[] Key or list of keys for the user to press that runs the action
 ---@param description string Description of action in UI
 ---@param callback function Function that gets run in async context
 ---@return self
-function M:action(key, description, callback)
-  if not self.state.keys[key] then
-    table.insert(self.state.actions[#self.state.actions], {
-      key = key,
-      description = description,
-      callback = callback and a.void(callback) or nil,
-    })
+function M:action(keys, description, callback)
+  if type(keys) == "string" then
+    keys = { keys }
+  end
 
+  for _, key in pairs(keys) do
+    if self.state.keys[key] then
+      require("neogit.logger").fmt_warn("[POPUP] Duplicate key mapping %q", key)
+      return self
+    end
     self.state.keys[key] = true
   end
+
+  table.insert(self.state.actions[#self.state.actions], {
+    keys = keys,
+    description = description,
+    callback = callback and a.void(callback) or nil,
+  })
 
   return self
 end
