@@ -46,4 +46,24 @@ describe("branch popup", function()
       eq("branch-from-test", get_current_branch())
     end)
   )
+
+  it(
+    "can spin off a branch",
+    in_prepared_repo(function()
+      input.value = "spin-off-branch"
+      act("bs<cr><cr>")
+      operations.wait("spin_off_branch")
+      eq("spin-off-branch", get_current_branch())
+    end)
+  )
+
+  it(
+    "can spin out a branch",
+    in_prepared_repo(function()
+      input.value = "spin-out-branch"
+      act("bS<cr><cr>")
+      operations.wait("spin_out_branch")
+      eq("master", get_current_branch())
+    end)
+  )
 end)
