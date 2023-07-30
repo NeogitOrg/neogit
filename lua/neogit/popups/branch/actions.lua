@@ -23,11 +23,6 @@ local function parse_remote_branch_name(ref)
 end
 
 M.spin_off_branch = operation("spin_off_branch", function()
-  if #git.repo.staged.items > 0 or #git.repo.unstaged.items > 0 then
-    notif.create("Staying on current branch as there are uncommitted changes.", vim.log.levels.INFO)
-    return
-  end
-
   local name = git.branch.create()
 
   local upstream = git.repo.upstream.ref
