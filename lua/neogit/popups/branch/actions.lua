@@ -36,16 +36,21 @@ M.spin_off_branch = operation("spin_off_branch", function()
 end)
 
 M.spin_out_branch = operation("spin_out_branch", function()
+  local checkout = false
   if status.is_dirty() then
-    notif.create("Staying on current branch as there are uncommitted changes.", vim.log.levels.INFO)
-    return
+    notif.create("Staying on HEAD due to uncommitted changes", vim.log.levels.INFO)
+    checkout = true
   end
 
-  git.branch.create()
+  local name = git.branch.create()
 
   local upstream = git.repo.upstream.ref
   if upstream then
     git.cli.reset.hard.args(upstream).call_sync()
+  end
+
+  if checkout then
+    git.cli.checkout.branch(name).call_sync()
   end
 
   status.refresh(true, "spin_out_branch")
