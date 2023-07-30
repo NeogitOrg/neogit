@@ -28,7 +28,7 @@ M.spin_off_branch = operation("spin_off_branch", function()
 
   git.cli.checkout.branch(name).call_sync()
 
-  local upstream = git.repo.upstream.ref
+  local upstream = git.branch.upstream()
   if upstream then
     git.log.update_ref(current_branch_name, upstream)
   end
@@ -50,7 +50,7 @@ M.spin_out_branch = operation("spin_out_branch", function()
     git.cli.checkout.branch(name).call_sync()
   end
 
-  local upstream = git.repo.upstream.ref
+  local upstream = git.branch.upstream()
   if upstream then
     if checkout then
       git.log.update_ref(current_branch_name, upstream)
