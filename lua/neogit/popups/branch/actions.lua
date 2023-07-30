@@ -43,14 +43,19 @@ M.spin_out_branch = operation("spin_out_branch", function()
   end
 
   local name = git.branch.create()
-
-  local upstream = git.repo.upstream.ref
-  if upstream then
-    git.cli.reset.hard.args(upstream).call_sync()
-  end
+  local current_branch_name = git.branch.current_full_name()
 
   if checkout then
     git.cli.checkout.branch(name).call_sync()
+  end
+
+  local upstream = git.repo.upstream.ref
+  if upstream then
+    if checkout then
+      git.log.update_ref(current_branch_name, upstream)
+    else
+      git.cli.reset.hard.args(upstream).call_sync()
+    end
   end
 
   status.refresh(true, "spin_out_branch")
