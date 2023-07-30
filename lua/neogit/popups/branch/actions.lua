@@ -24,13 +24,14 @@ end
 
 M.spin_off_branch = operation("spin_off_branch", function()
   local name = git.branch.create()
+  local current_branch_name = git.branch.current_full_name()
+
+  git.cli.checkout.branch(name).call_sync()
 
   local upstream = git.repo.upstream.ref
   if upstream then
-    git.cli.reset.hard.args(upstream).call_sync()
+    git.log.update_ref(current_branch_name, upstream)
   end
-
-  git.cli.checkout.branch(name).call_sync()
 
   status.refresh(true, "spin_off_branch")
 end)
