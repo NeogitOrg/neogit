@@ -105,4 +105,10 @@ function M.get_current_branch()
   return lines[#lines - 1]
 end
 
+function M.get_git_rev(rev)
+  local result = vim.api.nvim_exec("!git rev-parse " .. rev, true)
+  local lines = vim.split(result, "\n")
+  return lines[3]
+end
+
 return M

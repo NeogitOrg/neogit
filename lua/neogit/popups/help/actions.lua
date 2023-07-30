@@ -15,11 +15,18 @@ local function present(commands)
       fn = fn[2]
     end
 
-    return { name = name, key = status_mappings[cmd], fn = fn }
+    local keymap = status_mappings[cmd]
+    if keymap and #keymap > 0 then
+      return { { name = name, keys = keymap, cmp = table.concat(keymap):lower(), fn = fn } }
+    else
+      return { { name = name, keys = {}, cmp = "", fn = fn } }
+    end
   end)
 
+  presenter = util.flatten(presenter)
+
   table.sort(presenter, function(a, b)
-    return a.key:lower() < b.key:lower()
+    return a.cmp < b.cmp
   end)
 
   return presenter

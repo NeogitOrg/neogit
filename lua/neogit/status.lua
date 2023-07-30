@@ -154,7 +154,12 @@ local function draw_buffer()
     local reversed_status_map = config.get_reversed_status_maps()
 
     local function hint_label(map_name, hint)
-      return "[" .. reversed_status_map[map_name] .. "] " .. hint
+      local keys = reversed_status_map[map_name]
+      if keys and #keys > 0 then
+        return string.format("[%s] %s", table.concat(keys, " "), hint)
+      else
+        return string.format("[<unmapped>] %s", hint)
+      end
     end
 
     local hints = {
@@ -170,18 +175,33 @@ local function draw_buffer()
     output:append("")
   end
 
+  -- stylua: ignore
   output:append(
-    string.format("Head: %s %s", git.repo.head.branch, git.repo.head.commit_message or "(no commits)")
+    string.format(
+      "Head:     %s %s",
+      git.repo.head.branch,
+      git.repo.head.commit_message or "(no commits)"
+    )
   )
 
   if git.repo.upstream.ref then
     output:append(
-      string.format("Push: %s %s", git.repo.upstream.ref, git.repo.upstream.commit_message or "(no commits)")
+      string.format(
+        "Merge:    %s %s",
+        git.repo.upstream.ref,
+        git.repo.upstream.commit_message or "(no commits)"
+      )
     )
   end
 
-  if git.repo.merge.head then
-    output:append(string.format("Merge: %s", git.repo.merge.msg or "(no message)"))
+  if git.branch.pushRemote_ref() then
+    output:append(
+      string.format(
+        "Push:     %s %s",
+        git.branch.pushRemote_ref(),
+        git.repo.pushRemote.commit_message or "(does not exist)"
+      )
+    )
   end
 
   output:append("")
@@ -189,12 +209,13 @@ local function draw_buffer()
   local new_locations = {}
   local locations_lookup = Collection.new(M.locations):key_by("name")
 
-  local function render_section(header, key)
+  local function render_section(header, key, data)
     local section_config = config.values.sections[key]
     if section_config == false then
       return
     end
-    local data = git.repo[key]
+
+    data = data or git.repo[key]
     if #data.items == 0 then
       return
     end
@@ -279,12 +300,41 @@ local function draw_buffer()
   if git.repo.rebase.head then
     render_section("Rebasing: " .. git.repo.rebase.head, "rebase")
   end
+
   render_section("Untracked files", "untracked")
   render_section("Unstaged changes", "unstaged")
   render_section("Staged changes", "staged")
   render_section("Stashes", "stashes")
-  render_section("Unpulled changes", "unpulled")
-  render_section("Unmerged changes", "unmerged")
+
+  local pushRemote = git.branch.pushRemote_ref()
+  local upstream = git.branch.upstream()
+
+  if pushRemote and upstream ~= pushRemote then
+    render_section(
+      string.format("Unpulled from %s", pushRemote),
+      "unpulled_pushRemote",
+      git.repo.pushRemote.unpulled
+    )
+    render_section(
+      string.format("Unpushed to %s", pushRemote),
+      "unmerged_pushRemote",
+      git.repo.pushRemote.unmerged
+    )
+  end
+
+  if upstream then
+    render_section(
+      string.format("Unpulled from %s", upstream),
+      "unpulled_upstream",
+      git.repo.upstream.unpulled
+    )
+    render_section(
+      string.format("Unmerged into %s", upstream),
+      "unmerged_upstream",
+      git.repo.upstream.unmerged
+    )
+  end
+
   render_section("Recent commits", "recent")
 
   M.status_buffer:replace_content_with(output)
@@ -1017,9 +1067,11 @@ local cmd_func_map = function()
     -- INTEGRATIONS --
 
     ["DiffAtFile"] = function()
-      if not config.ensure_integration("diffview") then
+      if not config.check_integration("diffview") then
+        require("neogit.lib.notification").error("Diffview integration is not enabled")
         return
       end
+
       local dv = require("neogit.integrations.diffview")
       local section, item = M.get_current_section_item()
 
@@ -1158,7 +1210,7 @@ function M.create(kind, cwd)
       local func_map = cmd_func_map()
 
       for key, val in pairs(config.values.mappings.status) do
-        if val ~= "" then
+        if val and val ~= "" then
           local func = func_map[val]
           if func ~= nil then
             mappings[key] = func

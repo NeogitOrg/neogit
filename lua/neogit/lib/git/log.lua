@@ -286,4 +286,8 @@ end
 
 M.parse = parse
 
+function M.update_ref(from, to)
+  cli["update-ref"].message(string.format("reset: moving to %s", to)).args(from, to).call()
+end
+
 return M

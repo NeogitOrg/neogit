@@ -50,7 +50,7 @@ function M:open()
             and not input.get_confirmation("Are you sure you want to commit?")
           then
             -- Clear the buffer, without filling the register
-            buf:set_lines(0, -1, false, {})
+            buf:clear()
             buf:call(function()
               vim.cmd("silent w!")
             end)

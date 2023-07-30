@@ -1,7 +1,22 @@
 local M = {}
 
+---@return table<string, string[]>
+--- Returns a map of commands, mapped to the list of keys which trigger them.
 function M.get_reversed_status_maps()
-  return vim.tbl_add_reverse_lookup(vim.tbl_deep_extend("force", M.values.mappings.status, {}))
+  local result = {}
+  for k, v in pairs(M.values.mappings.status) do
+    -- If `v == false` the mapping is disabled
+    if v then
+      local current = result[v]
+      if current then
+        table.insert(current, k)
+      else
+        result[v] = { k }
+      end
+    end
+  end
+
+  return result
 end
 
 M.values = {
@@ -59,12 +74,10 @@ M.values = {
     item = { ">", "v" },
     section = { ">", "v" },
   },
-  integrations = setmetatable({}, {
-    __index = function(_, key)
-      local ok, value = pcall(require, key)
-      return ok and value or false
-    end,
-  }),
+  integrations = {
+    telescope = nil,
+    diffview = nil,
+  },
   sections = {
     untracked = {
       folded = false,
@@ -78,10 +91,16 @@ M.values = {
     stashes = {
       folded = true,
     },
-    unpulled = {
+    unpulled_upstream = {
       folded = true,
     },
-    unmerged = {
+    unmerged_upstream = {
+      folded = false,
+    },
+    unpulled_pushRemote = {
+      folded = true,
+    },
+    unmerged_pushRemote = {
       folded = false,
     },
     recent = {
@@ -94,6 +113,7 @@ M.values = {
   ignored_settings = {
     "NeogitPushPopup--force-with-lease",
     "NeogitPushPopup--force",
+    "NeogitPullPopup--rebase",
     "NeogitCommitPopup--allow-empty",
     "NeogitRevertPopup--no-edit", -- TODO: Fix incompatible switches with default enables
   },
@@ -153,13 +173,20 @@ M.values = {
   },
 }
 
-function M.ensure_integration(name)
-  if not M.values.integrations[name] then
-    vim.api.nvim_err_writeln(string.format("Neogit: `%s` integration is not enabled", name))
-    return false
+---@param name string
+---@return boolean
+function M.check_integration(name)
+  local logger = require("neogit.logger")
+  local enabled = M.values.integrations[name]
+
+  if enabled == nil or enabled == "auto" then
+    local success, _ = pcall(require, name)
+    logger.fmt_info("[CONFIG] Found auto integration '%s = %s'", name, success)
+    return success
   end
 
-  return true
+  logger.fmt_info("[CONFIG] Found explicit integration '%s' = %s", name, enabled)
+  return enabled
 end
 
 return M

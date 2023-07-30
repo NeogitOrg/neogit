@@ -147,6 +147,9 @@ end
 
 return {
   create = create,
+  error = function(msg, delay)
+    return create(msg, vim.log.levels.ERROR, delay)
+  end,
   delete_all = function()
     for _, n in ipairs(notifications) do
       n:delete()

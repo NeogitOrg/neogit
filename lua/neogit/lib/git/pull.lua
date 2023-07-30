@@ -11,15 +11,24 @@ function M.pull_interactive(remote, branch, args)
 end
 
 local function update_unpulled(state)
-  if not state.upstream.ref then
-    return
+  if state.upstream.ref then
+    local result = cli.log.oneline.for_range("..@{upstream}").show_popup(false).call():trim().stdout
+
+    state.upstream.unpulled = { items = {} }
+    state.upstream.unpulled.items = util.map(result, function(x)
+      return { name = x }
+    end)
   end
 
-  local result = cli.log.oneline.for_range("..@{upstream}").show_popup(false).call_sync():trim().stdout
+  local pushRemote = require("neogit.lib.git").branch.pushRemote_ref()
+  if pushRemote then
+    local result = cli.log.oneline.for_range(".." .. pushRemote).show_popup(false).call_sync():trim().stdout
 
-  state.unpulled.items = util.map(result, function(x)
-    return { name = x }
-  end)
+    state.pushRemote.unpulled = { items = {} }
+    state.pushRemote.unpulled.items = util.map(result, function(x)
+      return { name = x }
+    end)
+  end
 end
 
 function M.register(meta)

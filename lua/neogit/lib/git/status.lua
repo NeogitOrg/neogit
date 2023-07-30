@@ -27,22 +27,19 @@ local function update_status(state)
     unstaged_files = Collection.new(state.unstaged.items or {}):key_by("name"),
   }
 
-  local head = {}
-  local upstream = {}
-
   for _, l in ipairs(result.stdout) do
     local header, value = l:match("# ([%w%.]+) (.+)")
     if header then
       if header == "branch.head" then
-        head.branch = value
+        state.head.branch = value
       elseif header == "branch.oid" then
-        head.oid = value
+        state.head.oid = value
       elseif header == "branch.upstream" then
-        upstream.ref = value
+        state.upstream.ref = value
 
         local remote, branch = unpack(vim.split(value, "/"))
-        upstream.remote = remote
-        upstream.branch = branch
+        state.upstream.remote = remote
+        state.upstream.branch = branch
       end
     else
       local kind, rest = l:match("(.) (.+)")
@@ -93,16 +90,7 @@ local function update_status(state)
     end
   end
 
-  if not state.head.branch or head.branch == state.head.branch then
-    head.commit_message = state.head.commit_message
-  end
-
-  if not upstream.ref or upstream.ref == state.upstream.ref then
-    upstream.commit_message = state.upstream.commit_message
-  end
-
-  state.head = head
-  state.upstream = upstream
+  state.cwd = cwd
   state.untracked.items = untracked_files
   state.unstaged.items = unstaged_files
   state.staged.items = staged_files
@@ -117,6 +105,13 @@ local function update_branch_information(state)
       local result =
         git.cli.log.max_count(1).pretty("%B").for_range("@{upstream}").show_popup(false).call_sync():trim()
       state.upstream.commit_message = result.stdout[1]
+    end
+
+    local pushRemote = require("neogit.lib.git").branch.pushRemote_ref()
+    if pushRemote then
+      local result =
+        git.cli.log.max_count(1).pretty("%B").for_range(pushRemote).show_popup(false).call_sync():trim()
+      state.pushRemote.commit_message = result.stdout[1]
     end
   end
 end
