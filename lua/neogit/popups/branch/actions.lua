@@ -23,7 +23,14 @@ local function parse_remote_branch_name(ref)
 end
 
 M.spin_off_branch = operation("spin_off_branch", function()
-  local name = git.branch.create()
+  local name = input.get_user_input("branch > ")
+  if not name or name == "" then
+    return
+  end
+
+  name, _ = name:gsub("%s", "-")
+  git.branch.create(name)
+
   local current_branch_name = git.branch.current_full_name()
 
   git.cli.checkout.branch(name).call_sync()
@@ -43,7 +50,14 @@ M.spin_out_branch = operation("spin_out_branch", function()
     checkout = true
   end
 
-  local name = git.branch.create()
+  local name = input.get_user_input("branch > ")
+  if not name or name == "" then
+    return
+  end
+
+  name, _ = name:gsub("%s", "-")
+  git.branch.create(name)
+
   local current_branch_name = git.branch.current_full_name()
 
   if checkout then
