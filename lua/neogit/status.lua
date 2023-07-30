@@ -1238,6 +1238,10 @@ function M.create(kind, cwd)
   }
 end
 
+function M.is_dirty()
+  return #git.repo.staged.items > 0 or #git.repo.unstaged.items > 0
+end
+
 M.toggle = toggle
 M.reset = reset
 M.dispatch_reset = dispatch_reset

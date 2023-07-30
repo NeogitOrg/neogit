@@ -41,7 +41,7 @@ M.spin_off_branch = operation("spin_off_branch", function()
 end)
 
 M.spin_out_branch = operation("spin_out_branch", function()
-  if #git.repo.staged.items > 0 or #git.repo.unstaged.items > 0 then
+  if status.is_dirty() then
     notif.create("Staying on current branch as there are uncommitted changes.", vim.log.levels.INFO)
     return
   end
