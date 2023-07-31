@@ -23,7 +23,7 @@ local function parse_remote_branch_name(ref)
 end
 
 local function spin_off_branch(checkout)
-  if status.is_dirty() then
+  if status.is_dirty() and not checkout then
     notif.create("Staying on HEAD due to uncommitted changes", vim.log.levels.INFO)
     checkout = true
   end
