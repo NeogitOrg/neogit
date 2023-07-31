@@ -22,29 +22,7 @@ local function parse_remote_branch_name(ref)
   return remote, branch_name
 end
 
-M.spin_off_branch = operation("spin_off_branch", function()
-  local name = input.get_user_input("branch > ")
-  if not name or name == "" then
-    return
-  end
-
-  name, _ = name:gsub("%s", "-")
-  git.branch.create(name)
-
-  local current_branch_name = git.branch.current_full_name()
-
-  git.cli.checkout.branch(name).call_sync()
-
-  local upstream = git.branch.upstream()
-  if upstream then
-    git.log.update_ref(current_branch_name, upstream)
-  end
-
-  status.refresh(true, "spin_off_branch")
-end)
-
-M.spin_out_branch = operation("spin_out_branch", function()
-  local checkout = false
+local function spin_off_branch(checkout)
   if status.is_dirty() then
     notif.create("Staying on HEAD due to uncommitted changes", vim.log.levels.INFO)
     checkout = true
@@ -74,6 +52,14 @@ M.spin_out_branch = operation("spin_out_branch", function()
   end
 
   status.refresh(true, "spin_out_branch")
+end
+
+M.spin_off_branch = operation("spin_off_branch", function()
+  return spin_off_branch(true)
+end)
+
+M.spin_out_branch = operation("spin_out_branch", function()
+  return spin_off_branch(false)
 end)
 
 M.checkout_branch_revision = operation("checkout_branch_revision", function(popup)
