@@ -153,6 +153,10 @@ local status = {
   unstage_all = function()
     git.cli.reset.call()
   end,
+  is_dirty = function()
+    local repo = require("neogit.lib.git.repository")
+    return #repo.staged.items > 0 or #repo.unstaged.items > 0
+  end
 }
 
 status.register = function(meta)
