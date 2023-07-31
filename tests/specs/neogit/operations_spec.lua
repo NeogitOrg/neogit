@@ -43,7 +43,7 @@ describe("branch popup", function()
   it(
     "can create a new branch",
     in_prepared_repo(function()
-      input.value = "branch-from-test"
+      input.values = { "branch-from-test" }
       act("bc<cr><cr>")
       operations.wait("checkout_create_branch")
       eq("branch-from-test", get_current_branch())
@@ -53,7 +53,7 @@ describe("branch popup", function()
   it(
     "can create a new branch without checking it out",
     in_prepared_repo(function()
-      input.value = "branch-from-test-create"
+      input.values = { "branch-from-test-create" }
       act("bn<cr><cr>")
       operations.wait("create_branch")
       eq("master", get_current_branch())
@@ -65,11 +65,14 @@ describe("branch popup", function()
     "can rename a branch",
     in_prepared_repo(function()
       FuzzyFinderBuffer.value = "second-branch"
-      input.value = "second-branch-renamed"
+      input.values = { "second-branch-renamed" }
 
       assert.True(vim.tbl_contains(get_git_branches(), "second-branch"))
+
       act("bm<cr><cr>")
+
       operations.wait("rename_branch")
+
       assert.True(vim.tbl_contains(get_git_branches(), "second-branch-renamed"))
       assert.False(vim.tbl_contains(get_git_branches(), "second-branch"))
     end)
