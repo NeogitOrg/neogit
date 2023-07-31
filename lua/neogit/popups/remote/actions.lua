@@ -9,20 +9,31 @@ local status = require("neogit.status")
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 local RemoteConfigPopup = require("neogit.popups.remote_config")
 
-function M.add(popup)
+local operation = require("neogit.operations")
+
+M.add = operation("add_remote", function(popup)
   local name = input.get_user_input("Remote name: ")
   if not name then
     return
   end
 
   local origin = git.config.get("remote.origin.url").value
-  local host, remote = origin:match("([^:/]+)[^/]+(.-%.git)")
-  local remote_url = input.get_user_input("Remote url: ", host .. ":" .. name .. remote)
+  local host, _, remote = origin:match("([^:/]+)[:/]([^/]+)/(.+)")
+
+  remote = remote and remote:gsub("%.git$", "")
+
+  local msg
+  if host and remote then
+    msg = string.format("%s:%s/%s.git", host, name, remote)
+  end
+
+  local remote_url = input.get_user_input("Remote url: ", msg)
   if not remote_url then
     return
   end
 
   local result = git.remote.add(name, remote_url, popup:get_arguments())
+
   if result.code ~= 0 then
     return
   end
@@ -38,7 +49,7 @@ function M.add(popup)
   else
     notification.create("Added remote " .. name)
   end
-end
+end)
 
 function M.rename(_)
   local selected_remote = FuzzyFinderBuffer.new(git.remote.list()):open_async()
