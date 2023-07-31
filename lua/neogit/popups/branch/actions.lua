@@ -47,7 +47,7 @@ local function spin_off_branch(checkout)
     if checkout then
       git.log.update_ref(current_branch_name, upstream)
     else
-      git.cli.reset.hard.args(upstream).call_sync()
+      git.cli.reset.hard.args(upstream).call()
     end
   end
 
