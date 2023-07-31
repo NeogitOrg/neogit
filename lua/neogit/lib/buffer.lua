@@ -25,6 +25,11 @@ function Buffer:new(handle)
     border = nil,
     mmanager = mappings_manager.new(handle),
     kind = nil, -- how the buffer was opened. For more information look at the create function
+    namespace = api.nvim_create_namespace("neogit-buffer-" .. handle),
+    line_buffer = {},
+    hl_buffer = {},
+    sign_buffer = {},
+    ext_buffer = {},
   }
 
   this.ui = Ui.new(this)
@@ -81,6 +86,48 @@ end
 
 function Buffer:set_lines(first, last, strict, lines)
   api.nvim_buf_set_lines(self.handle, first, last, strict, lines)
+end
+
+function Buffer:buffered_set_line(line)
+  table.insert(self.line_buffer, line)
+end
+
+function Buffer:buffered_add_highlight(...)
+  table.insert(self.hl_buffer, { ... })
+end
+
+function Buffer:buffered_place_sign(...)
+  table.insert(self.sign_buffer, { ... })
+end
+
+function Buffer:buffered_set_extmark(...)
+  table.insert(self.ext_buffer, { ... })
+end
+
+function Buffer:resize(length)
+  api.nvim_buf_set_lines(self.handle, length, -1, false, {})
+end
+
+function Buffer:flush_buffers()
+  self:clear_namespace(self.namespace)
+
+  api.nvim_buf_set_lines(self.handle, 0, -1, false, self.line_buffer)
+  self.line_buffer = {}
+
+  for _, sign in ipairs(self.sign_buffer) do
+    self:place_sign(unpack(sign))
+  end
+  self.sign_buffer = {}
+
+  for _, hl in ipairs(self.hl_buffer) do
+    self:add_highlight(unpack(hl))
+  end
+  self.hl_buffer = {}
+
+  for _, ext in ipairs(self.ext_buffer) do
+    self:set_extmark(unpack(ext))
+  end
+  self.ext_buffer = {}
 end
 
 function Buffer:set_text(first_line, last_line, first_col, last_col, lines)
@@ -244,7 +291,7 @@ function Buffer:set_foldlevel(level)
 end
 
 function Buffer:replace_content_with(lines)
-  self:set_lines(0, -1, false, lines)
+  api.nvim_buf_set_lines(self.handle, 0, -1, false, lines)
 end
 
 function Buffer:open_fold(line, reset_pos)
@@ -262,7 +309,7 @@ function Buffer:open_fold(line, reset_pos)
 end
 
 function Buffer:add_highlight(line, col_start, col_end, name, ns_id)
-  local ns_id = ns_id or 0
+  local ns_id = ns_id or self.namespace
 
   api.nvim_buf_add_highlight(self.handle, ns_id, name, line, col_start, col_end)
 end

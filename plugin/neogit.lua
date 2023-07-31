@@ -20,3 +20,11 @@ end, {
   nargs = "*",
   desc = "Prints neogit message history",
 })
+
+api.nvim_create_user_command(
+  "NeogitResetState",
+  function()
+    require("neogit.lib.state")._reset()
+  end,
+  { nargs = "*", desc = "Reset any saved flags" }
+)

@@ -61,7 +61,7 @@ end)
 
 M.checkout_create_branch = operation("checkout_create_branch", function()
   local branches = git.branch.get_all_branches(false)
-  local current_branch = git.repo.head.branch
+  local current_branch = git.branch.current()
   if current_branch then
     table.insert(branches, 1, current_branch)
   end
@@ -77,12 +77,18 @@ M.checkout_create_branch = operation("checkout_create_branch", function()
     return
   end
 
-  git.cli.checkout.new_branch_with_start_point(name, base_branch).call_sync():trim()
+  git.cli.checkout.new_branch_with_start_point(name, base_branch).call_sync()
   status.refresh(true, "branch_create")
 end)
 
 M.create_branch = operation("create_branch", function()
-  git.branch.create()
+  local name = input.get_user_input("branch > ")
+  if not name or name == "" then
+    return
+  end
+
+  name, _ = name:gsub("%s", "-")
+  git.branch.create(name)
   status.refresh(true, "create_branch")
 end)
 
@@ -137,14 +143,11 @@ M.reset_branch = operation("reset_branch", function()
     return
   end
 
-  -- Reset the current branch to the desired state
+  -- Reset the current branch to the desired state & update reflog
   git.cli.reset.hard.args(to).call_sync()
+  git.log.update_ref(git.branch.current_full_name(), to)
 
-  -- Update reference
-  local from = git.cli["rev-parse"].symbolic_full_name.args(git.repo.head.branch).call_sync():trim().stdout[1]
-  git.cli["update-ref"].message(string.format("reset: moving to %s", to)).args(from, to).call_sync()
-
-  notif.create(string.format("Reset '%s'", git.repo.head.branch), vim.log.levels.INFO)
+  notif.create(string.format("Reset '%s'", git.branch.current()), vim.log.levels.INFO)
   status.refresh(true, "reset_branch")
 end)
 
