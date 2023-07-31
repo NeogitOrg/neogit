@@ -186,7 +186,7 @@ neogit.open({*opts})                                         *neogit.open()*
                   prevent the calling of `expand()` on the path.
 
                 • [1] (string) optional: Name of the Neogit
-                  popup to open to See |neogit-popups|.
+                  popup to open. See |neogit-popups|.
 
 
 ==============================================================================
