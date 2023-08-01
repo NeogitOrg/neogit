@@ -15,16 +15,9 @@ local function empty_state()
     git_path     = function(path)
       return Path.new(root):joinpath(".git", path)
     end,
-    index_stat   = function()
-      local index = Path.new(root):joinpath(".git", "index")
-      if index:exists() then
-        return index:_stat().mtime.sec
-      end
-    end,
     cwd          = vim.loop.cwd(),
     git_root     = root,
     invalid      = {},
-    index        = { timestamp = 0 },
     head         = { branch = nil, commit_message = "" },
     upstream     = {
       branch         = nil,
@@ -79,15 +72,6 @@ local function refresh(self, opts)
     return
   end
 
-  -- stylua: ignore
-  if
-    self.state.index.timestamp == self.state.index_stat() and
-    opts.source == "watcher"
-  then
-    logger.debug("[REPO]: Refreshing ABORTED - .git/index hasn't been modified since last refresh")
-    return
-  end
-
   if self.state.git_root == "" then
     logger.debug("[REPO]: Refreshing ABORTED - No git_root")
     return
@@ -134,7 +118,6 @@ if not M.initialized then
 
   local modules = {
     "status",
-    "index",
     "diff",
     "stash",
     "pull",

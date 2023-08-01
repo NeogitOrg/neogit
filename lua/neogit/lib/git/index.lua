@@ -109,13 +109,4 @@ function M.update()
     :spawn_async()
 end
 
-function M.register(meta)
-  meta.update_index = function(state)
-    -- This exists to prevent double-refreshing the repo, when triggered by both the action callback and filewatcher
-    -- callback. We are assuming that if the `.git/index` file has not been modified, then there's no need to update the
-    -- status buffer/repo state.
-    state.index.timestamp = state.index_stat()
-  end
-end
-
 return M
