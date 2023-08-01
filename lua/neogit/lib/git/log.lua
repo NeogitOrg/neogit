@@ -255,8 +255,7 @@ function M.list(options, show_popup)
     table.insert(options, "--max-count=256")
   end
 
-  local output =
-    cli.log.format(format).graph.arg_list(options or {}).show_popup(show_popup).call_sync():trim()
+  local output = cli.log.format(format).graph.arg_list(options or {}).show_popup(show_popup).call():trim()
 
   return parse_log(output.stdout, graph)
 end

@@ -19,7 +19,7 @@ local function update_file(file, mode, name)
 end
 
 local function update_status(state)
-  local result = git.cli.status.porcelain(2).branch.call_sync():trim()
+  local result = git.cli.status.porcelain(2).branch.call():trim()
 
   local untracked_files, unstaged_files, staged_files = {}, {}, {}
   local old_files_hash = {
@@ -98,19 +98,19 @@ end
 
 local function update_branch_information(state)
   if state.head.oid ~= "(initial)" then
-    local result = git.cli.log.max_count(1).pretty("%B").call_sync():trim()
+    local result = git.cli.log.max_count(1).pretty("%B").call():trim()
     state.head.commit_message = result.stdout[1]
 
     if state.upstream.ref then
       local result =
-        git.cli.log.max_count(1).pretty("%B").for_range("@{upstream}").show_popup(false).call_sync():trim()
+        git.cli.log.max_count(1).pretty("%B").for_range("@{upstream}").show_popup(false).call():trim()
       state.upstream.commit_message = result.stdout[1]
     end
 
     local pushRemote = require("neogit.lib.git").branch.pushRemote_ref()
     if pushRemote then
       local result =
-        git.cli.log.max_count(1).pretty("%B").for_range(pushRemote).show_popup(false).call_sync():trim()
+        git.cli.log.max_count(1).pretty("%B").for_range(pushRemote).show_popup(false).call():trim()
       state.pushRemote.commit_message = result.stdout[1]
     end
   end

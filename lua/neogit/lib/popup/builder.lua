@@ -272,12 +272,19 @@ function M:action(keys, description, callback)
   local action
   if callback then
     action = a.void(function(...)
-      callback(...)
+      local args = { ... }
+      local cb = function()
+        callback(unpack(args))
+      end
 
-      git.repo:dispatch_refresh {
-        callback = require("neogit.status").dispatch_refresh,
-        source = "action",
-      }
+      local refresh = function()
+        git.repo:dispatch_refresh {
+          callback = require("neogit.status").dispatch_refresh,
+          source = "action",
+        }
+      end
+
+      a.run(cb, refresh)
     end)
   end
 

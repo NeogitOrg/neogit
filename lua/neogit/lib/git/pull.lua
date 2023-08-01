@@ -21,7 +21,7 @@ local function update_unpulled(state)
 
   local pushRemote = require("neogit.lib.git").branch.pushRemote_ref()
   if pushRemote then
-    local result = cli.log.oneline.for_range(".." .. pushRemote).show_popup(false).call_sync():trim().stdout
+    local result = cli.log.oneline.for_range(".." .. pushRemote).show_popup(false).call():trim().stdout
 
     state.pushRemote.unpulled = { items = {} }
     state.pushRemote.unpulled.items = util.map(result, function(x)
