@@ -465,9 +465,7 @@ function M.refresh()
   logger.info("[STATUS BUFFER]: Finished refresh")
 end
 
-M.dispatch_refresh = a.void(function()
-  M.refresh()
-end)
+M.dispatch_refresh = a.void(M.refresh)
 
 M.refresh_manually = a.void(function(fname)
   if not fname or fname == "" then
@@ -551,7 +549,9 @@ end
 M.reset = function()
   git.repo:reset()
   M.locations = {}
-  M.refresh()
+  if config.values.auto_refresh then
+    M.refresh()
+  end
 end
 
 M.dispatch_reset = a.void(M.reset)
