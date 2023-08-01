@@ -3,6 +3,7 @@ local git = {
   stash = require("neogit.lib.git.stash"),
 }
 local Collection = require("neogit.lib.collection")
+local a = require("plenary.async")
 
 local function update_file(file, mode, name)
   local mt, diff, has_diff
@@ -19,6 +20,12 @@ local function update_file(file, mode, name)
 end
 
 local function update_status(state)
+  -- git-status outputs files relative to the cwd.
+  --
+  -- Save the working directory to allow resolution to absolute paths since the
+  -- cwd may change after the status is refreshed and used, especially if using
+  -- rooter plugins with lsp integration
+  local cwd = vim.loop.cwd()
   local result = git.cli.status.porcelain(2).branch.call():trim()
 
   local untracked_files, unstaged_files, staged_files = {}, {}, {}
@@ -90,28 +97,36 @@ local function update_status(state)
     end
   end
 
-  state.cwd = vim.loop.cwd()
+  state.cwd = cwd
+
   state.untracked.items = untracked_files
   state.unstaged.items = unstaged_files
   state.staged.items = staged_files
 end
 
 local function update_branch_information(state)
+  local tasks = {}
+
   if state.head.oid ~= "(initial)" then
-    local result = git.cli.log.max_count(1).pretty("%B").call():trim()
-    state.head.commit_message = result.stdout[1]
+    table.insert(tasks, function()
+      state.head.commit_message = git.cli.log.max_count(1).pretty("%B").call():trim().stdout[1]
+    end)
 
     if state.upstream.ref then
-      local result =
-        git.cli.log.max_count(1).pretty("%B").for_range("@{upstream}").show_popup(false).call():trim()
-      state.upstream.commit_message = result.stdout[1]
+      table.insert(tasks, function()
+        state.upstream.commit_message = git.cli.log.max_count(1).pretty("%B").for_range("@{upstream}").show_popup(false).call():trim().stdout[1]
+      end)
     end
 
     local pushRemote = require("neogit.lib.git").branch.pushRemote_ref()
     if pushRemote then
-      local result =
-        git.cli.log.max_count(1).pretty("%B").for_range(pushRemote).show_popup(false).call():trim()
-      state.pushRemote.commit_message = result.stdout[1]
+      table.insert(tasks, function()
+        state.pushRemote.commit_message = git.cli.log.max_count(1).pretty("%B").for_range(pushRemote).show_popup(false).call():trim().stdout[1]
+      end)
+    end
+
+    if #tasks > 0 then
+      a.util.join(tasks)
     end
   end
 end
