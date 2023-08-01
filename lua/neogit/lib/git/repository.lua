@@ -108,7 +108,7 @@ local function refresh(self, opts)
 
   a.util.scheduler()
   -- Status needs to run first because other update fn's depend on it
-  logger.trace("[REPO]: Refreshing %s", "update_status")
+  logger.trace("[REPO]: Refreshing update_status")
   self.lib.update_status(self.state)
 
   local updates = {}
