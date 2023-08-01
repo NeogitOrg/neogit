@@ -285,14 +285,6 @@ local function debounce_trailing(ms, fn)
   end
 end
 
--- Ensure a string is a minimum width
----@param s string
----@param len integer
----@return string
-local function pad_right(s, len)
-  return s .. string.rep(" ", math.max(len - #s, 0))
-end
-
 ---Removes the given value from the table
 ---@param tbl table
 ---@param value any
@@ -320,6 +312,14 @@ local function lists_equal(l1, l2)
   end
 
   return true
+end
+
+-- Ensure a string is a minimum width
+---@param s string
+---@param len integer
+---@return string
+local function pad_right(s, len)
+  return s .. string.rep(" ", math.max(len - #s, 0))
 end
 
 return {

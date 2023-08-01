@@ -556,7 +556,6 @@ end
 
 M.dispatch_reset = a.void(M.reset)
 
--- TODO: Close Watcher, repo?
 function M.close(skip_close)
   if not skip_close then
     M.status_buffer:close()
@@ -1184,9 +1183,6 @@ function M.create(kind, cwd)
     name = "NeogitStatus",
     filetype = "NeogitStatus",
     kind = kind,
-    after = function()
-      -- require("neogit.lib.git").repo:dispatch_refresh { source = "open" }
-    end,
     ---@param buffer Buffer
     initialize = function(buffer)
       logger.debug("[STATUS BUFFER]: Initializing...")
@@ -1202,7 +1198,6 @@ function M.create(kind, cwd)
       M.cwd = vim.loop.cwd()
 
       require("neogit.lib.git").repo:dispatch_refresh { source = "open" }
-      watcher.setup(Path.new(require("neogit.lib.git").repo.git_root, ".git"):absolute())
 
       vim.o.autochdir = false
 
@@ -1229,6 +1224,9 @@ function M.create(kind, cwd)
       logger.debug("[STATUS BUFFER]: Dispatching initial render")
       M.refresh()
     end,
+    after = function()
+      watcher.setup(Path.new(require("neogit.lib.git").repo.git_root, ".git"):absolute())
+    end
   }
 end
 

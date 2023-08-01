@@ -90,7 +90,7 @@ local function update_status(state)
     end
   end
 
-  state.cwd = cwd
+  state.cwd = vim.loop.cwd()
   state.untracked.items = untracked_files
   state.unstaged.items = unstaged_files
   state.staged.items = staged_files

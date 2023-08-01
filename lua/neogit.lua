@@ -33,6 +33,7 @@ local setup = function(opts)
 
   hl.setup()
   signs.setup()
+  require("neogit.autocmds").setup()
 end
 
 ---@param opts OpenOpts
