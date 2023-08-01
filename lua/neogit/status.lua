@@ -1197,8 +1197,6 @@ function M.create(kind, cwd)
       end
       M.cwd = vim.loop.cwd()
 
-      require("neogit.lib.git").repo:dispatch_refresh { source = "open" }
-
       vim.o.autochdir = false
 
       local mappings = buffer.mmanager.mappings
@@ -1222,11 +1220,11 @@ function M.create(kind, cwd)
       set_decoration_provider(buffer)
 
       logger.debug("[STATUS BUFFER]: Dispatching initial render")
-      M.refresh()
+      require("neogit.lib.git").repo:dispatch_refresh { source = "open", callback = M.dispatch_refresh }
     end,
     after = function()
       watcher.setup(Path.new(require("neogit.lib.git").repo.git_root, ".git"):absolute())
-    end
+    end,
   }
 end
 
