@@ -129,7 +129,7 @@ M.reset_branch = operation("reset_branch", function()
 
   local branches = git.branch.get_all_branches(false)
   local to = FuzzyFinderBuffer.new(branches):open_async {
-    prompt_prefix = " reset " .. git.repo.head.branch .. " to > ",
+    prompt_prefix = string.format(" reset %s to > ", git.branch.current()),
   }
 
   if not to then
