@@ -31,7 +31,7 @@ describe("git branch lib", function()
 
     before_each(function()
       git_harness.prepare_repository()
-      plenary_async.util.block_on(status.reset)
+      status.reset()
       setup_local_git_branches()
       require("neogit").setup()
     end)
