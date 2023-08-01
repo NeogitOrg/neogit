@@ -870,6 +870,12 @@ local set_folds = function(to)
   M.refresh()
 end
 
+local operation = function(fn)
+  return a.void(function()
+    a.run(fn, M.update)
+  end)
+end
+
 --- These needs to be a function to avoid a circular dependency
 --- between this module and the popup modules
 local cmd_func_map = function()
@@ -891,42 +897,12 @@ local cmd_func_map = function()
       set_folds { false, false, false }
     end),
     ["Toggle"] = M.toggle,
-    ["Discard"] = {
-      "nv",
-      a.void(function()
-        discard()
-        M.update()
-      end),
-      true,
-    },
-    ["Stage"] = {
-      "nv",
-      a.void(function()
-        stage()
-        M.update()
-      end),
-      true,
-    },
-    ["StageUnstaged"] = a.void(function()
-      git.status.stage_modified()
-      M.update()
-    end),
-    ["StageAll"] = a.void(function()
-      git.status.stage_all()
-      M.update()
-    end),
-    ["Unstage"] = {
-      "nv",
-      a.void(function()
-        unstage()
-        M.update()
-      end),
-      true,
-    },
-    ["UnstageStaged"] = a.void(function()
-      git.status.unstage_all()
-      M.update()
-    end),
+    ["Discard"] = { "nv", operation(discard), true },
+    ["Stage"] = { "nv", operation(stage), true },
+    ["StageUnstaged"] = operation(git.status.stage_modified),
+    ["StageAll"] = operation(git.status.stage_all),
+    ["Unstage"] = { "nv", operation(unstage), true },
+    ["UnstageStaged"] = operation(git.status.unstage_all),
     ["CommandHistory"] = function()
       GitCommandHistory:new():show()
     end,
