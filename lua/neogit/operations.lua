@@ -17,7 +17,7 @@ function M.wait(key, time)
   if M[key] == nil then
     return
   end
-  vim.wait(time or 1000, function()
+  vim.fn.wait(time or 1000, function()
     return M[key] == false
   end, 100)
 end
