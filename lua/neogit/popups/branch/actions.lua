@@ -113,7 +113,7 @@ M.rename_branch = operation("rename_branch", function()
   end
 
   new_name, _ = new_name:gsub("%s", "-")
-  git.cli.branch.move.args(selected_branch, new_name).call_sync():trim()
+  git.cli.branch.move.args(selected_branch, new_name).call_sync()
 end)
 
 M.reset_branch = operation("reset_branch", function()
@@ -162,7 +162,7 @@ M.delete_branch = operation("delete_branch", function()
       { values = { "&Yes", "&No" }, default = 2 }
     )
   then
-    git.cli.push.remote(remote).delete.to(branch_name).call_sync():trim()
+    git.cli.push.remote(remote).delete.to(branch_name).call_sync()
     notif.create(string.format("Deleted remote branch '%s/%s'", remote, branch_name), vim.log.levels.INFO)
   elseif branch_name then
     if git.branch.is_unmerged(branch_name) then
