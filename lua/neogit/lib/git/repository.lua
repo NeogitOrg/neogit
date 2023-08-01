@@ -66,14 +66,6 @@ function M.reset(self)
   self.state = empty_state()
 end
 
--- Invalidates a cached diff for a file
-function M.invalidate(self, ...)
-  local files = { ... }
-  for _, path in ipairs(files) do
-    table.insert(self.state.invalid, string.format("*:%s", path))
-  end
-end
-
 local refresh_lock = a.control.Semaphore.new(1)
 local lock_holder
 
@@ -121,8 +113,6 @@ local function refresh(self, opts)
   end
 
   a.util.run_all(updates, function()
-    self.state.invalidate = {}
-
     logger.info("[REPO]: Refreshes completed - freeing refresh lock")
     permit:forget()
     lock_holder = nil

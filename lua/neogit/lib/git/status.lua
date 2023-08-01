@@ -1,9 +1,10 @@
 local git = {
   cli = require("neogit.lib.git.cli"),
+  diff = require("neogit.lib.git.diff"),
   stash = require("neogit.lib.git.stash"),
 }
-local Collection = require("neogit.lib.collection")
 local a = require("plenary.async")
+local Collection = require("neogit.lib.collection")
 
 local function update_file(file, mode, name)
   local mt, diff, has_diff
@@ -134,7 +135,7 @@ end
 local M = {}
 
 function M.stage(...)
-  require("neogit.lib.git").repo:invalidate(...)
+  git.diff.invalidate(...)
   git.cli.add.files(...).call()
 end
 
@@ -147,7 +148,7 @@ function M.stage_all()
 end
 
 function M.unstage(...)
-  require("neogit.lib.git").repo:invalidate(...)
+  git.diff.invalidate(...)
   git.cli.reset.files(...).call()
 end
 

@@ -8,6 +8,8 @@ local ItemFilter = require("neogit.lib.item_filter")
 local insert = table.insert
 local sha256 = vim.fn.sha256
 
+local M = {}
+
 local function parse_diff_stats(raw)
   if type(raw) == "string" then
     raw = vim.split(raw, ", ")
@@ -155,7 +157,7 @@ local function build_hunks(lines)
   return hunks
 end
 
-local function parse_diff(raw_diff, raw_stats)
+function M.parse(raw_diff, raw_stats)
   local header, start_idx = build_diff_header(raw_diff)
   local lines = build_lines(raw_diff, start_idx)
   local hunks = build_hunks(lines)
@@ -179,7 +181,7 @@ local function build_metatable(f, raw_output_fn)
       if method == "diff" then
         self.diff = a.util.block_on(function()
           logger.debug("[DIFF] Loading diff for: " .. f.name)
-          return parse_diff(raw_output_fn())
+          return M.parse(raw_output_fn())
         end)
 
         return self.diff
@@ -230,33 +232,43 @@ local function invalidate_diff(filter, section, item)
   end
 end
 
-return {
-  parse = parse_diff,
-  register = function(meta)
-    meta.update_diffs = function(repo)
-      local filter
-      if repo.invalid[1] then
-        filter = ItemFilter.create(repo.invalid)
-      end
+M.invalid = {}
 
-      for _, f in ipairs(repo.untracked.items) do
-        invalidate_diff(filter, "untracked", f)
-        build_metatable(f, raw_untracked(f.name))
-      end
+-- Invalidates a cached diff for a file
+function M.invalidate(...)
+  local files = { ... }
+  for _, path in ipairs(files) do
+    table.insert(M.invalid, string.format("*:%s", path))
+  end
+end
 
-      for _, f in ipairs(repo.unstaged.items) do
-        if f.mode ~= "F" then
-          invalidate_diff(filter, "unstaged", f)
-          build_metatable(f, raw_unstaged(f.name))
-        end
-      end
+function M.register(meta)
+  meta.update_diffs = function(repo)
+    local filter
+    if #M.invalid > 0 then
+      filter = ItemFilter.create(M.invalid)
+      M.invalid = {}
+    end
 
-      for _, f in ipairs(repo.staged.items) do
-        if f.mode ~= "F" then
-          invalidate_diff(filter, "staged", f)
-          build_metatable(f, raw_staged(f.name))
-        end
+    for _, f in ipairs(repo.untracked.items) do
+      invalidate_diff(filter, "untracked", f)
+      build_metatable(f, raw_untracked(f.name))
+    end
+
+    for _, f in ipairs(repo.unstaged.items) do
+      if f.mode ~= "F" then
+        invalidate_diff(filter, "unstaged", f)
+        build_metatable(f, raw_unstaged(f.name))
       end
     end
-  end,
-}
+
+    for _, f in ipairs(repo.staged.items) do
+      if f.mode ~= "F" then
+        invalidate_diff(filter, "staged", f)
+        build_metatable(f, raw_staged(f.name))
+      end
+    end
+  end
+end
+
+return M
