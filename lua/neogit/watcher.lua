@@ -15,7 +15,7 @@ local a = require("plenary.async")
 --- @param gitdir string
 --- @return uv_fs_event_t?
 local function start(gitdir)
-  if not config.values.auto_refresh then
+  if not config.values.auto_refresh or vim.env.NVIM_APPNAME == "neogit-test" then
     return
   end
 
