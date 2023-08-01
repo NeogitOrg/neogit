@@ -23,7 +23,6 @@ local function empty_state()
     end,
     cwd          = vim.loop.cwd(),
     git_root     = root,
-    rev_toplevel = nil,
     invalid      = {},
     index        = { timestamp = 0 },
     head         = { branch = nil, commit_message = "" },
