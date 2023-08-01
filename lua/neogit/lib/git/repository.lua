@@ -78,7 +78,7 @@ end
 local refresh_lock = a.control.Semaphore.new(1)
 local lock_holder
 
-M.dispatch_refresh = a.void(function(self, opts)
+local function refresh(self, opts)
   opts = opts or {}
 
   logger.info(string.format("[REPO]: Refreshing START (source: %s)", opts.source or "UNKNOWN"))
@@ -133,7 +133,9 @@ M.dispatch_refresh = a.void(function(self, opts)
       opts.callback()
     end
   end)
-end)
+end
+
+M.dispatch_refresh = a.void(refresh)
 
 if not M.initialized then
   logger.info("[REPO]: Initializing Repository")
