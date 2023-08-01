@@ -462,6 +462,7 @@ function M.refresh()
     restore_cursor_location(s, f, h)
   end
 
+  M.current_operation = nil
   logger.info("[STATUS BUFFER]: Finished refresh")
 end
 
@@ -546,15 +547,14 @@ function M.toggle()
   refresh_status_buffer()
 end
 
-M.reset = function()
-  git.repo:reset()
+function M.reset()
+  M.current_operation = "reset"
   M.locations = {}
-  if config.values.auto_refresh then
-    M.refresh()
-  end
-end
 
-M.dispatch_reset = a.void(M.reset)
+  git.repo:reset()
+  git.repo:dispatch_refresh { source = "reset", callback = M.dispatch_refresh }
+  M.wait_on_current_operation()
+end
 
 function M.close(skip_close)
   if not skip_close then
@@ -673,7 +673,6 @@ local unstage_selection = function()
 end
 
 local stage = function()
-  M.current_operation = "stage"
   local section, item = M.get_current_section_item()
   local mode = vim.api.nvim_get_mode()
 
@@ -697,7 +696,7 @@ local stage = function()
           return item.name
         end))
       end
-      M.current_operation = nil
+
       return
     else
       if on_hunk and section.name ~= "untracked" then
@@ -710,7 +709,6 @@ local stage = function()
   end
 
   assert(item, "Stage item is nil")
-  M.current_operation = nil
 end
 
 local unstage = function()
@@ -720,14 +718,12 @@ local unstage = function()
   if section == nil or section.name ~= "staged" or (mode.mode == "V" and item == nil) then
     return
   end
-  M.current_operation = "unstage"
 
   if mode.mode == "V" then
     unstage_selection()
   else
     if item == nil then
       git.status.unstage_all()
-      M.current_operation = nil
       return
     else
       local on_hunk = current_line_is_hunk()
@@ -745,7 +741,6 @@ local unstage = function()
   end
 
   assert(item, "Unstage item is nil")
-  M.current_operation = nil
 end
 
 local function discard_message(item, mode)
@@ -815,8 +810,6 @@ local discard = function()
     return
   end
 
-  M.current_operation = "discard"
-
   local mode = vim.api.nvim_get_mode()
 
   -- These all need to be captured _before_ the get_confirmation() call, since that
@@ -849,8 +842,6 @@ local discard = function()
     discard_selected_files({ item }, section.name)
   end
 
-  M.current_operation = nil
-
   a.util.scheduler()
   vim.cmd("checktime")
 end
@@ -870,10 +861,13 @@ local set_folds = function(to)
   M.refresh()
 end
 
-local operation = function(fn)
-  return a.void(function()
-    a.run(fn, M.update)
-  end)
+local operation = function(fn, name)
+  return function()
+    M.current_operation = name
+    a.void(function()
+      a.run(fn, M.update)
+    end)()
+  end
 end
 
 --- These needs to be a function to avoid a circular dependency
@@ -897,12 +891,12 @@ local cmd_func_map = function()
       set_folds { false, false, false }
     end),
     ["Toggle"] = M.toggle,
-    ["Discard"] = { "nv", operation(discard), true },
-    ["Stage"] = { "nv", operation(stage), true },
-    ["StageUnstaged"] = operation(git.status.stage_modified),
-    ["StageAll"] = operation(git.status.stage_all),
-    ["Unstage"] = { "nv", operation(unstage), true },
-    ["UnstageStaged"] = operation(git.status.unstage_all),
+    ["Discard"] = { "nv", operation(discard, "discard"), true },
+    ["Stage"] = { "nv", operation(stage, "stage"), true },
+    ["Unstage"] = { "nv", operation(unstage, "unstage"), true },
+    ["StageUnstaged"] = operation(git.status.stage_modified, "stage_unstaged"),
+    ["StageAll"] = operation(git.status.stage_all, "stage_all"),
+    ["UnstageStaged"] = operation(git.status.unstage_all, "unstage_staged"),
     ["CommandHistory"] = function()
       GitCommandHistory:new():show()
     end,
@@ -1218,6 +1212,7 @@ end
 
 function M.wait_on_current_operation(ms)
   vim.wait(ms or 1000, function()
+    logger.trace("[STATUS] Waiting on current_operation: " .. (M.current_operation or "none"))
     return not M.current_operation
   end)
 end
