@@ -95,6 +95,9 @@ Miscellaneous maps ~
                                                 *neogit_$*
 $                       Command History
 
+                                                *neogit_#*
+#                       Console Output
+
                                                 *neogit_fold*
 1, 2, 3, 4              Set a foldlevel
 
