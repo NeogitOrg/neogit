@@ -55,11 +55,11 @@ local function spin_off_branch(checkout)
 end
 
 M.spin_off_branch = operation("spin_off_branch", function()
-  return spin_off_branch(true)
+  spin_off_branch(true)
 end)
 
 M.spin_out_branch = operation("spin_out_branch", function()
-  return spin_off_branch(false)
+  spin_off_branch(false)
 end)
 
 M.checkout_branch_revision = operation("checkout_branch_revision", function(popup)
