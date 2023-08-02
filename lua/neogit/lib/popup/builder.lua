@@ -271,10 +271,9 @@ function M:action(keys, description, callback)
 
   local action_fn
   if callback then
-    action_fn = function(...)
-      local args = { ... }
+    action_fn = a.void(function(popup)
       local cb = function()
-        callback(unpack(args))
+        callback(popup)
       end
 
       local refresh = function()
@@ -285,7 +284,7 @@ function M:action(keys, description, callback)
       end
 
       a.run(cb, refresh)
-    end
+    end)
   end
 
   table.insert(self.state.actions[#self.state.actions], {
