@@ -5,6 +5,15 @@ local function telescope_mappings(on_select, allow_multi)
   local action_state = require("telescope.actions.state")
   local actions = require("telescope.actions")
 
+  local function close_action(prompt_bufnr)
+    actions.close(prompt_bufnr)
+
+    local status = require("neogit.status")
+    if status.status_buffer then
+      status.status_buffer:focus()
+    end
+  end
+
   --- Lift the picker select action to a item select action
   local function select_action(prompt_bufnr)
     local selection = {}
@@ -22,7 +31,7 @@ local function telescope_mappings(on_select, allow_multi)
       return
     end
 
-    actions.close(prompt_bufnr)
+    close_action(prompt_bufnr)
 
     if allow_multi then
       on_select(selection)
@@ -37,7 +46,7 @@ local function telescope_mappings(on_select, allow_multi)
       ["Close"] = function(...)
         -- Make sure to notify the caller that we aborted to avoid hanging on the async task forever
         on_select(nil)
-        actions.close(...)
+        close_action(...)
       end,
       ["Next"] = actions.move_selection_next,
       ["Previous"] = actions.move_selection_previous,
