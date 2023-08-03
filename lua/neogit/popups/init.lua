@@ -25,17 +25,11 @@ end
 --- Returns an array useful for creating mappings for the available popups
 ---@return table<string, Mapping>
 function M.mappings_table()
-  local config = require("neogit.config")
-
   return {
     {
       "HelpPopup",
       "Help",
-      M.open("help", function(f)
-        f {
-          use_magit_keybindings = config.values.use_magit_keybindings,
-        }
-      end),
+      M.open("help"),
     },
     { "DiffPopup", "Diff", M.open("diff") },
     { "PullPopup", "Pull", M.open("pull") },

@@ -11,6 +11,7 @@ syn match NeogitRemote        /\S\+/              contained nextgroup=NeogitComm
 syn match NeogitDiffAdd       /.*/                contained
 syn match NeogitDiffDelete    /.*/                contained
 syn match NeogitUnmergedInto  /Unmerged into/     contained
+syn match NeogitUnpushedTo    /Unpushed to/       contained
 syn match NeogitUnpulledFrom  /Unpulled from/     contained
 syn match NeogitStash         /stash@{[0-9]*}\ze/
 syn match NeogitObjectId      /^[a-z0-9]\{7,}\>\s/
@@ -27,6 +28,7 @@ syn region NeogitHeadRegion         start=/^Head: \zs/        end=/$/ contains=N
 syn region NeogitPushRegion         start=/^Push: \zs/        end=/$/ contains=NeogitRemote
 syn region NeogitMergeRegion        start=/^Merge: \zs/       end=/$/ contains=NeogitRemote
 syn region NeogitUnmergedIntoRegion start=/^Unmerged into .*/ end=/$/ contains=NeogitRemote,NeogitUnmergedInto
+syn region NeogitUnpushedToRegion   start=/^Unpushed to .*/   end=/$/ contains=NeogitRemote,NeogitUnpushedTo
 syn region NeogitUnpulledFromRegion start=/^Unpulled from .*/ end=/$/ contains=NeogitRemote,NeogitUnpulledFrom
 syn region NeogitDiffAddRegion      start=/^+.*$/             end=/$/ contains=NeogitDiffAdd
 syn region NeogitDiffDeleteRegion   start=/^-.*$/             end=/$/ contains=NeogitDiffDelete

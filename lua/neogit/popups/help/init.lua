@@ -4,12 +4,12 @@ local actions = require("neogit.popups.help.actions")
 local M = {}
 
 -- TODO: Better alignment for labels, keys
-function M.create(env)
+function M.create()
   local p = popup.builder():name("NeogitHelpPopup"):group_heading("Commands")
 
   local popups = actions.popups()
   for i, cmd in ipairs(popups) do
-    p = p:action(cmd.key, cmd.name, cmd.fn)
+    p = p:action(cmd.keys, cmd.name, cmd.fn)
 
     if i == math.floor(#popups / 2) then
       p = p:new_action_group()
@@ -18,16 +18,15 @@ function M.create(env)
 
   p = p:new_action_group():new_action_group("Applying changes")
   for _, cmd in ipairs(actions.actions()) do
-    p = p:action(cmd.key, cmd.name, cmd.fn)
+    p = p:action(cmd.keys, cmd.name, cmd.fn)
   end
 
   p = p:new_action_group():new_action_group("Essential commands")
   for _, cmd in ipairs(actions.essential()) do
-    p = p:action(cmd.key, cmd.name, cmd.fn)
+    p = p:action(cmd.keys, cmd.name, cmd.fn)
   end
 
-  p = p:env(env):build()
-
+  p = p:build()
   p:show()
 
   return p

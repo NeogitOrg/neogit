@@ -39,11 +39,17 @@ function M.prepare_repository()
   local working_dir = util.create_temp_dir("working-dir")
   vim.api.nvim_set_current_dir(working_dir)
   util.system(string.format("git clone %s %s", bare_repo_path, working_dir))
-  util.system("git reset --soft HEAD~1")
-  util.system("git rm --cached untracked.txt")
-  util.system("git restore --staged a.txt")
-  util.system("git checkout second-branch")
-  util.system("git switch master")
+  util.system([[
+    git reset --soft HEAD~1
+    git rm --cached untracked.txt
+    git restore --staged a.txt
+    git checkout second-branch
+    git switch master
+    git config remote.origin.url git@github.com:example/example.git
+    git config user.email "test@neogit-test.test"
+    git config user.name "Neogit Test"
+  ]])
+
   print("WORKING DIRECTORY: " .. working_dir)
 
   return working_dir
@@ -55,11 +61,22 @@ function M.in_prepared_repo(cb)
     require("neogit").setup()
     vim.cmd("Neogit")
     a.util.block_on(status.reset)
-    local _, err = pcall(cb, dir)
-    if err ~= nil then
-      error(err)
-    end
+    a.util.block_on(function()
+      local _, err = pcall(cb, dir)
+      if err ~= nil then
+        error(err)
+      end
+    end)
   end
+end
+
+---@param cmd string[]
+---@return string[]
+local function exec(cmd)
+  local result = vim.system(cmd, { text = true }):wait()
+
+  local lines = vim.split(result.stdout, "\n")
+  return lines
 end
 
 function M.get_git_status(files)
@@ -103,6 +120,27 @@ function M.get_current_branch()
   local result = vim.api.nvim_exec("!git branch --show-current", true)
   local lines = vim.split(result, "\n")
   return lines[#lines - 1]
+end
+
+function M.get_remotes()
+  local lines = exec { "git", "remote" }
+  return lines
+end
+
+function M.get_remotes()
+  local lines = exec { "git", "remote" }
+  return lines
+end
+
+function M.get_remotes_url(remote)
+  local lines = exec { "git", "remote", "--get-url", remote }
+  return lines[1]
+end
+
+function M.get_git_rev(rev)
+  local result = vim.api.nvim_exec("!git rev-parse " .. rev, true)
+  local lines = vim.split(result, "\n")
+  return lines[3]
 end
 
 return M

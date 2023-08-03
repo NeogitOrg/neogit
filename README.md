@@ -142,7 +142,6 @@ neogit.setup {
   telescope_sorter = function()
     return require("telescope").extensions.fzf.native_fzf_sorter()
   end,
-  use_magit_keybindings = false,
   -- Change the default way of opening neogit
   kind = "tab",
   -- The time after which an output console is shown for slow running commands
@@ -226,7 +225,7 @@ neogit.setup {
       -- Adds a mapping with "B" as key that does the "BranchPopup" command
       ["B"] = "BranchPopup",
       -- Removes the default mapping of "s"
-      ["s"] = "",
+      ["s"] = false,
       ...
     },
     -- Modify fuzzy-finder buffer mappings
@@ -353,12 +352,6 @@ vim.api.nvim_create_autocmd('User', {
   callback = require('neogit').close,
 })
 ```
-
-## Magit-style Keybindings
-
-Neogit uses 'p' for pulling instead of 'F'.
-
-Set `use_magit_keybindings = true` in your call to [`setup`](#configuration) to use magit-style keybindings.
 
 ## Refreshing Neogit
 
