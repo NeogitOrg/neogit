@@ -118,7 +118,7 @@ function M.current_full_name()
 end
 
 function M.pushRemote(branch)
-  branch = branch or require("neogit.lib.git").repo.head.branch
+  branch = branch or M.current()
 
   if branch then
     local remote = config_lib.get("branch." .. branch .. ".pushRemote")
@@ -129,7 +129,7 @@ function M.pushRemote(branch)
 end
 
 function M.pushRemote_ref(branch)
-  branch = branch or require("neogit.lib.git").repo.head.branch
+  branch = branch or M.current()
   local pushRemote = M.pushRemote(branch)
 
   if branch and pushRemote then
