@@ -50,16 +50,16 @@ local function spin_off_branch(checkout)
       git.cli.reset.hard.args(upstream).call()
     end
   end
-
-  status.refresh(true, "spin_out_branch")
 end
 
 M.spin_off_branch = operation("spin_off_branch", function()
   spin_off_branch(true)
+  status.refresh(true, "spin_off_branch")
 end)
 
 M.spin_out_branch = operation("spin_out_branch", function()
   spin_off_branch(false)
+  status.refresh(true, "spin_out_branch")
 end)
 
 M.checkout_branch_revision = operation("checkout_branch_revision", function(popup)
