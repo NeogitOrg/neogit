@@ -20,6 +20,8 @@ local notification = require("neogit.lib.notification")
 
 local did_setup = false
 
+---Setup neogit
+---@param opts NeogitConfig
 local setup = function(opts)
   if did_setup then
     logger.debug("Already did setup!")
@@ -27,10 +29,7 @@ local setup = function(opts)
   end
   did_setup = true
 
-  if opts ~= nil then
-    config.values = vim.tbl_deep_extend("force", config.values, opts)
-  end
-
+  config.setup(opts)
   hl.setup()
   signs.setup()
   state.setup()
@@ -44,6 +43,10 @@ local open = function(opts)
 
   if opts.cwd and not opts.no_expand then
     opts.cwd = vim.fn.expand(opts.cwd)
+  end
+
+  if not opts.cwd then
+    opts.cwd = vim.fn.getcwd()
   end
 
   if not did_setup then
@@ -77,7 +80,12 @@ local open = function(opts)
     end
   else
     a.run(function()
-      status.create(opts.kind, opts.cwd)
+      if status.status_buffer then
+        vim.cmd(string.format("cd %s", opts.cwd))
+        status.refresh(true)
+      else
+        status.create(opts.kind, opts.cwd)
+      end
     end)
   end
 end

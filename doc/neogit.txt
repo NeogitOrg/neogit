@@ -31,6 +31,8 @@ CONTENTS                                        *neogit-contents*
     2. Commands                      |neogit-commands|
     3. Mappings                      |neogit-mappings|
     4. Highlights                    |neogit-highlights|
+    5. API                           |neogit-api|
+    6. Popups                        |neogit-popups|
 
 
 ==============================================================================
@@ -93,6 +95,9 @@ Miscellaneous maps ~
                                                 *neogit_$*
 $                       Command History
 
+                                                *neogit_#*
+#                       Console Output
+
                                                 *neogit_fold*
 1, 2, 3, 4              Set a foldlevel
 
@@ -149,5 +154,85 @@ Z                       Open stash popup
 ==============================================================================
 4. Highlights                                    *neogit-highlights*
 
+==============================================================================
+5. Lua API                                            *neogit-api* *neogit-lua*
+
+neogit.open({*opts})                                         *neogit.open()*
+    Open Neogit. Alternative to `:Neogit` >lua
+        local neogit = require('neogit')
+
+        -- open using defaults
+        neogit.open()
+
+        -- open commit popup
+        neogit.open({ "commit" })
+
+        -- open with split kind
+        neogit.open({ kind = "split" })
+
+        -- open home directory
+        neogit.open({ cwd = "~" })
+<
+    Parameters:
+      • {opts}  (table|nil)
+                • kind (string) optional: How to open Neogit.
+                    - "tab" (default) like :tab split
+                    - "replace"       like :enew
+                    - "split"         like :below split
+                    - "split_above"   like :top split
+                    - "vsplit"        like :vsplit
+                    - "floating" not-yet-implemented
+
+                • cwd (string) optional: Path to git repository.
+                  default: |current-directory|.
+                • no_expand (boolean) optional: Set to true to
+                  prevent the calling of `expand()` on the path.
+
+                • [1] (string) optional: Name of the Neogit
+                  popup to open. See |neogit-popups|.
+
+
+==============================================================================
+6. Popups                                          *neogit-popups*
+
+A Neogit popup is a client interface over a git subcommand or other
+git mechanism.
+
+                                                    *neogit-branch*
+"branch"             see :Man git-branch
+                                                    *neogit-branch_config*
+"branch_config"
+                                                    *neogit-cherry_pick*
+"cherry_pick"        see :Man git-cherry-pick
+                                                    *neogit-commit*
+"commit"             see :Man git-commit
+                                                    *neogit-diff*
+"diff"               see :Man git-diff
+                                                    *neogit-echo*
+"echo"               see :Man git-echo
+                                                    *neogit-fetch*
+"fetch"              see :Man git-fetch
+                                                    *neogit-help*
+"help"               see :Man git-help
+                                                    *neogit-log*
+"log"                see :Man git-log
+                                                    *neogit-merge*
+"merge"              see :Man git-merge
+                                                    *neogit-pull*
+"pull"               see :Man git-pull
+                                                    *neogit-push*
+"push"               see :Man git-push
+                                                    *neogit-rebase*
+"rebase"             see :Man git-rebase
+                                                    *neogit-remote*
+"remote"             see :Man git-remote
+                                                    *neogit-remote_config*
+"remote_config"
+                                                    *neogit-reset*
+"reset"              see :Man git-reset
+                                                    *neogit-revert*
+"revert"             see :Man git-revert
+                                                    *neogit-stash*
+"stash"              see :Man git-stash
 
  vim:tw=78:ts=8:ft=help
