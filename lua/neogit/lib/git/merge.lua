@@ -22,14 +22,6 @@ function M.merge(branch, args)
   end
 end
 
-function M.continue()
-  return merge_command(cli.merge.continue)
-end
-
-function M.abort()
-  return merge_command(cli.merge.abort)
-end
-
 function M.update_merge_status(state)
   if state.git_root == "" then
     return

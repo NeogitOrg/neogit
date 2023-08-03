@@ -2,8 +2,7 @@ local M = {}
 
 local git = require("neogit.lib.git")
 local input = require("neogit.lib.input")
-
-local a = require("plenary.async")
+local client = require("neogit.client")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
@@ -11,31 +10,31 @@ function M.in_merge()
   return git.repo.merge.head
 end
 
-function M.commit()
-  git.merge.continue()
-  a.util.scheduler()
-  require("neogit.status").refresh(true, "merge_continue")
+local function merge(popup, cmd, msg)
+  client.wrap(cmd.arg_list(popup:get_arguments()), {
+    autocmd = "NeogitMergeComplete",
+    msg = msg or {},
+  })
 end
 
-function M.abort()
-  if not input.get_confirmation("Abort merge?", { values = { "&Yes", "&No" }, default = 2 }) then
-    return
-  end
+function M.commit(popup)
+  merge(popup, git.cli.merge.continue)
+end
 
-  git.merge.abort()
-  a.util.scheduler()
-  require("neogit.status").refresh(true, "merge_abort")
+function M.abort(popup)
+  if input.get_confirmation("Abort merge?", { values = { "&Yes", "&No" }, default = 2 }) then
+    merge(popup, git.cli.merge.abort, { success = "Merge Aborted" })
+  end
 end
 
 function M.merge(popup)
   local branch = FuzzyFinderBuffer.new(git.branch.get_all_branches()):open_async()
-  if not branch then
-    return
+  if branch then
+    merge(popup, git.cli.merge, {
+      success = string.format("Merged %s into %s", branch, git.branch.current()),
+      fail = "Merging failed - Resolve conflicts before continuing",
+    })
   end
-
-  git.merge.merge(branch, popup:get_arguments())
-  a.util.scheduler()
-  require("neogit.status").refresh(true, "merge")
 end
 
 return M
