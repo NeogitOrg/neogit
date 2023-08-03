@@ -46,6 +46,10 @@ local open = function(opts)
     opts.cwd = vim.fn.expand(opts.cwd)
   end
 
+  if not opts.cwd then
+    opts.cwd = vim.fn.getcwd()
+  end
+
   if not did_setup then
     notification.create("Neogit has not been setup!", vim.log.levels.ERROR)
     logger.error("Neogit not setup!")
@@ -77,7 +81,12 @@ local open = function(opts)
     end
   else
     a.run(function()
-      status.create(opts.kind, opts.cwd)
+      if status.status_buffer then
+        vim.cmd(string.format("cd %s", opts.cwd))
+        status.refresh(true)
+      else
+        status.create(opts.kind, opts.cwd)
+      end
     end)
   end
 end
