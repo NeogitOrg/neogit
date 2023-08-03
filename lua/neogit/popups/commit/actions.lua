@@ -29,8 +29,6 @@ local function do_commit(popup, cmd)
     autocmd = "NeogitCommitComplete",
     msg = {
       setup = "Committing...",
-      success = "Committed!",
-      fail = "Couldn't commit",
     },
   })
 end
