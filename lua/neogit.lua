@@ -20,6 +20,8 @@ local notification = require("neogit.lib.notification")
 
 local did_setup = false
 
+---Setup neogit
+---@param opts NeogitConfig
 local setup = function(opts)
   if did_setup then
     logger.debug("Already did setup!")

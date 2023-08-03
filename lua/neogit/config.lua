@@ -19,8 +19,77 @@ function M.get_reversed_status_maps()
   return result
 end
 
+---@alias WindowKind
+---|"split" Open in a split
+---| "vsplit" Open in a vertical split
+---| "float" Open in a floating window
+---| "tab" Open in a new tab
+
+---@class NeogitConfigPopup Popup window options
+---@field kind WindowKind The type of window that should be opened
+
+---@alias NeogitConfigSignsIcon { [1]: string, [2]: string }
+
+---@class NeogitConfigSigns
+---@field hunk NeogitConfigSignsIcon The icons to use for open and closed hunks
+---@field item NeogitConfigSignsIcon The icons to use for open and closed items
+---@field section NeogitConfigSignsIcon The icons to use for open and closed sections
+
+---@class NeogitConfigSection A section to show in the Neogit Status buffer, e.g. Staged/Unstaged/Untracked
+---@field folded boolean Whether or not this section should be shown by default
+
+---@class NeogitConfigSections
+---@field untracked NeogitConfigSection
+---@field unstaged NeogitConfigSection
+---@field staged NeogitConfigSection
+---@field stashes NeogitConfigSection
+---@field unpulled_upstream NeogitConfigSection
+---@field unmerged_upstream NeogitConfigSection
+---@field unpulled_pushRemote NeogitConfigSection
+---@field unmerged_pushRemote NeogitConfigSection
+---@field recent NeogitConfigSection
+---@field rebase NeogitConfigSection
+
+---@alias NeogitConfigMappingsFinder "Select" | "Close" | "Next" | "Previous" | "MultiselectToggleNext" | "MultiselectTogglePrevious" | "NOP"
+---@alias NeogitConfigMappingsStatus "Close" | "InitRepo" | "Depth1" | "Depth2" | "Depth3" | "Depth4" | "Toggle" | "Discard" | "Stage" | "StageUnstaged" | "StageAll" | "Unstage" | "UnstageStaged" | "DiffAtFile" | "CommandHistory" | "Console" | "RefreshBuffer" | "GoToFile" | "VSplitOpen" | "SplitOpen" | "TabOpen" | "HelpPopup" | "DiffPopup" | "PullPopup" | "RebasePopup" | "MergePopup" | "PushPopup" | "CommitPopup" | "LogPopup" | "RevertPopup" | "StashPopup" | "CherryPickPopup" | "BranchPopup" | "FetchPopup" | "ResetPopup" | "RemotePopup" | "GoToPreviousHunkHeader" | "GoToNextHunkHeader"
+
+---@class NeogitConfigMappings Consult the config file or documentation for values
+---@field finder? { [string]: NeogitConfigMappingsFinder } A dictionary that uses finder commands to set multiple keybinds
+---@field status? { [string]: NeogitConfigMappingsStatus } A dictionary that uses status commands to set a single keybind
+
+---@class NeogitConfig Neogit configuration settings
+---@field disable_hint? boolean Remove the top hint in the Status buffer
+---@field disable_context_highlighting? boolean Disable context highlights based on cursor position
+---@field disable_signs? boolean Special signs to draw for sections etc. in Neogit
+---@field disable_commit_confirmation? boolean Disable commit confirmations
+---@field disable_builtin_notifications? boolean Disable Neogit's own notifications and use vim.notify
+---@field telescope_sorter? function The sorter telescope will use
+---@field disable_insert_on_commit? boolean|"auto" Disable automatically entering insert mode in commit dialogues
+---@field use_per_project_settings? boolean Scope persisted settings on a per-project basis
+---@field remember_settings? boolean Whether neogit should persist flags from popups, e.g. git push flags
+---@field auto_refresh? boolean Automatically refresh to detect git modifications without manual intervention
+---@field sort_branches? string Value used for `--sort` for the `git branch` command
+---@field kind? WindowKind The default type of window neogit should open in
+---@field console_timeout? integer Time in milliseconds after a console is created for long running commands
+---@field auto_show_console? boolean Automatically show the console if a command takes longer than console_timout
+---@field status? { recent_commit_count: integer } Status buffer options
+---@field commit_editor? NeogitConfigPopup Commit editor options
+---@field commit_select_view? NeogitConfigPopup Commit select view options
+---@field commit_view? NeogitConfigPopup Commit view options
+---@field log_view? NeogitConfigPopup Log view options
+---@field rebase_editor? NeogitConfigPopup Rebase editor options
+---@field reflog_view? NeogitConfigPopup Reflog view options
+---@field merge_editor? NeogitConfigPopup Merge editor options
+---@field preview_buffer? NeogitConfigPopup Preview options
+---@field popup? NeogitConfigPopup Set the default way of opening popups
+---@field signs? NeogitConfigSigns Signs used for toggled regions
+---@field integrations? { diffview: boolean, telescope: boolean } Which integrations to enable
+---@field sections? NeogitConfigSections
+---@field ignored_settings? string[] Settings to never persist, format: "Filetype--cli-value", i.e. "NeogitCommitPopup--author"
+---@field mappings? NeogitConfigMappings
+
 ---Returns the default Neogit configuration
----@return table
+---@return NeogitConfig
 function M.get_default_values()
   return {
     disable_hint = false,
