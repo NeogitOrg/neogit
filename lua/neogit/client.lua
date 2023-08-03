@@ -109,7 +109,7 @@ function M.wrap(cmd, opts)
     vim.api.nvim_exec_autocmds("User", { pattern = opts.autocmd, modeline = false })
   else
     if opts.msg.fail then
-      notif.create(opts.msg.fail)
+      notif.create(opts.msg.fail, vim.log.levels.ERROR)
     end
   end
 
