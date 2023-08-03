@@ -33,9 +33,8 @@ function M.mappings_table()
       "RebasePopup",
       "Rebase",
       M.open("rebase", function(f)
-        local status = require("neogit.status")
-        local line = status.status_buffer:get_current_line()
-        f { line[1]:match("^(%x%x%x%x%x%x%x+)") }
+        local commit = require("neogit.status").get_selected_commits()[1]
+        f { commit = commit and commit.oid or nil }
       end),
     },
     { "MergePopup", "Merge", M.open("merge") },
@@ -48,14 +47,11 @@ function M.mappings_table()
       {
         "nv",
         M.open("cherry_pick", function(f)
-          local selection = nil
-
-          if vim.api.nvim_get_mode().mode == "V" then
-            local status = require("neogit.status")
-            selection = status.get_selected_commits()
-          end
-
-          f { commits = selection }
+          f { commits = require("neogit.status").get_selected_commits() }
+        end),
+        true,
+      },
+    },
     {
       "BranchPopup",
       "Branch",
@@ -73,9 +69,7 @@ function M.mappings_table()
       "RevertPopup",
       "Revert",
       M.open("revert", function(f)
-        local status = require("neogit.status")
-        local line = status.status_buffer:get_current_line()
-        f { commits = { line[1]:match("^(%x%x%x%x%x%x%x+)") } }
+        f { commits = require("neogit.status").get_selected_commits() }
       end),
     },
     { "RemotePopup", "Remote", M.open("remote") },
@@ -83,11 +77,7 @@ function M.mappings_table()
       "StashPopup",
       "Stash",
       M.open("stash", function(f)
-        local status = require("neogit.status")
-        local line = status.status_buffer:get_current_line()
-        f {
-          name = line[1]:match("^(stash@{%d+})"),
-        }
+        f { name = require("neogit.status").status_buffer:get_current_line()[1]:match("^(stash@{%d+})") }
       end),
     },
   }
