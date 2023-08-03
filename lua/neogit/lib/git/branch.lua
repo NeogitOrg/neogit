@@ -50,7 +50,10 @@ function M.is_unmerged(branch, base)
 end
 
 function M.exists(branch)
-  local check = cli["rev-parse"].verify.args(string.format("refs/heads/%s", branch)).call_sync_ignoring_exit_code():trim().stdout[1]
+  local check = cli["rev-parse"].verify
+    .args(string.format("refs/heads/%s", branch))
+    .call_sync_ignoring_exit_code()
+    :trim().stdout[1]
 
   return check ~= nil
 end
