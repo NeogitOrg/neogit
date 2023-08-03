@@ -1,4 +1,5 @@
-require("plenary.async").tests.add_to_env()
+local async = require("plenary.async")
+async.tests.add_to_env()
 local eq = assert.are.same
 local operations = require("neogit.operations")
 local harness = require("tests.util.git_harness")
@@ -110,4 +111,100 @@ describe("branch popup", function()
       assert.False(vim.tbl_contains(get_git_branches(), "second-branch"))
     end)
   )
+
+  describe("spin out", function()
+    it(
+      "moves unpushed commits to a new branch unchecked out branch",
+      in_prepared_repo(function()
+        util.system([[
+          git reset --hard origin/master
+          touch feature.js
+          git add .
+          git commit -m 'some feature'
+        ]])
+        async.util.block_on(status.reset)
+
+        local input_branch = "spin-out-branch"
+        input.values = { input_branch }
+
+        local branch_before = get_current_branch()
+        local commit_before = get_git_rev(branch_before)
+
+        local remote_commit = get_git_rev("origin/" .. branch_before)
+
+        act("bS<cr><cr>")
+        operations.wait("spin_out_branch")
+
+        local branch_after = get_current_branch()
+
+        eq(branch_after, branch_before)
+        eq(get_git_rev(input_branch), commit_before)
+        eq(get_git_rev(branch_before), remote_commit)
+      end)
+    )
+
+    it(
+      "checks out the new branch if uncommitted changes present",
+      in_prepared_repo(function()
+        util.system([[
+          git reset --hard origin/master
+          touch feature.js
+          git add .
+          git commit -m 'some feature'
+          touch wip.js
+          git add .
+        ]])
+        async.util.block_on(status.reset)
+
+        local input_branch = "spin-out-branch"
+        input.values = { input_branch }
+
+        local branch_before = get_current_branch()
+        local commit_before = get_git_rev(branch_before)
+
+        local remote_commit = get_git_rev("origin/" .. branch_before)
+
+        act("bS<cr><cr>")
+        operations.wait("spin_out_branch")
+
+        local branch_after = get_current_branch()
+
+        eq(branch_after, input_branch)
+        eq(get_git_rev(branch_after), commit_before)
+        eq(get_git_rev(branch_before), remote_commit)
+      end)
+    )
+  end)
+
+  describe("spin off", function()
+    it(
+      "moves unpushed commits to a new checked out branch",
+      in_prepared_repo(function()
+        util.system([[
+          git reset --hard origin/master
+          touch feature.js
+          git add .
+          git commit -m 'some feature'
+        ]])
+        async.util.block_on(status.reset)
+
+        local input_branch = "spin-off-branch"
+        input.values = { input_branch }
+
+        local branch_before = get_current_branch()
+        local commit_before = get_git_rev(branch_before)
+
+        local remote_commit = get_git_rev("origin/" .. branch_before)
+
+        act("bs<cr><cr>")
+        operations.wait("spin_off_branch")
+
+        local branch_after = get_current_branch()
+
+        eq(branch_after, input_branch)
+        eq(get_git_rev(branch_after), commit_before)
+        eq(get_git_rev(branch_before), remote_commit)
+      end)
+    )
+  end)
 end)
