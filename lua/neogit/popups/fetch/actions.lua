@@ -10,8 +10,12 @@ local util = require("neogit.lib.util")
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
 local function fetch_from(name, remote, branch, args)
-  notif.create("Fetching from " .. name)
+  local notification = notif.create("Fetching from " .. name)
   local res = git.fetch.fetch_interactive(remote, branch, args)
+
+  if notification then
+    notification:delete()
+  end
 
   if res and res.code == 0 then
     a.util.scheduler()
@@ -20,6 +24,7 @@ local function fetch_from(name, remote, branch, args)
     status.refresh(true, "fetch_from")
     vim.api.nvim_exec_autocmds("User", { pattern = "NeogitFetchComplete", modeline = false })
   else
+    notif.create("Failed to fetch from " .. name)
     logger.error("Failed to fetch from " .. name)
   end
 end
