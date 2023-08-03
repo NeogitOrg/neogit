@@ -137,8 +137,14 @@ function M.pushRemote_ref(branch)
   end
 end
 
-function M.pushRemote_label()
-  return M.pushRemote_ref() or "pushRemote, setting that"
+function M.pushRemote_label(opts)
+  opts = opts or { branch = true }
+
+  if opts.branch then
+    return M.pushRemote_ref() or "pushRemote, setting that"
+  else
+    return M.pushRemote() or "pushRemote, setting that"
+  end
 end
 
 function M.pushRemote_remote_label()
