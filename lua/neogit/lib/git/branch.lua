@@ -169,7 +169,28 @@ function M.set_pushRemote()
 end
 
 function M.upstream()
-  return require("neogit.lib.git").repo.upstream.ref
+  local upstream = require("neogit.lib.git").repo.upstream.ref
+
+  if upstream then
+    return upstream
+  else
+    local full_name = cli["rev-parse"]
+      .abbrev_ref()
+      .show_popup(false)
+      .args("@{upstream}")
+      .call_sync_ignoring_exit_code()
+      :trim().stdout
+
+    local current = M.current()
+
+    if #full_name > 0 and current then
+      local remote = config_lib.get("branch." .. current .. ".remote")
+
+      if remote:is_set() then
+        return string.format("%s/%s", remote.value, full_name[1]:sub(#remote.value + 2, -1))
+      end
+    end
+  end
 end
 
 function M.upstream_label()
