@@ -39,12 +39,17 @@ function M.prepare_repository()
   local working_dir = util.create_temp_dir("working-dir")
   vim.api.nvim_set_current_dir(working_dir)
   util.system(string.format("git clone %s %s", bare_repo_path, working_dir))
-  util.system("git reset --soft HEAD~1")
-  util.system("git rm --cached untracked.txt")
-  util.system("git restore --staged a.txt")
-  util.system("git checkout second-branch")
-  util.system("git switch master")
-  util.system("git config remote.origin.url git@github.com:example/example.git")
+  util.system([[
+    git reset --soft HEAD~1
+    git rm --cached untracked.txt
+    git restore --staged a.txt
+    git checkout second-branch
+    git switch master
+    git config remote.origin.url git@github.com:example/example.git
+    git config user.email "test@neogit-test.test"
+    git config user.name "Neogit Test"
+  ]])
+
   print("WORKING DIRECTORY: " .. working_dir)
 
   return working_dir
