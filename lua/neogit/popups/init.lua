@@ -26,11 +26,7 @@ end
 ---@return table<string, Mapping>
 function M.mappings_table()
   return {
-    {
-      "HelpPopup",
-      "Help",
-      M.open("help"),
-    },
+    { "HelpPopup", "Help", M.open("help") },
     { "DiffPopup", "Diff", M.open("diff") },
     { "PullPopup", "Pull", M.open("pull") },
     {
