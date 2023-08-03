@@ -49,6 +49,15 @@ function M.is_unmerged(branch, base)
   return cli.cherry.arg_list({ base or "master", branch }).call_sync():trim().stdout[1] ~= nil
 end
 
+function M.exists(branch)
+  local check = cli["rev-parse"].verify
+    .args(string.format("refs/heads/%s", branch))
+    .call_sync_ignoring_exit_code()
+    :trim().stdout[1]
+
+  return check ~= nil
+end
+
 function M.create(name)
   cli.branch.name(name).call_interactive()
 end

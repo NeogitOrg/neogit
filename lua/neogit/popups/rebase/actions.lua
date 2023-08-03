@@ -10,7 +10,15 @@ local M = {}
 
 function M.base_branch()
   local value = git.config.get("neogit.baseBranch")
-  return value:is_set() and value.value or "master"
+  if value:is_set() then
+    return value.value
+  else
+    if git.branch.exists("master") then
+      return "master"
+    elseif git.branch.exists("main") then
+      return "main"
+    end
+  end
 end
 
 function M.onto_base(popup)

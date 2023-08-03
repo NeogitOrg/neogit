@@ -424,6 +424,7 @@ local configurations = {
 
   ["rev-parse"] = config {
     flags = {
+      verify = "--verify",
       revs_only = "--revs-only",
       no_revs = "--no-revs",
       flags = "--flags",
