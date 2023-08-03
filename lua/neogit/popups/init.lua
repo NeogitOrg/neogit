@@ -56,11 +56,17 @@ function M.mappings_table()
           end
 
           f { commits = selection }
+    {
+      "BranchPopup",
+      "Branch",
+      {
+        "nv",
+        M.open("branch", function(f)
+          f { revisions = require("neogit.status").get_selected_commits() }
         end),
         true,
       },
     },
-    { "BranchPopup", "Branch", M.open("branch") },
     { "FetchPopup", "Fetch", M.open("fetch") },
     { "ResetPopup", "Reset", M.open("reset") },
     {
