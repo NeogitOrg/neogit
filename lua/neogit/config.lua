@@ -54,8 +54,8 @@ end
 ---@alias NeogitConfigMappingsStatus "Close" | "InitRepo" | "Depth1" | "Depth2" | "Depth3" | "Depth4" | "Toggle" | "Discard" | "Stage" | "StageUnstaged" | "StageAll" | "Unstage" | "UnstageStaged" | "DiffAtFile" | "CommandHistory" | "Console" | "RefreshBuffer" | "GoToFile" | "VSplitOpen" | "SplitOpen" | "TabOpen" | "HelpPopup" | "DiffPopup" | "PullPopup" | "RebasePopup" | "MergePopup" | "PushPopup" | "CommitPopup" | "LogPopup" | "RevertPopup" | "StashPopup" | "CherryPickPopup" | "BranchPopup" | "FetchPopup" | "ResetPopup" | "RemotePopup" | "GoToPreviousHunkHeader" | "GoToNextHunkHeader"
 
 ---@class NeogitConfigMappings Consult the config file or documentation for values
----@field finder { [string]: NeogitConfigMappingsFinder } A dictionary that uses finder commands to set multiple keybinds
----@field status { [string]: NeogitConfigMappingsStatus } A dictionary that uses status commands to set a single keybind
+---@field finder? { [string]: NeogitConfigMappingsFinder } A dictionary that uses finder commands to set multiple keybinds
+---@field status? { [string]: NeogitConfigMappingsStatus } A dictionary that uses status commands to set a single keybind
 
 ---@class NeogitConfig Neogit configuration settings
 ---@field disable_hint? boolean Remove the top hint in the Status buffer
