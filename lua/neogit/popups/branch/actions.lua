@@ -176,9 +176,10 @@ M.reset_branch = operation("reset_branch", function()
     end
   end
 
+  local current = git.branch.current()
   local branches = git.branch.get_all_branches(false)
   local to = FuzzyFinderBuffer.new(branches):open_async {
-    prompt_prefix = " reset " .. git.repo.head.branch .. " to > ",
+    prompt_prefix = string.format(" reset %s to > ", current),
   }
 
   if not to then
@@ -189,7 +190,7 @@ M.reset_branch = operation("reset_branch", function()
   git.cli.reset.hard.args(to).call_sync()
   git.log.update_ref(git.branch.current_full_name(), to)
 
-  notif.create(string.format("Reset '%s'", git.branch.current()), vim.log.levels.INFO)
+  notif.create(string.format("Reset '%s' to '%s'", current, to), vim.log.levels.INFO)
   status.refresh(true, "reset_branch")
 end)
 
