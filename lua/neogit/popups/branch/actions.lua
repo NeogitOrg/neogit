@@ -166,7 +166,7 @@ M.rename_branch = operation("rename_branch", function()
 end)
 
 M.reset_branch = operation("reset_branch", function()
-  if #git.repo.staged.items > 0 or #git.repo.unstaged.items > 0 then
+  if git.status.is_dirty() then
     local confirmation = input.get_confirmation(
       "Uncommitted changes will be lost. Proceed?",
       { values = { "&Yes", "&No" }, default = 2 }
