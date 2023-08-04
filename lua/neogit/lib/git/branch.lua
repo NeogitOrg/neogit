@@ -63,6 +63,28 @@ function M.create(name)
   cli.branch.name(name).call_interactive()
 end
 
+function M.delete(name)
+  local input = require("neogit.lib.input")
+  local success = false
+
+  if M.is_unmerged(name) then
+    if
+      input.get_confirmation(
+        string.format("'%s' contains unmerged commits! Are you sure you want to delete it?", name),
+        { values = { "&Yes", "&No" }, default = 2 }
+      )
+    then
+      cli.branch.delete.force.name(name).call_sync()
+      success = true
+    end
+  else
+    cli.branch.delete.name(name).call_sync()
+    success = true
+  end
+
+  return success
+end
+
 function M.current()
   local head = require("neogit.lib.git").repo.head.branch
   if head then
