@@ -195,39 +195,71 @@ M.reset_branch = operation("reset_branch", function()
 end)
 
 M.delete_branch = operation("delete_branch", function()
-  -- TODO: If branch is checked out:
-  -- Branch gha-routes-js is checked out.  [d]etach HEAD & delete, [c]heckout origin/gha-routes-js & delete, [a]bort
-  local branches = git.branch.get_all_branches()
+  local branches = git.branch.get_all_branches(true)
   local selected_branch = FuzzyFinderBuffer.new(branches):open_async()
   if not selected_branch then
     return
   end
 
   local remote, branch_name = parse_remote_branch_name(selected_branch)
+  local success = false
 
   if
     remote
     and branch_name
     and input.get_confirmation(
-      "Delete remote branch '" .. remote .. "/" .. branch_name .. "'?",
+      string.format("Delete branch '%s/%s'?", remote, branch_name),
       { values = { "&Yes", "&No" }, default = 2 }
     )
   then
     git.cli.push.remote(remote).delete.to(branch_name).call_sync():trim()
-    notif.create(string.format("Deleted remote branch '%s/%s'", remote, branch_name), vim.log.levels.INFO)
-  elseif branch_name then
-    if git.branch.is_unmerged(branch_name) then
-      if
-        input.get_confirmation(
-          "'" .. branch_name .. "' contains unmerged commits! Are you sure you want to delete it?",
-          { values = { "&Yes", "&No" }, default = 2 }
-        )
-      then
-        git.cli.branch.delete.force.name(branch_name).call_sync()
-        notif.create(string.format("Deleted branch '%s'", branch_name), vim.log.levels.INFO)
+    success = true
+  elseif not remote and branch_name == git.branch.current() then
+    local choices = {
+      "&detach HEAD and delete",
+      "&abort"
+    }
+
+    local upstream = git.branch.upstream()
+    if upstream then
+      table.insert(choices, 2, string.format("&checkout %s and delete", upstream))
+    end
+
+    local choice = input.get_choice(
+      string.format("Branch '%s' is currently checked out.", branch_name),
+      { values = choices, default = #choices }
+    )
+
+    if choice == "d" then
+      git.cli.checkout.detach().call_sync()
+
+      if git.branch.delete(branch_name) then
+        success = true
+      else
+        git.cli.checkout.branch(branch_name).call_sync()
+      end
+    elseif choice == "c" then
+      git.cli.checkout.branch(upstream).call_sync()
+
+      if git.branch.delete(branch_name) then
+        success = true
+      else
+        git.cli.checkout.branch(branch_name).call_sync()
       end
     else
-      git.cli.branch.delete.name(branch_name).call_sync()
+      return
+    end
+
+  elseif not remote and branch_name then
+    if git.branch.delete(branch_name) then
+      success = true
+    end
+  end
+
+  if success then
+    if remote then
+      notif.create(string.format("Deleted branch '%s/%s'", remote, branch_name), vim.log.levels.INFO)
+    else
       notif.create(string.format("Deleted branch '%s'", branch_name), vim.log.levels.INFO)
     end
   end
