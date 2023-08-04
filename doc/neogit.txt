@@ -1,4 +1,4 @@
-*neogit.txt* A Magit clone for Neovim that is geared towards the Vim philosophy. 
+*neogit.txt* A Magit clone for Neovim that is geared towards the Vim philosophy.
 *neogit*
 Author: TimUntersberger
 License: MIT license {{{
@@ -25,17 +25,17 @@ License: MIT license {{{
 }}}
 
 ==============================================================================
-CONTENTS                                            *neogit-contents*
+CONTENTS                                                       *neogit_contents*
 
-    1. Intro                         |neogit-intro|
-    2. Commands                      |neogit-commands|
-    3. Mappings                      |neogit-mappings|
-    4. Highlights                    |neogit-highlights|
-    5. API                           |neogit-api|
-    6. Popups                        |neogit-popups|
+    1. Intro                         |neogit_intro|
+    2. Commands                      |neogit_commands|
+    3. Mappings                      |neogit_mappings|
+    4. Highlights                    |neogit_highlights|
+    5. API                           |neogit_api|
+    6. Popups                        |neogit_popups|
 
 ==============================================================================
-1. Intro                                            *neogit-intro*
+1. Intro                                                          *neogit_intro*
 
 Neogit is a git client for Neovim built as a clone of the popular emacs git
 client 'Magit'.
@@ -65,120 +65,118 @@ Though not yet feature complete, our goal is to bring the Magit git experience
 to Neovim users.
 
 ==============================================================================
-2. Commands                                         *neogit-commands*
+2. Commands                                                    *neogit_commands*
 
-                                                    *:Neogit*
+                                                                       *:Neogit*
 :Neogit                 In a Git repository, opens a new NeogitStatus tab.
 
-                                                    *:NeogitMessages*
+                                                               *:NeogitMessages*
 :NeogitMessages         Prints messages from neogit's messaging system.
 
-                                                    *:NeogitResetState*
+                                                             *:NeogitResetState*
 :NeogitResetState       Performs a full reset of saved flags for all popups.
 
 ==============================================================================
-3. Mappings                                         *neogit-mappings*
+3. Mappings                                                    *neogit_mappings*
 
-                                                    *neogit-status-maps*
+                                                            *neogit_status_maps*
 Status Mappings
 
-                                                    *neogit_s*
-s                       Stage file/hunk/selection
+                                                                      *neogit_s*
+s                       Stage file/hunk/visual-selection
 
-                                                    *neogit_S*
+                                                                      *neogit_S*
 S                       Stage unstaged changes
 
-                                                    *neogit_<C-s>*
+                                                                  *neogit_<C-s>*
 <C-s>                   Stage Everything
 
-                                                    *neogit_u*
-u                       Unstage file/hunk/selection
+                                                                      *neogit_u*
+u                       Unstage file/hunk/visual-selection
 
-                                                    *neogit_U*
+                                                                      *neogit_U*
 U                       Unstage staged changes
 
-                                                    *neogit_x*
-x                       Discard changes for file/hunk/selection
+                                                                      *neogit_x*
+x                       Discard changes for file/hunk/visual-selection
 
-                                                    *neogit_<cr>*
+                                                                   *neogit_<cr>*
 <cr>                    Goto item at cursor
 
-                                                    *neogit_<tab>*
+                                                                  *neogit_<tab>*
 <tab>                   Toggle diff
 
-                                                    *neogit_{*
+                                                                      *neogit_{*
 {                       Goto previous hunk
 
-                                                    *neogit_}*
+                                                                      *neogit_}*
 }                       Goto next hunk
 
-                                                    *neogit_<C-r>*
+                                                                  *neogit_<C-r>*
 <C-r>                   Refresh Buffer
 
-                                                    *neogit_fold*
+                                                                   *neogit_fold*
 1, 2, 3, 4              Set a foldlevel
 
 
-                                                    *neogit-popup-maps*
+                                                             *neogit_popup_maps*
 Popup maps ~
 
-                                                    *neogit_$*
+                                                                      *neogit_$*
 $                       Command History
 
-                                                    *neogit_#*
+                                                                      *neogit_#*
 #                       Console Output
 
-                                                    *neogit_L*
+                                                                      *neogit_L*
 L                       Open log popup
 
-                                                    *neogit_p*
+                                                                      *neogit_p*
 p                       Open pull popup
 
-                                                    *neogit_P*
+                                                                      *neogit_P*
 P                       Open push popup
 
-                                                    *neogit_f*
+                                                                      *neogit_f*
 f                       Open fetch popup
 
-                                                    *neogit_X*
+                                                                      *neogit_X*
 X                       Open reset popup
 
-                                                    *neogit_A*
+                                                                      *neogit_A*
 A                       Open cherry-pick popup
 
-                                                    *neogit_m*
+                                                                      *neogit_m*
 m                       Open merge popup
 
-                                                    *neogit_v*
+                                                                      *neogit_v*
 v                       Open revert popup
 
-                                                    *neogit_M*
+                                                                      *neogit_M*
 M                       Open remotes popup
 
-                                                    *neogit_?*
+                                                                      *neogit_?*
 ?                       Open help popup
 
-                                                    *neogit_b*
+                                                                      *neogit_b*
 b                       Open branch popup
 
-                                                    *neogit_c*
+                                                                      *neogit_c*
 c                       Open commit popup
 
-                                                    *neogit_r*
+                                                                      *neogit_r*
 r                       Open rebase popup
 
-                                                    *neogit_Z*
+                                                                      *neogit_Z*
 Z                       Open stash popup
 
 ==============================================================================
-4. Highlights                                       *neogit-highlights*
+4. Highlights                                                *neogit_highlights*
 
 The following highlight groups are defined by this plugin. If you set any of
 these yourself before the plugin loads, that will be respected. If they do not
 exist, they will be created with sensible defaults based on your colorscheme.
 
-
-GENERAL
 STATUS BUFFER
 NeogitBranch                Header showing currently checked out branch
 NeogitRemote                Header showing current branch's remote (if set)
@@ -186,7 +184,6 @@ NeogitObjectId              Object's SHA hash
 NeogitStash                 Stash name
 NeogitFold                  Folded text highlight
 NeogitRebaseDone            Current position within rebase
-
 
 STATUS BUFFER SECTION HEADERS
 NeogitUnpushedTo
@@ -201,7 +198,6 @@ NeogitStagedchanges
 NeogitStashes
 NeogitRebasing
 
-
 STATUS BUFFER FILE
 Applied to the label on the left of filenames.
 
@@ -214,7 +210,6 @@ NeogitChangeCopied
 NeogitChangeBothModified
 NeogitChangeNewFile
 
-
 SIGNS FOR LINE HIGHLIGHTING
 Used to highlight different sections of the status buffer or commit buffer.
 
@@ -223,7 +218,6 @@ NeogitDiffContext
 NeogitDiffAdd
 NeogitDiffDelete
 NeogitDiffHeader
-
 
 SIGNS FOR LINE HIGHLIGHTING CURRENT CONTEXT
 These are essentially an accented version of the above highlight groups. Only
@@ -243,7 +237,6 @@ COMMIT BUFFER
 NeogitFilePath              Applied to filepath
 NeogitCommitViewHeader      Applied to header of Commit View
 
-
 LOG VIEW BUFFER
 NeogitGraphRed              Used when --colors is enabled for graph
 NeogitGraphOrange
@@ -258,7 +251,6 @@ NeogitGraphYellowBold
 NeogitGraphGreenBold
 NeogitGraphBlueBold
 NeogitGraphPurpleBold
-
 
 POPUPS
 NeogitPopupSectionTitle    Applied to all section headers
@@ -281,7 +273,6 @@ NeogitPopupConfigDisabled  Applied to config without value
 NeogitPopupActionKey       Applied to key that triggers function
 NeogitPopupActionDisabled  Applied to key when function is unimplemented
 
-
 NOTIFICATIONS
 NeogitNotificationInfo     Linked to DiagnosticInfo by default
 NeogitNotificationWarning  Linked to DiagnosticWarning by default
@@ -295,9 +286,9 @@ NeogitCommandCodeNormal    Applied to a successful command's exit status (0)
 NeogitCommandCodeError     When command exits with non-zero status
 
 ==============================================================================
-5. Lua API                                          *neogit-api* *neogit-lua*
+5. Lua API                                               *neogit_api* *neogit-lua*
 
-neogit.open({*opts})                                *neogit.open()*
+neogit.open({*opts})                                             *neogit.open()*
     Open Neogit. Alternative to `:Neogit` >lua
         local neogit = require('neogit')
 
@@ -333,66 +324,66 @@ neogit.open({*opts})                                *neogit.open()*
 
 
 ==============================================================================
-6. Popups                                           *neogit-popups*
+6. Popups                                                        *neogit_popups*
 
 A Neogit popup is a client interface over a git subcommand or other
 git mechanism.
 
-                                                    *neogit-branch*
-"branch"             see :Man git-branch
+                                                                 *neogit_branch*
+"branch"             see :Man git-branch or |neogit_branch_popup|
 
-                                                    *neogit-branch_config*
+                                                          *neogit_branch_config*
 "branch_config"      Common configuration for branch/repo
 
-                                                    *neogit-cherry_pick*
+                                                            *neogit_cherry_pick*
 "cherry_pick"        see :Man git-cherry-pick
 
-                                                    *neogit-commit*
+                                                                 *neogit_commit*
 "commit"             see :Man git-commit
 
-                                                    *neogit-diff*
+                                                                   *neogit_diff*
 "diff"               see :Man git-diff
 
-                                                    *neogit-fetch*
+                                                                  *neogit_fetch*
 "fetch"              see :Man git-fetch
 
-                                                    *neogit-help*
+                                                                   *neogit_help*
 "help"               Overview of different popups
 
-                                                    *neogit-log*
+                                                                    *neogit_log*
 "log"                see :Man git-log
 
-                                                    *neogit-merge*
+                                                                  *neogit_merge*
 "merge"              see :Man git-merge
 
-                                                    *neogit-pull*
+                                                                   *neogit_pull*
 "pull"               see :Man git-pull
 
-                                                    *neogit-push*
+                                                                   *neogit_push*
 "push"               see :Man git-push
 
-                                                    *neogit-rebase*
+                                                                 *neogit_rebase*
 "rebase"             see :Man git-rebase
 
-                                                    *neogit-remote*
+                                                                 *neogit_remote*
 "remote"             see :Man git-remote
 
-                                                    *neogit-remote_config*
+                                                          *neogit_remote_config*
 "remote_config"      Common configuration for remote
 
-                                                    *neogit-reset*
+                                                                  *neogit_reset*
 "reset"              see :Man git-reset
 
-                                                    *neogit-revert*
+                                                                 *neogit_revert*
 "revert"             see :Man git-revert
 
-                                                    *neogit-stash*
+                                                                  *neogit_stash*
 "stash"              see :Man git-stash
 
 ==============================================================================
-Branch Popup                                        *neogit-branch-popup*
+Branch Popup                                               *neogit_branch_popup*
 
-Variables:
+Variables:                                       *neogit_branch_popup_variables*
   -  branch.<name>.description
 
   -  branch.<name>.merge
@@ -407,11 +398,11 @@ Variables:
     Cycles pushRemote between the remotes currently configured for the
     repository. `remote.pushDefault` will be offered, if set.
 
-Arguments:
+Arguments:                                            *neogit_branch_popup_args*
   - recurse-submodules
     Recurse submodules when checking out an existing branch
 
-Actions:
+Actions:                                           *neogit_branch_popup_actions*
   Actions for the branch popup are split into three categories: "Checkout",
   "Create", and "Do". They behave as described: "Checkout" actions will change
   your HEAD when checking out the selected/created branch. "Create" actions,
@@ -419,25 +410,67 @@ Actions:
 
   Finally, "Do" actions provide some common housekeeping actions.
 
-  - Checkout branch/revision
+  - Checkout branch/revision                        *neogit_branch_checkout_rev*
     Changes HEAD to point to the selected branch/revision. If a local branch
     is selected, that will be checked out. Otherwise HEAD will become
-    detatched. Any ref selected will
+    detatched. Any ref under the cursor or selected will be available to
+    checkout.
 
-  - Checkout local branch
-    Like
+  - Checkout local branch                         *neogit_branch_checkout_local*
+    Changes HEAD to point to the selected branch. Also lists branches on
+    remotes that do not have a matching branch locally. If a remote branch is
+    selected, then a local branch is created tracking the selected remote
+    branch.
 
-  - Checkout new branch
+  - Checkout new branch                             *neogit_branch_checkout_new*
+    Creates and switches HEAD to a new branch. Any whitespace in the branch
+    name will be automatically changed to '-'.
 
-  - Checkout new spin-off
+    For example, entering "new branch name" will result in a branch called
+    "new-branch-name" being created.
 
-  - Checkout new worktree
+    After entering a name, you will be prompted to choose a base branch for
+    the branch being created. The current branch will be at the top of the
+    list, but any branch can be chosen.
+
+  - Checkout new spin-off                               *neogit_branch_spin_off*
+    This command creates and checks out a new branch starting at and tracking
+    the current branch. That branch in turn is reset to the last commit it
+    shares with its upstream. If the current branch has no upstream or no
+    unpushed commits, then the new branch is created anyway and the previously
+    current branch is not touched.
+
+    This is useful to create a feature branch after work has already began on
+    the old branch.
+
+  - Checkout new worktree                      *neogit_branch_checkout_worktree*
     (Not yet implimented)
 
-  - Create new branch
+  - Create new branch                              *neogit_branch_create_branch*
+    Functionally the same as |neogit_branch_checkout_new|, but does not update
+    HEAD.
 
-  - Create new spin-out
+  - Create new spin-out                                 *neogit_branch_spin_out*
+    Like |neogit_branch_spin_off|, but doesn't change HEAD. However, if the
+    index has uncomitted changes, will behave exactly the same as spin_off.
 
-  - Create new worktree
+  - Create new worktree                          *neogit_branch_create_worktree*
+    (Not yet implimented)
+
+  - Configure                                             *neogit_branch_config*
+    Opens selector to choose a branch, then offering some configuration
+    options. See |neogit_branch_config_popup|.
+
+  - Rename                                                *neogit_branch_rename*
+    Opens selector to choose a branch to rename. Like with a new branch, any
+    whitespace will be replaced with '-'.
+
+  - Reset                                                  *neogit_branch_reset*
+    Resets the current branch to the the selected branch via a hard reset.
+    Uncommitted changes will be lost in the process.
+
+  - Delete                                                *neogit_branch_delete*
+    Opens selector, allowing the user to delete either a local or remote
+    branch.
 
 vim:tw=78:ts=8:ft=help
