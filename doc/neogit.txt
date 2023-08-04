@@ -457,7 +457,7 @@ Actions:                                           *neogit_branch_popup_actions*
   - Create new worktree                          *neogit_branch_create_worktree*
     (Not yet implimented)
 
-  - Configure                                             *neogit_branch_config*
+  - Configure                                          *neogit_branch_configure*
     Opens selector to choose a branch, then offering some configuration
     options. See |neogit_branch_config_popup|.
 
