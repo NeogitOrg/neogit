@@ -63,7 +63,11 @@ M.spin_out_branch = operation("spin_out_branch", function()
 end)
 
 M.checkout_branch_revision = operation("checkout_branch_revision", function(popup)
-  local selected_branch = FuzzyFinderBuffer.new(git.branch.get_all_branches()):open_async()
+  local revisions = util.map(popup.state.env.revisions, function(rev)
+    return rev.oid
+  end)
+  local options = util.merge(revisions, git.branch.get_all_branches())
+  local selected_branch = FuzzyFinderBuffer.new(options):open_async()
   if not selected_branch then
     return
   end
@@ -86,17 +90,15 @@ M.checkout_local_branch = operation("checkout_local_branch", function(popup)
     prompt_prefix = " branch > ",
   }
 
-  if not target then
-    return
-  end
+  if target then
+    if vim.tbl_contains(remote_branches, target) then
+      git.cli.checkout.track(target).arg_list(popup:get_arguments()).call_sync()
+    elseif target then
+      git.cli.checkout.branch(target).arg_list(popup:get_arguments()).call_sync()
+    end
 
-  if target:match([[/]]) then
-    git.cli.checkout.track(target).arg_list(popup:get_arguments()).call_sync()
-  elseif target then
-    git.cli.checkout.branch(target).arg_list(popup:get_arguments()).call_sync()
+    status.refresh(true, "branch_checkout")
   end
-
-  status.refresh(true, "branch_checkout")
 end)
 
 M.checkout_create_branch = operation("checkout_create_branch", function()
@@ -164,7 +166,7 @@ M.rename_branch = operation("rename_branch", function()
 end)
 
 M.reset_branch = operation("reset_branch", function()
-  if #git.repo.staged.items > 0 or #git.repo.unstaged.items > 0 then
+  if git.status.is_dirty() then
     local confirmation = input.get_confirmation(
       "Uncommitted changes will be lost. Proceed?",
       { values = { "&Yes", "&No" }, default = 2 }
@@ -174,9 +176,10 @@ M.reset_branch = operation("reset_branch", function()
     end
   end
 
+  local current = git.branch.current()
   local branches = git.branch.get_all_branches(false)
   local to = FuzzyFinderBuffer.new(branches):open_async {
-    prompt_prefix = " reset " .. git.repo.head.branch .. " to > ",
+    prompt_prefix = string.format(" reset %s to > ", current),
   }
 
   if not to then
@@ -187,7 +190,7 @@ M.reset_branch = operation("reset_branch", function()
   git.cli.reset.hard.args(to).call_sync()
   git.log.update_ref(git.branch.current_full_name(), to)
 
-  notif.create(string.format("Reset '%s'", git.branch.current()), vim.log.levels.INFO)
+  notif.create(string.format("Reset '%s' to '%s'", current, to), vim.log.levels.INFO)
   status.refresh(true, "reset_branch")
 end)
 

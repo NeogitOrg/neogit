@@ -582,7 +582,9 @@ function M:show()
       end
 
       if config.values.popup.kind == "split" or config.values.popup.kind == "split_above" then
-        vim.cmd([[execute "resize" . (line("$") + 1)]])
+        vim.schedule(function()
+          vim.cmd.resize(vim.fn.line("$") + 2)
+        end)
       end
     end,
     render = function()

@@ -59,6 +59,11 @@ function M.get_confirmation(msg, options)
   return vim.fn.confirm(msg, table.concat(options.values, "\n"), options.default) == 1
 end
 
+function M.get_choice(msg, options)
+  local choice = vim.fn.confirm(msg, table.concat(options.values, "\n"), options.default)
+  return options.values[choice]:match("&(.)")
+end
+
 function M.get_user_input(prompt, default)
   return user_input_prompt(prompt, default)
 end
