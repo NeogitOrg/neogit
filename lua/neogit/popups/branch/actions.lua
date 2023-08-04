@@ -208,11 +208,11 @@ M.delete_branch = operation("delete_branch", function()
     remote
     and branch_name
     and input.get_confirmation(
-      string.format("Delete branch '%s/%s'?", remote, branch_name),
+      string.format("Delete remote branch '%s/%s'?", remote, branch_name),
       { values = { "&Yes", "&No" }, default = 2 }
     )
   then
-    git.cli.push.remote(remote).delete.to(branch_name).call_sync():trim()
+    git.cli.push.remote(remote).delete.to(branch_name).call_sync()
     success = true
   elseif not remote and branch_name == git.branch.current() then
     local choices = {
@@ -231,28 +231,19 @@ M.delete_branch = operation("delete_branch", function()
     )
 
     if choice == "d" then
-      git.cli.checkout.detach().call_sync()
-
-      if git.branch.delete(branch_name) then
-        success = true
-      else
-        git.cli.checkout.branch(branch_name).call_sync()
-      end
+      git.cli.checkout.detach.call_sync()
     elseif choice == "c" then
       git.cli.checkout.branch(upstream).call_sync()
-
-      if git.branch.delete(branch_name) then
-        success = true
-      else
-        git.cli.checkout.branch(branch_name).call_sync()
-      end
     else
       return
     end
-  elseif not remote and branch_name then
-    if git.branch.delete(branch_name) then
-      success = true
+
+    success = git.branch.delete(branch_name)
+    if not success then -- Reset HEAD if unsuccessful
+      git.cli.checkout.branch(branch_name).call_sync()
     end
+  elseif not remote and branch_name then
+    success = git.branch.delete(branch_name)
   end
 
   if success then

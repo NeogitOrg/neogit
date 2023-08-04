@@ -14,7 +14,6 @@ local status = require("neogit.status")
 local input = require("tests.mocks.input")
 
 local function act(normal_cmd)
-  print("Feeding keys: ", normal_cmd)
   vim.fn.feedkeys(vim.api.nvim_replace_termcodes(normal_cmd, true, true, true))
   vim.fn.feedkeys("", "x") -- flush typeahead
   status.wait_on_current_operation()
@@ -113,11 +112,122 @@ describe("branch popup", function()
       end)
     )
 
-    it("can delete a local branch with unmerged commits", function() end)
+    it(
+      "can delete a local branch with unmerged commits",
+      in_prepared_repo(function()
+        FuzzyFinderBuffer.value = "second-branch"
+        input.confimed = true
 
-    it("can delete a remote branch", function() end)
+        util.system([[
+          git switch second-branch
+          touch test.file
+          git add .
+          git commit -m "test"
+          git switch master
+        ]])
 
-    it("can delete the currently checked-out branch", function() end)
+        assert.True(vim.tbl_contains(get_git_branches(), "second-branch"))
+
+        act("bD<cr>")
+        operations.wait("delete_branch")
+        assert.False(vim.tbl_contains(get_git_branches(), "second-branch"))
+      end)
+    )
+
+    it(
+      "can abort deleting a local branch with unmerged commits",
+      in_prepared_repo(function()
+        FuzzyFinderBuffer.value = "second-branch"
+        input.confirmed = false
+
+        util.system([[
+          git switch second-branch
+          touch test.file
+          git add .
+          git commit -m "test"
+          git switch master
+        ]])
+
+        assert.True(vim.tbl_contains(get_git_branches(), "second-branch"))
+
+        act("bD<cr>")
+        operations.wait("delete_branch")
+        assert.True(vim.tbl_contains(get_git_branches(), "second-branch"))
+      end)
+    )
+
+    it(
+      "can delete a remote branch",
+      in_prepared_repo(function()
+        FuzzyFinderBuffer.value = "upstream/second-branch"
+        input.confirmed = true
+
+        local remote = harness.prepare_repository()
+        util.system("git remote add upstream " .. remote)
+        util.system([[
+          git stash --include-untracked
+          git fetch upstream
+        ]])
+
+        assert.True(vim.tbl_contains(get_git_branches(), "remotes/upstream/second-branch"))
+
+        act("bD<cr>")
+        operations.wait("delete_branch")
+        assert.False(vim.tbl_contains(get_git_branches(), "remotes/upstream/second-branch"))
+      end))
+
+    it(
+      "can delete the currently checked-out branch (detach)",
+      in_prepared_repo(function()
+        FuzzyFinderBuffer.value = "master"
+        input.choice = "d"
+
+        assert.True(vim.tbl_contains(get_git_branches(), "master"))
+
+        act("bD<cr>")
+        operations.wait("delete_branch")
+        assert.False(vim.tbl_contains(get_git_branches(), "master"))
+
+        -- a value of "HEAD" indicates a detached HEAD state
+        assert.True(vim.tbl_contains(get_git_branches(), "(HEAD detached at e2c2a1c)"))
+        assert.True(vim.trim(util.system("git rev-parse --symbolic-full-name HEAD")) == "HEAD")
+      end)
+    )
+
+    it(
+      "can delete the currently checked-out branch (checkout upstream)",
+      in_prepared_repo(function()
+        FuzzyFinderBuffer.value = "master"
+        input.choice = "c"
+
+        util.system("git stash --include-untracked")
+
+        assert.True(vim.tbl_contains(get_git_branches(), "master"))
+
+        act("bD<cr>")
+        operations.wait("delete_branch")
+
+        assert.False(vim.tbl_contains(get_git_branches(), "master"))
+
+        -- a value of "HEAD" indicates a detached HEAD state
+        assert.True(vim.tbl_contains(get_git_branches(), "(HEAD detached at origin/master)"))
+        assert.True(vim.trim(util.system("git rev-parse --symbolic-full-name HEAD")) == "HEAD")
+      end)
+    )
+
+    it(
+      "can abort deleting the currently checked-out branch",
+      in_prepared_repo(function()
+        FuzzyFinderBuffer.value = "master"
+        input.choice = "a"
+
+        assert.True(vim.tbl_contains(get_git_branches(), "master"))
+
+        act("bD<cr>")
+        operations.wait("delete_branch")
+        assert.True(vim.tbl_contains(get_git_branches(), "master"))
+      end)
+    )
   end)
 
   describe("spin out", function()
