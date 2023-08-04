@@ -217,7 +217,7 @@ M.delete_branch = operation("delete_branch", function()
   elseif not remote and branch_name == git.branch.current() then
     local choices = {
       "&detach HEAD and delete",
-      "&abort"
+      "&abort",
     }
 
     local upstream = git.branch.upstream()
@@ -249,7 +249,6 @@ M.delete_branch = operation("delete_branch", function()
     else
       return
     end
-
   elseif not remote and branch_name then
     if git.branch.delete(branch_name) then
       success = true

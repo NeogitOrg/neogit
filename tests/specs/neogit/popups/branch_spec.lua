@@ -113,14 +113,11 @@ describe("branch popup", function()
       end)
     )
 
-    it("can delete a local branch with unmerged commits", function()
-    end)
+    it("can delete a local branch with unmerged commits", function() end)
 
-    it("can delete a remote branch", function()
-    end)
+    it("can delete a remote branch", function() end)
 
-    it("can delete the currently checked-out branch", function()
-    end)
+    it("can delete the currently checked-out branch", function() end)
   end)
 
   describe("spin out", function()

@@ -4,7 +4,7 @@ local M = {
   ---@type string[]
   values = {},
   confirmed = true,
-  choice = nil
+  choice = nil,
 }
 
 input.get_user_input = function(_, default)
