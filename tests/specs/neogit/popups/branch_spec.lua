@@ -99,18 +99,29 @@ describe("branch popup", function()
     end)
   )
 
-  it(
-    "can delete a branch",
-    in_prepared_repo(function()
-      FuzzyFinderBuffer.value = "second-branch"
+  describe("delete", function()
+    it(
+      "can delete a local branch without unmerged commits",
+      in_prepared_repo(function()
+        FuzzyFinderBuffer.value = "second-branch"
 
-      assert.True(vim.tbl_contains(get_git_branches(), "second-branch"))
+        assert.True(vim.tbl_contains(get_git_branches(), "second-branch"))
 
-      act("bD<cr>")
-      operations.wait("delete_branch")
-      assert.False(vim.tbl_contains(get_git_branches(), "second-branch"))
+        act("bD<cr>")
+        operations.wait("delete_branch")
+        assert.False(vim.tbl_contains(get_git_branches(), "second-branch"))
+      end)
+    )
+
+    it("can delete a local branch with unmerged commits", function()
     end)
-  )
+
+    it("can delete a remote branch", function()
+    end)
+
+    it("can delete the currently checked-out branch", function()
+    end)
+  end)
 
   describe("spin out", function()
     it(
