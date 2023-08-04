@@ -65,8 +65,8 @@ end
 
 function M.delete(name)
   local input = require("neogit.lib.input")
-  local success = false
 
+  local result
   if M.is_unmerged(name) then
     if
       input.get_confirmation(
@@ -74,15 +74,13 @@ function M.delete(name)
         { values = { "&Yes", "&No" }, default = 2 }
       )
     then
-      cli.branch.delete.force.name(name).call_sync()
-      success = true
+      result = cli.branch.delete.force.name(name).call_sync()
     end
   else
-    cli.branch.delete.name(name).call_sync()
-    success = true
+    result = cli.branch.delete.name(name).call_sync()
   end
 
-  return success
+  return result and result.code == 0 or false
 end
 
 function M.current()

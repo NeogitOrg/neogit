@@ -212,8 +212,7 @@ M.delete_branch = operation("delete_branch", function()
       { values = { "&Yes", "&No" }, default = 2 }
     )
   then
-    git.cli.push.remote(remote).delete.to(branch_name).call_sync()
-    success = true
+    success = git.cli.push.remote(remote).delete.to(branch_name).call_sync().code == 0
   elseif not remote and branch_name == git.branch.current() then
     local choices = {
       "&detach HEAD and delete",
@@ -248,7 +247,7 @@ M.delete_branch = operation("delete_branch", function()
 
   if success then
     if remote then
-      notif.create(string.format("Deleted branch '%s/%s'", remote, branch_name), vim.log.levels.INFO)
+      notif.create(string.format("Deleted remote branch '%s/%s'", remote, branch_name), vim.log.levels.INFO)
     else
       notif.create(string.format("Deleted branch '%s'", branch_name), vim.log.levels.INFO)
     end
