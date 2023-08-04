@@ -145,8 +145,6 @@ describe("git branch lib", function()
 
     it("properly detects all local branches", function()
       local branches_detected = gb.get_local_branches(true)
-      -- print("Branches:\n  " .. vim.inspect(branches))
-      -- print("Branches Detected:\n  " .. vim.inspect(branches_detected))
       assert.True(neogit_util.lists_equal(branches, branches_detected))
     end)
 
@@ -158,8 +156,6 @@ describe("git branch lib", function()
       neogit_util.remove_item_from_table(branches, "master")
 
       local branches_detected = gb.get_local_branches(false)
-      -- print("Branches:\n  " .. vim.inspect(branches))
-      -- print("Branches Detected:\n  " .. vim.inspect(branches_detected))
       assert.True(neogit_util.lists_equal(branches, branches_detected))
     end)
   end)
