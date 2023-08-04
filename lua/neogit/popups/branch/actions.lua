@@ -90,17 +90,15 @@ M.checkout_local_branch = operation("checkout_local_branch", function(popup)
     prompt_prefix = " branch > ",
   }
 
-  if not target then
-    return
-  end
+  if target then
+    if vim.tbl_contains(remote_branches, target) then
+      git.cli.checkout.track(target).arg_list(popup:get_arguments()).call_sync()
+    elseif target then
+      git.cli.checkout.branch(target).arg_list(popup:get_arguments()).call_sync()
+    end
 
-  if target:match([[/]]) then
-    git.cli.checkout.track(target).arg_list(popup:get_arguments()).call_sync()
-  elseif target then
-    git.cli.checkout.branch(target).arg_list(popup:get_arguments()).call_sync()
+    status.refresh(true, "branch_checkout")
   end
-
-  status.refresh(true, "branch_checkout")
 end)
 
 M.checkout_create_branch = operation("checkout_create_branch", function()
