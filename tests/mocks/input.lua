@@ -4,6 +4,7 @@ local M = {
   ---@type string[]
   values = {},
   confirmed = true,
+  choice = nil
 }
 
 input.get_user_input = function(_, default)
@@ -23,6 +24,10 @@ end
 
 input.get_confirmation = function(_, _)
   return M.confirmed
+end
+
+input.get_choice = function(_, _)
+  return M.choice
 end
 
 return M
