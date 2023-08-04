@@ -12,7 +12,6 @@ function M.setup_bare_repo()
   end
 
   local workspace_dir = util.create_temp_dir("base-dir")
-  print("BASE DIR: " .. workspace_dir)
   vim.api.nvim_set_current_dir(project_dir)
   util.system("cp -r tests/.repo " .. workspace_dir)
   vim.api.nvim_set_current_dir(workspace_dir)
@@ -27,7 +26,6 @@ function M.setup_bare_repo()
 
   bare_repo_path = util.create_temp_dir("bare-dir")
 
-  print("BARE DIR: " .. bare_repo_path)
   util.system(string.format("git clone --bare %s %s", workspace_dir, bare_repo_path))
 
   return bare_repo_path
@@ -49,8 +47,6 @@ function M.prepare_repository()
     git config user.email "test@neogit-test.test"
     git config user.name "Neogit Test"
   ]])
-
-  print("WORKING DIRECTORY: " .. working_dir)
 
   return working_dir
 end
@@ -120,11 +116,6 @@ function M.get_current_branch()
   local result = vim.api.nvim_exec("!git branch --show-current", true)
   local lines = vim.split(result, "\n")
   return lines[#lines - 1]
-end
-
-function M.get_remotes()
-  local lines = exec { "git", "remote" }
-  return lines
 end
 
 function M.get_remotes()

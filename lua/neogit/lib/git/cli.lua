@@ -157,6 +157,7 @@ local configurations = {
     },
     flags = {
       _track = "--track",
+      detach = "--detach",
     },
     aliases = {
       track = function(tbl)

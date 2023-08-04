@@ -7,6 +7,7 @@ local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 local M = {}
 
 local function parse_branches(branches, include_current)
+  include_current = include_current or false
   local other_branches = {}
 
   local remotes = "^remotes/(.*)"
@@ -60,6 +61,26 @@ end
 
 function M.create(name)
   cli.branch.name(name).call_interactive()
+end
+
+function M.delete(name)
+  local input = require("neogit.lib.input")
+
+  local result
+  if M.is_unmerged(name) then
+    if
+      input.get_confirmation(
+        string.format("'%s' contains unmerged commits! Are you sure you want to delete it?", name),
+        { values = { "&Yes", "&No" }, default = 2 }
+      )
+    then
+      result = cli.branch.delete.force.name(name).call_sync()
+    end
+  else
+    result = cli.branch.delete.name(name).call_sync()
+  end
+
+  return result and result.code == 0 or false
 end
 
 function M.current()
