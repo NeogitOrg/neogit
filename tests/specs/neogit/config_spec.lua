@@ -448,28 +448,16 @@ describe("Neogit config", function()
           assert.True(vim.tbl_count(require("neogit.config").validate_config()) ~= 0)
         end)
 
-        it("should return invalid when the mapping is not a table", function()
-          config.values.mappings.finder = {
-            ["Close"] = "c",
-          }
-          assert.True(vim.tbl_count(require("neogit.config").validate_config()) ~= 0)
-        end)
-
         it("should return invalid when a individual mapping is not a string", function()
           config.values.mappings.finder = {
-            ["Select"] = { { "c" } },
-          }
-          assert.True(vim.tbl_count(require("neogit.config").validate_config()) ~= 0)
-
-          config.values.mappings.finder = {
-            ["Next"] = { false },
+            ["c"] = { { "Close" } },
           }
           assert.True(vim.tbl_count(require("neogit.config").validate_config()) ~= 0)
         end)
 
         it("should return invalid when a command mapping is not known", function()
           config.values.mappings.finder = {
-            ["Invalid Command"] = { "c" },
+            ["c"] = { "Invalid Command" },
           }
           assert.True(vim.tbl_count(require("neogit.config").validate_config()) ~= 0)
         end)
@@ -480,9 +468,9 @@ describe("Neogit config", function()
           assert.True(vim.tbl_count(require("neogit.config").validate_config()) ~= 0)
         end)
 
-        it("should return invalid when a mapping is not a string", function()
+        it("should return invalid when a mapping is not a string or boolean", function()
           config.values.mappings.status = {
-            ["Close"] = false,
+            ["Close"] = {},
           }
           assert.True(vim.tbl_count(require("neogit.config").validate_config()) ~= 0)
         end)
@@ -553,6 +541,16 @@ describe("Neogit config", function()
 
       it("should return valid when ignored_settings has a valid setting", function()
         config.values.ignored_settings = { "Valid--setting-format" }
+        assert.True(vim.tbl_count(require("neogit.config").validate_config()) == 0)
+      end)
+
+      it("should return valid when a command mappings.status is a boolean", function()
+        config.values.mappings.status["c"] = false
+        assert.True(vim.tbl_count(require("neogit.config").validate_config()) == 0)
+      end)
+
+      it("should return valid when a command mappings.finder is a boolean", function()
+        config.values.mappings.finder["c"] = false
         assert.True(vim.tbl_count(require("neogit.config").validate_config()) == 0)
       end)
     end)
