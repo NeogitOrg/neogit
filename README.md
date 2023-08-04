@@ -114,7 +114,7 @@ With `diffview` integration enabled
 | Keybinding | Function                             |
 | ---------- | ------------------------------------ |
 | d          | Open `diffview.nvim` at hovered file |
-| D (TODO)   | Open diff popup                      |
+| D          | Open diff popup                      |
 
 ## Configuration
 
@@ -365,14 +365,6 @@ augroup DefaultRefreshEvents
   au BufWritePost,BufEnter,FocusGained,ShellCmdPost,VimResume * call <SID>neogit#refresh_manually(expand('<afile>'))
 augroup END
 ```
-
-## Todo
-
-**Note: This file is no longer being updated.**
-
-The todo file does not represent ALL of the missing features. This file just shows the features which I noticed were missing and I have to implement.
-
-[TODO](./todo.md)
 
 ## Testing
 
