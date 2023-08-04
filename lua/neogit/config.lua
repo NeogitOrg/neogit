@@ -442,9 +442,10 @@ function M.validate_config()
       end
 
       if not vim.tbl_contains(valid_finder_commands, command) then
-        valid_finder_commands = util.map(valid_finder_commands, function(command)
+        local valid_finder_commands = util.map(valid_finder_commands, function(command)
           return vim.inspect(command)
         end)
+
         err(
           string.format("mappings.finder[%s] -> %s", vim.inspect(key), vim.inspect(command)),
 
@@ -479,9 +480,10 @@ function M.validate_config()
           and validate_type(command, string.format("mappings.status['%s']", key), { "string", "boolean" })
         then
           if not vim.tbl_contains(valid_status_commands, command) then
-            valid_status_commands = util.map(valid_status_commands, function(command)
+            local valid_status_commands = util.map(valid_status_commands, function(command)
               return vim.inspect(command)
             end)
+
             err(
               string.format("mappings.status['%s']", key),
               string.format(
