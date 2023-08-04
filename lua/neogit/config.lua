@@ -51,8 +51,8 @@ end
 ---@field recent NeogitConfigSection
 ---@field rebase NeogitConfigSection
 
----@alias NeogitConfigMappingsFinder "Select" | "Close" | "Next" | "Previous" | "MultiselectToggleNext" | "MultiselectTogglePrevious" | "NOP"
----@alias NeogitConfigMappingsStatus "Close" | "InitRepo" | "Depth1" | "Depth2" | "Depth3" | "Depth4" | "Toggle" | "Discard" | "Stage" | "StageUnstaged" | "StageAll" | "Unstage" | "UnstageStaged" | "DiffAtFile" | "CommandHistory" | "Console" | "RefreshBuffer" | "GoToFile" | "VSplitOpen" | "SplitOpen" | "TabOpen" | "HelpPopup" | "DiffPopup" | "PullPopup" | "RebasePopup" | "MergePopup" | "PushPopup" | "CommitPopup" | "LogPopup" | "RevertPopup" | "StashPopup" | "CherryPickPopup" | "BranchPopup" | "FetchPopup" | "ResetPopup" | "RemotePopup" | "GoToPreviousHunkHeader" | "GoToNextHunkHeader"
+---@alias NeogitConfigMappingsFinder "Select" | "Close" | "Next" | "Previous" | "MultiselectToggleNext" | "MultiselectTogglePrevious" | "NOP" | false
+---@alias NeogitConfigMappingsStatus "Close" | "InitRepo" | "Depth1" | "Depth2" | "Depth3" | "Depth4" | "Toggle" | "Discard" | "Stage" | "StageUnstaged" | "StageAll" | "Unstage" | "UnstageStaged" | "DiffAtFile" | "CommandHistory" | "Console" | "RefreshBuffer" | "GoToFile" | "VSplitOpen" | "SplitOpen" | "TabOpen" | "HelpPopup" | "DiffPopup" | "PullPopup" | "RebasePopup" | "MergePopup" | "PushPopup" | "CommitPopup" | "LogPopup" | "RevertPopup" | "StashPopup" | "CherryPickPopup" | "BranchPopup" | "FetchPopup" | "ResetPopup" | "RemotePopup" | "GoToPreviousHunkHeader" | "GoToNextHunkHeader" | false
 
 ---@class NeogitConfigMappings Consult the config file or documentation for values
 ---@field finder? { [string]: NeogitConfigMappingsFinder } A dictionary that uses finder commands to set multiple keybinds
@@ -442,9 +442,10 @@ function M.validate_config()
       end
 
       if not vim.tbl_contains(valid_finder_commands, command) then
-        valid_finder_commands = util.map(valid_finder_commands, function(command)
+        local valid_finder_commands = util.map(valid_finder_commands, function(command)
           return vim.inspect(command)
         end)
+
         err(
           string.format("mappings.finder[%s] -> %s", vim.inspect(key), vim.inspect(command)),
 
@@ -479,9 +480,10 @@ function M.validate_config()
           and validate_type(command, string.format("mappings.status['%s']", key), { "string", "boolean" })
         then
           if not vim.tbl_contains(valid_status_commands, command) then
-            valid_status_commands = util.map(valid_status_commands, function(command)
+            local valid_status_commands = util.map(valid_status_commands, function(command)
               return vim.inspect(command)
             end)
+
             err(
               string.format("mappings.status['%s']", key),
               string.format(
