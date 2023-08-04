@@ -7,6 +7,7 @@ local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 local M = {}
 
 local function parse_branches(branches, include_current)
+  include_current = include_current or false
   local other_branches = {}
 
   local remotes = "^remotes/(.*)"
