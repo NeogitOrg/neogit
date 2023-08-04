@@ -1,3 +1,4 @@
+local util = require("neogit.lib.util")
 local M = {}
 
 ---@return table<string, string[]>
@@ -261,10 +262,29 @@ function M.validate_config()
   ---Checks if a variable is the correct, type if not it calls err with an error string
   ---@param value any
   ---@param name string
-  ---@param expected_type type
-  local function validate_type(value, name, expected_type)
-    if type(value) ~= expected_type then
-      err(name, string.format("Expected `%s` to be of type '%s', got '%s'", name, expected_type, type(value)))
+  ---@param expected_types type | type[]
+  local function validate_type(value, name, expected_types)
+    if type(expected_types) == "table" then
+      if not vim.tbl_contains(expected_types, type(value)) then
+        err(
+          name,
+          string.format(
+            "Expected `%s` to be one of types '%s', got '%s'",
+            name,
+            table.concat(expected_types, ", "),
+            type(value)
+          )
+        )
+        return false
+      end
+      return true
+    end
+
+    if type(value) ~= expected_types then
+      err(
+        name,
+        string.format("Expected `%s` to be of type '%s', got '%s'", name, expected_types, type(value))
+      )
       return false
     end
     return true
@@ -401,7 +421,9 @@ function M.validate_config()
     end
 
     -- Validate mappings.finder
-    local valid_finder_commands = {}
+    local valid_finder_commands = {
+      false,
+    }
 
     for _, cmd in pairs(M.get_default_values().mappings.finder) do
       table.insert(valid_finder_commands, cmd)
@@ -409,15 +431,23 @@ function M.validate_config()
 
     local function validate_finder_map(command, key)
       if
-        not validate_type(key, string.format("mappings.finder[%s]", vim.inspect(key)), "string")
-        or not validate_type(command, string.format("mappings.finder[%s]", vim.inspect(command)), "string")
+        not validate_type(key, string.format("mappings.finder -> %s", vim.inspect(key)), "string")
+        or not validate_type(
+          command,
+          string.format("mappings.finder[%s]", vim.inspect(command)),
+          { "string", "boolean" }
+        )
       then
         return
       end
 
       if not vim.tbl_contains(valid_finder_commands, command) then
+        valid_finder_commands = util.map(valid_finder_commands, function(command)
+          return vim.inspect(command)
+        end)
         err(
           string.format("mappings.finder[%s] -> %s", vim.inspect(key), vim.inspect(command)),
+
           string.format(
             "Expected a valid finder command, got %s. Valid finder commands: { %s }",
             vim.inspect(command),
@@ -434,7 +464,9 @@ function M.validate_config()
     end
 
     -- Validate mappings.status
-    local valid_status_commands = {}
+    local valid_status_commands = {
+      false,
+    }
 
     for _, cmd in pairs(M.get_default_values().mappings.status) do
       table.insert(valid_status_commands, cmd)
@@ -444,9 +476,12 @@ function M.validate_config()
       for key, command in pairs(config.mappings.status) do
         if
           validate_type(key, "mappings.status -> " .. vim.inspect(key), "string")
-          and validate_type(command, string.format("mappings.status['%s']", key), "string")
+          and validate_type(command, string.format("mappings.status['%s']", key), { "string", "boolean" })
         then
           if not vim.tbl_contains(valid_status_commands, command) then
+            valid_status_commands = util.map(valid_status_commands, function(command)
+              return vim.inspect(command)
+            end)
             err(
               string.format("mappings.status['%s']", key),
               string.format(
