@@ -174,7 +174,8 @@ describe("branch popup", function()
         act("bD<cr>")
         operations.wait("delete_branch")
         assert.False(vim.tbl_contains(get_git_branches(), "remotes/upstream/second-branch"))
-      end))
+      end)
+    )
 
     it(
       "can delete the currently checked-out branch (detach)",

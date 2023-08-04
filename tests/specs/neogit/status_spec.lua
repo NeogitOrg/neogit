@@ -7,7 +7,6 @@ local get_git_status = harness.get_git_status
 local get_git_diff = harness.get_git_diff
 
 local function act(normal_cmd)
-  print("Feeding keys: ", normal_cmd)
   vim.fn.feedkeys(vim.api.nvim_replace_termcodes(normal_cmd, true, true, true))
   vim.fn.feedkeys("", "x") -- flush typeahead
   status.wait_on_current_operation()
@@ -17,10 +16,7 @@ local function find(text)
   for index, line in ipairs(vim.api.nvim_buf_get_lines(0, 0, -1, true)) do
     if line:match(text) then
       vim.api.nvim_win_set_cursor(0, { index, 0 })
-      -- print(">" .. tostring(index) .. " " .. line)
       break
-      -- else
-      --   print(tostring(index) .. " " .. line)
     end
   end
 end
