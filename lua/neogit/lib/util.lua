@@ -30,6 +30,21 @@ local function flatten(tbl)
 end
 
 ---@generic T: any
+---@param tbl T[]
+---@return T[]
+--- Reverses list-like table
+local function reverse(tbl)
+  local t = {}
+  local c = #tbl + 1
+
+  for i, v in ipairs(tbl) do
+    t[c - i] = v
+  end
+
+  return t
+end
+
+---@generic T: any
 ---@generic U: any
 ---@param list T[]
 ---@param f fun(v: T): U|nil
@@ -331,4 +346,5 @@ return {
   remove_item_from_table = remove_item_from_table,
   lists_equal = lists_equal,
   pad_right = pad_right,
+  reverse = reverse,
 }
