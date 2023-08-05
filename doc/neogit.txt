@@ -381,6 +381,60 @@ git mechanism.
 "stash"              see :Man git-stash
 
 ==============================================================================
+Cherry-Pick Popup                                     *neogit_cherry_pick_popup*
+
+Arguments:                                       *neogit_cherry_pick_popup_args*
+  - --ff
+    If the current HEAD is the same as the parent of the cherry-pick’ed
+    commit, then a fast forward to this commit will be performed.
+
+Actions:                                      *neogit_cherry_pick_popup_actions*
+  Actions for the branch popup are split into two categories: "Apply here",
+  and "Apply elsewhere". The former will update the current HEAD, whereas the
+  latter will prompt for a target.
+
+  When a Cherry-Pick isn't in progress, the following actions are available:
+
+  - Pick                                               *neogit_cherry_pick_pick*
+    This command copies COMMITS from another branch onto the current branch.
+    If a commit is under the cursor, or multiple commits are selected, then
+    those are used instead of prompting. Otherwise the user is prompted to
+    select one or more commits.
+
+  - Apply                                             *neogit_cherry_pick_apply*
+    This command applies the changes in COMMITS from another branch onto the
+    current branch, without committing. If a commit is under the cursor, or
+    multiple commits are selected, then those are used instead of prompting.
+    Otherwise the user is prompted to select one or more commits.
+
+  - Harvest                                         *neogit_cherry_pick_harvest*
+    (not yet implemented)
+
+  - Squash                                           *neogit_cherry_pick_squash*
+    (not yet implemented)
+
+  - Donate                                           *neogit_cherry_pick_donate*
+    (not yet implemented)
+
+  - Spinout                                         *neogit_cherry_pick_spinout*
+    (not yet implemented)
+
+  - Spinoff                                         *neogit_cherry_pick_spinoff*
+    (not yet implemented)
+
+
+  When a Cherry-Pick is in progress, the following actions are available:
+
+  - Continue                                       *neogit_cherry_pick_continue*
+    Resume current cherry-pick sequence.
+
+  - Skip                                               *neogit_cherry_pick_skip*
+    Skip the current commit during a cherry-pick sequence.
+
+  - Abort                                             *neogit_cherry_pick_abort*
+    Abort the current cherry-pick sequence. This discards all changes made.
+
+==============================================================================
 Branch Popup                                               *neogit_branch_popup*
 
 Variables:                                       *neogit_branch_popup_variables*
