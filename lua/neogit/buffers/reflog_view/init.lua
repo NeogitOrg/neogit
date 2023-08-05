@@ -48,7 +48,7 @@ function M:open()
             end
           )
 
-          CherryPickPopup.create { commits = commits }
+          CherryPickPopup.create { commits = util.reverse(commits) }
         end,
         ["v"] = function()
           -- local commits = util.filter_map(
