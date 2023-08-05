@@ -476,13 +476,20 @@ function Buffer.create(config)
     buffer:call(config.after)
   end
 
-  -- This sets fold styling for Neogit windows without overriding user styling
   buffer:call(function()
+    -- This sets fold styling for Neogit windows without overriding user styling
     local hl = vim.wo.winhl
     if hl ~= "" then
       hl = hl .. ","
     end
     vim.wo.winhl = hl .. "Folded:NeogitFold"
+
+    -- If signs are not disabled, avoid overrided by user settings
+    buffer:call(function()
+      if not config.disable_signs then
+        vim.wo.signcolumn = "yes"
+      end
+    end)
   end)
 
   if config.context_highlight then
