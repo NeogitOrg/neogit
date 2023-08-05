@@ -438,10 +438,10 @@ Actions:                                      *neogit_cherry_pick_popup_actions*
 Branch Popup                                               *neogit_branch_popup*
 
 Variables:                                       *neogit_branch_popup_variables*
-  -  branch.<name>.description
+  - branch.<name>.description
 
-  -  branch.<name>.merge
-     branch.<name>.remote
+  - branch.<name>.merge
+    branch.<name>.remote
 
   - branch.<name>.rebase
     Cycles branch.<name>.rebase value between true, false, and the value of
@@ -453,8 +453,18 @@ Variables:                                       *neogit_branch_popup_variables*
     repository. `remote.pushDefault` will be offered, if set.
 
 Arguments:                                            *neogit_branch_popup_args*
-  - recurse-submodules
-    Recurse submodules when checking out an existing branch
+  - --recurse-submodules
+    (EXPERIMENTAL) Causes the current command to recurse into submodules if
+    submodule.propagateBranches is enabled.
+
+    When used in branch creation, a new branch <branchname> will be created
+    in the superproject and all of the submodules in the superproject’s
+    <start-point>. In submodules, the branch will point to the submodule
+    commit in the superproject’s <start-point> but the branch’s tracking
+    information will be set up based on the submodule’s branches and remotes
+    e.g.  git branch --recurse-submodules topic origin/main will create the
+    submodule branch "topic" that points to the submodule commit in the
+    superproject’s "origin/main", but tracks the submodule’s "origin/main".
 
 Actions:                                           *neogit_branch_popup_actions*
   Actions for the branch popup are split into three categories: "Checkout",
