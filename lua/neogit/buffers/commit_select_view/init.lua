@@ -55,7 +55,6 @@ function M:open(action)
             end
           )
 
-
           if action and commits[1] then
             vim.schedule(function()
               self:close()
