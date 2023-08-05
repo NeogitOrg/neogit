@@ -2,6 +2,7 @@ local a = require("plenary.async")
 local Buffer = require("neogit.lib.buffer")
 local ui = require("neogit.buffers.commit_select_view.ui")
 local config = require("neogit.config")
+local util = require("neogit.lib.util")
 
 ---@class CommitSelectViewBuffer
 ---@field commits CommitLogEntry[]
@@ -43,6 +44,28 @@ function M:open(action)
     filetype = "NeogitCommitSelectView",
     kind = config.values.commit_select_view.kind,
     mappings = {
+      v = {
+        ["<enter>"] = function()
+          local commits = util.filter_map(
+            self.buffer.ui:get_component_stack_in_linewise_selection(),
+            function(c)
+              if c.options.oid then
+                return c.options.oid
+              end
+            end
+          )
+
+
+          if action and commits[1] then
+            vim.schedule(function()
+              self:close()
+            end)
+
+            action(util.reverse(commits))
+            action = nil
+          end
+        end,
+      },
       n = {
         ["<tab>"] = function()
           -- no-op
