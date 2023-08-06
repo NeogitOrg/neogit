@@ -132,6 +132,12 @@ local configurations = {
     },
   },
 
+  ["merge-base"] = config {
+    flags = {
+      is_ancestor = "--is-ancestor",
+    },
+  },
+
   reset = config {
     flags = {
       hard = "--hard",

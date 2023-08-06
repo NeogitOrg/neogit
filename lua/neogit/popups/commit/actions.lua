@@ -47,11 +47,37 @@ local function commit_special(popup, method)
     return
   end
 
-  a.util.scheduler()
-  do_commit(popup, git.cli.commit.args(method, commit))
-  a.util.scheduler()
+  P(commit)
 
-  return commit
+  -- local block_rebase = false
+  -- if not git.log.is_ancestor(commit, "HEAD") then
+  --   local choice =
+  --     input.get_choice(string.format("'%s' isn't an ancestor of HEAD.", string.sub(commit, 1, 7)), {
+  --       values = {
+  --         "&create without rebasing",
+  --         "&select other",
+  --         "&abort",
+  --       },
+  --       default = 3,
+  --     })
+  --
+  --   if choice == "c" then
+  --     block_rebase = true
+  --   elseif choice == "s" then
+  --     commit_special(popup, method)
+  --     return
+  --   else
+  --     return
+  --   end
+  -- end
+  --
+  -- a.util.scheduler()
+  -- do_commit(popup, git.cli.commit.args(string.format("--%s=%s", method, commit)))
+  -- a.util.scheduler()
+  --
+  -- if not block_rebase then
+  --   return commit
+  -- end
 end
 
 function M.commit(popup)
@@ -83,15 +109,15 @@ function M.amend(popup)
 end
 
 function M.fixup(popup)
-  commit_special(popup, "--fixup")
+  commit_special(popup, "fixup")
 end
 
 function M.squash(popup)
-  commit_special(popup, "--squash")
+  commit_special(popup, "squash")
 end
 
 function M.instant_fixup(popup)
-  local commit = commit_special(popup, "--fixup")
+  local commit = commit_special(popup, "fixup")
   if not commit then
     return
   end
@@ -100,7 +126,7 @@ function M.instant_fixup(popup)
 end
 
 function M.instant_squash(popup)
-  local commit = commit_special(popup, "--squash")
+  local commit = commit_special(popup, "squash")
   if not commit then
     return
   end
