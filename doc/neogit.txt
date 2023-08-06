@@ -384,7 +384,7 @@ git mechanism.
 Cherry-Pick Popup                                     *neogit_cherry_pick_popup*
 
 Arguments:                                       *neogit_cherry_pick_popup_args*
-  - --ff
+  • --ff
     If the current HEAD is the same as the parent of the cherry-pick’ed
     commit, then a fast forward to this commit will be performed.
 
@@ -395,65 +395,65 @@ Actions:                                      *neogit_cherry_pick_popup_actions*
 
   When a Cherry-Pick isn't in progress, the following actions are available:
 
-  - Pick                                               *neogit_cherry_pick_pick*
+  • Pick                                               *neogit_cherry_pick_pick*
     This command copies COMMITS from another branch onto the current branch.
     If a commit is under the cursor, or multiple commits are selected, then
     those are used instead of prompting. Otherwise the user is prompted to
     select one or more commits.
 
-  - Apply                                             *neogit_cherry_pick_apply*
+  • Apply                                             *neogit_cherry_pick_apply*
     This command applies the changes in COMMITS from another branch onto the
     current branch, without committing. If a commit is under the cursor, or
     multiple commits are selected, then those are used instead of prompting.
     Otherwise the user is prompted to select one or more commits.
 
-  - Harvest                                         *neogit_cherry_pick_harvest*
+  • Harvest                                         *neogit_cherry_pick_harvest*
     (not yet implemented)
 
-  - Squash                                           *neogit_cherry_pick_squash*
+  • Squash                                           *neogit_cherry_pick_squash*
     (not yet implemented)
 
-  - Donate                                           *neogit_cherry_pick_donate*
+  • Donate                                           *neogit_cherry_pick_donate*
     (not yet implemented)
 
-  - Spinout                                         *neogit_cherry_pick_spinout*
+  • Spinout                                         *neogit_cherry_pick_spinout*
     (not yet implemented)
 
-  - Spinoff                                         *neogit_cherry_pick_spinoff*
+  • Spinoff                                         *neogit_cherry_pick_spinoff*
     (not yet implemented)
 
 
   When a Cherry-Pick is in progress, the following actions are available:
 
-  - Continue                                       *neogit_cherry_pick_continue*
+  • Continue                                       *neogit_cherry_pick_continue*
     Resume current cherry-pick sequence.
 
-  - Skip                                               *neogit_cherry_pick_skip*
+  • Skip                                               *neogit_cherry_pick_skip*
     Skip the current commit during a cherry-pick sequence.
 
-  - Abort                                             *neogit_cherry_pick_abort*
+  • Abort                                             *neogit_cherry_pick_abort*
     Abort the current cherry-pick sequence. This discards all changes made.
 
 ==============================================================================
 Branch Popup                                               *neogit_branch_popup*
 
 Variables:                                       *neogit_branch_popup_variables*
-  - branch.<name>.description
+  • branch.<name>.description
 
-  - branch.<name>.merge
+  • branch.<name>.merge
     branch.<name>.remote
 
-  - branch.<name>.rebase
+  • branch.<name>.rebase
     Cycles branch.<name>.rebase value between true, false, and the value of
     `pull.rebase`. When enabled, actions like pulling will attempt to rebase
     by default.
 
-  - branch.<name>.pushRemote
+  • branch.<name>.pushRemote
     Cycles pushRemote between the remotes currently configured for the
     repository. `remote.pushDefault` will be offered, if set.
 
 Arguments:                                            *neogit_branch_popup_args*
-  - --recurse-submodules
+  • --recurse-submodules
     (EXPERIMENTAL) Causes the current command to recurse into submodules if
     submodule.propagateBranches is enabled.
 
@@ -474,19 +474,19 @@ Actions:                                           *neogit_branch_popup_actions*
 
   Finally, "Do" actions provide some common housekeeping actions.
 
-  - Checkout branch/revision                        *neogit_branch_checkout_rev*
+  • Checkout branch/revision                        *neogit_branch_checkout_rev*
     Changes HEAD to point to the selected branch/revision. If a local branch
     is selected, that will be checked out. Otherwise HEAD will become
     detatched. Any ref under the cursor or selected will be available to
     checkout.
 
-  - Checkout local branch                         *neogit_branch_checkout_local*
+  • Checkout local branch                         *neogit_branch_checkout_local*
     Changes HEAD to point to the selected branch. Also lists branches on
     remotes that do not have a matching branch locally. If a remote branch is
     selected, then a local branch is created tracking the selected remote
     branch.
 
-  - Checkout new branch                             *neogit_branch_checkout_new*
+  • Checkout new branch                             *neogit_branch_checkout_new*
     Creates and switches HEAD to a new branch. Any whitespace in the branch
     name will be automatically changed to '-'.
 
@@ -497,7 +497,7 @@ Actions:                                           *neogit_branch_popup_actions*
     the branch being created. The current branch will be at the top of the
     list, but any branch can be chosen.
 
-  - Checkout new spin-off                               *neogit_branch_spin_off*
+  • Checkout new spin-off                               *neogit_branch_spin_off*
     This command creates and checks out a new branch starting at and tracking
     the current branch. That branch in turn is reset to the last commit it
     shares with its upstream. If the current branch has no upstream or no
@@ -507,34 +507,134 @@ Actions:                                           *neogit_branch_popup_actions*
     This is useful to create a feature branch after work has already began on
     the old branch.
 
-  - Checkout new worktree                      *neogit_branch_checkout_worktree*
+  • Checkout new worktree                      *neogit_branch_checkout_worktree*
     (Not yet implimented)
 
-  - Create new branch                              *neogit_branch_create_branch*
+  • Create new branch                              *neogit_branch_create_branch*
     Functionally the same as |neogit_branch_checkout_new|, but does not update
     HEAD.
 
-  - Create new spin-out                                 *neogit_branch_spin_out*
+  • Create new spin-out                                 *neogit_branch_spin_out*
     Like |neogit_branch_spin_off|, but doesn't change HEAD. However, if the
     index has uncomitted changes, will behave exactly the same as spin_off.
 
-  - Create new worktree                          *neogit_branch_create_worktree*
+  • Create new worktree                          *neogit_branch_create_worktree*
     (Not yet implimented)
 
-  - Configure                                          *neogit_branch_configure*
+  • Configure                                          *neogit_branch_configure*
     Opens selector to choose a branch, then offering some configuration
     options. See |neogit_branch_config_popup|.
 
-  - Rename                                                *neogit_branch_rename*
+  • Rename                                                *neogit_branch_rename*
     Opens selector to choose a branch to rename. Like with a new branch, any
     whitespace will be replaced with '-'.
 
-  - Reset                                                  *neogit_branch_reset*
+  • Reset                                                  *neogit_branch_reset*
     Resets the current branch to the the selected branch via a hard reset.
     Uncommitted changes will be lost in the process.
 
-  - Delete                                                *neogit_branch_delete*
+  • Delete                                                *neogit_branch_delete*
     Opens selector, allowing the user to delete either a local or remote
     branch.
+
+==============================================================================
+Commit Popup                                               *neogit_commit_popup*
+
+Arguments:                                            *neogit_commit_popup_args*
+  • --all
+    Tell the command to automatically stage files that have been modified and
+    deleted, but new files you have not told Git about are not affected.
+
+  • --allow-empty
+    Usually recording a commit that has the exact same tree as its sole parent
+    commit is a mistake, and the command prevents you from making such a
+    commit. This option bypasses the safety, and is primarily for use by
+    foreign SCM interface scripts.
+
+  • --verbose
+    Show unified diff between the HEAD commit and what would be committed at
+    the bottom of the commit message template to help the user describe the
+    commit by reminding what changes the commit has. Note that this diff
+    output doesn’t have its lines prefixed with #. This diff will not be a
+    part of the commit message. See the `commit.verbose` configuration variable
+    in git-config(1).
+
+  • --no-verify
+    Skip any pre-commit or commit-msg hooks. See also githooks(5).
+
+  • --signoff
+    Add a Signed-off-by trailer by the committer at the end of the commit log
+    message. The meaning of a signoff depends on the project to which you’re
+    committing. For example, it may certify that the committer has the rights
+    to submit the work under the project’s license or agrees to some
+    contributor representation, such as a Developer Certificate of Origin.
+
+    See http://developercertificate.org for the one used by the Linux kernel
+    and Git projects.
+
+    Consult the documentation or leadership of the project to which you’re
+    contributing to understand how the signoffs are used in that project.
+
+  • --no-gpg-sign
+    This is useful to countermand both commit.gpgSign configuration variable,
+    and --gpg-sign
+
+  • --reset-author
+    When used while ammending or when committing after a conflicting
+    cherry-pick, declare that the authorship of the resulting commit now
+    belongs to the committer. This also renews the author timestamp.
+
+  • --author=
+    Override the commit author. Specify an explicit author using the standard
+    A U Thor <author@example.com> format. Otherwise <author> is assumed to be
+    a pattern and is used to search for an existing commit by that author
+    (i.e. rev-list --all -i --author=<author>); the commit author is then
+    copied from the first such commit found.
+
+  • --gpg-sign=
+    GPG-sign commits. The argument should be the keyid is optional and
+    defaults to the committer identity,
+
+  • --reuse-message=
+    Take an existing commit object, and reuse the log message and the
+    authorship information (including the timestamp) when creating the commit.
+
+Actions:                                           *neogit_commit_popup_actions*
+  Actions in the commit popup are in three groups: "Create", "Edit HEAD", and
+  "Edit". The first should be somewhat self explanatory - you can create a new
+  commit from your staged changes. "Edit HEAD" actions will modify the current
+  commit HEAD is pointing at, and "Edit" will modify commits that your HEAD
+  isn't pointing to.
+
+  • Create Commit                                         *neogit_commit_create*
+    Creates a new commit on the current branch from the currently staged
+    changes.
+
+  • Extend                                                *neogit_commit_extend*
+    Amends the last commit without editing the commit message.
+
+  • Reword                                                *neogit_commit_reword*
+    Edit the last commit message without modifying the committed changes. Any
+    staged changes are ignored.
+
+  • Amend                                                  *neogit_commit_amend*
+    Amend the last commit.
+
+  • Fixup                                                  *neogit_commit_fixup*
+    Creates a fixup commit. If a commit is selected it will be used, otherwise
+    the user is prompted to pick a commit.
+
+  • Squash                                                *neogit_commit_squash*
+    Creates a squash commit. If a commit is selected it will be used,
+    otherwise the user is prompted to pick a commit.
+
+  • Augment                                              *neogit_commit_augment*
+    (not yet implemented)
+
+  • Instant Fixup                                  *neogit_commit_instant_fixup*
+    Similar to |neogit_commit_fixup|, but instantly rebases after.
+
+  • Instant Squash                                *neogit_commit_instant_squash*
+    Similar to |neogit_commit_squash|, but instantly rebases after.
 
 vim:tw=78:ts=8:ft=help
