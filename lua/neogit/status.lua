@@ -1061,7 +1061,16 @@ local cmd_func_map = function()
             local col = cursor_col == 0 and 0 or cursor_col - 1
             vim.api.nvim_win_set_cursor(0, { row, col })
           end
-        elseif vim.tbl_contains({ "unmerged", "unpulled", "recent", "stashes" }, section.name) then
+        elseif
+          vim.tbl_contains({
+            "unmerged_pushRemote",
+            "unpulled_pushRemote",
+            "unmerged_upstream",
+            "unpulled_upstream",
+            "recent",
+            "stashes",
+          }, section.name)
+        then
           if M.commit_view and M.commit_view.is_open then
             M.commit_view:close()
           end
