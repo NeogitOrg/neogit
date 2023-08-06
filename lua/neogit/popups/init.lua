@@ -34,12 +34,19 @@ function M.mappings_table()
       "Rebase",
       M.open("rebase", function(f)
         local commit = require("neogit.status").get_selected_commits()[1]
-        f { commit = commit and commit.oid or nil }
+        f { commit = commit and commit.oid }
       end),
     },
     { "MergePopup", "Merge", M.open("merge") },
     { "PushPopup", "Push", M.open("push") },
-    { "CommitPopup", "Commit", M.open("commit") },
+    {
+      "CommitPopup",
+      "Commit",
+      M.open("commit", function(f)
+        local commit = require("neogit.status").get_selected_commits()[1]
+        f { commit = commit and commit.oid }
+      end),
+    },
     { "LogPopup", "Log", M.open("log") },
     {
       "CherryPickPopup",

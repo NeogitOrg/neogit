@@ -3,7 +3,7 @@ local actions = require("neogit.popups.commit.actions")
 
 local M = {}
 
-function M.create()
+function M.create(env)
   local p = popup
     .builder()
     :name("NeogitCommitPopup")
@@ -30,7 +30,7 @@ function M.create()
     :new_action_group()
     :action("F", "Instant Fixup", actions.instant_fixup)
     :action("S", "Instant Squash", actions.instant_squash)
-    :env({ highlight = { "HEAD" } })
+    :env({ highlight = { "HEAD" }, commit = env.commit })
     :build()
 
   p:show()

@@ -36,7 +36,13 @@ local function do_commit(popup, cmd)
 end
 
 local function commit_special(popup, method)
-  local commit = CommitSelectViewBuffer.new(git.log.list()):open_async()
+  local commit
+  if popup.state.env.commit then
+    commit = popup.state.env.commit
+  else
+    commit = CommitSelectViewBuffer.new(git.log.list()):open_async()
+  end
+
   if not commit then
     return
   end
