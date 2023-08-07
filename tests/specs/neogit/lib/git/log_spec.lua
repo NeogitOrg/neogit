@@ -5,7 +5,6 @@ local util = require("tests.util.util")
 
 local subject = require("neogit.lib.git.log")
 
-
 describe("lib.git.log", function()
   before_each(function()
     git_harness.prepare_repository()
