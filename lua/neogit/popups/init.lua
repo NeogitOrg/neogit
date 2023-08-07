@@ -56,7 +56,6 @@ function M.mappings_table()
         M.open("cherry_pick", function(f)
           f { commits = require("neogit.status").get_selected_commits() }
         end),
-        true,
       },
     },
     {
@@ -67,7 +66,6 @@ function M.mappings_table()
         M.open("branch", function(f)
           f { revisions = require("neogit.status").get_selected_commits() }
         end),
-        true,
       },
     },
     { "FetchPopup", "Fetch", M.open("fetch") },
