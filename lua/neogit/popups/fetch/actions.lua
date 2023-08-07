@@ -43,6 +43,15 @@ function M.fetch_upstream(popup)
   local upstream = git.branch.upstream_remote()
   if upstream then
     fetch_from(upstream, upstream, "", popup:get_arguments())
+  else
+    upstream = select_remote()
+
+    if upstream then
+      local args = popup:get_arguments()
+      table.insert(args, "--set-upstream")
+
+      fetch_from(upstream, upstream, "", args)
+    end
   end
 end
 
