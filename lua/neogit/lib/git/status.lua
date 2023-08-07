@@ -157,6 +157,12 @@ local status = {
     local repo = require("neogit.lib.git.repository")
     return #repo.staged.items > 0 or #repo.unstaged.items > 0
   end,
+  anything_staged = function()
+    return #require("neogit.lib.git.repository").staged.items > 0
+  end,
+  anything_unstaged = function()
+    return #require("neogit.lib.git.repository").unstaged.items > 0
+  end,
 }
 
 status.register = function(meta)

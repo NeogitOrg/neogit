@@ -927,8 +927,8 @@ local cmd_func_map = function()
       set_folds { false, false, false }
     end),
     ["Toggle"] = toggle,
-    ["Discard"] = { "nv", a.void(discard), true },
-    ["Stage"] = { "nv", a.void(stage), true },
+    ["Discard"] = { "nv", a.void(discard) },
+    ["Stage"] = { "nv", a.void(stage) },
     ["StageUnstaged"] = a.void(function()
       git.status.stage_modified()
       refresh({ status = true, diffs = true }, "StageUnstaged")
@@ -937,7 +937,7 @@ local cmd_func_map = function()
       git.status.stage_all()
       refresh { status = true, diffs = true }
     end),
-    ["Unstage"] = { "nv", a.void(unstage), true },
+    ["Unstage"] = { "nv", a.void(unstage) },
     ["UnstageStaged"] = a.void(function()
       git.status.unstage_all()
       refresh({ status = true, diffs = true }, "UnstageStaged")
@@ -1227,12 +1227,19 @@ function M.create(kind, cwd)
       for key, val in pairs(config.values.mappings.status) do
         if val and val ~= "" then
           local func = func_map[val]
+
           if func ~= nil then
-            mappings[key] = func
-          elseif type(val) == "function" then
-            mappings[key] = val
-          elseif type(val) == "string" then
-            mappings[key] = function()
+            if type(func) == "function" then
+              mappings.n[key] = func
+            elseif type(func) == "table" then
+              for _, mode in pairs(vim.split(func[1], "")) do
+                mappings[mode][key] = func[2]
+              end
+            end
+          elseif type(val) == "function" then -- For user mappings that are either function values...
+            mappings.n[key] = val
+          elseif type(val) == "string" then -- ...or VIM command strings
+            mappings.n[key] = function()
               vim.cmd(val)
             end
           end

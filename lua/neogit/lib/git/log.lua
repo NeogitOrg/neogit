@@ -259,6 +259,10 @@ function M.list(options, show_popup)
   return parse_log(output.stdout, graph)
 end
 
+function M.is_ancestor(a, b)
+  return cli["merge-base"].is_ancestor.args(a, b):call_sync_ignoring_exit_code():trim().code == 0
+end
+
 local function update_recent(state)
   local count = config.values.status.recent_commit_count
   if count < 1 then

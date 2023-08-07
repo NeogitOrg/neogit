@@ -34,12 +34,19 @@ function M.mappings_table()
       "Rebase",
       M.open("rebase", function(f)
         local commit = require("neogit.status").get_selected_commits()[1]
-        f { commit = commit and commit.oid or nil }
+        f { commit = commit and commit.oid }
       end),
     },
     { "MergePopup", "Merge", M.open("merge") },
     { "PushPopup", "Push", M.open("push") },
-    { "CommitPopup", "Commit", M.open("commit") },
+    {
+      "CommitPopup",
+      "Commit",
+      M.open("commit", function(f)
+        local commit = require("neogit.status").get_selected_commits()[1]
+        f { commit = commit and commit.oid }
+      end),
+    },
     { "LogPopup", "Log", M.open("log") },
     {
       "CherryPickPopup",
@@ -49,7 +56,6 @@ function M.mappings_table()
         M.open("cherry_pick", function(f)
           f { commits = require("neogit.status").get_selected_commits() }
         end),
-        true,
       },
     },
     {
@@ -60,7 +66,6 @@ function M.mappings_table()
         M.open("branch", function(f)
           f { revisions = require("neogit.status").get_selected_commits() }
         end),
-        true,
       },
     },
     { "FetchPopup", "Fetch", M.open("fetch") },

@@ -35,17 +35,73 @@ local function do_commit(popup, cmd)
   })
 end
 
-local function commit_special(popup, method)
-  local commit = CommitSelectViewBuffer.new(git.log.list()):open_async()
-  if not commit then
-    return
+local function commit_special(popup, method, opts)
+  if not git.status.anything_staged() then
+    if git.status.anything_unstaged() then
+      local stage_all = input.get_confirmation(
+        "Nothing is staged. Commit all uncommitted changed?",
+        { values = { "&Yes", "&No" }, default = 2 }
+      )
+
+      if stage_all then
+        opts.all = true
+      else
+        return
+      end
+    else
+      require("neogit.lib.notification").create("No changes to commit.", vim.lsp.log_levels.WARN)
+      return
+    end
+  end
+
+  local commit
+  if popup.state.env.commit then
+    commit = popup.state.env.commit
+  else
+    commit = CommitSelectViewBuffer.new(git.log.list()):open_async()[1]
+    if not commit then
+      return
+    end
+  end
+
+  if opts.rebase and not git.log.is_ancestor(commit, "HEAD") then
+    local msg = string.format("'%s' isn't an ancestor of HEAD.", string.sub(commit, 1, 7))
+    local choice = input.get_choice(msg, {
+      values = {
+        "&create without rebasing",
+        "&select other",
+        "&abort",
+      },
+      default = 3,
+    })
+
+    if choice == "c" then
+      opts.rebase = false
+    elseif choice == "s" then
+      commit = CommitSelectViewBuffer.new(git.log.list()):open_async()[1]
+    else
+      return
+    end
+  end
+
+  local cmd = git.cli.commit.args(string.format("--%s=%s", method, commit))
+  if opts.edit then
+    cmd = cmd.edit
+  else
+    cmd = cmd.no_edit
+  end
+
+  if opts.all then
+    cmd = cmd.all
   end
 
   a.util.scheduler()
-  do_commit(popup, git.cli.commit.args(method, commit))
-  a.util.scheduler()
+  do_commit(popup, cmd)
 
-  return commit
+  if opts.rebase then
+    a.util.scheduler()
+    git.rebase.rebase_interactive(commit .. "~1", { "--autosquash", "--autostash", "--keep-empty" })
+  end
 end
 
 function M.commit(popup)
@@ -77,29 +133,31 @@ function M.amend(popup)
 end
 
 function M.fixup(popup)
-  commit_special(popup, "--fixup")
+  commit_special(popup, "fixup", { edit = false })
 end
 
 function M.squash(popup)
-  commit_special(popup, "--squash")
+  commit_special(popup, "squash", { edit = false })
+end
+
+function M.augment(popup)
+  commit_special(popup, "squash", { edit = true })
 end
 
 function M.instant_fixup(popup)
-  local commit = commit_special(popup, "--fixup")
-  if not commit then
+  if not confirm_modifications() then
     return
   end
 
-  git.rebase.rebase_interactive(commit .. "~1", "--autosquash")
+  commit_special(popup, "fixup", { rebase = true, edit = false })
 end
 
 function M.instant_squash(popup)
-  local commit = commit_special(popup, "--squash")
-  if not commit then
+  if not confirm_modifications() then
     return
   end
 
-  git.rebase.rebase_interactive(commit .. "~1", "--autosquash")
+  commit_special(popup, "squash", { rebase = true, edit = false })
 end
 
 return M

@@ -50,6 +50,10 @@ function M:open()
 
           CherryPickPopup.create { commits = util.reverse(commits) }
         end,
+        ["c"] = function()
+          local stack = self.buffer.ui:get_component_stack_under_cursor()
+          require("neogit.popups.commit").create { commit = stack[#stack].options.oid }
+        end,
         ["v"] = function()
           -- local commits = util.filter_map(
           --   self.buffer.ui:get_component_stack_in_linewise_selection(),
@@ -74,6 +78,10 @@ function M:open()
         ["A"] = function()
           local stack = self.buffer.ui:get_component_stack_under_cursor()
           CherryPickPopup.create { commits = { stack[#stack].options.oid } }
+        end,
+        ["c"] = function()
+          local stack = self.buffer.ui:get_component_stack_under_cursor()
+          require("neogit.popups.commit").create { commit = stack[#stack].options.oid }
         end,
         ["v"] = function()
           local stack = self.buffer.ui:get_component_stack_under_cursor()

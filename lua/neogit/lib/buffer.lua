@@ -437,13 +437,9 @@ function Buffer.create(config)
   if config.mappings then
     for mode, val in pairs(config.mappings) do
       for key, cb in pairs(val) do
-        buffer.mmanager.mappings[key] = {
-          mode,
-          function()
-            cb(buffer)
-          end,
-          mode:find("v") ~= nil,
-        }
+        buffer.mmanager.mappings[mode][key] = function()
+          cb(buffer)
+        end
       end
     end
   end

@@ -132,6 +132,12 @@ local configurations = {
     },
   },
 
+  ["merge-base"] = config {
+    flags = {
+      is_ancestor = "--is-ancestor",
+    },
+  },
+
   reset = config {
     flags = {
       hard = "--hard",
@@ -227,10 +233,12 @@ local configurations = {
 
   commit = config {
     flags = {
+      all = "--all",
       amend = "--amend",
       only = "--only",
       dry_run = "--dry-run",
       no_edit = "--no-edit",
+      edit = "--edit",
     },
     options = {
       commit_message_file = "--file",
