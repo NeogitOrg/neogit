@@ -629,7 +629,8 @@ Actions:                                           *neogit_commit_popup_actions*
     otherwise the user is prompted to pick a commit.
 
   • Augment                                              *neogit_commit_augment*
-    (not yet implemented)
+    Creates a squash commit, editing the squash message. If a commit is
+    selected it will be used, otherwise the user is prompted to pick a commit.
 
   • Instant Fixup                                  *neogit_commit_instant_fixup*
     Similar to |neogit_commit_fixup|, but instantly rebases after.
