@@ -14,7 +14,7 @@ local function get_commits(popup)
       return c.oid
     end)
   else
-    commits = { CommitSelectViewBuffer.new(git.log.list { "--max-count=256" }):open_async() }
+    commits = CommitSelectViewBuffer.new(git.log.list { "--max-count=256" }):open_async()
   end
 
   a.util.scheduler()

@@ -84,7 +84,7 @@ function M:open(action)
               self:close()
             end)
 
-            action(commit)
+            action({ commit })
             action = nil
           end
         end,
@@ -94,7 +94,7 @@ function M:open(action)
       ["BufUnload"] = function()
         self.buffer = nil
         if action then
-          action(nil)
+          action({})
         end
       end,
     },

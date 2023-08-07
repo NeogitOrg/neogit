@@ -9,7 +9,7 @@ local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 local M = {}
 
 local function reset(type)
-  local commit = CommitSelectViewBuffer.new(git.log.list { "--max-count=256" }):open_async()
+  local commit = CommitSelectViewBuffer.new(git.log.list { "--max-count=256" }):open_async()[1]
   if not commit then
     return
   end
@@ -46,7 +46,7 @@ end
 function M.a_file()
   local commits = git.log.list(util.merge({ "--max-count=256", "--all" }, git.stash.list_refs()))
 
-  local commit = CommitSelectViewBuffer.new(commits):open_async()
+  local commit = CommitSelectViewBuffer.new(commits):open_async()[1]
   if not commit then
     return
   end

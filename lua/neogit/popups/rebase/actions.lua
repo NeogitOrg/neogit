@@ -72,7 +72,13 @@ function M.onto_elsewhere(popup)
 end
 
 function M.interactively(popup)
-  local commit = popup.state.env.commit[1] or CommitSelectViewBuffer.new(git.log.list()):open_async()
+  local commit
+  if popup.state.env.commit then
+    commit = popup.state.env.commit
+  else
+    commit = CommitSelectViewBuffer.new(git.log.list()):open_async()[1]
+  end
+
   if commit then
     git.rebase.rebase_interactive(commit, popup:get_arguments())
     a.util.scheduler()
