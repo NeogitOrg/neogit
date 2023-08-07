@@ -28,7 +28,7 @@ function M:close()
   self.buffer = nil
 end
 
----@param action fun(commit: CommitLogEntry|nil)|nil
+---@param action fun(commit: CommitLogEntry|nil)|table
 function M:open(action)
   -- TODO: Pass this in as a param instead of reading state from object
   local _, item = require("neogit.status").get_current_section_item()
@@ -84,7 +84,7 @@ function M:open(action)
               self:close()
             end)
 
-            action({ commit })
+            action { commit }
             action = nil
           end
         end,
@@ -94,7 +94,7 @@ function M:open(action)
       ["BufUnload"] = function()
         self.buffer = nil
         if action then
-          action({})
+          action {}
         end
       end,
     },
