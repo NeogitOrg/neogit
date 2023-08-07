@@ -570,15 +570,17 @@ function M:show()
       vim.cmd([[setlocal nocursorline]])
 
       if self.state.env.highlight then
-        for _, text in ipairs(self.state.env.highlight) do
-          vim.fn.matchadd("NeogitPopupBranchName", text, 100)
+        for i = 1, #self.state.env.highlight, 1 do
+          vim.fn.matchadd("NeogitPopupBranchName", self.state.env.highlight[i], 100)
         end
       else
         vim.fn.matchadd("NeogitPopupBranchName", git.repo.head.branch, 100)
       end
 
-      for _, text in ipairs(self.state.env.bold or {}) do
-        vim.fn.matchadd("NeogitPopupBold", text, 100)
+      if self.state.env.bold then
+        for i = 1, #self.state.env.bold, 1 do
+          vim.fn.matchadd("NeogitPopupBold", self.state.env.bold[i], 100)
+        end
       end
 
       if config.values.popup.kind == "split" or config.values.popup.kind == "split_above" then
