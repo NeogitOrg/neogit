@@ -5,8 +5,6 @@ local popup = require("neogit.lib.popup")
 local M = {}
 
 function M.create()
-  local upstream = git.branch.upstream_remote()
-
   local p = popup
     .builder()
     :name("NeogitFetchPopup")
@@ -14,7 +12,7 @@ function M.create()
     :switch("t", "tags", "Fetch all tags")
     :group_heading("Fetch from")
     :action("p", git.branch.pushRemote_label(), actions.fetch_pushremote)
-    :action_if(upstream, "u", upstream, actions.fetch_upstream)
+    :action("u", git.branch.upstream_remote_label(), actions.fetch_upstream)
     :action("e", "elsewhere", actions.fetch_elsewhere)
     :action("a", "all remotes", actions.fetch_all_remotes)
     :new_action_group("Fetch")
@@ -23,7 +21,10 @@ function M.create()
     :action("m", "submodules", actions.fetch_submodules)
     :new_action_group("Configure")
     :action("C", "Set variables...", actions.set_variables)
-    :env({ highlight = { git.branch.pushRemote(), upstream }, bold = { "pushRemote" } })
+    :env({
+      highlight = { git.branch.pushRemote(), git.branch.upstream_remote() },
+      bold = { "@{upstream}", "pushRemote" },
+    })
     :build()
 
   p:show()
