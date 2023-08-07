@@ -9,6 +9,10 @@ local util = require("neogit.lib.util")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
+local function select_remote()
+  return FuzzyFinderBuffer.new(git.remote.list()):open_async { prompt_prefix = "remote > " }
+end
+
 local function fetch_from(name, remote, branch, args)
   notif.create("Fetching from " .. name)
   local res = git.fetch.fetch_interactive(remote, branch, args)
@@ -50,7 +54,7 @@ function M.fetch_all_remotes(popup)
 end
 
 function M.fetch_elsewhere(popup)
-  local remote = FuzzyFinderBuffer.new(git.remote.list()):open_async { prompt_prefix = "remote > " }
+  local remote = select_remote()
   if not remote then
     logger.error("No remote selected")
     return
@@ -65,7 +69,7 @@ end
 --   git@
 
 function M.fetch_another_branch(popup)
-  local remote = FuzzyFinderBuffer.new(git.remote.list()):open_async { prompt_prefix = "remote > " }
+  local remote = select_remote()
   if not remote then
     return
   end
@@ -85,7 +89,7 @@ function M.fetch_another_branch(popup)
 end
 
 function M.fetch_refspec(popup)
-  local remote = FuzzyFinderBuffer.new(git.remote.list()):open_async { prompt_prefix = "remote > " }
+  local remote = select_remote()
   if not remote then
     return
   end
