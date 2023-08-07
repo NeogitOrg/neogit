@@ -40,20 +40,21 @@ function M.to_pushremote(popup)
   end
 
   if pushRemote then
-    push_to(popup:get_arguments(), pushRemote, git.repo.head.branch)
+    push_to(popup:get_arguments(), pushRemote, git.branch.current())
   end
 end
 
 function M.to_upstream(popup)
-  local upstream = git.repo.upstream.ref
+  local upstream = git.branch.upstream()
   local remote, branch, set_upstream
 
   if upstream then
     remote, branch = upstream:match("^([^/]*)/(.*)$")
   else
     set_upstream = true
-    branch = git.repo.head.branch
+    branch = git.branch.current()
     remote = git.branch.upstream_remote()
+      or FuzzyFinderBuffer.new(git.remote.list()):open_async { prompt_prefix = "remote > " }
   end
 
   if remote then

@@ -138,10 +138,7 @@ function M.set_pushRemote()
   end
 
   if pushRemote then
-    config_lib.set(
-      string.format("branch.%s.pushRemote", require("neogit.lib.git").repo.head.branch),
-      pushRemote
-    )
+    config_lib.set(string.format("branch.%s.pushRemote", M.current()), pushRemote)
   end
 
   return pushRemote
@@ -155,19 +152,20 @@ function M.upstream_label()
   return M.upstream() or "@{upstream}, creating it"
 end
 
+function M.upstream_remote_label()
+  return M.upstream_remote() or "@{upstream}, setting it"
+end
+
 function M.upstream_remote()
   local git = require("neogit.lib.git")
   local remote = git.repo.upstream.remote
 
   if not remote then
     local remotes = git.remote.list()
-
-    if git.config.get("push.autoSetupRemote").value == "true" and vim.tbl_contains(remotes, "origin") then
-      remote = "origin"
-    elseif #remotes == 1 then
+    if #remotes == 1 then
       remote = remotes[1]
-    else
-      remote = FuzzyFinderBuffer.new(remotes):open_async { prompt_prefix = "remote > " }
+    elseif vim.tbl_contains(remotes, "origin") then
+      remote = "origin"
     end
   end
 

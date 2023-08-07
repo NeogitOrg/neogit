@@ -638,4 +638,61 @@ Actions:                                           *neogit_commit_popup_actions*
   • Instant Squash                                *neogit_commit_instant_squash*
     Similar to |neogit_commit_squash|, but instantly rebases after.
 
+==============================================================================
+Fetch Popup                                                 *neogit_fetch_popup*
+
+Arguments:                                             *neogit_fetch_popup_args*
+  • --prune
+    Before fetching, remove any remote-tracking references that no longer
+    exist on the remote. Tags are not subject to pruning if they are fetched
+    only because of the default tag auto-following or due to a --tags option.
+
+    However, if tags are fetched due to an explicit refspec (either on the
+    command line or in the remote configuration, for example if the remote was
+    cloned with the --mirror option), then they are also subject to pruning.
+
+  • --tags
+    Fetch all tags from the remote (i.e., fetch remote tags refs/tags/* into
+    local tags with the same name), in addition to whatever else would
+    otherwise be fetched. Using this option alone does not subject tags to
+    pruning, even if --prune is used (though tags may be pruned anyway if
+    they are also the destination of an explicit refspec; see --prune).
+
+
+Actions:                                            *neogit_fetch_popup_actions*
+
+  • Fetch from pushRemote                              *neogit_fetch_pushremote*
+    Fetches from the current pushRemote.
+
+    When the pushRemote is not configured, the user will be prompted to choose
+    from the existing remotes to set it.
+
+  • Fetch from upstream                                  *neogit_fetch_upstream*
+    Fetches from the upstream of the current branch.
+
+    If the upstream is configured for the current branch and names an existing
+    remote, then use that. Otherwise try to use another remote: If only a
+    single remote is configured, then use that. Otherwise if a remote named
+    "origin" exists, then use that.
+
+  • Fetch from elsewhere                                *neogit_fetch_elsewhere*
+    Provides a select interface for the user to choose which remote to fetch
+    from.
+
+  • Fetch from All Remotes                                    *neogit_fetch_all*
+    Fetches from all configured remotes.
+
+  • Fetch Another Branch                                   *neogit_fetch_branch*
+    Fetches only a specific branch from a remote, both of which are selected
+    by the user.
+
+  • Fetch Explicit Refspec                                *neogit_fetch_refspec*
+    Fetches from a remote using an explicit refspec.
+
+  • Fetch Submodules                                   *neogit_fetch_submodules*
+    Fetches all submodules.
+
+  • Set Variables                                   *neogit_fetch_set_variables*
+    Opens Branch Config popup for the current branch.
+
 vim:tw=78:ts=8:ft=help
