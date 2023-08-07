@@ -54,6 +54,7 @@ function M.to_upstream(popup)
     set_upstream = true
     branch = git.branch.current()
     remote = git.branch.upstream_remote()
+      or FuzzyFinderBuffer.new(git.remote.list()):open_async { prompt_prefix = "remote > " }
   end
 
   if remote then
