@@ -237,6 +237,7 @@ local configurations = {
       only = "--only",
       dry_run = "--dry-run",
       no_edit = "--no-edit",
+      edit = "--edit",
     },
     options = {
       commit_message_file = "--file",
