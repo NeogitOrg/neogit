@@ -233,6 +233,7 @@ local configurations = {
 
   commit = config {
     flags = {
+      all = "--all",
       amend = "--amend",
       only = "--only",
       dry_run = "--dry-run",
