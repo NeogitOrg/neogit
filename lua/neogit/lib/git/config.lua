@@ -20,11 +20,6 @@ function ConfigEntry.new(name, value, scope)
   }, ConfigEntry)
 end
 
--- ---@return string
--- function ConfigEntry:value()
---   return self._value or ""
--- end
-
 ---@return string
 function ConfigEntry:type()
   if self.value == "true" or self.value == "false" then
@@ -39,6 +34,21 @@ end
 ---@return boolean
 function ConfigEntry:is_set()
   return self.value ~= ""
+end
+
+---@return boolean|number|string|nil
+function ConfigEntry:read()
+  if not self:is_set() then
+    return nil
+  end
+
+  if self:type() == "boolean" then
+    return self.value == "true"
+  elseif self:type() == "number" then
+    return tonumber(self.value)
+  else
+    return self.value
+  end
 end
 
 ---@return nil
