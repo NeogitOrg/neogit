@@ -495,7 +495,7 @@ describe("Neogit config", function()
       end)
 
       it("should return valid when commit_editor.kind is a valid window kind", function()
-        config.values.commit_editor.kind = "floating"
+        config.values.commit_editor.kind = "replace"
         assert.True(vim.tbl_count(require("neogit.config").validate_config()) == 0)
       end)
 
@@ -505,7 +505,7 @@ describe("Neogit config", function()
       end)
 
       it("should return valid when commit_view.kind is a valid window kind", function()
-        config.values.commit_view.kind = "tab"
+        config.values.commit_view.kind = "split_above"
         assert.True(vim.tbl_count(require("neogit.config").validate_config()) == 0)
       end)
 
