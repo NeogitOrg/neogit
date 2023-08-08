@@ -28,6 +28,9 @@ local function update_status(state)
   local cwd = vim.fn.getcwd()
   local result = git.cli.status.porcelain(2).branch.call():trim()
 
+  local head = {}
+  local upstream = { unmerged = { items = {} }, unpulled = { items = {} } }
+
   local untracked_files, unstaged_files, staged_files = {}, {}, {}
   local old_files_hash = {
     staged_files = Collection.new(state.staged.items or {}):key_by("name"),
@@ -38,15 +41,15 @@ local function update_status(state)
     local header, value = l:match("# ([%w%.]+) (.+)")
     if header then
       if header == "branch.head" then
-        state.head.branch = value
+        head.branch = value
       elseif header == "branch.oid" then
-        state.head.oid = value
+        head.oid = value
       elseif header == "branch.upstream" then
-        state.upstream.ref = value
+        upstream.ref = value
 
         local remote, branch = unpack(vim.split(value, "/"))
-        state.upstream.remote = remote
-        state.upstream.branch = branch
+        upstream.remote = remote
+        upstream.branch = branch
       end
     else
       local kind, rest = l:match("(.) (.+)")
@@ -99,7 +102,17 @@ local function update_status(state)
     end
   end
 
+  if not state.head.branch or head.branch == state.head.branch then
+    head.commit_message = state.head.commit_message
+  end
+
+  if not upstream.ref or upstream.ref == state.upstream.ref then
+    upstream.commit_message = state.upstream.commit_message
+  end
+
   state.cwd = cwd
+  state.head = head
+  state.upstream = upstream
   state.untracked.items = untracked_files
   state.unstaged.items = unstaged_files
   state.staged.items = staged_files
