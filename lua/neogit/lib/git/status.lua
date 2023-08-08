@@ -35,6 +35,7 @@ local function update_status(state)
   local old_files_hash = {
     staged_files = Collection.new(state.staged.items or {}):key_by("name"),
     unstaged_files = Collection.new(state.unstaged.items or {}):key_by("name"),
+    untracked_files = Collection.new(state.untracked.items or {}):key_by("name"),
   }
 
   local match_kind = "(.) (.+)"
@@ -103,8 +104,8 @@ local function update_status(state)
   end
 
   local untracked = git.cli["ls-files"].others.exclude_standard.args(".").call():trim().stdout
-  for _, file in ipairs(untracked) do
-    table.insert(untracked_files, { name = file })
+  for _, name in ipairs(untracked) do
+    table.insert(untracked_files, update_file(old_files_hash.untracked_files[name], nil, name))
   end
 
   if not state.head.branch or head.branch == state.head.branch then
