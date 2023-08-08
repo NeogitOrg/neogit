@@ -294,12 +294,12 @@ function M.validate_config()
   local function validate_kind(val, name)
     if
       validate_type(val, name, "string")
-      and not vim.tbl_contains({ "split", "vsplit", "tab", "floating", "auto" }, val)
+      and not vim.tbl_contains({ "split", "vsplit", "tab", "floating", "replace", "auto" }, val)
     then
       err(
         name,
         string.format(
-          "Expected `%s` to be one of 'split', 'vsplit', 'tab', 'floating', or 'auto', got '%s'",
+          "Expected `%s` to be one of 'split', 'vsplit', 'tab', 'floating', 'replace' or 'auto', got '%s'",
           name,
           val
         )
