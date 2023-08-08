@@ -240,17 +240,13 @@ return {
       end
 
       for _, f in ipairs(repo.unstaged.items) do
-        if f.mode ~= "F" then
-          invalidate_diff(filter, "unstaged", f)
-          build_metatable(f, raw_unstaged(f.name))
-        end
+        invalidate_diff(filter, "unstaged", f)
+        build_metatable(f, raw_unstaged(f.name))
       end
 
       for _, f in ipairs(repo.staged.items) do
-        if f.mode ~= "F" then
-          invalidate_diff(filter, "staged", f)
-          build_metatable(f, raw_staged(f.name))
-        end
+        invalidate_diff(filter, "staged", f)
+        build_metatable(f, raw_staged(f.name))
       end
     end
   end,
