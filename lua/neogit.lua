@@ -92,7 +92,15 @@ end
 
 local complete = function(arglead)
   if arglead:find("^kind=") then
-    return { "kind=replace", "kind=tab", "kind=split", "kind=split_above", "kind=vsplit", "kind=floating" }
+    return {
+      "kind=replace",
+      "kind=tab",
+      "kind=split",
+      "kind=split_above",
+      "kind=vsplit",
+      "kind=floating",
+      "kind=auto",
+    }
   end
   -- Only complete arguments that start with arglead
   return vim.tbl_filter(function(arg)
