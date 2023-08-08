@@ -37,6 +37,11 @@ local function update_status(state)
     unstaged_files = Collection.new(state.unstaged.items or {}):key_by("name"),
   }
 
+  local match_kind = "(.) (.+)"
+  local match_u = "(..) (....) (%d+) (%d+) (%d+) (%d+) (%w+) (%w+) (%w+) (.+)"
+  local match_1 = "(.)(.) (....) (%d+) (%d+) (%d+) (%w+) (%w+) (.+)"
+  local match_2 = "(.)(.) (....) (%d+) (%d+) (%d+) (%w+) (%w+) (%a%d+) ([^\t]+)\t?(.+)"
+
   for _, l in ipairs(result.stdout) do
     local header, value = l:match("# ([%w%.]+) (.+)")
     if header then
@@ -52,24 +57,21 @@ local function update_status(state)
         upstream.branch = branch
       end
     else
-      local kind, rest = l:match("(.) (.+)")
-      if kind == "?" then
-        table.insert(untracked_files, {
-          name = rest,
-        })
-      elseif kind == "u" then
-        local mode, _, _, _, _, _, _, _, _, name =
-          rest:match("(..) (....) (%d+) (%d+) (%d+) (%d+) (%w+) (%w+) (%w+) (.+)")
-        table.insert(untracked_files, {
-          mode = mode,
-          name = name,
-        })
-        -- selene: allow(empty_if)
-      elseif kind == "!" then
-        -- we ignore ignored files for now
+      local kind, rest = l:match(match_kind)
+
+      -- kinds:
+      -- u = Unmerged
+      -- 1 = Ordinary Entries
+      -- 2 = Renamed/Copied Entries
+      -- ? = Untracked
+      -- ! = Ignored
+
+      if kind == "u" then
+        local mode, _, _, _, _, _, _, _, _, name = rest:match(match_u)
+
+        table.insert(untracked_files, { mode = mode, name = name })
       elseif kind == "1" then
-        local mode_staged, mode_unstaged, _, _, _, _, _, _, name =
-          rest:match("(.)(.) (....) (%d+) (%d+) (%d+) (%w+) (%w+) (.+)")
+        local mode_staged, mode_unstaged, _, _, _, _, _, _, name = rest:match(match_1)
 
         if mode_staged ~= "." then
           table.insert(staged_files, update_file(old_files_hash.staged_files[name], mode_staged, name))
@@ -79,11 +81,9 @@ local function update_status(state)
           table.insert(unstaged_files, update_file(old_files_hash.unstaged_files[name], mode_unstaged, name))
         end
       elseif kind == "2" then
-        local mode_staged, mode_unstaged, _, _, _, _, _, _, _, name, orig_name =
-          rest:match("(.)(.) (....) (%d+) (%d+) (%d+) (%w+) (%w+) (%a%d+) ([^\t]+)\t?(.+)")
-        local entry = {
-          name = name,
-        }
+        local mode_staged, mode_unstaged, _, _, _, _, _, _, _, name, orig_name = rest:match(match_2)
+
+        local entry = { name = name }
 
         if mode_staged ~= "." then
           entry.mode = mode_staged
@@ -100,6 +100,11 @@ local function update_status(state)
         end
       end
     end
+  end
+
+  local untracked = git.cli["ls-files"].others.exclude_standard.args(".").call():trim().stdout
+  for _, file in ipairs(untracked) do
+    table.insert(untracked_files, { name = file })
   end
 
   if not state.head.branch or head.branch == state.head.branch then
