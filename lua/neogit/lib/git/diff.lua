@@ -179,7 +179,7 @@ local function build_metatable(f, raw_output_fn)
       if method == "diff" then
         self.diff = a.util.block_on(function()
           logger.debug("[DIFF] Loading diff for: " .. f.name)
-          return parse_diff(raw_output_fn())
+          return parse_diff(unpack(raw_output_fn()))
         end)
 
         return self.diff
@@ -193,7 +193,10 @@ end
 -- Doing a git-diff with untracked files will exit(1) if a difference is observed, which we can ignore.
 local function raw_untracked(name)
   return function()
-    return cli.diff.no_ext_diff.no_index.files("/dev/null", name).call_ignoring_exit_code():trim().stdout, {}
+    local diff = cli.diff.no_ext_diff.no_index.files("/dev/null", name).call_ignoring_exit_code():trim().stdout
+    local stats = {}
+
+    return { diff, stats }
   end
 end
 
@@ -202,7 +205,7 @@ local function raw_unstaged(name)
     local diff = cli.diff.no_ext_diff.files(name).call():trim().stdout
     local stats = cli.diff.no_ext_diff.shortstat.files(name).call():trim().stdout
 
-    return diff, stats
+    return { diff, stats }
   end
 end
 
@@ -211,7 +214,7 @@ local function raw_staged(name)
     local diff = cli.diff.no_ext_diff.cached.files(name).call():trim().stdout
     local stats = cli.diff.no_ext_diff.cached.shortstat.files(name).call():trim().stdout
 
-    return diff, stats
+    return { diff, stats }
   end
 end
 
