@@ -119,7 +119,7 @@ function M.pushRemote_ref(branch)
   local pushRemote = M.pushRemote(branch)
 
   if branch and pushRemote then
-    return pushRemote .. "/" .. branch
+    return string.format("%s/%s", pushRemote, branch)
   end
 end
 
