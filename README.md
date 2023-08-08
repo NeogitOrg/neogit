@@ -1,58 +1,48 @@
 # Neogit
 
-![preview](https://user-images.githubusercontent.com/32014449/109874516-8042af00-7c6f-11eb-8afc-65ef52448c7a.png)
+![preview](https://github.com/NeogitOrg/neogit/assets/7228095/d964cbb4-a557-4e97-ac5b-ea571a001f5c)
+
 
 A **work-in-progress** [Magit](https://magit.vc) clone for [Neovim](https://neovim.io) that is geared toward the Vim philosophy.
 
-## Notice
-
-Neogit has moved to an organization at <https://github.com/NeogitOrg/neogit/issues> to ensure the longevity of this project and ensure that it is more accessible to collaborators.
 
 ## Installation
 
-**NOTE**: We depend on [plenary.nvim](https://github.com/nvim-lua/plenary.nvim) and, optionally, [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim), so to use this plugin, you will additionally need to
-require `nvim-lua/plenary.nvim` and `nvim-telescope/telescope.nvim` using your plugin manager of choice, before requiring this plugin.
-
-| Plugin Manager                                       | Command                                                                        |
-| ---------------------------------------------------- | ------------------------------------------------------------------------------ |
-| [Lazy](https://github.com/folke/lazy.nvim)           |`{ "NeogitOrg/neogit", dependencies = "nvim-lua/plenary.nvim", config = true }`|
-| [Packer](https://github.com/wbthomason/packer.nvim)  | `use { 'NeogitOrg/neogit', requires = 'nvim-lua/plenary.nvim' }`         |
-| [Vim-plug](https://github.com/junegunn/vim-plug)     | `Plug 'NeogitOrg/neogit'`                                                |
-| [NeoBundle](https://github.com/Shougo/neobundle.vim) | `NeoBundle 'NeogitOrg/neogit'`                                           |
-| [Vundle](https://github.com/VundleVim/Vundle.vim)    | `Bundle 'NeogitOrg/neogit'`                                              |
-| [Pathogen](https://github.com/tpope/vim-pathogen)    | `git clone https://github.com/NeogitOrg/neogit.git ~/.vim/bundle/neogit` |
-| [Dein](https://github.com/Shougo/dein.vim)           | `call dein#add('NeogitOrg/neogit')`                                      |
-| [Dep](https://github.com/chiyadev/dep)               | `{'NeogitOrg/neogit', requires = {'nvim-lua/plenary.nvim'}}`             |
-
-You also use in the built-in package manager:
-
-```bash
-$ git clone --depth 1 https://github.com/NeogitOrg/neogit $XDG_CONFIG_HOME/nvim/pack/plugins/start/neogit
-```
-
-Now you have to add the following lines to your `init.lua`
+Here's an example spec for [Lazy](https://github.com/folke/lazy.nvim), but you're free to use whichever plugin manager suits you.
 
 ```lua
-local neogit = require('neogit')
+{
+  "NeogitOrg/neogit",
+  dependencies = {
+    "nvim-lua/plenary.nvim",         -- required
+    "nvim-telescope/telescope.nvim", -- optional
+    "sindrets/diffview.nvim",        -- optional
+  },
+  config = true
+}
+```
 
+If you're not using lazy, you'll need to require and setup the plugin like so:
+
+```lua
+-- init.lua
+local neogit = require('neogit')
 neogit.setup {}
 ```
 
 ## Usage
 
-You can either open neogit by using the `Neogit` command
+You can either open neogit by using the `Neogit` command:
 
 ```vim
-:Neogit " Open the status buffer in a new tab
-:Neogit cwd=<cwd> " Use a different repository path
-:Neogit cwd=%:p:h " Uses the repository of the current file
-
+:Neogit             " Open the status buffer in a new tab
+:Neogit cwd=<cwd>   " Use a different repository path
+:Neogit cwd=%:p:h   " Uses the repository of the current file
 :Neogit kind=<kind> " Open specified popup directly
-
-:Neogit commit " Open commit popup
+:Neogit commit      " Open commit popup
 ```
 
-or using the lua api:
+Or using the lua api:
 
 ```lua
 local neogit = require('neogit')
@@ -70,30 +60,31 @@ neogit.open({ kind = "split" })
 neogit.open({ cwd = "~" })
 ```
 
-The create function takes 1 optional argument that can be one of the following values:
-
-- `tab` (default)
+The `kind` option can be one of the following values:
+- `tab`      (default)
 - `replace`
-- `floating` (This currently doesn't work with popups. Very unstable)
+- `floating` (EXPERIMENTAL! This currently doesn't work with popups. Very unstable)
 - `split`
 - `split_above`
 - `vsplit`
-- `auto` (vsplit if window would have 80 cols, otherwise split)
+- `auto` (`vsplit` if window would have 80 cols, otherwise `split`)
 
 ## Status Keybindings
 
 | Keybinding   | Function                                         |
 |--------------|--------------------------------------------------|
-| Tab          | Toggle diff                                      |
+| Tab          | Toggle diff/section                              |
 | 1, 2, 3, 4   | Set a foldlevel                                  |
 | $            | Command history                                  |
-| b            | Branch popup                                     |
 | s            | Stage (also supports staging selection/hunk)     |
 | S            | Stage unstaged changes                           |
-| \<C-s>       | Stage Everything                                 |
+| \<c-s>       | Stage Everything                                 |
 | u            | Unstage (also supports staging selection/hunk)   |
 | U            | Unstage staged changes                           |
+| x            | Discard changes (also supports discarding hunks) |
+| d            | Open `diffview.nvim` at hovered file             |
 | c            | Open commit popup                                |
+| b            | Branch popup                                     |
 | r            | Open rebase popup                                |
 | m            | Open merge popup                                 |
 | L            | Open log popup                                   |
@@ -103,18 +94,12 @@ The create function takes 1 optional argument that can be one of the following v
 | Z            | Open stash popup                                 |
 | X            | Open reset popup                                 |
 | A            | Open cherry pick popup                           |
-| _            | Open revert popup                                |
+| v            | Open revert popup                                |
 | ?            | Open help popup                                  |
-| x            | Discard changes (also supports discarding hunks) |
+| D            | Open diff popup                                  |
 | \<enter>     | Go to file                                       |
-| \<C-r>       | Refresh Buffer                                   |
+| \<c-r>       | Refresh Buffer                                   |
 
-With `diffview` integration enabled
-
-| Keybinding | Function                             |
-| ---------- | ------------------------------------ |
-| d          | Open `diffview.nvim` at hovered file |
-| D          | Open diff popup                      |
 
 ## Configuration
 
@@ -184,14 +169,6 @@ neogit.setup {
     -- The diffview integration enables the diff popup, which is a wrapper around `sindrets/diffview.nvim`.
     --
     -- Requires you to have `sindrets/diffview.nvim` installed.
-    -- use {
-    --   'NeogitOrg/neogit',
-    --   requires = {
-    --     'nvim-lua/plenary.nvim',
-    --     'sindrets/diffview.nvim'
-    --   }
-    -- }
-    --
     diffview = nil,
   },
   -- Setting any section to `false` will make the section not render at all
@@ -231,7 +208,7 @@ neogit.setup {
     -- Modify fuzzy-finder buffer mappings
     finder = {
       -- Binds <cr> to trigger select action
-      ["<cr>"] = "select",
+      ["<cr>"] = "Select",
       ...
     }
   }
@@ -279,36 +256,9 @@ neogit.setup {
 * MultiselectToggleNext
 * MultiselectTogglePrevious
 
-## Notification Highlighting
+## Highlight Groups
 
-Neogit defines three highlight groups for the notifications:
-
-```vim
-hi NeogitNotificationInfo guifg=#80ff95
-hi NeogitNotificationWarning guifg=#fff454
-hi NeogitNotificationError guifg=#c44323
-```
-
-You can override them to fit your colorscheme in your vim configuration.
-
-## Contextual Highlighting
-
-The colors for contextual highlighting are defined with these highlight groups:
-
-```vim
-hi def NeogitDiffAddHighlight guibg=#404040 guifg=#859900
-hi def NeogitDiffDeleteHighlight guibg=#404040 guifg=#dc322f
-hi def NeogitDiffContextHighlight guibg=#333333 guifg=#b2b2b2
-hi def NeogitDiffContext guibg=#262626 guifg=#b2b2b2
-hi def NeogitHunkHeader guifg=#cccccc guibg=#404040
-hi def NeogitHunkHeaderHighlight guifg=#cccccc guibg=#4d4d4d
-```
-
-You can override them to fit your colorscheme by creating a `syntax/NeogitStatus.vim` in your vim configuration and adding your custom highlights there.
-
-### Disabling Contextual Highlighting
-
-Set `disable_context_highlighting = true` in your call to [`setup`](#configuration) to disable context highlighting altogether.
+See the built-in documentation for a comprehensive list of highlight groups. If your theme doesn't style a particular group, we'll try our best to do a nice job.
 
 ## Disabling Hint
 
@@ -368,9 +318,7 @@ augroup END
 
 ## Testing
 
-Assure that you have [plenary.nvim](https://github.com/nvim-lua/plenary.nvim)
-installed as a plugin for your neovim instance. Afterwards, run `make test`
-to run the unit test suite.
+Run `make test` after checking out the repo. All dependencies should get automatically downloaded to `/tmp/neogit-test/`
 
 Plenary uses it's own port of busted and a bundled luassert, so consult their
 code and the respective [busted](http://olivinelabs.com/busted/) and
