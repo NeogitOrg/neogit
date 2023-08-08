@@ -17,17 +17,20 @@ local function empty_state()
     end,
     cwd          = vim.fn.getcwd(),
     git_root     = root,
-    head         = { branch = nil, commit_message = "" },
+    head         = {
+      branch = nil,
+      commit_message = nil
+    },
     upstream     = {
       branch         = nil,
-      commit_message = "",
+      commit_message = nil,
       remote         = nil,
       ref            = nil,
       unmerged       = { items = {} },
       unpulled       = { items = {} },
     },
     pushRemote   = {
-      commit_message = "",
+      commit_message = nil,
       unmerged       = { items = {} },
       unpulled       = { items = {} },
     },

@@ -1,5 +1,4 @@
 local cli = require("neogit.lib.git.cli")
-local util = require("neogit.lib.util")
 
 local M = {}
 
@@ -10,24 +9,28 @@ function M.pull_interactive(remote, branch, args)
 end
 
 local function update_unpulled(state)
+  local upstream_unpulled = {}
+  local pushRemote_unpulled = {}
+
   if state.upstream.ref then
     local result = cli.log.oneline.for_range("..@{upstream}").show_popup(false).call():trim().stdout
 
-    state.upstream.unpulled = { items = {} }
-    state.upstream.unpulled.items = util.map(result, function(x)
-      return { name = x }
-    end)
+    for _, name in ipairs(result) do
+      table.insert(upstream_unpulled, { name = name })
+    end
   end
 
   local pushRemote = require("neogit.lib.git").branch.pushRemote_ref()
   if pushRemote then
     local result = cli.log.oneline.for_range(".." .. pushRemote).show_popup(false).call():trim().stdout
 
-    state.pushRemote.unpulled = { items = {} }
-    state.pushRemote.unpulled.items = util.map(result, function(x)
-      return { name = x }
-    end)
+    for _, name in ipairs(result) do
+      table.insert(pushRemote_unpulled, { name = name })
+    end
   end
+
+  state.upstream.unpulled.items = upstream_unpulled
+  state.pushRemote.unpulled.items = pushRemote_unpulled
 end
 
 function M.register(meta)
