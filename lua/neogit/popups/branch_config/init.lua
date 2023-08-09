@@ -50,6 +50,8 @@ function M.create(branch)
         { display = "always", value = "always" },
         { display = "true", value = "true" },
         { display = "false", value = "false" },
+        { display = "inherit", value = "inherit" },
+        { display = "simple", value = "simple" },
         { display = "default:true", value = "" },
       },
     })
