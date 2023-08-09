@@ -486,6 +486,10 @@ Actions:                                           *neogit_branch_popup_actions*
     selected, then a local branch is created tracking the selected remote
     branch.
 
+  • Checkout recent branch                       *neogit_branch_checkout_recent*
+    Changes HEAD to point to the selected branch. Branches are listed by how
+    recently they have been checked out. Only local branches are considered.
+
   • Checkout new branch                             *neogit_branch_checkout_new*
     Creates and switches HEAD to a new branch. Any whitespace in the branch
     name will be automatically changed to '-'.

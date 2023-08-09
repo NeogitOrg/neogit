@@ -41,6 +41,16 @@ describe("branch popup", function()
   )
 
   it(
+    "can switch to another local recent branch in the repository",
+    in_prepared_repo(function()
+      FuzzyFinderBuffer.value = "second-branch"
+      act("br<cr>")
+      operations.wait("checkout_branch_recent")
+      eq("second-branch", get_current_branch())
+    end)
+  )
+
+  it(
     "can create a new branch",
     in_prepared_repo(function()
       input.values = { "branch-from-test" }

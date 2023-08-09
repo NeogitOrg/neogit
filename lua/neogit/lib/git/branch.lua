@@ -1,6 +1,7 @@
 local cli = require("neogit.lib.git.cli")
 local config_lib = require("neogit.lib.git.config")
 local config = require("neogit.config")
+local util = require("neogit.lib.util")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
@@ -28,21 +29,34 @@ local function parse_branches(branches, include_current)
   return other_branches
 end
 
+function M.get_recent_local_branches()
+  local valid_branches = M.get_local_branches()
+
+  local branches = util.filter_map(
+    cli.reflog.show.format("%gs").date("relative").call_sync():trim().stdout,
+    function(ref)
+      local name = ref:match("^checkout: moving from .* to (.*)$")
+      if vim.tbl_contains(valid_branches, name) then
+        return name
+      end
+    end
+  )
+
+  return util.deduplicate(branches)
+end
+
 function M.get_local_branches(include_current)
   local branches = cli.branch.list(config.values.sort_branches).call_sync():trim().stdout
-
   return parse_branches(branches, include_current)
 end
 
 function M.get_remote_branches(include_current)
   local branches = cli.branch.remotes.list(config.values.sort_branches).call_sync():trim().stdout
-
   return parse_branches(branches, include_current)
 end
 
 function M.get_all_branches(include_current)
   local branches = cli.branch.list(config.values.sort_branches).all.call_sync():trim().stdout
-
   return parse_branches(branches, include_current)
 end
 
