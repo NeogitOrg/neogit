@@ -3,3 +3,6 @@ tmp/
 
 # Generated files
 doc/tags
+
+# Environment
+.envrc
