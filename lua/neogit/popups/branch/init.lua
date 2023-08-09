@@ -20,7 +20,7 @@ function M.create(env)
       fn = config_actions.merge_config(current_branch),
     })
     :config_if(show_config, "m", "branch." .. current_branch .. ".remote", { passive = true })
-    :config_if(show_config, "r", "branch." .. current_branch .. ".rebase", {
+    :config_if(show_config, "R", "branch." .. current_branch .. ".rebase", {
       options = {
         { display = "true", value = "true" },
         { display = "false", value = "false" },
@@ -33,6 +33,7 @@ function M.create(env)
     :group_heading("Checkout")
     :action("b", "branch/revision", actions.checkout_branch_revision)
     :action("l", "local branch", actions.checkout_local_branch)
+    :action("r", "recent branch", actions.checkout_recent_branch)
     :new_action_group()
     :action("c", "new branch", actions.checkout_create_branch)
     :action("s", "new spin-off", actions.spin_off_branch)

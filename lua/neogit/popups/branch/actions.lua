@@ -101,6 +101,16 @@ M.checkout_local_branch = operation("checkout_local_branch", function(popup)
   end
 end)
 
+M.checkout_recent_branch = operation("checkout_recent_branch", function(popup)
+  local selected_branch = FuzzyFinderBuffer.new(git.branch.get_recent_local_branches()):open_async()
+  if not selected_branch then
+    return
+  end
+
+  git.cli.checkout.branch(selected_branch).arg_list(popup:get_arguments()).call_sync():trim()
+  status.refresh(true, "checkout_recent_branch")
+end)
+
 M.checkout_create_branch = operation("checkout_create_branch", function()
   local branches = git.branch.get_all_branches(false)
   local current_branch = git.branch.current()
