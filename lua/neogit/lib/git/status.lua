@@ -108,12 +108,22 @@ local function update_status(state)
     table.insert(untracked_files, update_file(old_files_hash.untracked_files[name], nil, name))
   end
 
+  -- These are a bit hacky - because we can _partially_ refresh repo state (for now),
+  -- some things need to be carried over here.
   if not state.head.branch or head.branch == state.head.branch then
     head.commit_message = state.head.commit_message
   end
 
   if not upstream.ref or upstream.ref == state.upstream.ref then
     upstream.commit_message = state.upstream.commit_message
+  end
+
+  if #state.upstream.unmerged.items > 0 then
+    upstream.unmerged = state.upstream.unmerged
+  end
+
+  if #state.upstream.unpulled.items > 0 then
+    upstream.unpulled = state.upstream.unpulled
   end
 
   state.cwd = cwd
