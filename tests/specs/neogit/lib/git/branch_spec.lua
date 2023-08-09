@@ -114,6 +114,31 @@ describe("lib.git.branch", function()
     end)
   end)
 
+  describe("recent branches", function()
+    before_each(function()
+      git_harness.prepare_repository()
+      plenary_async.util.block_on(status.reset)
+    end)
+
+    it("lists branches based on how recently they were checked out, excluding current", function()
+      util.system([[
+        git checkout -b first
+        git branch never-checked-out
+        git checkout -b second
+        git checkout -b third
+        git switch master
+        git switch second-branch
+      ]])
+
+      local branches_detected = gb.get_recent_local_branches()
+      local branches = {
+        "master", "third", "second", "first"
+      }
+
+      assert.are.same(branches, branches_detected)
+    end)
+  end)
+
   describe("local branches", function()
     local branches = {}
 
