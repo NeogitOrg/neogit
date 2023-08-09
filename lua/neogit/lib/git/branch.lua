@@ -39,7 +39,8 @@ function M.get_recent_local_branches()
       if vim.tbl_contains(valid_branches, name) then
         return name
       end
-    end)
+    end
+  )
 
   return util.deduplicate(branches)
 end
