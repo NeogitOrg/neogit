@@ -1,11 +1,8 @@
 name: Tests
 
 on:
-  push:
-    branches:
-      - "master"
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
+  push:
     branches:
       - "master"
 
