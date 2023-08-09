@@ -33,7 +33,7 @@ function M.get_recent_local_branches()
   local valid_branches = M.get_local_branches()
 
   local branches = util.filter_map(
-    cli.reflog.show.format("%gs").date("relative").call_sync():trim().stdout,
+    cli.reflog.show.format("%gs").date("relative").call():trim().stdout,
     function(ref)
       local name = ref:match("^checkout: moving from .* to (.*)$")
       if vim.tbl_contains(valid_branches, name) then
