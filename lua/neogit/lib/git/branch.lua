@@ -141,6 +141,10 @@ function M.pushRemote_label()
   return M.pushRemote_ref() or "pushRemote, setting that"
 end
 
+function M.pushRemote_remote_label()
+  return M.pushRemote() or "pushRemote, setting that"
+end
+
 function M.set_pushRemote()
   local remotes = require("neogit.lib.git").remote.list()
 
