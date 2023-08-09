@@ -9,14 +9,14 @@ function M.pull_interactive(remote, branch, args)
 end
 
 local function update_unpulled(state)
-  local upstream_unpulled = {}
-  local pushRemote_unpulled = {}
+  state.upstream.unpulled.items = {}
+  state.pushRemote.unpulled.items = {}
 
   if state.upstream.ref then
     local result = cli.log.oneline.for_range("..@{upstream}").show_popup(false).call():trim().stdout
 
     for _, name in ipairs(result) do
-      table.insert(upstream_unpulled, { name = name })
+      table.insert(state.upstream.unpulled.items, { name = name })
     end
   end
 
@@ -25,12 +25,9 @@ local function update_unpulled(state)
     local result = cli.log.oneline.for_range(".." .. pushRemote).show_popup(false).call():trim().stdout
 
     for _, name in ipairs(result) do
-      table.insert(pushRemote_unpulled, { name = name })
+      table.insert(state.pushRemote.unpulled.items, { name = name })
     end
   end
-
-  state.upstream.unpulled.items = upstream_unpulled
-  state.pushRemote.unpulled.items = pushRemote_unpulled
 end
 
 function M.register(meta)
