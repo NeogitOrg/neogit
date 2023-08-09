@@ -29,17 +29,23 @@ end
 
 ---@param name string Syntax group name.
 local function get_fg(name)
-  local color = vim.api.nvim_get_hl(0, { name = name })["fg"]
-  if color then
-    return "#" .. to_hex(color)
+  local color = vim.api.nvim_get_hl(0, { name = name })
+  if color["link"] then
+    return get_fg(color["link"])
+  end
+  if color["fg"] then
+    return "#" .. to_hex(color["fg"])
   end
 end
 
 ---@param name string Syntax group name.
 local function get_bg(name)
-  local color = vim.api.nvim_get_hl(0, { name = name })["bg"]
-  if color then
-    return "#" .. to_hex(color)
+  local color = vim.api.nvim_get_hl(0, { name = name })
+  if color["link"] then
+    return get_bg(color["link"])
+  end
+  if color["bg"] then
+    return "#" .. to_hex(color["bg"])
   end
 end
 
