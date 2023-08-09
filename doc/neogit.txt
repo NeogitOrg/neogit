@@ -538,6 +538,28 @@ Actions:                                           *neogit_branch_popup_actions*
     branch.
 
 ==============================================================================
+Branch Config Popup                                 *neogit_branch_config_popup*
+
+Allows configuring some common config settings for the selected branch, as
+well as some repository defaults.
+
+Branch:
+  • branch.<name>.description
+  • branch.<name>.merge
+  • branch.<name>.remote
+  • branch.<name>.rebase
+  • branch.<name>.pushRemote
+
+Repository defaults:
+  • pull.rebase
+  • remote.pushDefault
+  • neogit.baseBranch
+
+Branch creation:
+  • branch.autoSetupMerge
+  • branch.autoSetupRebase
+
+==============================================================================
 Commit Popup                                               *neogit_commit_popup*
 
 Arguments:                                            *neogit_commit_popup_args*
