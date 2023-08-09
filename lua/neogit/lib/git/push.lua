@@ -14,8 +14,10 @@ function M.push_interactive(remote, branch, args)
 end
 
 local function update_unmerged(state)
+  state.upstream.unmerged.items = {}
+  state.pushRemote.unmerged.items = {}
+
   if state.upstream.ref then
-    state.upstream.unmerged = { items = {} }
     state.upstream.unmerged.items = util.filter_map(log.list { "@{upstream}.." }, function(v)
       if v.oid then
         return {
@@ -29,7 +31,6 @@ local function update_unmerged(state)
 
   local pushRemote = require("neogit.lib.git").branch.pushRemote_ref()
   if pushRemote then
-    state.pushRemote.unmerged = { items = {} }
     state.pushRemote.unmerged.items = util.filter_map(log.list { pushRemote .. ".." }, function(v)
       if v.oid then
         return {
