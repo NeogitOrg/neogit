@@ -246,6 +246,7 @@ local configurations = {
   commit = config {
     flags = {
       all = "--all",
+      no_verify = "--no-verify",
       amend = "--amend",
       only = "--only",
       dry_run = "--dry-run",

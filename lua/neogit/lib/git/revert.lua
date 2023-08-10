@@ -1,19 +1,18 @@
 local cli = require("neogit.lib.git.cli")
-local client = require("neogit.client")
+local notif = require("neogit.lib.notification")
+local util = require("neogit.lib.util")
 
 local M = {}
 
--- TODO: Add proper support for multiple commits. Gotta do something with the sequencer
 function M.commits(commits, args)
-  client.wrap(cli.revert.args(table.concat(commits, " ")).arg_list(args), {
-    autocmd = "NeogitRevertComplete",
-    refresh = "do_revert",
-    msg = {
-      setup = "Reverting...",
-      success = "Reverted!",
-      fail = "Couldn't revert",
-    },
-  })
+  local result = cli.revert.no_commit.arg_list(util.merge(args, commits)).call()
+  if result.code ~= 0 then
+    notif.create("Revert failed", vim.log.levels.ERROR)
+    return false
+  end
+  return true
+end
+
 function M.continue()
   cli.revert.continue.call_sync()
 end
