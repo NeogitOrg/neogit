@@ -140,6 +140,12 @@ function M:open()
           local dv = require("neogit.integrations.diffview")
           dv.open("log", stack[#stack].options.oid)
         end,
+        ["b"] = require("neogit.popups").open("branch", function(p)
+          local stack = self.buffer.ui:get_component_stack_under_cursor()
+          local commit = stack[#stack].options.oid
+          print("Got commit:" .. commit)
+          p { revisions = { commit } }
+        end),
       },
     },
     after = function()

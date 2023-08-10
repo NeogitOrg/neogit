@@ -62,17 +62,6 @@ M.spin_out_branch = operation("spin_out_branch", function()
   status.refresh(true, "spin_out_branch")
 end)
 
-M.checkout_revision = operation("checkout_revision", function(popup)
-  local CommitSelectView = require("neogit.buffers.commit_select_view")
-  local commit = CommitSelectView.new(git.log.list()):open_async()[1]
-  local logger = require("neogit.logger")
-  logger.fmt_info("Checkout revision %q", vim.inspect(commit))
-
-  git.cli.checkout.commit(commit).arg_list(popup:get_arguments()).call()
-
-  status.refresh(true, "checkout_revision")
-end)
-
 M.checkout_branch_revision = operation("checkout_branch_revision", function(popup)
   local options = util.merge(popup.state.env.revisions, git.branch.get_all_branches())
 
