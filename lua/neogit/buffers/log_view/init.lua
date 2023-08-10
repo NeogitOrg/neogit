@@ -60,17 +60,16 @@ function M:open()
           require("neogit.popups.commit").create { commit = stack[#stack].options.oid }
         end,
         ["v"] = function()
-          require("neogit.lib.notification").error("Multiple commits not yet implimented")
-          -- local commits = util.filter_map(
-          --   self.buffer.ui:get_component_stack_in_linewise_selection(),
-          --   function(c)
-          --     if c.options.oid then
-          --       return c.options.oid
-          --     end
-          --   end
-          -- )
-          --
-          -- RevertPopup.create { commits = util.reverse(commits) }
+          local commits = util.filter_map(
+            self.buffer.ui:get_component_stack_in_linewise_selection(),
+            function(c)
+              if c.options.oid then
+                return c.options.oid
+              end
+            end
+          )
+
+          RevertPopup.create { commits = util.reverse(commits) }
         end,
       },
       n = {
