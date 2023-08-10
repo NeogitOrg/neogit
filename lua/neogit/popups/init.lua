@@ -1,3 +1,4 @@
+local util = require("neogit.lib.util")
 local M = {}
 
 ---@param name string
@@ -54,7 +55,10 @@ function M.mappings_table()
       {
         "nv",
         M.open("cherry_pick", function(f)
-          f { commits = require("neogit.status").get_selected_commits() }
+          local commits = util.filter_map(require("neogit.status").get_selected_commits(), function(c)
+            return c.oid
+          end)
+          f { commits = util.reverse(commits) }
         end),
       },
     },
@@ -64,7 +68,10 @@ function M.mappings_table()
       {
         "nv",
         M.open("branch", function(f)
-          f { revisions = require("neogit.status").get_selected_commits() }
+          local commits = util.filter_map(require("neogit.status").get_selected_commits(), function(c)
+            return c.oid
+          end)
+          f { revisions = commits }
         end),
       },
     },
@@ -73,9 +80,15 @@ function M.mappings_table()
     {
       "RevertPopup",
       "Revert",
-      M.open("revert", function(f)
-        f { commits = require("neogit.status").get_selected_commits() }
-      end),
+      {
+        "nv",
+        M.open("revert", function(f)
+          local commits = util.filter_map(require("neogit.status").get_selected_commits(), function(c)
+            return c.oid
+          end)
+          f { commits = util.reverse(commits) }
+        end),
+      },
     },
     { "RemotePopup", "Remote", M.open("remote") },
     {
