@@ -17,7 +17,7 @@ function M.create(env)
   local p = popup
     .builder()
     :name("NeogitCherryPickPopup")
-    :switch("F", "ff", "Attempt fast-forward", { enabled = true })
+    :switch_if(not in_progress, "F", "ff", "Attempt fast-forward", { enabled = true })
     :group_heading_if(not in_progress, "Apply here")
     :action_if(not in_progress, "A", "Pick", actions.pick)
     :action_if(not in_progress, "a", "Apply", actions.apply)
