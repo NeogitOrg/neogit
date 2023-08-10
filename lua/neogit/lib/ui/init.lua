@@ -153,6 +153,25 @@ function Ui:get_component_stack_on_line(line)
   end)
 end
 
+function Ui:get_commits_in_selection()
+  local commits = util.filter_map(
+    self:get_component_stack_in_linewise_selection(),
+    function(c)
+      if c.options.oid then
+        return c.options.oid
+      end
+    end
+  )
+
+  -- Reversed so that the oldest commit is the first in the list
+  return util.reverse(commits)
+end
+
+function Ui:get_commit_under_cursor()
+  local stack = self:get_component_stack_under_cursor()
+  return stack[#stack].options.oid
+end
+
 function Ui.visualize_component(c, options)
   Ui._print_component(0, c, options or {})
   if c.tag == "col" or c.tag == "row" then
