@@ -29,4 +29,22 @@ function M.commits(popup)
   require("neogit.status").refresh(true, "revert_commits")
 end
 
+function M.continue()
+  git.revert.continue()
+  a.util.scheduler()
+  require("neogit.status").refresh(true, "revert_continue")
+end
+
+function M.skip()
+  git.revert.skip()
+  a.util.scheduler()
+  require("neogit.status").refresh(true, "revert_skip")
+end
+
+function M.abort()
+  git.revert.abort()
+  a.util.scheduler()
+  require("neogit.status").refresh(true, "revert_abort")
+end
+
 return M

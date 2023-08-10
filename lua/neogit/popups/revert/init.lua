@@ -19,6 +19,9 @@ function M.create(env)
     :switch("E", "no-edit", "Don't edit commit messages", { incompatible = { "edit" } })
     :action("v", "Revert commit", actions.commits) -- TODO: Support multiple commits
     :action("V", "Revert changes")
+    :action_if(in_progress, "v", "continue", actions.continue)
+    :action_if(in_progress, "s", "skip", actions.skip)
+    :action_if(in_progress, "a", "abort", actions.abort)
     :env({ commits = env.commits or {} })
     :build()
 

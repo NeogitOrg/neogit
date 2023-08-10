@@ -155,7 +155,14 @@ local configurations = {
     },
   },
 
-  revert = config {},
+  revert = config {
+    flags = {
+      no_commit = "--no-commit",
+      continue = "--continue",
+      skip = "--skip",
+      abort = "--abort",
+    },
+  },
 
   checkout = config {
     short_opts = {

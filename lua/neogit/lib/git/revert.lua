@@ -14,6 +14,16 @@ function M.commits(commits, args)
       fail = "Couldn't revert",
     },
   })
+function M.continue()
+  cli.revert.continue.call_sync()
+end
+
+function M.skip()
+  cli.revert.skip.call_sync()
+end
+
+function M.abort()
+  cli.revert.abort.call_sync()
 end
 
 return M
