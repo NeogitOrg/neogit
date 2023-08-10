@@ -28,7 +28,7 @@ function M:close()
   self.buffer = nil
 end
 
----@param action fun(commit: CommitLogEntry|nil)|table
+---@param action fun(commit: CommitLogEntry[])
 function M:open(action)
   -- TODO: Pass this in as a param instead of reading state from object
   local _, item = require("neogit.status").get_current_section_item()
@@ -38,6 +38,9 @@ function M:open(action)
   if item and item.commit then
     commit_at_cursor = item.commit
   end
+
+  ---@type fun(commit: CommitLogEntry[])|nil
+  local action = action
 
   self.buffer = Buffer.create {
     name = "NeogitCommitSelectView",
@@ -111,6 +114,7 @@ function M:open(action)
 end
 
 ---@type fun(self): CommitLogEntry|nil
+--- Select one of more commits under the cursor or visual selection
 M.open_async = a.wrap(M.open, 2)
 
 return M

@@ -181,6 +181,11 @@ local configurations = {
           return tbl.args(branch)
         end
       end,
+      commit = function(tbl)
+        return function(commit)
+          return tbl.args(commit)
+        end
+      end,
       new_branch = function(tbl)
         return function(branch)
           return tbl.b(branch)

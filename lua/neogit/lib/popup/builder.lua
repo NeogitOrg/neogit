@@ -261,7 +261,7 @@ function M:action(keys, description, callback)
 
   for _, key in pairs(keys) do
     if self.state.keys[key] then
-      require("neogit.logger").fmt_warn("[POPUP] Duplicate key mapping %q", key)
+      error(string.format("[POPUP] Duplicate key mapping %q", key))
       return self
     end
     self.state.keys[key] = true
