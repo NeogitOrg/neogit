@@ -1,16 +1,20 @@
 local cli = require("neogit.lib.git.cli")
-local notif = require("neogit.lib.notification")
 local util = require("neogit.lib.util")
 
 local M = {}
 
-function M.commits(commits, args)
-  local result = cli.revert.no_commit.arg_list(util.merge(args, commits)).call()
-  if result.code ~= 0 then
-    notif.create("Revert failed", vim.log.levels.ERROR)
-    return false
+local function condense_commits(commits)
+  if #commits > 1 then
+    local first = commits[1]
+    local last = commits[#commits]
+    commits = { string.format("%s~1..%s", first, last) }
   end
-  return true
+
+  return commits
+end
+
+function M.commits(commits, args)
+  return cli.revert.no_commit.arg_list(util.merge(args, condense_commits(commits))).call().code == 0
 end
 
 function M.continue()
