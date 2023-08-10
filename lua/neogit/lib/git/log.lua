@@ -292,4 +292,8 @@ function M.update_ref(from, to)
   cli["update-ref"].message(string.format("reset: moving to %s", to)).args(from, to).call()
 end
 
+function M.message(commit)
+  return cli.log.format("%s").args(commit).call_sync():trim().stdout[1]
+end
+
 return M

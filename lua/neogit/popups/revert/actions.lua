@@ -32,7 +32,14 @@ function M.commits(popup)
     return
   end
 
-  local commit_cmd = git.cli.commit.no_verify
+  local message = {}
+  table.insert(message, string.format("Revert %d commits\n", #commits))
+  for _, commit in ipairs(commits) do
+    table.insert(message, string.format("This reverts commit %s:", commit))
+    table.insert(message, string.format("\t'" .. git.log.message(commit) .. "'\n", commit))
+  end
+
+  local commit_cmd = git.cli.commit.no_verify.with_message(table.concat(message, "\n") .. "\04")
   if vim.tbl_contains(args, "--edit") then
     commit_cmd = commit_cmd.edit
   else

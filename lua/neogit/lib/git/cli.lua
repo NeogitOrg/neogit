@@ -253,6 +253,13 @@ local configurations = {
       no_edit = "--no-edit",
       edit = "--edit",
     },
+    aliases = {
+      with_message = function(tbl)
+        return function(message)
+          return tbl.args("-F", "-").input(message)
+        end
+      end,
+    },
     options = {
       commit_message_file = "--file",
     },
