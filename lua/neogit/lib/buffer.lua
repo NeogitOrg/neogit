@@ -422,8 +422,9 @@ function Buffer.create(config)
   local buffer = Buffer:new(buffer)
   buffer.kind = kind
 
+  local win
   if config.open ~= false then
-    buffer:show()
+    win = buffer:show()
   end
 
   buffer:set_option("bufhidden", config.bufhidden or "wipe")
@@ -469,7 +470,9 @@ function Buffer.create(config)
   end
 
   if config.after then
-    buffer:call(config.after)
+    buffer:call(function()
+      config.after(buffer, win)
+    end)
   end
 
   buffer:call(function()
