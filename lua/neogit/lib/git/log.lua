@@ -293,7 +293,7 @@ function M.update_ref(from, to)
 end
 
 function M.message(commit)
-  return cli.log.format("%s").args(commit).call_sync():trim().stdout[1]
+  return cli.log.format("%s").args(commit).call():trim().stdout[1]
 end
 
 return M

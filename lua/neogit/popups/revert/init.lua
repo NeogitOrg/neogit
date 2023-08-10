@@ -12,6 +12,7 @@ function M.create(env)
   -- :switch("s", "signoff", "Add Signed-off-by lines")
   -- :option("S", "gpg-sign", "", "Sign using gpg")
 
+  -- stylua: ignore
   local p = popup
     .builder()
     :name("NeogitRevertPopup")
