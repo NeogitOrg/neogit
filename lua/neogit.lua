@@ -76,7 +76,7 @@ local open = function(opts)
     if not has_pop then
       vim.api.nvim_err_writeln("Invalid popup '" .. popup_name .. "'")
     else
-      popup.create()
+      popup.create {}
     end
   else
     a.run(function()
