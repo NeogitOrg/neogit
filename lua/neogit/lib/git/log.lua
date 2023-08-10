@@ -205,7 +205,7 @@ local function parse_log(output, colored_graph)
 
       table.insert(commits, commit)
     elseif level then
-      if graph ~= commits[#commits].graph then
+      if graph ~= commits[#commits].graph and graph ~= "|" then
         table.insert(commits, { graph = graph })
       end
     end
