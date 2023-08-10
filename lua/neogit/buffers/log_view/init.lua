@@ -35,6 +35,7 @@ function M:close()
 end
 
 function M:open()
+  local _, item = require("neogit.status").get_current_section_item()
   self.buffer = Buffer.create {
     name = "NeogitLogView",
     filetype = "NeogitLogView",
@@ -143,12 +144,21 @@ function M:open()
         ["b"] = require("neogit.popups").open("branch", function(p)
           local stack = self.buffer.ui:get_component_stack_under_cursor()
           local commit = stack[#stack].options.oid
-          print("Got commit:" .. commit)
           p { revisions = { commit } }
         end),
       },
     },
-    after = function()
+    after = function(buffer, win)
+      if item and item.commit then
+        local found = buffer.ui:find_component(function(c)
+          return c.options.oid == item.commit.oid
+        end)
+
+        if found then
+          vim.api.nvim_win_set_cursor(win, { found.position.row_start, 0 })
+        end
+      end
+
       vim.cmd([[setlocal nowrap]])
     end,
     render = function()
