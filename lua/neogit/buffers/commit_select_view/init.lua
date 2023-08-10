@@ -102,8 +102,6 @@ function M:open(action)
           return c.options.oid == item.commit.oid
         end)
         if found then
-          print("Found current component in graph", vim.inspect(found.position))
-          print("Win: ", win)
           vim.api.nvim_win_set_cursor(win, { found.position.row_start, 0 })
         end
       end

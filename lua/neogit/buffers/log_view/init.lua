@@ -60,7 +60,7 @@ function M:open()
           require("neogit.popups.commit").create { commit = stack[#stack].options.oid }
         end,
         ["v"] = function()
-          print("Multiple commits not yet implimented")
+          require("neogit.lib.notification").error("Multiple commits not yet implimented")
           -- local commits = util.filter_map(
           --   self.buffer.ui:get_component_stack_in_linewise_selection(),
           --   function(c)
