@@ -155,7 +155,14 @@ local configurations = {
     },
   },
 
-  revert = config {},
+  revert = config {
+    flags = {
+      no_commit = "--no-commit",
+      continue = "--continue",
+      skip = "--skip",
+      abort = "--abort",
+    },
+  },
 
   checkout = config {
     short_opts = {
@@ -239,11 +246,19 @@ local configurations = {
   commit = config {
     flags = {
       all = "--all",
+      no_verify = "--no-verify",
       amend = "--amend",
       only = "--only",
       dry_run = "--dry-run",
       no_edit = "--no-edit",
       edit = "--edit",
+    },
+    aliases = {
+      with_message = function(tbl)
+        return function(message)
+          return tbl.args("-F", "-").input(message)
+        end
+      end,
     },
     options = {
       commit_message_file = "--file",

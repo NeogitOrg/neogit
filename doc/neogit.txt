@@ -186,17 +186,21 @@ NeogitFold                  Folded text highlight
 NeogitRebaseDone            Current position within rebase
 
 STATUS BUFFER SECTION HEADERS
-NeogitUnpushedTo
-NeogitUnmergedInto
-NeogitUnpulledFrom
-NeogitUntrackedfiles
-NeogitUnstagedchanges
-NeogitUnmergedchanges
-NeogitUnpulledchanges
-NeogitRecentcommits
-NeogitStagedchanges
-NeogitStashes
-NeogitRebasing
+NeogitSectionHeader
+
+NeogitUnpushedTo            Linked to NeogitSectionHeader
+NeogitUnmergedInto          ^
+NeogitUnpulledFrom          ^
+NeogitUntrackedfiles        ^
+NeogitUnstagedchanges       ^
+NeogitUnmergedchanges       ^
+NeogitUnpulledchanges       ^
+NeogitRecentcommits         ^
+NeogitStagedchanges         ^
+NeogitStashes               ^
+NeogitRebasing              ^
+NeogitReverting             ^
+NeogitPicking               ^
 
 STATUS BUFFER FILE
 Applied to the label on the left of filenames.
@@ -778,7 +782,6 @@ Arguments:                                             *neogit_fetch_popup_args*
     pruning, even if --prune is used (though tags may be pruned anyway if
     they are also the destination of an explicit refspec; see --prune).
 
-
 Actions:                                            *neogit_fetch_popup_actions*
 
   • Fetch from pushRemote                              *neogit_fetch_pushremote*
@@ -814,5 +817,45 @@ Actions:                                            *neogit_fetch_popup_actions*
 
   • Set Variables                                   *neogit_fetch_set_variables*
     Opens Branch Config popup for the current branch.
+
+==============================================================================
+Revert Popup                                               *neogit_revert_popup*
+
+Arguments:                                            *neogit_revert_popup_args*
+• --mainline
+  Usually you cannot revert a merge because you do not know which side of the
+  merge should be considered the mainline. This option specifies the parent
+  number (starting from 1) of the mainline and allows revert to reverse the
+  change relative to the specified parent.
+
+  Reverting a merge commit declares that you will never want the tree changes
+  brought in by the merge. As a result, later merges will only bring in tree
+  changes introduced by commits that are not ancestors of the previously
+  reverted merge. This may or may not be what you want.
+
+• --edit
+  With this option, git revert will let you edit the commit message prior to
+  committing the revert. This is the default.
+
+  Cannot be used with --no-edit
+
+• --no-edit
+  With this option, git revert will auto-generate the commit message without
+  bringing up the commit message editor.
+
+  Cannot be used with --edit
+
+Actions:                                           *neogit_fetch_revert_actions*
+
+• Revert Commit(s)                                       *neogit_revert_commits*
+  Reverts one or more commits. If any commits are under the cursor, or
+  selected, they will be used. Otherwise a selector interface will come up.
+
+  Will create a commit of the reverted changes.
+
+• Revert Changes                                         *neogit_revert_changes*
+  Reverts one or more commits WITHOUT committing the worktree. If any commits
+  are under the cursor, or selected, they will be used. Otherwise a selector
+  interface will come up.
 
 vim:tw=78:ts=8:ft=help

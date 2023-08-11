@@ -310,6 +310,10 @@ local function draw_buffer()
 
   if git.repo.rebase.head then
     render_section("Rebasing: " .. git.repo.rebase.head, "rebase")
+  elseif git.repo.sequencer.head == "REVERT_HEAD" then
+    render_section("Reverting", "sequencer")
+  elseif git.repo.sequencer.head == "CHERRY_PICK_HEAD" then
+    render_section("Picking", "sequencer")
   end
 
   render_section("Untracked files", "untracked")

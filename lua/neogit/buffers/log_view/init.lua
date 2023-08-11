@@ -1,11 +1,9 @@
 local Buffer = require("neogit.lib.buffer")
-local util = require("neogit.lib.util")
 local ui = require("neogit.buffers.log_view.ui")
 local config = require("neogit.config")
+local popups = require("neogit.popups")
 
 local CommitViewBuffer = require("neogit.buffers.commit_view")
-local CherryPickPopup = require("neogit.popups.cherry_pick")
-local RevertPopup = require("neogit.popups.revert")
 
 ---@class LogViewBuffer
 ---@field commits CommitLogEntry[]
@@ -43,35 +41,21 @@ function M:open()
     context_highlight = false,
     mappings = {
       v = {
-        ["A"] = function()
-          local commits = util.filter_map(
-            self.buffer.ui:get_component_stack_in_linewise_selection(),
-            function(c)
-              if c.options.oid then
-                return c.options.oid
-              end
-            end
-          )
-
-          CherryPickPopup.create { commits = util.reverse(commits) }
-        end,
-        ["c"] = function()
-          local stack = self.buffer.ui:get_component_stack_under_cursor()
-          require("neogit.popups.commit").create { commit = stack[#stack].options.oid }
-        end,
-        ["v"] = function()
-          require("neogit.lib.notification").error("Multiple commits not yet implimented")
-          -- local commits = util.filter_map(
-          --   self.buffer.ui:get_component_stack_in_linewise_selection(),
-          --   function(c)
-          --     if c.options.oid then
-          --       return c.options.oid
-          --     end
-          --   end
-          -- )
-          --
-          -- RevertPopup.create { commits = util.reverse(commits) }
-        end,
+        ["A"] = popups.open("cherry_pick", function(p)
+          p { commits = self.buffer.ui:get_commits_in_selection() }
+        end),
+        ["b"] = popups.open("branch", function(p)
+          p { revisions = self.buffer.ui:get_commits_in_selection() }
+        end),
+        ["c"] = popups.open("commit", function(p)
+          p { commit = self.buffer.ui:get_commit_under_cursor() }
+        end),
+        ["r"] = popups.open("rebase", function(p)
+          p { commit = self.buffer.ui:get_commit_under_cursor() }
+        end),
+        ["v"] = popups.open("revert", function(p)
+          p { commits = self.buffer.ui:get_commits_in_selection() }
+        end),
       },
       n = {
         ["q"] = function()
@@ -80,21 +64,23 @@ function M:open()
         ["<esc>"] = function()
           self:close()
         end,
-        ["A"] = function()
-          local stack = self.buffer.ui:get_component_stack_under_cursor()
-          CherryPickPopup.create { commits = { stack[#stack].options.oid } }
-        end,
-        ["c"] = function()
-          local stack = self.buffer.ui:get_component_stack_under_cursor()
-          require("neogit.popups.commit").create { commit = stack[#stack].options.oid }
-        end,
-        ["v"] = function()
-          local stack = self.buffer.ui:get_component_stack_under_cursor()
-          RevertPopup.create { commits = { stack[#stack].options.oid } }
-        end,
+        ["A"] = popups.open("cherry_pick", function(p)
+          p { commits = { self.buffer.ui:get_commit_under_cursor() } }
+        end),
+        ["b"] = popups.open("branch", function(p)
+          p { revisions = { self.buffer.ui:get_commit_under_cursor() } }
+        end),
+        ["c"] = popups.open("commit", function(p)
+          p { commit = self.buffer.ui:get_commit_under_cursor() }
+        end),
+        ["r"] = popups.open("rebase", function(p)
+          p { commit = self.buffer.ui:get_commit_under_cursor() }
+        end),
+        ["v"] = popups.open("revert", function(p)
+          p { commits = { self.buffer.ui:get_commit_under_cursor() } }
+        end),
         ["<enter>"] = function()
-          local stack = self.buffer.ui:get_component_stack_under_cursor()
-          CommitViewBuffer.new(stack[#stack].options.oid):open()
+          CommitViewBuffer.new(self.buffer.ui:get_commit_under_cursor()):open()
         end,
         ["<c-k>"] = function(buffer)
           local stack = self.buffer.ui:get_component_stack_under_cursor()
@@ -136,15 +122,9 @@ function M:open()
             return
           end
 
-          local stack = self.buffer.ui:get_component_stack_under_cursor()
           local dv = require("neogit.integrations.diffview")
-          dv.open("log", stack[#stack].options.oid)
+          dv.open("log", self.buffer.ui:get_commit_under_cursor())
         end,
-        ["b"] = require("neogit.popups").open("branch", function(p)
-          local stack = self.buffer.ui:get_component_stack_under_cursor()
-          local commit = stack[#stack].options.oid
-          p { revisions = { commit } }
-        end),
       },
     },
     after = function(buffer, win)

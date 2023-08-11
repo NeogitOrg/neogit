@@ -151,6 +151,9 @@ function M.get_default_values()
       diffview = nil,
     },
     sections = {
+      sequencer = {
+        folded = false,
+      },
       untracked = {
         folded = false,
       },

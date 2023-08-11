@@ -205,7 +205,7 @@ local function parse_log(output, colored_graph)
 
       table.insert(commits, commit)
     elseif level then
-      if graph ~= commits[#commits].graph then
+      if graph ~= commits[#commits].graph and graph ~= "|" then
         table.insert(commits, { graph = graph })
       end
     end
@@ -290,6 +290,10 @@ M.parse = parse
 
 function M.update_ref(from, to)
   cli["update-ref"].message(string.format("reset: moving to %s", to)).args(from, to).call()
+end
+
+function M.message(commit)
+  return cli.log.format("%s").args(commit).call():trim().stdout[1]
 end
 
 return M

@@ -32,7 +32,6 @@ end
 function M:open(action)
   -- TODO: Pass this in as a param instead of reading state from object
   local _, item = require("neogit.status").get_current_section_item()
-  print("Found item: ", vim.inspect(item))
 
   ---@type fun(commit: CommitLogEntry[])|nil
   local action = action
@@ -44,15 +43,7 @@ function M:open(action)
     mappings = {
       v = {
         ["<enter>"] = function()
-          local commits = util.filter_map(
-            self.buffer.ui:get_component_stack_in_linewise_selection(),
-            function(c)
-              if c.options.oid then
-                return c.options.oid
-              end
-            end
-          )
-
+          local commits = self.buffer.ui:get_commits_in_selection()
           if action and commits[1] then
             vim.schedule(function()
               self:close()
@@ -74,9 +65,7 @@ function M:open(action)
           self:close()
         end,
         ["<enter>"] = function()
-          local stack = self.buffer.ui:get_component_stack_under_cursor()
-          local commit = stack[#stack].options.oid
-
+          local commit = self.buffer.ui:get_commit_under_cursor()
           if action and commit then
             vim.schedule(function()
               self:close()

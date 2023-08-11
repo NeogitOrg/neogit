@@ -23,9 +23,7 @@ function M.pick(popup)
     return
   end
 
-  a.util.scheduler()
   git.cherry_pick.pick(commits, popup:get_arguments())
-
   a.util.scheduler()
   require("neogit.status").refresh(true, "cherry_pick_pick")
 end

@@ -12,6 +12,12 @@ function M.pick(commits, args)
 end
 
 function M.apply(commits, args)
+  args = util.filter_map(args, function(arg)
+    if arg ~= "--ff" then
+      return arg
+    end
+  end)
+
   local result = cli["cherry-pick"].no_commit.arg_list(util.merge(args, commits)).call()
   if result.code ~= 0 then
     notif.create("Cherry Pick failed. Resolve conflicts before continuing", vim.log.levels.ERROR)
