@@ -5,6 +5,10 @@ endif
 " Support the rebase todo highlights
 source $VIMRUNTIME/syntax/gitrebase.vim
 
+" Added for Reverting section when sequencer/todo doesn't exist
+syn match gitrebasePick       "\v^work=>"         nextgroup=gitrebaseCommit skipwhite
+syn match gitrebaseBreak      "\v^onto=>"         nextgroup=gitrebaseCommit skipwhite
+
 syn match NeogitCommitMessage /.*/                contained
 syn match NeogitBranch        /\S\+/              contained nextgroup=NeogitCommitMessage
 syn match NeogitRemote        /\S\+/              contained nextgroup=NeogitCommitMessage
@@ -16,7 +20,7 @@ syn match NeogitUnpulledFrom  /Unpulled from/     contained
 syn match NeogitStash         /stash@{[0-9]*}\ze/
 syn match NeogitObjectId      /^[a-z0-9]\{7,}\>\s/
 
-let b:sections = ["Untracked files", "Unstaged changes", "Unmerged changes", "Unpulled changes", "Recent commits", "Staged changes", "Stashes", "Rebasing"]
+let b:sections = ["Untracked files", "Unstaged changes", "Unmerged changes", "Unpulled changes", "Recent commits", "Staged changes", "Stashes", "Rebasing", "Reverting", "Picking"]
 
 for section in b:sections
   let id = join(split(section, " "), "")

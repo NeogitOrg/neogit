@@ -310,6 +310,15 @@ local function draw_buffer()
 
   if git.repo.rebase.head then
     render_section("Rebasing: " .. git.repo.rebase.head, "rebase")
+  elseif git.sequencer.pick_or_revert_in_progress() then
+    local todo
+    if git.repo.sequencer.head == "REVERT_HEAD" then
+      todo = "Reverting"
+    else
+      todo = "Picking"
+    end
+
+    render_section(todo, "sequencer")
   end
 
   render_section("Untracked files", "untracked")
