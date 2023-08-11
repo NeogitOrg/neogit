@@ -566,7 +566,7 @@ function M:show()
     filetype = "NeogitPopup",
     kind = config.values.popup.kind,
     mappings = mappings,
-    after = function()
+    after = function(buf, _)
       vim.cmd([[setlocal nocursorline]])
 
       if self.state.env.highlight then
@@ -585,7 +585,9 @@ function M:show()
 
       if config.values.popup.kind == "split" or config.values.popup.kind == "split_above" then
         vim.schedule(function()
-          vim.cmd.resize(vim.fn.line("$") + 2)
+          if buf:is_focused() then
+            vim.cmd.resize(vim.fn.line("$") + 1)
+          end
         end)
       end
     end,
