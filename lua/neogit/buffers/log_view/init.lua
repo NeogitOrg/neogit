@@ -35,6 +35,7 @@ function M:close()
 end
 
 function M:open()
+  local _, item = require("neogit.status").get_current_section_item()
   self.buffer = Buffer.create {
     name = "NeogitLogView",
     filetype = "NeogitLogView",
@@ -59,7 +60,7 @@ function M:open()
           require("neogit.popups.commit").create { commit = stack[#stack].options.oid }
         end,
         ["v"] = function()
-          print("Multiple commits not yet implimented")
+          require("neogit.lib.notification").error("Multiple commits not yet implimented")
           -- local commits = util.filter_map(
           --   self.buffer.ui:get_component_stack_in_linewise_selection(),
           --   function(c)
@@ -140,9 +141,24 @@ function M:open()
           local dv = require("neogit.integrations.diffview")
           dv.open("log", stack[#stack].options.oid)
         end,
+        ["b"] = require("neogit.popups").open("branch", function(p)
+          local stack = self.buffer.ui:get_component_stack_under_cursor()
+          local commit = stack[#stack].options.oid
+          p { revisions = { commit } }
+        end),
       },
     },
-    after = function()
+    after = function(buffer, win)
+      if win and item and item.commit then
+        local found = buffer.ui:find_component(function(c)
+          return c.options.oid == item.commit.oid
+        end)
+
+        if found then
+          vim.api.nvim_win_set_cursor(win, { found.position.row_start, 0 })
+        end
+      end
+
       vim.cmd([[setlocal nowrap]])
     end,
     render = function()

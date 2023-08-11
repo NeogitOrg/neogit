@@ -28,16 +28,14 @@ function M:close()
   self.buffer = nil
 end
 
----@param action fun(commit: CommitLogEntry|nil)|table
+---@param action fun(commit: CommitLogEntry[])
 function M:open(action)
   -- TODO: Pass this in as a param instead of reading state from object
   local _, item = require("neogit.status").get_current_section_item()
+  print("Found item: ", vim.inspect(item))
 
-  local commit_at_cursor
-
-  if item and item.commit then
-    commit_at_cursor = item.commit
-  end
+  ---@type fun(commit: CommitLogEntry[])|nil
+  local action = action
 
   self.buffer = Buffer.create {
     name = "NeogitCommitSelectView",
@@ -98,9 +96,15 @@ function M:open(action)
         end
       end,
     },
-    after = function()
-      if commit_at_cursor then
-        vim.fn.search(commit_at_cursor.oid)
+    after = function(buffer, win)
+      if win and item and item.commit then
+        local found = buffer.ui:find_component(function(c)
+          return c.options.oid == item.commit.oid
+        end)
+
+        if found then
+          vim.api.nvim_win_set_cursor(win, { found.position.row_start, 0 })
+        end
       end
       vim.cmd([[setlocal nowrap]])
     end,
@@ -111,6 +115,7 @@ function M:open(action)
 end
 
 ---@type fun(self): CommitLogEntry|nil
+--- Select one of more commits under the cursor or visual selection
 M.open_async = a.wrap(M.open, 2)
 
 return M

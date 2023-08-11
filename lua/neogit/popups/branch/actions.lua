@@ -64,6 +64,7 @@ end)
 
 M.checkout_branch_revision = operation("checkout_branch_revision", function(popup)
   local options = util.merge(popup.state.env.revisions, git.branch.get_all_branches())
+
   local selected_branch = FuzzyFinderBuffer.new(options):open_async()
   if not selected_branch then
     return

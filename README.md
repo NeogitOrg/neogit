@@ -32,7 +32,7 @@ neogit.setup {}
 
 ## Usage
 
-You can either open neogit by using the `Neogit` command:
+You can either open Neogit by using the `Neogit` command:
 
 ```vim
 :Neogit             " Open the status buffer in a new tab
@@ -215,6 +215,26 @@ neogit.setup {
 }
 ```
 
+## Buffers
+
+### Log Buffer
+
+`Ll`
+
+Shows a graph over the commit history.
+
+You can perform an action over the commit underneath the cursor by opening one of the available popups, such at `b` for branch.
+
+#### Shortcuts
+- `bb` checkout commit under cursor
+- `d` open Diffview
+- `<Tab>` expand commit
+- `<Enter>` open commit diff
+- `v` Revert commit
+- `c` Targeted commit
+- `A` cherry pick
+- 
+
 ### List of status commands:
 * Close
 * InitRepo
@@ -320,7 +340,4 @@ augroup END
 
 Run `make test` after checking out the repo. All dependencies should get automatically downloaded to `/tmp/neogit-test/`
 
-Plenary uses it's own port of busted and a bundled luassert, so consult their
-code and the respective [busted](http://olivinelabs.com/busted/) and
-[luassert](http://olivinelabs.com/busted/#asserts) docs for what methods are
-available.
+See [./CONTRIBUTING.md] for more details

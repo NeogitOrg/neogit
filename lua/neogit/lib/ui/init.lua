@@ -3,6 +3,11 @@ local util = require("neogit.lib.util")
 
 local filter = util.filter
 
+---@class UiComponent
+---@field tag string
+---@field options table Component props or arguments
+---@field children UiComponent[]
+
 ---@class Ui
 ---@field buf number
 ---@field layout table
@@ -83,6 +88,13 @@ function Ui._find_component(components, f, options)
   return nil
 end
 
+---@class FindOptions
+---@field include_hidden boolean
+
+--- Finds a ui component in the buffer
+---
+---@param f fun(c: UiComponent): boolean
+---@param options FindOptions|nil
 function Ui:find_component(f, options)
   return Ui._find_component(self.layout, f, options or {})
 end
