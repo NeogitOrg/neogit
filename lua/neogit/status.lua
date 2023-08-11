@@ -178,22 +178,21 @@ local function draw_buffer()
 
   -- stylua: ignore
   if git.repo.head.branch == "(detached)" then
-
-  output:append(
-    string.format(
-      "Head: (detached) at %s %s",
-      git.repo.head.abbrev,
-      git.repo.head.commit_message or "(no commits)"
+    output:append(
+      string.format(
+        "Head: (detached) at %s %s",
+        git.repo.head.abbrev,
+        git.repo.head.commit_message or "(no commits)"
+      )
     )
-  )
   else
-  output:append(
-    string.format(
-      "Head:     %s %s",
-      git.repo.head.branch,
-      git.repo.head.commit_message or "(no commits)"
+    output:append(
+      string.format(
+        "Head:     %s %s",
+        git.repo.head.branch,
+        git.repo.head.commit_message or "(no commits)"
+      )
     )
-  )
   end
 
   if git.repo.upstream.ref then
