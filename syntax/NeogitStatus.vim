@@ -6,21 +6,42 @@ endif
 source $VIMRUNTIME/syntax/gitrebase.vim
 
 " Added for Reverting section when sequencer/todo doesn't exist
-syn match gitrebasePick       "\v^work=>"         nextgroup=gitrebaseCommit skipwhite
-syn match gitrebaseBreak      "\v^onto=>"         nextgroup=gitrebaseCommit skipwhite
+syn match gitrebasePick       "\v^work=>"           nextgroup=gitrebaseCommit skipwhite
+syn match gitrebaseBreak      "\v^onto=>"           nextgroup=gitrebaseCommit skipwhite
 
-syn match NeogitCommitMessage /.*/                contained
-syn match NeogitBranch        /\S\+/              contained nextgroup=NeogitCommitMessage
-syn match NeogitRemote        /\S\+/              contained nextgroup=NeogitCommitMessage
-syn match NeogitDiffAdd       /.*/                contained
-syn match NeogitDiffDelete    /.*/                contained
-syn match NeogitUnmergedInto  /Unmerged into/     contained
-syn match NeogitUnpushedTo    /Unpushed to/       contained
-syn match NeogitUnpulledFrom  /Unpulled from/     contained
+" Labels to the left of files
+syn match NeogitChangeModified     /\v^Modified( by us|)/
+syn match NeogitChangeAdded        /\v^Added( by us|)/
+syn match NeogitChangeDeleted      /\v^Deleted( by us|)/
+syn match NeogitChangeRenamed      /\v^Renamed( by us|)/
+syn match NeogitChangeUpdated      /\v^Updated( by us|)/
+syn match NeogitChangeCopied       /\v^Copied( by us|)/
+syn match NeogitChangeBothModified /^Both Modified/
+syn match NeogitChangeNewFile      /^New file/
+
+syn match NeogitCommitMessage /.*/                  contained
+syn match NeogitBranch        /\S\+/                contained nextgroup=NeogitCommitMessage
+syn match NeogitRemote        /\S\+/                contained nextgroup=NeogitCommitMessage
+syn match NeogitDiffAdd       /.*/                  contained
+syn match NeogitDiffDelete    /.*/                  contained
+syn match NeogitUnmergedInto  /Unmerged into/       contained
+syn match NeogitUnpushedTo    /Unpushed to/         contained
+syn match NeogitUnpulledFrom  /Unpulled from/       contained
 syn match NeogitStash         /stash@{[0-9]*}\ze/
 syn match NeogitObjectId      /^[a-z0-9]\{7,}\>\s/
 
-let b:sections = ["Untracked files", "Unstaged changes", "Unmerged changes", "Unpulled changes", "Recent commits", "Staged changes", "Stashes", "Rebasing", "Reverting", "Picking"]
+let b:sections = [
+      \ "Untracked files",
+      \ "Unstaged changes",
+      \ "Unmerged changes",
+      \ "Unpulled changes",
+      \ "Recent commits",
+      \ "Staged changes",
+      \ "Stashes",
+      \ "Rebasing",
+      \ "Reverting",
+      \ "Picking"
+      \ ]
 
 for section in b:sections
   let id = join(split(section, " "), "")
