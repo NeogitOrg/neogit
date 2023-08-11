@@ -70,6 +70,14 @@ end
 
 function Ui._find_component(components, f, options)
   for _, c in ipairs(components) do
+    if options.limit then
+      if options.limit == 0 then
+        return nil
+      end
+
+      options.limit = options.limit - 1
+    end
+
     if (options.include_hidden and c.options.hidden) or not c.options.hidden then
       if c.tag == "col" or c.tag == "row" then
         local res = Ui._find_component(c.children, f, options)
@@ -90,6 +98,7 @@ end
 
 ---@class FindOptions
 ---@field include_hidden boolean
+---@field limit number|nil
 
 --- Finds a ui component in the buffer
 ---
