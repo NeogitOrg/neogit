@@ -68,6 +68,11 @@ Neogit is tested using [`Plenary`](https://github.com/nvim-lua/plenary.nvim#plen
 
 It uses a *Busted* style testing, where each lua file inside [`./tests/specs/{test_name}_spec.lua`] is run.
 
+Plenary uses it's own port of busted and a bundled luassert, so consult their
+code and the respective [busted](http://olivinelabs.com/busted/) and
+[luassert](http://olivinelabs.com/busted/#asserts) docs for what methods are
+available.
+
 When adding new functionality we strongly encourage you to add a test spec to ensure that the feature works and remains
 working when new functionality is tacked on.
 
