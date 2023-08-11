@@ -93,9 +93,7 @@ function M:open()
         end,
         ["d"] = function()
           if not config.check_integration("diffview") then
-            require("neogit.lib.notification").create_error(
-              "Diffview integration must be enabled for reflog diff"
-            )
+            require("neogit.lib.notification").error("Diffview integration must be enabled for reflog diff")
             return
           end
 

@@ -5,7 +5,7 @@ local popup = require("neogit.lib.popup")
 
 function M.create()
   if not config.check_integration("diffview") then
-    require("neogit.lib.notification").create_error("Diffview integration must be enabled for diff popup")
+    require("neogit.lib.notification").error("Diffview integration must be enabled for diff popup")
     return
   end
 
