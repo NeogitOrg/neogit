@@ -4,9 +4,7 @@ local parser = require("neogit.buffers.commit_view.parsing")
 local ui = require("neogit.buffers.commit_view.ui")
 local log = require("neogit.lib.git.log")
 local config = require("neogit.config")
-
-local CherryPickPopup = require("neogit.popups.cherry_pick")
-local RevertPopup = require("neogit.popups.revert")
+local popups = require("neogit.popups")
 
 local api = vim.api
 
@@ -127,12 +125,21 @@ function M:open()
             vim.cmd("normal! zt")
           end
         end,
-        ["A"] = function()
-          CherryPickPopup.create { commits = { self.commit_info.oid } }
-        end,
-        ["v"] = function()
-          RevertPopup.create { commits = { self.commit_info.oid } }
-        end,
+        ["A"] = popups.open("cherry_pick", function(p)
+          p { commits = { self.commit_info.oid } }
+        end),
+        ["b"] = popups.open("branch", function(p)
+          p { revisions = { self.commit_info.oid } }
+        end),
+        ["c"] = popups.open("commit", function(p)
+          p { commit = self.commit_info.oid }
+        end),
+        ["r"] = popups.open("rebase", function(p)
+          p { commit = self.commit_info.oid }
+        end),
+        ["v"] = popups.open("revert", function(p)
+          p { commits = { self.commit_info.oid } }
+        end),
         ["q"] = function()
           self:close()
         end,
