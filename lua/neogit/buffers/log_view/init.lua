@@ -50,6 +50,9 @@ function M:open()
         ["c"] = popups.open("commit", function(p)
           p { commit = self.buffer.ui:get_commit_under_cursor() }
         end),
+        ["r"] = popups.open("rebase", function(p)
+          p { commit = self.buffer.ui:get_commit_under_cursor() }
+        end),
         ["v"] = popups.open("revert", function(p)
           p { commits = self.buffer.ui:get_commits_in_selection() }
         end),
@@ -68,6 +71,9 @@ function M:open()
           p { revisions = { self.buffer.ui:get_commit_under_cursor() } }
         end),
         ["c"] = popups.open("commit", function(p)
+          p { commit = self.buffer.ui:get_commit_under_cursor() }
+        end),
+        ["r"] = popups.open("rebase", function(p)
           p { commit = self.buffer.ui:get_commit_under_cursor() }
         end),
         ["v"] = popups.open("revert", function(p)
