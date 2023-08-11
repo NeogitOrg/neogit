@@ -19,6 +19,17 @@ local function get_commits(popup)
   return commits or {}
 end
 
+local function build_commit_message(commits)
+  local message = {}
+  table.insert(message, string.format("Revert %d commits\n", #commits))
+
+  for _, commit in ipairs(commits) do
+    table.insert(message, string.format("%s '%s'", commit:sub(1, 7), git.log.message(commit)))
+  end
+
+  return table.concat(message, "\n") .. "\04"
+end
+
 function M.commits(popup)
   local commits = get_commits(popup)
   if not commits[1] then
@@ -28,18 +39,11 @@ function M.commits(popup)
   local args = popup:get_arguments()
   local success = git.revert.commits(commits, args)
   if not success then
-    notif.create("Revert failed", vim.log.levels.ERROR)
+    notif.create("Revert failed. Resolve conflicts before continuing", vim.log.levels.ERROR)
     return
   end
 
-  local message = {}
-  table.insert(message, string.format("Revert %d commits\n", #commits))
-  for _, commit in ipairs(commits) do
-    table.insert(message, string.format("This reverts commit %s:", commit))
-    table.insert(message, string.format("\t'" .. git.log.message(commit) .. "'\n", commit))
-  end
-
-  local commit_cmd = git.cli.commit.no_verify.with_message(table.concat(message, "\n") .. "\04")
+  local commit_cmd = git.cli.commit.no_verify.with_message(build_commit_message(commits))
   if vim.tbl_contains(args, "--edit") then
     commit_cmd = commit_cmd.edit
   else
