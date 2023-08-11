@@ -186,17 +186,21 @@ NeogitFold                  Folded text highlight
 NeogitRebaseDone            Current position within rebase
 
 STATUS BUFFER SECTION HEADERS
-NeogitUnpushedTo
-NeogitUnmergedInto
-NeogitUnpulledFrom
-NeogitUntrackedfiles
-NeogitUnstagedchanges
-NeogitUnmergedchanges
-NeogitUnpulledchanges
-NeogitRecentcommits
-NeogitStagedchanges
-NeogitStashes
-NeogitRebasing
+NeogitSectionHeader
+
+NeogitUnpushedTo            Linked to NeogitSectionHeader
+NeogitUnmergedInto          ^
+NeogitUnpulledFrom          ^
+NeogitUntrackedfiles        ^
+NeogitUnstagedchanges       ^
+NeogitUnmergedchanges       ^
+NeogitUnpulledchanges       ^
+NeogitRecentcommits         ^
+NeogitStagedchanges         ^
+NeogitStashes               ^
+NeogitRebasing              ^
+NeogitReverting             ^
+NeogitPicking               ^
 
 STATUS BUFFER FILE
 Applied to the label on the left of filenames.
