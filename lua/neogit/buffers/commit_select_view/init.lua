@@ -97,10 +97,11 @@ function M:open(action)
       end,
     },
     after = function(buffer, win)
-      if item and item.commit then
+      if win and item and item.commit then
         local found = buffer.ui:find_component(function(c)
           return c.options.oid == item.commit.oid
         end)
+
         if found then
           vim.api.nvim_win_set_cursor(win, { found.position.row_start, 0 })
         end

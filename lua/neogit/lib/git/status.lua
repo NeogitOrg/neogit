@@ -50,6 +50,8 @@ local function update_status(state)
         head.branch = value
       elseif header == "branch.oid" then
         head.oid = value
+        -- TODO: vim.system and git lib
+        head.abbrev = git.cli["rev-parse"].short.args(value).call().stdout[1]
       elseif header == "branch.upstream" then
         upstream.ref = value
 

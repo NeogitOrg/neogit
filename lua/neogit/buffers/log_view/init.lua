@@ -149,7 +149,7 @@ function M:open()
       },
     },
     after = function(buffer, win)
-      if item and item.commit then
+      if win and item and item.commit then
         local found = buffer.ui:find_component(function(c)
           return c.options.oid == item.commit.oid
         end)
