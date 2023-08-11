@@ -90,14 +90,14 @@ local function get_current_section_item()
 end
 
 local mode_to_text = {
-  M  = "Modified",
-  N  = "New file",
-  A  = "Added",
-  D  = "Deleted",
-  C  = "Copied",
-  U  = "Updated",
+  M = "Modified",
+  N = "New file",
+  A = "Added",
+  D = "Deleted",
+  C = "Copied",
+  U = "Updated",
   UU = "Both Modified",
-  R  = "Renamed",
+  R = "Renamed",
 }
 
 local max_len = #"Modified by us"
