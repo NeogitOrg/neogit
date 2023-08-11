@@ -251,7 +251,7 @@ local function draw_buffer()
 
       for _, f in ipairs(data.items) do
         local label = util.pad_right(format_mode(f.mode), max_len)
-        if label and vim.o.columns < 80 then
+        if label and vim.o.columns < 120 then
           label = vim.trim(label)
         end
 
