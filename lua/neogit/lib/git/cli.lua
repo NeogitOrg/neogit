@@ -480,7 +480,7 @@ local git_is_repository_sync = function(cwd)
   if not cwd then
     vim.fn.system("git rev-parse --is-inside-work-tree")
   else
-    vim.fn.system(string.format("git -C \"%s\" rev-parse --is-inside-work-tree", cwd))
+    vim.fn.system(string.format("git -C %q rev-parse --is-inside-work-tree", cwd))
   end
 
   return vim.v.shell_error == 0
