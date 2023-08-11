@@ -132,9 +132,7 @@ function M:open()
         end,
         ["d"] = function()
           if not config.check_integration("diffview") then
-            require("neogit.lib.notification").create_error(
-              "Diffview integration must be enabled for log diff"
-            )
+            require("neogit.lib.notification").error("Diffview integration must be enabled for log diff")
           end
 
           local stack = self.buffer.ui:get_component_stack_under_cursor()
