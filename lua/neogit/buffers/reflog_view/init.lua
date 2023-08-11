@@ -39,6 +39,9 @@ function M:open()
         ["A"] = popups.open("cherry_pick", function(p)
           p { commits = self.buffer.ui:get_commits_in_selection() }
         end),
+        ["b"] = popups.open("branch", function(p)
+          p { revisions = self.buffer.ui:get_commits_in_selection() }
+        end),
         ["c"] = popups.open("commit", function(p)
           p { commit = self.buffer.ui:get_commit_under_cursor() }
         end),
@@ -55,6 +58,9 @@ function M:open()
         end,
         ["A"] = popups.open("cherry_pick", function(p)
           p { commits = { self.buffer.ui:get_commit_under_cursor() } }
+        end),
+        ["b"] = popups.open("branch", function(p)
+          p { revisions = { self.buffer.ui:get_commit_under_cursor() } }
         end),
         ["c"] = popups.open("commit", function(p)
           p { commit = self.buffer.ui:get_commit_under_cursor() }
