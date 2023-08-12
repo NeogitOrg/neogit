@@ -2,5 +2,11 @@
     "$schema": "https://raw.githubusercontent.com/sumneko/vscode-lua/master/setting/schema.json",
     "Lua.diagnostics.disable": [
         "redefined-local"
+    ],
+    "diagnostics.globals": [
+        "vim",
+        "it",
+        "describe",
+        "before_each"
     ]
 }

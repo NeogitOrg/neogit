@@ -40,19 +40,19 @@ end
 ---@field folded boolean Whether or not this section should be shown by default
 
 ---@class NeogitConfigSections
----@field untracked NeogitConfigSection
----@field unstaged NeogitConfigSection
----@field staged NeogitConfigSection
----@field stashes NeogitConfigSection
----@field unpulled_upstream NeogitConfigSection
----@field unmerged_upstream NeogitConfigSection
----@field unpulled_pushRemote NeogitConfigSection
----@field unmerged_pushRemote NeogitConfigSection
----@field recent NeogitConfigSection
----@field rebase NeogitConfigSection
+---@field untracked NeogitConfigSection|nil
+---@field unstaged NeogitConfigSection|nil
+---@field staged NeogitConfigSection|nil
+---@field stashes NeogitConfigSection|nil
+---@field unpulled_upstream NeogitConfigSection|nil
+---@field unmerged_upstream NeogitConfigSection|nil
+---@field unpulled_pushRemote NeogitConfigSection|nil
+---@field unmerged_pushRemote NeogitConfigSection|nil
+---@field recent NeogitConfigSection|nil
+---@field rebase NeogitConfigSection|nil
 
 ---@alias NeogitConfigMappingsFinder "Select" | "Close" | "Next" | "Previous" | "MultiselectToggleNext" | "MultiselectTogglePrevious" | "NOP" | false
----@alias NeogitConfigMappingsStatus "Close" | "InitRepo" | "Depth1" | "Depth2" | "Depth3" | "Depth4" | "Toggle" | "Discard" | "Stage" | "StageUnstaged" | "StageAll" | "Unstage" | "UnstageStaged" | "DiffAtFile" | "CommandHistory" | "Console" | "RefreshBuffer" | "GoToFile" | "VSplitOpen" | "SplitOpen" | "TabOpen" | "HelpPopup" | "DiffPopup" | "PullPopup" | "RebasePopup" | "MergePopup" | "PushPopup" | "CommitPopup" | "LogPopup" | "RevertPopup" | "StashPopup" | "CherryPickPopup" | "BranchPopup" | "FetchPopup" | "ResetPopup" | "RemotePopup" | "GoToPreviousHunkHeader" | "GoToNextHunkHeader" | false
+---@alias NeogitConfigMappingsStatus "Close" | "InitRepo" | "Depth1" | "Depth2" | "Depth3" | "Depth4" | "Toggle" | "Discard" | "Stage" | "StageUnstaged" | "StageAll" | "Unstage" | "UnstageStaged" | "DiffAtFile" | "CommandHistory" | "Console" | "RefreshBuffer" | "GoToFile" | "VSplitOpen" | "SplitOpen" | "TabOpen" | "HelpPopup" | "DiffPopup" | "PullPopup" | "RebasePopup" | "MergePopup" | "PushPopup" | "CommitPopup" | "LogPopup" | "RevertPopup" | "StashPopup" | "CherryPickPopup" | "BranchPopup" | "FetchPopup" | "ResetPopup" | "RemotePopup" | "GoToPreviousHunkHeader" | "GoToNextHunkHeader" | false | fun()
 
 ---@class NeogitConfigMappings Consult the config file or documentation for values
 ---@field finder? { [string]: NeogitConfigMappingsFinder } A dictionary that uses finder commands to set multiple keybinds
@@ -483,9 +483,13 @@ function M.validate_config()
       for key, command in pairs(config.mappings.status) do
         if
           validate_type(key, "mappings.status -> " .. vim.inspect(key), "string")
-          and validate_type(command, string.format("mappings.status['%s']", key), { "string", "boolean" })
+          and validate_type(
+            command,
+            string.format("mappings.status['%s']", key),
+            { "string", "boolean", "function" }
+          )
         then
-          if not vim.tbl_contains(valid_status_commands, command) then
+          if type(command) == "string" and not vim.tbl_contains(valid_status_commands, command) then
             local valid_status_commands = util.map(valid_status_commands, function(command)
               return vim.inspect(command)
             end)

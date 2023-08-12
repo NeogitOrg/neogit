@@ -549,6 +549,13 @@ describe("Neogit config", function()
         assert.True(vim.tbl_count(require("neogit.config").validate_config()) == 0)
       end)
 
+      it("should return valid when a command mappings.status is a function", function()
+        config.values.mappings.status["c"] = function()
+          print("Well hello there :)")
+        end
+        assert.True(vim.tbl_count(require("neogit.config").validate_config()) == 0)
+      end)
+
       it("should return valid when a command mappings.finder is a boolean", function()
         config.values.mappings.finder["c"] = false
         assert.True(vim.tbl_count(require("neogit.config").validate_config()) == 0)
