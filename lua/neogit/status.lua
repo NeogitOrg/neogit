@@ -100,7 +100,7 @@ local mode_to_text = {
   R = "Renamed",
 }
 
-local max_len = #"Both Modified"
+local max_len = #"Modified by us"
 
 local function draw_sign_for_item(item, name)
   if item.folded then
