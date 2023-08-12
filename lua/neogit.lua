@@ -37,7 +37,7 @@ local setup = function(opts)
   require("neogit.autocmds").setup()
 end
 
----@param opts OpenOpts
+---@param opts OpenOpts|nil
 local open = function(opts)
   opts = opts or {}
 
