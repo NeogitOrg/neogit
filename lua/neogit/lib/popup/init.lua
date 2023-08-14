@@ -567,7 +567,16 @@ function M:show()
     kind = config.values.popup.kind,
     mappings = mappings,
     after = function(buf, _)
-      vim.cmd([[setlocal nocursorline]])
+      if not buf:is_focused() then
+        return
+      end
+
+      -- Navigation shouldn't be done with the cursor, so hide the line
+      vim.opt_local.cursorline = false
+      -- Don't show spelling mistakes (it's fine, I promise)
+      vim.opt_local.spell = false
+      -- For users who might have set this very low, ensure it's reasonable for this buffer
+      vim.opt_local.timeoutlen = 1000
 
       if self.state.env.highlight then
         for i = 1, #self.state.env.highlight, 1 do
