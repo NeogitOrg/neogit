@@ -584,6 +584,11 @@ function M:show()
       end
 
       if config.values.popup.kind == "split" or config.values.popup.kind == "split_above" then
+        vim.cmd.resize(vim.fn.line("$") + 1)
+
+        -- We do it again because things like the BranchConfigPopup come from an async context,
+        -- but if we only do it schedule wrapped, then you can see it load at one size, and
+        -- resize a few ms later
         vim.schedule(function()
           if buf:is_focused() then
             vim.cmd.resize(vim.fn.line("$") + 1)
