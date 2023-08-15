@@ -8,10 +8,15 @@ local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
 local M = {}
 
-local function reset(type)
-  local commit = CommitSelectViewBuffer.new(git.log.list { "--max-count=256" }):open_async()[1]
-  if not commit then
-    return
+local function reset(type, popup)
+  local commit
+  if popup.state.env.commit then
+    commit = popup.state.env.commit
+  else
+    commit = CommitSelectViewBuffer.new(git.log.list { "--max-count=256" }):open_async()[1]
+    if not commit then
+      return
+    end
   end
 
   git.reset[type](commit)
@@ -19,36 +24,40 @@ local function reset(type)
   status.refresh(true, "reset_" .. type)
 end
 
-function M.mixed()
-  reset("mixed")
+function M.mixed(popup)
+  reset("mixed", popup)
 end
 
-function M.soft()
-  reset("soft")
+function M.soft(popup)
+  reset("soft", popup)
 end
 
-function M.hard()
-  reset("hard")
+function M.hard(popup)
+  reset("hard", popup)
 end
 
-function M.keep()
-  reset("keep")
+function M.keep(popup)
+  reset("keep", popup)
 end
 
-function M.index()
-  reset("index")
+function M.index(popup)
+  reset("index", popup)
 end
 
 -- https://github.com/magit/magit/blob/main/lisp/magit-reset.el#L87
 -- function M.worktree()
 -- end
 
-function M.a_file()
-  local commits = git.log.list(util.merge({ "--max-count=256", "--all" }, git.stash.list_refs()))
-
-  local commit = CommitSelectViewBuffer.new(commits):open_async()[1]
-  if not commit then
-    return
+function M.a_file(popup)
+  local commit
+  if popup.state.env.commit then
+    commit = popup.state.env.commit
+  else
+    local commits = git.log.list(util.merge({ "--max-count=256", "--all" }, git.stash.list_refs()))
+    commit = CommitSelectViewBuffer.new(commits):open_async()[1]
+    if not commit then
+      return
+    end
   end
 
   local files = util.deduplicate(util.merge(git.files.all(), git.files.diff(commit)))
