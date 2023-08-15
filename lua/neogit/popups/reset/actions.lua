@@ -13,7 +13,7 @@ local function reset(type, popup)
   if popup.state.env.commit then
     commit = popup.state.env.commit
   else
-    commit = CommitSelectViewBuffer.new(git.log.list { "--max-count=256" }):open_async()[1]
+    commit = CommitSelectViewBuffer.new(git.log.list()):open_async()[1]
     if not commit then
       return
     end
@@ -53,7 +53,7 @@ function M.a_file(popup)
   if popup.state.env.commit then
     commit = popup.state.env.commit
   else
-    local commits = git.log.list(util.merge({ "--max-count=256", "--all" }, git.stash.list_refs()))
+    local commits = git.log.list(util.merge({ "--all" }, git.stash.list_refs()))
     commit = CommitSelectViewBuffer.new(commits):open_async()[1]
     if not commit then
       return
