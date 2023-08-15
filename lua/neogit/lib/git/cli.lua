@@ -762,10 +762,10 @@ local function new_builder(subcommand)
 
     if #state.files > 0 then
       table.insert(cmd, "--")
-    end
 
-    for _, f in ipairs(state.files) do
-      table.insert(cmd, f)
+      for _, f in ipairs(state.files) do
+        table.insert(cmd, f)
+      end
     end
 
     if state.prefix then

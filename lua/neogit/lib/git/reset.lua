@@ -51,7 +51,7 @@ end
 function M.index(commit)
   a.util.scheduler()
 
-  local result = cli.reset.args(commit, ".").call()
+  local result = cli.reset.args(commit).files(".").call()
   if result.code ~= 0 then
     notif.create("Reset Failed", vim.log.levels.ERROR)
   else
