@@ -86,6 +86,7 @@ function M.mappings_table()
           f { commit = commit and commit.oid }
         end),
       },
+    },
     {
       "RevertPopup",
       "Revert",
