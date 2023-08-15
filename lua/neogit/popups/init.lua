@@ -76,7 +76,17 @@ function M.mappings_table()
       },
     },
     { "FetchPopup", "Fetch", M.open("fetch") },
-    { "ResetPopup", "Reset", M.open("reset") },
+    {
+      "ResetPopup",
+      "Reset",
+      {
+        "nv",
+        M.open("reset", function(f)
+          local commit = require("neogit.status").get_selected_commits()[1]
+          f { commit = commit and commit.oid }
+        end),
+      },
+    },
     {
       "RevertPopup",
       "Revert",

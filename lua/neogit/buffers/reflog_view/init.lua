@@ -51,6 +51,9 @@ function M:open()
         ["v"] = popups.open("revert", function(p)
           p { commits = self.buffer.ui:get_commits_in_selection() }
         end),
+        ["X"] = popups.open("reset", function(p)
+          p { commit = self.buffer.ui:get_commit_under_cursor() }
+        end),
       },
       n = {
         ["q"] = function()
@@ -73,6 +76,9 @@ function M:open()
         end),
         ["v"] = popups.open("revert", function(p)
           p { commits = { self.buffer.ui:get_commit_under_cursor() } }
+        end),
+        ["X"] = popups.open("reset", function(p)
+          p { commit = self.buffer.ui:get_commit_under_cursor() }
         end),
         ["<enter>"] = function()
           local stack = self.buffer.ui:get_component_stack_under_cursor()

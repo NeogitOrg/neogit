@@ -1,4 +1,6 @@
 local cli = require("neogit.lib.git.cli")
+local log = require("neogit.lib.git.log")
+local util = require("neogit.lib.util")
 
 local M = {}
 
@@ -13,20 +15,13 @@ local function update_unpulled(state)
   state.pushRemote.unpulled.items = {}
 
   if state.upstream.ref then
-    local result = cli.log.oneline.for_range("..@{upstream}").show_popup(false).call():trim().stdout
-
-    for _, name in ipairs(result) do
-      table.insert(state.upstream.unpulled.items, { name = name })
-    end
+    state.upstream.unpulled.items = util.filter_map(log.list { "..@{upstream}" }, log.present_commit)
   end
 
   local pushRemote = require("neogit.lib.git").branch.pushRemote_ref()
   if pushRemote then
-    local result = cli.log.oneline.for_range(".." .. pushRemote).show_popup(false).call():trim().stdout
-
-    for _, name in ipairs(result) do
-      table.insert(state.pushRemote.unpulled.items, { name = name })
-    end
+    state.pushRemote.unpulled.items =
+      util.filter_map(log.list { string.format("..%s", pushRemote) }, log.present_commit)
   end
 end
 

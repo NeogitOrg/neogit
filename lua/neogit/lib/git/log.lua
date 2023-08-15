@@ -271,15 +271,7 @@ local function update_recent(state)
 
   local result = M.list({ "--max-count=" .. tostring(count) }, false)
 
-  state.recent.items = util.filter_map(result, function(v)
-    if v.oid then
-      return {
-        name = string.format("%s %s", v.oid:sub(1, 7), v.description[1] or "<empty>"),
-        oid = v.oid,
-        commit = v,
-      }
-    end
-  end)
+  state.recent.items = util.filter_map(result, M.present_commit)
 end
 
 function M.register(meta)
@@ -294,6 +286,18 @@ end
 
 function M.message(commit)
   return cli.log.format("%s").args(commit).call():trim().stdout[1]
+end
+
+function M.present_commit(commit)
+  if not commit.oid then
+    return
+  end
+
+  return {
+    name = string.format("%s %s", commit.oid:sub(1, 7), commit.description[1] or "<empty>"),
+    oid = commit.oid,
+    commit = commit,
+  }
 end
 
 return M

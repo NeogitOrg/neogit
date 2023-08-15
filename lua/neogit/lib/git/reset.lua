@@ -51,7 +51,7 @@ end
 function M.index(commit)
   a.util.scheduler()
 
-  local result = cli.reset.args(commit, ".").call()
+  local result = cli.reset.args(commit).files(".").call()
   if result.code ~= 0 then
     notif.create("Reset Failed", vim.log.levels.ERROR)
   else
@@ -59,6 +59,7 @@ function M.index(commit)
   end
 end
 
+-- TODO: Worktree support
 --   "Reset the worktree to COMMIT. Keep the `HEAD' and index as-is."
 --
 --   (magit-wip-commit-before-change nil " before reset")
