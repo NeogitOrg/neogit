@@ -822,40 +822,76 @@ Actions:                                            *neogit_fetch_popup_actions*
 Revert Popup                                               *neogit_revert_popup*
 
 Arguments:                                            *neogit_revert_popup_args*
-• --mainline
-  Usually you cannot revert a merge because you do not know which side of the
-  merge should be considered the mainline. This option specifies the parent
-  number (starting from 1) of the mainline and allows revert to reverse the
-  change relative to the specified parent.
+  • --mainline
+    Usually you cannot revert a merge because you do not know which side of the
+    merge should be considered the mainline. This option specifies the parent
+    number (starting from 1) of the mainline and allows revert to reverse the
+    change relative to the specified parent.
 
-  Reverting a merge commit declares that you will never want the tree changes
-  brought in by the merge. As a result, later merges will only bring in tree
-  changes introduced by commits that are not ancestors of the previously
-  reverted merge. This may or may not be what you want.
+    Reverting a merge commit declares that you will never want the tree changes
+    brought in by the merge. As a result, later merges will only bring in tree
+    changes introduced by commits that are not ancestors of the previously
+    reverted merge. This may or may not be what you want.
 
-• --edit
-  With this option, git revert will let you edit the commit message prior to
-  committing the revert. This is the default.
+  • --edit
+    With this option, git revert will let you edit the commit message prior to
+    committing the revert. This is the default.
 
-  Cannot be used with --no-edit
+    Cannot be used with --no-edit
 
-• --no-edit
-  With this option, git revert will auto-generate the commit message without
-  bringing up the commit message editor.
+  • --no-edit
+    With this option, git revert will auto-generate the commit message without
+    bringing up the commit message editor.
 
-  Cannot be used with --edit
+    Cannot be used with --edit
 
-Actions:                                           *neogit_fetch_revert_actions*
+Actions:                                           *neogit_revert_popup_actions*
 
-• Revert Commit(s)                                       *neogit_revert_commits*
-  Reverts one or more commits. If any commits are under the cursor, or
-  selected, they will be used. Otherwise a selector interface will come up.
+  • Revert Commit(s)                                     *neogit_revert_commits*
+    Reverts one or more commits. If any commits are under the cursor, or
+    selected, they will be used. Otherwise a selector interface will come up.
 
-  Will create a commit of the reverted changes.
+    Will create a commit of the reverted changes.
 
-• Revert Changes                                         *neogit_revert_changes*
-  Reverts one or more commits WITHOUT committing the worktree. If any commits
-  are under the cursor, or selected, they will be used. Otherwise a selector
-  interface will come up.
+  • Revert Changes                                       *neogit_revert_changes*
+    Reverts one or more commits WITHOUT committing the worktree. If any commits
+    are under the cursor, or selected, they will be used. Otherwise a selector
+    interface will come up.
+
+==============================================================================
+Reset Popup                                                 *neogit_reset_popup*
+
+All actions will default to the commit under cursor if there is one, or prompt
+the user to select one if there is not.
+
+Actions:                                            *neogit_reset_popup_actions*
+
+  • Mixed                                                   *neogit_reset_mixed*
+    Resets the index but not the working tree (i.e., the changed files are
+    preserved but not marked for commit).
+
+  • Soft                                                     *neogit_reset_soft*
+    Does not touch the index file or the working tree at all (but resets the
+    head to <commit>, just like all modes do). This leaves all your changed
+    files "Changes to be committed", as git status would put it.
+
+  • Hard                                                     *neogit_reset_hard*
+    Resets the index and working tree. Any changes to tracked files in the
+    working tree since <commit> are discarded. Any untracked files or
+    directories in the way of writing any tracked files are simply deleted.
+
+  • Keep                                                     *neogit_reset_keep*
+    Resets index entries and updates files in the working tree that are
+    different between <commit> and HEAD. If a file that is different between
+    <commit> and HEAD has local changes, reset is aborted.
+
+  • Index                                                   *neogit_reset_index*
+    Reset the index to <commit>, keeping the HEAD and working tree as-is.
+
+    For example, if the commit refers to the HEAD, then this would unstage all
+    changes.
+
+  • Worktree                                             *neogit_reset_worktree*
+    (not yet implemented)
 
 vim:tw=78:ts=8:ft=help
