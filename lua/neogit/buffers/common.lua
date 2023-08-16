@@ -80,7 +80,7 @@ end)
 local function build_graph(graph)
   if type(graph) == "table" then
     return util.map(graph, function(g)
-      return text(g.text, { highlight = "NeogitGraph" .. g.color })
+      return text(g.text, { highlight = string.format("NeogitGraph%s", g.color) })
     end)
   else
     return { text(graph, { highlight = "Include" }) }

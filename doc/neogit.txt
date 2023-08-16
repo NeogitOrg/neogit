@@ -242,19 +242,22 @@ NeogitFilePath              Applied to filepath
 NeogitCommitViewHeader      Applied to header of Commit View
 
 LOG VIEW BUFFER
-NeogitGraphRed              Used when --colors is enabled for graph
-NeogitGraphOrange
-NeogitGraphYellow
+NeogitGraphBlack            Used when --colors is enabled for graph
+NeogitGraphBlackBold
+NeogitGraphRed
+NeogitGraphRedBold
 NeogitGraphGreen
-NeogitGraphBlue
-NeogitGraphPurple
-
-NeogitGraphRedBold          (Same as above, but bold)
-NeogitGraphOrangeBold
-NeogitGraphYellowBold
 NeogitGraphGreenBold
+NeogitGraphYellow
+NeogitGraphYellowBold
+NeogitGraphBlue
 NeogitGraphBlueBold
+NeogitGraphPurple
 NeogitGraphPurpleBold
+NeogitGraphCyan
+NeogitGraphCyanBold
+NeogitGraphWhite
+NeogitGraphWhiteBold
 
 POPUPS
 NeogitPopupSectionTitle    Applied to all section headers

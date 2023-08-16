@@ -234,7 +234,7 @@ function M.get_default_values()
         ["m"] = "MergePopup",
         ["P"] = "PushPopup",
         ["c"] = "CommitPopup",
-        ["L"] = "LogPopup",
+        ["l"] = "LogPopup",
         ["v"] = "RevertPopup",
         ["Z"] = "StashPopup",
         ["A"] = "CherryPickPopup",
