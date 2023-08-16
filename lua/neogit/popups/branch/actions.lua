@@ -90,7 +90,6 @@ M.checkout_local_branch = operation("checkout_local_branch", function(popup)
     elseif target then
       git.cli.checkout.branch(target).arg_list(popup:get_arguments()).call_sync()
     end
-
   end
 end)
 
@@ -250,7 +249,6 @@ M.delete_branch = operation("delete_branch", function()
       notif.create(string.format("Deleted branch '%s'", branch_name), vim.log.levels.INFO)
     end
   end
-
 end)
 
 return M
