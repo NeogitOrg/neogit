@@ -1,9 +1,20 @@
-# Neogit
+<div align="center">
+    <h1>Neogit</h1>
+    <table>
+        <tr>
+            <td>
+               <strong>A <em>work-in-progress</em> <a href="https://magit.vc">Magit</a> clone for <a href="https://neovim.io">Neovim</a>.</strong>
+            </td>
+        </tr>
+    </table>
+  
+  [![Lua](https://img.shields.io/badge/Lua-blue.svg?style=for-the-badge&logo=lua)](http://www.lua.org)
+  [![Neovim](https://img.shields.io/badge/Neovim%200.9+-green.svg?style=for-the-badge&logo=neovim)](https://neovim.io)
+  [![MIT](https://img.shields.io/badge/MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
+</div>
+
 
 ![preview](https://github.com/NeogitOrg/neogit/assets/7228095/d964cbb4-a557-4e97-ac5b-ea571a001f5c)
-
-
-A **work-in-progress** [Magit](https://magit.vc) clone for [Neovim](https://neovim.io) that is geared toward the Vim philosophy.
 
 
 ## Installation
