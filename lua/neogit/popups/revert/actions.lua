@@ -1,6 +1,5 @@
 local M = {}
 
-local a = require("plenary.async")
 local git = require("neogit.lib.git")
 local client = require("neogit.client")
 local notif = require("neogit.lib.notification")
@@ -59,9 +58,6 @@ function M.commits(popup)
       fail = "Couldn't revert",
     },
   })
-
-  a.util.scheduler()
-  require("neogit.status").refresh(true, "revert_commits")
 end
 
 function M.changes(popup)
@@ -71,26 +67,18 @@ function M.changes(popup)
   end
 
   git.revert.commits(commits, popup:get_arguments())
-  a.util.scheduler()
-  require("neogit.status").refresh(true, "revert_changes")
 end
 
 function M.continue()
   git.revert.continue()
-  a.util.scheduler()
-  require("neogit.status").refresh(true, "revert_continue")
 end
 
 function M.skip()
   git.revert.skip()
-  a.util.scheduler()
-  require("neogit.status").refresh(true, "revert_skip")
 end
 
 function M.abort()
   git.revert.abort()
-  a.util.scheduler()
-  require("neogit.status").refresh(true, "revert_abort")
 end
 
 return M
