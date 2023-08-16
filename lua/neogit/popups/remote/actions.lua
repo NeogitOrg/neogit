@@ -1,8 +1,10 @@
 local M = {}
 
+local a = require("plenary.async")
 local git = require("neogit.lib.git")
 local input = require("neogit.lib.input")
 local notification = require("neogit.lib.notification")
+local status = require("neogit.status")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 local RemoteConfigPopup = require("neogit.popups.remote_config")
@@ -61,7 +63,9 @@ function M.rename(_)
   end
 
   git.remote.rename(selected_remote, new_name)
+  a.util.scheduler()
   notification.create("Renamed remote " .. selected_remote .. " to " .. new_name)
+  status.refresh(true, "rename_remote")
 end
 
 function M.remove(_)
@@ -71,7 +75,9 @@ function M.remove(_)
   end
 
   git.remote.remove(selected_remote)
+  a.util.scheduler()
   notification.create("Removed remote " .. selected_remote)
+  status.refresh(true, "remove_remote")
 end
 
 function M.configure(_)
@@ -91,6 +97,8 @@ function M.prune_branches(_)
 
   notification.create("Pruning remote " .. selected_remote)
   git.remote.prune(selected_remote)
+  a.util.scheduler()
+  status.refresh(true, "prune_remote")
 end
 
 -- https://github.com/magit/magit/blob/main/lisp/magit-remote.el#L159
