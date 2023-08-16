@@ -1,6 +1,5 @@
 local M = {}
 
-local status = require("neogit.status")
 local git = require("neogit.lib.git")
 local input = require("neogit.lib.input")
 local util = require("neogit.lib.util")
@@ -54,12 +53,10 @@ end
 
 M.spin_off_branch = operation("spin_off_branch", function()
   spin_off_branch(true)
-  status.refresh(true, "spin_off_branch")
 end)
 
 M.spin_out_branch = operation("spin_out_branch", function()
   spin_off_branch(false)
-  status.refresh(true, "spin_out_branch")
 end)
 
 M.checkout_branch_revision = operation("checkout_branch_revision", function(popup)
@@ -71,7 +68,6 @@ M.checkout_branch_revision = operation("checkout_branch_revision", function(popu
   end
 
   git.cli.checkout.branch(selected_branch).arg_list(popup:get_arguments()).call_sync():trim()
-  status.refresh(true, "checkout_branch")
 end)
 
 M.checkout_local_branch = operation("checkout_local_branch", function(popup)
@@ -94,8 +90,6 @@ M.checkout_local_branch = operation("checkout_local_branch", function(popup)
     elseif target then
       git.cli.checkout.branch(target).arg_list(popup:get_arguments()).call_sync()
     end
-
-    status.refresh(true, "branch_checkout")
   end
 end)
 
@@ -106,7 +100,6 @@ M.checkout_recent_branch = operation("checkout_recent_branch", function(popup)
   end
 
   git.cli.checkout.branch(selected_branch).arg_list(popup:get_arguments()).call_sync():trim()
-  status.refresh(true, "checkout_recent_branch")
 end)
 
 M.checkout_create_branch = operation("checkout_create_branch", function()
@@ -128,7 +121,6 @@ M.checkout_create_branch = operation("checkout_create_branch", function()
   end
 
   git.cli.checkout.new_branch_with_start_point(name, base_branch).call_sync()
-  status.refresh(true, "branch_create")
 end)
 
 M.create_branch = operation("create_branch", function()
@@ -139,7 +131,6 @@ M.create_branch = operation("create_branch", function()
 
   name, _ = name:gsub("%s", "-")
   git.branch.create(name)
-  status.refresh(true, "create_branch")
 end)
 
 M.configure_branch = operation("configure_branch", function()
@@ -170,7 +161,6 @@ M.rename_branch = operation("rename_branch", function()
 
   new_name, _ = new_name:gsub("%s", "-")
   git.cli.branch.move.args(selected_branch, new_name).call_sync():trim()
-  status.refresh(true, "rename_branch")
 end)
 
 M.reset_branch = operation("reset_branch", function()
@@ -199,7 +189,6 @@ M.reset_branch = operation("reset_branch", function()
   git.log.update_ref(git.branch.current_full_name(), to)
 
   notif.create(string.format("Reset '%s' to '%s'", current, to), vim.log.levels.INFO)
-  status.refresh(true, "reset_branch")
 end)
 
 M.delete_branch = operation("delete_branch", function()
@@ -260,8 +249,6 @@ M.delete_branch = operation("delete_branch", function()
       notif.create(string.format("Deleted branch '%s'", branch_name), vim.log.levels.INFO)
     end
   end
-
-  status.refresh(true, "delete_branch")
 end)
 
 return M
