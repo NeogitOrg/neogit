@@ -2,6 +2,8 @@ local a = require("plenary.async")
 local state = require("neogit.lib.state")
 local config = require("neogit.lib.git.config")
 local util = require("neogit.lib.util")
+local notif = require("neogit.lib.notification")
+local logger = require("neogit.logger")
 
 local M = {}
 
@@ -261,16 +263,27 @@ function M:action(keys, description, callback)
 
   for _, key in pairs(keys) do
     if self.state.keys[key] then
-      require("neogit.lib.notification").error(string.format("[POPUP] Duplicate key mapping %q", key))
+      notif.error(string.format("[POPUP] Duplicate key mapping %q", key))
       return self
     end
     self.state.keys[key] = true
   end
 
+  local callback_fn
+  if callback then
+    callback_fn = a.void(function(...)
+      logger.debug(string.format("[ACTION] Running action from %s", self.state.name))
+      callback(...)
+
+      logger.debug("[ACTION] Dispatching Refresh")
+      require("neogit.status").dispatch_refresh(true, "action")
+    end)
+  end
+
   table.insert(self.state.actions[#self.state.actions], {
     keys = keys,
     description = description,
-    callback = callback and a.void(callback) or nil,
+    callback = callback_fn,
   })
 
   return self

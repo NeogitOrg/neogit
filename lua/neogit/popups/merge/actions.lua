@@ -3,8 +3,6 @@ local M = {}
 local git = require("neogit.lib.git")
 local input = require("neogit.lib.input")
 
-local a = require("plenary.async")
-
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
 function M.in_merge()
@@ -13,8 +11,6 @@ end
 
 function M.commit()
   git.merge.continue()
-  a.util.scheduler()
-  require("neogit.status").refresh(true, "merge_continue")
 end
 
 function M.abort()
@@ -23,8 +19,6 @@ function M.abort()
   end
 
   git.merge.abort()
-  a.util.scheduler()
-  require("neogit.status").refresh(true, "merge_abort")
 end
 
 function M.merge(popup)
@@ -34,8 +28,6 @@ function M.merge(popup)
   end
 
   git.merge.merge(branch, popup:get_arguments())
-  a.util.scheduler()
-  require("neogit.status").refresh(true, "merge")
 end
 
 return M

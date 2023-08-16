@@ -1,5 +1,3 @@
-local a = require("plenary.async")
-local status = require("neogit.status")
 local git = require("neogit.lib.git")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
@@ -8,14 +6,10 @@ local M = {}
 
 function M.both(popup)
   git.stash.stash_all(popup:get_arguments())
-  a.util.scheduler()
-  status.refresh(true, "stash_both")
 end
 
 function M.index(popup)
   git.stash.stash_index(popup:get_arguments())
-  a.util.scheduler()
-  status.refresh(true, "stash_index")
 end
 
 function M.push(popup)
@@ -25,8 +19,6 @@ function M.push(popup)
   end
 
   git.stash.push(popup:get_arguments(), files)
-  a.util.scheduler()
-  status.refresh(true, "stash_push")
 end
 
 local function use(action, stash)
@@ -45,8 +37,6 @@ local function use(action, stash)
 
   if name then
     git.stash[action](name)
-    a.util.scheduler()
-    status.refresh(true, "stash_" .. action)
   end
 end
 

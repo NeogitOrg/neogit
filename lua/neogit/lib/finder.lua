@@ -11,6 +11,7 @@ local function telescope_mappings(on_select, allow_multi)
     local status = require("neogit.status")
     if status.status_buffer then
       status.status_buffer:focus()
+      status.dispatch_refresh()
     end
   end
 
@@ -152,6 +153,7 @@ function Finder:find(on_select)
     }, function(item)
       vim.schedule(function()
         on_select(item)
+        require("neogit.status").dispatch_refresh()
       end)
     end)
   end
