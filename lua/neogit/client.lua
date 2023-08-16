@@ -103,9 +103,6 @@ function M.wrap(cmd, opts)
   else
     notif.create(opts.msg.fail)
   end
-
-  a.util.scheduler()
-  require("neogit.status").refresh(true, opts.refresh)
 end
 
 return M
