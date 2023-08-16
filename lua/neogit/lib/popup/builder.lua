@@ -275,7 +275,7 @@ function M:action(keys, description, callback)
       end
 
       local refresh = function()
-        require("neogit.status").refresh(true, "action")
+        require("neogit.status").dispatch_refresh(true, "action")
       end
 
       a.run(cb, refresh)
