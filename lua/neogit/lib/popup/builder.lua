@@ -267,25 +267,10 @@ function M:action(keys, description, callback)
     self.state.keys[key] = true
   end
 
-  local callback_fn
-  if callback then
-    callback_fn = a.void(function(popup)
-      local cb = function()
-        callback(popup)
-      end
-
-      local refresh = function()
-        require("neogit.status").dispatch_refresh(true, "action")
-      end
-
-      a.run(cb, refresh)
-    end)
-  end
-
   table.insert(self.state.actions[#self.state.actions], {
     keys = keys,
     description = description,
-    callback = callback_fn,
+    callback = callback and a.void(callback) or nil,
   })
 
   return self

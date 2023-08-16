@@ -512,8 +512,11 @@ function M:show()
         for _, key in ipairs(action.keys) do
           mappings.n[key] = function()
             logger.debug(string.format("[POPUP]: Invoking action '%s' of %s", key, self.state.name))
-            action.callback(self)
+            local ret = action.callback(self)
             self:close()
+            if type(ret) == "function" then
+              ret()
+            end
           end
         end
       else

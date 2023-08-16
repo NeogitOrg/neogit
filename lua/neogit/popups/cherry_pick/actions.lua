@@ -1,5 +1,6 @@
 local M = {}
 
+local a = require("plenary.async")
 local git = require("neogit.lib.git")
 local CommitSelectViewBuffer = require("neogit.buffers.commit_select_view")
 
@@ -23,6 +24,8 @@ function M.pick(popup)
   end
 
   git.cherry_pick.pick(commits, popup:get_arguments())
+  a.util.scheduler()
+  require("neogit.status").refresh(true, "cherry_pick_pick")
 end
 
 function M.apply(popup)
@@ -31,19 +34,29 @@ function M.apply(popup)
     return
   end
 
+  a.util.scheduler()
   git.cherry_pick.apply(commits, popup:get_arguments())
+
+  a.util.scheduler()
+  require("neogit.status").refresh(true, "cherry_pick_apply")
 end
 
 function M.continue()
   git.cherry_pick.continue()
+  a.util.scheduler()
+  require("neogit.status").refresh(true, "cherry_pick_continue")
 end
 
 function M.skip()
   git.cherry_pick.skip()
+  a.util.scheduler()
+  require("neogit.status").refresh(true, "cherry_pick_skip")
 end
 
 function M.abort()
   git.cherry_pick.abort()
+  a.util.scheduler()
+  require("neogit.status").refresh(true, "cherry_pick_abort")
 end
 
 return M
