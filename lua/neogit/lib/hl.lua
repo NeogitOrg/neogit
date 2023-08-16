@@ -107,7 +107,6 @@ function M.setup()
   hl_store = {
     NeogitGraphRed = { fg = palette.red },
     NeogitGraphWhite = { fg = palette.white },
-    NeogitGraphOrange = { fg = palette.orange },
     NeogitGraphYellow = { fg = palette.yellow },
     NeogitGraphGreen = { fg = palette.green },
     NeogitGraphCyan = { fg = palette.cyan },
@@ -116,7 +115,6 @@ function M.setup()
     NeogitGraphGray = { fg = palette.grey },
     NeogitGraphBoldRed = { fg = palette.red, bold = true },
     NeogitGraphBoldWhite = { fg = palette.white, bold = true },
-    NeogitGraphBoldOrange = { fg = palette.orange, bold = true },
     NeogitGraphBoldYellow = { fg = palette.yellow, bold = true },
     NeogitGraphBoldGreen = { fg = palette.green, bold = true },
     NeogitGraphBoldCyan = { fg = palette.cyan, bold = true },
