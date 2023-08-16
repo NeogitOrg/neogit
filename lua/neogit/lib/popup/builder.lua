@@ -269,16 +269,9 @@ function M:action(keys, description, callback)
 
   local callback_fn
   if callback then
-    callback_fn = a.void(function(popup)
-      local cb = function()
-        callback(popup)
-      end
-
-      local refresh = function()
-        require("neogit.status").dispatch_refresh(true, "action")
-      end
-
-      a.run(cb, refresh)
+    callback_fn = a.void(function(...)
+      callback(...)
+      require("neogit.status").dispatch_refresh(true, "action")
     end)
   end
 
