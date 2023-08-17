@@ -140,6 +140,9 @@ function M:open()
         ["v"] = popups.open("revert", function(p)
           p { commits = { self.commit_info.oid } }
         end),
+        ["X"] = popups.open("reset", function(p)
+          p { commit = self.commit_info.oid }
+        end),
         ["q"] = function()
           self:close()
         end,
