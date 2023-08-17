@@ -1,7 +1,3 @@
-local git = {
-  cli = require("neogit.lib.git.cli"),
-  stash = require("neogit.lib.git.stash"),
-}
 local a = require("plenary.async")
 local Collection = require("neogit.lib.collection")
 
@@ -20,6 +16,7 @@ local function update_file(file, mode, name)
 end
 
 local function update_status(state)
+  local git = require("neogit.lib.git")
   -- git-status outputs files relative to the cwd.
   --
   -- Save the working directory to allow resolution to absolute paths since the
@@ -51,7 +48,7 @@ local function update_status(state)
       elseif header == "branch.oid" then
         head.oid = value
         -- TODO: vim.system and git lib
-        head.abbrev = require("neogit.lib.git.rev_parse").abbreviate_commit(value)
+        head.abbrev = git.rev_parse.abbreviate_commit(value)
       elseif header == "branch.upstream" then
         upstream.ref = value
 
@@ -137,6 +134,8 @@ local function update_status(state)
 end
 
 local function update_branch_information(state)
+  local git = require("neogit.lib.git")
+
   local tasks = {}
 
   if state.head.oid ~= "(initial)" then
@@ -147,7 +146,7 @@ local function update_branch_information(state)
 
     if state.upstream.ref then
       table.insert(tasks, function()
-        local commit = require("neogit.lib.git.log").list({ "@{upstream}", "--max-count=1" }, false)[1]
+        local commit = git.log.list({ "@{upstream}", "--max-count=1" })[1]
         state.upstream.commit_message = commit.message
         state.upstream.abbrev = require("neogit.lib.git.rev_parse").abbreviate_commit(commit.oid)
       end)
@@ -156,9 +155,9 @@ local function update_branch_information(state)
     local pushRemote = require("neogit.lib.git").branch.pushRemote_ref()
     if pushRemote then
       table.insert(tasks, function()
-        local commit = require("neogit.lib.git.log").list({ pushRemote, "--max-count=1" }, false)[1]
+        local commit = git.log.list({ pushRemote, "--max-count=1" })[1]
         state.pushRemote.commit_message = commit.message
-        state.pushRemote.abbrev = require("neogit.lib.git.rev_parse").abbreviate_commit(commit.oid)
+        state.pushRemote.abbrev = git.rev_parse.abbreviate_commit(commit.oid)
       end)
     end
   end
@@ -168,6 +167,7 @@ local function update_branch_information(state)
   end
 end
 
+local git = { cli = require("neogit.lib.git.cli") }
 local status = {
   stage = function(...)
     git.cli.add.files(...).call()
