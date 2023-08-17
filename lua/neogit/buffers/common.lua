@@ -150,11 +150,17 @@ M.CommitEntry = Component.new(function(commit, args)
       row(graph),
       col(
         flat_map(commit.description, function(line)
-          local lines = map(util.str_wrap(line, vim.o.columns * 0.5), function(l)
+          local lines = map(util.str_wrap(line, vim.o.columns * 0.6), function(l)
             return row(util.merge(graph, { text(" "), text(l) }))
           end)
 
-          return util.merge(lines, { row(graph) })
+          if #lines > 2 then
+            return util.merge({ row(graph) }, lines, { row(graph) })
+          elseif #lines > 1 then
+            return util.merge({ row(graph) }, lines)
+          else
+            return lines
+          end
         end),
         { highlight = "String" }
       ),
