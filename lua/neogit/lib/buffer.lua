@@ -486,7 +486,7 @@ function Buffer.create(config)
     -- If signs are not disabled, avoid overrided by user settings
     buffer:call(function()
       if not config.disable_signs then
-        vim.wo.signcolumn = "yes"
+        vim.wo.signcolumn = "auto"
       end
     end)
   end)
