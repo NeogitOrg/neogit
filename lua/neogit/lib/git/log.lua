@@ -215,8 +215,8 @@ local format = table.concat({
   "%ce", -- Committer Email
   "%ae", -- Author Email
   "%b", -- Body
-  "%x1F", -- Terminator
-}, "%x1E") -- Hex character to split on (dec \30)
+  "%x1F", -- Entry delimiter to split on (dec \31)
+}, "%x1E") -- Field delimiter to split on (dec \30)
 
 -- TODO: Provide a list API that _doesnt_ to any graphing.
 ---@param options table|nil
