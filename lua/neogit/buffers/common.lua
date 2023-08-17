@@ -6,6 +6,7 @@ local text = Ui.text
 local col = Ui.col
 local row = Ui.row
 local map = util.map
+local flat_map = util.flat_map
 local filter = util.filter
 local intersperse = util.intersperse
 local range = util.range
@@ -148,8 +149,12 @@ M.CommitEntry = Component.new(function(commit, args)
       })),
       row(graph),
       col(
-        map(commit.description, function(line)
-          return row(util.merge(graph, { text(" "), text(line) }))
+        flat_map(commit.description, function(line)
+          local lines = map(util.str_wrap(line, vim.o.columns * 0.5), function(l)
+            return row(util.merge(graph, { text(" "), text(l) }))
+          end)
+
+          return util.merge(lines, { row(graph) })
         end),
         { highlight = "String" }
       ),
