@@ -14,12 +14,17 @@ local colors = {
 
 ---Parses a string with ansi-escape codes (colors) into a table
 ---@param str string
-function M.parse(str)
+function M.parse(str, opts)
   local colored = {}
   local idx = 1
 
   local parsed, _ = str:gsub("(\27%[[;%d]*m.-\27%[m)", function(match)
     local color, text = match:match("\27%[([;%d]*)m(.-)\27%[m")
+
+    if opts.recolor then
+      color = "35"
+    end
+
     colored[tostring(idx)] = { text = text, color = colors[color] }
     idx = idx + 1
 
