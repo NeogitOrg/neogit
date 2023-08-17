@@ -188,8 +188,9 @@ local function draw_buffer()
   else
     output:append(
       string.format(
-        "Head:     %s %s",
+        "Head:     %s %s %s",
         git.repo.head.branch,
+        git.repo.head.abbrev,
         git.repo.head.commit_message or "(no commits)"
       )
     )

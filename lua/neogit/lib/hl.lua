@@ -155,6 +155,7 @@ function M.setup()
     NeogitCommandCodeNormal = { link = "String" },
     NeogitCommandCodeError = { link = "Error" },
     NeogitBranch = { fg = palette.orange, bold = true },
+    NeogitOid = { fg = palette.green, bold = true },
     NeogitRemote = { fg = palette.green, bold = true },
     NeogitUnmergedInto = { fg = palette.bg_purple, bold = true },
     NeogitUnpushedTo = { fg = palette.bg_purple, bold = true },
