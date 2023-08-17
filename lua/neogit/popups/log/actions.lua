@@ -8,12 +8,16 @@ local ReflogViewBuffer = require("neogit.buffers.reflog_view")
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
 function M.log_current(popup)
-  LogViewBuffer.new(git.log.list(popup:get_arguments()), popup:get_internal_arguments()):open()
+  LogViewBuffer.new(
+    git.log.list(popup:get_arguments(), popup:get_internal_arguments()),
+    popup:get_internal_arguments()
+  )
+    :open()
 end
 
 function M.log_head(popup)
   LogViewBuffer.new(
-    git.log.list(util.merge(popup:get_arguments(), { "HEAD" })),
+    git.log.list(util.merge(popup:get_arguments(), { "HEAD" }), popup:get_internal_arguments()),
     popup:get_internal_arguments()
   )
     :open()
@@ -24,7 +28,7 @@ function M.log_local_branches(popup)
     git.log.list(util.merge(popup:get_arguments(), {
       git.repo.head.branch and "" or "HEAD",
       "--branches",
-    })),
+    }), popup:get_internal_arguments()),
     popup:get_internal_arguments()
   ):open()
 end
@@ -34,7 +38,7 @@ function M.log_other(popup)
   if branch then
     -- stylua: ignore
     LogViewBuffer.new(
-      git.log.list(util.merge(popup:get_arguments(), { branch })),
+      git.log.list(util.merge(popup:get_arguments(), { branch }), popup:get_internal_arguments()),
       popup:get_internal_arguments()
     ):open()
   end
@@ -47,7 +51,7 @@ function M.log_all_branches(popup)
       git.repo.head.branch and "" or "HEAD",
       "--branches",
       "--remotes",
-    })),
+    }), popup:get_internal_arguments()),
     popup:get_internal_arguments()
   ):open()
 end
@@ -57,7 +61,7 @@ function M.log_all_references(popup)
     git.log.list(util.merge(popup:get_arguments(), {
       git.repo.head.branch and "" or "HEAD",
       "--all",
-    })),
+    }), popup:get_internal_arguments()),
     popup:get_internal_arguments()
   ):open()
 end

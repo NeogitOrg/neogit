@@ -156,49 +156,64 @@ local function parse(raw)
   return commits
 end
 
----@return CommitLogEntry[]
-local function parse_log(output, graph, graph_raw)
-  output = table.concat(output, "\n")
-  output = vim.split(output, "\31", { trimempty = true })
-  output = util.map(output, function(line)
-    return vim.split(vim.trim(line:gsub("\n", " ")), "\30")
-  end)
+local function make_commit(entry, graph)
+  local hash, subject, author_name, rel_date, ref_name, author_date, committer_name, committer_date, committer_email, author_email, body =
+    unpack(entry)
 
+  if rel_date then
+    rel_date, _ = rel_date:gsub(" ago$", "")
+  end
+
+  return {
+    graph = graph,
+    oid = hash,
+    description = { subject, body },
+    author_name = author_name,
+    author_email = author_email,
+    rel_date = rel_date,
+    ref_name = ref_name,
+    author_date = author_date,
+    committer_date = committer_date,
+    committer_name = committer_name,
+    committer_email = committer_email,
+    body = body,
+    -- TODO: Remove below here
+    hash = hash,
+    message = subject,
+  }
+end
+
+---@return CommitLogEntry[]
+local function parse_log_with_graph(output, graph, graph_raw)
   local commits = {}
   for i = 1, #graph_raw do
     if graph_raw[i]:match("%*") then
-      local hash, subject, author_name, rel_date, ref_name, author_date, committer_name, committer_date, committer_email, author_email, body =
-        unpack(table.remove(output, 1))
-
-      if rel_date then
-        rel_date, _ = rel_date:gsub(" ago$", "")
-      end
-
-      local commit = {
-        graph = graph[i],
-        oid = hash,
-        description = { subject, body },
-        author_name = author_name,
-        author_email = author_email,
-        rel_date = rel_date,
-        ref_name = ref_name,
-        author_date = author_date,
-        committer_date = committer_date,
-        committer_name = committer_name,
-        committer_email = committer_email,
-        body = body,
-        -- TODO: Remove below here
-        hash = hash,
-        message = subject,
-      }
-
-      table.insert(commits, commit)
+      table.insert(commits, make_commit(table.remove(output, 1), graph[i]))
     else
       table.insert(commits, { graph = graph[i] })
     end
   end
 
   return commits
+end
+
+local function parse_log_without_graph(output)
+  local commits = {}
+  for i = 1, #output do
+    table.insert(commits, make_commit(output[i]))
+  end
+
+  return commits
+end
+
+local function split_output(output)
+  output = table.concat(output, "\n")
+  output = vim.split(output, "\31", { trimempty = true })
+  output = util.map(output, function(line)
+    return vim.split(vim.trim(line:gsub("\n", " ")), "\30")
+  end)
+
+  return output
 end
 
 local M = {}
@@ -218,13 +233,7 @@ local format = table.concat({
   "%x1F", -- Entry delimiter to split on (dec \31)
 }, "%x1E") -- Field delimiter to split on (dec \30)
 
--- TODO: Provide a list API that _doesnt_ to any graphing.
----@param options table|nil
----@return CommitLogEntry[]
-function M.list(options, show_popup)
-  options = options or {}
-  show_popup = show_popup or false
-
+local function list_with_graph(output, options)
   local graph_raw = cli.log.format("%x00").graph.color.arg_list(options or {}).call():trim()
   local graph = util.map(graph_raw.stdout_raw, function(line)
     return require("neogit.lib.ansi").parse(
@@ -232,6 +241,16 @@ function M.list(options, show_popup)
       { recolor = not vim.tbl_contains(options, "--color") }
     )
   end)
+
+  return parse_log_with_graph(output, graph, graph_raw.stdout)
+end
+
+-- TODO: Provide a list API that _doesnt_ to any graphing.
+---@param options table|nil
+---@return CommitLogEntry[]
+function M.list(options, internal)
+  options = options or {}
+  internal = internal or {}
 
   if
     not vim.tbl_contains(options, function(item)
@@ -241,8 +260,14 @@ function M.list(options, show_popup)
     table.insert(options, "--max-count=256")
   end
 
-  local output = cli.log.format(format).arg_list(options or {}).show_popup(show_popup).call():trim()
-  return parse_log(output.stdout, graph, graph_raw.stdout)
+  local output = cli.log.format(format).arg_list(options or {}).show_popup(false).call():trim()
+  output = split_output(output.stdout)
+
+  if internal.graph then
+    return list_with_graph(output, options)
+  else
+    return parse_log_without_graph(output)
+  end
 end
 
 function M.is_ancestor(a, b)
