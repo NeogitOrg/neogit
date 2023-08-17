@@ -7,7 +7,6 @@ local commit_header_pat = "([| ]*)(%*?)([| ]*)commit (%w+)"
 
 ---@class CommitLogEntry
 ---@field oid string the object id of the commit
----@field level number the depth of the commit in the graph
 ---@field graph string the graph string
 ---@field author_name string the name of the author
 ---@field author_email string the email of the author
@@ -51,8 +50,6 @@ local function parse(raw)
 
     -- Consume this line
     advance()
-
-    commit.level = util.str_count(s1, "|")
 
     local start_idx = #s1 + #s2 + #star
 
@@ -221,6 +218,7 @@ local format = table.concat({
   "%x1F", -- Terminator
 }, "%x1E") -- Hex character to split on (dec \30)
 
+-- TODO: Provide a list API that _doesnt_ to any graphing.
 ---@param options table|nil
 ---@return CommitLogEntry[]
 function M.list(options, show_popup)
