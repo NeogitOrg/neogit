@@ -180,7 +180,7 @@ local function draw_buffer()
   if git.repo.head.branch == "(detached)" then
     output:append(
       string.format(
-        "Detached: %s %s",
+        "Head (detached): %s %s",
         git.repo.head.abbrev,
         git.repo.head.commit_message or "(no commits)"
       )
