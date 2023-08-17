@@ -23,7 +23,7 @@ syn match NeogitCommitMessage /.*/                  contained
 
 syn match NeogitBranch          / \S\+/               contained nextgroup=NeogitCommitMessage
 syn match NeogitHeadOid         /\S\+/                contained nextgroup=NeogitBranch
-syn match NeogitHeadDetachedOid /\S\+/                contained nextgroup=NeogitCommitMessage
+syn match NeogitDetachedOid /\S\+/                contained nextgroup=NeogitCommitMessage
 syn match NeogitRemoteOid       /\S\+/                contained nextgroup=NeogitRemote
 
 syn match NeogitRemote        / \S\+/               contained nextgroup=NeogitCommitMessage
@@ -55,7 +55,7 @@ for section in b:sections
 endfor
 
 syn region NeogitHeadRegion         start=/^Head: \zs/                  end=/$/ contains=NeogitHeadOid
-syn region NeogitHeadDetachedRegion start=/^Head \(detached\): \zs/     end=/$/ contains=NeogitHeadDetachedOid
+syn region NeogitDetachedRegion     start=/^Detached: \zs/              end=/$/ contains=NeogitDetachedOid
 syn region NeogitPushRegion         start=/^Push: \zs/                  end=/$/ contains=NeogitRemoteOid
 syn region NeogitMergeRegion        start=/^Merge: \zs/                 end=/$/ contains=NeogitRemoteOid
 syn region NeogitUnmergedIntoRegion start=/^Unmerged into .*/           end=/$/ contains=NeogitRemote,NeogitUnmergedInto

@@ -156,7 +156,7 @@ function M.setup()
     NeogitCommandCodeError = { link = "Error" },
     NeogitBranch = { fg = palette.orange, bold = true },
     NeogitHeadOid = { link = "Comment" },
-    NeogitHeadDetachedOid = { link = "Comment" },
+    NeogitDetachedOid = { link = "Comment" },
     NeogitRemoteOid = { link = "Comment" },
     NeogitRemote = { fg = palette.green, bold = true },
     NeogitUnmergedInto = { fg = palette.bg_purple, bold = true },
