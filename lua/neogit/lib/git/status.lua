@@ -148,7 +148,7 @@ local function update_branch_information(state)
       table.insert(tasks, function()
         local commit = git.log.list({ "@{upstream}", "--max-count=1" })[1]
         state.upstream.commit_message = commit.message
-        state.upstream.abbrev = require("neogit.lib.git.rev_parse").abbreviate_commit(commit.oid)
+        state.upstream.abbrev = git.rev_parse.abbreviate_commit(commit.oid)
       end)
     end
 
