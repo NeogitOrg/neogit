@@ -145,6 +145,10 @@ function M.pushRemote_remote_label()
   return M.pushRemote() or "pushRemote, setting that"
 end
 
+function M.is_detached()
+  return require("neogit.lib.git").repo.head.branch == "(detached)"
+end
+
 function M.set_pushRemote()
   local remotes = require("neogit.lib.git").remote.list()
 
