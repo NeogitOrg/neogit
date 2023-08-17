@@ -37,7 +37,8 @@ end
 ---@field section NeogitConfigSignsIcon The icons to use for open and closed sections
 
 ---@class NeogitConfigSection A section to show in the Neogit Status buffer, e.g. Staged/Unstaged/Untracked
----@field folded boolean Whether or not this section should be shown by default
+---@field folded boolean Whether or not this section should be open or closed by default
+---@field hidden boolean Whether or not this section should be shown
 
 ---@class NeogitConfigSections
 ---@field untracked NeogitConfigSection|nil
@@ -153,36 +154,47 @@ function M.get_default_values()
     sections = {
       sequencer = {
         folded = false,
+        hidden = false,
       },
       untracked = {
         folded = false,
+        hidden = false,
       },
       unstaged = {
         folded = false,
+        hidden = false,
       },
       staged = {
         folded = false,
+        hidden = false,
       },
       stashes = {
         folded = true,
+        hidden = false,
       },
       unpulled_upstream = {
         folded = true,
+        hidden = false,
       },
       unmerged_upstream = {
         folded = false,
+        hidden = false,
       },
       unpulled_pushRemote = {
         folded = true,
+        hidden = false,
       },
       unmerged_pushRemote = {
         folded = false,
+        hidden = false,
       },
       recent = {
         folded = true,
+        hidden = false,
       },
       rebase = {
         folded = true,
+        hidden = false,
       },
     },
     ignored_settings = {
@@ -396,6 +408,7 @@ function M.validate_config()
     for section_name, section in pairs(config.sections) do
       validate_type(section, "section." .. section_name, "table")
       validate_type(section.folded, string.format("section.%s.folded", section_name), "boolean")
+      validate_type(section.hidden, string.format("section.%s.hidden", section_name), "boolean")
     end
   end
 
