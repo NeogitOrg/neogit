@@ -21,10 +21,10 @@ syn match NeogitChangeNewFile      /^New file/
 
 syn match NeogitCommitMessage /.*/                  contained
 
-syn match NeogitBranch          / \S\+/               contained nextgroup=NeogitCommitMessage
-syn match NeogitHeadOid         /\S\+/                contained nextgroup=NeogitBranch
-syn match NeogitDetachedOid /\S\+/                contained nextgroup=NeogitCommitMessage
-syn match NeogitRemoteOid       /\S\+/                contained nextgroup=NeogitRemote
+syn match NeogitBranch          / \S\+/             contained nextgroup=NeogitCommitMessage
+syn match NeogitHeadOid         /\S\+/              contained nextgroup=NeogitBranch
+syn match NeogitDetachedOid /\S\+/                  contained nextgroup=NeogitCommitMessage
+syn match NeogitRemoteOid       /\S\+/              contained nextgroup=NeogitRemote
 
 syn match NeogitRemote        / \S\+/               contained nextgroup=NeogitCommitMessage
 syn match NeogitDiffAdd       /.*/                  contained
