@@ -7,6 +7,7 @@ local commit_header_pat = "([| ]*)(%*?)([| ]*)commit (%w+)"
 
 ---@class CommitLogEntry
 ---@field oid string the object id of the commit
+---@field message string commit message
 ---@field level number the depth of the commit in the graph
 ---@field graph string the graph string
 ---@field author_name string the name of the author
@@ -231,7 +232,7 @@ local format = table.concat({
   "%b", -- Body
 }, "%x1E") -- Hex character to split on (dec \30)
 
----@param options table|nil
+---@param options string[]|nil
 ---@return CommitLogEntry[]
 function M.list(options, show_popup)
   options = options or {}

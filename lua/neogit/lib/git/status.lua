@@ -51,7 +51,7 @@ local function update_status(state)
       elseif header == "branch.oid" then
         head.oid = value
         -- TODO: vim.system and git lib
-        head.abbrev = git.cli["rev-parse"].short.args(value).call().stdout[1]
+        head.abbrev = require("neogit.lib.git.rev_parse").abbreviate_commit(value)
       elseif header == "branch.upstream" then
         upstream.ref = value
 
@@ -130,7 +130,7 @@ local function update_status(state)
 
   state.cwd = cwd
   state.head = head
-  state.upstream = upstream
+  state.upstream.ref = upstream.ref
   state.untracked.items = untracked_files
   state.unstaged.items = unstaged_files
   state.staged.items = staged_files
@@ -147,18 +147,18 @@ local function update_branch_information(state)
 
     if state.upstream.ref then
       table.insert(tasks, function()
-        local result =
-          git.cli.log.max_count(1).pretty("%B").for_range("@{upstream}").show_popup(false).call():trim()
-        state.upstream.commit_message = result.stdout[1]
+        local commit = require("neogit.lib.git.log").list({ "@{upstream}", "--max-count=1" }, false)[1]
+        state.upstream.commit_message = commit.message
+        state.upstream.abbrev = require("neogit.lib.git.rev_parse").abbreviate_commit(commit.oid)
       end)
     end
 
     local pushRemote = require("neogit.lib.git").branch.pushRemote_ref()
     if pushRemote then
       table.insert(tasks, function()
-        local result =
-          git.cli.log.max_count(1).pretty("%B").for_range(pushRemote).show_popup(false).call():trim()
-        state.pushRemote.commit_message = result.stdout[1]
+        local commit = require("neogit.lib.git.log").list({ pushRemote, "--max-count=1" }, false)[1]
+        state.pushRemote.commit_message = commit.message
+        state.pushRemote.abbrev = require("neogit.lib.git.rev_parse").abbreviate_commit(commit.oid)
       end)
     end
   end

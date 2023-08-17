@@ -189,8 +189,8 @@ local function draw_buffer()
     output:append(
       string.format(
         "Head:     %s %s %s",
-        git.repo.head.branch,
         git.repo.head.abbrev,
+        git.repo.head.branch,
         git.repo.head.commit_message or "(no commits)"
       )
     )
@@ -199,7 +199,8 @@ local function draw_buffer()
   if git.repo.upstream.ref then
     output:append(
       string.format(
-        "Merge:    %s %s",
+        "Merge:    %s %s %s",
+        git.repo.upstream.abbrev or "",
         git.repo.upstream.ref,
         git.repo.upstream.commit_message or "(no commits)"
       )
@@ -209,7 +210,8 @@ local function draw_buffer()
   if git.branch.pushRemote_ref() then
     output:append(
       string.format(
-        "Push:     %s %s",
+        "Push:     %s %s %s",
+        git.repo.pushRemote.abbrev or "",
         git.branch.pushRemote_ref(),
         git.repo.pushRemote.commit_message or "(does not exist)"
       )

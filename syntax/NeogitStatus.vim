@@ -21,10 +21,11 @@ syn match NeogitChangeNewFile      /^New file/
 
 syn match NeogitCommitMessage /.*/                  contained
 
-syn match NeogitBranch        /\S\+/                contained nextgroup=NeogitOid
-syn match NeogitOid           / \S\+/               contained nextgroup=NeogitCommitMessage
+syn match NeogitBranch        / \S\+/                contained nextgroup=NeogitCommitMessage
+syn match NeogitHeadOid       /\S\+/               contained nextgroup=NeogitBranch
+syn match NeogitRemoteOid     /\S\+/               contained nextgroup=NeogitRemote
 
-syn match NeogitRemote        /\S\+/                contained nextgroup=NeogitCommitMessage
+syn match NeogitRemote        / \S\+/                contained nextgroup=NeogitCommitMessage
 syn match NeogitDiffAdd       /.*/                  contained
 syn match NeogitDiffDelete    /.*/                  contained
 syn match NeogitUnmergedInto  /Unmerged into/       contained
@@ -52,9 +53,9 @@ for section in b:sections
   execute 'syn region Neogit' . id . 'Region start=/^' . section . '\ze.*/ end=/./ contains=Neogit' . id
 endfor
 
-syn region NeogitHeadRegion         start=/^Head: \zs/        end=/$/ contains=NeogitBranch
-syn region NeogitPushRegion         start=/^Push: \zs/        end=/$/ contains=NeogitRemote
-syn region NeogitMergeRegion        start=/^Merge: \zs/       end=/$/ contains=NeogitRemote
+syn region NeogitHeadRegion         start=/^Head: \zs/        end=/$/ contains=NeogitHeadOid
+syn region NeogitPushRegion         start=/^Push: \zs/        end=/$/ contains=NeogitRemoteOid
+syn region NeogitMergeRegion        start=/^Merge: \zs/       end=/$/ contains=NeogitRemoteOid
 syn region NeogitUnmergedIntoRegion start=/^Unmerged into .*/ end=/$/ contains=NeogitRemote,NeogitUnmergedInto
 syn region NeogitUnpushedToRegion   start=/^Unpushed to .*/   end=/$/ contains=NeogitRemote,NeogitUnpushedTo
 syn region NeogitUnpulledFromRegion start=/^Unpulled from .*/ end=/$/ contains=NeogitRemote,NeogitUnpulledFrom
