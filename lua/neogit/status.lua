@@ -222,7 +222,7 @@ local function draw_buffer()
 
   local function render_section(header, key, data)
     local section_config = config.values.sections[key]
-    if section_config == false then
+    if section_config.hidden then
       return
     end
 
