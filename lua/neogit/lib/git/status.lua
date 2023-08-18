@@ -26,7 +26,7 @@ local function update_status(state)
   local result = git.cli.status.porcelain(2).branch.call():trim()
 
   local head = {}
-  local upstream = { unmerged = { items = {} }, unpulled = { items = {} } }
+  local upstream = { unmerged = { items = {} }, unpulled = { items = {} }, ref = nil }
 
   local untracked_files, unstaged_files, staged_files = {}, {}, {}
   local old_files_hash = {
@@ -47,10 +47,12 @@ local function update_status(state)
         head.branch = value
       elseif header == "branch.oid" then
         head.oid = value
-        -- TODO: vim.system and git lib
         head.abbrev = git.rev_parse.abbreviate_commit(value)
       elseif header == "branch.upstream" then
         upstream.ref = value
+
+        local commit = git.log.list({ value, "--max-count=1" })[1]
+        upstream.abbrev = git.rev_parse.abbreviate_commit(commit.oid)
 
         local remote, branch = unpack(vim.split(value, "/"))
         upstream.remote = remote
@@ -127,7 +129,7 @@ local function update_status(state)
 
   state.cwd = cwd
   state.head = head
-  state.upstream.ref = upstream.ref
+  state.upstream = upstream
   state.untracked.items = untracked_files
   state.unstaged.items = unstaged_files
   state.staged.items = staged_files
@@ -146,14 +148,15 @@ local function update_branch_information(state)
 
     if state.upstream.ref then
       table.insert(tasks, function()
-        local commit = git.log.list({ "@{upstream}", "--max-count=1" })[1]
+        local commit = git.log.list({ state.upstream.ref, "--max-count=1" })[1]
+        -- May be done earlier by `update_status`, but this function can be called separately
         state.upstream.commit_message = commit.message
         state.upstream.abbrev = git.rev_parse.abbreviate_commit(commit.oid)
       end)
     end
 
     local pushRemote = require("neogit.lib.git").branch.pushRemote_ref()
-    if pushRemote then
+    if pushRemote and not git.branch.is_detached() then
       table.insert(tasks, function()
         local commit = git.log.list({ pushRemote, "--max-count=1" })[1]
         state.pushRemote.commit_message = commit.message

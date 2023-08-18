@@ -270,7 +270,7 @@ function M.graph(options)
   return { graph, graph_raw.stdout }
 end
 
----@param options string|nil
+---@param options string[]|nil
 ---@param graph table|nil
 ---@return CommitLogEntry[]
 function M.list(options, graph)
