@@ -183,29 +183,33 @@ local function make_commit(entry, graph)
   }
 end
 
+---@param output table
+---@param graph table|nil parsed ANSI graph table
+---@param graph_raw table|nil stdout from graph call, unparsed
 ---@return CommitLogEntry[]
-local function parse_log_with_graph(output, graph, graph_raw)
+local function parse_log(output, graph, graph_raw)
   local commits = {}
-  for i = 1, #graph_raw do
-    if graph_raw[i]:match("%*") then
-      table.insert(commits, make_commit(table.remove(output, 1), graph[i]))
-    else
-      table.insert(commits, { graph = graph[i] })
+
+  if graph and graph_raw then
+    for i = 1, #graph_raw do
+      if graph_raw[i]:match("%*") then
+        table.insert(commits, make_commit(table.remove(output, 1), graph[i]))
+      else
+        table.insert(commits, { graph = graph[i] })
+      end
+    end
+  else
+    for i = 1, #output do
+      table.insert(commits, make_commit(output[i]))
     end
   end
 
   return commits
 end
 
-local function parse_log_without_graph(output)
-  local commits = {}
-  for i = 1, #output do
-    table.insert(commits, make_commit(output[i]))
-  end
-
-  return commits
-end
-
+---Parses log output to a table
+---@param output table
+---@return string[][]
 local function split_output(output)
   output = table.concat(output, "\n")
   output = vim.split(output, "\31", { trimempty = true })
@@ -233,25 +237,10 @@ local format = table.concat({
   "%x1F", -- Entry delimiter to split on (dec \31)
 }, "%x1E") -- Field delimiter to split on (dec \30)
 
-local function list_with_graph(output, options)
-  local graph_raw = cli.log.format("%x00").graph.color.arg_list(options or {}).call():trim()
-  local graph = util.map(graph_raw.stdout_raw, function(line)
-    return require("neogit.lib.ansi").parse(
-      util.trim(line),
-      { recolor = not vim.tbl_contains(options, "--color") }
-    )
-  end)
-
-  return parse_log_with_graph(output, graph, graph_raw.stdout)
-end
-
--- TODO: Provide a list API that _doesnt_ to any graphing.
----@param options table|nil
----@return CommitLogEntry[]
-function M.list(options, internal)
-  options = options or {}
-  internal = internal or {}
-
+--- Ensure a max is passed to the list function to prevent accidentally getting thousands of results.
+---@param options table
+---@return table
+local function ensure_max(options)
   if
     not vim.tbl_contains(options, function(item)
       return item:match("%-%-max%-count=%d+")
@@ -260,16 +249,40 @@ function M.list(options, internal)
     table.insert(options, "--max-count=256")
   end
 
-  local output = cli.log.format(format).arg_list(options or {}).show_popup(false).call():trim()
-  output = split_output(output.stdout)
-
-  if internal.graph then
-    return list_with_graph(output, options)
-  else
-    return parse_log_without_graph(output)
-  end
+  return options
 end
 
+---@param options table|nil
+---@return table
+function M.graph(options)
+  options = ensure_max(options or {})
+
+  local graph_raw = cli.log.format("%x00").graph.color.arg_list(options).call():trim()
+  local graph = util.map(graph_raw.stdout_raw, function(line)
+    return require("neogit.lib.ansi").parse(
+      util.trim(line),
+      { recolor = not vim.tbl_contains(options, "--color") }
+    )
+  end)
+
+  return { graph, graph_raw.stdout }
+end
+
+---@param options table|nil
+---@param graph table|nil
+---@return CommitLogEntry[]
+function M.list(options, graph)
+  local output = split_output(
+    cli.log.format(format).arg_list(ensure_max(options or {})).show_popup(false).call():trim().stdout
+  )
+
+  return parse_log(output, unpack(graph or {}))
+end
+
+---Determines if commit a is an ancestor of commit b
+---@param a string commit hash
+---@param b string commit hash
+---@return boolean
 function M.is_ancestor(a, b)
   return cli["merge-base"].is_ancestor.args(a, b):call_sync_ignoring_exit_code():trim().code == 0
 end
@@ -280,9 +293,7 @@ local function update_recent(state)
     return
   end
 
-  local result = M.list({ "--max-count=" .. tostring(count) }, false)
-
-  state.recent.items = util.filter_map(result, M.present_commit)
+  state.recent.items = util.filter_map(M.list { "--max-count=" .. tostring(count) }, M.present_commit)
 end
 
 function M.register(meta)
