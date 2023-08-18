@@ -21,6 +21,7 @@ local function commits(popup, extras)
   return git.log.list(util.merge(popup:get_arguments(), extras or {}), maybe_graph(popup))
 end
 
+-- TODO: Handle when head is detached
 function M.log_current(popup)
   LogViewBuffer.new(commits(popup), popup:get_internal_arguments()):open()
 end
