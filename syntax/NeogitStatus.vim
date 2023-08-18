@@ -20,20 +20,16 @@ syn match NeogitChangeBothModified /^Both Modified/
 syn match NeogitChangeNewFile      /^New file/
 
 syn match NeogitCommitMessage /.*/                  contained
-
-syn match NeogitBranch          / \S\+/             contained nextgroup=NeogitCommitMessage
-syn match NeogitHeadOid         /\S\+/              contained nextgroup=NeogitBranch
-syn match NeogitDetachedOid     /\S\+/              contained nextgroup=NeogitCommitMessage
-syn match NeogitRemoteOid       /\S\+/              contained nextgroup=NeogitRemote
-
-syn match NeogitRemote        / \S\+/               contained nextgroup=NeogitCommitMessage
+syn match NeogitBranch        /\S\+/                contained nextgroup=NeogitObjectId,NeogitCommitMessage
+syn match NeogitRemote        /\S\+/                contained nextgroup=NeogitObjectId,NeogitCommitMessage
 syn match NeogitDiffAdd       /.*/                  contained
 syn match NeogitDiffDelete    /.*/                  contained
 syn match NeogitUnmergedInto  /Unmerged into/       contained
 syn match NeogitUnpushedTo    /Unpushed to/         contained
 syn match NeogitUnpulledFrom  /Unpulled from/       contained
+
 syn match NeogitStash         /stash@{[0-9]*}\ze/
-syn match NeogitObjectId      /^[a-z0-9]\{7,}\>\s/
+syn match NeogitObjectId      "\v<\x{7,}>"          contains=@NoSpell
 
 let b:sections = [
       \ "Untracked files",
@@ -54,14 +50,13 @@ for section in b:sections
   execute 'syn region Neogit' . id . 'Region start=/^' . section . '\ze.*/ end=/./ contains=Neogit' . id
 endfor
 
-syn region NeogitHeadRegion         start=/^Head: \zs/            end=/$/ contains=NeogitHeadOid
-syn region NeogitDetachedRegion     start=/^Head (detached): \zs/ end=/$/ contains=NeogitDetachedOid
-syn region NeogitPushRegion         start=/^Push: \zs/            end=/$/ contains=NeogitRemoteOid
-syn region NeogitMergeRegion        start=/^Merge: \zs/           end=/$/ contains=NeogitRemoteOid
-syn region NeogitUnmergedIntoRegion start=/^Unmerged into .*/     end=/$/ contains=NeogitRemote,NeogitUnmergedInto
-syn region NeogitUnpushedToRegion   start=/^Unpushed to .*/       end=/$/ contains=NeogitRemote,NeogitUnpushedTo
-syn region NeogitUnpulledFromRegion start=/^Unpulled from .*/     end=/$/ contains=NeogitRemote,NeogitUnpulledFrom
-syn region NeogitDiffAddRegion      start=/^+.*$/                 end=/$/ contains=NeogitDiffAdd
-syn region NeogitDiffDeleteRegion   start=/^-.*$/                 end=/$/ contains=NeogitDiffDelete
+syn region NeogitHeadRegion         start=/^Head: \zs/        end=/$/ contains=NeogitObjectId,NeogitBranch
+syn region NeogitPushRegion         start=/^Push: \zs/        end=/$/ contains=NeogitObjectId,NeogitRemote
+syn region NeogitMergeRegion        start=/^Merge: \zs/       end=/$/ contains=NeogitObjectId,NeogitRemote
+syn region NeogitUnmergedIntoRegion start=/^Unmerged into .*/ end=/$/ contains=NeogitRemote,NeogitUnmergedInto
+syn region NeogitUnpushedToRegion   start=/^Unpushed to .*/   end=/$/ contains=NeogitRemote,NeogitUnpushedTo
+syn region NeogitUnpulledFromRegion start=/^Unpulled from .*/ end=/$/ contains=NeogitRemote,NeogitUnpulledFrom
+syn region NeogitDiffAddRegion      start=/^+.*$/             end=/$/ contains=NeogitDiffAdd
+syn region NeogitDiffDeleteRegion   start=/^-.*$/             end=/$/ contains=NeogitDiffDelete
 
 let b:current_syntax = 1
