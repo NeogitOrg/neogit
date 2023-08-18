@@ -30,6 +30,15 @@ local function flatten(tbl)
 end
 
 ---@generic T: any
+---@generic U: any
+---@param tbl T[]
+---@param f fun(v: T): U
+---@return U[]
+local function flat_map(tbl, f)
+  return flatten(map(tbl, f))
+end
+
+---@generic T: any
 ---@param tbl T[]
 ---@return T[]
 --- Reverses list-like table
@@ -228,6 +237,42 @@ local function str_clamp(str, len, sep)
   return str_min_width(str_truncate(str, len - 1, ""), len, sep or " ")
 end
 
+--- Splits a string every n characters, respecting word boundaries
+---@param str string
+---@param len integer
+---@return table
+local function str_wrap(str, len)
+  if #str < len then
+    return { str }
+  end
+
+  local s = {}
+  local tmp = {}
+
+  local words = vim.split(str, " ")
+  local line_length = 0
+  while true do
+    if #words == 0 then
+      table.insert(s, table.concat(tmp, " "))
+      break
+    end
+
+    local word = table.remove(words, 1)
+    if line_length + #word + 1 > len then
+      table.insert(s, table.concat(tmp, " "))
+      tmp = {}
+
+      table.insert(tmp, word)
+      line_length = #word
+    else
+      table.insert(tmp, word)
+      line_length = line_length + #word + 1
+    end
+  end
+
+  return s
+end
+
 local function parse_command_args(args)
   local tbl = {}
 
@@ -347,4 +392,6 @@ return {
   lists_equal = lists_equal,
   pad_right = pad_right,
   reverse = reverse,
+  flat_map = flat_map,
+  str_wrap = str_wrap,
 }

@@ -95,6 +95,11 @@ function M:open()
 
           local t_idx = math.max(c.index - 1, 1)
           local target = c.parent.children[t_idx]
+          while not target.children[2] do
+            t_idx = t_idx - 1
+            target = c.parent.children[t_idx]
+          end
+
           target.children[2].options.hidden = false
 
           buffer.ui:update()
@@ -107,6 +112,11 @@ function M:open()
 
           local t_idx = math.min(c.index + 1, #c.parent.children)
           local target = c.parent.children[t_idx]
+          while not target.children[2] do
+            t_idx = t_idx + 1
+            target = c.parent.children[t_idx]
+          end
+
           target.children[2].options.hidden = false
 
           buffer.ui:update()

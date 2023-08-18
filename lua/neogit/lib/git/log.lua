@@ -53,8 +53,6 @@ local function parse(raw)
     -- Consume this line
     advance()
 
-    commit.level = util.str_count(s1, "|")
-
     local start_idx = #s1 + #s2 + #star
 
     local function lpeek()
@@ -160,65 +158,73 @@ local function parse(raw)
   return commits
 end
 
----@return CommitLogEntry[]
-local function parse_log(output, colored_graph)
-  if type(output) == "string" then
-    output = vim.split(output, "\n")
+local function make_commit(entry, graph)
+  local hash, subject, author_name, rel_date, ref_name, author_date, committer_name, committer_date, committer_email, author_email, body =
+    unpack(entry)
+
+  if rel_date then
+    rel_date, _ = rel_date:gsub(" ago$", "")
   end
 
-  local output_len = #output
+  return {
+    graph = graph,
+    oid = hash,
+    description = { subject, body },
+    author_name = author_name,
+    author_email = author_email,
+    rel_date = rel_date,
+    ref_name = ref_name,
+    author_date = author_date,
+    committer_date = committer_date,
+    committer_name = committer_name,
+    committer_email = committer_email,
+    body = body,
+    -- TODO: Remove below here
+    hash = hash,
+    message = subject,
+  }
+end
+
+---@param output table
+---@param graph table|nil parsed ANSI graph table
+---@param graph_raw table|nil stdout from graph call, unparsed
+---@return CommitLogEntry[]
+local function parse_log(output, graph, graph_raw)
   local commits = {}
 
-  for i = 1, output_len do
-    local level, hash, subject, author_name, rel_date, ref_name, author_date, committer_name, committer_date, committer_email, author_email, body =
-      unpack(vim.split(output[i], "\30"))
-
-    local graph
-    if colored_graph then
-      graph = colored_graph[i]
-    else
-      graph = util.trim(level:match("([_|/\\ %*]+)"))
+  if graph and graph_raw then
+    for i = 1, #graph_raw do
+      if graph_raw[i]:match("%*") then
+        table.insert(commits, make_commit(table.remove(output, 1), graph[i]))
+      else
+        table.insert(commits, { graph = graph[i] })
+      end
     end
-
-    if level and hash then
-      if rel_date then
-        rel_date, _ = rel_date:gsub(" ago$", "")
-      end
-
-      local commit = {
-        level = util.str_count(level, "|"),
-        graph = graph,
-        oid = hash,
-        description = { subject, body },
-        author_name = author_name,
-        author_email = author_email,
-        rel_date = rel_date,
-        ref_name = ref_name,
-        author_date = author_date,
-        committer_date = committer_date,
-        committer_name = committer_name,
-        committer_email = committer_email,
-        body = body,
-        -- TODO: Remove below here
-        hash = hash,
-        message = subject,
-      }
-
-      table.insert(commits, commit)
-    elseif level then
-      if graph ~= commits[#commits].graph and graph ~= "|" then
-        table.insert(commits, { graph = graph })
-      end
+  else
+    for i = 1, #output do
+      table.insert(commits, make_commit(output[i]))
     end
   end
 
   return commits
 end
 
+---Parses log output to a table
+---@param output table
+---@return string[][]
+local function split_output(output)
+  output = table.concat(output, "\n")
+  output = vim.split(output, "\31", { trimempty = true })
+  output = util.map(output, function(line)
+    return vim.split(vim.trim(line:gsub("\n", " ")), "\30")
+  end)
+
+  return output
+end
+
 local M = {}
 
 local format = table.concat({
-  "", -- Padding for Graph
   "%H", -- Full Hash
   "%s", -- Subject
   "%aN", -- Author Name
@@ -230,24 +236,13 @@ local format = table.concat({
   "%ce", -- Committer Email
   "%ae", -- Author Email
   "%b", -- Body
-}, "%x1E") -- Hex character to split on (dec \30)
+  "%x1F", -- Entry delimiter to split on (dec \31)
+}, "%x1E") -- Field delimiter to split on (dec \30)
 
----@param options string[]|nil
----@return CommitLogEntry[]
-function M.list(options, show_popup)
-  options = options or {}
-  show_popup = show_popup or false
-
-  local graph
-  if vim.tbl_contains(options, "--color") then
-    graph = util.map(
-      cli.log.format("%x00").graph.color.arg_list(options or {}).call():trim().stdout_raw,
-      function(line)
-        return require("neogit.lib.ansi").parse(util.trim(line))
-      end
-    )
-  end
-
+--- Ensure a max is passed to the list function to prevent accidentally getting thousands of results.
+---@param options table
+---@return table
+local function ensure_max(options)
   if
     not vim.tbl_contains(options, function(item)
       return item:match("%-%-max%-count=%d+")
@@ -256,10 +251,40 @@ function M.list(options, show_popup)
     table.insert(options, "--max-count=256")
   end
 
-  local output = cli.log.format(format).graph.arg_list(options or {}).show_popup(show_popup).call():trim()
-  return parse_log(output.stdout, graph)
+  return options
 end
 
+---@param options table|nil
+---@return table
+function M.graph(options)
+  options = ensure_max(options or {})
+
+  local graph_raw = cli.log.format("%x00").graph.color.arg_list(options).call():trim()
+  local graph = util.map(graph_raw.stdout_raw, function(line)
+    return require("neogit.lib.ansi").parse(
+      util.trim(line),
+      { recolor = not vim.tbl_contains(options, "--color") }
+    )
+  end)
+
+  return { graph, graph_raw.stdout }
+end
+
+---@param options string|nil
+---@param graph table|nil
+---@return CommitLogEntry[]
+function M.list(options, graph)
+  local output = split_output(
+    cli.log.format(format).arg_list(ensure_max(options or {})).show_popup(false).call():trim().stdout
+  )
+
+  return parse_log(output, unpack(graph or {}))
+end
+
+---Determines if commit a is an ancestor of commit b
+---@param a string commit hash
+---@param b string commit hash
+---@return boolean
 function M.is_ancestor(a, b)
   return cli["merge-base"].is_ancestor.args(a, b):call_sync_ignoring_exit_code():trim().code == 0
 end
@@ -270,9 +295,7 @@ local function update_recent(state)
     return
   end
 
-  local result = M.list({ "--max-count=" .. tostring(count) }, false)
-
-  state.recent.items = util.filter_map(result, M.present_commit)
+  state.recent.items = util.filter_map(M.list { "--max-count=" .. tostring(count) }, M.present_commit)
 end
 
 function M.register(meta)
