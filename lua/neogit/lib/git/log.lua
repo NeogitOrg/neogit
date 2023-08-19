@@ -7,6 +7,8 @@ local commit_header_pat = "([| ]*)(%*?)([| ]*)commit (%w+)"
 
 ---@class CommitLogEntry
 ---@field oid string the object id of the commit
+---@field message string commit message
+---@field level number the depth of the commit in the graph
 ---@field graph string the graph string
 ---@field author_name string the name of the author
 ---@field author_email string the email of the author
@@ -268,7 +270,7 @@ function M.graph(options)
   return { graph, graph_raw.stdout }
 end
 
----@param options table|nil
+---@param options string[]|nil
 ---@param graph table|nil
 ---@return CommitLogEntry[]
 function M.list(options, graph)

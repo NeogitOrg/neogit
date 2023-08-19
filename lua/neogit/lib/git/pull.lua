@@ -14,6 +14,10 @@ local function update_unpulled(state)
   state.upstream.unpulled.items = {}
   state.pushRemote.unpulled.items = {}
 
+  if state.head.branch == "(detached)" then
+    return
+  end
+
   if state.upstream.ref then
     state.upstream.unpulled.items = util.filter_map(log.list { "..@{upstream}" }, log.present_commit)
   end

@@ -1,5 +1,6 @@
 return {
   repo = require("neogit.lib.git.repository"),
+  rev_parse = require("neogit.lib.git.rev_parse"),
   cli = require("neogit.lib.git.cli"),
   init = require("neogit.lib.git.init"),
   status = require("neogit.lib.git.status"),
