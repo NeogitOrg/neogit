@@ -17,6 +17,10 @@ local function update_unmerged(state)
   state.upstream.unmerged.items = {}
   state.pushRemote.unmerged.items = {}
 
+  if state.head.branch == "(detached)" then
+    return
+  end
+
   if state.upstream.ref then
     state.upstream.unmerged.items = util.filter_map(log.list { "@{upstream}.." }, log.present_commit)
   end
