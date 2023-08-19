@@ -27,12 +27,33 @@ License: MIT license {{{
 ==============================================================================
 CONTENTS                                                       *neogit_contents*
 
-    1. Intro                         |neogit_intro|
-    2. Commands                      |neogit_commands|
-    3. Mappings                      |neogit_mappings|
-    4. Highlights                    |neogit_highlights|
-    5. API                           |neogit_api|
-    6. Popups                        |neogit_popups|
+    1. Intro                                                     |neogit_intro|
+    2. Commands                                               |neogit_commands|
+    3. Mappings                                               |neogit_mappings|
+    4. Highlights                                           |neogit_highlights|
+    5. API                                                         |neogit_api|
+    6. Popups                                                   |neogit_popups|
+       • Cherry Pick                                 |neogit_cherry_pick_popup|
+       • Branch                                           |neogit_branch_popup|
+       • Branch Config                             |neogit_branch_config_popup|
+       • Commit                                           |neogit_commit_popup|
+       • Diff                                               |neogit_diff_popup|
+       • Fetch                                             |neogit_fetch_popup|
+       • Log                                                 |neogit_log_popup|
+       • Merge                                             |neogit_merge_popup|
+       • Remote                                           |neogit_remote_popup|
+       • Remote Config                             |neogit_remote_config_popup|
+       • Pull                                               |neogit_pull_popup|
+       • Push                                               |neogit_push_popup|
+       • Rebase                                           |neogit_rebase_popup|
+       • Revert                                           |neogit_revert_popup|
+       • Reset                                             |neogit_reset_popup|
+       • Stash                                             |neogit_stash_popup|
+    7. Buffers                                                 |neogit_buffers|
+       • Status                                          |neogit_status_buffer|
+       • Log                                                |neogit_log_buffer|
+       • Reflog                                          |neogit_reflog_buffer|
+       • Commit                                          |neogit_commit_buffer|
 
 ==============================================================================
 1. Intro                                                          *neogit_intro*
@@ -129,7 +150,7 @@ $                       Command History
 #                       Console Output
 
                                                                       *neogit_L*
-L                       Open log popup
+l                       Open log popup
 
                                                                       *neogit_p*
 p                       Open pull popup
@@ -766,6 +787,11 @@ Actions:                                           *neogit_commit_popup_actions*
     Similar to |neogit_commit_squash|, but instantly rebases after.
 
 ==============================================================================
+Diff Popup                                                   *neogit_diff_popup*
+
+(TODO)
+
+==============================================================================
 Fetch Popup                                                 *neogit_fetch_popup*
 
 Arguments:                                             *neogit_fetch_popup_args*
@@ -820,6 +846,41 @@ Actions:                                            *neogit_fetch_popup_actions*
 
   • Set Variables                                   *neogit_fetch_set_variables*
     Opens Branch Config popup for the current branch.
+
+==============================================================================
+Log Popup                                                     *neogit_log_popup*
+
+(TODO)
+
+==============================================================================
+Merge Popup                                                 *neogit_merge_popup*
+
+(TODO)
+
+==============================================================================
+Remote Popup                                               *neogit_remote_popup*
+
+(TODO)
+
+==============================================================================
+Remote Config Popup                                 *neogit_remote_config_popup*
+
+(TODO)
+
+==============================================================================
+Pull Popup                                                   *neogit_pull_popup*
+
+(TODO)
+
+==============================================================================
+Push Popup                                                   *neogit_push_popup*
+
+(TODO)
+
+==============================================================================
+Rebase Popup                                               *neogit_rebase_popup*
+
+(TODO)
 
 ==============================================================================
 Revert Popup                                               *neogit_revert_popup*
@@ -896,5 +957,39 @@ Actions:                                            *neogit_reset_popup_actions*
 
   • Worktree                                             *neogit_reset_worktree*
     (not yet implemented)
+
+==============================================================================
+Stash Popup                                                 *neogit_stash_popup*
+
+(TODO)
+
+==============================================================================
+7. Buffers                                                      *neogit_buffers*
+
+• Status                                                  |neogit_status_buffer|
+• Log                                                        |neogit_log_buffer|
+• Reflog                                                  |neogit_reflog_buffer|
+• Commit                                                  |neogit_commit_buffer|
+
+==============================================================================
+Status Buffer                                             *neogit_status_buffer*
+
+(TODO)
+
+==============================================================================
+Log Buffer                                                   *neogit_log_buffer*
+
+(TODO)
+
+==============================================================================
+Reflog Buffer                                             *neogit_reflog_buffer*
+
+(TODO)
+
+==============================================================================
+Commit Buffer                                             *neogit_commit_buffer*
+
+(TODO)
+
 
 vim:tw=78:ts=8:ft=help
