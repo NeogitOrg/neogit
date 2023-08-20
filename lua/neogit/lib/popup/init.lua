@@ -563,8 +563,9 @@ function M:show()
     filetype = "NeogitPopup",
     kind = config.values.popup.kind,
     mappings = mappings,
-    after = function(buf, _)
-      vim.cmd([[setlocal nocursorline nolist]])
+    after = function(buf, win)
+      vim.api.nvim_set_option_value("cursorline", false, { win = win })
+      vim.api.nvim_set_option_value("list", false, { win = win })
 
       if self.state.env.highlight then
         for i = 1, #self.state.env.highlight, 1 do
