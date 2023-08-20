@@ -72,6 +72,8 @@ local function update_status(state)
         local mode, _, _, _, _, _, _, _, _, name = rest:match(match_u)
 
         table.insert(untracked_files, { mode = mode, name = name })
+      elseif kind == "?" then
+        table.insert(untracked_files, update_file(old_files_hash.untracked_files[rest], nil, rest))
       elseif kind == "1" then
         local mode_staged, mode_unstaged, _, _, _, _, _, _, name = rest:match(match_1)
 
@@ -102,11 +104,6 @@ local function update_status(state)
         end
       end
     end
-  end
-
-  local untracked = git.cli["ls-files"].others.exclude_standard.args(".").call():trim().stdout
-  for _, name in ipairs(untracked) do
-    table.insert(untracked_files, update_file(old_files_hash.untracked_files[name], nil, name))
   end
 
   -- These are a bit hacky - because we can _partially_ refresh repo state (for now),
