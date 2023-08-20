@@ -564,7 +564,7 @@ function M:show()
     kind = config.values.popup.kind,
     mappings = mappings,
     after = function(buf, _)
-      vim.cmd([[setlocal nocursorline]])
+      vim.cmd([[setlocal nocursorline nolist]])
 
       if self.state.env.highlight then
         for i = 1, #self.state.env.highlight, 1 do
