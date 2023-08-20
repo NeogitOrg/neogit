@@ -973,8 +973,12 @@ Stash Popup                                                 *neogit_stash_popup*
 
 ==============================================================================
 Status Buffer                                             *neogit_status_buffer*
-
 (TODO)
+
+Untracked Files                                 *neogit_status_buffer_untracked*
+  Neogit respects status.showUntrackedFiles. It can be set to "no" to hide
+  untracked files entirely, "normal" to show files and directories (default),
+  or "all" to show all files in all directories.
 
 ==============================================================================
 Log Buffer                                                   *neogit_log_buffer*
