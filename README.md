@@ -388,4 +388,4 @@ augroup END
 
 Run `make test` after checking out the repo. All dependencies should get automatically downloaded to `/tmp/neogit-test/`
 
-See [CONTRIBUTING.md](https://github.com/NeogitOrg/neogit/edit/master/CONTRIBUTING.md) for more details
+See [CONTRIBUTING.md](https://github.com/NeogitOrg/neogit/blob/master/CONTRIBUTING.md) for more details.
