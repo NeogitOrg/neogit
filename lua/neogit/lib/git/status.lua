@@ -150,8 +150,10 @@ local function update_branch_information(state)
       table.insert(tasks, function()
         local commit = git.log.list({ state.upstream.ref, "--max-count=1" })[1]
         -- May be done earlier by `update_status`, but this function can be called separately
-        state.upstream.commit_message = commit.message
-        state.upstream.abbrev = git.rev_parse.abbreviate_commit(commit.oid)
+        if commit then
+          state.upstream.commit_message = commit.message
+          state.upstream.abbrev = git.rev_parse.abbreviate_commit(commit.oid)
+        end
       end)
     end
 
@@ -159,8 +161,10 @@ local function update_branch_information(state)
     if pushRemote and not git.branch.is_detached() then
       table.insert(tasks, function()
         local commit = git.log.list({ pushRemote, "--max-count=1" })[1]
-        state.pushRemote.commit_message = commit.message
-        state.pushRemote.abbrev = git.rev_parse.abbreviate_commit(commit.oid)
+        if commit then
+          state.pushRemote.commit_message = commit.message
+          state.pushRemote.abbrev = git.rev_parse.abbreviate_commit(commit.oid)
+        end
       end)
     end
   end
