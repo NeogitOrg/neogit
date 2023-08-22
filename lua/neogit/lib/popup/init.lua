@@ -480,14 +480,24 @@ function M:show()
     },
   }
 
+  local arg_prefixes = {}
   for _, arg in pairs(self.state.args) do
     if arg.id then
+      arg_prefixes[arg.key_prefix] = true
       mappings.n[arg.id] = function()
         if arg.type == "switch" then
           self:toggle_switch(arg)
         elseif arg.type == "option" then
           self:set_option(arg)
         end
+      end
+    end
+  end
+  for prefix, _ in pairs(arg_prefixes) do
+    mappings.n[prefix] = function()
+      local c = vim.fn.getcharstr()
+      if mappings.n[prefix .. c] then
+        mappings.n[prefix .. c]()
       end
     end
   end
