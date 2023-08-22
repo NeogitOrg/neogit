@@ -4,7 +4,7 @@ local actions = require("neogit.popups.rebase.actions")
 
 local M = {}
 
-function M.create(env)
+function M.create(selection)
   local branch = git.branch.current()
   local in_rebase = git.repo.rebase.head
   local base_branch = actions.base_branch()
@@ -42,7 +42,7 @@ function M.create(env)
     :action_if(not in_rebase, "k", "to remove a commit")
     :action_if(not in_rebase, "f", "to autosquash")
     :env({
-      commit = env.commit,
+      commit = selection.current_commit and selection.current_commit.oid,
       highlight = { branch, git.repo.upstream.ref, base_branch },
       bold = { "@{upstream}", "pushRemote" },
     })

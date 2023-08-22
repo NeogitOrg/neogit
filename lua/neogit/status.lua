@@ -30,7 +30,10 @@ M.commit_view = nil
 ---@class Section
 ---@field first number
 ---@field last number
----@field files StatusItem[]
+---@field items StatusItem[]
+
+---@type Section[]
+---Sections in order by first lines
 M.locations = {}
 
 M.outdated = {}
@@ -63,7 +66,7 @@ local function get_section_item_idx_for_line(linenr)
     return nil, nil
   end
 
-  for i, item in pairs(section.files) do
+  for i, item in pairs(section.items) do
     if item.first <= linenr and linenr <= item.last then
       return section_idx, i
     end
@@ -81,7 +84,7 @@ local function get_section_item_for_line(linenr)
     return nil, nil
   end
 
-  return section, section.files[item_idx]
+  return section, section.items[item_idx]
 end
 
 ---@return Section|nil, StatusItem|nil
@@ -117,7 +120,7 @@ local function draw_signs()
   for _, l in ipairs(M.locations) do
     draw_sign_for_item(l, "section")
     if not l.folded then
-      Collection.new(l.files):filter(F.dot("hunks")):each(function(f)
+      Collection.new(l.items):filter(F.dot("hunks")):each(function(f)
         draw_sign_for_item(f, "item")
         if not f.folded then
           Collection.new(f.hunks):each(function(h)
@@ -235,13 +238,13 @@ local function draw_buffer()
       or {
         name = key,
         folded = section_config.folded,
-        files = {},
+        items = {},
       }
     location.first = #output
 
     if not location.folded then
-      local files_lookup = Collection.new(location.files):key_by("name")
-      location.files = {}
+      local items_lookup = Collection.new(location.items):key_by("name")
+      location.items = {}
 
       for _, f in ipairs(data.items) do
         local label = util.pad_right(format_mode(f.mode), max_len)
@@ -261,7 +264,7 @@ local function draw_buffer()
           M.status_buffer:place_sign(#output, "NeogitRebaseDone", "hl")
         end
 
-        local file = files_lookup[f.name] or { folded = true }
+        local file = items_lookup[f.name] or { folded = true }
         file.first = #output
 
         if not file.folded and f.has_diff then
@@ -290,7 +293,7 @@ local function draw_buffer()
         end
 
         file.last = #output
-        table.insert(location.files, setmetatable(file, { __index = f }))
+        table.insert(location.items, setmetatable(file, { __index = f }))
       end
     end
 
@@ -299,6 +302,11 @@ local function draw_buffer()
     if not location.folded then
       output:append("")
     end
+
+    -- if #new_locations > 0 then
+    --   assert(new_locations[#new_locations].last < location.first, "Sections are ordered")
+    -- end
+
     table.insert(new_locations, location)
   end
 
@@ -370,7 +378,7 @@ local function save_cursor_location(linenr)
     elseif line >= loc.first and line <= loc.last then
       section_loc = { li, loc.name }
 
-      for fi, file in ipairs(loc.files) do
+      for fi, file in ipairs(loc.items) do
         if line == file.first then
           file_loc = { fi, file.name }
           first, last = file.first, file.last
@@ -414,16 +422,16 @@ local function restore_cursor_location(section_loc, file_loc, hunk_loc)
     file_loc, hunk_loc = nil, nil
     section = M.locations[section_loc[1]] or M.locations[#M.locations]
   end
-  if not file_loc or not section.files or #section.files == 0 then
+  if not file_loc or not section.items or #section.items == 0 then
     return vim.fn.setpos(".", { 0, section.first, 0, 0 })
   end
 
-  local file = Collection.new(section.files):find(function(f)
+  local file = Collection.new(section.items):find(function(f)
     return f.name == file_loc[2]
   end)
   if not file then
     hunk_loc = nil
-    file = section.files[file_loc[1]] or section.files[#section.files]
+    file = section.items[file_loc[1]] or section.items[#section.items]
   end
   if not hunk_loc or not file.hunks or #file.hunks == 0 then
     return vim.fn.setpos(".", { 0, file.first, 0, 0 })
@@ -566,10 +574,12 @@ local function get_current_hunk_of_item(item)
 end
 
 local function toggle()
-  local section, item = get_current_section_item()
-  if section == nil then
+  local sel = M.get_selection()
+  if sel.current_section == nil then
     return
   end
+
+  local item = sel.current_item
 
   local on_hunk = item ~= nil and current_line_is_hunk()
 
@@ -581,7 +591,7 @@ local function toggle()
   elseif item then
     item.folded = not item.folded
   else
-    section.folded = not section.folded
+    sel.current_section.folded = not sel.current_section.folded
   end
 
   refresh_status_buffer()
@@ -608,21 +618,6 @@ local function close(skip_close)
   if M.cwd_changed then
     vim.cmd("cd -")
   end
-end
-
---- Returns commits in selection
----@return table
-function M.get_selected_commits()
-  local first_line = vim.fn.getpos("v")[2]
-  local last_line = vim.fn.getpos(".")[2]
-
-  local items = {}
-  for line = first_line, last_line do
-    local _, item = get_section_item_for_line(line)
-    table.insert(items, item)
-  end
-
-  return items
 end
 
 ---Determines if selection contains multiple files
@@ -685,9 +680,77 @@ local function get_selection()
     last_line - first_hunk.diff_from
 end
 
+---@class Selection
+---@field sections SectionSelection[]
+---@field first_line number
+---@field last_line number
+---
+---@field current_section Section|nil
+---@field current_item StatusItem|nil
+---@field current_commit CommitLogEntry|nil
+---
+---@field commits  CommitLogEntry[]
+---@field items  StatusItem[]
+
+---@class SectionSelection
+---@field section Section
+---@field items StatusItem[]
+
+---Returns the selected items grouped by spanned sections
+---@return Selection
+function M.get_selection()
+  local first_line = vim.fn.getpos("v")[2]
+  local last_line = vim.fn.getpos(".")[2]
+
+  local res = {
+    sections = {},
+    first_line = first_line,
+    last_line = last_line,
+    current_item = nil,
+    current_commit = nil,
+    commits = {},
+    items = {},
+  }
+
+  for _, section in ipairs(M.locations) do
+    local items = {}
+
+    if section.first > last_line then
+      break
+    end
+
+    if section.last >= first_line then
+      if section.first <= first_line and section.last >= last_line then
+        res.current_section = section
+      end
+      for _, item in pairs(section.items) do
+        if item.first <= first_line and item.last >= last_line then
+          res.current_item = item
+
+          res.current_commit = item.commit
+        end
+
+        if item.commit then
+          table.insert(res.commits, item.commit)
+        end
+
+        table.insert(res.items, item)
+        table.insert(items, item)
+      end
+
+      table.insert(section, {
+        section = section,
+        items = items,
+      })
+    end
+  end
+
+  return res
+end
+
 local stage_selection = function()
   if selection_spans_multiple_items_within_section() then
-    git.status.stage(unpack(map(M.get_selected_commits(), function(item)
+    git.status.stage(unpack(map(M.get_selection().items, function(item)
       return item.name
     end)))
   else
@@ -700,7 +763,7 @@ end
 
 local unstage_selection = function()
   if selection_spans_multiple_items_within_section() then
-    git.status.unstage(unpack(map(M.get_selected_commits(), function(item)
+    git.status.unstage(unpack(map(M.get_selection().items, function(item)
       return item.name
     end)))
   else
@@ -732,7 +795,7 @@ local stage = function()
       if section.name == "unstaged" then
         git.status.stage_modified()
       elseif section.name == "untracked" then
-        git.index.add(map(section.files, function(item)
+        git.index.add(map(section.items, function(item)
           return item.name
         end))
       end
@@ -865,7 +928,7 @@ local discard = function()
   -- These all need to be captured _before_ the get_confirmation() call, since that
   -- seems to effect how vim determines what's selected
   local multi_file = selection_spans_multiple_items_within_section()
-  local files = M.get_selected_commits()
+  local items = M.get_selection().items
 
   local selection = { get_selection() }
 
@@ -882,7 +945,7 @@ local discard = function()
 
   if mode.mode == "V" then
     if multi_file then
-      discard_selected_files(files, section.name)
+      discard_selected_files(items, section.name)
     else
       discard_selection(unpack(selection))
     end

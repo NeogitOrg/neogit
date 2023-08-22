@@ -30,7 +30,7 @@ function M.create(env)
     :new_action_group()
     :action("F", "Instant Fixup", actions.instant_fixup)
     :action("S", "Instant Squash", actions.instant_squash)
-    :env({ highlight = { "HEAD" }, commit = env.commit })
+    :env({ highlight = { "HEAD" }, commit = env.current_commit })
     :build()
 
   p:show()
