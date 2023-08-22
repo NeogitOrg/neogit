@@ -9,8 +9,8 @@ local CommitSelectViewBuffer = require("neogit.buffers.commit_select_view")
 ---@return table
 local function get_commits(popup)
   local commits
-  if popup.state.env.current_commit then
-    commits = { popup.state.env.current_commit }
+  if popup.state.env.commit then
+    commits = { popup.state.env.commit }
   else
     commits = CommitSelectViewBuffer.new(git.log.list { "--max-count=256" }):open_async()
   end

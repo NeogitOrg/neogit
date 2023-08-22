@@ -42,7 +42,7 @@ function M.create(selection)
     :action_if(not in_rebase, "k", "to remove a commit")
     :action_if(not in_rebase, "f", "to autosquash")
     :env({
-      commit = selection.current_commit and selection.current_commit.oid,
+      commit = selection.commit and selection.current_commit.oid,
       highlight = { branch, git.repo.upstream.ref, base_branch },
       bold = { "@{upstream}", "pushRemote" },
     })

@@ -575,11 +575,11 @@ end
 
 local function toggle()
   local sel = M.get_selection()
-  if sel.current_section == nil then
+  if sel.section == nil then
     return
   end
 
-  local item = sel.current_item
+  local item = sel.item
 
   local on_hunk = item ~= nil and current_line_is_hunk()
 
@@ -591,7 +591,7 @@ local function toggle()
   elseif item then
     item.folded = not item.folded
   else
-    sel.current_section.folded = not sel.current_section.folded
+    sel.section.folded = not sel.section.folded
   end
 
   refresh_status_buffer()
@@ -685,9 +685,10 @@ end
 ---@field first_line number
 ---@field last_line number
 ---
----@field current_section Section|nil
----@field current_item StatusItem|nil
----@field current_commit CommitLogEntry|nil
+---Current items under the cursor
+---@field section Section|nil
+---@field item StatusItem|nil
+---@field commit CommitLogEntry|nil
 ---
 ---@field commits  CommitLogEntry[]
 ---@field items  StatusItem[]
@@ -706,8 +707,8 @@ function M.get_selection()
     sections = {},
     first_line = first_line,
     last_line = last_line,
-    current_item = nil,
-    current_commit = nil,
+    item = nil,
+    commit = nil,
     commits = {},
     items = {},
   }
@@ -721,13 +722,13 @@ function M.get_selection()
 
     if section.last >= first_line then
       if section.first <= first_line and section.last >= last_line then
-        res.current_section = section
+        res.section = section
       end
       for _, item in pairs(section.items) do
         if item.first <= first_line and item.last >= last_line then
-          res.current_item = item
+          res.item = item
 
-          res.current_commit = item.commit
+          res.commit = item.commit
         end
 
         if item.commit then
