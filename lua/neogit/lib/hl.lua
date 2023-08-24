@@ -32,8 +32,9 @@ local function get_fg(name)
   local color = vim.api.nvim_get_hl(0, { name = name })
   if color["link"] then
     return get_fg(color["link"])
-  end
-  if color["fg"] then
+  elseif color["reverse"] then
+    return "#" .. to_hex(color["bg"])
+  elseif color["fg"] then
     return "#" .. to_hex(color["fg"])
   end
 end
@@ -43,8 +44,9 @@ local function get_bg(name)
   local color = vim.api.nvim_get_hl(0, { name = name })
   if color["link"] then
     return get_bg(color["link"])
-  end
-  if color["bg"] then
+  elseif color["reverse"] then
+    return "#" .. to_hex(color["fg"])
+  elseif color["bg"] then
     return "#" .. to_hex(color["bg"])
   end
 end
