@@ -52,7 +52,9 @@ local function update_status(state)
         upstream.ref = value
 
         local commit = git.log.list({ value, "--max-count=1" })[1]
-        upstream.abbrev = git.rev_parse.abbreviate_commit(commit.oid)
+        if commit then
+          upstream.abbrev = git.rev_parse.abbreviate_commit(commit.oid)
+        end
 
         local remote, branch = unpack(vim.split(value, "/"))
         upstream.remote = remote
