@@ -173,8 +173,8 @@ end
 
 local git = { cli = require("neogit.lib.git.cli") }
 local status = {
-  stage = function(...)
-    git.cli.add.files(...).call()
+  stage = function(files)
+    git.cli.add.files(unpack(files)).call()
   end,
   stage_modified = function()
     git.cli.add.update.call()
@@ -182,8 +182,8 @@ local status = {
   stage_all = function()
     git.cli.add.all.call()
   end,
-  unstage = function(...)
-    git.cli.reset.files(...).call()
+  unstage = function(files)
+    git.cli.reset.files(unpack(files)).call()
   end,
   unstage_all = function()
     git.cli.reset.call()
