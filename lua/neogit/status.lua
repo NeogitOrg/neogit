@@ -685,7 +685,6 @@ end
 ---@field sections SectionSelection[]
 ---@field first_line number
 ---@field last_line number
----
 ---Current items under the cursor
 ---@field section Section|nil
 ---@field item StatusItem|nil
@@ -693,16 +692,34 @@ end
 ---
 ---@field commits  CommitLogEntry[]
 ---@field items  StatusItem[]
+local Selection = {}
+Selection.__index = Selection
 
 ---@class SectionSelection
 ---@field section Section
 ---@field name string
 ---@field items StatusItem[]
 
+---@return string[], string[]
+
+function Selection:format()
+  local lines = {}
+
+  table.insert(lines, string.format("%d,%d:", self.first_line, self.last_line))
+
+  for _, sec in ipairs(self.sections) do
+    table.insert(lines, string.format("%s:", sec.name))
+    for _, item in ipairs(sec.items) do
+      table.insert(lines, string.format("  %s%s:", item == self.item and "*" or "", item.name))
+    end
+  end
+
+  return table.concat(lines, "\n")
+end
+
 ---@param item StatusItem
 ---@param first_line number
 ---@param last_line number
----@return string[], string[]
 function M.get_item_hunks(item, first_line, last_line)
   if item.hunks == nil then
     return {}, {}
@@ -762,8 +779,11 @@ end
 ---Returns the selected items grouped by spanned sections
 ---@return Selection
 function M.get_selection()
-  local first_line = vim.fn.getpos("v")[2]
-  local last_line = vim.fn.getpos(".")[2]
+  local visual_pos = vim.fn.getpos("v")[2]
+  local cursor_pos = vim.fn.getpos(".")[2]
+
+  local first_line = math.min(visual_pos, cursor_pos)
+  local last_line = math.max(visual_pos, cursor_pos)
 
   print("get_selection", first_line, last_line)
 
@@ -789,8 +809,10 @@ function M.get_selection()
         res.section = section
       end
 
+      local entire_section = section.first == first_line and first_line == last_line
+
       for _, item in pairs(section.items) do
-        if item.first <= last_line and item.last >= first_line then
+        if entire_section or item.first <= last_line and item.last >= first_line then
           if not res.item and item.first <= first_line and item.last >= last_line then
             res.item = item
 
@@ -814,7 +836,7 @@ function M.get_selection()
     end
   end
 
-  return res
+  return setmetatable(res, Selection)
 end
 
 local stage = function()
@@ -1376,6 +1398,7 @@ local cmd_func_map = function()
 
     mappings[v[1]] = v[3]
   end
+
   return mappings
 end
 
