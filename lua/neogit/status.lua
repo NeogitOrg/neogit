@@ -696,6 +696,7 @@ end
 
 ---@class SectionSelection
 ---@field section Section
+---@field name string
 ---@field items StatusItem[]
 
 ---@param item StatusItem
@@ -806,6 +807,7 @@ function M.get_selection()
       end
 
       table.insert(res.sections, {
+        name = section.name,
         section = section,
         items = items,
       })
@@ -954,11 +956,13 @@ local unstage = function()
   M.current_operation = nil
 end
 
-local function discard_message(item, mode)
-  if mode.mode == "V" then
-    return "Discard selection?"
+local function discard_message(files, hunk_count)
+  if hunk_count > 0 then
+    return string.format("Discard %d files?", #files)
+  elseif #files > 1 then
+    return string.format("Discard %d hunks?", hunk_count)
   else
-    return "Discard '" .. item.name .. "' ?"
+    return string.format("Discard %q?", files[1])
   end
 end
 
@@ -1016,56 +1020,129 @@ local function discard_hunk(section, item, lines, hunk)
 end
 
 local discard = function()
-  local sel = M.get_selection()
-  local section = sel.section
-  local item = sel.item
-
-  if section == nil or item == nil then
-    return
-  end
-
   M.current_operation = "discard"
 
+  local sel = M.get_selection()
   local mode = vim.api.nvim_get_mode()
 
-  -- These all need to be captured _before_ the get_confirmation() call, since that
-  -- seems to effect how vim determines what's selected
-  local multi_file = selection_spans_multiple_items_within_section()
-  local items = M.get_selection().items
+  -- print("sel", vim.inspect(sel.sections, { depth = 3 }))
 
-  local selection = { get_selection() }
+  -- if
+  --   sel.section == nil
+  --   or (section_name ~= "unstaged" and section_name ~= "untracked" and section_name ~= "unmerged")
+  --   or (mode.mode == "V" and sel.item == nil)
+  -- then
+  --   return
+  -- end
 
-  local on_hunk = current_line_is_hunk()
+  git.index.update()
 
-  local hunks, lines = M.get_item_hunks(item, sel.first_line, sel.last_line)
+  local t = {}
 
-  if not input.get_confirmation(discard_message(item, mode), { values = { "&Yes", "&No" }, default = 2 }) then
+  local hunk_count = 0
+  local file_count = 0
+  local files = {}
+
+  for _, section in ipairs(sel.sections) do
+    local section_name = section.name
+
+    file_count = file_count + #section.items
+    for _, item in ipairs(section.items) do
+      table.insert(files, item.name)
+      local hunks, lines = M.get_item_hunks(item, sel.first_line, sel.last_line)
+
+      print("Lines", vim.inspect(lines), "Hunks", vim.inspect(hunks))
+      if #hunks > 0 then
+        hunk_count = hunk_count + #hunks
+
+        for _, hunk in ipairs(hunks) do
+          table.insert(t, function()
+            git.index.apply(
+              git.index.generate_patch(item, hunk, hunk.from, hunk.to),
+              { cached = false, reverse = true }
+            )
+          end)
+        end
+      else
+        print("Discarding in section", section_name, item.name)
+        table.insert(t, function()
+          if section_name == "untracked" then
+            a.util.scheduler()
+            vim.fn.delete(cli.git_root() .. "/" .. item.name)
+          elseif section_name == "unstaged" then
+            git.index.checkout(item.name)
+          elseif section_name == "staged" then
+            git.index.reset { item.name }
+            git.index.checkout { item.name }
+          end
+        end)
+      end
+    end
+  end
+
+  if
+    not input.get_confirmation(
+      discard_message(files, hunk_count),
+      { values = { "&Yes", "&No" }, default = 2 }
+    )
+  then
     return
   end
 
-  -- Make sure the index is in sync as git-status skips it
-  -- Do this manually since the `cli` add --no-optional-locks
-  git.index.update()
-
-  if mode.mode == "V" then
-    if multi_file then
-      discard_selected_files(items, section.name)
-    else
-      discard_selection(unpack(selection))
-    end
-  elseif #sel.items == 1 then
-    for _, hunk in ipairs(hunks) do
-      discard_hunk(section.name, item, lines, hunk)
-    end
-  else
-    discard_selected_files({ item }, section.name)
+  if #t > 0 then
+    a.util.join(t)
   end
+  -- local sel = M.get_selection()
+  -- local section = sel.section
+  -- local item = sel.item
+
+  -- if section == nil or item == nil then
+  --   return
+  -- end
+
+  -- M.current_operation = "discard"
+
+  -- local mode = vim.api.nvim_get_mode()
+
+  -- -- These all need to be captured _before_ the get_confirmation() call, since that
+  -- -- seems to effect how vim determines what's selected
+  -- local multi_file = selection_spans_multiple_items_within_section()
+  -- local items = M.get_selection().items
+
+  -- local selection = { get_selection() }
+
+  -- local on_hunk = current_line_is_hunk()
+
+  -- local hunks, lines = M.get_item_hunks(item, sel.first_line, sel.last_line)
+
+  -- if not input.get_confirmation(discard_message(item, mode), { values = { "&Yes", "&No" }, default = 2 }) then
+  --   return
+  -- end
+
+  -- -- Make sure the index is in sync as git-status skips it
+  -- -- Do this manually since the `cli` add --no-optional-locks
+  -- git.index.update()
+
+  -- if mode.mode == "V" then
+  --   if multi_file then
+  --     discard_selected_files(items, section.name)
+  --   else
+  --     discard_selection(unpack(selection))
+  --   end
+  -- elseif #sel.items == 1 then
+  --   for _, hunk in ipairs(hunks) do
+  --     discard_hunk(section.name, item, lines, hunk)
+  --   end
+  -- else
+  --   discard_selected_files({ item }, section.name)
+  -- end
 
   refresh(true, "discard")
-  M.current_operation = nil
 
   a.util.scheduler()
   vim.cmd("checktime")
+
+  M.current_operation = nil
 end
 
 local set_folds = function(to)
