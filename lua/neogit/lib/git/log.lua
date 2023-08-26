@@ -243,12 +243,25 @@ local format = table.concat({
 ---@param options table
 ---@return table
 local function ensure_max(options)
-  if
-    not vim.tbl_contains(options, function(item)
-      return item:match("%-%-max%-count=%d+")
-    end, { predicate = true })
-  then
-    table.insert(options, "--max-count=256")
+  if vim.fn.has("nvim-0.10") == 1 then
+    if
+      not vim.tbl_contains(options, function(item)
+        return item:match("%-%-max%-count=%d+")
+      end, { predicate = true })
+    then
+      table.insert(options, "--max-count=256")
+    end
+  else
+    local has_max = false
+    for _, v in ipairs(options) do
+      if v:match("%-%-max%-count=%d+") then
+        has_max = true
+        break
+      end
+    end
+    if not has_max then
+      table.insert(options, "--max-count=256")
+    end
   end
 
   return options
