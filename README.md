@@ -28,6 +28,7 @@ Here's an example spec for [Lazy](https://github.com/folke/lazy.nvim), but you'r
     "nvim-lua/plenary.nvim",         -- required
     "nvim-telescope/telescope.nvim", -- optional
     "sindrets/diffview.nvim",        -- optional
+    "ibhagwan/fzf-lua",              -- optional
   },
   config = true
 }
@@ -141,6 +142,11 @@ neogit.setup {
     --
     -- Requires you to have `sindrets/diffview.nvim` installed.
     diffview = nil,
+
+    -- If enabled, uses fzf-lua for menu selection. If the telescope integration
+    -- is also selected then telescope is used instead
+    -- Requires you to have `ibhagwan/fzf-lua` installed.
+    fzf_lua = nil,
   },
   sections = {
     -- Reverting/Cherry Picking
