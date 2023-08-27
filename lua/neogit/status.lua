@@ -14,7 +14,6 @@ local fs = require("neogit.lib.fs")
 local input = require("neogit.lib.input")
 local util = require("neogit.lib.util")
 local watcher = require("neogit.watcher")
-local Path = require("plenary.path")
 
 local map = require("neogit.lib.util").map
 local api = vim.api
@@ -1265,7 +1264,7 @@ function M.create(kind, cwd)
       refresh(true, "Buffer.create")
     end,
     after = function()
-      M.watcher = watcher.new(Path.new(git.repo.git_root, ".git"):absolute())
+      M.watcher = watcher.new(git.repo.git_path():absolute())
     end,
   }
 end
