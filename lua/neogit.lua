@@ -42,10 +42,11 @@ function M.setup(opts)
   autocmds.setup()
 end
 
+---@alias Popup "cherry_pick" | "commit" | "branch" | "diff" | "fetch" | "log" | "merge" | "remote" | "pull" | "push" | "rebase" | "revert" | "reset" | "stash"
+---
 ---@class OpenOpts
 ---@field cwd string|nil
----TODO: popup enum
----@field [1] string|nil
+---@field [1] Popup|nil
 ---@field kind string|nil
 ---@field no_expand boolean|nil
 
