@@ -70,6 +70,55 @@ local function telescope_mappings(on_select, allow_multi)
   end
 end
 
+--- Utility function to map actions
+---@param on_select fun(item: any|nil)
+---@param allow_multi boolean
+local function fzf_actions(on_select, allow_multi)
+  local function refresh()
+    local status = require("neogit.status")
+    if status.status_buffer then
+      status.status_buffer:focus()
+      status.dispatch_refresh()
+    end
+  end
+  local function close_action()
+    on_select(nil)
+    refresh()
+  end
+  return {
+    ["default"] = function(selected)
+      if allow_multi then
+        on_select(selected)
+      else
+        on_select(selected[1])
+      end
+      refresh()
+    end,
+    ["esc"] = close_action,
+    ["ctrl-c"] = close_action,
+    ["ctrl-q"] = close_action,
+  }
+end
+
+--- Utility function to map finder opts to fzf
+---@param opts FinderOpts
+---@return table
+local function fzf_opts(opts)
+  local fzf_opts = {}
+  if not opts.allow_multi then
+    fzf_opts["--no-multi"] = ""
+  end
+  if opts.layout_config.prompt_position ~= "top" then
+    fzf_opts["--layout"] = "reverse-list"
+  end
+  if opts.border then
+    fzf_opts["--border"] = "rounded"
+  else
+    fzf_opts["--border"] = "none"
+  end
+  return fzf_opts
+end
+
 ---@return FinderOpts
 local function default_opts()
   return {
@@ -144,6 +193,16 @@ function Finder:find(on_select)
         attach_mappings = telescope_mappings(on_select, self.opts.allow_multi),
       })
       :find()
+  elseif config.check_integration("fzf_lua") then
+    local fzf_lua = require("fzf-lua")
+    fzf_lua.fzf_exec(self.entries, {
+      prompt = self.opts.prompt_prefix,
+      fzf_opts = fzf_opts(self.opts),
+      winopts = {
+        height = self.opts.layout_config.height,
+      },
+      actions = fzf_actions(on_select, self.opts.allow_multi),
+    })
   else
     vim.ui.select(self.entries, {
       prompt = self.opts.prompt_prefix,
