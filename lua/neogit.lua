@@ -1,15 +1,46 @@
-local config = require("neogit.config")
-local a = require("plenary.async")
-local lib = require("neogit.lib")
-local signs = require("neogit.lib.signs")
-local hl = require("neogit.lib.hl")
-local status = require("neogit.status")
-local state = require("neogit.lib.state")
-local input = require("neogit.lib.input")
-local logger = require("neogit.logger")
+local M = {}
 
-local cli = require("neogit.lib.git.cli")
-local notification = require("neogit.lib.notification")
+local did_setup = false
+
+---Setup neogit
+---@param opts NeogitConfig
+function M.setup(opts)
+  local config = require("neogit.config")
+  local signs = require("neogit.lib.signs")
+  local autocmds = require("neogit.autocmds")
+  local hl = require("neogit.lib.hl")
+  local state = require("neogit.lib.state")
+  local logger = require("neogit.logger")
+
+  if did_setup then
+    logger.debug("Already did setup!")
+    return
+  end
+  did_setup = true
+
+  M.autocmd_group = vim.api.nvim_create_augroup("Neogit", { clear = false })
+
+  M.status = require("neogit.status")
+  M.dispatch_reset = M.status.dispatch_reset
+  M.refresh = M.status.refresh
+  M.reset = M.status.reset
+  M.refresh_manually = M.status.refresh_manually
+  M.dispatch_refresh = M.status.dispatch_refresh
+  M.refresh_viml_compat = M.status.refresh_viml_compat
+  M.close = M.status.close
+
+  M.lib = require("neogit.lib")
+  M.cli = M.lib.git.cli
+  M.popups = require("neogit.popups")
+  M.config = config
+  M.notif = require("neogit.lib.notification")
+
+  config.setup(opts)
+  hl.setup()
+  signs.setup()
+  state.setup()
+  autocmds.setup()
+end
 
 ---@class OpenOpts
 ---@field cwd string|nil
@@ -18,27 +49,16 @@ local notification = require("neogit.lib.notification")
 ---@field kind string|nil
 ---@field no_expand boolean|nil
 
-local did_setup = false
-
----Setup neogit
----@param opts NeogitConfig
-local setup = function(opts)
-  if did_setup then
-    logger.debug("Already did setup!")
-    return
-  end
-  did_setup = true
-
-  config.setup(opts)
-  hl.setup()
-  signs.setup()
-  state.setup()
-
-  require("neogit.autocmds").setup()
-end
-
 ---@param opts OpenOpts|nil
-local open = function(opts)
+function M.open(opts)
+  local a = require("plenary.async")
+  local lib = require("neogit.lib")
+  local status = require("neogit.status")
+  local input = require("neogit.lib.input")
+  local cli = require("neogit.lib.git.cli")
+  local logger = require("neogit.logger")
+  local notification = require("neogit.lib.notification")
+
   opts = opts or {}
 
   if opts.cwd and not opts.no_expand then
@@ -90,7 +110,7 @@ local open = function(opts)
   end
 end
 
-local complete = function(arglead)
+function M.complete(arglead)
   if arglead:find("^kind=") then
     return {
       "kind=replace",
@@ -108,31 +128,16 @@ local complete = function(arglead)
   end, { "kind=", "cwd=", "commit" })
 end
 
-return {
-  lib = require("neogit.lib"),
-  popups = require("neogit.popups"),
-  config = config,
-  status = status,
-  get_repo = function()
-    return require("neogit.lib.git").repo
-  end,
-  cli = lib.git.cli,
-  get_log_file_path = function()
-    return vim.fn.stdpath("cache") .. "/neogit.log"
-  end,
-  notif = require("neogit.lib.notification"),
-  open = open,
-  reset = status.reset,
-  get_config = function()
-    return config.values
-  end,
-  dispatch_reset = status.dispatch_reset,
-  refresh = status.refresh,
-  refresh_manually = status.refresh_manually,
-  dispatch_refresh = status.dispatch_refresh,
-  refresh_viml_compat = status.refresh_viml_compat,
-  close = status.close,
-  setup = setup,
-  complete = complete,
-  autocmd_group = vim.api.nvim_create_augroup("Neogit", { clear = false }),
-}
+function M.get_repo()
+  return require("neogit.lib.git").repo
+end
+
+function M.get_log_file_path()
+  return vim.fn.stdpath("cache") .. "/neogit.log"
+end
+
+function M.get_config()
+  return require("neogit.config").values
+end
+
+return M
