@@ -159,7 +159,7 @@ local function parse(raw)
 end
 
 local function make_commit(entry, graph)
-  local hash, subject, author_name, rel_date, ref_name, author_date, committer_name, committer_date, committer_email, author_email, body =
+  local hash, subject, author_name, rel_date, ref_name, author_date, committer_name, committer_date, committer_email, author_email, body, signature_code =
     unpack(entry)
 
   if rel_date then
@@ -179,6 +179,7 @@ local function make_commit(entry, graph)
     committer_name = committer_name,
     committer_email = committer_email,
     body = body,
+    signature_code = signature_code,
     -- TODO: Remove below here
     hash = hash,
     message = subject,
@@ -236,6 +237,7 @@ local format = table.concat({
   "%ce", -- Committer Email
   "%ae", -- Author Email
   "%b", -- Body
+  "%G?", -- Signature status
   "%x1F", -- Entry delimiter to split on (dec \31)
 }, "%x1E") -- Field delimiter to split on (dec \30)
 
