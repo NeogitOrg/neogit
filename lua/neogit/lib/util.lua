@@ -1,4 +1,5 @@
 local a = require("plenary.async")
+local uv = vim.loop
 
 ---@generic T: any
 ---@generic U: any
@@ -360,6 +361,23 @@ local function pad_right(s, len)
   return s .. string.rep(" ", math.max(len - #s, 0))
 end
 
+--- Debounces a function on the trailing edge.
+---
+--- @generic F: function
+--- @param ms number Timeout in ms
+--- @param fn F Function to debounce
+--- @return F Debounced function.
+local function debounce_trailing(ms, fn)
+  local timer = assert(uv.new_timer())
+  return function(...)
+    local argv = { ... }
+    timer:start(ms, 0, function()
+      timer:stop()
+      fn(unpack(argv))
+    end)
+  end
+end
+
 return {
   time = time,
   time_async = time_async,
@@ -394,4 +412,5 @@ return {
   reverse = reverse,
   flat_map = flat_map,
   str_wrap = str_wrap,
+  debounce_trailing = debounce_trailing,
 }

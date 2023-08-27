@@ -13,6 +13,8 @@ local LineBuffer = require("neogit.lib.line_buffer")
 local fs = require("neogit.lib.fs")
 local input = require("neogit.lib.input")
 local util = require("neogit.lib.util")
+local watcher = require("neogit.watcher")
+local Path = require("plenary.path")
 
 local map = require("neogit.lib.util").map
 local api = vim.api
@@ -602,6 +604,8 @@ local function close(skip_close)
   if not skip_close then
     M.status_buffer:close()
   end
+
+  M.watcher:stop()
   notif.delete_all()
   M.status_buffer = nil
   vim.o.autochdir = M.prev_autochdir
@@ -1091,6 +1095,7 @@ local cmd_func_map = function()
     end),
 
     ["RefreshBuffer"] = function()
+      notif.create("Refreshing Status", vim.log.levels.INFO)
       dispatch_refresh(true)
     end,
 
@@ -1258,6 +1263,9 @@ function M.create(kind, cwd)
 
       logger.debug("[STATUS BUFFER]: Dispatching initial render")
       refresh(true, "Buffer.create")
+    end,
+    after = function()
+      M.watcher = watcher.new(Path.new(git.repo.git_root, ".git"):absolute())
     end,
   }
 end
