@@ -225,7 +225,7 @@ end
 
 local M = {}
 
-local format = table.concat({
+local format_args = {
   "%H", -- Full Hash
   "%s", -- Subject
   "%aN", -- Author Name
@@ -239,7 +239,8 @@ local format = table.concat({
   "%b", -- Body
   "%G?", -- Signature status
   "%x1F", -- Entry delimiter to split on (dec \31)
-}, "%x1E") -- Field delimiter to split on (dec \30)
+}
+local format_delimiter = "%x1E" -- Field delimiter to split on (dec \30)
 
 --- Ensure a max is passed to the list function to prevent accidentally getting thousands of results.
 ---@param options table
@@ -269,6 +270,34 @@ local function ensure_max(options)
   return options
 end
 
+--- Checks to see if `--max-count` exceeds 256
+---@param options table Arguments
+---@return boolean Exceeds 256 or not
+local function exceeds_max_default(options)
+  for _, v in ipairs(options) do
+    local count = tonumber(v:match("%-%-max%-count=(%d+)"))
+    if count ~= nil and count > 256 then
+      return true
+    end
+  end
+  return false
+end
+
+--- Parses the arguments needed for the format output of git log
+---@param show_signature boolean Should '%G?' be omitted from the arguments
+---@return string Concatenated format arguments
+local function parse_log_format(show_signature)
+  if not show_signature then
+    return table.concat(
+      vim.tbl_filter(function(value)
+        return value ~= "%G?"
+      end, format_args),
+      format_delimiter
+    )
+  end
+  return table.concat(format_args, format_delimiter)
+end
+
 ---@param options table|nil
 ---@return table
 function M.graph(options)
@@ -289,8 +318,22 @@ end
 ---@param graph table|nil
 ---@return CommitLogEntry[]
 function M.list(options, graph)
+  options = ensure_max(options or {})
+  local show_signature = false
+  if vim.tbl_contains(options, "--show-signature") then
+    -- Do not show signature when count > 256
+    if not exceeds_max_default(options) then
+      show_signature = true
+    end
+    util.remove_item_from_table(options, "--show-signature")
+  end
   local output = split_output(
-    cli.log.format(format).arg_list(ensure_max(options or {})).show_popup(false).call():trim().stdout
+    cli.log
+      .format(parse_log_format(show_signature))
+      .arg_list(ensure_max(options))
+      .show_popup(false)
+      .call()
+      :trim().stdout
   )
 
   return parse_log(output, unpack(graph or {}))
@@ -337,6 +380,13 @@ function M.present_commit(commit)
     oid = commit.oid,
     commit = commit,
   }
+end
+
+--- Runs `git verify-commit`
+---@param commit string Hash of commit
+---@return string The stderr output of the command
+function M.verify_commit(commit)
+  return cli["verify-commit"].args(commit).call_sync_ignoring_exit_code():trim().stderr
 end
 
 return M
