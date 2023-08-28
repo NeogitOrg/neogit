@@ -279,6 +279,9 @@ NeogitGraphCyan
 NeogitGraphCyanBold
 NeogitGraphWhite
 NeogitGraphWhiteBold
+NeogitGraphGray
+NeogitGraphBoldGray
+NeogitGraphOrange
 
 POPUPS
 NeogitPopupSectionTitle    Applied to all section headers
