@@ -28,13 +28,21 @@ function M.parse(str, opts)
     colored[tostring(idx)] = { text = text, color = colors[color] }
     idx = idx + 1
 
-    return idx - 1
+    return table.concat { "{", tostring(idx - 1), "}" }
   end)
 
   local out = {}
+  local buffer = {}
+  local capture = false
   for g in parsed:gmatch(".") do
-    if g:match("%d") then
-      table.insert(out, colored[g])
+    if g == "{" then
+      capture = true
+    elseif g == "}" then
+      capture = false
+      table.insert(out, colored[table.concat(buffer)])
+      buffer = {}
+    elseif capture then
+      table.insert(buffer, g)
     else
       table.insert(out, { text = g, color = "Gray" })
     end
