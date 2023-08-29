@@ -12,20 +12,12 @@ local colors = {
   ["37"] = "White",   ["1;37"] = "BoldWhite",
 }
 
-local capture_start = "{"
-local capture_end = "}"
-
--- Pre-compute to prevent repeated string allocation "{1}", "{2}", ...
-local indices = {}
-for i = 1, 100 do
-  table.insert(indices, table.concat { capture_start, i, capture_end })
-end
+local mark = "%"
 
 ---Parses a string with ansi-escape codes (colors) into a table
 ---@param str string
 function M.parse(str, opts)
   local colored = {}
-  local idx = 1
 
   local parsed, _ = str:gsub("(\27%[[;%d]*m.-\27%[m)", function(match)
     local color, text = match:match("\27%[([;%d]*)m(.-)\27%[m")
@@ -34,28 +26,20 @@ function M.parse(str, opts)
       color = "35"
     end
 
-    colored[tostring(idx)] = { text = text, color = colors[color] }
-    idx = idx + 1
-
-    return indices[idx - 1]
+    table.insert(colored, { text = text, color = colors[color] })
+    return mark
   end)
 
   local out = {}
-  local buffer = {}
-  local capture = false
   for g in parsed:gmatch(".") do
-    if g == capture_start then
-      capture = true
-    elseif g == capture_end then
-      capture = false
-      table.insert(out, colored[table.concat(buffer)])
-      buffer = {}
-    elseif capture then
-      table.insert(buffer, g)
+    if g == mark then
+      table.insert(out, table.remove(colored, 1))
     else
       table.insert(out, { text = g, color = "Gray" })
     end
   end
+
+  assert(vim.tbl_isempty(colored), "ANSI Parser didn't consume all graph parts")
 
   return out
 end
