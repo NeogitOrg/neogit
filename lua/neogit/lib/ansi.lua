@@ -12,6 +12,15 @@ local colors = {
   ["37"] = "White",   ["1;37"] = "BoldWhite",
 }
 
+local capture_start = "{"
+local capture_end = "}"
+
+-- Pre-compute to prevent repeated string allocation "{1}", "{2}", ...
+local indices = {}
+for i = 1, 100 do
+  table.insert(indices, table.concat { capture_start, i, capture_end })
+end
+
 ---Parses a string with ansi-escape codes (colors) into a table
 ---@param str string
 function M.parse(str, opts)
@@ -28,16 +37,16 @@ function M.parse(str, opts)
     colored[tostring(idx)] = { text = text, color = colors[color] }
     idx = idx + 1
 
-    return table.concat { "{", tostring(idx - 1), "}" }
+    return indices[idx - 1]
   end)
 
   local out = {}
   local buffer = {}
   local capture = false
   for g in parsed:gmatch(".") do
-    if g == "{" then
+    if g == capture_start then
       capture = true
-    elseif g == "}" then
+    elseif g == capture_end then
       capture = false
       table.insert(out, colored[table.concat(buffer)])
       buffer = {}
