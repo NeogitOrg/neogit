@@ -119,6 +119,8 @@ function M:switch(key, cli, description, opts)
   local value
   if opts.enabled and opts.value then
     value = cli .. opts.value
+  elseif opts.options and opts.cli_suffix ~= "" then
+    value = state.get({ self.state.name, opts.cli_suffix }, cli)
   else
     value = cli
   end
@@ -129,6 +131,7 @@ function M:switch(key, cli, description, opts)
     key = key,
     key_prefix = opts.key_prefix,
     cli = value,
+    value = value, -- Only used with options. Needed to keep the construct_config_options() fn simple.
     cli_base = cli,
     description = description,
     enabled = state.get({ self.state.name, cli }, opts.enabled),

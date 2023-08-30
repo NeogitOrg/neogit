@@ -232,7 +232,7 @@ function M:toggle_switch(switch)
 
     switch.enabled = switch.cli ~= ""
 
-    state.set({ self.state.name, switch.cli }, switch.enabled)
+    state.set({ self.state.name, switch.cli_suffix }, switch.cli)
     self:update_component(
       switch.id,
       get_highlight_for_switch(switch),
