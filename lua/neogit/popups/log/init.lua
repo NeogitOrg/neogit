@@ -40,7 +40,7 @@ function M.create()
         { display = "topo", value = "topo" },
         { display = "author-date", value = "author-date" },
         { display = "date", value = "date" },
-      }
+      },
     })
     :arg_heading("Formatting")
     :switch("g", "graph", "Show graph", { enabled = true, internal = true, incompatible = { "reverse" } })
