@@ -13,10 +13,16 @@ local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 local function maybe_graph(popup)
   local args = popup:get_internal_arguments()
   if args.graph then
-    return git.log.graph(popup:get_arguments())
+    local external_args = popup:get_arguments()
+    util.remove_item_from_table(external_args, "--show-signature")
+    return git.log.graph(external_args)
   end
 end
 
+--- Runs `git log` and parses the commits
+---@param popup table Contains the argument list
+---@param extras table|nil
+---@return CommitLogEntry[]
 local function commits(popup, extras)
   return git.log.list(util.merge(popup:get_arguments(), extras or {}), maybe_graph(popup))
 end

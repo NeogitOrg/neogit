@@ -15,6 +15,7 @@ local M = {
 -- @class CommitViewBuffer
 -- @field is_open whether the buffer is currently shown
 -- @field commit_info CommitInfo
+-- @field commit_signature table|nil
 -- @field commit_overview CommitOverview
 -- @field buffer Buffer
 -- @see CommitInfo
@@ -30,13 +31,13 @@ function M.new(commit_id, notify)
     local notif = require("neogit.lib.notification")
     notification = notif.create("Parsing commit...")
   end
-
   local instance = {
     is_open = false,
     commit_info = log.parse(cli.show.format("fuller").args(commit_id).call_sync().stdout)[1],
     commit_overview = parser.parse_commit_overview(
       cli.show.stat.oneline.args(commit_id).call_sync():trim().stdout
     ),
+    commit_signature = log.verify_commit(commit_id),
     buffer = nil,
   }
 
@@ -168,7 +169,7 @@ function M:open()
       },
     },
     render = function()
-      return ui.CommitView(self.commit_info, self.commit_overview)
+      return ui.CommitView(self.commit_info, self.commit_overview, self.commit_signature)
     end,
   }
 end

@@ -475,6 +475,7 @@ local configurations = {
       abort = "--abort",
     },
   },
+  ["verify-commit"] = config {},
 }
 
 -- TODO: Consider returning a Path object, since consumers of this function tend to need that anyways.
