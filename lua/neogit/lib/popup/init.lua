@@ -291,6 +291,11 @@ function M:set_option(option)
     else
       set("")
     end
+  elseif option.fn then
+    -- Void wrapped so we can call the fuzzy finder from async context
+    require("plenary.async").void(function()
+      set(option.fn(self, option))
+    end)()
   else
     -- ...Otherwise get the value via input.
     local input = vim.fn.input {
