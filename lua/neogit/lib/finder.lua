@@ -1,17 +1,19 @@
 local config = require("neogit.config")
 local a = require("plenary.async")
 
-local function telescope_mappings(on_select, allow_multi)
+local function telescope_mappings(on_select, allow_multi, refocus_status)
   local action_state = require("telescope.actions.state")
   local actions = require("telescope.actions")
 
   local function close_action(prompt_bufnr)
     actions.close(prompt_bufnr)
 
-    local status = require("neogit.status")
-    if status.status_buffer then
-      status.status_buffer:focus()
-      status.dispatch_refresh()
+    if refocus_status then
+      local status = require("neogit.status")
+      if status.status_buffer then
+        status.status_buffer:focus()
+        status.dispatch_refresh()
+      end
     end
   end
 
@@ -122,6 +124,9 @@ end
 ---@return FinderOpts
 local function default_opts()
   return {
+    __internal_neogit = {
+      refocus_status = true
+    },
     layout_config = {
       height = 0.3,
       prompt_position = "top",
@@ -190,7 +195,7 @@ function Finder:find(on_select)
       .new(self.opts, {
         finder = finders.new_table { results = self.entries },
         sorter = config.values.telescope_sorter() or sorters.fuzzy_with_index_bias(),
-        attach_mappings = telescope_mappings(on_select, self.opts.allow_multi),
+        attach_mappings = telescope_mappings(on_select, self.opts.allow_multi, self.opts.__internal_neogit.refocus_status),
       })
       :find()
   elseif config.check_integration("fzf_lua") then
