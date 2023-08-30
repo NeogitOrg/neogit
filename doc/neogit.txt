@@ -286,6 +286,15 @@ NeogitGraphGray
 NeogitGraphBoldGray
 NeogitGraphOrange
 
+NeogitSignatureGood        For highlighting the commit hash when
+NeogitSignatureBad         --show-signature is passed
+NeogitSignatureMissing
+NeogitSignatureNone
+NeogitSignatureGoodUnknown
+NeogitSignatureGoodExpired
+NeogitSignatureGoodExpiredKey
+NeogitSignatureGoodRevokedKey
+
 POPUPS
 NeogitPopupSectionTitle    Applied to all section headers
 NeogitPopupBranchName      Applied to the current branch name for emphasis

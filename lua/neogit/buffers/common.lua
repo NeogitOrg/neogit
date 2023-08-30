@@ -97,14 +97,14 @@ end
 --   "E" if the signature cannot be checked (e.g. missing key)
 --   and "N" for no signature
 local highlight_for_signature = {
-  G = "NeogitGraphGreen",
-  B = "NeogitGraphRed",
-  U = "NeogitGraphBoldBlue",
-  X = "NeogitGraphOrange",
-  Y = "NeogitGraphOrange",
-  R = "NeogitGraphRed",
-  E = "NeogitGraphBlue",
-  N = "NeogitGraphGray",
+  G = "NeogitSignatureGood",
+  B = "NeogitSignatureBad",
+  U = "NeogitSignatureGoodUnknown",
+  X = "NeogitSignatureGoodExpired",
+  Y = "NeogitSignatureGoodExpiredKey",
+  R = "NeogitSignatureGoodRevokedKey",
+  E = "NeogitSignatureMissing",
+  N = "NeogitSignatureNone",
 }
 
 M.CommitEntry = Component.new(function(commit, args)
@@ -189,7 +189,9 @@ M.CommitEntry = Component.new(function(commit, args)
   return col({
     row(
       util.merge({
-        text(commit.oid:sub(1, 7), { highlight = highlight_for_signature[commit.signature_code] }),
+        text(commit.oid:sub(1, 7), {
+          highlight = commit.signature_code and highlight_for_signature[commit.signature_code] or "Comment",
+        }),
         text(" "),
       }, graph, { text(" ") }, ref, { text(commit.description[1]) }),
       {

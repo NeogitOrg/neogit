@@ -39,6 +39,7 @@ end
 
 function M.CommitView(info, overview, signature_block)
   local hide_signature = vim.tbl_isempty(signature_block)
+
   return {
     M.CommitHeader(info),
     text(""),
