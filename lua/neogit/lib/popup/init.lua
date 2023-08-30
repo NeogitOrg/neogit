@@ -49,7 +49,7 @@ function M:get_arguments()
       table.insert(flags, arg.cli_prefix .. arg.cli .. arg.cli_suffix)
     end
 
-    if arg.type == "option" and #arg.value ~= 0 and not arg.internal then
+    if arg.type == "option" and arg.cli ~= "" and #arg.value ~= 0 and not arg.internal then
       table.insert(flags, arg.cli_prefix .. arg.cli .. "=" .. arg.value)
     end
   end
@@ -186,6 +186,8 @@ function M:update_component(id, highlight, value)
       local last_child = component.children[#component.children - 1]
       if last_child and last_child.value == "=" then
         -- Check if this is a CLI option - the value should get blanked out for these
+        new = ""
+      elseif component.options.id == "--" then
         new = ""
       else
         -- If the component is NOT a cli option, use "unset" string
