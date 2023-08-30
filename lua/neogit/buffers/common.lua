@@ -189,7 +189,7 @@ M.CommitEntry = Component.new(function(commit, args)
   return col({
     row(
       util.merge({
-        text(commit.oid:sub(1, 7), { highlight = highlight_for_signature[commit.signature_code] }),
+        text(commit.oid:sub(1, 7), { highlight = commit.signature_code and highlight_for_signature[commit.signature_code] or "Comment" }),
         text(" "),
       }, graph, { text(" ") }, ref, { text(commit.description[1]) }),
       {
