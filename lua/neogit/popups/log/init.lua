@@ -32,7 +32,7 @@ function M.create()
     :switch("D", "simplify-by-decoration", "Simplify by decoration")
     :switch("f", "follow", "Follow renames when showing single-file log")
     :arg_heading("Commit Ordering")
-    :switch("r", "reverse", "Reverse order")
+    :switch("r", "reverse", "Reverse order", { incompatible = { "graph", "color" } })
     :switch("o", "topo", "Order commits by", {
       cli_suffix = "-order",
       options = {
@@ -43,8 +43,8 @@ function M.create()
       }
     })
     :arg_heading("Formatting")
-    :switch("g", "graph", "Show graph", { enabled = true, internal = true })
-    :switch("c", "color", "Show graph in color")
+    :switch("g", "graph", "Show graph", { enabled = true, internal = true, incompatible = { "reverse" } })
+    :switch("c", "color", "Show graph in color", { incompatible = { "reverse" } })
     :switch("d", "decorate", "Show refnames", { enabled = true })
     :switch("S", "show-signature", "Show signatures", { key_prefix = "=" })
     :switch("s", "stat", "Show diffstats")
