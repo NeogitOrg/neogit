@@ -27,6 +27,8 @@ syn match NeogitDiffDelete    /.*/                  contained
 syn match NeogitUnmergedInto  /Unmerged into/       contained
 syn match NeogitUnpushedTo    /Unpushed to/         contained
 syn match NeogitUnpulledFrom  /Unpulled from/       contained
+syn match NeogitTagName       /\S\+ /               contained nextgroup=NeogitTagDistance
+syn match NeogitTagDistance   /[0-9]/               contained
 
 syn match NeogitStash         /stash@{[0-9]*}\ze/
 syn match NeogitObjectId      "\v<\x{7,}>"          contains=@NoSpell
@@ -58,5 +60,6 @@ syn region NeogitUnpushedToRegion   start=/^Unpushed to .*/   end=/$/ contains=N
 syn region NeogitUnpulledFromRegion start=/^Unpulled from .*/ end=/$/ contains=NeogitRemote,NeogitUnpulledFrom
 syn region NeogitDiffAddRegion      start=/^+.*$/             end=/$/ contains=NeogitDiffAdd
 syn region NeogitDiffDeleteRegion   start=/^-.*$/             end=/$/ contains=NeogitDiffDelete
+syn region NeogitTagRegion          start=/^Tag: \zs/         end=/$/ contains=NeogitTagName,NeogitTagDistance
 
 let b:current_syntax = 1

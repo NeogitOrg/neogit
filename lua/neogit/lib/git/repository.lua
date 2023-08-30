@@ -19,7 +19,11 @@ local function empty_state()
     git_root     = root,
     head         = {
       branch = nil,
-      commit_message = nil
+      commit_message = nil,
+      tag = {
+        name = nil,
+        distance = nil,
+      },
     },
     upstream     = {
       branch         = nil,

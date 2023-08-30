@@ -186,6 +186,8 @@ function M.setup()
     NeogitRebasing = { link = "NeogitSectionHeader" },
     NeogitPicking = { link = "NeogitSectionHeader" },
     NeogitReverting = { link = "NeogitSectionHeader" },
+    NeogitTagName = { fg = palette.yellow },
+    NeogitTagDistance = { fg = palette.cyan }
   }
   -- stylua: ignore end
 

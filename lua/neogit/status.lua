@@ -209,6 +209,9 @@ local function draw_buffer()
       )
     end
   end
+  if git.repo.head.tag.name then
+    output:append(string.format("Tag:      %s (%s)", git.repo.head.tag.name, git.repo.head.tag.distance))
+  end
 
   output:append("")
 
