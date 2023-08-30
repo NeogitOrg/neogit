@@ -178,6 +178,10 @@ function M:option(key, cli, value, description, opts)
     opts.cli_prefix = "--"
   end
 
+  if opts.separator == nil then
+    opts.separator = "="
+  end
+
   table.insert(self.state.args, {
     type = "option",
     id = opts.key_prefix .. key,
@@ -189,6 +193,8 @@ function M:option(key, cli, value, description, opts)
     cli_prefix = opts.cli_prefix,
     choices = opts.choices,
     default = opts.default,
+    separator = opts.separator,
+    fn = opts.fn,
   })
 
   return self

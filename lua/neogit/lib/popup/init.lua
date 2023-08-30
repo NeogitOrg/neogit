@@ -397,7 +397,7 @@ local Option = Component.new(function(option)
     row.id(option.id).highlight(get_highlight_for_option(option)) {
       text(option.cli_prefix),
       text(option.cli),
-      text("="),
+      text(option.separator),
       text(option.value or ""),
     },
     text(")"),
