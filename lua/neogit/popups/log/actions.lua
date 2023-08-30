@@ -15,7 +15,7 @@ local function maybe_graph(popup)
   if args.graph then
     local external_args = popup:get_arguments()
     util.remove_item_from_table(external_args, "--show-signature")
-    return git.log.graph(external_args)
+    return git.log.graph(external_args, popup.state.env.files)
   end
 end
 
@@ -24,7 +24,7 @@ end
 ---@param extras table|nil
 ---@return CommitLogEntry[]
 local function commits(popup, extras)
-  return git.log.list(util.merge(popup:get_arguments(), extras or {}), maybe_graph(popup))
+  return git.log.list(util.merge(popup:get_arguments(), extras or {}), maybe_graph(popup), popup.state.env.files)
 end
 
 -- TODO: Handle when head is detached
