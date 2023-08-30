@@ -26,6 +26,10 @@ end
 ---| "float" Open in a floating window
 ---| "tab" Open in a new tab
 
+---@class NeogitCommitBufferConfig Commit buffer options
+---@field kind WindowKind The type of window that should be opened
+---@field verify_commit boolean Show commit signature information in the buffer
+
 ---@class NeogitConfigPopup Popup window options
 ---@field kind WindowKind The type of window that should be opened
 
@@ -84,7 +88,7 @@ end
 ---@field status? { recent_commit_count: integer } Status buffer options
 ---@field commit_editor? NeogitConfigPopup Commit editor options
 ---@field commit_select_view? NeogitConfigPopup Commit select view options
----@field commit_view? NeogitConfigPopup Commit view options
+---@field commit_view? NeogitCommitBufferConfig Commit buffer options
 ---@field log_view? NeogitConfigPopup Log view options
 ---@field rebase_editor? NeogitConfigPopup Rebase editor options
 ---@field reflog_view? NeogitConfigPopup Reflog view options
@@ -134,6 +138,7 @@ function M.get_default_values()
     },
     commit_view = {
       kind = "vsplit",
+      verify_commit = os.execute("which gpg") == 0,
     },
     log_view = {
       kind = "tab",

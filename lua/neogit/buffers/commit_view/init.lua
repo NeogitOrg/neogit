@@ -37,7 +37,7 @@ function M.new(commit_id, notify)
     commit_overview = parser.parse_commit_overview(
       cli.show.stat.oneline.args(commit_id).call_sync():trim().stdout
     ),
-    commit_signature = log.verify_commit(commit_id),
+    commit_signature = config.values.commit_view.verify_commit and log.verify_commit(commit_id) or {},
     buffer = nil,
   }
 
