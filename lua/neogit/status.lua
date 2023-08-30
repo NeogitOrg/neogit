@@ -863,14 +863,16 @@ local stage = function()
     for _, item in ipairs(section.items) do
       local hunks, lines = M.get_item_hunks(item, sel.first_line, sel.last_line)
 
-      print("Lines", vim.inspect(lines), "Hunks", vim.inspect(hunks))
       if #hunks > 0 then
         for _, hunk in ipairs(hunks) do
           git.index.apply(git.index.generate_patch(item, hunk, hunk.from, hunk.to), { cached = true })
         end
-      else
+      elseif section_name == "unstaged" then
         git.status.stage { item.name }
-        print("Staging item", item.name)
+      elseif section_name == "untracked" then
+        git.index.add { item.name }
+      else
+        print("Ignoring stage for", item.name)
       end
     end
   end
@@ -1047,8 +1049,6 @@ local discard = function()
   local sel = M.get_selection()
   local mode = vim.api.nvim_get_mode()
 
-  -- print("sel", vim.inspect(sel.sections, { depth = 3 }))
-
   -- if
   --   sel.section == nil
   --   or (section_name ~= "unstaged" and section_name ~= "untracked" and section_name ~= "unmerged")
@@ -1073,7 +1073,6 @@ local discard = function()
       table.insert(files, item.name)
       local hunks, lines = M.get_item_hunks(item, sel.first_line, sel.last_line)
 
-      print("Lines", vim.inspect(lines), "Hunks", vim.inspect(hunks))
       if #hunks > 0 then
         hunk_count = hunk_count + #hunks
 
@@ -1092,7 +1091,7 @@ local discard = function()
             a.util.scheduler()
             vim.fn.delete(cli.git_root() .. "/" .. item.name)
           elseif section_name == "unstaged" then
-            git.index.checkout(item.name)
+            git.index.checkout { item.name }
           elseif section_name == "staged" then
             git.index.reset { item.name }
             git.index.checkout { item.name }
