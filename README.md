@@ -63,8 +63,16 @@ neogit.setup {
   disable_commit_confirmation = false,
   -- Uses `vim.notify` instead of the built-in notification system.
   disable_builtin_notifications = false,
-  -- Changes what mode the Commit Editor starts in. `true` will leave nvim in normal mode, `false` will change nvim to insert mode, and `"auto"` will change nvim to insert mode IF the commit message is empty, otherwise leaving it in normal mode.
+  -- Changes what mode the Commit Editor starts in. `true` will leave nvim in normal mode, `false` will change nvim to
+  -- insert mode, and `"auto"` will change nvim to insert mode IF the commit message is empty, otherwise leaving it in
+  -- normal mode.
   disable_insert_on_commit = true,
+  -- When enabled, will watch the `.git/` directory for changes and refresh the status buffer in response to filesystem
+  -- events.
+  filewatcher = {
+    interval = 1000,
+    enabled = true,
+  },
   -- Allows a different telescope sorter. Defaults to 'fuzzy_with_index_bias'. The example below will use the native fzf
   -- sorter instead. By default, this function returns `nil`.
   telescope_sorter = function()

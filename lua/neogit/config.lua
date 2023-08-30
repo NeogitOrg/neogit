@@ -53,6 +53,11 @@ end
 ---@field rebase NeogitConfigSection|nil
 ---@field sequencer NeogitConfigSection|nil
 
+---@class NeogitFilewatcherConfig
+---@field interval number
+---@field enabled boolean
+---@field filewatcher NeogitFilewatcherConfig|nil
+
 ---@alias NeogitConfigMappingsFinder "Select" | "Close" | "Next" | "Previous" | "MultiselectToggleNext" | "MultiselectTogglePrevious" | "NOP" | false
 ---@alias NeogitConfigMappingsStatus "Close" | "InitRepo" | "Depth1" | "Depth2" | "Depth3" | "Depth4" | "Toggle" | "Discard" | "Stage" | "StageUnstaged" | "StageAll" | "Unstage" | "UnstageStaged" | "DiffAtFile" | "CommandHistory" | "Console" | "RefreshBuffer" | "GoToFile" | "VSplitOpen" | "SplitOpen" | "TabOpen" | "HelpPopup" | "DiffPopup" | "PullPopup" | "RebasePopup" | "MergePopup" | "PushPopup" | "CommitPopup" | "LogPopup" | "RevertPopup" | "StashPopup" | "CherryPickPopup" | "BranchPopup" | "FetchPopup" | "ResetPopup" | "RemotePopup" | "GoToPreviousHunkHeader" | "GoToNextHunkHeader" | false | fun()
 
@@ -61,6 +66,7 @@ end
 ---@field status? { [string]: NeogitConfigMappingsStatus } A dictionary that uses status commands to set a single keybind
 
 ---@class NeogitConfig Neogit configuration settings
+---@field filewatcher? NeogitFilewatcherConfig Values for filewatcher
 ---@field disable_hint? boolean Remove the top hint in the Status buffer
 ---@field disable_context_highlighting? boolean Disable context highlights based on cursor position
 ---@field disable_signs? boolean Special signs to draw for sections etc. in Neogit
@@ -100,6 +106,10 @@ function M.get_default_values()
     disable_signs = false,
     disable_commit_confirmation = false,
     disable_builtin_notifications = false,
+    filewatcher = {
+      interval = 1000,
+      enabled = true,
+    },
     telescope_sorter = function()
       return nil
     end,
