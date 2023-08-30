@@ -96,6 +96,13 @@ local configurations = {
     },
   },
 
+  describe = config {
+    flags = {
+      long = "--long",
+      tags = "--tags",
+    },
+  },
+
   diff = config {
     flags = {
       cached = "--cached",

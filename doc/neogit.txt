@@ -205,6 +205,9 @@ NeogitObjectId              Object's SHA hash
 NeogitStash                 Stash name
 NeogitFold                  Folded text highlight
 NeogitRebaseDone            Current position within rebase
+NeogitTagName               Closest Tag name
+NeogitTagDistance           Number of commits between the tag and HEAD
+
 
 STATUS BUFFER SECTION HEADERS
 NeogitSectionHeader

@@ -15,6 +15,11 @@ local function update_file(file, mode, name)
   return setmetatable({ mode = mode, name = name, has_diff = has_diff, diff = diff }, mt or {})
 end
 
+-- Generic pattern for matching tag ref and distance from rev
+-- Unfortunately lua's pattern matching isn't that complete so
+-- some cases may be dropped.
+local tag_pattern = "(.-)%-([0-9]+)%-g%x+$"
+
 local function update_status(state)
   local git = require("neogit.lib.git")
   -- git-status outputs files relative to the cwd.
@@ -126,6 +131,17 @@ local function update_status(state)
     upstream.unpulled = state.upstream.unpulled
   end
 
+  local tag = git.cli.describe.long.tags.args("HEAD").call_ignoring_exit_code():trim().stdout
+  if #tag == 1 then
+    local tag, distance = tostring(tag[1]):match(tag_pattern)
+    if tag and distance then
+      head.tag = { name = tag, distance = tonumber(distance) }
+    else
+      head.tag = { name = nil, distance = nil }
+    end
+  else
+    head.tag = { name = nil, distance = nil }
+  end
   state.cwd = cwd
   state.head = head
   state.upstream = upstream
