@@ -33,6 +33,15 @@ function M.create()
     :switch("f", "follow", "Follow renames when showing single-file log")
     :arg_heading("Commit Ordering")
     :switch("r", "reverse", "Reverse order")
+    :switch("o", "topo", "Order commits by", {
+      cli_suffix = "-order",
+      options = {
+        { display = "", value = "" },
+        { display = "topo", value = "topo" },
+        { display = "author-date", value = "author-date" },
+        { display = "date", value = "date" },
+      }
+    })
     :arg_heading("Formatting")
     :switch("g", "graph", "Show graph", { enabled = true, internal = true })
     :switch("c", "color", "Show graph in color")

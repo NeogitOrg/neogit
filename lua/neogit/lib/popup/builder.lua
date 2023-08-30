@@ -112,6 +112,10 @@ function M:switch(key, cli, description, opts)
     opts.cli_prefix = "--"
   end
 
+  if opts.cli_suffix == nil then
+    opts.cli_suffix = ""
+  end
+
   local value
   if opts.enabled and opts.value then
     value = cli .. opts.value
@@ -131,6 +135,8 @@ function M:switch(key, cli, description, opts)
     internal = opts.internal,
     cli_prefix = opts.cli_prefix,
     user_input = opts.user_input,
+    cli_suffix = opts.cli_suffix,
+    options = opts.options,
     incompatible = util.build_reverse_lookup(opts.incompatible),
   })
 
