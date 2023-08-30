@@ -4,12 +4,6 @@ local actions = require("neogit.popups.log.actions")
 local M = {}
 
 function M.create()
-  -- TODO: Activation should be "--", and should open file-select fuzzy finder, defaulting to the filepath under the cursor if there is one. Needs to get passed into #files() down the line, too.
-  -- :option("-", "--", "", "Limit to files")
-
-  -- TODO: Build multi-selector switch
-  -- :switch("o", "xxx-order", "Order commits by", false)
-
   -- TODO: Need to figure out how this works
   -- :switch("h", "header", "Show header", { cli_prefix = "++" })
   -- :switch("p", "patch", "Show diffs")
@@ -30,6 +24,17 @@ function M.create()
     :switch("p", "first-parent", "First parent", { key_prefix = "=" })
     :arg_heading("History Simplification")
     :switch("D", "simplify-by-decoration", "Simplify by decoration")
+    :option(
+      "-",
+      "",
+      "",
+      "Limit to files",
+      {
+        key_prefix = "-",
+        separator = "",
+        fn = actions.limit_to_files,
+      }
+    )
     :switch("f", "follow", "Follow renames when showing single-file log")
     :arg_heading("Commit Ordering")
     :switch("r", "reverse", "Reverse order", { incompatible = { "graph", "color" } })
