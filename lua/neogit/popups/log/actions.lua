@@ -80,4 +80,29 @@ function M.reflog_other(popup)
   end
 end
 
+-- TODO: Prefill the fuzzy finder with the filepath under cursor, if there is one
+function M.limit_to_files(popup, option)
+  if option.value ~= "" then
+    popup.state.env.files = nil
+    return ""
+  end
+
+  local files = FuzzyFinderBuffer.new(git.files.all_tree()):open_async {
+    allow_multi = true,
+    __internal_neogit = { refocus_status = false }
+  }
+
+  if not files or vim.tbl_isempty(files) then
+    popup.state.env.files = nil
+    return ""
+  end
+
+  popup.state.env.files = files
+  files = util.map(files, function(file)
+    return table.concat({ [["]], file, [["]] }, "")
+  end)
+
+  return " " .. table.concat(files, " ")
+end
+
 return M
