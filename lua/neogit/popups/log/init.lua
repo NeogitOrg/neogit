@@ -24,17 +24,11 @@ function M.create()
     :switch("p", "first-parent", "First parent", { key_prefix = "=" })
     :arg_heading("History Simplification")
     :switch("D", "simplify-by-decoration", "Simplify by decoration")
-    :option(
-      "-",
-      "",
-      "",
-      "Limit to files",
-      {
-        key_prefix = "-",
-        separator = "",
-        fn = actions.limit_to_files,
-      }
-    )
+    :option("-", "", "", "Limit to files", {
+      key_prefix = "-",
+      separator = "",
+      fn = actions.limit_to_files,
+    })
     :switch("f", "follow", "Follow renames when showing single-file log")
     :arg_heading("Commit Ordering")
     :switch("r", "reverse", "Reverse order", { incompatible = { "graph", "color" } })

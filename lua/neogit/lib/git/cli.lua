@@ -452,8 +452,8 @@ local configurations = {
     flags = {
       full_tree = "--full-tree",
       name_only = "--name-only",
-      recursive = "-r"
-    }
+      recursive = "-r",
+    },
   },
 
   ["ls-remote"] = config {

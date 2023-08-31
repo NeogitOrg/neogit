@@ -125,7 +125,7 @@ end
 local function default_opts()
   return {
     __internal_neogit = {
-      refocus_status = true
+      refocus_status = true,
     },
     layout_config = {
       height = 0.3,
@@ -195,7 +195,11 @@ function Finder:find(on_select)
       .new(self.opts, {
         finder = finders.new_table { results = self.entries },
         sorter = config.values.telescope_sorter() or sorters.fuzzy_with_index_bias(),
-        attach_mappings = telescope_mappings(on_select, self.opts.allow_multi, self.opts.__internal_neogit.refocus_status),
+        attach_mappings = telescope_mappings(
+          on_select,
+          self.opts.allow_multi,
+          self.opts.__internal_neogit.refocus_status
+        ),
       })
       :find()
   elseif config.check_integration("fzf_lua") then

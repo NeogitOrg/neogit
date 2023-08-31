@@ -24,7 +24,11 @@ end
 ---@param extras table|nil
 ---@return CommitLogEntry[]
 local function commits(popup, extras)
-  return git.log.list(util.merge(popup:get_arguments(), extras or {}), maybe_graph(popup), popup.state.env.files)
+  return git.log.list(
+    util.merge(popup:get_arguments(), extras or {}),
+    maybe_graph(popup),
+    popup.state.env.files
+  )
 end
 
 -- TODO: Handle when head is detached
@@ -89,7 +93,7 @@ function M.limit_to_files(popup, option)
 
   local files = FuzzyFinderBuffer.new(git.files.all_tree()):open_async {
     allow_multi = true,
-    __internal_neogit = { refocus_status = false }
+    __internal_neogit = { refocus_status = false },
   }
 
   if not files or vim.tbl_isempty(files) then

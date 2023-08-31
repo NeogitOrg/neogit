@@ -184,10 +184,8 @@ function M:update_component(id, highlight, value)
     local new
     if value == "" then
       local last_child = component.children[#component.children - 1]
-      if last_child and last_child.value == "=" then
+      if (last_child and last_child.value == "=") or component.options.id == "--" then
         -- Check if this is a CLI option - the value should get blanked out for these
-        new = ""
-      elseif component.options.id == "--" then
         new = ""
       else
         -- If the component is NOT a cli option, use "unset" string
