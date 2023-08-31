@@ -102,7 +102,7 @@ function M.limit_to_files(popup, option, set)
 
     local files = FuzzyFinderBuffer.new(git.files.all_tree()):open_async {
       allow_multi = true,
-      __internal_neogit = { refocus_status = false },
+      refocus_status = false,
     }
 
     if not files or vim.tbl_isempty(files) then
