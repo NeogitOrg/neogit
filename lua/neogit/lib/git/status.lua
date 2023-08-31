@@ -61,7 +61,7 @@ local function update_status(state)
           upstream.abbrev = git.rev_parse.abbreviate_commit(commit.oid)
         end
 
-        local remote, branch = unpack(vim.split(value, "/"))
+        local remote, branch = value:match("^([^/]*)/(.*)$")
         upstream.remote = remote
         upstream.branch = branch
       end
