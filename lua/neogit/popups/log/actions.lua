@@ -15,7 +15,7 @@ local function maybe_graph(popup)
   if args.graph then
     local external_args = popup:get_arguments()
     util.remove_item_from_table(external_args, "--show-signature")
-    return git.log.graph(external_args, popup.state.env.files)
+    return git.log.graph(external_args, popup.state.env.files, args.color)
   end
 end
 

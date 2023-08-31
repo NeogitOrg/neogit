@@ -42,7 +42,12 @@ function M.create()
       },
     })
     :arg_heading("Formatting")
-    :switch("g", "graph", "Show graph", { enabled = true, internal = true, incompatible = { "reverse" }, dependant = { "color" } })
+    :switch("g", "graph", "Show graph", {
+      enabled = true,
+      internal = true,
+      incompatible = { "reverse" },
+      dependant = { "color" },
+    })
     :switch("c", "color", "Show graph in color", { internal = true, incompatible = { "reverse" } })
     :switch("d", "decorate", "Show refnames", { enabled = true })
     :switch("S", "show-signature", "Show signatures", { key_prefix = "=" })

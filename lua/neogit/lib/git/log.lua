@@ -300,17 +300,15 @@ end
 
 ---@param options table|nil
 ---@param files? table
+---@param color boolean
 ---@return table
-function M.graph(options, files)
+function M.graph(options, files, color)
   options = ensure_max(options or {})
   files = files or {}
 
   local graph_raw = cli.log.format("%x00").graph.color.arg_list(options).files(unpack(files)).call():trim()
   local graph = util.map(graph_raw.stdout_raw, function(line)
-    return require("neogit.lib.ansi").parse(
-      util.trim(line),
-      { recolor = not vim.tbl_contains(options, "--color") }
-    )
+    return require("neogit.lib.ansi").parse(util.trim(line), { recolor = not color })
   end)
 
   return { graph, graph_raw.stdout }
