@@ -290,10 +290,7 @@ function M:set_option(option)
       set("")
     end
   elseif option.fn then
-    -- Void wrapped so we can call the fuzzy finder from async context
-    require("plenary.async").void(function()
-      set(option.fn(self, option))
-    end)()
+    option.fn(self, option, set)
   else
     -- ...Otherwise get the value via input.
     local input = vim.fn.input {
@@ -303,7 +300,7 @@ function M:set_option(option)
     }
 
     -- If the option specifies a default value, and the user set the value to be empty, defer to default value.
-    -- This is handy to prevent the user from accidently loading thousands of log entries by accident.
+    -- This is handy to prevent the user from accidentally loading thousands of log entries by accident.
     if option.default and input == "" then
       set(option.default)
     else
