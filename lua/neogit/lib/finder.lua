@@ -75,18 +75,22 @@ end
 --- Utility function to map actions
 ---@param on_select fun(item: any|nil)
 ---@param allow_multi boolean
-local function fzf_actions(on_select, allow_multi)
+local function fzf_actions(on_select, allow_multi, refocus_status)
   local function refresh()
-    local status = require("neogit.status")
-    if status.status_buffer then
-      status.status_buffer:focus()
-      status.dispatch_refresh()
+    if refocus_status then
+      local status = require("neogit.status")
+      if status.status_buffer then
+        status.status_buffer:focus()
+        status.dispatch_refresh()
+      end
     end
   end
+
   local function close_action()
     on_select(nil)
     refresh()
   end
+
   return {
     ["default"] = function(selected)
       if allow_multi then
@@ -107,31 +111,33 @@ end
 ---@return table
 local function fzf_opts(opts)
   local fzf_opts = {}
+
   if not opts.allow_multi then
     fzf_opts["--no-multi"] = ""
   end
+
   if opts.layout_config.prompt_position ~= "top" then
     fzf_opts["--layout"] = "reverse-list"
   end
+
   if opts.border then
     fzf_opts["--border"] = "rounded"
   else
     fzf_opts["--border"] = "none"
   end
+
   return fzf_opts
 end
 
 ---@return FinderOpts
 local function default_opts()
   return {
-    __internal_neogit = {
-      refocus_status = true,
-    },
     layout_config = {
       height = 0.3,
       prompt_position = "top",
       preview_cutoff = vim.fn.winwidth(0),
     },
+    refocus_status = true,
     allow_multi = false,
     border = false,
     prompt_prefix = " > ",
@@ -195,11 +201,7 @@ function Finder:find(on_select)
       .new(self.opts, {
         finder = finders.new_table { results = self.entries },
         sorter = config.values.telescope_sorter() or sorters.fuzzy_with_index_bias(),
-        attach_mappings = telescope_mappings(
-          on_select,
-          self.opts.allow_multi,
-          self.opts.__internal_neogit.refocus_status
-        ),
+        attach_mappings = telescope_mappings(on_select, self.opts.allow_multi, self.opts.refocus_status),
       })
       :find()
   elseif config.check_integration("fzf_lua") then
@@ -210,7 +212,7 @@ function Finder:find(on_select)
       winopts = {
         height = self.opts.layout_config.height,
       },
-      actions = fzf_actions(on_select, self.opts.allow_multi),
+      actions = fzf_actions(on_select, self.opts.allow_multi, self.opts.refocus_status),
     })
   else
     vim.ui.select(self.entries, {
@@ -221,7 +223,9 @@ function Finder:find(on_select)
     }, function(item)
       vim.schedule(function()
         on_select(item)
-        require("neogit.status").dispatch_refresh()
+        if self.opts.refocus_status then
+          require("neogit.status").dispatch_refresh()
+        end
       end)
     end)
   end
