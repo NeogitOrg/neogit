@@ -15,7 +15,7 @@ local function maybe_graph(popup)
   if args.graph then
     local external_args = popup:get_arguments()
     util.remove_item_from_table(external_args, "--show-signature")
-    return git.log.graph(external_args)
+    return git.log.graph(external_args, popup.state.env.files, args.color)
   end
 end
 
@@ -24,7 +24,11 @@ end
 ---@param extras table|nil
 ---@return CommitLogEntry[]
 local function commits(popup, extras)
-  return git.log.list(util.merge(popup:get_arguments(), extras or {}), maybe_graph(popup))
+  return git.log.list(
+    util.merge(popup:get_arguments(), extras or {}),
+    maybe_graph(popup),
+    popup.state.env.files
+  )
 end
 
 -- TODO: Handle when head is detached
@@ -78,6 +82,42 @@ function M.reflog_other(popup)
   if branch then
     ReflogViewBuffer.new(git.reflog.list(branch, popup:get_arguments())):open()
   end
+end
+
+-- TODO: Prefill the fuzzy finder with the filepath under cursor, if there is one
+---comment
+---@param popup Popup
+---@param option table
+---@param set function
+---@return nil
+function M.limit_to_files(popup, option, set)
+  local a = require("plenary.async")
+
+  a.run(function()
+    if option.value ~= "" then
+      popup.state.env.files = nil
+      set("")
+      return
+    end
+
+    local files = FuzzyFinderBuffer.new(git.files.all_tree()):open_async {
+      allow_multi = true,
+      refocus_status = false,
+    }
+
+    if not files or vim.tbl_isempty(files) then
+      popup.state.env.files = nil
+      set("")
+      return
+    end
+
+    popup.state.env.files = files
+    files = util.map(files, function(file)
+      return string.format([[ "%s"]], file)
+    end)
+
+    set(table.concat(files, ""))
+  end)
 end
 
 return M

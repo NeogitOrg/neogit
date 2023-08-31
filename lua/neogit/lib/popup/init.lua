@@ -49,7 +49,7 @@ function M:get_arguments()
       table.insert(flags, arg.cli_prefix .. arg.cli .. arg.cli_suffix)
     end
 
-    if arg.type == "option" and #arg.value ~= 0 and not arg.internal then
+    if arg.type == "option" and arg.cli ~= "" and #arg.value ~= 0 and not arg.internal then
       table.insert(flags, arg.cli_prefix .. arg.cli .. "=" .. arg.value)
     end
   end
@@ -184,7 +184,7 @@ function M:update_component(id, highlight, value)
     local new
     if value == "" then
       local last_child = component.children[#component.children - 1]
-      if last_child and last_child.value == "=" then
+      if (last_child and last_child.value == "=") or component.options.id == "--" then
         -- Check if this is a CLI option - the value should get blanked out for these
         new = ""
       else
@@ -270,6 +270,17 @@ function M:toggle_switch(switch)
       end
     end
   end
+
+  -- Ensure that switches that depend on this one are also disabled
+  if not switch.enabled and #switch.dependant > 0 then
+    for _, var in ipairs(self.state.args) do
+      if var.type == "switch" and var.enabled and switch.dependant[var.cli] then
+        var.enabled = false
+        state.set({ self.state.name, var.cli }, var.enabled)
+        self:update_component(var.id, get_highlight_for_switch(var))
+      end
+    end
+  end
 end
 
 -- Toggle an option on/off and set it's value
@@ -289,6 +300,8 @@ function M:set_option(option)
     else
       set("")
     end
+  elseif option.fn then
+    option.fn(self, option, set)
   else
     -- ...Otherwise get the value via input.
     local input = vim.fn.input {
@@ -298,7 +311,7 @@ function M:set_option(option)
     }
 
     -- If the option specifies a default value, and the user set the value to be empty, defer to default value.
-    -- This is handy to prevent the user from accidently loading thousands of log entries by accident.
+    -- This is handy to prevent the user from accidentally loading thousands of log entries by accident.
     if option.default and input == "" then
       set(option.default)
     else
@@ -397,7 +410,7 @@ local Option = Component.new(function(option)
     row.id(option.id).highlight(get_highlight_for_option(option)) {
       text(option.cli_prefix),
       text(option.cli),
-      text("="),
+      text(option.separator),
       text(option.value or ""),
     },
     text(")"),

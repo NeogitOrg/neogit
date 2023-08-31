@@ -218,6 +218,7 @@ function M.get_default_values()
       "NeogitPushPopup--force-with-lease",
       "NeogitPushPopup--force",
       "NeogitPullPopup--rebase",
+      "NeogitLogPopup--",
       "NeogitCommitPopup--allow-empty",
       "NeogitRevertPopup--no-edit", -- TODO: Fix incompatible switches with default enables
     },
@@ -436,7 +437,7 @@ function M.validate_config()
 
     for _, setting in ipairs(config.ignored_settings) do
       if validate_type(setting, "ignored_settings." .. vim.inspect(setting), "string") then
-        local match_pattern = ".+%-%-.+"
+        local match_pattern = ".+%-%-.?"
         if not string.match(setting, match_pattern) then
           err(
             "ignored_settings",

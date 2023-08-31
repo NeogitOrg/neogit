@@ -299,26 +299,29 @@ local function parse_log_format(show_signature)
 end
 
 ---@param options table|nil
+---@param files? table
+---@param color boolean
 ---@return table
-function M.graph(options)
+function M.graph(options, files, color)
   options = ensure_max(options or {})
+  files = files or {}
 
-  local graph_raw = cli.log.format("%x00").graph.color.arg_list(options).call():trim()
+  local graph_raw = cli.log.format("%x00").graph.color.arg_list(options).files(unpack(files)).call():trim()
   local graph = util.map(graph_raw.stdout_raw, function(line)
-    return require("neogit.lib.ansi").parse(
-      util.trim(line),
-      { recolor = not vim.tbl_contains(options, "--color") }
-    )
+    return require("neogit.lib.ansi").parse(util.trim(line), { recolor = not color })
   end)
 
   return { graph, graph_raw.stdout }
 end
 
----@param options string[]|nil
----@param graph table|nil
+---@param options? string[]
+---@param graph? table
+---@param files? table
 ---@return CommitLogEntry[]
-function M.list(options, graph)
+function M.list(options, graph, files)
+  files = files or {}
   options = ensure_max(options or {})
+
   local show_signature = false
   if vim.tbl_contains(options, "--show-signature") then
     -- Do not show signature when count > 256
@@ -327,10 +330,12 @@ function M.list(options, graph)
     end
     util.remove_item_from_table(options, "--show-signature")
   end
+
   local output = split_output(
     cli.log
       .format(parse_log_format(show_signature))
       .arg_list(ensure_max(options))
+      .files(unpack(files))
       .show_popup(false)
       .call()
       :trim().stdout

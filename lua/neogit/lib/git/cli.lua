@@ -448,6 +448,14 @@ local configurations = {
     },
   },
 
+  ["ls-tree"] = config {
+    flags = {
+      full_tree = "--full-tree",
+      name_only = "--name-only",
+      recursive = "-r",
+    },
+  },
+
   ["ls-remote"] = config {
     aliases = {
       remote = function(tbl)
