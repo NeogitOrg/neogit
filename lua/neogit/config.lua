@@ -138,7 +138,7 @@ function M.get_default_values()
     },
     commit_view = {
       kind = "vsplit",
-      verify_commit = os.execute("which gpg") == 0,
+      verify_commit = vim.fn.executable("gpg") == 1,
     },
     log_view = {
       kind = "tab",
