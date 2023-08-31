@@ -270,6 +270,17 @@ function M:toggle_switch(switch)
       end
     end
   end
+
+  -- Ensure that switches that depend on this one are also disabled
+  if not switch.enabled and #switch.dependant > 0 then
+    for _, var in ipairs(self.state.args) do
+      if var.type == "switch" and var.enabled and switch.dependant[var.cli] then
+        var.enabled = false
+        state.set({ self.state.name, var.cli }, var.enabled)
+        self:update_component(var.id, get_highlight_for_switch(var))
+      end
+    end
+  end
 end
 
 -- Toggle an option on/off and set it's value
