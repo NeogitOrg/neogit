@@ -1,6 +1,14 @@
 local config = require("neogit.config")
 local a = require("plenary.async")
 
+local function refocus_status_buffer()
+  local status = require("neogit.status")
+  if status.status_buffer then
+    status.status_buffer:focus()
+    status.dispatch_refresh()
+  end
+end
+
 local function telescope_mappings(on_select, allow_multi, refocus_status)
   local action_state = require("telescope.actions.state")
   local actions = require("telescope.actions")
@@ -9,11 +17,7 @@ local function telescope_mappings(on_select, allow_multi, refocus_status)
     actions.close(prompt_bufnr)
 
     if refocus_status then
-      local status = require("neogit.status")
-      if status.status_buffer then
-        status.status_buffer:focus()
-        status.dispatch_refresh()
-      end
+      refocus_status_buffer()
     end
   end
 
@@ -78,11 +82,7 @@ end
 local function fzf_actions(on_select, allow_multi, refocus_status)
   local function refresh()
     if refocus_status then
-      local status = require("neogit.status")
-      if status.status_buffer then
-        status.status_buffer:focus()
-        status.dispatch_refresh()
-      end
+      refocus_status_buffer()
     end
   end
 
@@ -224,7 +224,7 @@ function Finder:find(on_select)
       vim.schedule(function()
         on_select(item)
         if self.opts.refocus_status then
-          require("neogit.status").dispatch_refresh()
+          refocus_status_buffer()
         end
       end)
     end)
