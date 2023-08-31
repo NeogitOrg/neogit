@@ -29,8 +29,10 @@ M.status_buffer = nil
 M.commit_view = nil
 
 ---@class Section
----@field first number
----@field last number
+---@field name string Internal Name
+---@field first number Start line number
+---@field last number End Line number
+---@field ignore_sign boolean If true will skip drawing the section icons
 ---@field files StatusItem[]
 M.locations = {}
 
@@ -81,6 +83,9 @@ local function get_section_item_for_line(linenr)
   if section == nil then
     return nil, nil
   end
+  if item_idx == nil then
+    return section, nil
+  end
 
   return section, section.files[item_idx]
 end
@@ -116,16 +121,18 @@ local function draw_signs()
     return
   end
   for _, l in ipairs(M.locations) do
-    draw_sign_for_item(l, "section")
-    if not l.folded then
-      Collection.new(l.files):filter(F.dot("hunks")):each(function(f)
-        draw_sign_for_item(f, "item")
-        if not f.folded then
-          Collection.new(f.hunks):each(function(h)
-            draw_sign_for_item(h, "hunk")
-          end)
-        end
-      end)
+    if not l.ignore_sign then
+      draw_sign_for_item(l, "section")
+      if not l.folded then
+        Collection.new(l.files):filter(F.dot("hunks")):each(function(f)
+          draw_sign_for_item(f, "item")
+          if not f.folded then
+            Collection.new(f.hunks):each(function(h)
+              draw_sign_for_item(h, "hunk")
+            end)
+          end
+        end)
+      end
     end
   end
 end
@@ -177,6 +184,9 @@ local function draw_buffer()
     output:append("")
   end
 
+  local new_locations = {}
+  local locations_lookup = Collection.new(M.locations):key_by("name")
+
   output:append(
     string.format(
       "Head:     %s%s %s",
@@ -185,6 +195,13 @@ local function draw_buffer()
       git.repo.head.commit_message or "(no commits)"
     )
   )
+  table.insert(new_locations, {
+    name = "head_branch_header",
+    first = #output,
+    last = #output,
+    files = {},
+    ignore_sign = true,
+  })
 
   if not git.branch.is_detached() then
     if git.repo.upstream.ref then
@@ -196,6 +213,13 @@ local function draw_buffer()
           git.repo.upstream.commit_message or "(no commits)"
         )
       )
+      table.insert(new_locations, {
+        name = "upstream_header",
+        first = #output,
+        last = #output,
+        files = {},
+        ignore_sign = true,
+      })
     end
 
     if git.branch.pushRemote_ref() then
@@ -207,16 +231,27 @@ local function draw_buffer()
           git.repo.pushRemote.commit_message or "(does not exist)"
         )
       )
+      table.insert(new_locations, {
+        name = "push_branch_header",
+        first = #output,
+        last = #output,
+        files = {},
+        ignore_sign = true,
+      })
     end
   end
   if git.repo.head.tag.name then
     output:append(string.format("Tag:      %s (%s)", git.repo.head.tag.name, git.repo.head.tag.distance))
+    table.insert(new_locations, {
+      name = "tag_header",
+      first = #output,
+      last = #output,
+      files = {},
+      ignore_sign = true,
+    })
   end
 
   output:append("")
-
-  local new_locations = {}
-  local locations_lookup = Collection.new(M.locations):key_by("name")
 
   local function render_section(header, key, data)
     local section_config = config.values.sections[key]
@@ -920,6 +955,92 @@ local set_folds = function(to)
   refresh(true, "set_folds")
 end
 
+--- Handles the GoToFile action on sections that contain a hunk
+---@param item StatusItem
+---@see section_has_hunks
+local function handle_section_item(item)
+  local path = item.name
+  local hunk, hunk_lines = get_current_hunk_of_item(item)
+  local cursor_row, cursor_col
+  if hunk then
+    cursor_row, cursor_col = unpack(vim.api.nvim_win_get_cursor(0))
+  end
+
+  notif.delete_all()
+  M.status_buffer:close()
+
+  local relpath = vim.fn.fnamemodify(path, ":.")
+
+  if not vim.o.hidden and vim.bo.buftype == "" and not vim.bo.readonly and vim.fn.bufname() ~= "" then
+    vim.cmd("update")
+  end
+
+  vim.cmd("e " .. relpath)
+
+  if hunk and hunk_lines then
+    local line_offset = cursor_row - hunk.first
+    local row = hunk.disk_from + line_offset - 1
+    for i = 1, line_offset do
+      if string.sub(hunk_lines[i], 1, 1) == "-" then
+        row = row - 1
+      end
+    end
+    -- adjust for diff sign column
+    local col = cursor_col == 0 and 0 or cursor_col - 1
+    vim.api.nvim_win_set_cursor(0, { row, col })
+  end
+end
+
+--- Returns the section header ref the user selected
+---@param section Section
+---@return string|nil
+local function get_header_ref(section)
+  if section.name == "head_branch_header" then
+    return git.repo.head.branch
+  end
+  if section.name == "upstream_header" and git.repo.upstream.branch then
+    return git.repo.upstream.branch
+  end
+  if section.name == "tag_header" and git.repo.head.tag.name then
+    return git.repo.head.tag.name
+  end
+  if section.name == "push_branch_header" and git.repo.pushRemote.abbrev then
+    return git.repo.pushRemote.abbrev
+  end
+  return nil
+end
+
+--- Determines if a given section is a status header section
+---@param section Section
+---@return boolean
+local function is_section_header(section)
+  return vim.tbl_contains(
+    { "head_branch_header", "upstream_header", "tag_header", "push_branch_header" },
+    section.name
+  )
+end
+
+--- Determines if a given section contains hunks/diffs
+---@param section Section
+---@return boolean
+local function section_has_hunks(section)
+  return vim.tbl_contains({ "unstaged", "staged", "untracked" }, section.name)
+end
+
+--- Determines if a given section has a list of commits under it
+---@param section Section
+---@return boolean
+local function section_has_commits(section)
+  return vim.tbl_contains({
+    "unmerged_pushRemote",
+    "unpulled_pushRemote",
+    "unmerged_upstream",
+    "unpulled_upstream",
+    "recent",
+    "stashes",
+  }, section.name)
+end
+
 --- These needs to be a function to avoid a circular dependency
 --- between this module and the popup modules
 local cmd_func_map = function()
@@ -1042,56 +1163,32 @@ local cmd_func_map = function()
       -- local repo_root = cli.git_root()
       a.util.scheduler()
       local section, item = get_current_section_item()
-
-      if item and section then
-        if section.name == "unstaged" or section.name == "staged" or section.name == "untracked" then
-          local path = item.name
-          local hunk, hunk_lines = get_current_hunk_of_item(item)
-          local cursor_row, cursor_col
-          if hunk then
-            cursor_row, cursor_col = unpack(vim.api.nvim_win_get_cursor(0))
-          end
-
-          notif.delete_all()
-          M.status_buffer:close()
-
-          local relpath = vim.fn.fnamemodify(path, ":.")
-
-          if not vim.o.hidden and vim.bo.buftype == "" and not vim.bo.readonly and vim.fn.bufname() ~= "" then
-            vim.cmd("update")
-          end
-
-          vim.cmd("e " .. relpath)
-
-          if hunk and hunk_lines then
-            local line_offset = cursor_row - hunk.first
-            local row = hunk.disk_from + line_offset - 1
-            for i = 1, line_offset do
-              if string.sub(hunk_lines[i], 1, 1) == "-" then
-                row = row - 1
-              end
+      if not section then
+        return
+      end
+      if item then
+        if section_has_hunks(section) then
+          handle_section_item(item)
+        else
+          if section_has_commits(section) then
+            if M.commit_view and M.commit_view.is_open then
+              M.commit_view:close()
             end
-            -- adjust for diff sign column
-            local col = cursor_col == 0 and 0 or cursor_col - 1
-            vim.api.nvim_win_set_cursor(0, { row, col })
+            M.commit_view = CommitView.new(item.name:match("(.-):? "), true)
+            M.commit_view:open()
           end
-        elseif
-          vim.tbl_contains({
-            "unmerged_pushRemote",
-            "unpulled_pushRemote",
-            "unmerged_upstream",
-            "unpulled_upstream",
-            "recent",
-            "stashes",
-          }, section.name)
-        then
+        end
+      else
+        if is_section_header(section) then
+          local ref = get_header_ref(section)
+          if not ref then
+            return
+          end
           if M.commit_view and M.commit_view.is_open then
             M.commit_view:close()
           end
-          M.commit_view = CommitView.new(item.name:match("(.-):? "), true)
+          M.commit_view = CommitView.new(ref, true)
           M.commit_view:open()
-        else
-          return
         end
       end
     end),
