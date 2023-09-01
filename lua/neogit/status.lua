@@ -864,18 +864,6 @@ local stage = function()
   local sel = M.get_selection()
   local mode = vim.api.nvim_get_mode()
 
-  local section_name = sel.section and sel.section.name
-
-  -- print("sel", vim.inspect(sel.sections, { depth = 3 }))
-
-  -- if
-  --   sel.section == nil
-  --   or (section_name ~= "unstaged" and section_name ~= "untracked" and section_name ~= "unmerged")
-  --   or (mode.mode == "V" and sel.item == nil)
-  -- then
-  --   return
-  -- end
-
   local t = {}
 
   for _, section in ipairs(sel.sections) do
@@ -885,19 +873,20 @@ local stage = function()
       if #hunks > 0 then
         for _, hunk in ipairs(hunks) do
           table.insert(t, function()
+            -- Apply works for both tracked and untracked
             git.index.apply(git.index.generate_patch(item, hunk, hunk.from, hunk.to), { cached = true })
           end)
         end
-      elseif section_name == "unstaged" then
+      elseif section.name == "unstaged" then
         table.insert(t, function()
           git.status.stage { item.name }
         end)
-      elseif section_name == "untracked" then
+      elseif section.name == "untracked" then
         table.insert(t, function()
           git.index.add { item.name }
         end)
       else
-        logger.fmt_debug("Not staging item in %s", section_name)
+        logger.fmt_debug("Not staging item in %s", section.name)
       end
     end
   end
