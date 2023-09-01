@@ -741,8 +741,15 @@ function M.get_item_hunks(item, first_line, last_line, partial)
 
     if h.diff_from <= last_line and h.diff_to >= first_line then
       -- Relative to the hunk
-      local from = math.max(first_line - h.diff_from, h.diff_from)
-      local to = partial and math.min(last_line - h.diff_from, h.diff_to) or h.diff_to
+      local from
+      local to
+      if partial then
+        from = math.max(first_line - h.diff_from, h.diff_from)
+        to = math.min(last_line - h.diff_from, h.diff_to) or h.diff_to
+      else
+        from = h.diff_from
+        to = h.diff_to
+      end
 
       local o = {
 
@@ -870,20 +877,31 @@ local stage = function()
     for _, item in ipairs(section.items) do
       local hunks = M.get_item_hunks(item, sel.first_line, sel.last_line, mode.mode == "V")
 
-      if #hunks > 0 then
-        for _, hunk in ipairs(hunks) do
-          table.insert(t, function()
-            -- Apply works for both tracked and untracked
-            git.index.apply(git.index.generate_patch(item, hunk, hunk.from, hunk.to), { cached = true })
-          end)
-        end
-      elseif section.name == "unstaged" then
+      if section.name == "unstaged" then
         table.insert(t, function()
-          git.status.stage { item.name }
+          if #hunks > 0 then
+            for _, hunk in ipairs(hunks) do
+              table.insert(t, function()
+                -- Apply works for both tracked and untracked
+                git.index.apply(git.index.generate_patch(item, hunk, hunk.from, hunk.to), { cached = true })
+              end)
+            end
+          else
+            git.status.stage { item.name }
+          end
         end)
       elseif section.name == "untracked" then
         table.insert(t, function()
-          git.index.add { item.name }
+          if #hunks > 0 then
+            for _, hunk in ipairs(hunks) do
+              table.insert(t, function()
+                -- Apply works for both tracked and untracked
+                git.index.apply(git.index.generate_patch(item, hunk, hunk.from, hunk.to), { cached = true })
+              end)
+            end
+          else
+            git.index.add { item.name }
+          end
         end)
       else
         logger.fmt_debug("Not staging item in %s", section.name)
@@ -895,62 +913,66 @@ local stage = function()
     a.util.join(t)
   end
 
+  M.current_operation = nil
+
   refresh({
     status = true,
     diffs = vim.tbl_map(function(v)
       return "*:" .. v.name
     end, sel.items),
   }, "stage_finish")
-
-  M.current_operation = nil
 end
 
 local unstage = function()
   local sel = M.get_selection()
   local mode = vim.api.nvim_get_mode()
 
-  if sel.section == nil or sel.section.name ~= "staged" then
-    return
-  end
+  local t = {}
 
-  M.current_operation = "unstage"
-  local item = sel.item
+  for _, section in ipairs(sel.sections) do
+    for _, item in ipairs(section.items) do
+      if section.name == "staged" then
+        local hunks = M.get_item_hunks(item, sel.first_line, sel.last_line, mode.mode == "V")
 
-  if mode.mode == "V" then
-    if #sel.items > 1 then
-      git.status.unstage(map(sel.items, function(item)
-        return item.name
-      end))
-    else
-      local section, item, hunk, from, to = get_selection()
-      if section and from then
-        git.index.apply(git.index.generate_patch(item, hunk, from, to), { cached = true })
-      end
-    end
-  else
-    if item == nil then
-      git.status.unstage_all()
-      refresh(true, "unstage")
-      M.current_operation = nil
-      return
-    else
-      local hunks = M.get_item_hunks(item, sel.first_line, sel.last_line, mode.mode == "V")
-      if #hunks > 0 then
-        for _, hunk in ipairs(hunks) do
-          git.index.apply(
-            git.index.generate_patch(item, hunk, nil, nil, true),
-            { reverse = true, cached = true }
-          )
+        if #hunks > 0 then
+          for _, hunk in ipairs(hunks) do
+            table.insert(t, function()
+              logger.fmt_debug(
+                "Unstaging hunk %d %d of %d %d, index_from %d",
+                hunk.from,
+                hunk.to,
+                hunk.diff_from,
+                hunk.diff_to,
+                hunk.index_from
+              )
+              -- Apply works for both tracked and untracked
+              git.index.apply(
+                git.index.generate_patch(item, hunk, hunk.from, hunk.to, true),
+                { cached = true, reverse = true }
+              )
+            end)
+          end
+        else
+          table.insert(t, function()
+            git.status.unstage { item.name }
+          end)
         end
-      else
-        git.status.unstage { item.name }
       end
     end
   end
 
-  assert(item, "Unstage item is nil")
-  refresh({ status = true, diffs = { "*:" .. item.name } }, "unstage_finish")
+  if #t > 0 then
+    a.util.join(t)
+  end
+
   M.current_operation = nil
+
+  refresh({
+    status = true,
+    diffs = vim.tbl_map(function(v)
+      return "*:" .. v.name
+    end, sel.items),
+  }, "unstage_finish")
 end
 
 local function discard_message(files, hunk_count)
