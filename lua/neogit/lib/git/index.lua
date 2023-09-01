@@ -3,9 +3,9 @@ local M = {}
 
 ---Generates a patch that can be applied to index
 ---@param item any
----@param hunk any
----@param from any
----@param to any
+---@param hunk Hunk
+---@param from number
+---@param to number
 ---@param reverse boolean|nil
 ---@return string
 function M.generate_patch(item, hunk, from, to, reverse)

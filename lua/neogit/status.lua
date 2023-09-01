@@ -717,10 +717,16 @@ function Selection:format()
   return table.concat(lines, "\n")
 end
 
+---@class SelectedHunk: Hunk
+---@field from number start offset from the first line of the hunk
+---@field to number end offset from the first line of the hunk
+
 ---@param item StatusItem
 ---@param first_line number
 ---@param last_line number
-function M.get_item_hunks(item, first_line, last_line)
+---@param mode string|nil
+---@return SelectedHunk[],string[]
+function M.get_item_hunks(item, first_line, last_line, mode)
   if item.hunks == nil then
     return {}, {}
   end
@@ -736,16 +742,25 @@ function M.get_item_hunks(item, first_line, last_line)
     if h.diff_from <= last_line and h.diff_to >= first_line then
       -- Relative to the hunk
       local from = math.max(first_line - h.diff_from, h.diff_from)
-      local to = math.min(last_line - h.diff_from, h.diff_to)
-      hunks.from = from
-      hunks.to = to
+      local to = mode == "V" and math.min(last_line - h.diff_from, h.diff_to) or h.diff_to
 
-      table.insert(hunks, h)
+      local o = {
+
+        from = from,
+        to = to,
+        __index = h,
+      }
+
+      setmetatable(o, o)
+
+      table.insert(hunks, o)
+
       for i = from, to do
         table.insert(lines, item.diff.lines[i + h.diff_from])
       end
     end
   end
+
   return hunks, lines
 end
 
@@ -982,9 +997,9 @@ end
 
 local function discard_message(files, hunk_count)
   if hunk_count > 0 then
-    return string.format("Discard %d files?", #files)
+    return string.format("Discard %d hunks?", #files)
   elseif #files > 1 then
-    return string.format("Discard %d hunks?", hunk_count)
+    return string.format("Discard %d files?", hunk_count)
   else
     return string.format("Discard %q?", files[1])
   end
@@ -1043,7 +1058,7 @@ local function discard_hunk(section, item, lines, hunk)
   end
 end
 
-local discard = function()
+local function discard()
   M.current_operation = "discard"
 
   local sel = M.get_selection()
@@ -1071,21 +1086,29 @@ local discard = function()
     file_count = file_count + #section.items
     for _, item in ipairs(section.items) do
       table.insert(files, item.name)
-      local hunks, lines = M.get_item_hunks(item, sel.first_line, sel.last_line)
+      local hunks = M.get_item_hunks(item, sel.first_line, sel.last_line, mode.mode)
 
+      print("Hunks: ", vim.inspect(hunks))
       if #hunks > 0 then
+        logger.fmt_debug("Discarding %d hunks from %q", #hunks, item.name)
+
         hunk_count = hunk_count + #hunks
 
         for _, hunk in ipairs(hunks) do
           table.insert(t, function()
-            git.index.apply(
-              git.index.generate_patch(item, hunk, hunk.from, hunk.to),
-              { cached = false, reverse = true }
-            )
+            local patch = git.index.generate_patch(item, hunk, hunk.from, hunk.to, true)
+            logger.fmt_debug("Patch: %s", patch)
+
+            if section_name == "staged" then
+              --- Apply both to the worktree and the staging area
+              git.index.apply(patch, { index = true, reverse = true })
+            else
+              git.index.apply(patch, { reverse = true })
+            end
           end)
         end
       else
-        print("Discarding in section", section_name, item.name)
+        logger.fmt_debug("Discarding in section %s %s", section_name, item.name)
         table.insert(t, function()
           if section_name == "untracked" then
             a.util.scheduler()
