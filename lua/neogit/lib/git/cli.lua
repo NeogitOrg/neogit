@@ -123,6 +123,14 @@ local configurations = {
     },
   },
 
+  tag = config {
+    flags = {
+      n = "-n",
+      list = "--list",
+      delete = "--delete",
+    },
+  },
+
   rebase = config {
     flags = {
       interactive = "-i",
@@ -457,12 +465,21 @@ local configurations = {
   },
 
   ["ls-remote"] = config {
+    flags = {
+      tags = "--tags",
+    },
     aliases = {
       remote = function(tbl)
         return function(remote)
           return tbl.args(remote)
         end
       end,
+    },
+  },
+
+  ["for-each-ref"] = config {
+    options = {
+      format = "--format",
     },
   },
 

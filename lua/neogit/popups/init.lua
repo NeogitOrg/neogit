@@ -77,6 +77,7 @@ function M.mappings_table()
         end),
       },
     },
+    { "TagPopup", "Tag", M.open("tag") },
     { "LogPopup", "Log", M.open("log") },
     {
       "CherryPickPopup",

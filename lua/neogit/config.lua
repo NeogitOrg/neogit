@@ -273,6 +273,7 @@ function M.get_default_values()
         ["P"] = "PushPopup",
         ["c"] = "CommitPopup",
         ["i"] = "IgnorePopup",
+        ["t"] = "TagPopup",
         ["l"] = "LogPopup",
         ["v"] = "RevertPopup",
         ["Z"] = "StashPopup",
