@@ -22,8 +22,13 @@ function M.OverviewFile(file)
 end
 
 function M.CommitHeader(info)
+  local full_commit = {}
+  if info.oid ~= info.commit_arg then
+    full_commit = row { text(info.commit_arg .. " "), text.highlight("Comment")(info.oid) }
+  end
   return col {
-    text.sign("NeogitCommitViewHeader")("Commit " .. info.oid),
+    text.sign("NeogitCommitViewHeader")("Commit " .. info.commit_arg),
+    full_commit,
     row {
       text.highlight("Comment")("Author:     "),
       text(info.author_name .. " <" .. info.author_email .. ">"),

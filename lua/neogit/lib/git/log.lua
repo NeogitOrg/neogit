@@ -17,6 +17,7 @@ local commit_header_pat = "([| ]*)(%*?)([| ]*)commit (%w+)"
 ---@field committer_email string the email of the committer
 ---@field committer_date string when the committer commited
 ---@field description string a list of lines
+---@field commit_arg string the passed argument of the git command
 ---@field diffs any[]
 
 ---Parses the provided list of lines into a CommitLogEntry
