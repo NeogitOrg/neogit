@@ -101,6 +101,30 @@ function M.push_other(popup)
   push_to(popup:get_arguments(), remote, source .. ":" .. destination)
 end
 
+function M.to_gerrit(popup)
+  local pushRemote = git.branch.pushRemote()
+  if not pushRemote then
+    pushRemote = git.branch.set_pushRemote()
+  end
+  if pushRemote then
+    push_to(popup:get_arguments(), pushRemote, "HEAD:refs/for/master")
+  end
+end
+
+function M.to_gerrit_other(popup)
+  local pushRemote = git.branch.pushRemote()
+  if not pushRemote then
+    pushRemote = git.branch.set_pushRemote()
+  end
+
+  local target = FuzzyFinderBuffer.new(git.branch.get_remote_branches()):open_async {
+    prompt_prefix = "push > ",
+  }
+  if pushRemote and target then
+    push_to(popup:get_arguments(), pushRemote, "HEAD:refs/for/" .. target)
+  end
+end
+
 function M.configure()
   require("neogit.popups.branch_config").create()
 end
