@@ -79,7 +79,9 @@ local function build_config()
 
   for _, option in ipairs(cli.config.list._local.call_sync():trim().stdout) do
     local key, value = option:match([[^(.-)=(.*)$]])
-    result[key] = ConfigEntry.new(key, value, "local")
+    if key then
+      result[key] = ConfigEntry.new(key, value, "local")
+    end
   end
 
   return result
