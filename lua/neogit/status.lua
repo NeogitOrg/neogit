@@ -747,8 +747,8 @@ function M.get_item_hunks(item, first_line, last_line, partial)
       local from
       local to
       if partial then
-        from = math.max(first_line - h.diff_from, h.diff_from)
-        to = math.min(last_line - h.diff_from, h.diff_to) or h.diff_to
+        from = h.diff_from + math.max(first_line - h.diff_from, h.diff_from)
+        to = h.diff_from + math.min(last_line - h.diff_from, h.diff_to) or h.diff_to
       else
         from = h.diff_from + 1
         to = h.diff_to
