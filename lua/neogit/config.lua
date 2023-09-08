@@ -229,6 +229,7 @@ function M.get_default_values()
         ["x"] = "Discard",
         ["s"] = "Stage",
         ["S"] = "StageUnstaged",
+        ["!"] = "DebugSelection",
         ["<c-s>"] = "StageAll",
         ["u"] = "Unstage",
         ["U"] = "UnstageStaged",

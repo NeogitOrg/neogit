@@ -711,6 +711,9 @@ function Selection:format()
     table.insert(lines, string.format("%s:", sec.name))
     for _, item in ipairs(sec.items) do
       table.insert(lines, string.format("  %s%s:", item == self.item and "*" or "", item.name))
+      for _, hunk in ipairs(M.get_item_hunks(item, self.first_line, self.last_line, false)) do
+        table.insert(lines, string.format("    %d%d:", hunk.from, hunk.to))
+      end
     end
   end
 
@@ -727,7 +730,7 @@ end
 ---@param partial boolean
 ---@return SelectedHunk[],string[]
 function M.get_item_hunks(item, first_line, last_line, partial)
-  if item.hunks == nil then
+  if item.folded or item.hunks == nil then
     return {}, {}
   end
 
@@ -747,7 +750,7 @@ function M.get_item_hunks(item, first_line, last_line, partial)
         from = math.max(first_line - h.diff_from, h.diff_from)
         to = math.min(last_line - h.diff_from, h.diff_to) or h.diff_to
       else
-        from = h.diff_from
+        from = h.diff_from + 1
         to = h.diff_to
       end
 
@@ -871,46 +874,41 @@ local stage = function()
   local sel = M.get_selection()
   local mode = vim.api.nvim_get_mode()
 
-  local t = {}
+  local files = {}
 
   for _, section in ipairs(sel.sections) do
     for _, item in ipairs(section.items) do
       local hunks = M.get_item_hunks(item, sel.first_line, sel.last_line, mode.mode == "V")
 
       if section.name == "unstaged" then
-        table.insert(t, function()
-          if #hunks > 0 then
-            for _, hunk in ipairs(hunks) do
-              table.insert(t, function()
-                -- Apply works for both tracked and untracked
-                git.index.apply(git.index.generate_patch(item, hunk, hunk.from, hunk.to), { cached = true })
-              end)
-            end
-          else
-            git.status.stage { item.name }
+        if #hunks > 0 then
+          for _, hunk in ipairs(hunks) do
+            -- Apply works for both tracked and untracked
+            local patch = git.index.generate_patch(item, hunk, hunk.from, hunk.to)
+            print("hunk", hunk.from, hunk.to, patch)
+            git.index.apply(patch, { cached = true })
           end
-        end)
+        else
+          git.status.stage { item.name }
+        end
       elseif section.name == "untracked" then
-        table.insert(t, function()
-          if #hunks > 0 then
-            for _, hunk in ipairs(hunks) do
-              table.insert(t, function()
-                -- Apply works for both tracked and untracked
-                git.index.apply(git.index.generate_patch(item, hunk, hunk.from, hunk.to), { cached = true })
-              end)
-            end
-          else
-            git.index.add { item.name }
+        if #hunks > 0 then
+          for _, hunk in ipairs(hunks) do
+            -- Apply works for both tracked and untracked
+            git.index.apply(git.index.generate_patch(item, hunk, hunk.from, hunk.to), { cached = true })
           end
-        end)
+        else
+          table.insert(files, item.name)
+        end
       else
         logger.fmt_debug("Not staging item in %s", section.name)
       end
     end
   end
 
-  if #t > 0 then
-    a.util.join(t)
+  --- Add all collected files
+  if #files > 0 then
+    git.index.add(files)
   end
 
   M.current_operation = nil
@@ -927,7 +925,7 @@ local unstage = function()
   local sel = M.get_selection()
   local mode = vim.api.nvim_get_mode()
 
-  local t = {}
+  local files = {}
 
   for _, section in ipairs(sel.sections) do
     for _, item in ipairs(section.items) do
@@ -936,33 +934,29 @@ local unstage = function()
 
         if #hunks > 0 then
           for _, hunk in ipairs(hunks) do
-            table.insert(t, function()
-              logger.fmt_debug(
-                "Unstaging hunk %d %d of %d %d, index_from %d",
-                hunk.from,
-                hunk.to,
-                hunk.diff_from,
-                hunk.diff_to,
-                hunk.index_from
-              )
-              -- Apply works for both tracked and untracked
-              git.index.apply(
-                git.index.generate_patch(item, hunk, hunk.from, hunk.to, true),
-                { cached = true, reverse = true }
-              )
-            end)
+            logger.fmt_debug(
+              "Unstaging hunk %d %d of %d %d, index_from %d",
+              hunk.from,
+              hunk.to,
+              hunk.diff_from,
+              hunk.diff_to,
+              hunk.index_from
+            )
+            -- Apply works for both tracked and untracked
+            git.index.apply(
+              git.index.generate_patch(item, hunk, hunk.from, hunk.to, true),
+              { cached = true, reverse = true }
+            )
           end
         else
-          table.insert(t, function()
-            git.status.unstage { item.name }
-          end)
+          table.insert(files, item.name)
         end
       end
     end
   end
 
-  if #t > 0 then
-    a.util.join(t)
+  if #files > 0 then
+    git.status.unstage(files)
   end
 
   M.current_operation = nil
@@ -977,9 +971,9 @@ end
 
 local function discard_message(files, hunk_count)
   if hunk_count > 0 then
-    return string.format("Discard %d hunks?", #files)
+    return string.format("Discard %d hunks?", hunk_count)
   elseif #files > 1 then
-    return string.format("Discard %d files?", hunk_count)
+    return string.format("Discard %d files?", #files)
   else
     return string.format("Discard %q?", files[1])
   end
@@ -1113,8 +1107,9 @@ local function discard()
     return
   end
 
-  if #t > 0 then
-    a.util.join(t)
+  for i, v in ipairs(t) do
+    logger.fmt_debug("Discard job %d", i)
+    v()
   end
   -- local sel = M.get_selection()
   -- local section = sel.section
@@ -1205,6 +1200,11 @@ local cmd_func_map = function()
       set_folds { false, false, false }
     end),
     ["Toggle"] = toggle,
+
+    ["DebugSelection"] = function()
+      local s = M.get_selection():format()
+      vim.notify(s)
+    end,
     ["Discard"] = { "nv", a.void(discard) },
     ["Stage"] = { "nv", a.void(stage) },
     ["StageUnstaged"] = a.void(function()
