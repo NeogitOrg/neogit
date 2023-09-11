@@ -443,7 +443,15 @@ local function restore_cursor_location(section_loc, file_loc, hunk_loc)
     return vim.fn.setpos(".", { 0, 1, 0, 0 })
   end
   if not section_loc then
-    section_loc = { 1, "" }
+    -- Skip the headers and put the cursor on the first foldable region
+    local idx = 1
+    for i, location in ipairs(M.locations) do
+      if not location.ignore_sign then
+        idx = i
+        break
+      end
+    end
+    section_loc = { idx, "" }
   end
 
   local section = Collection.new(M.locations):find(function(s)
