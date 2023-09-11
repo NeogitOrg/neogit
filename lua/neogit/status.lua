@@ -201,7 +201,7 @@ local function draw_buffer()
       )
     end
 
-    if git.branch.pushRemote_ref() then
+    if git.branch.pushRemote_ref() and git.repo.pushRemote.abbrev then
       output:append(
         string.format(
           "Push:     %s%s %s",

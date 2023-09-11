@@ -10,7 +10,7 @@ local M = {}
 local function reset(type, popup)
   local commit
   if popup.state.env.commit then
-    commit = popup.state.env.commit
+    commit = popup.state.env.commit.oid
   else
     commit = CommitSelectViewBuffer.new(git.log.list()):open_async()[1]
     if not commit then

@@ -34,7 +34,7 @@ function M.mappings_table()
       "RebasePopup",
       "Rebase",
       M.open("rebase", function(f)
-        f { selection = require("neogit.status").get_selection() }
+        f(require("neogit.status").get_selection())
       end),
     },
     { "MergePopup", "Merge", M.open("merge") },
@@ -43,7 +43,7 @@ function M.mappings_table()
       "CommitPopup",
       "Commit",
       M.open("commit", function(f)
-        f { selection = require("neogit.status").get_selection() }
+        f(require("neogit.status").get_selection())
       end),
     },
     { "LogPopup", "Log", M.open("log") },
@@ -56,7 +56,7 @@ function M.mappings_table()
           -- local commits = util.filter_map(require("neogit.status").get_selected_commits(), function(c)
           --   return c.oid
           -- end)
-          f { selection = require("neogit.status").get_selection() }
+          f(require("neogit.status").get_selection())
         end),
       },
     },
@@ -66,7 +66,7 @@ function M.mappings_table()
       {
         "nv",
         M.open("branch", function(f)
-          f { selection = require("neogit.status").get_selection() }
+          f(require("neogit.status").get_selection())
         end),
       },
     },
@@ -77,7 +77,7 @@ function M.mappings_table()
       {
         "nv",
         M.open("reset", function(f)
-          f { selection = require("neogit.status").get_selection() }
+          f(require("neogit.status").get_selection())
         end),
       },
     },
@@ -87,7 +87,7 @@ function M.mappings_table()
       {
         "nv",
         M.open("revert", function(f)
-          f { selection = require("neogit.status").get_selection() }
+          f(require("neogit.status").get_selection())
         end),
       },
     },

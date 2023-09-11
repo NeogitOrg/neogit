@@ -1,17 +1,23 @@
 local M = {}
 
+local util = require("neogit.lib.util")
 local git = require("neogit.lib.git")
 local client = require("neogit.client")
 local notif = require("neogit.lib.notification")
 local CommitSelectViewBuffer = require("neogit.buffers.commit_select_view")
 
 ---@param popup any
----@return table
+---@return CommitLogEntry[]
 local function get_commits(popup)
   local commits
-  if popup.state.env.commit then
-    commits = { popup.state.env.commit }
+  if #popup.state.env.commits > 0 then
+    vim.notify("Reverting single commit")
+    commits = util.reverse(popup.state.env.commits)
+    commits = vim.tbl_map(function(v)
+      return v.oid
+    end, commits)
   else
+    print("Selecting commits")
     commits = CommitSelectViewBuffer.new(git.log.list { "--max-count=256" }):open_async()
   end
 
@@ -31,12 +37,15 @@ end
 
 function M.commits(popup)
   local commits = get_commits(popup)
-  if not commits[1] then
+  if #commits == 0 then
     return
   end
 
   local args = popup:get_arguments()
+
+  vim.notify("Reverting commits" .. vim.inspect(commits))
   local success = git.revert.commits(commits, args)
+
   if not success then
     notif.create("Revert failed. Resolve conflicts before continuing", vim.log.levels.ERROR)
     return
