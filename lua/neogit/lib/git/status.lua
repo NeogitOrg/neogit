@@ -1,7 +1,7 @@
 local a = require("plenary.async")
 local Collection = require("neogit.lib.collection")
 
-local function update_file(file, mode, name)
+local function update_file(file, mode, name, original_name)
   local mt, diff, has_diff
   if file then
     mt = getmetatable(file)
@@ -12,7 +12,13 @@ local function update_file(file, mode, name)
     end
   end
 
-  return setmetatable({ mode = mode, name = name, has_diff = has_diff, diff = diff }, mt or {})
+  return setmetatable({
+    mode = mode,
+    name = name,
+    original_name = original_name,
+    has_diff = has_diff,
+    diff = diff,
+  }, mt or {})
 end
 
 -- Generic pattern for matching tag ref and distance from rev
@@ -94,20 +100,18 @@ local function update_status(state)
       elseif kind == "2" then
         local mode_staged, mode_unstaged, _, _, _, _, _, _, _, name, orig_name = rest:match(match_2)
 
-        local entry = { name = name }
-
         if mode_staged ~= "." then
-          entry.mode = mode_staged
-          table.insert(staged_files, entry)
+          table.insert(
+            staged_files,
+            update_file(old_files_hash.staged_files[name], mode_staged, name, orig_name)
+          )
         end
 
         if mode_unstaged ~= "." then
-          entry.mode = mode_unstaged
-          table.insert(unstaged_files, entry)
-        end
-
-        if orig_name ~= nil then
-          entry.original_name = orig_name
+          table.insert(
+            unstaged_files,
+            update_file(old_files_hash.unstaged_files[name], mode_unstaged, name, orig_name)
+          )
         end
       end
     end
