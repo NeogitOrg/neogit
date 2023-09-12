@@ -868,6 +868,13 @@ local function discard_selected_files(files, section)
   elseif section == "staged" then
     git.index.reset(filenames)
     git.index.checkout(filenames)
+  elseif section == "stashes" then
+    map(filenames, function(name)
+      local stash = name:match("(stash@{%d+})")
+      if stash then
+        git.stash.drop(stash)
+      end
+    end)
   end
 end
 
