@@ -1333,6 +1333,7 @@ function M.create(kind, cwd)
     name = "NeogitStatus",
     filetype = "NeogitStatus",
     kind = kind,
+    disable_line_numbers = config.values.disable_line_numbers or true,
     ---@param buffer Buffer
     initialize = function(buffer)
       logger.debug("[STATUS BUFFER]: Initializing...")
