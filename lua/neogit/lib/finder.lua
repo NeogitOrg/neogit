@@ -142,6 +142,7 @@ local function default_opts()
     border = false,
     prompt_prefix = " > ",
     previewer = false,
+    cache_picker = false,
     layout_strategy = "bottom_pane",
     sorting_strategy = "ascending",
     theme = "ivy",
