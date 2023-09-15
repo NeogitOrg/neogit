@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Before reporting: search [existing issues](https://github.com/TimUntersberger/neogit/issues) and make sure that both Neogit and its dependencies are updated to the latest version.
+        Before reporting: search [existing issues](https://github.com/NeogitOrg/neogit/issues) and make sure that both Neogit and its dependencies are updated to the latest version.
   - type: textarea
     attributes:
       label: "Description"
@@ -62,7 +62,7 @@ body:
             {
               "wbthomason/packer.nvim",
               {
-                "TimUntersberger/neogit",
+                "NeogitOrg/neogit",
                 requires = {
                   { "nvim-lua/plenary.nvim" },
                   { "sindrets/diffview.nvim" },
