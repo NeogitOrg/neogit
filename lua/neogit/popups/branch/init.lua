@@ -5,7 +5,7 @@ local git = require("neogit.lib.git")
 local actions = require("neogit.popups.branch.actions")
 local config_actions = require("neogit.popups.branch_config.actions")
 
-function M.create(selection)
+function M.create(env)
   local current_branch = git.branch.current()
   local show_config = current_branch ~= "" and current_branch ~= "(detached)"
   local pull_rebase_entry = git.config.get("pull.rebase")
@@ -47,7 +47,7 @@ function M.create(selection)
     :action("m", "rename", actions.rename_branch)
     :action("X", "reset", actions.reset_branch)
     :action("D", "delete", actions.delete_branch)
-    :env(selection)
+    :env(env)
     :build()
 
   p:show()

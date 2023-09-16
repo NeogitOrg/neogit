@@ -3,7 +3,7 @@ local popup = require("neogit.lib.popup")
 
 local M = {}
 
-function M.create(selection)
+function M.create(env)
   local in_progress = require("neogit.lib.git.sequencer").pick_or_revert_in_progress()
   -- TODO: enabled = true needs to check if incompatible switch is toggled in internal state, and not apply.
   --       if you enable 'no edit', and revert, next time you load the popup both will be enabled
@@ -25,7 +25,7 @@ function M.create(selection)
     :action_if(in_progress, "v", "continue", actions.continue)
     :action_if(in_progress, "s", "skip", actions.skip)
     :action_if(in_progress, "a", "abort", actions.abort)
-    :env(selection)
+    :env(env)
     :build()
 
   p:show()

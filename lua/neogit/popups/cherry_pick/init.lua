@@ -3,7 +3,7 @@ local actions = require("neogit.popups.cherry_pick.actions")
 
 local M = {}
 
-function M.create(selection)
+function M.create(env)
   local in_progress = require("neogit.lib.git.sequencer").pick_or_revert_in_progress()
 
   -- TODO
@@ -31,7 +31,7 @@ function M.create(selection)
     :action_if(in_progress, "A", "continue", actions.continue)
     :action_if(in_progress, "s", "skip", actions.skip)
     :action_if(in_progress, "a", "abort", actions.abort)
-    :env(selection)
+    :env(env)
     :build()
 
   p:show()

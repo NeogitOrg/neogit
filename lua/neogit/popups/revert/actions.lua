@@ -11,13 +11,8 @@ local CommitSelectViewBuffer = require("neogit.buffers.commit_select_view")
 local function get_commits(popup)
   local commits
   if #popup.state.env.commits > 0 then
-    vim.notify("Reverting single commit")
     commits = util.reverse(popup.state.env.commits)
-    commits = vim.tbl_map(function(v)
-      return v.oid
-    end, commits)
   else
-    print("Selecting commits")
     commits = CommitSelectViewBuffer.new(git.log.list { "--max-count=256" }):open_async()
   end
 
@@ -43,7 +38,6 @@ function M.commits(popup)
 
   local args = popup:get_arguments()
 
-  vim.notify("Reverting commits" .. vim.inspect(commits))
   local success = git.revert.commits(commits, args)
 
   if not success then

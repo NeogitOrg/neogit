@@ -3,7 +3,7 @@ local popup = require("neogit.lib.popup")
 
 local M = {}
 
-function M.create(env)
+function M.create()
   -- TODO:
   -- :switch("u", "include-untracked", "Also save untracked files")
   -- :switch("a", "all", "Also save untracked and ignored files")

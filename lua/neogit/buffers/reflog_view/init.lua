@@ -28,7 +28,7 @@ function M:close()
   self.buffer = nil
 end
 
-function M:open()
+function M:open(env)
   self.buffer = Buffer.create {
     name = "NeogitReflogView",
     filetype = "NeogitReflogView",
