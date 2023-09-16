@@ -57,7 +57,7 @@ function M.from_upstream(popup)
     end
   end
 
-  local remote, branch = unpack(vim.split(upstream, "/"))
+  local remote, branch = upstream:match("^([^/]*)/(.*)$")
   pull_from(popup:get_arguments(), remote, branch, { set_upstream = set_upstream })
 end
 
@@ -68,7 +68,7 @@ function M.from_elsewhere(popup)
     return
   end
 
-  local remote, branch = unpack(vim.split(target, "/"))
+  local remote, branch = target:match("^([^/]*)/(.*)$")
   pull_from(popup:get_arguments(), remote, branch)
 end
 

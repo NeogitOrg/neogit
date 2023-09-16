@@ -46,10 +46,10 @@ function M:get_arguments()
 
   for _, arg in pairs(self.state.args) do
     if arg.type == "switch" and arg.enabled and not arg.internal then
-      table.insert(flags, arg.cli_prefix .. arg.cli)
+      table.insert(flags, arg.cli_prefix .. arg.cli .. arg.cli_suffix)
     end
 
-    if arg.type == "option" and #arg.value ~= 0 and not arg.internal then
+    if arg.type == "option" and arg.cli ~= "" and #arg.value ~= 0 and not arg.internal then
       table.insert(flags, arg.cli_prefix .. arg.cli .. "=" .. arg.value)
     end
   end
@@ -116,7 +116,8 @@ end
 
 -- Builds config component to be rendered
 ---@return table
-local function construct_config_options(config)
+local function construct_config_options(config, prefix, suffix)
+  local set = false
   local options = filter_map(config.options, function(option)
     if option.display == "" then
       return
@@ -128,6 +129,7 @@ local function construct_config_options(config)
 
     local highlight
     if config.value == option.value then
+      set = true
       highlight = "NeogitPopupConfigEnabled"
     else
       highlight = "NeogitPopupConfigDisabled"
@@ -139,6 +141,22 @@ local function construct_config_options(config)
   local value = intersperse(options, text.highlight("NeogitPopupConfigDisabled")("|"))
   table.insert(value, 1, text.highlight("NeogitPopupConfigDisabled")("["))
   table.insert(value, #value + 1, text.highlight("NeogitPopupConfigDisabled")("]"))
+
+  if prefix then
+    table.insert(
+      value,
+      1,
+      text.highlight(set and "NeogitPopupConfigEnabled" or "NeogitPopupConfigDisabled")(prefix)
+    )
+  end
+
+  if suffix then
+    table.insert(
+      value,
+      #value + 1,
+      text.highlight(set and "NeogitPopupConfigEnabled" or "NeogitPopupConfigDisabled")(suffix)
+    )
+  end
 
   return value
 end
@@ -166,7 +184,7 @@ function M:update_component(id, highlight, value)
     local new
     if value == "" then
       local last_child = component.children[#component.children - 1]
-      if last_child and last_child.value == "=" then
+      if (last_child and last_child.value == "=") or component.options.id == "--" then
         -- Check if this is a CLI option - the value should get blanked out for these
         new = ""
       else
@@ -199,6 +217,31 @@ end
 ---@param switch table
 ---@return nil
 function M:toggle_switch(switch)
+  if switch.options then
+    local options = build_reverse_lookup(filter_map(switch.options, function(option)
+      if option.condition and not option.condition() then
+        return
+      end
+
+      return option.value
+    end))
+
+    local index = options[switch.cli or ""]
+    switch.cli = options[(index + 1)] or options[1]
+    switch.value = switch.cli
+
+    switch.enabled = switch.cli ~= ""
+
+    state.set({ self.state.name, switch.cli_suffix }, switch.cli)
+    self:update_component(
+      switch.id,
+      get_highlight_for_switch(switch),
+      construct_config_options(switch, switch.cli_prefix, switch.cli_suffix)
+    )
+
+    return
+  end
+
   switch.enabled = not switch.enabled
 
   -- If a switch depends on user input, i.e. `-Gsomething`, prompt user to get input
@@ -227,6 +270,17 @@ function M:toggle_switch(switch)
       end
     end
   end
+
+  -- Ensure that switches that depend on this one are also disabled
+  if not switch.enabled and #switch.dependant > 0 then
+    for _, var in ipairs(self.state.args) do
+      if var.type == "switch" and var.enabled and switch.dependant[var.cli] then
+        var.enabled = false
+        state.set({ self.state.name, var.cli }, var.enabled)
+        self:update_component(var.id, get_highlight_for_switch(var))
+      end
+    end
+  end
 end
 
 -- Toggle an option on/off and set it's value
@@ -246,6 +300,8 @@ function M:set_option(option)
     else
       set("")
     end
+  elseif option.fn then
+    option.fn(self, option, set)
   else
     -- ...Otherwise get the value via input.
     local input = vim.fn.input {
@@ -255,7 +311,7 @@ function M:set_option(option)
     }
 
     -- If the option specifies a default value, and the user set the value to be empty, defer to default value.
-    -- This is handy to prevent the user from accidently loading thousands of log entries by accident.
+    -- This is handy to prevent the user from accidentally loading thousands of log entries by accident.
     if option.default and input == "" then
       set(option.default)
     else
@@ -318,6 +374,15 @@ function M:repaint_config()
 end
 
 local Switch = Component.new(function(switch)
+  local value
+  if switch.options then
+    value = row.id(switch.id)(construct_config_options(switch, switch.cli_prefix, switch.cli_suffix))
+  else
+    value = row
+      .id(switch.id)
+      .highlight(get_highlight_for_switch(switch)) { text(switch.cli_prefix), text(switch.cli) }
+  end
+
   return row.tag("Switch").value(switch) {
     text(" "),
     row.highlight("NeogitPopupSwitchKey") {
@@ -327,10 +392,7 @@ local Switch = Component.new(function(switch)
     text(" "),
     text(switch.description),
     text(" ("),
-    row.id(switch.id).highlight(get_highlight_for_switch(switch)) {
-      text(switch.cli_prefix),
-      text(switch.cli),
-    },
+    value,
     text(")"),
   }
 end)
@@ -348,7 +410,7 @@ local Option = Component.new(function(option)
     row.id(option.id).highlight(get_highlight_for_option(option)) {
       text(option.cli_prefix),
       text(option.cli),
-      text("="),
+      text(option.separator),
       text(option.value or ""),
     },
     text(")"),
@@ -480,14 +542,24 @@ function M:show()
     },
   }
 
+  local arg_prefixes = {}
   for _, arg in pairs(self.state.args) do
     if arg.id then
+      arg_prefixes[arg.key_prefix] = true
       mappings.n[arg.id] = function()
         if arg.type == "switch" then
           self:toggle_switch(arg)
         elseif arg.type == "option" then
           self:set_option(arg)
         end
+      end
+    end
+  end
+  for prefix, _ in pairs(arg_prefixes) do
+    mappings.n[prefix] = function()
+      local c = vim.fn.getcharstr()
+      if mappings.n[prefix .. c] then
+        mappings.n[prefix .. c]()
       end
     end
   end

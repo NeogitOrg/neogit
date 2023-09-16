@@ -17,6 +17,7 @@ local commit_header_pat = "([| ]*)(%*?)([| ]*)commit (%w+)"
 ---@field committer_email string the email of the committer
 ---@field committer_date string when the committer commited
 ---@field description string a list of lines
+---@field commit_arg string the passed argument of the git command
 ---@field diffs any[]
 
 ---Parses the provided list of lines into a CommitLogEntry
@@ -159,7 +160,7 @@ local function parse(raw)
 end
 
 local function make_commit(entry, graph)
-  local hash, subject, author_name, rel_date, ref_name, author_date, committer_name, committer_date, committer_email, author_email, body =
+  local hash, subject, author_name, rel_date, ref_name, author_date, committer_name, committer_date, committer_email, author_email, body, signature_code =
     unpack(entry)
 
   if rel_date then
@@ -179,6 +180,7 @@ local function make_commit(entry, graph)
     committer_name = committer_name,
     committer_email = committer_email,
     body = body,
+    signature_code = signature_code,
     -- TODO: Remove below here
     hash = hash,
     message = subject,
@@ -224,7 +226,7 @@ end
 
 local M = {}
 
-local format = table.concat({
+local format_args = {
   "%H", -- Full Hash
   "%s", -- Subject
   "%aN", -- Author Name
@@ -236,46 +238,108 @@ local format = table.concat({
   "%ce", -- Committer Email
   "%ae", -- Author Email
   "%b", -- Body
+  "%G?", -- Signature status
   "%x1F", -- Entry delimiter to split on (dec \31)
-}, "%x1E") -- Field delimiter to split on (dec \30)
+}
+local format_delimiter = "%x1E" -- Field delimiter to split on (dec \30)
 
 --- Ensure a max is passed to the list function to prevent accidentally getting thousands of results.
 ---@param options table
 ---@return table
 local function ensure_max(options)
-  if
-    not vim.tbl_contains(options, function(item)
-      return item:match("%-%-max%-count=%d+")
-    end, { predicate = true })
-  then
-    table.insert(options, "--max-count=256")
+  if vim.fn.has("nvim-0.10") == 1 then
+    if
+      not vim.tbl_contains(options, function(item)
+        return item:match("%-%-max%-count=%d+")
+      end, { predicate = true })
+    then
+      table.insert(options, "--max-count=256")
+    end
+  else
+    local has_max = false
+    for _, v in ipairs(options) do
+      if v:match("%-%-max%-count=%d+") then
+        has_max = true
+        break
+      end
+    end
+    if not has_max then
+      table.insert(options, "--max-count=256")
+    end
   end
 
   return options
 end
 
----@param options table|nil
----@return table
-function M.graph(options)
-  options = ensure_max(options or {})
+--- Checks to see if `--max-count` exceeds 256
+---@param options table Arguments
+---@return boolean Exceeds 256 or not
+local function exceeds_max_default(options)
+  for _, v in ipairs(options) do
+    local count = tonumber(v:match("%-%-max%-count=(%d+)"))
+    if count ~= nil and count > 256 then
+      return true
+    end
+  end
+  return false
+end
 
-  local graph_raw = cli.log.format("%x00").graph.color.arg_list(options).call():trim()
-  local graph = util.map(graph_raw.stdout_raw, function(line)
-    return require("neogit.lib.ansi").parse(
-      util.trim(line),
-      { recolor = not vim.tbl_contains(options, "--color") }
+--- Parses the arguments needed for the format output of git log
+---@param show_signature boolean Should '%G?' be omitted from the arguments
+---@return string Concatenated format arguments
+local function parse_log_format(show_signature)
+  if not show_signature then
+    return table.concat(
+      vim.tbl_filter(function(value)
+        return value ~= "%G?"
+      end, format_args),
+      format_delimiter
     )
+  end
+  return table.concat(format_args, format_delimiter)
+end
+
+---@param options table|nil
+---@param files? table
+---@param color boolean
+---@return table
+function M.graph(options, files, color)
+  options = ensure_max(options or {})
+  files = files or {}
+
+  local graph_raw = cli.log.format("%x00").graph.color.arg_list(options).files(unpack(files)).call():trim()
+  local graph = util.map(graph_raw.stdout_raw, function(line)
+    return require("neogit.lib.ansi").parse(util.trim(line), { recolor = not color })
   end)
 
   return { graph, graph_raw.stdout }
 end
 
----@param options string[]|nil
----@param graph table|nil
+---@param options? string[]
+---@param graph? table
+---@param files? table
 ---@return CommitLogEntry[]
-function M.list(options, graph)
+function M.list(options, graph, files)
+  files = files or {}
+  options = ensure_max(options or {})
+
+  local show_signature = false
+  if vim.tbl_contains(options, "--show-signature") then
+    -- Do not show signature when count > 256
+    if not exceeds_max_default(options) then
+      show_signature = true
+    end
+    util.remove_item_from_table(options, "--show-signature")
+  end
+
   local output = split_output(
-    cli.log.format(format).arg_list(ensure_max(options or {})).show_popup(false).call():trim().stdout
+    cli.log
+      .format(parse_log_format(show_signature))
+      .arg_list(ensure_max(options))
+      .files(unpack(files))
+      .show_popup(false)
+      .call()
+      :trim().stdout
   )
 
   return parse_log(output, unpack(graph or {}))
@@ -322,6 +386,13 @@ function M.present_commit(commit)
     oid = commit.oid,
     commit = commit,
   }
+end
+
+--- Runs `git verify-commit`
+---@param commit string Hash of commit
+---@return string The stderr output of the command
+function M.verify_commit(commit)
+  return cli["verify-commit"].args(commit).call_sync_ignoring_exit_code():trim().stderr
 end
 
 return M

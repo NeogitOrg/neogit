@@ -12,14 +12,18 @@ local function empty_state()
   local Path = require("plenary.path")
 
   return {
-    git_path     = function(path)
-      return Path.new(root):joinpath(".git", path)
+    git_path     = function(...)
+      return Path.new(root):joinpath(".git", ...)
     end,
     cwd          = vim.fn.getcwd(),
     git_root     = root,
     head         = {
       branch = nil,
-      commit_message = nil
+      commit_message = nil,
+      tag = {
+        name = nil,
+        distance = nil,
+      },
     },
     upstream     = {
       branch         = nil,

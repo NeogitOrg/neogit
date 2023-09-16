@@ -205,6 +205,9 @@ NeogitObjectId              Object's SHA hash
 NeogitStash                 Stash name
 NeogitFold                  Folded text highlight
 NeogitRebaseDone            Current position within rebase
+NeogitTagName               Closest Tag name
+NeogitTagDistance           Number of commits between the tag and HEAD
+
 
 STATUS BUFFER SECTION HEADERS
 NeogitSectionHeader
@@ -279,6 +282,18 @@ NeogitGraphCyan
 NeogitGraphCyanBold
 NeogitGraphWhite
 NeogitGraphWhiteBold
+NeogitGraphGray
+NeogitGraphBoldGray
+NeogitGraphOrange
+
+NeogitSignatureGood        For highlighting the commit hash when
+NeogitSignatureBad         --show-signature is passed
+NeogitSignatureMissing
+NeogitSignatureNone
+NeogitSignatureGoodUnknown
+NeogitSignatureGoodExpired
+NeogitSignatureGoodExpiredKey
+NeogitSignatureGoodRevokedKey
 
 POPUPS
 NeogitPopupSectionTitle    Applied to all section headers

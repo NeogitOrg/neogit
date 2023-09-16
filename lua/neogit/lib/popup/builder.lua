@@ -104,6 +104,10 @@ function M:switch(key, cli, description, opts)
     opts.incompatible = {}
   end
 
+  if opts.dependant == nil then
+    opts.dependant = {}
+  end
+
   if opts.key_prefix == nil then
     opts.key_prefix = "-"
   end
@@ -112,11 +116,24 @@ function M:switch(key, cli, description, opts)
     opts.cli_prefix = "--"
   end
 
+  if opts.cli_suffix == nil then
+    opts.cli_suffix = ""
+  end
+
   local value
   if opts.enabled and opts.value then
     value = cli .. opts.value
+  elseif opts.options and opts.cli_suffix ~= "" then
+    value = state.get({ self.state.name, opts.cli_suffix }, cli)
   else
     value = cli
+  end
+
+  local enabled
+  if opts.options then
+    enabled = state.get({ self.state.name, opts.cli_suffix }, "") ~= ""
+  else
+    enabled = state.get({ self.state.name, cli }, opts.enabled)
   end
 
   table.insert(self.state.args, {
@@ -125,13 +142,17 @@ function M:switch(key, cli, description, opts)
     key = key,
     key_prefix = opts.key_prefix,
     cli = value,
+    value = value, -- Only used with options. Needed to keep the construct_config_options() fn simple.
     cli_base = cli,
     description = description,
-    enabled = state.get({ self.state.name, cli }, opts.enabled),
+    enabled = enabled,
     internal = opts.internal,
     cli_prefix = opts.cli_prefix,
     user_input = opts.user_input,
+    cli_suffix = opts.cli_suffix,
+    options = opts.options,
     incompatible = util.build_reverse_lookup(opts.incompatible),
+    dependant = util.build_reverse_lookup(opts.dependant),
   })
 
   return self
@@ -169,6 +190,10 @@ function M:option(key, cli, value, description, opts)
     opts.cli_prefix = "--"
   end
 
+  if opts.separator == nil then
+    opts.separator = "="
+  end
+
   table.insert(self.state.args, {
     type = "option",
     id = opts.key_prefix .. key,
@@ -180,6 +205,8 @@ function M:option(key, cli, value, description, opts)
     cli_prefix = opts.cli_prefix,
     choices = opts.choices,
     default = opts.default,
+    separator = opts.separator,
+    fn = opts.fn,
   })
 
   return self

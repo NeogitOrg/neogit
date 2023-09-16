@@ -28,6 +28,7 @@ Here's an example spec for [Lazy](https://github.com/folke/lazy.nvim), but you'r
     "nvim-lua/plenary.nvim",         -- required
     "nvim-telescope/telescope.nvim", -- optional
     "sindrets/diffview.nvim",        -- optional
+    "ibhagwan/fzf-lua",              -- optional
   },
   config = true
 }
@@ -62,8 +63,16 @@ neogit.setup {
   disable_commit_confirmation = false,
   -- Uses `vim.notify` instead of the built-in notification system.
   disable_builtin_notifications = false,
-  -- Changes what mode the Commit Editor starts in. `true` will leave nvim in normal mode, `false` will change nvim to insert mode, and `"auto"` will change nvim to insert mode IF the commit message is empty, otherwise leaving it in normal mode.
+  -- Changes what mode the Commit Editor starts in. `true` will leave nvim in normal mode, `false` will change nvim to
+  -- insert mode, and `"auto"` will change nvim to insert mode IF the commit message is empty, otherwise leaving it in
+  -- normal mode.
   disable_insert_on_commit = true,
+  -- When enabled, will watch the `.git/` directory for changes and refresh the status buffer in response to filesystem
+  -- events.
+  filewatcher = {
+    interval = 1000,
+    enabled = true,
+  },
   -- Allows a different telescope sorter. Defaults to 'fuzzy_with_index_bias'. The example below will use the native fzf
   -- sorter instead. By default, this function returns `nil`.
   telescope_sorter = function()
@@ -91,6 +100,8 @@ neogit.setup {
   sort_branches = "-committerdate",
   -- Change the default way of opening neogit
   kind = "tab",
+  -- Disable line numbers and relative line numbers
+  disable_line_numbers = true
   -- The time after which an output console is shown for slow running commands
   console_timeout = 2000,
   -- Automatically show console if a command takes more than console_timeout milliseconds
@@ -106,6 +117,7 @@ neogit.setup {
   },
   commit_view = {
     kind = "vsplit",
+    verify_commit = os.execute("which gpg") == 0, -- Can be set to true or false, otherwise we try to find the binary
   },
   log_view = {
     kind = "tab",
@@ -141,6 +153,11 @@ neogit.setup {
     --
     -- Requires you to have `sindrets/diffview.nvim` installed.
     diffview = nil,
+
+    -- If enabled, uses fzf-lua for menu selection. If the telescope integration
+    -- is also selected then telescope is used instead
+    -- Requires you to have `ibhagwan/fzf-lua` installed.
+    fzf_lua = nil,
   },
   sections = {
     -- Reverting/Cherry Picking

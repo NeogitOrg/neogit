@@ -52,7 +52,7 @@ function M.merge_config(branch)
 
     local merge_value, remote_value
     if target:match([[/]]) then
-      local target_remote, target_branch = unpack(vim.split(target, [[/]]))
+      local target_remote, target_branch = target:match("^([^/]*)/(.*)$")
       merge_value = "refs/heads/" .. target_branch
       remote_value = target_remote
     else

@@ -1,7 +1,7 @@
 local a = require("plenary.async")
 local Collection = require("neogit.lib.collection")
 
-local function update_file(file, mode, name)
+local function update_file(file, mode, name, original_name)
   local mt, diff, has_diff
   if file then
     mt = getmetatable(file)
@@ -12,8 +12,19 @@ local function update_file(file, mode, name)
     end
   end
 
-  return setmetatable({ mode = mode, name = name, has_diff = has_diff, diff = diff }, mt or {})
+  return setmetatable({
+    mode = mode,
+    name = name,
+    original_name = original_name,
+    has_diff = has_diff,
+    diff = diff,
+  }, mt or {})
 end
+
+-- Generic pattern for matching tag ref and distance from rev
+-- Unfortunately lua's pattern matching isn't that complete so
+-- some cases may be dropped.
+local tag_pattern = "(.-)%-([0-9]+)%-g%x+$"
 
 local function update_status(state)
   local git = require("neogit.lib.git")
@@ -52,9 +63,11 @@ local function update_status(state)
         upstream.ref = value
 
         local commit = git.log.list({ value, "--max-count=1" })[1]
-        upstream.abbrev = git.rev_parse.abbreviate_commit(commit.oid)
+        if commit then
+          upstream.abbrev = git.rev_parse.abbreviate_commit(commit.oid)
+        end
 
-        local remote, branch = unpack(vim.split(value, "/"))
+        local remote, branch = value:match("^([^/]*)/(.*)$")
         upstream.remote = remote
         upstream.branch = branch
       end
@@ -87,20 +100,18 @@ local function update_status(state)
       elseif kind == "2" then
         local mode_staged, mode_unstaged, _, _, _, _, _, _, _, name, orig_name = rest:match(match_2)
 
-        local entry = { name = name }
-
         if mode_staged ~= "." then
-          entry.mode = mode_staged
-          table.insert(staged_files, entry)
+          table.insert(
+            staged_files,
+            update_file(old_files_hash.staged_files[name], mode_staged, name, orig_name)
+          )
         end
 
         if mode_unstaged ~= "." then
-          entry.mode = mode_unstaged
-          table.insert(unstaged_files, entry)
-        end
-
-        if orig_name ~= nil then
-          entry.original_name = orig_name
+          table.insert(
+            unstaged_files,
+            update_file(old_files_hash.unstaged_files[name], mode_unstaged, name, orig_name)
+          )
         end
       end
     end
@@ -124,6 +135,17 @@ local function update_status(state)
     upstream.unpulled = state.upstream.unpulled
   end
 
+  local tag = git.cli.describe.long.tags.args("HEAD").call_ignoring_exit_code():trim().stdout
+  if #tag == 1 then
+    local tag, distance = tostring(tag[1]):match(tag_pattern)
+    if tag and distance then
+      head.tag = { name = tag, distance = tonumber(distance) }
+    else
+      head.tag = { name = nil, distance = nil }
+    end
+  else
+    head.tag = { name = nil, distance = nil }
+  end
   state.cwd = cwd
   state.head = head
   state.upstream = upstream

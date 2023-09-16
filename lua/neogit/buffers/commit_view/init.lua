@@ -8,35 +8,54 @@ local popups = require("neogit.popups")
 
 local api = vim.api
 
+---@class CommitInfo
+---@field oid string Full commit hash
+---@field author_email string
+---@field author_name string
+---@field author_date string
+---@field commit_arg string The commit argument passed to `git show`
+---@field commiter_email string
+---@field commiter_date string
+---@field description table
+
+---@class CommitOverview
+---@field summary string
+---@field files table
+
+--- @class CommitViewBuffer
+--- @field is_open boolean whether the buffer is currently shown
+--- @field commit_info CommitInfo
+--- @field commit_signature table|nil
+--- @field commit_overview CommitOverview
+--- @field buffer Buffer
+--- @field open fun()
+--- @field close fun()
+--- @see CommitInfo
+--- @see Buffer
+--- @see Ui
 local M = {
   instance = nil,
 }
 
--- @class CommitViewBuffer
--- @field is_open whether the buffer is currently shown
--- @field commit_info CommitInfo
--- @field commit_overview CommitOverview
--- @field buffer Buffer
--- @see CommitInfo
--- @see Buffer
--- @see Ui
-
 --- Creates a new CommitViewBuffer
--- @param commit_id the id of the commit
--- @return CommitViewBuffer
+--- @param commit_id string the id of the commit/tag
+--- @param notify boolean Should show a notification or not
+--- @return CommitViewBuffer
 function M.new(commit_id, notify)
   local notification
   if notify then
     local notif = require("neogit.lib.notification")
     notification = notif.create("Parsing commit...")
   end
-
+  local commit_info = log.parse(cli.show.format("fuller").args(commit_id).call_sync().stdout)[1]
+  commit_info.commit_arg = commit_id
   local instance = {
     is_open = false,
-    commit_info = log.parse(cli.show.format("fuller").args(commit_id).call_sync().stdout)[1],
+    commit_info = commit_info,
     commit_overview = parser.parse_commit_overview(
       cli.show.stat.oneline.args(commit_id).call_sync():trim().stdout
     ),
+    commit_signature = config.values.commit_view.verify_commit and log.verify_commit(commit_id) or {},
     buffer = nil,
   }
 
@@ -49,12 +68,15 @@ function M.new(commit_id, notify)
   return instance
 end
 
+--- Closes the CommitViewBuffer
 function M:close()
   self.is_open = false
   self.buffer:close()
   self.buffer = nil
 end
 
+--- Opens the CommitViewBuffer
+--- If already open will close the buffer
 function M:open()
   if M.instance and M.instance.is_open then
     M.instance:close()
@@ -168,7 +190,7 @@ function M:open()
       },
     },
     render = function()
-      return ui.CommitView(self.commit_info, self.commit_overview)
+      return ui.CommitView(self.commit_info, self.commit_overview, self.commit_signature)
     end,
   }
 end

@@ -12,11 +12,12 @@ local colors = {
   ["37"] = "White",   ["1;37"] = "BoldWhite",
 }
 
+local mark = "%"
+
 ---Parses a string with ansi-escape codes (colors) into a table
 ---@param str string
 function M.parse(str, opts)
   local colored = {}
-  local idx = 1
 
   local parsed, _ = str:gsub("(\27%[[;%d]*m.-\27%[m)", function(match)
     local color, text = match:match("\27%[([;%d]*)m(.-)\27%[m")
@@ -25,20 +26,20 @@ function M.parse(str, opts)
       color = "35"
     end
 
-    colored[tostring(idx)] = { text = text, color = colors[color] }
-    idx = idx + 1
-
-    return idx - 1
+    table.insert(colored, { text = text, color = colors[color] })
+    return mark
   end)
 
   local out = {}
   for g in parsed:gmatch(".") do
-    if g:match("%d") then
-      table.insert(out, colored[g])
+    if g == mark then
+      table.insert(out, table.remove(colored, 1))
     else
       table.insert(out, { text = g, color = "Gray" })
     end
   end
+
+  assert(vim.tbl_isempty(colored), "ANSI Parser didn't consume all graph parts")
 
   return out
 end

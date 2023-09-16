@@ -88,6 +88,25 @@ local function build_graph(graph)
   end
 end
 
+-- - '%G?': show "G" for a good (valid) signature,
+--   "B" for a bad signature,
+--   "U" for a good signature with unknown validity,
+--   "X" for a good signature that has expired,
+--   "Y" for a good signature made by an expired key,
+--   "R" for a good signature made by a revoked key,
+--   "E" if the signature cannot be checked (e.g. missing key)
+--   and "N" for no signature
+local highlight_for_signature = {
+  G = "NeogitSignatureGood",
+  B = "NeogitSignatureBad",
+  U = "NeogitSignatureGoodUnknown",
+  X = "NeogitSignatureGoodExpired",
+  Y = "NeogitSignatureGoodExpiredKey",
+  R = "NeogitSignatureGoodRevokedKey",
+  E = "NeogitSignatureMissing",
+  N = "NeogitSignatureNone",
+}
+
 M.CommitEntry = Component.new(function(commit, args)
   local ref = {}
   if commit.ref_name ~= "" then
@@ -169,13 +188,12 @@ M.CommitEntry = Component.new(function(commit, args)
 
   return col({
     row(
-      util.merge(
-        { text(commit.oid:sub(1, 7), { highlight = "Comment" }), text(" ") },
-        graph,
-        { text(" ") },
-        ref,
-        { text(commit.description[1]) }
-      ),
+      util.merge({
+        text(commit.oid:sub(1, 7), {
+          highlight = commit.signature_code and highlight_for_signature[commit.signature_code] or "Comment",
+        }),
+        text(" "),
+      }, graph, { text(" ") }, ref, { text(commit.description[1]) }),
       {
         virtual_text = {
           { " ", "Constant" },

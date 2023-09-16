@@ -19,7 +19,7 @@ describe("remote popup", function()
     "can add remote",
     in_prepared_repo(function()
       input.values = { "foo", "https://github.com/foo/bar" }
-      act("Ma<cr>")
+      act("Ma")
 
       operations.wait("add_remote")
 
@@ -27,7 +27,7 @@ describe("remote popup", function()
       eq({ "https://github.com/foo/bar" }, lib.git.remote.get_url("foo"))
 
       input.values = { "other", "" }
-      act("Ma<cr>")
+      act("Ma")
 
       operations.wait("add_remote")
 

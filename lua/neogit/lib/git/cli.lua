@@ -96,6 +96,13 @@ local configurations = {
     },
   },
 
+  describe = config {
+    flags = {
+      long = "--long",
+      tags = "--tags",
+    },
+  },
+
   diff = config {
     flags = {
       cached = "--cached",
@@ -441,6 +448,14 @@ local configurations = {
     },
   },
 
+  ["ls-tree"] = config {
+    flags = {
+      full_tree = "--full-tree",
+      name_only = "--name-only",
+      recursive = "-r",
+    },
+  },
+
   ["ls-remote"] = config {
     aliases = {
       remote = function(tbl)
@@ -475,6 +490,7 @@ local configurations = {
       abort = "--abort",
     },
   },
+  ["verify-commit"] = config {},
 }
 
 -- TODO: Consider returning a Path object, since consumers of this function tend to need that anyways.

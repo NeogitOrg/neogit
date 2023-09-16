@@ -26,6 +26,10 @@ end
 ---| "float" Open in a floating window
 ---| "tab" Open in a new tab
 
+---@class NeogitCommitBufferConfig Commit buffer options
+---@field kind WindowKind The type of window that should be opened
+---@field verify_commit boolean Show commit signature information in the buffer
+
 ---@class NeogitConfigPopup Popup window options
 ---@field kind WindowKind The type of window that should be opened
 
@@ -53,6 +57,11 @@ end
 ---@field rebase NeogitConfigSection|nil
 ---@field sequencer NeogitConfigSection|nil
 
+---@class NeogitFilewatcherConfig
+---@field interval number
+---@field enabled boolean
+---@field filewatcher NeogitFilewatcherConfig|nil
+
 ---@alias NeogitConfigMappingsFinder "Select" | "Close" | "Next" | "Previous" | "MultiselectToggleNext" | "MultiselectTogglePrevious" | "NOP" | false
 ---@alias NeogitConfigMappingsStatus "Close" | "InitRepo" | "Depth1" | "Depth2" | "Depth3" | "Depth4" | "Toggle" | "Discard" | "Stage" | "StageUnstaged" | "StageAll" | "Unstage" | "UnstageStaged" | "DiffAtFile" | "CommandHistory" | "Console" | "RefreshBuffer" | "GoToFile" | "VSplitOpen" | "SplitOpen" | "TabOpen" | "HelpPopup" | "DiffPopup" | "PullPopup" | "RebasePopup" | "MergePopup" | "PushPopup" | "CommitPopup" | "LogPopup" | "RevertPopup" | "StashPopup" | "CherryPickPopup" | "BranchPopup" | "FetchPopup" | "ResetPopup" | "RemotePopup" | "GoToPreviousHunkHeader" | "GoToNextHunkHeader" | false | fun()
 
@@ -61,6 +70,7 @@ end
 ---@field status? { [string]: NeogitConfigMappingsStatus } A dictionary that uses status commands to set a single keybind
 
 ---@class NeogitConfig Neogit configuration settings
+---@field filewatcher? NeogitFilewatcherConfig Values for filewatcher
 ---@field disable_hint? boolean Remove the top hint in the Status buffer
 ---@field disable_context_highlighting? boolean Disable context highlights based on cursor position
 ---@field disable_signs? boolean Special signs to draw for sections etc. in Neogit
@@ -73,12 +83,13 @@ end
 ---@field auto_refresh? boolean Automatically refresh to detect git modifications without manual intervention
 ---@field sort_branches? string Value used for `--sort` for the `git branch` command
 ---@field kind? WindowKind The default type of window neogit should open in
+---@field disable_line_numbers? boolean Whether to disable line numbers
 ---@field console_timeout? integer Time in milliseconds after a console is created for long running commands
 ---@field auto_show_console? boolean Automatically show the console if a command takes longer than console_timout
 ---@field status? { recent_commit_count: integer } Status buffer options
 ---@field commit_editor? NeogitConfigPopup Commit editor options
 ---@field commit_select_view? NeogitConfigPopup Commit select view options
----@field commit_view? NeogitConfigPopup Commit view options
+---@field commit_view? NeogitCommitBufferConfig Commit buffer options
 ---@field log_view? NeogitConfigPopup Log view options
 ---@field rebase_editor? NeogitConfigPopup Rebase editor options
 ---@field reflog_view? NeogitConfigPopup Reflog view options
@@ -86,7 +97,7 @@ end
 ---@field preview_buffer? NeogitConfigPopup Preview options
 ---@field popup? NeogitConfigPopup Set the default way of opening popups
 ---@field signs? NeogitConfigSigns Signs used for toggled regions
----@field integrations? { diffview: boolean, telescope: boolean } Which integrations to enable
+---@field integrations? { diffview: boolean, telescope: boolean, fzf_lua: boolean } Which integrations to enable
 ---@field sections? NeogitConfigSections
 ---@field ignored_settings? string[] Settings to never persist, format: "Filetype--cli-value", i.e. "NeogitCommitPopup--author"
 ---@field mappings? NeogitConfigMappings
@@ -100,6 +111,10 @@ function M.get_default_values()
     disable_signs = false,
     disable_commit_confirmation = false,
     disable_builtin_notifications = false,
+    filewatcher = {
+      interval = 1000,
+      enabled = true,
+    },
     telescope_sorter = function()
       return nil
     end,
@@ -109,6 +124,7 @@ function M.get_default_values()
     auto_refresh = true,
     sort_branches = "-committerdate",
     kind = "tab",
+    disable_line_numbers = true,
     -- The time after which an output console is shown for slow running commands
     console_timeout = 2000,
     -- Automatically show console if a command takes more than console_timeout milliseconds
@@ -124,6 +140,7 @@ function M.get_default_values()
     },
     commit_view = {
       kind = "vsplit",
+      verify_commit = vim.fn.executable("gpg") == 1,
     },
     log_view = {
       kind = "tab",
@@ -151,6 +168,7 @@ function M.get_default_values()
     integrations = {
       telescope = nil,
       diffview = nil,
+      fzf_lua = nil,
     },
     sections = {
       sequencer = {
@@ -202,6 +220,7 @@ function M.get_default_values()
       "NeogitPushPopup--force-with-lease",
       "NeogitPushPopup--force",
       "NeogitPullPopup--rebase",
+      "NeogitLogPopup--",
       "NeogitCommitPopup--allow-empty",
       "NeogitRevertPopup--no-edit", -- TODO: Fix incompatible switches with default enables
     },
@@ -384,7 +403,7 @@ function M.validate_config()
   end
 
   local function validate_integrations()
-    local valid_integrations = { "diffview", "telescope" }
+    local valid_integrations = { "diffview", "telescope", "fzf_lua" }
     if not validate_type(config.integrations, "integrations", "table") or #config.integrations == 0 then
       return
     end
@@ -421,7 +440,7 @@ function M.validate_config()
 
     for _, setting in ipairs(config.ignored_settings) do
       if validate_type(setting, "ignored_settings." .. vim.inspect(setting), "string") then
-        local match_pattern = ".+%-%-.+"
+        local match_pattern = ".+%-%-.?"
         if not string.match(setting, match_pattern) then
           err(
             "ignored_settings",
@@ -536,6 +555,7 @@ function M.validate_config()
     validate_type(config.sort_branches, "sort_branches", "string")
     validate_type(config.console_timeout, "console_timeout", "number")
     validate_kind(config.kind, "kind")
+    validate_type(config.disable_line_numbers, "disable_line_numbers", "boolean")
     validate_type(config.auto_show_console, "auto_show_console", "boolean")
     if validate_type(config.status, "status", "table") then
       validate_type(config.status.recent_commit_count, "status.recent_commit_count", "number")

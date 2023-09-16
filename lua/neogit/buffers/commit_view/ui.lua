@@ -21,9 +21,18 @@ function M.OverviewFile(file)
   }
 end
 
+local function commit_header_arg(info)
+  if info.oid ~= info.commit_arg then
+    return row { text(info.commit_arg .. " "), text.highlight("Comment")(info.oid) }
+  else
+    return row {}
+  end
+end
+
 function M.CommitHeader(info)
   return col {
-    text.sign("NeogitCommitViewHeader")("Commit " .. info.oid),
+    text.sign("NeogitCommitViewHeader")("Commit " .. info.commit_arg),
+    commit_header_arg(info),
     row {
       text.highlight("Comment")("Author:     "),
       text(info.author_name .. " <" .. info.author_email .. ">"),
@@ -37,12 +46,16 @@ function M.CommitHeader(info)
   }
 end
 
-function M.CommitView(info, overview)
+function M.CommitView(info, overview, signature_block)
+  local hide_signature = vim.tbl_isempty(signature_block)
+
   return {
     M.CommitHeader(info),
     text(""),
     col(map(info.description, text), { sign = "NeogitCommitViewDescription", tag = "Description" }),
     text(""),
+    col(map(signature_block or {}, text), { tag = "Signature", hidden = hide_signature }),
+    text("", { hidden = hide_signature }),
     text(overview.summary),
     col(map(overview.files, M.OverviewFile), { tag = "OverviewFileList" }),
     text(""),

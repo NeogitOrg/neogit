@@ -11,7 +11,7 @@ local operation = require("neogit.operations")
 
 M.add = operation("add_remote", function(popup)
   local name = input.get_user_input("Remote name: ")
-  if not name then
+  if not name or name == "" then
     return
   end
 
@@ -26,7 +26,7 @@ M.add = operation("add_remote", function(popup)
   end
 
   local remote_url = input.get_user_input("Remote url: ", msg)
-  if not remote_url then
+  if not remote_url or remote_url == "" then
     return
   end
 

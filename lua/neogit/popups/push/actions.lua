@@ -97,7 +97,7 @@ function M.push_other(popup)
     return
   end
 
-  local remote, _ = unpack(vim.split(destination, "/"))
+  local remote, _ = destination:match("^([^/]*)/(.*)$")
   push_to(popup:get_arguments(), remote, source .. ":" .. destination)
 end
 
