@@ -15,7 +15,6 @@ function M.generate_patch(item, hunk, from, to, reverse)
   -- to = to or hunk.diff_to - hunk.diff_from
 
   if not from and not to then
-    print("Using whole hunk")
     from = hunk.diff_from + 1
     to = hunk.diff_to
   end
@@ -32,7 +31,7 @@ function M.generate_patch(item, hunk, from, to, reverse)
   local len_offset = 0
 
   -- + 1 skips the hunk header, since we construct that manually afterwards
-  print("Lines: ", vim.inspect(item.diff.lines), hunk.diff_from, hunk.diff_to)
+  -- TODO: could use `hunk.lines` instead if this is only called with the `SelectedHunk` type
   for k = hunk.diff_from + 1, hunk.diff_to do
     local v = item.diff.lines[k]
     local operand, line = v:match("^([+ -])(.*)")
