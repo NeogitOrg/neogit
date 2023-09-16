@@ -20,7 +20,7 @@ function M.generate_patch(item, hunk, from, to, reverse)
     to = hunk.diff_to
   end
 
-  assert(from <= to)
+  assert(from <= to, string.format("from must be less than or equal to to %d %d", from, to))
   if from > to then
     from, to = to, from
   end

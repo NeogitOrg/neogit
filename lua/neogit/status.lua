@@ -34,6 +34,7 @@ M.commit_view = nil
 ---@field items StatusItem[]
 ---@field name string
 ---@field ignore_sign boolean If true will skip drawing the section icons
+---@field folded boolean|nil
 
 ---@type Section[]
 ---Sections in order by first lines
@@ -760,8 +761,11 @@ function Selection:format()
     table.insert(lines, string.format("%s:", sec.name))
     for _, item in ipairs(sec.items) do
       table.insert(lines, string.format("  %s%s:", item == self.item and "*" or "", item.name))
-      for _, hunk in ipairs(M.get_item_hunks(item, self.first_line, self.last_line, false)) do
-        table.insert(lines, string.format("    %d%d:", hunk.from, hunk.to))
+      for _, hunk in ipairs(M.get_item_hunks(item, self.first_line, self.last_line, true)) do
+        table.insert(lines, string.format("    %d,%d:", hunk.from, hunk.to))
+        for _, line in ipairs(hunk.lines) do
+          table.insert(lines, string.format("      %s", line))
+        end
       end
     end
   end
@@ -772,6 +776,7 @@ end
 ---@class SelectedHunk: Hunk
 ---@field from number start offset from the first line of the hunk
 ---@field to number end offset from the first line of the hunk
+---@field lines string[]
 
 ---@param item StatusItem
 ---@param first_line number
@@ -793,22 +798,27 @@ function M.get_item_hunks(item, first_line, last_line, partial)
 
     if h.diff_from <= last_line and h.diff_to >= first_line then
       -- Relative to the hunk
-      local from
-      local to
+      local from, to
       if partial then
-        from = h.diff_from + math.max(first_line - h.diff_from, h.diff_from)
-        to = h.diff_from + math.min(last_line - h.diff_from, h.diff_to) or h.diff_to
+        from = h.diff_from + math.max(first_line - h.diff_from, 0)
+        to = math.min(last_line, h.diff_to)
       else
         from = h.diff_from + 1
         to = h.diff_to
       end
 
-      local o = {
+      local hunk_lines = {}
 
+      for i = from, to do
+        table.insert(hunk_lines, item.diff.lines[i])
+      end
+
+      local o = {
         from = from,
         to = to,
         __index = h,
         hunk = h,
+        lines = hunk_lines,
       }
 
       setmetatable(o, o)
@@ -934,7 +944,6 @@ local stage = function()
           for _, hunk in ipairs(hunks) do
             -- Apply works for both tracked and untracked
             local patch = git.index.generate_patch(item, hunk, hunk.from, hunk.to)
-            print("hunk", hunk.from, hunk.to, patch)
             git.index.apply(patch, { cached = true })
           end
         else
@@ -1223,7 +1232,7 @@ end
 local set_folds = function(to)
   Collection.new(M.locations):each(function(l)
     l.folded = to[1]
-    Collection.new(l.files):each(function(f)
+    Collection.new(l.items):each(function(f)
       f.folded = to[2]
       if f.hunks then
         Collection.new(f.hunks):each(function(h)
@@ -1240,11 +1249,9 @@ end
 ---@see section_has_hunks
 local function handle_section_item(item)
   local path = item.name
-  local hunk, hunk_lines = M.get_item_hunks(item)
-  local cursor_row, cursor_col
-  if hunk then
-    cursor_row, cursor_col = unpack(vim.api.nvim_win_get_cursor(0))
-  end
+  local cursor_row, cursor_col = unpack(vim.api.nvim_win_get_cursor(0))
+
+  local hunk = M.get_item_hunks(item, cursor_row, cursor_row, false)[1]
 
   notif.delete_all()
   M.status_buffer:close()
@@ -1257,11 +1264,12 @@ local function handle_section_item(item)
 
   vim.cmd("e " .. relpath)
 
-  if hunk and hunk_lines then
+  if hunk then
     local line_offset = cursor_row - hunk.first
+
     local row = hunk.disk_from + line_offset - 1
     for i = 1, line_offset do
-      if string.sub(hunk_lines[i], 1, 1) == "-" then
+      if string.sub(hunk.lines[i], 1, 1) == "-" then
         row = row - 1
       end
     end
@@ -1343,10 +1351,13 @@ local cmd_func_map = function()
     end),
     ["Toggle"] = toggle,
 
-    ["DebugSelection"] = function()
-      local s = M.get_selection():format()
-      vim.notify(s)
-    end,
+    ["DebugSelection"] = {
+      "nv",
+      function()
+        local s = M.get_selection():format()
+        vim.notify(s)
+      end,
+    },
     ["Discard"] = { "nv", a.void(discard) },
     ["Stage"] = { "nv", a.void(stage) },
     ["StageUnstaged"] = a.void(function()
