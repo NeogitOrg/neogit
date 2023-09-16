@@ -15,7 +15,6 @@ local input = require("neogit.lib.input")
 local util = require("neogit.lib.util")
 local watcher = require("neogit.watcher")
 
-local map = require("neogit.lib.util").map
 local api = vim.api
 local fn = vim.fn
 
@@ -49,6 +48,7 @@ M.outdated = {}
 ---@field oid string|nil optional object id
 ---@field commit CommitLogEntry|nil optional object id
 ---@field folded boolean|nil
+---@field hunks Hunk[]|nil
 
 local head_start = "@"
 local add_start = "+"
@@ -671,66 +671,6 @@ local function close(skip_close)
   end
 end
 
----Determines if selection contains multiple files
----@return boolean
-local function selection_spans_multiple_items_within_section()
-  local first_line = vim.fn.getpos("v")[2]
-  local last_line = vim.fn.getpos(".")[2]
-
-  local first_section, first_item = get_section_item_for_line(first_line)
-  local last_section, last_item = get_section_item_for_line(last_line)
-
-  if not first_section or not last_section then
-    return false
-  end
-
-  return (first_section.name == last_section.name) and (first_item.name ~= last_item.name)
-end
-
---- Validates the current selection and acts accordingly
---@return nil
---@return number, number
-local function get_selection()
-  local first_line = vim.fn.getpos("v")[2]
-  local last_line = vim.fn.getpos(".")[2]
-
-  local first_section, first_item = get_section_item_for_line(first_line)
-  local last_section, last_item = get_section_item_for_line(last_line)
-
-  if not first_section or not first_item or not last_section or not last_item then
-    return nil
-  end
-
-  local first_hunk = get_hunk_of_item_for_line(first_item, first_line)
-  local last_hunk = get_hunk_of_item_for_line(last_item, last_line)
-
-  if not first_hunk or not last_hunk then
-    return nil
-  end
-
-  if
-    first_section.name ~= last_section.name
-    or first_item.name ~= last_item.name
-    or first_hunk.first ~= last_hunk.first
-  then
-    return nil
-  end
-
-  first_line = first_line - first_item.first
-  last_line = last_line - last_item.first
-
-  -- both hunks are the same anyway so only have to check one
-  if first_hunk.diff_from == first_line or first_hunk.diff_from == last_line then
-    return nil
-  end
-
-  return first_section,
-    first_item,
-    first_hunk,
-    first_line - first_hunk.diff_from,
-    last_line - first_hunk.diff_from
-end
-
 ---@class Selection
 ---@field sections SectionSelection[]
 ---@field first_line number
@@ -1034,66 +974,6 @@ local function discard_message(files, hunk_count)
     return string.format("Discard %d files?", #files)
   else
     return string.format("Discard %q?", files[1])
-  end
-end
-
----Discards selected files
----@param files table
----@param section string
-local function discard_selected_files(files, section)
-  local filenames = map(files, function(item)
-    return item.name
-  end)
-
-  logger.debug("[Status] Discarding selected files: " .. table.concat(filenames, ", "))
-
-  if section == "untracked" then
-    a.util.scheduler()
-    for _, file in ipairs(filenames) do
-      vim.fn.delete(cli.git_root() .. "/" .. file)
-    end
-  elseif section == "unstaged" then
-    git.index.checkout(filenames)
-  elseif section == "staged" then
-    git.index.reset(filenames)
-    git.index.checkout(filenames)
-  elseif section == "stashes" then
-    map(filenames, function(name)
-      local stash = name:match("(stash@{%d+})")
-      if stash then
-        git.stash.drop(stash)
-      end
-    end)
-  end
-end
-
----Discards selected lines
-local function discard_selection(section, item, hunk, from, to)
-  logger.debug("Discarding selection hunk:" .. vim.inspect(hunk))
-  local patch = git.index.generate_patch(item, hunk, from, to, true)
-  logger.debug("Patch:" .. vim.inspect(patch))
-
-  if section.name == "staged" then
-    local result = git.index.apply(patch, { reverse = true, index = true })
-    if result.code ~= 0 then
-      error("Failed to discard" .. vim.inspect(result))
-    end
-  else
-    git.index.apply(patch, { reverse = true })
-  end
-end
-
----Discards hunk
-local function discard_hunk(section, item, lines, hunk)
-  lines[1] =
-    string.format("@@ -%d,%d +%d,%d @@", hunk.index_from, hunk.index_len, hunk.index_from, hunk.disk_len)
-
-  local diff = table.concat(lines or {}, "\n")
-  diff = table.concat({ "--- a/" .. item.name, "+++ b/" .. item.name, diff, "" }, "\n")
-  if section == "staged" then
-    git.index.apply(diff, { reverse = true, index = true })
-  else
-    git.index.apply(diff, { reverse = true })
   end
 end
 
