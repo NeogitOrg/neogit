@@ -7,6 +7,8 @@ local LogViewBuffer = require("neogit.buffers.log_view")
 local ReflogViewBuffer = require("neogit.buffers.reflog_view")
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
+local operation = require("neogit.operations")
+
 ---Builds a graph for the popup if required
 ---@param popup table
 ---@return table|nil
@@ -32,9 +34,9 @@ local function commits(popup, extras)
 end
 
 -- TODO: Handle when head is detached
-function M.log_current(popup)
+M.log_current = operation("log_current", function(popup)
   LogViewBuffer.new(commits(popup), popup:get_internal_arguments()):open()
-end
+end)
 
 function M.log_head(popup)
   LogViewBuffer.new(commits(popup, { "HEAD" }), popup:get_internal_arguments()):open()
