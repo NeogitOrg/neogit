@@ -101,7 +101,12 @@ function M.get(key, default)
     return default
   end
 
-  return M.state[gen_key(key)] or default
+  local value = M.state[gen_key(key)]
+  if value ~= nil then
+    return value
+  else
+    return default
+  end
 end
 
 ---Reset current state, removing whats written to disk
