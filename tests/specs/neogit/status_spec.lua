@@ -107,7 +107,6 @@ describe("status buffer", function()
       end)
     )
 
-
     it(
       "can stage a whole file and touched hunk",
       in_prepared_repo(function()

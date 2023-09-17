@@ -810,7 +810,6 @@ function M.get_selection()
   local first_line = math.min(visual_pos, cursor_pos)
   local last_line = math.max(visual_pos, cursor_pos)
 
-
   local res = {
     sections = {},
     first_line = first_line,
