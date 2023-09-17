@@ -1227,14 +1227,6 @@ local cmd_func_map = function()
       set_folds { false, false, false }
     end),
     ["Toggle"] = toggle,
-
-    ["DebugSelection"] = {
-      "nv",
-      function()
-        local s = M.get_selection():format()
-        vim.notify(s)
-      end,
-    },
     ["Discard"] = { "nv", a.void(discard) },
     ["Stage"] = { "nv", a.void(stage) },
     ["StageUnstaged"] = a.void(function()
