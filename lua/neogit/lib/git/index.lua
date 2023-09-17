@@ -11,9 +11,6 @@ local M = {}
 function M.generate_patch(item, hunk, from, to, reverse)
   reverse = reverse or false
 
-  -- from = from or 1
-  -- to = to or hunk.diff_to - hunk.diff_from
-
   if not from and not to then
     from = hunk.diff_from + 1
     to = hunk.diff_to
@@ -23,8 +20,6 @@ function M.generate_patch(item, hunk, from, to, reverse)
   if from > to then
     from, to = to, from
   end
-  -- from = from + hunk.diff_from
-  -- to = to + hunk.diff_from
 
   local diff_content = {}
   local len_start = hunk.index_len

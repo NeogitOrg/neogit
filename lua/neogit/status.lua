@@ -596,32 +596,6 @@ local function current_line_is_hunk()
   return h ~= nil
 end
 
--- local function get_hunk_of_item_for_line(item, line)
---   if item.hunks == nil then
---     return nil
---   end
-
---   local hunk
---   local lines = {}
---   for _, h in ipairs(item.hunks) do
---     if h.first <= line and line <= h.last then
---       hunk = h
---       for i = hunk.diff_from, hunk.diff_to do
---         table.insert(lines, item.diff.lines[i])
---       end
---       break
---     end
---   end
---   return hunk, lines
--- end
-
--- local function get_current_hunk_of_item(item)
---   if item.hunks == nil then
---     return nil
---   end
---   return get_hunk_of_item_for_line(item, vim.fn.line("."))
--- end
-
 local function toggle()
   local sel = M.get_selection()
   if sel.section == nil then
@@ -981,14 +955,6 @@ local function discard()
   local sel = M.get_selection()
   local mode = vim.api.nvim_get_mode()
 
-  -- if
-  --   sel.section == nil
-  --   or (section_name ~= "unstaged" and section_name ~= "untracked" and section_name ~= "unmerged")
-  --   or (mode.mode == "V" and sel.item == nil)
-  -- then
-  --   return
-  -- end
-
   git.index.update()
 
   local t = {}
@@ -1053,50 +1019,6 @@ local function discard()
     logger.fmt_debug("Discard job %d", i)
     v()
   end
-  -- local sel = M.get_selection()
-  -- local section = sel.section
-  -- local item = sel.item
-
-  -- if section == nil or item == nil then
-  --   return
-  -- end
-
-  -- M.current_operation = "discard"
-
-  -- local mode = vim.api.nvim_get_mode()
-
-  -- -- These all need to be captured _before_ the get_confirmation() call, since that
-  -- -- seems to effect how vim determines what's selected
-  -- local multi_file = selection_spans_multiple_items_within_section()
-  -- local items = M.get_selection().items
-
-  -- local selection = { get_selection() }
-
-  -- local on_hunk = current_line_is_hunk()
-
-  -- local hunks, lines = M.get_item_hunks(item, sel.first_line, sel.last_line)
-
-  -- if not input.get_confirmation(discard_message(item, mode), { values = { "&Yes", "&No" }, default = 2 }) then
-  --   return
-  -- end
-
-  -- -- Make sure the index is in sync as git-status skips it
-  -- -- Do this manually since the `cli` add --no-optional-locks
-  -- git.index.update()
-
-  -- if mode.mode == "V" then
-  --   if multi_file then
-  --     discard_selected_files(items, section.name)
-  --   else
-  --     discard_selection(unpack(selection))
-  --   end
-  -- elseif #sel.items == 1 then
-  --   for _, hunk in ipairs(hunks) do
-  --     discard_hunk(section.name, item, lines, hunk)
-  --   end
-  -- else
-  --   discard_selected_files({ item }, section.name)
-  -- end
 
   refresh(true, "discard")
 
@@ -1284,10 +1206,6 @@ local cmd_func_map = function()
       elseif on_hunk then
         local hunks = M.get_item_hunks(sel.item, 0, sel.first_line - 1, false)
         local hunk = hunks[#hunks]
-
-        -- if hunk and vim.fn.line(".") == hunk.first then
-        --   hunk = get_hunk_of_item_for_line(item, vim.fn.line(".") - 1)
-        -- end
 
         if hunk then
           vim.api.nvim_win_set_cursor(0, { hunk.first, 0 })
