@@ -40,7 +40,7 @@ function M:open(_)
           p { commits = self.buffer.ui:get_commits_in_selection() }
         end),
         ["b"] = popups.open("branch", function(p)
-          p { revisions = self.buffer.ui:get_commits_in_selection() }
+          p { commits = self.buffer.ui:get_commits_in_selection() }
         end),
         ["c"] = popups.open("commit", function(p)
           p { commit = self.buffer.ui:get_commit_under_cursor() }
@@ -66,7 +66,7 @@ function M:open(_)
           p { commits = { self.buffer.ui:get_commit_under_cursor() } }
         end),
         ["b"] = popups.open("branch", function(p)
-          p { revisions = { self.buffer.ui:get_commit_under_cursor() } }
+          p { commits = { self.buffer.ui:get_commit_under_cursor() } }
         end),
         ["c"] = popups.open("commit", function(p)
           p { commit = self.buffer.ui:get_commit_under_cursor() }

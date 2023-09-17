@@ -3,7 +3,7 @@ local actions = require("neogit.popups.reset.actions")
 
 local M = {}
 
-function M.create(selection)
+function M.create(env)
   local p = popup
     .builder()
     :name("NeogitResetPopup")
@@ -16,7 +16,7 @@ function M.create(selection)
     :action("w", "worktree (only)")
     :group_heading("")
     :action("f", "a file", actions.a_file)
-    :env(selection)
+    :env(env)
     :build()
 
   p:show()

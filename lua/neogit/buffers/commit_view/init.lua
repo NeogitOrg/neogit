@@ -151,7 +151,7 @@ function M:open()
           p { commits = { self.commit_info.oid } }
         end),
         ["b"] = popups.open("branch", function(p)
-          p { revisions = { self.commit_info.oid } }
+          p { commits = { self.commit_info.oid } }
         end),
         ["c"] = popups.open("commit", function(p)
           p { commit = self.commit_info.oid }

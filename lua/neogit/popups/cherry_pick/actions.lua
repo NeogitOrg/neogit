@@ -1,6 +1,5 @@
 local M = {}
 
-local util = require("neogit.lib.util")
 local git = require("neogit.lib.git")
 
 local CommitSelectViewBuffer = require("neogit.buffers.commit_select_view")
@@ -9,8 +8,8 @@ local CommitSelectViewBuffer = require("neogit.buffers.commit_select_view")
 ---@return table
 local function get_commits(popup)
   local commits
-  if popup.state.env.commits then
-    commits = util.reverse(popup.state.commits)
+  if #popup.state.env.commits > 0 then
+    commits = popup.state.commits
   else
     commits = CommitSelectViewBuffer.new(git.log.list { "--max-count=256" }):open_async()
   end
