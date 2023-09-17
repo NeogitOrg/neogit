@@ -810,7 +810,6 @@ function M.get_selection()
   local first_line = math.min(visual_pos, cursor_pos)
   local last_line = math.max(visual_pos, cursor_pos)
 
-  print("get_selection", first_line, last_line)
 
   local res = {
     sections = {},
@@ -1007,7 +1006,6 @@ local function discard()
       table.insert(files, item.name)
       local hunks = M.get_item_hunks(item, sel.first_line, sel.last_line, mode.mode == "V")
 
-      print("Hunks: ", vim.inspect(hunks))
       if #hunks > 0 then
         logger.fmt_debug("Discarding %d hunks from %q", #hunks, item.name)
 
