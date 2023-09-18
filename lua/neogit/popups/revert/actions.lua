@@ -1,6 +1,5 @@
 local M = {}
 
-local util = require("neogit.lib.util")
 local git = require("neogit.lib.git")
 local client = require("neogit.client")
 local notif = require("neogit.lib.notification")
