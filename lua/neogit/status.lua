@@ -871,7 +871,7 @@ local stage = function()
           table.insert(files, item.name)
         end
       else
-        logger.fmt_debug("Not staging item in %s", section.name)
+        logger.fmt_debug("[STATUS] Not staging item in %s", section.name)
       end
     end
   end
