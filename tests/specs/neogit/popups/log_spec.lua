@@ -49,4 +49,13 @@ describe("log popup", function()
       vim.fn.feedkeys("q", "x")
     end)
   )
+
+  it(
+    "respects decorate switch",
+    in_prepared_repo(function()
+      act("l-dl")
+      operations.wait("log_current")
+      eq("e2c2a1c  b.txt", vim.api.nvim_get_current_line())
+    end)
+  )
 end)
