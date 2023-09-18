@@ -15,7 +15,7 @@ end
 
 describe("log popup", function()
   it(
-    "switches persist correctly",
+    "persists switches correctly",
     in_prepared_repo(function()
       -- Create a merge commit so that we can see graph markers in the log.
       util.system([[
@@ -29,7 +29,7 @@ describe("log popup", function()
 
       vim.fn.feedkeys("j", "x")
       -- Check for graph markers.
-      eq("        |\\", vim.api.nvim_get_current_line())
+      eq([[        |\]], vim.api.nvim_get_current_line())
       vim.fn.feedkeys("q", "x")
 
       -- Open new log buffer with graph disabled.
