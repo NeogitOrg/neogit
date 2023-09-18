@@ -597,14 +597,14 @@ local function current_line_is_hunk()
 end
 
 local function toggle()
-  local sel = M.get_selection()
-  if sel.section == nil then
+  local selection = M.get_selection()
+  if selection.section == nil then
     return
   end
 
-  local item = sel.item
+  local item = selection.item
 
-  local hunks = item and M.get_item_hunks(item, sel.first_line, sel.last_line, false)
+  local hunks = item and M.get_item_hunks(item, selection.first_line, selection.last_line, false)
   if item and hunks and #hunks > 0 then
     for _, hunk in ipairs(hunks) do
       hunk.hunk.folded = not hunk.hunk.folded
@@ -613,8 +613,8 @@ local function toggle()
     vim.api.nvim_win_set_cursor(0, { hunks[1].first, 0 })
   elseif item then
     item.folded = not item.folded
-  elseif sel.section ~= nil then
-    sel.section.folded = not sel.section.folded
+  elseif selection.section ~= nil then
+    selection.section.folded = not selection.section.folded
   end
 
   refresh_status_buffer()
@@ -748,15 +748,15 @@ function M.get_item_hunks(item, first_line, last_line, partial)
   return hunks, lines
 end
 
----@param sel Selection
-function M.selection_hunks(sel)
+---@param selection Selection
+function M.selection_hunks(selection)
   local res = {}
-  for _, item in ipairs(sel.items) do
+  for _, item in ipairs(selection.items) do
     local lines = {}
     local hunks = {}
 
-    for _, h in ipairs(sel.item.hunks) do
-      if h.first <= sel.last_line and h.last >= sel.first_line then
+    for _, h in ipairs(selection.item.hunks) do
+      if h.first <= selection.last_line and h.last >= selection.first_line then
         table.insert(hunks, h)
         for i = h.diff_from, h.diff_to do
           table.insert(lines, item.diff.lines[i])
@@ -842,14 +842,14 @@ end
 local stage = function()
   M.current_operation = "stage"
 
-  local sel = M.get_selection()
+  local selection = M.get_selection()
   local mode = vim.api.nvim_get_mode()
 
   local files = {}
 
-  for _, section in ipairs(sel.sections) do
+  for _, section in ipairs(selection.sections) do
     for _, item in ipairs(section.items) do
-      local hunks = M.get_item_hunks(item, sel.first_line, sel.last_line, mode.mode == "V")
+      local hunks = M.get_item_hunks(item, selection.first_line, selection.last_line, mode.mode == "V")
 
       if section.name == "unstaged" then
         if #hunks > 0 then
@@ -887,20 +887,20 @@ local stage = function()
     status = true,
     diffs = vim.tbl_map(function(v)
       return "*:" .. v.name
-    end, sel.items),
+    end, selection.items),
   }, "stage_finish")
 end
 
 local unstage = function()
-  local sel = M.get_selection()
+  local selection = M.get_selection()
   local mode = vim.api.nvim_get_mode()
 
   local files = {}
 
-  for _, section in ipairs(sel.sections) do
+  for _, section in ipairs(selection.sections) do
     for _, item in ipairs(section.items) do
       if section.name == "staged" then
-        local hunks = M.get_item_hunks(item, sel.first_line, sel.last_line, mode.mode == "V")
+        local hunks = M.get_item_hunks(item, selection.first_line, selection.last_line, mode.mode == "V")
 
         if #hunks > 0 then
           for _, hunk in ipairs(hunks) do
@@ -935,7 +935,7 @@ local unstage = function()
     status = true,
     diffs = vim.tbl_map(function(v)
       return "*:" .. v.name
-    end, sel.items),
+    end, selection.items),
   }, "unstage_finish")
 end
 
@@ -952,7 +952,7 @@ end
 local function discard()
   M.current_operation = "discard"
 
-  local sel = M.get_selection()
+  local selection = M.get_selection()
   local mode = vim.api.nvim_get_mode()
 
   git.index.update()
@@ -963,13 +963,13 @@ local function discard()
   local file_count = 0
   local files = {}
 
-  for _, section in ipairs(sel.sections) do
+  for _, section in ipairs(selection.sections) do
     local section_name = section.name
 
     file_count = file_count + #section.items
     for _, item in ipairs(section.items) do
       table.insert(files, item.name)
-      local hunks = M.get_item_hunks(item, sel.first_line, sel.last_line, mode.mode == "V")
+      local hunks = M.get_item_hunks(item, selection.first_line, selection.last_line, mode.mode == "V")
 
       if #hunks > 0 then
         logger.fmt_debug("Discarding %d hunks from %q", #hunks, item.name)
@@ -1195,7 +1195,7 @@ local cmd_func_map = function()
         return
       end
 
-      local sel = M.get_selection()
+      local selection = M.get_selection()
       local on_hunk = item and current_line_is_hunk()
 
       if item and not on_hunk then
@@ -1204,7 +1204,7 @@ local cmd_func_map = function()
           vim.api.nvim_win_set_cursor(0, { prev_item.hunks[#prev_item.hunks].first, 0 })
         end
       elseif on_hunk then
-        local hunks = M.get_item_hunks(sel.item, 0, sel.first_line - 1, false)
+        local hunks = M.get_item_hunks(selection.item, 0, selection.first_line - 1, false)
         local hunk = hunks[#hunks]
 
         if hunk then
@@ -1229,8 +1229,10 @@ local cmd_func_map = function()
       if item and not on_hunk then
         vim.api.nvim_win_set_cursor(0, { vim.fn.line(".") + 1, 0 })
       elseif on_hunk then
-        local sel = M.get_selection()
-        local hunks = M.get_item_hunks(sel.item, sel.last_line + 1, sel.last_line + 1, false)
+        local selection = M.get_selection()
+        local hunks =
+          M.get_item_hunks(selection.item, selection.last_line + 1, selection.last_line + 1, false)
+
         local hunk = hunks[1]
 
         assert(hunk, "Hunk is nil")
