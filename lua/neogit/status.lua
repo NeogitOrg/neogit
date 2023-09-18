@@ -871,7 +871,7 @@ local stage = function()
           table.insert(files, item.name)
         end
       else
-        logger.fmt_debug("[STATUS] Not staging item in %s", section.name)
+        logger.fmt_debug("[STATUS]: Not staging item in %s", section.name)
       end
     end
   end
@@ -905,7 +905,7 @@ local unstage = function()
         if #hunks > 0 then
           for _, hunk in ipairs(hunks) do
             logger.fmt_debug(
-              "[STATUS] Unstaging hunk %d %d of %d %d, index_from %d",
+              "[STATUS]: Unstaging hunk %d %d of %d %d, index_from %d",
               hunk.from,
               hunk.to,
               hunk.diff_from,
