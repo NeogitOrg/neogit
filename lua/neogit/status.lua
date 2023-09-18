@@ -905,7 +905,7 @@ local unstage = function()
         if #hunks > 0 then
           for _, hunk in ipairs(hunks) do
             logger.fmt_debug(
-              "Unstaging hunk %d %d of %d %d, index_from %d",
+              "[STATUS] Unstaging hunk %d %d of %d %d, index_from %d",
               hunk.from,
               hunk.to,
               hunk.diff_from,
