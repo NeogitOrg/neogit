@@ -109,7 +109,9 @@ local highlight_for_signature = {
 
 M.CommitEntry = Component.new(function(commit, args)
   local ref = {}
-  if commit.ref_name ~= "" then
+
+  -- Parse out ref names
+  if args.decorate and commit.ref_name ~= "" then
     local ref_name, _ = commit.ref_name:gsub("HEAD %-> ", "")
     local remote_name, local_name = unpack(vim.split(ref_name, ", "))
 

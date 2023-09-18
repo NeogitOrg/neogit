@@ -49,7 +49,7 @@ function M.create()
       dependant = { "color" },
     })
     :switch("c", "color", "Show graph in color", { internal = true, incompatible = { "reverse" } })
-    :switch("d", "decorate", "Show refnames", { enabled = true })
+    :switch("d", "decorate", "Show refnames", { enabled = true, internal = true })
     :switch("S", "show-signature", "Show signatures", { key_prefix = "=" })
     :switch("s", "stat", "Show diffstats")
     :group_heading("Log")
