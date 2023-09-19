@@ -75,7 +75,6 @@ end
 ---@field disable_context_highlighting? boolean Disable context highlights based on cursor position
 ---@field disable_signs? boolean Special signs to draw for sections etc. in Neogit
 ---@field disable_commit_confirmation? boolean Disable commit confirmations
----@field disable_builtin_notifications? boolean Disable Neogit's own notifications and use vim.notify
 ---@field telescope_sorter? function The sorter telescope will use
 ---@field disable_insert_on_commit? boolean|"auto" Disable automatically entering insert mode in commit dialogues
 ---@field use_per_project_settings? boolean Scope persisted settings on a per-project basis
@@ -110,7 +109,6 @@ function M.get_default_values()
     disable_context_highlighting = false,
     disable_signs = false,
     disable_commit_confirmation = false,
-    disable_builtin_notifications = false,
     filewatcher = {
       interval = 1000,
       enabled = true,
@@ -546,7 +544,6 @@ function M.validate_config()
     validate_type(config.disable_context_highlighting, "disable_context_highlighting", "boolean")
     validate_type(config.disable_signs, "disable_signs", "boolean")
     validate_type(config.disable_commit_confirmation, "disable_commit_confirmation", "boolean")
-    validate_type(config.disable_builtin_notifications, "disable_builtin_notifications", "boolean")
     validate_type(config.telescope_sorter, "telescope_sorter", "function")
     validate_type(config.use_per_project_settings, "use_per_project_settings", "boolean")
     validate_type(config.remember_settings, "remember_settings", "boolean")
