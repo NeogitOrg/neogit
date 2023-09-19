@@ -91,9 +91,6 @@ to Neovim users.
                                                                        *:Neogit*
 :Neogit                 In a Git repository, opens a new NeogitStatus tab.
 
-                                                               *:NeogitMessages*
-:NeogitMessages         Prints messages from neogit's messaging system.
-
                                                              *:NeogitResetState*
 :NeogitResetState       Performs a full reset of saved flags for all popups.
 
