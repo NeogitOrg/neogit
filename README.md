@@ -101,7 +101,7 @@ neogit.setup {
   -- Change the default way of opening neogit
   kind = "tab",
   -- Disable line numbers and relative line numbers
-  disable_line_numbers = true
+  disable_line_numbers = true,
   -- The time after which an output console is shown for slow running commands
   console_timeout = 2000,
   -- Automatically show console if a command takes more than console_timeout milliseconds
