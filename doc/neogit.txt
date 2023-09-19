@@ -313,12 +313,6 @@ NeogitPopupConfigDisabled  Applied to config without value
 NeogitPopupActionKey       Applied to key that triggers function
 NeogitPopupActionDisabled  Applied to key when function is unimplemented
 
-NOTIFICATIONS
-NeogitNotificationInfo     Linked to DiagnosticInfo by default
-NeogitNotificationWarning  Linked to DiagnosticWarning by default
-NeogitNotificationError    Linked to DiagnosticError by default
-
-
 COMMAND HISTORY BUFFER
 NeogitCommandText          Git command that was run
 NeogitCommandTime          Execution time
