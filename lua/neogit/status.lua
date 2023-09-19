@@ -506,7 +506,6 @@ local refresh_lock = a.control.Semaphore.new(1)
 local lock_holder = nil
 
 local function refresh(which, reason)
-  notification.info("[DEBUG] Refreshing Status Buffer")
   logger.info("[STATUS BUFFER]: Starting refresh")
 
   if refresh_lock.permits == 0 then
