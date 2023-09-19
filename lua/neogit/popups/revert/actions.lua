@@ -53,9 +53,7 @@ function M.commits(popup)
     autocmd = "NeogitRevertComplete",
     refresh = "do_revert",
     msg = {
-      setup = "Reverting...",
-      success = "Reverted!",
-      fail = "Couldn't revert",
+      success = "Reverted",
     },
   })
 end

@@ -89,18 +89,22 @@ function M.wrap(cmd, opts)
 
   a.util.scheduler()
 
-  notification.info(opts.msg.setup)
+  if opts.msg.setup then
+    notification.info(opts.msg.setup)
+  end
   local result = cmd.env(M.get_envs_git_editor()):in_pty(true).call(true):trim()
 
   a.util.scheduler()
 
-  notification.delete_all()
-
   if result.code == 0 then
-    notification.info(opts.msg.success)
+    if opts.msg.success then
+      notification.info(opts.msg.success, { dismiss = true })
+    end
     vim.api.nvim_exec_autocmds("User", { pattern = opts.autocmd, modeline = false })
   else
-    notification.warn(opts.msg.fail)
+    if opts.msg.fail then
+      notification.warn(opts.msg.fail, { dismiss = true })
+    end
   end
 end
 
