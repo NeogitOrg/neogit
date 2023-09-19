@@ -18,21 +18,24 @@ describe("remote popup", function()
   it(
     "can add remote",
     in_prepared_repo(function()
-      input.values = { "foo", "https://github.com/foo/bar" }
+      local remote_a = harness.prepare_repository()
+      local remote_b = harness.prepare_repository()
+
+      input.values = { "foo", remote_a }
       act("Ma")
 
       operations.wait("add_remote")
 
       eq({ "foo", "origin" }, lib.git.remote.list())
-      eq({ "https://github.com/foo/bar" }, lib.git.remote.get_url("foo"))
+      eq({ remote_a }, lib.git.remote.get_url("foo"))
 
-      input.values = { "other", "" }
+      input.values = { "other", remote_b }
       act("Ma")
 
       operations.wait("add_remote")
 
       eq({ "foo", "origin", "other" }, lib.git.remote.list())
-      eq({ "git@github.com:other/example.git" }, lib.git.remote.get_url("other"))
+      eq({ remote_b }, lib.git.remote.get_url("other"))
     end)
   )
 end)
