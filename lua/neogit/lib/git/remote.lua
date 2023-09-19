@@ -24,8 +24,6 @@ local function cleanup_push_variables(remote, new_name)
 end
 
 function M.add(name, url, args)
-  a.util.scheduler()
-
   return cli.remote.add.arg_list(args).args(name, url).call().code == 0
 end
 
