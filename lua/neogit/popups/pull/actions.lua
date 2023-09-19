@@ -23,7 +23,7 @@ local function pull_from(args, remote, branch, opts)
 
   if res and res.code == 0 then
     a.util.scheduler()
-    notification.info("Pulled from " .. name)
+    notification.info("Pulled from " .. name, { dismiss = true })
     logger.debug("Pulled from " .. name)
     vim.api.nvim_exec_autocmds("User", { pattern = "NeogitPullComplete", modeline = false })
   else

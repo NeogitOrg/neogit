@@ -24,7 +24,7 @@ local function push_to(args, remote, branch, opts)
   if res and res.code == 0 then
     a.util.scheduler()
     logger.debug("Pushed to " .. name)
-    notification.info("Pushed to " .. name)
+    notification.info("Pushed to " .. name, { dismiss = true })
     vim.api.nvim_exec_autocmds("User", { pattern = "NeogitPushComplete", modeline = false })
   else
     logger.error("Failed to push to " .. name)

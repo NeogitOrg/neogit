@@ -18,7 +18,7 @@ local function fetch_from(name, remote, branch, args)
 
   if res and res.code == 0 then
     a.util.scheduler()
-    notification.info("Fetched from " .. name)
+    notification.info("Fetched from " .. name, { dismiss = true })
     logger.debug("Fetched from " .. name)
     vim.api.nvim_exec_autocmds("User", { pattern = "NeogitFetchComplete", modeline = false })
   else
@@ -105,6 +105,7 @@ function M.fetch_refspec(popup)
   local refspecs = util.map(git.cli["ls-remote"].remote(remote).call():trim().stdout, function(ref)
     return vim.split(ref, "\t")[2]
   end)
+  notification.delete_all()
 
   local refspec = FuzzyFinderBuffer.new(refspecs):open_async { prompt_prefix = "refspec > " }
   if not refspec then
