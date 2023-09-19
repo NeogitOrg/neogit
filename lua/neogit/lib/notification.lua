@@ -8,25 +8,31 @@ local function create(message, level, opts)
     M.delete_all()
   end
 
-  return vim.notify(message, level, { title = "Neogit", icon = " " })
+  vim.notify(message, level, { title = "Neogit", icon = " " })
 end
 
 ---@param message string  message to send
 ---@param opts    table?
 function M.error(message, opts)
-  return create(message, vim.log.levels.ERROR, opts or {})
+  create(message, vim.log.levels.ERROR, opts or {})
 end
 
 ---@param message string  message to send
 ---@param opts    table?
 function M.info(message, opts)
-  return create(message, vim.log.levels.INFO, opts or {})
+  create(message, vim.log.levels.INFO, opts or {})
 end
 
 ---@param message string  message to send
 ---@param opts    table?
 function M.warn(message, opts)
-  return create(message, vim.log.levels.WARN, opts or {})
+  create(message, vim.log.levels.WARN, opts or {})
+end
+
+---@param message string  message to send
+---@param opts    table?
+function M.debug(message, opts)
+  create(message, vim.log.levels.DEBUG, opts or {})
 end
 
 function M.delete_all()
