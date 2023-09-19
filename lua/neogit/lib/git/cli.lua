@@ -548,6 +548,12 @@ local function handle_new_cmd(job, popup, hidden_text)
       log_fn(
         string.format("[CLI] Execution of '%s' failed with code %d after %d ms", job.cmd, job.code, job.time)
       )
+
+      for _, line in ipairs(job.stderr) do
+        if line ~= "" then
+          log_fn(string.format("[CLI] [STDERR] %s", line))
+        end
+      end
     else
       log_fn(string.format("[CLI] Execution of '%s' succeeded in %d ms", job.cmd, job.time))
     end
