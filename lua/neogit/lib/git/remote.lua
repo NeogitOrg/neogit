@@ -1,5 +1,5 @@
 local cli = require("neogit.lib.git.cli")
-local notif = require("neogit.lib.notification")
+local notification = require("neogit.lib.notification")
 local a = require("plenary.async")
 
 local M = {}
@@ -28,9 +28,9 @@ function M.add(name, url, args)
 
   local result = cli.remote.add.arg_list(args).args(name, url).call()
   if result.code ~= 0 then
-    notif.create("Couldn't add remote", vim.log.levels.ERROR)
+    notification.error("Couldn't add remote")
   else
-    notif.create("Added remote '" .. name .. "'", vim.log.levels.INFO)
+    notification.info("Added remote '" .. name .. "'")
   end
 
   return result
@@ -39,9 +39,9 @@ end
 function M.rename(from, to)
   local result = cli.remote.rename.arg_list({ from, to }).call_sync()
   if result.code ~= 0 then
-    notif.create("Couldn't rename remote", vim.log.levels.ERROR)
+    notification.error("Couldn't rename remote")
   else
-    notif.create("Renamed '" .. from .. "' -> '" .. to .. "'", vim.log.levels.INFO)
+    notification.info("Renamed '" .. from .. "' -> '" .. to .. "'")
     cleanup_push_variables(from, to)
   end
 
@@ -51,9 +51,9 @@ end
 function M.remove(name)
   local result = cli.remote.rm.args(name).call_sync()
   if result.code ~= 0 then
-    notif.create("Couldn't remove remote", vim.log.levels.ERROR)
+    notification.error("Couldn't remove remote")
   else
-    notif.create("Removed remote '" .. name .. "'", vim.log.levels.INFO)
+    notification.info("Removed remote '" .. name .. "'")
     cleanup_push_variables(name)
   end
 
@@ -63,9 +63,9 @@ end
 function M.prune(name)
   local result = cli.remote.prune.args(name).call_sync()
   if result.code ~= 0 then
-    notif.create("Couldn't prune remote", vim.log.levels.ERROR)
+    notification.error("Couldn't prune remote")
   else
-    notif.create("Pruned remote '" .. name .. "'", vim.log.levels.INFO)
+    notification.info("Pruned remote '" .. name .. "'")
   end
 
   return result

@@ -43,9 +43,9 @@ M.add = operation("add_remote", function(popup)
 
   if set_default then
     git.config.set("remote.pushDefault", name)
-    notification.create("Added remote " .. name .. " and set as pushDefault")
+    notification.info("Added remote " .. name .. " and set as pushDefault")
   else
-    notification.create("Added remote " .. name)
+    notification.info("Added remote " .. name)
   end
 end)
 
@@ -61,7 +61,7 @@ function M.rename(_)
   end
 
   git.remote.rename(selected_remote, new_name)
-  notification.create("Renamed remote " .. selected_remote .. " to " .. new_name)
+  notification.info("Renamed remote " .. selected_remote .. " to " .. new_name)
 end
 
 function M.remove(_)
@@ -71,7 +71,7 @@ function M.remove(_)
   end
 
   git.remote.remove(selected_remote)
-  notification.create("Removed remote " .. selected_remote)
+  notification.info("Removed remote " .. selected_remote)
 end
 
 function M.configure(_)
@@ -89,7 +89,7 @@ function M.prune_branches(_)
     return
   end
 
-  notification.create("Pruning remote " .. selected_remote)
+  notification.info("Pruning remote " .. selected_remote)
   git.remote.prune(selected_remote)
 end
 

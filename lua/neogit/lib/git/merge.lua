@@ -1,5 +1,5 @@
 local client = require("neogit.client")
-local notif = require("neogit.lib.notification")
+local notification = require("neogit.lib.notification")
 local cli = require("neogit.lib.git.cli")
 local branch_lib = require("neogit.lib.git.branch")
 
@@ -16,9 +16,9 @@ function M.merge(branch, args)
   a.util.scheduler()
   local result = merge_command(cli.merge.args(branch).arg_list(args))
   if result.code ~= 0 then
-    notif.create("Merging failed. Resolve conflicts before continuing", vim.log.levels.ERROR)
+    notification.error("Merging failed. Resolve conflicts before continuing")
   else
-    notif.create("Merged '" .. branch .. "' into '" .. branch_lib.current() .. "'", vim.log.levels.INFO)
+    notification.info("Merged '" .. branch .. "' into '" .. branch_lib.current() .. "'")
   end
 end
 

@@ -1,7 +1,7 @@
 local a = require("plenary.async")
 local git = require("neogit.lib.git")
 local logger = require("neogit.logger")
-local notif = require("neogit.lib.notification")
+local notification = require("neogit.lib.notification")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
@@ -17,14 +17,14 @@ local function push_to(args, remote, branch, opts)
   local name = remote .. "/" .. branch
 
   logger.debug("Pushing to " .. name)
-  notif.create("Pushing to " .. name)
+  notification.info("Pushing to " .. name)
 
   local res = git.push.push_interactive(remote, branch, args)
 
   if res and res.code == 0 then
     a.util.scheduler()
-    logger.error("Pushed to " .. name)
-    notif.create("Pushed to " .. name)
+    logger.debug("Pushed to " .. name)
+    notification.info("Pushed to " .. name)
     vim.api.nvim_exec_autocmds("User", { pattern = "NeogitPushComplete", modeline = false })
   else
     logger.error("Failed to push to " .. name)

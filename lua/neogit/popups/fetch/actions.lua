@@ -3,7 +3,7 @@ local M = {}
 local a = require("plenary.async")
 local git = require("neogit.lib.git")
 local logger = require("neogit.logger")
-local notif = require("neogit.lib.notification")
+local notification = require("neogit.lib.notification")
 local util = require("neogit.lib.util")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
@@ -13,12 +13,12 @@ local function select_remote()
 end
 
 local function fetch_from(name, remote, branch, args)
-  notif.create("Fetching from " .. name)
+  notification.info("Fetching from " .. name)
   local res = git.fetch.fetch_interactive(remote, branch, args)
 
   if res and res.code == 0 then
     a.util.scheduler()
-    notif.create("Fetched from " .. name)
+    notification.info("Fetched from " .. name)
     logger.debug("Fetched from " .. name)
     vim.api.nvim_exec_autocmds("User", { pattern = "NeogitFetchComplete", modeline = false })
   else
@@ -101,7 +101,7 @@ function M.fetch_refspec(popup)
     return
   end
 
-  notif.create("Determining refspecs...")
+  notification.info("Determining refspecs...")
   local refspecs = util.map(git.cli["ls-remote"].remote(remote).call():trim().stdout, function(ref)
     return vim.split(ref, "\t")[2]
   end)
@@ -115,7 +115,7 @@ function M.fetch_refspec(popup)
 end
 
 function M.fetch_submodules(_)
-  notif.create("Fetching submodules")
+  notification.info("Fetching submodules")
   git.cli.fetch.recurse_submodules().verbose().jobs(4).call()
 end
 

@@ -182,7 +182,7 @@ function Process:start_timer()
           if config.values.auto_show_console then
             Process.show_console()
           else
-            notification.create(message .. "\n\nOpen the console for details", vim.log.levels.WARN)
+            notification.warn(message .. "\n\nOpen the console for details")
           end
         end
       end)
@@ -347,7 +347,7 @@ function Process:spawn(cb)
           table.concat(output, "\n")
         )
 
-        notification.create(message, vim.log.levels.ERROR)
+        notification.error(message)
       end
       -- vim.schedule(Process.show_console)
     end

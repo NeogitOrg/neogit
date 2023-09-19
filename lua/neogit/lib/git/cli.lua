@@ -1,4 +1,4 @@
-local notif = require("neogit.lib.notification")
+local notification = require("neogit.lib.notification")
 local logger = require("neogit.logger")
 local a = require("plenary.async")
 local process = require("neogit.process")
@@ -555,10 +555,7 @@ local function handle_new_cmd(job, popup, hidden_text)
 
   if popup and job.code ~= 0 then
     vim.schedule(function()
-      notif.create(
-        "Git Error (" .. job.code .. "), press $ to see the git command history",
-        vim.log.levels.ERROR
-      )
+      notification.error("Git Error (" .. job.code .. "), press $ to see the git command history")
     end)
   end
 end

@@ -1,6 +1,6 @@
 local logger = require("neogit.logger")
 local client = require("neogit.client")
-local notif = require("neogit.lib.notification")
+local notification = require("neogit.lib.notification")
 
 local M = {}
 
@@ -18,9 +18,9 @@ function M.rebase_interactive(commit, args)
   local git = require("neogit.lib.git")
   local result = rebase_command(git.cli.rebase.interactive.args(commit).arg_list(args))
   if result.code ~= 0 then
-    notif.create("Rebasing failed. Resolve conflicts before continuing", vim.log.levels.ERROR)
+    notification.error("Rebasing failed. Resolve conflicts before continuing")
   else
-    notif.create("Rebased successfully", vim.log.levels.INFO)
+    notification.info("Rebased successfully")
   end
 end
 
@@ -29,9 +29,9 @@ function M.rebase_onto(branch, args)
   local git = require("neogit.lib.git")
   local result = rebase_command(git.cli.rebase.args(branch).arg_list(args))
   if result.code ~= 0 then
-    notif.create("Rebasing failed. Resolve conflicts before continuing", vim.log.levels.ERROR)
+    notification.error("Rebasing failed. Resolve conflicts before continuing")
   else
-    notif.create("Rebased onto '" .. branch .. "'", vim.log.levels.INFO)
+    notification.info("Rebased onto '" .. branch .. "'")
   end
 end
 
