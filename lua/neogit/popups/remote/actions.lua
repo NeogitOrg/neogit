@@ -60,8 +60,10 @@ function M.rename(_)
     return
   end
 
-  git.remote.rename(selected_remote, new_name)
-  notification.info("Renamed remote " .. selected_remote .. " to " .. new_name)
+  local success = git.remote.rename(selected_remote, new_name)
+  if success then
+    notification.info("Renamed '" .. selected_remote .. "' -> '" .. new_name .. "'")
+  end
 end
 
 function M.remove(_)
@@ -70,8 +72,10 @@ function M.remove(_)
     return
   end
 
-  git.remote.remove(selected_remote)
-  notification.info("Removed remote " .. selected_remote)
+  local success = git.remote.remove(selected_remote)
+  if success then
+    notification.info("Removed remote '" .. selected_remote .. "'")
+  end
 end
 
 function M.configure(_)

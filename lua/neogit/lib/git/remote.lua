@@ -26,49 +26,29 @@ end
 function M.add(name, url, args)
   a.util.scheduler()
 
-  local result = cli.remote.add.arg_list(args).args(name, url).call()
-  if result.code ~= 0 then
-    notification.error("Couldn't add remote")
-  else
-    notification.info("Added remote '" .. name .. "'")
-  end
-
-  return result
+  return cli.remote.add.arg_list(args).args(name, url).call().code == 0
 end
 
 function M.rename(from, to)
   local result = cli.remote.rename.arg_list({ from, to }).call_sync()
-  if result.code ~= 0 then
-    notification.error("Couldn't rename remote")
-  else
-    notification.info("Renamed '" .. from .. "' -> '" .. to .. "'")
+  if result.code == 0 then
     cleanup_push_variables(from, to)
   end
 
-  return result
+  return result.code == 0
 end
 
 function M.remove(name)
   local result = cli.remote.rm.args(name).call_sync()
-  if result.code ~= 0 then
-    notification.error("Couldn't remove remote")
-  else
-    notification.info("Removed remote '" .. name .. "'")
+  if result.code == 0 then
     cleanup_push_variables(name)
   end
 
-  return result
+  return result.code == 0
 end
 
 function M.prune(name)
-  local result = cli.remote.prune.args(name).call_sync()
-  if result.code ~= 0 then
-    notification.error("Couldn't prune remote")
-  else
-    notification.info("Pruned remote '" .. name .. "'")
-  end
-
-  return result
+  return cli.remote.prune.args(name).call().code == 0
 end
 
 function M.list()
