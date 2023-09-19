@@ -36,7 +36,7 @@ function M.debug(message, opts)
 end
 
 function M.delete_all()
-  if vim.notify.dismiss then
+  if type(vim.notify) == "table" and vim.notify.dismiss then
     vim.notify.dismiss()
   end
 end
