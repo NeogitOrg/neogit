@@ -17,6 +17,20 @@ function M.create(remote)
         { display = "--tags", value = "--tags" },
       },
     })
+    :config_heading("")
+    :config_heading("Configure repository defaults")
+    :config(
+      "P",
+      "remote.pushDefault",
+      { options = require("neogit.popups.branch_config.actions").remotes_for_config() }
+    )
+    :config("d", "neogit.remoteAddSetRemotePushDefault", {
+      options = {
+        { display = "ask", value = "ask" },
+        { display = "ask-if-unset", value = "ask-if-unset" },
+        { display = "", value = "" },
+      },
+    })
     :env({ highlight = { remote } })
     :build()
 

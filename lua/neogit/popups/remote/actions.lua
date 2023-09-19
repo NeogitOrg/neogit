@@ -9,6 +9,21 @@ local RemoteConfigPopup = require("neogit.popups.remote_config")
 
 local operation = require("neogit.operations")
 
+local function ask_to_set_pushDefault()
+  local repo_config = git.config.get("neogit.remoteAddSetRemotePushDefault")
+  local current_value = git.config.get("remote.pushDefault")
+
+  if repo_config:is_set() then
+    if repo_config.value == "ask-if-unset" and not current_value:is_set() then
+      return true
+    elseif repo_config.value == "ask" then
+      return true
+    end
+  else
+    return false
+  end
+end
+
 M.add = operation("add_remote", function(popup)
   local name = input.get_user_input("Remote name: ")
   if not name or name == "" then
@@ -30,22 +45,20 @@ M.add = operation("add_remote", function(popup)
     return
   end
 
-  local result = git.remote.add(name, remote_url, popup:get_arguments())
+  local success = git.remote.add(name, remote_url, popup:get_arguments())
+  if success then
+    local set_default = ask_to_set_pushDefault()
+      and input.get_confirmation(
+        [[Set 'remote.pushDefault' to "]] .. name .. [["?]],
+        { values = { "&Yes", "&No" }, default = 2 }
+      )
 
-  if result.code ~= 0 then
-    return
-  end
-
-  local set_default = input.get_confirmation(
-    [[Set 'remote.pushDefault' to "]] .. name .. [["?]],
-    { values = { "&Yes", "&No" }, default = 2 }
-  )
-
-  if set_default then
-    git.config.set("remote.pushDefault", name)
-    notification.info("Added remote " .. name .. " and set as pushDefault")
-  else
-    notification.info("Added remote " .. name)
+    if set_default then
+      git.config.set("remote.pushDefault", name)
+      notification.info("Added remote " .. name .. " and set as remote.pushDefault")
+    else
+      notification.info("Added remote " .. name)
+    end
   end
 end)
 
