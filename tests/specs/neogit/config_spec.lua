@@ -26,16 +26,6 @@ describe("Neogit config", function()
         assert.True(vim.tbl_count(require("neogit.config").validate_config()) ~= 0)
       end)
 
-      it("should return invalid when disable_commit_confirmation isn't a boolean", function()
-        config.values.disable_commit_confirmation = "not a boolean"
-        assert.True(vim.tbl_count(require("neogit.config").validate_config()) ~= 0)
-      end)
-
-      it("should return invalid when disable_builtin_notifications isn't a boolean", function()
-        config.values.disable_builtin_notifications = "not a boolean"
-        assert.True(vim.tbl_count(require("neogit.config").validate_config()) ~= 0)
-      end)
-
       it("should return invalid when telescope_sorter isn't a function", function()
         config.values.telescope_sorter = "not a function"
         assert.True(vim.tbl_count(require("neogit.config").validate_config()) ~= 0)
