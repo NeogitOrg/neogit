@@ -2,23 +2,31 @@ local M = {}
 
 ---@param message string  message to send
 ---@param level   integer vim.log.levels.X
-local function create(message, level)
+---@param opts    table
+local function create(message, level, opts)
+  if opts.dismiss then
+    M.delete_all()
+  end
+
   return vim.notify(message, level, { title = "Neogit", icon = " " })
 end
 
 ---@param message string  message to send
-function M.error(message)
-  return create(message, vim.log.levels.ERROR)
+---@param opts    table?
+function M.error(message, opts)
+  return create(message, vim.log.levels.ERROR, opts or {})
 end
 
 ---@param message string  message to send
-function M.info(message)
-  return create(message, vim.log.levels.INFO)
+---@param opts    table?
+function M.info(message, opts)
+  return create(message, vim.log.levels.INFO, opts or {})
 end
 
 ---@param message string  message to send
-function M.warn(message)
-  return create(message, vim.log.levels.WARN)
+---@param opts    table?
+function M.warn(message, opts)
+  return create(message, vim.log.levels.WARN, opts or {})
 end
 
 function M.delete_all()
