@@ -100,6 +100,7 @@ end
 ---@field sections? NeogitConfigSections
 ---@field ignored_settings? string[] Settings to never persist, format: "Filetype--cli-value", i.e. "NeogitCommitPopup--author"
 ---@field mappings? NeogitConfigMappings
+---@field notification_icon? String
 
 ---Returns the default Neogit configuration
 ---@return NeogitConfig
@@ -127,6 +128,7 @@ function M.get_default_values()
     console_timeout = 2000,
     -- Automatically show console if a command takes more than console_timeout milliseconds
     auto_show_console = true,
+    notification_icon = "󰊢",
     status = {
       recent_commit_count = 10,
     },
@@ -549,6 +551,7 @@ function M.validate_config()
     validate_type(config.remember_settings, "remember_settings", "boolean")
     validate_type(config.auto_refresh, "auto_refresh", "boolean")
     validate_type(config.sort_branches, "sort_branches", "string")
+    validate_type(config.notification_icon, "notification_icon", "string")
     validate_type(config.console_timeout, "console_timeout", "number")
     validate_kind(config.kind, "kind")
     validate_type(config.disable_line_numbers, "disable_line_numbers", "boolean")

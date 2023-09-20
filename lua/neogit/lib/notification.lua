@@ -1,4 +1,5 @@
 local M = {}
+local config = require("neogit.config")
 
 ---@param message string  message to send
 ---@param level   integer vim.log.levels.X
@@ -8,7 +9,7 @@ local function create(message, level, opts)
     M.delete_all()
   end
 
-  vim.notify(message, level, { title = "Neogit", icon = "" })
+  vim.notify(message, level, { title = "Neogit", icon = config.values.notification_icon })
 end
 
 ---@param message string  message to send
