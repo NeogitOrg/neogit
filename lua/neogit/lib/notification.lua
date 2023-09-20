@@ -8,7 +8,7 @@ local function create(message, level, opts)
     M.delete_all()
   end
 
-  vim.notify(message, level, { title = "Neogit", icon = " " })
+  vim.notify(message, level, { title = "Neogit", icon = "" })
 end
 
 ---@param message string  message to send
