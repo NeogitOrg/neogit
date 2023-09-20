@@ -1,6 +1,4 @@
 local cli = require("neogit.lib.git.cli")
-local notification = require("neogit.lib.notification")
-local a = require("plenary.async")
 
 local M = {}
 
