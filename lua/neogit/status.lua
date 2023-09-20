@@ -508,51 +508,48 @@ local function refresh_status_buffer()
   vim.cmd("redraw")
 end
 
-local refresh_lock = a.control.Semaphore.new(1)
-local lock_holder = nil
+-- local refresh_lock = a.control.Semaphore.new(1)
+-- local lock_holder = nil
 
-local function refresh(which, reason)
+local function refresh(_, reason)
   logger.info("[STATUS BUFFER]: Starting refresh")
 
-  if refresh_lock.permits == 0 then
-    logger.debug(
-      string.format(
-        "[STATUS BUFFER]: Refresh lock not available. Aborting refresh. Lock held by: %q",
-        lock_holder
-      )
-    )
-    --- Undo the deadlock fix
-    --- This is because refresh wont properly wait but return immediately if
-    --- refresh is already in progress. This breaks as waiting for refresh does
-    --- not mean that a status buffer is drawn and ready
-    a.util.scheduler()
-    -- refresh_status()
-    -- return
-  end
+  -- if refresh_lock.permits == 0 then
+  --   logger.fmt_debug("[STATUS BUFFER]: Refresh lock not available. Aborting refresh. Lock held by: %q", lock_holder)
+  --   --- Undo the deadlock fix
+  --   --- This is because refresh wont properly wait but return immediately if
+  --   --- refresh is already in progress. This breaks as waiting for refresh does
+  --   --- not mean that a status buffer is drawn and ready
+  --   a.util.scheduler()
+  --   -- refresh_status()
+  --   -- return
+  -- end
 
-  local permit = refresh_lock:acquire()
-  lock_holder = reason or "unknown"
-  logger.debug("[STATUS BUFFER]: Acquired refresh lock: " .. lock_holder)
+  -- local permit = refresh_lock:acquire()
+  -- lock_holder = reason or "unknown"
+  -- logger.debug("[STATUS BUFFER]: Acquired refresh lock: " .. lock_holder)
 
   a.util.scheduler()
   local s, f, h = save_cursor_location()
 
-  if cli.git_root() ~= "" then
-    git.repo:refresh(which)
-    refresh_status_buffer()
-    vim.api.nvim_exec_autocmds("User", { pattern = "NeogitStatusRefreshed", modeline = false })
-  end
+  local refresh_callback = vim.schedule_wrap(function(success)
+    if success then
+      refresh_status_buffer()
+      vim.api.nvim_exec_autocmds("User", { pattern = "NeogitStatusRefreshed", modeline = false })
+      logger.info("[STATUS BUFFER]: Finished refresh")
 
-  a.util.scheduler()
-  if vim.fn.bufname() == "NeogitStatus" then
-    restore_cursor_location(s, f, h)
-  end
+      if M.status_buffer and M.status_buffer:is_focused() then
+        logger.debug("[STATUS BUFFER]: Restoring cursor")
+        restore_cursor_location(s, f, h)
+      end
+    end
 
-  logger.info("[STATUS BUFFER]: Finished refresh")
+    -- lock_holder = nil
+    -- permit:forget()
+    -- logger.info("[STATUS BUFFER]: Refresh lock is now free")
+  end)
 
-  lock_holder = nil
-  permit:forget()
-  logger.info("[STATUS BUFFER]: Refresh lock is now free")
+  git.repo:refresh { source = reason, callback = refresh_callback }
 end
 
 local dispatch_refresh = a.void(function(v, reason)

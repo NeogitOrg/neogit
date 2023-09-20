@@ -65,96 +65,42 @@ function M.reset(self)
   self.state = empty_state()
 end
 
-function M.refresh(self, lib)
-  local refreshes = {}
+function M.refresh(self, opts)
+  opts = opts or {}
+  logger.info(string.format("[REPO]: Refreshing START (source: %s)", opts.source or "UNKNOWN"))
 
-  if lib and type(lib) == "table" then
-    if lib.status then
-      self.lib.update_status(self.state)
-      a.util.scheduler()
+  if self.state.git_root == "" then
+    logger.debug("[REPO]: Refreshing ABORTED - No git_root")
+
+    if opts.callback then
+      logger.debug("[REPO]: Running refresh callback (aborted)")
+      opts.callback(false)
     end
 
-    if lib.branch_information then
-      table.insert(refreshes, function()
-        logger.debug("[REPO]: Refreshing branch information")
-        self.lib.update_branch_information(self.state)
-      end)
-    end
+    return
+  end
 
-    if lib.rebase then
-      table.insert(refreshes, function()
-        logger.debug("[REPO]: Refreshing rebase information")
-        self.lib.update_rebase_status(self.state)
-      end)
-    end
+  logger.trace("[REPO]: Refreshing update_status")
+  self.lib.update_status(self.state)
 
-    if lib.cherry_pick then
-      table.insert(refreshes, function()
-        logger.debug("[REPO]: Refreshing cherry-pick information")
-        self.lib.update_cherry_pick_status(self.state)
-      end)
-    end
-
-    if lib.merge then
-      table.insert(refreshes, function()
-        logger.debug("[REPO]: Refreshing merge information")
-        self.lib.update_merge_status(self.state)
-      end)
-    end
-
-    if lib.stashes then
-      table.insert(refreshes, function()
-        logger.debug("[REPO]: Refreshing stash")
-        self.lib.update_stashes(self.state)
-      end)
-    end
-
-    if lib.unpulled then
-      table.insert(refreshes, function()
-        logger.debug("[REPO]: Refreshing unpulled commits")
-        self.lib.update_unpulled(self.state)
-      end)
-    end
-
-    if lib.unmerged then
-      table.insert(refreshes, function()
-        logger.debug("[REPO]: Refreshing unpushed commits")
-        self.lib.update_unmerged(self.state)
-      end)
-    end
-
-    if lib.recent then
-      table.insert(refreshes, function()
-        logger.debug("[REPO]: Refreshing recent commits")
-        self.lib.update_recent(self.state)
-      end)
-    end
-
-    if lib.diffs then
-      local filter = (type(lib) == "table" and type(lib.diffs) == "table") and lib.diffs or nil
-
-      table.insert(refreshes, function()
-        logger.debug("[REPO]: Refreshing diffs")
-        self.lib.update_diffs(self.state, filter)
-      end)
-    end
-  else
-    logger.debug("[REPO]: Refreshing ALL")
-    self.lib.update_status(self.state)
-    a.util.scheduler()
-
-    for name, fn in pairs(self.lib) do
-      table.insert(refreshes, function()
-        logger.debug("[REPO]: Refreshing " .. name)
+  local updates = {}
+  for name, fn in pairs(self.lib) do
+    if name ~= "update_status" then
+      table.insert(updates, function()
+        logger.trace(string.format("[REPO]: Refreshing %s", name))
         fn(self.state)
       end)
     end
   end
 
-  logger.debug(string.format("[REPO]: Running %d refresh(es)", #refreshes))
-  a.util.join(refreshes)
-  a.util.scheduler()
-  logger.debug("[REPO]: Refreshes completed")
+  a.util.run_all(updates, function()
+    logger.info("[REPO]: Refreshes completed")
+
+    if opts.callback then
+      logger.debug("[REPO]: Running refresh callback (success)")
+      opts.callback(true)
+    end
+  end)
 end
 
 if not M.initialized then
