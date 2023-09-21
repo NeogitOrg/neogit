@@ -71,12 +71,6 @@ function M.refresh(self, opts)
 
   if self.state.git_root == "" then
     logger.debug("[REPO]: Refreshing ABORTED - No git_root")
-
-    if opts.callback then
-      logger.debug("[REPO]: Running refresh callback (aborted)")
-      opts.callback(false)
-    end
-
     return
   end
 
@@ -97,8 +91,8 @@ function M.refresh(self, opts)
     logger.info("[REPO]: Refreshes completed")
 
     if opts.callback then
-      logger.debug("[REPO]: Running refresh callback (success)")
-      opts.callback(true)
+      logger.debug("[REPO]: Running refresh callback")
+      opts.callback()
     end
   end)
 end
