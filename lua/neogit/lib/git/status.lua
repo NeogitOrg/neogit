@@ -33,7 +33,7 @@ local function update_status(state)
   -- Save the working directory to allow resolution to absolute paths since the
   -- cwd may change after the status is refreshed and used, especially if using
   -- rooter plugins with lsp integration
-  local cwd = vim.fn.getcwd()
+  local cwd = vim.loop.cwd()
   local result = git.cli.status.porcelain(2).branch.call():trim()
 
   local head = {}
