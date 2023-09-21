@@ -65,14 +65,26 @@ function M.reset(self)
   self.state = empty_state()
 end
 
+M._refresh_lock = a.control.Semaphore.new(1)
+M._lock_holder = nil
+
 function M.refresh(self, opts)
   opts = opts or {}
-  logger.info(string.format("[REPO]: Refreshing START (source: %s)", opts.source or "UNKNOWN"))
+  logger.fmt_info("[REPO]: Refreshing START (source: %s)", opts.source or "UNKNOWN")
 
   if self.state.git_root == "" then
     logger.debug("[REPO]: Refreshing ABORTED - No git_root")
     return
   end
+
+  if M._refresh_lock.permits < 1 then
+    logger.fmt_debug("[REPO]: Refreshing ABORTED - Lock held by: %q", M._lock_holder)
+    return
+  end
+
+  local permit = M._refresh_lock:acquire()
+  M._lock_holder = opts.source or "UNKNOWN"
+  logger.fmt_debug("[REPO]: Acquired refresh lock: %s", M._lock_holder)
 
   logger.trace("[REPO]: Refreshing update_status")
   self.lib.update_status(self.state)
@@ -88,7 +100,10 @@ function M.refresh(self, opts)
   end
 
   a.util.run_all(updates, function()
-    logger.info("[REPO]: Refreshes completed")
+    logger.info("[REPO]: Refreshes complete - freeing Refresh lock")
+
+    M._lock_holder = nil
+    permit:forget()
 
     if opts.callback then
       logger.debug("[REPO]: Running refresh callback")
