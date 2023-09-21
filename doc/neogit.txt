@@ -882,7 +882,30 @@ Remote Popup                                               *neogit_remote_popup*
 ==============================================================================
 Remote Config Popup                                 *neogit_remote_config_popup*
 
-(TODO)
+Allows configuring some common config settings for the selected remote, as
+well as some repository defaults.
+
+Remote:
+  • remote.<name>.url                                 *neogit_remote_config_url*
+    The URL of a remote repository.
+
+  • remote.<name>.fetch                             *neogit_remote_config_fetch*
+    The default set of "refspec" for git fetch.
+
+  • remote.<name>.pushurl                         *neogit_remote_config_pushurl*
+    The push URL of a remote repository
+
+  • remote.<name>.push                               *neogit_remote_config_push*
+    The default set of "refspec" for git-push
+
+  • remote.<name>.tagOpt                           *neogit_remote_config_tagOpt*
+    Setting this value to --no-tags disables automatic tag following when
+    fetching from remote <name>. Setting it to --tags will fetch every tag
+    from remote <name>, even if they are not reachable from remote branch
+    heads.
+
+    Passing these flags directly to git fetch can override this setting.
+    See |neogit_fetch_popup_args|.
 
 ==============================================================================
 Pull Popup                                                   *neogit_pull_popup*
