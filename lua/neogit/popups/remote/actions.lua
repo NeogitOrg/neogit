@@ -10,15 +10,13 @@ local RemoteConfigPopup = require("neogit.popups.remote_config")
 local operation = require("neogit.operations")
 
 local function ask_to_set_pushDefault()
-  local repo_config = git.config.get("neogit.remoteAddSetRemotePushDefault")
+  local repo_config = git.config.get("neogit.askSetPushDefault")
   local current_value = git.config.get("remote.pushDefault")
 
-  if repo_config:is_set() then
-    if repo_config.value == "ask-if-unset" and not current_value:is_set() then
-      return true
-    elseif repo_config.value == "ask" then
-      return true
-    end
+  if current_value:is_unset() and (repo_config:is_unset() or repo_config:read() == "ask-if-unset") then
+    return true
+  elseif repo_config:read() == "ask" then
+    return true
   else
     return false
   end

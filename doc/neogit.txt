@@ -649,6 +649,17 @@ Repository defaults:
     If set, will be used by "rebase onto base" action. Otherwise defaults to
     either "main" or "master", depending on which is found.
 
+  • neogit.askSetPushDefault            *neogit_branch_config_askSetPushDefault*
+    This option controls whether the user is asked whether they want to set
+    remote.pushDefault after adding a remote.
+
+    When set to 'ask', the user is always asked.
+
+    When 'ask-if-unset', the user is only asked if the variable isn’t set.
+    (This is also the default behaviour when unset.)
+
+    When 'never', the user isn’t asked and the variable isn’t set.
+
 Branch creation:
   • branch.autoSetupMerge                  *neogit_branch_config_autoSetupMerge*
     Tells git branch, git switch and git checkout to set up new branches so
