@@ -8,7 +8,7 @@ local a = require("plenary.async")
 
 local watch_gitdir_handler = a.void(function()
   logger.debug("[WATCHER] Dispatching Refresh")
-  require("neogit.status").dispatch_refresh()
+  require("neogit.status").dispatch_refresh(nil, "watcher")
 end)
 
 local watch_gitdir_handler_db =
