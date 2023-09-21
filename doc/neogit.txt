@@ -882,8 +882,7 @@ Remote Popup                                               *neogit_remote_popup*
 ==============================================================================
 Remote Config Popup                                 *neogit_remote_config_popup*
 
-Allows configuring some common config settings for the selected remote, as
-well as some repository defaults.
+Allows configuring some common config variables for the selected remote.
 
 Remote:
   • remote.<name>.url                                 *neogit_remote_config_url*
