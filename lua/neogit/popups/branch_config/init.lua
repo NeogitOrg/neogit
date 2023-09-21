@@ -43,6 +43,13 @@ function M.create(branch)
     })
     :config("P", "remote.pushDefault", { options = actions.remotes_for_config() })
     :config("b", "neogit.baseBranch")
+    :config("A", "neogit.askSetPushDefault", {
+      options = {
+        { display = "ask", value = "ask" },
+        { display = "ask-if-unset", value = "" },
+        { display = "never", value = "never" },
+      },
+    })
     :config_heading("")
     :config_heading("Configure branch creation")
     :config("as", "branch.autoSetupMerge", {

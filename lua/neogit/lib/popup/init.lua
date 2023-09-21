@@ -7,6 +7,7 @@ local util = require("neogit.lib.util")
 local config = require("neogit.config")
 local state = require("neogit.lib.state")
 local input = require("neogit.lib.input")
+local notification = require("neogit.lib.notification")
 
 local git = require("neogit.lib.git")
 
@@ -591,8 +592,7 @@ function M:show()
       else
         for _, key in ipairs(action.keys) do
           mappings.n[key] = function()
-            local notif = require("neogit.lib.notification")
-            notif.create(action.description .. " has not been implemented yet", vim.log.levels.WARN)
+            notification.warn(action.description .. " has not been implemented yet")
           end
         end
       end

@@ -33,7 +33,7 @@ function M.setup(opts)
   M.cli = M.lib.git.cli
   M.popups = require("neogit.popups")
   M.config = config
-  M.notif = require("neogit.lib.notification")
+  M.notification = require("neogit.lib.notification")
 
   config.setup(opts)
   hl.setup()
@@ -71,7 +71,7 @@ function M.open(opts)
   end
 
   if not did_setup then
-    notification.create("Neogit has not been setup!", vim.log.levels.ERROR)
+    notification.error("Neogit has not been setup!")
     logger.error("Neogit not setup!")
     return
   end
@@ -85,7 +85,7 @@ function M.open(opts)
     then
       lib.git.init.create(opts.cwd or vim.fn.getcwd(), true)
     else
-      notification.create("The current working directory is not a git repository", vim.log.levels.ERROR)
+      notification.error("The current working directory is not a git repository")
       return
     end
   end

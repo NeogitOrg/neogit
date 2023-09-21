@@ -91,9 +91,6 @@ to Neovim users.
                                                                        *:Neogit*
 :Neogit                 In a Git repository, opens a new NeogitStatus tab.
 
-                                                               *:NeogitMessages*
-:NeogitMessages         Prints messages from neogit's messaging system.
-
                                                              *:NeogitResetState*
 :NeogitResetState       Performs a full reset of saved flags for all popups.
 
@@ -315,12 +312,6 @@ NeogitPopupConfigDisabled  Applied to config without value
 
 NeogitPopupActionKey       Applied to key that triggers function
 NeogitPopupActionDisabled  Applied to key when function is unimplemented
-
-NOTIFICATIONS
-NeogitNotificationInfo     Linked to DiagnosticInfo by default
-NeogitNotificationWarning  Linked to DiagnosticWarning by default
-NeogitNotificationError    Linked to DiagnosticError by default
-
 
 COMMAND HISTORY BUFFER
 NeogitCommandText          Git command that was run
@@ -658,6 +649,17 @@ Repository defaults:
     If set, will be used by "rebase onto base" action. Otherwise defaults to
     either "main" or "master", depending on which is found.
 
+  • neogit.askSetPushDefault            *neogit_branch_config_askSetPushDefault*
+    This option controls whether the user is asked whether they want to set
+    remote.pushDefault after adding a remote.
+
+    When set to 'ask', the user is always asked.
+
+    When 'ask-if-unset', the user is only asked if the variable isn’t set.
+    (This is also the default behaviour when unset.)
+
+    When 'never', the user isn’t asked and the variable isn’t set.
+
 Branch creation:
   • branch.autoSetupMerge                  *neogit_branch_config_autoSetupMerge*
     Tells git branch, git switch and git checkout to set up new branches so
@@ -880,7 +882,29 @@ Remote Popup                                               *neogit_remote_popup*
 ==============================================================================
 Remote Config Popup                                 *neogit_remote_config_popup*
 
-(TODO)
+Allows configuring some common config variables for the selected remote.
+
+Remote:
+  • remote.<name>.url                                 *neogit_remote_config_url*
+    The URL of a remote repository.
+
+  • remote.<name>.fetch                             *neogit_remote_config_fetch*
+    The default set of "refspec" for git fetch.
+
+  • remote.<name>.pushurl                         *neogit_remote_config_pushurl*
+    The push URL of a remote repository
+
+  • remote.<name>.push                               *neogit_remote_config_push*
+    The default set of "refspec" for git-push
+
+  • remote.<name>.tagOpt                           *neogit_remote_config_tagOpt*
+    Setting this value to --no-tags disables automatic tag following when
+    fetching from remote <name>. Setting it to --tags will fetch every tag
+    from remote <name>, even if they are not reachable from remote branch
+    heads.
+
+    Passing these flags directly to git fetch can override this setting.
+    See |neogit_fetch_popup_args|.
 
 ==============================================================================
 Pull Popup                                                   *neogit_pull_popup*

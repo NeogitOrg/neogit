@@ -9,6 +9,19 @@ local RemoteConfigPopup = require("neogit.popups.remote_config")
 
 local operation = require("neogit.operations")
 
+local function ask_to_set_pushDefault()
+  local repo_config = git.config.get("neogit.askSetPushDefault")
+  local current_value = git.config.get("remote.pushDefault")
+
+  if current_value:is_unset() and (repo_config:is_unset() or repo_config:read() == "ask-if-unset") then
+    return true
+  elseif repo_config:read() == "ask" then
+    return true
+  else
+    return false
+  end
+end
+
 M.add = operation("add_remote", function(popup)
   local name = input.get_user_input("Remote name: ")
   if not name or name == "" then
@@ -30,22 +43,20 @@ M.add = operation("add_remote", function(popup)
     return
   end
 
-  local result = git.remote.add(name, remote_url, popup:get_arguments())
+  local success = git.remote.add(name, remote_url, popup:get_arguments())
+  if success then
+    local set_default = ask_to_set_pushDefault()
+      and input.get_confirmation(
+        [[Set 'remote.pushDefault' to "]] .. name .. [["?]],
+        { values = { "&Yes", "&No" }, default = 2 }
+      )
 
-  if result.code ~= 0 then
-    return
-  end
-
-  local set_default = input.get_confirmation(
-    [[Set 'remote.pushDefault' to "]] .. name .. [["?]],
-    { values = { "&Yes", "&No" }, default = 2 }
-  )
-
-  if set_default then
-    git.config.set("remote.pushDefault", name)
-    notification.create("Added remote " .. name .. " and set as pushDefault")
-  else
-    notification.create("Added remote " .. name)
+    if set_default then
+      git.config.set("remote.pushDefault", name)
+      notification.info("Added remote " .. name .. " and set as remote.pushDefault")
+    else
+      notification.info("Added remote " .. name)
+    end
   end
 end)
 
@@ -60,8 +71,10 @@ function M.rename(_)
     return
   end
 
-  git.remote.rename(selected_remote, new_name)
-  notification.create("Renamed remote " .. selected_remote .. " to " .. new_name)
+  local success = git.remote.rename(selected_remote, new_name)
+  if success then
+    notification.info("Renamed '" .. selected_remote .. "' -> '" .. new_name .. "'")
+  end
 end
 
 function M.remove(_)
@@ -70,8 +83,10 @@ function M.remove(_)
     return
   end
 
-  git.remote.remove(selected_remote)
-  notification.create("Removed remote " .. selected_remote)
+  local success = git.remote.remove(selected_remote)
+  if success then
+    notification.info("Removed remote '" .. selected_remote .. "'")
+  end
 end
 
 function M.configure(_)
@@ -89,7 +104,7 @@ function M.prune_branches(_)
     return
   end
 
-  notification.create("Pruning remote " .. selected_remote)
+  notification.info("Pruning remote " .. selected_remote)
   git.remote.prune(selected_remote)
 end
 
