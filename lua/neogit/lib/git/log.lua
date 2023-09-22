@@ -218,7 +218,10 @@ local function split_output(output)
   output = table.concat(output, "\n")
   output = vim.split(output, "\31", { trimempty = true })
   output = util.map(output, function(line)
-    return vim.split(vim.trim(line:gsub("\n", " ")), "\30")
+    line = vim.split(vim.trim(line:gsub("\n", " ")), "\30")
+    line[1] = line[1]:match("(%x+)")
+
+    return line
   end)
 
   return output
@@ -329,13 +332,15 @@ function M.list(options, graph, files)
     if not exceeds_max_default(options) then
       show_signature = true
     end
+
     util.remove_item_from_table(options, "--show-signature")
   end
 
   local output = split_output(
     cli.log
       .format(parse_log_format(show_signature))
-      .arg_list(ensure_max(options))
+      .arg_list(options)
+      .args(graph and "--graph")
       .files(unpack(files))
       .show_popup(false)
       .call()
