@@ -6,6 +6,7 @@ local util = require("tests.util.util")
 local in_prepared_repo = harness.in_prepared_repo
 
 local status = require("neogit.status")
+local state = require("neogit.lib.state")
 
 local function act(normal_cmd)
   vim.fn.feedkeys(vim.api.nvim_replace_termcodes(normal_cmd, true, true, true))
@@ -14,6 +15,17 @@ local function act(normal_cmd)
 end
 
 describe("log popup", function()
+  before_each(function()
+    -- Reset all switches.
+    state.setup()
+    state._reset()
+  end)
+
+  after_each(function()
+    -- Close log buffer.
+    vim.fn.feedkeys("q", "x")
+  end)
+
   it(
     "persists switches correctly",
     in_prepared_repo(function()
@@ -46,7 +58,6 @@ describe("log popup", function()
       vim.fn.feedkeys("j", "x")
       -- Check for absence of graph markers.
       eq("e2c2a1c  master origin/second-branch b.txt", vim.api.nvim_get_current_line())
-      vim.fn.feedkeys("q", "x")
     end)
   )
 
@@ -55,7 +66,17 @@ describe("log popup", function()
     in_prepared_repo(function()
       act("l-dl")
       operations.wait("log_current")
-      eq("e2c2a1c  b.txt", vim.api.nvim_get_current_line())
+      eq("e2c2a1c * b.txt", vim.api.nvim_get_current_line())
+    end)
+  )
+
+  it(
+    "limits number of commits",
+    in_prepared_repo(function()
+      act("l=n<C-u>1<CR>l")
+      operations.wait("log_current")
+      vim.fn.feedkeys("G", "x")
+      eq("e2c2a1c * origin/second-branch master b.txt", vim.api.nvim_get_current_line())
     end)
   )
 end)
