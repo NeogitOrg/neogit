@@ -12,12 +12,13 @@ local operation = require("neogit.operations")
 ---Builds a graph for the popup if required
 ---@param popup table
 ---@return table|nil
-local function maybe_graph(popup)
+local function maybe_graph(popup, extras)
   local args = popup:get_internal_arguments()
   if args.graph then
     local external_args = popup:get_arguments()
     util.remove_item_from_table(external_args, "--show-signature")
-    return git.log.graph(external_args, popup.state.env.files, args.color)
+
+    return git.log.graph(util.merge(external_args, extras), popup.state.env.files, args.color)
   end
 end
 
@@ -28,7 +29,7 @@ end
 local function commits(popup, extras)
   return git.log.list(
     util.merge(popup:get_arguments(), extras or {}),
-    maybe_graph(popup),
+    maybe_graph(popup, extras),
     popup.state.env.files
   )
 end
