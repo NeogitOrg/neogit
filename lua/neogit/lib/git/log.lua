@@ -189,22 +189,27 @@ end
 
 ---@param output table
 ---@param graph table|nil parsed ANSI graph table
----@param graph_raw table|nil stdout from graph call, unparsed
 ---@return CommitLogEntry[]
-local function parse_log(output, graph, graph_raw)
+local function parse_log(output, graph)
   local commits = {}
 
-  if graph and graph_raw then
-    for i = 1, #graph_raw do
-      if graph_raw[i]:match("%*") then
-        table.insert(commits, make_commit(table.remove(output, 1), graph[i]))
-      else
-        table.insert(commits, { graph = graph[i] })
-      end
-    end
-  else
+  if vim.tbl_isempty(graph) then
     for i = 1, #output do
       table.insert(commits, make_commit(output[i]))
+    end
+  else
+    local commit_lookup = {}
+    for _, commit in ipairs(output) do
+      commit_lookup[commit[1]] = commit
+    end
+
+    for _, line in ipairs(graph) do
+      local oid = line[1].oid
+      if oid then
+        table.insert(commits, make_commit(commit_lookup[oid], line))
+      else
+        table.insert(commits, { graph = line })
+      end
     end
   end
 
@@ -218,10 +223,7 @@ local function split_output(output)
   output = table.concat(output, "\n")
   output = vim.split(output, "\31", { trimempty = true })
   output = util.map(output, function(line)
-    line = vim.split(vim.trim(line:gsub("\n", " ")), "\30")
-    line[1] = line[1]:match("(%x+)")
-
-    return line
+    return vim.split(vim.trim(line:gsub("\n", " ")), "\30")
   end)
 
   return output
@@ -310,12 +312,12 @@ function M.graph(options, files, color)
   options = ensure_max(options or {})
   files = files or {}
 
-  local graph_raw = cli.log.format("%x00").graph.color.arg_list(options).files(unpack(files)).call():trim()
-  local graph = util.map(graph_raw.stdout_raw, function(line)
+  local result =
+    cli.log.format("%x1E%H%x00").graph.color.arg_list(options).files(unpack(files)).call():trim().stdout_raw
+
+  return util.filter_map(result, function(line)
     return require("neogit.lib.ansi").parse(util.trim(line), { recolor = not color })
   end)
-
-  return { graph, graph_raw.stdout }
 end
 
 ---@param options? string[]
@@ -336,18 +338,15 @@ function M.list(options, graph, files)
     util.remove_item_from_table(options, "--show-signature")
   end
 
-  local output = split_output(
-    cli.log
-      .format(parse_log_format(show_signature))
-      .arg_list(options)
-      .args(graph and "--graph")
-      .files(unpack(files))
-      .show_popup(false)
-      .call()
-      :trim().stdout
-  )
+  local output = cli.log
+    .format(parse_log_format(show_signature))
+    .arg_list(options)
+    .files(unpack(files))
+    .show_popup(false)
+    .call()
+    :trim().stdout
 
-  return parse_log(output, unpack(graph or {}))
+  return parse_log(split_output(output), graph or {})
 end
 
 ---Determines if commit a is an ancestor of commit b
