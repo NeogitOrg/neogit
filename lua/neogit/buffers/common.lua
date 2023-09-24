@@ -115,18 +115,21 @@ M.CommitEntry = Component.new(function(commit, args)
     local ref_name, _ = commit.ref_name:gsub("HEAD %-> ", "")
     local remote_name, local_name = unpack(vim.split(ref_name, ", "))
 
-    if local_name then
-      table.insert(
-        ref,
-        text(local_name .. " ", { highlight = local_name:match("/") and "String" or "Macro" })
-      )
-    end
+    if local_name and remote_name and vim.endswith(remote_name, local_name) then
+      local remote = remote_name:match("^([^/]*)")
+      table.insert(ref, text(remote .. "/", { highlight = "String" }))
+      table.insert(ref, text(local_name, { highlight = "Macro" }))
+      table.insert(ref, text(" "))
+    else
+      if local_name then
+        table.insert(ref, text(local_name, { highlight = local_name:match("/") and "String" or "Macro" }))
+        table.insert(ref, text(" "))
+      end
 
-    if remote_name then
-      table.insert(
-        ref,
-        text(remote_name .. " ", { highlight = remote_name:match("/") and "String" or "Macro" })
-      )
+      if remote_name then
+        table.insert(ref, text(remote_name, { highlight = remote_name:match("/") and "String" or "Macro" }))
+        table.insert(ref, text(" "))
+      end
     end
   end
 
