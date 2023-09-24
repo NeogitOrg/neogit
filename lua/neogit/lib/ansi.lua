@@ -21,7 +21,7 @@ function M.parse(str, opts)
     return
   end
 
-  local graph, oid = unpack(vim.split(str, "\30", { trimempty = true }))
+  local graph, oid = unpack(vim.split(str, " \30", { trimempty = true }))
   local colored = {}
 
   local parsed, _ = graph:gsub("(\27%[[;%d]*m.-\27%[m)", function(match)
