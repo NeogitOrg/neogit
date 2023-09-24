@@ -173,9 +173,9 @@ local function make_commit(entry, graph)
     description = { subject, body },
     author_name = author_name,
     author_email = author_email,
+    author_date = author_date,
     rel_date = rel_date,
     ref_name = ref_name,
-    author_date = author_date,
     committer_date = committer_date,
     committer_name = committer_name,
     committer_email = committer_email,
@@ -188,7 +188,7 @@ local function make_commit(entry, graph)
 end
 
 ---@param output table
----@param graph table|nil parsed ANSI graph table
+---@param graph  table parsed ANSI graph table
 ---@return CommitLogEntry[]
 local function parse_log(output, graph)
   local commits = {}
@@ -199,8 +199,8 @@ local function parse_log(output, graph)
     end
   else
     local commit_lookup = {}
-    for _, commit in ipairs(output) do
-      commit_lookup[commit[1]] = commit
+    for i = 1, #output do
+      commit_lookup[output[i][1]] = output[i]
     end
 
     for _, line in ipairs(graph) do
