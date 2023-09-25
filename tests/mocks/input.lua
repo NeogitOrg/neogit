@@ -10,7 +10,6 @@ local M = {
 input.get_user_input = function(_, default)
   local value = table.remove(M.values, 1)
   if value == "" and default then
-    print("Using input default: " .. default)
     return default
   else
     return value

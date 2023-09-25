@@ -2,7 +2,7 @@ local M = {}
 
 local git = require("neogit.lib.git")
 local client = require("neogit.client")
-local notif = require("neogit.lib.notification")
+local notification = require("neogit.lib.notification")
 local CommitSelectViewBuffer = require("neogit.buffers.commit_select_view")
 
 ---@param popup any
@@ -40,7 +40,7 @@ function M.commits(popup)
   local success = git.revert.commits(commits, args)
 
   if not success then
-    notif.create("Revert failed. Resolve conflicts before continuing", vim.log.levels.ERROR)
+    notification.error("Revert failed. Resolve conflicts before continuing")
     return
   end
 
@@ -55,9 +55,7 @@ function M.commits(popup)
     autocmd = "NeogitRevertComplete",
     refresh = "do_revert",
     msg = {
-      setup = "Reverting...",
-      success = "Reverted!",
-      fail = "Couldn't revert",
+      success = "Reverted",
     },
   })
 end

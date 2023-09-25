@@ -7,34 +7,38 @@ local LogViewBuffer = require("neogit.buffers.log_view")
 local ReflogViewBuffer = require("neogit.buffers.reflog_view")
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
+local operation = require("neogit.operations")
+
 ---Builds a graph for the popup if required
----@param popup table
+---@param popup table Contains the argument list
+---@param flags table extra CLI flags like --branches or --remotes
 ---@return table|nil
-local function maybe_graph(popup)
+local function maybe_graph(popup, flags)
   local args = popup:get_internal_arguments()
   if args.graph then
     local external_args = popup:get_arguments()
     util.remove_item_from_table(external_args, "--show-signature")
-    return git.log.graph(external_args, popup.state.env.files, args.color)
+
+    return git.log.graph(util.merge(external_args, flags), popup.state.env.files, args.color)
   end
 end
 
 --- Runs `git log` and parses the commits
 ---@param popup table Contains the argument list
----@param extras table|nil
+---@param flags table extra CLI flags like --branches or --remotes
 ---@return CommitLogEntry[]
-local function commits(popup, extras)
+local function commits(popup, flags)
   return git.log.list(
-    util.merge(popup:get_arguments(), extras or {}),
-    maybe_graph(popup),
+    util.merge(popup:get_arguments(), flags),
+    maybe_graph(popup, flags),
     popup.state.env.files
   )
 end
 
 -- TODO: Handle when head is detached
-function M.log_current(popup)
-  LogViewBuffer.new(commits(popup), popup:get_internal_arguments()):open()
-end
+M.log_current = operation("log_current", function(popup)
+  LogViewBuffer.new(commits(popup, {}), popup:get_internal_arguments()):open()
+end)
 
 function M.log_head(popup)
   LogViewBuffer.new(commits(popup, { "HEAD" }), popup:get_internal_arguments()):open()

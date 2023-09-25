@@ -1,5 +1,5 @@
 local cli = require("neogit.lib.git.cli")
-local notif = require("neogit.lib.notification")
+local notification = require("neogit.lib.notification")
 local util = require("neogit.lib.util")
 
 local M = {}
@@ -7,7 +7,7 @@ local M = {}
 function M.pick(commits, args)
   local result = cli["cherry-pick"].arg_list(util.merge(args, commits)).call()
   if result.code ~= 0 then
-    notif.create("Cherry Pick failed. Resolve conflicts before continuing", vim.log.levels.ERROR)
+    notification.error("Cherry Pick failed. Resolve conflicts before continuing")
   end
 end
 
@@ -20,7 +20,7 @@ function M.apply(commits, args)
 
   local result = cli["cherry-pick"].no_commit.arg_list(util.merge(args, commits)).call()
   if result.code ~= 0 then
-    notif.create("Cherry Pick failed. Resolve conflicts before continuing", vim.log.levels.ERROR)
+    notification.error("Cherry Pick failed. Resolve conflicts before continuing")
   end
 end
 

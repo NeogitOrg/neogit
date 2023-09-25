@@ -173,9 +173,9 @@ local function make_commit(entry, graph)
     description = { subject, body },
     author_name = author_name,
     author_email = author_email,
+    author_date = author_date,
     rel_date = rel_date,
     ref_name = ref_name,
-    author_date = author_date,
     committer_date = committer_date,
     committer_name = committer_name,
     committer_email = committer_email,
@@ -188,23 +188,36 @@ local function make_commit(entry, graph)
 end
 
 ---@param output table
----@param graph table|nil parsed ANSI graph table
----@param graph_raw table|nil stdout from graph call, unparsed
+---@param graph  table parsed ANSI graph table
 ---@return CommitLogEntry[]
-local function parse_log(output, graph, graph_raw)
+local function parse_log(output, graph)
   local commits = {}
 
-  if graph and graph_raw then
-    for i = 1, #graph_raw do
-      if graph_raw[i]:match("%*") then
-        table.insert(commits, make_commit(table.remove(output, 1), graph[i]))
+  if vim.tbl_isempty(graph) then
+    for i = 1, #output do
+      table.insert(commits, make_commit(output[i]))
+    end
+  else
+    local total_commits = #output
+    local current_commit = 0
+
+    local commit_lookup = {}
+    for i = 1, #output do
+      commit_lookup[output[i][1]] = output[i]
+    end
+
+    for i = 1, #graph do
+      if current_commit == total_commits then
+        break
+      end
+
+      local oid = graph[i][1].oid
+      if oid then
+        table.insert(commits, make_commit(commit_lookup[oid], graph[i]))
+        current_commit = current_commit + 1
       else
         table.insert(commits, { graph = graph[i] })
       end
-    end
-  else
-    for i = 1, #output do
-      table.insert(commits, make_commit(output[i]))
     end
   end
 
@@ -284,6 +297,40 @@ local function exceeds_max_default(options)
   return false
 end
 
+--- Ensure a max is passed to the list function to prevent accidentally getting thousands of results.
+---@param options table
+---@return table, boolean
+local function show_signature(options)
+  local show_signature = false
+  if vim.tbl_contains(options, "--show-signature") then
+    -- Do not show signature when count > 256
+    if not exceeds_max_default(options) then
+      show_signature = true
+    end
+
+    util.remove_item_from_table(options, "--show-signature")
+  end
+
+  return options, show_signature
+end
+
+--- When no order is specified, and a graph is built, --topo-order needs to be used to match the default graph ordering.
+--- @param options table
+--- @param graph table|nil
+--- @return table, string|nil
+local function determine_order(options, graph)
+  if
+    (graph or {})[1]
+    and not vim.tbl_contains(options, "--date-order")
+    and not vim.tbl_contains(options, "--author-date-order")
+    and not vim.tbl_contains(options, "--topo-order")
+  then
+    table.insert(options, "--topo-order")
+  end
+
+  return options
+end
+
 --- Parses the arguments needed for the format output of git log
 ---@param show_signature boolean Should '%G?' be omitted from the arguments
 ---@return string Concatenated format arguments
@@ -307,12 +354,12 @@ function M.graph(options, files, color)
   options = ensure_max(options or {})
   files = files or {}
 
-  local graph_raw = cli.log.format("%x00").graph.color.arg_list(options).files(unpack(files)).call():trim()
-  local graph = util.map(graph_raw.stdout_raw, function(line)
+  local result =
+    cli.log.format("%x1E%H%x00").graph.color.arg_list(options).files(unpack(files)).call():trim().stdout_raw
+
+  return util.filter_map(result, function(line)
     return require("neogit.lib.ansi").parse(util.trim(line), { recolor = not color })
   end)
-
-  return { graph, graph_raw.stdout }
 end
 
 ---@param options? string[]
@@ -321,28 +368,21 @@ end
 ---@return CommitLogEntry[]
 function M.list(options, graph, files)
   files = files or {}
+  local signature = false
+
   options = ensure_max(options or {})
+  options = determine_order(options, graph)
+  options, signature = show_signature(options)
 
-  local show_signature = false
-  if vim.tbl_contains(options, "--show-signature") then
-    -- Do not show signature when count > 256
-    if not exceeds_max_default(options) then
-      show_signature = true
-    end
-    util.remove_item_from_table(options, "--show-signature")
-  end
+  local output = cli.log
+    .format(parse_log_format(signature))
+    .arg_list(options)
+    .files(unpack(files))
+    .show_popup(false)
+    .call()
+    :trim().stdout
 
-  local output = split_output(
-    cli.log
-      .format(parse_log_format(show_signature))
-      .arg_list(ensure_max(options))
-      .files(unpack(files))
-      .show_popup(false)
-      .call()
-      :trim().stdout
-  )
-
-  return parse_log(output, unpack(graph or {}))
+  return parse_log(split_output(output), graph or {})
 end
 
 ---Determines if commit a is an ancestor of commit b

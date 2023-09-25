@@ -3,7 +3,7 @@ local GitCommandHistory = require("neogit.buffers.git_command_history")
 local CommitView = require("neogit.buffers.commit_view")
 local git = require("neogit.lib.git")
 local cli = require("neogit.lib.git.cli")
-local notif = require("neogit.lib.notification")
+local notification = require("neogit.lib.notification")
 local config = require("neogit.config")
 local a = require("plenary.async")
 local logger = require("neogit.logger")
@@ -637,7 +637,7 @@ local function close(skip_close)
   end
 
   M.watcher:stop()
-  notif.delete_all()
+  notification.delete_all()
   M.status_buffer = nil
   vim.o.autochdir = M.prev_autochdir
   if M.cwd_changed then
@@ -1052,7 +1052,7 @@ local function handle_section_item(item)
 
   local hunk = M.get_item_hunks(item, cursor_row, cursor_row, false)[1]
 
-  notif.delete_all()
+  notification.delete_all()
   M.status_buffer:close()
 
   local relpath = vim.fn.fnamemodify(path, ":.")
@@ -1284,7 +1284,7 @@ local cmd_func_map = function()
     end),
 
     ["RefreshBuffer"] = function()
-      notif.create("Refreshing Status", vim.log.levels.INFO)
+      notification.info("Refreshing Status")
       dispatch_refresh(true)
     end,
 
@@ -1292,7 +1292,7 @@ local cmd_func_map = function()
 
     ["DiffAtFile"] = function()
       if not config.check_integration("diffview") then
-        require("neogit.lib.notification").error("Diffview integration is not enabled")
+        notification.error("Diffview integration is not enabled")
         return
       end
 

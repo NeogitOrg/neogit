@@ -17,16 +17,21 @@ local mark = "%"
 ---Parses a string with ansi-escape codes (colors) into a table
 ---@param str string
 function M.parse(str, opts)
+  if str == "" then
+    return
+  end
+
+  local graph, oid = unpack(vim.split(str, " \30", { trimempty = true }))
   local colored = {}
 
-  local parsed, _ = str:gsub("(\27%[[;%d]*m.-\27%[m)", function(match)
+  local parsed, _ = graph:gsub("(\27%[[;%d]*m.-\27%[m)", function(match)
     local color, text = match:match("\27%[([;%d]*)m(.-)\27%[m")
 
     if opts.recolor then
       color = "35"
     end
 
-    table.insert(colored, { text = text, color = colors[color] })
+    table.insert(colored, { text = text, color = colors[color], oid = oid })
     return mark
   end)
 
@@ -35,7 +40,7 @@ function M.parse(str, opts)
     if g == mark then
       table.insert(out, table.remove(colored, 1))
     else
-      table.insert(out, { text = g, color = "Gray" })
+      table.insert(out, { text = g, color = "Gray", oid = oid })
     end
   end
 

@@ -1,5 +1,5 @@
 local cli = require("neogit.lib.git.cli")
-local notif = require("neogit.lib.notification")
+local notification = require("neogit.lib.notification")
 local input = require("neogit.lib.input")
 
 local M = {}
@@ -29,7 +29,7 @@ M.init_repo = function()
   directory = vim.fn.fnamemodify(directory, ":p")
 
   if vim.fn.isdirectory(directory) == 0 then
-    notif.create("You entered an invalid directory", vim.log.levels.ERROR)
+    notification.error("You entered an invalid directory")
     return
   end
 

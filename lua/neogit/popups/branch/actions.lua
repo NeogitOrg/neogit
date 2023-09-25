@@ -3,7 +3,7 @@ local M = {}
 local git = require("neogit.lib.git")
 local input = require("neogit.lib.input")
 local util = require("neogit.lib.util")
-local notif = require("neogit.lib.notification")
+local notification = require("neogit.lib.notification")
 local operation = require("neogit.operations")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
@@ -23,7 +23,7 @@ end
 
 local function spin_off_branch(checkout)
   if git.status.is_dirty() and not checkout then
-    notif.create("Staying on HEAD due to uncommitted changes", vim.log.levels.INFO)
+    notification.info("Staying on HEAD due to uncommitted changes")
     checkout = true
   end
 
@@ -188,7 +188,7 @@ M.reset_branch = operation("reset_branch", function()
   git.cli.reset.hard.args(to).call_sync()
   git.log.update_ref(git.branch.current_full_name(), to)
 
-  notif.create(string.format("Reset '%s' to '%s'", current, to), vim.log.levels.INFO)
+  notification.info(string.format("Reset '%s' to '%s'", current, to))
 end)
 
 M.delete_branch = operation("delete_branch", function()
@@ -244,9 +244,9 @@ M.delete_branch = operation("delete_branch", function()
 
   if success then
     if remote then
-      notif.create(string.format("Deleted remote branch '%s/%s'", remote, branch_name), vim.log.levels.INFO)
+      notification.info(string.format("Deleted remote branch '%s/%s'", remote, branch_name))
     else
-      notif.create(string.format("Deleted branch '%s'", branch_name), vim.log.levels.INFO)
+      notification.info(string.format("Deleted branch '%s'", branch_name))
     end
   end
 end)

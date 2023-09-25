@@ -4,6 +4,7 @@ local CommitSelectViewBuffer = require("neogit.buffers.commit_select_view")
 local git = require("neogit.lib.git")
 local client = require("neogit.client")
 local input = require("neogit.lib.input")
+local notification = require("neogit.lib.notification")
 local a = require("plenary.async")
 
 local function confirm_modifications()
@@ -28,9 +29,7 @@ local function do_commit(popup, cmd)
   client.wrap(cmd.arg_list(popup:get_arguments()), {
     autocmd = "NeogitCommitComplete",
     msg = {
-      setup = "Committing...",
-      success = "Committed!",
-      fail = "Couldn't commit",
+      success = "Committed",
     },
   })
 end
@@ -49,7 +48,7 @@ local function commit_special(popup, method, opts)
         return
       end
     else
-      require("neogit.lib.notification").create("No changes to commit.", vim.lsp.log_levels.WARN)
+      notification.warn("No changes to commit.")
       return
     end
   end

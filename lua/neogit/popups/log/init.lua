@@ -7,6 +7,7 @@ function M.create()
   -- TODO: Need to figure out how this works
   -- :switch("h", "header", "Show header", { cli_prefix = "++" })
   -- :switch("p", "patch", "Show diffs")
+  -- :switch("s", "stat", "Show diffstats")
 
   local p = popup
     .builder()
@@ -49,9 +50,8 @@ function M.create()
       dependant = { "color" },
     })
     :switch("c", "color", "Show graph in color", { internal = true, incompatible = { "reverse" } })
-    :switch("d", "decorate", "Show refnames", { enabled = true })
+    :switch("d", "decorate", "Show refnames", { enabled = true, internal = true })
     :switch("S", "show-signature", "Show signatures", { key_prefix = "=" })
-    :switch("s", "stat", "Show diffstats")
     :group_heading("Log")
     :action("l", "current", actions.log_current)
     :action("h", "HEAD", actions.log_head)

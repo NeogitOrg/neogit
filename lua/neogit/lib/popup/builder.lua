@@ -2,7 +2,7 @@ local a = require("plenary.async")
 local state = require("neogit.lib.state")
 local config = require("neogit.lib.git.config")
 local util = require("neogit.lib.util")
-local notif = require("neogit.lib.notification")
+local notification = require("neogit.lib.notification")
 local logger = require("neogit.logger")
 
 local M = {}
@@ -290,7 +290,7 @@ function M:action(keys, description, callback)
 
   for _, key in pairs(keys) do
     if self.state.keys[key] then
-      notif.error(string.format("[POPUP] Duplicate key mapping %q", key))
+      notification.error(string.format("[POPUP] Duplicate key mapping %q", key))
       return self
     end
     self.state.keys[key] = true
