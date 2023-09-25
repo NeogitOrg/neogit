@@ -289,6 +289,38 @@ local function exceeds_max_default(options)
   return false
 end
 
+--- Ensure a max is passed to the list function to prevent accidentally getting thousands of results.
+---@param options table
+---@return table, boolean
+local function show_signature(options)
+  local show_signature = false
+  if vim.tbl_contains(options, "--show-signature") then
+    -- Do not show signature when count > 256
+    if not exceeds_max_default(options) then
+      show_signature = true
+    end
+
+    util.remove_item_from_table(options, "--show-signature")
+  end
+
+  return options, show_signature
+end
+
+--- When no order is specified, and a graph is built, --topo-order needs to be used to match the default graph ordering.
+--- @param options table
+--- @param graph table|nil
+--- @return table, string|nil
+local function determine_order(options, graph)
+  if (graph or {})[1]
+    and not vim.tbl_contains(options, "--date-order")
+    and not vim.tbl_contains(options, "--author-date-order")
+    and not vim.tbl_contains(options, "--topo-order") then
+    table.insert(options, "--topo-order")
+  end
+
+  return options
+end
+
 --- Parses the arguments needed for the format output of git log
 ---@param show_signature boolean Should '%G?' be omitted from the arguments
 ---@return string Concatenated format arguments
@@ -326,20 +358,14 @@ end
 ---@return CommitLogEntry[]
 function M.list(options, graph, files)
   files = files or {}
+  local signature = false
+
   options = ensure_max(options or {})
-
-  local show_signature = false
-  if vim.tbl_contains(options, "--show-signature") then
-    -- Do not show signature when count > 256
-    if not exceeds_max_default(options) then
-      show_signature = true
-    end
-
-    util.remove_item_from_table(options, "--show-signature")
-  end
+  options = determine_order(options, graph)
+  options, signature = show_signature(options)
 
   local output = cli.log
-    .format(parse_log_format(show_signature))
+    .format(parse_log_format(signature))
     .arg_list(options)
     .files(unpack(files))
     .show_popup(false)
