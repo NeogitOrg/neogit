@@ -1,5 +1,3 @@
-local util = require("neogit.lib.util")
-local notification = require("neogit.lib.notification")
 local M = {}
 
 ---@param name string
@@ -18,6 +16,7 @@ function M.open(name, f)
 
       f(value.create)
     else
+      local notification = require("neogit.lib.notification")
       notification.error(string.format("Failed to load popup: %q\n%s", name, value))
     end
   end
