@@ -65,8 +65,8 @@ function M.reset(self)
   self.state = empty_state()
 end
 
-M._refresh_lock = a.control.Semaphore.new(1)
-M._lock_holder = nil
+local refresh_lock = a.control.Semaphore.new(1)
+local lock_holder = nil
 
 function M.refresh(self, opts)
   opts = opts or {}
@@ -77,39 +77,37 @@ function M.refresh(self, opts)
     return
   end
 
-  if M._refresh_lock.permits < 1 then
-    logger.fmt_debug("[REPO]: Refreshing ABORTED - Lock held by: %q", M._lock_holder)
+  if refresh_lock.permits < 1 then
+    logger.fmt_debug("[REPO]: Refreshing ABORTED - Lock held by: %q", lock_holder)
     return
   end
 
-  local permit = M._refresh_lock:acquire()
-  M._lock_holder = opts.source or "UNKNOWN"
-  logger.fmt_debug("[REPO]: Acquired refresh lock: %s", M._lock_holder)
+  local permit = refresh_lock:acquire()
+  lock_holder = opts.source or "UNKNOWN"
+  logger.fmt_debug("[REPO]: Acquired refresh lock: %s", lock_holder)
 
-  logger.trace("[REPO]: Refreshing update_status")
-  self.lib.update_status(self.state)
-
-  local updates = {}
-  for name, fn in pairs(self.lib) do
-    if name ~= "update_status" then
-      table.insert(updates, function()
-        logger.trace(string.format("[REPO]: Refreshing %s", name))
-        fn(self.state)
-      end)
-    end
-  end
-
-  a.util.run_all(updates, function()
+  local cleanup = function()
     logger.info("[REPO]: Refreshes complete - freeing Refresh lock")
 
-    M._lock_holder = nil
+    lock_holder = nil
     permit:forget()
 
     if opts.callback then
       logger.debug("[REPO]: Running refresh callback")
       opts.callback()
     end
-  end)
+  end
+
+  local update_status = function()
+    logger.trace("[REPO]: Refreshing update_status")
+    self.lib.update_status(self.state)
+  end
+
+  local update_all = function()
+    a.util.run_all(M.updates, cleanup)
+  end
+
+  a.run(update_status, update_all)
 end
 
 if not M.initialized then
@@ -132,6 +130,16 @@ if not M.initialized then
 
   for _, m in ipairs(modules) do
     require("neogit.lib.git." .. m).register(M.lib)
+  end
+
+  M.updates = {}
+  for name, fn in pairs(M.lib) do
+    if name ~= "update_status" then
+      table.insert(M.updates, function()
+        logger.trace(string.format("[REPO]: Refreshing %s", name))
+        fn(M.state)
+      end)
+    end
   end
 end
 
