@@ -168,9 +168,7 @@ function Process:start_timer()
         if not self.timer then
           return
         end
-        self.timer = nil
-        timer:stop()
-        timer:close()
+        self:stop_timer()
         if not self.result or (self.result.code ~= 0) then
           local message = string.format(
             "Command %q running for more than: %.1f seconds",
@@ -196,7 +194,9 @@ function Process:stop_timer()
     local timer = self.timer
     self.timer = nil
     timer:stop()
-    timer:close()
+    if not timer:is_closing() then
+      timer:close()
+    end
   end
 end
 
