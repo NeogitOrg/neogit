@@ -112,7 +112,7 @@ function M.get_default_values()
     disable_commit_confirmation = false,
     filewatcher = {
       interval = 1000,
-      enabled = true,
+      enabled = false,
     },
     telescope_sorter = function()
       return nil
