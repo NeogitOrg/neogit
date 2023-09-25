@@ -1,5 +1,5 @@
 local cli = require("neogit.lib.git.cli")
-local notif = require("neogit.lib.notification")
+local notification = require("neogit.lib.notification")
 local a = require("plenary.async")
 
 local M = {}
@@ -9,9 +9,9 @@ function M.mixed(commit)
 
   local result = cli.reset.mixed.args(commit).call()
   if result.code ~= 0 then
-    notif.create("Reset Failed", vim.log.levels.ERROR)
+    notification.error("Reset Failed")
   else
-    notif.create("Reset to " .. commit, vim.log.levels.INFO)
+    notification.info("Reset to " .. commit)
   end
 end
 
@@ -20,9 +20,9 @@ function M.soft(commit)
 
   local result = cli.reset.soft.args(commit).call()
   if result.code ~= 0 then
-    notif.create("Reset Failed", vim.log.levels.ERROR)
+    notification.error("Reset Failed")
   else
-    notif.create("Reset to " .. commit, vim.log.levels.INFO)
+    notification.info("Reset to " .. commit)
   end
 end
 
@@ -31,9 +31,9 @@ function M.hard(commit)
 
   local result = cli.reset.hard.args(commit).call()
   if result.code ~= 0 then
-    notif.create("Reset Failed", vim.log.levels.ERROR)
+    notification.error("Reset Failed")
   else
-    notif.create("Reset to " .. commit, vim.log.levels.INFO)
+    notification.info("Reset to " .. commit)
   end
 end
 
@@ -42,9 +42,9 @@ function M.keep(commit)
 
   local result = cli.reset.keep.args(commit).call()
   if result.code ~= 0 then
-    notif.create("Reset Failed", vim.log.levels.ERROR)
+    notification.error("Reset Failed")
   else
-    notif.create("Reset to " .. commit, vim.log.levels.INFO)
+    notification.info("Reset to " .. commit)
   end
 end
 
@@ -53,9 +53,9 @@ function M.index(commit)
 
   local result = cli.reset.args(commit).files(".").call()
   if result.code ~= 0 then
-    notif.create("Reset Failed", vim.log.levels.ERROR)
+    notification.error("Reset Failed")
   else
-    notif.create("Reset to " .. commit, vim.log.levels.INFO)
+    notification.info("Reset to " .. commit)
   end
 end
 
@@ -72,12 +72,12 @@ end
 function M.file(commit, files)
   local result = cli.checkout.rev(commit).files(unpack(files)).call_sync()
   if result.code ~= 0 then
-    notif.create("Reset Failed", vim.log.levels.ERROR)
+    notification.error("Reset Failed")
   else
     if #files > 1 then
-      notif.create("Reset " .. #files .. " files", vim.log.levels.info)
+      notification.info("Reset " .. #files .. " files")
     else
-      notif.create("Reset " .. files[1], vim.log.levels.info)
+      notification.info("Reset " .. files[1])
     end
   end
 end

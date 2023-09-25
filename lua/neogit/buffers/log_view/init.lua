@@ -2,6 +2,7 @@ local Buffer = require("neogit.lib.buffer")
 local ui = require("neogit.buffers.log_view.ui")
 local config = require("neogit.config")
 local popups = require("neogit.popups")
+local notification = require("neogit.lib.notification")
 
 local CommitViewBuffer = require("neogit.buffers.commit_view")
 
@@ -134,7 +135,7 @@ function M:open()
         end,
         ["d"] = function()
           if not config.check_integration("diffview") then
-            require("neogit.lib.notification").error("Diffview integration must be enabled for log diff")
+            notification.error("Diffview integration must be enabled for log diff")
             return
           end
 

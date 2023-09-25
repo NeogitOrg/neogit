@@ -5,6 +5,7 @@ local ui = require("neogit.buffers.commit_view.ui")
 local log = require("neogit.lib.git.log")
 local config = require("neogit.config")
 local popups = require("neogit.popups")
+local notification = require("neogit.lib.notification")
 
 local api = vim.api
 
@@ -42,11 +43,10 @@ local M = {
 --- @param notify boolean Should show a notification or not
 --- @return CommitViewBuffer
 function M.new(commit_id, notify)
-  local notification
   if notify then
-    local notif = require("neogit.lib.notification")
-    notification = notif.create("Parsing commit...")
+    notification.info("Parsing commit...")
   end
+
   local commit_info = log.parse(cli.show.format("fuller").args(commit_id).call_sync().stdout)[1]
   commit_info.commit_arg = commit_id
   local instance = {
@@ -59,9 +59,7 @@ function M.new(commit_id, notify)
     buffer = nil,
   }
 
-  if notification then
-    notification:delete()
-  end
+  notification.delete_all()
 
   setmetatable(instance, { __index = M })
 

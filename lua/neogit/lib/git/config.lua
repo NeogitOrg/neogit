@@ -36,9 +36,14 @@ function ConfigEntry:is_set()
   return self.value ~= ""
 end
 
+---@return boolean
+function ConfigEntry:is_unset()
+  return not self:is_set()
+end
+
 ---@return boolean|number|string|nil
 function ConfigEntry:read()
-  if not self:is_set() then
+  if self:is_unset() then
     return nil
   end
 
