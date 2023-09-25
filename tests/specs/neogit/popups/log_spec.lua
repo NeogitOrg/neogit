@@ -37,7 +37,7 @@ describe("log popup", function()
       operations.wait("log_current")
       vim.fn.feedkeys("j", "x")
       -- Check for absence of graph markers.
-      eq("e2c2a1c  master origin/second-branch b.txt", vim.api.nvim_get_current_line())
+      eq("e2c2a1c  origin/second-branch master b.txt", vim.api.nvim_get_current_line())
       vim.fn.feedkeys("q", "x")
 
       -- Open new log buffer, remember_settings should persist that graph is disabled.
@@ -45,7 +45,7 @@ describe("log popup", function()
       operations.wait("log_current")
       vim.fn.feedkeys("j", "x")
       -- Check for absence of graph markers.
-      eq("e2c2a1c  master origin/second-branch b.txt", vim.api.nvim_get_current_line())
+      eq("e2c2a1c  origin/second-branch master b.txt", vim.api.nvim_get_current_line())
       vim.fn.feedkeys("q", "x")
     end)
   )
