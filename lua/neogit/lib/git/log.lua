@@ -319,10 +319,12 @@ end
 --- @param graph table|nil
 --- @return table, string|nil
 local function determine_order(options, graph)
-  if (graph or {})[1]
+  if
+    (graph or {})[1]
     and not vim.tbl_contains(options, "--date-order")
     and not vim.tbl_contains(options, "--author-date-order")
-    and not vim.tbl_contains(options, "--topo-order") then
+    and not vim.tbl_contains(options, "--topo-order")
+  then
     table.insert(options, "--topo-order")
   end
 
