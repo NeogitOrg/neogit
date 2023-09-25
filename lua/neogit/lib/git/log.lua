@@ -198,15 +198,23 @@ local function parse_log(output, graph)
       table.insert(commits, make_commit(output[i]))
     end
   else
+    local total_commits = #output
+    local current_commit = 0
+
     local commit_lookup = {}
     for i = 1, #output do
       commit_lookup[output[i][1]] = output[i]
     end
 
     for i = 1, #graph do
+      if current_commit == total_commits then
+        break
+      end
+
       local oid = graph[i][1].oid
       if oid then
         table.insert(commits, make_commit(commit_lookup[oid], graph[i]))
+        current_commit = current_commit + 1
       else
         table.insert(commits, { graph = graph[i] })
       end
