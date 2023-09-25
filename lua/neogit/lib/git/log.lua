@@ -203,12 +203,12 @@ local function parse_log(output, graph)
       commit_lookup[output[i][1]] = output[i]
     end
 
-    for _, line in ipairs(graph) do
-      local oid = line[1].oid
+    for i = 1, #graph do
+      local oid = graph[i][1].oid
       if oid then
-        table.insert(commits, make_commit(commit_lookup[oid], line))
+        table.insert(commits, make_commit(commit_lookup[oid], graph[i]))
       else
-        table.insert(commits, { graph = line })
+        table.insert(commits, { graph = graph[i] })
       end
     end
   end
