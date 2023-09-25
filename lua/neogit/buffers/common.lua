@@ -115,8 +115,13 @@ M.CommitEntry = Component.new(function(commit, args)
     local ref_name, _ = commit.ref_name:gsub("HEAD %-> ", "")
     local remote_name, local_name = unpack(vim.split(ref_name, ", "))
 
+    -- Sometimes the log output will list remote/local names in reverse order
+    if (local_name and local_name:match("/")) and (remote_name and not remote_name:match("/")) then
+      remote_name, local_name = local_name, remote_name
+    end
+
     if local_name and remote_name and vim.endswith(remote_name, local_name) then
-      local remote = remote_name:match("^([^/]*)")
+      local remote = remote_name:match("^([^/]*)/.*$")
       table.insert(ref, text(remote .. "/", { highlight = "String" }))
       table.insert(ref, text(local_name, { highlight = "Macro" }))
       table.insert(ref, text(" "))
