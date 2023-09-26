@@ -804,7 +804,7 @@ function M.get_selection()
 
       local entire_section = section.first == first_line and first_line == last_line
 
-      for _, item in pairs(section.items) do
+      for _, item in pairs(section.items or {}) do
         if entire_section or item.first <= last_line and item.last >= first_line then
           if not res.item and item.first <= first_line and item.last >= last_line then
             res.item = item
