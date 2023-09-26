@@ -47,7 +47,7 @@ function M.create(env)
     :action("m", "rename", actions.rename_branch)
     :action("X", "reset", actions.reset_branch)
     :action("D", "delete", actions.delete_branch)
-    :env({ revisions = env.revisions or {} })
+    :env(env)
     :build()
 
   p:show()

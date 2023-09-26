@@ -106,6 +106,37 @@ describe("status buffer", function()
         )
       end)
     )
+
+    it(
+      "can stage a whole file and touched hunk",
+      in_prepared_repo(function()
+        find("Modified a%.txt")
+        act("<tab>")
+        find("untracked%.txt")
+        --- 0 untracked.txt
+        --- 1
+        --- 2 Unstaged
+        --- 3 a.txt
+        --- 4 HEADER
+        --- 5 This is a text file...
+        --- 6 -It exists...
+        --- 7 +This is a change
+        act("V6js")
+        eq(
+          [[--- a/a.txt
++++ b/a.txt
+@@ -1,5 +1,4 @@
+ This is a text file under version control.
+-It exists so it can be manipulated by the test suite.
+ Here are some lines we can change during the tests.
+ 
+ 
+]],
+          get_git_diff("a.txt", "--cached")
+        )
+        eq("A  untracked.txt\n", get_git_status("untracked.txt"))
+      end)
+    )
   end)
 
   describe("unstaging files - u", function()

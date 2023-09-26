@@ -1,9 +1,11 @@
 local eq = assert.are.same
+
 local generate_patch_from_selection = require("neogit.lib.git").index.generate_patch
 
 -- Helper-function to keep the testsuite clean, since the interface to the
 -- function under test is quite bloated
 local function run_with_hunk(hunk, from, to, reverse)
+  local diff_from = 1
   local lines = vim.split(hunk, "\n")
   local header_matches =
     vim.fn.matchlist(lines[1], "@@ -\\(\\d\\+\\),\\(\\d\\+\\) +\\(\\d\\+\\),\\(\\d\\+\\) @@")
@@ -15,9 +17,9 @@ local function run_with_hunk(hunk, from, to, reverse)
     last = #lines,
     index_from = header_matches[2],
     index_len = header_matches[3],
-    diff_from = 1,
+    diff_from = diff_from,
     diff_to = #lines,
-  }, from, to, reverse)
+  }, diff_from + from, diff_from + to, reverse)
 end
 
 describe("patch creation", function()

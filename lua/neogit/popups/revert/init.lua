@@ -25,7 +25,7 @@ function M.create(env)
     :action_if(in_progress, "v", "continue", actions.continue)
     :action_if(in_progress, "s", "skip", actions.skip)
     :action_if(in_progress, "a", "abort", actions.abort)
-    :env({ commits = env.commits or {} })
+    :env(env)
     :build()
 
   p:show()

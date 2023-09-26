@@ -103,6 +103,13 @@ local function hunk_hash(content)
   return sha256(table.concat(content, "\n"))
 end
 
+---@class Hunk
+---@field index_from number
+---@field index_len number
+---@field diff_from number
+---@field diff_to number
+
+---@return Hunk
 local function build_hunks(lines)
   local hunks = {}
   local hunk = nil

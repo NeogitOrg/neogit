@@ -16,7 +16,7 @@ function M.create(env)
     :action("w", "worktree (only)")
     :group_heading("")
     :action("f", "a file", actions.a_file)
-    :env({ commit = env.commit })
+    :env(env)
     :build()
 
   p:show()

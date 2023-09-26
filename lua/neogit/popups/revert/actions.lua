@@ -6,10 +6,10 @@ local notification = require("neogit.lib.notification")
 local CommitSelectViewBuffer = require("neogit.buffers.commit_select_view")
 
 ---@param popup any
----@return table
+---@return CommitLogEntry[]
 local function get_commits(popup)
   local commits
-  if popup.state.env.commits[1] then
+  if #popup.state.env.commits > 0 then
     commits = popup.state.env.commits
   else
     commits = CommitSelectViewBuffer.new(git.log.list { "--max-count=256" }):open_async()
@@ -31,12 +31,14 @@ end
 
 function M.commits(popup)
   local commits = get_commits(popup)
-  if not commits[1] then
+  if #commits == 0 then
     return
   end
 
   local args = popup:get_arguments()
+
   local success = git.revert.commits(commits, args)
+
   if not success then
     notification.error("Revert failed. Resolve conflicts before continuing")
     return
