@@ -344,10 +344,6 @@ local function draw_buffer()
       output:append("")
     end
 
-    -- if #new_locations > 0 then
-    --   assert(new_locations[#new_locations].last < location.first, "Sections are ordered")
-    -- end
-
     table.insert(new_locations, location)
   end
 
