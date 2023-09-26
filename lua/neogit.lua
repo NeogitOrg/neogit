@@ -102,7 +102,7 @@ function M.open(opts)
   else
     a.run(function()
       if status.status_buffer then
-        vim.cmd(string.format("cd %s", opts.cwd))
+        vim.cmd.lcd(opts.cwd)
         status.refresh(true)
       else
         status.create(opts.kind, opts.cwd)
