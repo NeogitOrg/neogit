@@ -46,7 +46,7 @@ M.init_repo = function()
 
   local status = require("neogit.status")
   status.cwd_changed = true
-  vim.cmd(string.format("cd %s", directory))
+  vim.cmd.lcd(directory)
 
   M.create(directory)
 

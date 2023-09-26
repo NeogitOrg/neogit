@@ -637,7 +637,7 @@ local function close(skip_close)
   M.status_buffer = nil
   vim.o.autochdir = M.prev_autochdir
   if M.cwd_changed then
-    vim.cmd("cd -")
+    vim.cmd.lcd("-")
   end
 end
 
@@ -1416,7 +1416,7 @@ function M.create(kind, cwd)
 
       if cwd then
         M.cwd_changed = true
-        vim.cmd(string.format("cd %s", cwd))
+        vim.cmd.lcd(cwd)
       end
 
       vim.o.autochdir = false
