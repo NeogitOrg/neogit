@@ -204,7 +204,7 @@ local function draw_buffer()
     name = "head_branch_header",
     first = #output,
     last = #output,
-    files = {},
+    items = {},
     ignore_sign = true,
   })
 
@@ -222,7 +222,7 @@ local function draw_buffer()
         name = "upstream_header",
         first = #output,
         last = #output,
-        files = {},
+        items = {},
         ignore_sign = true,
       })
     end
@@ -240,7 +240,7 @@ local function draw_buffer()
         name = "push_branch_header",
         first = #output,
         last = #output,
-        files = {},
+        items = {},
         ignore_sign = true,
       })
     end
@@ -251,7 +251,7 @@ local function draw_buffer()
       name = "tag_header",
       first = #output,
       last = #output,
-      files = {},
+      items = {},
       ignore_sign = true,
     })
   end
