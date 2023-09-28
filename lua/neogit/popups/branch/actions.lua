@@ -274,10 +274,14 @@ M.open_pull_request = operation("open_pull_request", function()
     end
   end
 
-  if vim.ui.open then
-    vim.ui.open(util.format(template, parse_remote_info(url)))
+  if template then
+    if vim.ui.open then
+      vim.ui.open(util.format(template, parse_remote_info(url)))
+    else
+      notification.warn("Requires Neovim 0.10")
+    end
   else
-    notification.warn("Requires Neovim 0.10")
+    notification.warn("Pull request URL template not found for this branch's upstream")
   end
 end)
 
