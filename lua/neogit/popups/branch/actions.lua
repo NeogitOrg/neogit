@@ -274,7 +274,11 @@ M.open_pull_request = operation("open_pull_request", function()
     end
   end
 
-  vim.ui.open(util.format(template, parse_remote_info(url)))
+  if vim.ui.open then
+    vim.ui.open(util.format(template, parse_remote_info(url)))
+  else
+    notification.warn("Requires Neovim 0.10")
+  end
 end)
 
 return M
