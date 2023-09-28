@@ -3,7 +3,7 @@
     <table>
         <tr>
             <td>
-               <strong>A <em>work-in-progress</em> <a href="https://magit.vc">Magit</a> clone for <a href="https://neovim.io">Neovim</a>.</strong>
+               <strong>A <a href="https://magit.vc">Magit</a> clone for <a href="https://neovim.io">Neovim</a>.</strong>
             </td>
         </tr>
     </table>
