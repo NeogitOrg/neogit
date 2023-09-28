@@ -47,6 +47,7 @@ function M.create(env)
     :action("m", "rename", actions.rename_branch)
     :action("X", "reset", actions.reset_branch)
     :action("D", "delete", actions.delete_branch)
+    :action_if(git.branch.upstream(), "o", "pull request", actions.open_pull_request)
     :env(env)
     :build()
 

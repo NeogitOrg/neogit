@@ -575,6 +575,12 @@ Actions:                                           *neogit_branch_popup_actions*
     Opens selector, allowing the user to delete either a local or remote
     branch.
 
+  • Pull Request                                    *neogit_branch_pull_request*
+    When a branch has an upstream configured, can be used to open a
+    pull-request on the git services' website. By default, supports github,
+    gitlab, and bitbucket, but more can be added via config.git_services.
+
+
 ==============================================================================
 Branch Config Popup                                 *neogit_branch_config_popup*
 

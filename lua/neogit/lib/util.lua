@@ -378,6 +378,17 @@ local function debounce_trailing(ms, fn)
   end
 end
 
+--- http://lua-users.org/wiki/StringInterpolation
+--- @param template string
+--- @param values table
+--- example:
+---   format("${name} is ${value}", {name = "foo", value = "bar"}) )
+local function format(template, values)
+  return (template:gsub("($%b{})", function(w)
+    return values[w:sub(3, -2)] or w
+  end))
+end
+
 return {
   time = time,
   time_async = time_async,
@@ -413,4 +424,5 @@ return {
   flat_map = flat_map,
   str_wrap = str_wrap,
   debounce_trailing = debounce_trailing,
+  format = format,
 }

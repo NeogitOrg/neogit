@@ -74,6 +74,7 @@ end
 ---@field disable_hint? boolean Remove the top hint in the Status buffer
 ---@field disable_context_highlighting? boolean Disable context highlights based on cursor position
 ---@field disable_signs? boolean Special signs to draw for sections etc. in Neogit
+---@field git_services? table Templartes to use when opening a pull request for a branch
 ---@field disable_commit_confirmation? boolean Disable commit confirmations
 ---@field telescope_sorter? function The sorter telescope will use
 ---@field disable_insert_on_commit? boolean|"auto" Disable automatically entering insert mode in commit dialogues
@@ -117,6 +118,11 @@ function M.get_default_values()
     telescope_sorter = function()
       return nil
     end,
+    git_services = {
+      ["github.com"] = "https://github.com/${owner}/${repository}/compare/${branch_name}?expand=1",
+      ["bitbucket.org"] = "https://bitbucket.org/${owner}/${repository}/pull-requests/new?source=${branch_name}&t=1",
+      ["gitlab.com"] = "https://gitlab.com/${owner}/${repository}/merge_requests/new?merge_request[source_branch]=${branch_name}",
+    },
     disable_insert_on_commit = true,
     use_per_project_settings = true,
     remember_settings = true,
