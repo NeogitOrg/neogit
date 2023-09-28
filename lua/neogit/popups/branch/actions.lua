@@ -1,6 +1,7 @@
 local M = {}
 
 local git = require("neogit.lib.git")
+local config = require("neogit.config")
 local input = require("neogit.lib.input")
 local util = require("neogit.lib.util")
 local notification = require("neogit.lib.notification")
@@ -249,6 +250,31 @@ M.delete_branch = operation("delete_branch", function()
       notification.info(string.format("Deleted branch '%s'", branch_name))
     end
   end
+end)
+
+local function parse_remote_info(url)
+  local repo, owner
+  if url:match("^https?://") or url:match("^ssh://") then
+    repo, owner, _ = unpack(util.reverse(vim.split(url, "/")))
+  else
+    owner, repo = unpack(vim.split(vim.split(url, ":")[2], "/"))
+  end
+
+  repo, _ = repo:gsub(".git$", "")
+  return { repository = repo, owner = owner, branch_name = git.branch.current() }
+end
+
+M.open_pull_request = operation("open_pull_request", function()
+  local template
+  local url = git.remote.get_url(git.branch.upstream_remote())[1]
+  for service, v in pairs(config.values.git_services) do
+    if url:match(service) then
+      template = v
+      break
+    end
+  end
+
+  vim.ui.open(util.format(template, parse_remote_info(url)))
 end)
 
 return M
