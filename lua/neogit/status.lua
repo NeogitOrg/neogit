@@ -692,33 +692,28 @@ end
 ---@param first_line number
 ---@param last_line number
 ---@param partial boolean
----@return SelectedHunk[],string[]
+---@return SelectedHunk[]
 function M.get_item_hunks(item, first_line, last_line, partial)
   if item.folded or item.hunks == nil then
-    return {}, {}
+    return {}
   end
 
   local hunks = {}
-  local lines = {}
 
   for _, h in ipairs(item.hunks) do
-    -- Transform to be relative to the current item/file
-    local first_line = first_line - item.first
-    local last_line = last_line - item.first
-
-    if h.diff_from <= last_line and h.diff_to >= first_line then
-      -- Relative to the hunk
+    if h.first <= last_line and h.last >= first_line then
       local from, to
+
       if partial then
-        from = h.diff_from + math.max(first_line - h.diff_from, 0)
-        to = math.min(last_line, h.diff_to)
+        local length = last_line - first_line
+        from = h.diff_from + math.max((first_line - item.first) - h.diff_from, 0)
+        to = from + length
       else
         from = h.diff_from + 1
         to = h.diff_to
       end
 
       local hunk_lines = {}
-
       for i = from, to do
         table.insert(hunk_lines, item.diff.lines[i])
       end
@@ -734,14 +729,10 @@ function M.get_item_hunks(item, first_line, last_line, partial)
       setmetatable(o, o)
 
       table.insert(hunks, o)
-
-      for i = from, to do
-        table.insert(lines, item.diff.lines[i + h.diff_from])
-      end
     end
   end
 
-  return hunks, lines
+  return hunks
 end
 
 ---@param selection Selection
