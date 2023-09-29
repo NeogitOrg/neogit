@@ -692,56 +692,47 @@ end
 ---@param first_line number
 ---@param last_line number
 ---@param partial boolean
----@return SelectedHunk[],string[]
+---@return SelectedHunk[]
 function M.get_item_hunks(item, first_line, last_line, partial)
-  if item.folded or item.hunks == nil then
-    return {}, {}
-  end
-
   local hunks = {}
-  local lines = {}
 
-  for _, h in ipairs(item.hunks) do
-    -- Transform to be relative to the current item/file
-    local first_line = first_line - item.first
-    local last_line = last_line - item.first
+  if not item.folded and item.hunks then
+    for _, h in ipairs(item.hunks) do
+      if h.first <= last_line and h.last >= first_line then
+        local from, to
 
-    if h.diff_from <= last_line and h.diff_to >= first_line then
-      -- Relative to the hunk
-      local from, to
-      if partial then
-        from = h.diff_from + math.max(first_line - h.diff_from, 0)
-        to = math.min(last_line, h.diff_to)
-      else
-        from = h.diff_from + 1
-        to = h.diff_to
-      end
+        if partial then
+          local cursor_offset = first_line - h.first
+          local length = last_line - first_line
 
-      local hunk_lines = {}
+          from = h.diff_from + cursor_offset
+          to = from + length
+        else
+          from = h.diff_from + 1
+          to = h.diff_to
+        end
 
-      for i = from, to do
-        table.insert(hunk_lines, item.diff.lines[i])
-      end
+        local hunk_lines = {}
+        for i = from, to do
+          table.insert(hunk_lines, item.diff.lines[i])
+        end
 
-      local o = {
-        from = from,
-        to = to,
-        __index = h,
-        hunk = h,
-        lines = hunk_lines,
-      }
+        local o = {
+          from = from,
+          to = to,
+          __index = h,
+          hunk = h,
+          lines = hunk_lines,
+        }
 
-      setmetatable(o, o)
+        setmetatable(o, o)
 
-      table.insert(hunks, o)
-
-      for i = from, to do
-        table.insert(lines, item.diff.lines[i + h.diff_from])
+        table.insert(hunks, o)
       end
     end
   end
 
-  return hunks, lines
+  return hunks
 end
 
 ---@param selection Selection
