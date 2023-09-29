@@ -636,8 +636,8 @@ local function close(skip_close)
   notification.delete_all()
   M.status_buffer = nil
   vim.o.autochdir = M.prev_autochdir
-  if M.cwd_changed then
-    vim.cmd.lcd("-")
+  if M.old_cwd then
+    vim.cmd.lcd(M.old_cwd)
   end
 end
 
@@ -1398,16 +1398,19 @@ function M.create(kind, cwd)
     kind = kind,
     disable_line_numbers = config.values.disable_line_numbers or true,
     ---@param buffer Buffer
-    initialize = function(buffer)
+    initialize = function(buffer, win)
       logger.debug("[STATUS BUFFER]: Initializing...")
 
       M.status_buffer = buffer
 
       M.prev_autochdir = vim.o.autochdir
 
-      if cwd then
-        M.cwd_changed = true
-        vim.cmd.lcd(cwd)
+      if cwd and win then
+        M.old_cwd = vim.fn.getcwd(win)
+
+        vim.api.nvim_win_call(win, function()
+          vim.cmd.lcd(cwd)
+        end)
       end
 
       vim.o.autochdir = false

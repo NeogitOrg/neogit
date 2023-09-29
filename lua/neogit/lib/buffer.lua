@@ -453,7 +453,7 @@ function Buffer.create(config)
   end
 
   if config.initialize then
-    config.initialize(buffer)
+    config.initialize(buffer, win)
   end
 
   if config.render then
