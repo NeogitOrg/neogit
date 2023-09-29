@@ -1,4 +1,5 @@
 local M = {}
+local git = require("neogit.lib.git")
 
 ---@param name string
 ---@param f nil|fun(create: fun(...)): any
@@ -59,6 +60,18 @@ function M.mappings_table()
       "Commit",
       M.open("commit", function(f)
         f { commit = commit_oid(require("neogit.status").get_selection().commit) }
+      end),
+    },
+    {
+      "IgnorePopup",
+      "Ignore",
+      M.open("ignore", function(f)
+        f {
+          files = util.filter_map(require("neogit.status").get_selection().items, function(v)
+            return v.name
+          end),
+          git_root = git.repo.state.git_root,
+        }
       end),
     },
     { "LogPopup", "Log", M.open("log") },
