@@ -694,41 +694,41 @@ end
 ---@param partial boolean
 ---@return SelectedHunk[]
 function M.get_item_hunks(item, first_line, last_line, partial)
-  if item.folded or item.hunks == nil then
-    return {}
-  end
-
   local hunks = {}
 
-  for _, h in ipairs(item.hunks) do
-    if h.first <= last_line and h.last >= first_line then
-      local from, to
+  if not item.folded and item.hunks then
+    for _, h in ipairs(item.hunks) do
+      if h.first <= last_line and h.last >= first_line then
+        local from, to
 
-      if partial then
-        local length = last_line - first_line
-        from = h.diff_from + math.max((first_line - item.first) - h.diff_from, 0)
-        to = from + length
-      else
-        from = h.diff_from + 1
-        to = h.diff_to
+        if partial then
+          local cursor_offset = first_line - h.first
+          local length = last_line - first_line
+
+          from = h.diff_from + cursor_offset
+          to = from + length
+        else
+          from = h.diff_from + 1
+          to = h.diff_to
+        end
+
+        local hunk_lines = {}
+        for i = from, to do
+          table.insert(hunk_lines, item.diff.lines[i])
+        end
+
+        local o = {
+          from = from,
+          to = to,
+          __index = h,
+          hunk = h,
+          lines = hunk_lines,
+        }
+
+        setmetatable(o, o)
+
+        table.insert(hunks, o)
       end
-
-      local hunk_lines = {}
-      for i = from, to do
-        table.insert(hunk_lines, item.diff.lines[i])
-      end
-
-      local o = {
-        from = from,
-        to = to,
-        __index = h,
-        hunk = h,
-        lines = hunk_lines,
-      }
-
-      setmetatable(o, o)
-
-      table.insert(hunks, o)
     end
   end
 
