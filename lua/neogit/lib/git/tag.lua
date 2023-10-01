@@ -3,20 +3,16 @@ local cli = require("neogit.lib.git.cli")
 local M = {}
 
 --- Outputs a list of tags locally
----@return table|nil List of tags.
+---@return table List of tags.
 function M.list()
-  local revisions = cli.tag.list.call():trim().stdout
-  if #revisions == 0 then
-    return nil
-  end
-  return revisions
+  return cli.tag.list.call():trim().stdout
 end
 
 --- Deletes a list of tags
 ---@param tags table List of tags
 ---@return boolean Successfully deleted
 function M.delete(tags)
-  local result = cli.tag.delete.arg_list(unpack(tags)).call():trim()
+  local result = cli.tag.delete.arg_list(tags).call():trim()
   return result.code == 0
 end
 

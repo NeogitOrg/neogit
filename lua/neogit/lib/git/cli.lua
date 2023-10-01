@@ -597,6 +597,7 @@ local mt_builder = {
         return tbl
       end
     end
+
     if action == "arg_list" then
       return function(args)
         for _, v in ipairs(args) do

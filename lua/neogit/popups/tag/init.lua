@@ -1,5 +1,5 @@
-local actions = require("neogit.popups.tag.actions")
 local popup = require("neogit.lib.popup")
+local actions = require("neogit.popups.tag.actions")
 
 local M = {}
 
@@ -14,11 +14,12 @@ function M.create()
     :option("u", "local-user", "", "Sign as", { key_prefix = "-" })
     :group_heading("Create")
     :action("t", "tag", actions.create_tag)
-    :action("r", "release", nil)
+    :action("r", "release")
     :new_action_group("Do")
     :action("x", "delete", actions.delete)
     :action("p", "prune", actions.prune)
     :build()
+
   p:show()
 
   return p
