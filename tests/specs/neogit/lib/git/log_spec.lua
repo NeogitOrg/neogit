@@ -213,10 +213,17 @@ describe("lib.git.log.parse", function()
 
     local keys = vim.tbl_keys(parsed_commit)
     table.sort(keys)
-    assert.are.same(
-      keys,
-      { 'author_date', 'author_email', 'author_name', 'committer_date', 'committer_email', 'committer_name', 'description', 'diffs', 'oid' }
-    )
+    assert.are.same(keys, {
+      "author_date",
+      "author_email",
+      "author_name",
+      "committer_date",
+      "committer_email",
+      "committer_name",
+      "description",
+      "diffs",
+      "oid",
+    })
 
     for k, v in pairs(parsed_commit) do
       assert.are.same(v, expected[k])
@@ -245,7 +252,7 @@ describe("lib.git.log.parse", function()
       " Permission is hereby granted, free of charge, to any person obtaining a copy",
       ' of this software and associated documentation files (the "Software"), to deal',
       " in the Software without restriction, including without limitation the rights",
-      ""
+      "",
     }
 
     local expected = {
@@ -269,7 +276,7 @@ describe("lib.git.log.parse", function()
               hash = "092d9a04537ba4a006a439721537adeeb69d1d692f1d763e6d859d01a317e92e",
               index_from = 1,
               index_len = 7,
-              line = "@@ -1,7 +1,9 @@"
+              line = "@@ -1,7 +1,9 @@",
             },
           },
           info = {},
@@ -298,10 +305,17 @@ describe("lib.git.log.parse", function()
 
     local keys = vim.tbl_keys(parsed_commit)
     table.sort(keys)
-    assert.are.same(
-      keys,
-      { 'author_date', 'author_email', 'author_name', 'committer_date', 'committer_email', 'committer_name', 'description', 'diffs', 'oid' }
-    )
+    assert.are.same(keys, {
+      "author_date",
+      "author_email",
+      "author_name",
+      "committer_date",
+      "committer_email",
+      "committer_name",
+      "description",
+      "diffs",
+      "oid",
+    })
 
     for k, v in pairs(parsed_commit) do
       assert.are.same(v, expected[k])
