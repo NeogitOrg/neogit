@@ -128,6 +128,7 @@ function M.parse(raw)
 
     while true do
       line = lpeek()
+
       -- Parse the last diff, if any, and begin a new one
       if not line or vim.startswith(line, "diff") then
         -- There was a previous diff, parse it
@@ -135,6 +136,7 @@ function M.parse(raw)
           table.insert(commit.diffs, diff_lib.parse(current_diff))
           current_diff = {}
         end
+
         in_diff = true
       elseif line == "" then -- A blank line signifies end of diffs
         -- Parse the last diff, consume the blankline, and exit
@@ -142,6 +144,7 @@ function M.parse(raw)
           table.insert(commit.diffs, diff_lib.parse(current_diff))
           current_diff = {}
         end
+
         advance()
         break
       end
