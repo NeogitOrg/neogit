@@ -131,6 +131,7 @@ function M.action(popup, action, args)
         local fn = actions[action]
         if fn then
           args = {
+            state = { env = {} },
             get_arguments = function()
               return args or {}
             end,
