@@ -111,6 +111,42 @@ function M.open(opts)
   end
 end
 
+-- EXPERIMENTAL!
+-- This can be used to create bindable functions for custom keybindings:
+--   local neogit = require("neogit")
+--   vim.keymap.set('n', '<leader>gcc', neogit.action('commit', 'commit', { '--verbose', '--all' }))
+--
+---@param popup  string Name of popup, as found in `lua/neogit/popups/*`
+---@param action string Name of action for popup, found in `lua/neogit/popups/*/actions.lua`
+---@param args   table? CLI arguments to pass to git command
+---@return function
+function M.action(popup, action, args)
+  local notification = require("neogit.lib.notification")
+  local a = require("plenary.async")
+
+  return function()
+    a.run(function()
+      local ok, actions = pcall(require, "neogit.popups." .. popup .. ".actions")
+      if ok then
+        local fn = actions[action]
+        if fn then
+          args = {
+            get_arguments = function()
+              return args or {}
+            end,
+          }
+
+          fn(args)
+        else
+          notification.error("Invalid action for " .. popup .. " popup: " .. action)
+        end
+      else
+        notification.error("Invalid popup: " .. popup)
+      end
+    end)
+  end
+end
+
 function M.complete(arglead)
   if arglead:find("^kind=") then
     return {
