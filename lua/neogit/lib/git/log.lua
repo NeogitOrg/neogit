@@ -3,6 +3,8 @@ local diff_lib = require("neogit.lib.git.diff")
 local util = require("neogit.lib.util")
 local config = require("neogit.config")
 
+local M = {}
+
 local commit_header_pat = "([| ]*)(%*?)([| ]*)commit (%w+)"
 
 ---@class CommitLogEntry
@@ -23,7 +25,7 @@ local commit_header_pat = "([| ]*)(%*?)([| ]*)commit (%w+)"
 ---Parses the provided list of lines into a CommitLogEntry
 ---@param raw string[]
 ---@return CommitLogEntry[]
-local function parse(raw)
+function M.parse(raw)
   local commits = {}
   local idx = 1
 
@@ -237,8 +239,6 @@ local function split_output(output)
   return output
 end
 
-local M = {}
-
 local format_args = {
   "%H", -- Full Hash
   "%s", -- Subject
@@ -405,8 +405,6 @@ end
 function M.register(meta)
   meta.update_recent = update_recent
 end
-
-M.parse = parse
 
 function M.update_ref(from, to)
   cli["update-ref"].message(string.format("reset: moving to %s", to)).args(from, to).call()
