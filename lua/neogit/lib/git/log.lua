@@ -117,7 +117,7 @@ function M.parse(raw)
       advance()
     end
 
-    -- Skip the whitespace after the status if here was a description
+    -- Skip the whitespace after the status if there was a description
     if commit.description[1] then
       advance()
     end
