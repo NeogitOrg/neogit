@@ -3,6 +3,8 @@ local diff_lib = require("neogit.lib.git.diff")
 local util = require("neogit.lib.util")
 local config = require("neogit.config")
 
+local M = {}
+
 local commit_header_pat = "([| ]*)(%*?)([| ]*)commit (%w+)"
 
 ---@class CommitLogEntry
@@ -23,7 +25,7 @@ local commit_header_pat = "([| ]*)(%*?)([| ]*)commit (%w+)"
 ---Parses the provided list of lines into a CommitLogEntry
 ---@param raw string[]
 ---@return CommitLogEntry[]
-local function parse(raw)
+function M.parse(raw)
   local commits = {}
   local idx = 1
 
@@ -105,8 +107,8 @@ local function parse(raw)
     while true do
       line = lpeek()
 
-      -- The commit message is indented
-      if not line or not line:match("^    ") then
+      -- The commit message is indented or No commit message - go straight to diff
+      if not line or not line:match("^    ") or line:match("^diff") then
         break
       end
 
@@ -115,8 +117,10 @@ local function parse(raw)
       advance()
     end
 
-    -- Skip the whitespace after the status
-    advance()
+    -- Skip the whitespace after the status if there was a description
+    if commit.description[1] then
+      advance()
+    end
 
     -- Read diffs
     local current_diff = {}
@@ -124,6 +128,7 @@ local function parse(raw)
 
     while true do
       line = lpeek()
+
       -- Parse the last diff, if any, and begin a new one
       if not line or vim.startswith(line, "diff") then
         -- There was a previous diff, parse it
@@ -131,6 +136,7 @@ local function parse(raw)
           table.insert(commit.diffs, diff_lib.parse(current_diff))
           current_diff = {}
         end
+
         in_diff = true
       elseif line == "" then -- A blank line signifies end of diffs
         -- Parse the last diff, consume the blankline, and exit
@@ -138,6 +144,7 @@ local function parse(raw)
           table.insert(commit.diffs, diff_lib.parse(current_diff))
           current_diff = {}
         end
+
         advance()
         break
       end
@@ -236,8 +243,6 @@ local function split_output(output)
 
   return output
 end
-
-local M = {}
 
 local format_args = {
   "%H", -- Full Hash
@@ -405,8 +410,6 @@ end
 function M.register(meta)
   meta.update_recent = update_recent
 end
-
-M.parse = parse
 
 function M.update_ref(from, to)
   cli["update-ref"].message(string.format("reset: moving to %s", to)).args(from, to).call()
