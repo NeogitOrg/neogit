@@ -130,14 +130,12 @@ function M.action(popup, action, args)
       if ok then
         local fn = actions[action]
         if fn then
-          args = {
+          fn {
             state = { env = {} },
             get_arguments = function()
               return args or {}
             end,
           }
-
-          fn(args)
         else
           notification.error("Invalid action for " .. popup .. " popup: " .. action)
         end
