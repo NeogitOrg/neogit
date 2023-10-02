@@ -224,6 +224,10 @@ function Finder:find(on_select)
         return entry
       end,
     }, function(item)
+      if type(item) ~= "table" then
+        item = { item }
+      end
+
       vim.schedule(function()
         on_select(item)
         if self.opts.refocus_status then
