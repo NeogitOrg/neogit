@@ -107,8 +107,8 @@ function M.parse(raw)
     while true do
       line = lpeek()
 
-      -- The commit message is indented
-      if not line or not line:match("^    ") then
+      -- The commit message is indented or No commit message - go straight to diff
+      if not line or not line:match("^    ") or line:match("^diff") then
         break
       end
 
@@ -117,8 +117,10 @@ function M.parse(raw)
       advance()
     end
 
-    -- Skip the whitespace after the status
-    advance()
+    -- Skip the whitespace after the status if here was a description
+    if commit.description[1] then
+      advance()
+    end
 
     -- Read diffs
     local current_diff = {}
