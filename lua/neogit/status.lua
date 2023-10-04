@@ -26,6 +26,7 @@ M.current_operation = nil
 M.prev_autochdir = nil
 M.status_buffer = nil
 M.commit_view = nil
+M.cursor_location = nil
 
 ---@class Section
 ---@field first number
@@ -627,7 +628,19 @@ end
 
 local dispatch_reset = a.void(reset)
 
+local closing = false
 local function close(skip_close)
+  if closing then
+    return
+  end
+  closing = true
+
+  if skip_close == nil then
+    skip_close = false
+  end
+
+  M.cursor_location = { save_cursor_location() }
+
   if not skip_close then
     M.status_buffer:close()
   end
@@ -639,6 +652,8 @@ local function close(skip_close)
   if M.old_cwd then
     vim.cmd.lcd(M.old_cwd)
   end
+
+  closing = false
 end
 
 ---@class Selection
@@ -1119,9 +1134,7 @@ end
 --- between this module and the popup modules
 local cmd_func_map = function()
   local mappings = {
-    ["Close"] = function()
-      M.status_buffer:close()
-    end,
+    ["Close"] = M.close,
     ["InitRepo"] = a.void(git.init.init_repo),
     ["Depth1"] = a.void(function()
       set_folds { true, true, false }
@@ -1447,6 +1460,11 @@ function M.create(kind, cwd)
     end,
     after = function()
       M.watcher = watcher.new(git.repo.git_path():absolute())
+
+      if M.cursor_location then
+        restore_cursor_location(unpack(M.cursor_location))
+        M.cursor_location = nil
+      end
     end,
   }
 end
