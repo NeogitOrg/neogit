@@ -18,10 +18,11 @@ local function add_rules(path, rules)
     return notification.error(string.format("Failed to close file %q", path))
   end
 
-  notification.info(string.format("Added %d rules to %q", #rules, path))
+  -- notification.info(string.format("Added %d rules to %q", #rules, path))
 end
 
-function M.shared(popup)
+local operation = require("neogit.operations")
+M.shared = operation("ignore_shared", function(popup)
   local Path = require("plenary.path")
 
   local git_root = popup.state.env.git_root
@@ -30,9 +31,9 @@ function M.shared(popup)
   end, popup.state.env.paths)
 
   add_rules(git_root .. "/.gitignore", rules)
-end
+end)
 
-function M.private(popup)
+M.private = operation("ignore_private", function(popup)
   local Path = require("plenary.path")
 
   local git_root = popup.state.env.git_root
@@ -41,9 +42,9 @@ function M.private(popup)
   end, popup.state.env.paths)
 
   add_rules(git_root .. "/.git/info/exclude", rules)
-end
+end)
 
-function M.at_subdirectory(popup)
+M.at_subdirectory = operation("ignore_subdirectory", function(popup)
   local Path = require("plenary.path")
 
   for _, path in ipairs(popup.state.env.paths) do
@@ -52,6 +53,6 @@ function M.at_subdirectory(popup)
 
     add_rules(tostring(parent) .. "/.gitignore", { tostring(path:make_relative(parent)) })
   end
-end
+end)
 
 return M
