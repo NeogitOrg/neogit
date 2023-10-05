@@ -1,8 +1,18 @@
 local a = require("plenary.async")
+local Path = require("plenary.path")
 local Collection = require("neogit.lib.collection")
 
-local function update_file(file, mode, name, original_name)
+---@class File: StatusItem
+---@field mode string
+---@field has_diff boolean
+---@field diff string[]
+---@field absolute_path string
+
+local function update_file(cwd, file, mode, name, original_name)
   local mt, diff, has_diff
+
+  local absolute_path = Path:new(cwd, name):absolute()
+
   if file then
     mt = getmetatable(file)
     has_diff = file.has_diff
@@ -18,6 +28,7 @@ local function update_file(file, mode, name, original_name)
     original_name = original_name,
     has_diff = has_diff,
     diff = diff,
+    absolute_path = absolute_path,
   }, mt or {})
 end
 
@@ -86,16 +97,19 @@ local function update_status(state)
 
         table.insert(untracked_files, { mode = mode, name = name })
       elseif kind == "?" then
-        table.insert(untracked_files, update_file(old_files_hash.untracked_files[rest], nil, rest))
+        table.insert(untracked_files, update_file(cwd, old_files_hash.untracked_files[rest], nil, rest))
       elseif kind == "1" then
         local mode_staged, mode_unstaged, _, _, _, _, _, _, name = rest:match(match_1)
 
         if mode_staged ~= "." then
-          table.insert(staged_files, update_file(old_files_hash.staged_files[name], mode_staged, name))
+          table.insert(staged_files, update_file(cwd, old_files_hash.staged_files[name], mode_staged, name))
         end
 
         if mode_unstaged ~= "." then
-          table.insert(unstaged_files, update_file(old_files_hash.unstaged_files[name], mode_unstaged, name))
+          table.insert(
+            unstaged_files,
+            update_file(cwd, old_files_hash.unstaged_files[name], mode_unstaged, name)
+          )
         end
       elseif kind == "2" then
         local mode_staged, mode_unstaged, _, _, _, _, _, _, _, name, orig_name = rest:match(match_2)
@@ -103,14 +117,14 @@ local function update_status(state)
         if mode_staged ~= "." then
           table.insert(
             staged_files,
-            update_file(old_files_hash.staged_files[name], mode_staged, name, orig_name)
+            update_file(cwd, old_files_hash.staged_files[name], mode_staged, name, orig_name)
           )
         end
 
         if mode_unstaged ~= "." then
           table.insert(
             unstaged_files,
-            update_file(old_files_hash.unstaged_files[name], mode_unstaged, name, orig_name)
+            update_file(cwd, old_files_hash.unstaged_files[name], mode_unstaged, name, orig_name)
           )
         end
       end

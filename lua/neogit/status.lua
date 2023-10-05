@@ -1031,10 +1031,16 @@ local set_folds = function(to)
 end
 
 --- Handles the GoToFile action on sections that contain a hunk
----@param item StatusItem
+---@param item File
 ---@see section_has_hunks
 local function handle_section_item(item)
-  local path = item.name
+  local path = item.absolute_path
+
+  if not path then
+    notification.error("Cannot open file. No path found.")
+    return
+  end
+
   local cursor_row, cursor_col = unpack(vim.api.nvim_win_get_cursor(0))
 
   local hunk = M.get_item_hunks(item, cursor_row, cursor_row, false)[1]
