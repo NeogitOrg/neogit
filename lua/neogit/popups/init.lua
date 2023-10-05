@@ -67,8 +67,8 @@ function M.mappings_table()
       "Ignore",
       M.open("ignore", function(f)
         f {
-          files = util.filter_map(require("neogit.status").get_selection().items, function(v)
-            return v.name
+          paths = util.filter_map(require("neogit.status").get_selection().items, function(v)
+            return v.absolute_path
           end),
           git_root = git.repo.state.git_root,
         }
