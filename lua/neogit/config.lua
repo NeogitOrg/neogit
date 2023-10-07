@@ -20,6 +20,19 @@ function M.get_reversed_status_maps()
   return result
 end
 
+---@return table<string, string[]>
+--- Returns a map of commands, mapped to the list of keys which trigger them.
+function M.get_reversed_popup_maps()
+  local result = {}
+  for k, v in pairs(M.values.mappings.status) do
+    if v and v:match("Popup$") then
+      result[util.underscore(v):gsub("_popup$", "")] = k
+    end
+  end
+
+  return result
+end
+
 ---@alias WindowKind
 ---|"split" Open in a split
 ---| "vsplit" Open in a vertical split
