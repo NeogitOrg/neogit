@@ -449,6 +449,7 @@ local function restore_cursor_location(section_loc, file_loc, hunk_loc)
   if #M.locations == 0 then
     return vim.fn.setpos(".", { 0, 1, 0, 0 })
   end
+
   if not section_loc then
     -- Skip the headers and put the cursor on the first foldable region
     local idx = 1
@@ -464,10 +465,12 @@ local function restore_cursor_location(section_loc, file_loc, hunk_loc)
   local section = Collection.new(M.locations):find(function(s)
     return s.name == section_loc[2]
   end)
+
   if not section then
     file_loc, hunk_loc = nil, nil
     section = M.locations[section_loc[1]] or M.locations[#M.locations]
   end
+
   if not file_loc or not section.items or #section.items == 0 then
     return vim.fn.setpos(".", { 0, section.first, 0, 0 })
   end
@@ -475,10 +478,12 @@ local function restore_cursor_location(section_loc, file_loc, hunk_loc)
   local file = Collection.new(section.items):find(function(f)
     return f.name == file_loc[2]
   end)
+
   if not file then
     hunk_loc = nil
     file = section.items[file_loc[1]] or section.items[#section.items]
   end
+
   if not hunk_loc or not file.hunks or #file.hunks == 0 then
     return vim.fn.setpos(".", { 0, file.first, 0, 0 })
   end
