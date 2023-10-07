@@ -145,22 +145,22 @@ function M:open()
             vim.cmd("normal! zt")
           end
         end,
-        ["A"] = popups.open("cherry_pick", function(p)
+        [popups.mapping_for("cherry_pick")] = popups.open("cherry_pick", function(p)
           p { commits = { self.commit_info.oid } }
         end),
-        ["b"] = popups.open("branch", function(p)
+        [popups.mapping_for("branch")] = popups.open("branch", function(p)
           p { commits = { self.commit_info.oid } }
         end),
-        ["c"] = popups.open("commit", function(p)
+        [popups.mapping_for("commit")] = popups.open("commit", function(p)
           p { commit = self.commit_info.oid }
         end),
-        ["r"] = popups.open("rebase", function(p)
+        [popups.mapping_for("rebase")] = popups.open("rebase", function(p)
           p { commit = self.commit_info.oid }
         end),
-        ["v"] = popups.open("revert", function(p)
+        [popups.mapping_for("revert")] = popups.open("revert", function(p)
           p { commits = { self.commit_info.oid } }
         end),
-        ["X"] = popups.open("reset", function(p)
+        [popups.mapping_for("reset")] = popups.open("reset", function(p)
           p { commit = self.commit_info.oid }
         end),
         ["q"] = function()
