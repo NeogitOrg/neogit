@@ -1,5 +1,6 @@
 local M = {}
 local Path = require("plenary.path")
+local git = require("neogit.lib.git")
 
 ---@param path
 ---@param rules string[]
@@ -9,7 +10,9 @@ end
 
 local operation = require("neogit.operations")
 M.shared = operation("ignore_shared", function(popup)
-  local git_root = popup.state.env.git_root
+  local git_root = git.repo.git_root
+  print("git root", git_root)
+
   local rules = vim.tbl_map(function(v)
     return Path:new(v):make_relative(git_root)
   end, popup.state.env.paths)
@@ -18,12 +21,13 @@ M.shared = operation("ignore_shared", function(popup)
 end)
 
 M.private = operation("ignore_private", function(popup)
-  local git_root = popup.state.env.git_root
+  local git_path = git.repo.git_path()
+
   local rules = vim.tbl_map(function(v)
-    return Path:new(v):make_relative(git_root)
+    return Path:new(v):make_relative()
   end, popup.state.env.paths)
 
-  add_rules(Path:new(git_root .. "/.git/info/exclude"), rules)
+  add_rules(Path:new(git_path, "/info/exclude"), rules)
 end)
 
 M.at_subdirectory = operation("ignore_subdirectory", function(popup)
@@ -31,7 +35,7 @@ M.at_subdirectory = operation("ignore_subdirectory", function(popup)
     local path = Path:new(path)
     local parent = path:parent()
 
-    add_rules(path:parent() .. "/.gitignore", { path:make_relative(parent) })
+    add_rules(Path:new(parent , "/.gitignore"), { path:make_relative(tostring(parent)) })
   end
 end)
 
