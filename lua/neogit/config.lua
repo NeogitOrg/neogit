@@ -264,7 +264,6 @@ function M.get_default_values()
       "NeogitPullPopup--rebase",
       "NeogitLogPopup--",
       "NeogitCommitPopup--allow-empty",
-      "NeogitRevertPopup--no-edit", -- TODO: Fix incompatible switches with default enables
     },
     mappings = {
       finder = {
