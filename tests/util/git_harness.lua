@@ -69,14 +69,9 @@ end
 ---@param cmd string[]
 ---@return string[]
 local function exec(cmd)
-  -- Wake me up when when this get into stable
-  -- local result = vim.system(cmd, { text = true }):wait()
-  -- local lines = vim.split(result.stdout, "\n")
-  -- return lines
+  local output = vim.fn.system(cmd)
+  local lines = output and vim.split(output, "\n") or {}
 
-  local lines = vim.fn.system(cmd)
-  local lines = vim.split(lines, "\n")
-  -- return lines
   return lines
 end
 
