@@ -35,7 +35,7 @@ M.at_subdirectory = operation("ignore_subdirectory", function(popup)
     local path = Path:new(path)
     local parent = path:parent()
 
-    add_rules(Path:new(parent , "/.gitignore"), { path:make_relative(tostring(parent)) })
+    add_rules(Path:new(parent, "/.gitignore"), { path:make_relative(tostring(parent)) })
   end
 end)
 
