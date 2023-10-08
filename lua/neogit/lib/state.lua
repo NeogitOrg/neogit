@@ -16,12 +16,7 @@ function M.filepath()
   local filename = "state"
 
   if config.values.use_per_project_settings then
-    filename = vim.loop.cwd():gsub("/", "%%")
-  end
-
-  if vim.loop.os_uname().sysname == "Windows_NT" then
-    base_path = base_path:gsub("/", "\\")
-    filename = filename:gsub("\\", "%%")
+    filename = vim.loop.cwd():gsub("^%a:", ""):gsub("/", "%%")
   end
 
   return Path:new(base_path .. filename)
