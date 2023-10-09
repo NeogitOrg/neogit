@@ -226,7 +226,6 @@ function M.get_default_values()
       "NeogitPushPopup--force-with-lease",
       "NeogitPushPopup--force",
       "NeogitPullPopup--rebase",
-      "NeogitLogPopup--",
       "NeogitCommitPopup--allow-empty",
     },
     mappings = {
