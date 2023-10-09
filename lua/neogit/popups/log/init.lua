@@ -30,6 +30,16 @@ function M.create()
       key_prefix = "-",
       separator = "",
       fn = actions.limit_to_files,
+      setup = function(popup)
+        local value = require("neogit.lib.state").get { "NeogitLogPopup", "" }
+        value = vim.split(value, " ", { trimempty = true })
+        value = require("neogit.lib.util").map(value, function(v)
+          local result, _ = v:gsub([["]], "")
+          return result
+        end)
+
+        popup.state.env.files = value
+      end,
     })
     :switch("f", "follow", "Follow renames when showing single-file log")
     :arg_heading("Commit Ordering")
