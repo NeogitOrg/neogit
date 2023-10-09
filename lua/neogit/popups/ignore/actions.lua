@@ -11,7 +11,6 @@ end
 local operation = require("neogit.operations")
 M.shared = operation("ignore_shared", function(popup)
   local git_root = git.repo.git_root
-  print("git root", git_root)
 
   local rules = vim.tbl_map(function(v)
     return Path:new(v):make_relative(git_root)

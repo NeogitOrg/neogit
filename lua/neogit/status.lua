@@ -1035,7 +1035,6 @@ end
 ---@see section_has_hunks
 local function handle_section_item(item)
   local path = item.absolute_path
-  print("Opening: " .. path)
 
   if not path then
     notification.error("Cannot open file. No path found.")

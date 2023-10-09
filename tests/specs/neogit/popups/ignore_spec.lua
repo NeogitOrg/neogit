@@ -5,8 +5,6 @@ local harness = require("tests.util.git_harness")
 local in_prepared_repo = harness.in_prepared_repo
 
 local status = require("neogit.status")
-local input = require("tests.mocks.input")
-local lib = require("neogit.lib")
 
 local function act(normal_cmd)
   vim.fn.feedkeys(vim.api.nvim_replace_termcodes(normal_cmd, true, true, true))
@@ -18,7 +16,6 @@ describe("ignore popup", function()
   it(
     "top level ignore",
     in_prepared_repo(function()
-      print("Here")
       local files = harness.exec { "git", "status", "--porcelain=1" }
       eq(files, { " M a.txt", "M  b.txt", "?? untracked.txt", "" })
 
