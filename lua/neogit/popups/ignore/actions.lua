@@ -5,6 +5,10 @@ local git = require("neogit.lib.git")
 ---@param path
 ---@param rules string[]
 local function add_rules(path, rules)
+  if #rules == 0 then
+    return
+  end
+
   path:write(table.concat(rules, "\n") .. "\n", "a+", 438)
 end
 
