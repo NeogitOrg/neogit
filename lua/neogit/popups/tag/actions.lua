@@ -60,7 +60,7 @@ function M.prune(_)
     prompt_prefix = " Prune tags using remote > ",
   }
 
-  if not selected_remote or selected_remote == "" then
+  if (selected_remote or "") == "" then
     return
   end
 
