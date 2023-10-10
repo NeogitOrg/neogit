@@ -72,8 +72,10 @@ function M.editor(target, client)
     editor.rebase_editor(target, send_client_quit)
   elseif target:find("COMMIT_EDITMSG$") then
     editor.commit_editor(target, send_client_quit)
-  elseif target:find("MERGE_MSG$") or target:find("TAG_EDITMSG$") then
+  elseif target:find("MERGE_MSG$") then
     editor.merge_editor(target, send_client_quit)
+  elseif target:find("TAG_EDITMSG$") then
+    editor.tag_editor(target, send_client_quit)
   else
     local notification = require("neogit.lib.notification")
     notification.warn(target .. " has not been implemented yet")
