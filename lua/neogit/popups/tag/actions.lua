@@ -57,7 +57,7 @@ end
 ---@param _ table
 function M.prune(_)
   local selected_remote = FuzzyFinderBuffer.new(git.remote.list()):open_async {
-    prompt_prefix = " Prune tags using remote > "
+    prompt_prefix = " Prune tags using remote > ",
   }
 
   if not selected_remote or selected_remote == "" then
