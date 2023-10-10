@@ -93,18 +93,17 @@ function M.prune(_)
   local choices = { "&delete all", "&review each", "&abort" }
 
   if #l_tags > 0 then
-      local choice = input.get_choice(
-        #l_tags .. " tags can be removed locally",
-        { values = choices, default = #choices }
-      )
+    local choice =
+      input.get_choice(#l_tags .. " tags can be removed locally", { values = choices, default = #choices })
     if choice == "d" then
-      l_tags = {}
+      -- No-op
     elseif choice == "r" then
       l_tags = utils.filter(l_tags, function(tag)
+        vim.cmd.redraw()
         return input.get_confirmation("Delete local tag: " .. tag)
       end)
     else
-      return
+      l_tags = {}
     end
   end
 
@@ -115,13 +114,14 @@ function M.prune(_)
     )
 
     if choice == "d" then
-      r_tags = {}
+      -- no-op
     elseif choice == "r" then
       r_tags = utils.filter(r_tags, function(tag)
+        vim.cmd.redraw()
         return input.get_confirmation("Delete remote tag: " .. tag)
       end)
     else
-      return
+      r_tags = {}
     end
   end
 
@@ -136,8 +136,8 @@ function M.prune(_)
       table.insert(prune_tags, ":" .. tag)
     end
 
-    notification.info("Pruned remote tags: \n" .. table.concat(r_tags, "\n"))
     git.cli.push.arg_list({ selected_remote, unpack(prune_tags) }).call()
+    notification.info("Pruned remote tags: \n" .. table.concat(r_tags, "\n"))
   end
 end
 
