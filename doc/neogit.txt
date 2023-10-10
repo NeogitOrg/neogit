@@ -49,6 +49,8 @@ CONTENTS                                                       *neogit_contents*
        • Revert                                           |neogit_revert_popup|
        • Reset                                             |neogit_reset_popup|
        • Stash                                             |neogit_stash_popup|
+       • Tag                                                 |neogit_tag_popup|
+
     7. Buffers                                                 |neogit_buffers|
        • Status                                          |neogit_status_buffer|
        • Log                                                |neogit_log_buffer|
@@ -1007,6 +1009,38 @@ Actions:                                            *neogit_reset_popup_actions*
 Stash Popup                                                 *neogit_stash_popup*
 
 (TODO)
+
+==============================================================================
+Tag Popup                                                     *neogit_tag_popup*
+
+Arguments:                                               *neogit_tag_popup_args*
+  • --force
+    Replace an existing tag with the given name (instead of failing)
+
+  • --annotate
+    Make an unsigned, annotated tag object
+
+  • --sign
+    Make a GPG-signed tag, using the default e-mail address’s key. The default
+    behavior of tag GPG-signing is controlled by `tag.gpgSign` configuration
+    variable if it exists, or disabled otherwise.
+
+  • --local-user
+    Make a GPG-signed tag, using the given key.
+
+Actions:                                              *neogit_tag_popup_actions*
+
+  • Tag                                                         *neogit_tag_tag*
+    Creates a new TAG at specified REV.
+
+  • Release                                                 *neogit_tag_release*
+    (not yet implemented)
+
+  • Delete                                                   *neogit_tag_delete*
+    Deletes one or more tags.
+
+  • Prune                                                     *neogit_tag_prune*
+    Offers to delete tags missing locally from REMOTE, and vice versa.
 
 ==============================================================================
 7. Buffers                                                      *neogit_buffers*
