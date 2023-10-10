@@ -95,6 +95,8 @@ function M.prune(_)
   if #l_tags > 0 then
     local choice =
       input.get_choice(#l_tags .. " tags can be removed locally", { values = choices, default = #choices })
+
+    -- selene: allow(empty_if)
     if choice == "d" then
       -- No-op
     elseif choice == "r" then
@@ -113,6 +115,7 @@ function M.prune(_)
       { values = choices, default = #choices }
     )
 
+    -- selene: allow(empty_if)
     if choice == "d" then
       -- no-op
     elseif choice == "r" then
