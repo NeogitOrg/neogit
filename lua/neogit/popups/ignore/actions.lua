@@ -2,11 +2,17 @@ local M = {}
 local Path = require("plenary.path")
 local git = require("neogit.lib.git")
 local operation = require("neogit.operations")
+local util = require("neogit.lib.util")
+
+local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
 ---@param path
 ---@param rules string[]
 local function add_rules(path, rules)
-  if #rules == 0 then
+  rules = FuzzyFinderBuffer.new(util.merge(rules, git.files.untracked()))
+    :open_async { allow_multi = true, prompt_prefix = " File or pattern to ignore > " }
+
+  if not rules or #rules == 0 then
     return
   end
 
@@ -47,8 +53,7 @@ M.private_global = operation("ignore_private_global", function(popup)
     return Path:new(v):make_relative()
   end, popup.state.env.paths)
 
-  local excludesFile = git.config.get_global("core.excludesfile"):read()
-  add_rules(Path:new(excludesFile), rules)
+  add_rules(Path:new(git.config.get_global("core.excludesfile"):read()), rules)
 end)
 
 return M
