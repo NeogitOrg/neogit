@@ -44,7 +44,7 @@ function M.create_release(_) end
 ---@param _ table
 function M.delete(_)
   local tags = FuzzyFinderBuffer.new(git.tag.list()):open_async { allow_multi = true }
-  if #tags == 0 then
+  if #(tags or {}) == 0 then
     return
   end
 
