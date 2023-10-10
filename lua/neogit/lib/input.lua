@@ -51,6 +51,10 @@ local function remove_completion_function(id)
   _G.__NEOGIT.completers[id] = nil
 end
 
+--- Provides the user with a confirmation
+---@param msg string Prompt to use for confirmation
+---@param options table|nil
+---@return boolean Confirmation (Yes/No)
 function M.get_confirmation(msg, options)
   options = options or {}
   options.values = options.values or { "&Yes", "&No" }
@@ -59,6 +63,14 @@ function M.get_confirmation(msg, options)
   return vim.fn.confirm(msg, table.concat(options.values, "\n"), options.default) == 1
 end
 
+---@class UserChoiceOptions
+---@field values table List of choices prefixed with '&'
+---@field default integer Default choice to select
+
+--- Provides the user with choices
+---@param msg string Prompt to use for the choices
+---@param options UserChoiceOptions
+---@return string First letter of the selected choice
 function M.get_choice(msg, options)
   local choice = vim.fn.confirm(msg, table.concat(options.values, "\n"), options.default)
   return options.values[choice]:match("&(.)")

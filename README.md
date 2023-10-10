@@ -135,6 +135,9 @@ neogit.setup {
   merge_editor = {
     kind = "split",
   },
+  tag_editor = {
+    kind = "split",
+  },
   preview_buffer = {
     kind = "split",
   },

@@ -72,7 +72,7 @@ function M.editor(target, client)
     editor.rebase_editor(target, send_client_quit)
   elseif target:find("COMMIT_EDITMSG$") then
     editor.commit_editor(target, send_client_quit)
-  elseif target:find("MERGE_MSG$") then
+  elseif target:find("MERGE_MSG$") or target:find("TAG_EDITMSG$") then
     editor.merge_editor(target, send_client_quit)
   else
     local notification = require("neogit.lib.notification")
@@ -81,8 +81,17 @@ function M.editor(target, client)
   end
 end
 
+---@class NotifyMsg
+---@field setup string|nil Message to show before running
+---@field success string|nil Message to show when successful
+---@field fail string|nil Message to show when failed
+
+---@class WrapOpts
+---@field autocmd string
+---@field msg NotifyMsg
+
 ---@param cmd any
----@param opts table
+---@param opts WrapOpts
 function M.wrap(cmd, opts)
   local notification = require("neogit.lib.notification")
   local a = require("plenary.async")
