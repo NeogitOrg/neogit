@@ -66,9 +66,11 @@ function M.prune(_)
 
   local tags = git.tag.list()
   if #tags == 0 then
+    notification.info("No tags found")
     return
   end
 
+  notification.info("Fetching remote tags...")
   local r_out = git.tag.list_remote(selected_remote)
   local remote_tags = {}
 
@@ -82,6 +84,7 @@ function M.prune(_)
   local l_tags = utils.set_difference(tags, remote_tags)
   local r_tags = utils.set_difference(remote_tags, tags)
 
+  notification.delete_all()
   if #l_tags == 0 and #r_tags == 0 then
     notification.info("Same tags exist locally and remotely")
     return
