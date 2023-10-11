@@ -483,6 +483,15 @@ local configurations = {
     },
   },
 
+  ["rev-list"] = config {
+    flags = {
+      parents = "--parents",
+    },
+    options = {
+      max_count = "--max-count",
+    },
+  },
+
   ["rev-parse"] = config {
     flags = {
       verify = "--verify",
