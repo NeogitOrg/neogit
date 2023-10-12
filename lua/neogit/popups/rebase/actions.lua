@@ -69,7 +69,15 @@ function M.interactively(popup)
   end
 
   if commit then
-    git.rebase.rebase_interactive(commit, popup:get_arguments())
+    local args = popup:get_arguments()
+    local parent_commit = git.cli["rev-list"].max_count(1).parents.args(commit).call().stdout[1]
+    if commit ~= parent_commit then
+      commit = vim.split(parent_commit, " ")[2]
+    else
+      table.insert(args, "--root")
+    end
+
+    git.rebase.rebase_interactive(commit, args)
   end
 end
 

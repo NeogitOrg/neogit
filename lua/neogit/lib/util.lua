@@ -389,6 +389,27 @@ local function format(template, values)
   end))
 end
 
+--- Compute the differences present in a and not in b
+---@param a table
+---@param b table
+---@return table
+local function set_difference(a, b)
+  local result = {}
+  for _, x in ipairs(a) do
+    local found = false
+    for _, y in ipairs(b) do
+      if x == y then
+        found = true
+        break
+      end
+    end
+    if not found then
+      table.insert(result, x)
+    end
+  end
+  return result
+end
+
 return {
   time = time,
   time_async = time_async,
@@ -425,4 +446,5 @@ return {
   str_wrap = str_wrap,
   debounce_trailing = debounce_trailing,
   format = format,
+  set_difference = set_difference,
 }

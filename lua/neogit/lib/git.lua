@@ -8,6 +8,8 @@ return {
   files = require("neogit.lib.git.files"),
   fetch = require("neogit.lib.git.fetch"),
   log = require("neogit.lib.git.log"),
+  refs = require("neogit.lib.git.refs"),
+  tag = require("neogit.lib.git.tag"),
   reflog = require("neogit.lib.git.reflog"),
   branch = require("neogit.lib.git.branch"),
   diff = require("neogit.lib.git.diff"),
