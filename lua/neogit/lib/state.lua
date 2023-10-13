@@ -16,7 +16,10 @@ function M.filepath()
   local filename = "state"
 
   if config.values.use_per_project_settings then
-    filename = vim.loop.cwd():gsub("^%a:", ""):gsub("/", "%%")
+    filename = vim.loop.cwd()
+      :gsub("^(%a):", "/%1")
+      :gsub("/", "%%")
+      :gsub(Path.sep, "%%")
   end
 
   return Path:new(base_path .. filename)
