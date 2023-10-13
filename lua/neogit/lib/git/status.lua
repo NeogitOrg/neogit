@@ -8,6 +8,26 @@ local Collection = require("neogit.lib.collection")
 ---@field diff string[]
 ---@field absolute_path string
 
+---@param status string
+-- <sub>       A 4 character field describing the submodule state.
+--             "N..." when the entry is not a submodule.
+--             "S<c><m><u>" when the entry is a submodule.
+--             <c> is "C" if the commit changed; otherwise ".".
+--             <m> is "M" if it has tracked changes; otherwise ".".
+--             <u> is "U" if there are untracked changes; otherwise ".".
+local function parse_submodule_status(status)
+  local a, b, c, d = status:match("(.)(.)(.)(.)")
+  if a == "N" then
+    return nil
+  else
+    return {
+      commit_changed = b == "C",
+      has_tracked_changes = c == "M",
+      has_untracked_changes = d == "U",
+    }
+  end
+end
+
 local function update_file(cwd, file, mode, name, original_name)
   local mt, diff, has_diff
 
@@ -59,7 +79,9 @@ local function update_status(state)
 
   local match_kind = "(.) (.+)"
   local match_u = "(..) (....) (%d+) (%d+) (%d+) (%d+) (%w+) (%w+) (%w+) (.+)"
+  -- Ordinary changed entries
   local match_1 = "(.)(.) (....) (%d+) (%d+) (%d+) (%w+) (%w+) (.+)"
+  -- Renamed or copied entries
   local match_2 = "(.)(.) (....) (%d+) (%d+) (%d+) (%w+) (%w+) (%a%d+) ([^\t]+)\t?(.+)"
 
   for _, l in ipairs(result.stdout) do
@@ -99,34 +121,37 @@ local function update_status(state)
       elseif kind == "?" then
         table.insert(untracked_files, update_file(cwd, old_files_hash.untracked_files[rest], nil, rest))
       elseif kind == "1" then
-        local mode_staged, mode_unstaged, _, _, _, _, _, _, name = rest:match(match_1)
+        local mode_staged, mode_unstaged, submodule, _, _, _, _, _, name = rest:match(match_1)
 
+        local file
         if mode_staged ~= "." then
-          table.insert(staged_files, update_file(cwd, old_files_hash.staged_files[name], mode_staged, name))
+          file = update_file(cwd, old_files_hash.staged_files[name], mode_staged, name)
+          table.insert(staged_files, file)
         end
 
         if mode_unstaged ~= "." then
-          table.insert(
-            unstaged_files,
-            update_file(cwd, old_files_hash.unstaged_files[name], mode_unstaged, name)
-          )
+          file = update_file(cwd, old_files_hash.unstaged_files[name], mode_unstaged, name)
+          table.insert(unstaged_files, file)
         end
+
+        assert(file, "tracked file is neither staged or unstaged")
+        file.submodule = parse_submodule_status(submodule)
       elseif kind == "2" then
-        local mode_staged, mode_unstaged, _, _, _, _, _, _, _, name, orig_name = rest:match(match_2)
+        local mode_staged, mode_unstaged, submodule, _, _, _, _, _, _, name, orig_name = rest:match(match_2)
+        local file
 
         if mode_staged ~= "." then
-          table.insert(
-            staged_files,
-            update_file(cwd, old_files_hash.staged_files[name], mode_staged, name, orig_name)
-          )
+          file = update_file(cwd, old_files_hash.staged_files[name], mode_staged, name, orig_name)
+          table.insert(staged_files, file)
         end
 
         if mode_unstaged ~= "." then
-          table.insert(
-            unstaged_files,
-            update_file(cwd, old_files_hash.unstaged_files[name], mode_unstaged, name, orig_name)
-          )
+          file = update_file(cwd, old_files_hash.unstaged_files[name], mode_unstaged, name, orig_name)
+          table.insert(unstaged_files, file)
         end
+
+        assert(file, "renamed file is neither staged or unstaged")
+        file.submodule = parse_submodule_status(submodule)
       end
     end
   end

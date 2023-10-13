@@ -141,6 +141,23 @@ local function draw_signs()
     end
   end
 end
+local function format_submodule_mode(mode)
+  local res = {}
+
+  if mode.commit_changed then
+    table.insert(res, "new commits")
+  end
+
+  if mode.has_tracked_changes then
+    table.insert(res, "modfied content")
+  end
+
+  if mode.has_untracked_changes then
+    table.insert(res, "untracked content")
+  end
+
+  return #res > 0 and "(" .. table.concat(res, ", ") .. ")" or "(malformed submodule)"
+end
 
 local function format_mode(mode)
   if not mode then
@@ -289,17 +306,25 @@ local function draw_buffer()
 
       for _, f in ipairs(data.items) do
         local label = util.pad_right(format_mode(f.mode), max_len)
+
         if label and vim.o.columns < 120 then
           label = vim.trim(label)
         end
 
+        local line
         if f.mode and f.original_name then
-          output:append(string.format("%s %s -> %s", label, f.original_name, f.name))
+          line = string.format("%s %s -> %s", label, f.original_name, f.name)
         elseif f.mode then
-          output:append(string.format("%s %s", label, f.name))
+          line = string.format("%s %s", label, f.name)
         else
-          output:append(f.name)
+          line = f.name
         end
+
+        if f.submodule then
+          line = line .. " " .. format_submodule_mode(f.submodule)
+        end
+
+        output:append(line)
 
         if f.done then
           M.status_buffer:place_sign(#output, "NeogitRebaseDone", "hl")
