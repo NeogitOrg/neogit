@@ -19,7 +19,7 @@ function M.filepath()
     filename = vim.loop.cwd()
       :gsub("^(%a):", "/%1")
       :gsub("/", "%%")
-      :gsub(Path.sep, "%%")
+      :gsub(Path.path.sep, "%%")
   end
 
   return Path:new(base_path .. filename)
