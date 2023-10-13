@@ -123,35 +123,35 @@ local function update_status(state)
       elseif kind == "1" then
         local mode_staged, mode_unstaged, submodule, _, _, _, _, _, name = rest:match(match_1)
 
-        local file
+        local submodule = parse_submodule_status(submodule)
+
         if mode_staged ~= "." then
-          file = update_file(cwd, old_files_hash.staged_files[name], mode_staged, name)
+          local file = update_file(cwd, old_files_hash.staged_files[name], mode_staged, name)
+          file.submodule = submodule
           table.insert(staged_files, file)
         end
 
         if mode_unstaged ~= "." then
-          file = update_file(cwd, old_files_hash.unstaged_files[name], mode_unstaged, name)
+          local file = update_file(cwd, old_files_hash.unstaged_files[name], mode_unstaged, name)
+          file.submodule = submodule
           table.insert(unstaged_files, file)
         end
-
-        assert(file, "tracked file is neither staged or unstaged")
-        file.submodule = parse_submodule_status(submodule)
       elseif kind == "2" then
         local mode_staged, mode_unstaged, submodule, _, _, _, _, _, _, name, orig_name = rest:match(match_2)
-        local file
+
+        local submodule = parse_submodule_status(submodule)
 
         if mode_staged ~= "." then
-          file = update_file(cwd, old_files_hash.staged_files[name], mode_staged, name, orig_name)
+          local file = update_file(cwd, old_files_hash.staged_files[name], mode_staged, name, orig_name)
+          file.submodule = submodule
           table.insert(staged_files, file)
         end
 
         if mode_unstaged ~= "." then
-          file = update_file(cwd, old_files_hash.unstaged_files[name], mode_unstaged, name, orig_name)
+          local file = update_file(cwd, old_files_hash.unstaged_files[name], mode_unstaged, name, orig_name)
+          file.submodule = submodule
           table.insert(unstaged_files, file)
         end
-
-        assert(file, "renamed file is neither staged or unstaged")
-        file.submodule = parse_submodule_status(submodule)
       end
     end
   end

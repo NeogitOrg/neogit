@@ -10,20 +10,21 @@ syn match gitrebasePick       "\v^work=>"           nextgroup=gitrebaseCommit sk
 syn match gitrebaseBreak      "\v^onto=>"           nextgroup=gitrebaseCommit skipwhite
 
 " Labels to the left of files
-syn match NeogitChangeModified     /\v^Modified( by us|)/ nextgroup=NeogitFilePath skipwhite 
-syn match NeogitChangeAdded        /\v^Added( by us|)/ nextgroup=NeogitFilePath skipwhite 
-syn match NeogitChangeDeleted      /\v^Deleted( by us|)/ nextgroup=NeogitFilePath skipwhite 
-syn match NeogitChangeRenamed      /\v^Renamed( by us|)/ nextgroup=NeogitFilePath skipwhite 
-syn match NeogitChangeUpdated      /\v^Updated( by us|)/ nextgroup=NeogitFilePath skipwhite 
-syn match NeogitChangeCopied       /\v^Copied( by us|)/ nextgroup=NeogitFilePath skipwhite 
-syn match NeogitChangeBothModified /^Both Modified/ nextgroup=NeogitFilePath skipwhite 
-syn match NeogitChangeNewFile      /^New file/ nextgroup=NeogitFilePath skipwhite 
+syn match NeogitChangeModified     /\v^Modified( by us|)/ nextgroup=NeogitFileName skipwhite 
+syn match NeogitChangeAdded        /\v^Added( by us|)/ nextgroup=NeogitFileName skipwhite 
+syn match NeogitChangeDeleted      /\v^Deleted( by us|)/ nextgroup=NeogitFileName skipwhite 
+syn match NeogitChangeRenamed      /\v^Renamed( by us|)/ nextgroup=NeogitFileName skipwhite 
+syn match NeogitChangeUpdated      /\v^Updated( by us|)/ nextgroup=NeogitFileName skipwhite 
+syn match NeogitChangeCopied       /\v^Copied( by us|)/ nextgroup=NeogitFileName skipwhite 
+syn match NeogitChangeBothModified /^Both Modified/ nextgroup=NeogitFileName skipwhite 
+syn match NeogitChangeNewFile      /^New file/ nextgroup=NeogitFileName skipwhite 
 
 
 " Files themselves
-syn match NeogitFilePath /[a-zA-Z0-9\/._-]\+/ contained nextgroup=NeogitChangeSubmodule skipwhite
+" syn match NeogitFilePath /\v\s+([a-zA-Z0-9\/._-]+\/|)/ contained nextgroup=NeogitFileName skipwhite
+syn match NeogitFileName /[a-zA-Z0-9\/._-]\+/ contained nextgroup=NeogitSubmodule
 
-syn match NeogitChangeSubmodule      /\(.\+\)/ contained skipwhite
+syn match NeogitSubmodule      /\(.\+\)/ contained skipwhite
 
 syn match NeogitCommitMessage /.*/                  contained
 syn match NeogitBranch        /\S\+/                contained nextgroup=NeogitObjectId,NeogitCommitMessage
@@ -67,5 +68,7 @@ syn region NeogitUnpulledFromRegion start=/^Unpulled from .*/ end=/$/ contains=N
 syn region NeogitDiffAddRegion      start=/^+.*$/             end=/$/ contains=NeogitDiffAdd
 syn region NeogitDiffDeleteRegion   start=/^-.*$/             end=/$/ contains=NeogitDiffDelete
 syn region NeogitTagRegion          start=/^Tag: \zs/         end=/$/ contains=NeogitTagName,NeogitTagDistance
+syn region NeogitUntrackedRegion          start=/^Tag: \zs/   end=/$/ contains=NeogitFilePath
+
 
 let b:current_syntax = 1
