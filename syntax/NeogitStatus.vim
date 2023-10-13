@@ -10,14 +10,20 @@ syn match gitrebasePick       "\v^work=>"           nextgroup=gitrebaseCommit sk
 syn match gitrebaseBreak      "\v^onto=>"           nextgroup=gitrebaseCommit skipwhite
 
 " Labels to the left of files
-syn match NeogitChangeModified     /\v^Modified( by us|)/
-syn match NeogitChangeAdded        /\v^Added( by us|)/
-syn match NeogitChangeDeleted      /\v^Deleted( by us|)/
-syn match NeogitChangeRenamed      /\v^Renamed( by us|)/
-syn match NeogitChangeUpdated      /\v^Updated( by us|)/
-syn match NeogitChangeCopied       /\v^Copied( by us|)/
-syn match NeogitChangeBothModified /^Both Modified/
-syn match NeogitChangeNewFile      /^New file/
+syn match NeogitChangeModified     /\v^Modified( by us|)/ nextgroup=NeogitFilePath skipwhite 
+syn match NeogitChangeAdded        /\v^Added( by us|)/ nextgroup=NeogitFilePath skipwhite 
+syn match NeogitChangeDeleted      /\v^Deleted( by us|)/ nextgroup=NeogitFilePath skipwhite 
+syn match NeogitChangeRenamed      /\v^Renamed( by us|)/ nextgroup=NeogitFilePath skipwhite 
+syn match NeogitChangeUpdated      /\v^Updated( by us|)/ nextgroup=NeogitFilePath skipwhite 
+syn match NeogitChangeCopied       /\v^Copied( by us|)/ nextgroup=NeogitFilePath skipwhite 
+syn match NeogitChangeBothModified /^Both Modified/ nextgroup=NeogitFilePath skipwhite 
+syn match NeogitChangeNewFile      /^New file/ nextgroup=NeogitFilePath skipwhite 
+
+
+" Files themselves
+syn match NeogitFilePath /[a-zA-Z0-9\/._-]\+/ contained nextgroup=NeogitChangeSubmodule skipwhite
+
+syn match NeogitChangeSubmodule      /\(.\+\)/ contained skipwhite
 
 syn match NeogitCommitMessage /.*/                  contained
 syn match NeogitBranch        /\S\+/                contained nextgroup=NeogitObjectId,NeogitCommitMessage

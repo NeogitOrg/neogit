@@ -180,6 +180,7 @@ function M.setup()
     NeogitChangeCopied = { fg = palette.bg_cyan, bold = true, italic = true },
     NeogitChangeBothModified = { fg = palette.bg_yellow, bold = true, italic = true },
     NeogitChangeNewFile = { fg = palette.bg_green, bold = true, italic = true },
+    NeogitChangeSubmodule = { fg = palette.bg_red, italic = true },
     NeogitSectionHeader = { fg = palette.bg_purple, bold = true },
     NeogitUntrackedfiles = { link = "NeogitSectionHeader" },
     NeogitUnstagedchanges = { link = "NeogitSectionHeader" },
