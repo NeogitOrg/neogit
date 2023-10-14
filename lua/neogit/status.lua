@@ -879,6 +879,8 @@ local stage = function()
 end
 
 local unstage = function()
+  M.current_operation = "unstage"
+
   local selection = M.get_selection()
   local mode = vim.api.nvim_get_mode()
 
