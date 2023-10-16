@@ -14,7 +14,12 @@ local function push_to(args, remote, branch, opts)
     table.insert(args, "--set-upstream")
   end
 
-  local name = remote .. "/" .. branch
+  local name
+  if branch then
+    name = remote .. "/" .. branch
+  else
+    name = remote
+  end
 
   logger.debug("Pushing to " .. name)
   notification.info("Pushing to " .. name)
@@ -78,10 +83,11 @@ function M.push_other(popup)
   table.insert(sources, "HEAD")
   table.insert(sources, "ORIG_HEAD")
   table.insert(sources, "FETCH_HEAD")
+  if popup.state.env.commit then
+    table.insert(sources, 1, popup.state.env.commit)
+  end
 
-  local source = FuzzyFinderBuffer.new(sources):open_async {
-    prompt_prefix = "push > ",
-  }
+  local source = FuzzyFinderBuffer.new(sources):open_async { prompt_prefix = "push > " }
   if not source then
     return
   end
@@ -99,6 +105,21 @@ function M.push_other(popup)
 
   local remote, _ = destination:match("^([^/]*)/(.*)$")
   push_to(popup:get_arguments(), remote, source .. ":" .. destination)
+end
+
+function M.push_tags(popup)
+  local remotes = git.remote.list()
+
+  local remote
+  if #remotes == 1 then
+    remote = remotes[1]
+  else
+    remote = FuzzyFinderBuffer.new(remotes):open_async { prompt_prefix = "push tags to > " }
+  end
+
+  if remote then
+    push_to({ "--tags", unpack(popup:get_arguments()) }, remote)
+  end
 end
 
 function M.configure()

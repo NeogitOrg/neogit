@@ -14,6 +14,7 @@ local fs = require("neogit.lib.fs")
 local input = require("neogit.lib.input")
 local util = require("neogit.lib.util")
 local watcher = require("neogit.watcher")
+local operation = require("neogit.operations")
 
 local api = vim.api
 local fn = vim.fn
@@ -22,7 +23,6 @@ local M = {}
 
 M.disabled = false
 
-M.current_operation = nil
 M.prev_autochdir = nil
 M.status_buffer = nil
 M.commit_view = nil
@@ -851,9 +851,7 @@ function M.get_selection()
   return setmetatable(res, Selection)
 end
 
-local stage = function()
-  M.current_operation = "stage"
-
+local stage = operation("stage", function()
   local selection = M.get_selection()
   local mode = vim.api.nvim_get_mode()
 
@@ -893,17 +891,15 @@ local stage = function()
     git.index.add(files)
   end
 
-  M.current_operation = nil
-
   refresh({
     status = true,
     diffs = vim.tbl_map(function(v)
       return "*:" .. v.name
     end, selection.items),
   }, "stage_finish")
-end
+end)
 
-local unstage = function()
+local unstage = operation("unstage", function()
   local selection = M.get_selection()
   local mode = vim.api.nvim_get_mode()
 
@@ -941,15 +937,13 @@ local unstage = function()
     git.status.unstage(files)
   end
 
-  M.current_operation = nil
-
   refresh({
     status = true,
     diffs = vim.tbl_map(function(v)
       return "*:" .. v.name
     end, selection.items),
   }, "unstage_finish")
-end
+end)
 
 local function discard_message(files, hunk_count)
   if hunk_count > 0 then
@@ -961,9 +955,7 @@ local function discard_message(files, hunk_count)
   end
 end
 
-local function discard()
-  M.current_operation = "discard"
-
+local discard = operation("discard", function()
   local selection = M.get_selection()
   local mode = vim.api.nvim_get_mode()
 
@@ -1036,9 +1028,7 @@ local function discard()
 
   a.util.scheduler()
   vim.cmd("checktime")
-
-  M.current_operation = nil
-end
+end)
 
 local set_folds = function(to)
   Collection.new(M.locations):each(function(l)
@@ -1509,12 +1499,6 @@ end
 
 function M.get_status()
   return M.status
-end
-
-function M.wait_on_current_operation(ms)
-  vim.wait(ms or 1000, function()
-    return not M.current_operation
-  end)
 end
 
 return M
