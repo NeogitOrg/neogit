@@ -5,7 +5,7 @@ local function refocus_status_buffer()
   local status = require("neogit.status")
   if status.status_buffer then
     status.status_buffer:focus()
-    status.dispatch_refresh()
+    status.dispatch_refresh_all()
   end
 end
 
@@ -65,6 +65,7 @@ local function telescope_mappings(on_select, allow_multi, refocus_status)
     }
 
     for mapping, command in pairs(config.values.mappings.finder) do
+      assert(command, "Missing command for mapping " .. mapping)
       if command:match("^Multiselect") then
         if allow_multi then
           map({ "i" }, mapping, commands[command])

@@ -303,7 +303,7 @@ function M:action(keys, description, callback)
       callback(...)
 
       logger.debug("[ACTION] Dispatching Refresh")
-      require("neogit.status").dispatch_refresh(true, "action")
+      require("neogit.status").dispatch_refresh_all(true, "action")
     end)
   end
 

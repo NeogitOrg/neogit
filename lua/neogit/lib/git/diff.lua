@@ -108,6 +108,8 @@ end
 ---@field index_len number
 ---@field diff_from number
 ---@field diff_to number
+---@field first number
+---@field last number
 
 ---@return Hunk
 local function build_hunks(lines)
@@ -196,6 +198,14 @@ local function build_metatable(f, raw_output_fn)
 
   f.has_diff = true
 end
+
+---@class Diff
+---@field kind string
+---@field lines string[]
+---@field file string
+---@field info string[]
+---@field stats table
+---@field hunks Hunk[]
 
 -- Doing a git-diff with untracked files will exit(1) if a difference is observed, which we can ignore.
 local function raw_untracked(name)
