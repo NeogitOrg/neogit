@@ -30,7 +30,7 @@ function M.create(env)
     :env({
       highlight = { current, git.branch.upstream(), git.branch.pushRemote_ref() },
       bold = { "pushRemote", "@{upstream}" },
-      commit = env.commit
+      commit = env.commit,
     })
     :build()
 
