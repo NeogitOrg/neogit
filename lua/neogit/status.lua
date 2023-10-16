@@ -1079,6 +1079,13 @@ local function handle_section_item(item)
     vim.cmd("update")
   end
 
+  if item.submodule then
+    vim.schedule(function()
+      require("neogit").open { cwd = relpath }
+    end)
+    return
+  end
+
   vim.cmd("e " .. relpath)
 
   if hunk then

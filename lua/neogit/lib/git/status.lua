@@ -7,6 +7,12 @@ local Collection = require("neogit.lib.collection")
 ---@field has_diff boolean
 ---@field diff string[]
 ---@field absolute_path string
+---@field submodule SubmoduleStatus|nil
+
+---@class SubmoduleStatus
+---@field commit_changed boolean C
+---@field has_tracked_changes boolean M
+---@field has_untracked_changes boolean U
 
 ---@param status string
 -- <sub>       A 4 character field describing the submodule state.

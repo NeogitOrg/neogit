@@ -63,6 +63,7 @@ function M.open(opts)
   opts = opts or {}
 
   if opts.cwd and not opts.no_expand then
+    ---@diagnostic disable-next-line: assign-type-mismatch
     opts.cwd = vim.fn.expand(opts.cwd)
   end
 
