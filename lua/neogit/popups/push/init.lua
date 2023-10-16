@@ -4,7 +4,7 @@ local git = require("neogit.lib.git")
 
 local M = {}
 
-function M.create()
+function M.create(env)
   local current = git.branch.current()
 
   local p = popup
@@ -30,6 +30,7 @@ function M.create()
     :env({
       highlight = { current, git.branch.upstream(), git.branch.pushRemote_ref() },
       bold = { "pushRemote", "@{upstream}" },
+      commit = env.commit,
     })
     :build()
 

@@ -151,10 +151,13 @@ end
 
 function M.set_pushRemote()
   local remotes = require("neogit.lib.git").remote.list()
+  local pushDefault = require("neogit.lib.git").config.get("remote.pushDefault")
 
   local pushRemote
   if #remotes == 1 then
     pushRemote = remotes[1]
+  elseif pushDefault:is_set() then
+    pushRemote = pushDefault:read()
   else
     pushRemote = FuzzyFinderBuffer.new(remotes):open_async { prompt_prefix = "set pushRemote > " }
   end

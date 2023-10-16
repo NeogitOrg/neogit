@@ -46,6 +46,9 @@ function M:open(_)
         ["c"] = popups.open("commit", function(p)
           p { commit = self.buffer.ui:get_commit_under_cursor() }
         end),
+        ["P"] = popups.open("push", function(p)
+          p { commit = self.buffer.ui:get_commit_under_cursor() }
+        end),
         ["r"] = popups.open("rebase", function(p)
           p { commit = self.buffer.ui:get_commit_under_cursor() }
         end),
@@ -70,6 +73,9 @@ function M:open(_)
           p { commits = { self.buffer.ui:get_commit_under_cursor() } }
         end),
         ["c"] = popups.open("commit", function(p)
+          p { commit = self.buffer.ui:get_commit_under_cursor() }
+        end),
+        ["P"] = popups.open("push", function(p)
           p { commit = self.buffer.ui:get_commit_under_cursor() }
         end),
         ["r"] = popups.open("rebase", function(p)
