@@ -444,19 +444,19 @@ Actions:                                      *neogit_cherry_pick_popup_actions*
     Otherwise the user is prompted to select one or more commits.
 
   • Harvest                                         *neogit_cherry_pick_harvest*
-    (not yet implemented)
+    (Not yet implemented)
 
   • Squash                                           *neogit_cherry_pick_squash*
-    (not yet implemented)
+    (Not yet implemented)
 
   • Donate                                           *neogit_cherry_pick_donate*
-    (not yet implemented)
+    (Not yet implemented)
 
   • Spinout                                         *neogit_cherry_pick_spinout*
-    (not yet implemented)
+    (Not yet implemented)
 
   • Spinoff                                         *neogit_cherry_pick_spinoff*
-    (not yet implemented)
+    (Not yet implemented)
 
 
   When a Cherry-Pick is in progress, the following actions are available:
@@ -548,7 +548,7 @@ Actions:                                           *neogit_branch_popup_actions*
     the old branch.
 
   • Checkout new worktree                      *neogit_branch_checkout_worktree*
-    (Not yet implimented)
+    (Not yet implemented)
 
   • Create new branch                              *neogit_branch_create_branch*
     Functionally the same as |neogit_branch_checkout_new|, but does not update
@@ -559,7 +559,7 @@ Actions:                                           *neogit_branch_popup_actions*
     index has uncomitted changes, will behave exactly the same as spin_off.
 
   • Create new worktree                          *neogit_branch_create_worktree*
-    (Not yet implimented)
+    (Not yet implemented)
 
   • Configure                                          *neogit_branch_configure*
     Opens selector to choose a branch, then offering some configuration
@@ -837,7 +837,6 @@ Arguments:                                             *neogit_fetch_popup_args*
     they are also the destination of an explicit refspec; see --prune).
 
 Actions:                                            *neogit_fetch_popup_actions*
-
   • Fetch from pushRemote                              *neogit_fetch_pushremote*
     Fetches from the current pushRemote.
 
@@ -871,6 +870,7 @@ Actions:                                            *neogit_fetch_popup_actions*
 
   • Set Variables                                   *neogit_fetch_set_variables*
     Opens Branch Config popup for the current branch.
+    See |neogit_branch_config_popup|.
 
 ==============================================================================
 Log Popup                                                     *neogit_log_popup*
@@ -922,7 +922,87 @@ Pull Popup                                                   *neogit_pull_popup*
 ==============================================================================
 Push Popup                                                   *neogit_push_popup*
 
-(TODO)
+Arguments:                                              *neogit_push_popup_args*
+  • --force-with-lease
+    Usually, "git push" refuses to update a remote ref that is not an ancestor
+    of the local ref used to overwrite it.
+
+    This option overrides this restriction if the current value of the remote
+    ref is the expected value. "git push" fails otherwise.
+
+    Imagine that you have to rebase what you have already published. You will
+    have to bypass the "must fast-forward" rule in order to replace the
+    history you originally published with the rebased history. If somebody
+    else built on top of your original history while you are rebasing, the tip
+    of the branch at the remote may advance with their commit, and blindly
+    pushing with --force will lose their work.
+
+    This option allows you to say that you expect the history you are updating
+    is what you rebased and want to replace. If the remote ref still points at
+    the commit you specified, you can be sure that no other people did
+    anything to the ref. It is like taking a "lease" on the ref without
+    explicitly locking it, and the remote ref is updated only if the "lease"
+    is still valid.
+
+  • --force
+    Usually, the command refuses to update a remote ref that is not an
+    ancestor of the local ref used to overwrite it. Also, when
+    --force-with-lease option is used, the command refuses to update a remote
+    ref whose current value does not match what is expected.
+
+    This flag disables these checks, and can cause the remote repository to
+    lose commits; use it with care.
+
+    Note that --force applies to all the refs that are pushed, hence using it
+    with push.default set to matching or with multiple push destinations
+    configured with remote.*.push may overwrite refs other than the current
+    branch (including local refs that are strictly behind their remote
+    counterpart).
+
+  • --set-upstream
+    For every branch that is up to date or successfully pushed, add upstream
+    (tracking) reference.
+
+  • --no-verify
+    Skips runing any pre-push git hooks. By default, all hooks are run.
+
+  • --dry-run
+    Do everything except actually send the updates.
+
+Actions:                                             *neogit_push_popup_actions*
+  • Push <current> to pushRemote                        *neogit_push_pushRemote*
+    Pushes the current branch to `branch.<name>.pushRemote`. If that is unset,
+    to `remote.pushDefault`. And if _that_ is unset, the user will be prompted
+    to select a remote, which will be used to set `branch.<name>.pushRemote`,
+    and pushed to.
+
+  • Push <current> to @{upstream}                         *neogit_push_upstream*
+    Pushes the current branch to it's upstream branch. If not set, then the
+    user will be prompted to select a remote, which will be set as the
+    current branch's upstream and pushed to.
+
+  • Push <current> elsewhere                             *neogit_push_elsewhere*
+    Pushes the current branch to a branch selected by the user.
+
+  • Push another branch                             *neogit_push_another_branch*
+    Push a branch somewhere. Both source and target are selected by the user.
+
+  • Push explicit refspecs                       *neogit_push_explicit_refspecs*
+    (Not yet implemented)
+
+  • Push matching branches                       *neogit_push_matching_branches*
+    (Not yet implemented)
+
+  • Push a tag                                                 *neogit_push_tag*
+    (Not yet implemented)
+
+  • Push all tags                                         *neogit_push_all_tags*
+    Pushes all tags to selected remote. If only one remote exists, that will
+    be used; otherwise the user will be prompted to select a remote.
+
+  • Set Variables                                    *neogit_push_set_variables*
+    Opens Branch Config popup for the current branch.
+    See |neogit_branch_config_popup|.
 
 ==============================================================================
 Rebase Popup                                               *neogit_rebase_popup*
@@ -957,7 +1037,6 @@ Arguments:                                            *neogit_revert_popup_args*
     Cannot be used with --edit
 
 Actions:                                           *neogit_revert_popup_actions*
-
   • Revert Commit(s)                                     *neogit_revert_commits*
     Reverts one or more commits. If any commits are under the cursor, or
     selected, they will be used. Otherwise a selector interface will come up.
@@ -976,7 +1055,6 @@ All actions will default to the commit under cursor if there is one, or prompt
 the user to select one if there is not.
 
 Actions:                                            *neogit_reset_popup_actions*
-
   • Mixed                                                   *neogit_reset_mixed*
     Resets the index but not the working tree (i.e., the changed files are
     preserved but not marked for commit).
@@ -1003,7 +1081,7 @@ Actions:                                            *neogit_reset_popup_actions*
     changes.
 
   • Worktree                                             *neogit_reset_worktree*
-    (not yet implemented)
+    (Not yet implemented)
 
 ==============================================================================
 Stash Popup                                                 *neogit_stash_popup*
@@ -1029,12 +1107,11 @@ Arguments:                                               *neogit_tag_popup_args*
     Make a GPG-signed tag, using the given key.
 
 Actions:                                              *neogit_tag_popup_actions*
-
   • Tag                                                         *neogit_tag_tag*
     Creates a new TAG at specified REV.
 
   • Release                                                 *neogit_tag_release*
-    (not yet implemented)
+    (Not yet implemented)
 
   • Delete                                                   *neogit_tag_delete*
     Deletes one or more tags.
