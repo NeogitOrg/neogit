@@ -985,7 +985,8 @@ Actions:                                             *neogit_push_popup_actions*
     Pushes the current branch to a branch selected by the user.
 
   • Push another branch                             *neogit_push_another_branch*
-    Push a branch somewhere. Both source and target are selected by the user.
+    Push a branch or commit somewhere. Both source and target are selected by
+    the user.
 
   • Push explicit refspecs                       *neogit_push_explicit_refspecs*
     (Not yet implemented)

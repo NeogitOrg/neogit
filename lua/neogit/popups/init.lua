@@ -54,7 +54,13 @@ function M.mappings_table()
       end),
     },
     { "MergePopup", "Merge", M.open("merge") },
-    { "PushPopup", "Push", M.open("push") },
+    {
+      "PushPopup",
+      "Push",
+      M.open("push", function(f)
+        f { commit = commit_oid(require("neogit.status").get_selection().commit) }
+      end),
+    },
     {
       "CommitPopup",
       "Commit",

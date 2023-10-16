@@ -78,16 +78,16 @@ function M.to_elsewhere(popup)
   end
 end
 
--- TODO: Add env.commit = {} and offer to push the current commit under cursor somewhere
 function M.push_other(popup)
   local sources = git.branch.get_local_branches()
   table.insert(sources, "HEAD")
   table.insert(sources, "ORIG_HEAD")
   table.insert(sources, "FETCH_HEAD")
+  if popup.state.env.commit then
+    table.insert(sources, 1, popup.state.env.commit)
+  end
 
-  local source = FuzzyFinderBuffer.new(sources):open_async {
-    prompt_prefix = "push > ",
-  }
+  local source = FuzzyFinderBuffer.new(sources):open_async { prompt_prefix = "push > " }
   if not source then
     return
   end
