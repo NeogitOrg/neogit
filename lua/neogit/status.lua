@@ -108,8 +108,7 @@ end
 
 ---@param self StatusBuffer
 ---@return Section|nil, StatusItem|nil
-local function get_current_section_item(self)
-  assert(self, "self is nil")
+function M:get_current_section_item()
   return get_section_item_for_line(self, vim.fn.line("."))
 end
 
@@ -709,8 +708,6 @@ function M.dispatch_refresh_manually_all()
 end
 
 function M:close(skip_close)
-  logger.fmt_debug("Closing status buffer %d", self.status_buffer.handle)
-
   if not skip_close then
     self.status_buffer:close()
   end
@@ -1135,6 +1132,7 @@ function M:handle_section_item(item)
   local hunk = M.get_item_hunks(item, cursor_row, cursor_row, false)[1]
 
   notification.delete_all()
+  self:close()
 
   local relpath = vim.fn.fnamemodify(path, ":.")
 
@@ -1165,7 +1163,6 @@ function M:handle_section_item(item)
     vim.api.nvim_win_set_cursor(0, { row, col })
   end
 
-  self:close()
 end
 
 --- Returns the section header ref the user selected
@@ -1255,25 +1252,25 @@ function M:cmd_func_map()
       process.show_console()
     end,
     ["TabOpen"] = function()
-      local _, item = get_current_section_item(self)
+      local _, item = self:get_current_section_item()
       if item then
         vim.cmd("tabedit " .. item.name)
       end
     end,
     ["VSplitOpen"] = function()
-      local _, item = get_current_section_item(self)
+      local _, item = self:get_current_section_item()
       if item then
         vim.cmd("vsplit " .. item.name)
       end
     end,
     ["SplitOpen"] = function()
-      local _, item = get_current_section_item(self)
+      local _, item = self:get_current_section_item()
       if item then
         vim.cmd("split " .. item.name)
       end
     end,
     ["GoToPreviousHunkHeader"] = function()
-      local section, item = get_current_section_item(self)
+      local section, item = self:get_current_section_item()
       if not section then
         return
       end
@@ -1302,7 +1299,7 @@ function M:cmd_func_map()
       end
     end,
     ["GoToNextHunkHeader"] = function()
-      local section, item = get_current_section_item(self)
+      local section, item = self:get_current_section_item()
       if not section then
         return
       end
@@ -1335,7 +1332,7 @@ function M:cmd_func_map()
     ["GoToFile"] = a.void(function()
       -- local repo_root = cli.git_root()
       a.util.scheduler()
-      local section, item = get_current_section_item(self)
+      local section, item = self:get_current_section_item()
       if not section then
         return
       end
@@ -1383,7 +1380,7 @@ function M:cmd_func_map()
       end
 
       local dv = require("neogit.integrations.diffview")
-      local section, item = get_current_section_item(self)
+      local section, item = self:get_current_section_item()
 
       if section and item then
         dv.open(section.name, item.name)
@@ -1417,17 +1414,14 @@ function M:set_decoration_provider()
   local last_frame_key = frame_key()
 
   local function on_start()
-    logger.debug("on_start")
     return self.status_buffer:is_focused() and frame_key() ~= last_frame_key
   end
 
   local function on_end()
-    logger.debug("on_end")
     last_frame_key = frame_key()
   end
 
   local function on_win()
-    logger.debug("on_win")
     self.status_buffer:clear_namespace(decor_ns)
     self.status_buffer:clear_namespace(context_ns)
 
@@ -1480,8 +1474,15 @@ function M:set_decoration_provider()
   self.status_buffer:set_decorations(decor_ns, { on_start = on_start, on_win = on_win, on_end = on_end })
 end
 
-function M.find(git_root)
-  return status_buffers[git_root]
+function M.find(cwd)
+  local buffer = status_buffers[cwd]
+  if buffer then
+    if buffer.status_buffer:is_valid() then
+      return buffer
+    else
+      status_buffers[cwd] = nil
+    end
+  end
 end
 
 --- Creates a new status buffer
@@ -1492,7 +1493,7 @@ function M.create(kind, cwd)
   local existing = M.find(cwd)
   if existing then
     logger.debug("Status buffer already exists. Focusing the existing one")
-    existing.status_buffer:focus()
+    existing.status_buffer:show(true)
     return existing
   end
 

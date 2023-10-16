@@ -156,16 +156,19 @@ function Buffer:close(force)
     return
   end
 
-  if api.nvim_buf_is_valid(self.handle) then
-    local winnr = fn.bufwinnr(self.handle)
-    if winnr ~= -1 then
-      local winid = fn.win_getid(winnr)
-      if not pcall(api.nvim_win_close, winid, force) then
-        vim.cmd("b#")
-      end
-    else
-      api.nvim_buf_delete(self.handle, { force = force })
+  if not api.nvim_buf_is_valid(self.handle) then
+    return
+  end
+
+  local winnr = fn.bufwinnr(self.handle)
+  if winnr ~= -1 then
+    local winid = fn.win_getid(winnr)
+    -- Last window in tabpage
+    if not pcall(api.nvim_win_close, winid, force) then
+      pcall(vim.cmd.b, "#")
     end
+  else
+    api.nvim_buf_delete(self.handle, { force = force })
   end
 end
 
@@ -187,13 +190,22 @@ function Buffer:hide()
   end
 end
 
+---@param focus boolean|nil
 ---@return number
-function Buffer:show()
+function Buffer:show(focus)
   local windows = fn.win_findbuf(self.handle)
 
   -- Already visible
   if #windows > 0 then
+    if focus then
+      fn.win_gotoid(windows[1])
+    end
     return windows[1]
+  end
+
+  if not api.nvim_buf_is_valid(self.handle) then
+    require("neogit.logger").warn("Buffer is not valid")
+    return -1
   end
 
   if self.kind == "auto" then
