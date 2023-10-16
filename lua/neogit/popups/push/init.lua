@@ -24,7 +24,7 @@ function M.create()
     :action("r", "explicit refspecs")
     :action("m", "matching branches")
     :action("T", "a tag")
-    :action("t", "all tags")
+    :action("t", "all tags", actions.push_tags)
     :new_action_group("Configure")
     :action("C", "Set variables...", actions.configure)
     :env({

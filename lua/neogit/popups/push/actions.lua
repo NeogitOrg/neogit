@@ -101,6 +101,10 @@ function M.push_other(popup)
   push_to(popup:get_arguments(), remote, source .. ":" .. destination)
 end
 
+function M.push_tags()
+  push_to({ "--tags" }, git.branch.pushRemote(), "")
+end
+
 function M.configure()
   require("neogit.popups.branch_config").create()
 end
