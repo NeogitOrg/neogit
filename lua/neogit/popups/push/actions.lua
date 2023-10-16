@@ -14,7 +14,12 @@ local function push_to(args, remote, branch, opts)
     table.insert(args, "--set-upstream")
   end
 
-  local name = remote .. "/" .. branch
+  local name
+  if branch then
+    name = remote .. "/" .. branch
+  else
+    name = remote
+  end
 
   logger.debug("Pushing to " .. name)
   notification.info("Pushing to " .. name)
@@ -73,6 +78,7 @@ function M.to_elsewhere(popup)
   end
 end
 
+-- TODO: Add env.commit = {} and offer to push the current commit under cursor somewhere
 function M.push_other(popup)
   local sources = git.branch.get_local_branches()
   table.insert(sources, "HEAD")
@@ -101,8 +107,19 @@ function M.push_other(popup)
   push_to(popup:get_arguments(), remote, source .. ":" .. destination)
 end
 
-function M.push_tags()
-  push_to({ "--tags" }, git.branch.pushRemote(), "")
+function M.push_tags(popup)
+  local remotes = git.remote.list()
+
+  local remote
+  if #remotes == 1 then
+    remote = remotes[1]
+  else
+    remote = FuzzyFinderBuffer.new(remotes):open_async { prompt_prefix = "push tags to > " }
+  end
+
+  if remote then
+    push_to({ "--tags", unpack(popup:get_arguments()) }, remote)
+  end
 end
 
 function M.configure()
