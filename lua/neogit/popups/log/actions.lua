@@ -73,6 +73,14 @@ function M.log_all_references(popup)
     :open()
 end
 
+function M.log_all_with_reflog(popup)
+  LogViewBuffer.new(
+    commits(popup, { git.branch.is_detached() and "" or "HEAD", "--reflog" }),
+    popup:get_internal_arguments()
+  )
+    :open()
+end
+
 function M.reflog_current(popup)
   ReflogViewBuffer.new(git.reflog.list(git.branch.current(), popup:get_arguments())):open()
 end
