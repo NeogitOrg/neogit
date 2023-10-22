@@ -68,6 +68,7 @@ function M.generate_patch(item, hunk, from, to, reverse)
 
   local git_root = repo.git_root
 
+  assert(item.absolute_path, "Item is not a path")
   local path = Path:new(item.absolute_path):make_relative(git_root)
 
   table.insert(diff_content, 1, string.format("+++ b/%s", path))
