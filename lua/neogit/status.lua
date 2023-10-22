@@ -841,7 +841,7 @@ local stage = operation("stage", function()
           for _, hunk in ipairs(hunks) do
             -- Apply works for both tracked and untracked
             local patch = git.index.generate_patch(item, hunk, hunk.from, hunk.to)
-            git.index.apply(patch, { cached = true })
+            git.index.apply(patch, { cached = true, use_git_root = true })
           end
         else
           git.status.stage { item.name }
@@ -850,7 +850,10 @@ local stage = operation("stage", function()
         if #hunks > 0 then
           for _, hunk in ipairs(hunks) do
             -- Apply works for both tracked and untracked
-            git.index.apply(git.index.generate_patch(item, hunk, hunk.from, hunk.to), { cached = true })
+            git.index.apply(
+              git.index.generate_patch(item, hunk, hunk.from, hunk.to),
+              { cached = true, use_git_root = true }
+            )
           end
         else
           table.insert(files, item.name)
@@ -898,7 +901,7 @@ local unstage = operation("unstage", function()
             -- Apply works for both tracked and untracked
             git.index.apply(
               git.index.generate_patch(item, hunk, hunk.from, hunk.to, true),
-              { cached = true, reverse = true }
+              { cached = true, reverse = true, use_git_root = true }
             )
           end
         else
@@ -962,9 +965,9 @@ local discard = operation("discard", function()
 
             if section_name == "staged" then
               --- Apply both to the worktree and the staging area
-              git.index.apply(patch, { index = true, reverse = true })
+              git.index.apply(patch, { index = true, reverse = true, use_git_root = true })
             else
-              git.index.apply(patch, { reverse = true })
+              git.index.apply(patch, { reverse = true, use_git_root = true })
             end
           end)
         end

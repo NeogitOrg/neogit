@@ -1,4 +1,7 @@
 local cli = require("neogit.lib.git.cli")
+local repo = require("neogit.lib.git.repository")
+local Path = require("plenary.path")
+
 local M = {}
 
 ---Generates a patch that can be applied to index
@@ -62,8 +65,14 @@ function M.generate_patch(item, hunk, from, to, reverse)
     1,
     string.format("@@ -%d,%d +%d,%d @@", hunk.index_from, len_start, hunk.index_from, len_start + len_offset)
   )
-  table.insert(diff_content, 1, string.format("+++ b/%s", item.name))
-  table.insert(diff_content, 1, string.format("--- a/%s", item.name))
+
+  local git_root = repo.git_root
+
+  assert(item.absolute_path, "Item is not a path")
+  local path = Path:new(item.absolute_path):make_relative(git_root)
+
+  table.insert(diff_content, 1, string.format("+++ b/%s", path))
+  table.insert(diff_content, 1, string.format("--- a/%s", path))
   table.insert(diff_content, "\n")
 
   return table.concat(diff_content, "\n")
@@ -73,7 +82,7 @@ end
 ---@param opts table
 ---@return table
 function M.apply(patch, opts)
-  opts = opts or { reverse = false, cached = false, index = false }
+  opts = opts or { reverse = false, cached = false, index = false, use_git_root = false }
 
   local cmd = cli.apply
 
@@ -87,6 +96,12 @@ function M.apply(patch, opts)
 
   if opts.index then
     cmd = cmd.index
+  end
+
+  if opts.use_git_root then
+    local repository = require("neogit.lib.git.repository")
+
+    cmd = cmd.cwd(repository.git_root)
   end
 
   return cmd.with_patch(patch).call()
