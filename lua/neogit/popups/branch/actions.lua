@@ -155,7 +155,7 @@ M.rename_branch = operation("rename_branch", function()
     return
   end
 
-  local new_name = input.get_user_input("new branch name > ")
+  local new_name = input.get_user_input("new branch name > ", selected_branch)
   if not new_name or new_name == "" then
     return
   end
