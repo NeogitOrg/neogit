@@ -56,8 +56,7 @@ function M.get_remote_branches(include_current)
 end
 
 function M.get_all_branches(include_current)
-  local branches = cli.branch.list(config.values.sort_branches).all.call_sync():trim().stdout
-  return parse_branches(branches, include_current)
+  return util.merge(M.get_local_branches(include_current), M.get_remote_branches(include_current))
 end
 
 function M.is_unmerged(branch, base)
