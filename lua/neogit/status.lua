@@ -1416,8 +1416,9 @@ function M.create(kind, cwd)
 
       local mappings = buffer.mmanager.mappings
       local func_map = cmd_func_map()
+      local keys = vim.tbl_extend("error", config.values.mappings.status, config.values.mappings.popup)
 
-      for key, val in pairs(config.values.mappings.status) do
+      for key, val in pairs(keys) do
         if val and val ~= "" then
           local func = func_map[val]
 

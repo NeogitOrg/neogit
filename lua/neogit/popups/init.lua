@@ -23,6 +23,19 @@ function M.open(name, f)
   end
 end
 
+local mappings
+
+---@param name string
+---@return string
+---Returns the keymapping for a popup
+function M.mapping_for(name)
+  if not mappings then
+    mappings = require("neogit.config").get_reversed_popup_maps()
+  end
+
+  return mappings[name]
+end
+
 --- Returns an array useful for creating mappings for the available popups
 ---@return table<string, Mapping>
 function M.mappings_table()

@@ -42,56 +42,56 @@ function M:open()
     context_highlight = false,
     mappings = {
       v = {
-        ["A"] = popups.open("cherry_pick", function(p)
+        [popups.mapping_for("cherry_pick")] = popups.open("cherry_pick", function(p)
           p { commits = self.buffer.ui:get_commits_in_selection() }
         end),
-        ["b"] = popups.open("branch", function(p)
+        [popups.mapping_for("branch")] = popups.open("branch", function(p)
           p { commits = self.buffer.ui:get_commits_in_selection() }
         end),
-        ["c"] = popups.open("commit", function(p)
+        [popups.mapping_for("commit")] = popups.open("commit", function(p)
           p { commit = self.buffer.ui:get_commit_under_cursor() }
         end),
-        ["P"] = popups.open("push", function(p)
+        [popups.mapping_for("push")] = popups.open("push", function(p)
           p { commit = self.buffer.ui:get_commit_under_cursor() }
         end),
-        ["r"] = popups.open("rebase", function(p)
+        [popups.mapping_for("rebase")] = popups.open("rebase", function(p)
           p { commit = self.buffer.ui:get_commit_under_cursor() }
         end),
-        ["v"] = popups.open("revert", function(p)
+        [popups.mapping_for("revert")] = popups.open("revert", function(p)
           p { commits = self.buffer.ui:get_commits_in_selection() }
         end),
-        ["X"] = popups.open("reset", function(p)
+        [popups.mapping_for("reset")] = popups.open("reset", function(p)
           p { commit = self.buffer.ui:get_commit_under_cursor() }
         end),
       },
       n = {
+        [popups.mapping_for("cherry_pick")] = popups.open("cherry_pick", function(p)
+          p { commits = { self.buffer.ui:get_commit_under_cursor() } }
+        end),
+        [popups.mapping_for("branch")] = popups.open("branch", function(p)
+          p { commits = { self.buffer.ui:get_commit_under_cursor() } }
+        end),
+        [popups.mapping_for("commit")] = popups.open("commit", function(p)
+          p { commit = self.buffer.ui:get_commit_under_cursor() }
+        end),
+        [popups.mapping_for("push")] = popups.open("push", function(p)
+          p { commit = self.buffer.ui:get_commit_under_cursor() }
+        end),
+        [popups.mapping_for("rebase")] = popups.open("rebase", function(p)
+          p { commit = self.buffer.ui:get_commit_under_cursor() }
+        end),
+        [popups.mapping_for("revert")] = popups.open("revert", function(p)
+          p { commits = { self.buffer.ui:get_commit_under_cursor() } }
+        end),
+        [popups.mapping_for("reset")] = popups.open("reset", function(p)
+          p { commit = self.buffer.ui:get_commit_under_cursor() }
+        end),
         ["q"] = function()
           self:close()
         end,
         ["<esc>"] = function()
           self:close()
         end,
-        ["A"] = popups.open("cherry_pick", function(p)
-          p { commits = { self.buffer.ui:get_commit_under_cursor() } }
-        end),
-        ["b"] = popups.open("branch", function(p)
-          p { commits = { self.buffer.ui:get_commit_under_cursor() } }
-        end),
-        ["c"] = popups.open("commit", function(p)
-          p { commit = self.buffer.ui:get_commit_under_cursor() }
-        end),
-        ["P"] = popups.open("push", function(p)
-          p { commit = self.buffer.ui:get_commit_under_cursor() }
-        end),
-        ["r"] = popups.open("rebase", function(p)
-          p { commit = self.buffer.ui:get_commit_under_cursor() }
-        end),
-        ["v"] = popups.open("revert", function(p)
-          p { commits = { self.buffer.ui:get_commit_under_cursor() } }
-        end),
-        ["X"] = popups.open("reset", function(p)
-          p { commit = self.buffer.ui:get_commit_under_cursor() }
-        end),
         ["<enter>"] = function()
           CommitViewBuffer.new(self.buffer.ui:get_commit_under_cursor()):open()
         end,
