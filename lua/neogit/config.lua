@@ -24,10 +24,8 @@ end
 --- Returns a map of commands, mapped to the list of keys which trigger them.
 function M.get_reversed_popup_maps()
   local result = {}
-  for k, v in pairs(M.values.mappings.status) do
-    if v and v:match("Popup$") then
-      result[util.underscore(v):gsub("_popup$", "")] = k
-    end
+  for k, v in pairs(M.values.mappings.popup) do
+    result[util.underscore(v):gsub("_popup$", "")] = k
   end
 
   return result
@@ -76,11 +74,15 @@ end
 ---@field filewatcher NeogitFilewatcherConfig|nil
 
 ---@alias NeogitConfigMappingsFinder "Select" | "Close" | "Next" | "Previous" | "MultiselectToggleNext" | "MultiselectTogglePrevious" | "NOP" | false
----@alias NeogitConfigMappingsStatus "Close" | "InitRepo" | "Depth1" | "Depth2" | "Depth3" | "Depth4" | "Toggle" | "Discard" | "Stage" | "StageUnstaged" | "StageAll" | "Unstage" | "UnstageStaged" | "DiffAtFile" | "CommandHistory" | "Console" | "RefreshBuffer" | "GoToFile" | "VSplitOpen" | "SplitOpen" | "TabOpen" | "HelpPopup" | "DiffPopup" | "PullPopup" | "RebasePopup" | "MergePopup" | "PushPopup" | "CommitPopup" | "IgnorePopup" | "LogPopup" | "RevertPopup" | "StashPopup" | "CherryPickPopup" | "BranchPopup" | "FetchPopup" | "ResetPopup" | "RemotePopup" | "GoToPreviousHunkHeader" | "GoToNextHunkHeader" | false | fun()
+
+---@alias NeogitConfigMappingsStatus "Close" | "Depth1" | "Depth2" | "Depth3" | "Depth4" | "Toggle" | "Discard" | "Stage" | "StageUnstaged" | "StageAll" | "Unstage" | "UnstageStaged" | "DiffAtFile" | "RefreshBuffer" | "GoToFile" | "VSplitOpen" | "SplitOpen" | "TabOpen" | "GoToPreviousHunkHeader" | "GoToNextHunkHeader" | "Console" | "CommandHistory" | "InitRepo" | false | fun()
+
+---@alias NeogitConfigMappingsPopup "HelpPopup" | "DiffPopup" | "PullPopup" | "RebasePopup" | "MergePopup" | "PushPopup" | "CommitPopup" | "LogPopup" | "RevertPopup" | "StashPopup" | "IgnorePopup" | "CherryPickPopup" | "BranchPopup" | "FetchPopup" | "ResetPopup" | "RemotePopup" | false
 
 ---@class NeogitConfigMappings Consult the config file or documentation for values
 ---@field finder? { [string]: NeogitConfigMappingsFinder } A dictionary that uses finder commands to set multiple keybinds
 ---@field status? { [string]: NeogitConfigMappingsStatus } A dictionary that uses status commands to set a single keybind
+---@field popup? { [string]: NeogitConfigMappingsPopup } A dictionary that uses popup commands to set a single keybind
 
 ---@class NeogitConfig Neogit configuration settings
 ---@field filewatcher? NeogitFilewatcherConfig Values for filewatcher
@@ -260,6 +262,24 @@ function M.get_default_values()
         ["<s-tab>"] = "MultiselectTogglePrevious",
         ["<c-j>"] = "NOP",
       },
+      popup = {
+        ["?"] = "HelpPopup",
+        ["A"] = "CherryPickPopup",
+        ["D"] = "DiffPopup",
+        ["M"] = "RemotePopup",
+        ["P"] = "PushPopup",
+        ["X"] = "ResetPopup",
+        ["Z"] = "StashPopup",
+        ["i"] = "IgnorePopup",
+        ["b"] = "BranchPopup",
+        ["c"] = "CommitPopup",
+        ["f"] = "FetchPopup",
+        ["l"] = "LogPopup",
+        ["m"] = "MergePopup",
+        ["p"] = "PullPopup",
+        ["r"] = "RebasePopup",
+        ["v"] = "RevertPopup",
+      },
       status = {
         ["q"] = "Close",
         ["I"] = "InitRepo",
@@ -282,23 +302,6 @@ function M.get_default_values()
         ["<c-v>"] = "VSplitOpen",
         ["<c-x>"] = "SplitOpen",
         ["<c-t>"] = "TabOpen",
-        ["?"] = "HelpPopup",
-        ["D"] = "DiffPopup",
-        ["p"] = "PullPopup",
-        ["r"] = "RebasePopup",
-        ["m"] = "MergePopup",
-        ["P"] = "PushPopup",
-        ["c"] = "CommitPopup",
-        ["i"] = "IgnorePopup",
-        ["t"] = "TagPopup",
-        ["l"] = "LogPopup",
-        ["v"] = "RevertPopup",
-        ["Z"] = "StashPopup",
-        ["A"] = "CherryPickPopup",
-        ["b"] = "BranchPopup",
-        ["f"] = "FetchPopup",
-        ["X"] = "ResetPopup",
-        ["M"] = "RemotePopup",
         ["{"] = "GoToPreviousHunkHeader",
         ["}"] = "GoToNextHunkHeader",
       },
@@ -558,6 +561,38 @@ function M.validate_config()
                 "Expected a valid status command, got '%s'. Valid status commands: { %s }",
                 command,
                 table.concat(valid_status_commands, ", ")
+              )
+            )
+          end
+        end
+      end
+    end
+
+    local valid_popup_commands = {
+      false,
+    }
+
+    for _, cmd in pairs(M.get_default_values().mappings.popup) do
+      table.insert(valid_popup_commands, cmd)
+    end
+
+    if validate_type(config.mappings.popup, "mappings.status", "table") then
+      for key, command in pairs(config.mappings.popup) do
+        if
+          validate_type(key, "mappings.popup -> " .. vim.inspect(key), "string")
+          and validate_type(command, string.format("mappings.popup['%s']", key), { "string", "boolean" })
+        then
+          if type(command) == "string" and not vim.tbl_contains(valid_popup_commands, command) then
+            local valid_popup_commands = util.map(valid_status_commands, function(command)
+              return vim.inspect(command)
+            end)
+
+            err(
+              string.format("mappings.popup['%s']", key),
+              string.format(
+                "Expected a valid popup command, got '%s'. Valid popup commands: { %s }",
+                command,
+                table.concat(valid_popup_commands, ", ")
               )
             )
           end
