@@ -154,6 +154,9 @@ function M:open()
         [popups.mapping_for("commit")] = popups.open("commit", function(p)
           p { commit = self.commit_info.oid }
         end),
+        [popups.mapping_for("push")] = popups.open("push", function(p)
+          p { commit = self.commit_info.oid }
+        end),
         [popups.mapping_for("rebase")] = popups.open("rebase", function(p)
           p { commit = self.commit_info.oid }
         end),
