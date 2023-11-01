@@ -299,10 +299,10 @@ function M:action(keys, description, callback)
   local callback_fn
   if callback then
     callback_fn = a.void(function(...)
-      logger.debug(string.format("[ACTION] Running action from %s", self.state.name))
+      logger.fmt_debug("[ACTION] Running action from %s", self.state.name)
       callback(...)
+      logger.fmt_debug("[ACTION] Dispatching Refresh for %s", self.state.name)
 
-      logger.debug("[ACTION] Dispatching Refresh")
       require("neogit.status").dispatch_refresh_all(true, "action")
     end)
   end

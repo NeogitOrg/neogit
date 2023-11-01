@@ -597,8 +597,8 @@ end
 ---@param reason string|nil
 function M:dispatch_refresh(which, reason)
   a.void(function()
-    M:refresh(which, reason)
-  end)
+    self:refresh(which, reason)
+  end)()
 end
 
 function M:refresh_manually(fname)
@@ -613,7 +613,7 @@ function M:refresh_manually(fname)
     end
 
     self:refresh({ status = true, diffs = { "*:" .. path } }, "manually")
-  end)
+  end)()
 end
 
 --- Compatibility endpoint to refresh data from an autocommand.
@@ -629,7 +629,7 @@ function M:refresh_viml_compat(fname)
     return
   end
 
-  M:refresh_manually(fname)
+  self:refresh_manually(fname)
 end
 
 function M:current_line_is_hunk()
@@ -683,23 +683,16 @@ function M.reset_all()
   end
 end
 
-function M.dispatch_reset_all()
-  a.void(function()
-    M.reset_all()
-  end)
-end
-
 function M.refresh_all(which, reason)
-  for _, status_buffer in pairs(status_buffers) do
+  logger.fmt_info("[STATUS BUFFER]: Refreshing all status buffers")
+  for name, status_buffer in pairs(status_buffers) do
+    logger.fmt_info("[STATUS BUFFER]: Refreshing status buffer %s", name)
     status_buffer:refresh(which, reason)
   end
 end
 
-function M.dispatch_refresh_all(which, reason)
-  a.void(function()
-    M.refresh_all(which, reason)
-  end)
-end
+M.dispatch_reset_all = a.void(M.reset_all)
+M.dispatch_refresh_all = a.void(M.refresh_all)
 
 function M.dispatch_refresh_manually_all()
   for _, status_buffer in pairs(status_buffers) do
@@ -961,11 +954,11 @@ function M:stage()
         return "*:" .. v.name
       end, selection.items),
     }, "stage_finish")
-  end)
+  end, { dispatch = true })
 end
 
 function M:unstage()
-  return operation("unstage", function(self)
+  return operation("unstage", function()
     local selection = self:get_selection()
     local mode = vim.api.nvim_get_mode()
 
@@ -1009,7 +1002,7 @@ function M:unstage()
         return "*:" .. v.name
       end, selection.items),
     }, "unstage_finish")
-  end)
+  end, { dispatch = true })
 end
 
 local function format_discard_message(files, hunk_count)
@@ -1096,7 +1089,7 @@ function M:discard()
 
     a.util.scheduler()
     vim.cmd("checktime")
-  end)
+  end, { dispatch = true })
 end
 
 function M:set_folds(to)
@@ -1162,7 +1155,6 @@ function M:handle_section_item(item)
     local col = cursor_col == 0 and 0 or cursor_col - 1
     vim.api.nvim_win_set_cursor(0, { row, col })
   end
-
 end
 
 --- Returns the section header ref the user selected

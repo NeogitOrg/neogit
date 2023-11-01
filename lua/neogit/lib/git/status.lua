@@ -64,6 +64,7 @@ end
 local tag_pattern = "(.-)%-([0-9]+)%-g%x+$"
 
 local function update_status(state)
+  local logger = require("neogit.logger")
   local git = require("neogit.lib.git")
   -- git-status outputs files relative to the cwd.
   --
@@ -161,6 +162,8 @@ local function update_status(state)
       end
     end
   end
+
+  logger.fmt_info("Updated status %s", vim.inspect(head))
 
   -- These are a bit hacky - because we can _partially_ refresh repo state (for now),
   -- some things need to be carried over here.

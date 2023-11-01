@@ -22,12 +22,25 @@ function M.wait(key, time)
   end, 100)
 end
 
-function meta.__call(_tbl, key, async_func)
-  return a.void(function(...)
+---@class OperationOps
+---@field dispatch boolean Dispatch the function to run in the background, returning immediately
+
+---@param opts OperationOps
+function meta.__call(_tbl, key, async_func, opts)
+  opts = opts or {}
+  local f = function(...)
     M[key] = true
     async_func(...)
     M[key] = false
-  end)
+  end
+
+  if opts.dispatch then
+    return a.void(function(...)
+      f(...)
+    end)
+  else
+    return f
+  end
 end
 
 return setmetatable(M, meta)

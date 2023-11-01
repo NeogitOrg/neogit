@@ -92,6 +92,9 @@ M.checkout_local_branch = operation("checkout_local_branch", function(popup)
       git.cli.checkout.branch(target).arg_list(popup:get_arguments()).call_sync()
     end
   end
+
+  local logger = require("neogit.logger")
+  logger.fmt_info("Checked out branch: %s", vim.fn.system("git branch --show-current"))
 end)
 
 M.checkout_recent_branch = operation("checkout_recent_branch", function(popup)
