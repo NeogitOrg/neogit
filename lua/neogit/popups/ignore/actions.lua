@@ -3,57 +3,60 @@ local Path = require("plenary.path")
 local git = require("neogit.lib.git")
 local operation = require("neogit.operations")
 local util = require("neogit.lib.util")
+local input = require("neogit.lib.input")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
+
+local function make_rules(popup, relative)
+  local files = util.merge(popup.state.env.paths, git.files.untracked())
+
+  return util.deduplicate(vim.tbl_map(function(v)
+    if vim.startswith(v, relative) then
+      return "/" .. Path:new(v):make_relative(relative)
+    end
+  end, files))
+end
 
 ---@param path
 ---@param rules string[]
 local function add_rules(path, rules)
-  rules = FuzzyFinderBuffer.new(util.merge(rules, git.files.untracked()))
+  local selected = FuzzyFinderBuffer.new(rules)
     :open_async { allow_multi = true, prompt_prefix = " File or pattern to ignore > " }
 
-  if not rules or #rules == 0 then
+  if not selected or #selected == 0 then
     return
   end
 
-  path:write(table.concat(rules, "\n") .. "\n", "a+", 438)
+  path:write(table.concat(selected, "\n") .. "\n", "a+", 438)
 end
 
 M.shared_toplevel = operation("ignore_shared", function(popup)
-  local git_root = git.repo.git_root
-
-  local rules = vim.tbl_map(function(v)
-    return Path:new(v):make_relative(git_root)
-  end, popup.state.env.paths)
-
-  add_rules(Path:new(git_root, "/.gitignore"), rules)
+  add_rules(
+    Path:new(git.repo.git_root, ".gitignore"),
+    make_rules(popup, git.repo.git_root)
+  )
 end)
 
 M.shared_subdirectory = operation("ignore_subdirectory", function(popup)
-  for _, path in ipairs(popup.state.env.paths) do
-    local path = Path:new(path)
-    local parent = path:parent()
-
-    add_rules(Path:new(parent, "/.gitignore"), { path:make_relative(tostring(parent)) })
+  local subdirectory = input.get_user_input(" sub-directory > ", nil, "dir")
+  if subdirectory then
+    subdirectory = tostring(Path:new(vim.loop.cwd(), subdirectory))
+    add_rules(Path:new(subdirectory, ".gitignore"), make_rules(popup, subdirectory))
   end
 end)
 
 M.private_local = operation("ignore_private", function(popup)
-  local git_path = git.repo.git_path()
-
-  local rules = vim.tbl_map(function(v)
-    return Path:new(v):make_relative()
-  end, popup.state.env.paths)
-
-  add_rules(Path:new(git_path, "/info/exclude"), rules)
+  add_rules(
+    git.repo.git_path("info", "exclude"),
+    make_rules(popup, git.repo.git_root)
+  )
 end)
 
 M.private_global = operation("ignore_private_global", function(popup)
-  local rules = vim.tbl_map(function(v)
-    return Path:new(v):make_relative()
-  end, popup.state.env.paths)
-
-  add_rules(Path:new(git.config.get_global("core.excludesfile"):read()), rules)
+  add_rules(
+    Path:new(git.config.get_global("core.excludesfile"):read()),
+    make_rules(popup, git.repo.git_root)
+  )
 end)
 
 return M
