@@ -29,8 +29,44 @@ function M.new(filename, on_unload)
   return instance
 end
 
+local confirmed = config.values.disable_commit_confirmation
+
+-- Define mappable actions
+local map_actions = {
+  send = function(buffer)
+    if not confirmed then
+      confirmed = input.get_confirmation("Are you sure you want to commit?")
+      if confirmed and vim.bo.mod then
+        vim.cmd("silent w!")
+      end
+    end
+    if not confirmed and config.values.disable_commit_close_on_deny then
+      return
+    end
+    buffer:close(true)
+  end,
+  close = function(buffer)
+    buffer:close(true)
+  end,
+}
+
+-- Assign actions to keys (single keys or tables of keys)
+local mappings = { n = {} }
+for action, command in pairs(map_actions) do
+  local action_mapping = config.values.mappings.commit[action]
+
+  if type(action_mapping) == "string" then
+    mappings.n[action_mapping] = command
+  elseif type(action_mapping) == "table" then
+    for _, map in pairs(action_mapping) do
+      mappings.n[map] = command
+    end
+  end
+end
+
 function M:open()
-  local should_commit = false
+  confirmed = config.values.disable_commit_confirmation
+
   self.buffer = Buffer.create {
     name = self.filename,
     filetype = "NeogitCommitMessage",
@@ -41,41 +77,21 @@ function M:open()
     readonly = false,
     autocmds = {
       ["BufUnload"] = function(o)
-        local buf = Buffer.create {
-          name = o.buf,
-        }
-        if not should_commit and buf:get_option("modified") then
-          if
-            not config.values.disable_commit_confirmation
-            and not input.get_confirmation("Are you sure you want to commit?")
-          then
-            -- Clear the buffer, without filling the register
-            buf:clear()
-            buf:call(function()
-              vim.cmd("silent w!")
-            end)
-          end
+        if not confirmed then
+          vim.api.nvim_buf_set_lines(o.buf, 0, -1, false, {})
+          vim.api.nvim_buf_call(o.buf, function()
+            vim.cmd("silent w!")
+          end)
         end
 
-        if self.on_unload and not should_commit then
-          self.on_unload(true)
+        if self.on_unload then
+          self.on_unload()
         end
 
         require("neogit.process").defer_show_preview_buffers()
       end,
     },
-    mappings = {
-      n = {
-        ["q"] = function(buffer)
-          if not buffer:get_option("modified") then
-            buffer:close(true)
-          elseif input.get_confirmation("Commit message hasn't been saved. Abort?") then
-            should_commit = true
-            buffer:close(true)
-          end
-        end,
-      },
-    },
+    mappings = mappings,
     initialize = function(buffer)
       vim.api.nvim_buf_call(buffer.handle, function()
         local disable_insert = config.values.disable_insert_on_commit

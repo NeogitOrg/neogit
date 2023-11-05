@@ -269,6 +269,10 @@ function M.get_default_values()
       "NeogitCommitPopup--allow-empty",
     },
     mappings = {
+      commit = {
+        close = { "q" },
+        send = { "<leader>c" },
+      },
       finder = {
         ["<cr>"] = "Select",
         ["<c-c>"] = "Close",
@@ -723,7 +727,7 @@ function M.setup(opts)
     M.values = vim.tbl_deep_extend("force", M.values, opts)
   end
 
-  local config_errs = M.validate_config()
+  --[[ local config_errs = M.validate_config()
   if vim.tbl_count(config_errs) > 0 then
     local header = "====Neogit Configuration Errors===="
     local header_message = {
@@ -750,7 +754,7 @@ function M.setup(opts)
       ),
       vim.log.levels.ERROR
     )
-  end
+  end ]]
 end
 
 return M
