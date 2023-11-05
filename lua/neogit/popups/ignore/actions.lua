@@ -30,6 +30,7 @@ local function add_rules(path, rules)
   path:write(table.concat(selected, "\n") .. "\n", "a+", 438)
 end
 
+-- stylua: ignore
 M.shared_toplevel = operation("ignore_shared", function(popup)
   add_rules(
     Path:new(git.repo.git_root, ".gitignore"),
@@ -45,6 +46,7 @@ M.shared_subdirectory = operation("ignore_subdirectory", function(popup)
   end
 end)
 
+-- stylua: ignore
 M.private_local = operation("ignore_private", function(popup)
   add_rules(
     git.repo.git_path("info", "exclude"),
@@ -52,6 +54,7 @@ M.private_local = operation("ignore_private", function(popup)
   )
 end)
 
+-- stylua: ignore
 M.private_global = operation("ignore_private_global", function(popup)
   add_rules(
     Path:new(git.config.get_global("core.excludesfile"):read()),
