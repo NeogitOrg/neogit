@@ -252,14 +252,8 @@ M.delete_branch = operation("delete_branch", function()
   end
 end)
 
-local function parse_remote_info(url)
-  local repo, owner
-  if url:match("^https?://") or url:match("^ssh://") then
-    repo, owner, _ = unpack(util.reverse(vim.split(url, "/")))
-  else
-    owner, repo = unpack(vim.split(vim.split(url, ":")[2], "/"))
-  end
-
+local function parse_remote_info(service, url)
+  local _, _, owner, repo = string.find(url, service .. ".(.+)/(.+)")
   repo, _ = repo:gsub(".git$", "")
   return { repository = repo, owner = owner, branch_name = git.branch.current() }
 end
@@ -267,8 +261,10 @@ end
 M.open_pull_request = operation("open_pull_request", function()
   local template
   local url = git.remote.get_url(git.branch.upstream_remote())[1]
-  for service, v in pairs(config.values.git_services) do
-    if url:match(service) then
+  local service
+  for s, v in pairs(config.values.git_services) do
+    if url:match(s) then
+      service = s
       template = v
       break
     end
@@ -276,7 +272,7 @@ M.open_pull_request = operation("open_pull_request", function()
 
   if template then
     if vim.ui.open then
-      vim.ui.open(util.format(template, parse_remote_info(url)))
+      vim.ui.open(util.format(template, parse_remote_info(service, url)))
     else
       notification.warn("Requires Neovim 0.10")
     end
