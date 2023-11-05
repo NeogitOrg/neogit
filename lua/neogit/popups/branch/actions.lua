@@ -72,7 +72,7 @@ M.checkout_branch_revision = operation("checkout_branch_revision", function(popu
 end)
 
 M.checkout_local_branch = operation("checkout_local_branch", function(popup)
-  local local_branches = git.branch.get_local_branches()
+  local local_branches = git.branch.get_local_branches(true)
   local remote_branches = util.filter_map(git.branch.get_remote_branches(), function(name)
     local branch_name = name:match([[%/(.*)$]])
     -- Remove remote branches that have a local branch by the same name
@@ -145,7 +145,7 @@ end)
 
 M.rename_branch = operation("rename_branch", function()
   local current_branch = git.repo.head.branch
-  local branches = git.branch.get_local_branches()
+  local branches = git.branch.get_local_branches(true)
   if current_branch then
     table.insert(branches, 1, current_branch)
   end
@@ -161,7 +161,9 @@ M.rename_branch = operation("rename_branch", function()
   end
 
   new_name, _ = new_name:gsub("%s", "-")
-  git.cli.branch.move.args(selected_branch, new_name).call_sync():trim()
+  git.cli.branch.move.args(selected_branch, new_name).call()
+
+  notification.info(string.format("Renamed '%s' to '%s'", selected_branch, new_name))
 end)
 
 M.reset_branch = operation("reset_branch", function()
@@ -259,9 +261,9 @@ local function parse_remote_info(service, url)
 end
 
 M.open_pull_request = operation("open_pull_request", function()
-  local template
+  local template, service
   local url = git.remote.get_url(git.branch.upstream_remote())[1]
-  local service
+
   for s, v in pairs(config.values.git_services) do
     if url:match(s) then
       service = s
