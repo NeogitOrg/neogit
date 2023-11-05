@@ -30,36 +30,37 @@ local function add_rules(path, rules)
   path:write(table.concat(selected, "\n") .. "\n", "a+", 438)
 end
 
--- stylua: ignore
 M.shared_toplevel = operation("ignore_shared", function(popup)
-  add_rules(
-    Path:new(git.repo.git_root, ".gitignore"),
-    make_rules(popup, git.repo.git_root)
-  )
+  local ignore_file = Path:new(git.repo.git_root, ".gitignore")
+  local rules = make_rules(popup, git.repo.git_root)
+
+  add_rules(ignore_file, rules)
 end)
 
 M.shared_subdirectory = operation("ignore_subdirectory", function(popup)
   local subdirectory = input.get_user_input(" sub-directory > ", nil, "dir")
   if subdirectory then
-    subdirectory = tostring(Path:new(vim.loop.cwd(), subdirectory))
-    add_rules(Path:new(subdirectory, ".gitignore"), make_rules(popup, subdirectory))
+    subdirectory = Path:new(vim.loop.cwd(), subdirectory)
+
+    local ignore_file = subdirectory:join(".gitignore")
+    local rules = make_rules(popup, tostring(subdirectory))
+
+    add_rules(ignore_file, rules)
   end
 end)
 
--- stylua: ignore
 M.private_local = operation("ignore_private", function(popup)
-  add_rules(
-    git.repo.git_path("info", "exclude"),
-    make_rules(popup, git.repo.git_root)
-  )
+  local ignore_file = git.repo.git_path("info", "exclude")
+  local rules = make_rules(popup, git.repo.git_root)
+
+  add_rules(ignore_file, rules)
 end)
 
--- stylua: ignore
 M.private_global = operation("ignore_private_global", function(popup)
-  add_rules(
-    Path:new(git.config.get_global("core.excludesfile"):read()),
-    make_rules(popup, git.repo.git_root)
-  )
+  local ignore_file = Path:new(git.config.get_global("core.excludesfile"):read())
+  local rules = make_rules(popup, git.repo.git_root)
+
+  add_rules(ignore_file, rules)
 end)
 
 return M
