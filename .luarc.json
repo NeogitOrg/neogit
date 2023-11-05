@@ -9,10 +9,5 @@
         "describe",
         "before_each"
     ],
-    "workspace.library": [
-        "/Users/cameron/.local/share/nvim/lazy/neodev.nvim/types/nightly",
-        "/opt/homebrew/Cellar/neovim/HEAD-8405649/share/nvim/runtime/lua",
-        "/Users/cameron/code/neogit/lua",
-        "${3rd}/luv/library"
-    ]
+    "workspace.checkThirdParty": "Disable",
 }
