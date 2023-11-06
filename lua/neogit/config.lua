@@ -701,6 +701,16 @@ function M.setup(opts)
   if opts ~= nil then
     if opts.use_default_keymaps == false then
       M.values.mappings = { status = {}, popup = {}, finder = {} }
+    else
+      -- Clear our any "false" user mappings from defaults
+      for section, maps in pairs(opts.mappings or {}) do
+        for k, v in pairs(maps) do
+          if v == false then
+            M.values.mappings[section][k] = nil
+            opts.mappings[section][k] = nil
+          end
+        end
+      end
     end
 
     M.values = vim.tbl_deep_extend("force", M.values, opts)
