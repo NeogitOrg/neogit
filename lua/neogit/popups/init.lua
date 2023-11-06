@@ -95,7 +95,13 @@ function M.mappings_table()
         end),
       },
     },
-    { "TagPopup", "Tag", M.open("tag") },
+    {
+      "TagPopup",
+      "Tag",
+      M.open("tag", function(f)
+        f { commit = commit_oid(require("neogit.status").get_selection().commit) }
+      end),
+    },
     { "LogPopup", "Log", M.open("log") },
     {
       "CherryPickPopup",

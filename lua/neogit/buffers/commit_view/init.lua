@@ -166,6 +166,9 @@ function M:open()
         [popups.mapping_for("ResetPopup")] = popups.open("reset", function(p)
           p { commit = self.commit_info.oid }
         end),
+        [popups.mapping_for("TagPopup")] = popups.open("tag", function(p)
+          p { commit = self.commit_info.oid }
+        end),
         ["q"] = function()
           self:close()
         end,

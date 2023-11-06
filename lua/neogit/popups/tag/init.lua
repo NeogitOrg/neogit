@@ -3,7 +3,7 @@ local actions = require("neogit.popups.tag.actions")
 
 local M = {}
 
-function M.create()
+function M.create(env)
   local p = popup
     .builder()
     :name("NeogitTagPopup")
@@ -18,6 +18,7 @@ function M.create()
     :new_action_group("Do")
     :action("x", "delete", actions.delete)
     :action("p", "prune", actions.prune)
+    :env(env)
     :build()
 
   p:show()

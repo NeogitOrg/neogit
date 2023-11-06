@@ -58,6 +58,9 @@ function M:open(_)
         [popups.mapping_for("ResetPopup")] = popups.open("reset", function(p)
           p { commit = self.buffer.ui:get_commit_under_cursor() }
         end),
+        [popups.mapping_for("TagPopup")] = popups.open("tag", function(p)
+          p { commit = self.buffer.ui:get_commit_under_cursor() }
+        end),
       },
       n = {
         [popups.mapping_for("CherryPickPopup")] = popups.open("cherry_pick", function(p)
@@ -79,6 +82,9 @@ function M:open(_)
           p { commits = { self.buffer.ui:get_commit_under_cursor() } }
         end),
         [popups.mapping_for("ResetPopup")] = popups.open("reset", function(p)
+          p { commit = self.buffer.ui:get_commit_under_cursor() }
+        end),
+        [popups.mapping_for("TagPopup")] = popups.open("tag", function(p)
           p { commit = self.buffer.ui:get_commit_under_cursor() }
         end),
         ["q"] = function()
