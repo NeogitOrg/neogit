@@ -1,5 +1,6 @@
 local M = {}
 local git = require("neogit.lib.git")
+local util = require("neogit.lib.util")
 
 ---@param name string
 ---@param f nil|fun(create: fun(...)): any
@@ -39,8 +40,6 @@ end
 --- Returns an array useful for creating mappings for the available popups
 ---@return table<string, Mapping>
 function M.mappings_table()
-  local util = require("neogit.lib.util")
-
   ---@param commit CommitLogEntry|nil
   ---@return string|nil
   local function commit_oid(commit)
