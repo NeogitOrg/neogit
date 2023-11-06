@@ -24,7 +24,6 @@ function M.create_tag(popup)
     end
   end
 
-
   local args = popup:get_arguments()
   if vim.tbl_count(args) > 0 and not vim.tbl_contains(args, "--annotate") then
     table.insert(args, "--annotate")
