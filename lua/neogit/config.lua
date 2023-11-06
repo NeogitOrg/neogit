@@ -168,7 +168,7 @@ function M.get_default_values()
       recent_commit_count = 10,
     },
     commit_editor = {
-      kind = "split",
+      kind = "auto",
     },
     commit_select_view = {
       kind = "tab",
@@ -181,16 +181,16 @@ function M.get_default_values()
       kind = "tab",
     },
     rebase_editor = {
-      kind = "split",
+      kind = "auto",
     },
     reflog_view = {
       kind = "tab",
     },
     merge_editor = {
-      kind = "split",
+      kind = "auto",
     },
     tag_editor = {
-      kind = "split",
+      kind = "auto",
     },
     preview_buffer = {
       kind = "split",
