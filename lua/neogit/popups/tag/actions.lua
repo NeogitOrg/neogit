@@ -14,9 +14,14 @@ function M.create_tag(popup)
   end
   tag_input, _ = tag_input:gsub("%s", "-")
 
-  local selected_branch = FuzzyFinderBuffer.new(git.refs.list()):open_async()
-  if not selected_branch then
-    return
+  local selected
+  if popup.state.env.commit then
+    selected = popup.state.env.commit
+  else
+    selected = FuzzyFinderBuffer.new(git.refs.list()):open_async()
+    if not selected then
+      return
+    end
   end
 
   local args = popup:get_arguments()
@@ -24,11 +29,11 @@ function M.create_tag(popup)
     table.insert(args, "--annotate")
   end
 
-  client.wrap(git.cli.tag.arg_list(utils.merge(args, { tag_input, selected_branch })), {
+  client.wrap(git.cli.tag.arg_list(utils.merge(args, { tag_input, selected })), {
     autocmd = "NeogitTagComplete",
     msg = {
-      success = "Added tag " .. tag_input .. " on " .. selected_branch,
-      fail = "Failed to add tag " .. tag_input .. " on " .. selected_branch,
+      success = "Added tag " .. tag_input .. " on " .. selected,
+      fail = "Failed to add tag " .. tag_input .. " on " .. selected,
     },
   })
 end

@@ -1,5 +1,6 @@
 local M = {}
 local git = require("neogit.lib.git")
+local util = require("neogit.lib.util")
 
 ---@param name string
 ---@param f nil|fun(create: fun(...)): any
@@ -23,24 +24,22 @@ function M.open(name, f)
   end
 end
 
-local mappings
-
 ---@param name string
----@return string
+---@return string|string[]
 ---Returns the keymapping for a popup
 function M.mapping_for(name)
-  if not mappings then
-    mappings = require("neogit.config").get_reversed_popup_maps()
-  end
+  local mappings = require("neogit.config").get_reversed_popup_maps()
 
-  return mappings[name]
+  if mappings[name] then
+    return mappings[name]
+  else
+    return {}
+  end
 end
 
 --- Returns an array useful for creating mappings for the available popups
 ---@return table<string, Mapping>
 function M.mappings_table()
-  local util = require("neogit.lib.util")
-
   ---@param commit CommitLogEntry|nil
   ---@return string|nil
   local function commit_oid(commit)
@@ -96,7 +95,13 @@ function M.mappings_table()
         end),
       },
     },
-    { "TagPopup", "Tag", M.open("tag") },
+    {
+      "TagPopup",
+      "Tag",
+      M.open("tag", function(f)
+        f { commit = commit_oid(require("neogit.status").get_selection().commit) }
+      end),
+    },
     { "LogPopup", "Log", M.open("log") },
     {
       "CherryPickPopup",
