@@ -129,11 +129,13 @@ end
 ---@field ignored_settings? string[] Settings to never persist, format: "Filetype--cli-value", i.e. "NeogitCommitPopup--author"
 ---@field mappings? NeogitConfigMappings
 ---@field notification_icon? String
+---@field use_default_keymaps? Boolean
 
 ---Returns the default Neogit configuration
 ---@return NeogitConfig
 function M.get_default_values()
   return {
+    use_default_keymaps = true,
     disable_hint = false,
     disable_context_highlighting = false,
     disable_signs = false,
@@ -697,6 +699,20 @@ end
 
 function M.setup(opts)
   if opts ~= nil then
+    if opts.use_default_keymaps == false then
+      M.values.mappings = { status = {}, popup = {}, finder = {} }
+    else
+      -- Clear our any "false" user mappings from defaults
+      for section, maps in pairs(opts.mappings or {}) do
+        for k, v in pairs(maps) do
+          if v == false then
+            M.values.mappings[section][k] = nil
+            opts.mappings[section][k] = nil
+          end
+        end
+      end
+    end
+
     M.values = vim.tbl_deep_extend("force", M.values, opts)
   end
 
