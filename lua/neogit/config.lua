@@ -3,9 +3,9 @@ local M = {}
 
 ---@return table<string, string[]>
 --- Returns a map of commands, mapped to the list of keys which trigger them.
-function M.get_reversed_status_maps()
+local function get_reversed_maps(tbl)
   local result = {}
-  for k, v in pairs(M.values.mappings.status) do
+  for k, v in pairs(tbl) do
     -- If `v == false` the mapping is disabled
     if v then
       local current = result[v]
@@ -20,15 +20,26 @@ function M.get_reversed_status_maps()
   return result
 end
 
+local reversed_status_maps
+---@return table<string, string[]>
+--- Returns a map of commands, mapped to the list of keys which trigger them.
+function M.get_reversed_status_maps()
+  if not reversed_status_maps then
+    reversed_status_maps = get_reversed_maps(M.values.mappings.status)
+  end
+
+  return reversed_status_maps
+end
+
+local reversed_popup_maps
 ---@return table<string, string[]>
 --- Returns a map of commands, mapped to the list of keys which trigger them.
 function M.get_reversed_popup_maps()
-  local result = {}
-  for k, v in pairs(M.values.mappings.popup) do
-    result[util.underscore(v):gsub("_popup$", "")] = k
+  if not reversed_popup_maps then
+    reversed_popup_maps = get_reversed_maps(M.values.mappings.popup)
   end
 
-  return result
+  return reversed_popup_maps
 end
 
 ---@alias WindowKind

@@ -445,8 +445,16 @@ function Buffer.create(config)
   if config.mappings then
     for mode, val in pairs(config.mappings) do
       for key, cb in pairs(val) do
-        buffer.mmanager.mappings[mode][key] = function()
-          cb(buffer)
+        if type(key) == "string" then
+          buffer.mmanager.mappings[mode][key] = function()
+            cb(buffer)
+          end
+        elseif type(key) == "table" then
+          for _, k in ipairs(key) do
+            buffer.mmanager.mappings[mode][k] = function()
+              cb(buffer)
+            end
+          end
         end
       end
     end
