@@ -366,7 +366,9 @@ local function parse_json(output)
   end)
 
   local ok, result = pcall(vim.json.decode, commits, { luanil = { object = true, array = true } })
-  assert(ok, "Failed to parse log json!: " .. result)
+  if not ok then
+    assert(ok, "Failed to parse log json!: " .. result)
+  end
 
   return result
 end
