@@ -305,8 +305,41 @@ function M.graph(options, files, color)
   end)
 end
 
+local function format(show_signature)
+  local template = {
+    [["oid":"%H"]],
+    [["abbreviated_commit":"%h"]],
+    [["tree":"%T"]],
+    [["abbreviated_tree":"%t"]],
+    [["parent":"%P"]],
+    [["abbreviated_parent":"%p"]],
+    [["ref_name":"%D"]],
+    [["encoding":"%e"]],
+    [["subject":"%s"]],
+    [["sanitized_subject_line":"%f"]],
+    [["body":"%b"]],
+    [["commit_notes":"%N"]],
+    [["author_name":"%aN"]],
+    [["author_email":"%aE"]],
+    [["author_date":"%aD"]],
+    [["committer_name":"%cN"]],
+    [["committer_email":"%cE"]],
+    [["committer_date":"%cD"]],
+    [["rel_date":"%cr"]],
+  }
 
-local format = '{"oid":"%H","abbreviated_commit":"%h","tree":"%T","abbreviated_tree":"%t","parent":"%P","abbreviated_parent":"%p","ref_name":"%D","encoding":"%e","subject":"%s","sanitized_subject_line":"%f","body":"%b","commit_notes":"%N","verification_flag":"%G?","signer":"%GS","signer_key":"%GK","author_name":"%aN","author_email":"%aE","author_date":"%aD","committer_name":"%cN","committer_email":"%cE","committer_date":"%cD","rel_date":"%cr"},'
+  if show_signature then
+    local signature_format = {
+      [["signer":"%GS"]],
+      [["signer_key":"%GK"]],
+      [["verification_flag":"%G?"]]
+    }
+
+    table.insert(template, table.concat(signature_format, ","))
+  end
+
+  return string.format("{%s},", table.concat(template, ","))
+end
 
 ---@param output table
 ---@return table
@@ -333,7 +366,7 @@ local function parse_json(output)
   end)
 
   local ok, result = pcall(vim.json.decode, commits, { luanil = { object = true, array = true } })
-  assert(ok, "Failed to parse log json!")
+  assert(ok, "Failed to parse log json!: " .. result)
 
   return result
 end
@@ -345,11 +378,14 @@ end
 function M.list(options, graph, files)
   files = files or {}
 
+  local signature = false
+
   options = ensure_max(options or {})
   options = determine_order(options, graph)
+  options, signature = show_signature(options)
 
   local output = cli.log
-    .format(format)
+    .format(format(signature))
     .arg_list(options)
     .files(unpack(files))
     .show_popup(false)
