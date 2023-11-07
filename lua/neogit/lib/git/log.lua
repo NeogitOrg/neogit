@@ -167,31 +167,14 @@ function M.parse(raw)
 end
 
 local function make_commit(entry, graph)
-  local hash, subject, author_name, rel_date, ref_name, author_date, committer_name, committer_date, committer_email, author_email, body, signature_code =
-    unpack(entry)
+  entry.graph = graph
+  entry.description = { entry.subject, entry.body }
 
-  if rel_date then
-    rel_date, _ = rel_date:gsub(" ago$", "")
+  if entry.rel_date then
+    entry.rel_date, _ = entry.rel_date:gsub(" ago$", "")
   end
 
-  return {
-    graph = graph,
-    oid = hash,
-    description = { subject, body },
-    author_name = author_name,
-    author_email = author_email,
-    author_date = author_date,
-    rel_date = rel_date,
-    ref_name = ref_name,
-    committer_date = committer_date,
-    committer_name = committer_name,
-    committer_email = committer_email,
-    body = body,
-    signature_code = signature_code,
-    -- TODO: Remove below here
-    hash = hash,
-    message = subject,
-  }
+  return entry
 end
 
 ---@param output table
@@ -210,7 +193,7 @@ local function parse_log(output, graph)
 
     local commit_lookup = {}
     for i = 1, #output do
-      commit_lookup[output[i][1]] = output[i]
+      commit_lookup[output[i]["oid"]] = output[i]
     end
 
     for i = 1, #graph do
@@ -230,36 +213,6 @@ local function parse_log(output, graph)
 
   return commits
 end
-
----Parses log output to a table
----@param output table
----@return string[][]
-local function split_output(output)
-  output = table.concat(output, "\n")
-  output = vim.split(output, "\31", { trimempty = true })
-  output = util.map(output, function(line)
-    return vim.split(vim.trim(line:gsub("\n", " ")), "\30")
-  end)
-
-  return output
-end
-
-local format_args = {
-  "%H", -- Full Hash
-  "%s", -- Subject
-  "%aN", -- Author Name
-  "%cr", -- Commit Date (Relative)
-  "%D", -- Ref Name
-  "%ad", -- Author Date
-  "%cN", -- Committer Name
-  "%cd", -- Committer Date
-  "%ce", -- Committer Email
-  "%ae", -- Author Email
-  "%b", -- Body
-  "%G?", -- Signature status
-  "%x1F", -- Entry delimiter to split on (dec \31)
-}
-local format_delimiter = "%x1E" -- Field delimiter to split on (dec \30)
 
 --- Ensure a max is passed to the list function to prevent accidentally getting thousands of results.
 ---@param options table
@@ -336,21 +289,6 @@ local function determine_order(options, graph)
   return options
 end
 
---- Parses the arguments needed for the format output of git log
----@param show_signature boolean Should '%G?' be omitted from the arguments
----@return string Concatenated format arguments
-local function parse_log_format(show_signature)
-  if not show_signature then
-    return table.concat(
-      vim.tbl_filter(function(value)
-        return value ~= "%G?"
-      end, format_args),
-      format_delimiter
-    )
-  end
-  return table.concat(format_args, format_delimiter)
-end
-
 ---@param options table|nil
 ---@param files? table
 ---@param color boolean
@@ -367,27 +305,57 @@ function M.graph(options, files, color)
   end)
 end
 
+
+local format = '{"oid":"%H","abbreviated_commit":"%h","tree":"%T","abbreviated_tree":"%t","parent":"%P","abbreviated_parent":"%p","ref_name":"%D","encoding":"%e","subject":"%s","sanitized_subject_line":"%f","body":"%b","commit_notes":"%N","verification_flag":"%G?","signer":"%GS","signer_key":"%GK","author_name":"%aN","author_email":"%aE","author_date":"%aD","committer_name":"%cN","committer_email":"%cE","committer_date":"%cD","rel_date":"%cr"},'
+
+local function parse_json(output)
+  -- Wrap list of commits in an Array
+  local commits = "[" .. table.concat(output, "\\n") .. "]"
+
+  -- Remove trailing comma from last object in array
+  commits, _ = commits:gsub(",]", "]")
+
+  -- Remove escaped newlines from in-between objects
+  commits, _ = commits:gsub("},\\n{", "},{")
+
+  -- Escape any double-quote characters in the body
+  commits, _ = commits:gsub([[(,"body":")(.-)(","commit_notes":")]], function(before, body, after)
+    body, _ = body:gsub([["]], [[\"]])
+    return table.concat({ before, body, after }, "")
+  end)
+
+  -- Escape any double-quote characters in the subject
+  commits, _ = commits:gsub([[(,"subject":")(.-)(","sanitized_subject_line":")]], function(before, body, after)
+    body, _ = body:gsub([["]], [[\"]])
+    return table.concat({ before, body, after }, "")
+  end)
+
+  local ok, result = pcall(vim.json.decode, commits, { luanil = { object = true, array = true } })
+  assert(ok, "Failed to parse log json!")
+
+  return result
+end
+
 ---@param options? string[]
 ---@param graph? table
 ---@param files? table
 ---@return CommitLogEntry[]
 function M.list(options, graph, files)
   files = files or {}
-  local signature = false
 
   options = ensure_max(options or {})
   options = determine_order(options, graph)
-  options, signature = show_signature(options)
 
   local output = cli.log
-    .format(parse_log_format(signature))
+    .format(format)
     .arg_list(options)
     .files(unpack(files))
     .show_popup(false)
     .call()
     :trim().stdout
 
-  return parse_log(split_output(output), graph or {})
+
+  return parse_log(parse_json(output), graph or {})
 end
 
 ---Determines if commit a is an ancestor of commit b
