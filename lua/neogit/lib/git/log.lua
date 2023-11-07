@@ -353,14 +353,16 @@ local function parse_json(output)
   -- Remove escaped newlines from in-between objects
   commits, _ = commits:gsub("},\\n{", "},{")
 
-  -- Escape any double-quote characters in the body
+  -- Escape any double-quote characters, or escape codes, in the body
   commits, _ = commits:gsub([[(,"body":")(.-)(","commit_notes":")]], function(before, body, after)
+    body, _ = body:gsub([[\]], [[\\]])
     body, _ = body:gsub([["]], [[\"]])
     return table.concat({ before, body, after }, "")
   end)
 
-  -- Escape any double-quote characters in the subject
+  -- Escape any double-quote characters, or escape codes, in the subject
   commits, _ = commits:gsub([[(,"subject":")(.-)(","sanitized_subject_line":")]], function(before, body, after)
+    body, _ = body:gsub([[\]], [[\\]])
     body, _ = body:gsub([["]], [[\"]])
     return table.concat({ before, body, after }, "")
   end)
@@ -393,7 +395,6 @@ function M.list(options, graph, files)
     .show_popup(false)
     .call()
     :trim().stdout
-
 
   return parse_log(parse_json(output), graph or {})
 end
