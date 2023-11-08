@@ -67,7 +67,7 @@ function M.open(opts)
   end
 
   if not opts.cwd then
-    opts.cwd = vim.fn.getcwd()
+    opts.cwd = require("neogit.lib.git.cli").git_root()
   end
 
   if not did_setup then
