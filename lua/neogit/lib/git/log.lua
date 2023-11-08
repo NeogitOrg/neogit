@@ -355,17 +355,16 @@ local function parse_json(output)
 
   -- Escape any double-quote characters, or escape codes, in the body
   commits, _ = commits:gsub([[(,"body":")(.-)(","commit_notes":")]], function(before, body, after)
-    body, _ = body:gsub([[\]], [[\\]])
-    body, _ = body:gsub([["]], [[\"]])
-    return table.concat({ before, body, after }, "")
+    return table.concat({ before, vim.fn.escape(body, [[\"]]), after }, "")
   end)
 
   -- Escape any double-quote characters, or escape codes, in the subject
-  commits, _ = commits:gsub([[(,"subject":")(.-)(","sanitized_subject_line":")]], function(before, body, after)
-    body, _ = body:gsub([[\]], [[\\]])
-    body, _ = body:gsub([["]], [[\"]])
-    return table.concat({ before, body, after }, "")
-  end)
+  commits, _ = commits:gsub(
+    [[(,"subject":")(.-)(","sanitized_subject_line":")]],
+    function(before, subject, after)
+      return table.concat({ before, vim.fn.escape(subject, [[\"]]), after }, "")
+    end
+  )
 
   local ok, result = pcall(vim.json.decode, commits, { luanil = { object = true, array = true } })
   if not ok then
