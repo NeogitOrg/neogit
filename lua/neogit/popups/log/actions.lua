@@ -30,7 +30,7 @@ end
 local function commits(popup, flags)
   return git.log.list(
     util.merge(popup:get_arguments(), flags),
-    maybe_graph(popup, flags),
+    popup:get_internal_arguments().graph,
     popup.state.env.files
   )
 end

@@ -278,7 +278,7 @@ end
 --- @return table, string|nil
 local function determine_order(options, graph)
   if
-    (graph or {})[1]
+    graph
     and not vim.tbl_contains(options, "--date-order")
     and not vim.tbl_contains(options, "--author-date-order")
     and not vim.tbl_contains(options, "--topo-order")
@@ -332,7 +332,7 @@ local function format(show_signature)
     local signature_format = {
       [["signer":"%GS"]],
       [["signer_key":"%GK"]],
-      [["verification_flag":"%G?"]]
+      [["verification_flag":"%G?"]],
     }
 
     table.insert(template, table.concat(signature_format, ","))
@@ -395,7 +395,16 @@ function M.list(options, graph, files)
     .call()
     :trim().stdout
 
-  return parse_log(parse_json(output), graph or {})
+  local commits = parse_json(output)
+
+  local graph_output
+  if graph then
+    graph_output = require("neogit.lib.graph").build(commits)
+  else
+    graph_output = {}
+  end
+
+  return parse_log(commits, graph_output)
 end
 
 ---Determines if commit a is an ancestor of commit b
