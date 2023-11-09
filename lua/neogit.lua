@@ -103,6 +103,7 @@ function M.open(opts)
     a.run(function()
       if status.status_buffer then
         vim.cmd.lcd(opts.cwd)
+        status.reset()
         status.refresh(true)
       else
         status.create(opts.kind, opts.cwd)
