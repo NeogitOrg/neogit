@@ -106,6 +106,7 @@ function M.open(opts)
         status.reset()
         status.refresh(true)
       else
+        status.reset()
         status.create(opts.kind, opts.cwd)
       end
     end)
