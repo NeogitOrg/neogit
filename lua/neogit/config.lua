@@ -120,6 +120,7 @@ end
 ---@field rebase_editor? NeogitConfigPopup Rebase editor options
 ---@field reflog_view? NeogitConfigPopup Reflog view options
 ---@field merge_editor? NeogitConfigPopup Merge editor options
+---@field description_editor? NeogitConfigPopup Merge editor options
 ---@field tag_editor? NeogitConfigPopup Tag editor options
 ---@field preview_buffer? NeogitConfigPopup Preview options
 ---@field popup? NeogitConfigPopup Set the default way of opening popups
@@ -187,6 +188,9 @@ function M.get_default_values()
       kind = "tab",
     },
     merge_editor = {
+      kind = "auto",
+    },
+    description_editor = {
       kind = "auto",
     },
     tag_editor = {

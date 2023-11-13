@@ -76,6 +76,7 @@ local configurations = {
       _get = "--get",
       _add = "--add",
       _unset = "--unset",
+      null = "--null",
     },
     aliases = {
       set = function(tbl)
@@ -320,6 +321,7 @@ local configurations = {
       remotes = "-r",
       force = "--force",
       current = "--show-current",
+      edit_description = "--edit-description",
       very_verbose = "-vv",
       move = "-m",
     },
