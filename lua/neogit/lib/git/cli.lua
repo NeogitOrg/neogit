@@ -321,6 +321,7 @@ local configurations = {
       remotes = "-r",
       force = "--force",
       current = "--show-current",
+      edit_description = "--edit-description",
       very_verbose = "-vv",
       move = "-m",
     },

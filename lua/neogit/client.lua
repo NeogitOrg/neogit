@@ -76,6 +76,8 @@ function M.editor(target, client)
     editor.merge_editor(target, send_client_quit)
   elseif target:find("TAG_EDITMSG$") then
     editor.tag_editor(target, send_client_quit)
+  elseif target:find("EDIT_DESCRIPTION$") then
+    editor.description_editor(target, send_client_quit)
   else
     local notification = require("neogit.lib.notification")
     notification.warn(target .. " has not been implemented yet")
