@@ -76,6 +76,7 @@ local configurations = {
       _get = "--get",
       _add = "--add",
       _unset = "--unset",
+      null = "--null",
     },
     aliases = {
       set = function(tbl)

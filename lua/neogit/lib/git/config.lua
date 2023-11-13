@@ -82,9 +82,13 @@ end
 local function build_config()
   local result = {}
 
-  for _, option in ipairs(cli.config.list._local.call_sync():trim().stdout) do
-    local key, value = option:match([[^(.-)=(.*)$]])
-    result[key] = ConfigEntry.new(key, value, "local")
+  local out = vim.split(table.concat(cli.config.list.null._local.call():trim().stdout_raw, "\0"), "\n")
+  for _, option in ipairs(out) do
+    local key, value = unpack(vim.split(option, "\0"))
+
+    if key ~= "" then
+      result[key] = ConfigEntry.new(key, value, "local")
+    end
   end
 
   return result
