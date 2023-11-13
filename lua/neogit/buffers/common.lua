@@ -152,7 +152,7 @@ M.CommitEntry = Component.new(function(commit, args)
     details = col.hidden(true).padding_left(8) {
       row(util.merge(graph, {
         text(" "),
-        text("Author:     ", { highlight = "Comment" }),
+        text("Author:     ", { highlight = "NeogitGraphAuthor" }),
         text(commit.author_name),
         text(" <"),
         text(commit.author_email),
@@ -209,7 +209,7 @@ M.CommitEntry = Component.new(function(commit, args)
           { " ", "Constant" },
           {
             util.str_clamp(commit.author_name, 30 - (#commit.rel_date > 10 and #commit.rel_date or 10)),
-            "Constant",
+            "NeogitGraphAuthor",
           },
           { util.str_min_width(commit.rel_date, 10), "Special" },
         },

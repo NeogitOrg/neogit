@@ -107,6 +107,7 @@ function M.setup()
 
   -- stylua: ignore start
   hl_store = {
+    NeogitGraphAuthor = { fg = palette.orange },
     NeogitGraphRed = { fg = palette.red },
     NeogitGraphWhite = { fg = palette.white },
     NeogitGraphYellow = { fg = palette.yellow },
