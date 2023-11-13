@@ -21,7 +21,7 @@ function M:open()
     load = true,
     filetype = "NeogitBranchDescription",
     buftype = "",
-    kind = config.values.merge_editor.kind,
+    kind = config.values.description_editor.kind,
     modifiable = true,
     readonly = false,
     autocmds = {
