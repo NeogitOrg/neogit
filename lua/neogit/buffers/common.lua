@@ -122,17 +122,23 @@ M.CommitEntry = Component.new(function(commit, args)
 
     if local_name and remote_name and vim.endswith(remote_name, local_name) then
       local remote = remote_name:match("^([^/]*)/.*$")
-      table.insert(ref, text(remote .. "/", { highlight = "String" }))
-      table.insert(ref, text(local_name, { highlight = "Macro" }))
+      table.insert(ref, text(remote .. "/", { highlight = "NeogitRemote" }))
+      table.insert(ref, text(local_name, { highlight = "NeogitBranch" }))
       table.insert(ref, text(" "))
     else
       if local_name then
-        table.insert(ref, text(local_name, { highlight = local_name:match("/") and "String" or "Macro" }))
+        table.insert(
+          ref,
+          text(local_name, { highlight = local_name:match("/") and "NeogitRemote" or "NeogitBranch" })
+        )
         table.insert(ref, text(" "))
       end
 
       if remote_name then
-        table.insert(ref, text(remote_name, { highlight = remote_name:match("/") and "String" or "Macro" }))
+        table.insert(
+          ref,
+          text(remote_name, { highlight = remote_name:match("/") and "NeogitRemote" or "NeogitBranch" })
+        )
         table.insert(ref, text(" "))
       end
     end
@@ -152,7 +158,7 @@ M.CommitEntry = Component.new(function(commit, args)
     details = col.hidden(true).padding_left(8) {
       row(util.merge(graph, {
         text(" "),
-        text("Author:     ", { highlight = "Comment" }),
+        text("Author:     ", { highlight = "NeogitGraphAuthor" }),
         text(commit.author_name),
         text(" <"),
         text(commit.author_email),
@@ -209,7 +215,7 @@ M.CommitEntry = Component.new(function(commit, args)
           { " ", "Constant" },
           {
             util.str_clamp(commit.author_name, 30 - (#commit.rel_date > 10 and #commit.rel_date or 10)),
-            "Constant",
+            "NeogitGraphAuthor",
           },
           { util.str_min_width(commit.rel_date, 10), "Special" },
         },

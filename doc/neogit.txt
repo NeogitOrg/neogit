@@ -265,6 +265,7 @@ NeogitFilePath              Applied to filepath
 NeogitCommitViewHeader      Applied to header of Commit View
 
 LOG VIEW BUFFER
+NeogitGraphAuthor           Applied to the commit's author in graph view
 NeogitGraphBlack            Used when --colors is enabled for graph
 NeogitGraphBlackBold
 NeogitGraphRed
