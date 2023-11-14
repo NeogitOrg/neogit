@@ -163,7 +163,7 @@ function M.setup()
     NeogitCommandTime = { link = "Comment" },
     NeogitCommandCodeNormal = { link = "String" },
     NeogitCommandCodeError = { link = "Error" },
-    NeogitBranch = { fg = palette.orange, bold = true },
+    NeogitBranch = { fg = palette.blue, bold = true },
     NeogitRemote = { fg = palette.green, bold = true },
     NeogitUnmergedInto = { fg = palette.bg_purple, bold = true },
     NeogitUnpushedTo = { fg = palette.bg_purple, bold = true },
