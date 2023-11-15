@@ -19,7 +19,14 @@ function M.create()
     :option("F", "grep", "", "Search messages", { key_prefix = "-" })
     :switch("G", "G", "Search changes", { user_input = true, cli_prefix = "-" })
     :switch("S", "S", "Search occurrences", { user_input = true, cli_prefix = "-" })
-    :switch("L", "L", "Trace line evolution", { user_input = true, cli_prefix = "-" })
+    :switch("L", "L", "Trace line evolution", {
+      user_input = true,
+      cli_prefix = "-",
+      validate_help = "Input must match 'start,end:file' or ':funcname:file'",
+      validate = function(input)
+        return (input:match("^%d+,%d+:.-$") ~= nil) or (input:match("^:.-:.-$") ~= nil)
+      end,
+    })
     :option("s", "since", "", "Limit to commits since", { key_prefix = "-" })
     :option("u", "until", "", "Limit to commits until", { key_prefix = "-" })
     :switch("m", "no-merges", "Omit merges", { key_prefix = "=" })
