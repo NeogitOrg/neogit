@@ -15,12 +15,7 @@ M.create = function(directory, sync)
 end
 
 M.init_repo = function()
-  local directory = vim.fn.input {
-    prompt = "Create repository in: ",
-    text = "",
-    cancelreturn = "",
-    completion = "dir",
-  }
+  local directory = input.get_user_input("Create repository in > ", "", "dir")
   if directory == "" then
     return
   end
@@ -29,9 +24,13 @@ M.init_repo = function()
   directory = vim.fn.fnamemodify(directory, ":p")
 
   if vim.fn.isdirectory(directory) == 0 then
-    notification.error("You entered an invalid directory")
+    notification.error("Invalid Directory")
     return
   end
+
+  local status = require("neogit.status")
+  status.cwd_changed = true
+  vim.cmd.lcd(directory)
 
   if cli.git_is_repository_sync() then
     if
@@ -43,10 +42,6 @@ M.init_repo = function()
       return
     end
   end
-
-  local status = require("neogit.status")
-  status.cwd_changed = true
-  vim.cmd.lcd(directory)
 
   M.create(directory)
 
