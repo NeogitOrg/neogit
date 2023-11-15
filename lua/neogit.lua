@@ -111,7 +111,6 @@ function M.open(opts)
   end
 end
 
--- EXPERIMENTAL!
 -- This can be used to create bindable functions for custom keybindings:
 --   local neogit = require("neogit")
 --   vim.keymap.set('n', '<leader>gcc', neogit.action('commit', 'commit', { '--verbose', '--all' }))
@@ -137,7 +136,14 @@ function M.action(popup, action, args)
             end,
           }
         else
-          notification.error("Invalid action for " .. popup .. " popup: " .. action)
+          notification.error(
+            string.format(
+              "Invalid action %s for %s popup\nValid actions are: %s",
+              action,
+              popup,
+              table.concat(vim.tbl_keys(actions), ", ")
+            )
+          )
         end
       else
         notification.error("Invalid popup: " .. popup)
