@@ -33,21 +33,22 @@ CONTENTS                                                       *neogit_contents*
     4. Highlights                                           |neogit_highlights|
     5. API                                                         |neogit_api|
     6. Popups                                                   |neogit_popups|
-       • Cherry Pick                                 |neogit_cherry_pick_popup|
        • Branch                                           |neogit_branch_popup|
        • Branch Config                             |neogit_branch_config_popup|
+       • Cherry Pick                                 |neogit_cherry_pick_popup|
        • Commit                                           |neogit_commit_popup|
        • Diff                                               |neogit_diff_popup|
        • Fetch                                             |neogit_fetch_popup|
+       • Ignore                                           |neogit_ignore_popup|
        • Log                                                 |neogit_log_popup|
        • Merge                                             |neogit_merge_popup|
-       • Remote                                           |neogit_remote_popup|
-       • Remote Config                             |neogit_remote_config_popup|
        • Pull                                               |neogit_pull_popup|
        • Push                                               |neogit_push_popup|
        • Rebase                                           |neogit_rebase_popup|
-       • Revert                                           |neogit_revert_popup|
+       • Remote                                           |neogit_remote_popup|
+       • Remote Config                             |neogit_remote_config_popup|
        • Reset                                             |neogit_reset_popup|
+       • Revert                                           |neogit_revert_popup|
        • Stash                                             |neogit_stash_popup|
        • Tag                                                 |neogit_tag_popup|
 
@@ -1113,6 +1114,26 @@ Actions:                                            *neogit_reset_popup_actions*
 Stash Popup                                                 *neogit_stash_popup*
 
 (TODO)
+
+==============================================================================
+Ignore Popup                                               *neogit_ignore_popup*
+
+Actions:                                           *neogit_ignore_popup_actions*
+  • Shared at top-level                                 *neogit_ignore_toplevel*
+    Appends selected filepaths to the `.gitignore` file located in the
+    project's root.
+
+  • Shared in sub-directory                               *neogit_ignore_subdir*
+    Appends selected filepaths to the `.gitignore` file located in the
+    selected subdirectory, creating one if it doesn't exist.
+
+  • Private for Repo                                     *neogit_ignore_private*
+    Appends selected filepaths to the user's private exclude file in the
+    current repository.
+
+  • Private Global                                        *neogit_ignore_global*
+    If git config value {core.excludesFile} is set, this action will append
+    selected filepaths to the global excludes file.
 
 ==============================================================================
 Tag Popup                                                     *neogit_tag_popup*
