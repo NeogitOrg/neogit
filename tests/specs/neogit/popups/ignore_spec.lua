@@ -37,23 +37,20 @@ describe("ignore popup", function()
     it(
       "can ignore untracked files in subdirectory of project",
       in_prepared_repo(function()
-        harness.exec({ "mkdir", "subdir" })
-        harness.exec({ "touch", "subdir/untracked.txt" })
-        harness.exec({ "touch", "subdir/tracked.txt" })
-        harness.exec({ "git", "add", "subdir/tracked.txt" })
+        harness.exec { "mkdir", "subdir" }
+        harness.exec { "touch", "subdir/untracked.txt" }
+        harness.exec { "touch", "subdir/tracked.txt" }
+        harness.exec { "git", "add", "subdir/tracked.txt" }
 
         local files = harness.exec { "git", "status", "--porcelain=1" }
-        eq(
-          files,
-          {
-            " M a.txt",
-            "M  b.txt",
-            "A  subdir/tracked.txt",
-            "?? subdir/untracked.txt",
-            "?? untracked.txt",
-            ""
-          }
-        )
+        eq(files, {
+          " M a.txt",
+          "M  b.txt",
+          "A  subdir/tracked.txt",
+          "?? subdir/untracked.txt",
+          "?? untracked.txt",
+          "",
+        })
 
         input.values = { "subdir" }
         FuzzyFinderBuffer.value = { "untracked.txt" }
@@ -62,17 +59,14 @@ describe("ignore popup", function()
 
         local files = harness.exec { "git", "status", "--porcelain=1" }
 
-        eq(
-          files,
-          {
-            " M a.txt",
-            "M  b.txt",
-            "A  subdir/tracked.txt",
-            "?? subdir/.gitignore",
-            "?? untracked.txt",
-            ""
-          }
-        )
+        eq(files, {
+          " M a.txt",
+          "M  b.txt",
+          "A  subdir/tracked.txt",
+          "?? subdir/.gitignore",
+          "?? untracked.txt",
+          "",
+        })
 
         eq(harness.exec { "cat", "subdir/.gitignore" }, { "untracked.txt", "" })
       end)
@@ -94,19 +88,16 @@ describe("ignore popup", function()
 
         eq(files, { " M a.txt", "M  b.txt", "" })
 
-        eq(
-          harness.exec { "cat", ".git/info/exclude" },
-          {
-            "# git ls-files --others --exclude-from=.git/info/exclude",
-            "# Lines that start with '#' are comments.",
-            "# For a project mostly in C, the following would be a good set of",
-            "# exclude patterns (uncomment them if you want to use them):",
-            "# *.[oa]",
-            "# *~",
-            "untracked.txt",
-            ""
-          }
-        )
+        eq(harness.exec { "cat", ".git/info/exclude" }, {
+          "# git ls-files --others --exclude-from=.git/info/exclude",
+          "# Lines that start with '#' are comments.",
+          "# For a project mostly in C, the following would be a good set of",
+          "# exclude patterns (uncomment them if you want to use them):",
+          "# *.[oa]",
+          "# *~",
+          "untracked.txt",
+          "",
+        })
       end)
     )
   end)
@@ -129,10 +120,7 @@ describe("ignore popup", function()
 
         eq(files, { " M a.txt", "M  b.txt", "" })
 
-        eq(
-          harness.exec { "cat", global_exclude },
-          { "untracked.txt", "" }
-        )
+        eq(harness.exec { "cat", global_exclude }, { "untracked.txt", "" })
       end)
     )
   end)
