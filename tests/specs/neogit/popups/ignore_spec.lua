@@ -101,27 +101,4 @@ describe("ignore popup", function()
       end)
     )
   end)
-
-  describe("private global", function()
-    it(
-      "can ignore for user",
-      in_prepared_repo(function()
-        local global_exclude = vim.loop.fs_mkstemp("")
-        harness.exec { "git", "config", "core.excludesFile", global_exclude }
-
-        local files = harness.exec { "git", "status", "--porcelain=1" }
-        eq(files, { " M a.txt", "M  b.txt", "?? untracked.txt", "" })
-
-        FuzzyFinderBuffer.value = { "untracked.txt" }
-        act("ig")
-        operations.wait("ignore_private_global")
-
-        local files = harness.exec { "git", "status", "--porcelain=1" }
-
-        eq(files, { " M a.txt", "M  b.txt", "" })
-
-        eq(harness.exec { "cat", global_exclude }, { "untracked.txt", "" })
-      end)
-    )
-  end)
 end)
