@@ -360,7 +360,11 @@ neogit.open({*opts})                                             *neogit.open()*
                   popup to open. See |neogit-popups|.
 
 neogit.action({popup}, {action}, {args})                       *neogit.action()*
-    Call an action without going through the popup interface. >lua
+    Call an action without going through the popup interface.
+
+    Note: Some actions might not play nicely when being invoked this way.
+          You've been warned. >lua
+
         local neogit = require('neogit')
 
         -- Calls the "commit" action from the "commit" popup, with arguments
