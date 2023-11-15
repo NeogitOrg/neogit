@@ -1,4 +1,5 @@
 local M = {}
+
 local Path = require("plenary.path")
 local git = require("neogit.lib.git")
 local operation = require("neogit.operations")
@@ -17,7 +18,7 @@ local function make_rules(popup, relative)
   end, files))
 end
 
----@param path
+---@param path Path
 ---@param rules string[]
 local function add_rules(path, rules)
   local selected = FuzzyFinderBuffer.new(rules)
@@ -27,7 +28,7 @@ local function add_rules(path, rules)
     return
   end
 
-  path:write(table.concat(selected, "\n") .. "\n", "a+", 438)
+  path:write(table.concat(selected, "\n") .. "\n", "a+")
 end
 
 M.shared_toplevel = operation("ignore_shared", function(popup)
@@ -42,7 +43,7 @@ M.shared_subdirectory = operation("ignore_subdirectory", function(popup)
   if subdirectory then
     subdirectory = Path:new(vim.loop.cwd(), subdirectory)
 
-    local ignore_file = subdirectory:join(".gitignore")
+    local ignore_file = subdirectory:joinpath(".gitignore")
     local rules = make_rules(popup, tostring(subdirectory))
 
     add_rules(ignore_file, rules)
