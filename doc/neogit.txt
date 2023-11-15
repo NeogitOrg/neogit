@@ -359,6 +359,26 @@ neogit.open({*opts})                                             *neogit.open()*
                 • [1] (string) optional: Name of the Neogit
                   popup to open. See |neogit-popups|.
 
+neogit.action({popup}, {action}, {args})                       *neogit.action()*
+    Call an action without going through the popup interface. >lua
+        local neogit = require('neogit')
+
+        -- Calls the "commit" action from the "commit" popup, with arguments
+        vim.keymap.set(
+          'n',
+          '<leader>gcc',
+          neogit.action('commit', 'commit', { '--verbose', '--all' })
+        )
+<
+    Parameters:
+      • {popup}  (string)
+        Name of popup, as found in `lua/neogit/popups/*`
+
+      • {action} (string)
+        Name of action for popup, found in `lua/neogit/popups/*/actions.lua`
+
+      • {args}   (table|nil)
+        CLI arguments to pass to git command
 
 ==============================================================================
 6. Popups                                                        *neogit_popups*
