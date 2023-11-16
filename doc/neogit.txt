@@ -200,6 +200,7 @@ exist, they will be created with sensible defaults based on your colorscheme.
 
 STATUS BUFFER
 NeogitBranch                Header showing currently checked out branch
+NeogitBranchHead            Currently checkoued branch (in log graph)
 NeogitRemote                Header showing current branch's remote (if set)
 NeogitObjectId              Object's SHA hash
 NeogitStash                 Stash name
