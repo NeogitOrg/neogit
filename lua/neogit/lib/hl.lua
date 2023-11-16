@@ -164,6 +164,7 @@ function M.setup()
     NeogitCommandCodeNormal = { link = "String" },
     NeogitCommandCodeError = { link = "Error" },
     NeogitBranch = { fg = palette.blue, bold = true },
+    NeogitBranchHead = { fg = palette.blue, bold = true, underline = true },
     NeogitRemote = { fg = palette.green, bold = true },
     NeogitUnmergedInto = { fg = palette.bg_purple, bold = true },
     NeogitUnpushedTo = { fg = palette.bg_purple, bold = true },

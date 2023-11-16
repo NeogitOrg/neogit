@@ -120,16 +120,19 @@ M.CommitEntry = Component.new(function(commit, args)
       remote_name, local_name = local_name, remote_name
     end
 
+    local is_head = string.match(commit.ref_name, "HEAD") ~= nil
+    local branch_highlight = is_head and "NeogitBranchHead" or "NeogitBranch"
+
     if local_name and remote_name and vim.endswith(remote_name, local_name) then
       local remote = remote_name:match("^([^/]*)/.*$")
       table.insert(ref, text(remote .. "/", { highlight = "NeogitRemote" }))
-      table.insert(ref, text(local_name, { highlight = "NeogitBranch" }))
+      table.insert(ref, text(local_name, { highlight = branch_highlight }))
       table.insert(ref, text(" "))
     else
       if local_name then
         table.insert(
           ref,
-          text(local_name, { highlight = local_name:match("/") and "NeogitRemote" or "NeogitBranch" })
+          text(local_name, { highlight = local_name:match("/") and "NeogitRemote" or branch_highlight })
         )
         table.insert(ref, text(" "))
       end
@@ -137,7 +140,7 @@ M.CommitEntry = Component.new(function(commit, args)
       if remote_name then
         table.insert(
           ref,
-          text(remote_name, { highlight = remote_name:match("/") and "NeogitRemote" or "NeogitBranch" })
+          text(remote_name, { highlight = remote_name:match("/") and "NeogitRemote" or branch_highlight })
         )
         table.insert(ref, text(" "))
       end
