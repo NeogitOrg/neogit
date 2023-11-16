@@ -39,11 +39,6 @@ local tag_pattern = "(.-)%-([0-9]+)%-g%x+$"
 
 local function update_status(state)
   local git = require("neogit.lib.git")
-  -- git-status outputs files relative to the cwd.
-  --
-  -- Save the working directory to allow resolution to absolute paths since the
-  -- cwd may change after the status is refreshed and used, especially if using
-  -- rooter plugins with lsp integration
   local cwd = vim.fn.getcwd()
   local result = git.cli.status.porcelain(2).branch.call():trim()
 
@@ -160,12 +155,25 @@ local function update_status(state)
   else
     head.tag = { name = nil, distance = nil }
   end
-  state.cwd = cwd
+
   state.head = head
   state.upstream = upstream
   state.untracked.items = untracked_files
   state.unstaged.items = unstaged_files
   state.staged.items = staged_files
+
+  -- git-status outputs files relative to the cwd.
+  --
+  -- Save the git root to allow resolution to absolute paths since the
+  -- cwd may change after the status is refreshed and used, especially if using
+  -- rooter plugins with lsp integration
+  local git_root = require("neogit.lib.git.cli").git_root()
+  state.git_root = git_root
+  local Path = require("plenary.path")
+  state.git_path = function(...)
+      return Path.new(git_root):joinpath(".git", ...)
+  end
+
 end
 
 local function update_branch_information(state)

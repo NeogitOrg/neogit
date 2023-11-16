@@ -3,7 +3,7 @@ local logger = require("neogit.logger")
 
 -- git-status outputs files relative to the cwd.
 --
--- Save the working directory to allow resolution to absolute paths since the
+-- Save the git_root to allow resolution to absolute paths since the
 -- cwd may change after the status is refreshed and used, especially if using
 -- rooter plugins with lsp integration
 -- stylua: ignore start
@@ -15,7 +15,6 @@ local function empty_state()
     git_path     = function(...)
       return Path.new(root):joinpath(".git", ...)
     end,
-    cwd          = vim.fn.getcwd(),
     git_root     = root,
     head         = {
       branch = nil,
