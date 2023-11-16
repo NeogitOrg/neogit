@@ -53,10 +53,11 @@ end
 
 function M.in_prepared_repo(cb)
   return function()
-    local dir = M.prepare_repository()
     require("neogit").setup()
-    vim.cmd("Neogit")
     a.util.block_on(status.reset)
+    local dir = M.prepare_repository()
+    vim.cmd("Neogit")
+    a.util.block_on(status.refresh)
     a.util.block_on(function()
       local _, err = pcall(cb, dir)
       if err ~= nil then
