@@ -171,9 +171,8 @@ local function update_status(state)
   state.git_root = git_root
   local Path = require("plenary.path")
   state.git_path = function(...)
-      return Path.new(git_root):joinpath(".git", ...)
+    return Path.new(git_root):joinpath(".git", ...)
   end
-
 end
 
 local function update_branch_information(state)
