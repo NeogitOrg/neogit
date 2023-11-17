@@ -120,7 +120,7 @@ M.CommitEntry = Component.new(function(commit, args)
       remote_name, local_name = local_name, remote_name
     end
 
-    local is_head = string.match(commit.ref_name, "HEAD") ~= nil
+    local is_head = string.match(commit.ref_name, "HEAD %->") ~= nil
     local branch_highlight = is_head and "NeogitBranchHead" or "NeogitBranch"
 
     if local_name and remote_name and vim.endswith(remote_name, local_name) then
