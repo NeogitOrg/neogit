@@ -113,11 +113,21 @@ M.CommitEntry = Component.new(function(commit, args)
   -- Parse out ref names
   if args.decorate and commit.ref_name ~= "" then
     local ref_name, _ = commit.ref_name:gsub("HEAD %-> ", "")
-    local remote_name, local_name = unpack(vim.split(ref_name, ", "))
 
-    -- Sometimes the log output will list remote/local names in reverse order
-    if (local_name and local_name:match("/")) and (remote_name and not remote_name:match("/")) then
-      remote_name, local_name = local_name, remote_name
+    local names = vim.split(ref_name, ", ")
+    local local_name = nil
+    local remote_name = nil
+    local tag_name = nil
+    for _, name in ipairs(names) do
+      if name:match("^tag: .*") ~= nil then
+        tag_name = name:gsub("tag: ", "")
+      end
+      if local_name == nil and not name:match("/") then
+        local_name = name
+      end
+      if remote_name == nil and name:match("/") then
+        remote_name = name
+      end
     end
 
     local is_head = string.match(commit.ref_name, "HEAD %->") ~= nil
@@ -144,6 +154,11 @@ M.CommitEntry = Component.new(function(commit, args)
         )
         table.insert(ref, text(" "))
       end
+    end
+
+    if tag_name ~= nil then
+      table.insert(ref, text(tag_name, { highlight = "NeogitTagName" }))
+      table.insert(ref, text(" "))
     end
   end
 
