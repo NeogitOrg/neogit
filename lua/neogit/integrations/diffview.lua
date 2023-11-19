@@ -166,13 +166,14 @@ function M.open(section_name, item_name)
   local view
 
   if section_name == "recent" or section_name == "unmerged" or section_name == "log" then
+    local range
     if type(item_name) == "table" then
-      local range = dv_utils.tbl_pack(item_name[1] .. ".." .. item_name[#item_name])
-      view = dv_lib.diffview_open(range)
+      range = string.format("%s..%s", item_name[1], item_name[#item_name])
     else
-      local commit_id = item_name:match("[a-f0-9]+")
-      view = dv_lib.diffview_open(dv_utils.tbl_pack(commit_id .. "^!"))
+      range = string.format("%s^!", item_name:match("[a-f0-9]+"))
     end
+
+    view = dv_lib.diffview_open(dv_utils.tbl_pack(range))
   elseif section_name == "stashes" then
     local stash_id = item_name:match("stash@{%d+}")
     view = dv_lib.diffview_open(dv_utils.tbl_pack(stash_id .. "^!"))
