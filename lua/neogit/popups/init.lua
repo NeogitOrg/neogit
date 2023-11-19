@@ -90,7 +90,7 @@ function M.mappings_table()
             paths = util.filter_map(require("neogit.status").get_selection().items, function(v)
               return v.absolute_path
             end),
-            git_root = git.repo.state.git_root,
+            git_root = git.repo.git_root,
           }
         end),
       },

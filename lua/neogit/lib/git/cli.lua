@@ -521,8 +521,11 @@ local configurations = {
   ["verify-commit"] = config {},
 }
 
--- TODO: Consider returning a Path object, since consumers of this function tend to need that anyways.
-local function git_root()
+-- NOTE: Use require("neogit.lib.git.repository").git_root instead of calling this function.
+-- repository.git_root is used by all other library functions, so it's most likely the one you want to use.
+-- git_root_of_cwd() returns the git repo of the cwd, which can change anytime
+-- after git_root_of_cwd() has been called.
+local function git_root_of_cwd()
   local process =
     process.new({ cmd = { "git", "rev-parse", "--show-toplevel" }, ignore_code = true }):spawn_blocking()
 
@@ -533,15 +536,7 @@ local function git_root()
   end
 end
 
-local git_root_sync = function()
-  return util.trim(vim.fn.system("git rev-parse --show-toplevel"))
-end
-
-local git_dir_path_sync = function()
-  return util.trim(vim.fn.system("git rev-parse --git-dir"))
-end
-
-local git_is_repository_sync = function(cwd)
+local is_inside_worktree = function(cwd)
   if not cwd then
     vim.fn.system("git rev-parse --is-inside-work-tree")
   else
@@ -630,13 +625,6 @@ local mt_builder = {
     if action == "input" or action == "stdin" then
       return function(value)
         tbl[k_state].input = value
-        return tbl
-      end
-    end
-
-    if action == "cwd" then
-      return function(cwd)
-        tbl[k_state].cwd = cwd
         return tbl
       end
     end
@@ -791,7 +779,6 @@ local function new_builder(subcommand)
     input = nil,
     show_popup = true,
     in_pty = false,
-    cwd = nil,
     env = {},
   }
 
@@ -825,9 +812,10 @@ local function new_builder(subcommand)
 
     logger.trace(string.format("[CLI]: Executing '%s': '%s'", subcommand, table.concat(cmd, " ")))
 
+    local repo = require("neogit.lib.git.repository")
     return process.new {
       cmd = cmd,
-      cwd = state.cwd,
+      cwd = repo.git_root,
       env = state.env,
       pty = state.in_pty,
       verbose = verbose,
@@ -962,7 +950,6 @@ local function new_parallel_builder(calls)
     calls = calls,
     show_popup = true,
     in_pty = true,
-    cwd = nil,
   }
 
   local function call()
@@ -970,15 +957,13 @@ local function new_parallel_builder(calls)
       return
     end
 
-    if not state.cwd then
-      state.cwd = git_root()
-    end
-    if not state.cwd or state.cwd == "" then
+    local repo = require("neogit.lib.git.repository")
+    if not repo.git_root then
       return
     end
 
     for _, c in ipairs(state.calls) do
-      c.cwd(state.cwd).show_popup(state.show_popup)
+      c.show_popup(state.show_popup)
     end
 
     local processes = {}
@@ -993,13 +978,6 @@ local function new_parallel_builder(calls)
     call = call,
   }, {
     __index = function(tbl, action)
-      if action == "cwd" then
-        return function(cwd)
-          state.cwd = cwd
-          return tbl
-        end
-      end
-
       if action == "show_popup" then
         return function(show_popup)
           state.show_popup = show_popup
@@ -1031,10 +1009,8 @@ local meta = {
 local cli = setmetatable({
   history = history,
   insert = handle_new_cmd,
-  git_root = git_root,
-  git_root_sync = git_root_sync,
-  git_dir_path_sync = git_dir_path_sync,
-  git_is_repository_sync = git_is_repository_sync,
+  git_root_of_cwd = git_root_of_cwd,
+  is_inside_worktree = is_inside_worktree,
   in_parallel = function(...)
     local calls = { ... }
     return new_parallel_builder(calls)

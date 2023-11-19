@@ -271,9 +271,6 @@ function Process:spawn(cb)
   -- An empty table is treated as an array
   self.env = self.env or {}
   self.env.TERM = "xterm-256color"
-  if self.cwd == "<current>" then
-    self.cwd = nil
-  end
 
   local start = vim.loop.now()
   self.start = start

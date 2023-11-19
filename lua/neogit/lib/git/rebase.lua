@@ -46,15 +46,16 @@ function M.skip()
 end
 
 function M.update_rebase_status(state)
-  if state.git_root == "" then
+  local repo = require("neogit.lib.git.repository")
+  if repo.git_root == "" then
     return
   end
 
   state.rebase = { items = {}, head = nil, current = nil }
 
   local rebase_file
-  local rebase_merge = state.git_path("rebase-merge")
-  local rebase_apply = state.git_path("rebase-apply")
+  local rebase_merge = repo:git_path("rebase-merge")
+  local rebase_apply = repo:git_path("rebase-apply")
 
   if rebase_merge:exists() then
     rebase_file = rebase_merge
