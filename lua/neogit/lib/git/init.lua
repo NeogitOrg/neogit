@@ -32,7 +32,7 @@ M.init_repo = function()
   status.cwd_changed = true
   vim.cmd.lcd(directory)
 
-  if cli.git_is_repository_sync() then
+  if cli.is_inside_worktree() then
     if
       not input.get_confirmation(
         string.format("Reinitialize existing repository %s?", directory),

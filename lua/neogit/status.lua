@@ -537,7 +537,7 @@ local function refresh(which, reason)
   a.util.scheduler()
   local s, f, h = save_cursor_location()
 
-  if cli.git_root() ~= "" then
+  if cli.git_root_of_cwd() ~= "" then
     git.repo:refresh(which)
     refresh_status_buffer()
     vim.api.nvim_exec_autocmds("User", { pattern = "NeogitStatusRefreshed", modeline = false })
@@ -632,7 +632,9 @@ local function close(skip_close)
     M.status_buffer:close()
   end
 
-  M.watcher:stop()
+  if M.watcher then
+    M.watcher:stop()
+  end
   notification.delete_all()
   M.status_buffer = nil
   vim.o.autochdir = M.prev_autochdir
@@ -841,7 +843,7 @@ local stage = operation("stage", function()
           for _, hunk in ipairs(hunks) do
             -- Apply works for both tracked and untracked
             local patch = git.index.generate_patch(item, hunk, hunk.from, hunk.to)
-            git.index.apply(patch, { cached = true, use_git_root = true })
+            git.index.apply(patch, { cached = true })
           end
         else
           git.status.stage { item.name }
@@ -850,10 +852,7 @@ local stage = operation("stage", function()
         if #hunks > 0 then
           for _, hunk in ipairs(hunks) do
             -- Apply works for both tracked and untracked
-            git.index.apply(
-              git.index.generate_patch(item, hunk, hunk.from, hunk.to),
-              { cached = true, use_git_root = true }
-            )
+            git.index.apply(git.index.generate_patch(item, hunk, hunk.from, hunk.to), { cached = true })
           end
         else
           table.insert(files, item.name)
@@ -901,7 +900,7 @@ local unstage = operation("unstage", function()
             -- Apply works for both tracked and untracked
             git.index.apply(
               git.index.generate_patch(item, hunk, hunk.from, hunk.to, true),
-              { cached = true, reverse = true, use_git_root = true }
+              { cached = true, reverse = true }
             )
           end
         else
@@ -967,9 +966,9 @@ local discard = operation("discard", function()
 
             if section_name == "staged" then
               --- Apply both to the worktree and the staging area
-              git.index.apply(patch, { index = true, reverse = true, use_git_root = true })
+              git.index.apply(patch, { index = true, reverse = true })
             else
-              git.index.apply(patch, { reverse = true, use_git_root = true })
+              git.index.apply(patch, { reverse = true })
             end
           end)
         end
@@ -978,7 +977,7 @@ local discard = operation("discard", function()
         table.insert(t, function()
           if section_name == "untracked" then
             a.util.scheduler()
-            vim.fn.delete(cli.git_root() .. "/" .. item.name)
+            vim.fn.delete(git.repo.git_root .. "/" .. item.name)
           elseif section_name == "unstaged" then
             git.index.checkout { item.name }
           elseif section_name == "staged" then
@@ -1238,7 +1237,6 @@ local cmd_func_map = function()
       end
     end,
     ["GoToFile"] = a.void(function()
-      -- local repo_root = cli.git_root()
       a.util.scheduler()
       local section, item = get_current_section_item()
       if not section then
@@ -1448,7 +1446,7 @@ function M.create(kind, cwd)
       refresh(true, "Buffer.create")
     end,
     after = function()
-      M.watcher = watcher.new(git.repo.git_path():absolute())
+      M.watcher = watcher.new(git.repo:git_path():absolute())
     end,
   }
 end

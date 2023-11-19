@@ -51,7 +51,7 @@ M.shared_subdirectory = operation("ignore_subdirectory", function(popup)
 end)
 
 M.private_local = operation("ignore_private", function(popup)
-  local ignore_file = git.repo.git_path("info", "exclude")
+  local ignore_file = git.repo:git_path("info", "exclude")
   local rules = make_rules(popup, git.repo.git_root)
 
   add_rules(ignore_file, rules)

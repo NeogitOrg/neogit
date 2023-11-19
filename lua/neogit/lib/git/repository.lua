@@ -1,23 +1,12 @@
 local a = require("plenary.async")
 local logger = require("neogit.logger")
+local Path = require("plenary.path")
+local cli = require("neogit.lib.git.cli")
 
--- git-status outputs files relative to the cwd.
---
--- Save the working directory to allow resolution to absolute paths since the
--- cwd may change after the status is refreshed and used, especially if using
--- rooter plugins with lsp integration
--- stylua: ignore start
 local function empty_state()
-  local root = require("neogit.lib.git.cli").git_root()
-  local Path = require("plenary.path")
-
   return {
-    git_path     = function(...)
-      return Path.new(root):joinpath(".git", ...)
-    end,
-    cwd          = vim.fn.getcwd(),
-    git_root     = root,
-    head         = {
+    git_root = require("neogit.lib.git.cli").git_root_of_cwd(),
+    head = {
       branch = nil,
       commit_message = nil,
       tag = {
@@ -25,27 +14,27 @@ local function empty_state()
         distance = nil,
       },
     },
-    upstream     = {
-      branch         = nil,
+    upstream = {
+      branch = nil,
       commit_message = nil,
-      remote         = nil,
-      ref            = nil,
-      unmerged       = { items = {} },
-      unpulled       = { items = {} },
+      remote = nil,
+      ref = nil,
+      unmerged = { items = {} },
+      unpulled = { items = {} },
     },
-    pushRemote   = {
+    pushRemote = {
       commit_message = nil,
-      unmerged       = { items = {} },
-      unpulled       = { items = {} },
+      unmerged = { items = {} },
+      unpulled = { items = {} },
     },
-    untracked    = { items = {} },
-    unstaged     = { items = {} },
-    staged       = { items = {} },
-    stashes      = { items = {} },
-    recent       = { items = {} },
-    rebase       = { items = {}, head = nil },
-    sequencer    = { items = {}, head = nil },
-    merge        = { items = {}, head = nil, msg = nil },
+    untracked = { items = {} },
+    unstaged = { items = {} },
+    staged = { items = {} },
+    stashes = { items = {} },
+    recent = { items = {} },
+    rebase = { items = {}, head = nil },
+    sequencer = { items = {}, head = nil },
+    merge = { items = {}, head = nil, msg = nil },
   }
 end
 -- stylua: ignore end
@@ -67,6 +56,10 @@ end
 
 function M.refresh(self, lib)
   local refreshes = {}
+
+  if lib then
+    self.state.git_root = cli.git_root_of_cwd()
+  end
 
   if lib and type(lib) == "table" then
     if lib.status then
@@ -155,6 +148,10 @@ function M.refresh(self, lib)
   a.util.join(refreshes)
   a.util.scheduler()
   logger.debug("[REPO]: Refreshes completed")
+end
+
+function M.git_path(self, ...)
+  return Path.new(self.state.git_root):joinpath(".git", ...)
 end
 
 if not M.initialized then

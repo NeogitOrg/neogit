@@ -172,6 +172,7 @@ describe("branch popup", function()
         input.confirmed = true
 
         local remote = harness.prepare_repository()
+        async.util.block_on(status.reset)
         util.system("git remote add upstream " .. remote)
         util.system([[
           git stash --include-untracked

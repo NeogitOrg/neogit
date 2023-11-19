@@ -20,23 +20,24 @@ function M.pick_or_revert_in_progress()
 end
 
 function M.update_sequencer_status(state)
+  local repo = require("neogit.lib.git.repository")
   state.sequencer = { items = {}, head = nil, head_oid = nil }
 
-  local revert_head = state.git_path("REVERT_HEAD")
-  local cherry_head = state.git_path("CHERRY_PICK_HEAD")
+  local revert_head = repo:git_path("REVERT_HEAD")
+  local cherry_head = repo:git_path("CHERRY_PICK_HEAD")
 
   if cherry_head:exists() then
     state.sequencer.head = "CHERRY_PICK_HEAD"
-    state.sequencer.head_oid = state.git_path("CHERRY_PICK_HEAD"):read()
+    state.sequencer.head_oid = repo:git_path("CHERRY_PICK_HEAD"):read()
     state.sequencer.cherry_pick = true
   elseif revert_head:exists() then
     state.sequencer.head = "REVERT_HEAD"
-    state.sequencer.head_oid = state.git_path("REVERT_HEAD"):read()
+    state.sequencer.head_oid = repo:git_path("REVERT_HEAD"):read()
     state.sequencer.revert = true
   end
 
-  local todo = state.git_path("sequencer/todo")
-  local orig = state.git_path("ORIG_HEAD")
+  local todo = repo:git_path("sequencer/todo")
+  local orig = repo:git_path("ORIG_HEAD")
   if todo:exists() then
     for line in todo:iter() do
       if not line:match("^#") then
