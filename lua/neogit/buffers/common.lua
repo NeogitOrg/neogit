@@ -184,7 +184,7 @@ M.CommitEntry = Component.new(function(commit, args)
       })),
       row(graph),
       col(
-        flat_map(commit.description, function(line)
+        flat_map({ commit.subject, commit.body }, function(line)
           local lines = map(util.str_wrap(line, vim.o.columns * 0.6), function(l)
             return row(util.merge(graph, { text(" "), text(l) }))
           end)
@@ -206,10 +206,11 @@ M.CommitEntry = Component.new(function(commit, args)
     row(
       util.merge({
         text(commit.oid:sub(1, 7), {
-          highlight = commit.verification_flag and highlight_for_signature[commit.verification_flag] or "Comment",
+          highlight = commit.verification_flag and highlight_for_signature[commit.verification_flag]
+            or "Comment",
         }),
         text(" "),
-      }, graph, { text(" ") }, ref, { text(commit.description[1]) }),
+      }, graph, { text(" ") }, ref, { text(commit.subject) }),
       {
         virtual_text = {
           { " ", "Constant" },
