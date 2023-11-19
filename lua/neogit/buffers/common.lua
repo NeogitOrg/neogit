@@ -158,8 +158,8 @@ M.CommitEntry = Component.new(function(commit, args)
     details = col.hidden(true).padding_left(8) {
       row(util.merge(graph, {
         text(" "),
-        text("Author:     ", { highlight = "NeogitGraphAuthor" }),
-        text(commit.author_name),
+        text("Author:     ", { highlight = "Comment" }),
+        text(commit.author_name, { highlight = "NeogitGraphAuthor" }),
         text(" <"),
         text(commit.author_email),
         text(">"),
