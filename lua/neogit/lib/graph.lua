@@ -1,30 +1,32 @@
+-- Modified version of graphing algorithm from https://github.com/rbong/vim-flog
+
 local M = {}
 
 local graph_error = "flog: internal error drawing graph"
 
--- Init graph strings
-local current_commit_str = "* "
-local commit_branch_str = "│ "
-local commit_empty_str = "  "
-local complex_merge_str_1 = "┬┊"
-local complex_merge_str_2 = "╰┤"
-local merge_all_str = "┼"
-local merge_jump_str = "┊"
-local merge_up_down_left_str = "┤"
-local merge_up_down_right_str = "├"
-local merge_up_down_str = "│"
-local merge_up_left_right_str = "┴"
-local merge_up_left_str = "╯"
-local merge_up_right_str = "╰"
-local merge_up_str = " "
+-- styleua: ignore
+local current_commit_str        = "• "
+local commit_branch_str         = "│ "
+local commit_empty_str          = "  "
+local complex_merge_str_1       = "┬┊"
+local complex_merge_str_2       = "╰┤"
+local merge_all_str             = "┼"
+local merge_jump_str            = "┊"
+local merge_up_down_left_str    = "┤"
+local merge_up_down_right_str   = "├"
+local merge_up_down_str         = "│"
+local merge_up_left_right_str   = "┴"
+local merge_up_left_str         = "╯"
+local merge_up_right_str        = "╰"
+local merge_up_str              = " "
 local merge_down_left_right_str = "┬"
-local merge_down_left_str = "╮"
-local merge_down_right_str = "╭"
-local merge_left_right_str = "─"
-local merge_empty_str = " "
-local missing_parent_str = "┊ "
+local merge_down_left_str       = "╮"
+local merge_down_right_str      = "╭"
+local merge_left_right_str      = "─"
+local merge_empty_str           = " "
+local missing_parent_str        = "┊ "
 local missing_parent_branch_str = "│ "
-local missing_parent_empty_str = "  "
+local missing_parent_empty_str  = "  "
 
 function M.build(commits)
   commits = require("neogit.lib.util").filter_map(commits, function(item)
@@ -35,7 +37,6 @@ function M.build(commits)
 
   -- Init commit parsing data
   local commit_hashes = {}
-
   for _, commit in ipairs(commits) do
     commit_hashes[commit.oid] = 1
   end
@@ -49,15 +50,13 @@ function M.build(commits)
   local nbranches = 0
 
   -- Draw graph
-
   for _, commit in ipairs(commits) do
-    -- Get commit data
 
+    -- Get commit data
     local commit_hash = commit.oid
     local parents = vim.split(commit.parent, " ")
     local parent_hashes = {}
     local nparents = #parents
-    local ncommit_lines = #commit.body
 
     for _, parent in ipairs(parents) do
       parent_hashes[parent] = 1
