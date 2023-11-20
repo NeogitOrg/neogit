@@ -66,6 +66,15 @@ function M:open()
         [popups.mapping_for("TagPopup")] = popups.open("tag", function(p)
           p { commit = self.buffer.ui:get_commit_under_cursor() }
         end),
+        ["d"] = function()
+          if not config.check_integration("diffview") then
+            notification.error("Diffview integration must be enabled for log diff")
+            return
+          end
+
+          local dv = require("neogit.integrations.diffview")
+          dv.open("log", self.buffer.ui:get_commits_in_selection())
+        end,
       },
       n = {
         [popups.mapping_for("CherryPickPopup")] = popups.open("cherry_pick", function(p)
