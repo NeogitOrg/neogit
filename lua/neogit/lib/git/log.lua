@@ -454,30 +454,33 @@ function M.interprete(ref, remotes)
     tags = {},
   }
   for _, part in ipairs(parts) do
+    local skip = false
     if part:match("^tag: .*") ~= nil then
       local tag = part:gsub("tag: ", "")
       table.insert(result.tags, tag)
       -- No need to annotate tags with remotes, probably too cluttered
-      goto continue
+      skip = true
     end
     local has_remote = false
     for _, remote in ipairs(remotes) do
-      if part:match("^" .. remote .. "/") then
-        has_remote = true
-        local name = part:gsub("^" .. remote .. "/", "")
-        if name == "HEAD" then
-          goto continue
+      if not skip then
+        if part:match("^" .. remote .. "/") then
+          has_remote = true
+          local name = part:gsub("^" .. remote .. "/", "")
+          if name == "HEAD" then
+            skip = true
+          else
+            if result.branches[name] == nil then
+              result.branches[name] = {}
+            end
+            table.insert(result.branches[name], remote)
+          end
         end
-        if result.branches[name] == nil then
-          result.branches[name] = {}
-        end
-        table.insert(result.branches[name], remote)
       end
     end
-    if not has_remote and result.branches[part] == nil then
+    if not skip and not has_remote and result.branches[part] == nil then
       result.branches[part] = {}
     end
-    ::continue::
   end
   return result
 end
