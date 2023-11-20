@@ -199,9 +199,9 @@ these yourself before the plugin loads, that will be respected. If they do not
 exist, they will be created with sensible defaults based on your colorscheme.
 
 STATUS BUFFER
-NeogitBranch                Header showing currently checked out branch
-NeogitBranchHead            Currently checkoued branch (in log graph)
-NeogitRemote                Header showing current branch's remote (if set)
+NeogitBranch                Local branches
+NeogitBranchHead            Accent highlight for current HEAD in LogBuffer
+NeogitRemote                Remote branches
 NeogitObjectId              Object's SHA hash
 NeogitStash                 Stash name
 NeogitFold                  Folded text highlight
