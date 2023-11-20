@@ -438,4 +438,48 @@ function M.verify_commit(commit)
   return cli["verify-commit"].args(commit).call_sync_ignoring_exit_code():trim().stderr
 end
 
+---@class CommitBranchInfo
+---@field branches table<string, string[]>  Mapping from (local) branch names to list of remotes where this branch is present (empty for local branches)
+---@field tags string[] List of tags placed on this commit
+
+--- Parse information of branches, tags and remotes from a given commit's ref output
+--- @param ref string comma separated list of branches, tags and remotes, e.g.:
+---   * "origin/main, main, origin/HEAD, tag: 1.2.3, fork/develop"
+--- @param remotes string[] list of remote names, e.g. by calling `require("neogit.lib.git.remote").list()`
+--- @return CommitBranchInfo
+function M.interprete(ref, remotes)
+  local parts = vim.split(ref, ", ")
+  local result = {
+    branches = {},
+    tags = {},
+  }
+  for _, part in ipairs(parts) do
+    if part:match("^tag: .*") ~= nil then
+      local tag = part:gsub("tag: ", "")
+      table.insert(result.tags, tag)
+      -- No need to annotate tags with remotes, probably too cluttered
+      goto continue
+    end
+    local has_remote = false
+    for _, remote in ipairs(remotes) do
+      if part:match("^" .. remote .. "/") then
+        has_remote = true
+        local name = part:gsub("^" .. remote .. "/", "")
+        if name == "HEAD" then
+          goto continue
+        end
+        if result.branches[name] == nil then
+          result.branches[name] = {}
+        end
+        table.insert(result.branches[name], remote)
+      end
+    end
+    if not has_remote and result.branches[part] == nil then
+      result.branches[part] = {}
+    end
+    ::continue::
+  end
+  return result
+end
+
 return M
