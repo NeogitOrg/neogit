@@ -4,7 +4,7 @@ local M = {}
 
 local graph_error = "flog: internal error drawing graph"
 
--- styleua: ignore
+-- stylua: ignore start
 local current_commit_str        = "• "
 local commit_branch_str         = "│ "
 local commit_empty_str          = "  "
@@ -27,6 +27,7 @@ local merge_empty_str           = " "
 local missing_parent_str        = "┊ "
 local missing_parent_branch_str = "│ "
 local missing_parent_empty_str  = "  "
+-- stylua: ignore end
 
 function M.build(commits)
   commits = require("neogit.lib.util").filter_map(commits, function(item)
@@ -51,7 +52,6 @@ function M.build(commits)
 
   -- Draw graph
   for _, commit in ipairs(commits) do
-
     -- Get commit data
     local commit_hash = commit.oid
     local parents = vim.split(commit.parent, " ")
@@ -509,9 +509,9 @@ function M.build(commits)
   local graph = {}
   for _, line in ipairs(vim_out) do
     local g = {}
-    for _, c in ipairs(vim.split(line.text, "")) do
+    line.text:gsub(".", function(c)
       table.insert(g, { text = c, color = line.color, oid = line.oid })
-    end
+    end)
 
     table.insert(graph, g)
   end
