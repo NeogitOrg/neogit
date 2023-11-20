@@ -2,6 +2,7 @@ local status = require("neogit.status")
 local plenary_async = require("plenary.async")
 local git_harness = require("tests.util.git_harness")
 local util = require("tests.util.util")
+local remote = require("neogit.lib.git.remote")
 
 local subject = require("neogit.lib.git.log")
 
@@ -320,5 +321,74 @@ describe("lib.git.log.parse", function()
     for k, v in pairs(parsed_commit) do
       assert.are.same(v, expected[k])
     end
+  end)
+
+  it("lib.git.log.interprete extracts local branch name", function()
+    local remotes = remote.list()
+    assert.are.same({ branches = { main = {} }, tags = {} }, subject.interprete("main", remotes))
+    assert.are.same(
+      { branches = { main = {}, develop = {} }, tags = {} },
+      subject.interprete("main, develop", remotes)
+    )
+  end)
+
+  it("lib.git.log.interprete extracts local & remote branch names", function()
+    local remotes = { "origin" }
+    assert.are.same(
+      { branches = { main = { "origin" } }, tags = {} },
+      subject.interprete("origin/main", remotes)
+    )
+    assert.are.same(
+      { branches = { main = { "origin" }, develop = { "origin" } }, tags = {} },
+      subject.interprete("origin/main, origin/develop", remotes)
+    )
+    assert.are.same(
+      { branches = { main = { "origin" }, develop = { "origin" } }, tags = {} },
+      subject.interprete("origin/main, main, origin/develop", remotes)
+    )
+    assert.are.same(
+      { branches = { main = { "origin" }, develop = { "origin" }, foo = {} }, tags = {} },
+      subject.interprete("main, origin/main, origin/develop, develop, foo", remotes)
+    )
+  end)
+
+  it("lib.git.log.interprete can deal with multiple remotes", function()
+    local remotes = { "origin", "fork" }
+    assert.are.same(
+      { branches = { main = { "origin", "fork" } }, tags = {} },
+      subject.interprete("origin/main, main, fork/main", remotes)
+    )
+    assert.are.same(
+      { branches = { main = { "origin" }, develop = { "origin", "fork" }, foo = {} }, tags = {} },
+      subject.interprete("origin/main, develop, origin/develop, fork/develop, foo", remotes)
+    )
+  end)
+
+  it("lib.git.log.interprete can deal with slashes in branch names", function()
+    local remotes = { "origin" }
+    assert.are.same(
+      { branches = { ["feature/xyz"] = { "origin" }, ["foo/bar/baz"] = {} }, tags = {} },
+      subject.interprete("feature/xyz, foo/bar/baz, origin/feature/xyz", remotes)
+    )
+  end)
+
+  it("lib.git.log.interprete ignores HEAD references", function()
+    local remotes = { "origin", "fork" }
+    assert.are.same(
+      { branches = { main = { "origin", "fork" }, develop = {} }, tags = {} },
+      subject.interprete("origin/main, fork/main, develop, origin/HEAD, fork/HEAD", remotes)
+    )
+  end)
+
+  it("lib.git.log.interprete parses tags", function()
+    local remotes = { "origin" }
+    assert.are.same({
+      branches = {},
+      tags = { "0.1.0" },
+    }, subject.interprete("tag: 0.1.0", remotes))
+    assert.are.same({
+      branches = {},
+      tags = { "0.5.7", "foo-bar" },
+    }, subject.interprete("tag: 0.5.7, tag: foo-bar", remotes))
   end)
 end)
