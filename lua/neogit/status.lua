@@ -1041,7 +1041,7 @@ local function handle_section_item(item)
   notification.delete_all()
   M.status_buffer:close()
 
-  local relpath = vim.fn.fnamemodify(path, ":.")
+  local relpath = vim.fn.fnamemodify(path, ":."):gsub("([$])", "\\%1")
 
   if not vim.o.hidden and vim.bo.buftype == "" and not vim.bo.readonly and vim.fn.bufname() ~= "" then
     vim.cmd("update")
