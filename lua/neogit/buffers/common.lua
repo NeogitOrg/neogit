@@ -30,13 +30,13 @@ M.Diff = Component.new(function(diff)
     }
   end)
 
-  return col.tag("Diff") {
+  return col.tag("Diff")({
     text(string.format("%s %s", diff.kind, diff.file), { sign = "NeogitDiffHeader" }),
     col.tag("DiffContent") {
       col.tag("DiffInfo")(map(diff.info, text)),
       col.tag("HunkList")(map(hunk_props, M.Hunk)),
     },
-  }
+  }, { foldable = true })
 end)
 
 local HunkLine = Component.new(function(line)
@@ -54,10 +54,10 @@ local HunkLine = Component.new(function(line)
 end)
 
 M.Hunk = Component.new(function(props)
-  return col.tag("Hunk") {
+  return col.tag("Hunk")({
     text.sign("NeogitHunkHeader")(props.header),
     col.tag("HunkContent")(map(props.content, HunkLine)),
-  }
+  }, { foldable = true })
 end)
 
 M.List = Component.new(function(props)
