@@ -87,11 +87,9 @@ function M:show()
             text(" "),
             text.highlight("NeogitCommandTime")(stdio),
           },
-          col
-            .hidden(true)
-            .padding_left("  | ")
-            .highlight("NeogitCommandText")(map(is_err and item.stderr or item.stdout, text)),
-        }
+          col.padding_left("  | ")
+             .highlight("NeogitCommandText")(map(is_err and item.stderr or item.stdout, text)),
+        }, { foldable = true })
       end)
     end,
   }

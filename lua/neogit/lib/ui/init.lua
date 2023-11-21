@@ -24,9 +24,7 @@ end
 
 function Ui._print_component(indent, c, _options)
   local output = string.rep("  ", indent)
-  if c.options.hidden then
-    output = output .. "(H)"
-  elseif c.position then
+  if c.position then
     local text = ""
     if c.position.row_start == c.position.row_end then
       text = c.position.row_start
@@ -48,7 +46,7 @@ function Ui._print_component(indent, c, _options)
   end
 
   for k, v in pairs(c.options) do
-    if k ~= "tag" and k ~= "hidden" then
+    if k ~= "tag" then
       output = output .. " " .. k .. "=" .. tostring(v)
     end
   end
@@ -59,10 +57,7 @@ end
 function Ui._visualize_tree(indent, components, options)
   for _, c in ipairs(components) do
     Ui._print_component(indent, c, options)
-    if
-      (c.tag == "col" or c.tag == "row")
-      and not (options.collapse_hidden_components and c.options.hidden)
-    then
+    if c.tag == "col" or c.tag == "row" then
       Ui._visualize_tree(indent + 1, c.children, options)
     end
   end
@@ -70,18 +65,16 @@ end
 
 function Ui._find_component(components, f, options)
   for _, c in ipairs(components) do
-    if (options.include_hidden and c.options.hidden) or not c.options.hidden then
-      if c.tag == "col" or c.tag == "row" then
-        local res = Ui._find_component(c.children, f, options)
+    if c.tag == "col" or c.tag == "row" then
+      local res = Ui._find_component(c.children, f, options)
 
-        if res then
-          return res
-        end
+      if res then
+        return res
       end
+    end
 
-      if f(c) then
-        return c
-      end
+    if f(c) then
+      return c
     end
   end
 
@@ -89,7 +82,6 @@ function Ui._find_component(components, f, options)
 end
 
 ---@class FindOptions
----@field include_hidden boolean
 
 --- Finds a ui component in the buffer
 ---
@@ -286,12 +278,7 @@ function Ui:_render(first_line, first_col, parent, components, flags)
         self.buf:buffered_set_line(table.concat { c:get_padding_left(), c.value })
 
         if highlight then
-          self.buf:buffered_add_highlight(
-            curr_line - 1,
-            c.position.col_start,
-            c.position.col_end,
-            highlight
-          )
+          self.buf:buffered_add_highlight(curr_line - 1, c.position.col_start, c.position.col_end, highlight)
         end
 
         if sign then
@@ -324,7 +311,10 @@ function Ui:_render(first_line, first_col, parent, components, flags)
       c.position.row_end = curr_line - first_line
 
       if c.options.foldable then
-        self.buf:buffered_create_fold(c.position.row_start, c.position.row_end)
+        self.buf:buffered_create_fold(
+          #self.buf.line_buffer - (c.position.row_end - c.position.row_start),
+          #self.buf.line_buffer
+        )
       end
     end
   end
