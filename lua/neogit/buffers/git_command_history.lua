@@ -77,7 +77,7 @@ function M:show()
 
         local spacing = string.rep(" ", win_width - #code - #command - #time - #stdio - 6)
 
-        return col {
+        return col({
           row {
             text.highlight(highlight_code)(code),
             text(" "),
@@ -87,8 +87,9 @@ function M:show()
             text(" "),
             text.highlight("NeogitCommandTime")(stdio),
           },
-          col.padding_left("  | ")
-             .highlight("NeogitCommandText")(map(is_err and item.stderr or item.stdout, text)),
+          col
+            .padding_left("  | ")
+            .highlight("NeogitCommandText")(map(is_err and item.stderr or item.stdout, text)),
         }, { foldable = true })
       end)
     end,
