@@ -444,7 +444,7 @@ function Buffer.create(config)
   buffer:set_option("buftype", config.buftype or "nofile")
   buffer:set_option("swapfile", false)
 
-  buffer:set_option("foldenable", true)
+  vim.opt_local.foldenable = true
   buffer:set_option("foldmethod", "manual")
   buffer:set_option("foldlevel", 99)
   buffer:set_option("foldminlines", 0)
