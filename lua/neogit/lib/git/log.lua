@@ -447,7 +447,7 @@ end
 ---   * "origin/main, main, origin/HEAD, tag: 1.2.3, fork/develop"
 --- @param remotes string[] list of remote names, e.g. by calling `require("neogit.lib.git.remote").list()`
 --- @return CommitBranchInfo
-function M.interprete(ref, remotes)
+function M.branch_info(ref, remotes)
   local parts = vim.split(ref, ", ")
   local result = {
     branches = {},

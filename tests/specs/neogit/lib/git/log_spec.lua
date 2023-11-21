@@ -323,72 +323,72 @@ describe("lib.git.log.parse", function()
     end
   end)
 
-  it("lib.git.log.interprete extracts local branch name", function()
+  it("lib.git.log.branch_info extracts local branch name", function()
     local remotes = remote.list()
-    assert.are.same({ branches = { main = {} }, tags = {} }, subject.interprete("main", remotes))
+    assert.are.same({ branches = { main = {} }, tags = {} }, subject.branch_info("main", remotes))
     assert.are.same(
       { branches = { main = {}, develop = {} }, tags = {} },
-      subject.interprete("main, develop", remotes)
+      subject.branch_info("main, develop", remotes)
     )
   end)
 
-  it("lib.git.log.interprete extracts local & remote branch names", function()
+  it("lib.git.log.branch_info extracts local & remote branch names", function()
     local remotes = { "origin" }
     assert.are.same(
       { branches = { main = { "origin" } }, tags = {} },
-      subject.interprete("origin/main", remotes)
+      subject.branch_info("origin/main", remotes)
     )
     assert.are.same(
       { branches = { main = { "origin" }, develop = { "origin" } }, tags = {} },
-      subject.interprete("origin/main, origin/develop", remotes)
+      subject.branch_info("origin/main, origin/develop", remotes)
     )
     assert.are.same(
       { branches = { main = { "origin" }, develop = { "origin" } }, tags = {} },
-      subject.interprete("origin/main, main, origin/develop", remotes)
+      subject.branch_info("origin/main, main, origin/develop", remotes)
     )
     assert.are.same(
       { branches = { main = { "origin" }, develop = { "origin" }, foo = {} }, tags = {} },
-      subject.interprete("main, origin/main, origin/develop, develop, foo", remotes)
+      subject.branch_info("main, origin/main, origin/develop, develop, foo", remotes)
     )
   end)
 
-  it("lib.git.log.interprete can deal with multiple remotes", function()
+  it("lib.git.log.branch_info can deal with multiple remotes", function()
     local remotes = { "origin", "fork" }
     assert.are.same(
       { branches = { main = { "origin", "fork" } }, tags = {} },
-      subject.interprete("origin/main, main, fork/main", remotes)
+      subject.branch_info("origin/main, main, fork/main", remotes)
     )
     assert.are.same(
       { branches = { main = { "origin" }, develop = { "origin", "fork" }, foo = {} }, tags = {} },
-      subject.interprete("origin/main, develop, origin/develop, fork/develop, foo", remotes)
+      subject.branch_info("origin/main, develop, origin/develop, fork/develop, foo", remotes)
     )
   end)
 
-  it("lib.git.log.interprete can deal with slashes in branch names", function()
+  it("lib.git.log.branch_info can deal with slashes in branch names", function()
     local remotes = { "origin" }
     assert.are.same(
       { branches = { ["feature/xyz"] = { "origin" }, ["foo/bar/baz"] = {} }, tags = {} },
-      subject.interprete("feature/xyz, foo/bar/baz, origin/feature/xyz", remotes)
+      subject.branch_info("feature/xyz, foo/bar/baz, origin/feature/xyz", remotes)
     )
   end)
 
-  it("lib.git.log.interprete ignores HEAD references", function()
+  it("lib.git.log.branch_info ignores HEAD references", function()
     local remotes = { "origin", "fork" }
     assert.are.same(
       { branches = { main = { "origin", "fork" }, develop = {} }, tags = {} },
-      subject.interprete("origin/main, fork/main, develop, origin/HEAD, fork/HEAD", remotes)
+      subject.branch_info("origin/main, fork/main, develop, origin/HEAD, fork/HEAD", remotes)
     )
   end)
 
-  it("lib.git.log.interprete parses tags", function()
+  it("lib.git.log.branch_info parses tags", function()
     local remotes = { "origin" }
     assert.are.same({
       branches = {},
       tags = { "0.1.0" },
-    }, subject.interprete("tag: 0.1.0", remotes))
+    }, subject.branch_info("tag: 0.1.0", remotes))
     assert.are.same({
       branches = {},
       tags = { "0.5.7", "foo-bar" },
-    }, subject.interprete("tag: 0.5.7, tag: foo-bar", remotes))
+    }, subject.branch_info("tag: 0.5.7, tag: foo-bar", remotes))
   end)
 end)

@@ -118,7 +118,7 @@ M.CommitEntry = Component.new(function(commit, args)
     local is_head = string.match(commit.ref_name, "HEAD %->") ~= nil
     local branch_highlight = is_head and "NeogitBranchHead" or "NeogitBranch"
 
-    local items = log.interprete(ref_name, remote.list())
+    local items = log.branch_info(ref_name, remote.list())
     for branch, remotes in pairs(items.branches) do
       if #remotes == 1 then
         table.insert(ref, text(remotes[1] .. "/", { highlight = "NeogitRemote" }))
