@@ -133,7 +133,7 @@ function M:open()
           vim.cmd("normal! zz")
         end,
         ["<tab>"] = function()
-          vim.cmd("normal! za")
+          pcall(vim.cmd, "normal! za")
         end,
         ["d"] = function()
           if not config.check_integration("diffview") then
