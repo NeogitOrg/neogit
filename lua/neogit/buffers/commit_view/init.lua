@@ -180,6 +180,9 @@ function M:open()
     render = function()
       return ui.CommitView(self.commit_info, self.commit_overview, self.commit_signature)
     end,
+    after = function()
+      vim.cmd("normal! zR")
+    end,
   }
 end
 
