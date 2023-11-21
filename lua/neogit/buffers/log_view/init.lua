@@ -110,49 +110,30 @@ function M:open()
         ["<enter>"] = function()
           CommitViewBuffer.new(self.buffer.ui:get_commit_under_cursor()):open()
         end,
-        ["<c-k>"] = function(buffer)
-          local stack = self.buffer.ui:get_component_stack_under_cursor()
-          local c = stack[#stack]
-          c.children[2].options.hidden = true
+        ["<c-k>"] = function()
+          vim.cmd("normal! zc")
 
-          local t_idx = math.max(c.index - 1, 1)
-          local target = c.parent.children[t_idx]
-          while not target.children[2] do
-            t_idx = t_idx - 1
-            target = c.parent.children[t_idx]
+          vim.cmd("normal! k")
+          while vim.fn.foldlevel(".") == 0 do
+            vim.cmd("normal! k")
           end
 
-          target.children[2].options.hidden = false
-
-          buffer.ui:update()
-          self.buffer:move_cursor(target.position.row_start)
+          vim.cmd("normal! zo")
+          vim.cmd("normal! zz")
         end,
-        ["<c-j>"] = function(buffer)
-          local stack = self.buffer.ui:get_component_stack_under_cursor()
-          local c = stack[#stack]
-          c.children[2].options.hidden = true
+        ["<c-j>"] = function()
+          vim.cmd("normal! zc")
 
-          local t_idx = math.min(c.index + 1, #c.parent.children)
-          local target = c.parent.children[t_idx]
-          while not target.children[2] do
-            t_idx = t_idx + 1
-            target = c.parent.children[t_idx]
+          vim.cmd("normal! j")
+          while vim.fn.foldlevel(".") == 0 do
+            vim.cmd("normal! j")
           end
 
-          target.children[2].options.hidden = false
-
-          buffer.ui:update()
-          buffer:move_cursor(target.position.row_start)
+          vim.cmd("normal! zo")
           vim.cmd("normal! zz")
         end,
         ["<tab>"] = function()
-          local stack = self.buffer.ui:get_component_stack_under_cursor()
-          local c = stack[#stack]
-
-          if c.children[2] then
-            c.children[2]:toggle_hidden()
-            self.buffer.ui:update()
-          end
+          vim.cmd("normal! za")
         end,
         ["d"] = function()
           if not config.check_integration("diffview") then
