@@ -42,6 +42,7 @@ function M.fold_text()
 end
 
 function M.setup()
+  -- selene: allow(global_usage)
   _G.NeogitBufferFoldText = M.fold_text
 end
 
