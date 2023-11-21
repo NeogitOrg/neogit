@@ -1,8 +1,7 @@
 local Ui = require("neogit.lib.ui")
 local Component = require("neogit.lib.ui.component")
 local util = require("neogit.lib.util")
-local log = require("neogit.lib.git.log")
-local remote = require("neogit.lib.git.remote")
+local git = require("neogit.lib.git")
 
 local text = Ui.text
 local col = Ui.col
@@ -118,7 +117,7 @@ M.CommitEntry = Component.new(function(commit, args)
     local is_head = string.match(commit.ref_name, "HEAD %->") ~= nil
     local branch_highlight = is_head and "NeogitBranchHead" or "NeogitBranch"
 
-    local items = log.branch_info(ref_name, remote.list())
+    local items = git.log.branch_info(ref_name, git.remote.list())
     for branch, remotes in pairs(items.branches) do
       if #remotes == 1 then
         table.insert(ref, text(remotes[1] .. "/", { highlight = "NeogitRemote" }))
