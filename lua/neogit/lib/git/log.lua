@@ -439,7 +439,8 @@ function M.verify_commit(commit)
 end
 
 ---@class CommitBranchInfo
----@field branches table<string, string[]>  Mapping from (local) branch names to list of remotes where this branch is present (empty for local branches)
+---@field untracked string[] List of local branches on without any remote counterparts
+---@field tracked table<string, string[]>  Mapping from (local) branch names to list of remotes where this branch is present
 ---@field tags string[] List of tags placed on this commit
 
 --- Parse information of branches, tags and remotes from a given commit's ref output
@@ -450,9 +451,11 @@ end
 function M.branch_info(ref, remotes)
   local parts = vim.split(ref, ", ")
   local result = {
-    branches = {},
+    untracked = {},
+    tracked = {},
     tags = {},
   }
+  local untracked = {}
   for _, part in ipairs(parts) do
     local skip = false
     if part:match("^tag: .*") ~= nil then
@@ -470,16 +473,22 @@ function M.branch_info(ref, remotes)
           if name == "HEAD" then
             skip = true
           else
-            if result.branches[name] == nil then
-              result.branches[name] = {}
+            if result.tracked[name] == nil then
+              result.tracked[name] = {}
             end
-            table.insert(result.branches[name], remote)
+            table.insert(result.tracked[name], remote)
           end
         end
       end
     end
-    if not skip and not has_remote and result.branches[part] == nil then
-      result.branches[part] = {}
+    -- if not skip and not has_remote and result.tracked[part] == nil then
+    if not skip and not has_remote then
+      table.insert(untracked, part)
+    end
+  end
+  for _, branch in ipairs(untracked) do
+    if result.tracked[branch] == nil then
+      table.insert(result.untracked, branch)
     end
   end
   return result
