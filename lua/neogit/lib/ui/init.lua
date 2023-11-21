@@ -194,67 +194,65 @@ function Ui:_render(first_line, first_col, parent, components, flags)
       c.parent = parent
       c.index = i
 
-      if not c.options.hidden then
-        c.position = {}
-        c.position.row_start = curr_line - first_line + 1
+      c.position = {}
+      c.position.row_start = curr_line - first_line + 1
 
-        local highlight = c:get_highlight()
+      local highlight = c:get_highlight()
 
-        if c.tag == "text" then
-          local padding_left = flags.in_nested_row and "" or c:get_padding_left(i == 1)
-          table.insert(text, 1, padding_left)
+      if c.tag == "text" then
+        local padding_left = flags.in_nested_row and "" or c:get_padding_left(i == 1)
+        table.insert(text, 1, padding_left)
 
-          col_start = col_start + #padding_left
-          col_end = col_start + c:get_width()
-          c.position.col_start = col_start
-          c.position.col_end = col_end - 1
+        col_start = col_start + #padding_left
+        col_end = col_start + c:get_width()
+        c.position.col_start = col_start
+        c.position.col_end = col_end - 1
 
-          if c.options.align_right then
-            table.insert(text, c.value)
-            table.insert(text, (" "):rep(c.options.align_right - #c.value))
-          else
-            table.insert(text, c.value)
-          end
-
-          if highlight then
-            table.insert(highlights, {
-              from = col_start,
-              to = col_end,
-              name = highlight,
-            })
-          end
-
-          col_start = col_end
-        elseif c.tag == "row" then
-          flags.in_nested_row = true
-
-          local padding_left = flags.in_nested_row and "" or c:get_padding_left(i == 1)
-          local res = self:_render(curr_line, col_start, c, c.children, flags)
-
-          flags.in_nested_row = false
-
-          if c.position.col_end then
-            c.position.col_end = c.position.col_end + #padding_left
-          end
-
-          table.insert(text, padding_left)
-          table.insert(text, res.text)
-
-          for _, h in ipairs(res.highlights) do
-            h.to = h.to + #padding_left
-            table.insert(highlights, h)
-          end
-
-          col_end = col_start + vim.fn.strdisplaywidth(res.text)
-          c.position.col_start = col_start
-          c.position.col_end = col_end
-          col_start = col_end
+        if c.options.align_right then
+          table.insert(text, c.value)
+          table.insert(text, (" "):rep(c.options.align_right - #c.value))
         else
-          error("The row component does not support having a `" .. c.tag .. "` as child")
+          table.insert(text, c.value)
         end
 
-        c.position.row_end = c.position.row_start
+        if highlight then
+          table.insert(highlights, {
+            from = col_start,
+            to = col_end,
+            name = highlight,
+          })
+        end
+
+        col_start = col_end
+      elseif c.tag == "row" then
+        flags.in_nested_row = true
+
+        local padding_left = flags.in_nested_row and "" or c:get_padding_left(i == 1)
+        local res = self:_render(curr_line, col_start, c, c.children, flags)
+
+        flags.in_nested_row = false
+
+        if c.position.col_end then
+          c.position.col_end = c.position.col_end + #padding_left
+        end
+
+        table.insert(text, padding_left)
+        table.insert(text, res.text)
+
+        for _, h in ipairs(res.highlights) do
+          h.to = h.to + #padding_left
+          table.insert(highlights, h)
+        end
+
+        col_end = col_start + vim.fn.strdisplaywidth(res.text)
+        c.position.col_start = col_start
+        c.position.col_end = col_end
+        col_start = col_end
+      else
+        error("The row component does not support having a `" .. c.tag .. "` as child")
       end
+
+      c.position.row_end = c.position.row_start
     end
 
     if flags.in_nested_row then
@@ -264,82 +262,69 @@ function Ui:_render(first_line, first_col, parent, components, flags)
       }
     end
 
-    if not flags.hidden then
-      self.buf:buffered_set_line(table.concat(text))
+    self.buf:buffered_set_line(table.concat(text))
 
-      for _, h in ipairs(highlights) do
-        self.buf:buffered_add_highlight(curr_line - 1, h.from, h.to, h.name)
-      end
-
-      curr_line = curr_line + 1
+    for _, h in ipairs(highlights) do
+      self.buf:buffered_add_highlight(curr_line - 1, h.from, h.to, h.name)
     end
+
+    curr_line = curr_line + 1
   else
     for i, c in ipairs(components) do
       c.parent = parent
       c.index = i
 
-      if not c.options.hidden then
-        c.position = {}
-        c.position.row_start = curr_line - first_line + 1
-        c.position.col_start = 0
-        c.position.col_end = -1
-        local sign = c:get_sign()
-        local highlight = c:get_highlight()
+      c.position = {}
+      c.position.row_start = curr_line - first_line + 1
+      c.position.col_start = 0
+      c.position.col_end = -1
 
-        if c.tag == "text" then
-          if not flags.hidden then
-            self.buf:buffered_set_line(table.concat { c:get_padding_left(), c.value })
+      local sign = c:get_sign()
+      local highlight = c:get_highlight()
 
-            if highlight then
-              self.buf:buffered_add_highlight(
-                curr_line - 1,
-                c.position.col_start,
-                c.position.col_end,
-                highlight
-              )
-            end
+      if c.tag == "text" then
+        self.buf:buffered_set_line(table.concat { c:get_padding_left(), c.value })
 
-            if sign then
-              self.buf:buffered_place_sign(curr_line, sign, "hl")
-            end
-
-            curr_line = curr_line + 1
-          end
-        elseif c.tag == "col" then
-          curr_line = curr_line + self:_render(curr_line, 0, c, c.children, flags)
-        elseif c.tag == "row" then
-          flags.in_row = true
-          curr_line = curr_line + self:_render(curr_line, 0, c, c.children, flags)
-
-          if not flags.hidden and sign then
-            self.buf:buffered_place_sign(curr_line - 1, sign, "hl")
-          end
-
-          if not flags.hidden and c.options.virtual_text then
-            local ns = self.buf:create_namespace("NeogitBufferVirtualText")
-            self.buf:buffered_set_extmark(ns, curr_line - 2, 0, {
-              hl_mode = "combine",
-              virt_text = c.options.virtual_text,
-              virt_text_pos = "right_align",
-            })
-          end
-
-          flags.in_row = false
+        if highlight then
+          self.buf:buffered_add_highlight(
+            curr_line - 1,
+            c.position.col_start,
+            c.position.col_end,
+            highlight
+          )
         end
 
-        c.position.row_end = curr_line - first_line
-      else
-        flags.hidden = true
-
-        if c.tag == "col" then
-          self:_render(curr_line, 0, c, c.children, flags)
-        elseif c.tag == "row" then
-          flags.in_row = true
-          self:_render(curr_line, 0, c, c.children, flags)
-          flags.in_row = false
+        if sign then
+          self.buf:buffered_place_sign(curr_line, sign, "hl")
         end
 
-        flags.hidden = false
+        curr_line = curr_line + 1
+      elseif c.tag == "col" then
+        curr_line = curr_line + self:_render(curr_line, 0, c, c.children, flags)
+      elseif c.tag == "row" then
+        flags.in_row = true
+        curr_line = curr_line + self:_render(curr_line, 0, c, c.children, flags)
+
+        if sign then
+          self.buf:buffered_place_sign(curr_line - 1, sign, "hl")
+        end
+
+        if c.options.virtual_text then
+          local ns = self.buf:create_namespace("NeogitBufferVirtualText")
+          self.buf:buffered_set_extmark(ns, curr_line - 2, 0, {
+            hl_mode = "combine",
+            virt_text = c.options.virtual_text,
+            virt_text_pos = "right_align",
+          })
+        end
+
+        flags.in_row = false
+      end
+
+      c.position.row_end = curr_line - first_line
+
+      if c.options.foldable then
+        self.buf:buffered_create_fold(c.position.row_start, c.position.row_end)
       end
     end
   end
