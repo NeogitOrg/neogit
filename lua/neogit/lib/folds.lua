@@ -1,43 +1,44 @@
--- For Nightly, a function that constructs the fold text
 local M = {}
 
 function M.fold_text()
   local text = vim.fn.getline(vim.v.foldstart)
+
+  if not vim.fn.has("nvim-0.10") == 1 then
+    return text
+  end
+
   local bufnr = vim.fn.bufnr()
   local ns = vim.api.nvim_get_namespaces()["neogit-buffer-" .. bufnr]
 
   local lnum = vim.v.foldstart - 1
-  local startRange = { lnum, 0 }
-  local endRange = { lnum, -1 }
+  local start_range = { lnum, 0 }
+  local end_range = { lnum, -1 }
 
-  local lastColEnd = 0
-  local hlRes = {}
-  local marks = vim.api.nvim_buf_get_extmarks(bufnr, ns, startRange, endRange, { details = true })
-  for i, m in ipairs(marks) do
-    local sc, details = m[3], m[4]
-    local ec = details.end_col or (sc + 1)
-    local hlGroup = details.hl_group
+  local last_col_end = 0
+  local res = {}
 
-    if hlGroup then
-      if sc > lastColEnd then
-        table.insert(hlRes, { text:sub(lastColEnd + 1, sc), "NeogitGraphWhite" })
+  local marks = vim.api.nvim_buf_get_extmarks(bufnr, ns, start_range, end_range, { details = true })
+
+  for _, m in ipairs(marks) do
+    local start_col, details = m[3], m[4]
+    local end_col = details.end_col or (start_col + 1)
+    local hl_group = details.hl_group
+
+    if hl_group then
+      if start_col > last_col_end then
+        table.insert(res, { text:sub(last_col_end + 1, start_col), "NeogitGraphWhite" })
       end
 
-      if i == 1 then
-        table.insert(hlRes, { text:sub(sc + 1, ec + 1), hlGroup })
-        lastColEnd = ec + 1
-      else
-        table.insert(hlRes, { text:sub(sc + 1, ec), hlGroup })
-        lastColEnd = ec
-      end
+      last_col_end = end_col
+      table.insert(res, { text:sub(start_col + 1, end_col), hl_group })
     end
   end
 
-  if #text > lastColEnd then
-    table.insert(hlRes, { text:sub(lastColEnd + 1, -1), "NeogitGraphWhite" })
+  if #text > last_col_end then
+    table.insert(res, { text:sub(last_col_end + 1, -1), "NeogitGraphWhite" })
   end
 
-  return hlRes
+  return res
 end
 
 function M.setup()
