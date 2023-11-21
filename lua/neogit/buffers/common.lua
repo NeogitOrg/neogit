@@ -1,3 +1,4 @@
+
 local Ui = require("neogit.lib.ui")
 local Component = require("neogit.lib.ui.component")
 local util = require("neogit.lib.util")
@@ -202,7 +203,7 @@ M.CommitEntry = Component.new(function(commit, args)
     }
   end
 
-  return col({
+  return col.tag("commit")({
     row(
       util.merge({
         text(commit.oid:sub(1, 7), {
@@ -222,11 +223,11 @@ M.CommitEntry = Component.new(function(commit, args)
       }
     ),
     details,
-  }, { oid = commit.oid })
+  }, { oid = commit.oid, foldable = args.details == true })
 end)
 
 M.CommitGraph = Component.new(function(commit, _)
-  return col.padding_left(8) { row(build_graph(commit.graph)) }
+  return col.tag("graph").padding_left(8) { row(build_graph(commit.graph)) }
 end)
 
 M.Grid = Component.new(function(props)
