@@ -117,8 +117,12 @@ M.CommitEntry = Component.new(function(commit, args)
     local is_head = string.match(commit.ref_name, "HEAD %->") ~= nil
     local branch_highlight = is_head and "NeogitBranchHead" or "NeogitBranch"
 
-    local items = git.log.branch_info(ref_name, git.remote.list())
-    for branch, remotes in pairs(items.branches) do
+    local info = git.log.branch_info(ref_name, git.remote.list())
+    for _, branch in ipairs(info.untracked) do
+      table.insert(ref, text(branch, { highlight = "NeogitBranch" }))
+      table.insert(ref, text(" "))
+    end
+    for branch, remotes in pairs(info.tracked) do
       if #remotes == 1 then
         table.insert(ref, text(remotes[1] .. "/", { highlight = "NeogitRemote" }))
       end
@@ -128,7 +132,7 @@ M.CommitEntry = Component.new(function(commit, args)
       table.insert(ref, text(branch, { highlight = branch_highlight }))
       table.insert(ref, text(" "))
     end
-    for _, tag in pairs(items.tags) do
+    for _, tag in pairs(info.tags) do
       table.insert(ref, text(tag, { highlight = "NeogitTagName" }))
       table.insert(ref, text(" "))
     end
