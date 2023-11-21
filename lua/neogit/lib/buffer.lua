@@ -446,7 +446,7 @@ function Buffer.create(config)
 
   buffer:set_option("foldenable", true)
   buffer:set_option("foldmethod", "manual")
-  buffer:set_option("foldlevel", 1)
+  buffer:set_option("foldlevel", 99)
   buffer:set_option("foldminlines", 0)
   buffer:set_option("foldtext", "v:lua.NeogitBufferFoldText()")
 

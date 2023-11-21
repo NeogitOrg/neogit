@@ -172,24 +172,8 @@ function M:open()
         ["q"] = function()
           self:close()
         end,
-        ["<F10>"] = function()
-          self.buffer.ui:print_layout_tree { collapse_hidden_components = true }
-        end,
         ["<tab>"] = function()
-          local c = self.buffer.ui:get_component_under_cursor()
-
-          if c then
-            local c = c.parent
-            if c.options.tag == "HunkContent" then
-              c = c.parent
-            end
-            if vim.tbl_contains({ "Diff", "Hunk" }, c.options.tag) then
-              local first, _ = c:row_range_abs()
-              c.children[2]:toggle_hidden()
-              self.buffer.ui:update()
-              api.nvim_win_set_cursor(0, { first, 0 })
-            end
-          end
+          pcall(vim.cmd, "normal! za")
         end,
       },
     },

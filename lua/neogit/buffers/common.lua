@@ -1,4 +1,3 @@
-
 local Ui = require("neogit.lib.ui")
 local Component = require("neogit.lib.ui.component")
 local util = require("neogit.lib.util")
@@ -156,7 +155,7 @@ M.CommitEntry = Component.new(function(commit, args)
 
   local details
   if args.details then
-    details = col.hidden(true).padding_left(8) {
+    details = col.padding_left(8) {
       row(util.merge(graph, {
         text(" "),
         text("Author:     ", { highlight = "NeogitGraphAuthor" }),
@@ -267,14 +266,6 @@ M.Grid = Component.new(function(props)
   for i = 1, #props.items do
     local children = {}
 
-    -- TODO: seems to be a leftover from when the grid was column major
-    -- if i ~= 1 then
-    --   children = map(range(props.gap), function()
-    --     return text("")
-    --   end)
-    -- end
-
-    -- current row
     local r = props.items[i]
 
     for j = 1, #r do
