@@ -46,14 +46,30 @@ function M:show()
         ["<esc>"] = function()
           self:close()
         end,
-        ["<tab>"] = function()
-          local stack = self.buffer.ui:get_component_stack_under_cursor()
-          local c = stack[#stack]
+        ["<c-k>"] = function()
+          vim.cmd("normal! zc")
 
-          if c then
-            c.children[2]:toggle_hidden()
-            self.buffer.ui:update()
+          vim.cmd("normal! k")
+          while vim.fn.foldlevel(".") == 0 do
+            vim.cmd("normal! k")
           end
+
+          vim.cmd("normal! zo")
+          vim.cmd("normal! zz")
+        end,
+        ["<c-j>"] = function()
+          vim.cmd("normal! zc")
+
+          vim.cmd("normal! j")
+          while vim.fn.foldlevel(".") == 0 do
+            vim.cmd("normal! j")
+          end
+
+          vim.cmd("normal! zo")
+          vim.cmd("normal! zz")
+        end,
+        ["<tab>"] = function()
+          pcall(vim.cmd, "normal! za")
         end,
       },
     },
