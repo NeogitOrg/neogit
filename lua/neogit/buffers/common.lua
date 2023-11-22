@@ -1,6 +1,7 @@
 local Ui = require("neogit.lib.ui")
 local Component = require("neogit.lib.ui.component")
 local util = require("neogit.lib.util")
+local git = require("neogit.lib.git")
 
 local text = Ui.text
 local col = Ui.col
@@ -113,37 +114,27 @@ M.CommitEntry = Component.new(function(commit, args)
   -- Parse out ref names
   if args.decorate and commit.ref_name ~= "" then
     local ref_name, _ = commit.ref_name:gsub("HEAD %-> ", "")
-    local remote_name, local_name = unpack(vim.split(ref_name, ", "))
-
-    -- Sometimes the log output will list remote/local names in reverse order
-    if (local_name and local_name:match("/")) and (remote_name and not remote_name:match("/")) then
-      remote_name, local_name = local_name, remote_name
-    end
-
     local is_head = string.match(commit.ref_name, "HEAD %->") ~= nil
     local branch_highlight = is_head and "NeogitBranchHead" or "NeogitBranch"
 
-    if local_name and remote_name and vim.endswith(remote_name, local_name) then
-      local remote = remote_name:match("^([^/]*)/.*$")
-      table.insert(ref, text(remote .. "/", { highlight = "NeogitRemote" }))
-      table.insert(ref, text(local_name, { highlight = branch_highlight }))
+    local info = git.log.branch_info(ref_name, git.remote.list())
+    for _, branch in ipairs(info.untracked) do
+      table.insert(ref, text(branch, { highlight = "NeogitBranch" }))
       table.insert(ref, text(" "))
-    else
-      if local_name then
-        table.insert(
-          ref,
-          text(local_name, { highlight = local_name:match("/") and "NeogitRemote" or branch_highlight })
-        )
-        table.insert(ref, text(" "))
+    end
+    for branch, remotes in pairs(info.tracked) do
+      if #remotes == 1 then
+        table.insert(ref, text(remotes[1] .. "/", { highlight = "NeogitRemote" }))
       end
-
-      if remote_name then
-        table.insert(
-          ref,
-          text(remote_name, { highlight = remote_name:match("/") and "NeogitRemote" or branch_highlight })
-        )
-        table.insert(ref, text(" "))
+      if #remotes > 1 then
+        table.insert(ref, text("{" .. table.concat(remotes, ",") .. "}/", { highlight = "NeogitRemote" }))
       end
+      table.insert(ref, text(branch, { highlight = branch_highlight }))
+      table.insert(ref, text(" "))
+    end
+    for _, tag in pairs(info.tags) do
+      table.insert(ref, text(tag, { highlight = "NeogitTagName" }))
+      table.insert(ref, text(" "))
     end
   end
 
