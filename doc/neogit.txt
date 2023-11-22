@@ -988,7 +988,7 @@ Actions:                                             *neogit_pull_popup_actions*
   • Pull into <current> from pushRemote                 *neogit_pull_pushRemote*
     Pulls into the current branch from `branch.<name>.pushRemote`. If that is
     unset, the user will be prompted to select a remote branch, which will
-    pulled from and used to set `branch.<name>.pushRemote.
+    pulled from and used to set `branch.<name>.pushRemote`.
 
   • Pull into <current> from @{upstream}                  *neogit_pull_upstream*
     Pulls into the current branch from it's upstream counterpart. If that is
