@@ -111,25 +111,33 @@ function M:open()
           CommitViewBuffer.new(self.buffer.ui:get_commit_under_cursor()):open()
         end,
         ["<c-k>"] = function()
-          vim.cmd("normal! zc")
+          pcall(vim.cmd, "normal! zc")
 
           vim.cmd("normal! k")
-          while vim.fn.foldlevel(".") == 0 do
+          for _ = vim.fn.line("."), 0, -1 do
+            if vim.fn.foldlevel(".") > 0 then
+              break
+            end
+
             vim.cmd("normal! k")
           end
 
-          vim.cmd("normal! zo")
+          pcall(vim.cmd, "normal! zo")
           vim.cmd("normal! zz")
         end,
         ["<c-j>"] = function()
-          vim.cmd("normal! zc")
+          pcall(vim.cmd, "normal! zc")
 
           vim.cmd("normal! j")
-          while vim.fn.foldlevel(".") == 0 do
+          for _ = vim.fn.line("."), vim.fn.line("$"), 1 do
+            if vim.fn.foldlevel(".") > 0 then
+              break
+            end
+
             vim.cmd("normal! j")
           end
 
-          vim.cmd("normal! zo")
+          pcall(vim.cmd, "normal! zo")
           vim.cmd("normal! zz")
         end,
         ["<tab>"] = function()
