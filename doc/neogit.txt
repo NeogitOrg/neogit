@@ -945,7 +945,62 @@ Remote:
 ==============================================================================
 Pull Popup                                                   *neogit_pull_popup*
 
-(TODO)
+Variables:                                         *neogit_pull_popup_variables*
+  • branch.<name>.rebase
+    When true, rebase the branch <name> on top of the fetched branch, instead
+    of merging the default branch from the default remote when "git pull" is
+    run. See "pull.rebase" for doing this in a non branch-specific manner.
+
+Arguments:                                              *neogit_pull_popup_args*
+  • --ff-only
+    Only update to the new history if there is no divergent local history.
+    This is the default when no method for reconciling divergent histories is
+    provided (via the --rebase=* flags).
+
+  • --rebase
+    When enabled, rebase the current branch on top of the upstream branch
+    after fetching. If there is a remote-tracking branch corresponding to the
+    upstream branch and the upstream branch was rebased since last fetched,
+    the rebase uses that information to avoid rebasing non-local changes.
+
+    See pull.rebase, branch.<name>.rebase and branch.autoSetupRebase if you 
+    want to make git pull always use --rebase instead of merging.
+
+    Note:
+    This is a potentially dangerous mode of operation. It rewrites history,
+    which does not bode well when you published that history already. Do not
+    use this option unless you understand the consequences.
+
+  • --autostash
+    Automatically create a temporary stash entry before the operation begins,
+    record it in the special ref MERGE_AUTOSTASH and apply it after the
+    operation ends. This means that you can run the operation on a dirty
+    worktree. However, use with care: the final stash application after a
+    successful merge might result in non-trivial conflicts.
+
+  • --tags
+    Fetch all tags from the remote (i.e., fetch remote tags refs/tags/* into
+    local tags with the same name), in addition to whatever else would
+    otherwise be fetched.
+
+Actions:                                             *neogit_pull_popup_actions*
+  • Pull into <current> from pushRemote                 *neogit_pull_pushRemote*
+    Pulls into the current branch from `branch.<name>.pushRemote`. If that is
+    unset, the user will be prompted to select a remote branch, which will
+    pulled from and used to set `branch.<name>.pushRemote.
+
+  • Pull into <current> from @{upstream}                  *neogit_pull_upstream*
+    Pulls into the current branch from it's upstream counterpart. If that is
+    unset, the user will be prompted to select a remote branch, which will
+    pulled from and set as the upstream.
+
+  • Pull into <current> from elsewhere                   *neogit_pull_elsewhere*
+    Prompts the user to select a branch (local or remote), which is then
+    pulled in the current branch.
+
+  • Set Variables                                    *neogit_pull_set_variables*
+    Opens Branch Config popup for the current branch.
+    See |neogit_branch_config_popup|.
 
 ==============================================================================
 Push Popup                                                   *neogit_push_popup*
