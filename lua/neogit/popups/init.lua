@@ -1,5 +1,6 @@
-local util = require("neogit.lib.util")
 local M = {}
+local git = require("neogit.lib.git")
+local util = require("neogit.lib.util")
 
 ---@param name string
 ---@param f nil|fun(create: fun(...)): any
@@ -18,14 +19,41 @@ function M.open(name, f)
       f(value.create)
     else
       local notification = require("neogit.lib.notification")
-      notification.create(string.format("Failed to load popup: %q\n%s", name, value), vim.log.levels.ERROR)
+      notification.error(string.format("Failed to load popup: %q\n%s", name, value))
     end
+  end
+end
+
+---@param name string
+---@return string|string[]
+---Returns the keymapping for a popup
+function M.mapping_for(name)
+  local mappings = require("neogit.config").get_reversed_popup_maps()
+
+  if mappings[name] then
+    return mappings[name]
+  else
+    return {}
   end
 end
 
 --- Returns an array useful for creating mappings for the available popups
 ---@return table<string, Mapping>
 function M.mappings_table()
+  ---@param commit CommitLogEntry|nil
+  ---@return string|nil
+  local function commit_oid(commit)
+    return commit and commit.oid
+  end
+
+  ---@param commits CommitLogEntry[]
+  ---@return string[]
+  local function map_commits(commits)
+    return vim.tbl_map(function(v)
+      return v.oid
+    end, commits)
+  end
+
   return {
     { "HelpPopup", "Help", M.open("help") },
     { "DiffPopup", "Diff", M.open("diff") },
@@ -34,18 +62,44 @@ function M.mappings_table()
       "RebasePopup",
       "Rebase",
       M.open("rebase", function(f)
-        local commit = require("neogit.status").get_selected_commits()[1]
-        f { commit = commit and commit.oid }
+        f { commit = commit_oid(require("neogit.status").get_selection().commit) }
       end),
     },
     { "MergePopup", "Merge", M.open("merge") },
-    { "PushPopup", "Push", M.open("push") },
+    {
+      "PushPopup",
+      "Push",
+      M.open("push", function(f)
+        f { commit = commit_oid(require("neogit.status").get_selection().commit) }
+      end),
+    },
     {
       "CommitPopup",
       "Commit",
       M.open("commit", function(f)
-        local commit = require("neogit.status").get_selected_commits()[1]
-        f { commit = commit and commit.oid }
+        f { commit = commit_oid(require("neogit.status").get_selection().commit) }
+      end),
+    },
+    {
+      "IgnorePopup",
+      "Ignore",
+      {
+        "nv",
+        M.open("ignore", function(f)
+          f {
+            paths = util.filter_map(require("neogit.status").get_selection().items, function(v)
+              return v.absolute_path
+            end),
+            git_root = git.repo.git_root,
+          }
+        end),
+      },
+    },
+    {
+      "TagPopup",
+      "Tag",
+      M.open("tag", function(f)
+        f { commit = commit_oid(require("neogit.status").get_selection().commit) }
       end),
     },
     { "LogPopup", "Log", M.open("log") },
@@ -55,10 +109,7 @@ function M.mappings_table()
       {
         "nv",
         M.open("cherry_pick", function(f)
-          local commits = util.filter_map(require("neogit.status").get_selected_commits(), function(c)
-            return c.oid
-          end)
-          f { commits = util.reverse(commits) }
+          f { commits = util.reverse(map_commits(require("neogit.status").get_selection().commits)) }
         end),
       },
     },
@@ -68,10 +119,7 @@ function M.mappings_table()
       {
         "nv",
         M.open("branch", function(f)
-          local commits = util.filter_map(require("neogit.status").get_selected_commits(), function(c)
-            return c.oid
-          end)
-          f { revisions = commits }
+          f { commits = map_commits(require("neogit.status").get_selection().commits) }
         end),
       },
     },
@@ -82,8 +130,7 @@ function M.mappings_table()
       {
         "nv",
         M.open("reset", function(f)
-          local commit = require("neogit.status").get_selected_commits()[1]
-          f { commit = commit and commit.oid }
+          f { commit = commit_oid(require("neogit.status").get_selection().commit) }
         end),
       },
     },
@@ -93,10 +140,7 @@ function M.mappings_table()
       {
         "nv",
         M.open("revert", function(f)
-          local commits = util.filter_map(require("neogit.status").get_selected_commits(), function(c)
-            return c.oid
-          end)
-          f { commits = util.reverse(commits) }
+          f { commits = util.reverse(map_commits(require("neogit.status").get_selection().commits)) }
         end),
       },
     },

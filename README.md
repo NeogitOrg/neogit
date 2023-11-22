@@ -3,7 +3,7 @@
     <table>
         <tr>
             <td>
-               <strong>A <em>work-in-progress</em> <a href="https://magit.vc">Magit</a> clone for <a href="https://neovim.io">Neovim</a>.</strong>
+               <strong>A <a href="https://magit.vc">Magit</a> clone for <a href="https://neovim.io">Neovim</a>.</strong>
             </td>
         </tr>
     </table>
@@ -61,8 +61,6 @@ neogit.setup {
   disable_signs = false,
   -- Do not ask to confirm the commit - just do it when the buffer is closed.
   disable_commit_confirmation = false,
-  -- Uses `vim.notify` instead of the built-in notification system.
-  disable_builtin_notifications = false,
   -- Changes what mode the Commit Editor starts in. `true` will leave nvim in normal mode, `false` will change nvim to
   -- insert mode, and `"auto"` will change nvim to insert mode IF the commit message is empty, otherwise leaving it in
   -- normal mode.
@@ -72,6 +70,12 @@ neogit.setup {
   filewatcher = {
     interval = 1000,
     enabled = true,
+  },
+  -- Used to generate URL's for branch popup action "pull request".
+  git_services = {
+    ["github.com"] = "https://github.com/${owner}/${repository}/compare/${branch_name}?expand=1",
+    ["bitbucket.org"] = "https://bitbucket.org/${owner}/${repository}/pull-requests/new?source=${branch_name}&t=1",
+    ["gitlab.com"] = "https://gitlab.com/${owner}/${repository}/merge_requests/new?merge_request[source_branch]=${branch_name}",
   },
   -- Allows a different telescope sorter. Defaults to 'fuzzy_with_index_bias'. The example below will use the native fzf
   -- sorter instead. By default, this function returns `nil`.
@@ -90,6 +94,8 @@ neogit.setup {
     "NeogitCommitPopup--allow-empty",
     "NeogitRevertPopup--no-edit",
   },
+  -- Set to false if you want to be responsible for creating _ALL_ keymappings
+  use_default_keymaps = true,
   -- Neogit refreshes its internal state after specific events, which can be expensive depending on the repository size.
   -- Disabling `auto_refresh` will make it so you have to manually refresh the status after you open it.
   auto_refresh = true,
@@ -101,7 +107,7 @@ neogit.setup {
   -- Change the default way of opening neogit
   kind = "tab",
   -- Disable line numbers and relative line numbers
-  disable_line_numbers = true
+  disable_line_numbers = true,
   -- The time after which an output console is shown for slow running commands
   console_timeout = 2000,
   -- Automatically show console if a command takes more than console_timeout milliseconds
@@ -110,7 +116,7 @@ neogit.setup {
     recent_commit_count = 10,
   },
   commit_editor = {
-    kind = "split",
+    kind = "auto",
   },
   commit_select_view = {
     kind = "tab",
@@ -123,13 +129,16 @@ neogit.setup {
     kind = "tab",
   },
   rebase_editor = {
-    kind = "split",
+    kind = "auto",
   },
   reflog_view = {
     kind = "tab",
   },
   merge_editor = {
-    kind = "split",
+    kind = "auto",
+  },
+  tag_editor = {
+    kind = "auto",
   },
   preview_buffer = {
     kind = "split",
@@ -220,6 +229,23 @@ neogit.setup {
       ["<c-j>"] = "NOP",
     },
     -- Setting any of these to `false` will disable the mapping.
+    popup = {
+      ["?"] = "HelpPopup",
+      ["A"] = "CherryPickPopup",
+      ["D"] = "DiffPopup",
+      ["M"] = "RemotePopup",
+      ["P"] = "PushPopup",
+      ["X"] = "ResetPopup",
+      ["Z"] = "StashPopup",
+      ["b"] = "BranchPopup",
+      ["c"] = "CommitPopup",
+      ["f"] = "FetchPopup",
+      ["l"] = "LogPopup",
+      ["m"] = "MergePopup",
+      ["p"] = "PullPopup",
+      ["r"] = "RebasePopup",
+      ["v"] = "RevertPopup",
+    },
     status = {
       ["q"] = "Close",
       ["I"] = "InitRepo",
@@ -242,21 +268,6 @@ neogit.setup {
       ["<c-v>"] = "VSplitOpen",
       ["<c-x>"] = "SplitOpen",
       ["<c-t>"] = "TabOpen",
-      ["?"] = "HelpPopup",
-      ["D"] = "DiffPopup",
-      ["p"] = "PullPopup",
-      ["r"] = "RebasePopup",
-      ["m"] = "MergePopup",
-      ["P"] = "PushPopup",
-      ["c"] = "CommitPopup",
-      ["l"] = "LogPopup",
-      ["v"] = "RevertPopup",
-      ["Z"] = "StashPopup",
-      ["A"] = "CherryPickPopup",
-      ["b"] = "BranchPopup",
-      ["f"] = "FetchPopup",
-      ["X"] = "ResetPopup",
-      ["M"] = "RemotePopup",
       ["{"] = "GoToPreviousHunkHeader",
       ["}"] = "GoToNextHunkHeader",
     },

@@ -1,4 +1,5 @@
 require("plenary.async").tests.add_to_env()
+local async = require("plenary.async")
 local eq = assert.are.same
 local operations = require("neogit.operations")
 local harness = require("tests.util.git_harness")
@@ -11,28 +12,31 @@ local lib = require("neogit.lib")
 local function act(normal_cmd)
   vim.fn.feedkeys(vim.api.nvim_replace_termcodes(normal_cmd, true, true, true))
   vim.fn.feedkeys("", "x") -- flush typeahead
-  status.wait_on_current_operation()
 end
 
 describe("remote popup", function()
   it(
     "can add remote",
     in_prepared_repo(function()
-      input.values = { "foo", "https://github.com/foo/bar" }
+      local remote_a = harness.prepare_repository()
+      local remote_b = harness.prepare_repository()
+      async.util.block_on(status.reset)
+
+      input.values = { "foo", remote_a }
       act("Ma")
 
       operations.wait("add_remote")
 
       eq({ "foo", "origin" }, lib.git.remote.list())
-      eq({ "https://github.com/foo/bar" }, lib.git.remote.get_url("foo"))
+      eq({ remote_a }, lib.git.remote.get_url("foo"))
 
-      input.values = { "other", "" }
+      input.values = { "other", remote_b }
       act("Ma")
 
       operations.wait("add_remote")
 
       eq({ "foo", "origin", "other" }, lib.git.remote.list())
-      eq({ "git@github.com:other/example.git" }, lib.git.remote.get_url("other"))
+      eq({ remote_b }, lib.git.remote.get_url("other"))
     end)
   )
 end)

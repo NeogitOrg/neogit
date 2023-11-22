@@ -30,8 +30,10 @@ local function telescope_mappings(on_select, allow_multi, refocus_status)
       for _, item in ipairs(picker:get_multi_selection()) do
         table.insert(selection, item[1])
       end
-    else
+    elseif action_state.get_selected_entry() ~= nil then
       table.insert(selection, action_state.get_selected_entry()[1])
+    else
+      table.insert(selection, picker:_get_prompt())
     end
 
     if not selection[1] or selection[1] == "" then
@@ -223,7 +225,8 @@ function Finder:find(on_select)
       end,
     }, function(item)
       vim.schedule(function()
-        on_select(item)
+        on_select(self.opts.allow_multi and { item } or item)
+
         if self.opts.refocus_status then
           refocus_status_buffer()
         end

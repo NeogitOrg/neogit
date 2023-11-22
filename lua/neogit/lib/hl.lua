@@ -107,6 +107,7 @@ function M.setup()
 
   -- stylua: ignore start
   hl_store = {
+    NeogitGraphAuthor = { fg = palette.orange },
     NeogitGraphRed = { fg = palette.red },
     NeogitGraphWhite = { fg = palette.white },
     NeogitGraphYellow = { fg = palette.yellow },
@@ -158,14 +159,12 @@ function M.setup()
     NeogitCommitViewHeader = { bg = palette.bg_cyan, fg = palette.bg0 },
     NeogitDiffHeader = { bg = palette.bg3, fg = palette.blue, bold = true },
     NeogitDiffHeaderHighlight = { bg = palette.bg3, fg = palette.orange, bold = true },
-    NeogitNotificationInfo = { link = "DiagnosticInfo" },
-    NeogitNotificationWarning = { link = "DiagnosticWarn" },
-    NeogitNotificationError = { link = "DiagnosticError" },
     NeogitCommandText = { link = "Comment" },
     NeogitCommandTime = { link = "Comment" },
     NeogitCommandCodeNormal = { link = "String" },
     NeogitCommandCodeError = { link = "Error" },
-    NeogitBranch = { fg = palette.orange, bold = true },
+    NeogitBranch = { fg = palette.blue, bold = true },
+    NeogitBranchHead = { fg = palette.blue, bold = true, underline = true },
     NeogitRemote = { fg = palette.green, bold = true },
     NeogitUnmergedInto = { fg = palette.bg_purple, bold = true },
     NeogitUnpushedTo = { fg = palette.bg_purple, bold = true },

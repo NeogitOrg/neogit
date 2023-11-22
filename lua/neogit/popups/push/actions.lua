@@ -1,7 +1,7 @@
 local a = require("plenary.async")
 local git = require("neogit.lib.git")
 local logger = require("neogit.logger")
-local notif = require("neogit.lib.notification")
+local notification = require("neogit.lib.notification")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
@@ -14,17 +14,22 @@ local function push_to(args, remote, branch, opts)
     table.insert(args, "--set-upstream")
   end
 
-  local name = remote .. "/" .. branch
+  local name
+  if branch then
+    name = remote .. "/" .. branch
+  else
+    name = remote
+  end
 
   logger.debug("Pushing to " .. name)
-  notif.create("Pushing to " .. name)
+  notification.info("Pushing to " .. name)
 
   local res = git.push.push_interactive(remote, branch, args)
 
   if res and res.code == 0 then
     a.util.scheduler()
-    logger.error("Pushed to " .. name)
-    notif.create("Pushed to " .. name)
+    logger.debug("Pushed to " .. name)
+    notification.info("Pushed to " .. name, { dismiss = true })
     vim.api.nvim_exec_autocmds("User", { pattern = "NeogitPushComplete", modeline = false })
   else
     logger.error("Failed to push to " .. name)
@@ -78,10 +83,11 @@ function M.push_other(popup)
   table.insert(sources, "HEAD")
   table.insert(sources, "ORIG_HEAD")
   table.insert(sources, "FETCH_HEAD")
+  if popup.state.env.commit then
+    table.insert(sources, 1, popup.state.env.commit)
+  end
 
-  local source = FuzzyFinderBuffer.new(sources):open_async {
-    prompt_prefix = "push > ",
-  }
+  local source = FuzzyFinderBuffer.new(sources):open_async { prompt_prefix = "push > " }
   if not source then
     return
   end
@@ -99,6 +105,21 @@ function M.push_other(popup)
 
   local remote, _ = destination:match("^([^/]*)/(.*)$")
   push_to(popup:get_arguments(), remote, source .. ":" .. destination)
+end
+
+function M.push_tags(popup)
+  local remotes = git.remote.list()
+
+  local remote
+  if #remotes == 1 then
+    remote = remotes[1]
+  else
+    remote = FuzzyFinderBuffer.new(remotes):open_async { prompt_prefix = "push tags to > " }
+  end
+
+  if remote then
+    push_to({ "--tags", unpack(popup:get_arguments()) }, remote)
+  end
 end
 
 function M.configure()

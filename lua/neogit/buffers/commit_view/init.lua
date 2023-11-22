@@ -5,6 +5,7 @@ local ui = require("neogit.buffers.commit_view.ui")
 local log = require("neogit.lib.git.log")
 local config = require("neogit.config")
 local popups = require("neogit.popups")
+local notification = require("neogit.lib.notification")
 
 local api = vim.api
 
@@ -42,11 +43,10 @@ local M = {
 --- @param notify boolean Should show a notification or not
 --- @return CommitViewBuffer
 function M.new(commit_id, notify)
-  local notification
   if notify then
-    local notif = require("neogit.lib.notification")
-    notification = notif.create("Parsing commit...")
+    notification.info("Parsing commit...")
   end
+
   local commit_info = log.parse(cli.show.format("fuller").args(commit_id).call_sync().stdout)[1]
   commit_info.commit_arg = commit_id
   local instance = {
@@ -59,9 +59,7 @@ function M.new(commit_id, notify)
     buffer = nil,
   }
 
-  if notification then
-    notification:delete()
-  end
+  notification.delete_all()
 
   setmetatable(instance, { __index = M })
 
@@ -147,22 +145,28 @@ function M:open()
             vim.cmd("normal! zt")
           end
         end,
-        ["A"] = popups.open("cherry_pick", function(p)
+        [popups.mapping_for("CherryPickPopup")] = popups.open("cherry_pick", function(p)
           p { commits = { self.commit_info.oid } }
         end),
-        ["b"] = popups.open("branch", function(p)
-          p { revisions = { self.commit_info.oid } }
-        end),
-        ["c"] = popups.open("commit", function(p)
-          p { commit = self.commit_info.oid }
-        end),
-        ["r"] = popups.open("rebase", function(p)
-          p { commit = self.commit_info.oid }
-        end),
-        ["v"] = popups.open("revert", function(p)
+        [popups.mapping_for("BranchPopup")] = popups.open("branch", function(p)
           p { commits = { self.commit_info.oid } }
         end),
-        ["X"] = popups.open("reset", function(p)
+        [popups.mapping_for("CommitPopup")] = popups.open("commit", function(p)
+          p { commit = self.commit_info.oid }
+        end),
+        [popups.mapping_for("PushPopup")] = popups.open("push", function(p)
+          p { commit = self.commit_info.oid }
+        end),
+        [popups.mapping_for("RebasePopup")] = popups.open("rebase", function(p)
+          p { commit = self.commit_info.oid }
+        end),
+        [popups.mapping_for("RevertPopup")] = popups.open("revert", function(p)
+          p { commits = { self.commit_info.oid } }
+        end),
+        [popups.mapping_for("ResetPopup")] = popups.open("reset", function(p)
+          p { commit = self.commit_info.oid }
+        end),
+        [popups.mapping_for("TagPopup")] = popups.open("tag", function(p)
           p { commit = self.commit_info.oid }
         end),
         ["q"] = function()

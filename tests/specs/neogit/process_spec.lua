@@ -1,6 +1,5 @@
 require("plenary.async").tests.add_to_env()
 local util = require("tests.util.util")
-local eq = assert.are.same
 
 local process = require("neogit.process")
 
@@ -38,42 +37,18 @@ describe("process execution", function()
   end)
 
   it("process input", function()
-    vim.fn.mkdir("tmp/", "p")
-    local p = process
-      .new({
-        cmd = { "rm", "tmp/output" },
-      })
-      :spawn_blocking()
+    local tmp_dir = util.create_temp_dir()
     local input = { "This is a line", "This is another line", "", "" }
-    local p = process.new {
-      cmd = { "tee", "tmp/output" },
-    }
+    local p = process.new { cmd = { "tee", tmp_dir .. "/output" } }
 
     p:spawn()
-
-    local expecting = {}
-    for _, v in ipairs(input) do
-      expecting[#expecting + 1] = v
-    end
-
-    print("Sending: ", vim.inspect(table.concat(expecting, "\n")))
     p:send(table.concat(input, "\n"))
     p:send("\04")
-
     p:close_stdin()
     p:wait()
 
-    print("Output:", vim.fn.system("cat tmp/output"))
-
-    local lines = {}
-    local result = process
-      .new({
-        cmd = { "cat", "tmp/output" },
-      })
-      :spawn_blocking(1000)
-
+    local result = process.new({ cmd = { "cat", tmp_dir .. "/output" } }):spawn_blocking(1000)
     assert(result)
-    print("Lines: ", vim.inspect(lines))
     assert.are.same(result.stdout, input)
   end)
   it("basic command trim", function()

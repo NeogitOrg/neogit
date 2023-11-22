@@ -74,34 +74,50 @@ function M.editor(target, client)
     editor.commit_editor(target, send_client_quit)
   elseif target:find("MERGE_MSG$") then
     editor.merge_editor(target, send_client_quit)
+  elseif target:find("TAG_EDITMSG$") then
+    editor.tag_editor(target, send_client_quit)
+  elseif target:find("EDIT_DESCRIPTION$") then
+    editor.description_editor(target, send_client_quit)
   else
-    local notif = require("neogit.lib.notification")
-    notif.create(target .. " has not been implemented yet", vim.log.levels.WARN)
+    local notification = require("neogit.lib.notification")
+    notification.warn(target .. " has not been implemented yet")
     send_client_quit()
   end
 end
 
+---@class NotifyMsg
+---@field setup string|nil Message to show before running
+---@field success string|nil Message to show when successful
+---@field fail string|nil Message to show when failed
+
+---@class WrapOpts
+---@field autocmd string
+---@field msg NotifyMsg
+
 ---@param cmd any
----@param opts table
+---@param opts WrapOpts
 function M.wrap(cmd, opts)
-  local notif = require("neogit.lib.notification")
+  local notification = require("neogit.lib.notification")
   local a = require("plenary.async")
 
   a.util.scheduler()
 
-  local notification = notif.create(opts.msg.setup, vim.log.levels.INFO, 9999)
+  if opts.msg.setup then
+    notification.info(opts.msg.setup)
+  end
   local result = cmd.env(M.get_envs_git_editor()):in_pty(true).call(true):trim()
 
   a.util.scheduler()
-  if notification then
-    notification:delete()
-  end
 
   if result.code == 0 then
-    notif.create(opts.msg.success)
+    if opts.msg.success then
+      notification.info(opts.msg.success, { dismiss = true })
+    end
     vim.api.nvim_exec_autocmds("User", { pattern = opts.autocmd, modeline = false })
   else
-    notif.create(opts.msg.fail)
+    if opts.msg.fail then
+      notification.warn(opts.msg.fail, { dismiss = true })
+    end
   end
 end
 

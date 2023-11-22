@@ -1,29 +1,35 @@
 local cli = require("neogit.lib.git.cli")
+local repo = require("neogit.lib.git.repository")
+local Path = require("plenary.path")
+
 local M = {}
 
 ---Generates a patch that can be applied to index
 ---@param item any
----@param hunk any
----@param from any
----@param to any
+---@param hunk Hunk
+---@param from number
+---@param to number
 ---@param reverse boolean|nil
 ---@return string
 function M.generate_patch(item, hunk, from, to, reverse)
   reverse = reverse or false
-  from = from or 1
-  to = to or hunk.diff_to - hunk.diff_from
 
+  if not from and not to then
+    from = hunk.diff_from + 1
+    to = hunk.diff_to
+  end
+
+  assert(from <= to, string.format("from must be less than or equal to to %d %d", from, to))
   if from > to then
     from, to = to, from
   end
-  from = from + hunk.diff_from
-  to = to + hunk.diff_from
 
   local diff_content = {}
   local len_start = hunk.index_len
   local len_offset = 0
 
   -- + 1 skips the hunk header, since we construct that manually afterwards
+  -- TODO: could use `hunk.lines` instead if this is only called with the `SelectedHunk` type
   for k = hunk.diff_from + 1, hunk.diff_to do
     local v = item.diff.lines[k]
     local operand, line = v:match("^([+ -])(.*)")
@@ -59,8 +65,14 @@ function M.generate_patch(item, hunk, from, to, reverse)
     1,
     string.format("@@ -%d,%d +%d,%d @@", hunk.index_from, len_start, hunk.index_from, len_start + len_offset)
   )
-  table.insert(diff_content, 1, string.format("+++ b/%s", item.name))
-  table.insert(diff_content, 1, string.format("--- a/%s", item.name))
+
+  local git_root = repo.git_root
+
+  assert(item.absolute_path, "Item is not a path")
+  local path = Path:new(item.absolute_path):make_relative(git_root)
+
+  table.insert(diff_content, 1, string.format("+++ b/%s", path))
+  table.insert(diff_content, 1, string.format("--- a/%s", path))
   table.insert(diff_content, "\n")
 
   return table.concat(diff_content, "\n")

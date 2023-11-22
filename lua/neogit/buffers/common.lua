@@ -1,6 +1,7 @@
 local Ui = require("neogit.lib.ui")
 local Component = require("neogit.lib.ui.component")
 local util = require("neogit.lib.util")
+local git = require("neogit.lib.git")
 
 local text = Ui.text
 local col = Ui.col
@@ -113,20 +114,27 @@ M.CommitEntry = Component.new(function(commit, args)
   -- Parse out ref names
   if args.decorate and commit.ref_name ~= "" then
     local ref_name, _ = commit.ref_name:gsub("HEAD %-> ", "")
-    local remote_name, local_name = unpack(vim.split(ref_name, ", "))
+    local is_head = string.match(commit.ref_name, "HEAD %->") ~= nil
+    local branch_highlight = is_head and "NeogitBranchHead" or "NeogitBranch"
 
-    if local_name then
-      table.insert(
-        ref,
-        text(local_name .. " ", { highlight = local_name:match("/") and "String" or "Macro" })
-      )
+    local info = git.log.branch_info(ref_name, git.remote.list())
+    for _, branch in ipairs(info.untracked) do
+      table.insert(ref, text(branch, { highlight = "NeogitBranch" }))
+      table.insert(ref, text(" "))
     end
-
-    if remote_name then
-      table.insert(
-        ref,
-        text(remote_name .. " ", { highlight = remote_name:match("/") and "String" or "Macro" })
-      )
+    for branch, remotes in pairs(info.tracked) do
+      if #remotes == 1 then
+        table.insert(ref, text(remotes[1] .. "/", { highlight = "NeogitRemote" }))
+      end
+      if #remotes > 1 then
+        table.insert(ref, text("{" .. table.concat(remotes, ",") .. "}/", { highlight = "NeogitRemote" }))
+      end
+      table.insert(ref, text(branch, { highlight = branch_highlight }))
+      table.insert(ref, text(" "))
+    end
+    for _, tag in pairs(info.tags) do
+      table.insert(ref, text(tag, { highlight = "NeogitTagName" }))
+      table.insert(ref, text(" "))
     end
   end
 
@@ -144,7 +152,7 @@ M.CommitEntry = Component.new(function(commit, args)
     details = col.hidden(true).padding_left(8) {
       row(util.merge(graph, {
         text(" "),
-        text("Author:     ", { highlight = "Comment" }),
+        text("Author:     ", { highlight = "NeogitGraphAuthor" }),
         text(commit.author_name),
         text(" <"),
         text(commit.author_email),
@@ -201,7 +209,7 @@ M.CommitEntry = Component.new(function(commit, args)
           { " ", "Constant" },
           {
             util.str_clamp(commit.author_name, 30 - (#commit.rel_date > 10 and #commit.rel_date or 10)),
-            "Constant",
+            "NeogitGraphAuthor",
           },
           { util.str_min_width(commit.rel_date, 10), "Special" },
         },

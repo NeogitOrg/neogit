@@ -82,8 +82,7 @@ function M.get_remote_branches(include_current)
 end
 
 function M.get_all_branches(include_current)
-  local branches = cli.branch.list(config.values.sort_branches).all.call_sync():trim().stdout
-  return parse_branches(branches, include_current)
+  return util.merge(M.get_local_branches(include_current), M.get_remote_branches(include_current))
 end
 
 function M.is_unmerged(branch, base)
@@ -177,10 +176,13 @@ end
 
 function M.set_pushRemote()
   local remotes = require("neogit.lib.git").remote.list()
+  local pushDefault = require("neogit.lib.git").config.get("remote.pushDefault")
 
   local pushRemote
   if #remotes == 1 then
     pushRemote = remotes[1]
+  elseif pushDefault:is_set() then
+    pushRemote = pushDefault:read()
   else
     pushRemote = FuzzyFinderBuffer.new(remotes):open_async { prompt_prefix = "set pushRemote > " }
   end

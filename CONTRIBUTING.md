@@ -53,12 +53,21 @@ Logging is a useful tool for inspecting what happens in the code and in what ord
 Export the environment variables `NEOGIT_LOG_CONSOLE="sync"` to enable logging, and `NEOGIT_LOG_LEVEL="debug"` for more
 verbose logging.
 
+
 ```lua
 local logger = require("neogit.logger")
 
 logger.fmt_info("This is a log message: %d", 2)
 logger.fmt_debug("This is a verbose log message: %q", status)
 ```
+
+If suitable, prefer to scope your logs using `[ SCOPE ]` to make it easier to find the source of a message, such as:
+
+`[ Status ]: not staging item in %s`,
+
+rather than:
+
+`Not staging item %s`.
 
 ## Code Standards
 

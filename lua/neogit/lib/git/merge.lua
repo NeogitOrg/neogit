@@ -1,5 +1,5 @@
 local client = require("neogit.client")
-local notif = require("neogit.lib.notification")
+local notification = require("neogit.lib.notification")
 local cli = require("neogit.lib.git.cli")
 local branch_lib = require("neogit.lib.git.branch")
 
@@ -16,9 +16,9 @@ function M.merge(branch, args)
   a.util.scheduler()
   local result = merge_command(cli.merge.args(branch).arg_list(args))
   if result.code ~= 0 then
-    notif.create("Merging failed. Resolve conflicts before continuing", vim.log.levels.ERROR)
+    notification.error("Merging failed. Resolve conflicts before continuing")
   else
-    notif.create("Merged '" .. branch .. "' into '" .. branch_lib.current() .. "'", vim.log.levels.INFO)
+    notification.info("Merged '" .. branch .. "' into '" .. branch_lib.current() .. "'")
   end
 end
 
@@ -31,20 +31,21 @@ function M.abort()
 end
 
 function M.update_merge_status(state)
-  if state.git_root == "" then
+  local repo = require("neogit.lib.git.repository")
+  if repo.git_root == "" then
     return
   end
 
   state.merge = { head = nil, msg = "", items = {} }
 
-  local merge_head = state.git_path("MERGE_HEAD")
+  local merge_head = repo:git_path("MERGE_HEAD")
   if not merge_head:exists() then
     return
   end
 
   state.merge.head = merge_head:read():match("([^\r\n]+)")
 
-  local message = state.git_path("MERGE_MSG")
+  local message = repo:git_path("MERGE_MSG")
   if message:exists() then
     state.merge.msg = message:read():match("([^\r\n]+)") -- we need \r? to support windows
   end

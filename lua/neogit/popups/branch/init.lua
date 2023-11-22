@@ -15,7 +15,9 @@ function M.create(env)
     .builder()
     :name("NeogitBranchPopup")
     :switch("r", "recurse-submodules", "Recurse submodules when checking out an existing branch")
-    :config_if(show_config, "d", "branch." .. current_branch .. ".description")
+    :config_if(show_config, "d", "branch." .. current_branch .. ".description", {
+      fn = config_actions.description_config(current_branch),
+    })
     :config_if(show_config, "u", "branch." .. current_branch .. ".merge", {
       fn = config_actions.merge_config(current_branch),
     })
@@ -47,7 +49,8 @@ function M.create(env)
     :action("m", "rename", actions.rename_branch)
     :action("X", "reset", actions.reset_branch)
     :action("D", "delete", actions.delete_branch)
-    :env({ revisions = env.revisions or {} })
+    :action_if(git.branch.upstream(), "o", "pull request", actions.open_pull_request)
+    :env(env)
     :build()
 
   p:show()

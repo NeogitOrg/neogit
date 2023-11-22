@@ -1,7 +1,7 @@
 local a = require("plenary.async")
 local git = require("neogit.lib.git")
 local logger = require("neogit.logger")
-local notif = require("neogit.lib.notification")
+local notification = require("neogit.lib.notification")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
@@ -16,14 +16,14 @@ local function pull_from(args, remote, branch, opts)
 
   local name = remote .. "/" .. branch
 
-  notif.create("Pulling from " .. name)
+  notification.info("Pulling from " .. name)
   logger.debug("Pulling from " .. name)
 
   local res = git.pull.pull_interactive(remote, branch, args)
 
   if res and res.code == 0 then
     a.util.scheduler()
-    notif.create("Pulled from " .. name)
+    notification.info("Pulled from " .. name, { dismiss = true })
     logger.debug("Pulled from " .. name)
     vim.api.nvim_exec_autocmds("User", { pattern = "NeogitPullComplete", modeline = false })
   else
@@ -62,7 +62,7 @@ function M.from_upstream(popup)
 end
 
 function M.from_elsewhere(popup)
-  local target = FuzzyFinderBuffer.new(git.branch.get_remote_branches())
+  local target = FuzzyFinderBuffer.new(git.branch.get_all_branches(false))
     :open_async { prompt_prefix = "pull > " }
   if not target then
     return
