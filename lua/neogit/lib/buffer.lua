@@ -445,8 +445,16 @@ function Buffer.create(config)
   if config.mappings then
     for mode, val in pairs(config.mappings) do
       for key, cb in pairs(val) do
-        buffer.mmanager.mappings[mode][key] = function()
-          cb(buffer)
+        if type(key) == "string" then
+          buffer.mmanager.mappings[mode][key] = function()
+            cb(buffer)
+          end
+        elseif type(key) == "table" then
+          for _, k in ipairs(key) do
+            buffer.mmanager.mappings[mode][k] = function()
+              cb(buffer)
+            end
+          end
         end
       end
     end
@@ -483,19 +491,13 @@ function Buffer.create(config)
   end
 
   buffer:call(function()
-    -- This sets fold styling for Neogit windows without overriding user styling
-    local hl = vim.wo.winhl
-    if hl ~= "" then
-      hl = hl .. ","
-    end
-    vim.wo.winhl = hl .. "Folded:NeogitFold"
+    -- Set fold styling for Neogit windows while preserving user styling
+    vim.opt_local.winhl:append("Folded:NeogitFold")
 
-    -- If signs are not disabled, avoid overrided by user settings
-    buffer:call(function()
-      if not config.disable_signs then
-        vim.wo.signcolumn = "auto"
-      end
-    end)
+    -- Set signcolumn unless disabled by user settings
+    if not config.disable_signs then
+      vim.opt_local.signcolumn = "auto"
+    end
   end)
 
   if config.context_highlight then

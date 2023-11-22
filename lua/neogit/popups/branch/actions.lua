@@ -72,7 +72,7 @@ M.checkout_branch_revision = operation("checkout_branch_revision", function(popu
 end)
 
 M.checkout_local_branch = operation("checkout_local_branch", function(popup)
-  local local_branches = git.branch.get_local_branches()
+  local local_branches = git.branch.get_local_branches(true)
   local remote_branches = util.filter_map(git.branch.get_remote_branches(), function(name)
     local branch_name = name:match([[%/(.*)$]])
     -- Remove remote branches that have a local branch by the same name
@@ -145,7 +145,7 @@ end)
 
 M.rename_branch = operation("rename_branch", function()
   local current_branch = git.repo.head.branch
-  local branches = git.branch.get_local_branches()
+  local branches = git.branch.get_local_branches(true)
   if current_branch then
     table.insert(branches, 1, current_branch)
   end
@@ -155,13 +155,15 @@ M.rename_branch = operation("rename_branch", function()
     return
   end
 
-  local new_name = input.get_user_input("new branch name > ")
+  local new_name = input.get_user_input("new branch name > ", selected_branch)
   if not new_name or new_name == "" then
     return
   end
 
   new_name, _ = new_name:gsub("%s", "-")
-  git.cli.branch.move.args(selected_branch, new_name).call_sync():trim()
+  git.cli.branch.move.args(selected_branch, new_name).call()
+
+  notification.info(string.format("Renamed '%s' to '%s'", selected_branch, new_name))
 end)
 
 M.reset_branch = operation("reset_branch", function()
@@ -252,23 +254,19 @@ M.delete_branch = operation("delete_branch", function()
   end
 end)
 
-local function parse_remote_info(url)
-  local repo, owner
-  if url:match("^https?://") or url:match("^ssh://") then
-    repo, owner, _ = unpack(util.reverse(vim.split(url, "/")))
-  else
-    owner, repo = unpack(vim.split(vim.split(url, ":")[2], "/"))
-  end
-
+local function parse_remote_info(service, url)
+  local _, _, owner, repo = string.find(url, service .. ".(.+)/(.+)")
   repo, _ = repo:gsub(".git$", "")
   return { repository = repo, owner = owner, branch_name = git.branch.current() }
 end
 
 M.open_pull_request = operation("open_pull_request", function()
-  local template
+  local template, service
   local url = git.remote.get_url(git.branch.upstream_remote())[1]
-  for service, v in pairs(config.values.git_services) do
-    if url:match(service) then
+
+  for s, v in pairs(config.values.git_services) do
+    if url:match(s) then
+      service = s
       template = v
       break
     end
@@ -276,7 +274,7 @@ M.open_pull_request = operation("open_pull_request", function()
 
   if template then
     if vim.ui.open then
-      vim.ui.open(util.format(template, parse_remote_info(url)))
+      vim.ui.open(util.format(template, parse_remote_info(service, url)))
     else
       notification.warn("Requires Neovim 0.10")
     end

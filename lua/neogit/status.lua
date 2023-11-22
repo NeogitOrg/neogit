@@ -14,6 +14,7 @@ local fs = require("neogit.lib.fs")
 local input = require("neogit.lib.input")
 local util = require("neogit.lib.util")
 local watcher = require("neogit.watcher")
+local operation = require("neogit.operations")
 
 local api = vim.api
 local fn = vim.fn
@@ -22,7 +23,6 @@ local M = {}
 
 M.disabled = false
 
-M.current_operation = nil
 M.prev_autochdir = nil
 M.status_buffer = nil
 M.commit_view = nil
@@ -537,7 +537,7 @@ local function refresh(which, reason)
   a.util.scheduler()
   local s, f, h = save_cursor_location()
 
-  if cli.git_root() ~= "" then
+  if cli.git_root_of_cwd() ~= "" then
     git.repo:refresh(which)
     refresh_status_buffer()
     vim.api.nvim_exec_autocmds("User", { pattern = "NeogitStatusRefreshed", modeline = false })
@@ -632,7 +632,9 @@ local function close(skip_close)
     M.status_buffer:close()
   end
 
-  M.watcher:stop()
+  if M.watcher then
+    M.watcher:stop()
+  end
   notification.delete_all()
   M.status_buffer = nil
   vim.o.autochdir = M.prev_autochdir
@@ -826,9 +828,7 @@ function M.get_selection()
   return setmetatable(res, Selection)
 end
 
-local stage = function()
-  M.current_operation = "stage"
-
+local stage = operation("stage", function()
   local selection = M.get_selection()
   local mode = vim.api.nvim_get_mode()
 
@@ -868,17 +868,15 @@ local stage = function()
     git.index.add(files)
   end
 
-  M.current_operation = nil
-
   refresh({
     status = true,
     diffs = vim.tbl_map(function(v)
       return "*:" .. v.name
     end, selection.items),
   }, "stage_finish")
-end
+end)
 
-local unstage = function()
+local unstage = operation("unstage", function()
   local selection = M.get_selection()
   local mode = vim.api.nvim_get_mode()
 
@@ -916,18 +914,18 @@ local unstage = function()
     git.status.unstage(files)
   end
 
-  M.current_operation = nil
-
   refresh({
     status = true,
     diffs = vim.tbl_map(function(v)
       return "*:" .. v.name
     end, selection.items),
   }, "unstage_finish")
-end
+end)
 
 local function discard_message(files, hunk_count)
-  if hunk_count > 0 then
+  if vim.api.nvim_get_mode() == "V" then
+    return "Discard selection?"
+  elseif hunk_count > 0 then
     return string.format("Discard %d hunks?", hunk_count)
   elseif #files > 1 then
     return string.format("Discard %d files?", #files)
@@ -936,9 +934,7 @@ local function discard_message(files, hunk_count)
   end
 end
 
-local function discard()
-  M.current_operation = "discard"
-
+local discard = operation("discard", function()
   local selection = M.get_selection()
   local mode = vim.api.nvim_get_mode()
 
@@ -981,7 +977,7 @@ local function discard()
         table.insert(t, function()
           if section_name == "untracked" then
             a.util.scheduler()
-            vim.fn.delete(cli.git_root() .. "/" .. item.name)
+            vim.fn.delete(git.repo.git_root .. "/" .. item.name)
           elseif section_name == "unstaged" then
             git.index.checkout { item.name }
           elseif section_name == "staged" then
@@ -1011,9 +1007,7 @@ local function discard()
 
   a.util.scheduler()
   vim.cmd("checktime")
-
-  M.current_operation = nil
-end
+end)
 
 local set_folds = function(to)
   Collection.new(M.locations):each(function(l)
@@ -1031,10 +1025,16 @@ local set_folds = function(to)
 end
 
 --- Handles the GoToFile action on sections that contain a hunk
----@param item StatusItem
+---@param item File
 ---@see section_has_hunks
 local function handle_section_item(item)
-  local path = item.name
+  local path = item.absolute_path
+
+  if not path then
+    notification.error("Cannot open file. No path found.")
+    return
+  end
+
   local cursor_row, cursor_col = unpack(vim.api.nvim_win_get_cursor(0))
 
   local hunk = M.get_item_hunks(item, cursor_row, cursor_row, false)[1]
@@ -1237,7 +1237,6 @@ local cmd_func_map = function()
       end
     end,
     ["GoToFile"] = a.void(function()
-      -- local repo_root = cli.git_root()
       a.util.scheduler()
       local section, item = get_current_section_item()
       if not section then
@@ -1417,8 +1416,9 @@ function M.create(kind, cwd)
 
       local mappings = buffer.mmanager.mappings
       local func_map = cmd_func_map()
+      local keys = vim.tbl_extend("error", config.values.mappings.status, config.values.mappings.popup)
 
-      for key, val in pairs(config.values.mappings.status) do
+      for key, val in pairs(keys) do
         if val and val ~= "" then
           local func = func_map[val]
 
@@ -1446,7 +1446,7 @@ function M.create(kind, cwd)
       refresh(true, "Buffer.create")
     end,
     after = function()
-      M.watcher = watcher.new(git.repo.git_path():absolute())
+      M.watcher = watcher.new(git.repo:git_path():absolute())
     end,
   }
 end
@@ -1471,12 +1471,6 @@ end
 
 function M.get_status()
   return M.status
-end
-
-function M.wait_on_current_operation(ms)
-  vim.wait(ms or 1000, function()
-    return not M.current_operation
-  end)
 end
 
 return M

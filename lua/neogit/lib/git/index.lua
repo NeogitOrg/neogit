@@ -1,4 +1,7 @@
 local cli = require("neogit.lib.git.cli")
+local repo = require("neogit.lib.git.repository")
+local Path = require("plenary.path")
+
 local M = {}
 
 ---Generates a patch that can be applied to index
@@ -62,8 +65,14 @@ function M.generate_patch(item, hunk, from, to, reverse)
     1,
     string.format("@@ -%d,%d +%d,%d @@", hunk.index_from, len_start, hunk.index_from, len_start + len_offset)
   )
-  table.insert(diff_content, 1, string.format("+++ b/%s", item.name))
-  table.insert(diff_content, 1, string.format("--- a/%s", item.name))
+
+  local git_root = repo.git_root
+
+  assert(item.absolute_path, "Item is not a path")
+  local path = Path:new(item.absolute_path):make_relative(git_root)
+
+  table.insert(diff_content, 1, string.format("+++ b/%s", path))
+  table.insert(diff_content, 1, string.format("--- a/%s", path))
   table.insert(diff_content, "\n")
 
   return table.concat(diff_content, "\n")

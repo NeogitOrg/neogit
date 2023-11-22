@@ -69,9 +69,9 @@ end
 ---@param cmd string[]
 ---@return string[]
 local function exec(cmd)
-  local result = vim.system(cmd, { text = true }):wait()
+  local output = vim.fn.system(cmd)
+  local lines = output and vim.split(output, "\n") or {}
 
-  local lines = vim.split(result.stdout, "\n")
   return lines
 end
 
@@ -133,5 +133,7 @@ function M.get_git_rev(rev)
   local lines = vim.split(result, "\n")
   return lines[3]
 end
+
+M.exec = exec
 
 return M

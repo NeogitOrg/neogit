@@ -42,50 +42,71 @@ function M:open()
     context_highlight = false,
     mappings = {
       v = {
-        ["A"] = popups.open("cherry_pick", function(p)
+        [popups.mapping_for("CherryPickPopup")] = popups.open("cherry_pick", function(p)
           p { commits = self.buffer.ui:get_commits_in_selection() }
         end),
-        ["b"] = popups.open("branch", function(p)
+        [popups.mapping_for("BranchPopup")] = popups.open("branch", function(p)
           p { commits = self.buffer.ui:get_commits_in_selection() }
         end),
-        ["c"] = popups.open("commit", function(p)
+        [popups.mapping_for("CommitPopup")] = popups.open("commit", function(p)
           p { commit = self.buffer.ui:get_commit_under_cursor() }
         end),
-        ["r"] = popups.open("rebase", function(p)
+        [popups.mapping_for("PushPopup")] = popups.open("push", function(p)
           p { commit = self.buffer.ui:get_commit_under_cursor() }
         end),
-        ["v"] = popups.open("revert", function(p)
+        [popups.mapping_for("RebasePopup")] = popups.open("rebase", function(p)
+          p { commit = self.buffer.ui:get_commit_under_cursor() }
+        end),
+        [popups.mapping_for("RevertPopup")] = popups.open("revert", function(p)
           p { commits = self.buffer.ui:get_commits_in_selection() }
         end),
-        ["X"] = popups.open("reset", function(p)
+        [popups.mapping_for("ResetPopup")] = popups.open("reset", function(p)
           p { commit = self.buffer.ui:get_commit_under_cursor() }
         end),
+        [popups.mapping_for("TagPopup")] = popups.open("tag", function(p)
+          p { commit = self.buffer.ui:get_commit_under_cursor() }
+        end),
+        ["d"] = function()
+          if not config.check_integration("diffview") then
+            notification.error("Diffview integration must be enabled for log diff")
+            return
+          end
+
+          local dv = require("neogit.integrations.diffview")
+          dv.open("log", self.buffer.ui:get_commits_in_selection())
+        end,
       },
       n = {
+        [popups.mapping_for("CherryPickPopup")] = popups.open("cherry_pick", function(p)
+          p { commits = { self.buffer.ui:get_commit_under_cursor() } }
+        end),
+        [popups.mapping_for("BranchPopup")] = popups.open("branch", function(p)
+          p { commits = { self.buffer.ui:get_commit_under_cursor() } }
+        end),
+        [popups.mapping_for("CommitPopup")] = popups.open("commit", function(p)
+          p { commit = self.buffer.ui:get_commit_under_cursor() }
+        end),
+        [popups.mapping_for("PushPopup")] = popups.open("push", function(p)
+          p { commit = self.buffer.ui:get_commit_under_cursor() }
+        end),
+        [popups.mapping_for("RebasePopup")] = popups.open("rebase", function(p)
+          p { commit = self.buffer.ui:get_commit_under_cursor() }
+        end),
+        [popups.mapping_for("RevertPopup")] = popups.open("revert", function(p)
+          p { commits = { self.buffer.ui:get_commit_under_cursor() } }
+        end),
+        [popups.mapping_for("ResetPopup")] = popups.open("reset", function(p)
+          p { commit = self.buffer.ui:get_commit_under_cursor() }
+        end),
+        [popups.mapping_for("TagPopup")] = popups.open("tag", function(p)
+          p { commit = self.buffer.ui:get_commit_under_cursor() }
+        end),
         ["q"] = function()
           self:close()
         end,
         ["<esc>"] = function()
           self:close()
         end,
-        ["A"] = popups.open("cherry_pick", function(p)
-          p { commits = { self.buffer.ui:get_commit_under_cursor() } }
-        end),
-        ["b"] = popups.open("branch", function(p)
-          p { commits = { self.buffer.ui:get_commit_under_cursor() } }
-        end),
-        ["c"] = popups.open("commit", function(p)
-          p { commit = self.buffer.ui:get_commit_under_cursor() }
-        end),
-        ["r"] = popups.open("rebase", function(p)
-          p { commit = self.buffer.ui:get_commit_under_cursor() }
-        end),
-        ["v"] = popups.open("revert", function(p)
-          p { commits = { self.buffer.ui:get_commit_under_cursor() } }
-        end),
-        ["X"] = popups.open("reset", function(p)
-          p { commit = self.buffer.ui:get_commit_under_cursor() }
-        end),
         ["<enter>"] = function()
           CommitViewBuffer.new(self.buffer.ui:get_commit_under_cursor()):open()
         end,

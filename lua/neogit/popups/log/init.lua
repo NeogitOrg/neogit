@@ -23,6 +23,7 @@ function M.create()
     :switch("L", "L", "Trace line evolution", { user_input = true, cli_prefix = "-" })
     :switch("m", "no-merges", "Omit merges", { key_prefix = "=" })
     :switch("p", "first-parent", "First parent", { key_prefix = "=" })
+    :switch("R", "reflog", "List reflog", { key_prefix = "=" })
     :arg_heading("History Simplification")
     :switch("D", "simplify-by-decoration", "Simplify by decoration")
     :option("-", "", "", "Limit to files", {
