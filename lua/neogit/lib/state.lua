@@ -79,15 +79,21 @@ local function gen_key(key_table)
 end
 
 ---Set option and write to disk
----@param key table
+---@param key string[]
 ---@param value any
 function M.set(key, value)
   if not M.enabled() then
     return
   end
 
-  if not vim.tbl_contains(config.values.ignored_settings, gen_key(key)) then
-    M.state[gen_key(key)] = value
+  local cache_key = gen_key(key)
+  if not vim.tbl_contains(config.values.ignored_settings, cache_key) then
+    if value == "" then
+      M.state[cache_key] = nil
+    else
+      M.state[cache_key] = value
+    end
+
     M.write()
   end
 end
