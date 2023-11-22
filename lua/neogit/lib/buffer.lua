@@ -444,11 +444,12 @@ function Buffer.create(config)
   buffer:set_option("buftype", config.buftype or "nofile")
   buffer:set_option("swapfile", false)
 
-  vim.opt_local.foldenable = true
-  buffer:set_option("foldmethod", "manual")
-  buffer:set_option("foldlevel", 99)
-  buffer:set_option("foldminlines", 0)
-  buffer:set_option("foldtext", "v:lua.NeogitBufferFoldText()")
+  if win then
+    vim.api.nvim_set_option_value("foldenable", true, { win = win })
+    vim.api.nvim_set_option_value("foldlevel", 99, { win = win })
+    vim.api.nvim_set_option_value("foldminlines", 0, { win = win })
+    vim.api.nvim_set_option_value("foldtext", "v:lua.NeogitBufferFoldText()", { win = win })
+  end
 
   if config.filetype then
     buffer:set_filetype(config.filetype)
