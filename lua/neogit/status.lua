@@ -924,7 +924,9 @@ local unstage = operation("unstage", function()
 end)
 
 local function discard_message(files, hunk_count)
-  if hunk_count > 0 then
+  if vim.api.nvim_get_mode() == "V" then
+    return string.format("Discard selection?")
+  elseif hunk_count > 0 then
     return string.format("Discard %d hunks?", hunk_count)
   elseif #files > 1 then
     return string.format("Discard %d files?", #files)
