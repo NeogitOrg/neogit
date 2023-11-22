@@ -53,14 +53,13 @@ function M.checkout(name, args)
     local pushRemote = M.pushRemote_ref()
     local upstream = M.upstream()
 
-    if pushRemote == upstream then
+    if upstream and upstream == pushRemote then
       fetch.fetch_upstream()
     else
-      if M.upstream() then
+      if upstream then
         fetch.fetch_upstream()
       end
-
-      if M.pushRemote_ref() then
+      if pushRemote then
         fetch.fetch_pushRemote()
       end
     end
