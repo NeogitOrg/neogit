@@ -82,7 +82,7 @@ end
 ---@param opts table
 ---@return table
 function M.apply(patch, opts)
-  opts = opts or { reverse = false, cached = false, index = false, use_git_root = false }
+  opts = opts or { reverse = false, cached = false, index = false }
 
   local cmd = cli.apply
 
@@ -96,12 +96,6 @@ function M.apply(patch, opts)
 
   if opts.index then
     cmd = cmd.index
-  end
-
-  if opts.use_git_root then
-    local repository = require("neogit.lib.git.repository")
-
-    cmd = cmd.cwd(repository.git_root)
   end
 
   return cmd.with_patch(patch).call()
