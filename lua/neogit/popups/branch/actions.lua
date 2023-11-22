@@ -82,7 +82,7 @@ M.checkout_local_branch = operation("checkout_local_branch", function(popup)
   end)
 
   local target = FuzzyFinderBuffer.new(util.merge(local_branches, remote_branches)):open_async {
-    prompt_prefix = " branch > ",
+    prompt_prefix = "branch",
   }
 
   if target then
@@ -116,7 +116,7 @@ M.checkout_create_branch = operation("checkout_create_branch", function()
   end
   name, _ = name:gsub("%s", "-")
 
-  local base_branch = FuzzyFinderBuffer.new(branches):open_async { prompt_prefix = " base branch > " }
+  local base_branch = FuzzyFinderBuffer.new(branches):open_async { prompt_prefix = "base branch" }
   if not base_branch then
     return
   end
@@ -180,7 +180,7 @@ M.reset_branch = operation("reset_branch", function()
   local current = git.branch.current()
   local branches = git.branch.get_all_branches(false)
   local to = FuzzyFinderBuffer.new(branches):open_async {
-    prompt_prefix = string.format(" reset %s to > ", current),
+    prompt_prefix = string.format("reset %s to", current),
   }
 
   if not to then
