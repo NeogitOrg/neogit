@@ -22,7 +22,7 @@ end
 ---@param rules string[]
 local function add_rules(path, rules)
   local selected = FuzzyFinderBuffer.new(rules)
-    :open_async { allow_multi = true, prompt_prefix = " File or pattern to ignore > " }
+    :open_async { allow_multi = true, prompt_prefix = "File or pattern to ignore" }
 
   if not selected or #selected == 0 then
     return

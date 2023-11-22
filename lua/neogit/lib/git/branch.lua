@@ -158,7 +158,7 @@ function M.set_pushRemote()
   elseif pushDefault:is_set() then
     pushRemote = pushDefault:read()
   else
-    pushRemote = FuzzyFinderBuffer.new(remotes):open_async { prompt_prefix = "set pushRemote > " }
+    pushRemote = FuzzyFinderBuffer.new(remotes):open_async { prompt_prefix = "set pushRemote" }
   end
 
   if pushRemote then
