@@ -925,7 +925,7 @@ end)
 
 local function discard_message(files, hunk_count)
   if vim.api.nvim_get_mode() == "V" then
-    return string.format("Discard selection?")
+    return "Discard selection?"
   elseif hunk_count > 0 then
     return string.format("Discard %d hunks?", hunk_count)
   elseif #files > 1 then
