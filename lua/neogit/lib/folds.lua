@@ -3,7 +3,8 @@ local M = {}
 function M.fold_text()
   local text = vim.fn.getline(vim.v.foldstart)
 
-  if not vim.fn.has("nvim-0.10") == 1 then
+  -- TODO: Remove this once nvim-0.10 is released
+  if vim.fn.has("nvim-0.10") == 0 then
     return text
   end
 
