@@ -501,9 +501,11 @@ Branch Popup                                               *neogit_branch_popup*
 
 Variables:                                       *neogit_branch_popup_variables*
   • branch.<name>.description
+    (TODO)
 
   • branch.<name>.merge
     branch.<name>.remote
+    (TODO)
 
   • branch.<name>.rebase
     Cycles branch.<name>.rebase value between true, false, and the value of
