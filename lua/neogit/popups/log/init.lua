@@ -30,6 +30,18 @@ function M.create()
       key_prefix = "-",
       separator = "",
       fn = actions.limit_to_files,
+      setup = function(popup)
+        local state = require("neogit.lib.state").get { "NeogitLogPopup", "" }
+        if state then
+          -- State for this option is saved with quotes around each filepath, which cannot
+          -- get passed into the CLI lib. So, to handle things internally, we need to strip
+          -- them out when loading the popup.
+          popup.state.env.files = vim.tbl_map(function(value)
+            local result, _ = value:gsub([["]], "")
+            return result
+          end, vim.split(state, " ", { trimempty = true }))
+        end
+      end,
     })
     :switch("f", "follow", "Follow renames when showing single-file log")
     :arg_heading("Commit Ordering")
