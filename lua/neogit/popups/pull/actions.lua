@@ -62,7 +62,7 @@ function M.from_upstream(popup)
 end
 
 function M.from_elsewhere(popup)
-  local target = FuzzyFinderBuffer.new(git.branch.get_remote_branches())
+  local target = FuzzyFinderBuffer.new(git.branch.get_all_branches(false))
     :open_async { prompt_prefix = "pull > " }
   if not target then
     return
