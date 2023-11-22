@@ -39,7 +39,7 @@ local function spin_off_branch(checkout)
   local current_branch_name = git.branch.current_full_name()
 
   if checkout then
-    git.branch.checkout(name)
+    git.cli.checkout.branch(name).call()
   end
 
   local upstream = git.branch.upstream()
@@ -68,7 +68,7 @@ M.checkout_branch_revision = operation("checkout_branch_revision", function(popu
     return
   end
 
-  git.branch.checkout(selected_branch, popup:get_arguments())
+  git.cli.checkout.branch(selected_branch).arg_list(popup:get_arguments()).call()
 end)
 
 M.checkout_local_branch = operation("checkout_local_branch", function(popup)
