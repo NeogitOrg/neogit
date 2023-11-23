@@ -1045,7 +1045,7 @@ local function handle_section_item(item)
       end
     end
     -- adjust for diff sign column
-    col = math.floor(0, cursor_col - 1)
+    col = math.max(0, cursor_col - 1)
   end
 
   notification.delete_all()
