@@ -1029,30 +1029,25 @@ end
 ---@see section_has_hunks
 local function handle_section_item(item)
   local path = item.absolute_path
-
   if not path then
     notification.error("Cannot open file. No path found.")
     return
   end
 
   local cursor_row, cursor_col = unpack(vim.api.nvim_win_get_cursor(0))
-
   local hunk = M.get_item_hunks(item, cursor_row, cursor_row, false)[1]
 
   notification.delete_all()
   M.status_buffer:close()
 
-  local relpath = vim.fn.fnamemodify(path, ":.")
-
   if not vim.o.hidden and vim.bo.buftype == "" and not vim.bo.readonly and vim.fn.bufname() ~= "" then
     vim.cmd("update")
   end
 
-  vim.cmd("e " .. relpath)
+  vim.cmd(string.format("edit %s", vim.fn.fnameescape(vim.fn.fnamemodify(path, ":~:."))))
 
   if hunk then
     local line_offset = cursor_row - hunk.first
-
     local row = hunk.disk_from + line_offset - 1
     for i = 1, line_offset do
       if string.sub(hunk.lines[i], 1, 1) == "-" then
