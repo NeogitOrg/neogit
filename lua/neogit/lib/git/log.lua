@@ -370,8 +370,9 @@ end
 ---@param options? string[]
 ---@param graph? table
 ---@param files? table
+---@param hidden? boolean
 ---@return CommitLogEntry[]
-function M.list(options, graph, files)
+function M.list(options, graph, files, hidden)
   files = files or {}
   local signature = false
 
@@ -384,6 +385,7 @@ function M.list(options, graph, files)
     .arg_list(options)
     .files(unpack(files))
     .show_popup(false)
+    .hide_from_history(hidden)
     .call()
     :trim().stdout
 
