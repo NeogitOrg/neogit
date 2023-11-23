@@ -548,9 +548,13 @@ end
 
 local history = {}
 
-local function handle_new_cmd(job, popup, hidden_text)
+local function handle_new_cmd(job, popup, hidden_text, hide_from_history)
   if popup == nil then
     popup = true
+  end
+
+  if hide_from_history == nil then
+    hide_from_history = false
   end
 
   table.insert(history, {
@@ -560,6 +564,7 @@ local function handle_new_cmd(job, popup, hidden_text)
     stderr = job.stderr,
     code = job.code,
     time = job.time,
+    hidden = hide_from_history,
   })
 
   do
@@ -662,6 +667,17 @@ local mt_builder = {
     if action == "hide_text" then
       return function(hide_text)
         tbl[k_state].hide_text = hide_text
+        return tbl
+      end
+    end
+
+    if action == "hide_from_history" then
+      return function(hidden)
+        if hidden == nil then
+          hidden = true
+        end
+
+        tbl[k_state].hide_from_history = hidden
         return tbl
       end
     end
@@ -855,7 +871,7 @@ local function new_builder(subcommand)
         stderr = result.stderr,
         code = result.code,
         time = result.time,
-      }, state.show_popup, state.hide_text)
+      }, state.show_popup, state.hide_text, state.hide_from_history)
 
       return result
     end,
@@ -871,7 +887,7 @@ local function new_builder(subcommand)
         stderr = result.stderr,
         code = 0,
         time = result.time,
-      }, state.show_popup, state.hide_text)
+      }, state.show_popup, state.hide_text, state.hide_from_history)
 
       return result
     end,
@@ -896,7 +912,7 @@ local function new_builder(subcommand)
         stderr = result.stderr,
         code = result.code,
         time = result.time,
-      }, state.show_popup, state.hide_text)
+      }, state.show_popup, state.hide_text, state.hide_from_history)
 
       return result
     end,
@@ -917,7 +933,7 @@ local function new_builder(subcommand)
         stderr = result.stderr,
         code = result.code,
         time = result.time,
-      }, state.show_popup, state.hide_text)
+      }, state.show_popup, state.hide_text, state.hide_from_history)
 
       return result
     end,
@@ -938,7 +954,7 @@ local function new_builder(subcommand)
         stderr = result.stderr,
         code = 0,
         time = result.time,
-      }, state.show_popup, state.hide_text)
+      }, state.show_popup, state.hide_text, state.hide_from_history)
 
       return result
     end,
