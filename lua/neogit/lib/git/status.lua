@@ -50,7 +50,7 @@ local function update_status(state)
   -- cwd may change after the status is refreshed and used, especially if using
   -- rooter plugins with lsp integration
   local cwd = vim.fn.getcwd()
-  local result = git.cli.status.porcelain(2).branch.call():trim()
+  local result = git.cli.status.porcelain(2).branch.hide_from_history().call():trim()
 
   local head = {}
   local upstream = { unmerged = { items = {} }, unpulled = { items = {} }, ref = nil }
@@ -73,7 +73,7 @@ local function update_status(state)
       elseif header == "branch.upstream" then
         upstream.ref = value
 
-        local commit = git.log.list({ value, "--max-count=1" })[1]
+        local commit = git.log.list({ value, "--max-count=1" }, {}, {}, true)[1]
         if commit then
           upstream.abbrev = git.rev_parse.abbreviate_commit(commit.oid)
         end
@@ -149,7 +149,7 @@ local function update_status(state)
     upstream.unpulled = state.upstream.unpulled
   end
 
-  local tag = git.cli.describe.long.tags.args("HEAD").call_ignoring_exit_code():trim().stdout
+  local tag = git.cli.describe.long.tags.args("HEAD").hide_from_history().call_ignoring_exit_code():trim().stdout
   if #tag == 1 then
     local tag, distance = tostring(tag[1]):match(tag_pattern)
     if tag and distance then
@@ -174,7 +174,7 @@ local function update_branch_information(state)
 
   if state.head.oid ~= "(initial)" then
     table.insert(tasks, function()
-      local result = git.cli.log.max_count(1).pretty("%B").call():trim()
+      local result = git.cli.log.max_count(1).pretty("%B").hide_from_history().call():trim()
       state.head.commit_message = result.stdout[1]
     end)
 

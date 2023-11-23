@@ -11,7 +11,7 @@ function M.abbreviate_commit(oid)
   if oid == "(initial)" then
     return "(initial)"
   else
-    return cli["rev-parse"].short.args(oid).call().stdout[1]
+    return cli["rev-parse"].short.args(oid).hide_from_history().call().stdout[1]
   end
 end
 

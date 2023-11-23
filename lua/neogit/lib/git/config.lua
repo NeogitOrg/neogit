@@ -82,7 +82,7 @@ end
 local function build_config()
   local result = {}
 
-  local out = vim.split(table.concat(cli.config.list.null._local.call_sync():trim().stdout_raw, "\0"), "\n")
+  local out = vim.split(table.concat(cli.config.list.null._local.hide_from_history().call_sync():trim().stdout_raw, "\0"), "\n")
   for _, option in ipairs(out) do
     local key, value = unpack(vim.split(option, "\0"))
 

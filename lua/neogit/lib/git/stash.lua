@@ -105,7 +105,7 @@ function M.drop(stash)
 end
 
 function M.list()
-  return cli.stash.args("list").call():trim().stdout
+  return cli.stash.args("list").hide_from_history().call():trim().stdout
 end
 
 function M.register(meta)
