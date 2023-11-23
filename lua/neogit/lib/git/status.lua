@@ -37,6 +37,11 @@ end
 -- some cases may be dropped.
 local tag_pattern = "(.-)%-([0-9]+)%-g%x+$"
 
+local match_kind = "(.) (.+)"
+local match_u = "(..) (....) (%d+) (%d+) (%d+) (%d+) (%w+) (%w+) (%w+) (.+)"
+local match_1 = "(.)(.) (....) (%d+) (%d+) (%d+) (%w+) (%w+) (.+)"
+local match_2 = "(.)(.) (....) (%d+) (%d+) (%d+) (%w+) (%w+) (%a%d+) ([^\t]+)\t?(.+)"
+
 local function update_status(state)
   local git = require("neogit.lib.git")
   -- git-status outputs files relative to the cwd.
@@ -56,11 +61,6 @@ local function update_status(state)
     unstaged_files = Collection.new(state.unstaged.items or {}):key_by("name"),
     untracked_files = Collection.new(state.untracked.items or {}):key_by("name"),
   }
-
-  local match_kind = "(.) (.+)"
-  local match_u = "(..) (....) (%d+) (%d+) (%d+) (%d+) (%w+) (%w+) (%w+) (.+)"
-  local match_1 = "(.)(.) (....) (%d+) (%d+) (%d+) (%w+) (%w+) (.+)"
-  local match_2 = "(.)(.) (....) (%d+) (%d+) (%d+) (%w+) (%w+) (%a%d+) ([^\t]+)\t?(.+)"
 
   for _, l in ipairs(result.stdout) do
     local header, value = l:match("# ([%w%.]+) (.+)")
