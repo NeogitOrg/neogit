@@ -1028,14 +1028,25 @@ end
 ---@param item File
 ---@see section_has_hunks
 local function handle_section_item(item)
-  local path = item.absolute_path
-  if not path then
+  if not item.absolute_path then
     notification.error("Cannot open file. No path found.")
     return
   end
 
+  local row, col
   local cursor_row, cursor_col = unpack(vim.api.nvim_win_get_cursor(0))
   local hunk = M.get_item_hunks(item, cursor_row, cursor_row, false)[1]
+  if hunk then
+    local line_offset = cursor_row - hunk.first
+    row = hunk.disk_from + line_offset - 1
+    for i = 1, line_offset do
+      if string.sub(hunk.lines[i], 1, 1) == "-" then
+        row = row - 1
+      end
+    end
+    -- adjust for diff sign column
+    col = math.floor(0, cursor_col - 1)
+  end
 
   notification.delete_all()
   M.status_buffer:close()
@@ -1044,18 +1055,10 @@ local function handle_section_item(item)
     vim.cmd("update")
   end
 
-  vim.cmd(string.format("edit %s", vim.fn.fnameescape(vim.fn.fnamemodify(path, ":~:."))))
+  local path = vim.fn.fnameescape(vim.fn.fnamemodify(item.absolute_path, ":~:."))
+  vim.cmd(string.format("edit %s", path))
 
-  if hunk then
-    local line_offset = cursor_row - hunk.first
-    local row = hunk.disk_from + line_offset - 1
-    for i = 1, line_offset do
-      if string.sub(hunk.lines[i], 1, 1) == "-" then
-        row = row - 1
-      end
-    end
-    -- adjust for diff sign column
-    local col = cursor_col == 0 and 0 or cursor_col - 1
+  if row and col then
     vim.api.nvim_win_set_cursor(0, { row, col })
   end
 end
