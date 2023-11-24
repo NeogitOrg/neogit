@@ -201,7 +201,7 @@ end
 local function raw_untracked(name)
   return function()
     local diff =
-      cli.diff.no_ext_diff.no_index.files("/dev/null", name).call_ignoring_exit_code():trim().stdout
+      cli.diff.no_ext_diff.no_index.files("/dev/null", name).hide_from_history().call({ ignore_code = true }):trim().stdout
     local stats = {}
 
     return { diff, stats }
@@ -210,8 +210,8 @@ end
 
 local function raw_unstaged(name)
   return function()
-    local diff = cli.diff.no_ext_diff.files(name).call():trim().stdout
-    local stats = cli.diff.no_ext_diff.shortstat.files(name).call():trim().stdout
+    local diff = cli.diff.no_ext_diff.files(name).hide_from_history().call():trim().stdout
+    local stats = cli.diff.no_ext_diff.shortstat.files(name).hide_from_history().call():trim().stdout
 
     return { diff, stats }
   end
@@ -219,8 +219,8 @@ end
 
 local function raw_staged(name)
   return function()
-    local diff = cli.diff.no_ext_diff.cached.files(name).call():trim().stdout
-    local stats = cli.diff.no_ext_diff.cached.shortstat.files(name).call():trim().stdout
+    local diff = cli.diff.no_ext_diff.cached.files(name).hide_from_history().call():trim().stdout
+    local stats = cli.diff.no_ext_diff.cached.shortstat.files(name).hide_from_history().call():trim().stdout
 
     return { diff, stats }
   end
@@ -228,8 +228,8 @@ end
 
 local function raw_staged_renamed(name, original)
   return function()
-    local diff = cli.diff.no_ext_diff.cached.files(name, original).call():trim().stdout
-    local stats = cli.diff.no_ext_diff.cached.shortstat.files(name, original).call():trim().stdout
+    local diff = cli.diff.no_ext_diff.cached.files(name, original).hide_from_history().call():trim().stdout
+    local stats = cli.diff.no_ext_diff.cached.shortstat.files(name, original).hide_from_history().call():trim().stdout
 
     return { diff, stats }
   end

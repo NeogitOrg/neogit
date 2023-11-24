@@ -105,7 +105,7 @@ function M.wrap(cmd, opts)
   if opts.msg.setup then
     notification.info(opts.msg.setup)
   end
-  local result = cmd.env(M.get_envs_git_editor()):in_pty(true).call(true):trim()
+  local result = cmd.env(M.get_envs_git_editor()):in_pty(true).call({ verbose = true }):trim()
 
   a.util.scheduler()
 

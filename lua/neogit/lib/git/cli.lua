@@ -844,8 +844,10 @@ local function new_builder(subcommand)
     [k_config] = configuration,
     [k_command] = subcommand,
     to_process = to_process,
-    call_interactive = function(handle_line)
-      handle_line = handle_line or handle_interactive_password_questions
+    call_interactive = function(opts)
+      opts = opts or {}
+
+      local handle_line = opts.handle_line or handle_interactive_password_questions
       local p = to_process(true, false)
       p.pty = true
 
@@ -870,28 +872,14 @@ local function new_builder(subcommand)
         stderr = result.stderr,
         code = result.code,
         time = result.time,
-      }, state.show_popup, state.hide_text, state.hide_from_history)
+      }, state.show_popup, state.hide_text, opts.hidden)
 
       return result
     end,
-    call_ignoring_exit_code = function(verbose)
-      local p = to_process(verbose, false, true)
-      local result = p:spawn_async()
+    call = function(opts)
+      opts = opts or {}
 
-      assert(result, "Command did not complete")
-
-      handle_new_cmd({
-        cmd = table.concat(p.cmd, " "),
-        stdout = result.stdout,
-        stderr = result.stderr,
-        code = 0,
-        time = result.time,
-      }, state.show_popup, state.hide_text, state.hide_from_history)
-
-      return result
-    end,
-    call = function(verbose)
-      local p = to_process(verbose, not state.show_popup)
+      local p = to_process(opts.verbose, not state.show_popup, opts.ignore_code)
       local result = p:spawn_async(function()
         -- Required since we need to do this before awaiting
         if state.input then
@@ -911,12 +899,14 @@ local function new_builder(subcommand)
         stderr = result.stderr,
         code = result.code,
         time = result.time,
-      }, state.show_popup, state.hide_text, state.hide_from_history)
+      }, state.show_popup, state.hide_text, opts.hidden)
 
       return result
     end,
-    call_sync = function(verbose, external_errors)
-      local p = to_process(verbose, external_errors)
+    call_sync = function(opts)
+      opts = opts or {}
+
+      local p = to_process(opts.verbose, opts.external_errors, opts.ignore_code)
 
       if not p:spawn() then
         error("Failed to run command")
@@ -932,28 +922,7 @@ local function new_builder(subcommand)
         stderr = result.stderr,
         code = result.code,
         time = result.time,
-      }, state.show_popup, state.hide_text, state.hide_from_history)
-
-      return result
-    end,
-    call_sync_ignoring_exit_code = function(verbose, external_errors)
-      local p = to_process(verbose, external_errors, true)
-
-      if not p:spawn() then
-        error("Failed to run command")
-        return nil
-      end
-
-      local result = p:wait()
-      assert(result, "Command did not complete")
-
-      handle_new_cmd({
-        cmd = table.concat(p.cmd, " "),
-        stdout = result.stdout,
-        stderr = result.stderr,
-        code = 0,
-        time = result.time,
-      }, state.show_popup, state.hide_text, state.hide_from_history)
+      }, state.show_popup, state.hide_text, opts.hidden)
 
       return result
     end,

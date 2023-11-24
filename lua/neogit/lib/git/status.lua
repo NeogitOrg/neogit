@@ -150,7 +150,7 @@ local function update_status(state)
   end
 
   local tag =
-    git.cli.describe.long.tags.args("HEAD").hide_from_history().call_ignoring_exit_code():trim().stdout
+    git.cli.describe.long.tags.args("HEAD").hide_from_history().call({ ignore_code = true }):trim().stdout
   if #tag == 1 then
     local tag, distance = tostring(tag[1]):match(tag_pattern)
     if tag and distance then
