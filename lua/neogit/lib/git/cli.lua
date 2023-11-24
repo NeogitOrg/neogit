@@ -547,6 +547,10 @@ end
 
 local history = {}
 
+---@param job any
+---@param popup any
+---@param hidden_text string Text to obfuscate from history
+---@param hide_from_history boolean Do not show this command in GitHistoryBuffer
 local function handle_new_cmd(job, popup, hidden_text, hide_from_history)
   if popup == nil then
     popup = true
@@ -666,17 +670,6 @@ local mt_builder = {
     if action == "hide_text" then
       return function(hide_text)
         tbl[k_state].hide_text = hide_text
-        return tbl
-      end
-    end
-
-    if action == "hide_from_history" then
-      return function(hidden)
-        if hidden == nil then
-          hidden = true
-        end
-
-        tbl[k_state].hide_from_history = hidden
         return tbl
       end
     end

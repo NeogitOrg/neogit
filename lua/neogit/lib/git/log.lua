@@ -385,8 +385,7 @@ function M.list(options, graph, files, hidden)
     .arg_list(options)
     .files(unpack(files))
     .show_popup(false)
-    .hide_from_history(hidden)
-    .call()
+    .call({ hidden = hidden })
     :trim().stdout
 
   return parse_log(split_output(output), graph or {})

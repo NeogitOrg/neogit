@@ -50,7 +50,7 @@ local function update_status(state)
   -- cwd may change after the status is refreshed and used, especially if using
   -- rooter plugins with lsp integration
   local cwd = vim.fn.getcwd()
-  local result = git.cli.status.porcelain(2).branch.hide_from_history().call():trim()
+  local result = git.cli.status.porcelain(2).branch.call({ hidden = true }):trim()
 
   local head = {}
   local upstream = { unmerged = { items = {} }, unpulled = { items = {} }, ref = nil }
@@ -150,7 +150,7 @@ local function update_status(state)
   end
 
   local tag =
-    git.cli.describe.long.tags.args("HEAD").hide_from_history().call({ ignore_code = true }):trim().stdout
+    git.cli.describe.long.tags.args("HEAD").call({ hidden = true, ignore_code = true }):trim().stdout
   if #tag == 1 then
     local tag, distance = tostring(tag[1]):match(tag_pattern)
     if tag and distance then
@@ -175,7 +175,8 @@ local function update_branch_information(state)
 
   if state.head.oid ~= "(initial)" then
     table.insert(tasks, function()
-      local result = git.cli.log.max_count(1).pretty("%B").hide_from_history().call():trim()
+      local result = git.cli.log.max_count(1).pretty("%B").call({ hidden = true }):trim()
+
       state.head.commit_message = result.stdout[1]
     end)
 
