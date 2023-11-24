@@ -200,8 +200,10 @@ end
 -- Doing a git-diff with untracked files will exit(1) if a difference is observed, which we can ignore.
 local function raw_untracked(name)
   return function()
-    local diff =
-      cli.diff.no_ext_diff.no_index.files("/dev/null", name).call({ hidden = true, ignore_code = true }):trim().stdout
+    local diff = cli.diff.no_ext_diff.no_index
+      .files("/dev/null", name)
+      .call({ hidden = true, ignore_code = true })
+      :trim().stdout
     local stats = {}
 
     return { diff, stats }
@@ -229,7 +231,8 @@ end
 local function raw_staged_renamed(name, original)
   return function()
     local diff = cli.diff.no_ext_diff.cached.files(name, original).call({ hidden = true }):trim().stdout
-    local stats = cli.diff.no_ext_diff.cached.shortstat.files(name, original).call({ hidden = true }):trim().stdout
+    local stats =
+      cli.diff.no_ext_diff.cached.shortstat.files(name, original).call({ hidden = true }):trim().stdout
 
     return { diff, stats }
   end

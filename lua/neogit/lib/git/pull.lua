@@ -19,7 +19,8 @@ local function update_unpulled(state)
   end
 
   if state.upstream.ref then
-    state.upstream.unpulled.items = util.filter_map(log.list({ "..@{upstream}" }, {}, {}, true), log.present_commit)
+    state.upstream.unpulled.items =
+      util.filter_map(log.list({ "..@{upstream}" }, {}, {}, true), log.present_commit)
   end
 
   local pushRemote = require("neogit.lib.git").branch.pushRemote_ref()
