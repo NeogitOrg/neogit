@@ -344,7 +344,7 @@ function Process:spawn(cb)
           table.concat(output, "\n")
         )
 
-        notification.error(message)
+        notification.warn(message)
       end
       -- vim.schedule(Process.show_console)
     end
