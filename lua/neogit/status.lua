@@ -1028,39 +1028,37 @@ end
 ---@param item File
 ---@see section_has_hunks
 local function handle_section_item(item)
-  local path = item.absolute_path
-
-  if not path then
+  if not item.absolute_path then
     notification.error("Cannot open file. No path found.")
     return
   end
 
+  local row, col
   local cursor_row, cursor_col = unpack(vim.api.nvim_win_get_cursor(0))
-
   local hunk = M.get_item_hunks(item, cursor_row, cursor_row, false)[1]
-
-  notification.delete_all()
-  M.status_buffer:close()
-
-  local relpath = vim.fn.fnamemodify(path, ":.")
-
-  if not vim.o.hidden and vim.bo.buftype == "" and not vim.bo.readonly and vim.fn.bufname() ~= "" then
-    vim.cmd("update")
-  end
-
-  vim.cmd("e " .. relpath)
-
   if hunk then
     local line_offset = cursor_row - hunk.first
-
-    local row = hunk.disk_from + line_offset - 1
+    row = hunk.disk_from + line_offset - 1
     for i = 1, line_offset do
       if string.sub(hunk.lines[i], 1, 1) == "-" then
         row = row - 1
       end
     end
     -- adjust for diff sign column
-    local col = cursor_col == 0 and 0 or cursor_col - 1
+    col = math.max(0, cursor_col - 1)
+  end
+
+  notification.delete_all()
+  M.status_buffer:close()
+
+  if not vim.o.hidden and vim.bo.buftype == "" and not vim.bo.readonly and vim.fn.bufname() ~= "" then
+    vim.cmd("update")
+  end
+
+  local path = vim.fn.fnameescape(vim.fn.fnamemodify(item.absolute_path, ":~:."))
+  vim.cmd(string.format("edit %s", path))
+
+  if row and col then
     vim.api.nvim_win_set_cursor(0, { row, col })
   end
 end
