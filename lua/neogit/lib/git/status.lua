@@ -182,7 +182,7 @@ local function update_branch_information(state)
 
     if state.upstream.ref then
       table.insert(tasks, function()
-        local commit = git.log.list({ state.upstream.ref, "--max-count=1" })[1]
+        local commit = git.log.list({ state.upstream.ref, "--max-count=1" }, {}, {}, true)[1]
         -- May be done earlier by `update_status`, but this function can be called separately
         if commit then
           state.upstream.commit_message = commit.message
@@ -194,7 +194,7 @@ local function update_branch_information(state)
     local pushRemote = require("neogit.lib.git").branch.pushRemote_ref()
     if pushRemote and not git.branch.is_detached() then
       table.insert(tasks, function()
-        local commit = git.log.list({ pushRemote, "--max-count=1" })[1]
+        local commit = git.log.list({ pushRemote, "--max-count=1" }, {}, {}, true)[1]
         if commit then
           state.pushRemote.commit_message = commit.message
           state.pushRemote.abbrev = git.rev_parse.abbreviate_commit(commit.oid)

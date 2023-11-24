@@ -405,7 +405,7 @@ local function update_recent(state)
     return
   end
 
-  state.recent.items = util.filter_map(M.list { "--max-count=" .. tostring(count) }, M.present_commit)
+  state.recent.items = util.filter_map(M.list({ "--max-count=" .. tostring(count) }, {}, {}, true), M.present_commit)
 end
 
 function M.register(meta)
