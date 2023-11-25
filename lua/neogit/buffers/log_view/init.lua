@@ -51,6 +51,9 @@ function M:open()
         [popups.mapping_for("CommitPopup")] = popups.open("commit", function(p)
           p { commit = self.buffer.ui:get_commit_under_cursor() }
         end),
+        [popups.mapping_for("PullPopup")] = popups.open("pull", function(p)
+          p { commit = self.buffer.ui:get_commit_under_cursor() }
+        end),
         [popups.mapping_for("PushPopup")] = popups.open("push", function(p)
           p { commit = self.buffer.ui:get_commit_under_cursor() }
         end),
@@ -84,6 +87,9 @@ function M:open()
           p { commits = { self.buffer.ui:get_commit_under_cursor() } }
         end),
         [popups.mapping_for("CommitPopup")] = popups.open("commit", function(p)
+          p { commit = self.buffer.ui:get_commit_under_cursor() }
+        end),
+        [popups.mapping_for("PullPopup")] = popups.open("pull", function(p)
           p { commit = self.buffer.ui:get_commit_under_cursor() }
         end),
         [popups.mapping_for("PushPopup")] = popups.open("push", function(p)
