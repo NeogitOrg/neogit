@@ -267,6 +267,12 @@ function Buffer:show()
     vim.cmd("setlocal nornu")
   end
 
+  -- Workaround UFO getting folds wrong.
+  local ufo, _ = pcall(require, "ufo")
+  if ufo then
+    ufo.detach()
+  end
+
   return win
 end
 
