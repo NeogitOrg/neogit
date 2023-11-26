@@ -12,4 +12,61 @@ function M.list()
   return revisions
 end
 
+function M.list_parsed()
+  local refs = cli["for-each-ref"].format(
+    [[{"oid":"%(objectname)","ref":"%(refname)","name":"%(refname:short)","subject":"%(subject)"},]]
+  ).call_sync():trim().stdout
+
+  -- Wrap list of refs in an Array
+  refs = "[" .. table.concat(refs, "\\n") .. "]"
+
+  -- Remove trailing comma from last object in array
+  refs, _ = refs:gsub(",]", "]")
+
+  -- Remove escaped newlines from in-between objects
+  refs, _ = refs:gsub("},\\n{", "},{")
+
+  -- Escape any double-quote characters, or escape codes, in the subject
+  refs, _ = refs:gsub(
+    [[(,"subject":")(.-)("})]],
+    function(before, subject, after)
+      return table.concat({ before, vim.fn.escape(subject, [[\"]]), after }, "")
+    end
+  )
+
+  local ok, result = pcall(vim.json.decode, refs, { luanil = { object = true, array = true } })
+  if not ok then
+    assert(ok, "Failed to parse log json!: " .. result)
+  end
+
+  local output = {
+    local_branch = {},
+    remote_branch = {},
+    tag = {}
+  }
+
+  for _, ref in ipairs(result) do
+    if ref.ref:match("^refs/heads/") then
+      ref.type = "local_branch"
+      table.insert(output.local_branch, ref)
+
+    elseif ref.ref:match("^refs/remotes/") then
+      local remote, branch = ref.ref:match("^refs/remotes/([^/]*)/(.*)$")
+      if not output.remote_branch[remote] then
+        output.remote_branch[remote] = {}
+      end
+
+      ref.type = "remote_branch"
+      ref.name = branch
+      table.insert(output.remote_branch[remote], ref)
+
+    elseif ref.ref:match("^refs/tags/") then
+      ref.type = "tag"
+      table.insert(output.tag, ref)
+    end
+  end
+
+  return output
+end
+
 return M
