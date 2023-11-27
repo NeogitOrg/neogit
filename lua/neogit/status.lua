@@ -1153,9 +1153,9 @@ local cmd_func_map = function()
     ["CommandHistory"] = function()
       GitCommandHistory:new():show()
     end,
-    ["ShowRefs"] = function()
+    ["ShowRefs"] = a.void(function()
       RefsViewBuffer.new(git.refs.list_parsed()):open()
-    end,
+    end),
     ["Console"] = function()
       local process = require("neogit.process")
       process.show_console()

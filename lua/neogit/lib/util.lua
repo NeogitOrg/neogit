@@ -323,16 +323,16 @@ function M.deduplicate(tbl)
   return res
 end
 
--- function M.find(tbl, cond)
---   local res
---   for i = 1, #tbl do
---     if cond(tbl[i]) then
---       res = tbl[i]
---       break
---     end
---   end
---   return res
--- end
+function M.find(tbl, cond)
+  local res
+  for i = 1, #tbl do
+    if cond(tbl[i]) then
+      res = tbl[i]
+      break
+    end
+  end
+  return res
+end
 
 function M.build_reverse_lookup(tbl)
   local result = {}

@@ -22,6 +22,7 @@ local M = {
 function M.new(refs)
   local instance = {
     refs = refs,
+    head = "HEAD",
     is_open = false,
     buffer = nil,
   }
@@ -180,7 +181,7 @@ function M:open()
       },
     },
     render = function()
-      return ui.RefsView(self.refs)
+      return ui.RefsView(self.refs, self.head)
     end,
     after = function()
       vim.cmd([[setlocal nowrap nospell]])

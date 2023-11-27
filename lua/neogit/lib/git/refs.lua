@@ -12,10 +12,24 @@ function M.list()
   return revisions
 end
 
+local function json_format()
+  local template = {
+    [["head":"%(HEAD)"]],
+    [["oid":"%(objectname)"]],
+    [["ref":"%(refname)"]],
+    [["name":"%(refname:short)"]],
+    [["upstream_status":"%(upstream:trackshort)"]],
+    [["upstream_name":"%(upstream:short)"]],
+    [["subject":"%(subject)"]],
+  }
+
+  return string.format("{%s},", table.concat(template, ","))
+end
+
+local json = json_format()
+
 function M.list_parsed()
-  local refs = cli["for-each-ref"].format(
-    [[{"oid":"%(objectname)","ref":"%(refname)","name":"%(refname:short)","subject":"%(subject)"},]]
-  ).call_sync():trim().stdout
+  local refs = cli["for-each-ref"].format(json).call_sync():trim().stdout
 
   -- Wrap list of refs in an Array
   refs = "[" .. table.concat(refs, "\\n") .. "]"
@@ -27,12 +41,9 @@ function M.list_parsed()
   refs, _ = refs:gsub("},\\n{", "},{")
 
   -- Escape any double-quote characters, or escape codes, in the subject
-  refs, _ = refs:gsub(
-    [[(,"subject":")(.-)("})]],
-    function(before, subject, after)
-      return table.concat({ before, vim.fn.escape(subject, [[\"]]), after }, "")
-    end
-  )
+  refs, _ = refs:gsub([[(,"subject":")(.-)("})]], function(before, subject, after)
+    return table.concat({ before, vim.fn.escape(subject, [[\"]]), after }, "")
+  end)
 
   local ok, result = pcall(vim.json.decode, refs, { luanil = { object = true, array = true } })
   if not ok then
@@ -42,14 +53,15 @@ function M.list_parsed()
   local output = {
     local_branch = {},
     remote_branch = {},
-    tag = {}
+    tag = {},
   }
 
   for _, ref in ipairs(result) do
+    ref.head = ref.head == "*"
+
     if ref.ref:match("^refs/heads/") then
       ref.type = "local_branch"
       table.insert(output.local_branch, ref)
-
     elseif ref.ref:match("^refs/remotes/") then
       local remote, branch = ref.ref:match("^refs/remotes/([^/]*)/(.*)$")
       if not output.remote_branch[remote] then
@@ -59,7 +71,6 @@ function M.list_parsed()
       ref.type = "remote_branch"
       ref.name = branch
       table.insert(output.remote_branch[remote], ref)
-
     elseif ref.ref:match("^refs/tags/") then
       ref.type = "tag"
       table.insert(output.tag, ref)
