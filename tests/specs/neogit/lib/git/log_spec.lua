@@ -331,6 +331,23 @@ describe("lib.git.log.parse", function()
       subject.branch_info("main, develop", remotes)
     )
   end)
+  it("lib.git.log.branch_info extracts head", function()
+    local remotes = remote.list()
+    assert.are.same(
+      { head = "main", untracked = { "main" }, tracked = {}, tags = {} },
+      subject.branch_info("HEAD -> main", remotes)
+    )
+    assert.are.same(
+      { head = "develop", untracked = { "main", "develop" }, tracked = {}, tags = {} },
+      subject.branch_info("main, HEAD -> develop", remotes)
+    )
+    assert.are.same({
+      head = "foo",
+      untracked = { "foo" },
+      tracked = { develop = { "origin" }, main = { "origin" } },
+      tags = {},
+    }, subject.branch_info("HEAD -> foo, origin/HEAD, main, origin/main, origin/develop", { "origin" }))
+  end)
 
   it("lib.git.log.branch_info extracts local & remote branch names", function()
     local remotes = { "origin" }

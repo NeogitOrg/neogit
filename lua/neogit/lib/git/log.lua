@@ -439,6 +439,7 @@ function M.verify_commit(commit)
 end
 
 ---@class CommitBranchInfo
+---@field head string? The name of the local branch, which is currently checked out (if any)
 ---@field untracked string[] List of local branches on without any remote counterparts
 ---@field tracked table<string, string[]>  Mapping from (local) branch names to list of remotes where this branch is present
 ---@field tags string[] List of tags placed on this commit
@@ -446,11 +447,13 @@ end
 --- Parse information of branches, tags and remotes from a given commit's ref output
 --- @param ref string comma separated list of branches, tags and remotes, e.g.:
 ---   * "origin/main, main, origin/HEAD, tag: 1.2.3, fork/develop"
+---   * "HEAD -> main, origin/main, origin/HEAD, tag: 1.2.3, fork/develop"
 --- @param remotes string[] list of remote names, e.g. by calling `require("neogit.lib.git.remote").list()`
 --- @return CommitBranchInfo
 function M.branch_info(ref, remotes)
   local parts = vim.split(ref, ", ")
   local result = {
+    head = nil,
     untracked = {},
     tracked = {},
     tags = {},
@@ -464,6 +467,11 @@ function M.branch_info(ref, remotes)
       -- No need to annotate tags with remotes, probably too cluttered
       skip = true
     end
+    if part:match("HEAD %-> ") then
+      part = part:gsub("HEAD %-> ", "")
+      result.head = part
+    end
+
     local has_remote = false
     for _, remote in ipairs(remotes) do
       if not skip then
