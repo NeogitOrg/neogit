@@ -154,6 +154,7 @@ function M:open()
         [popups.mapping_for("CommitPopup")] = popups.open("commit", function(p)
           p { commit = self.commit_info.oid }
         end),
+        [popups.mapping_for("FetchPopup")] = popups.open("fetch"),
         [popups.mapping_for("PushPopup")] = popups.open("push", function(p)
           p { commit = self.commit_info.oid }
         end),
