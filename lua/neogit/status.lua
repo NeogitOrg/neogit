@@ -1,5 +1,6 @@
 local Buffer = require("neogit.lib.buffer")
 local GitCommandHistory = require("neogit.buffers.git_command_history")
+local RefsViewBuffer = require("neogit.buffers.refs_view")
 local CommitView = require("neogit.buffers.commit_view")
 local git = require("neogit.lib.git")
 local cli = require("neogit.lib.git.cli")
@@ -1151,6 +1152,9 @@ local cmd_func_map = function()
     end),
     ["CommandHistory"] = function()
       GitCommandHistory:new():show()
+    end,
+    ["ShowRefs"] = function()
+      RefsViewBuffer.new(git.refs.list_parsed()):open()
     end,
     ["Console"] = function()
       local process = require("neogit.process")

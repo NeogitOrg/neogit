@@ -86,7 +86,7 @@ end
 
 ---@alias NeogitConfigMappingsFinder "Select" | "Close" | "Next" | "Previous" | "MultiselectToggleNext" | "MultiselectTogglePrevious" | "NOP" | false
 
----@alias NeogitConfigMappingsStatus "Close" | "Depth1" | "Depth2" | "Depth3" | "Depth4" | "Toggle" | "Discard" | "Stage" | "StageUnstaged" | "StageAll" | "Unstage" | "UnstageStaged" | "DiffAtFile" | "RefreshBuffer" | "GoToFile" | "VSplitOpen" | "SplitOpen" | "TabOpen" | "GoToPreviousHunkHeader" | "GoToNextHunkHeader" | "Console" | "CommandHistory" | "InitRepo" | false | fun()
+---@alias NeogitConfigMappingsStatus "Close" | "Depth1" | "Depth2" | "Depth3" | "Depth4" | "Toggle" | "Discard" | "Stage" | "StageUnstaged" | "StageAll" | "Unstage" | "UnstageStaged" | "DiffAtFile" | "RefreshBuffer" | "GoToFile" | "VSplitOpen" | "SplitOpen" | "TabOpen" | "GoToPreviousHunkHeader" | "GoToNextHunkHeader" | "Console" | "CommandHistory" | "ShowRefs" | "InitRepo" | false | fun()
 
 ---@alias NeogitConfigMappingsPopup "HelpPopup" | "DiffPopup" | "PullPopup" | "RebasePopup" | "MergePopup" | "PushPopup" | "CommitPopup" | "LogPopup" | "RevertPopup" | "StashPopup" | "IgnorePopup" | "CherryPickPopup" | "BranchPopup" | "FetchPopup" | "ResetPopup" | "RemotePopup" | "TagPopup" | false
 
@@ -311,6 +311,7 @@ function M.get_default_values()
         ["u"] = "Unstage",
         ["U"] = "UnstageStaged",
         ["d"] = "DiffAtFile",
+        ["y"] = "ShowRefs",
         ["$"] = "CommandHistory",
         ["#"] = "Console",
         ["<c-r>"] = "RefreshBuffer",
