@@ -19,17 +19,16 @@ local function section(refs, heading)
   for _, ref in ipairs(refs) do
     table.insert(
       rows,
-      row({
-        text.highlight(highlights[ref.type])(
-          util.str_truncate(ref.name, 34),
-          { align_right = 35 }
-        ),
-        text(ref.subject),
+      col({
+        row {
+          text.highlight(highlights[ref.type])(util.str_truncate(ref.name, 34), { align_right = 35 }),
+          text(ref.subject),
+        },
       }, { oid = ref.oid })
     )
   end
 
-  table.insert(rows, row({ text("") }))
+  table.insert(rows, row { text("") })
 
   return col({
     row(util.merge(heading, {
@@ -68,8 +67,6 @@ function M.Tags(tags)
 end
 
 function M.RefsView(refs)
-  refs = refs or git.refs.list_parsed()
-
   return util.merge({ M.Branches(refs.local_branch) }, M.Remotes(refs.remote_branch), { M.Tags(refs.tag) })
 end
 
