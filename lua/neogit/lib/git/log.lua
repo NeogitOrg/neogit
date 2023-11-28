@@ -439,56 +439,61 @@ function M.verify_commit(commit)
 end
 
 ---@class CommitBranchInfo
----@field untracked string[] List of local branches on without any remote counterparts
----@field tracked table<string, string[]>  Mapping from (local) branch names to list of remotes where this branch is present
+---@field head string? The name of the local branch, which is currently checked out (if any)
+---@field locals table<string,boolean> Set of local branch names
+---@field remotes table<string, string[]> table<string, string[]> Mapping from (local) branch names to list of remotes where this branch is present
 ---@field tags string[] List of tags placed on this commit
 
 --- Parse information of branches, tags and remotes from a given commit's ref output
 --- @param ref string comma separated list of branches, tags and remotes, e.g.:
 ---   * "origin/main, main, origin/HEAD, tag: 1.2.3, fork/develop"
+---   * "HEAD -> main, origin/main, origin/HEAD, tag: 1.2.3, fork/develop"
 --- @param remotes string[] list of remote names, e.g. by calling `require("neogit.lib.git.remote").list()`
 --- @return CommitBranchInfo
 function M.branch_info(ref, remotes)
   local parts = vim.split(ref, ", ")
   local result = {
-    untracked = {},
-    tracked = {},
+    head = nil,
+    locals = {},
+    remotes = {},
     tags = {},
   }
-  local untracked = {}
-  for _, part in ipairs(parts) do
+
+  for _, name in pairs(parts) do
     local skip = false
-    if part:match("^tag: .*") ~= nil then
-      local tag = part:gsub("tag: ", "")
+    if name:match("^tag: .*") ~= nil then
+      local tag = name:gsub("tag: ", "")
       table.insert(result.tags, tag)
-      -- No need to annotate tags with remotes, probably too cluttered
       skip = true
     end
-    local has_remote = false
-    for _, remote in ipairs(remotes) do
+
+    if name:match("HEAD %-> ") then
+      name = name:gsub("HEAD %-> ", "")
+      result.head = name
+    end
+
+    local remote = nil
+    for _, r in ipairs(remotes) do
       if not skip then
-        if part:match("^" .. remote .. "/") then
-          has_remote = true
-          local name = part:gsub("^" .. remote .. "/", "")
+        if name:match("^" .. r .. "/") then
+          name = name:gsub("^" .. r .. "/", "")
           if name == "HEAD" then
             skip = true
           else
-            if result.tracked[name] == nil then
-              result.tracked[name] = {}
-            end
-            table.insert(result.tracked[name], remote)
+            remote = r
           end
         end
       end
     end
-    -- if not skip and not has_remote and result.tracked[part] == nil then
-    if not skip and not has_remote then
-      table.insert(untracked, part)
-    end
-  end
-  for _, branch in ipairs(untracked) do
-    if result.tracked[branch] == nil then
-      table.insert(result.untracked, branch)
+    if not skip then
+      if remote ~= nil then
+        if result.remotes[name] == nil then
+          result.remotes[name] = {}
+        end
+        table.insert(result.remotes[name], remote)
+      else
+        result.locals[name] = true
+      end
     end
   end
   return result
