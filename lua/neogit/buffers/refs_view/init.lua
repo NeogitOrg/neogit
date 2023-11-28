@@ -137,38 +137,48 @@ function M:open()
         ["<enter>"] = function()
           CommitViewBuffer.new(self.buffer.ui:get_commits_in_selection()[1]):open()
         end,
-        ["{"] = function()
-          pcall(vim.cmd, "normal! zc")
-
-          vim.cmd("normal! k")
-          for _ = vim.fn.line("."), 0, -1 do
-            if vim.fn.foldlevel(".") > 0 then
-              break
-            end
-
-            vim.cmd("normal! k")
-          end
-
-          pcall(vim.cmd, "normal! zo")
-          vim.cmd("normal! zz")
-        end,
-        ["}"] = function()
-          pcall(vim.cmd, "normal! zc")
-
-          vim.cmd("normal! j")
-          for _ = vim.fn.line("."), vim.fn.line("$"), 1 do
-            if vim.fn.foldlevel(".") > 0 then
-              break
-            end
-
-            vim.cmd("normal! j")
-          end
-
-          pcall(vim.cmd, "normal! zo")
-          vim.cmd("normal! zz")
-        end,
+        -- ["{"] = function()
+        --   pcall(vim.cmd, "normal! zc")
+        --
+        --   vim.cmd("normal! k")
+        --   for _ = vim.fn.line("."), 0, -1 do
+        --     if vim.fn.foldlevel(".") > 0 then
+        --       break
+        --     end
+        --
+        --     vim.cmd("normal! k")
+        --   end
+        --
+        --   pcall(vim.cmd, "normal! zo")
+        --   vim.cmd("normal! zz")
+        -- end,
+        -- ["}"] = function()
+        --   pcall(vim.cmd, "normal! zc")
+        --
+        --   vim.cmd("normal! j")
+        --   for _ = vim.fn.line("."), vim.fn.line("$"), 1 do
+        --     if vim.fn.foldlevel(".") > 0 then
+        --       break
+        --     end
+        --
+        --     vim.cmd("normal! j")
+        --   end
+        --
+        --   pcall(vim.cmd, "normal! zo")
+        --   vim.cmd("normal! zz")
+        -- end,
         ["<tab>"] = function()
-          pcall(vim.cmd, "normal! za")
+          local fold = self.buffer.ui:get_fold_under_cursor()
+          if fold then
+            if fold.options.on_open then
+              fold.options.on_open(fold, self.buffer.ui)
+            else
+              local ok, _ = pcall(vim.cmd, "normal! za")
+              if ok then
+                fold.options.folded = not fold.options.folded
+              end
+            end
+          end
         end,
         ["d"] = function()
           if not config.check_integration("diffview") then
