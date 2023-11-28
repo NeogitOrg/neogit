@@ -1,4 +1,5 @@
 local popup = require("neogit.lib.popup")
+local config = require("neogit.config")
 local actions = require("neogit.popups.log.actions")
 
 local M = {}
@@ -62,7 +63,13 @@ function M.create()
       incompatible = { "reverse" },
       dependant = { "color" },
     })
-    :switch("c", "color", "Show graph in color", { internal = true, incompatible = { "reverse" } })
+    :switch_if(
+      config.values.graph_style == "ascii",
+      "c",
+      "color",
+      "Show graph in color",
+      { internal = true, incompatible = { "reverse" } }
+    )
     :switch("d", "decorate", "Show refnames", { enabled = true, internal = true })
     :switch("S", "show-signature", "Show signatures", { key_prefix = "=" })
     :group_heading("Log")

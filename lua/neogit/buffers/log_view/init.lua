@@ -51,6 +51,7 @@ function M:open()
         [popups.mapping_for("CommitPopup")] = popups.open("commit", function(p)
           p { commit = self.buffer.ui:get_commit_under_cursor() }
         end),
+        [popups.mapping_for("FetchPopup")] = popups.open("fetch"),
         [popups.mapping_for("PushPopup")] = popups.open("push", function(p)
           p { commit = self.buffer.ui:get_commit_under_cursor() }
         end),
@@ -66,6 +67,7 @@ function M:open()
         [popups.mapping_for("TagPopup")] = popups.open("tag", function(p)
           p { commit = self.buffer.ui:get_commit_under_cursor() }
         end),
+        [popups.mapping_for("PullPopup")] = popups.open("pull"),
         ["d"] = function()
           if not config.check_integration("diffview") then
             notification.error("Diffview integration must be enabled for log diff")
@@ -86,6 +88,7 @@ function M:open()
         [popups.mapping_for("CommitPopup")] = popups.open("commit", function(p)
           p { commit = self.buffer.ui:get_commit_under_cursor() }
         end),
+        [popups.mapping_for("FetchPopup")] = popups.open("fetch"),
         [popups.mapping_for("PushPopup")] = popups.open("push", function(p)
           p { commit = self.buffer.ui:get_commit_under_cursor() }
         end),
@@ -101,6 +104,7 @@ function M:open()
         [popups.mapping_for("TagPopup")] = popups.open("tag", function(p)
           p { commit = self.buffer.ui:get_commit_under_cursor() }
         end),
+        [popups.mapping_for("PullPopup")] = popups.open("pull"),
         ["q"] = function()
           self:close()
         end,

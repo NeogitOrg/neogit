@@ -1,8 +1,7 @@
 local Buffer = require("neogit.lib.buffer")
-local cli = require("neogit.lib.git.cli")
 local parser = require("neogit.buffers.commit_view.parsing")
 local ui = require("neogit.buffers.commit_view.ui")
-local log = require("neogit.lib.git.log")
+local git = require("neogit.lib.git")
 local config = require("neogit.config")
 local popups = require("neogit.popups")
 local notification = require("neogit.lib.notification")
@@ -47,15 +46,15 @@ function M.new(commit_id, notify)
     notification.info("Parsing commit...")
   end
 
-  local commit_info = log.parse(cli.show.format("fuller").args(commit_id).call_sync().stdout)[1]
+  local commit_info = git.log.parse(git.cli.show.format("fuller").args(commit_id).call_sync().stdout)[1]
   commit_info.commit_arg = commit_id
   local instance = {
     is_open = false,
     commit_info = commit_info,
     commit_overview = parser.parse_commit_overview(
-      cli.show.stat.oneline.args(commit_id).call_sync():trim().stdout
+      git.cli.show.stat.oneline.args(commit_id).call_sync():trim().stdout
     ),
-    commit_signature = config.values.commit_view.verify_commit and log.verify_commit(commit_id) or {},
+    commit_signature = config.values.commit_view.verify_commit and git.log.verify_commit(commit_id) or {},
     buffer = nil,
   }
 
@@ -154,6 +153,7 @@ function M:open()
         [popups.mapping_for("CommitPopup")] = popups.open("commit", function(p)
           p { commit = self.commit_info.oid }
         end),
+        [popups.mapping_for("FetchPopup")] = popups.open("fetch"),
         [popups.mapping_for("PushPopup")] = popups.open("push", function(p)
           p { commit = self.commit_info.oid }
         end),
@@ -169,6 +169,7 @@ function M:open()
         [popups.mapping_for("TagPopup")] = popups.open("tag", function(p)
           p { commit = self.commit_info.oid }
         end),
+        [popups.mapping_for("PullPopup")] = popups.open("pull"),
         ["q"] = function()
           self:close()
         end,

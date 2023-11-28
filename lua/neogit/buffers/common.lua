@@ -113,23 +113,28 @@ M.CommitEntry = Component.new(function(commit, args)
 
   -- Parse out ref names
   if args.decorate and commit.ref_name ~= "" then
-    local ref_name, _ = commit.ref_name:gsub("HEAD %-> ", "")
-    local is_head = string.match(commit.ref_name, "HEAD %->") ~= nil
-    local branch_highlight = is_head and "NeogitBranchHead" or "NeogitBranch"
+    local info = git.log.branch_info(commit.ref_name, git.remote.list())
 
-    local info = git.log.branch_info(ref_name, git.remote.list())
-    for _, branch in ipairs(info.untracked) do
-      table.insert(ref, text(branch, { highlight = "NeogitBranch" }))
-      table.insert(ref, text(" "))
+    -- Render local only branches first
+    for name, _ in pairs(info.locals) do
+      if info.remotes[name] == nil then
+        local branch_highlight = info.head == name and "NeogitBranchHead" or "NeogitBranch"
+        table.insert(ref, text(name, { highlight = branch_highlight }))
+        table.insert(ref, text(" "))
+      end
     end
-    for branch, remotes in pairs(info.tracked) do
+
+    -- Render tracked (local+remote) branches next
+    for name, remotes in pairs(info.remotes) do
       if #remotes == 1 then
         table.insert(ref, text(remotes[1] .. "/", { highlight = "NeogitRemote" }))
       end
       if #remotes > 1 then
         table.insert(ref, text("{" .. table.concat(remotes, ",") .. "}/", { highlight = "NeogitRemote" }))
       end
-      table.insert(ref, text(branch, { highlight = branch_highlight }))
+      local branch_highlight = info.head == name and "NeogitBranchHead" or "NeogitBranch"
+      local locally = info.locals[name] ~= nil
+      table.insert(ref, text(name, { highlight = locally and branch_highlight or "NeogitRemote" }))
       table.insert(ref, text(" "))
     end
     for _, tag in pairs(info.tags) do
@@ -152,8 +157,8 @@ M.CommitEntry = Component.new(function(commit, args)
     details = col.hidden(true).padding_left(8) {
       row(util.merge(graph, {
         text(" "),
-        text("Author:     ", { highlight = "NeogitGraphAuthor" }),
-        text(commit.author_name),
+        text("Author:     ", { highlight = "Comment" }),
+        text(commit.author_name, { highlight = "NeogitGraphAuthor" }),
         text(" <"),
         text(commit.author_email),
         text(">"),
@@ -178,7 +183,7 @@ M.CommitEntry = Component.new(function(commit, args)
       })),
       row(graph),
       col(
-        flat_map(commit.description, function(line)
+        flat_map({ commit.subject, commit.body }, function(line)
           local lines = map(util.str_wrap(line, vim.o.columns * 0.6), function(l)
             return row(util.merge(graph, { text(" "), text(l) }))
           end)
@@ -200,10 +205,11 @@ M.CommitEntry = Component.new(function(commit, args)
     row(
       util.merge({
         text(commit.oid:sub(1, 7), {
-          highlight = commit.signature_code and highlight_for_signature[commit.signature_code] or "Comment",
+          highlight = commit.verification_flag and highlight_for_signature[commit.verification_flag]
+            or "Comment",
         }),
         text(" "),
-      }, graph, { text(" ") }, ref, { text(commit.description[1]) }),
+      }, graph, { text(" ") }, ref, { text(commit.subject) }),
       {
         virtual_text = {
           { " ", "Constant" },
