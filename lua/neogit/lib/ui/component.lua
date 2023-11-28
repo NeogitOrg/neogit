@@ -2,7 +2,24 @@ local util = require("neogit.lib.util")
 
 local default_component_options = {
   foldable = false,
+  folded = false,
 }
+
+---@class ComponentPosition
+---@field row_start integer
+---@field row_end integer
+---@field col_start integer
+---@field col_end integer
+
+---@class ComponentOptions
+---@field padding_left integer
+---@field tag string
+---@field foldable boolean
+---@field folded boolean
+
+---@class Component
+---@field position ComponentPosition
+---@field parent Component
 
 local Component = {}
 

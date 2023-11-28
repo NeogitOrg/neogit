@@ -37,7 +37,7 @@ M.Diff = Component.new(function(diff)
       col.tag("DiffInfo")(map(diff.info, text)),
       col.tag("HunkList")(map(hunk_props, M.Hunk)),
     },
-  }, { foldable = true })
+  }, { foldable = true, folded = false })
 end)
 
 local HunkLine = Component.new(function(line)
@@ -58,7 +58,7 @@ M.Hunk = Component.new(function(props)
   return col.tag("Hunk")({
     text.sign("NeogitHunkHeader")(props.header),
     col.tag("HunkContent")(map(props.content, HunkLine)),
-  }, { foldable = true })
+  }, { foldable = true, folded = false })
 end)
 
 M.List = Component.new(function(props)
@@ -216,7 +216,7 @@ M.CommitEntry = Component.new(function(commit, args)
       }
     ),
     details,
-  }, { oid = commit.oid, foldable = args.details == true })
+  }, { oid = commit.oid, foldable = args.details == true, folded = true })
 end)
 
 M.CommitGraph = Component.new(function(commit, _)
