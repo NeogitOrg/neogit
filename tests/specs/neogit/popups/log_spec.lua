@@ -14,6 +14,10 @@ local function act(normal_cmd)
   vim.fn.feedkeys("", "x") -- flush typeahead
 end
 
+local function actual()
+  return vim.api.nvim_buf_get_lines(0, 0, -1, true)
+end
+
 describe("log popup", function()
   before_each(function()
     -- Reset all switches.
@@ -75,8 +79,19 @@ describe("log popup", function()
     in_prepared_repo(function()
       act("l=n<C-u>1<CR>l")
       operations.wait("log_current")
-      vim.fn.feedkeys("G", "x")
-      eq("e2c2a1c * master origin/second-branch b.txt", vim.api.nvim_get_current_line())
+
+      local expected = {
+        "e2c2a1c * master origin/second-branch b.txt",
+        "        * Author:     Florian Proksch <florian.proksch@protonmail.com>",
+        "        * AuthorDate: Tue Feb 9 20:33:33 2021 +0100",
+        "        * Commit:     Florian Proksch <florian.proksch@protonmail.com>",
+        "        * CommitDate: Tue Feb 9 20:33:33 2021 +0100",
+        "        *",
+        "        * b.txt",
+        "        * ",
+      }
+
+      eq(expected, actual())
     end)
   )
 
@@ -91,8 +106,8 @@ describe("log popup", function()
       ]])
       act("l=APerson<CR>l")
       operations.wait("log_current")
-      vim.fn.feedkeys("G", "x")
-      assert.is_not.Nil(string.find(vim.api.nvim_get_current_line(), "Empty commit", 1, true))
+
+      assert.is_not.Nil(string.find(actual()[1], "Empty commit", 1, true))
     end)
   )
 
@@ -101,8 +116,19 @@ describe("log popup", function()
     in_prepared_repo(function()
       act("l=Fa.txt<CR>l")
       operations.wait("log_current")
-      vim.fn.feedkeys("G", "x")
-      eq("d86fa0e * a.txt", vim.api.nvim_get_current_line())
+
+      local expected = {
+        "d86fa0e * a.txt",
+        "        * Author:     Florian Proksch <florian.proksch@protonmail.com>",
+        "        * AuthorDate: Sat Feb 6 08:08:32 2021 +0100",
+        "        * Commit:     Florian Proksch <florian.proksch@protonmail.com>",
+        "        * CommitDate: Sat Feb 6 21:20:33 2021 +0100",
+        "        *",
+        "        * a.txt",
+        "        * ",
+      }
+
+      eq(expected, actual())
     end)
   )
 
@@ -111,8 +137,19 @@ describe("log popup", function()
     in_prepared_repo(function()
       act("l=sFeb 8 2021<CR>l")
       operations.wait("log_current")
-      vim.fn.feedkeys("G", "x")
-      eq("e2c2a1c * master origin/second-branch b.txt", vim.api.nvim_get_current_line())
+
+      local expected = {
+        "e2c2a1c * master origin/second-branch b.txt",
+        "        * Author:     Florian Proksch <florian.proksch@protonmail.com>",
+        "        * AuthorDate: Tue Feb 9 20:33:33 2021 +0100",
+        "        * Commit:     Florian Proksch <florian.proksch@protonmail.com>",
+        "        * CommitDate: Tue Feb 9 20:33:33 2021 +0100",
+        "        *",
+        "        * b.txt",
+        "        * ",
+      }
+
+      eq(expected, actual())
     end)
   )
 
@@ -121,8 +158,19 @@ describe("log popup", function()
     in_prepared_repo(function()
       act("l=uFeb 7 2021<CR>l")
       operations.wait("log_current")
-      vim.fn.feedkeys("G", "x")
-      eq("d86fa0e * a.txt", vim.api.nvim_get_current_line())
+
+      local expected = {
+        "d86fa0e * a.txt",
+        "        * Author:     Florian Proksch <florian.proksch@protonmail.com>",
+        "        * AuthorDate: Sat Feb 6 08:08:32 2021 +0100",
+        "        * Commit:     Florian Proksch <florian.proksch@protonmail.com>",
+        "        * CommitDate: Sat Feb 6 21:20:33 2021 +0100",
+        "        *",
+        "        * a.txt",
+        "        * ",
+      }
+
+      eq(expected, actual())
     end)
   )
 
@@ -132,8 +180,20 @@ describe("log popup", function()
       input.values = { "text file" }
       act("l-Gl")
       operations.wait("log_current")
-      vim.fn.feedkeys("G", "x")
-      eq("d86fa0e * a.txt", vim.api.nvim_get_current_line())
+
+      local expected = {
+        "        ...",
+        "d86fa0e * a.txt",
+        "        * Author:     Florian Proksch <florian.proksch@protonmail.com>",
+        "        * AuthorDate: Sat Feb 6 08:08:32 2021 +0100",
+        "        * Commit:     Florian Proksch <florian.proksch@protonmail.com>",
+        "        * CommitDate: Sat Feb 6 21:20:33 2021 +0100",
+        "        *",
+        "        * a.txt",
+        "        * ",
+      }
+
+      eq(expected, actual())
     end)
   )
 
@@ -143,8 +203,19 @@ describe("log popup", function()
       input.values = { "test file" }
       act("l-Sl")
       operations.wait("log_current")
-      vim.fn.feedkeys("G", "x")
-      eq("e2c2a1c * master origin/second-branch b.txt", vim.api.nvim_get_current_line())
+
+      local expected = {
+        "e2c2a1c * master origin/second-branch b.txt",
+        "        * Author:     Florian Proksch <florian.proksch@protonmail.com>",
+        "        * AuthorDate: Tue Feb 9 20:33:33 2021 +0100",
+        "        * Commit:     Florian Proksch <florian.proksch@protonmail.com>",
+        "        * CommitDate: Tue Feb 9 20:33:33 2021 +0100",
+        "        *",
+        "        * b.txt",
+        "        * ",
+      }
+
+      eq(expected, actual())
     end)
   )
 

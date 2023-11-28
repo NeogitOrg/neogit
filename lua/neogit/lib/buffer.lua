@@ -32,6 +32,7 @@ function Buffer:new(handle)
     hl_buffer = {},
     sign_buffer = {},
     ext_buffer = {},
+    fold_buffer = {},
   }
 
   this.ui = Ui.new(this)
@@ -106,6 +107,10 @@ function Buffer:buffered_set_extmark(...)
   table.insert(self.ext_buffer, { ... })
 end
 
+function Buffer:buffered_create_fold(...)
+  table.insert(self.fold_buffer, { ... })
+end
+
 function Buffer:resize(length)
   api.nvim_buf_set_lines(self.handle, length, -1, false, {})
 end
@@ -130,6 +135,11 @@ function Buffer:flush_buffers()
     self:set_extmark(unpack(ext))
   end
   self.ext_buffer = {}
+
+  for _, fold in ipairs(self.fold_buffer) do
+    self:create_fold(unpack(fold))
+  end
+  self.fold_buffer = {}
 end
 
 function Buffer:set_text(first_line, last_line, first_col, last_col, lines)
@@ -270,7 +280,7 @@ function Buffer:put(lines, after, follow)
 end
 
 function Buffer:create_fold(first, last)
-  vim.cmd(string.format(self.handle .. "bufdo %d,%dfold", first, last))
+  vim.cmd(string.format("%d,%dfold", first, last))
 end
 
 function Buffer:unlock()
@@ -288,10 +298,6 @@ end
 
 function Buffer:set_name(name)
   api.nvim_buf_set_name(self.handle, name)
-end
-
-function Buffer:set_foldlevel(level)
-  vim.cmd("setlocal foldlevel=" .. level)
 end
 
 function Buffer:replace_content_with(lines)
@@ -382,8 +388,8 @@ function Buffer:set_extmark(...)
   return api.nvim_buf_set_extmark(self.handle, ...)
 end
 
-function Buffer:get_extmark(ns, id)
-  return api.nvim_buf_get_extmark_by_id(self.handle, ns, id, { details = true })
+function Buffer:get_extmark(id, ns)
+  return api.nvim_buf_get_extmark_by_id(self.handle, ns or self.namespace, id, { details = true })
 end
 
 function Buffer:del_extmark(ns, id)
@@ -437,6 +443,13 @@ function Buffer.create(config)
   buffer:set_option("bufhidden", config.bufhidden or "wipe")
   buffer:set_option("buftype", config.buftype or "nofile")
   buffer:set_option("swapfile", false)
+
+  if win then
+    vim.api.nvim_set_option_value("foldenable", true, { win = win })
+    vim.api.nvim_set_option_value("foldlevel", 99, { win = win })
+    vim.api.nvim_set_option_value("foldminlines", 0, { win = win })
+    vim.api.nvim_set_option_value("foldtext", "v:lua.NeogitBufferFoldText()", { win = win })
+  end
 
   if config.filetype then
     buffer:set_filetype(config.filetype)
@@ -493,6 +506,7 @@ function Buffer.create(config)
   buffer:call(function()
     -- Set fold styling for Neogit windows while preserving user styling
     vim.opt_local.winhl:append("Folded:NeogitFold")
+    vim.opt_local.fillchars:append("fold: ")
 
     -- Set signcolumn unless disabled by user settings
     if not config.disable_signs then

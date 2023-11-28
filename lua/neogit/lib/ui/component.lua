@@ -1,8 +1,7 @@
 local util = require("neogit.lib.util")
 
 local default_component_options = {
-  folded = false,
-  hidden = false,
+  foldable = false,
 }
 
 local Component = {}
@@ -20,10 +19,6 @@ function Component:row_range_abs()
   return from, from + len
 end
 
-function Component:toggle_hidden()
-  self.options.hidden = not self.options.hidden
-end
-
 function Component:get_padding_left(recurse)
   local padding_left = self.options.padding_left or 0
   local padding_left_text = type(padding_left) == "string" and padding_left or (" "):rep(padding_left)
@@ -33,14 +28,7 @@ function Component:get_padding_left(recurse)
   return padding_left_text .. (self.parent and self.parent:get_padding_left() or "")
 end
 
-function Component:is_hidden()
-  return self.options.hidden or (self.parent and self.parent:is_hidden())
-end
-
 function Component:is_under_cursor(cursor)
-  if self:is_hidden() then
-    return false
-  end
   local row = cursor[1]
   local col = cursor[2]
   local from, to = self:row_range_abs()
@@ -51,10 +39,6 @@ function Component:is_under_cursor(cursor)
 end
 
 function Component:is_in_linewise_range(start, stop)
-  if self:is_hidden() then
-    return false
-  end
-
   local from, to = self:row_range_abs()
   return from >= start and from <= stop and to >= start and to <= stop
 end

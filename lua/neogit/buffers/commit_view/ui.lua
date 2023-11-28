@@ -46,16 +46,21 @@ function M.CommitHeader(info)
   }
 end
 
-function M.CommitView(info, overview, signature_block)
-  local hide_signature = vim.tbl_isempty(signature_block)
+function M.SignatureBlock(signature_block)
+  if vim.tbl_isempty(signature_block or {}) then
+    return text("")
+  end
 
+  return col(util.merge(map(signature_block, text), { text("") }), { tag = "Signature" })
+end
+
+function M.CommitView(info, overview, signature_block)
   return {
     M.CommitHeader(info),
     text(""),
     col(map(info.description, text), { sign = "NeogitCommitViewDescription", tag = "Description" }),
     text(""),
-    col(map(signature_block or {}, text), { tag = "Signature", hidden = hide_signature }),
-    text("", { hidden = hide_signature }),
+    M.SignatureBlock(signature_block),
     text(overview.summary),
     col(map(overview.files, M.OverviewFile), { tag = "OverviewFileList" }),
     text(""),

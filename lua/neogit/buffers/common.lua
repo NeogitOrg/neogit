@@ -31,13 +31,13 @@ M.Diff = Component.new(function(diff)
     }
   end)
 
-  return col.tag("Diff") {
+  return col.tag("Diff")({
     text(string.format("%s %s", diff.kind, diff.file), { sign = "NeogitDiffHeader" }),
     col.tag("DiffContent") {
       col.tag("DiffInfo")(map(diff.info, text)),
       col.tag("HunkList")(map(hunk_props, M.Hunk)),
     },
-  }
+  }, { foldable = true })
 end)
 
 local HunkLine = Component.new(function(line)
@@ -55,10 +55,10 @@ local HunkLine = Component.new(function(line)
 end)
 
 M.Hunk = Component.new(function(props)
-  return col.tag("Hunk") {
+  return col.tag("Hunk")({
     text.sign("NeogitHunkHeader")(props.header),
     col.tag("HunkContent")(map(props.content, HunkLine)),
-  }
+  }, { foldable = true })
 end)
 
 M.List = Component.new(function(props)
@@ -149,7 +149,7 @@ M.CommitEntry = Component.new(function(commit, args)
 
   local details
   if args.details then
-    details = col.hidden(true).padding_left(8) {
+    details = col.padding_left(8) {
       row(util.merge(graph, {
         text(" "),
         text("Author:     ", { highlight = "NeogitGraphAuthor" }),
@@ -196,7 +196,7 @@ M.CommitEntry = Component.new(function(commit, args)
     }
   end
 
-  return col({
+  return col.tag("commit")({
     row(
       util.merge({
         text(commit.oid:sub(1, 7), {
@@ -216,11 +216,11 @@ M.CommitEntry = Component.new(function(commit, args)
       }
     ),
     details,
-  }, { oid = commit.oid })
+  }, { oid = commit.oid, foldable = args.details == true })
 end)
 
 M.CommitGraph = Component.new(function(commit, _)
-  return col.padding_left(8) { row(build_graph(commit.graph)) }
+  return col.tag("graph").padding_left(8) { row(build_graph(commit.graph)) }
 end)
 
 M.Grid = Component.new(function(props)
@@ -260,14 +260,6 @@ M.Grid = Component.new(function(props)
   for i = 1, #props.items do
     local children = {}
 
-    -- TODO: seems to be a leftover from when the grid was column major
-    -- if i ~= 1 then
-    --   children = map(range(props.gap), function()
-    --     return text("")
-    --   end)
-    -- end
-
-    -- current row
     local r = props.items[i]
 
     for j = 1, #r do
