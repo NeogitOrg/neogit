@@ -82,10 +82,12 @@ local function section(refs, heading, head)
 
   table.insert(rows, row { text("") })
 
-  return col({
-    row(util.merge(heading, { text.highlight("NeogitGraphWhite")(string.format(" (%d)", #refs)) })),
-    col(rows),
-  }, { foldable = true })
+  return col.tag("Section")({
+    row.tag("SectionHeading")(
+      util.merge(heading, { text.highlight("NeogitGraphWhite")(string.format(" (%d)", #refs)) })
+    ),
+    col.tag("SectionBody")(rows),
+  }, { foldable = true, folded = false })
 end
 
 function M.Branches(branches, head)
