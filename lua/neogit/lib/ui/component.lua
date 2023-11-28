@@ -108,6 +108,11 @@ function Component:get_highlight()
   return self.options.highlight or (self.parent and self.parent:get_highlight() or nil)
 end
 
+function Component:append(c)
+  table.insert(self.children, c)
+  return self
+end
+
 function Component.new(f)
   local x = {}
   setmetatable(x, {
