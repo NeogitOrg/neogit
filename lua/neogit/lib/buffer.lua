@@ -297,6 +297,7 @@ function Buffer:set_fold_state(first, last, open)
     vim.cmd(string.format("%d,%dfoldclose", first, last))
   end
 end
+
 function Buffer:unlock()
   self:set_option("readonly", false)
   self:set_option("modifiable", true)
