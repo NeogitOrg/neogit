@@ -42,6 +42,14 @@ local neogit = require('neogit')
 neogit.setup {}
 ```
 
+## Compatibility
+
+The `master` branch will always be compatible with the latest **stable** release of Neovim, and with the latest **nightly** build as well.
+
+Some features may only be available using unreleased (neovim nightly) API's - to use them, set your plugin manager to track the `nightly` branch instead. 
+
+The `nightly` branch has the same stability guarantees as the `master` branch.
+
 ## Configuration
 
 You can configure neogit by running the `neogit.setup()` function, passing a table as the argument.
