@@ -114,24 +114,27 @@ M.CommitEntry = Component.new(function(commit, args)
   -- Parse out ref names
   if args.decorate and commit.ref_name ~= "" then
     local info = git.log.branch_info(commit.ref_name, git.remote.list())
-    for _, branch in ipairs(info.untracked) do
-      table.insert(
-        ref,
-        text(branch, { highlight = info.head == branch and "NeogitBranchHead" or "NeogitBranch" })
-      )
-      table.insert(ref, text(" "))
+
+    -- Render local only branches first
+    for name, _ in pairs(info.locals) do
+      if info.remotes[name] == nil then
+        local branch_highlight = info.head == name and "NeogitBranchHead" or "NeogitBranch"
+        table.insert(ref, text(name, { highlight = branch_highlight }))
+        table.insert(ref, text(" "))
+      end
     end
-    for branch, remotes in pairs(info.tracked) do
+
+    -- Render tracked (local+remote) branches next
+    for name, remotes in pairs(info.remotes) do
       if #remotes == 1 then
         table.insert(ref, text(remotes[1] .. "/", { highlight = "NeogitRemote" }))
       end
       if #remotes > 1 then
         table.insert(ref, text("{" .. table.concat(remotes, ",") .. "}/", { highlight = "NeogitRemote" }))
       end
-      table.insert(
-        ref,
-        text(branch, { highlight = info.head == branch and "NeogitBranchHead" or "NeogitBranch" })
-      )
+      local branch_highlight = info.head == name and "NeogitBranchHead" or "NeogitBranch"
+      local locally = info.locals[name] ~= nil
+      table.insert(ref, text(name, { highlight = locally and branch_highlight or "NeogitRemote" }))
       table.insert(ref, text(" "))
     end
     for _, tag in pairs(info.tags) do
