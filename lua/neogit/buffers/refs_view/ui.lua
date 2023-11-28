@@ -71,7 +71,13 @@ local function section(refs, heading, head)
             this:append(cherries)
             ui:update()
 
-            vim.cmd(string.format("redraw | echomsg 'Got %d cherries for %s'", #cherries.children - 1, ref.oid:sub(1, 7)))
+            vim.cmd(
+              string.format(
+                "redraw | echomsg 'Got %d cherries for %s'",
+                #cherries.children - 1,
+                ref.oid:sub(1, 7)
+              )
+            )
           else
             vim.cmd(string.format("redraw | echomsg 'No cherries found for %s'", ref.oid:sub(1, 7)))
           end
