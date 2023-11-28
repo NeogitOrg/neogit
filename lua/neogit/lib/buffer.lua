@@ -138,6 +138,7 @@ function Buffer:flush_buffers()
 
   for _, fold in ipairs(self.fold_buffer) do
     self:create_fold(unpack(fold))
+    self:set_fold_state(unpack(fold))
   end
   self.fold_buffer = {}
 end
@@ -285,10 +286,17 @@ function Buffer:put(lines, after, follow)
   api.nvim_put(lines, "l", after, follow)
 end
 
-function Buffer:create_fold(first, last)
+function Buffer:create_fold(first, last, _)
   vim.cmd(string.format("%d,%dfold", first, last))
 end
 
+function Buffer:set_fold_state(first, last, open)
+  if open then
+    vim.cmd(string.format("%d,%dfoldopen", first, last))
+  else
+    vim.cmd(string.format("%d,%dfoldclose", first, last))
+  end
+end
 function Buffer:unlock()
   self:set_option("readonly", false)
   self:set_option("modifiable", true)
