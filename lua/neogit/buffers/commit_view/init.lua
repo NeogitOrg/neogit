@@ -169,6 +169,7 @@ function M:open()
         [popups.mapping_for("TagPopup")] = popups.open("tag", function(p)
           p { commit = self.commit_info.oid }
         end),
+        [popups.mapping_for("PullPopup")] = popups.open("pull"),
         ["q"] = function()
           self:close()
         end,

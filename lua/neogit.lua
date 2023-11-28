@@ -69,7 +69,7 @@ function M.open(opts)
   end
 
   if not opts.cwd then
-    opts.cwd = require("neogit.lib.git.cli").git_root()
+    opts.cwd = require("neogit.lib.git.cli").git_root_of_cwd()
   end
 
   if not did_setup then
@@ -78,7 +78,7 @@ function M.open(opts)
     return
   end
 
-  if not cli.git_is_repository_sync(opts.cwd) then
+  if not cli.is_inside_worktree(opts.cwd) then
     if
       input.get_confirmation(
         string.format("Initialize repository in %s?", opts.cwd or vim.fn.getcwd()),
@@ -170,10 +170,6 @@ function M.complete(arglead)
   return vim.tbl_filter(function(arg)
     return arg:match("^" .. arglead)
   end, { "kind=", "cwd=", "commit" })
-end
-
-function M.get_repo()
-  return require("neogit.lib.git").repo
 end
 
 function M.get_log_file_path()

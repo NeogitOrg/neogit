@@ -2,6 +2,7 @@ local status = require("neogit.status")
 local plenary_async = require("plenary.async")
 local git_harness = require("tests.util.git_harness")
 local util = require("tests.util.util")
+local remote = require("neogit.lib.git.remote")
 
 local subject = require("neogit.lib.git.log")
 
@@ -320,5 +321,76 @@ describe("lib.git.log.parse", function()
     for k, v in pairs(parsed_commit) do
       assert.are.same(v, expected[k])
     end
+  end)
+
+  it("lib.git.log.branch_info extracts local branch name", function()
+    local remotes = remote.list()
+    assert.are.same({ untracked = { "main" }, tracked = {}, tags = {} }, subject.branch_info("main", remotes))
+    assert.are.same(
+      { untracked = { "main", "develop" }, tracked = {}, tags = {} },
+      subject.branch_info("main, develop", remotes)
+    )
+  end)
+
+  it("lib.git.log.branch_info extracts local & remote branch names", function()
+    local remotes = { "origin" }
+    assert.are.same(
+      { tracked = { main = { "origin" } }, tags = {}, untracked = {} },
+      subject.branch_info("origin/main", remotes)
+    )
+    assert.are.same(
+      { tracked = { main = { "origin" }, develop = { "origin" } }, tags = {}, untracked = {} },
+      subject.branch_info("origin/main, origin/develop", remotes)
+    )
+    assert.are.same(
+      { tracked = { main = { "origin" }, develop = { "origin" } }, tags = {}, untracked = {} },
+      subject.branch_info("origin/main, main, origin/develop", remotes)
+    )
+    assert.are.same(
+      { tracked = { main = { "origin" }, develop = { "origin" } }, tags = {}, untracked = { "foo" } },
+      subject.branch_info("main, origin/main, origin/develop, develop, foo", remotes)
+    )
+  end)
+
+  it("lib.git.log.branch_info can deal with multiple remotes", function()
+    local remotes = { "origin", "fork" }
+    assert.are.same(
+      { tracked = { main = { "origin", "fork" } }, tags = {}, untracked = {} },
+      subject.branch_info("origin/main, main, fork/main", remotes)
+    )
+    assert.are.same({
+      tracked = { main = { "origin" }, develop = { "origin", "fork" } },
+      tags = {},
+      untracked = { "foo" },
+    }, subject.branch_info("origin/main, develop, origin/develop, fork/develop, foo", remotes))
+  end)
+
+  it("lib.git.log.branch_info can deal with slashes in branch names", function()
+    local remotes = { "origin" }
+    assert.are.same(
+      { tracked = { ["feature/xyz"] = { "origin" } }, untracked = { "foo/bar/baz" }, tags = {} },
+      subject.branch_info("feature/xyz, foo/bar/baz, origin/feature/xyz", remotes)
+    )
+  end)
+
+  it("lib.git.log.branch_info ignores HEAD references", function()
+    local remotes = { "origin", "fork" }
+    assert.are.same(
+      { tracked = { main = { "origin", "fork" } }, untracked = { "develop" }, tags = {} },
+      subject.branch_info("origin/main, fork/main, develop, origin/HEAD, fork/HEAD", remotes)
+    )
+  end)
+
+  it("lib.git.log.branch_info parses tags", function()
+    local remotes = { "origin" }
+    assert.are.same(
+      { tracked = {}, untracked = {}, tags = { "0.1.0" } },
+      subject.branch_info("tag: 0.1.0", remotes)
+    )
+    assert.are.same({
+      tracked = {},
+      untracked = {},
+      tags = { "0.5.7", "foo-bar" },
+    }, subject.branch_info("tag: 0.5.7, tag: foo-bar", remotes))
   end)
 end)

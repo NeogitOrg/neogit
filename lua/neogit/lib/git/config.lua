@@ -70,10 +70,10 @@ end
 ---@type table<string, ConfigEntry>
 local config_cache = {}
 local cache_key = nil
-local git_root = cli.git_root()
 
 local function make_cache_key()
-  local stat = vim.loop.fs_stat(git_root .. "/.git/config")
+  local repo = require("neogit.lib.git.repository")
+  local stat = vim.loop.fs_stat(repo.git_root .. "/.git/config")
   if stat then
     return stat.mtime.sec
   end

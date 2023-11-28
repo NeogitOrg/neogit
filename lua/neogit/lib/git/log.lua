@@ -438,4 +438,60 @@ function M.verify_commit(commit)
   return cli["verify-commit"].args(commit).call_sync_ignoring_exit_code():trim().stderr
 end
 
+---@class CommitBranchInfo
+---@field untracked string[] List of local branches on without any remote counterparts
+---@field tracked table<string, string[]>  Mapping from (local) branch names to list of remotes where this branch is present
+---@field tags string[] List of tags placed on this commit
+
+--- Parse information of branches, tags and remotes from a given commit's ref output
+--- @param ref string comma separated list of branches, tags and remotes, e.g.:
+---   * "origin/main, main, origin/HEAD, tag: 1.2.3, fork/develop"
+--- @param remotes string[] list of remote names, e.g. by calling `require("neogit.lib.git.remote").list()`
+--- @return CommitBranchInfo
+function M.branch_info(ref, remotes)
+  local parts = vim.split(ref, ", ")
+  local result = {
+    untracked = {},
+    tracked = {},
+    tags = {},
+  }
+  local untracked = {}
+  for _, part in ipairs(parts) do
+    local skip = false
+    if part:match("^tag: .*") ~= nil then
+      local tag = part:gsub("tag: ", "")
+      table.insert(result.tags, tag)
+      -- No need to annotate tags with remotes, probably too cluttered
+      skip = true
+    end
+    local has_remote = false
+    for _, remote in ipairs(remotes) do
+      if not skip then
+        if part:match("^" .. remote .. "/") then
+          has_remote = true
+          local name = part:gsub("^" .. remote .. "/", "")
+          if name == "HEAD" then
+            skip = true
+          else
+            if result.tracked[name] == nil then
+              result.tracked[name] = {}
+            end
+            table.insert(result.tracked[name], remote)
+          end
+        end
+      end
+    end
+    -- if not skip and not has_remote and result.tracked[part] == nil then
+    if not skip and not has_remote then
+      table.insert(untracked, part)
+    end
+  end
+  for _, branch in ipairs(untracked) do
+    if result.tracked[branch] == nil then
+      table.insert(result.untracked, branch)
+    end
+  end
+  return result
+end
+
 return M

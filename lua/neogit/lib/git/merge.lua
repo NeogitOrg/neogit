@@ -31,20 +31,21 @@ function M.abort()
 end
 
 function M.update_merge_status(state)
-  if state.git_root == "" then
+  local repo = require("neogit.lib.git.repository")
+  if repo.git_root == "" then
     return
   end
 
   state.merge = { head = nil, msg = "", items = {} }
 
-  local merge_head = state.git_path("MERGE_HEAD")
+  local merge_head = repo:git_path("MERGE_HEAD")
   if not merge_head:exists() then
     return
   end
 
   state.merge.head = merge_head:read():match("([^\r\n]+)")
 
-  local message = state.git_path("MERGE_MSG")
+  local message = repo:git_path("MERGE_MSG")
   if message:exists() then
     state.merge.msg = message:read():match("([^\r\n]+)") -- we need \r? to support windows
   end

@@ -160,7 +160,6 @@ local function update_status(state)
   else
     head.tag = { name = nil, distance = nil }
   end
-  state.cwd = cwd
   state.head = head
   state.upstream = upstream
   state.untracked.items = untracked_files
