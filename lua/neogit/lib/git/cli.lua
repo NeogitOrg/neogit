@@ -870,11 +870,7 @@ local function new_builder(subcommand)
       return result
     end,
     call = function(opts)
-      opts = vim.tbl_extend(
-        "keep",
-        (opts or {}),
-        { verbose = false, ignore_code = false }
-      )
+      opts = vim.tbl_extend("keep", (opts or {}), { verbose = false, ignore_code = false })
 
       local p = to_process(opts.verbose, not state.show_popup, opts.ignore_code)
       local result = p:spawn_async(function()
@@ -901,11 +897,7 @@ local function new_builder(subcommand)
       return result
     end,
     call_sync = function(opts)
-      opts = vim.tbl_extend(
-        "keep",
-        (opts or {}),
-        { verbose = false, ignore_code = false }
-      )
+      opts = vim.tbl_extend("keep", (opts or {}), { verbose = false, ignore_code = false })
 
       local p = to_process(opts.verbose, opts.external_errors, opts.ignore_code)
 
