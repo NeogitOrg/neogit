@@ -399,7 +399,7 @@ function M.list(options, graph, files, graph_color)
 
   local graph_output
   if graph then
-    if config.values.graph_style == "flog" then
+    if config.values.graph_style == "unicode" then
       graph_output = require("neogit.lib.graph").build(commits)
     elseif config.values.graph_style == "ascii" then
       util.remove_item_from_table(options, "--show-signature")
