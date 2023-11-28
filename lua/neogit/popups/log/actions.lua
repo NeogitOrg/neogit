@@ -18,6 +18,7 @@ local function commits(popup, flags)
     util.merge(popup:get_arguments(), flags),
     popup:get_internal_arguments().graph,
     popup.state.env.files,
+    false,
     popup:get_internal_arguments().color
   )
 end

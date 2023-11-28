@@ -291,7 +291,7 @@ end
 
 ---@param options table|nil
 ---@param files? table
----@param color boolean
+---@param color? boolean
 ---@return table
 function M.graph(options, files, color)
   options = ensure_max(options or {})
@@ -377,7 +377,8 @@ end
 ---@param options? string[]
 ---@param graph? table
 ---@param files? table
----@param hidden? boolean
+---@param hidden? boolean Hide from git history
+---@param graph_color? boolean Render ascii graph in color
 ---@return CommitLogEntry[]
 function M.list(options, graph, files, hidden, graph_color)
   files = files or {}
