@@ -378,7 +378,7 @@ end
 ---@param graph? table
 ---@param files? table
 ---@return CommitLogEntry[]
-function M.list(options, graph, files)
+function M.list(options, graph, files, graph_color)
   files = files or {}
 
   local signature = false
@@ -399,7 +399,12 @@ function M.list(options, graph, files)
 
   local graph_output
   if graph then
-    graph_output = require("neogit.lib.graph").build(commits)
+    if config.values.graph_style == "flog" then
+      graph_output = require("neogit.lib.graph").build(commits)
+    elseif config.values.graph_style == "ascii" then
+      util.remove_item_from_table(options, "--show-signature")
+      graph_output = M.graph(options, files, graph_color)
+    end
   else
     graph_output = {}
   end

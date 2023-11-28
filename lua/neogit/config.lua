@@ -90,6 +90,8 @@ end
 
 ---@alias NeogitConfigMappingsPopup "HelpPopup" | "DiffPopup" | "PullPopup" | "RebasePopup" | "MergePopup" | "PushPopup" | "CommitPopup" | "LogPopup" | "RevertPopup" | "StashPopup" | "IgnorePopup" | "CherryPickPopup" | "BranchPopup" | "FetchPopup" | "ResetPopup" | "RemotePopup" | "TagPopup" | false
 
+---@alias NeogitGraphStyle "ascii" | "flog"
+
 ---@class NeogitConfigMappings Consult the config file or documentation for values
 ---@field finder? { [string]: NeogitConfigMappingsFinder } A dictionary that uses finder commands to set multiple keybinds
 ---@field status? { [string]: NeogitConfigMappingsStatus } A dictionary that uses status commands to set a single keybind
@@ -97,6 +99,7 @@ end
 
 ---@class NeogitConfig Neogit configuration settings
 ---@field filewatcher? NeogitFilewatcherConfig Values for filewatcher
+---@field graph_style? NeogitGraphStyle Style for graph
 ---@field disable_hint? boolean Remove the top hint in the Status buffer
 ---@field disable_context_highlighting? boolean Disable context highlights based on cursor position
 ---@field disable_signs? boolean Special signs to draw for sections etc. in Neogit
@@ -141,6 +144,7 @@ function M.get_default_values()
     disable_context_highlighting = false,
     disable_signs = false,
     disable_commit_confirmation = false,
+    graph_style = "ascii",
     filewatcher = {
       interval = 1000,
       enabled = false,
