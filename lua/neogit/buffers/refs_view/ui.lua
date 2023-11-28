@@ -1,5 +1,6 @@
 local M = {}
 
+local a = require("plenary.async")
 local Ui = require("neogit.lib.ui")
 local util = require("neogit.lib.util")
 local git = require("neogit.lib.git")
@@ -54,14 +55,26 @@ local function section(refs, heading, head)
   for _, ref in ipairs(refs) do
     table.insert(
       rows,
-      col({ Ref(ref) }, {
+      col.tag("Ref")({ Ref(ref) }, {
         oid = ref.oid,
         foldable = true,
-        callback = a.void(function(c)
-          vim.cmd("echomsg 'Getting cherries for " .. ref.oid .. "'")
+        on_open = a.void(function(this, ui)
+          vim.cmd(string.format("echomsg 'Getting cherries for %s'", ref.oid:sub(1, 7)))
+
           local cherries = Cherries(ref, head)
-          vim.cmd("echomsg ''")
-          P { cherries }
+          if cherries.children[1] then
+            this.options.on_open = nil -- Don't call this again
+            this.options.foldable = true
+            this.options.folded = false
+
+            vim.cmd("norm! zE") -- Eliminate all existing folds
+            this:append(cherries)
+            ui:update()
+
+            vim.cmd(string.format("redraw | echomsg 'Got %d cherries for %s'", #cherries.children - 1, ref.oid:sub(1, 7)))
+          else
+            vim.cmd(string.format("redraw | echomsg 'No cherries found for %s'", ref.oid:sub(1, 7)))
+          end
         end),
       })
     )
