@@ -271,7 +271,7 @@ function Buffer:show()
   -- Workaround UFO getting folds wrong.
   local ufo, _ = pcall(require, "ufo")
   if ufo then
-    ufo.detach()
+    require("ufo").detach()
   end
 
   return win
