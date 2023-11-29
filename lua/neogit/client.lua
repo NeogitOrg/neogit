@@ -96,6 +96,7 @@ end
 
 ---@param cmd any
 ---@param opts WrapOpts
+---@return integer code of `cmd`
 function M.wrap(cmd, opts)
   local notification = require("neogit.lib.notification")
   local a = require("plenary.async")
@@ -119,6 +120,7 @@ function M.wrap(cmd, opts)
       notification.warn(opts.msg.fail, { dismiss = true })
     end
   end
+  return result.code
 end
 
 return M

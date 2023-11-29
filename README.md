@@ -399,6 +399,8 @@ Neogit emits the following events:
 | `NeogitBranchRename`    | Branch was renamed                       | `{ branch_name: string, new_name: string }`     |
 | `NeogitRebase`        | A rebase finished                        | `{ commit: string, status: "ok"\|"conflict" }`    |
 | `NeogitReset`         | A branch was reset to a certain commit   | `{ commit: string, mode: "soft"\|"mixed"\|"hard"\|"keep"\|"index" }` |
+| `NeogitTagCreate`     | A tag was placed on a certain commit     | `{ name: string, ref: string }`                   |
+| `NeogitTagDelete`     | A tag was removed                        | `{ name: string }`                                |
 
 You can listen to the events using the following code:
 
