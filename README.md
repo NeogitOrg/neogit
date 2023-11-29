@@ -401,6 +401,7 @@ Neogit emits the following events:
 | `NeogitReset`         | A branch was reset to a certain commit   | `{ commit: string, mode: "soft"\|"mixed"\|"hard"\|"keep"\|"index" }` |
 | `NeogitTagCreate`     | A tag was placed on a certain commit     | `{ name: string, ref: string }`                   |
 | `NeogitTagDelete`     | A tag was removed                        | `{ name: string }`                                |
+| `NeogitCherryPick`    | One or more commits were cherry-picked    | `{ commits: string[] }`                          |
 
 You can listen to the events using the following code:
 

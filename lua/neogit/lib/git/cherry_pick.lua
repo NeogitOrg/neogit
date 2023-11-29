@@ -4,10 +4,16 @@ local util = require("neogit.lib.util")
 
 local M = {}
 
+local function fire_cherrypick_event(data)
+  vim.api.nvim_exec_autocmds("User", { pattern = "NeogitCherryPick", modeline = false, data = data })
+end
+
 function M.pick(commits, args)
   local result = cli["cherry-pick"].arg_list(util.merge(args, commits)).call()
   if result.code ~= 0 then
     notification.error("Cherry Pick failed. Resolve conflicts before continuing")
+  else
+    fire_cherrypick_event { commits = commits }
   end
 end
 
@@ -21,6 +27,8 @@ function M.apply(commits, args)
   local result = cli["cherry-pick"].no_commit.arg_list(util.merge(args, commits)).call()
   if result.code ~= 0 then
     notification.error("Cherry Pick failed. Resolve conflicts before continuing")
+  else
+    fire_cherrypick_event { commits = commits }
   end
 end
 
