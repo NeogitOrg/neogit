@@ -6,6 +6,10 @@ local M = {}
 
 local a = require("plenary.async")
 
+local function fire_rebase_event(data)
+  vim.api.nvim_exec_autocmds("User", { pattern = "NeogitRebase", modeline = false, data = data })
+end
+
 local function rebase_command(cmd)
   local git = require("neogit.lib.git")
   cmd = cmd or git.cli.rebase
@@ -19,8 +23,10 @@ function M.rebase_interactive(commit, args)
   local result = rebase_command(git.cli.rebase.interactive.args(commit).arg_list(args))
   if result.code ~= 0 then
     notification.error("Rebasing failed. Resolve conflicts before continuing")
+    fire_rebase_event { commit = commit, status = "conflict" }
   else
     notification.info("Rebased successfully")
+    fire_rebase_event { commit = commit, status = "ok" }
   end
 end
 
@@ -30,8 +36,10 @@ function M.rebase_onto(branch, args)
   local result = rebase_command(git.cli.rebase.args(branch).arg_list(args))
   if result.code ~= 0 then
     notification.error("Rebasing failed. Resolve conflicts before continuing")
+    fire_rebase_event("conflict")
   else
     notification.info("Rebased onto '" .. branch .. "'")
+    fire_rebase_event("ok")
   end
 end
 

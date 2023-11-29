@@ -397,6 +397,7 @@ Neogit emits the following events:
 | `NeogitBranchCheckout`  | Branch was checked out                   | `{ branch_name: string }`                       |
 | `NeogitBranchReset`     | Branch was reset to a commit/branch      | `{ branch_name: string, resetting_to: string }` |
 | `NeogitBranchRename`    | Branch was renamed                       | `{ branch_name: string, new_name: string }`     |
+| `NeogitRebase`        | A rebase finished                        | `{ commit: string, status: "ok"\|"conflict" }`    |
 
 You can listen to the events using the following code:
 
