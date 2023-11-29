@@ -47,7 +47,6 @@ function M:open(_)
           p { commit = self.buffer.ui:get_commit_under_cursor() }
         end),
         [popups.mapping_for("FetchPopup")] = popups.open("fetch"),
-        [popups.mapping_for("HelpPopup")] = popups.open("help"),
         [popups.mapping_for("MergePopup")] = popups.open("merge", function(p)
           p { commit = self.buffer.ui:get_commit_under_cursor() }
         end),
@@ -79,7 +78,6 @@ function M:open(_)
           p { commit = self.buffer.ui:get_commit_under_cursor() }
         end),
         [popups.mapping_for("FetchPopup")] = popups.open("fetch"),
-        [popups.mapping_for("HelpPopup")] = popups.open("help"),
         [popups.mapping_for("MergePopup")] = popups.open("merge", function(p)
           p { commit = self.buffer.ui:get_commit_under_cursor() }
         end),
