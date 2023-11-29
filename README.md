@@ -402,6 +402,7 @@ Neogit emits the following events:
 | `NeogitTagCreate`     | A tag was placed on a certain commit     | `{ name: string, ref: string }`                   |
 | `NeogitTagDelete`     | A tag was removed                        | `{ name: string }`                                |
 | `NeogitCherryPick`    | One or more commits were cherry-picked    | `{ commits: string[] }`                          |
+| `NeogitMerge`         | A merge finished                          | `{ branch: string, args = string[], status: "ok"\|"conflict" }` |
 
 You can listen to the events using the following code:
 
