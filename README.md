@@ -398,6 +398,7 @@ Neogit emits the following events:
 | `NeogitBranchReset`     | Branch was reset to a commit/branch      | `{ branch_name: string, resetting_to: string }` |
 | `NeogitBranchRename`    | Branch was renamed                       | `{ branch_name: string, new_name: string }`     |
 | `NeogitRebase`        | A rebase finished                        | `{ commit: string, status: "ok"\|"conflict" }`    |
+| `NeogitReset`         | A branch was reset to a certain commit   | `{ commit: string, mode: "soft"\|"mixed"\|"hard"\|"keep"\|"index" }` |
 
 You can listen to the events using the following code:
 
