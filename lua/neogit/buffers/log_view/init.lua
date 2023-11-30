@@ -174,8 +174,6 @@ function M:open()
           vim.api.nvim_win_set_cursor(win, { found.position.row_start, 0 })
         end
       end
-
-      vim.cmd([[setlocal nowrap]])
     end,
     render = function()
       return ui.View(self.commits, self.internal_args)

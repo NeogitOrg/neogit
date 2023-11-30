@@ -194,7 +194,6 @@ function M:open()
       return ui.RefsView(self.refs, self.head)
     end,
     after = function()
-      vim.cmd([[setlocal nowrap nospell]])
     end,
   }
 end

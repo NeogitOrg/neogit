@@ -512,6 +512,9 @@ function Buffer.create(config)
     buffer:set_option("readonly", true)
   end
 
+  buffer:set_option("spell", false)
+  buffer:set_option("wrap", false)
+
   if config.after then
     buffer:call(function()
       config.after(buffer, win)

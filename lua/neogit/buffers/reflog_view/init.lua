@@ -118,9 +118,6 @@ function M:open(_)
         end,
       },
     },
-    after = function()
-      vim.cmd([[setlocal nowrap]])
-    end,
     render = function()
       return ui.View(self.entries)
     end,
