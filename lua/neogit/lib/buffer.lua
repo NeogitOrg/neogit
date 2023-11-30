@@ -512,8 +512,10 @@ function Buffer.create(config)
     buffer:set_option("readonly", true)
   end
 
-  buffer:set_option("spell", false)
-  buffer:set_option("wrap", false)
+  if vim.fn.has("nvim-0.10") then
+    buffer:set_option("spell", false)
+    buffer:set_option("wrap", false)
+  end
 
   if config.after then
     buffer:call(function()
