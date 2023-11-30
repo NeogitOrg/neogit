@@ -193,8 +193,6 @@ function M:open()
     render = function()
       return ui.RefsView(self.refs, self.head)
     end,
-    after = function()
-    end,
   }
 end
 
