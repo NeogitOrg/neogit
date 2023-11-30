@@ -385,13 +385,24 @@ See the built-in documentation for a comprehensive list of highlight groups. If 
 
 Neogit emits the following events:
 
-| Event                   | Description                      |
-|-------------------------|----------------------------------|
-| `NeogitStatusRefreshed` | Status has been reloaded         |
-| `NeogitCommitComplete`  | Commit has been created          |
-| `NeogitPushComplete`    | Push has completed               |
-| `NeogitPullComplete`    | Pull has completed               |
-| `NeogitFetchComplete`   | Fetch has completed              |
+| Event                   | Description                              | Event Data                                      |
+|-------------------------|------------------------------------------|-------------------------------------------------|
+| `NeogitStatusRefreshed` | Status has been reloaded                 | `{}`                                            |
+| `NeogitCommitComplete`  | Commit has been created                  | `{}`                                            |
+| `NeogitPushComplete`    | Push has completed                       | `{}`                                            |
+| `NeogitPullComplete`    | Pull has completed                       | `{}`                                            |
+| `NeogitFetchComplete`   | Fetch has completed                      | `{}`                                            |
+| `NeogitBranchCreate`    | Branch was created, starting from `base` | `{ branch_name: string, base: string? }`        |
+| `NeogitBranchDelete`    | Branch was deleted                       | `{ branch_name: string }`                       |
+| `NeogitBranchCheckout`  | Branch was checked out                   | `{ branch_name: string }`                       |
+| `NeogitBranchReset`     | Branch was reset to a commit/branch      | `{ branch_name: string, resetting_to: string }` |
+| `NeogitBranchRename`    | Branch was renamed                       | `{ branch_name: string, new_name: string }`     |
+| `NeogitRebase`        | A rebase finished                        | `{ commit: string, status: "ok"\|"conflict" }`    |
+| `NeogitReset`         | A branch was reset to a certain commit   | `{ commit: string, mode: "soft"\|"mixed"\|"hard"\|"keep"\|"index" }` |
+| `NeogitTagCreate`     | A tag was placed on a certain commit     | `{ name: string, ref: string }`                   |
+| `NeogitTagDelete`     | A tag was removed                        | `{ name: string }`                                |
+| `NeogitCherryPick`    | One or more commits were cherry-picked    | `{ commits: string[] }`                          |
+| `NeogitMerge`         | A merge finished                          | `{ branch: string, args = string[], status: "ok"\|"conflict" }` |
 
 You can listen to the events using the following code:
 
