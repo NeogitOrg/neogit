@@ -42,6 +42,14 @@ local neogit = require('neogit')
 neogit.setup {}
 ```
 
+## Compatibility
+
+The `master` branch will always be compatible with the latest **stable** release of Neovim, and with the latest **nightly** build as well.
+
+Some features may only be available using unreleased (neovim nightly) API's - to use them, set your plugin manager to track the `nightly` branch instead. 
+
+The `nightly` branch has the same stability guarantees as the `master` branch.
+
 ## Configuration
 
 You can configure neogit by running the `neogit.setup()` function, passing a table as the argument.
@@ -71,6 +79,9 @@ neogit.setup {
     interval = 1000,
     enabled = true,
   },
+  -- "ascii"   is the graph the git CLI generates
+  -- "unicode" is the graph like https://github.com/rbong/vim-flog
+  graph_style = "ascii", 
   -- Used to generate URL's for branch popup action "pull request".
   git_services = {
     ["github.com"] = "https://github.com/${owner}/${repository}/compare/${branch_name}?expand=1",

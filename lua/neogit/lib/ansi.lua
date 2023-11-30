@@ -38,6 +38,7 @@ function M.parse(str, opts)
   local out = {}
   for g in parsed:gmatch(".") do
     if g == mark then
+      assert(not vim.tbl_isempty(colored), "ANSI Parser didn't construct all graph parts: " .. str)
       table.insert(out, table.remove(colored, 1))
     else
       table.insert(out, { text = g, color = "Gray", oid = oid })

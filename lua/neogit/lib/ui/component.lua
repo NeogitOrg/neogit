@@ -62,7 +62,8 @@ end
 
 function Component:get_width()
   if self.tag == "text" then
-    local width = vim.fn.strdisplaywidth(self.value)
+    local width = string.len(self.value)
+    -- local width = vim.fn.strdisplaywidth(self.value)
     if self.options.align_right then
       return width + (self.options.align_right - width)
     else
