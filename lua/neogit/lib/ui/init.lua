@@ -129,6 +129,13 @@ function Ui:get_component_stack_under_cursor()
   end)
 end
 
+function Ui:get_fold_under_cursor()
+  local cursor = vim.api.nvim_win_get_cursor(0)
+  return self:find_component(function(c)
+    return c.options.foldable and c:is_under_cursor(cursor)
+  end)
+end
+
 function Ui:get_component_stack_in_linewise_selection()
   local range = { vim.fn.getpos("v")[2], vim.fn.getpos(".")[2] }
   table.sort(range)
@@ -313,7 +320,8 @@ function Ui:_render(first_line, first_col, parent, components, flags)
       if c.options.foldable then
         self.buf:buffered_create_fold(
           #self.buf.line_buffer - (c.position.row_end - c.position.row_start),
-          #self.buf.line_buffer
+          #self.buf.line_buffer,
+          not c.options.folded
         )
       end
     end

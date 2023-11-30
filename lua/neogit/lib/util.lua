@@ -143,6 +143,19 @@ function M.filter(tbl, f)
   return vim.tbl_filter(f, tbl)
 end
 
+---Finds length of longest string in table
+---@param tbl table
+---@return integer
+function M.max_length(tbl)
+  local max = 0
+  for _, v in ipairs(tbl) do
+    if #v > max then
+      max = #v
+    end
+  end
+  return max
+end
+
 -- function M.print_tbl(tbl)
 --   for _, x in pairs(tbl) do
 --     print("| " .. x)
