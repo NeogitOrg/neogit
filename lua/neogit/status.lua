@@ -247,7 +247,7 @@ local function draw_buffer()
         last = #output,
         items = {},
         ignore_sign = true,
-        ref = git.branch.pushRemote_ref()
+        ref = git.branch.pushRemote_ref(),
       })
     end
   end
@@ -260,7 +260,7 @@ local function draw_buffer()
       last = #output,
       items = {},
       ignore_sign = true,
-      commit = { oid = git.rev_parse.oid(git.repo.head.tag.name) }
+      commit = { oid = git.rev_parse.oid(git.repo.head.tag.name) },
     })
   end
 
