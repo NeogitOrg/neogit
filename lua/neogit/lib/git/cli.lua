@@ -135,6 +135,7 @@ local configurations = {
   rebase = config {
     flags = {
       interactive = "-i",
+      onto = "--onto",
       continue = "--continue",
       abort = "--abort",
       skip = "--skip",

@@ -43,6 +43,17 @@ function M.rebase_onto(branch, args)
   end
 end
 
+function M.onto(start, newbase, args)
+  local result = rebase_command(cli.rebase.onto.args(newbase, start).arg_list(args))
+  if result.code ~= 0 then
+    notification.error("Rebasing failed. Resolve conflicts before continuing")
+    fire_rebase_event("conflict")
+  else
+    notification.info("Rebased onto '" .. newbase .. "'")
+    fire_rebase_event("ok")
+  end
+end
+
 function M.continue()
   local git = require("neogit.lib.git")
   return rebase_command(git.cli.rebase.continue)

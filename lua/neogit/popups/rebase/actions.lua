@@ -81,6 +81,28 @@ function M.interactively(popup)
   end
 end
 
+function M.subset(popup)
+  local newbase = FuzzyFinderBuffer.new(git.branch.get_all_branches())
+    :open_async { prompt_prefix = "rebase subset onto" }
+
+  if not newbase then
+    return
+  end
+
+  local start
+  if popup.state.env.commit and git.log.is_ancestor(popup.state.env.commit, "HEAD") then
+    start = popup.state.env.commit
+  else
+    start = CommitSelectViewBuffer.new(git.log.list { "HEAD" }):open_async()[1]
+  end
+
+  if not start then
+    return
+  end
+
+  git.rebase.onto(start, newbase, popup:get_arguments())
+end
+
 function M.continue()
   git.rebase.continue()
 end
