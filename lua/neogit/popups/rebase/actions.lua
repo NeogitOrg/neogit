@@ -20,7 +20,7 @@ function M.base_branch()
 end
 
 function M.onto_base(popup)
-  git.rebase.rebase_onto(M.base_branch(), popup:get_arguments())
+  git.rebase.onto_branch(M.base_branch(), popup:get_arguments())
 end
 
 function M.onto_pushRemote(popup)
@@ -30,7 +30,7 @@ function M.onto_pushRemote(popup)
   end
 
   if pushRemote then
-    git.rebase.rebase_onto(
+    git.rebase.onto_branch(
       string.format("refs/remotes/%s/%s", pushRemote, git.branch.current()),
       popup:get_arguments()
     )
@@ -50,13 +50,13 @@ function M.onto_upstream(popup)
     upstream = string.format("refs/remotes/%s", target)
   end
 
-  git.rebase.rebase_onto(upstream, popup:get_arguments())
+  git.rebase.onto_branch(upstream, popup:get_arguments())
 end
 
 function M.onto_elsewhere(popup)
   local target = FuzzyFinderBuffer.new(git.branch.get_all_branches()):open_async()
   if target then
-    git.rebase.rebase_onto(target, popup:get_arguments())
+    git.rebase.onto_branch(target, popup:get_arguments())
   end
 end
 

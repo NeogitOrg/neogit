@@ -30,10 +30,10 @@ function M.rebase_interactive(commit, args)
   end
 end
 
-function M.rebase_onto(branch, args)
   a.util.scheduler()
   local git = require("neogit.lib.git")
   local result = rebase_command(git.cli.rebase.args(branch).arg_list(args))
+function M.onto_branch(branch, args)
   if result.code ~= 0 then
     notification.error("Rebasing failed. Resolve conflicts before continuing")
     fire_rebase_event("conflict")
