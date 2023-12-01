@@ -3,6 +3,7 @@ local Buffer = require("neogit.lib.buffer")
 local ui = require("neogit.buffers.commit_select_view.ui")
 local config = require("neogit.config")
 local util = require("neogit.lib.util")
+local status_maps = require("neogit.config").get_reversed_status_maps()
 
 ---@class CommitSelectViewBuffer
 ---@field commits CommitLogEntry[]
@@ -60,6 +61,16 @@ function M:open(action)
         end,
         ["q"] = function()
           self:close()
+        end,
+        [status_maps["YankSelected"]] = function()
+          local yank = self.buffer.ui:get_commit_under_cursor()
+          if yank then
+            yank = string.format("'%s'", yank)
+            vim.cmd.let("@+=" .. yank)
+            vim.cmd.echo(yank)
+          else
+            vim.cmd("echo ''")
+          end
         end,
         ["<esc>"] = function()
           self:close()

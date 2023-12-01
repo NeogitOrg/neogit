@@ -5,6 +5,7 @@ local git = require("neogit.lib.git")
 local config = require("neogit.config")
 local popups = require("neogit.popups")
 local notification = require("neogit.lib.notification")
+local status_maps = require("neogit.config").get_reversed_status_maps()
 
 local api = vim.api
 
@@ -175,6 +176,11 @@ function M:open()
         [popups.mapping_for("PullPopup")] = popups.open("pull"),
         ["q"] = function()
           self:close()
+        end,
+        [status_maps["YankSelected"]] = function()
+          local yank = string.format("'%s'", self.commit_info.oid)
+          vim.cmd.let("@+=" .. yank)
+          vim.cmd.echo(yank)
         end,
         ["<tab>"] = function()
           pcall(vim.cmd, "normal! za")
