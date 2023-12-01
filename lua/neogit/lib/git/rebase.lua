@@ -1,6 +1,7 @@
 local logger = require("neogit.logger")
 local client = require("neogit.client")
 local notification = require("neogit.lib.notification")
+local cli = require("neogit.lib.git.cli")
 
 local M = {}
 
@@ -11,16 +12,12 @@ local function fire_rebase_event(data)
 end
 
 local function rebase_command(cmd)
-  local git = require("neogit.lib.git")
-  cmd = cmd or git.cli.rebase
-  local envs = client.get_envs_git_editor()
-  return cmd.env(envs).show_popup(true):in_pty(true).call(true)
+  a.util.scheduler()
+  return cmd.env(client.get_envs_git_editor()).show_popup(true):in_pty(true).call(true)
 end
 
 function M.rebase_interactive(commit, args)
-  a.util.scheduler()
-  local git = require("neogit.lib.git")
-  local result = rebase_command(git.cli.rebase.interactive.args(commit).arg_list(args))
+  local result = rebase_command(cli.rebase.interactive.args(commit).arg_list(args))
   if result.code ~= 0 then
     notification.error("Rebasing failed. Resolve conflicts before continuing")
     fire_rebase_event { commit = commit, status = "conflict" }
@@ -30,10 +27,8 @@ function M.rebase_interactive(commit, args)
   end
 end
 
-  a.util.scheduler()
-  local git = require("neogit.lib.git")
-  local result = rebase_command(git.cli.rebase.args(branch).arg_list(args))
 function M.onto_branch(branch, args)
+  local result = rebase_command(cli.rebase.args(branch).arg_list(args))
   if result.code ~= 0 then
     notification.error("Rebasing failed. Resolve conflicts before continuing")
     fire_rebase_event("conflict")
@@ -55,13 +50,11 @@ function M.onto(start, newbase, args)
 end
 
 function M.continue()
-  local git = require("neogit.lib.git")
-  return rebase_command(git.cli.rebase.continue)
+  return rebase_command(cli.rebase.continue)
 end
 
 function M.skip()
-  local git = require("neogit.lib.git")
-  return rebase_command(git.cli.rebase.skip)
+  return rebase_command(cli.rebase.skip)
 end
 
 function M.update_rebase_status(state)
