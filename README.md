@@ -274,6 +274,7 @@ neogit.setup {
       ["d"] = "DiffAtFile",
       ["$"] = "CommandHistory",
       ["#"] = "Console",
+      ["Y"] = "YankSelected",
       ["<c-r>"] = "RefreshBuffer",
       ["<enter>"] = "GoToFile",
       ["<c-v>"] = "VSplitOpen",

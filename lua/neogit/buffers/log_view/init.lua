@@ -3,7 +3,7 @@ local ui = require("neogit.buffers.log_view.ui")
 local config = require("neogit.config")
 local popups = require("neogit.popups")
 local notification = require("neogit.lib.notification")
-
+local status_maps = require("neogit.config").get_reversed_status_maps()
 local CommitViewBuffer = require("neogit.buffers.commit_view")
 
 ---@class LogViewBuffer
@@ -111,6 +111,16 @@ function M:open()
           p { commit = self.buffer.ui:get_commit_under_cursor() }
         end),
         [popups.mapping_for("PullPopup")] = popups.open("pull"),
+        [status_maps["YankSelected"]] = function()
+          local yank = self.buffer.ui:get_commit_under_cursor()
+          if yank then
+            yank = string.format("'%s'", yank)
+            vim.cmd.let("@+=" .. yank)
+            vim.cmd.echo(yank)
+          else
+            vim.cmd("echo ''")
+          end
+        end,
         ["q"] = function()
           self:close()
         end,
