@@ -502,11 +502,25 @@ Branch Popup                                               *neogit_branch_popup*
 
 Variables:                                       *neogit_branch_popup_variables*
   • branch.<name>.description
-    (TODO)
+    Longform description of a branch.
 
-  • branch.<name>.merge
-    branch.<name>.remote
-    (TODO)
+  • branch.<name>.merge, branch.<name>.remote
+    Together branch.<name>.merge and branch.<name>.remote define the upstream
+    branch for the given branch. It tells git fetch/git pull/git rebase which
+    branch to merge and can also affect git push. When in branch <name>, it
+    tells git fetch the default refspec to be marked for merging in
+    FETCH_HEAD.
+
+    The value is handled like the remote part of a refspec, and must match a
+    ref which is fetched from the remote given by "branch.<name>.remote".
+
+    The merge information is used by git pull (which first calls git fetch) to
+    lookup the default branch for merging. Without this option, git pull
+    defaults to merge the first refspec fetched. Specify multiple values to
+    get an octopus merge. If you wish to setup git pull so that it merges into
+    <name> from another branch in the local repository, you can point
+    branch.<name>.merge to the desired branch, and use the relative path
+    setting . (a period) for branch.<name>.remote.
 
   • branch.<name>.rebase
     Cycles branch.<name>.rebase value between true, false, and the value of
@@ -1092,7 +1106,163 @@ Actions:                                             *neogit_push_popup_actions*
 ==============================================================================
 Rebase Popup                                               *neogit_rebase_popup*
 
-(TODO)
+Arguments:                                            *neogit_rebase_popup_args*
+  • --keep-empty
+    Keep commits that start empty before the rebase (i.e. that do not change
+    anything from its parent) in the result. The default is to keep commits
+    which start empty, since creating such commits requires passing the
+    --allow-empty override flag to git commit, signifying that a user is very
+    intentionally creating such a commit and thus wants to keep it.
+
+    Usage of this flag will probably be rare, since you can get rid of commits
+    that start empty by just firing up an interactive rebase and removing the
+    lines corresponding to the commits you don’t want. This flag exists as a
+    convenient shortcut, such as for cases where external tools generate many
+    empty commits and you want them all removed.
+
+  • --rebase-merges=
+    By default, a rebase will simply drop merge commits from the todo list,
+    and put the rebased commits into a single, linear branch. With
+    --rebase-merges, the rebase will instead try to preserve the branching
+    structure within the commits that are to be rebased, by recreating the
+    merge commits. Any resolved merge conflicts or manual amendments in these
+    merge commits will have to be resolved/re-applied manually.
+
+    When rebasing merges, there are two modes:
+      - rebase-cousins
+      - no-rebase-cousins
+
+    In no-rebase-cousins mode, commits which do not have <upstream> as direct
+    ancestor will keep their original branch point, i.e. commits that would be
+    excluded by git-log's --ancestry-path option will keep their original
+    ancestry by default.
+
+    In rebase-cousins mode, such commits are instead rebased onto <upstream>.
+
+  • --update-refs
+    Automatically force-update any branches that point to commits that are
+    being rebased. Any branches that are checked out in a worktree are not
+    updated in this way.
+
+    If the configuration variable rebase.updateRefs is set, then this option
+    can be used to override and disable this setting.
+
+  • --committer-date-is-author-date
+    Instead of using the current time as the committer date, use the author
+    date of the commit being rebased as the committer date.
+
+    This option implies --force-rebase.
+
+  • --ignore-date
+    Instead of using the author date of the original commit, use the current
+    time as the author date of the rebased commit.
+
+    This option implies --force-rebase.
+
+  • --autosquash
+    When the commit log message begins with "squash! ..." or "fixup! ..." or
+    "amend! ...", and there is already a commit in the todo list that matches
+    the same ..., automatically modify the todo list of rebase -i, so that the
+    commit marked for squashing comes right after the commit to be modified,
+    and change the action of the moved commit from pick to squash or fixup or
+    fixup -C respectively.
+
+    A commit matches the ... if the commit subject matches, or if the ...
+    refers to the commit’s hash. As a fall-back, partial matches of the commit
+    subject work, too. The recommended way to create fixup/amend/squash
+    commits is by using the --fixup, --fixup=amend: or --fixup=reword: and
+    --squash options respectively of git-commit. These are all available from
+    the commit popup.
+
+    If the --autosquash option is enabled by default using the configuration
+    variable rebase.autoSquash, this option can be used to override and
+    disable this setting.
+
+  • --autostash
+    Automatically create a temporary stash entry before the operation begins,
+    and apply it after the operation ends. This means that you can run rebase
+    on a dirty worktree. However, use with care: the final stash application
+    after a successful rebase might result in non-trivial conflicts.
+
+  • --interactive
+    Make a list of the commits which are about to be rebased. Let the user
+    edit that list before rebasing. This mode can also be used to split
+    commits.
+
+  • --no-verify
+    This option bypasses the pre-rebase hook
+
+  • --gpg-sign=
+    GPG-sign commits.
+
+Actions:                                           *neogit_rebase_popup_actions*
+  • Rebase onto pushRemote                            *neogit_rebase_pushRemote*
+    This action rebases the current branch onto it's pushRemote.
+
+    When the pushRemote is not configured, then the user can first set it
+    before rebasing.
+
+  • Rebase onto upstream                                *neogit_rebase_upstream*
+    This action rebases the current branch onto it's upstream branch.
+
+    When the upstream is not configured, then the user can first set it
+    before rebasing.
+
+  • Rebase onto elsewhere                              *neogit_rebase_elsewhere*
+    This command rebases the current branch onto a branch read in the picker.
+    All commits that are reachable from HEAD but not from the selected branch
+    TARGET will be rebased.
+
+  • Rebase onto base                                        *neogit_rebase_base*
+    Rebases the current branch onto either the user-configured base branch,
+    main, or master. The base branch is read from the neogit.baseBranch git
+    config, which can be set in the branch config popup.
+
+    See |neogit_branch_config_baseBranch|
+
+  • Rebase interactively                           *neogit_rebase_interactively*
+    This action begins an interactive rebase.
+
+  • Rebase a subset                                       *neogit_rebase_subset*
+    This action starts a non-interactive rebase sequence to transfer commits
+    from START to HEAD onto NEWBASE. User will be prompted to select NEWBASE,
+    then a START commit.
+
+  • Rebase to modify a commit                      *neogit_rebase_modify_commit*
+    (TODO)
+
+  • Rebase to reword a commit                      *neogit_rebase_reword_commit*
+    (TODO)
+
+  • Rebase to remove a commit                      *neogit_rebase_remove_commit*
+    (TODO)
+
+  • Rebase to autosquash                              *neogit_rebase_autosquash*
+    (TODO)
+
+When a rebase is in progress, the following actions are available instead:
+  • Continue                                            *neogit_rebase_continue*
+    Continue with a rebase in progress after sorting out a conflict. May open
+    the Commit editor.
+
+  • Skip                                                    *neogit_rebase_skip*
+    Skips the current commit in a rebase-todo.
+
+  • Edit                                                    *neogit_rebase_edit*
+    Edit the todo-list of the current rebase sequence.
+
+  • Abort                                                  *neogit_rebase_abort*
+    Aborts the current rebase sequence, restoring everything to how it looked
+    before the rebase was attempted.
+
+Notes:
+  By default Neogit uses the --autostash argument, which causes uncommitted
+  changes to be stored in a stash before the rebase begins. These changes are
+  restored after the rebase completes and if possible the stash is removed.
+
+  Even though one of the actions is dedicated to interactive rebasing, the
+  popup also features the --interactive argument. This can be used to turn one
+  of the other, non-interactive rebase variants, into an interactive rebase.
 
 ==============================================================================
 Revert Popup                                               *neogit_revert_popup*
