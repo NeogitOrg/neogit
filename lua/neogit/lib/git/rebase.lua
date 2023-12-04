@@ -57,6 +57,10 @@ function M.skip()
   return rebase_command(cli.rebase.skip)
 end
 
+function M.edit()
+  return rebase_command(cli.rebase.edit_todo)
+end
+
 function M.update_rebase_status(state)
   local repo = require("neogit.lib.git.repository")
   if repo.git_root == "" then

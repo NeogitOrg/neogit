@@ -16,12 +16,13 @@ function M.create(env)
     :group_heading_if(in_rebase, "Actions")
     :action_if(in_rebase, "r", "Continue", actions.continue)
     :action_if(in_rebase, "s", "Skip", actions.skip)
-    :action_if(in_rebase, "e", "Edit")
+    :action_if(in_rebase, "e", "Edit", actions.edit)
     :action_if(in_rebase, "a", "Abort", actions.abort)
     :switch_if(not in_rebase, "k", "keep-empty", "Keep empty commits")
-    :option_if(not in_rebase, "r", "rebase-merges", "", "Rebase merges",
-      { choices = { "no-rebase-cousins", "rebase-cousins" }, key_prefix = "-" }
-    )
+    :option_if(not in_rebase, "r", "rebase-merges", "", "Rebase merges", {
+      choices = { "no-rebase-cousins", "rebase-cousins" },
+      key_prefix = "-",
+    })
     :switch_if(not in_rebase, "u", "update-refs", "Update branches")
     :switch_if(not in_rebase, "d", "committer-date-is-author-date", "Use author date as committer date")
     :switch_if(not in_rebase, "t", "ignore-date", "Use current time as author date")
@@ -38,7 +39,6 @@ function M.create(env)
     :new_action_group_if(not in_rebase, "Rebase")
     :action_if(not in_rebase, "i", "interactively", actions.interactively)
     :action_if(not in_rebase, "s", "a subset", actions.subset)
-
     :new_action_group_if(not in_rebase)
     :action_if(not in_rebase, "m", "to modify a commit")
     :action_if(not in_rebase, "w", "to reword a commit")

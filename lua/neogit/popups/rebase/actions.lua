@@ -111,6 +111,10 @@ function M.skip()
   git.rebase.skip()
 end
 
+function M.edit()
+  git.rebase.edit()
+end
+
 -- TODO: Extract to rebase lib?
 function M.abort()
   if input.get_confirmation("Abort rebase?", { values = { "&Yes", "&No" }, default = 2 }) then

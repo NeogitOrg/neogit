@@ -136,6 +136,7 @@ local configurations = {
     flags = {
       interactive = "-i",
       onto = "--onto",
+      edit_todo = "--edit-todo",
       continue = "--continue",
       abort = "--abort",
       skip = "--skip",
