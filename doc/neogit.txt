@@ -502,11 +502,25 @@ Branch Popup                                               *neogit_branch_popup*
 
 Variables:                                       *neogit_branch_popup_variables*
   • branch.<name>.description
-    (TODO)
+    Longform description of a branch.
 
-  • branch.<name>.merge
-    branch.<name>.remote
-    (TODO)
+  • branch.<name>.merge, branch.<name>.remote
+    Together branch.<name>.merge and branch.<name>.remote define the upstream
+    branch for the given branch. It tells git fetch/git pull/git rebase which
+    branch to merge and can also affect git push. When in branch <name>, it
+    tells git fetch the default refspec to be marked for merging in
+    FETCH_HEAD.
+
+    The value is handled like the remote part of a refspec, and must match a
+    ref which is fetched from the remote given by "branch.<name>.remote".
+
+    The merge information is used by git pull (which first calls git fetch) to
+    lookup the default branch for merging. Without this option, git pull
+    defaults to merge the first refspec fetched. Specify multiple values to
+    get an octopus merge. If you wish to setup git pull so that it merges into
+    <name> from another branch in the local repository, you can point
+    branch.<name>.merge to the desired branch, and use the relative path
+    setting . (a period) for branch.<name>.remote.
 
   • branch.<name>.rebase
     Cycles branch.<name>.rebase value between true, false, and the value of
