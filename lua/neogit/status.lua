@@ -166,9 +166,10 @@ local function draw_buffer()
   local output = LineBuffer.new()
   if not config.values.disable_hint then
     local reversed_status_map = config.get_reversed_status_maps()
+    local reversed_popup_map = config.get_reversed_popup_maps()
 
     local function hint_label(map_name, hint)
-      local keys = reversed_status_map[map_name]
+      local keys = reversed_status_map[map_name] or reversed_popup_map[map_name]
       if keys and #keys > 0 then
         return string.format("[%s] %s", table.concat(keys, " "), hint)
       else
