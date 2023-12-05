@@ -549,6 +549,7 @@ local function refresh(which, reason)
   lock_holder = reason or "unknown"
   logger.debug("[STATUS BUFFER]: Acquired refresh lock: " .. lock_holder)
 
+  a.util.scheduler()
   local s, f, h = save_cursor_location()
 
   if cli.git_root_of_cwd() ~= "" then
@@ -557,6 +558,7 @@ local function refresh(which, reason)
     vim.api.nvim_exec_autocmds("User", { pattern = "NeogitStatusRefreshed", modeline = false })
   end
 
+  a.util.scheduler()
   if vim.fn.bufname() == "NeogitStatus" then
     restore_cursor_location(s, f, h)
   end
