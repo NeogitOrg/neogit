@@ -15,4 +15,11 @@ function M.abbreviate_commit(oid)
   end
 end
 
+---@param rev string
+---@return string
+---@async
+function M.oid(rev)
+  return cli["rev-parse"].args(rev).call_sync().stdout[1]
+end
+
 return M

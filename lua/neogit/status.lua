@@ -166,9 +166,10 @@ local function draw_buffer()
   local output = LineBuffer.new()
   if not config.values.disable_hint then
     local reversed_status_map = config.get_reversed_status_maps()
+    local reversed_popup_map = config.get_reversed_popup_maps()
 
     local function hint_label(map_name, hint)
-      local keys = reversed_status_map[map_name]
+      local keys = reversed_status_map[map_name] or reversed_popup_map[map_name]
       if keys and #keys > 0 then
         return string.format("[%s] %s", table.concat(keys, " "), hint)
       else
@@ -200,12 +201,14 @@ local function draw_buffer()
       git.repo.head.commit_message or "(no commits)"
     )
   )
+
   table.insert(new_locations, {
     name = "head_branch_header",
     first = #output,
     last = #output,
     items = {},
     ignore_sign = true,
+    commit = { oid = git.repo.head.oid },
   })
 
   if not git.branch.is_detached() then
@@ -218,12 +221,14 @@ local function draw_buffer()
           git.repo.upstream.commit_message or "(no commits)"
         )
       )
+
       table.insert(new_locations, {
         name = "upstream_header",
         first = #output,
         last = #output,
         items = {},
         ignore_sign = true,
+        commit = { oid = git.repo.upstream.oid },
       })
     end
 
@@ -236,15 +241,18 @@ local function draw_buffer()
           git.repo.pushRemote.commit_message or "(does not exist)"
         )
       )
+
       table.insert(new_locations, {
         name = "push_branch_header",
         first = #output,
         last = #output,
         items = {},
         ignore_sign = true,
+        ref = git.branch.pushRemote_ref(),
       })
     end
   end
+
   if git.repo.head.tag.name then
     output:append(string.format("Tag:      %s (%s)", git.repo.head.tag.name, git.repo.head.tag.distance))
     table.insert(new_locations, {
@@ -253,6 +261,7 @@ local function draw_buffer()
       last = #output,
       items = {},
       ignore_sign = true,
+      commit = { oid = git.rev_parse.oid(git.repo.head.tag.name) },
     })
   end
 
@@ -1172,6 +1181,32 @@ local cmd_func_map = function()
       local _, item = get_current_section_item()
       if item then
         vim.cmd("split " .. item.name)
+      end
+    end,
+    ["YankSelected"] = function()
+      local yank
+
+      local selection = require("neogit.status").get_selection()
+      if selection.item then
+        yank = selection.item.name
+      elseif selection.commit then
+        yank = selection.commit.oid
+      elseif selection.section and selection.section.ref then
+        yank = selection.section.ref
+      elseif selection.section and selection.section.commit then
+        yank = selection.section.commit.oid
+      end
+
+      if yank then
+        if yank:match("^stash@{%d+}") then
+          yank = git.rev_parse.oid(yank:match("^(stash@{%d+})"))
+        end
+
+        yank = string.format("'%s'", yank)
+        vim.cmd.let("@+=" .. yank)
+        vim.cmd.echo(yank)
+      else
+        vim.cmd("echo ''")
       end
     end,
     ["GoToPreviousHunkHeader"] = function()

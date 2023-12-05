@@ -5,6 +5,7 @@ local git = require("neogit.lib.git")
 local config = require("neogit.config")
 local popups = require("neogit.popups")
 local notification = require("neogit.lib.notification")
+local status_maps = require("neogit.config").get_reversed_status_maps()
 
 local api = vim.api
 
@@ -154,6 +155,9 @@ function M:open()
           p { commit = self.commit_info.oid }
         end),
         [popups.mapping_for("FetchPopup")] = popups.open("fetch"),
+        [popups.mapping_for("MergePopup")] = popups.open("merge", function(p)
+          p { commit = self.buffer.ui:get_commit_under_cursor() }
+        end),
         [popups.mapping_for("PushPopup")] = popups.open("push", function(p)
           p { commit = self.commit_info.oid }
         end),
@@ -175,6 +179,11 @@ function M:open()
         end,
         ["<F10>"] = function()
           self.buffer.ui:print_layout_tree { collapse_hidden_components = true }
+        end,
+        [status_maps["YankSelected"]] = function()
+          local yank = string.format("'%s'", self.commit_info.oid)
+          vim.cmd.let("@+=" .. yank)
+          vim.cmd.echo(yank)
         end,
         ["<tab>"] = function()
           local c = self.buffer.ui:get_component_under_cursor()

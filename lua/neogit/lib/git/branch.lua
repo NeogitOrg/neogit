@@ -14,13 +14,14 @@ local function parse_branches(branches, include_current)
   local remotes = "^remotes/(.*)"
   local head = "^(.*)/HEAD"
   local ref = " %-> "
+  local detached = "^%(HEAD detached at %x%x%x%x%x%x%x%x%)$"
   local pattern = include_current and "^[* ] (.+)" or "^  (.+)"
 
   for _, b in ipairs(branches) do
     local branch_name = b:match(pattern)
     if branch_name then
       local name = branch_name:match(remotes) or branch_name
-      if name and not name:match(ref) and not name:match(head) then
+      if name and not name:match(ref) and not name:match(head) and not name:match(detached) then
         table.insert(other_branches, name)
       end
     end
