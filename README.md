@@ -42,6 +42,14 @@ local neogit = require('neogit')
 neogit.setup {}
 ```
 
+## Compatibility
+
+The `master` branch will always be compatible with the latest **stable** release of Neovim, and with the latest **nightly** build as well.
+
+Some features may only be available using unreleased (neovim nightly) API's - to use them, set your plugin manager to track the `nightly` branch instead. 
+
+The `nightly` branch has the same stability guarantees as the `master` branch.
+
 ## Configuration
 
 You can configure neogit by running the `neogit.setup()` function, passing a table as the argument.
@@ -71,6 +79,9 @@ neogit.setup {
     interval = 1000,
     enabled = true,
   },
+  -- "ascii"   is the graph the git CLI generates
+  -- "unicode" is the graph like https://github.com/rbong/vim-flog
+  graph_style = "ascii", 
   -- Used to generate URL's for branch popup action "pull request".
   git_services = {
     ["github.com"] = "https://github.com/${owner}/${repository}/compare/${branch_name}?expand=1",
@@ -94,6 +105,8 @@ neogit.setup {
     "NeogitCommitPopup--allow-empty",
     "NeogitRevertPopup--no-edit",
   },
+  -- Set to false if you want to be responsible for creating _ALL_ keymappings
+  use_default_keymaps = true,
   -- Neogit refreshes its internal state after specific events, which can be expensive depending on the repository size.
   -- Disabling `auto_refresh` will make it so you have to manually refresh the status after you open it.
   auto_refresh = true,
@@ -114,7 +127,7 @@ neogit.setup {
     recent_commit_count = 10,
   },
   commit_editor = {
-    kind = "split",
+    kind = "auto",
   },
   commit_select_view = {
     kind = "tab",
@@ -127,13 +140,16 @@ neogit.setup {
     kind = "tab",
   },
   rebase_editor = {
-    kind = "split",
+    kind = "auto",
   },
   reflog_view = {
     kind = "tab",
   },
   merge_editor = {
-    kind = "split",
+    kind = "auto",
+  },
+  tag_editor = {
+    kind = "auto",
   },
   preview_buffer = {
     kind = "split",
@@ -224,6 +240,23 @@ neogit.setup {
       ["<c-j>"] = "NOP",
     },
     -- Setting any of these to `false` will disable the mapping.
+    popup = {
+      ["?"] = "HelpPopup",
+      ["A"] = "CherryPickPopup",
+      ["D"] = "DiffPopup",
+      ["M"] = "RemotePopup",
+      ["P"] = "PushPopup",
+      ["X"] = "ResetPopup",
+      ["Z"] = "StashPopup",
+      ["b"] = "BranchPopup",
+      ["c"] = "CommitPopup",
+      ["f"] = "FetchPopup",
+      ["l"] = "LogPopup",
+      ["m"] = "MergePopup",
+      ["p"] = "PullPopup",
+      ["r"] = "RebasePopup",
+      ["v"] = "RevertPopup",
+    },
     status = {
       ["q"] = "Close",
       ["I"] = "InitRepo",
@@ -241,26 +274,12 @@ neogit.setup {
       ["d"] = "DiffAtFile",
       ["$"] = "CommandHistory",
       ["#"] = "Console",
+      ["Y"] = "YankSelected",
       ["<c-r>"] = "RefreshBuffer",
       ["<enter>"] = "GoToFile",
       ["<c-v>"] = "VSplitOpen",
       ["<c-x>"] = "SplitOpen",
       ["<c-t>"] = "TabOpen",
-      ["?"] = "HelpPopup",
-      ["D"] = "DiffPopup",
-      ["p"] = "PullPopup",
-      ["r"] = "RebasePopup",
-      ["m"] = "MergePopup",
-      ["P"] = "PushPopup",
-      ["c"] = "CommitPopup",
-      ["l"] = "LogPopup",
-      ["v"] = "RevertPopup",
-      ["Z"] = "StashPopup",
-      ["A"] = "CherryPickPopup",
-      ["b"] = "BranchPopup",
-      ["f"] = "FetchPopup",
-      ["X"] = "ResetPopup",
-      ["M"] = "RemotePopup",
       ["{"] = "GoToPreviousHunkHeader",
       ["}"] = "GoToNextHunkHeader",
     },
@@ -367,13 +386,24 @@ See the built-in documentation for a comprehensive list of highlight groups. If 
 
 Neogit emits the following events:
 
-| Event                   | Description                      |
-|-------------------------|----------------------------------|
-| `NeogitStatusRefreshed` | Status has been reloaded         |
-| `NeogitCommitComplete`  | Commit has been created          |
-| `NeogitPushComplete`    | Push has completed               |
-| `NeogitPullComplete`    | Pull has completed               |
-| `NeogitFetchComplete`   | Fetch has completed              |
+| Event                   | Description                              | Event Data                                      |
+|-------------------------|------------------------------------------|-------------------------------------------------|
+| `NeogitStatusRefreshed` | Status has been reloaded                 | `{}`                                            |
+| `NeogitCommitComplete`  | Commit has been created                  | `{}`                                            |
+| `NeogitPushComplete`    | Push has completed                       | `{}`                                            |
+| `NeogitPullComplete`    | Pull has completed                       | `{}`                                            |
+| `NeogitFetchComplete`   | Fetch has completed                      | `{}`                                            |
+| `NeogitBranchCreate`    | Branch was created, starting from `base` | `{ branch_name: string, base: string? }`        |
+| `NeogitBranchDelete`    | Branch was deleted                       | `{ branch_name: string }`                       |
+| `NeogitBranchCheckout`  | Branch was checked out                   | `{ branch_name: string }`                       |
+| `NeogitBranchReset`     | Branch was reset to a commit/branch      | `{ branch_name: string, resetting_to: string }` |
+| `NeogitBranchRename`    | Branch was renamed                       | `{ branch_name: string, new_name: string }`     |
+| `NeogitRebase`        | A rebase finished                        | `{ commit: string, status: "ok"\|"conflict" }`    |
+| `NeogitReset`         | A branch was reset to a certain commit   | `{ commit: string, mode: "soft"\|"mixed"\|"hard"\|"keep"\|"index" }` |
+| `NeogitTagCreate`     | A tag was placed on a certain commit     | `{ name: string, ref: string }`                   |
+| `NeogitTagDelete`     | A tag was removed                        | `{ name: string }`                                |
+| `NeogitCherryPick`    | One or more commits were cherry-picked    | `{ commits: string[] }`                          |
+| `NeogitMerge`         | A merge finished                          | `{ branch: string, args = string[], status: "ok"\|"conflict" }` |
 
 You can listen to the events using the following code:
 

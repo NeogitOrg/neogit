@@ -194,6 +194,10 @@ function M:option(key, cli, value, description, opts)
     opts.separator = "="
   end
 
+  if opts.setup then
+    opts.setup(self)
+  end
+
   table.insert(self.state.args, {
     type = "option",
     id = opts.key_prefix .. key,

@@ -10,7 +10,7 @@ local M = {}
 function M.View(commits)
   return util.filter_map(commits, function(commit)
     if commit.oid then
-      return Commit(commit, { graph = true })
+      return Commit(commit, { graph = true, decorate = true })
     else
       return Graph(commit)
     end

@@ -1,6 +1,7 @@
 local a = require("plenary.async")
 local git = require("neogit.lib.git")
 local util = require("neogit.lib.util")
+local client = require("neogit.client")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
@@ -45,7 +46,7 @@ function M.merge_config(branch)
   local branches = util.merge(local_branches, remote_branches)
 
   return a.void(function(popup, c)
-    local target = FuzzyFinderBuffer.new(branches):open_async { prompt_prefix = "Upstream > " }
+    local target = FuzzyFinderBuffer.new(branches):open_async { prompt_prefix = "upstream" }
     if not target then
       return
     end
@@ -64,6 +65,20 @@ function M.merge_config(branch)
     git.config.set("branch." .. branch .. ".remote", remote_value)
 
     c.value = merge_value
+    popup:repaint_config()
+  end)
+end
+
+function M.description_config(branch)
+  return a.void(function(popup, c)
+    client.wrap(git.cli.branch.edit_description, {
+      autocmd = "NeogitDescriptionComplete",
+      msg = {
+        success = "Description Updated",
+      },
+    })
+
+    c.value = git.config.get("branch." .. branch .. ".description"):read()
     popup:repaint_config()
   end)
 end

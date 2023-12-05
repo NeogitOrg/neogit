@@ -4,6 +4,10 @@ local a = require("plenary.async")
 
 local M = {}
 
+local function fire_reset_event(data)
+  vim.api.nvim_exec_autocmds("User", { pattern = "NeogitReset", modeline = false, data = data })
+end
+
 function M.mixed(commit)
   a.util.scheduler()
 
@@ -12,6 +16,7 @@ function M.mixed(commit)
     notification.error("Reset Failed")
   else
     notification.info("Reset to " .. commit)
+    fire_reset_event { commit = commit, mode = "mixed" }
   end
 end
 
@@ -23,6 +28,7 @@ function M.soft(commit)
     notification.error("Reset Failed")
   else
     notification.info("Reset to " .. commit)
+    fire_reset_event { commit = commit, mode = "soft" }
   end
 end
 
@@ -34,6 +40,7 @@ function M.hard(commit)
     notification.error("Reset Failed")
   else
     notification.info("Reset to " .. commit)
+    fire_reset_event { commit = commit, mode = "hard" }
   end
 end
 
@@ -45,6 +52,7 @@ function M.keep(commit)
     notification.error("Reset Failed")
   else
     notification.info("Reset to " .. commit)
+    fire_reset_event { commit = commit, mode = "keep" }
   end
 end
 
@@ -56,6 +64,7 @@ function M.index(commit)
     notification.error("Reset Failed")
   else
     notification.info("Reset to " .. commit)
+    fire_reset_event { commit = commit, mode = "index" }
   end
 end
 

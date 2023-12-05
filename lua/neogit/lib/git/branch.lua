@@ -14,13 +14,14 @@ local function parse_branches(branches, include_current)
   local remotes = "^remotes/(.*)"
   local head = "^(.*)/HEAD"
   local ref = " %-> "
+  local detached = "^%(HEAD detached at %x%x%x%x%x%x%x%x%)$"
   local pattern = include_current and "^[* ] (.+)" or "^  (.+)"
 
   for _, b in ipairs(branches) do
     local branch_name = b:match(pattern)
     if branch_name then
       local name = branch_name:match(remotes) or branch_name
-      if name and not name:match(ref) and not name:match(head) then
+      if name and not name:match(ref) and not name:match(head) and not name:match(detached) then
         table.insert(other_branches, name)
       end
     end
@@ -56,8 +57,7 @@ function M.get_remote_branches(include_current)
 end
 
 function M.get_all_branches(include_current)
-  local branches = cli.branch.list(config.values.sort_branches).all.call_sync():trim().stdout
-  return parse_branches(branches, include_current)
+  return util.merge(M.get_local_branches(include_current), M.get_remote_branches(include_current))
 end
 
 function M.is_unmerged(branch, base)
@@ -151,12 +151,15 @@ end
 
 function M.set_pushRemote()
   local remotes = require("neogit.lib.git").remote.list()
+  local pushDefault = require("neogit.lib.git").config.get("remote.pushDefault")
 
   local pushRemote
   if #remotes == 1 then
     pushRemote = remotes[1]
+  elseif pushDefault:is_set() then
+    pushRemote = pushDefault:read()
   else
-    pushRemote = FuzzyFinderBuffer.new(remotes):open_async { prompt_prefix = "set pushRemote > " }
+    pushRemote = FuzzyFinderBuffer.new(remotes):open_async { prompt_prefix = "set pushRemote" }
   end
 
   if pushRemote then

@@ -297,6 +297,7 @@ function M:set_option(option)
   -- Prompt user to select from predetermined choices
   if option.choices then
     if not option.value or option.value == "" then
+      -- TODO: Use input.get_choice here instead
       vim.ui.select(option.choices, { prompt = option.description }, set)
     else
       set("")

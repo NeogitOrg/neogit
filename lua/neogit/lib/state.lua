@@ -12,19 +12,14 @@ end
 
 ---@return Path
 function M.filepath()
-  local base_path = vim.fn.stdpath("state") .. "/neogit/"
+  local state_path = Path.new(vim.fn.stdpath("state")):joinpath("neogit")
   local filename = "state"
 
   if config.values.use_per_project_settings then
-    filename = vim.loop.cwd():gsub("/", "%%")
+    filename = vim.loop.cwd():gsub("^(%a):", "/%1"):gsub("/", "%%"):gsub(Path.path.sep, "%%")
   end
 
-  if vim.loop.os_uname().sysname == "Windows_NT" then
-    base_path = base_path:gsub("/", "\\")
-    filename = filename:gsub("\\", "%%")
-  end
-
-  return Path:new(base_path .. filename)
+  return state_path:joinpath(filename)
 end
 
 ---Initializes state
@@ -79,15 +74,21 @@ local function gen_key(key_table)
 end
 
 ---Set option and write to disk
----@param key table
+---@param key string[]
 ---@param value any
 function M.set(key, value)
   if not M.enabled() then
     return
   end
 
-  if not vim.tbl_contains(config.values.ignored_settings, gen_key(key)) then
-    M.state[gen_key(key)] = value
+  local cache_key = gen_key(key)
+  if not vim.tbl_contains(config.values.ignored_settings, cache_key) then
+    if value == "" then
+      M.state[cache_key] = nil
+    else
+      M.state[cache_key] = value
+    end
+
     M.write()
   end
 end

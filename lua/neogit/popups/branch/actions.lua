@@ -10,6 +10,10 @@ local operation = require("neogit.operations")
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 local BranchConfigPopup = require("neogit.popups.branch_config")
 
+local function fire_branch_event(pattern, data)
+  vim.api.nvim_exec_autocmds("User", { pattern = pattern, modeline = false, data = data })
+end
+
 local function parse_remote_branch_name(ref)
   local offset = ref:find("/")
   if not offset then
@@ -69,10 +73,11 @@ M.checkout_branch_revision = operation("checkout_branch_revision", function(popu
   end
 
   git.cli.checkout.branch(selected_branch).arg_list(popup:get_arguments()).call_sync():trim()
+  fire_branch_event("NeogitBranchCheckout", { branch_name = selected_branch })
 end)
 
 M.checkout_local_branch = operation("checkout_local_branch", function(popup)
-  local local_branches = git.branch.get_local_branches()
+  local local_branches = git.branch.get_local_branches(true)
   local remote_branches = util.filter_map(git.branch.get_remote_branches(), function(name)
     local branch_name = name:match([[%/(.*)$]])
     -- Remove remote branches that have a local branch by the same name
@@ -82,7 +87,7 @@ M.checkout_local_branch = operation("checkout_local_branch", function(popup)
   end)
 
   local target = FuzzyFinderBuffer.new(util.merge(local_branches, remote_branches)):open_async {
-    prompt_prefix = " branch > ",
+    prompt_prefix = "branch",
   }
 
   if target then
@@ -91,6 +96,7 @@ M.checkout_local_branch = operation("checkout_local_branch", function(popup)
     elseif target then
       git.cli.checkout.branch(target).arg_list(popup:get_arguments()).call_sync()
     end
+    fire_branch_event("NeogitBranchCheckout", { branch_name = target })
   end
 end)
 
@@ -101,6 +107,7 @@ M.checkout_recent_branch = operation("checkout_recent_branch", function(popup)
   end
 
   git.cli.checkout.branch(selected_branch).arg_list(popup:get_arguments()).call_sync():trim()
+  fire_branch_event("NeogitBranchCheckout", { branch_name = selected_branch })
 end)
 
 M.checkout_create_branch = operation("checkout_create_branch", function()
@@ -116,12 +123,14 @@ M.checkout_create_branch = operation("checkout_create_branch", function()
   end
   name, _ = name:gsub("%s", "-")
 
-  local base_branch = FuzzyFinderBuffer.new(branches):open_async { prompt_prefix = " base branch > " }
+  local base_branch = FuzzyFinderBuffer.new(branches):open_async { prompt_prefix = "base branch" }
   if not base_branch then
     return
   end
 
   git.cli.checkout.new_branch_with_start_point(name, base_branch).call_sync()
+  fire_branch_event("NeogitBranchCreate", { branch_name = name, base = base_branch })
+  fire_branch_event("NeogitBranchCheckout", { branch_name = name })
 end)
 
 M.create_branch = operation("create_branch", function()
@@ -132,6 +141,7 @@ M.create_branch = operation("create_branch", function()
 
   name, _ = name:gsub("%s", "-")
   git.branch.create(name)
+  fire_branch_event("NeogitBranchCreate", { branch_name = name })
 end)
 
 M.configure_branch = operation("configure_branch", function()
@@ -145,7 +155,7 @@ end)
 
 M.rename_branch = operation("rename_branch", function()
   local current_branch = git.repo.head.branch
-  local branches = git.branch.get_local_branches()
+  local branches = git.branch.get_local_branches(true)
   if current_branch then
     table.insert(branches, 1, current_branch)
   end
@@ -155,13 +165,16 @@ M.rename_branch = operation("rename_branch", function()
     return
   end
 
-  local new_name = input.get_user_input("new branch name > ")
+  local new_name = input.get_user_input("new branch name > ", selected_branch)
   if not new_name or new_name == "" then
     return
   end
 
   new_name, _ = new_name:gsub("%s", "-")
-  git.cli.branch.move.args(selected_branch, new_name).call_sync():trim()
+  git.cli.branch.move.args(selected_branch, new_name).call()
+
+  notification.info(string.format("Renamed '%s' to '%s'", selected_branch, new_name))
+  fire_branch_event("NeogitBranchRename", { branch_name = selected_branch, new_name = new_name })
 end)
 
 M.reset_branch = operation("reset_branch", function()
@@ -178,7 +191,7 @@ M.reset_branch = operation("reset_branch", function()
   local current = git.branch.current()
   local branches = git.branch.get_all_branches(false)
   local to = FuzzyFinderBuffer.new(branches):open_async {
-    prompt_prefix = string.format(" reset %s to > ", current),
+    prompt_prefix = string.format("reset %s to", current),
   }
 
   if not to then
@@ -190,6 +203,7 @@ M.reset_branch = operation("reset_branch", function()
   git.log.update_ref(git.branch.current_full_name(), to)
 
   notification.info(string.format("Reset '%s' to '%s'", current, to))
+  fire_branch_event("NeogitBranchReset", { branch_name = current, resetting_to = to })
 end)
 
 M.delete_branch = operation("delete_branch", function()
@@ -249,26 +263,23 @@ M.delete_branch = operation("delete_branch", function()
     else
       notification.info(string.format("Deleted branch '%s'", branch_name))
     end
+    fire_branch_event("NeogitBranchDelete", { branch_name = branch_name })
   end
 end)
 
-local function parse_remote_info(url)
-  local repo, owner
-  if url:match("^https?://") or url:match("^ssh://") then
-    repo, owner, _ = unpack(util.reverse(vim.split(url, "/")))
-  else
-    owner, repo = unpack(vim.split(vim.split(url, ":")[2], "/"))
-  end
-
+local function parse_remote_info(service, url)
+  local _, _, owner, repo = string.find(url, service .. ".(.+)/(.+)")
   repo, _ = repo:gsub(".git$", "")
   return { repository = repo, owner = owner, branch_name = git.branch.current() }
 end
 
 M.open_pull_request = operation("open_pull_request", function()
-  local template
+  local template, service
   local url = git.remote.get_url(git.branch.upstream_remote())[1]
-  for service, v in pairs(config.values.git_services) do
-    if url:match(service) then
+
+  for s, v in pairs(config.values.git_services) do
+    if url:match(s) then
+      service = s
       template = v
       break
     end
@@ -276,7 +287,7 @@ M.open_pull_request = operation("open_pull_request", function()
 
   if template then
     if vim.ui.open then
-      vim.ui.open(util.format(template, parse_remote_info(url)))
+      vim.ui.open(util.format(template, parse_remote_info(service, url)))
     else
       notification.warn("Requires Neovim 0.10")
     end

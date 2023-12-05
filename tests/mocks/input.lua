@@ -16,11 +16,6 @@ input.get_user_input = function(_, default)
   end
 end
 
-input.get_user_input_with_completion = function(_, _)
-  local value = table.remove(M.values, 1)
-  return value
-end
-
 input.get_confirmation = function(_, _)
   return M.confirmed
 end
