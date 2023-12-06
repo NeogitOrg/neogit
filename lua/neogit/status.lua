@@ -413,7 +413,7 @@ end
 ---@param linenr number|nil
 ---@return table, table, table, number, number
 local function save_cursor_location(linenr)
-  local line = linenr or vim.fn.line(".")
+  local line = linenr or vim.api.nvim_win_get_cursor(0)[1]
   local section_loc, file_loc, hunk_loc, first, last
 
   for li, loc in ipairs(M.locations) do
@@ -456,7 +456,7 @@ end
 
 local function restore_cursor_location(section_loc, file_loc, hunk_loc)
   if #M.locations == 0 then
-    return vim.fn.setpos(".", { 0, 1, 0, 0 })
+    return vim.api.nvim_win_set_cursor(0, { 1, 0 })
   end
 
   if not section_loc then
@@ -481,7 +481,7 @@ local function restore_cursor_location(section_loc, file_loc, hunk_loc)
   end
 
   if not file_loc or not section.items or #section.items == 0 then
-    return vim.fn.setpos(".", { 0, section.first, 0, 0 })
+    return vim.api.nvim_win_set_cursor(0, { section.first, 0 })
   end
 
   local file = Collection.new(section.items):find(function(f)
@@ -494,14 +494,14 @@ local function restore_cursor_location(section_loc, file_loc, hunk_loc)
   end
 
   if not hunk_loc or not file.hunks or #file.hunks == 0 then
-    return vim.fn.setpos(".", { 0, file.first, 0, 0 })
+    return vim.api.nvim_win_set_cursor(0, { file.first, 0 })
   end
 
   local hunk = Collection.new(file.hunks):find(function(h)
     return h.hash == hunk_loc[2]
   end) or file.hunks[hunk_loc[1]] or file.hunks[#file.hunks]
 
-  vim.fn.setpos(".", { 0, hunk.first, 0, 0 })
+  return vim.api.nvim_win_set_cursor(0, { hunk.first, 0 })
 end
 
 local function refresh_status_buffer()
