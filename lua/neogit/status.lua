@@ -2,7 +2,6 @@ local Buffer = require("neogit.lib.buffer")
 local GitCommandHistory = require("neogit.buffers.git_command_history")
 local CommitView = require("neogit.buffers.commit_view")
 local git = require("neogit.lib.git")
-local cli = require("neogit.lib.git.cli")
 local notification = require("neogit.lib.notification")
 local config = require("neogit.config")
 local a = require("plenary.async")
@@ -26,6 +25,7 @@ M.disabled = false
 M.prev_autochdir = nil
 M.status_buffer = nil
 M.commit_view = nil
+M.cursor_location = nil
 
 ---@class Section
 ---@field first number
@@ -412,7 +412,7 @@ end
 ---@param linenr number|nil
 ---@return table, table, table, number, number
 local function save_cursor_location(linenr)
-  local line = linenr or vim.fn.line(".")
+  local line = linenr or vim.api.nvim_win_get_cursor(0)[1]
   local section_loc, file_loc, hunk_loc, first, last
 
   for li, loc in ipairs(M.locations) do
@@ -455,8 +455,9 @@ end
 
 local function restore_cursor_location(section_loc, file_loc, hunk_loc)
   if #M.locations == 0 then
-    return vim.fn.setpos(".", { 0, 1, 0, 0 })
+    return vim.api.nvim_win_set_cursor(0, { 1, 0 })
   end
+
   if not section_loc then
     -- Skip the headers and put the cursor on the first foldable region
     local idx = 1
@@ -472,30 +473,34 @@ local function restore_cursor_location(section_loc, file_loc, hunk_loc)
   local section = Collection.new(M.locations):find(function(s)
     return s.name == section_loc[2]
   end)
+
   if not section then
     file_loc, hunk_loc = nil, nil
     section = M.locations[section_loc[1]] or M.locations[#M.locations]
   end
+
   if not file_loc or not section.items or #section.items == 0 then
-    return vim.fn.setpos(".", { 0, section.first, 0, 0 })
+    return vim.api.nvim_win_set_cursor(0, { section.first, 0 })
   end
 
   local file = Collection.new(section.items):find(function(f)
     return f.name == file_loc[2]
   end)
+
   if not file then
     hunk_loc = nil
     file = section.items[file_loc[1]] or section.items[#section.items]
   end
+
   if not hunk_loc or not file.hunks or #file.hunks == 0 then
-    return vim.fn.setpos(".", { 0, file.first, 0, 0 })
+    return vim.api.nvim_win_set_cursor(0, { file.first, 0 })
   end
 
   local hunk = Collection.new(file.hunks):find(function(h)
     return h.hash == hunk_loc[2]
   end) or file.hunks[hunk_loc[1]] or file.hunks[#file.hunks]
 
-  vim.fn.setpos(".", { 0, hunk.first, 0, 0 })
+  return vim.api.nvim_win_set_cursor(0, { hunk.first, 0 })
 end
 
 local function refresh_status_buffer()
@@ -543,18 +548,18 @@ local function refresh(which, reason)
   lock_holder = reason or "unknown"
   logger.debug("[STATUS BUFFER]: Acquired refresh lock: " .. lock_holder)
 
-  a.util.scheduler()
-  local s, f, h = save_cursor_location()
-
-  if cli.git_root_of_cwd() ~= "" then
+  if git.repo.git_root ~= "" then
+    a.util.scheduler()
     git.repo:refresh(which)
-    refresh_status_buffer()
-    vim.api.nvim_exec_autocmds("User", { pattern = "NeogitStatusRefreshed", modeline = false })
-  end
 
-  a.util.scheduler()
-  if vim.fn.bufname() == "NeogitStatus" then
-    restore_cursor_location(s, f, h)
+    local s, f, h = save_cursor_location()
+    refresh_status_buffer()
+
+    if M.status_buffer ~= nil and M.status_buffer:is_focused() then
+      restore_cursor_location(s, f, h)
+    end
+
+    vim.api.nvim_exec_autocmds("User", { pattern = "NeogitStatusRefreshed", modeline = false })
   end
 
   logger.info("[STATUS BUFFER]: Finished refresh")
@@ -636,7 +641,19 @@ end
 
 local dispatch_reset = a.void(reset)
 
+local closing = false
 local function close(skip_close)
+  if closing then
+    return
+  end
+  closing = true
+
+  if skip_close == nil then
+    skip_close = false
+  end
+
+  M.cursor_location = { save_cursor_location() }
+
   if not skip_close then
     M.status_buffer:close()
   end
@@ -650,6 +667,8 @@ local function close(skip_close)
   if M.old_cwd then
     vim.cmd.lcd(M.old_cwd)
   end
+
+  closing = false
 end
 
 ---@class Selection
@@ -1126,9 +1145,7 @@ end
 --- between this module and the popup modules
 local cmd_func_map = function()
   local mappings = {
-    ["Close"] = function()
-      M.status_buffer:close()
-    end,
+    ["Close"] = M.close,
     ["InitRepo"] = a.void(git.init.init_repo),
     ["Depth1"] = a.void(function()
       set_folds { true, true, false }
@@ -1480,6 +1497,11 @@ function M.create(kind, cwd)
     end,
     after = function()
       M.watcher = watcher.new(git.repo:git_path():absolute())
+
+      if M.cursor_location then
+        restore_cursor_location(unpack(M.cursor_location))
+        M.cursor_location = nil
+      end
     end,
   }
 end
