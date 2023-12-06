@@ -1,6 +1,5 @@
 local notification = require("neogit.lib.notification")
 local logger = require("neogit.logger")
-local a = require("plenary.async")
 local process = require("neogit.process")
 local util = require("neogit.lib.util")
 
