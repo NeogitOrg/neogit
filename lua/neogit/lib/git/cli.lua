@@ -947,57 +947,6 @@ local function new_builder(subcommand)
   }, mt_builder)
 end
 
-local function new_parallel_builder(calls)
-  local state = {
-    calls = calls,
-    show_popup = true,
-    in_pty = true,
-  }
-
-  local function call()
-    if #state.calls == 0 then
-      return
-    end
-
-    local repo = require("neogit.lib.git.repository")
-    if not repo.git_root then
-      return
-    end
-
-    for _, c in ipairs(state.calls) do
-      c.show_popup(state.show_popup)
-    end
-
-    local processes = {}
-    for _, c in ipairs(state.calls) do
-      table.insert(processes, c)
-    end
-
-    return a.util.join(processes)
-  end
-
-  return setmetatable({
-    call = call,
-  }, {
-    __index = function(tbl, action)
-      if action == "show_popup" then
-        return function(show_popup)
-          state.show_popup = show_popup
-          return tbl
-        end
-      end
-
-      if action == "in_pty" then
-        return function(in_pty)
-          tbl[k_state].in_pty = in_pty
-          return tbl
-        end
-      end
-    end,
-    __call = call,
-  })
-end
-
 local meta = {
   __index = function(_tbl, key)
     if configurations[key] then
@@ -1013,10 +962,6 @@ local cli = setmetatable({
   insert = handle_new_cmd,
   git_root_of_cwd = git_root_of_cwd,
   is_inside_worktree = is_inside_worktree,
-  in_parallel = function(...)
-    local calls = { ... }
-    return new_parallel_builder(calls)
-  end,
 }, meta)
 
 return cli
