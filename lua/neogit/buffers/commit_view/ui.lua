@@ -35,12 +35,12 @@ function M.CommitHeader(info)
     commit_header_arg(info),
     row {
       text.highlight("Comment")("Author:     "),
-      text(info.author_name .. " <" .. info.author_email .. ">"),
+      text((info.author_name or "") .. " <" .. (info.author_email or "") .. ">"),
     },
     row { text.highlight("Comment")("AuthorDate: "), text(info.author_date) },
     row {
       text.highlight("Comment")("Committer:  "),
-      text(info.committer_name .. " <" .. info.committer_email .. ">"),
+      text((info.committer_name or "") .. " <" .. (info.committer_email or "") .. ">"),
     },
     row { text.highlight("Comment")("CommitDate: "), text(info.committer_date) },
   }

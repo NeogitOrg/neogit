@@ -1,8 +1,18 @@
 local a = require("plenary.async")
+local Path = require("plenary.path")
 local Collection = require("neogit.lib.collection")
 
-local function update_file(file, mode, name, original_name)
+---@class File: StatusItem
+---@field mode string
+---@field has_diff boolean
+---@field diff string[]
+---@field absolute_path string
+
+local function update_file(cwd, file, mode, name, original_name)
   local mt, diff, has_diff
+
+  local absolute_path = Path:new(cwd, name):absolute()
+
   if file then
     mt = getmetatable(file)
     has_diff = file.has_diff
@@ -18,6 +28,7 @@ local function update_file(file, mode, name, original_name)
     original_name = original_name,
     has_diff = has_diff,
     diff = diff,
+    absolute_path = absolute_path,
   }, mt or {})
 end
 
@@ -64,6 +75,7 @@ local function update_status(state)
 
         local commit = git.log.list({ value, "--max-count=1" })[1]
         if commit then
+          upstream.oid = commit.oid
           upstream.abbrev = git.rev_parse.abbreviate_commit(commit.oid)
         end
 
@@ -84,18 +96,21 @@ local function update_status(state)
       if kind == "u" then
         local mode, _, _, _, _, _, _, _, _, name = rest:match(match_u)
 
-        table.insert(untracked_files, { mode = mode, name = name })
+        table.insert(unstaged_files, update_file(cwd, old_files_hash.unstaged_files[name], mode, name))
       elseif kind == "?" then
-        table.insert(untracked_files, update_file(old_files_hash.untracked_files[rest], nil, rest))
+        table.insert(untracked_files, update_file(cwd, old_files_hash.untracked_files[rest], nil, rest))
       elseif kind == "1" then
         local mode_staged, mode_unstaged, _, _, _, _, _, _, name = rest:match(match_1)
 
         if mode_staged ~= "." then
-          table.insert(staged_files, update_file(old_files_hash.staged_files[name], mode_staged, name))
+          table.insert(staged_files, update_file(cwd, old_files_hash.staged_files[name], mode_staged, name))
         end
 
         if mode_unstaged ~= "." then
-          table.insert(unstaged_files, update_file(old_files_hash.unstaged_files[name], mode_unstaged, name))
+          table.insert(
+            unstaged_files,
+            update_file(cwd, old_files_hash.unstaged_files[name], mode_unstaged, name)
+          )
         end
       elseif kind == "2" then
         local mode_staged, mode_unstaged, _, _, _, _, _, _, _, name, orig_name = rest:match(match_2)
@@ -103,14 +118,14 @@ local function update_status(state)
         if mode_staged ~= "." then
           table.insert(
             staged_files,
-            update_file(old_files_hash.staged_files[name], mode_staged, name, orig_name)
+            update_file(cwd, old_files_hash.staged_files[name], mode_staged, name, orig_name)
           )
         end
 
         if mode_unstaged ~= "." then
           table.insert(
             unstaged_files,
-            update_file(old_files_hash.unstaged_files[name], mode_unstaged, name, orig_name)
+            update_file(cwd, old_files_hash.unstaged_files[name], mode_unstaged, name, orig_name)
           )
         end
       end
@@ -146,7 +161,7 @@ local function update_status(state)
   else
     head.tag = { name = nil, distance = nil }
   end
-  state.cwd = cwd
+
   state.head = head
   state.upstream = upstream
   state.untracked.items = untracked_files
@@ -170,7 +185,7 @@ local function update_branch_information(state)
         local commit = git.log.list({ state.upstream.ref, "--max-count=1" })[1]
         -- May be done earlier by `update_status`, but this function can be called separately
         if commit then
-          state.upstream.commit_message = commit.message
+          state.upstream.commit_message = commit.subject
           state.upstream.abbrev = git.rev_parse.abbreviate_commit(commit.oid)
         end
       end)
@@ -181,7 +196,7 @@ local function update_branch_information(state)
       table.insert(tasks, function()
         local commit = git.log.list({ pushRemote, "--max-count=1" })[1]
         if commit then
-          state.pushRemote.commit_message = commit.message
+          state.pushRemote.commit_message = commit.subject
           state.pushRemote.abbrev = git.rev_parse.abbreviate_commit(commit.oid)
         end
       end)

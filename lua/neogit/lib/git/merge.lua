@@ -12,13 +12,19 @@ local function merge_command(cmd)
   return cmd.env(envs).show_popup(true):in_pty(true).call(true)
 end
 
+local function fire_merge_event(data)
+  vim.api.nvim_exec_autocmds("User", { pattern = "NeogitMerge", modeline = false, data = data })
+end
+
 function M.merge(branch, args)
   a.util.scheduler()
   local result = merge_command(cli.merge.args(branch).arg_list(args))
   if result.code ~= 0 then
     notification.error("Merging failed. Resolve conflicts before continuing")
+    fire_merge_event { branch = branch, args = args, status = "conflict" }
   else
     notification.info("Merged '" .. branch .. "' into '" .. branch_lib.current() .. "'")
+    fire_merge_event { branch = branch, args = args, status = "ok" }
   end
 end
 
@@ -31,20 +37,21 @@ function M.abort()
 end
 
 function M.update_merge_status(state)
-  if state.git_root == "" then
+  local repo = require("neogit.lib.git.repository")
+  if repo.git_root == "" then
     return
   end
 
   state.merge = { head = nil, msg = "", items = {} }
 
-  local merge_head = state.git_path("MERGE_HEAD")
+  local merge_head = repo:git_path("MERGE_HEAD")
   if not merge_head:exists() then
     return
   end
 
   state.merge.head = merge_head:read():match("([^\r\n]+)")
 
-  local message = state.git_path("MERGE_MSG")
+  local message = repo:git_path("MERGE_MSG")
   if message:exists() then
     state.merge.msg = message:read():match("([^\r\n]+)") -- we need \r? to support windows
   end

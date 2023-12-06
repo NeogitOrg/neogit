@@ -11,6 +11,7 @@ local function run_with_hunk(hunk, from, to, reverse)
     vim.fn.matchlist(lines[1], "@@ -\\(\\d\\+\\),\\(\\d\\+\\) +\\(\\d\\+\\),\\(\\d\\+\\) @@")
   return generate_patch_from_selection({
     name = "test.txt",
+    absolute_path = "test.txt",
     diff = { lines = lines },
   }, {
     first = 1,

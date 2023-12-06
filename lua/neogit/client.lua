@@ -74,6 +74,10 @@ function M.editor(target, client)
     editor.commit_editor(target, send_client_quit)
   elseif target:find("MERGE_MSG$") then
     editor.merge_editor(target, send_client_quit)
+  elseif target:find("TAG_EDITMSG$") then
+    editor.tag_editor(target, send_client_quit)
+  elseif target:find("EDIT_DESCRIPTION$") then
+    editor.description_editor(target, send_client_quit)
   else
     local notification = require("neogit.lib.notification")
     notification.warn(target .. " has not been implemented yet")
@@ -81,8 +85,18 @@ function M.editor(target, client)
   end
 end
 
+---@class NotifyMsg
+---@field setup string|nil Message to show before running
+---@field success string|nil Message to show when successful
+---@field fail string|nil Message to show when failed
+
+---@class WrapOpts
+---@field autocmd string
+---@field msg NotifyMsg
+
 ---@param cmd any
----@param opts table
+---@param opts WrapOpts
+---@return integer code of `cmd`
 function M.wrap(cmd, opts)
   local notification = require("neogit.lib.notification")
   local a = require("plenary.async")
@@ -106,6 +120,7 @@ function M.wrap(cmd, opts)
       notification.warn(opts.msg.fail, { dismiss = true })
     end
   end
+  return result.code
 end
 
 return M

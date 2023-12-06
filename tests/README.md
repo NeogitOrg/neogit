@@ -91,7 +91,7 @@ describe("git cli", function()
     it(
       "finds the correct git root for a non symlinked directory",
       in_prepared_repo(function(root_dir)
-        local detected_root_dir = git_cli.git_root()
+        local detected_root_dir = git_cli.git_root_of_cwd()
         eq(detected_root_dir, root_dir)
       end)
     )

@@ -16,7 +16,6 @@ local input = require("tests.mocks.input")
 local function act(normal_cmd)
   vim.fn.feedkeys(vim.api.nvim_replace_termcodes(normal_cmd, true, true, true))
   vim.fn.feedkeys("", "x") -- flush typeahead
-  status.wait_on_current_operation()
 end
 
 describe("branch popup", function()
@@ -173,6 +172,7 @@ describe("branch popup", function()
         input.confirmed = true
 
         local remote = harness.prepare_repository()
+        async.util.block_on(status.reset)
         util.system("git remote add upstream " .. remote)
         util.system([[
           git stash --include-untracked

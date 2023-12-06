@@ -70,10 +70,10 @@ end
 ---@type table<string, ConfigEntry>
 local config_cache = {}
 local cache_key = nil
-local git_root = cli.git_root()
 
 local function make_cache_key()
-  local stat = vim.loop.fs_stat(git_root .. "/.git/config")
+  local repo = require("neogit.lib.git.repository")
+  local stat = vim.loop.fs_stat(repo.git_root .. "/.git/config")
   if stat then
     return stat.mtime.sec
   end
@@ -82,9 +82,13 @@ end
 local function build_config()
   local result = {}
 
-  for _, option in ipairs(cli.config.list._local.call_sync():trim().stdout) do
-    local key, value = option:match([[^(.-)=(.*)$]])
-    result[key] = ConfigEntry.new(key, value, "local")
+  local out = vim.split(table.concat(cli.config.list.null._local.call_sync():trim().stdout_raw, "\0"), "\n")
+  for _, option in ipairs(out) do
+    local key, value = unpack(vim.split(option, "\0"))
+
+    if key ~= "" then
+      result[key] = ConfigEntry.new(key, value, "local")
+    end
   end
 
   return result

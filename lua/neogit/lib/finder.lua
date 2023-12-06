@@ -171,6 +171,10 @@ Finder.__index = Finder
 ---@param opts FinderOpts
 ---@return Finder
 function Finder:new(opts)
+  if opts.prompt_prefix then
+    opts.prompt_prefix = string.format(" %s > ", opts.prompt_prefix)
+  end
+
   local this = {
     opts = vim.tbl_deep_extend("keep", opts, default_opts()),
     entries = {},
@@ -210,7 +214,7 @@ function Finder:find(on_select)
   elseif config.check_integration("fzf_lua") then
     local fzf_lua = require("fzf-lua")
     fzf_lua.fzf_exec(self.entries, {
-      prompt = self.opts.prompt_prefix,
+      prompt = string.format(" %s > ", self.opts.prompt_prefix),
       fzf_opts = fzf_opts(self.opts),
       winopts = {
         height = self.opts.layout_config.height,
@@ -219,13 +223,14 @@ function Finder:find(on_select)
     })
   else
     vim.ui.select(self.entries, {
-      prompt = self.opts.prompt_prefix,
+      prompt = string.format(" %s > ", self.opts.prompt_prefix),
       format_item = function(entry)
         return entry
       end,
     }, function(item)
       vim.schedule(function()
-        on_select(item)
+        on_select(self.opts.allow_multi and { item } or item)
+
         if self.opts.refocus_status then
           refocus_status_buffer()
         end
