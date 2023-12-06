@@ -555,7 +555,7 @@ local function refresh(which, reason)
     local s, f, h = save_cursor_location()
     refresh_status_buffer()
 
-    if M.status_buffer:is_focused() then
+    if M.status_buffer ~= nil and M.status_buffer:is_focused() then
       restore_cursor_location(s, f, h)
     end
 
