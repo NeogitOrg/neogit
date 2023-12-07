@@ -291,14 +291,17 @@ end
 
 ---@param options table|nil
 ---@param files? table
----@param color boolean
+---@param color? boolean
 ---@return table
 function M.graph(options, files, color)
   options = ensure_max(options or {})
   files = files or {}
 
-  local result =
-    cli.log.format("%x1E%H%x00").graph.color.arg_list(options).files(unpack(files)).call():trim().stdout_raw
+  local result = cli.log
+    .format("%x1E%H%x00").graph.color
+    .arg_list(options)
+    .files(unpack(files))
+    .call({ ignore_error = true, hidden = true }).stdout_raw
 
   return util.filter_map(result, function(line)
     return require("neogit.lib.ansi").parse(util.trim(line), { recolor = not color })
@@ -377,8 +380,10 @@ end
 ---@param options? string[]
 ---@param graph? table
 ---@param files? table
+---@param hidden? boolean Hide from git history
+---@param graph_color? boolean Render ascii graph in color
 ---@return CommitLogEntry[]
-function M.list(options, graph, files, graph_color)
+function M.list(options, graph, files, hidden, graph_color)
   files = files or {}
 
   local signature = false
@@ -392,8 +397,7 @@ function M.list(options, graph, files, graph_color)
     .arg_list(options)
     .files(unpack(files))
     .show_popup(false)
-    .call()
-    :trim().stdout
+    .call({ hidden = hidden, ignore_error = hidden }).stdout
 
   local commits = parse_json(output)
 
@@ -417,7 +421,7 @@ end
 ---@param b string commit hash
 ---@return boolean
 function M.is_ancestor(a, b)
-  return cli["merge-base"].is_ancestor.args(a, b):call_sync_ignoring_exit_code():trim().code == 0
+  return cli["merge-base"].is_ancestor.args(a, b).call_sync({ ignore_error = true, hidden = true }).code == 0
 end
 
 local function update_recent(state)
@@ -426,7 +430,8 @@ local function update_recent(state)
     return
   end
 
-  state.recent.items = util.filter_map(M.list { "--max-count=" .. tostring(count) }, M.present_commit)
+  state.recent.items =
+    util.filter_map(M.list({ "--max-count=" .. tostring(count) }, {}, {}, true), M.present_commit)
 end
 
 function M.register(meta)
@@ -438,7 +443,7 @@ function M.update_ref(from, to)
 end
 
 function M.message(commit)
-  return cli.log.format("%s").args(commit).call():trim().stdout[1]
+  return cli.log.format("%s").args(commit).call().stdout[1]
 end
 
 function M.present_commit(commit)
@@ -457,7 +462,7 @@ end
 ---@param commit string Hash of commit
 ---@return string The stderr output of the command
 function M.verify_commit(commit)
-  return cli["verify-commit"].args(commit).call_sync_ignoring_exit_code():trim().stderr
+  return cli["verify-commit"].args(commit).call_sync({ ignore_error = true }).stderr
 end
 
 ---@class CommitBranchInfo

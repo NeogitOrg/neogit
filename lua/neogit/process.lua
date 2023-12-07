@@ -5,9 +5,8 @@ local Buffer = require("neogit.lib.buffer")
 local config = require("neogit.config")
 local logger = require("neogit.logger")
 
+-- from: https://stackoverflow.com/questions/48948630/lua-ansi-escapes-pattern
 local function remove_escape_codes(s)
-  -- from: https://stackoverflow.com/questions/48948630/lua-ansi-escapes-pattern
-
   return s:gsub("[\27\155][][()#;?%d]*[A-PRZcf-ntqry=><~]", ""):gsub("[\r\n\04\08]", "")
 end
 
@@ -21,7 +20,7 @@ end
 ---@field stdin number|nil
 ---@field pty boolean
 ---@field on_partial_line fun(process: Process, data: string, raw: string) callback on complete lines
----@field on_error (fun(res: ProcessResult): boolean)|boolean|nil Intercept the error externally, returning true prevents the error from being logged
+---@field on_error (fun(res: ProcessResult): boolean) Intercept the error externally, returning true prevents the error from being logged
 local Process = {}
 Process.__index = Process
 
@@ -327,26 +326,22 @@ function Process:spawn(cb)
     stdout_cleanup()
     stderr_cleanup()
 
-    -- TODO: Replace ignore_code with on_error callback
-    if code ~= 0 and not hide_console and not self.ignore_code then
-      if not self.on_error or (type(self.on_error) == "function" and not self.on_error(res)) then
-        append_log(self, string.format("Process exited with code: %d", code))
+    if not hide_console and code > 0 and self.on_error(res) then
+      append_log(self, string.format("Process exited with code: %d", code))
 
-        local output = {}
-        local start = math.max(#res.output - 16, 1)
-        for i = start, math.min(#res.output, start + 16) do
-          table.insert(output, "    " .. res.output[i])
-        end
-
-        local message = string.format(
-          "%s:\n\n%s\n\nOpen the console for details",
-          table.concat(self.cmd, " "),
-          table.concat(output, "\n")
-        )
-
-        notification.warn(message)
+      local output = {}
+      local start = math.max(#res.output - 16, 1)
+      for i = start, math.min(#res.output, start + 16) do
+        table.insert(output, "    " .. res.output[i])
       end
-      -- vim.schedule(Process.show_console)
+
+      local message = string.format(
+        "%s:\n\n%s\n\nOpen the console for details",
+        table.concat(self.cmd, " "),
+        table.concat(output, "\n")
+      )
+
+      notification.warn(message)
     end
 
     self.stdin = nil
@@ -361,8 +356,7 @@ function Process:spawn(cb)
   local job = vim.fn.jobstart(self.cmd, {
     cwd = self.cwd,
     env = self.env,
-    -- Fake a small standard terminal
-    pty = not not self.pty,
+    pty = not not self.pty, -- Fake a small standard terminal
     width = 80,
     height = 24,
     on_stdout = on_stdout,

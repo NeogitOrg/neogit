@@ -13,7 +13,7 @@ end
 
 local function rebase_command(cmd)
   a.util.scheduler()
-  return cmd.env(client.get_envs_git_editor()).show_popup(true):in_pty(true).call(true)
+  return cmd.env(client.get_envs_git_editor()).show_popup(true):in_pty(true).call { verbose = true }
 end
 
 function M.rebase_interactive(commit, args)

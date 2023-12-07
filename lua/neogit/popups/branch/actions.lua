@@ -72,7 +72,7 @@ M.checkout_branch_revision = operation("checkout_branch_revision", function(popu
     return
   end
 
-  git.cli.checkout.branch(selected_branch).arg_list(popup:get_arguments()).call_sync():trim()
+  git.cli.checkout.branch(selected_branch).arg_list(popup:get_arguments()).call_sync()
   fire_branch_event("NeogitBranchCheckout", { branch_name = selected_branch })
 end)
 
@@ -106,7 +106,7 @@ M.checkout_recent_branch = operation("checkout_recent_branch", function(popup)
     return
   end
 
-  git.cli.checkout.branch(selected_branch).arg_list(popup:get_arguments()).call_sync():trim()
+  git.cli.checkout.branch(selected_branch).arg_list(popup:get_arguments()).call_sync()
   fire_branch_event("NeogitBranchCheckout", { branch_name = selected_branch })
 end)
 
