@@ -591,12 +591,6 @@ local function handle_new_cmd(job, popup, hidden_text, hide_from_history)
       log_fn(string.format("[CLI] Execution of '%s' succeeded in %d ms", job.cmd, job.time))
     end
   end
-
-  if popup and job.code ~= 0 then
-    vim.schedule(function()
-      notification.error("Git Error (" .. job.code .. "), press $ to see the git command history")
-    end)
-  end
 end
 
 local k_state = {}
