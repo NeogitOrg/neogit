@@ -5,14 +5,14 @@ local M = {}
 --- Outputs a list of tags locally
 ---@return table List of tags.
 function M.list()
-  return cli.tag.list.call():trim().stdout
+  return cli.tag.list.call().stdout
 end
 
 --- Deletes a list of tags
 ---@param tags table List of tags
 ---@return boolean Successfully deleted
 function M.delete(tags)
-  local result = cli.tag.delete.arg_list(tags).call():trim()
+  local result = cli.tag.delete.arg_list(tags).call()
   return result.code == 0
 end
 
@@ -20,7 +20,7 @@ end
 ---@param remote string
 ---@return table
 function M.list_remote(remote)
-  return cli["ls-remote"].tags.args(remote).call():trim().stdout
+  return cli["ls-remote"].tags.args(remote).call().stdout
 end
 
 return M

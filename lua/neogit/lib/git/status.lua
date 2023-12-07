@@ -37,6 +37,11 @@ end
 -- some cases may be dropped.
 local tag_pattern = "(.-)%-([0-9]+)%-g%x+$"
 
+local match_kind = "(.) (.+)"
+local match_u = "(..) (....) (%d+) (%d+) (%d+) (%d+) (%w+) (%w+) (%w+) (.+)"
+local match_1 = "(.)(.) (....) (%d+) (%d+) (%d+) (%w+) (%w+) (.+)"
+local match_2 = "(.)(.) (....) (%d+) (%d+) (%d+) (%w+) (%w+) (%a%d+) ([^\t]+)\t?(.+)"
+
 local function update_status(state)
   local git = require("neogit.lib.git")
   -- git-status outputs files relative to the cwd.
@@ -45,7 +50,7 @@ local function update_status(state)
   -- cwd may change after the status is refreshed and used, especially if using
   -- rooter plugins with lsp integration
   local cwd = vim.loop.cwd()
-  local result = git.cli.status.porcelain(2).branch.call():trim()
+  local result = git.cli.status.porcelain(2).branch.call { hidden = true }
 
   local head = {}
   local upstream = { unmerged = { items = {} }, unpulled = { items = {} }, ref = nil }
@@ -56,11 +61,6 @@ local function update_status(state)
     unstaged_files = Collection.new(state.unstaged.items or {}):key_by("name"),
     untracked_files = Collection.new(state.untracked.items or {}):key_by("name"),
   }
-
-  local match_kind = "(.) (.+)"
-  local match_u = "(..) (....) (%d+) (%d+) (%d+) (%d+) (%w+) (%w+) (%w+) (.+)"
-  local match_1 = "(.)(.) (....) (%d+) (%d+) (%d+) (%w+) (%w+) (.+)"
-  local match_2 = "(.)(.) (....) (%d+) (%d+) (%d+) (%w+) (%w+) (%a%d+) ([^\t]+)\t?(.+)"
 
   for _, l in ipairs(result.stdout) do
     local header, value = l:match("# ([%w%.]+) (.+)")
@@ -73,7 +73,7 @@ local function update_status(state)
       elseif header == "branch.upstream" then
         upstream.ref = value
 
-        local commit = git.log.list({ value, "--max-count=1" })[1]
+        local commit = git.log.list({ value, "--max-count=1" }, {}, {}, true)[1]
         if commit then
           upstream.oid = commit.oid
           upstream.abbrev = git.rev_parse.abbreviate_commit(commit.oid)
@@ -150,7 +150,7 @@ local function update_status(state)
     upstream.unpulled = state.upstream.unpulled
   end
 
-  local tag = git.cli.describe.long.tags.args("HEAD").call_ignoring_exit_code():trim().stdout
+  local tag = git.cli.describe.long.tags.args("HEAD").call({ hidden = true, ignore_error = true }).stdout
   if #tag == 1 then
     local tag, distance = tostring(tag[1]):match(tag_pattern)
     if tag and distance then
@@ -176,13 +176,14 @@ local function update_branch_information(state)
 
   if state.head.oid ~= "(initial)" then
     table.insert(tasks, function()
-      local result = git.cli.log.max_count(1).pretty("%B").call():trim()
+      local result = git.cli.log.max_count(1).pretty("%B").call { hidden = true }
+
       state.head.commit_message = result.stdout[1]
     end)
 
     if state.upstream.ref then
       table.insert(tasks, function()
-        local commit = git.log.list({ state.upstream.ref, "--max-count=1" })[1]
+        local commit = git.log.list({ state.upstream.ref, "--max-count=1" }, {}, {}, true)[1]
         -- May be done earlier by `update_status`, but this function can be called separately
         if commit then
           state.upstream.commit_message = commit.subject
@@ -194,7 +195,7 @@ local function update_branch_information(state)
     local pushRemote = require("neogit.lib.git").branch.pushRemote_ref()
     if pushRemote and not git.branch.is_detached() then
       table.insert(tasks, function()
-        local commit = git.log.list({ pushRemote, "--max-count=1" })[1]
+        local commit = git.log.list({ pushRemote, "--max-count=1" }, {}, {}, true)[1]
         if commit then
           state.pushRemote.commit_message = commit.subject
           state.pushRemote.abbrev = git.rev_parse.abbreviate_commit(commit.oid)

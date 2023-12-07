@@ -102,7 +102,7 @@ function M.fetch_refspec(popup)
   end
 
   notification.info("Determining refspecs...")
-  local refspecs = util.map(git.cli["ls-remote"].remote(remote).call():trim().stdout, function(ref)
+  local refspecs = util.map(git.cli["ls-remote"].remote(remote).call().stdout, function(ref)
     return vim.split(ref, "\t")[2]
   end)
   notification.delete_all()

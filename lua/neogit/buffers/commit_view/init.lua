@@ -53,7 +53,7 @@ function M.new(commit_id, notify)
     is_open = false,
     commit_info = commit_info,
     commit_overview = parser.parse_commit_overview(
-      git.cli.show.stat.oneline.args(commit_id).call_sync():trim().stdout
+      git.cli.show.stat.oneline.args(commit_id).call_sync().stdout
     ),
     commit_signature = config.values.commit_view.verify_commit and git.log.verify_commit(commit_id) or {},
     buffer = nil,
