@@ -817,7 +817,6 @@ local function new_builder(subcommand)
         "--no-pager",
         "--literal-pathspecs",
         "--no-optional-locks",
-        "-c", "core.preloadindex=true",
         "-c", "color.ui=always",
         subcommand
       },
