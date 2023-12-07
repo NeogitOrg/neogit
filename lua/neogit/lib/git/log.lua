@@ -297,8 +297,11 @@ function M.graph(options, files, color)
   options = ensure_max(options or {})
   files = files or {}
 
-  local result =
-    cli.log.format("%x1E%H%x00").graph.color.arg_list(options).files(unpack(files)).call().stdout_raw
+  local result = cli.log
+    .format("%x1E%H%x00").graph.color
+    .arg_list(options)
+    .files(unpack(files))
+    .call({ ignore_error = true, hidden = true }).stdout_raw
 
   return util.filter_map(result, function(line)
     return require("neogit.lib.ansi").parse(util.trim(line), { recolor = not color })
@@ -394,7 +397,7 @@ function M.list(options, graph, files, hidden, graph_color)
     .arg_list(options)
     .files(unpack(files))
     .show_popup(false)
-    .call({ hidden = hidden }).stdout
+    .call({ hidden = hidden, ignore_error = hidden }).stdout
 
   local commits = parse_json(output)
 
@@ -418,7 +421,7 @@ end
 ---@param b string commit hash
 ---@return boolean
 function M.is_ancestor(a, b)
-  return cli["merge-base"].is_ancestor.args(a, b):call_sync({ ignore_error = true }).code == 0
+  return cli["merge-base"].is_ancestor.args(a, b).call_sync({ ignore_error = true, hidden = true }).code == 0
 end
 
 local function update_recent(state)

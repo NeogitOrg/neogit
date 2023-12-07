@@ -831,8 +831,8 @@ local function new_builder(subcommand)
     [k_config] = configuration,
     [k_command] = subcommand,
     to_process = to_process,
-    call_interactive = function(opts)
-      opts = opts or {}
+    call_interactive = function(options)
+      local opts = options or {}
 
       local handle_line = opts.handle_line or handle_interactive_password_questions
       local p = to_process {
@@ -868,27 +868,23 @@ local function new_builder(subcommand)
 
       return result
     end,
-    call = function(opts)
-      opts = vim.tbl_extend(
+    call = function(options)
+      local opts = vim.tbl_extend(
         "keep",
-        (opts or {}),
+        (options or {}),
         { verbose = false, ignore_error = not state.show_popup, hidden = false }
       )
 
       local p = to_process {
         verbose = opts.verbose,
         on_error = function(res)
-          if opts.ignore_error then
-            return false
-          end
-
           local commit_aborted_msg =
             "hint: Waiting for your editor to close the file... Aborting commit due to empty commit message."
           if res.stdout[1] == commit_aborted_msg then
             return false
           end
 
-          return true
+          return not opts.ignore_error
         end,
       }
 
@@ -915,21 +911,16 @@ local function new_builder(subcommand)
 
       return result:trim()
     end,
-    call_sync = function(opts)
-      opts = vim.tbl_extend(
+    call_sync = function(options)
+      local opts = vim.tbl_extend(
         "keep",
-        (opts or {}),
+        (options or {}),
         { verbose = false, ignore_error = not state.show_popup, hidden = false }
       )
 
       local p = to_process {
-        verbose = opts.verbose,
         on_error = function(_res)
-          if opts.ignore_error then
-            return false
-          end
-
-          return true
+          return not opts.ignore_error
         end,
       }
 

@@ -19,8 +19,7 @@ describe("process execution", function()
   end)
 
   it("can cat a file", function()
-    local result =
-      process.new({ cmd = { "cat", "a.txt" }, cwd = util.get_fixtures_dir() }):spawn_blocking(1)
+    local result = process.new({ cmd = { "cat", "a.txt" }, cwd = util.get_fixtures_dir() }):spawn_blocking(1)
 
     assert(result)
     assert.are.same({
