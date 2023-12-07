@@ -526,8 +526,14 @@ local configurations = {
 -- git_root_of_cwd() returns the git repo of the cwd, which can change anytime
 -- after git_root_of_cwd() has been called.
 local function git_root_of_cwd()
-  local process =
-    process.new({ cmd = { "git", "rev-parse", "--show-toplevel" }, ignore_error = true }):spawn_blocking()
+  local process = process
+    .new({
+      cmd = { "git", "rev-parse", "--show-toplevel" },
+      on_error = function()
+        return false
+      end,
+    })
+    :spawn_blocking()
 
   if process ~= nil and process.code == 0 then
     return process.stdout[1]
