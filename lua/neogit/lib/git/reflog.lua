@@ -60,7 +60,7 @@ function M.list(refname, options)
       .arg_list(options or {})
       .args(refname, "--")
       .call()
-      :trim().stdout
+      .stdout
   )
 end
 

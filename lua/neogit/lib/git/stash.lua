@@ -20,7 +20,6 @@ local function perform_stash(include)
         GIT_INDEX_FILE = ".git/NEOGIT_TMP_INDEX",
       })
       .call()
-      :trim()
 
     cli["update-index"].add.remove
       .files(unpack(files))
@@ -51,7 +50,7 @@ local function perform_stash(include)
     --.commit('HEAD')
     --.call()
   elseif include.index then
-    local diff = cli.diff.no_ext_diff.cached.call():trim().stdout[1] .. "\n"
+    local diff = cli.diff.no_ext_diff.cached.call().stdout[1] .. "\n"
 
     cli.apply.reverse.cached.input(diff).call()
 
@@ -60,7 +59,7 @@ local function perform_stash(include)
 end
 
 function M.list_refs()
-  local result = cli.reflog.show.format("%h").args("stash").call({ ignore_error = true }):trim()
+  local result = cli.reflog.show.format("%h").args("stash").call({ ignore_error = true })
   if result.code > 0 then
     return {}
   else
@@ -105,7 +104,7 @@ function M.drop(stash)
 end
 
 function M.list()
-  return cli.stash.args("list").call({ hidden = true }):trim().stdout
+  return cli.stash.args("list").call({ hidden = true }).stdout
 end
 
 function M.register(meta)

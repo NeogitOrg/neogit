@@ -52,10 +52,9 @@ describe("process execution", function()
     assert.are.same(result.stdout, input)
   end)
   it("basic command trim", function()
-    local result = process
-      .new({ cmd = { "cat", "process_test" }, cwd = util.get_fixtures_dir() })
-      :spawn_blocking(1000)
-      :trim()
+    local result =
+      process.new({ cmd = { "cat", "process_test" }, cwd = util.get_fixtures_dir() }):spawn_blocking(1000)
+
     assert(result)
     assert.are.same(result.stdout, {
       "This is a test file",

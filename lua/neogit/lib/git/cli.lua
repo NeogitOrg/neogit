@@ -913,7 +913,7 @@ local function new_builder(subcommand)
         time = result.time,
       }, state.show_popup, state.hide_text, opts.hidden)
 
-      return result
+      return result:trim()
     end,
     call_sync = function(opts)
       opts = vim.tbl_extend(
@@ -949,7 +949,7 @@ local function new_builder(subcommand)
         time = result.time,
       }, state.show_popup, state.hide_text, opts.hidden)
 
-      return result
+      return result:trim()
     end,
   }, mt_builder)
 end

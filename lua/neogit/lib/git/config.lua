@@ -83,7 +83,7 @@ local function build_config()
   local result = {}
 
   local out = vim.split(
-    table.concat(cli.config.list.null._local.call_sync({ hidden = true }):trim().stdout_raw, "\0"),
+    table.concat(cli.config.list.null._local.call_sync({ hidden = true }).stdout_raw, "\0"),
     "\n"
   )
   for _, option in ipairs(out) do
@@ -114,7 +114,7 @@ end
 
 ---@return ConfigEntry
 function M.get_global(key)
-  local result = cli.config.global.get(key).call_sync({ ignore_error = true }):trim().stdout[1]
+  local result = cli.config.global.get(key).call_sync({ ignore_error = true }).stdout[1]
   return ConfigEntry.new(key, result, "global")
 end
 

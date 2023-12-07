@@ -203,7 +203,7 @@ local function raw_untracked(name)
     local diff = cli.diff.no_ext_diff.no_index
       .files("/dev/null", name)
       .call({ hidden = true, ignore_error = true })
-      :trim().stdout
+      .stdout
     local stats = {}
 
     return { diff, stats }
@@ -212,8 +212,8 @@ end
 
 local function raw_unstaged(name)
   return function()
-    local diff = cli.diff.no_ext_diff.files(name).call({ hidden = true }):trim().stdout
-    local stats = cli.diff.no_ext_diff.shortstat.files(name).call({ hidden = true }):trim().stdout
+    local diff = cli.diff.no_ext_diff.files(name).call({ hidden = true }).stdout
+    local stats = cli.diff.no_ext_diff.shortstat.files(name).call({ hidden = true }).stdout
 
     return { diff, stats }
   end
@@ -221,8 +221,8 @@ end
 
 local function raw_staged(name)
   return function()
-    local diff = cli.diff.no_ext_diff.cached.files(name).call({ hidden = true }):trim().stdout
-    local stats = cli.diff.no_ext_diff.cached.shortstat.files(name).call({ hidden = true }):trim().stdout
+    local diff = cli.diff.no_ext_diff.cached.files(name).call({ hidden = true }).stdout
+    local stats = cli.diff.no_ext_diff.cached.shortstat.files(name).call({ hidden = true }).stdout
 
     return { diff, stats }
   end
@@ -230,9 +230,9 @@ end
 
 local function raw_staged_renamed(name, original)
   return function()
-    local diff = cli.diff.no_ext_diff.cached.files(name, original).call({ hidden = true }):trim().stdout
+    local diff = cli.diff.no_ext_diff.cached.files(name, original).call({ hidden = true }).stdout
     local stats =
-      cli.diff.no_ext_diff.cached.shortstat.files(name, original).call({ hidden = true }):trim().stdout
+      cli.diff.no_ext_diff.cached.shortstat.files(name, original).call({ hidden = true }).stdout
 
     return { diff, stats }
   end
