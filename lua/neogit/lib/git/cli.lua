@@ -1,4 +1,3 @@
-local notification = require("neogit.lib.notification")
 local logger = require("neogit.logger")
 local process = require("neogit.process")
 local util = require("neogit.lib.util")
@@ -883,7 +882,8 @@ local function new_builder(subcommand)
             return false
           end
 
-          local commit_aborted_msg = "hint: Waiting for your editor to close the file... Aborting commit due to empty commit message."
+          local commit_aborted_msg =
+            "hint: Waiting for your editor to close the file... Aborting commit due to empty commit message."
           if res.stdout[1] == commit_aborted_msg then
             return false
           end
@@ -924,7 +924,7 @@ local function new_builder(subcommand)
 
       local p = to_process {
         verbose = opts.verbose,
-        on_error = function(res)
+        on_error = function(_res)
           if opts.ignore_error then
             return false
           end

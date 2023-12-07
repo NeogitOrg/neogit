@@ -59,7 +59,7 @@ local function perform_stash(include)
 end
 
 function M.list_refs()
-  local result = cli.reflog.show.format("%h").args("stash").call({ ignore_error = true })
+  local result = cli.reflog.show.format("%h").args("stash").call { ignore_error = true }
   if result.code > 0 then
     return {}
   else

@@ -67,8 +67,7 @@ end
 function M.exists(branch)
   local check = cli["rev-parse"].verify
     .args(string.format("refs/heads/%s", branch))
-    .call_sync({ ignore_error = true })
-    .stdout[1]
+    .call_sync({ ignore_error = true }).stdout[1]
 
   return check ~= nil
 end

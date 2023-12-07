@@ -394,8 +394,7 @@ function M.list(options, graph, files, hidden, graph_color)
     .arg_list(options)
     .files(unpack(files))
     .show_popup(false)
-    .call({ hidden = hidden })
-    .stdout
+    .call({ hidden = hidden }).stdout
 
   local commits = parse_json(output)
 
