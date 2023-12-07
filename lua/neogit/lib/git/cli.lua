@@ -872,7 +872,7 @@ local function new_builder(subcommand)
       local opts = vim.tbl_extend(
         "keep",
         (options or {}),
-        { verbose = false, ignore_error = not state.show_popup, hidden = false }
+        { verbose = false, ignore_error = not state.show_popup, hidden = false, trim = true }
       )
 
       local p = to_process {
@@ -909,13 +909,17 @@ local function new_builder(subcommand)
         time = result.time,
       }, state.show_popup, state.hide_text, opts.hidden)
 
-      return result:trim()
+      if opts.trim then
+        return result:trim()
+      else
+        return result
+      end
     end,
     call_sync = function(options)
       local opts = vim.tbl_extend(
         "keep",
         (options or {}),
-        { verbose = false, ignore_error = not state.show_popup, hidden = false }
+        { verbose = false, ignore_error = not state.show_popup, hidden = false, trim = true }
       )
 
       local p = to_process {
@@ -940,7 +944,11 @@ local function new_builder(subcommand)
         time = result.time,
       }, state.show_popup, state.hide_text, opts.hidden)
 
-      return result:trim()
+      if opts.trim then
+        return result:trim()
+      else
+        return result
+      end
     end,
   }, mt_builder)
 end
