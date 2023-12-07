@@ -1,4 +1,5 @@
 local popup = require("neogit.lib.popup")
+local config = require("neogit.config")
 local actions = require("neogit.popups.log.actions")
 
 local M = {}
@@ -23,12 +24,25 @@ function M.create()
     :switch("L", "L", "Trace line evolution", { user_input = true, cli_prefix = "-" })
     :switch("m", "no-merges", "Omit merges", { key_prefix = "=" })
     :switch("p", "first-parent", "First parent", { key_prefix = "=" })
+    :switch("R", "reflog", "List reflog", { key_prefix = "=" })
     :arg_heading("History Simplification")
     :switch("D", "simplify-by-decoration", "Simplify by decoration")
     :option("-", "", "", "Limit to files", {
       key_prefix = "-",
       separator = "",
       fn = actions.limit_to_files,
+      setup = function(popup)
+        local state = require("neogit.lib.state").get { "NeogitLogPopup", "" }
+        if state then
+          -- State for this option is saved with quotes around each filepath, which cannot
+          -- get passed into the CLI lib. So, to handle things internally, we need to strip
+          -- them out when loading the popup.
+          popup.state.env.files = vim.tbl_map(function(value)
+            local result, _ = value:gsub([["]], "")
+            return result
+          end, vim.split(state, " ", { trimempty = true }))
+        end
+      end,
     })
     :switch("f", "follow", "Follow renames when showing single-file log")
     :arg_heading("Commit Ordering")
@@ -49,7 +63,13 @@ function M.create()
       incompatible = { "reverse" },
       dependant = { "color" },
     })
-    :switch("c", "color", "Show graph in color", { internal = true, incompatible = { "reverse" } })
+    :switch_if(
+      config.values.graph_style == "ascii",
+      "c",
+      "color",
+      "Show graph in color",
+      { internal = true, incompatible = { "reverse" } }
+    )
     :switch("d", "decorate", "Show refnames", { enabled = true, internal = true })
     :switch("S", "show-signature", "Show signatures", { key_prefix = "=" })
     :group_heading("Log")

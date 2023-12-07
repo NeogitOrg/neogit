@@ -1,60 +1,77 @@
 local logger = require("neogit.logger")
 local client = require("neogit.client")
 local notification = require("neogit.lib.notification")
+local cli = require("neogit.lib.git.cli")
 
 local M = {}
 
 local a = require("plenary.async")
 
+local function fire_rebase_event(data)
+  vim.api.nvim_exec_autocmds("User", { pattern = "NeogitRebase", modeline = false, data = data })
+end
+
 local function rebase_command(cmd)
-  local git = require("neogit.lib.git")
-  cmd = cmd or git.cli.rebase
-  local envs = client.get_envs_git_editor()
-  return cmd.env(envs).show_popup(true):in_pty(true).call(true)
+  a.util.scheduler()
+  return cmd.env(client.get_envs_git_editor()).show_popup(true):in_pty(true).call { verbose = true }
 end
 
 function M.rebase_interactive(commit, args)
-  a.util.scheduler()
-  local git = require("neogit.lib.git")
-  local result = rebase_command(git.cli.rebase.interactive.args(commit).arg_list(args))
+  local result = rebase_command(cli.rebase.interactive.args(commit).arg_list(args))
   if result.code ~= 0 then
     notification.error("Rebasing failed. Resolve conflicts before continuing")
+    fire_rebase_event { commit = commit, status = "conflict" }
   else
     notification.info("Rebased successfully")
+    fire_rebase_event { commit = commit, status = "ok" }
   end
 end
 
-function M.rebase_onto(branch, args)
-  a.util.scheduler()
-  local git = require("neogit.lib.git")
-  local result = rebase_command(git.cli.rebase.args(branch).arg_list(args))
+function M.onto_branch(branch, args)
+  local result = rebase_command(cli.rebase.args(branch).arg_list(args))
   if result.code ~= 0 then
     notification.error("Rebasing failed. Resolve conflicts before continuing")
+    fire_rebase_event("conflict")
   else
     notification.info("Rebased onto '" .. branch .. "'")
+    fire_rebase_event("ok")
+  end
+end
+
+function M.onto(start, newbase, args)
+  local result = rebase_command(cli.rebase.onto.args(newbase, start).arg_list(args))
+  if result.code ~= 0 then
+    notification.error("Rebasing failed. Resolve conflicts before continuing")
+    fire_rebase_event("conflict")
+  else
+    notification.info("Rebased onto '" .. newbase .. "'")
+    fire_rebase_event("ok")
   end
 end
 
 function M.continue()
-  local git = require("neogit.lib.git")
-  return rebase_command(git.cli.rebase.continue)
+  return rebase_command(cli.rebase.continue)
 end
 
 function M.skip()
-  local git = require("neogit.lib.git")
-  return rebase_command(git.cli.rebase.skip)
+  return rebase_command(cli.rebase.skip)
+end
+
+function M.edit()
+  return rebase_command(cli.rebase.edit_todo)
 end
 
 function M.update_rebase_status(state)
-  if state.git_root == "" then
+  local repo = require("neogit.lib.git.repository")
+  if repo.git_root == "" then
     return
   end
 
   state.rebase = { items = {}, head = nil, current = nil }
 
   local rebase_file
-  local rebase_merge = state.git_path("rebase-merge")
-  local rebase_apply = state.git_path("rebase-apply")
+  local rebase_merge = repo:git_path("rebase-merge")
+  local rebase_apply = repo:git_path("rebase-apply")
 
   if rebase_merge:exists() then
     rebase_file = rebase_merge

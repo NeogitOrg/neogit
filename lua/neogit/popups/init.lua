@@ -1,4 +1,6 @@
 local M = {}
+local git = require("neogit.lib.git")
+local util = require("neogit.lib.util")
 
 ---@param name string
 ---@param f nil|fun(create: fun(...)): any
@@ -22,11 +24,22 @@ function M.open(name, f)
   end
 end
 
+---@param name string
+---@return string|string[]
+---Returns the keymapping for a popup
+function M.mapping_for(name)
+  local mappings = require("neogit.config").get_reversed_popup_maps()
+
+  if mappings[name] then
+    return mappings[name]
+  else
+    return {}
+  end
+end
+
 --- Returns an array useful for creating mappings for the available popups
 ---@return table<string, Mapping>
 function M.mappings_table()
-  local util = require("neogit.lib.util")
-
   ---@param commit CommitLogEntry|nil
   ---@return string|nil
   local function commit_oid(commit)
@@ -53,11 +66,39 @@ function M.mappings_table()
       end),
     },
     { "MergePopup", "Merge", M.open("merge") },
-    { "PushPopup", "Push", M.open("push") },
+    {
+      "PushPopup",
+      "Push",
+      M.open("push", function(f)
+        f { commit = commit_oid(require("neogit.status").get_selection().commit) }
+      end),
+    },
     {
       "CommitPopup",
       "Commit",
       M.open("commit", function(f)
+        f { commit = commit_oid(require("neogit.status").get_selection().commit) }
+      end),
+    },
+    {
+      "IgnorePopup",
+      "Ignore",
+      {
+        "nv",
+        M.open("ignore", function(f)
+          f {
+            paths = util.filter_map(require("neogit.status").get_selection().items, function(v)
+              return v.absolute_path
+            end),
+            git_root = git.repo.git_root,
+          }
+        end),
+      },
+    },
+    {
+      "TagPopup",
+      "Tag",
+      M.open("tag", function(f)
         f { commit = commit_oid(require("neogit.status").get_selection().commit) }
       end),
     },

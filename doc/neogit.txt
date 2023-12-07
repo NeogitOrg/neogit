@@ -33,22 +33,25 @@ CONTENTS                                                       *neogit_contents*
     4. Highlights                                           |neogit_highlights|
     5. API                                                         |neogit_api|
     6. Popups                                                   |neogit_popups|
-       • Cherry Pick                                 |neogit_cherry_pick_popup|
        • Branch                                           |neogit_branch_popup|
        • Branch Config                             |neogit_branch_config_popup|
+       • Cherry Pick                                 |neogit_cherry_pick_popup|
        • Commit                                           |neogit_commit_popup|
        • Diff                                               |neogit_diff_popup|
        • Fetch                                             |neogit_fetch_popup|
+       • Ignore                                           |neogit_ignore_popup|
        • Log                                                 |neogit_log_popup|
        • Merge                                             |neogit_merge_popup|
-       • Remote                                           |neogit_remote_popup|
-       • Remote Config                             |neogit_remote_config_popup|
        • Pull                                               |neogit_pull_popup|
        • Push                                               |neogit_push_popup|
        • Rebase                                           |neogit_rebase_popup|
-       • Revert                                           |neogit_revert_popup|
+       • Remote                                           |neogit_remote_popup|
+       • Remote Config                             |neogit_remote_config_popup|
        • Reset                                             |neogit_reset_popup|
+       • Revert                                           |neogit_revert_popup|
        • Stash                                             |neogit_stash_popup|
+       • Tag                                                 |neogit_tag_popup|
+
     7. Buffers                                                 |neogit_buffers|
        • Status                                          |neogit_status_buffer|
        • Log                                                |neogit_log_buffer|
@@ -196,8 +199,9 @@ these yourself before the plugin loads, that will be respected. If they do not
 exist, they will be created with sensible defaults based on your colorscheme.
 
 STATUS BUFFER
-NeogitBranch                Header showing currently checked out branch
-NeogitRemote                Header showing current branch's remote (if set)
+NeogitBranch                Local branches
+NeogitBranchHead            Accent highlight for current HEAD in LogBuffer
+NeogitRemote                Remote branches
 NeogitObjectId              Object's SHA hash
 NeogitStash                 Stash name
 NeogitFold                  Folded text highlight
@@ -263,6 +267,7 @@ NeogitFilePath              Applied to filepath
 NeogitCommitViewHeader      Applied to header of Commit View
 
 LOG VIEW BUFFER
+NeogitGraphAuthor           Applied to the commit's author in graph view
 NeogitGraphBlack            Used when --colors is enabled for graph
 NeogitGraphBlackBold
 NeogitGraphRed
@@ -356,6 +361,30 @@ neogit.open({*opts})                                             *neogit.open()*
                 • [1] (string) optional: Name of the Neogit
                   popup to open. See |neogit-popups|.
 
+neogit.action({popup}, {action}, {args})                       *neogit.action()*
+    Call an action without going through the popup interface.
+
+    Note: Some actions might not play nicely when being invoked this way.
+          You've been warned. >lua
+
+        local neogit = require('neogit')
+
+        -- Calls the "commit" action from the "commit" popup, with arguments
+        vim.keymap.set(
+          'n',
+          '<leader>gcc',
+          neogit.action('commit', 'commit', { '--verbose', '--all' })
+        )
+<
+    Parameters:
+      • {popup}  (string)
+        Name of popup, as found in `lua/neogit/popups/*`
+
+      • {action} (string)
+        Name of action for popup, found in `lua/neogit/popups/*/actions.lua`
+
+      • {args}   (table|nil)
+        CLI arguments to pass to git command
 
 ==============================================================================
 6. Popups                                                        *neogit_popups*
@@ -442,19 +471,19 @@ Actions:                                      *neogit_cherry_pick_popup_actions*
     Otherwise the user is prompted to select one or more commits.
 
   • Harvest                                         *neogit_cherry_pick_harvest*
-    (not yet implemented)
+    (Not yet implemented)
 
   • Squash                                           *neogit_cherry_pick_squash*
-    (not yet implemented)
+    (Not yet implemented)
 
   • Donate                                           *neogit_cherry_pick_donate*
-    (not yet implemented)
+    (Not yet implemented)
 
   • Spinout                                         *neogit_cherry_pick_spinout*
-    (not yet implemented)
+    (Not yet implemented)
 
   • Spinoff                                         *neogit_cherry_pick_spinoff*
-    (not yet implemented)
+    (Not yet implemented)
 
 
   When a Cherry-Pick is in progress, the following actions are available:
@@ -473,9 +502,25 @@ Branch Popup                                               *neogit_branch_popup*
 
 Variables:                                       *neogit_branch_popup_variables*
   • branch.<name>.description
+    Longform description of a branch.
 
-  • branch.<name>.merge
-    branch.<name>.remote
+  • branch.<name>.merge, branch.<name>.remote
+    Together branch.<name>.merge and branch.<name>.remote define the upstream
+    branch for the given branch. It tells git fetch/git pull/git rebase which
+    branch to merge and can also affect git push. When in branch <name>, it
+    tells git fetch the default refspec to be marked for merging in
+    FETCH_HEAD.
+
+    The value is handled like the remote part of a refspec, and must match a
+    ref which is fetched from the remote given by "branch.<name>.remote".
+
+    The merge information is used by git pull (which first calls git fetch) to
+    lookup the default branch for merging. Without this option, git pull
+    defaults to merge the first refspec fetched. Specify multiple values to
+    get an octopus merge. If you wish to setup git pull so that it merges into
+    <name> from another branch in the local repository, you can point
+    branch.<name>.merge to the desired branch, and use the relative path
+    setting . (a period) for branch.<name>.remote.
 
   • branch.<name>.rebase
     Cycles branch.<name>.rebase value between true, false, and the value of
@@ -546,7 +591,7 @@ Actions:                                           *neogit_branch_popup_actions*
     the old branch.
 
   • Checkout new worktree                      *neogit_branch_checkout_worktree*
-    (Not yet implimented)
+    (Not yet implemented)
 
   • Create new branch                              *neogit_branch_create_branch*
     Functionally the same as |neogit_branch_checkout_new|, but does not update
@@ -557,7 +602,7 @@ Actions:                                           *neogit_branch_popup_actions*
     index has uncomitted changes, will behave exactly the same as spin_off.
 
   • Create new worktree                          *neogit_branch_create_worktree*
-    (Not yet implimented)
+    (Not yet implemented)
 
   • Configure                                          *neogit_branch_configure*
     Opens selector to choose a branch, then offering some configuration
@@ -835,7 +880,6 @@ Arguments:                                             *neogit_fetch_popup_args*
     they are also the destination of an explicit refspec; see --prune).
 
 Actions:                                            *neogit_fetch_popup_actions*
-
   • Fetch from pushRemote                              *neogit_fetch_pushremote*
     Fetches from the current pushRemote.
 
@@ -869,6 +913,7 @@ Actions:                                            *neogit_fetch_popup_actions*
 
   • Set Variables                                   *neogit_fetch_set_variables*
     Opens Branch Config popup for the current branch.
+    See |neogit_branch_config_popup|.
 
 ==============================================================================
 Log Popup                                                     *neogit_log_popup*
@@ -915,17 +960,309 @@ Remote:
 ==============================================================================
 Pull Popup                                                   *neogit_pull_popup*
 
-(TODO)
+Variables:                                         *neogit_pull_popup_variables*
+  • branch.<name>.rebase
+    When true, rebase the branch <name> on top of the fetched branch, instead
+    of merging the default branch from the default remote when "git pull" is
+    run. See "pull.rebase" for doing this in a non branch-specific manner.
+
+Arguments:                                              *neogit_pull_popup_args*
+  • --ff-only
+    Only update to the new history if there is no divergent local history.
+    This is the default when no method for reconciling divergent histories is
+    provided (via the --rebase=* flags).
+
+  • --rebase
+    When enabled, rebase the current branch on top of the upstream branch
+    after fetching. If there is a remote-tracking branch corresponding to the
+    upstream branch and the upstream branch was rebased since last fetched,
+    the rebase uses that information to avoid rebasing non-local changes.
+
+    See pull.rebase, branch.<name>.rebase and branch.autoSetupRebase if you 
+    want to make git pull always use --rebase instead of merging.
+
+    Note:
+    This is a potentially dangerous mode of operation. It rewrites history,
+    which does not bode well when you published that history already. Do not
+    use this option unless you understand the consequences.
+
+  • --autostash
+    Automatically create a temporary stash entry before the operation begins,
+    record it in the special ref MERGE_AUTOSTASH and apply it after the
+    operation ends. This means that you can run the operation on a dirty
+    worktree. However, use with care: the final stash application after a
+    successful merge might result in non-trivial conflicts.
+
+  • --tags
+    Fetch all tags from the remote (i.e., fetch remote tags refs/tags/* into
+    local tags with the same name), in addition to whatever else would
+    otherwise be fetched.
+
+Actions:                                             *neogit_pull_popup_actions*
+  • Pull into <current> from pushRemote                 *neogit_pull_pushRemote*
+    Pulls into the current branch from `branch.<name>.pushRemote`. If that is
+    unset, the user will be prompted to select a remote branch, which will
+    pulled from and used to set `branch.<name>.pushRemote`.
+
+  • Pull into <current> from @{upstream}                  *neogit_pull_upstream*
+    Pulls into the current branch from it's upstream counterpart. If that is
+    unset, the user will be prompted to select a remote branch, which will
+    pulled from and set as the upstream.
+
+  • Pull into <current> from elsewhere                   *neogit_pull_elsewhere*
+    Prompts the user to select a branch (local or remote), which is then
+    pulled in the current branch.
+
+  • Set Variables                                    *neogit_pull_set_variables*
+    Opens Branch Config popup for the current branch.
+    See |neogit_branch_config_popup|.
 
 ==============================================================================
 Push Popup                                                   *neogit_push_popup*
 
-(TODO)
+Arguments:                                              *neogit_push_popup_args*
+  • --force-with-lease
+    Usually, "git push" refuses to update a remote ref that is not an ancestor
+    of the local ref used to overwrite it.
+
+    This option overrides this restriction if the current value of the remote
+    ref is the expected value. "git push" fails otherwise.
+
+    Imagine that you have to rebase what you have already published. You will
+    have to bypass the "must fast-forward" rule in order to replace the
+    history you originally published with the rebased history. If somebody
+    else built on top of your original history while you are rebasing, the tip
+    of the branch at the remote may advance with their commit, and blindly
+    pushing with --force will lose their work.
+
+    This option allows you to say that you expect the history you are updating
+    is what you rebased and want to replace. If the remote ref still points at
+    the commit you specified, you can be sure that no other people did
+    anything to the ref. It is like taking a "lease" on the ref without
+    explicitly locking it, and the remote ref is updated only if the "lease"
+    is still valid.
+
+  • --force
+    Usually, the command refuses to update a remote ref that is not an
+    ancestor of the local ref used to overwrite it. Also, when
+    --force-with-lease option is used, the command refuses to update a remote
+    ref whose current value does not match what is expected.
+
+    This flag disables these checks, and can cause the remote repository to
+    lose commits; use it with care.
+
+    Note that --force applies to all the refs that are pushed, hence using it
+    with push.default set to matching or with multiple push destinations
+    configured with remote.*.push may overwrite refs other than the current
+    branch (including local refs that are strictly behind their remote
+    counterpart).
+
+  • --set-upstream
+    For every branch that is up to date or successfully pushed, add upstream
+    (tracking) reference.
+
+  • --no-verify
+    Skips runing any pre-push git hooks. By default, all hooks are run.
+
+  • --dry-run
+    Do everything except actually send the updates.
+
+Actions:                                             *neogit_push_popup_actions*
+  • Push <current> to pushRemote                        *neogit_push_pushRemote*
+    Pushes the current branch to `branch.<name>.pushRemote`. If that is unset,
+    to `remote.pushDefault`. And if _that_ is unset, the user will be prompted
+    to select a remote, which will be used to set `branch.<name>.pushRemote`,
+    and pushed to.
+
+  • Push <current> to @{upstream}                         *neogit_push_upstream*
+    Pushes the current branch to it's upstream branch. If not set, then the
+    user will be prompted to select a remote, which will be set as the
+    current branch's upstream and pushed to.
+
+  • Push <current> elsewhere                             *neogit_push_elsewhere*
+    Pushes the current branch to a branch selected by the user.
+
+  • Push another branch                             *neogit_push_another_branch*
+    Push a branch or commit somewhere. Both source and target are selected by
+    the user.
+
+  • Push explicit refspecs                       *neogit_push_explicit_refspecs*
+    (Not yet implemented)
+
+  • Push matching branches                       *neogit_push_matching_branches*
+    (Not yet implemented)
+
+  • Push a tag                                                 *neogit_push_tag*
+    (Not yet implemented)
+
+  • Push all tags                                         *neogit_push_all_tags*
+    Pushes all tags to selected remote. If only one remote exists, that will
+    be used; otherwise the user will be prompted to select a remote.
+
+  • Set Variables                                    *neogit_push_set_variables*
+    Opens Branch Config popup for the current branch.
+    See |neogit_branch_config_popup|.
 
 ==============================================================================
 Rebase Popup                                               *neogit_rebase_popup*
 
-(TODO)
+Arguments:                                            *neogit_rebase_popup_args*
+  • --keep-empty
+    Keep commits that start empty before the rebase (i.e. that do not change
+    anything from its parent) in the result. The default is to keep commits
+    which start empty, since creating such commits requires passing the
+    --allow-empty override flag to git commit, signifying that a user is very
+    intentionally creating such a commit and thus wants to keep it.
+
+    Usage of this flag will probably be rare, since you can get rid of commits
+    that start empty by just firing up an interactive rebase and removing the
+    lines corresponding to the commits you don’t want. This flag exists as a
+    convenient shortcut, such as for cases where external tools generate many
+    empty commits and you want them all removed.
+
+  • --rebase-merges=
+    By default, a rebase will simply drop merge commits from the todo list,
+    and put the rebased commits into a single, linear branch. With
+    --rebase-merges, the rebase will instead try to preserve the branching
+    structure within the commits that are to be rebased, by recreating the
+    merge commits. Any resolved merge conflicts or manual amendments in these
+    merge commits will have to be resolved/re-applied manually.
+
+    When rebasing merges, there are two modes:
+      - rebase-cousins
+      - no-rebase-cousins
+
+    In no-rebase-cousins mode, commits which do not have <upstream> as direct
+    ancestor will keep their original branch point, i.e. commits that would be
+    excluded by git-log's --ancestry-path option will keep their original
+    ancestry by default.
+
+    In rebase-cousins mode, such commits are instead rebased onto <upstream>.
+
+  • --update-refs
+    Automatically force-update any branches that point to commits that are
+    being rebased. Any branches that are checked out in a worktree are not
+    updated in this way.
+
+    If the configuration variable rebase.updateRefs is set, then this option
+    can be used to override and disable this setting.
+
+  • --committer-date-is-author-date
+    Instead of using the current time as the committer date, use the author
+    date of the commit being rebased as the committer date.
+
+    This option implies --force-rebase.
+
+  • --ignore-date
+    Instead of using the author date of the original commit, use the current
+    time as the author date of the rebased commit.
+
+    This option implies --force-rebase.
+
+  • --autosquash
+    When the commit log message begins with "squash! ..." or "fixup! ..." or
+    "amend! ...", and there is already a commit in the todo list that matches
+    the same ..., automatically modify the todo list of rebase -i, so that the
+    commit marked for squashing comes right after the commit to be modified,
+    and change the action of the moved commit from pick to squash or fixup or
+    fixup -C respectively.
+
+    A commit matches the ... if the commit subject matches, or if the ...
+    refers to the commit’s hash. As a fall-back, partial matches of the commit
+    subject work, too. The recommended way to create fixup/amend/squash
+    commits is by using the --fixup, --fixup=amend: or --fixup=reword: and
+    --squash options respectively of git-commit. These are all available from
+    the commit popup.
+
+    If the --autosquash option is enabled by default using the configuration
+    variable rebase.autoSquash, this option can be used to override and
+    disable this setting.
+
+  • --autostash
+    Automatically create a temporary stash entry before the operation begins,
+    and apply it after the operation ends. This means that you can run rebase
+    on a dirty worktree. However, use with care: the final stash application
+    after a successful rebase might result in non-trivial conflicts.
+
+  • --interactive
+    Make a list of the commits which are about to be rebased. Let the user
+    edit that list before rebasing. This mode can also be used to split
+    commits.
+
+  • --no-verify
+    This option bypasses the pre-rebase hook
+
+  • --gpg-sign=
+    GPG-sign commits.
+
+Actions:                                           *neogit_rebase_popup_actions*
+  • Rebase onto pushRemote                            *neogit_rebase_pushRemote*
+    This action rebases the current branch onto it's pushRemote.
+
+    When the pushRemote is not configured, then the user can first set it
+    before rebasing.
+
+  • Rebase onto upstream                                *neogit_rebase_upstream*
+    This action rebases the current branch onto it's upstream branch.
+
+    When the upstream is not configured, then the user can first set it
+    before rebasing.
+
+  • Rebase onto elsewhere                              *neogit_rebase_elsewhere*
+    This command rebases the current branch onto a branch read in the picker.
+    All commits that are reachable from HEAD but not from the selected branch
+    TARGET will be rebased.
+
+  • Rebase onto base                                        *neogit_rebase_base*
+    Rebases the current branch onto either the user-configured base branch,
+    main, or master. The base branch is read from the neogit.baseBranch git
+    config, which can be set in the branch config popup.
+
+    See |neogit_branch_config_baseBranch|
+
+  • Rebase interactively                           *neogit_rebase_interactively*
+    This action begins an interactive rebase.
+
+  • Rebase a subset                                       *neogit_rebase_subset*
+    This action starts a non-interactive rebase sequence to transfer commits
+    from START to HEAD onto NEWBASE. User will be prompted to select NEWBASE,
+    then a START commit.
+
+  • Rebase to modify a commit                      *neogit_rebase_modify_commit*
+    (TODO)
+
+  • Rebase to reword a commit                      *neogit_rebase_reword_commit*
+    (TODO)
+
+  • Rebase to remove a commit                      *neogit_rebase_remove_commit*
+    (TODO)
+
+  • Rebase to autosquash                              *neogit_rebase_autosquash*
+    (TODO)
+
+When a rebase is in progress, the following actions are available instead:
+  • Continue                                            *neogit_rebase_continue*
+    Continue with a rebase in progress after sorting out a conflict. May open
+    the Commit editor.
+
+  • Skip                                                    *neogit_rebase_skip*
+    Skips the current commit in a rebase-todo.
+
+  • Edit                                                    *neogit_rebase_edit*
+    Edit the todo-list of the current rebase sequence.
+
+  • Abort                                                  *neogit_rebase_abort*
+    Aborts the current rebase sequence, restoring everything to how it looked
+    before the rebase was attempted.
+
+Notes:
+  By default Neogit uses the --autostash argument, which causes uncommitted
+  changes to be stored in a stash before the rebase begins. These changes are
+  restored after the rebase completes and if possible the stash is removed.
+
+  Even though one of the actions is dedicated to interactive rebasing, the
+  popup also features the --interactive argument. This can be used to turn one
+  of the other, non-interactive rebase variants, into an interactive rebase.
 
 ==============================================================================
 Revert Popup                                               *neogit_revert_popup*
@@ -955,7 +1292,6 @@ Arguments:                                            *neogit_revert_popup_args*
     Cannot be used with --edit
 
 Actions:                                           *neogit_revert_popup_actions*
-
   • Revert Commit(s)                                     *neogit_revert_commits*
     Reverts one or more commits. If any commits are under the cursor, or
     selected, they will be used. Otherwise a selector interface will come up.
@@ -974,7 +1310,6 @@ All actions will default to the commit under cursor if there is one, or prompt
 the user to select one if there is not.
 
 Actions:                                            *neogit_reset_popup_actions*
-
   • Mixed                                                   *neogit_reset_mixed*
     Resets the index but not the working tree (i.e., the changed files are
     preserved but not marked for commit).
@@ -1001,12 +1336,63 @@ Actions:                                            *neogit_reset_popup_actions*
     changes.
 
   • Worktree                                             *neogit_reset_worktree*
-    (not yet implemented)
+    (Not yet implemented)
 
 ==============================================================================
 Stash Popup                                                 *neogit_stash_popup*
 
 (TODO)
+
+==============================================================================
+Ignore Popup                                               *neogit_ignore_popup*
+
+Actions:                                           *neogit_ignore_popup_actions*
+  • Shared at top-level                                 *neogit_ignore_toplevel*
+    Appends selected filepaths to the `.gitignore` file located in the
+    project's root.
+
+  • Shared in sub-directory                               *neogit_ignore_subdir*
+    Appends selected filepaths to the `.gitignore` file located in the
+    selected subdirectory, creating one if it doesn't exist.
+
+  • Private for Repo                                     *neogit_ignore_private*
+    Appends selected filepaths to the user's private exclude file in the
+    current repository.
+
+  • Private Global                                        *neogit_ignore_global*
+    If git config value {core.excludesFile} is set, this action will append
+    selected filepaths to the global excludes file.
+
+==============================================================================
+Tag Popup                                                     *neogit_tag_popup*
+
+Arguments:                                               *neogit_tag_popup_args*
+  • --force
+    Replace an existing tag with the given name (instead of failing)
+
+  • --annotate
+    Make an unsigned, annotated tag object
+
+  • --sign
+    Make a GPG-signed tag, using the default e-mail address’s key. The default
+    behavior of tag GPG-signing is controlled by `tag.gpgSign` configuration
+    variable if it exists, or disabled otherwise.
+
+  • --local-user
+    Make a GPG-signed tag, using the given key.
+
+Actions:                                              *neogit_tag_popup_actions*
+  • Tag                                                         *neogit_tag_tag*
+    Creates a new TAG at specified REV.
+
+  • Release                                                 *neogit_tag_release*
+    (Not yet implemented)
+
+  • Delete                                                   *neogit_tag_delete*
+    Deletes one or more tags.
+
+  • Prune                                                     *neogit_tag_prune*
+    Offers to delete tags missing locally from REMOTE, and vice versa.
 
 ==============================================================================
 7. Buffers                                                      *neogit_buffers*

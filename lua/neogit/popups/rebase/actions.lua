@@ -20,7 +20,7 @@ function M.base_branch()
 end
 
 function M.onto_base(popup)
-  git.rebase.rebase_onto(M.base_branch(), popup:get_arguments())
+  git.rebase.onto_branch(M.base_branch(), popup:get_arguments())
 end
 
 function M.onto_pushRemote(popup)
@@ -30,7 +30,7 @@ function M.onto_pushRemote(popup)
   end
 
   if pushRemote then
-    git.rebase.rebase_onto(
+    git.rebase.onto_branch(
       string.format("refs/remotes/%s/%s", pushRemote, git.branch.current()),
       popup:get_arguments()
     )
@@ -50,13 +50,13 @@ function M.onto_upstream(popup)
     upstream = string.format("refs/remotes/%s", target)
   end
 
-  git.rebase.rebase_onto(upstream, popup:get_arguments())
+  git.rebase.onto_branch(upstream, popup:get_arguments())
 end
 
 function M.onto_elsewhere(popup)
   local target = FuzzyFinderBuffer.new(git.branch.get_all_branches()):open_async()
   if target then
-    git.rebase.rebase_onto(target, popup:get_arguments())
+    git.rebase.onto_branch(target, popup:get_arguments())
   end
 end
 
@@ -69,8 +69,38 @@ function M.interactively(popup)
   end
 
   if commit then
-    git.rebase.rebase_interactive(commit, popup:get_arguments())
+    local args = popup:get_arguments()
+    local parent_commit = git.cli["rev-list"].max_count(1).parents.args(commit).call().stdout[1]
+    if commit ~= parent_commit then
+      commit = vim.split(parent_commit, " ")[2]
+    else
+      table.insert(args, "--root")
+    end
+
+    git.rebase.rebase_interactive(commit, args)
   end
+end
+
+function M.subset(popup)
+  local newbase = FuzzyFinderBuffer.new(git.branch.get_all_branches())
+    :open_async { prompt_prefix = "rebase subset onto" }
+
+  if not newbase then
+    return
+  end
+
+  local start
+  if popup.state.env.commit and git.log.is_ancestor(popup.state.env.commit, "HEAD") then
+    start = popup.state.env.commit
+  else
+    start = CommitSelectViewBuffer.new(git.log.list { "HEAD" }):open_async()[1]
+  end
+
+  if not start then
+    return
+  end
+
+  git.rebase.onto(start, newbase, popup:get_arguments())
 end
 
 function M.continue()
@@ -81,10 +111,14 @@ function M.skip()
   git.rebase.skip()
 end
 
+function M.edit()
+  git.rebase.edit()
+end
+
 -- TODO: Extract to rebase lib?
 function M.abort()
   if input.get_confirmation("Abort rebase?", { values = { "&Yes", "&No" }, default = 2 }) then
-    git.cli.rebase.abort.call_sync():trim()
+    git.cli.rebase.abort.call_sync()
   end
 end
 

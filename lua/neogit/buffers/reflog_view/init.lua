@@ -3,7 +3,7 @@ local ui = require("neogit.buffers.reflog_view.ui")
 local config = require("neogit.config")
 local popups = require("neogit.popups")
 local notification = require("neogit.lib.notification")
-
+local status_maps = require("neogit.config").get_reversed_status_maps()
 local CommitViewBuffer = require("neogit.buffers.commit_view")
 
 ---@class ReflogViewBuffer
@@ -37,55 +37,87 @@ function M:open(_)
     context_highlight = true,
     mappings = {
       v = {
-        ["A"] = popups.open("cherry_pick", function(p)
+        [popups.mapping_for("CherryPickPopup")] = popups.open("cherry_pick", function(p)
           p { commits = self.buffer.ui:get_commits_in_selection() }
         end),
-        ["b"] = popups.open("branch", function(p)
+        [popups.mapping_for("BranchPopup")] = popups.open("branch", function(p)
           p { commits = self.buffer.ui:get_commits_in_selection() }
         end),
-        ["c"] = popups.open("commit", function(p)
+        [popups.mapping_for("CommitPopup")] = popups.open("commit", function(p)
           p { commit = self.buffer.ui:get_commit_under_cursor() }
         end),
-        ["r"] = popups.open("rebase", function(p)
+        [popups.mapping_for("FetchPopup")] = popups.open("fetch"),
+        [popups.mapping_for("MergePopup")] = popups.open("merge", function(p)
           p { commit = self.buffer.ui:get_commit_under_cursor() }
         end),
-        ["v"] = popups.open("revert", function(p)
+        [popups.mapping_for("PushPopup")] = popups.open("push", function(p)
+          p { commit = self.buffer.ui:get_commit_under_cursor() }
+        end),
+        [popups.mapping_for("RebasePopup")] = popups.open("rebase", function(p)
+          p { commit = self.buffer.ui:get_commit_under_cursor() }
+        end),
+        [popups.mapping_for("RevertPopup")] = popups.open("revert", function(p)
           p { commits = self.buffer.ui:get_commits_in_selection() }
         end),
-        ["X"] = popups.open("reset", function(p)
+        [popups.mapping_for("ResetPopup")] = popups.open("reset", function(p)
           p { commit = self.buffer.ui:get_commit_under_cursor() }
         end),
+        [popups.mapping_for("TagPopup")] = popups.open("tag", function(p)
+          p { commit = self.buffer.ui:get_commit_under_cursor() }
+        end),
+        [popups.mapping_for("PullPopup")] = popups.open("pull"),
       },
       n = {
+        [popups.mapping_for("CherryPickPopup")] = popups.open("cherry_pick", function(p)
+          p { commits = { self.buffer.ui:get_commit_under_cursor() } }
+        end),
+        [popups.mapping_for("BranchPopup")] = popups.open("branch", function(p)
+          p { commits = { self.buffer.ui:get_commit_under_cursor() } }
+        end),
+        [popups.mapping_for("CommitPopup")] = popups.open("commit", function(p)
+          p { commit = self.buffer.ui:get_commit_under_cursor() }
+        end),
+        [popups.mapping_for("FetchPopup")] = popups.open("fetch"),
+        [popups.mapping_for("MergePopup")] = popups.open("merge", function(p)
+          p { commit = self.buffer.ui:get_commit_under_cursor() }
+        end),
+        [popups.mapping_for("PushPopup")] = popups.open("push", function(p)
+          p { commit = self.buffer.ui:get_commit_under_cursor() }
+        end),
+        [popups.mapping_for("RebasePopup")] = popups.open("rebase", function(p)
+          p { commit = self.buffer.ui:get_commit_under_cursor() }
+        end),
+        [popups.mapping_for("RevertPopup")] = popups.open("revert", function(p)
+          p { commits = { self.buffer.ui:get_commit_under_cursor() } }
+        end),
+        [popups.mapping_for("ResetPopup")] = popups.open("reset", function(p)
+          p { commit = self.buffer.ui:get_commit_under_cursor() }
+        end),
+        [popups.mapping_for("TagPopup")] = popups.open("tag", function(p)
+          p { commit = self.buffer.ui:get_commit_under_cursor() }
+        end),
+        [popups.mapping_for("PullPopup")] = popups.open("pull"),
+        [status_maps["YankSelected"]] = function()
+          local yank = self.buffer.ui:get_commit_under_cursor()
+          if yank then
+            yank = string.format("'%s'", yank)
+            vim.cmd.let("@+=" .. yank)
+            vim.cmd.echo(yank)
+          else
+            vim.cmd("echo ''")
+          end
+        end,
         ["q"] = function()
           self:close()
         end,
         ["<esc>"] = function()
           self:close()
         end,
-        ["A"] = popups.open("cherry_pick", function(p)
-          p { commits = { self.buffer.ui:get_commit_under_cursor() } }
-        end),
-        ["b"] = popups.open("branch", function(p)
-          p { commits = { self.buffer.ui:get_commit_under_cursor() } }
-        end),
-        ["c"] = popups.open("commit", function(p)
-          p { commit = self.buffer.ui:get_commit_under_cursor() }
-        end),
-        ["r"] = popups.open("rebase", function(p)
-          p { commit = self.buffer.ui:get_commit_under_cursor() }
-        end),
-        ["v"] = popups.open("revert", function(p)
-          p { commits = { self.buffer.ui:get_commit_under_cursor() } }
-        end),
-        ["X"] = popups.open("reset", function(p)
-          p { commit = self.buffer.ui:get_commit_under_cursor() }
-        end),
         ["<enter>"] = function()
           local stack = self.buffer.ui:get_component_stack_under_cursor()
           CommitViewBuffer.new(stack[#stack].options.oid):open()
         end,
-        ["d"] = function()
+        [popups.mapping_for("DiffPopup")] = function()
           if not config.check_integration("diffview") then
             notification.error("Diffview integration must be enabled for reflog diff")
             return

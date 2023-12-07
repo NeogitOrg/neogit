@@ -1,4 +1,5 @@
 require("plenary.async").tests.add_to_env()
+local async = require("plenary.async")
 local eq = assert.are.same
 local operations = require("neogit.operations")
 local harness = require("tests.util.git_harness")
@@ -11,7 +12,6 @@ local lib = require("neogit.lib")
 local function act(normal_cmd)
   vim.fn.feedkeys(vim.api.nvim_replace_termcodes(normal_cmd, true, true, true))
   vim.fn.feedkeys("", "x") -- flush typeahead
-  status.wait_on_current_operation()
 end
 
 describe("remote popup", function()
@@ -20,6 +20,7 @@ describe("remote popup", function()
     in_prepared_repo(function()
       local remote_a = harness.prepare_repository()
       local remote_b = harness.prepare_repository()
+      async.util.block_on(status.reset)
 
       input.values = { "foo", remote_a }
       act("Ma")

@@ -1,11 +1,11 @@
 local Buffer = require("neogit.lib.buffer")
-local cli = require("neogit.lib.git.cli")
 local parser = require("neogit.buffers.commit_view.parsing")
 local ui = require("neogit.buffers.commit_view.ui")
-local log = require("neogit.lib.git.log")
+local git = require("neogit.lib.git")
 local config = require("neogit.config")
 local popups = require("neogit.popups")
 local notification = require("neogit.lib.notification")
+local status_maps = require("neogit.config").get_reversed_status_maps()
 
 local api = vim.api
 
@@ -47,15 +47,15 @@ function M.new(commit_id, notify)
     notification.info("Parsing commit...")
   end
 
-  local commit_info = log.parse(cli.show.format("fuller").args(commit_id).call_sync().stdout)[1]
+  local commit_info = git.log.parse(git.cli.show.format("fuller").args(commit_id).call_sync().stdout)[1]
   commit_info.commit_arg = commit_id
   local instance = {
     is_open = false,
     commit_info = commit_info,
     commit_overview = parser.parse_commit_overview(
-      cli.show.stat.oneline.args(commit_id).call_sync():trim().stdout
+      git.cli.show.stat.oneline.args(commit_id).call_sync().stdout
     ),
-    commit_signature = config.values.commit_view.verify_commit and log.verify_commit(commit_id) or {},
+    commit_signature = config.values.commit_view.verify_commit and git.log.verify_commit(commit_id) or {},
     buffer = nil,
   }
 
@@ -100,6 +100,55 @@ function M:open()
     },
     mappings = {
       n = {
+        ["<cr>"] = function()
+          local c = self.buffer.ui:get_component_on_line(vim.fn.line("."))
+
+          local diff_headers
+          -- Check we are on top of a path on the OverviewFiles
+          if c.options.highlight == "NeogitFilePath" then
+            -- Some paths are padded for formatting purposes. We need to trim them
+            -- in order to use them as match patterns.
+            local selected_path = vim.fn.trim(c.value)
+
+            diff_headers = {}
+
+            -- Recursively navigate the layout until we hit NeogitDiffHeader leafs
+            -- Forward declaration required to avoid missing global error
+            local find_diff_headers
+
+            function find_diff_headers(layout)
+              if layout.children then
+                -- One layout element may have multiple children so we need to loop
+                for _, val in pairs(layout.children) do
+                  local v = find_diff_headers(val)
+                  if v then
+                    -- defensive trim
+                    diff_headers[vim.fn.trim(v[1])] = v[2]
+                  end
+                end
+              else
+                if layout.options.sign == "NeogitDiffHeader" then
+                  return { layout.value, layout:row_range_abs() }
+                end
+              end
+            end
+            -- The Diffs are in the 10th element of the layout.
+            -- TODO: Do better than assume that we care about layout[10]
+            find_diff_headers(self.buffer.ui.layout[10])
+
+            -- Search for a match and jump if we find it
+            for path, line_nr in pairs(diff_headers) do
+              -- The gsub is to work around the fact that the OverviewFiles use
+              -- => in renames but the diff header uses ->
+              local match = string.match(path:gsub(" %-> ", " => "), selected_path)
+              if match then
+                local winid = vim.fn.win_getid()
+                vim.api.nvim_win_set_cursor(winid, { line_nr, 1 })
+                break
+              end
+            end
+          end
+        end,
         ["{"] = function() -- Goto Previous
           local function previous_hunk_header(self, line)
             local c = self.buffer.ui:get_component_on_line(line)
@@ -145,29 +194,45 @@ function M:open()
             vim.cmd("normal! zt")
           end
         end,
-        ["A"] = popups.open("cherry_pick", function(p)
+        [popups.mapping_for("CherryPickPopup")] = popups.open("cherry_pick", function(p)
           p { commits = { self.commit_info.oid } }
         end),
-        ["b"] = popups.open("branch", function(p)
+        [popups.mapping_for("BranchPopup")] = popups.open("branch", function(p)
           p { commits = { self.commit_info.oid } }
         end),
-        ["c"] = popups.open("commit", function(p)
+        [popups.mapping_for("CommitPopup")] = popups.open("commit", function(p)
           p { commit = self.commit_info.oid }
         end),
-        ["r"] = popups.open("rebase", function(p)
+        [popups.mapping_for("FetchPopup")] = popups.open("fetch"),
+        [popups.mapping_for("MergePopup")] = popups.open("merge", function(p)
+          p { commit = self.buffer.ui:get_commit_under_cursor() }
+        end),
+        [popups.mapping_for("PushPopup")] = popups.open("push", function(p)
           p { commit = self.commit_info.oid }
         end),
-        ["v"] = popups.open("revert", function(p)
+        [popups.mapping_for("RebasePopup")] = popups.open("rebase", function(p)
+          p { commit = self.commit_info.oid }
+        end),
+        [popups.mapping_for("RevertPopup")] = popups.open("revert", function(p)
           p { commits = { self.commit_info.oid } }
         end),
-        ["X"] = popups.open("reset", function(p)
+        [popups.mapping_for("ResetPopup")] = popups.open("reset", function(p)
           p { commit = self.commit_info.oid }
         end),
+        [popups.mapping_for("TagPopup")] = popups.open("tag", function(p)
+          p { commit = self.commit_info.oid }
+        end),
+        [popups.mapping_for("PullPopup")] = popups.open("pull"),
         ["q"] = function()
           self:close()
         end,
         ["<F10>"] = function()
           self.buffer.ui:print_layout_tree { collapse_hidden_components = true }
+        end,
+        [status_maps["YankSelected"]] = function()
+          local yank = string.format("'%s'", self.commit_info.oid)
+          vim.cmd.let("@+=" .. yank)
+          vim.cmd.echo(yank)
         end,
         ["<tab>"] = function()
           local c = self.buffer.ui:get_component_under_cursor()

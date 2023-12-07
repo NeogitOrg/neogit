@@ -16,6 +16,9 @@ local function parse(entries)
     index = index + 1
     local hash, author, name, subject, date = unpack(vim.split(entry, "\30"))
     local command, message = subject:match([[^(.-): (.*)]])
+    if not command then
+      command = subject:match([[^(.-):]])
+    end
 
     if command:match("^pull") then
       command = "pull"
@@ -51,13 +54,7 @@ function M.list(refname, options)
   }, "%x1E")
 
   return parse(
-    cli.reflog.show
-      .format(format)
-      .date("raw")
-      .arg_list(options or {})
-      .args(refname, "--")
-      .call()
-      :trim().stdout
+    cli.reflog.show.format(format).date("raw").arg_list(options or {}).args(refname, "--").call().stdout
   )
 end
 

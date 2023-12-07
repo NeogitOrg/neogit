@@ -67,7 +67,7 @@ function M.open(opts)
   end
 
   if not opts.cwd then
-    opts.cwd = vim.fn.getcwd()
+    opts.cwd = require("neogit.lib.git.cli").git_root_of_cwd()
   end
 
   if not did_setup then
@@ -76,7 +76,7 @@ function M.open(opts)
     return
   end
 
-  if not cli.git_is_repository_sync(opts.cwd) then
+  if not cli.is_inside_worktree(opts.cwd) then
     if
       input.get_confirmation(
         string.format("Initialize repository in %s?", opts.cwd or vim.fn.getcwd()),
@@ -111,6 +111,47 @@ function M.open(opts)
   end
 end
 
+-- This can be used to create bindable functions for custom keybindings:
+--   local neogit = require("neogit")
+--   vim.keymap.set('n', '<leader>gcc', neogit.action('commit', 'commit', { '--verbose', '--all' }))
+--
+---@param popup  string Name of popup, as found in `lua/neogit/popups/*`
+---@param action string Name of action for popup, found in `lua/neogit/popups/*/actions.lua`
+---@param args   table? CLI arguments to pass to git command
+---@return function
+function M.action(popup, action, args)
+  local notification = require("neogit.lib.notification")
+  local a = require("plenary.async")
+
+  return function()
+    a.run(function()
+      local ok, actions = pcall(require, "neogit.popups." .. popup .. ".actions")
+      if ok then
+        local fn = actions[action]
+        if fn then
+          fn {
+            state = { env = {} },
+            get_arguments = function()
+              return args or {}
+            end,
+          }
+        else
+          notification.error(
+            string.format(
+              "Invalid action %s for %s popup\nValid actions are: %s",
+              action,
+              popup,
+              table.concat(vim.tbl_keys(actions), ", ")
+            )
+          )
+        end
+      else
+        notification.error("Invalid popup: " .. popup)
+      end
+    end)
+  end
+end
+
 function M.complete(arglead)
   if arglead:find("^kind=") then
     return {
@@ -127,10 +168,6 @@ function M.complete(arglead)
   return vim.tbl_filter(function(arg)
     return arg:match("^" .. arglead)
   end, { "kind=", "cwd=", "commit" })
-end
-
-function M.get_repo()
-  return require("neogit.lib.git").repo
 end
 
 function M.get_log_file_path()

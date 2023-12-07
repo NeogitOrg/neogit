@@ -12,7 +12,6 @@ local input = require("tests.mocks.input")
 local function act(normal_cmd)
   vim.fn.feedkeys(vim.api.nvim_replace_termcodes(normal_cmd, true, true, true))
   vim.fn.feedkeys("", "x") -- flush typeahead
-  status.wait_on_current_operation()
 end
 
 describe("log popup", function()

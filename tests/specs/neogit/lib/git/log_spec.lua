@@ -2,6 +2,7 @@ local status = require("neogit.status")
 local plenary_async = require("plenary.async")
 local git_harness = require("tests.util.git_harness")
 local util = require("tests.util.util")
+local remote = require("neogit.lib.git.remote")
 
 local subject = require("neogit.lib.git.log")
 
@@ -320,5 +321,128 @@ describe("lib.git.log.parse", function()
     for k, v in pairs(parsed_commit) do
       assert.are.same(v, expected[k])
     end
+  end)
+
+  it("lib.git.log.branch_info extracts local branch name", function()
+    local remotes = remote.list()
+    assert.are.same(
+      { tags = {}, locals = { main = true }, remotes = {} },
+      subject.branch_info("main", remotes)
+    )
+    assert.are.same({
+      locals = { main = true, develop = true },
+      remotes = {},
+      tags = {},
+    }, subject.branch_info("main, develop", remotes))
+  end)
+
+  it("lib.git.log.branch_info extracts head", function()
+    local remotes = remote.list()
+    assert.are.same(
+      { head = "main", locals = { main = true }, remotes = {}, tags = {} },
+      subject.branch_info("HEAD -> main", remotes)
+    )
+    assert.are.same({
+      head = "develop",
+      locals = { main = true, develop = true },
+      remotes = {},
+      tags = {},
+    }, subject.branch_info("main, HEAD -> develop", remotes))
+    assert.are.same({
+      head = "foo",
+      locals = { foo = true, develop = true },
+      remotes = {
+        main = { "origin" },
+        foo = { "origin" },
+      },
+      tags = {},
+    }, subject.branch_info(
+      "HEAD -> foo, origin/HEAD, origin/main, foo, origin/foo, develop",
+      { "origin" }
+    ))
+  end)
+
+  it("lib.git.log.branch_info extracts local & remote branch names (tracked)", function()
+    local remotes = { "origin" }
+    assert.are.same(
+      { tags = {}, locals = { main = true }, remotes = { main = remotes } },
+      subject.branch_info("main, origin/main", remotes)
+    )
+    assert.are.same({
+      locals = { main = true, develop = true },
+      remotes = {
+        main = remotes,
+        develop = remotes,
+      },
+      tags = {},
+    }, subject.branch_info("main, develop, origin/main, origin/develop", remotes))
+    assert.are.same({
+      locals = { main = true },
+      remotes = {
+        main = remotes,
+        develop = remotes,
+      },
+      tags = {},
+    }, subject.branch_info("origin/main, main, origin/develop", remotes))
+    assert.are.same({
+      tags = {},
+      locals = { main = true, develop = true, foo = true },
+      remotes = {
+        main = remotes,
+        develop = remotes,
+      },
+    }, subject.branch_info("main, origin/main, origin/develop, develop, foo", remotes))
+  end)
+
+  it("lib.git.log.branch_info can deal with multiple remotes", function()
+    local remotes = { "origin", "fork" }
+    assert.are.same({
+      locals = { main = true },
+      remotes = {
+        main = { "origin", "fork" },
+      },
+      tags = {},
+    }, subject.branch_info("origin/main, main, fork/main", remotes))
+    assert.are.same({
+      locals = { develop = true, foo = true },
+      remotes = {
+        main = { "origin" },
+        develop = { "origin", "fork" },
+      },
+      tags = {},
+    }, subject.branch_info("origin/main, develop, origin/develop, fork/develop, foo", remotes))
+  end)
+
+  it("lib.git.log.branch_info can deal with slashes in branch names", function()
+    local remotes = { "origin" }
+    assert.are.same({
+      locals = { ["feature/xyz"] = true, ["foo/bar/baz"] = true },
+      remotes = {
+        ["feature/xyz"] = { "origin" },
+      },
+      tags = {},
+    }, subject.branch_info("feature/xyz, foo/bar/baz, origin/feature/xyz", remotes))
+  end)
+
+  it("lib.git.log.branch_info ignores HEAD references", function()
+    local remotes = { "origin", "fork" }
+    assert.are.same({
+      remotes = { main = { "origin", "fork" } },
+      locals = { develop = true },
+      tags = {},
+    }, subject.branch_info("origin/main, fork/main, develop, origin/HEAD, fork/HEAD", remotes))
+  end)
+
+  it("lib.git.log.branch_info parses tags", function()
+    local remotes = { "origin" }
+    assert.are.same(
+      { locals = {}, remotes = {}, tags = { "0.1.0" } },
+      subject.branch_info("tag: 0.1.0", remotes)
+    )
+    assert.are.same({
+      locals = {},
+      remotes = {},
+      tags = { "0.5.7", "foo-bar" },
+    }, subject.branch_info("tag: 0.5.7, tag: foo-bar", remotes))
   end)
 end)
