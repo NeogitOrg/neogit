@@ -6,23 +6,24 @@ local process = require("neogit.process")
 describe("process execution", function()
   it("basic command", function()
     local result =
-      process.new({ cmd = { "cat", "process_test" }, cwd = util.get_fixtures_dir() }):spawn_blocking(1000)
+      process.new({ cmd = { "cat", "process_test" }, cwd = util.get_fixtures_dir() }):spawn_blocking(1)
     assert(result)
-    assert.are.same(result.stdout, {
+    assert.are.same({
       "This is a test file",
       "",
       "",
       "It is intended to be read by cat and returned to neovim using the process api",
       "",
       "",
-    })
+    }, result.stdout)
   end)
+
   it("can cat a file", function()
     local result =
-      process.new({ cmd = { "cat", "a.txt" }, cwd = util.get_fixtures_dir() }):spawn_blocking(1000)
+      process.new({ cmd = { "cat", "a.txt" }, cwd = util.get_fixtures_dir() }):spawn_blocking(1)
 
     assert(result)
-    assert.are.same(result.stdout, {
+    assert.are.same({
       "Lorem ipsum dolor sit amet, officia excepteur ex fugiat reprehenderit enim labore culpa sint ad nisi Lorem pariatur mollit ex esse exercitation amet.",
       "Nisi anim cupidatat excepteur officia.",
       "Reprehenderit nostrud nostrud ipsum Lorem est aliquip amet voluptate voluptate dolor minim nulla est proident.",
@@ -33,7 +34,7 @@ describe("process execution", function()
       "Aliqua reprehenderit commodo ex non excepteur duis sunt velit enim.",
       "Voluptate laboris sint cupidatat ullamco ut ea consectetur et est culpa et culpa duis.",
       "",
-    })
+    }, result.stdout)
   end)
 
   it("process input", function()
@@ -47,18 +48,19 @@ describe("process execution", function()
     p:close_stdin()
     p:wait()
 
-    local result = process.new({ cmd = { "cat", tmp_dir .. "/output" } }):spawn_blocking(1000)
+    local result = process.new({ cmd = { "cat", tmp_dir .. "/output" } }):spawn_blocking(1)
     assert(result)
-    assert.are.same(result.stdout, input)
+    assert.are.same(input, result.stdout)
   end)
+
   it("basic command trim", function()
     local result =
-      process.new({ cmd = { "cat", "process_test" }, cwd = util.get_fixtures_dir() }):spawn_blocking(1000)
+      process.new({ cmd = { "cat", "process_test" }, cwd = util.get_fixtures_dir() }):spawn_blocking(1)
 
     assert(result)
-    assert.are.same(result.stdout, {
+    assert.are.same({
       "This is a test file",
       "It is intended to be read by cat and returned to neovim using the process api",
-    })
+    }, result:trim().stdout)
   end)
 end)
