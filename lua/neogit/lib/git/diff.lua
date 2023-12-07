@@ -202,7 +202,7 @@ local function raw_untracked(name)
   return function()
     local diff = cli.diff.no_ext_diff.no_index
       .files("/dev/null", name)
-      .call({ hidden = true, ignore_code = true })
+      .call({ hidden = true, ignore_error = true })
       :trim().stdout
     local stats = {}
 

@@ -528,7 +528,7 @@ local configurations = {
 -- after git_root_of_cwd() has been called.
 local function git_root_of_cwd()
   local process =
-    process.new({ cmd = { "git", "rev-parse", "--show-toplevel" }, ignore_code = true }):spawn_blocking()
+    process.new({ cmd = { "git", "rev-parse", "--show-toplevel" }, ignore_error = true }):spawn_blocking()
 
   if process ~= nil and process.code == 0 then
     return process.stdout[1]
@@ -792,7 +792,7 @@ local function new_builder(subcommand)
     env = {},
   }
 
-  local function to_process(verbose, suppress_error, ignore_code)
+  local function to_process(opts)
     local cmd = {}
 
     for _, o in ipairs(state.options) do
@@ -828,9 +828,8 @@ local function new_builder(subcommand)
       cwd = repo.git_root,
       env = state.env,
       pty = state.in_pty,
-      verbose = verbose,
-      ignore_code = ignore_code,
-      on_error = suppress_error,
+      verbose = opts.verbose,
+      on_error = opts.on_error,
     }
   end
 
@@ -843,7 +842,12 @@ local function new_builder(subcommand)
       opts = opts or {}
 
       local handle_line = opts.handle_line or handle_interactive_password_questions
-      local p = to_process(true, false)
+      local p = to_process {
+        verbose = opts.verbose,
+        on_error = function(_res)
+          return false
+        end,
+      }
       p.pty = true
 
       p.on_partial_line = function(p, line, _)
@@ -872,9 +876,28 @@ local function new_builder(subcommand)
       return result
     end,
     call = function(opts)
-      opts = vim.tbl_extend("keep", (opts or {}), { verbose = false, ignore_code = false })
+      opts = vim.tbl_extend(
+        "keep",
+        (opts or {}),
+        { verbose = false, ignore_error = not state.show_popup, hidden = false }
+      )
 
-      local p = to_process(opts.verbose, not state.show_popup, opts.ignore_code)
+      local p = to_process {
+        verbose = opts.verbose,
+        on_error = function(res)
+          if opts.ignore_error then
+            return false
+          end
+
+          local commit_aborted_msg = "hint: Waiting for your editor to close the file... Aborting commit due to empty commit message."
+          if res.stdout[1] == commit_aborted_msg then
+            return false
+          end
+
+          return true
+        end,
+      }
+
       local result = p:spawn_async(function()
         -- Required since we need to do this before awaiting
         if state.input then
@@ -899,9 +922,22 @@ local function new_builder(subcommand)
       return result
     end,
     call_sync = function(opts)
-      opts = vim.tbl_extend("keep", (opts or {}), { verbose = false, ignore_code = false })
+      opts = vim.tbl_extend(
+        "keep",
+        (opts or {}),
+        { verbose = false, ignore_error = not state.show_popup, hidden = false }
+      )
 
-      local p = to_process(opts.verbose, opts.external_errors, opts.ignore_code)
+      local p = to_process {
+        verbose = opts.verbose,
+        on_error = function(res)
+          if opts.ignore_error then
+            return false
+          end
+
+          return true
+        end,
+      }
 
       if not p:spawn() then
         error("Failed to run command")

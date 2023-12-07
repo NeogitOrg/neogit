@@ -114,7 +114,7 @@ end
 
 ---@return ConfigEntry
 function M.get_global(key)
-  local result = cli.config.global.get(key).call_sync({ ignore_code = true }):trim().stdout[1]
+  local result = cli.config.global.get(key).call_sync({ ignore_error = true }):trim().stdout[1]
   return ConfigEntry.new(key, result, "global")
 end
 
