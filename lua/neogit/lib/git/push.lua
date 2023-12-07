@@ -22,12 +22,14 @@ local function update_unmerged(state)
   end
 
   if state.upstream.ref then
-    state.upstream.unmerged.items = util.filter_map(log.list { "@{upstream}.." }, log.present_commit)
+    state.upstream.unmerged.items =
+      util.filter_map(log.list({ "@{upstream}.." }, {}, {}, true), log.present_commit)
   end
 
   local pushRemote = require("neogit.lib.git").branch.pushRemote_ref()
   if pushRemote then
-    state.pushRemote.unmerged.items = util.filter_map(log.list { pushRemote .. ".." }, log.present_commit)
+    state.pushRemote.unmerged.items =
+      util.filter_map(log.list({ pushRemote .. ".." }, {}, {}, true), log.present_commit)
   end
 end
 

@@ -118,7 +118,7 @@ end
 -- TODO: Extract to rebase lib?
 function M.abort()
   if input.get_confirmation("Abort rebase?", { values = { "&Yes", "&No" }, default = 2 }) then
-    git.cli.rebase.abort.call_sync():trim()
+    git.cli.rebase.abort.call_sync()
   end
 end
 

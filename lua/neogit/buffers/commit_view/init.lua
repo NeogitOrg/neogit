@@ -53,7 +53,7 @@ function M.new(commit_id, notify)
     is_open = false,
     commit_info = commit_info,
     commit_overview = parser.parse_commit_overview(
-      git.cli.show.stat.oneline.args(commit_id).call_sync():trim().stdout
+      git.cli.show.stat.oneline.args(commit_id).call_sync().stdout
     ),
     commit_signature = config.values.commit_view.verify_commit and git.log.verify_commit(commit_id) or {},
     buffer = nil,
@@ -100,6 +100,55 @@ function M:open()
     },
     mappings = {
       n = {
+        ["<cr>"] = function()
+          local c = self.buffer.ui:get_component_on_line(vim.fn.line("."))
+
+          local diff_headers
+          -- Check we are on top of a path on the OverviewFiles
+          if c.options.highlight == "NeogitFilePath" then
+            -- Some paths are padded for formatting purposes. We need to trim them
+            -- in order to use them as match patterns.
+            local selected_path = vim.fn.trim(c.value)
+
+            diff_headers = {}
+
+            -- Recursively navigate the layout until we hit NeogitDiffHeader leafs
+            -- Forward declaration required to avoid missing global error
+            local find_diff_headers
+
+            function find_diff_headers(layout)
+              if layout.children then
+                -- One layout element may have multiple children so we need to loop
+                for _, val in pairs(layout.children) do
+                  local v = find_diff_headers(val)
+                  if v then
+                    -- defensive trim
+                    diff_headers[vim.fn.trim(v[1])] = v[2]
+                  end
+                end
+              else
+                if layout.options.sign == "NeogitDiffHeader" then
+                  return { layout.value, layout:row_range_abs() }
+                end
+              end
+            end
+            -- The Diffs are in the 10th element of the layout.
+            -- TODO: Do better than assume that we care about layout[10]
+            find_diff_headers(self.buffer.ui.layout[10])
+
+            -- Search for a match and jump if we find it
+            for path, line_nr in pairs(diff_headers) do
+              -- The gsub is to work around the fact that the OverviewFiles use
+              -- => in renames but the diff header uses ->
+              local match = string.match(path:gsub(" %-> ", " => "), selected_path)
+              if match then
+                local winid = vim.fn.win_getid()
+                vim.api.nvim_win_set_cursor(winid, { line_nr, 1 })
+                break
+              end
+            end
+          end
+        end,
         ["{"] = function() -- Goto Previous
           local function previous_hunk_header(self, line)
             local c = self.buffer.ui:get_component_on_line(line)

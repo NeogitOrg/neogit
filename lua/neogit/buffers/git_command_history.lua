@@ -4,6 +4,7 @@ local Ui = require("neogit.lib.ui")
 local util = require("neogit.lib.util")
 
 local map = util.map
+local filter_map = util.filter_map
 
 local text = Ui.text
 local col = Ui.col
@@ -76,7 +77,11 @@ function M:show()
     render = function()
       local win_width = vim.fn.winwidth(0)
 
-      return map(self.state, function(item)
+      return filter_map(self.state, function(item)
+        if item.hidden then
+          return
+        end
+
         local is_err = item.code ~= 0
 
         local code = string.format("%3d", item.code)
