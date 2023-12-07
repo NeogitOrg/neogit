@@ -810,8 +810,19 @@ local function new_builder(subcommand)
       table.insert(cmd, 1, state.prefix)
     end
 
-    -- Disable the pager so that the commands don't stop and wait for pagination
-    cmd = util.merge({ "git", "--no-pager", "-c", "color.ui=always", "--no-optional-locks", subcommand }, cmd)
+    -- stylua: ignore
+    cmd = util.merge(
+      {
+        "git",
+        "--no-pager",
+        "--literal-pathspecs",
+        "--no-optional-locks",
+        "-c", "core.preloadindex=true",
+        "-c", "color.ui=always",
+        subcommand
+      },
+      cmd
+    )
 
     logger.trace(string.format("[CLI]: Executing '%s': '%s'", subcommand, table.concat(cmd, " ")))
 
@@ -872,7 +883,7 @@ local function new_builder(subcommand)
       local opts = vim.tbl_extend(
         "keep",
         (options or {}),
-        { verbose = false, ignore_error = not state.show_popup, hidden = false }
+        { verbose = false, ignore_error = not state.show_popup, hidden = false, trim = true }
       )
 
       local p = to_process {
@@ -909,13 +920,17 @@ local function new_builder(subcommand)
         time = result.time,
       }, state.show_popup, state.hide_text, opts.hidden)
 
-      return result:trim()
+      if opts.trim then
+        return result:trim()
+      else
+        return result
+      end
     end,
     call_sync = function(options)
       local opts = vim.tbl_extend(
         "keep",
         (options or {}),
-        { verbose = false, ignore_error = not state.show_popup, hidden = false }
+        { verbose = false, ignore_error = not state.show_popup, hidden = false, trim = true }
       )
 
       local p = to_process {
@@ -940,7 +955,11 @@ local function new_builder(subcommand)
         time = result.time,
       }, state.show_popup, state.hide_text, opts.hidden)
 
-      return result:trim()
+      if opts.trim then
+        return result:trim()
+      else
+        return result
+      end
     end,
   }, mt_builder)
 end

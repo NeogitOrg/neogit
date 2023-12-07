@@ -47,7 +47,8 @@ function M.new(commit_id, notify)
     notification.info("Parsing commit...")
   end
 
-  local commit_info = git.log.parse(git.cli.show.format("fuller").args(commit_id).call_sync().stdout)[1]
+  local commit_info =
+    git.log.parse(git.cli.show.format("fuller").args(commit_id).call_sync({ trim = false }).stdout)[1]
   commit_info.commit_arg = commit_id
   local instance = {
     is_open = false,
