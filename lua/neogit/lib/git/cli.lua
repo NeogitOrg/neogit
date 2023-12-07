@@ -810,8 +810,19 @@ local function new_builder(subcommand)
       table.insert(cmd, 1, state.prefix)
     end
 
-    -- Disable the pager so that the commands don't stop and wait for pagination
-    cmd = util.merge({ "git", "--no-pager", "-c", "color.ui=always", "--no-optional-locks", subcommand }, cmd)
+    -- stylua: ignore
+    cmd = util.merge(
+      {
+        "git",
+        "--no-pager",
+        "--literal-pathspecs",
+        "--no-optional-locks",
+        "-c", "core.preloadindex=true",
+        "-c", "color.ui=always",
+        subcommand
+      },
+      cmd
+    )
 
     logger.trace(string.format("[CLI]: Executing '%s': '%s'", subcommand, table.concat(cmd, " ")))
 
