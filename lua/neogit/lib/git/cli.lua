@@ -574,7 +574,7 @@ local function handle_new_cmd(job, popup, hidden_text, hide_from_history)
   do
     local log_fn = logger.trace
     if job.code > 0 then
-      log_fn = logger.error
+      log_fn = logger.warn
     end
     if job.code > 0 then
       log_fn(
