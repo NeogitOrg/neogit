@@ -37,7 +37,6 @@ local function empty_state()
     merge = { items = {}, head = nil, msg = nil },
   }
 end
--- stylua: ignore end
 
 local meta = {
   __index = function(self, method)
