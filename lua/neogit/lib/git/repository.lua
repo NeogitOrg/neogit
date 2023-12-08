@@ -161,6 +161,7 @@ if not M.initialized then
 
   local modules = {
     "status",
+    "branch",
     "diff",
     "stash",
     "pull",
