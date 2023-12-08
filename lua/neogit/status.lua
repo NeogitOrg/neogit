@@ -523,30 +523,10 @@ local function refresh_status_buffer()
 end
 
 local refresh_lock = a.control.Semaphore.new(1)
-local lock_holder = nil
 
 local function refresh(which, reason)
-  logger.info("[STATUS BUFFER]: Starting refresh")
-
-  if refresh_lock.permits == 0 then
-    logger.debug(
-      string.format(
-        "[STATUS BUFFER]: Refresh lock not available. Aborting refresh. Lock held by: %q",
-        lock_holder
-      )
-    )
-    --- Undo the deadlock fix
-    --- This is because refresh wont properly wait but return immediately if
-    --- refresh is already in progress. This breaks as waiting for refresh does
-    --- not mean that a status buffer is drawn and ready
-    a.util.scheduler()
-    -- refresh_status()
-    -- return
-  end
-
   local permit = refresh_lock:acquire()
-  lock_holder = reason or "unknown"
-  logger.debug("[STATUS BUFFER]: Acquired refresh lock: " .. lock_holder)
+  logger.debug("[STATUS BUFFER]: Acquired refresh lock: " .. (reason or "unknown"))
 
   if git.repo.git_root ~= "" then
     a.util.scheduler()
@@ -562,15 +542,17 @@ local function refresh(which, reason)
     vim.api.nvim_exec_autocmds("User", { pattern = "NeogitStatusRefreshed", modeline = false })
   end
 
-  logger.info("[STATUS BUFFER]: Finished refresh")
-
-  lock_holder = nil
   permit:forget()
   logger.info("[STATUS BUFFER]: Refresh lock is now free")
 end
 
 local dispatch_refresh = a.void(function(v, reason)
-  refresh(v, reason)
+  reason = reason or "unknown"
+  if refresh_lock.permits > 0 then
+    refresh(v, reason)
+  else
+    logger.debug("[STATUS] Refresh lock is active. Skipping refresh from " .. reason)
+  end
 end)
 
 local refresh_manually = a.void(function(fname)
@@ -582,7 +564,9 @@ local refresh_manually = a.void(function(fname)
   if not path then
     return
   end
-  refresh({ status = true, diffs = { "*:" .. path } }, "manually")
+  if refresh_lock.permits > 0 then
+    refresh({ status = true, diffs = { "*:" .. path } }, "manually")
+  end
 end)
 
 --- Compatibility endpoint to refresh data from an autocommand.
@@ -1454,6 +1438,7 @@ function M.create(kind, cwd)
 
       M.prev_autochdir = vim.o.autochdir
 
+      -- Breaks when initializing a new repo in CWD
       if cwd and win then
         M.old_cwd = vim.fn.getcwd(win)
 

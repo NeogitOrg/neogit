@@ -2,17 +2,6 @@ local uv = vim.loop
 
 local config = require("neogit.config")
 local logger = require("neogit.logger")
-local util = require("neogit.lib.util")
-
-local a = require("plenary.async")
-
-local watch_gitdir_handler = a.void(function()
-  logger.debug("[WATCHER] Dispatching Refresh")
-  require("neogit.status").dispatch_refresh(true, "watcher")
-end)
-
-local watch_gitdir_handler_db =
-  util.debounce_trailing(config.values.filewatcher.interval, watch_gitdir_handler)
 
 local fs_event_handler = function(err, filename, events)
   if err then
@@ -38,7 +27,7 @@ local fs_event_handler = function(err, filename, events)
   end
 
   logger.debug(info)
-  watch_gitdir_handler_db()
+  require("neogit.status").dispatch_refresh(true, "watcher")
 end
 
 -- Adapted from https://github.com/lewis6991/gitsigns.nvim/blob/main/lua/gitsigns/watcher.lua#L103

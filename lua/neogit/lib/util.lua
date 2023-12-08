@@ -1,6 +1,3 @@
--- local a = require("plenary.async")
-local uv = vim.loop
-
 local M = {}
 
 ---@generic T: any
@@ -365,23 +362,6 @@ end
 
 function M.pad_right(s, len)
   return s .. string.rep(" ", math.max(len - #s, 0))
-end
-
---- Debounces a function on the trailing edge.
----
---- @generic F: function
---- @param ms number Timeout in ms
---- @param fn F Function to debounce
---- @return F Debounced function.
-function M.debounce_trailing(ms, fn)
-  local timer = assert(uv.new_timer())
-  return function(...)
-    local argv = { ... }
-    timer:start(ms, 0, function()
-      timer:stop()
-      fn(unpack(argv))
-    end)
-  end
 end
 
 --- http://lua-users.org/wiki/StringInterpolation
