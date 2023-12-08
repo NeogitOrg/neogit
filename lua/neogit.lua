@@ -121,7 +121,19 @@ end
 ---@return function
 function M.action(popup, action, args)
   local notification = require("neogit.lib.notification")
+  local util = require("neogit.lib.util")
   local a = require("plenary.async")
+  args = args or {}
+
+  local internal_args = {
+    graph = vim.tbl_contains(args, "--graph"),
+    color = vim.tbl_contains(args, "--color"),
+    decorate = vim.tbl_contains(args, "--decorate"),
+  }
+
+  util.remove_item_from_table(args, "--graph")
+  util.remove_item_from_table(args, "--color")
+  util.remove_item_from_table(args, "--decorate")
 
   return function()
     a.run(function()
@@ -132,7 +144,10 @@ function M.action(popup, action, args)
           fn {
             state = { env = {} },
             get_arguments = function()
-              return args or {}
+              return args
+            end,
+            get_internal_arguments = function()
+              return internal_args
             end,
           }
         else
