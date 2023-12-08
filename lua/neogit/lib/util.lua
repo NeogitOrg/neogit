@@ -334,11 +334,15 @@ end
 ---@param tbl table
 ---@param value any
 function M.remove_item_from_table(tbl, value)
+  local removed = false
   for index, t_value in ipairs(tbl) do
     if vim.deep_equal(t_value, value) then
       table.remove(tbl, index)
+      removed = true
     end
   end
+
+  return removed
 end
 
 ---Checks if both lists contain the same values. This does NOT check ordering.
