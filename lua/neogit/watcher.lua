@@ -20,7 +20,8 @@ local fs_event_handler = function(err, filename, events)
     filename == nil or
     filename:match("%.lock$") or
     filename:match("COMMIT_EDITMSG") or
-    filename:match("~$")
+    filename:match("~$") or
+    filename:match("%d%d%d%d")
   then
     logger.debug(string.format("%s (ignoring)", info))
     return
