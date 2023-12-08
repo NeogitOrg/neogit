@@ -1,4 +1,3 @@
-local a = require("plenary.async")
 local Path = require("plenary.path")
 local Collection = require("neogit.lib.collection")
 
@@ -49,7 +48,7 @@ local function update_status(state)
   -- Save the working directory to allow resolution to absolute paths since the
   -- cwd may change after the status is refreshed and used, especially if using
   -- rooter plugins with lsp integration
-  local cwd = vim.fn.getcwd()
+  local cwd = vim.loop.cwd()
   local result = git.cli.status.porcelain(2).branch.call { hidden = true }
 
   local head = {}
@@ -169,46 +168,6 @@ local function update_status(state)
   state.staged.items = staged_files
 end
 
-local function update_branch_information(state)
-  local git = require("neogit.lib.git")
-
-  local tasks = {}
-
-  if state.head.oid ~= "(initial)" then
-    table.insert(tasks, function()
-      local result = git.cli.log.max_count(1).pretty("%B").call { hidden = true }
-
-      state.head.commit_message = result.stdout[1]
-    end)
-
-    if state.upstream.ref then
-      table.insert(tasks, function()
-        local commit = git.log.list({ state.upstream.ref, "--max-count=1" }, {}, {}, true)[1]
-        -- May be done earlier by `update_status`, but this function can be called separately
-        if commit then
-          state.upstream.commit_message = commit.subject
-          state.upstream.abbrev = git.rev_parse.abbreviate_commit(commit.oid)
-        end
-      end)
-    end
-
-    local pushRemote = require("neogit.lib.git").branch.pushRemote_ref()
-    if pushRemote and not git.branch.is_detached() then
-      table.insert(tasks, function()
-        local commit = git.log.list({ pushRemote, "--max-count=1" }, {}, {}, true)[1]
-        if commit then
-          state.pushRemote.commit_message = commit.subject
-          state.pushRemote.abbrev = git.rev_parse.abbreviate_commit(commit.oid)
-        end
-      end)
-    end
-  end
-
-  if #tasks > 0 then
-    a.util.join(tasks)
-  end
-end
-
 local git = { cli = require("neogit.lib.git.cli") }
 local status = {
   stage = function(files)
@@ -240,7 +199,6 @@ local status = {
 
 status.register = function(meta)
   meta.update_status = update_status
-  meta.update_branch_information = update_branch_information
 end
 
 return status

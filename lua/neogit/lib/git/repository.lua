@@ -5,7 +5,7 @@ local cli = require("neogit.lib.git.cli")
 
 local function empty_state()
   return {
-    git_root = require("neogit.lib.git.cli").git_root_of_cwd(),
+    git_root = cli.git_root_of_cwd(),
     head = {
       branch = nil,
       commit_message = nil,
@@ -37,7 +37,6 @@ local function empty_state()
     merge = { items = {}, head = nil, msg = nil },
   }
 end
--- stylua: ignore end
 
 local meta = {
   __index = function(self, method)
@@ -55,18 +54,10 @@ function M.reset(self)
 end
 
 function M.refresh(self, lib)
+  self.state.git_root = cli.git_root_of_cwd()
+
   local refreshes = {}
-
-  if lib then
-    self.state.git_root = cli.git_root_of_cwd()
-  end
-
   if lib and type(lib) == "table" then
-    if lib.status then
-      self.lib.update_status(self.state)
-      a.util.scheduler()
-    end
-
     if lib.branch_information then
       table.insert(refreshes, function()
         logger.debug("[REPO]: Refreshing branch information")
@@ -133,20 +124,22 @@ function M.refresh(self, lib)
     end
   else
     logger.debug("[REPO]: Refreshing ALL")
-    self.lib.update_status(self.state)
-    a.util.scheduler()
-
     for name, fn in pairs(self.lib) do
-      table.insert(refreshes, function()
-        logger.debug("[REPO]: Refreshing " .. name)
-        fn(self.state)
-      end)
+      if name ~= "update_status" then
+        table.insert(refreshes, function()
+          logger.debug("[REPO]: Refreshing " .. name)
+          fn(self.state)
+        end)
+      end
     end
   end
 
   logger.debug(string.format("[REPO]: Running %d refresh(es)", #refreshes))
+
+  logger.debug("[REPO]: Refreshing status")
+  self.lib.update_status(self.state)
   a.util.join(refreshes)
-  a.util.scheduler()
+
   logger.debug("[REPO]: Refreshes completed")
 end
 
@@ -162,6 +155,7 @@ if not M.initialized then
 
   local modules = {
     "status",
+    "branch",
     "diff",
     "stash",
     "pull",

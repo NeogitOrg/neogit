@@ -19,7 +19,7 @@ end
 ---@return string
 ---@async
 function M.oid(rev)
-  return cli["rev-parse"].args(rev).call_sync().stdout[1]
+  return cli["rev-parse"].args(rev).call_sync({ hidden = true, ignore_error = true }).stdout[1]
 end
 
 return M
