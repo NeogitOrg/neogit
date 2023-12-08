@@ -7,8 +7,8 @@ local util = require("neogit.lib.util")
 local a = require("plenary.async")
 
 local watch_gitdir_handler = a.void(function()
-  logger.debug("[WATCHER] Dispatching Refresh")
-  require("neogit.status").dispatch_refresh(true, "watcher")
+  -- logger.debug("[WATCHER] Dispatching Refresh")
+  -- require("neogit.status").dispatch_refresh(true, "watcher")
 end)
 
 local watch_gitdir_handler_db =
