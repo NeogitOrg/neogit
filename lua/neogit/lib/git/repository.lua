@@ -5,7 +5,7 @@ local cli = require("neogit.lib.git.cli")
 
 local function empty_state()
   return {
-    git_root = require("neogit.lib.git.cli").git_root_of_cwd(),
+    git_root = cli.git_root_of_cwd(),
     head = {
       branch = nil,
       commit_message = nil,
