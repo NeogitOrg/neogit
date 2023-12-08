@@ -54,12 +54,9 @@ function M.reset(self)
 end
 
 function M.refresh(self, lib)
+  self.state.git_root = cli.git_root_of_cwd()
+
   local refreshes = {}
-
-  if lib then
-    self.state.git_root = cli.git_root_of_cwd()
-  end
-
   if lib and type(lib) == "table" then
     if lib.branch_information then
       table.insert(refreshes, function()
@@ -138,9 +135,11 @@ function M.refresh(self, lib)
   end
 
   logger.debug(string.format("[REPO]: Running %d refresh(es)", #refreshes))
+
   logger.debug("[REPO]: Refreshing status")
   self.lib.update_status(self.state)
   a.util.join(refreshes)
+
   logger.debug("[REPO]: Refreshes completed")
 end
 
