@@ -569,7 +569,7 @@ local refresh_manually = a.void(function(fname)
     return
   end
   if refresh_lock.permits > 0 then
-    refresh({ status = true, diffs = { "*:" .. path } }, "manually")
+    refresh({ update_diffs = { "*:" .. path } }, "manually")
   end
 end)
 
@@ -885,8 +885,7 @@ local stage = operation("stage", function()
   end
 
   refresh({
-    status = true,
-    diffs = vim.tbl_map(function(v)
+    update_diffs = vim.tbl_map(function(v)
       return "*:" .. v.name
     end, selection.items),
   }, "stage_finish")
@@ -931,8 +930,7 @@ local unstage = operation("unstage", function()
   end
 
   refresh({
-    status = true,
-    diffs = vim.tbl_map(function(v)
+    update_diffs = vim.tbl_map(function(v)
       return "*:" .. v.name
     end, selection.items),
   }, "unstage_finish")
@@ -1152,16 +1150,16 @@ local cmd_func_map = function()
     ["Stage"] = { "nv", a.void(stage) },
     ["StageUnstaged"] = a.void(function()
       git.status.stage_modified()
-      refresh({ status = true, diffs = true }, "StageUnstaged")
+      refresh({ update_diffs = true }, "StageUnstaged")
     end),
     ["StageAll"] = a.void(function()
       git.status.stage_all()
-      refresh { status = true, diffs = true }
+      refresh { update_diffs = true }
     end),
     ["Unstage"] = { "nv", a.void(unstage) },
     ["UnstageStaged"] = a.void(function()
       git.status.unstage_all()
-      refresh({ status = true, diffs = true }, "UnstageStaged")
+      refresh({ update_diffs = true }, "UnstageStaged")
     end),
     ["CommandHistory"] = function()
       GitCommandHistory:new():show()

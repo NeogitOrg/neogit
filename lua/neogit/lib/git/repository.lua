@@ -73,10 +73,26 @@ function M.refresh(self, opts)
   a.util.scheduler()
 
   -- This needs to be run before all others, because libs like Pull and Push depend on it setting some state.
-  logger.debug("[REPO]: Refreshing update_status")
+  logger.debug("[REPO]: Refreshing 'update_status'")
   self.lib.update_status(self.state)
 
-  a.util.run_all(M.updates, cleanup)
+  local tasks = {}
+  if opts.partial then
+    for name, fn in pairs(M.lib) do
+      if opts.partial[name] then
+        local filter = type(opts.partial[name]) == "table" and opts.partial[name]
+
+        table.insert(tasks, function()
+          logger.fmt_debug("[REPO]: Refreshing %s", name)
+          fn(M.state, filter)
+        end)
+      end
+    end
+  else
+    tasks = M.updates
+  end
+
+  a.util.run_all(tasks, cleanup)
 end
 
 function M.git_path(self, ...)

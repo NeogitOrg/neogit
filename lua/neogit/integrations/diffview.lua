@@ -96,7 +96,7 @@ local function get_local_diff_view(selected_file_name)
   }
 
   view:on_files_staged(a.void(function(_)
-    status.refresh({ status = true, diffs = true }, "on_files_staged")
+    status.refresh({ update_diffs = true }, "on_files_staged")
     view:update_files()
   end))
 
