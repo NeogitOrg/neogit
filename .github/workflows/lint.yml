@@ -15,7 +15,7 @@ jobs:
       - name: Get latest selene version
         id: selene-version
         run: |
-          echo "SELENE_VERSION='$(curl -s -L0 https://crates.io/api/v1/crates/selene  | jq -r '.crate.max_stable_version')'" >> $GITHUB_ENV
+          echo "SELENE_VERSION=$(curl -s -L0 https://crates.io/api/v1/crates/selene  | jq -r '.crate.max_stable_version')" >> $GITHUB_ENV
 
       - name: Restore Cached Selene
         id: cache-selene-restore
@@ -33,14 +33,6 @@ jobs:
         if: ${{ steps.cache-selene-restore.outputs.cache-hit != 'true' }}
         run: cargo install selene --force
 
-      - name: Save New Selene Build to Cache
-        if: ${{ steps.cache-selene-restore.outputs.cache-hit != 'true' }}
-        id: cache-selene-save
-        uses: actions/cache/save@v3
-        with:
-          key: ${{ runner.os }}-selene-${{ env.SELENE_VERSION }}
-          path: ~/.cargo/bin/selene
-
       - name: Run Selene
         run: make lint
 
@@ -48,7 +40,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: JohnnyMorganz/stylua-action@v1.1.2
+      - uses: JohnnyMorganz/stylua-action@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           args: --color always --check lua/ tests/
