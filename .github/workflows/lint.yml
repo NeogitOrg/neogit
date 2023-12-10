@@ -15,7 +15,7 @@ jobs:
       - name: Get latest selene version
         id: selene-version
         run: |
-          echo "SELENE_VERSION='$(curl -s -L0 https://crates.io/api/v1/crates/selene  | jq -r '.crate.max_stable_version')'" >> $GITHUB_OUTPUT
+          echo "SELENE_VERSION='$(curl -s -L0 https://crates.io/api/v1/crates/selene  | jq -r '.crate.max_stable_version')'" >> $GITHUB_ENV
 
       - name: Restore Cached Selene
         id: cache-selene-restore
