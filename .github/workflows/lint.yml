@@ -24,7 +24,7 @@ jobs:
           key: ${{ runner.os }}-selene-${{ env.SELENE_VERSION }}
           path: ~/.cargo/bin/selene
 
-      - uses: actions-rs/toolchain@v1
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
         if: ${{ steps.cache-selene-restore.outputs.cache-hit != 'true' }}
         with:
           toolchain: stable
