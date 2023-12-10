@@ -14,7 +14,7 @@ end
 function M.fetch_upstream()
   local repo = require("neogit.lib.git").repo
   if repo.upstream.branch and repo.upstream.remote then
-    cli.fetch.args(repo.upstream.remote, repo.upstream.branch).call_ignoring_exit_code()
+    cli.fetch.args(repo.upstream.remote, repo.upstream.branch).call { ignore_error = true }
   end
 end
 
@@ -25,7 +25,7 @@ function M.fetch_pushRemote()
   end
 
   local remote, branch = branch.pushRemote_ref():match("^([^/]*)/(.*)$")
-  cli.fetch.args(remote, branch).call_ignoring_exit_code()
+  cli.fetch.args(remote, branch).call { ignore_error = true }
 end
 
 return M
