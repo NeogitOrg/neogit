@@ -855,7 +855,7 @@ local function new_builder(subcommand)
       local p = to_process {
         verbose = opts.verbose,
         on_error = function(_res)
-          return false
+          return true
         end,
       }
       p.pty = true
