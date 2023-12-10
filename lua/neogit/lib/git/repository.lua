@@ -48,99 +48,35 @@ local M = {}
 
 M.state = empty_state()
 M.lib = {}
+M.updates = {}
 
 function M.reset(self)
   self.state = empty_state()
 end
 
-function M.refresh(self, lib)
-  self.state.git_root = cli.git_root_of_cwd()
+function M.refresh(self, opts)
+  opts = opts or {}
+  logger.fmt_info("[REPO]: Refreshing START (source: %s)", opts.source or "UNKNOWN")
 
-  local refreshes = {}
-  if lib and type(lib) == "table" then
-    if lib.branch_information then
-      table.insert(refreshes, function()
-        logger.debug("[REPO]: Refreshing branch information")
-        self.lib.update_branch_information(self.state)
-      end)
-    end
+  local cleanup = function()
+    logger.debug("[REPO]: Refreshes complete")
 
-    if lib.rebase then
-      table.insert(refreshes, function()
-        logger.debug("[REPO]: Refreshing rebase information")
-        self.lib.update_rebase_status(self.state)
-      end)
-    end
-
-    if lib.cherry_pick then
-      table.insert(refreshes, function()
-        logger.debug("[REPO]: Refreshing cherry-pick information")
-        self.lib.update_cherry_pick_status(self.state)
-      end)
-    end
-
-    if lib.merge then
-      table.insert(refreshes, function()
-        logger.debug("[REPO]: Refreshing merge information")
-        self.lib.update_merge_status(self.state)
-      end)
-    end
-
-    if lib.stashes then
-      table.insert(refreshes, function()
-        logger.debug("[REPO]: Refreshing stash")
-        self.lib.update_stashes(self.state)
-      end)
-    end
-
-    if lib.unpulled then
-      table.insert(refreshes, function()
-        logger.debug("[REPO]: Refreshing unpulled commits")
-        self.lib.update_unpulled(self.state)
-      end)
-    end
-
-    if lib.unmerged then
-      table.insert(refreshes, function()
-        logger.debug("[REPO]: Refreshing unpushed commits")
-        self.lib.update_unmerged(self.state)
-      end)
-    end
-
-    if lib.recent then
-      table.insert(refreshes, function()
-        logger.debug("[REPO]: Refreshing recent commits")
-        self.lib.update_recent(self.state)
-      end)
-    end
-
-    if lib.diffs then
-      local filter = (type(lib) == "table" and type(lib.diffs) == "table") and lib.diffs or nil
-
-      table.insert(refreshes, function()
-        logger.debug("[REPO]: Refreshing diffs")
-        self.lib.update_diffs(self.state, filter)
-      end)
-    end
-  else
-    logger.debug("[REPO]: Refreshing ALL")
-    for name, fn in pairs(self.lib) do
-      if name ~= "update_status" then
-        table.insert(refreshes, function()
-          logger.debug("[REPO]: Refreshing " .. name)
-          fn(self.state)
-        end)
-      end
+    if opts.callback then
+      logger.debug("[REPO]: Running refresh callback")
+      opts.callback()
     end
   end
 
-  logger.debug(string.format("[REPO]: Running %d refresh(es)", #refreshes))
+  self.state.git_root = cli.git_root_of_cwd()
 
-  logger.debug("[REPO]: Refreshing status")
+  -- Needed until Process doesn't use vim.fn.*
+  a.util.scheduler()
+
+  -- This needs to be run before all others, because libs like Pull and Push depend on it setting some state.
+  logger.debug("[REPO]: Refreshing update_status")
   self.lib.update_status(self.state)
-  a.util.join(refreshes)
 
-  logger.debug("[REPO]: Refreshes completed")
+  a.util.run_all(M.updates, cleanup)
 end
 
 function M.git_path(self, ...)
@@ -168,6 +104,15 @@ if not M.initialized then
 
   for _, m in ipairs(modules) do
     require("neogit.lib.git." .. m).register(M.lib)
+  end
+
+  for name, fn in pairs(M.lib) do
+    if name ~= "update_status" then
+      table.insert(M.updates, function()
+        logger.fmt_debug("[REPO]: Refreshing %s", name)
+        fn(M.state)
+      end)
+    end
   end
 end
 
