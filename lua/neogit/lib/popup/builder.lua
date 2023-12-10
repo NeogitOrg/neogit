@@ -4,6 +4,7 @@ local config = require("neogit.lib.git.config")
 local util = require("neogit.lib.util")
 local notification = require("neogit.lib.notification")
 local logger = require("neogit.logger")
+local watcher = require("neogit.watcher")
 
 local M = {}
 
@@ -304,10 +305,13 @@ function M:action(keys, description, callback)
   if callback then
     callback_fn = a.void(function(...)
       logger.debug(string.format("[ACTION] Running action from %s", self.state.name))
+
+      watcher.pause()
       callback(...)
+      watcher.resume()
 
       logger.debug("[ACTION] Dispatching Refresh")
-      require("neogit.status").dispatch_refresh(true, "action")
+      require("neogit.status").dispatch_refresh(nil, "action")
     end)
   end
 
