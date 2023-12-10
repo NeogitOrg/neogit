@@ -311,7 +311,7 @@ function M:action(keys, description, callback)
       watcher.resume()
 
       logger.debug("[ACTION] Dispatching Refresh")
-      require("neogit.status").dispatch_refresh(true, "action")
+      require("neogit.status").dispatch_refresh(nil, "action")
     end)
   end
 

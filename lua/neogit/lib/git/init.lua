@@ -45,7 +45,7 @@ M.init_repo = function()
 
   M.create(directory)
 
-  status.refresh(true, "InitRepo")
+  status.refresh(nil, "InitRepo")
 end
 
 return M
