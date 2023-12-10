@@ -99,7 +99,7 @@ function M:show()
           col
             .hidden(true)
             .padding_left("  | ")
-            .highlight("NeogitCommandText")(map(util.merge(item.stderr, item.stdout), text)),
+            .highlight("NeogitCommandText")(map(util.merge(item.stdout, item.stderr), text)),
         }
       end)
     end,
