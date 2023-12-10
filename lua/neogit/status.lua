@@ -524,6 +524,10 @@ end
 
 local refresh_lock = a.control.Semaphore.new(1)
 
+function M.is_refresh_locked()
+  return refresh_lock.permits == 0
+end
+
 local function refresh(partial, reason)
   local permit = refresh_lock:acquire()
   logger.debug("[STATUS BUFFER]: Acquired refresh lock: " .. (reason or "unknown"))
@@ -552,10 +556,10 @@ end
 
 local dispatch_refresh = a.void(function(partial, reason)
   reason = reason or "unknown"
-  if refresh_lock.permits > 0 then
-    refresh(partial, reason)
-  else
+  if M.is_refresh_locked() then
     logger.debug("[STATUS] Refresh lock is active. Skipping refresh from " .. reason)
+  else
+    refresh(partial, reason)
   end
 end)
 
