@@ -5,7 +5,7 @@ local function refocus_status_buffer()
   local status = require("neogit.status")
   if status.status_buffer then
     status.status_buffer:focus()
-    status.dispatch_refresh()
+    status.dispatch_refresh(nil, "finder.refocus")
   end
 end
 

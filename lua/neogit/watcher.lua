@@ -34,7 +34,7 @@ local fs_event_handler = function(err, filename, events)
   end
 
   logger.debug(info)
-  require("neogit.status").dispatch_refresh(true, "watcher")
+  require("neogit.status").dispatch_refresh(nil, "watcher")
 end
 
 -- Adapted from https://github.com/lewis6991/gitsigns.nvim/blob/main/lua/gitsigns/watcher.lua#L103

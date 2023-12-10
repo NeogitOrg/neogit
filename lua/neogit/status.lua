@@ -550,10 +550,10 @@ local function refresh(partial, reason)
   git.repo:refresh { source = reason, callback = callback, partial = partial }
 end
 
-local dispatch_refresh = a.void(function(v, reason)
+local dispatch_refresh = a.void(function(partial, reason)
   reason = reason or "unknown"
   if refresh_lock.permits > 0 then
-    refresh(v, reason)
+    refresh(partial, reason)
   else
     logger.debug("[STATUS] Refresh lock is active. Skipping refresh from " .. reason)
   end
@@ -624,7 +624,7 @@ local reset = function()
   if not config.values.auto_refresh then
     return
   end
-  refresh(true, "reset")
+  refresh(nil, "reset")
 end
 
 local dispatch_reset = a.void(reset)
@@ -1019,7 +1019,7 @@ local discard = operation("discard", function()
     v()
   end
 
-  refresh(true, "discard")
+  refresh(nil, "discard")
 
   a.util.scheduler()
   vim.cmd("checktime")
@@ -1037,7 +1037,7 @@ local set_folds = function(to)
       end
     end)
   end)
-  refresh(true, "set_folds")
+  refresh(nil, "set_folds")
 end
 
 --- Handles the GoToFile action on sections that contain a hunk
@@ -1309,7 +1309,7 @@ local cmd_func_map = function()
 
     ["RefreshBuffer"] = function()
       notification.info("Refreshing Status")
-      dispatch_refresh(true)
+      dispatch_refresh(nil, "manual")
     end,
 
     -- INTEGRATIONS --
@@ -1482,7 +1482,7 @@ function M.create(kind, cwd)
       set_decoration_provider(buffer)
 
       logger.debug("[STATUS BUFFER]: Dispatching initial render")
-      refresh(true, "Buffer.create")
+      refresh(nil, "Buffer.create")
     end,
     after = function()
       M.watcher = watcher.new(git.repo:git_path():absolute())
