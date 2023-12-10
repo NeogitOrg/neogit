@@ -537,12 +537,7 @@ local function refresh(partial, reason)
     refresh_status_buffer()
 
     if M.status_buffer ~= nil and M.status_buffer:is_focused() then
-      if M.cursor_location then
-        restore_cursor_location(unpack(M.cursor_location))
-        M.cursor_location = nil
-      else
-        restore_cursor_location(s, f, h)
-      end
+      restore_cursor_location(s, f, h)
     end
 
     vim.api.nvim_exec_autocmds("User", { pattern = "NeogitStatusRefreshed", modeline = false })
@@ -1488,6 +1483,15 @@ function M.create(kind, cwd)
     end,
     after = function()
       M.watcher = watcher.new(git.repo:git_path():absolute())
+
+      if M.cursor_location then
+        vim.wait(2000, function()
+          return not M.is_refresh_locked()
+        end)
+
+        restore_cursor_location(unpack(M.cursor_location))
+        M.cursor_location = nil
+      end
     end,
   }
 end
