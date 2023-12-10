@@ -9,7 +9,11 @@ local a = require("plenary.async")
 
 local function merge_command(cmd)
   local envs = client.get_envs_git_editor()
-  return cmd.env(envs).show_popup(true):in_pty(true).call(true)
+  return cmd.env(envs).show_popup(true):in_pty(true).call { verbose = true }
+end
+
+local function fire_merge_event(data)
+  vim.api.nvim_exec_autocmds("User", { pattern = "NeogitMerge", modeline = false, data = data })
 end
 
 function M.merge(branch, args)
@@ -17,8 +21,10 @@ function M.merge(branch, args)
   local result = merge_command(cli.merge.args(branch).arg_list(args))
   if result.code ~= 0 then
     notification.error("Merging failed. Resolve conflicts before continuing")
+    fire_merge_event { branch = branch, args = args, status = "conflict" }
   else
     notification.info("Merged '" .. branch .. "' into '" .. branch_lib.current() .. "'")
+    fire_merge_event { branch = branch, args = args, status = "ok" }
   end
 end
 

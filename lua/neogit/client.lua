@@ -96,6 +96,7 @@ end
 
 ---@param cmd any
 ---@param opts WrapOpts
+---@return integer code of `cmd`
 function M.wrap(cmd, opts)
   local notification = require("neogit.lib.notification")
   local a = require("plenary.async")
@@ -105,7 +106,7 @@ function M.wrap(cmd, opts)
   if opts.msg.setup then
     notification.info(opts.msg.setup)
   end
-  local result = cmd.env(M.get_envs_git_editor()):in_pty(true).call(true):trim()
+  local result = cmd.env(M.get_envs_git_editor()):in_pty(true).call { verbose = true }
 
   a.util.scheduler()
 
@@ -119,6 +120,7 @@ function M.wrap(cmd, opts)
       notification.warn(opts.msg.fail, { dismiss = true })
     end
   end
+  return result.code
 end
 
 return M

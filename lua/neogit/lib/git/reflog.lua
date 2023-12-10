@@ -54,13 +54,7 @@ function M.list(refname, options)
   }, "%x1E")
 
   return parse(
-    cli.reflog.show
-      .format(format)
-      .date("raw")
-      .arg_list(options or {})
-      .args(refname, "--")
-      .call()
-      :trim().stdout
+    cli.reflog.show.format(format).date("raw").arg_list(options or {}).args(refname, "--").call().stdout
   )
 end
 

@@ -14,13 +14,14 @@ local function parse_branches(branches, include_current)
   local remotes = "^remotes/(.*)"
   local head = "^(.*)/HEAD"
   local ref = " %-> "
+  local detached = "^%(HEAD detached at %x%x%x%x%x%x%x%x%)$"
   local pattern = include_current and "^[* ] (.+)" or "^  (.+)"
 
   for _, b in ipairs(branches) do
     local branch_name = b:match(pattern)
     if branch_name then
       local name = branch_name:match(remotes) or branch_name
-      if name and not name:match(ref) and not name:match(head) then
+      if name and not name:match(ref) and not name:match(head) and not name:match(detached) then
         table.insert(other_branches, name)
       end
     end
@@ -33,7 +34,7 @@ function M.get_recent_local_branches()
   local valid_branches = M.get_local_branches()
 
   local branches = util.filter_map(
-    cli.reflog.show.format("%gs").date("relative").call_sync():trim().stdout,
+    cli.reflog.show.format("%gs").date("relative").call_sync().stdout,
     function(ref)
       local name = ref:match("^checkout: moving from .* to (.*)$")
       if vim.tbl_contains(valid_branches, name) then
@@ -71,12 +72,12 @@ function M.track(name, args)
 end
 
 function M.get_local_branches(include_current)
-  local branches = cli.branch.list(config.values.sort_branches).call_sync():trim().stdout
+  local branches = cli.branch.list(config.values.sort_branches).call_sync().stdout
   return parse_branches(branches, include_current)
 end
 
 function M.get_remote_branches(include_current)
-  local branches = cli.branch.remotes.list(config.values.sort_branches).call_sync():trim().stdout
+  local branches = cli.branch.remotes.list(config.values.sort_branches).call_sync().stdout
   return parse_branches(branches, include_current)
 end
 
@@ -85,14 +86,13 @@ function M.get_all_branches(include_current)
 end
 
 function M.is_unmerged(branch, base)
-  return cli.cherry.arg_list({ base or "master", branch }).call_sync():trim().stdout[1] ~= nil
+  return cli.cherry.arg_list({ base or "master", branch }).call_sync().stdout[1] ~= nil
 end
 
 function M.exists(branch)
   local check = cli["rev-parse"].verify
     .args(string.format("refs/heads/%s", branch))
-    .call_sync_ignoring_exit_code()
-    :trim().stdout[1]
+    .call_sync({ ignore_error = true }).stdout[1]
 
   return check ~= nil
 end
@@ -126,7 +126,7 @@ function M.current()
   if head then
     return head
   else
-    local branch_name = cli.branch.current.call_sync():trim().stdout
+    local branch_name = cli.branch.current.call_sync().stdout
     if #branch_name > 0 then
       return branch_name[1]
     end
@@ -137,7 +137,7 @@ end
 function M.current_full_name()
   local current = M.current()
   if current then
-    return cli["rev-parse"].symbolic_full_name.args(current).call_sync():trim().stdout[1]
+    return cli["rev-parse"].symbolic_full_name.args(current).call_sync().stdout[1]
   end
 end
 
@@ -183,7 +183,7 @@ function M.set_pushRemote()
   elseif pushDefault:is_set() then
     pushRemote = pushDefault:read()
   else
-    pushRemote = FuzzyFinderBuffer.new(remotes):open_async { prompt_prefix = "set pushRemote > " }
+    pushRemote = FuzzyFinderBuffer.new(remotes):open_async { prompt_prefix = "set pushRemote" }
   end
 
   if pushRemote then
@@ -219,6 +219,38 @@ function M.upstream_remote()
   end
 
   return remote
+end
+
+local function update_branch_information(state)
+  local git = require("neogit.lib.git")
+
+  if state.head.oid ~= "(initial)" then
+    local result = cli.log.max_count(1).pretty("%B").call { hidden = true }
+
+    state.head.commit_message = result.stdout[1]
+
+    if state.upstream.ref then
+      local commit = git.log.list({ state.upstream.ref, "--max-count=1" }, {}, {}, true)[1]
+      -- May be done earlier by `update_status`, but this function can be called separately
+      if commit then
+        state.upstream.commit_message = commit.subject
+        state.upstream.abbrev = git.rev_parse.abbreviate_commit(commit.oid)
+      end
+    end
+
+    local pushRemote = require("neogit.lib.git").branch.pushRemote_ref()
+    if pushRemote and not git.branch.is_detached() then
+      local commit = git.log.list({ pushRemote, "--max-count=1" }, {}, {}, true)[1]
+      if commit then
+        state.pushRemote.commit_message = commit.subject
+        state.pushRemote.abbrev = git.rev_parse.abbreviate_commit(commit.oid)
+      end
+    end
+  end
+end
+
+M.register = function(meta)
+  meta.update_branch_information = update_branch_information
 end
 
 return M

@@ -1,6 +1,3 @@
--- local a = require("plenary.async")
-local uv = vim.loop
-
 local M = {}
 
 ---@generic T: any
@@ -291,14 +288,14 @@ function M.parse_command_args(args)
   return tbl
 end
 
--- function M.pattern_escape(str)
---   local special_chars = { "(", ")", ".", "%", "+", "-", "*", "?", "[", "^", "$" }
---   for _, char in ipairs(special_chars) do
---     str, _ = str:gsub("%" .. char, "%%" .. char)
---   end
---
---   return str
--- end
+function M.pattern_escape(str)
+  local special_chars = { "%%", "%(", "%)", "%.", "%+", "%-", "%*", "%?", "%[", "%^", "%$" }
+  for _, char in ipairs(special_chars) do
+    str, _ = str:gsub(char, "%" .. char)
+  end
+
+  return str
+end
 
 function M.deduplicate(tbl)
   local res = {}
@@ -334,11 +331,15 @@ end
 ---@param tbl table
 ---@param value any
 function M.remove_item_from_table(tbl, value)
+  local removed = false
   for index, t_value in ipairs(tbl) do
     if vim.deep_equal(t_value, value) then
       table.remove(tbl, index)
+      removed = true
     end
   end
+
+  return removed
 end
 
 ---Checks if both lists contain the same values. This does NOT check ordering.
@@ -361,23 +362,6 @@ end
 
 function M.pad_right(s, len)
   return s .. string.rep(" ", math.max(len - #s, 0))
-end
-
---- Debounces a function on the trailing edge.
----
---- @generic F: function
---- @param ms number Timeout in ms
---- @param fn F Function to debounce
---- @return F Debounced function.
-function M.debounce_trailing(ms, fn)
-  local timer = assert(uv.new_timer())
-  return function(...)
-    local argv = { ... }
-    timer:start(ms, 0, function()
-      timer:stop()
-      fn(unpack(argv))
-    end)
-  end
 end
 
 --- http://lua-users.org/wiki/StringInterpolation

@@ -4,10 +4,15 @@ local Ui = require("neogit.lib.ui")
 local util = require("neogit.lib.util")
 
 local map = util.map
+local filter_map = util.filter_map
 
 local text = Ui.text
 local col = Ui.col
 local row = Ui.row
+
+local command_mask = util.pattern_escape(
+  " --no-pager --literal-pathspecs --no-optional-locks -c core.preloadindex=true -c color.ui=always"
+)
 
 local M = {}
 
@@ -60,11 +65,15 @@ function M:show()
     render = function()
       local win_width = vim.fn.winwidth(0)
 
-      return map(self.state, function(item)
+      return filter_map(self.state, function(item)
+        if item.hidden then
+          return
+        end
+
         local is_err = item.code ~= 0
 
         local code = string.format("%3d", item.code)
-        local command, _ = item.cmd:gsub(" %-%-no%-pager %-c color%.ui=always %-%-no%-optional%-locks", "")
+        local command, _ = item.cmd:gsub(command_mask, "")
         local time = string.format("(%3.3f ms)", item.time)
         local stdio = string.format("[%s %3d]", "stdout", #item.stdout)
 
