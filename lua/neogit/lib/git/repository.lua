@@ -67,10 +67,10 @@ function M.refresh(self, opts)
     end
   end
 
-  self.state.git_root = cli.git_root_of_cwd()
-
   -- Needed until Process doesn't use vim.fn.*
   a.util.scheduler()
+
+  self.state.git_root = cli.git_root_of_cwd()
 
   -- This needs to be run before all others, because libs like Pull and Push depend on it setting some state.
   logger.debug("[REPO]: Refreshing 'update_status'")
