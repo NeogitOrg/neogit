@@ -524,26 +524,30 @@ end
 
 local refresh_lock = a.control.Semaphore.new(1)
 
-local function refresh(which, reason)
+local function refresh(partial, reason)
   local permit = refresh_lock:acquire()
   logger.debug("[STATUS BUFFER]: Acquired refresh lock: " .. (reason or "unknown"))
 
-  if git.repo.git_root ~= "" then
-    a.util.scheduler()
-    git.repo:refresh(which)
-
+  local callback = function()
     local s, f, h = save_cursor_location()
     refresh_status_buffer()
 
     if M.status_buffer ~= nil and M.status_buffer:is_focused() then
-      restore_cursor_location(s, f, h)
+      if M.cursor_location then
+        restore_cursor_location(unpack(M.cursor_location))
+        M.cursor_location = nil
+      else
+        restore_cursor_location(s, f, h)
+      end
     end
 
     vim.api.nvim_exec_autocmds("User", { pattern = "NeogitStatusRefreshed", modeline = false })
+
+    permit:forget()
+    logger.info("[STATUS BUFFER]: Refresh lock is now free")
   end
 
-  permit:forget()
-  logger.info("[STATUS BUFFER]: Refresh lock is now free")
+  git.repo:refresh { source = reason, callback = callback, partial = partial }
 end
 
 local dispatch_refresh = a.void(function(v, reason)
@@ -1482,11 +1486,6 @@ function M.create(kind, cwd)
     end,
     after = function()
       M.watcher = watcher.new(git.repo:git_path():absolute())
-
-      if M.cursor_location then
-        restore_cursor_location(unpack(M.cursor_location))
-        M.cursor_location = nil
-      end
     end,
   }
 end
