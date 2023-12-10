@@ -238,7 +238,7 @@ end
 
 local function invalidate_diff(filter, section, item)
   if not filter or filter:accepts(section, item.name) then
-    logger.debug("[DIFF] Invalidating cached diff for: " .. item.name)
+    logger.fmt_debug("[DIFF] Invalidating cached diff for: %s", item.name)
     item.diff = nil
   end
 end
