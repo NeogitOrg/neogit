@@ -4,10 +4,20 @@ local notification = require("neogit.lib.notification")
 local Buffer = require("neogit.lib.buffer")
 local config = require("neogit.config")
 local logger = require("neogit.logger")
+local util = require("neogit.lib.util")
 
 -- from: https://stackoverflow.com/questions/48948630/lua-ansi-escapes-pattern
 local function remove_escape_codes(s)
   return s:gsub("[\27\155][][()#;?%d]*[A-PRZcf-ntqry=><~]", ""):gsub("[\r\n\04\08]", "")
+end
+
+local command_mask = util.pattern_escape(
+  " --no-pager --literal-pathspecs --no-optional-locks -c core.preloadindex=true -c color.ui=always"
+)
+
+local function mask_command(cmd)
+  local command, _ = cmd:gsub(command_mask, "")
+  return command
 end
 
 ---@class Process
@@ -336,8 +346,8 @@ function Process:spawn(cb)
       end
 
       local message = string.format(
-        "%s:\n\n%s\n\nOpen the console for details",
-        table.concat(self.cmd, " "),
+        "%s:\n\n%s\n\nAn error occured.",
+        mask_command(table.concat(self.cmd, " ")),
         table.concat(output, "\n")
       )
 
