@@ -15,13 +15,13 @@ jobs:
       - name: Get latest selene version
         id: selene-version
         run: |
-          echo "$(curl -s -L0 https://crates.io/api/v1/crates/selene  | jq -r '.crate.max_stable_version')" >> "$GITHUB_OUTPUT"
+          echo "SELENE_VERSION=$(curl -s -L0 https://crates.io/api/v1/crates/selene  | jq -r '.crate.max_stable_version')" >> $GITHUB_OUTPUT
 
       - name: Restore Cached Selene
         id: cache-selene-restore
         uses: actions/cache@v3
         with:
-          key: ${{ runner.os }}-selene-${{ steps.selene-version.outputs.selene-version }}
+          key: ${{ runner.os }}-selene-${{ env.SELENE_VERSION }}
           path: ~/.cargo/bin/selene
 
       - uses: actions-rs/toolchain@v1
@@ -38,7 +38,7 @@ jobs:
         id: cache-selene-save
         uses: actions/cache/save@v3
         with:
-          key: ${{ runner.os }}-selene-${{ steps.selene-version.outputs.selene-version }}
+          key: ${{ runner.os }}-selene-${{ env.SELENE_VERSION }}
           path: ~/.cargo/bin/selene
 
       - name: Run Selene
