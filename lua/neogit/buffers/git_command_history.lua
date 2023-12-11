@@ -114,7 +114,7 @@ function M:show()
           },
           col
             .padding_left("  | ")
-            .highlight("NeogitCommandText")(map(is_err and item.stderr or item.stdout, text)),
+            .highlight("NeogitCommandText")(map(util.merge(item.stdout, item.stderr), text)),
         }, { foldable = true, folded = true })
       end)
     end,
