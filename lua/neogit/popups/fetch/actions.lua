@@ -13,8 +13,12 @@ local function select_remote()
 end
 
 local function fetch_from(name, remote, branch, args)
-  notification.info("Fetching from " .. name)
+  local message = notification.info("Fetching from " .. name)
   local res = git.fetch.fetch_interactive(remote, branch, args)
+
+  if message then
+    message:delete()
+  end
 
   if res and res.code == 0 then
     a.util.scheduler()
