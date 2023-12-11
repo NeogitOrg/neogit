@@ -3,7 +3,7 @@
     <table>
         <tr>
             <td>
-               <strong>A <a href="https://magit.vc">Magit</a> clone for <a href="https://neovim.io">Neovim</a>.</strong>
+               <strong>A git interface for <a href="https://neovim.io">Neovim</a>, inspired by <a href="https://magit.vc">Magit</a>.</strong>
             </td>
         </tr>
     </table>
