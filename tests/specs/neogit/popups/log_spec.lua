@@ -73,7 +73,7 @@ describe("log popup", function()
   it(
     "limits number of commits",
     in_prepared_repo(function()
-      act("l=n<C-u>1<CR>l")
+      act("l-n<C-u>1<CR>l")
       operations.wait("log_current")
       vim.fn.feedkeys("G", "x")
       eq("e2c2a1c * master origin/second-branch b.txt", vim.api.nvim_get_current_line())
@@ -89,7 +89,7 @@ describe("log popup", function()
         git config user.mail "person@example.com"
         git commit --allow-empty -m "Empty commit"
       ]])
-      act("l=APerson<CR>l")
+      act("l-APerson<CR>l")
       operations.wait("log_current")
       vim.fn.feedkeys("G", "x")
       assert.is_not.Nil(string.find(vim.api.nvim_get_current_line(), "Empty commit", 1, true))
@@ -99,7 +99,7 @@ describe("log popup", function()
   it(
     "limits commits based on commit message",
     in_prepared_repo(function()
-      act("l=Fa.txt<CR>l")
+      act("l-Fa.txt<CR>l")
       operations.wait("log_current")
       vim.fn.feedkeys("G", "x")
       eq("d86fa0e * a.txt", vim.api.nvim_get_current_line())
@@ -109,7 +109,7 @@ describe("log popup", function()
   it(
     "limits commits since date",
     in_prepared_repo(function()
-      act("l=sFeb 8 2021<CR>l")
+      act("l-sFeb 8 2021<CR>l")
       operations.wait("log_current")
       vim.fn.feedkeys("G", "x")
       eq("e2c2a1c * master origin/second-branch b.txt", vim.api.nvim_get_current_line())
@@ -119,7 +119,7 @@ describe("log popup", function()
   it(
     "limits commits until date",
     in_prepared_repo(function()
-      act("l=uFeb 7 2021<CR>l")
+      act("l-uFeb 7 2021<CR>l")
       operations.wait("log_current")
       vim.fn.feedkeys("G", "x")
       eq("d86fa0e * a.txt", vim.api.nvim_get_current_line())
