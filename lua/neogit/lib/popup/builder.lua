@@ -150,6 +150,8 @@ function M:switch(key, cli, description, opts)
     internal = opts.internal,
     cli_prefix = opts.cli_prefix,
     user_input = opts.user_input,
+    validate = opts.validate or function() return true end,
+    validate_help = opts.validate_help,
     cli_suffix = opts.cli_suffix,
     options = opts.options,
     incompatible = util.build_reverse_lookup(opts.incompatible),
