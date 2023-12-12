@@ -424,6 +424,13 @@ function M.is_ancestor(a, b)
   return cli["merge-base"].is_ancestor.args(a, b).call_sync({ ignore_error = true, hidden = true }).code == 0
 end
 
+---Finds parent commit of a commit. If no parent exists, will return nil
+---@param commit string
+---@return string|nil
+function M.parent(commit)
+  return vim.split(cli["rev-list"].max_count(1).parents.args(commit).call({ hidden = true }).stdout[1], " ")[2]
+end
+
 local function update_recent(state)
   local count = config.values.status.recent_commit_count
   if count < 1 then

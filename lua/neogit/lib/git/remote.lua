@@ -48,11 +48,11 @@ function M.prune(name)
 end
 
 function M.list()
-  return cli.remote.call_sync().stdout
+  return cli.remote.call_sync({ hidden = true }).stdout
 end
 
 function M.get_url(name)
-  return cli.remote.get_url(name).call().stdout
+  return cli.remote.get_url(name).call({ hidden = true }).stdout
 end
 
 return M
