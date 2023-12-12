@@ -84,6 +84,7 @@ function M.interactively(popup)
         default = 1,
       })
 
+      -- selene: allow(empty_if)
       if choice == "c" then
         -- no-op
       elseif choice == "s" then
