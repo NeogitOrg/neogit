@@ -83,8 +83,8 @@ function M:open()
           buffer:insert_line("break")
         end,
         ["<cr>"] = function()
-          local oid = vim.split(vim.api.nvim_get_current_line(), " ")[2]
-          if oid:match("%x%x%x%x%x%x%x") then
+          local oid = vim.api.nvim_get_current_line():match("(%x%x%x%x%x%x%x)")
+          if oid then
             CommitViewBuffer.new(oid):open("tab")
           end
         end,
