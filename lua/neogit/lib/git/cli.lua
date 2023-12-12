@@ -487,6 +487,7 @@ local configurations = {
 
   ["rev-list"] = config {
     flags = {
+      merges = "--merges",
       parents = "--parents",
     },
     options = {

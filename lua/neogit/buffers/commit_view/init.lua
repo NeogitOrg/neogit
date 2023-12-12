@@ -38,10 +38,10 @@ local M = {
   instance = nil,
 }
 
---- Creates a new CommitViewBuffer
---- @param commit_id string the id of the commit/tag
---- @param notify boolean Should show a notification or not
---- @return CommitViewBuffer
+---Creates a new CommitViewBuffer
+---@param commit_id string the id of the commit/tag
+---@param notify boolean? Should show a notification or not
+---@return CommitViewBuffer
 function M.new(commit_id, notify)
   if notify then
     notification.info("Parsing commit...")
@@ -76,7 +76,9 @@ end
 
 --- Opens the CommitViewBuffer
 --- If already open will close the buffer
-function M:open()
+function M:open(kind)
+  kind = kind or config.values.commit_view.kind
+
   if M.instance and M.instance.is_open then
     M.instance:close()
   end
@@ -92,7 +94,7 @@ function M:open()
   self.buffer = Buffer.create {
     name = "NeogitCommitView",
     filetype = "NeogitCommitView",
-    kind = config.values.commit_view.kind,
+    kind = kind,
     context_highlight = true,
     autocmds = {
       ["BufUnload"] = function()

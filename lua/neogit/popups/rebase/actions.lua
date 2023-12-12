@@ -1,5 +1,6 @@
 local git = require("neogit.lib.git")
 local input = require("neogit.lib.input")
+local notification = require("neogit.lib.notification")
 
 local CommitSelectViewBuffer = require("neogit.buffers.commit_select_view")
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
@@ -65,14 +66,38 @@ function M.interactively(popup)
   if popup.state.env.commit then
     commit = popup.state.env.commit
   else
-    commit = CommitSelectViewBuffer.new(git.log.list()):open_async()[1]
+    commit = CommitSelectViewBuffer.new(git.log.list({}, {}, {}, true)):open_async()[1]
   end
 
   if commit then
+    if not git.log.is_ancestor(commit, "HEAD") then
+      notification.warn("Commit isn't an ancestor of HEAD")
+      return
+    end
+
     local args = popup:get_arguments()
-    local parent_commit = git.cli["rev-list"].max_count(1).parents.args(commit).call().stdout[1]
-    if commit ~= parent_commit then
-      commit = vim.split(parent_commit, " ")[2]
+
+    local merges = git.cli["rev-list"].merges.args(commit .. "..HEAD").call().stdout
+    if merges[1] then
+      local choice = input.get_choice("Proceed despite merge in rebase range?", {
+        values = { "&continue", "&select other", "&abort" },
+        default = 1,
+      })
+
+      -- selene: allow(empty_if)
+      if choice == "c" then
+        -- no-op
+      elseif choice == "s" then
+        popup.state.env.commit = nil
+        M.interactively(popup)
+      else
+        return
+      end
+    end
+
+    local parent = git.log.parent(commit)
+    if parent then
+      commit = commit .. "^"
     else
       table.insert(args, "--root")
     end

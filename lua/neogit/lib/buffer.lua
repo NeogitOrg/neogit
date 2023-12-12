@@ -91,6 +91,11 @@ function Buffer:set_lines(first, last, strict, lines)
   api.nvim_buf_set_lines(self.handle, first, last, strict, lines)
 end
 
+function Buffer:insert_line(line)
+  local line_nr = fn.line(".") - 1
+  api.nvim_buf_set_lines(self.handle, line_nr, line_nr, false, { line })
+end
+
 function Buffer:buffered_set_line(line)
   table.insert(self.line_buffer, line)
 end

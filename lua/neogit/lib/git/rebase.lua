@@ -17,6 +17,10 @@ local function rebase_command(cmd)
 end
 
 function M.rebase_interactive(commit, args)
+  if vim.tbl_contains(args, "--root") then
+    commit = ""
+  end
+
   local result = rebase_command(cli.rebase.interactive.args(commit).arg_list(args))
   if result.code ~= 0 then
     notification.error("Rebasing failed. Resolve conflicts before continuing")
