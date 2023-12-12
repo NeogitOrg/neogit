@@ -105,6 +105,7 @@ end
 ---@field disable_signs? boolean Special signs to draw for sections etc. in Neogit
 ---@field git_services? table Templartes to use when opening a pull request for a branch
 ---@field disable_commit_confirmation? boolean Disable commit confirmations
+---@field fetch_after_checkout? boolean Perform a fetch if the newly checked out branch has an upstream or pushRemote set
 ---@field telescope_sorter? function The sorter telescope will use
 ---@field disable_insert_on_commit? boolean|"auto" Disable automatically entering insert mode in commit dialogues
 ---@field use_per_project_settings? boolean Scope persisted settings on a per-project basis
@@ -160,6 +161,7 @@ function M.get_default_values()
     disable_insert_on_commit = true,
     use_per_project_settings = true,
     remember_settings = true,
+    fetch_after_checkout = false,
     auto_refresh = true,
     sort_branches = "-committerdate",
     kind = "tab",

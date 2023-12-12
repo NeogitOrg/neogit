@@ -46,6 +46,31 @@ function M.get_recent_local_branches()
   return util.deduplicate(branches)
 end
 
+function M.checkout(name, args)
+  cli.checkout.branch(name).arg_list(args or {}).call_sync()
+
+  if config.values.fetch_after_checkout then
+    local fetch = require("neogit.lib.git.fetch")
+    local pushRemote = M.pushRemote_ref()
+    local upstream = M.upstream()
+
+    if upstream and upstream == pushRemote then
+      fetch.fetch_upstream()
+    else
+      if upstream then
+        fetch.fetch_upstream()
+      end
+      if pushRemote then
+        fetch.fetch_pushRemote()
+      end
+    end
+  end
+end
+
+function M.track(name, args)
+  cli.checkout.track(name).arg_list(args or {}).call_sync()
+end
+
 function M.get_local_branches(include_current)
   local branches = cli.branch.list(config.values.sort_branches).call_sync().stdout
   return parse_branches(branches, include_current)
