@@ -57,6 +57,7 @@ CONTENTS                                                       *neogit_contents*
        • Log                                                |neogit_log_buffer|
        • Reflog                                          |neogit_reflog_buffer|
        • Commit                                          |neogit_commit_buffer|
+       • Rebase Todo                                |neogit_rebase_todo_buffer|
 
 ==============================================================================
 1. Intro                                                          *neogit_intro*
@@ -1413,18 +1414,30 @@ Untracked Files                                 *neogit_status_buffer_untracked*
 
 ==============================================================================
 Log Buffer                                                   *neogit_log_buffer*
-
 (TODO)
 
 ==============================================================================
 Reflog Buffer                                             *neogit_reflog_buffer*
-
 (TODO)
 
 ==============================================================================
 Commit Buffer                                             *neogit_commit_buffer*
-
 (TODO)
 
+==============================================================================
+Rebase Todo Buffer                                   *neogit_rebase_todo_buffer*
+
+The Rebase editor has some extra commands, beyond being a normal vim buffer.
+
+The following keys, in normal mode, will act on the commit under the cursor:
+• `p`    Pick current commit
+• `r`    Reword current commit
+• `e`    Edit current commit
+• `s`    Squash current commit
+• `f`    Fixup current commit
+• `d`    Drop current commit
+• `x`    Insert command to execute
+• `b`    Insert breakpoint
+• `<cr>` Open current commit in Commit Buffer
 
 vim:tw=78:ts=8:ft=help
