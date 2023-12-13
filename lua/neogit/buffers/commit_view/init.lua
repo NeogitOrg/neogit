@@ -130,7 +130,7 @@ function M:open(kind)
                   end
                 end
               else
-                if layout.options.sign == "NeogitDiffHeader" then
+                if layout.options.line_hl == "NeogitDiffHeader" then
                   return { layout.value, layout:row_range_abs() }
                 end
               end

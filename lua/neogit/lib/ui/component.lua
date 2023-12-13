@@ -105,6 +105,10 @@ function Component:get_sign()
   return self.options.sign or (self.parent and self.parent:get_sign() or nil)
 end
 
+function Component:get_line_highlight()
+  return self.options.line_hl or (self.parent and self.parent:get_line_highlight() or nil)
+end
+
 function Component:get_highlight()
   return self.options.highlight or (self.parent and self.parent:get_highlight() or nil)
 end
