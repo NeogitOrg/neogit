@@ -1285,7 +1285,7 @@ local cmd_func_map = function()
             if M.commit_view and M.commit_view.is_open then
               M.commit_view:close()
             end
-            M.commit_view = CommitView.new(item.name:match("(.-):? "), true)
+            M.commit_view = CommitView.new(item.name:match("(.-):? "))
             M.commit_view:open()
           end
         end
@@ -1298,7 +1298,7 @@ local cmd_func_map = function()
           if M.commit_view and M.commit_view.is_open then
             M.commit_view:close()
           end
-          M.commit_view = CommitView.new(ref, true)
+          M.commit_view = CommitView.new(ref)
           M.commit_view:open()
         end
       end
