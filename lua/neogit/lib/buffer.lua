@@ -467,7 +467,7 @@ function Buffer.create(config)
   end
 
   if config.load then
-    local content = Path:new(config.name):read()
+    local content = Path:new(config.name):readlines()
     api.nvim_buf_set_lines(buffer, 0, -1, false, content)
     api.nvim_buf_call(buffer, function()
       vim.cmd("silent w!")
