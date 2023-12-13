@@ -519,6 +519,7 @@ local configurations = {
       abort = "--abort",
     },
   },
+
   ["verify-commit"] = config {},
 }
 
