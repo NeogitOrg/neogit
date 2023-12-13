@@ -47,9 +47,8 @@ function M.new(commit_id, filter)
 
   commit_info.commit_arg = commit_id
 
-  local commit_overview = parser.parse_commit_overview(
-    git.cli.show.stat.oneline.args(commit_id).call_sync().stdout
-  )
+  local commit_overview =
+    parser.parse_commit_overview(git.cli.show.stat.oneline.args(commit_id).call_sync().stdout)
 
   local instance = {
     is_open = false,
