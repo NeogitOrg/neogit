@@ -9,15 +9,18 @@ local CommitViewBuffer = require("neogit.buffers.commit_view")
 ---@class LogViewBuffer
 ---@field commits CommitLogEntry[]
 ---@field internal_args table
+---@field files string[]
 local M = {}
 M.__index = M
 
 ---Opens a popup for selecting a commit
 ---@param commits CommitLogEntry[]|nil
 ---@param internal_args table|nil
+---@param files string[]|nil list of files to filter by
 ---@return LogViewBuffer
-function M.new(commits, internal_args)
+function M.new(commits, internal_args, files)
   local instance = {
+    files = files,
     commits = commits,
     internal_args = internal_args,
     buffer = nil,
@@ -128,7 +131,7 @@ function M:open()
           self:close()
         end,
         ["<enter>"] = function()
-          CommitViewBuffer.new(self.buffer.ui:get_commit_under_cursor()):open()
+          CommitViewBuffer.new(self.buffer.ui:get_commit_under_cursor(), self.files):open()
         end,
         ["<c-k>"] = function()
           pcall(vim.cmd, "normal! zc")
