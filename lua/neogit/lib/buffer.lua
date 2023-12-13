@@ -7,6 +7,7 @@ local Ui = require("neogit.lib.ui")
 
 ---@class Buffer
 ---@field handle number
+---@field win_handle number
 ---@field namespaces table
 ---@field mmanager MappingsManager
 ---@field ui Ui
@@ -64,8 +65,8 @@ function Buffer:get_changedtick()
 end
 
 function Buffer:lock()
-  self:set_option("readonly", true)
-  self:set_option("modifiable", false)
+  self:set_buffer_option("readonly", true)
+  self:set_buffer_option("modifiable", false)
 end
 
 function Buffer:define_autocmd(events, script)
@@ -297,6 +298,7 @@ function Buffer:show()
     require("ufo").detach()
   end
 
+  self.win_handle = win
   return win
 end
 
@@ -322,16 +324,20 @@ function Buffer:set_fold_state(first, last, open)
 end
 
 function Buffer:unlock()
-  self:set_option("readonly", false)
-  self:set_option("modifiable", true)
+  self:set_buffer_option("readonly", false)
+  self:set_buffer_option("modifiable", true)
 end
 
 function Buffer:get_option(name)
-  return api.nvim_buf_get_option(self.handle, name)
+  return api.nvim_get_option_value(name, { buf = self.handle })
 end
 
-function Buffer:set_option(name, value)
-  api.nvim_buf_set_option(self.handle, name, value)
+function Buffer:set_buffer_option(name, value)
+  api.nvim_set_option_value(name, value, { buf = self.handle })
+end
+
+function Buffer:set_window_option(name, value)
+  api.nvim_set_option_value(name, value, { win = self.win_handle })
 end
 
 function Buffer:set_name(name)
@@ -418,7 +424,7 @@ function Buffer:get_namespace_id(name)
 end
 
 function Buffer:set_filetype(ft)
-  api.nvim_buf_set_option(self.handle, "filetype", ft)
+  self:set_buffer_option("filetype", ft)
 end
 
 function Buffer:call(f)
@@ -477,15 +483,15 @@ function Buffer.create(config)
     win = buffer:show()
   end
 
-  buffer:set_option("bufhidden", config.bufhidden or "wipe")
-  buffer:set_option("buftype", config.buftype or "nofile")
-  buffer:set_option("swapfile", false)
+  buffer:set_buffer_option("bufhidden", config.bufhidden or "wipe")
+  buffer:set_buffer_option("buftype", config.buftype or "nofile")
+  buffer:set_buffer_option("swapfile", false)
 
   if win then
-    vim.api.nvim_set_option_value("foldenable", true, { win = win })
-    vim.api.nvim_set_option_value("foldlevel", 99, { win = win })
-    vim.api.nvim_set_option_value("foldminlines", 0, { win = win })
-    vim.api.nvim_set_option_value("foldtext", "v:lua.NeogitBufferFoldText()", { win = win })
+    buffer:set_window_option("foldenable", true)
+    buffer:set_window_option("foldlevel", 99)
+    buffer:set_window_option("foldminlines", 0)
+    buffer:set_window_option("foldtext", "v:lua.NeogitBufferFoldText()")
   end
 
   if config.filetype then
@@ -526,17 +532,17 @@ function Buffer.create(config)
   buffer.mmanager.register()
 
   if not config.modifiable then
-    buffer:set_option("modifiable", false)
-    buffer:set_option("modified", false)
+    buffer:set_buffer_option("modifiable", false)
+    buffer:set_buffer_option("modified", false)
   end
 
   if config.readonly == true then
-    buffer:set_option("readonly", true)
+    buffer:set_buffer_option("readonly", true)
   end
 
   if vim.fn.has("nvim-0.10") then
-    buffer:set_option("spell", false)
-    buffer:set_option("wrap", false)
+    buffer:set_window_option("spell", false)
+    buffer:set_window_option("wrap", false)
   end
 
   if config.after then
