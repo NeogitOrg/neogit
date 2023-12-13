@@ -26,12 +26,15 @@ Here's an example spec for [Lazy](https://github.com/folke/lazy.nvim), but you'r
   "NeogitOrg/neogit",
   dependencies = {
     "nvim-lua/plenary.nvim",         -- required
+    "sindrets/diffview.nvim",        -- optional - Diff integration
+
+    -- Only one of these is needed, not both.
     "nvim-telescope/telescope.nvim", -- optional
-    "sindrets/diffview.nvim",        -- optional
     "ibhagwan/fzf-lua",              -- optional
   },
   config = true
 }
+
 ```
 
 If you're not using lazy, you'll need to require and setup the plugin like so:
