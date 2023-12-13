@@ -43,7 +43,7 @@ local function spin_off_branch(checkout)
   local current_branch_name = git.branch.current_full_name()
 
   if checkout then
-    git.cli.checkout.branch(name).call_sync()
+    git.cli.checkout.branch(name).call()
   end
 
   local upstream = git.branch.upstream()
@@ -92,9 +92,9 @@ M.checkout_local_branch = operation("checkout_local_branch", function(popup)
 
   if target then
     if vim.tbl_contains(remote_branches, target) then
-      git.cli.checkout.track(target).arg_list(popup:get_arguments()).call_sync()
+      git.branch.track(target, popup:get_arguments())
     elseif target then
-      git.cli.checkout.branch(target).arg_list(popup:get_arguments()).call_sync()
+      git.branch.checkout(target, popup:get_arguments())
     end
     fire_branch_event("NeogitBranchCheckout", { branch_name = target })
   end
@@ -106,7 +106,7 @@ M.checkout_recent_branch = operation("checkout_recent_branch", function(popup)
     return
   end
 
-  git.cli.checkout.branch(selected_branch).arg_list(popup:get_arguments()).call_sync()
+  git.branch.checkout(selected_branch, popup:get_arguments())
   fire_branch_event("NeogitBranchCheckout", { branch_name = selected_branch })
 end)
 
