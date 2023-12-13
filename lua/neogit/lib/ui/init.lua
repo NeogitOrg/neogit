@@ -278,7 +278,6 @@ function Ui:_render(first_line, first_col, parent, components, flags)
       c.position.col_start = 0
       c.position.col_end = -1
 
-      local sign = c:get_sign()
       local line_hl = c:get_line_highlight()
       local highlight = c:get_highlight()
 
@@ -287,10 +286,6 @@ function Ui:_render(first_line, first_col, parent, components, flags)
 
         if highlight then
           self.buf:buffered_add_highlight(curr_line - 1, c.position.col_start, c.position.col_end, highlight)
-        end
-
-        if sign then
-          self.buf:buffered_place_sign(curr_line, sign, "hl")
         end
 
         if line_hl then
@@ -303,10 +298,6 @@ function Ui:_render(first_line, first_col, parent, components, flags)
       elseif c.tag == "row" then
         flags.in_row = true
         curr_line = curr_line + self:_render(curr_line, 0, c, c.children, flags)
-
-        if sign then
-          self.buf:buffered_place_sign(curr_line - 1, sign, "hl")
-        end
 
         if line_hl then
           self.buf:buffered_add_line_highlight(curr_line - 2, line_hl)
