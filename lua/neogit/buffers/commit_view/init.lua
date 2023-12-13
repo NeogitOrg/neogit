@@ -44,13 +44,18 @@ local M = {
 function M.new(commit_id, filter)
   local commit_info =
     git.log.parse(git.cli.show.format("fuller").args(commit_id).call_sync({ trim = false }).stdout)[1]
+
   commit_info.commit_arg = commit_id
+
+  local commit_overview = parser.parse_commit_overview(
+    git.cli.show.stat.oneline.args(commit_id).call_sync().stdout
+  )
+
   local instance = {
     is_open = false,
+    item_filter = filter,
     commit_info = commit_info,
-    commit_overview = parser.parse_commit_overview(
-      git.cli.show.stat.oneline.args(commit_id).call_sync().stdout
-    ),
+    commit_overview = commit_overview,
     commit_signature = config.values.commit_view.verify_commit and git.log.verify_commit(commit_id) or {},
     buffer = nil,
   }
@@ -249,7 +254,7 @@ function M:open(kind)
       },
     },
     render = function()
-      return ui.CommitView(self.commit_info, self.commit_overview, self.commit_signature)
+      return ui.CommitView(self.commit_info, self.commit_overview, self.commit_signature, self.item_filter)
     end,
   }
 end
