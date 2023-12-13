@@ -425,8 +425,8 @@ function Buffer:call(f)
   api.nvim_buf_call(self.handle, f)
 end
 
-function Buffer.exists(name)
-  return fn.bufnr(name) ~= -1
+function Buffer:exists()
+  return fn.bufnr(self.handle) ~= -1
 end
 
 function Buffer:set_extmark(...)
@@ -557,10 +557,10 @@ function Buffer.create(config)
   end)
 
   if config.context_highlight then
-    buffer:call(function()
-      local decor_ns = api.nvim_create_namespace("NeogitBufferViewDecor" .. config.name)
-      local context_ns = api.nvim_create_namespace("NeogitBufferitViewContext" .. config.name)
+    buffer:create_namespace("ViewContext")
+    buffer:create_namespace("ViewDecor")
 
+    buffer:call(function()
       local function frame_key()
         return table.concat { fn.line("w0"), fn.line("w$"), fn.getcurpos()[2], buffer:get_changedtick() }
       end
@@ -576,7 +576,7 @@ function Buffer.create(config)
       end
 
       local function on_win()
-        buffer:clear_namespace(context_ns)
+        buffer:clear_namespace("ViewContext")
 
         -- TODO: this is WAY to slow to be called so frequently, especially in a large buffer
         local stack = buffer.ui:get_component_stack_under_cursor()
@@ -590,19 +590,19 @@ function Buffer.create(config)
 
         for line = fn.line("w0"), fn.line("w$") do
           if first and last and line >= first and line <= last and not top_level then
-            local sign = buffer.ui:get_component_stack_on_line(line)[1].options.sign
-
-            buffer:set_extmark(
-              context_ns,
+            local line_hl = buffer.ui:get_component_stack_on_line(line)[1].options.line_hl
+            buffer:buffered_add_line_highlight(
               line - 1,
-              0,
-              { line_hl_group = (sign or "NeogitDiffContext") .. "Highlight", priority = 10 }
+              (line_hl or "NeogitDiffContext") .. "Highlight",
+              { priority = 200, namespace = "ViewContext" }
             )
           end
         end
+
+        buffer:flush_line_highlight_buffer()
       end
 
-      buffer:set_decorations(decor_ns, { on_start = on_start, on_win = on_win, on_end = on_end })
+      buffer:set_decorations("ViewDecor", { on_start = on_start, on_win = on_win, on_end = on_end })
     end)
   end
 
