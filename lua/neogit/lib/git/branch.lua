@@ -46,6 +46,35 @@ function M.get_recent_local_branches()
   return util.deduplicate(branches)
 end
 
+function M.checkout(name, args)
+  cli.checkout.branch(name).arg_list(args or {}).call_sync()
+
+  if config.values.fetch_after_checkout then
+    local fetch = require("neogit.lib.git.fetch")
+    local pushRemote = M.pushRemote_ref(name)
+    local upstream = M.upstream(name)
+
+    if upstream and upstream == pushRemote then
+      local remote, branch = upstream:match("^([^/]*)/(.*)$")
+      fetch.fetch(remote, branch)
+    else
+      if upstream then
+        local remote, branch = upstream:match("^([^/]*)/(.*)$")
+        fetch.fetch(remote, branch)
+      end
+
+      if pushRemote then
+        local remote, branch = pushRemote:match("^([^/]*)/(.*)$")
+        fetch.fetch(remote, branch)
+      end
+    end
+  end
+end
+
+function M.track(name, args)
+  cli.checkout.track(name).arg_list(args or {}).call_sync()
+end
+
 function M.get_local_branches(include_current)
   local branches = cli.branch.list(config.values.sort_branches).call_sync().stdout
   return parse_branches(branches, include_current)
@@ -168,8 +197,23 @@ function M.set_pushRemote()
   return pushRemote
 end
 
-function M.upstream()
-  return require("neogit.lib.git").repo.upstream.ref
+---Finds the upstream ref for a branch, or current branch
+---When a branch is specified and no upstream exists, returns nil
+---@param name string?
+---@return string|nil
+function M.upstream(name)
+  if name then
+    local result = cli["rev-parse"].symbolic_full_name
+      .abbrev_ref()
+      .args(name .. "@{upstream}")
+      .call { ignore_error = true }
+
+    if result.code == 0 then
+      return result.stdout[1]
+    end
+  else
+    return require("neogit.lib.git").repo.upstream.ref
+  end
 end
 
 function M.upstream_label()
