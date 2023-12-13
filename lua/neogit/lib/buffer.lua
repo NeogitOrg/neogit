@@ -5,6 +5,8 @@ local mappings_manager = require("neogit.lib.mappings_manager")
 local signs = require("neogit.lib.signs")
 local Ui = require("neogit.lib.ui")
 
+local Path = require("plenary.path")
+
 ---@class Buffer
 ---@field handle number
 ---@field win_handle number
@@ -443,8 +445,6 @@ function Buffer:set_decorations(namespace, opts)
   return api.nvim_set_decoration_provider(self:get_namespace_id(namespace), opts)
 end
 
-local uv_utils = require("neogit.lib.uv")
-
 ---@class BufferConfig
 ---@field name string
 ---@field load boolean
@@ -467,7 +467,7 @@ function Buffer.create(config)
   end
 
   if config.load then
-    local content = uv_utils.read_file_sync(config.name)
+    local content = Path:new(config.name):read()
     api.nvim_buf_set_lines(buffer, 0, -1, false, content)
     api.nvim_buf_call(buffer, function()
       vim.cmd("silent w!")
