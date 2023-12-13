@@ -1,14 +1,13 @@
 local api = vim.api
 local fn = vim.fn
-package.loaded["neogit.buffer"] = nil
-
-__BUFFER_AUTOCMD_STORE = {}
 
 local mappings_manager = require("neogit.lib.mappings_manager")
+local signs = require("neogit.lib.signs")
 local Ui = require("neogit.lib.ui")
 
 ---@class Buffer
 ---@field handle number
+---@field namespaces table
 ---@field mmanager MappingsManager
 ---@field ui Ui
 ---@field kind string
@@ -27,10 +26,12 @@ function Buffer:new(handle)
     border = nil,
     mmanager = mappings_manager.new(handle),
     kind = nil, -- how the buffer was opened. For more information look at the create function
-    namespace = api.nvim_create_namespace("neogit-buffer-" .. handle),
+    namespaces = {
+      default = api.nvim_create_namespace("neogit-buffer-" .. handle),
+    },
     line_buffer = {},
     hl_buffer = {},
-    sign_buffer = {},
+    line_hl_buffer = {},
     ext_buffer = {},
     fold_buffer = {},
   }
@@ -104,10 +105,6 @@ function Buffer:buffered_add_highlight(...)
   table.insert(self.hl_buffer, { ... })
 end
 
-function Buffer:buffered_place_sign(...)
-  table.insert(self.sign_buffer, { ... })
-end
-
 function Buffer:buffered_set_extmark(...)
   table.insert(self.ext_buffer, { ... })
 end
@@ -116,36 +113,57 @@ function Buffer:buffered_create_fold(...)
   table.insert(self.fold_buffer, { ... })
 end
 
+function Buffer:buffered_add_line_highlight(...)
+  table.insert(self.line_hl_buffer, { ... })
+end
+
 function Buffer:resize(length)
   api.nvim_buf_set_lines(self.handle, length, -1, false, {})
 end
 
-function Buffer:flush_buffers()
-  self:clear_namespace(self.namespace)
-
-  api.nvim_buf_set_lines(self.handle, 0, -1, false, self.line_buffer)
-  self.line_buffer = {}
-
-  for _, sign in ipairs(self.sign_buffer) do
-    self:place_sign(unpack(sign))
+function Buffer:flush_line_buffer()
+  if self.line_buffer[1] then
+    api.nvim_buf_set_lines(self.handle, 0, -1, false, self.line_buffer)
+    self.line_buffer = {}
   end
-  self.sign_buffer = {}
+end
 
-  for _, hl in ipairs(self.hl_buffer) do
-    self:add_highlight(unpack(hl))
+function Buffer:flush_highlight_buffer()
+  for _, highlight in ipairs(self.hl_buffer) do
+    self:add_highlight(unpack(highlight))
   end
   self.hl_buffer = {}
+end
 
+function Buffer:flush_extmark_buffer()
   for _, ext in ipairs(self.ext_buffer) do
     self:set_extmark(unpack(ext))
   end
   self.ext_buffer = {}
+end
 
+function Buffer:flush_line_highlight_buffer()
+  for _, hl in ipairs(self.line_hl_buffer) do
+    self:add_line_highlight(unpack(hl))
+  end
+  self.line_hl_buffer = {}
+end
+
+function Buffer:flush_fold_buffer()
   for _, fold in ipairs(self.fold_buffer) do
     self:create_fold(unpack(fold))
     self:set_fold_state(unpack(fold))
   end
   self.fold_buffer = {}
+end
+
+function Buffer:flush_buffers()
+  self:clear_namespace("default")
+  self:flush_line_buffer()
+  self:flush_highlight_buffer()
+  self:flush_extmark_buffer()
+  self:flush_line_highlight_buffer()
+  self:flush_fold_buffer()
 end
 
 function Buffer:set_text(first_line, last_line, first_col, last_col, lines)
@@ -338,58 +356,65 @@ function Buffer:open_fold(line, reset_pos)
   end
 end
 
-function Buffer:add_highlight(line, col_start, col_end, name, ns_id)
-  local ns_id = ns_id or self.namespace
-
-  api.nvim_buf_add_highlight(self.handle, ns_id, name, line, col_start, col_end)
+function Buffer:add_highlight(line, col_start, col_end, name, namespace)
+  api.nvim_buf_add_highlight(self.handle, self:get_namespace_id(namespace), name, line, col_start, col_end)
 end
 
-function Buffer:unplace_sign(id)
-  vim.cmd("sign unplace " .. id)
+function Buffer:place_sign(line, name, opts)
+  opts = opts or {}
+
+  api.nvim_buf_set_extmark(
+    self.handle,
+    self:get_namespace_id(opts.namespace),
+    line - 1,
+    0,
+    { sign_text = signs.get(name) }
+  )
 end
 
-function Buffer:place_sign(line, name, group, id)
-  -- Sign IDs should be unique within a group, however there's no downside as
-  -- long as we don't want to uniquely identify the placed sign later. Thus,
-  -- we leave the choice to the caller
-  local sign_id = id or 1
+function Buffer:add_line_highlight(line, hl_group, opts)
+  opts = opts or {}
 
-  -- There's an equivalent function sign_place() which can automatically use
-  -- a free ID, but is considerable slower, so we use the command for now
-  local cmd = {
-    string.format("sign place %d", sign_id),
-    string.format("line=%d", line),
-    string.format("name=%s", name),
-  }
+  api.nvim_buf_set_extmark(
+    self.handle,
+    self:get_namespace_id(opts.namespace),
+    line,
+    0,
+    { line_hl_group = hl_group, priority = opts.priority or 190 }
+  )
+end
 
-  if group then
-    table.insert(cmd, string.format("group=%s", group))
+function Buffer:clear_namespace(name)
+  assert(name, "Cannot clear namespace without specifying which")
+
+  if not self:is_focused() then
+    return
   end
 
-  table.insert(cmd, string.format("buffer=%d", self.handle))
-
-  vim.cmd(table.concat(cmd, " "))
-  return sign_id
-end
-
-function Buffer:get_sign_at_line(line, group)
-  group = group or "*"
-  return fn.sign_getplaced(self.handle, {
-    group = group,
-    lnum = line,
-  })[1]
-end
-
-function Buffer:clear_sign_group(group)
-  vim.cmd(string.format("sign unplace * group=%s buffer=%s", group, self.handle))
-end
-
-function Buffer:clear_namespace(namespace)
-  api.nvim_buf_clear_namespace(self.handle, namespace, 0, -1)
+  api.nvim_buf_clear_namespace(self.handle, self:get_namespace_id(name), 0, -1)
 end
 
 function Buffer:create_namespace(name)
-  return api.nvim_create_namespace(name)
+  assert(name, "Namespace must have a name")
+
+  local namespace = "neogit-buffer-" .. self.handle .. "-" .. name
+  if not self.namespaces[namespace] then
+    self.namespaces[namespace] = api.nvim_create_namespace(namespace)
+  end
+
+  return self.namespaces[namespace]
+end
+
+function Buffer:get_namespace_id(name)
+  local ns_id
+  if name and name ~= "default" then
+    ns_id = self.namespaces["neogit-buffer-" .. self.handle .. "-" .. name]
+    assert(ns_id, "Namespace ID should never be nil! Create '" .. name .. "' namespace before using it")
+  else
+    ns_id = self.namespaces.default
+  end
+
+  return ns_id
 end
 
 function Buffer:set_filetype(ft)
@@ -400,24 +425,16 @@ function Buffer:call(f)
   api.nvim_buf_call(self.handle, f)
 end
 
-function Buffer.exists(name)
-  return fn.bufnr(name) ~= -1
+function Buffer:exists()
+  return fn.bufnr(self.handle) ~= -1
 end
 
 function Buffer:set_extmark(...)
   return api.nvim_buf_set_extmark(self.handle, ...)
 end
 
-function Buffer:get_extmark(id, ns)
-  return api.nvim_buf_get_extmark_by_id(self.handle, ns or self.namespace, id, { details = true })
-end
-
-function Buffer:del_extmark(ns, id)
-  return api.nvim_buf_del_extmark(self.handle, ns, id)
-end
-
 function Buffer:set_decorations(namespace, opts)
-  return api.nvim_set_decoration_provider(namespace, opts)
+  return api.nvim_set_decoration_provider(self:get_namespace_id(namespace), opts)
 end
 
 local uv_utils = require("neogit.lib.uv")
@@ -540,10 +557,10 @@ function Buffer.create(config)
   end)
 
   if config.context_highlight then
-    buffer:call(function()
-      local decor_ns = api.nvim_create_namespace("NeogitBufferViewDecor" .. config.name)
-      local context_ns = api.nvim_create_namespace("NeogitBufferitViewContext" .. config.name)
+    buffer:create_namespace("ViewContext")
+    buffer:create_namespace("ViewDecor")
 
+    buffer:call(function()
       local function frame_key()
         return table.concat { fn.line("w0"), fn.line("w$"), fn.getcurpos()[2], buffer:get_changedtick() }
       end
@@ -559,7 +576,7 @@ function Buffer.create(config)
       end
 
       local function on_win()
-        buffer:clear_namespace(context_ns)
+        buffer:clear_namespace("ViewContext")
 
         -- TODO: this is WAY to slow to be called so frequently, especially in a large buffer
         local stack = buffer.ui:get_component_stack_under_cursor()
@@ -573,19 +590,19 @@ function Buffer.create(config)
 
         for line = fn.line("w0"), fn.line("w$") do
           if first and last and line >= first and line <= last and not top_level then
-            local sign = buffer.ui:get_component_stack_on_line(line)[1].options.sign
-
-            buffer:set_extmark(
-              context_ns,
+            local line_hl = buffer.ui:get_component_stack_on_line(line)[1].options.line_hl
+            buffer:buffered_add_line_highlight(
               line - 1,
-              0,
-              { line_hl_group = (sign or "NeogitDiffContext") .. "Highlight", priority = 10 }
+              (line_hl or "NeogitDiffContext") .. "Highlight",
+              { priority = 200, namespace = "ViewContext" }
             )
           end
         end
+
+        buffer:flush_line_highlight_buffer()
       end
 
-      buffer:set_decorations(decor_ns, { on_start = on_start, on_win = on_win, on_end = on_end })
+      buffer:set_decorations("ViewDecor", { on_start = on_start, on_win = on_win, on_end = on_end })
     end)
   end
 

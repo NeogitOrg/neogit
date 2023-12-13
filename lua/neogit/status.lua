@@ -16,7 +16,6 @@ local util = require("neogit.lib.util")
 local watcher = require("neogit.watcher")
 local operation = require("neogit.operations")
 
-local api = vim.api
 local fn = vim.fn
 
 local M = {}
@@ -116,9 +115,9 @@ local max_len = #"Modified by us"
 
 local function draw_sign_for_item(item, name)
   if item.folded then
-    M.status_buffer:place_sign(item.first, "NeogitClosed:" .. name, "fold_markers")
+    M.status_buffer:place_sign(item.first, "NeogitClosed" .. name, { namespace = "fold_markers" })
   else
-    M.status_buffer:place_sign(item.first, "NeogitOpen:" .. name, "fold_markers")
+    M.status_buffer:place_sign(item.first, "NeogitOpen" .. name, { namespace = "fold_markers" })
   end
 end
 
@@ -161,8 +160,7 @@ local function format_mode(mode)
 end
 
 local function draw_buffer()
-  M.status_buffer:clear_sign_group("hl")
-  M.status_buffer:clear_sign_group("fold_markers")
+  M.status_buffer:clear_namespace("fold_markers")
 
   local output = LineBuffer.new()
   if not config.values.disable_hint then
@@ -312,7 +310,7 @@ local function draw_buffer()
         end
 
         if f.done then
-          M.status_buffer:place_sign(#output, "NeogitRebaseDone", "hl")
+          M.status_buffer:add_line_highlight(#output, "NeogitRebaseDone", { priority = 210 })
         end
 
         local file = items_lookup[f.name] or { folded = true }
@@ -1348,32 +1346,33 @@ end
 ---@param buffer Buffer
 ---@return nil
 local function set_decoration_provider(buffer)
-  local decor_ns = api.nvim_create_namespace("NeogitStatusDecor")
-  local context_ns = api.nvim_create_namespace("NeogitStatusContext")
+  buffer:create_namespace("View")
+  buffer:create_namespace("ViewDecor")
+  buffer:create_namespace("ViewContext")
 
   local function frame_key()
-    return table.concat { fn.line("w0"), fn.line("w$"), fn.line("."), buffer:get_changedtick() }
+    return table.concat { buffer.handle, fn.line("w0"), fn.line("w$"), fn.line("."), buffer:get_changedtick() }
   end
 
   local last_frame_key = frame_key()
 
   local function on_start()
-    return buffer:is_focused() and frame_key() ~= last_frame_key
+    return buffer:exists() and buffer:is_focused() and frame_key() ~= last_frame_key
   end
 
   local function on_end()
-    last_frame_key = frame_key()
+    last_frame_key = buffer:exists() and frame_key() or "NONE"
   end
 
-  local function on_win()
-    buffer:clear_namespace(decor_ns)
-    buffer:clear_namespace(context_ns)
+  local function on_win(_, _, _, top, bottom)
+    buffer:clear_namespace("ViewDecor")
+    buffer:clear_namespace("ViewContext")
 
     -- first and last lines of current context based on cursor position, if available
     local _, _, _, first, last = save_cursor_location()
     local cursor_line = vim.fn.line(".")
 
-    for line = fn.line("w0"), fn.line("w$") do
+    for line = top, bottom do
       local text = buffer:get_line(line)[1]
       if text then
         local highlight
@@ -1393,7 +1392,7 @@ local function set_decoration_provider(buffer)
         end
 
         if highlight then
-          buffer:set_extmark(decor_ns, line - 1, 0, { line_hl_group = highlight, priority = 9 })
+          buffer:add_line_highlight(line - 1, highlight, { priority = 190, namespace = "ViewDecor" })
         end
 
         if
@@ -1404,18 +1403,17 @@ local function set_decoration_provider(buffer)
           and line <= last
           and highlight ~= "NeogitCursorLine"
         then
-          buffer:set_extmark(
-            context_ns,
+          buffer:add_line_highlight(
             line - 1,
-            0,
-            { line_hl_group = (highlight or "NeogitDiffContext") .. "Highlight", priority = 10 }
+            (highlight or "NeogitDiffContext") .. "Highlight",
+            { priority = 200, namespace = "ViewContext" }
           )
         end
       end
     end
   end
 
-  buffer:set_decorations(decor_ns, { on_start = on_start, on_win = on_win, on_end = on_end })
+  buffer:set_decorations("View", { on_start = on_start, on_win = on_win, on_end = on_end })
 end
 
 --- Creates a new status buffer
@@ -1480,6 +1478,7 @@ function M.create(kind, cwd)
         end
       end
 
+      buffer:create_namespace("fold_markers")
       set_decoration_provider(buffer)
 
       logger.debug("[STATUS BUFFER]: Dispatching initial render")

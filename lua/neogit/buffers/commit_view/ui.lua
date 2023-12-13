@@ -31,7 +31,7 @@ end
 
 function M.CommitHeader(info)
   return col {
-    text.sign("NeogitCommitViewHeader")("Commit " .. info.commit_arg),
+    text.line_hl("NeogitCommitViewHeader")("Commit " .. info.commit_arg),
     commit_header_arg(info),
     row {
       text.highlight("Comment")("Author:     "),
@@ -58,7 +58,7 @@ function M.CommitView(info, overview, signature_block)
   return {
     M.CommitHeader(info),
     text(""),
-    col(map(info.description, text), { sign = "NeogitCommitViewDescription", tag = "Description" }),
+    col(map(info.description, text), { line_hl = "NeogitCommitViewDescription", tag = "Description" }),
     text(""),
     M.SignatureBlock(signature_block),
     text(overview.summary),
