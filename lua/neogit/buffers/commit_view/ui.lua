@@ -68,7 +68,7 @@ function M.CommitView(info, overview, signature_block, item_filter)
       end
     end)
   end
-    
+
   return {
     M.CommitHeader(info),
     text(""),
