@@ -136,8 +136,8 @@ function M:open(kind)
               end
             end
             -- The Diffs are in the 10th element of the layout.
-            -- TODO: Do better than assume that we care about layout[10]
-            find_diff_headers(self.buffer.ui.layout[10])
+            -- TODO: Do better than assume that we care about the last item
+            find_diff_headers(self.buffer.ui.layout[#self.buffer.ui.layout])
 
             -- Search for a match and jump if we find it
             for path, line_nr in pairs(diff_headers) do
