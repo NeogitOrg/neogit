@@ -4,7 +4,6 @@ local ui = require("neogit.buffers.commit_view.ui")
 local git = require("neogit.lib.git")
 local config = require("neogit.config")
 local popups = require("neogit.popups")
-local notification = require("neogit.lib.notification")
 local status_maps = require("neogit.config").get_reversed_status_maps()
 
 local api = vim.api
@@ -40,13 +39,9 @@ local M = {
 
 ---Creates a new CommitViewBuffer
 ---@param commit_id string the id of the commit/tag
----@param notify boolean? Should show a notification or not
+---@param filter string[]? Filter diffs to filepaths in table
 ---@return CommitViewBuffer
-function M.new(commit_id, notify)
-  if notify then
-    notification.info("Parsing commit...")
-  end
-
+function M.new(commit_id, filter)
   local commit_info =
     git.log.parse(git.cli.show.format("fuller").args(commit_id).call_sync({ trim = false }).stdout)[1]
   commit_info.commit_arg = commit_id
@@ -59,8 +54,6 @@ function M.new(commit_id, notify)
     commit_signature = config.values.commit_view.verify_commit and git.log.verify_commit(commit_id) or {},
     buffer = nil,
   }
-
-  notification.delete_all()
 
   setmetatable(instance, { __index = M })
 
