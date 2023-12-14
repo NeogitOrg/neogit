@@ -51,9 +51,7 @@ function M:open()
           then
             -- Clear the buffer, without filling the register
             buf:clear()
-            buf:call(function()
-              vim.cmd("silent w!")
-            end)
+            buf:write()
           end
         end
 
