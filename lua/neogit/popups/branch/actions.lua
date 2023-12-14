@@ -65,7 +65,7 @@ M.spin_out_branch = operation("spin_out_branch", function()
 end)
 
 M.checkout_branch_revision = operation("checkout_branch_revision", function(popup)
-  local options = util.merge(popup.state.env.commits, git.branch.get_all_branches())
+  local options = util.merge(popup.state.env.commits, git.branch.get_all_branches(), git.tag.list())
 
   local selected_branch = FuzzyFinderBuffer.new(options):open_async()
   if not selected_branch then
