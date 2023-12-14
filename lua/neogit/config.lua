@@ -42,6 +42,16 @@ function M.get_reversed_popup_maps()
   return reversed_popup_maps
 end
 
+local reversed_rebase_editor_maps
+---@return table<string, string[]>
+--- Returns a map of commands, mapped to the list of keys which trigger them.
+function M.get_reversed_rebase_editor_maps()
+  if not reversed_rebase_editor_maps then
+    reversed_rebase_editor_maps = get_reversed_maps(M.values.mappings.rebase_editor)
+  end
+
+  return reversed_rebase_editor_maps
+end
 ---@alias WindowKind
 ---|"split" Open in a split
 ---| "vsplit" Open in a vertical split
@@ -90,12 +100,16 @@ end
 
 ---@alias NeogitConfigMappingsPopup "HelpPopup" | "DiffPopup" | "PullPopup" | "RebasePopup" | "MergePopup" | "PushPopup" | "CommitPopup" | "LogPopup" | "RevertPopup" | "StashPopup" | "IgnorePopup" | "CherryPickPopup" | "BranchPopup" | "FetchPopup" | "ResetPopup" | "RemotePopup" | "TagPopup" | false
 
----@alias NeogitGraphStyle "ascii" | "unicode"
+---@alias NeogitConfigMappingsRebaseEditor "Pick" | "Reword" | "Edit" | "Squash" | "Fixup" | "Execute" | "Drop" | "Break" | "MoveUp" | "MoveDown" | "Close" | "OpenCommit" | "Submit" | "Abort" | false
+
 
 ---@class NeogitConfigMappings Consult the config file or documentation for values
 ---@field finder? { [string]: NeogitConfigMappingsFinder } A dictionary that uses finder commands to set multiple keybinds
 ---@field status? { [string]: NeogitConfigMappingsStatus } A dictionary that uses status commands to set a single keybind
 ---@field popup? { [string]: NeogitConfigMappingsPopup } A dictionary that uses popup commands to set a single keybind
+---@field rebase_editor? { [string]: NeogitConfigMappingsRebaseEditor } A dictionary that uses Rebase editor commands to set a single keybind
+
+---@alias NeogitGraphStyle "ascii" | "unicode"
 
 ---@class NeogitConfig Neogit configuration settings
 ---@field filewatcher? NeogitFilewatcherConfig Values for filewatcher
@@ -271,6 +285,22 @@ function M.get_default_values()
       "NeogitCommitPopup--allow-empty",
     },
     mappings = {
+      rebase_editor = {
+        ["p"] = "Pick",
+        ["r"] = "Reword",
+        ["e"] = "Edit",
+        ["s"] = "Squash",
+        ["f"] = "Fixup",
+        ["x"] = "Execute",
+        ["d"] = "Drop",
+        ["b"] = "Break",
+        ["q"] = "Close",
+        ["<cr>"] = "OpenCommit",
+        ["gk"] = "MoveUp",
+        ["gj"] = "MoveDown",
+        ["<c-c><c-c>"] = "Submit",
+        ["<c-c><c-k>"] = "Abort",
+      },
       finder = {
         ["<cr>"] = "Select",
         ["<c-c>"] = "Close",
