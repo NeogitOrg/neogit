@@ -74,6 +74,12 @@ function Buffer:clear()
   api.nvim_buf_set_lines(self.handle, 0, -1, false, {})
 end
 
+function Buffer:write()
+  self:call(function()
+    vim.cmd("silent w!")
+  end)
+end
+
 function Buffer:get_lines(first, last, strict)
   return api.nvim_buf_get_lines(self.handle, first, last, strict)
 end
