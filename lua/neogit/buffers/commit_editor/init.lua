@@ -56,7 +56,7 @@ function M:open()
         end
 
         if self.on_unload and not should_commit then
-          self.on_unload(true)
+          self.on_unload(0)
         end
 
         require("neogit.process").defer_show_preview_buffers()
