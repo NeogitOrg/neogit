@@ -87,6 +87,7 @@ function M:open(_)
         [popups.mapping_for("RebasePopup")] = popups.open("rebase", function(p)
           p { commit = self.buffer.ui:get_commit_under_cursor() }
         end),
+        [popups.mapping_for("RemotePopup")] = popups.open("remote"),
         [popups.mapping_for("RevertPopup")] = popups.open("revert", function(p)
           p { commits = { self.buffer.ui:get_commit_under_cursor() } }
         end),
