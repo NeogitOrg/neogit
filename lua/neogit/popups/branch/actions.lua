@@ -65,20 +65,7 @@ M.spin_out_branch = operation("spin_out_branch", function()
 end)
 
 M.checkout_branch_revision = operation("checkout_branch_revision", function(popup)
-  local l_branches = util.map(git.branch.get_local_branches(false), function(branch)
-    return string.format("heads/%s", branch)
-  end)
-
-  local r_branches = util.map(git.branch.get_remote_branches(false), function(branch)
-    return string.format("remotes/%s", branch)
-  end)
-
-  local tags = util.map(git.tag.list(), function(tag)
-    return string.format("tags/%s", tag)
-  end)
-
-  local options = util.merge(popup.state.env.commits, l_branches, r_branches, tags)
-
+  local options = util.merge(popup.state.env.commits, git.branch.get_all_branches(false), git.tag.list())
   local selected_branch = FuzzyFinderBuffer.new(options):open_async()
   if not selected_branch then
     return
@@ -200,19 +187,7 @@ M.reset_branch = operation("reset_branch", function(popup)
     end
   end
 
-  local l_branches = util.map(git.branch.get_local_branches(false), function(branch)
-    return string.format("heads/%s", branch)
-  end)
-
-  local r_branches = util.map(git.branch.get_remote_branches(false), function(branch)
-    return string.format("remotes/%s", branch)
-  end)
-
-  local tags = util.map(git.tag.list(), function(tag)
-    return string.format("tags/%s", tag)
-  end)
-
-  local options = util.merge(popup.state.env.commits, l_branches, r_branches, tags)
+  local options = util.merge(popup.state.env.commits, git.branch.get_all_branches(false), git.tag.list())
   local current = git.branch.current()
   local to = FuzzyFinderBuffer.new(options):open_async {
     prompt_prefix = string.format("reset %s to", current),
