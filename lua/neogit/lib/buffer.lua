@@ -150,10 +150,10 @@ end
 function Buffer:move_cursor(line)
   if line < 0 then
     self:focus()
-    vim.cmd("norm G")
+    vim.cmd("norm! G")
   else
     self:focus()
-    vim.cmd("norm " .. line .. "G")
+    vim.cmd("norm! " .. line .. "G")
   end
 end
 
