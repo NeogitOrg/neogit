@@ -31,10 +31,10 @@ local function line_action(action)
   end
 end
 
-function M.new(filename, on_close)
+function M.new(filename, on_unload)
   local instance = {
     filename = filename,
-    on_close = on_close,
+    on_unload = on_unload,
     buffer = nil,
   }
 
@@ -99,8 +99,8 @@ function M:open()
     end,
     autocmds = {
       ["BufUnload"] = function()
-        if self.on_close then
-          self.on_close(aborted and 1 or 0)
+        if self.on_unload then
+          self.on_unload(aborted and 1 or 0)
         end
 
         if not aborted then

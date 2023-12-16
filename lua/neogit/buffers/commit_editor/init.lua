@@ -1,6 +1,9 @@
 local Buffer = require("neogit.lib.buffer")
 local config = require("neogit.config")
 local input = require("neogit.lib.input")
+local util = require("neogit.lib.util")
+
+local pad = util.pad_right
 
 local M = {}
 
@@ -30,7 +33,9 @@ function M.new(filename, on_unload)
 end
 
 function M:open()
-  local should_commit = false
+  local mapping = config.get_reversed_commit_editor_maps()
+  local aborted = false
+
   self.buffer = Buffer.create {
     name = self.filename,
     filetype = "NeogitCommitMessage",
@@ -39,38 +44,60 @@ function M:open()
     kind = config.values.commit_editor.kind,
     modifiable = true,
     readonly = false,
+    after = function(buffer)
+      local padding = util.max_length(util.flatten(vim.tbl_values(mapping)))
+      local pad_mapping = function(name)
+        return pad(mapping[name][1], padding)
+      end
+
+      -- stylua: ignore
+      local help_lines = {
+        "# Neogit Commands:",
+        string.format("#   %s close", pad_mapping("Close")),
+        string.format("#   %s tell Git to make it happen", pad_mapping("Submit")),
+        string.format("#   %s tell Git that you changed your mind, i.e. abort", pad_mapping("Abort")),
+        "#"
+      }
+
+      help_lines = util.filter_map(help_lines, function(line)
+        if not line:match("<NOP>") then -- mapping will be <NOP> if user unbinds key
+          return line
+        end
+      end)
+
+      local line = vim.fn.search("# Changes to be committed:") - 2
+      buffer:set_lines(line, line, false, help_lines)
+      buffer:write()
+      buffer:move_cursor(1)
+    end,
     autocmds = {
-      ["BufUnload"] = function(o)
-        local buf = Buffer.create {
-          name = o.buf,
-        }
-        if not should_commit and buf:get_option("modified") then
-          if
-            not config.values.disable_commit_confirmation
-            and not input.get_confirmation("Are you sure you want to commit?")
-          then
-            -- Clear the buffer, without filling the register
-            buf:clear()
-            buf:write()
-          end
+      ["BufUnload"] = function()
+        if self.on_unload then
+          self.on_unload(aborted and 1 or 0)
         end
 
-        if self.on_unload and not should_commit then
-          self.on_unload(0)
+        if not aborted then
+          require("neogit.process").defer_show_preview_buffers()
         end
-
-        require("neogit.process").defer_show_preview_buffers()
       end,
     },
     mappings = {
       n = {
-        ["q"] = function(buffer)
-          if not buffer:get_option("modified") then
-            buffer:close(true)
-          elseif input.get_confirmation("Commit message hasn't been saved. Abort?") then
-            should_commit = true
-            buffer:close(true)
+        [mapping["Close"]] = function(buffer)
+          if buffer:get_option("modified") and input.get_confirmation("Save changes?") then
+            buffer:write()
           end
+
+          buffer:close(true)
+        end,
+        [mapping["Submit"]] = function(buffer)
+          buffer:write()
+          buffer:close(true)
+        end,
+        [mapping["Abort"]] = function(buffer)
+          aborted = true
+          buffer:write()
+          buffer:close(true)
         end,
       },
     },
