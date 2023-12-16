@@ -58,7 +58,7 @@ function M:open()
     after = function(buffer)
       local padding = util.max_length(util.flatten(vim.tbl_values(mapping)))
       local pad_mapping = function(name)
-        return pad(mapping[name][1], padding)
+        return pad(mapping[name] and mapping[name][1] or "<NOP>", padding)
       end
 
       -- stylua: ignore

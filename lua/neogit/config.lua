@@ -17,12 +17,6 @@ local function get_reversed_maps(tbl)
     end
   end
 
-  setmetatable(result, {
-    __index = function()
-      return { "<NOP>" }
-    end,
-  })
-
   return result
 end
 
