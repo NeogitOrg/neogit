@@ -69,6 +69,14 @@ function M:open()
       buffer:set_lines(line, line, false, help_lines)
       buffer:write()
       buffer:move_cursor(1)
+
+      local disable_insert = config.values.disable_insert_on_commit
+      if
+        (disable_insert == "auto" and vim.fn.prevnonblank(".") ~= vim.fn.line("."))
+        or not disable_insert
+      then
+        vim.cmd(":startinsert")
+      end
     end,
     autocmds = {
       ["BufUnload"] = function()
@@ -102,17 +110,6 @@ function M:open()
         end,
       },
     },
-    initialize = function(buffer)
-      vim.api.nvim_buf_call(buffer.handle, function()
-        local disable_insert = config.values.disable_insert_on_commit
-        if
-          (disable_insert == "auto" and vim.fn.prevnonblank(".") ~= vim.fn.line("."))
-          or not disable_insert
-        then
-          vim.cmd(":startinsert")
-        end
-      end)
-    end,
   }
 end
 

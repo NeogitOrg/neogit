@@ -111,10 +111,11 @@ function M:open()
     mappings = {
       n = {
         [mapping["Close"]] = function(buffer)
-          if buffer:get_option("modified") and input.get_confirmation("Save changes?") then
-            buffer:write()
+          if buffer:get_option("modified") and not input.get_confirmation("Save changes?") then
+            aborted = true
           end
 
+          buffer:write()
           buffer:close(true)
         end,
         [mapping["Submit"]] = function(buffer)
