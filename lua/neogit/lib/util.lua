@@ -184,10 +184,6 @@ end
 --   return res
 -- end
 
--- function M.str_right_pad(str, len, sep)
---   return str .. sep:rep(len - #str)
--- end
-
 function M.str_min_width(str, len, sep)
   local length = vim.fn.strdisplaywidth(str)
   if length > len then
@@ -417,7 +413,8 @@ function M.underscore(s)
     return "_" .. upper:lower()
   end
 
-  return s:gsub("%u", snakey):gsub("^_", "")
+  local r, _ = s:gsub("%u", snakey):gsub("^_", "")
+  return r
 end
 
 return M

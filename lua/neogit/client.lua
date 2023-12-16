@@ -63,8 +63,14 @@ function M.editor(target, client)
   local editor = require("neogit.editor")
 
   local rpc_client = RPC.create_connection(client)
-  local function send_client_quit()
-    rpc_client:send_cmd_async("qall")
+  local function send_client_quit(status)
+    status = status or 0
+    if status == 0 then
+      rpc_client:send_cmd_async("qall")
+    elseif status == 1 then
+      rpc_client:send_cmd_async("cq")
+    end
+
     rpc_client:disconnect()
   end
 

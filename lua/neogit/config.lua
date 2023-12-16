@@ -17,6 +17,12 @@ local function get_reversed_maps(tbl)
     end
   end
 
+  setmetatable(result, {
+    __index = function()
+      return { "<NOP>" }
+    end,
+  })
+
   return result
 end
 
@@ -42,6 +48,16 @@ function M.get_reversed_popup_maps()
   return reversed_popup_maps
 end
 
+local reversed_rebase_editor_maps
+---@return table<string, string[]>
+--- Returns a map of commands, mapped to the list of keys which trigger them.
+function M.get_reversed_rebase_editor_maps()
+  if not reversed_rebase_editor_maps then
+    reversed_rebase_editor_maps = get_reversed_maps(M.values.mappings.rebase_editor)
+  end
+
+  return reversed_rebase_editor_maps
+end
 ---@alias WindowKind
 ---|"split" Open in a split
 ---| "vsplit" Open in a vertical split
@@ -90,12 +106,15 @@ end
 
 ---@alias NeogitConfigMappingsPopup "HelpPopup" | "DiffPopup" | "PullPopup" | "RebasePopup" | "MergePopup" | "PushPopup" | "CommitPopup" | "LogPopup" | "RevertPopup" | "StashPopup" | "IgnorePopup" | "CherryPickPopup" | "BranchPopup" | "FetchPopup" | "ResetPopup" | "RemotePopup" | "TagPopup" | false
 
----@alias NeogitGraphStyle "ascii" | "unicode"
+---@alias NeogitConfigMappingsRebaseEditor "Pick" | "Reword" | "Edit" | "Squash" | "Fixup" | "Execute" | "Drop" | "Break" | "MoveUp" | "MoveDown" | "Close" | "OpenCommit" | "Submit" | "Abort" | false
 
 ---@class NeogitConfigMappings Consult the config file or documentation for values
 ---@field finder? { [string]: NeogitConfigMappingsFinder } A dictionary that uses finder commands to set multiple keybinds
 ---@field status? { [string]: NeogitConfigMappingsStatus } A dictionary that uses status commands to set a single keybind
 ---@field popup? { [string]: NeogitConfigMappingsPopup } A dictionary that uses popup commands to set a single keybind
+---@field rebase_editor? { [string]: NeogitConfigMappingsRebaseEditor } A dictionary that uses Rebase editor commands to set a single keybind
+
+---@alias NeogitGraphStyle "ascii" | "unicode"
 
 ---@class NeogitConfig Neogit configuration settings
 ---@field filewatcher? NeogitFilewatcherConfig Values for filewatcher
@@ -271,6 +290,22 @@ function M.get_default_values()
       "NeogitCommitPopup--allow-empty",
     },
     mappings = {
+      rebase_editor = {
+        ["p"] = "Pick",
+        ["r"] = "Reword",
+        ["e"] = "Edit",
+        ["s"] = "Squash",
+        ["f"] = "Fixup",
+        ["x"] = "Execute",
+        ["d"] = "Drop",
+        ["b"] = "Break",
+        ["q"] = "Close",
+        ["<cr>"] = "OpenCommit",
+        ["gk"] = "MoveUp",
+        ["gj"] = "MoveDown",
+        ["<c-c><c-c>"] = "Submit",
+        ["<c-c><c-k>"] = "Abort",
+      },
       finder = {
         ["<cr>"] = "Select",
         ["<c-c>"] = "Close",
@@ -600,14 +635,14 @@ function M.validate_config()
       table.insert(valid_popup_commands, cmd)
     end
 
-    if validate_type(config.mappings.popup, "mappings.status", "table") then
+    if validate_type(config.mappings.popup, "mappings.popup", "table") then
       for key, command in pairs(config.mappings.popup) do
         if
           validate_type(key, "mappings.popup -> " .. vim.inspect(key), "string")
           and validate_type(command, string.format("mappings.popup['%s']", key), { "string", "boolean" })
         then
           if type(command) == "string" and not vim.tbl_contains(valid_popup_commands, command) then
-            local valid_popup_commands = util.map(valid_status_commands, function(command)
+            local valid_popup_commands = util.map(valid_popup_commands, function(command)
               return vim.inspect(command)
             end)
 
@@ -617,6 +652,42 @@ function M.validate_config()
                 "Expected a valid popup command, got '%s'. Valid popup commands: { %s }",
                 command,
                 table.concat(valid_popup_commands, ", ")
+              )
+            )
+          end
+        end
+      end
+    end
+
+    local valid_rebase_editor_commands = {
+      false,
+    }
+
+    for _, cmd in pairs(M.get_default_values().mappings.rebase_editor) do
+      table.insert(valid_rebase_editor_commands, cmd)
+    end
+
+    if validate_type(config.mappings.rebase_editor, "mappings.rebase_editor", "table") then
+      for key, command in pairs(config.mappings.rebase_editor) do
+        if
+          validate_type(key, "mappings.rebase_editor -> " .. vim.inspect(key), "string")
+          and validate_type(
+            command,
+            string.format("mappings.rebase_editor['%s']", key),
+            { "string", "boolean" }
+          )
+        then
+          if type(command) == "string" and not vim.tbl_contains(valid_rebase_editor_commands, command) then
+            local valid_rebase_editor_commands = util.map(valid_rebase_editor_commands, function(command)
+              return vim.inspect(command)
+            end)
+
+            err(
+              string.format("mappings.rebase_editor['%s']", key),
+              string.format(
+                "Expected a valid rebase_editor command, got '%s'. Valid rebase_editor commands: { %s }",
+                command,
+                table.concat(valid_rebase_editor_commands, ", ")
               )
             )
           end

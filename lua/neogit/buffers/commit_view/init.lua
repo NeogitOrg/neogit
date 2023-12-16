@@ -213,6 +213,7 @@ function M:open(kind)
         [popups.mapping_for("RebasePopup")] = popups.open("rebase", function(p)
           p { commit = self.commit_info.oid }
         end),
+        [popups.mapping_for("RemotePopup")] = popups.open("remote"),
         [popups.mapping_for("RevertPopup")] = popups.open("revert", function(p)
           p { commits = { self.commit_info.oid } }
         end),

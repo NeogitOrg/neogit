@@ -51,14 +51,12 @@ function M:open()
           then
             -- Clear the buffer, without filling the register
             buf:clear()
-            buf:call(function()
-              vim.cmd("silent w!")
-            end)
+            buf:write()
           end
         end
 
         if self.on_unload and not should_commit then
-          self.on_unload(true)
+          self.on_unload(0)
         end
 
         require("neogit.process").defer_show_preview_buffers()
