@@ -58,6 +58,18 @@ function M.get_reversed_rebase_editor_maps()
 
   return reversed_rebase_editor_maps
 end
+
+local reversed_commit_editor_maps
+---@return table<string, string[]>
+--- Returns a map of commands, mapped to the list of keys which trigger them.
+function M.get_reversed_commit_editor_maps()
+  if not reversed_commit_editor_maps then
+    reversed_commit_editor_maps = get_reversed_maps(M.values.mappings.commit_editor)
+  end
+
+  return reversed_commit_editor_maps
+end
+
 ---@alias WindowKind
 ---|"split" Open in a split
 ---| "vsplit" Open in a vertical split
@@ -106,13 +118,16 @@ end
 
 ---@alias NeogitConfigMappingsPopup "HelpPopup" | "DiffPopup" | "PullPopup" | "RebasePopup" | "MergePopup" | "PushPopup" | "CommitPopup" | "LogPopup" | "RevertPopup" | "StashPopup" | "IgnorePopup" | "CherryPickPopup" | "BranchPopup" | "FetchPopup" | "ResetPopup" | "RemotePopup" | "TagPopup" | false
 
----@alias NeogitConfigMappingsRebaseEditor "Pick" | "Reword" | "Edit" | "Squash" | "Fixup" | "Execute" | "Drop" | "Break" | "MoveUp" | "MoveDown" | "Close" | "OpenCommit" | "Submit" | "Abort" | false
+---@alias NeogitConfigMappingsRebaseEditor "Pick" | "Reword" | "Edit" | "Squash" | "Fixup" | "Execute" | "Drop" | "Break" | "MoveUp" | "MoveDown" | "Close" | "OpenCommit" | "Submit" | "Abort" | false | fun()
+---
+---@alias NeogitConfigMappingsCommitEditor "Close" | "Submit" | "Abort" | false | fun()
 
 ---@class NeogitConfigMappings Consult the config file or documentation for values
 ---@field finder? { [string]: NeogitConfigMappingsFinder } A dictionary that uses finder commands to set multiple keybinds
 ---@field status? { [string]: NeogitConfigMappingsStatus } A dictionary that uses status commands to set a single keybind
 ---@field popup? { [string]: NeogitConfigMappingsPopup } A dictionary that uses popup commands to set a single keybind
 ---@field rebase_editor? { [string]: NeogitConfigMappingsRebaseEditor } A dictionary that uses Rebase editor commands to set a single keybind
+---@field commit_editor? { [string]: NeogitConfigMappingsCommitEditor } A dictionary that uses Commit editor commands to set a single keybind
 
 ---@alias NeogitGraphStyle "ascii" | "unicode"
 
@@ -177,7 +192,7 @@ function M.get_default_values()
       ["bitbucket.org"] = "https://bitbucket.org/${owner}/${repository}/pull-requests/new?source=${branch_name}&t=1",
       ["gitlab.com"] = "https://gitlab.com/${owner}/${repository}/merge_requests/new?merge_request[source_branch]=${branch_name}",
     },
-    disable_insert_on_commit = true,
+    disable_insert_on_commit = "auto",
     use_per_project_settings = true,
     remember_settings = true,
     fetch_after_checkout = false,
@@ -290,6 +305,11 @@ function M.get_default_values()
       "NeogitCommitPopup--allow-empty",
     },
     mappings = {
+      commit_editor = {
+        ["q"] = "Close",
+        ["<c-c><c-c>"] = "Submit",
+        ["<c-c><c-k>"] = "Abort",
+      },
       rebase_editor = {
         ["p"] = "Pick",
         ["r"] = "Reword",
@@ -673,7 +693,7 @@ function M.validate_config()
           and validate_type(
             command,
             string.format("mappings.rebase_editor['%s']", key),
-            { "string", "boolean" }
+            { "string", "boolean", "function" }
           )
         then
           if type(command) == "string" and not vim.tbl_contains(valid_rebase_editor_commands, command) then
@@ -687,6 +707,42 @@ function M.validate_config()
                 "Expected a valid rebase_editor command, got '%s'. Valid rebase_editor commands: { %s }",
                 command,
                 table.concat(valid_rebase_editor_commands, ", ")
+              )
+            )
+          end
+        end
+      end
+    end
+
+    local valid_commit_editor_commands = {
+      false,
+    }
+
+    for _, cmd in pairs(M.get_default_values().mappings.commit_editor) do
+      table.insert(valid_commit_editor_commands, cmd)
+    end
+
+    if validate_type(config.mappings.commit_editor, "mappings.commit_editor", "table") then
+      for key, command in pairs(config.mappings.commit_editor) do
+        if
+          validate_type(key, "mappings.commit_editor -> " .. vim.inspect(key), "string")
+          and validate_type(
+            command,
+            string.format("mappings.commit_editor['%s']", key),
+            { "string", "boolean", "function" }
+          )
+        then
+          if type(command) == "string" and not vim.tbl_contains(valid_commit_editor_commands, command) then
+            local valid_commit_editor_commands = util.map(valid_commit_editor_commands, function(command)
+              return vim.inspect(command)
+            end)
+
+            err(
+              string.format("mappings.commit_editor['%s']", key),
+              string.format(
+                "Expected a valid commit_editor command, got '%s'. Valid commit_editor commands: { %s }",
+                command,
+                table.concat(valid_commit_editor_commands, ", ")
               )
             )
           end
