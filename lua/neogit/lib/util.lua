@@ -140,6 +140,19 @@ function M.filter(tbl, f)
   return vim.tbl_filter(f, tbl)
 end
 
+---Finds length of longest string in table
+---@param tbl table
+---@return integer
+function M.max_length(tbl)
+  local max = 0
+  for _, v in ipairs(tbl) do
+    if #v > max then
+      max = #v
+    end
+  end
+  return max
+end
+
 -- function M.print_tbl(tbl)
 --   for _, x in pairs(tbl) do
 --     print("| " .. x)
@@ -169,10 +182,6 @@ end
 --   local res = a.run(f())
 --   print(name .. " took " .. os.clock() - before .. "ms")
 --   return res
--- end
-
--- function M.str_right_pad(str, len, sep)
---   return str .. sep:rep(len - #str)
 -- end
 
 function M.str_min_width(str, len, sep)
@@ -404,7 +413,8 @@ function M.underscore(s)
     return "_" .. upper:lower()
   end
 
-  return s:gsub("%u", snakey):gsub("^_", "")
+  local r, _ = s:gsub("%u", snakey):gsub("^_", "")
+  return r
 end
 
 return M

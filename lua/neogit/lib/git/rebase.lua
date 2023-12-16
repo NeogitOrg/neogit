@@ -21,10 +21,15 @@ function M.rebase_interactive(commit, args)
     commit = ""
   end
 
-  local result = rebase_command(cli.rebase.interactive.args(commit).arg_list(args))
+  local result = rebase_command(cli.rebase.interactive.arg_list(args).args(commit))
   if result.code ~= 0 then
-    notification.error("Rebasing failed. Resolve conflicts before continuing")
-    fire_rebase_event { commit = commit, status = "conflict" }
+    if result.stdout[1]:match("^hint: Waiting for your editor to close the file%.%.%. error") then
+      notification.info("Rebase aborted")
+      fire_rebase_event { commit = commit, status = "aborted" }
+    else
+      notification.error("Rebasing failed. Resolve conflicts before continuing")
+      fire_rebase_event { commit = commit, status = "conflict" }
+    end
   else
     notification.info("Rebased successfully")
     fire_rebase_event { commit = commit, status = "ok" }
