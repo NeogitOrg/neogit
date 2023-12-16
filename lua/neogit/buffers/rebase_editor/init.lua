@@ -64,6 +64,7 @@ function M:open()
         return pad(mappings(name)[1], padding)
       end
 
+      -- stylua: ignore
       local help_lines = {
         "# Neogit Commands:",
         string.format("#   %s pick   = use commit", pad_mapping("Pick")),

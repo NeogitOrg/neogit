@@ -664,7 +664,11 @@ function M.validate_config()
       for key, command in pairs(config.mappings.rebase_editor) do
         if
           validate_type(key, "mappings.rebase_editor -> " .. vim.inspect(key), "string")
-          and validate_type(command, string.format("mappings.rebase_editor['%s']", key), { "string", "boolean" })
+          and validate_type(
+            command,
+            string.format("mappings.rebase_editor['%s']", key),
+            { "string", "boolean" }
+          )
         then
           if type(command) == "string" and not vim.tbl_contains(valid_rebase_editor_commands, command) then
             local valid_rebase_editor_commands = util.map(valid_rebase_editor_commands, function(command)
