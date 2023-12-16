@@ -166,8 +166,8 @@ end
 ---@field sections? NeogitConfigSections
 ---@field ignored_settings? string[] Settings to never persist, format: "Filetype--cli-value", i.e. "NeogitCommitPopup--author"
 ---@field mappings? NeogitConfigMappings
----@field notification_icon? String
----@field use_default_keymaps? Boolean
+---@field notification_icon? string
+---@field use_default_keymaps? boolean
 
 ---Returns the default Neogit configuration
 ---@return NeogitConfig
