@@ -58,6 +58,18 @@ function M.get_reversed_rebase_editor_maps()
 
   return reversed_rebase_editor_maps
 end
+
+local reversed_commit_editor_maps
+---@return table<string, string[]>
+--- Returns a map of commands, mapped to the list of keys which trigger them.
+function M.get_reversed_commit_editor_maps()
+  if not reversed_commit_editor_maps then
+    reversed_commit_editor_maps = get_reversed_maps(M.values.mappings.commit_editor)
+  end
+
+  return reversed_commit_editor_maps
+end
+
 ---@alias WindowKind
 ---|"split" Open in a split
 ---| "vsplit" Open in a vertical split
@@ -106,13 +118,16 @@ end
 
 ---@alias NeogitConfigMappingsPopup "HelpPopup" | "DiffPopup" | "PullPopup" | "RebasePopup" | "MergePopup" | "PushPopup" | "CommitPopup" | "LogPopup" | "RevertPopup" | "StashPopup" | "IgnorePopup" | "CherryPickPopup" | "BranchPopup" | "FetchPopup" | "ResetPopup" | "RemotePopup" | "TagPopup" | false
 
----@alias NeogitConfigMappingsRebaseEditor "Pick" | "Reword" | "Edit" | "Squash" | "Fixup" | "Execute" | "Drop" | "Break" | "MoveUp" | "MoveDown" | "Close" | "OpenCommit" | "Submit" | "Abort" | false
+---@alias NeogitConfigMappingsRebaseEditor "Pick" | "Reword" | "Edit" | "Squash" | "Fixup" | "Execute" | "Drop" | "Break" | "MoveUp" | "MoveDown" | "Close" | "OpenCommit" | "Submit" | "Abort" | false | fun()
+---
+---@alias NeogitConfigMappingsCommitEditor "Close" | "Submit" | "Abort" | false | fun()
 
 ---@class NeogitConfigMappings Consult the config file or documentation for values
 ---@field finder? { [string]: NeogitConfigMappingsFinder } A dictionary that uses finder commands to set multiple keybinds
 ---@field status? { [string]: NeogitConfigMappingsStatus } A dictionary that uses status commands to set a single keybind
 ---@field popup? { [string]: NeogitConfigMappingsPopup } A dictionary that uses popup commands to set a single keybind
 ---@field rebase_editor? { [string]: NeogitConfigMappingsRebaseEditor } A dictionary that uses Rebase editor commands to set a single keybind
+---@field commit_editor? { [string]: NeogitConfigMappingsCommitEditor } A dictionary that uses Commit editor commands to set a single keybind
 
 ---@alias NeogitGraphStyle "ascii" | "unicode"
 
@@ -123,7 +138,6 @@ end
 ---@field disable_context_highlighting? boolean Disable context highlights based on cursor position
 ---@field disable_signs? boolean Special signs to draw for sections etc. in Neogit
 ---@field git_services? table Templartes to use when opening a pull request for a branch
----@field disable_commit_confirmation? boolean Disable commit confirmations
 ---@field fetch_after_checkout? boolean Perform a fetch if the newly checked out branch has an upstream or pushRemote set
 ---@field telescope_sorter? function The sorter telescope will use
 ---@field disable_insert_on_commit? boolean|"auto" Disable automatically entering insert mode in commit dialogues
@@ -163,7 +177,6 @@ function M.get_default_values()
     disable_hint = false,
     disable_context_highlighting = false,
     disable_signs = false,
-    disable_commit_confirmation = false,
     graph_style = "ascii",
     filewatcher = {
       interval = 1000,
@@ -177,7 +190,7 @@ function M.get_default_values()
       ["bitbucket.org"] = "https://bitbucket.org/${owner}/${repository}/pull-requests/new?source=${branch_name}&t=1",
       ["gitlab.com"] = "https://gitlab.com/${owner}/${repository}/merge_requests/new?merge_request[source_branch]=${branch_name}",
     },
-    disable_insert_on_commit = true,
+    disable_insert_on_commit = "auto",
     use_per_project_settings = true,
     remember_settings = true,
     fetch_after_checkout = false,
@@ -290,6 +303,11 @@ function M.get_default_values()
       "NeogitCommitPopup--allow-empty",
     },
     mappings = {
+      commit_editor = {
+        ["q"] = "Close",
+        ["<c-c><c-c>"] = "Submit",
+        ["<c-c><c-k>"] = "Abort",
+      },
       rebase_editor = {
         ["p"] = "Pick",
         ["r"] = "Reword",
@@ -673,7 +691,7 @@ function M.validate_config()
           and validate_type(
             command,
             string.format("mappings.rebase_editor['%s']", key),
-            { "string", "boolean" }
+            { "string", "boolean", "function" }
           )
         then
           if type(command) == "string" and not vim.tbl_contains(valid_rebase_editor_commands, command) then
@@ -693,13 +711,48 @@ function M.validate_config()
         end
       end
     end
+
+    local valid_commit_editor_commands = {
+      false,
+    }
+
+    for _, cmd in pairs(M.get_default_values().mappings.commit_editor) do
+      table.insert(valid_commit_editor_commands, cmd)
+    end
+
+    if validate_type(config.mappings.commit_editor, "mappings.commit_editor", "table") then
+      for key, command in pairs(config.mappings.commit_editor) do
+        if
+          validate_type(key, "mappings.commit_editor -> " .. vim.inspect(key), "string")
+          and validate_type(
+            command,
+            string.format("mappings.commit_editor['%s']", key),
+            { "string", "boolean", "function" }
+          )
+        then
+          if type(command) == "string" and not vim.tbl_contains(valid_commit_editor_commands, command) then
+            local valid_commit_editor_commands = util.map(valid_commit_editor_commands, function(command)
+              return vim.inspect(command)
+            end)
+
+            err(
+              string.format("mappings.commit_editor['%s']", key),
+              string.format(
+                "Expected a valid commit_editor command, got '%s'. Valid commit_editor commands: { %s }",
+                command,
+                table.concat(valid_commit_editor_commands, ", ")
+              )
+            )
+          end
+        end
+      end
+    end
   end
 
   if validate_type(config, "base config", "table") then
     validate_type(config.disable_hint, "disable_hint", "boolean")
     validate_type(config.disable_context_highlighting, "disable_context_highlighting", "boolean")
     validate_type(config.disable_signs, "disable_signs", "boolean")
-    validate_type(config.disable_commit_confirmation, "disable_commit_confirmation", "boolean")
     validate_type(config.telescope_sorter, "telescope_sorter", "function")
     validate_type(config.use_per_project_settings, "use_per_project_settings", "boolean")
     validate_type(config.remember_settings, "remember_settings", "boolean")
