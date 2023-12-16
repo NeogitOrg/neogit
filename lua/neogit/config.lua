@@ -138,7 +138,6 @@ end
 ---@field disable_context_highlighting? boolean Disable context highlights based on cursor position
 ---@field disable_signs? boolean Special signs to draw for sections etc. in Neogit
 ---@field git_services? table Templartes to use when opening a pull request for a branch
----@field disable_commit_confirmation? boolean Disable commit confirmations
 ---@field fetch_after_checkout? boolean Perform a fetch if the newly checked out branch has an upstream or pushRemote set
 ---@field telescope_sorter? function The sorter telescope will use
 ---@field disable_insert_on_commit? boolean|"auto" Disable automatically entering insert mode in commit dialogues
@@ -178,7 +177,6 @@ function M.get_default_values()
     disable_hint = false,
     disable_context_highlighting = false,
     disable_signs = false,
-    disable_commit_confirmation = false,
     graph_style = "ascii",
     filewatcher = {
       interval = 1000,
@@ -755,7 +753,6 @@ function M.validate_config()
     validate_type(config.disable_hint, "disable_hint", "boolean")
     validate_type(config.disable_context_highlighting, "disable_context_highlighting", "boolean")
     validate_type(config.disable_signs, "disable_signs", "boolean")
-    validate_type(config.disable_commit_confirmation, "disable_commit_confirmation", "boolean")
     validate_type(config.telescope_sorter, "telescope_sorter", "function")
     validate_type(config.use_per_project_settings, "use_per_project_settings", "boolean")
     validate_type(config.remember_settings, "remember_settings", "boolean")
