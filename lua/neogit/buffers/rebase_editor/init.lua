@@ -43,10 +43,6 @@ function M.new(filename, on_close)
   return instance
 end
 
-local function mappings(cmd)
-  return config.get_reversed_rebase_editor_maps()[cmd]
-end
-
 function M:open()
   local mapping = config.get_reversed_rebase_editor_maps()
   local aborted = false
@@ -114,28 +110,28 @@ function M:open()
     },
     mappings = {
       n = {
-        [mappings("Close")] = function(buffer)
+        [mapping["Close"]] = function(buffer)
           if buffer:get_option("modified") and input.get_confirmation("Save changes?") then
             buffer:write()
           end
 
           buffer:close(true)
         end,
-        [mappings("Submit")] = function(buffer)
+        [mapping["Submit"]] = function(buffer)
           buffer:write()
           buffer:close(true)
         end,
-        [mappings("Abort")] = function(buffer)
+        [mapping["Abort"]] = function(buffer)
           aborted = true
           buffer:write()
           buffer:close(true)
         end,
-        [mappings("Pick")] = line_action("pick"),
-        [mappings("Reword")] = line_action("reword"),
-        [mappings("Edit")] = line_action("edit"),
-        [mappings("Squash")] = line_action("squash"),
-        [mappings("Fixup")] = line_action("fixup"),
-        [mappings("Execute")] = function(buffer)
+        [mapping["Pick"]] = line_action("pick"),
+        [mapping["Reword"]] = line_action("reword"),
+        [mapping["Edit"]] = line_action("edit"),
+        [mapping["Squash"]] = line_action("squash"),
+        [mapping["Fixup"]] = line_action("fixup"),
+        [mapping["Execute"]] = function(buffer)
           local exec = input.get_user_input("Execute: ")
           if not exec or exec == "" then
             return
@@ -143,7 +139,7 @@ function M:open()
 
           buffer:insert_line("exec " .. exec)
         end,
-        [mappings("Drop")] = function()
+        [mapping["Drop"]] = function()
           local line = vim.api.nvim_get_current_line()
           if line:match("^# ") then
             return
@@ -152,16 +148,16 @@ function M:open()
           vim.api.nvim_set_current_line("# " .. line)
           vim.cmd("normal! j")
         end,
-        [mappings("Break")] = function(buffer)
+        [mapping["Break"]] = function(buffer)
           buffer:insert_line("break")
         end,
-        [mappings("MoveUp")] = function()
+        [mapping["MoveUp"]] = function()
           vim.cmd("move -2")
         end,
-        [mappings("MoveDown")] = function()
+        [mapping["MoveDown"]] = function()
           vim.cmd("move +1")
         end,
-        [mappings("OpenCommit")] = function()
+        [mapping["OpenCommit"]] = function()
           local oid = vim.api.nvim_get_current_line():match("(%x%x%x%x%x%x%x)")
           if oid then
             CommitViewBuffer.new(oid):open("tab")
