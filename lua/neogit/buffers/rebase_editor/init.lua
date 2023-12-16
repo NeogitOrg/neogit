@@ -44,10 +44,11 @@ function M.new(filename, on_close)
 end
 
 local function mappings(cmd)
-  return config.get_reversed_rebase_editor_maps()[cmd] or { "<NOP>" }
+  return config.get_reversed_rebase_editor_maps()[cmd]
 end
 
 function M:open()
+  local mapping = config.get_reversed_rebase_editor_maps()
   local aborted = false
 
   self.buffer = Buffer.create {
@@ -59,9 +60,9 @@ function M:open()
     modifiable = true,
     readonly = false,
     after = function(buffer)
-      local padding = util.max_length(util.flatten(vim.tbl_values(config.get_reversed_rebase_editor_maps())))
+      local padding = util.max_length(util.flatten(vim.tbl_values(mapping)))
       local pad_mapping = function(name)
-        return pad(mappings(name)[1], padding)
+        return pad(mapping[name][1], padding)
       end
 
       -- stylua: ignore
@@ -90,7 +91,7 @@ function M:open()
       }
 
       help_lines = util.filter_map(help_lines, function(line)
-        if not line:match("<NOP>") then
+        if not line:match("<NOP>") then -- mapping will be <NOP> if user unbinds key
           return line
         end
       end)
