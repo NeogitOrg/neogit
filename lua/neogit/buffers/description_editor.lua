@@ -3,10 +3,10 @@ local config = require("neogit.config")
 
 local M = {}
 
-function M.new(filename, on_close)
+function M.new(filename, on_unload)
   local instance = {
     filename = filename,
-    on_close = on_close,
+    on_unload = on_unload,
     buffer = nil,
   }
 
@@ -26,7 +26,7 @@ function M:open()
     readonly = false,
     autocmds = {
       ["BufUnload"] = function()
-        self.on_close()
+        self.on_unload()
         vim.cmd("silent w!")
         require("neogit.process").defer_show_preview_buffers()
       end,
