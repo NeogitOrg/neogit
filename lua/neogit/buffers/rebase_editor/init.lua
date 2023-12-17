@@ -96,9 +96,22 @@ function M:open()
       buffer:set_lines(-1, -1, false, help_lines)
       buffer:write()
       buffer:move_cursor(1)
+
+      -- Source runtime ftplugin
+      vim.cmd.source("$VIMRUNTIME/ftplugin/gitrebase.vim")
+
+      -- Apply syntax highlighting
+      local ok, _ = pcall(vim.treesitter.language.inspect, "git_rebase")
+      if ok then
+        vim.treesitter.start(buffer.handle, "git_rebase")
+      else
+        vim.cmd.source("$VIMRUNTIME/syntax/gitrebase.vim")
+      end
     end,
     autocmds = {
       ["BufUnload"] = function()
+        pcall(vim.treesitter.stop, self.buffer.handle)
+
         if self.on_unload then
           self.on_unload(aborted and 1 or 0)
         end
