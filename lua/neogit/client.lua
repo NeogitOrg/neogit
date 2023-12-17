@@ -10,6 +10,8 @@ function M.get_nvim_remote_editor()
   local neogit_path = debug.getinfo(1, "S").source:sub(2, -#"lua/neogit/client.lua" - 2)
   local nvim_path = fn.shellescape(vim.v.progpath)
 
+  logger.debug("[CLIENT] Neogit path: " .. neogit_path)
+  logger.debug("[CLIENT] Neovim path: " .. nvim_path)
   local runtimepath_cmd = fn.shellescape(fmt("set runtimepath^=%s", fn.fnameescape(tostring(neogit_path))))
   local lua_cmd = fn.shellescape("lua require('neogit.client').client()")
 
@@ -46,8 +48,11 @@ function M.client()
   end
 
   local file_target = fn.fnamemodify(fn.argv()[1], ":p")
+  logger.fmt_debug("[CLIENT] File target: %s", file_target)
 
   local client = fn.serverstart()
+  logger.fmt_debug("[CLIENT] Client address: %s", client)
+
   local lua_cmd = fmt('lua require("neogit.client").editor("%s", "%s")', file_target, client)
 
   if vim.loop.os_uname().sysname == "Windows_NT" then
@@ -62,7 +67,7 @@ end
 ---@param target string Filename to open
 ---@param client string Address returned from vim.fn.serverstart()
 function M.editor(target, client)
-  logger.debug("[CLIENT] Here")
+  logger.fmt_debug("[CLIENT] Invoked editor with target: %s, from: %s", target, client)
   require("neogit.process").hide_preview_buffers()
 
   local rpc_client = RPC.create_connection(client)
@@ -85,11 +90,11 @@ function M.editor(target, client)
     target:find("COMMIT_EDITMSG$")
     or target:find("MERGE_MSG$")
     or target:find("TAG_EDITMSG$")
-    or target:find("TAG_EDITMSG$")
     or target:find("EDIT_DESCRIPTION$")
   then
     require("neogit.buffers.editor").new(target, send_client_quit):open()
   else
+    logger.fmt_warn("[CLIENT] No editor for target: %s", target)
     require("neogit.lib.notification").warn(target .. " has not been implemented yet")
     send_client_quit(1)
   end
