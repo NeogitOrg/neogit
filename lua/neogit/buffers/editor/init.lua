@@ -7,19 +7,30 @@ local pad = util.pad_right
 
 local M = {}
 
--- @class CommitEditorBuffer
--- @field content content of buffer
--- @field filename filename of buffer
--- @field on_unload callback distached on unload
--- @field buffer Buffer
--- @see Buffer
--- @see Ui
+local filetypes = {
+  ["COMMIT_EDITMSG"] = "NeogitCommitMessage",
+  ["MERGE_MSG"] = "NeogitMergeMessage",
+  ["TAG_EDITMSG"] = "NeogitTagMessage",
+  ["EDIT_DESCRIPTION"] = "NeogitBranchDescription",
+}
 
---- Creates a new CommitEditorBuffer
--- @param content the content of buffer
--- @param filename the filename of buffer
--- @param on_unload the event dispatched on buffer unload
--- @return CommitEditorBuffer
+local kind = {
+  ["COMMIT_EDITMSG"] = config.values.commit_editor.kind,
+  ["MERGE_MSG"] = config.values.merge_editor.kind,
+  ["TAG_EDITMSG"] = config.values.tag_editor.kind,
+  ["EDIT_DESCRIPTION"] = config.values.description_editor.kind,
+}
+
+---@class EditorBuffer
+---@field filename string filename of buffer
+---@field on_unload function callback invoked when buffer is unloaded
+---@field buffer Buffer
+---@see Buffer
+
+--- Creates a new EditorBuffer
+---@param filename string the filename of buffer
+---@param on_unload function the event dispatched on buffer unload
+---@return EditorBuffer
 function M.new(filename, on_unload)
   local instance = {
     filename = filename,
@@ -38,10 +49,10 @@ function M:open()
 
   self.buffer = Buffer.create {
     name = self.filename,
-    filetype = "NeogitCommitMessage",
+    filetype = filetypes[self.filename],
     load = true,
     buftype = "",
-    kind = config.values.commit_editor.kind,
+    kind = kind[self.filename],
     modifiable = true,
     readonly = false,
     after = function(buffer)
