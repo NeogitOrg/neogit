@@ -7,22 +7,10 @@ local pad = util.pad_right
 
 local M = {}
 
-local filetypes = {
-  ["COMMIT_EDITMSG"] = "NeogitCommitMessage",
-  ["MERGE_MSG"] = "NeogitMergeMessage",
-  ["TAG_EDITMSG"] = "NeogitTagMessage",
-  ["EDIT_DESCRIPTION"] = "NeogitBranchDescription",
-}
-
-local kind = {
-  ["COMMIT_EDITMSG"] = config.values.commit_editor.kind,
-  ["MERGE_MSG"] = config.values.merge_editor.kind,
-  ["TAG_EDITMSG"] = config.values.tag_editor.kind,
-  ["EDIT_DESCRIPTION"] = config.values.description_editor.kind,
-}
-
 ---@class EditorBuffer
 ---@field filename string filename of buffer
+---@field kind string Type of buffer to open, eg. tab, replace, split, vsplit
+---@field filetype string neogit filetype for editor
 ---@field on_unload function callback invoked when buffer is unloaded
 ---@field buffer Buffer
 ---@see Buffer
@@ -32,7 +20,27 @@ local kind = {
 ---@param on_unload function the event dispatched on buffer unload
 ---@return EditorBuffer
 function M.new(filename, on_unload)
+  local kind, filetype
+  if filename:find("COMMIT_EDITMSG$") then
+    kind = config.values.commit_editor.kind
+    filetype = "NeogitCommitMessage"
+  elseif filename:find("MERGE_MSG$") then
+    kind = config.values.merge_editor.kind
+    filetype = "NeogitMergeMessage"
+  elseif filename:find("TAG_EDITMSG$") then
+    kind = config.values.tag_editor.kind
+    filetype = "NeogitTagMessage"
+  elseif filename:find("EDIT_DESCRIPTION$") then
+    kind = config.values.description_editor.kind
+    filetype = "NeogitBranchDescription"
+  end
+
+  assert(kind, "Editor kind must be specified")
+  assert(filetype, "Editor filetype must be specified")
+
   local instance = {
+    kind = kind,
+    filetype = filetype,
     filename = filename,
     on_unload = on_unload,
     buffer = nil,
@@ -49,10 +57,10 @@ function M:open()
 
   self.buffer = Buffer.create {
     name = self.filename,
-    filetype = filetypes[self.filename],
+    filetype = self.filetype,
     load = true,
     buftype = "",
-    kind = kind[self.filename],
+    kind = self.kind,
     modifiable = true,
     readonly = false,
     after = function(buffer)

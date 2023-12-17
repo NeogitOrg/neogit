@@ -1,4 +1,6 @@
 local RPC = require("neogit.lib.rpc")
+local logger = require("neogit.logger")
+
 local fn = vim.fn
 local fmt = string.format
 
@@ -57,14 +59,17 @@ function M.client()
 end
 
 --- Invoked by the `client` and starts the appropriate file editor
+---@param target string Filename to open
+---@param client string Address returned from vim.fn.serverstart()
 function M.editor(target, client)
+  logger.debug("[CLIENT] Here")
   require("neogit.process").hide_preview_buffers()
 
-  local editor = require("neogit.editor")
-
   local rpc_client = RPC.create_connection(client)
+
+  ---on_unload callback when closing editor
+  ---@param status integer Status code to close remote nvim instance with. 0 for success, 1 for failure
   local function send_client_quit(status)
-    status = status or 0
     if status == 0 then
       rpc_client:send_cmd_async("qall")
     elseif status == 1 then
@@ -75,19 +80,18 @@ function M.editor(target, client)
   end
 
   if target:find("git%-rebase%-todo$") then
-    editor.rebase_editor(target, send_client_quit)
-  elseif target:find("COMMIT_EDITMSG$") then
-    editor.commit_editor(target, send_client_quit)
-  elseif target:find("MERGE_MSG$") then
-    editor.merge_editor(target, send_client_quit)
-  elseif target:find("TAG_EDITMSG$") then
-    editor.tag_editor(target, send_client_quit)
-  elseif target:find("EDIT_DESCRIPTION$") then
-    editor.description_editor(target, send_client_quit)
+    require("neogit.buffers.rebase_editor").new(target, send_client_quit):open()
+  elseif
+    target:find("COMMIT_EDITMSG$")
+    or target:find("MERGE_MSG$")
+    or target:find("TAG_EDITMSG$")
+    or target:find("TAG_EDITMSG$")
+    or target:find("EDIT_DESCRIPTION$")
+  then
+    require("neogit.buffers.editor").new(target, send_client_quit):open()
   else
-    local notification = require("neogit.lib.notification")
-    notification.warn(target .. " has not been implemented yet")
-    send_client_quit()
+    require("neogit.lib.notification").warn(target .. " has not been implemented yet")
+    send_client_quit(1)
   end
 end
 
