@@ -64,6 +64,7 @@ function M:open()
     modifiable = true,
     readonly = false,
     after = function(buffer)
+      -- Populate help lines with mappings for buffer
       local padding = util.max_length(util.flatten(vim.tbl_values(mapping)))
       local pad_mapping = function(name)
         return pad(mapping[name] and mapping[name][1] or "<NOP>", padding)
@@ -89,6 +90,7 @@ function M:open()
       buffer:write()
       buffer:move_cursor(1)
 
+      -- Start insert mode if user has configured it
       local disable_insert = config.values.disable_insert_on_commit
       if
         (disable_insert == "auto" and vim.fn.prevnonblank(".") ~= vim.fn.line("."))
@@ -96,9 +98,22 @@ function M:open()
       then
         vim.cmd(":startinsert")
       end
+
+      -- Source runtime ftplugin
+      vim.cmd.source("$VIMRUNTIME/ftplugin/gitcommit.vim")
+
+      -- Apply syntax highlighting
+      local ok, _ = pcall(vim.treesitter.language.inspect, "gitcommit")
+      if ok then
+        vim.treesitter.start(buffer.handle, "gitcommit")
+      else
+        vim.cmd.source("$VIMRUNTIME/syntax/gitcommit.vim")
+      end
     end,
     autocmds = {
       ["BufUnload"] = function()
+        pcall(vim.treesitter.stop, self.buffer.handle)
+
         if self.on_unload then
           self.on_unload(aborted and 1 or 0)
         end
