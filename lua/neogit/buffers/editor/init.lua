@@ -7,10 +7,15 @@ local pad = util.pad_right
 
 local M = {}
 
+local filetypes = {
+  ["COMMIT_EDITMSG"] = "NeogitCommitMessage",
+  ["MERGE_MSG"] = "NeogitMergeMessage",
+  ["TAG_EDITMSG"] = "NeogitTagMessage",
+  ["EDIT_DESCRIPTION"] = "NeogitBranchDescription",
+}
+
 ---@class EditorBuffer
 ---@field filename string filename of buffer
----@field kind string Type of buffer to open, eg. tab, replace, split, vsplit
----@field filetype string neogit filetype for editor
 ---@field on_unload function callback invoked when buffer is unloaded
 ---@field buffer Buffer
 ---@see Buffer
@@ -20,27 +25,7 @@ local M = {}
 ---@param on_unload function the event dispatched on buffer unload
 ---@return EditorBuffer
 function M.new(filename, on_unload)
-  local kind, filetype
-  if filename:find("COMMIT_EDITMSG$") then
-    kind = config.values.commit_editor.kind
-    filetype = "NeogitCommitMessage"
-  elseif filename:find("MERGE_MSG$") then
-    kind = config.values.merge_editor.kind
-    filetype = "NeogitMergeMessage"
-  elseif filename:find("TAG_EDITMSG$") then
-    kind = config.values.tag_editor.kind
-    filetype = "NeogitTagMessage"
-  elseif filename:find("EDIT_DESCRIPTION$") then
-    kind = config.values.description_editor.kind
-    filetype = "NeogitBranchDescription"
-  end
-
-  assert(kind, "Editor kind must be specified")
-  assert(filetype, "Editor filetype must be specified")
-
   local instance = {
-    kind = kind,
-    filetype = filetype,
     filename = filename,
     on_unload = on_unload,
     buffer = nil,
@@ -51,16 +36,18 @@ function M.new(filename, on_unload)
   return instance
 end
 
-function M:open()
+function M:open(kind)
+  assert(kind, "Editor must speficy a kind")
+
   local mapping = config.get_reversed_commit_editor_maps()
   local aborted = false
 
   self.buffer = Buffer.create {
     name = self.filename,
-    filetype = self.filetype,
+    filetype = filetypes[self.filename:match("[%u_]+$")] or "NeogitEditor",
     load = true,
     buftype = "",
-    kind = self.kind,
+    kind = kind,
     modifiable = true,
     readonly = false,
     after = function(buffer)
@@ -118,9 +105,7 @@ function M:open()
           self.on_unload(aborted and 1 or 0)
         end
 
-        if not aborted then
-          require("neogit.process").defer_show_preview_buffers()
-        end
+        require("neogit.process").defer_show_preview_buffers()
       end,
     },
     mappings = {
