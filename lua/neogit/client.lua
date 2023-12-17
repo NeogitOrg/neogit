@@ -1,5 +1,6 @@
 local RPC = require("neogit.lib.rpc")
 local logger = require("neogit.logger")
+local config = require("neogit.config")
 
 local fn = vim.fn
 local fmt = string.format
@@ -84,20 +85,29 @@ function M.editor(target, client)
     rpc_client:disconnect()
   end
 
-  if target:find("git%-rebase%-todo$") then
-    require("neogit.buffers.rebase_editor").new(target, send_client_quit):open()
-  elseif
-    target:find("COMMIT_EDITMSG$")
-    or target:find("MERGE_MSG$")
-    or target:find("TAG_EDITMSG$")
-    or target:find("EDIT_DESCRIPTION$")
-  then
-    require("neogit.buffers.editor").new(target, send_client_quit):open()
+  local kind
+  if target:find("COMMIT_EDITMSG$") then
+    kind = config.values.commit_editor.kind
+  elseif target:find("MERGE_MSG$") then
+    kind = config.values.merge_editor.kind
+  elseif target:find("TAG_EDITMSG$") then
+    kind = config.values.tag_editor.kind
+  elseif target:find("EDIT_DESCRIPTION$") then
+    kind = config.values.description_editor.kind
+  elseif target:find("git%-rebase%-todo$") then
+    kind = config.values.rebase_editor.kind
   else
-    logger.fmt_warn("[CLIENT] No editor for target: %s", target)
-    require("neogit.lib.notification").warn(target .. " has not been implemented yet")
-    send_client_quit(1)
+    kind = "auto"
   end
+
+  local editor
+  if target:find("git%-rebase%-todo$") then
+    editor = require("neogit.buffers.rebase_editor")
+  else
+    editor = require("neogit.buffers.editor")
+  end
+
+  editor.new(target, send_client_quit):open(kind)
 end
 
 ---@class NotifyMsg

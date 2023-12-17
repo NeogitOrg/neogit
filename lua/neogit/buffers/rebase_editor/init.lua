@@ -43,7 +43,7 @@ function M.new(filename, on_unload)
   return instance
 end
 
-function M:open()
+function M:open(kind)
   local mapping = config.get_reversed_rebase_editor_maps()
   local aborted = false
 
@@ -52,7 +52,7 @@ function M:open()
     load = true,
     filetype = "NeogitRebaseTodo",
     buftype = "",
-    kind = config.values.rebase_editor.kind,
+    kind = kind,
     modifiable = true,
     readonly = false,
     after = function(buffer)
@@ -63,7 +63,7 @@ function M:open()
 
       -- stylua: ignore
       local help_lines = {
-        "# Neogit Commands:",
+        "# Commands:",
         string.format("#   %s pick   = use commit", pad_mapping("Pick")),
         string.format("#   %s reword = use commit, but edit the commit message", pad_mapping("Reword")),
         string.format("#   %s edit   = use commit, but stop for amending", pad_mapping("Edit")),
@@ -116,9 +116,7 @@ function M:open()
           self.on_unload(aborted and 1 or 0)
         end
 
-        if not aborted then
-          require("neogit.process").defer_show_preview_buffers()
-        end
+        require("neogit.process").defer_show_preview_buffers()
       end,
     },
     mappings = {
