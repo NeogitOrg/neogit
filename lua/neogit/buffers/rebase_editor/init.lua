@@ -58,7 +58,7 @@ function M:open()
     after = function(buffer)
       local padding = util.max_length(util.flatten(vim.tbl_values(mapping)))
       local pad_mapping = function(name)
-        return pad(mapping[name][1], padding)
+        return pad(mapping[name] and mapping[name][1] or "<NOP>", padding)
       end
 
       -- stylua: ignore
@@ -96,9 +96,22 @@ function M:open()
       buffer:set_lines(-1, -1, false, help_lines)
       buffer:write()
       buffer:move_cursor(1)
+
+      -- Source runtime ftplugin
+      vim.cmd.source("$VIMRUNTIME/ftplugin/gitrebase.vim")
+
+      -- Apply syntax highlighting
+      local ok, _ = pcall(vim.treesitter.language.inspect, "git_rebase")
+      if ok then
+        vim.treesitter.start(buffer.handle, "git_rebase")
+      else
+        vim.cmd.source("$VIMRUNTIME/syntax/gitrebase.vim")
+      end
     end,
     autocmds = {
       ["BufUnload"] = function()
+        pcall(vim.treesitter.stop, self.buffer.handle)
+
         if self.on_unload then
           self.on_unload(aborted and 1 or 0)
         end
@@ -111,10 +124,11 @@ function M:open()
     mappings = {
       n = {
         [mapping["Close"]] = function(buffer)
-          if buffer:get_option("modified") and input.get_confirmation("Save changes?") then
-            buffer:write()
+          if buffer:get_option("modified") and not input.get_confirmation("Save changes?") then
+            aborted = true
           end
 
+          buffer:write()
           buffer:close(true)
         end,
         [mapping["Submit"]] = function(buffer)
