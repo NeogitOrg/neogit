@@ -71,11 +71,11 @@ function M:open()
 
       -- stylua: ignore
       local help_lines = {
-        "# Neogit Commands:",
-        string.format("#   %s close", pad_mapping("Close")),
-        string.format("#   %s tell Git to make it happen", pad_mapping("Submit")),
-        string.format("#   %s tell Git that you changed your mind, i.e. abort", pad_mapping("Abort")),
-        "#"
+        "#",
+        "# Commands:",
+        string.format("#   %s Close", pad_mapping("Close")),
+        string.format("#   %s Submit", pad_mapping("Submit")),
+        string.format("#   %s Abort", pad_mapping("Abort")),
       }
 
       help_lines = util.filter_map(help_lines, function(line)
@@ -84,7 +84,7 @@ function M:open()
         end
       end)
 
-      local line = vim.fn.search("# Changes to be committed:") - 2
+      local line = vim.fn.search("^#$") - 1
       buffer:set_lines(line, line, false, help_lines)
       buffer:write()
       buffer:move_cursor(1)
