@@ -10,6 +10,7 @@ local text = Ui.text
 local map = util.map
 
 local List = common.List
+local Diff = common.Diff
 
 local M = {}
 
@@ -24,7 +25,7 @@ local RemoteHeader = Component.new(function(props)
 end)
 
 local Section = Component.new(function(props)
-  return col {
+  return col({
     row {
       text(props.title),
       text(" ("),
@@ -32,7 +33,7 @@ local Section = Component.new(function(props)
       text(")"),
     },
     col(props.items),
-  }
+  }, { foldable = true, folded = false })
 end)
 
 function M.Status(state)
@@ -52,92 +53,67 @@ function M.Status(state)
             msg = state.upstream.commit_message,
           },
         },
-          -- #state.untracked_files > 0 and Section {
-          --   title = "Untracked files",
-          --   items = map(state.untracked_files, Diff)
-          -- },
-          -- #state.unstaged_changes > 0 and Section {
-          --   title = "Unstaged changes",
-          --   items = map(state.unstaged_changes, Diff)
-          -- },
-          -- #state.staged_changes > 0 and Section {
-          --   title = "Staged changes",
-          --   items = map(state.staged_changes, Diff)
-          -- },
-        #state.stashes > 0
-          and Section {
-            title = "Stashes",
-            items = map(state.stashes, function(s)
-              return row {
-                text.highlight("Comment")("stash@{", s.idx, "}: "),
-                text(s.message),
-              }
-            end),
-          },
-        -- #state.unpulled_changes > 0 and Section {
-        --   title = "Unpulled changes",
-        --   items = map(state.unpulled_changes, Diff)
+        #state.untracked.items > 0 and Section {
+          title = "Untracked files",
+          items = map(state.untracked.items, Diff),
+        },
+        #state.unstaged.items > 0 and Section {
+          title = "Unstaged changes",
+          items = map(state.unstaged.items, Diff),
+        },
+        -- #state.staged.items > 0 and Section {
+        --   title = "Staged changes",
+        --   items = map(state.staged.items, Diff),
         -- },
-        -- #state.unmerged_changes > 0 and Section {
+        -- #state.stashes.items > 0 and Section {
+        --   title = "Stashes",
+        --   items = map(state.stashes.items, function(s)
+        --     return row {
+        --       text.highlight("Comment")("stash@{" .. s.idx .. "}: "),
+        --       text(s.message),
+        --     }
+        --   end),
+        -- },
+        -- #state.upstream.unpulled.items > 0 and Section {
+        --   title = "Unpulled changes",
+        --   items = map(state.upstream.unpulled.items, Diff),
+        -- },
+        -- #state.upstream.unmerged.items > 0 and Section {
         --   title = "Unmerged changes",
-        --   items = map(state.unmerged_changes, Diff)
+        --   items = map(state.upstream.unmerged.items, Diff),
         -- },
       },
     },
   }
 end
 
--- function _load_diffs(repo)
---   local cli = require("neogit.lib.git.cli")
+local a = require("plenary.async")
 
---   local unstaged_jobs = map(repo.unstaged.items, function(f)
---     return cli.diff.shortstat.patch.files(f.name).to_job()
---   end)
+M._TEST = a.void(function()
+  local git = require("neogit.lib.git")
 
---   local staged_jobs = map(repo.staged.items, function(f)
---     return cli.diff.cached.shortstat.patch.files(f.name).to_job()
---   end)
+  local render_status = function()
+    local git = require("neogit.lib.git")
+    require("neogit.buffers.status").new(git.repo):open()
+    -- .new({
+    --   head = git.repo.head,
+    --   upstream = git.repo.upstream,
+    --   untracked_files = git.repo.untracked.items,
+    --   unstaged_changes = map(git.repo.unstaged.items, function(f)
+    --     return f.diff
+    --   end),
+    --   staged_changes = map(git.repo.staged.items, function(f)
+    --     return f.diff
+    --   end),
+    --   stashes = git.repo.stashes.items,
+    --   unpulled_changes = git.repo.upstream.unpulled.items,
+    --   unmerged_changes = git.repo.upstream.unmerged.items,
+    --   recent_changes = git.repo.recent.items,
+    -- })
+    -- :open()
+  end
 
---   local jobs = {}
-
---   for _, x in ipairs { unstaged_jobs, staged_jobs } do
---     for _, j in ipairs(x) do
---       table.insert(jobs, j)
---     end
---   end
-
---   Job.start_all(jobs)
---   Job.wait_all(jobs)
-
---   for i, j in ipairs(unstaged_jobs) do
---     repo.unstaged.items[i].diff = difflib.parse(j.stdout, true)
---   end
-
---   for i, j in ipairs(staged_jobs) do
---     repo.staged.items[i].diff = difflib.parse(j.stdout, true)
---   end
--- end
-
-function M._TEST()
-  local repo = require("neogit.lib.git.repository").create()
-
-  require("neogit.buffers.status")
-    .new({
-      head = repo.head,
-      upstream = repo.upstream,
-      untracked_files = repo.untracked.items,
-      unstaged_changes = map(repo.unstaged.items, function(f)
-        return f.diff
-      end),
-      staged_changes = map(repo.staged.items, function(f)
-        return f.diff
-      end),
-      stashes = repo.stashes.items,
-      unpulled_changes = repo.upstream.unpulled.items,
-      unmerged_changes = repo.upstream.unmerged.items,
-      recent_changes = repo.recent.items,
-    })
-    :open()
-end
+  git.repo:refresh { source = "status_test", callback = render_status }
+end)
 
 return M
