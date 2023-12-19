@@ -31,13 +31,13 @@ local function raise_error(result, input)
 
   error(
     "Failed to parse log json!: "
-    .. result
-    .. "\n"
-    .. input:sub(char_index - 30, char_index - 1)
-    .. "<"
-    .. input:sub(char_index, char_index)
-    .. ">"
-    .. input:sub(char_index + 1, char_index + 30)
+      .. result
+      .. "\n"
+      .. input:sub(char_index - 30, char_index - 1)
+      .. "<"
+      .. input:sub(char_index, char_index)
+      .. ">"
+      .. input:sub(char_index + 1, char_index + 30)
   )
 end
 
