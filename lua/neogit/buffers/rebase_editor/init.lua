@@ -21,7 +21,7 @@ local function line_action(action)
       return
     end
 
-    if line[2] and line[2]:match("%x%x%x%x%x%x%x%x") and line[1] ~= "Rebase" then
+    if line[2] and line[2]:match("%x%x%x%x%x%x%x") and line[1] ~= "Rebase" then
       line[1] = action
       vim.api.nvim_set_current_line(table.concat(line, " "))
       buffer:write()
