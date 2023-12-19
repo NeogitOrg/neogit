@@ -360,6 +360,7 @@ M.list = util.memoize(function(options, graph, files, hidden, graph_color)
 
   local output = cli.log
     .format(format(signature))
+    .args("--no-patch")
     .arg_list(options)
     .files(unpack(files))
     .show_popup(false)
