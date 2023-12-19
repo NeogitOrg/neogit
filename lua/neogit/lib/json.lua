@@ -10,8 +10,8 @@ end
 local function escape_field(json_str, field)
   local pattern = ([[(,"%s":")(.-)(",")]]):format(field)
 
-  json_str, _ = json_str:gsub(pattern, function(before, body, after)
-    return table.concat({ before, vim.fn.escape(body, [[\"]]), after }, "")
+  json_str, _ = json_str:gsub(pattern, function(before, value, after)
+    return table.concat({ before, vim.fn.escape(value, [[\"]]), after }, "")
   end)
 
   return json_str
@@ -38,10 +38,11 @@ end
 ---@return table
 function M.decode(lines)
   local json_array = array_wrap(lines)
-  json_array = escape_field(json_array, "body")
-  json_array = escape_field(json_array, "author_name")
-  json_array = escape_field(json_array, "committer_name")
-  json_array = escape_field(json_array, "subject")
+
+  local escaped_fields = { "body", "author_name", "committer_name", "subject" }
+  for _, field in ipairs(escaped_fields) do
+    json_array = escape_field(json_array, field)
+  end
 
   local ok, result = pcall(vim.json.decode, json_array, { luanil = { object = true, array = true } })
   if not ok then
