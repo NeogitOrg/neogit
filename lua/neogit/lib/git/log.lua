@@ -311,32 +311,32 @@ end)
 
 local function format(show_signature)
   local fields = {
-    ["oid"] = "%H",
-    ["abbreviated_commit"] = "%h",
-    ["tree"] = "%T",
-    ["abbreviated_tree"] = "%t",
-    ["parent"] = "%P",
-    ["abbreviated_parent"] = "%p",
-    ["ref_name"] = "%D",
-    ["encoding"] = "%e",
-    ["subject"] = "%s",
-    ["sanitized_subject_line"] = "%f",
-    ["body"] = "%b",
-    ["commit_notes"] = "%N",
-    ["author_name"] = "%aN",
-    ["author_email"] = "%aE",
-    ["author_date"] = "%aD",
-    ["committer_name"] = "%cN",
-    ["committer_email"] = "%cE",
-    ["committer_date"] = "%cD",
-    ["rel_date"] = "%cr",
+    oid = "%H",
+    abbreviated_commit = "%h",
+    tree = "%T",
+    abbreviated_tree = "%t",
+    parent = "%P",
+    abbreviated_parent = "%p",
+    ref_name = "%D",
+    encoding = "%e",
+    subject = "%s",
+    sanitized_subject_line = "%f",
+    body = "%b",
+    commit_notes = "%N",
+    author_name = "%aN",
+    author_email = "%aE",
+    author_date = "%aD",
+    committer_name = "%cN",
+    committer_email = "%cE",
+    committer_date = "%cD",
+    rel_date = "%cr",
   }
 
   if show_signature then
     vim.tbl_extend("keep", fields, {
-      ["signer"] = "%GS",
-      ["signer_key"] = "%GK",
-      ["verification_flag"] = "%G?",
+      signer = "%GS",
+      signer_key = "%GK",
+      verification_flag = "%G?",
     })
   end
 
