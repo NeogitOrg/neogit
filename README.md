@@ -231,6 +231,27 @@ neogit.setup {
     },
   },
   mappings = {
+    commit_editor = {
+      ["q"] = "Close",
+      ["<c-c><c-c>"] = "Submit",
+      ["<c-c><c-k>"] = "Abort",
+    },
+    rebase_editor = {
+      ["p"] = "Pick",
+      ["r"] = "Reword",
+      ["e"] = "Edit",
+      ["s"] = "Squash",
+      ["f"] = "Fixup",
+      ["x"] = "Execute",
+      ["d"] = "Drop",
+      ["b"] = "Break",
+      ["q"] = "Close",
+      ["<cr>"] = "OpenCommit",
+      ["gk"] = "MoveUp",
+      ["gj"] = "MoveDown",
+      ["<c-c><c-c>"] = "Submit",
+      ["<c-c><c-k>"] = "Abort",
+    },
     finder = {
       ["<cr>"] = "Select",
       ["<c-c>"] = "Close",
