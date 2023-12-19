@@ -13,18 +13,10 @@ jobs:
     strategy:
       matrix:
         release: [stable, nightly]
+    env:
+      CI: "1"
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install Dependencies
-        run: |
-          mkdir -p ~/.local/share/neogit-test/site/pack/plenary.nvim/start
-          cd ~/.local/share/neogit-test/site/pack/plenary.nvim/start
-          git clone https://github.com/nvim-lua/plenary.nvim
-
-          mkdir -p ~/.local/share/neogit-test/site/pack/telescope.nvim/start
-          cd ~/.local/share/neogit-test/site/pack/telescope.nvim/start
-          git clone https://github.com/nvim-telescope/telescope.nvim
 
       - name: Install Neovim
         run: |
@@ -32,9 +24,30 @@ jobs:
           tar -zxf nvim-linux64.tar.gz
           sudo ln -s $(pwd)/nvim-linux64/bin/nvim /usr/local/bin
 
-      - name: Test
-        continue-on-error: false
-        env:
-          ci: "1"
+      - name: Install Dependencies
         run: |
-          make test
+          mkdir -p ~/.local/share/nvim/site/pack/
+          cd ~/.local/share/nvim/site/pack/
+
+          mkdir -p ./plenary.nvim/start
+          cd ./plenary.nvim/start
+          git clone https://github.com/nvim-lua/plenary.nvim
+
+          mkdir -p ./telescope.nvim/start
+          cd ./telescope.nvim/start
+          git clone https://github.com/nvim-telescope/telescope.nvim
+
+      # - name: Luassert Test
+      #   continue-on-error: true
+      #   run: |
+      #     make test
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: E2E Test
+        env:
+          NVIM_RUBY_LOG_LEVEL: "debug"
+        run: |
+          bundle exec rspec
