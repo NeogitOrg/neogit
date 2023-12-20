@@ -8,7 +8,7 @@ end
 ---@param json_str string unparsed json
 ---@param field string The json key to escape the body for
 local function escape_field(json_str, field)
-  local pattern = ([[(,"%s":")(.-)(",")]]):format(field)
+  local pattern = ([[("%s":")(.-)(",")]]):format(field)
 
   json_str, _ = json_str:gsub(pattern, function(before, value, after)
     return table.concat({ before, vim.fn.escape(value, [[\"]]), after }, "")
