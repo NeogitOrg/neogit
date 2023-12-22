@@ -50,27 +50,26 @@ local function get_local_diff_view(section_name, item_name, opts)
 
     for kind, section in pairs(sections) do
       files[kind] = {}
-      if opts.only and section_name == kind then
-        for idx, item in ipairs(section.items) do
-          local file = {
-            path = item.name,
-            status = item.mode and item.mode:sub(1, 1),
-            stats = (item.diff and item.diff.stats) and {
-              additions = item.diff.stats.additions or 0,
-              deletions = item.diff.stats.deletions or 0,
-            } or nil,
-            left_null = vim.tbl_contains({ "A", "?" }, item.mode),
-            right_null = false,
-            selected = (item_name and item.name == item_name) or (not item_name and idx == 1),
-          }
 
-          if item_name and opts.only then
-            if file.selected then
-              table.insert(files[kind], file)
-            end
-          else
+      for idx, item in ipairs(section.items) do
+        local file = {
+          path = item.name,
+          status = item.mode and item.mode:sub(1, 1),
+          stats = (item.diff and item.diff.stats) and {
+            additions = item.diff.stats.additions or 0,
+            deletions = item.diff.stats.deletions or 0,
+          } or nil,
+          left_null = vim.tbl_contains({ "A", "?" }, item.mode),
+          right_null = false,
+          selected = (item_name and item.name == item_name) or (not item_name and idx == 1),
+        }
+
+        if opts.only then
+          if (item_name and file.selected) or (not item_name and section_name == kind) then
             table.insert(files[kind], file)
           end
+        else
+          table.insert(files[kind], file)
         end
       end
     end
@@ -146,6 +145,7 @@ function M.open(section_name, item_name, opts)
 
     view = dv_lib.diffview_open(dv_utils.tbl_pack(range))
   elseif section_name == "stashes" then
+    -- TODO: Fix when no item name
     local stash_id = item_name:match("stash@{%d+}")
     view = dv_lib.diffview_open(dv_utils.tbl_pack(stash_id .. "^!"))
   else
