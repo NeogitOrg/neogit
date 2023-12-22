@@ -27,12 +27,17 @@ local function cb(name)
   return string.format(":lua require('neogit.integrations.diffview').diffview_mappings['%s']()<CR>", name)
 end
 
-local function get_local_diff_view(selected_file_name)
+local function get_local_diff_view(section_name, item_name, opts)
   local left = Rev(RevType.STAGE)
   local right = Rev(RevType.LOCAL)
 
+  if section_name == "unstaged" then
+    section_name = "working"
+  end
+
   local function update_files()
     local files = {}
+
     local sections = {
       conflicting = {
         items = vim.tbl_filter(function(o)
@@ -42,25 +47,34 @@ local function get_local_diff_view(selected_file_name)
       working = repo.unstaged,
       staged = repo.staged,
     }
+
     for kind, section in pairs(sections) do
       files[kind] = {}
-      for _, item in ipairs(section.items) do
-        local file = {
-          path = item.name,
-          status = item.mode and item.mode:sub(1, 1),
-          stats = (item.diff and item.diff.stats) and {
-            additions = item.diff.stats.additions or 0,
-            deletions = item.diff.stats.deletions or 0,
-          } or nil,
-          left_null = vim.tbl_contains({ "A", "?" }, item.mode),
-          right_null = false,
-          selected = item.name == selected_file_name,
-        }
+      if opts.only and section_name == kind then
+        for idx, item in ipairs(section.items) do
+          local file = {
+            path = item.name,
+            status = item.mode and item.mode:sub(1, 1),
+            stats = (item.diff and item.diff.stats) and {
+              additions = item.diff.stats.additions or 0,
+              deletions = item.diff.stats.deletions or 0,
+            } or nil,
+            left_null = vim.tbl_contains({ "A", "?" }, item.mode),
+            right_null = false,
+            selected = (item_name and item.name == item_name) or (not item_name and idx == 1),
+          }
 
-        table.insert(files[kind], file)
+          if item_name and opts.only then
+            if file.selected then
+              table.insert(files[kind], file)
+            end
+          else
+            table.insert(files[kind], file)
+          end
+        end
       end
     end
-    selected_file_name = nil
+
     return files
   end
 
@@ -97,7 +111,8 @@ local function get_local_diff_view(selected_file_name)
   return view
 end
 
-function M.open(section_name, item_name)
+function M.open(section_name, item_name, opts)
+  opts = opts or {}
   old_config = vim.deepcopy(dv_config.get_config())
 
   local config = dv_config.get_config()
@@ -134,14 +149,12 @@ function M.open(section_name, item_name)
     local stash_id = item_name:match("stash@{%d+}")
     view = dv_lib.diffview_open(dv_utils.tbl_pack(stash_id .. "^!"))
   else
-    view = get_local_diff_view(item_name)
+    view = get_local_diff_view(section_name, item_name, opts)
   end
 
   if view then
     view:open()
   end
-
-  return view
 end
 
 return M
