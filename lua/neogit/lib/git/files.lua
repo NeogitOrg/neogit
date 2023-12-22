@@ -7,7 +7,7 @@ function M.all()
 end
 
 function M.untracked()
-  return cli["ls-files"].others.exclude_standard.call({ hidden = true }).stdout
+  return cli["ls-files"].others.exclude_standard.call_sync({ hidden = true }).stdout
 end
 
 function M.all_tree()

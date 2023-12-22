@@ -536,7 +536,7 @@ local function refresh(partial, reason)
     refresh_status_buffer()
 
     if M.status_buffer ~= nil and M.status_buffer:is_focused() then
-      restore_cursor_location(s, f, h)
+      pcall(restore_cursor_location, s, f, h)
     end
 
     vim.api.nvim_exec_autocmds("User", { pattern = "NeogitStatusRefreshed", modeline = false })

@@ -284,6 +284,9 @@ function M:config_if(cond, key, name, options)
   return self
 end
 
+-- Allow user actions to be queued
+local action_lock = a.control.Semaphore.new(1)
+
 ---@param keys string|string[] Key or list of keys for the user to press that runs the action
 ---@param description string Description of action in UI
 ---@param callback function Function that gets run in async context
@@ -304,11 +307,14 @@ function M:action(keys, description, callback)
   local callback_fn
   if callback then
     callback_fn = a.void(function(...)
+      local permit = action_lock:acquire()
       logger.debug(string.format("[ACTION] Running action from %s", self.state.name))
 
       watcher.pause()
       callback(...)
       watcher.resume()
+
+      permit:forget()
 
       logger.debug("[ACTION] Dispatching Refresh")
       require("neogit.status").dispatch_refresh(nil, "action")
