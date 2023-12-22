@@ -677,7 +677,7 @@ function M:show()
     end,
     autocmds = {
       ["WinLeave"] = function()
-        if self.buffer.kind == "floating" then
+        if self.buffer and self.buffer.kind == "floating" then
           -- We pcall this because it's possible the window was closed by a command invocation, e.g. "cc" for commits
           pcall(self.close, self)
         end
