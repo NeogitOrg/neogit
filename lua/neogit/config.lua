@@ -826,7 +826,7 @@ end
 function M.setup(opts)
   if opts ~= nil then
     if opts.use_default_keymaps == false then
-      M.values.mappings = { status = {}, popup = {}, finder = {} }
+      M.values.mappings = { status = {}, popup = {}, finder = {}, commit_editor = {}, rebase_editor = {} }
     else
       -- Clear our any "false" user mappings from defaults
       for section, maps in pairs(opts.mappings or {}) do
