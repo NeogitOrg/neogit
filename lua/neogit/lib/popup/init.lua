@@ -386,7 +386,6 @@ local Switch = Component.new(function(switch)
   end
 
   return row.tag("Switch").value(switch) {
-    text(" "),
     row.highlight("NeogitPopupSwitchKey") {
       text(switch.key_prefix),
       text(switch.key),
@@ -401,7 +400,6 @@ end)
 
 local Option = Component.new(function(option)
   return row.tag("Option").value(option) {
-    text(" "),
     row.highlight("NeogitPopupOptionKey") {
       text(option.key_prefix),
       text(option.key),
@@ -464,7 +462,6 @@ local Config = Component.new(function(props)
       end
 
       return row.tag("Config").value(config) {
-        text(" "),
         row.highlight("NeogitPopupConfigKey") { text(key) },
         text(" " .. config.name .. " "),
         row.id(config.id) { unpack(value) },
@@ -476,9 +473,7 @@ local Config = Component.new(function(props)
 end)
 
 local function render_action(action)
-  local items = {
-    text(" "),
-  }
+  local items = {}
 
   -- selene: allow(empty_if)
   if action.keys == nil then
