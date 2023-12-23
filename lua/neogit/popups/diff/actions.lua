@@ -1,5 +1,8 @@
 local M = {}
 local diffview = require("neogit.integrations.diffview")
+local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
+local util = require("neogit.lib.util")
+local git = require("neogit.lib.git")
 
 -- aka "dwim" = do what I mean
 function M.this(popup)
@@ -27,6 +30,15 @@ end
 function M.unstaged(popup)
   popup:close()
   diffview.open("unstaged", nil, { only = true })
+end
+
+function M.stash(popup)
+  popup:close()
+
+  local selected = FuzzyFinderBuffer.new(git.stash.list()):open_async()
+  if selected then
+    diffview.open("stashes", selected)
+  end
 end
 
 return M

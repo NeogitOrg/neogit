@@ -20,7 +20,7 @@ function M.create(env)
     :action_if(diffview, "w", "worktree", actions.worktree)
     :new_action_group("Show")
     :action("c", "Commit")
-    :action("t", "Stash")
+    :action_if(diffview, "t", "Stash", actions.stash)
     :env(env)
     :build()
 
