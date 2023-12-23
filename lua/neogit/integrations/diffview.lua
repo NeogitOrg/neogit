@@ -148,6 +148,8 @@ function M.open(section_name, item_name, opts)
     -- TODO: Fix when no item name
     local stash_id = item_name:match("stash@{%d+}")
     view = dv_lib.diffview_open(dv_utils.tbl_pack(stash_id .. "^!"))
+  elseif section_name == "commit" then
+    view = dv_lib.diffview_open(dv_utils.tbl_pack(item_name .. "^!"))
   else
     view = get_local_diff_view(section_name, item_name, opts)
   end
