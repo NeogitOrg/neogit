@@ -56,7 +56,15 @@ function M.mappings_table()
 
   return {
     { "HelpPopup", "Help", M.open("help") },
-    { "DiffPopup", "Diff", M.open("diff") },
+    {
+      "DiffPopup",
+      "Diff",
+      M.open("diff", function(f)
+        local section, item = require("neogit.status").get_current_section_item()
+
+        f { section = section, item = item }
+      end),
+    },
     { "PullPopup", "Pull", M.open("pull") },
     {
       "RebasePopup",
