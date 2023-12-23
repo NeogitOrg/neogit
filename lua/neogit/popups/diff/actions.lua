@@ -19,4 +19,14 @@ function M.worktree(popup)
   diffview.open()
 end
 
+function M.staged(popup)
+  popup:close()
+  diffview.open("staged", nil, { only = true })
+end
+
+function M.unstaged(popup)
+  popup:close()
+  diffview.open("unstaged", nil, { only = true })
+end
+
 return M
