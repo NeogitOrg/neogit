@@ -44,11 +44,8 @@ end
 function M.commit(popup)
   popup:close()
 
-  local options = util.merge(
-    git.branch.get_all_branches(),
-    git.tag.list(),
-    { "HEAD", "ORIG_HEAD", "FETCH_HEAD" }
-  )
+  local options =
+    util.merge(git.branch.get_all_branches(), git.tag.list(), { "HEAD", "ORIG_HEAD", "FETCH_HEAD" })
 
   local selected = FuzzyFinderBuffer.new(options):open_async()
   if selected then
