@@ -1,7 +1,5 @@
 local M = {}
 
-local dv = require("diffview")
-local dv_config = require("diffview.config")
 local Rev = require("diffview.vcs.adapters.git.rev").GitRev
 local RevType = require("diffview.vcs.rev").RevType
 local CDiffView = require("diffview.api.views.diff.diff_view").CDiffView
@@ -12,20 +10,6 @@ local neogit = require("neogit")
 local repo = require("neogit.lib.git.repository")
 local status = require("neogit.status")
 local a = require("plenary.async")
-
-local old_config
-
-M.diffview_mappings = {
-  close = function()
-    vim.cmd("tabclose")
-    neogit.dispatch_refresh(nil, "diffview_close")
-    dv.setup(old_config)
-  end,
-}
-
-local function cb(name)
-  return string.format(":lua require('neogit.integrations.diffview').diffview_mappings['%s']()<CR>", name)
-end
 
 local function get_local_diff_view(section_name, item_name, opts)
   local left = Rev(RevType.STAGE)
@@ -111,28 +95,6 @@ local function get_local_diff_view(section_name, item_name, opts)
 end
 
 function M.open(section_name, item_name, opts)
-  opts = opts or {}
-  old_config = vim.deepcopy(dv_config.get_config())
-
-  local config = dv_config.get_config()
-
-  local keymaps = {
-    view = {
-      ["q"] = cb("close"),
-      ["<esc>"] = cb("close"),
-    },
-    file_panel = {
-      ["q"] = cb("close"),
-      ["<esc>"] = cb("close"),
-    },
-  }
-
-  for key, keymap in pairs(keymaps) do
-    config.keymaps[key] = dv_config.extend_keymaps(keymap, config.keymaps[key] or {})
-  end
-
-  dv.setup(config)
-
   local view
 
   if section_name == "recent" or section_name == "unmerged" or section_name == "log" then
@@ -144,11 +106,7 @@ function M.open(section_name, item_name, opts)
     end
 
     view = dv_lib.diffview_open(dv_utils.tbl_pack(range))
-  elseif section_name == "stashes" then
-    -- TODO: Fix when no item name
-    local stash_id = item_name:match("stash@{%d+}")
-    view = dv_lib.diffview_open(dv_utils.tbl_pack(stash_id .. "^!"))
-  elseif section_name == "commit" then
+  elseif (section_name == "stashes" or section_name == "commit") and item_name then
     view = dv_lib.diffview_open(dv_utils.tbl_pack(item_name .. "^!"))
   else
     view = get_local_diff_view(section_name, item_name, opts)
