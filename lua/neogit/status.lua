@@ -1335,7 +1335,12 @@ local function set_decoration_provider(buffer)
   buffer:create_namespace("ViewContext")
 
   local function frame_key()
-    return table.concat { buffer.handle, fn.line("w0"), fn.line("w$"), fn.line("."), buffer:get_changedtick() }
+    local ok, tick = pcall(buffer.get_changedtick, buffer)
+    if ok then
+      return table.concat { buffer.handle, fn.line("w0"), fn.line("w$"), fn.line("."), tick }
+    else
+      return table.concat { buffer.handle, fn.line("w0"), fn.line("w$"), fn.line("."), "0" }
+    end
   end
 
   local last_frame_key = frame_key()
