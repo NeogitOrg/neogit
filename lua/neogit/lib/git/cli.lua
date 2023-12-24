@@ -37,7 +37,7 @@ local configurations = {
       add = "add",
       list = "list",
       move = "move",
-      remove = "remove"
+      remove = "remove",
     },
   },
 
