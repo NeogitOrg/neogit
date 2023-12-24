@@ -166,10 +166,4 @@ function M.mappings_table()
   }
 end
 
-function M.test()
-  M.open("echo", function(f)
-    f("a", "b")
-  end)()
-end
-
 return M
