@@ -32,6 +32,15 @@ local configurations = {
 
   init = config {},
 
+  worktree = config {
+    flags = {
+      add = "add",
+      list = "list",
+      move = "move",
+      remove = "remove"
+    },
+  },
+
   status = config {
     flags = {
       short = "-s",

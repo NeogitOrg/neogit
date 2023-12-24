@@ -1507,4 +1507,9 @@ function M.get_status()
   return M.status
 end
 
+function M.chdir(dir)
+  M.old_cwd = dir
+  vim.loop.chdir(dir)
+end
+
 return M
