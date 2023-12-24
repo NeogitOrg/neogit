@@ -1332,7 +1332,12 @@ local function set_decoration_provider(buffer)
   local context_ns = api.nvim_create_namespace("NeogitStatusContext")
 
   local function frame_key()
-    return table.concat { fn.line("w0"), fn.line("w$"), fn.line("."), buffer:get_changedtick() }
+    local ok, tick = pcall(buffer.get_changedtick, buffer)
+    if ok then
+      return table.concat { fn.line("w0"), fn.line("w$"), fn.line("."), tick }
+    else
+      return table.concat { fn.line("w0"), fn.line("w$"), fn.line("."), "0" }
+    end
   end
 
   local last_frame_key = frame_key()
