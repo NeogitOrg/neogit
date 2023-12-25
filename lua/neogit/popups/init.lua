@@ -153,9 +153,7 @@ function M.mappings_table()
       },
     },
     { "RemotePopup", "Remote", M.open("remote") },
-    { "WorktreePopup", "Worktree", M.open("worktree", function(f)
-      f {}
-    end) },
+    { "WorktreePopup", "Worktree", M.open("worktree") },
     {
       "StashPopup",
       "Stash",

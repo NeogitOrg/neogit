@@ -3,7 +3,7 @@ local popup = require("neogit.lib.popup")
 
 local M = {}
 
-function M.create(env)
+function M.create()
   local p = popup
     .builder()
     :name("NeogitWorktreePopup")
@@ -15,7 +15,6 @@ function M.create(env)
     :action("g", "Goto", actions.visit)
     :action("m", "Move", actions.move)
     :action("D", "Delete", actions.delete)
-    :env(env)
     :build()
 
   p:show()
