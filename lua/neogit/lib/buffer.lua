@@ -385,8 +385,8 @@ function Buffer:call(f)
   api.nvim_buf_call(self.handle, f)
 end
 
-function Buffer.exists(name)
-  return fn.bufnr(name) ~= -1
+function Buffer:exists()
+  return fn.bufnr(self.handle) ~= -1
 end
 
 function Buffer:set_extmark(...)
