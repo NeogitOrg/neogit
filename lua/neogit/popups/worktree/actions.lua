@@ -31,38 +31,49 @@ local function get_path(prompt)
     end
   until not dir:exists()
 
-local function worktree(params)
   return dir:absolute()
 end
+
+function M.checkout_worktree()
   local options = util.merge(git.branch.get_all_branches(), git.tag.list(), git.refs.heads())
   local selected = FuzzyFinderBuffer.new(options):open_async { prompt_prefix = "checkout" }
   if not selected then
     return
   end
 
-  -- See if we can use the directory telescope thing, or make our own with plenary.scandir
-  local path = input.get_user_input(("Checkout %s in new worktree: "):format(selected), nil, "dir")
+  local path = get_path(("Checkout %s in new worktree"):format(selected))
   if not path then
     return
   end
 
-  local abs_path = Path.new(path):absolute()
-
-  if git.worktree.add(selected, abs_path, params) then
+  if git.worktree.add(selected, path) then
     notification.info("Added worktree")
-
-    if not vim.tbl_contains(params, "--no-checkout") then
-      status.chdir(abs_path)
-    end
+    status.chdir(path)
   end
 end
 
-function M.checkout_worktree()
-  worktree { "--checkout" }
-end
-
 function M.create_worktree()
-  worktree { "--no-checkout" }
+  local path = get_path("Create worktree")
+  if not path then
+    return
+  end
+
+  local options = util.merge(git.branch.get_all_branches(), git.tag.list(), git.refs.heads())
+  local selected = FuzzyFinderBuffer.new(options)
+    :open_async { prompt_prefix = "Create and checkout branch starting at" }
+  if not selected then
+    return
+  end
+
+  local name = input.get_user_input("Name for new branch: ", nil)
+  if not name then
+    return
+  end
+
+  if git.worktree.add(selected, path, { "-b", name }) then
+    notification.info("Added worktree")
+    status.chdir(path)
+  end
 end
 
 function M.move()
@@ -75,11 +86,13 @@ function M.move()
     return
   end
 
-  local path = input.get_user_input("Move worktree to: ", nil, "dir")
-  local abs_path = Path.new(path):absolute()
+  local path = get_path("Move worktree to")
+  if not path then
+    return
+  end
 
-  if git.worktree.move(selected, abs_path) then
-    notification.info(("Moved worktree to %s"):format(abs_path))
+  if git.worktree.move(selected, path) then
+    notification.info(("Moved worktree to %s"):format(path))
     -- Only CD if moving the currently checked-out worktree
     -- if Path.new(vim.loop.cwd()):absolute() == abs_path then
     --   status.chdir(abs_path)
