@@ -9,20 +9,36 @@ local notification = require("neogit.lib.notification")
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 local Path = require("plenary.path")
 
-function M.worktree()
+local function worktree(params)
   local options = util.merge(git.branch.get_all_branches(), git.tag.list(), git.refs.heads())
   local selected = FuzzyFinderBuffer.new(options):open_async { prompt_prefix = "checkout" }
   if not selected then
     return
   end
 
+  -- See if we can use the directory telescope thing, or make our own with plenary.scandir
   local path = input.get_user_input(("Checkout %s in new worktree: "):format(selected), nil, "dir")
+  if not path then
+    return
+  end
+
   local abs_path = Path.new(path):absolute()
 
-  if git.worktree.add(selected, abs_path) then
+  if git.worktree.add(selected, abs_path, params) then
     notification.info("Added worktree")
-    status.chdir(abs_path)
+
+    if not vim.tbl_contains(params, "--no-checkout") then
+      status.chdir(abs_path)
+    end
   end
+end
+
+function M.checkout_worktree()
+  worktree { "--checkout" }
+end
+
+function M.create_worktree()
+  worktree { "--no-checkout" }
 end
 
 function M.move()
