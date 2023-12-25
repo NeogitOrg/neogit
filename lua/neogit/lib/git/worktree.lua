@@ -8,8 +8,8 @@ local M = {}
 ---@param ref string branch name, tag name, HEAD, etc.
 ---@param path string absolute path
 ---@return boolean
-function M.add(ref, path)
-  local result = cli.worktree.add.args(path, ref).call_sync()
+function M.add(ref, path, params)
+  local result = cli.worktree.add.arg_list(params).args(path, ref).call_sync()
   return result.code == 0
 end
 
