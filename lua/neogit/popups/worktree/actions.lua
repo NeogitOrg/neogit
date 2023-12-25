@@ -8,8 +8,32 @@ local notification = require("neogit.lib.notification")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 local Path = require("plenary.path")
+local scan_dir = require("plenary.scandir").scan_dir
+
+---Poor man's dired
+---@return string|nil
+local function get_path(prompt)
+  local dir = Path.new(".")
+  repeat
+    local dirs = scan_dir(dir:absolute(), { depth = 1, only_dirs = true })
+    local selected = FuzzyFinderBuffer.new(dirs):open_async {
+      prompt_prefix = prompt,
+    }
+
+    if not selected then
+      return
+    end
+
+    if vim.startswith(selected, "/") then
+      dir = Path.new(selected)
+    else
+      dir = dir:joinpath(selected)
+    end
+  until not dir:exists()
 
 local function worktree(params)
+  return dir:absolute()
+end
   local options = util.merge(git.branch.get_all_branches(), git.tag.list(), git.refs.heads())
   local selected = FuzzyFinderBuffer.new(options):open_async { prompt_prefix = "checkout" }
   if not selected then
