@@ -1331,23 +1331,8 @@ local function set_decoration_provider(buffer)
   local decor_ns = api.nvim_create_namespace("NeogitStatusDecor")
   local context_ns = api.nvim_create_namespace("NeogitStatusContext")
 
-  local function frame_key()
-    local ok, tick = pcall(buffer.get_changedtick, buffer)
-    if ok then
-      return table.concat { fn.line("w0"), fn.line("w$"), fn.line("."), tick }
-    else
-      return table.concat { fn.line("w0"), fn.line("w$"), fn.line("."), "0" }
-    end
-  end
-
-  local last_frame_key = frame_key()
-
   local function on_start()
-    return buffer:is_focused() and frame_key() ~= last_frame_key
-  end
-
-  local function on_end()
-    last_frame_key = frame_key()
+    return buffer:exists() and buffer:is_focused()
   end
 
   local function on_win()
@@ -1400,7 +1385,7 @@ local function set_decoration_provider(buffer)
     end
   end
 
-  buffer:set_decorations(decor_ns, { on_start = on_start, on_win = on_win, on_end = on_end })
+  buffer:set_decorations(decor_ns, { on_start = on_start, on_win = on_win })
 end
 
 --- Creates a new status buffer
