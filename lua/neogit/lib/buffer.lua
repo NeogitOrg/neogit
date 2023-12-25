@@ -573,18 +573,8 @@ function Buffer.create(config)
     buffer:create_namespace("ViewDecor")
 
     buffer:call(function()
-      local function frame_key()
-        return table.concat { fn.line("w0"), fn.line("w$"), fn.getcurpos()[2], buffer:get_changedtick() }
-      end
-
-      local last_frame_key = frame_key()
-
       local function on_start()
-        return buffer:is_focused() and frame_key() ~= last_frame_key
-      end
-
-      local function on_end()
-        last_frame_key = frame_key()
+        return buffer:exists() and buffer:is_focused()
       end
 
       local function on_win()
@@ -614,7 +604,7 @@ function Buffer.create(config)
         buffer:flush_line_highlight_buffer()
       end
 
-      buffer:set_decorations("ViewDecor", { on_start = on_start, on_win = on_win, on_end = on_end })
+      buffer:set_decorations("ViewDecor", { on_start = on_start, on_win = on_win })
     end)
   end
 
