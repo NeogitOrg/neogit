@@ -5,6 +5,7 @@ local input = require("neogit.lib.input")
 local util = require("neogit.lib.util")
 local status = require("neogit.status")
 local notification = require("neogit.lib.notification")
+local operations = require("neogit.operations")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 local Path = require("plenary.path")
@@ -34,7 +35,7 @@ local function get_path(prompt)
   return dir:absolute()
 end
 
-function M.checkout_worktree()
+M.checkout_worktree = operations("checkout_worktree", function()
   local options = util.merge(git.branch.get_all_branches(), git.tag.list(), git.refs.heads())
   local selected = FuzzyFinderBuffer.new(options):open_async { prompt_prefix = "checkout" }
   if not selected then
@@ -50,9 +51,9 @@ function M.checkout_worktree()
     notification.info("Added worktree")
     status.chdir(path)
   end
-end
+end)
 
-function M.create_worktree()
+M.create_worktree = operations("create_worktree", function()
   local path = get_path("Create worktree")
   if not path then
     return
@@ -74,9 +75,9 @@ function M.create_worktree()
     notification.info("Added worktree")
     status.chdir(path)
   end
-end
+end)
 
-function M.move()
+M.move = operations("move_worktree", function()
   local options = vim.tbl_map(function(w)
     return w.path
   end, git.worktree.list { include_main = false })
@@ -98,9 +99,9 @@ function M.move()
     --   status.chdir(abs_path)
     -- end
   end
-end
+end)
 
-function M.delete()
+M.delete = operations("delete_worktree", function()
   local options = vim.tbl_map(function(w)
     return w.path
   end, git.worktree.list { include_main = false })
@@ -127,9 +128,9 @@ function M.delete()
       end
     end
   end
-end
+end)
 
-function M.visit()
+M.visit = operations("visit_worktree", function()
   local options = vim.tbl_map(function(w)
     return w.path
   end, git.worktree.list())
@@ -138,6 +139,6 @@ function M.visit()
   if selected then
     status.chdir(selected)
   end
-end
+end)
 
 return M
