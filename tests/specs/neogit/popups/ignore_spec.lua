@@ -20,7 +20,7 @@ describe("ignore popup", function()
         local files = harness.exec { "git", "status", "--porcelain=1" }
         eq(files, { " M a.txt", "M  b.txt", "?? untracked.txt", "" })
 
-        FuzzyFinderBuffer.value = { "untracked.txt" }
+        FuzzyFinderBuffer.value = { { "untracked.txt" } }
 
         act("it")
         operations.wait("ignore_shared")
@@ -53,7 +53,7 @@ describe("ignore popup", function()
         })
 
         input.values = { "subdir" }
-        FuzzyFinderBuffer.value = { "untracked.txt" }
+        FuzzyFinderBuffer.value = { { "untracked.txt" } }
         act("is")
         operations.wait("ignore_subdirectory")
 
@@ -80,7 +80,7 @@ describe("ignore popup", function()
         local files = harness.exec { "git", "status", "--porcelain=1" }
         eq(files, { " M a.txt", "M  b.txt", "?? untracked.txt", "" })
 
-        FuzzyFinderBuffer.value = { "untracked.txt" }
+        FuzzyFinderBuffer.value = { { "untracked.txt" } }
         act("ip")
         operations.wait("ignore_private")
 
