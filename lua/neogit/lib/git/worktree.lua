@@ -9,7 +9,7 @@ local M = {}
 ---@param path string absolute path
 ---@return boolean
 function M.add(ref, path, params)
-  local result = cli.worktree.add.arg_list(params).args(path, ref).call_sync()
+  local result = cli.worktree.add.arg_list(params or {}).args(path, ref).call_sync()
   return result.code == 0
 end
 
