@@ -17,7 +17,7 @@ local function get_path(prompt)
   local dir = Path.new(".")
   repeat
     local dirs = scan_dir(dir:absolute(), { depth = 1, only_dirs = true })
-    local selected = FuzzyFinderBuffer.new(dirs):open_async {
+    local selected = FuzzyFinderBuffer.new(util.merge({ ".." }, dirs)):open_async {
       prompt_prefix = prompt,
     }
 
