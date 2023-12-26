@@ -1401,24 +1401,24 @@ Actions:                                              *neogit_tag_popup_actions*
 Worktree Popup                                           *neogit_worktree_popup*
 
 Actions:                                         *neogit_worktree_popup_actions*
-  • Checkout worktree                                 *neogit_checkout_worktree*
+  • Checkout worktree                                 *neogit_worktree_checkout*
     Checks out an existing branch in a new directory.
 
     Changes CWD.
 
-  • Create branch and worktree                   *neogit_create_branch_worktree*
+  • Create branch and worktree                   *neogit_worktree_create_branch*
     Creates a new branch and checks it out in a new worktree, at the directory
     specified by the user.
 
     Changes CWD.
 
-  • Goto                                                  *neogit_goto_worktree*
+  • Goto                                                  *neogit_worktree_goto*
     Changes CWD to an existing worktree.
 
-  • Move                                                  *neogit_move_worktree*
+  • Move                                                  *neogit_worktree_move*
     Moves a worktree to a new directory in the filesystem.
 
-  • Delete                                              *neogit_delete_worktree*
+  • Delete                                              *neogit_worktree_delete*
     Removes a worktree. If uncommitted changes or untracked files exist, user
     will be prompted to execute command forcefully. When the worktree selected
     is the CWD, then CWD will be changed to the main worktree.
