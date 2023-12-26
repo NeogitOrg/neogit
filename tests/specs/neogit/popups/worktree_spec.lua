@@ -22,13 +22,13 @@ describe("worktree popup", function()
         harness.exec { "git", "branch", test_branch }
         FuzzyFinderBuffer.value = { test_branch, "../worktree-folder" }
 
-        local worktrees = harness.exec({ "git", "worktree", "list" })
+        local worktrees = harness.exec { "git", "worktree", "list" }
         assert.are.same(worktrees[2], "")
 
         act("ww")
         operations.wait("checkout_worktree")
 
-        worktrees = harness.exec({ "git", "worktree", "list" })
+        worktrees = harness.exec { "git", "worktree", "list" }
         assert.True(worktrees[2]:match("%[a%-new%-branch%-tree%]$") ~= nil)
       end)
     )
