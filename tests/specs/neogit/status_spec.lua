@@ -25,7 +25,7 @@ end
 describe("status buffer", function()
   describe("staging files - s", function()
     it(
-      "Handles non-engligh filenames correctly",
+      "Handles non-english filenames correctly",
       in_prepared_repo(function()
         harness.exec { "touch", "你好.md" }
         a.util.block_on(status.reset)
@@ -44,7 +44,7 @@ describe("status buffer", function()
         find("untracked%.txt")
         act("s")
         operations.wait("stage")
-        eq("A  untracked.txt\n", get_git_status("untracked.txt"))
+        eq("A  untracked.txt", get_git_status("untracked.txt"))
       end)
     )
 
@@ -52,10 +52,10 @@ describe("status buffer", function()
       "can stage a tracked file under the cursor",
       in_prepared_repo(function()
         find("Modified a%.txt")
-        eq(" M a.txt\n", get_git_status("a.txt"))
+        eq(" M a.txt", get_git_status("a.txt"))
         act("s")
         operations.wait("stage")
-        eq("M  a.txt\n", get_git_status("a.txt"))
+        eq("M  a.txt", get_git_status("a.txt"))
       end)
     )
 
@@ -65,7 +65,7 @@ describe("status buffer", function()
         find("Modified a%.txt")
         act("<tab>jjs")
         operations.wait("stage")
-        eq("MM a.txt\n", get_git_status("a.txt"))
+        eq("MM a.txt", get_git_status("a.txt"))
         eq(
           [[--- a/a.txt
 +++ b/a.txt
@@ -88,7 +88,7 @@ describe("status buffer", function()
         find("Modified a%.txt")
         act("<tab>8js")
         operations.wait("stage")
-        eq("MM a.txt\n", get_git_status("a.txt"))
+        eq("MM a.txt", get_git_status("a.txt"))
         eq(
           [[--- a/a.txt
 +++ b/a.txt
@@ -110,7 +110,7 @@ describe("status buffer", function()
         find("Modified a%.txt")
         act("<tab>jjjjVs")
         operations.wait("stage")
-        -- eq("M  a.txt\n", get_git_status("a.txt"))
+        eq("MM a.txt", get_git_status("a.txt"))
         eq(
           [[--- a/a.txt
 +++ b/a.txt
@@ -155,7 +155,7 @@ describe("status buffer", function()
 ]],
           get_git_diff("a.txt", "--cached")
         )
-        eq("A  untracked.txt\n", get_git_status("untracked.txt"))
+        eq("A  untracked.txt", get_git_status("untracked.txt"))
       end)
     )
   end)
@@ -165,10 +165,10 @@ describe("status buffer", function()
       "can unstage a staged file under the cursor",
       in_prepared_repo(function()
         find("Modified b%.txt")
-        eq("M  b.txt\n", get_git_status("b.txt"))
+        eq("M  b.txt", get_git_status("b.txt"))
         act("u")
         operations.wait("unstage")
-        eq(" M b.txt\n", get_git_status("b.txt"))
+        eq(" M b.txt", get_git_status("b.txt"))
       end)
     )
 
@@ -178,7 +178,7 @@ describe("status buffer", function()
         find("Modified b%.txt")
         act("<tab>jju")
         operations.wait("unstage")
-        eq("MM b.txt\n", get_git_status("b.txt"))
+        eq("MM b.txt", get_git_status("b.txt"))
         eq(
           [[--- a/b.txt
 +++ b/b.txt
@@ -199,7 +199,7 @@ describe("status buffer", function()
         find("Modified b%.txt")
         act("<tab>jjjjVu")
         operations.wait("unstage")
-        eq("MM b.txt\n", get_git_status("b.txt"))
+        eq("MM b.txt", get_git_status("b.txt"))
         eq(
           [[--- a/b.txt
 +++ b/b.txt
@@ -221,7 +221,7 @@ describe("status buffer", function()
         find("Modified b%.txt")
         act("<tab>8ju")
         operations.wait("unstage")
-        eq("MM b.txt\n", get_git_status("b.txt"))
+        eq("MM b.txt", get_git_status("b.txt"))
         eq(
           [[--- a/b.txt
 +++ b/b.txt
@@ -254,7 +254,7 @@ describe("status buffer", function()
         find("Modified a%.txt")
         act("<tab>jjx")
         operations.wait("discard")
-        eq(" M a.txt\n", get_git_status("a.txt"))
+        eq(" M a.txt", get_git_status("a.txt"))
         eq(
           [[--- a/a.txt
 +++ b/a.txt
@@ -276,7 +276,7 @@ describe("status buffer", function()
         find("Modified a%.txt")
         act("<tab>jjjjVx")
         operations.wait("discard")
-        eq(" M a.txt\n", get_git_status("a.txt"))
+        eq(" M a.txt", get_git_status("a.txt"))
         eq(
           [[--- a/a.txt
 +++ b/a.txt
@@ -324,7 +324,7 @@ describe("status buffer", function()
         find("Modified b%.txt")
         act("<tab>jjx")
         operations.wait("discard")
-        eq("M  b.txt\n", get_git_status("b.txt"))
+        eq("M  b.txt", get_git_status("b.txt"))
         eq(
           [[--- a/b.txt
 +++ b/b.txt
@@ -345,7 +345,7 @@ describe("status buffer", function()
         find("Modified b%.txt")
         act("<tab>jjjjVx")
         operations.wait("discard")
-        eq("M  b.txt\n", get_git_status("b.txt"))
+        eq("M  b.txt", get_git_status("b.txt"))
         eq(
           [[--- a/b.txt
 +++ b/b.txt
