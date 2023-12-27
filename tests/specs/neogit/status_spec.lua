@@ -1,3 +1,4 @@
+local a = require("plenary.async")
 local eq = assert.are.same
 local status = require("neogit.status")
 local operations = require("neogit.operations")
@@ -23,6 +24,20 @@ end
 
 describe("status buffer", function()
   describe("staging files - s", function()
+    it(
+      "Handles non-engligh filenames correctly",
+      in_prepared_repo(function()
+        harness.exec { "touch", "你好.md" }
+        a.util.block_on(status.reset)
+        a.util.block_on(status.refresh)
+
+        find("你好%.md")
+        act("s")
+        operations.wait("stage")
+        eq("A  你好.md", get_git_status("你好.md"))
+      end)
+    )
+
     it(
       "can stage an untracked file under the cursor",
       in_prepared_repo(function()
