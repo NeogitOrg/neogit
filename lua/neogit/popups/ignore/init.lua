@@ -5,7 +5,7 @@ local popup = require("neogit.lib.popup")
 local M = {}
 
 ---@class IgnoreEnv
----@field files string[] Abolute paths
+---@field files string[] Absolute paths
 function M.create(env)
   local excludesFile = require("neogit.lib.git.config").get_global("core.excludesfile")
 

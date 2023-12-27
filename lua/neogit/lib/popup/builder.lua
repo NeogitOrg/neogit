@@ -82,7 +82,7 @@ end
 ---@param opts table|nil A table of options for the switch
 ---@param opts.enabled boolean Controls if the switch should default to 'on' state
 ---@param opts.internal boolean Whether the switch is internal to neogit or should be included in the cli command.
---                              If `true` we don't include it in the cli comand.
+--                              If `true` we don't include it in the cli command.
 ---@param opts.incompatible table A table of strings that represent other cli flags that this one cannot be used with
 ---@param opts.key_prefix string Allows overwriting the default '-' to toggle switch
 ---@param opts.cli_prefix string Allows overwriting the default '--' thats used to create the cli flag. Sometimes you may want

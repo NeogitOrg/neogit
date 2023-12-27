@@ -557,7 +557,7 @@ Actions:                                           *neogit_branch_popup_actions*
   • Checkout branch/revision                        *neogit_branch_checkout_rev*
     Changes HEAD to point to the selected branch/revision. If a local branch
     is selected, that will be checked out. Otherwise HEAD will become
-    detatched. Any ref under the cursor or selected will be available to
+    detached. Any ref under the cursor or selected will be available to
     checkout.
 
   • Checkout local branch                         *neogit_branch_checkout_local*
@@ -600,7 +600,7 @@ Actions:                                           *neogit_branch_popup_actions*
 
   • Create new spin-out                                 *neogit_branch_spin_out*
     Like |neogit_branch_spin_off|, but doesn't change HEAD. However, if the
-    index has uncomitted changes, will behave exactly the same as spin_off.
+    index has uncommitted changes, will behave exactly the same as spin_off.
 
   • Create new worktree                          *neogit_branch_create_worktree*
     (Not yet implemented)
@@ -797,7 +797,7 @@ Arguments:                                            *neogit_commit_popup_args*
     and --gpg-sign
 
   • --reset-author
-    When used while ammending or when committing after a conflicting
+    When used while amending or when committing after a conflicting
     cherry-pick, declare that the authorship of the resulting commit now
     belongs to the committer. This also renews the author timestamp.
 
