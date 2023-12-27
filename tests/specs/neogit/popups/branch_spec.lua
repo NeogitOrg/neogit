@@ -125,7 +125,7 @@ describe("branch popup", function()
       "can delete a local branch with unmerged commits",
       in_prepared_repo(function()
         FuzzyFinderBuffer.value = "second-branch"
-        input.confimed = true
+        input.confirmed = true
 
         util.system([[
           git switch second-branch

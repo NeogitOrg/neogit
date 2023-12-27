@@ -142,7 +142,7 @@ end
 ---@field kind? WindowKind The default type of window neogit should open in
 ---@field disable_line_numbers? boolean Whether to disable line numbers
 ---@field console_timeout? integer Time in milliseconds after a console is created for long running commands
----@field auto_show_console? boolean Automatically show the console if a command takes longer than console_timout
+---@field auto_show_console? boolean Automatically show the console if a command takes longer than console_timeout
 ---@field status? { recent_commit_count: integer } Status buffer options
 ---@field commit_editor? NeogitConfigPopup Commit editor options
 ---@field commit_select_view? NeogitConfigPopup Commit select view options

@@ -30,7 +30,7 @@ describe("docs", function()
 
     for _, ref in ipairs(refs) do
       if not tags[ref] then
-        vim.print("Undefined tag refrenced! " .. ref)
+        vim.print("Undefined tag referenced! " .. ref)
       end
 
       assert.True(tags[ref])
