@@ -37,7 +37,7 @@ function M.new(filename, on_unload)
 end
 
 function M:open(kind)
-  assert(kind, "Editor must speficy a kind")
+  assert(kind, "Editor must specify a kind")
 
   local mapping = config.get_reversed_commit_editor_maps()
   local aborted = false

@@ -14,8 +14,8 @@ local api = vim.api
 ---@field author_name string
 ---@field author_date string
 ---@field commit_arg string The commit argument passed to `git show`
----@field commiter_email string
----@field commiter_date string
+---@field committer_email string
+---@field committer_date string
 ---@field description table
 
 ---@class CommitOverview

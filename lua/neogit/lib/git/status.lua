@@ -1,4 +1,5 @@
 local Path = require("plenary.path")
+local util = require("neogit.lib.util")
 local Collection = require("neogit.lib.collection")
 
 ---@class File: StatusItem
@@ -49,7 +50,6 @@ local function update_status(state)
   -- cwd may change after the status is refreshed and used, especially if using
   -- rooter plugins with lsp integration
   local cwd = vim.loop.cwd()
-  local result = git.cli.status.porcelain(2).branch.call { hidden = true }
 
   local head = {}
   local upstream = { unmerged = { items = {} }, unpulled = { items = {} }, ref = nil }
@@ -61,7 +61,15 @@ local function update_status(state)
     untracked_files = Collection.new(state.untracked.items or {}):key_by("name"),
   }
 
-  for _, l in ipairs(result.stdout) do
+  local result = git.cli.status.null_separated.porcelain(2).branch.call { hidden = true }
+  result = vim.split(result.stdout_raw[1], "\n")
+  result = util.filter_map(result, function(l)
+    if l ~= "" then
+      return l
+    end
+  end)
+
+  for _, l in ipairs(result) do
     local header, value = l:match("# ([%w%.]+) (.+)")
     if header then
       if header == "branch.head" then
