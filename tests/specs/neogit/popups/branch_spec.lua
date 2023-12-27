@@ -19,6 +19,16 @@ local function act(normal_cmd)
 end
 
 describe("branch popup", function()
+  it( -- This test needs to be first or it fails. Lame.
+    "can create a new branch",
+    in_prepared_repo(function()
+      input.values = { "branch-from-test-one" }
+      act("bc<cr><cr>")
+      operations.wait("checkout_create_branch")
+      eq("branch-from-test-one", get_current_branch())
+    end)
+  )
+
   it(
     "can switch to another branch in the repository",
     in_prepared_repo(function()
@@ -46,16 +56,6 @@ describe("branch popup", function()
       act("br<cr>")
       operations.wait("checkout_branch_recent")
       eq("second-branch", get_current_branch())
-    end)
-  )
-
-  it(
-    "can create a new branch",
-    in_prepared_repo(function()
-      input.values = { "branch-from-test-one" }
-      act("bc<cr><cr>")
-      operations.wait("checkout_create_branch")
-      eq("branch-from-test-one", get_current_branch())
     end)
   )
 
