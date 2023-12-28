@@ -1493,8 +1493,16 @@ function M.get_status()
 end
 
 function M.chdir(dir)
+  local destination = require("plenary.path").new(dir)
+  vim.wait(10000, function()
+    return destination:exists()
+  end)
+
+  logger.debug("[STATUS] Changing Dir: " .. dir)
   M.old_cwd = dir
+  vim.cmd.cd(dir)
   vim.loop.chdir(dir)
+  reset()
 end
 
 return M

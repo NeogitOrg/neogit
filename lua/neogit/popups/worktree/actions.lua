@@ -104,11 +104,6 @@ M.move = operations("move_worktree", function()
     notification.info(("Moved worktree to %s"):format(path))
 
     if change_dir then
-      local destination = Path.new(path)
-      vim.wait(10000, function()
-        return destination:exists()
-      end)
-
       status.chdir(path)
     end
   end
