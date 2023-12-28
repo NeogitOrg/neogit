@@ -19,10 +19,20 @@ local function act(normal_cmd)
 end
 
 describe("branch popup", function()
+  it( -- This test needs to be first or it fails. Lame.
+    "can create a new branch",
+    in_prepared_repo(function()
+      input.values = { "branch-from-test-one" }
+      act("bc<cr><cr>")
+      operations.wait("checkout_create_branch")
+      eq("branch-from-test-one", get_current_branch())
+    end)
+  )
+
   it(
     "can switch to another branch in the repository",
     in_prepared_repo(function()
-      FuzzyFinderBuffer.value = "second-branch"
+      FuzzyFinderBuffer.value = { "second-branch" }
       act("bb<cr>")
       operations.wait("checkout_branch_revision")
       eq("second-branch", get_current_branch())
@@ -32,7 +42,7 @@ describe("branch popup", function()
   it(
     "can switch to another local branch in the repository",
     in_prepared_repo(function()
-      FuzzyFinderBuffer.value = "second-branch"
+      FuzzyFinderBuffer.value = { "second-branch" }
       act("bl<cr>")
       operations.wait("checkout_branch_local")
       eq("second-branch", get_current_branch())
@@ -42,20 +52,10 @@ describe("branch popup", function()
   it(
     "can switch to another local recent branch in the repository",
     in_prepared_repo(function()
-      FuzzyFinderBuffer.value = "second-branch"
+      FuzzyFinderBuffer.value = { "second-branch" }
       act("br<cr>")
       operations.wait("checkout_branch_recent")
       eq("second-branch", get_current_branch())
-    end)
-  )
-
-  it(
-    "can create a new branch",
-    in_prepared_repo(function()
-      input.values = { "branch-from-test" }
-      act("bc<cr><cr>")
-      operations.wait("checkout_create_branch")
-      eq("branch-from-test", get_current_branch())
     end)
   )
 
@@ -73,7 +73,7 @@ describe("branch popup", function()
   it(
     "can rename a branch",
     in_prepared_repo(function()
-      FuzzyFinderBuffer.value = "second-branch"
+      FuzzyFinderBuffer.value = { "second-branch" }
       input.values = { "second-branch-renamed" }
 
       assert.True(vim.tbl_contains(get_git_branches(), "second-branch"))
@@ -95,7 +95,7 @@ describe("branch popup", function()
         git config user.name "Neogit Test"
         ]])
 
-      FuzzyFinderBuffer.value = "second-branch"
+      FuzzyFinderBuffer.value = { "second-branch" }
 
       util.system("git commit --allow-empty -m 'test'")
       assert.are.Not.same("e2c2a1c0e5858a690c1dc13edc1fd5de103409d9", get_git_rev("HEAD"))
@@ -111,7 +111,7 @@ describe("branch popup", function()
     it(
       "can delete a local branch without unmerged commits",
       in_prepared_repo(function()
-        FuzzyFinderBuffer.value = "second-branch"
+        FuzzyFinderBuffer.value = { "second-branch" }
 
         assert.True(vim.tbl_contains(get_git_branches(), "second-branch"))
 
@@ -124,8 +124,8 @@ describe("branch popup", function()
     it(
       "can delete a local branch with unmerged commits",
       in_prepared_repo(function()
-        FuzzyFinderBuffer.value = "second-branch"
-        input.confimed = true
+        FuzzyFinderBuffer.value = { "second-branch" }
+        input.confirmed = true
 
         util.system([[
           git switch second-branch
@@ -146,7 +146,7 @@ describe("branch popup", function()
     it(
       "can abort deleting a local branch with unmerged commits",
       in_prepared_repo(function()
-        FuzzyFinderBuffer.value = "second-branch"
+        FuzzyFinderBuffer.value = { "second-branch" }
         input.confirmed = false
 
         util.system([[
@@ -168,7 +168,7 @@ describe("branch popup", function()
     it(
       "can delete a remote branch",
       in_prepared_repo(function()
-        FuzzyFinderBuffer.value = "upstream/second-branch"
+        FuzzyFinderBuffer.value = { "upstream/second-branch" }
         input.confirmed = true
 
         local remote = harness.prepare_repository()
@@ -190,7 +190,7 @@ describe("branch popup", function()
     it(
       "can delete the currently checked-out branch (detach)",
       in_prepared_repo(function()
-        FuzzyFinderBuffer.value = "master"
+        FuzzyFinderBuffer.value = { "master" }
         input.choice = "d"
 
         assert.True(vim.tbl_contains(get_git_branches(), "master"))
@@ -208,7 +208,7 @@ describe("branch popup", function()
     it(
       "can delete the currently checked-out branch (checkout upstream)",
       in_prepared_repo(function()
-        FuzzyFinderBuffer.value = "master"
+        FuzzyFinderBuffer.value = { "master" }
         input.choice = "c"
 
         util.system("git stash --include-untracked")
@@ -229,7 +229,7 @@ describe("branch popup", function()
     it(
       "can abort deleting the currently checked-out branch",
       in_prepared_repo(function()
-        FuzzyFinderBuffer.value = "master"
+        FuzzyFinderBuffer.value = { "master" }
         input.choice = "a"
 
         assert.True(vim.tbl_contains(get_git_branches(), "master"))

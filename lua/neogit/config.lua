@@ -110,7 +110,7 @@ end
 
 ---@alias NeogitConfigMappingsStatus "Close" | "Depth1" | "Depth2" | "Depth3" | "Depth4" | "Toggle" | "Discard" | "Stage" | "StageUnstaged" | "StageAll" | "Unstage" | "UnstageStaged" | "RefreshBuffer" | "GoToFile" | "VSplitOpen" | "SplitOpen" | "TabOpen" | "GoToPreviousHunkHeader" | "GoToNextHunkHeader" | "Console" | "CommandHistory" | "ShowRefs" | "InitRepo" | "YankSelected" | false | fun()
 
----@alias NeogitConfigMappingsPopup "HelpPopup" | "DiffPopup" | "PullPopup" | "RebasePopup" | "MergePopup" | "PushPopup" | "CommitPopup" | "LogPopup" | "RevertPopup" | "StashPopup" | "IgnorePopup" | "CherryPickPopup" | "BranchPopup" | "FetchPopup" | "ResetPopup" | "RemotePopup" | "TagPopup" | false
+---@alias NeogitConfigMappingsPopup "HelpPopup" | "DiffPopup" | "PullPopup" | "RebasePopup" | "MergePopup" | "PushPopup" | "CommitPopup" | "LogPopup" | "RevertPopup" | "StashPopup" | "IgnorePopup" | "CherryPickPopup" | "BranchPopup" | "FetchPopup" | "ResetPopup" | "RemotePopup" | "TagPopup" | "WorktreePopup" | false
 
 ---@alias NeogitConfigMappingsRebaseEditor "Pick" | "Reword" | "Edit" | "Squash" | "Fixup" | "Execute" | "Drop" | "Break" | "MoveUp" | "MoveDown" | "Close" | "OpenCommit" | "Submit" | "Abort" | false | fun()
 ---
@@ -142,7 +142,7 @@ end
 ---@field kind? WindowKind The default type of window neogit should open in
 ---@field disable_line_numbers? boolean Whether to disable line numbers
 ---@field console_timeout? integer Time in milliseconds after a console is created for long running commands
----@field auto_show_console? boolean Automatically show the console if a command takes longer than console_timout
+---@field auto_show_console? boolean Automatically show the console if a command takes longer than console_timeout
 ---@field status? { recent_commit_count: integer } Status buffer options
 ---@field commit_editor? NeogitConfigPopup Commit editor options
 ---@field commit_select_view? NeogitConfigPopup Commit select view options
@@ -341,6 +341,7 @@ function M.get_default_values()
         ["i"] = "IgnorePopup",
         ["t"] = "TagPopup",
         ["b"] = "BranchPopup",
+        ["w"] = "WorktreePopup",
         ["c"] = "CommitPopup",
         ["f"] = "FetchPopup",
         ["l"] = "LogPopup",
@@ -825,52 +826,55 @@ function M.check_integration(name)
 end
 
 function M.setup(opts)
-  if opts ~= nil then
-    if opts.use_default_keymaps == false then
-      M.values.mappings = { status = {}, popup = {}, finder = {}, commit_editor = {}, rebase_editor = {} }
-    else
-      -- Clear our any "false" user mappings from defaults
-      for section, maps in pairs(opts.mappings or {}) do
-        for k, v in pairs(maps) do
-          if v == false then
-            M.values.mappings[section][k] = nil
-            opts.mappings[section][k] = nil
-          end
+  if opts == nil then
+    return
+  end
+
+  if opts.use_default_keymaps == false then
+    M.values.mappings = { status = {}, popup = {}, finder = {}, commit_editor = {}, rebase_editor = {} }
+  else
+    -- Clear our any "false" user mappings from defaults
+    for section, maps in pairs(opts.mappings or {}) do
+      for k, v in pairs(maps) do
+        if v == false then
+          M.values.mappings[section][k] = nil
+          opts.mappings[section][k] = nil
         end
       end
     end
-
-    M.values = vim.tbl_deep_extend("force", M.values, opts)
   end
+
+  M.values = vim.tbl_deep_extend("force", M.values, opts)
 
   local config_errs = M.validate_config()
-  if vim.tbl_count(config_errs) > 0 then
-    local header = "====Neogit Configuration Errors===="
-    local header_message = {
-      "Neogit has NOT been setup!",
-      "You have a misconfiguration in your Neogit setup!",
-      'Validate that your configuration passed to `require("neogit").setup()` is valid!',
-    }
-    local header_sep = ""
-    for _ = 0, string.len(header), 1 do
-      header_sep = header_sep .. "-"
-    end
-
-    local config_errs_message = {}
-    for config_key, err in pairs(config_errs) do
-      table.insert(config_errs_message, string.format("Config value: `%s` had error -> %s", config_key, err))
-    end
-    error(
-      string.format(
-        "\n%s\n%s\n%s\n%s",
-        header,
-        table.concat(header_message, "\n"),
-        header_sep,
-        table.concat(config_errs_message, "\n")
-      ),
-      vim.log.levels.ERROR
-    )
+  if vim.tbl_count(config_errs) == 0 then
+    return
   end
+  local header = "====Neogit Configuration Errors===="
+  local header_message = {
+    "Neogit has NOT been setup!",
+    "You have a misconfiguration in your Neogit setup!",
+    'Validate that your configuration passed to `require("neogit").setup()` is valid!',
+  }
+  local header_sep = ""
+  for _ = 0, string.len(header), 1 do
+    header_sep = header_sep .. "-"
+  end
+
+  local config_errs_message = {}
+  for config_key, err in pairs(config_errs) do
+    table.insert(config_errs_message, string.format("Config value: `%s` had error -> %s", config_key, err))
+  end
+  error(
+    string.format(
+      "\n%s\n%s\n%s\n%s",
+      header,
+      table.concat(header_message, "\n"),
+      header_sep,
+      table.concat(config_errs_message, "\n")
+    ),
+    vim.log.levels.ERROR
+  )
 end
 
 return M

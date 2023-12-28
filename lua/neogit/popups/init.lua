@@ -153,6 +153,7 @@ function M.mappings_table()
       },
     },
     { "RemotePopup", "Remote", M.open("remote") },
+    { "WorktreePopup", "Worktree", M.open("worktree") },
     {
       "StashPopup",
       "Stash",
@@ -161,12 +162,6 @@ function M.mappings_table()
       end),
     },
   }
-end
-
-function M.test()
-  M.open("echo", function(f)
-    f("a", "b")
-  end)()
 end
 
 return M

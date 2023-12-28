@@ -71,7 +71,7 @@ describe("validating a string variable", function ()
   end)
 
   it("should have content 'Hello World!'", function()
-     assert.are.same("Hello World!", our_varible)
+     assert.are.same("Hello World!", our_variable)
   )
 end)
 ```

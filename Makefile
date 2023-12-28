@@ -3,6 +3,7 @@ test:
 
 lint:
 	selene --config selene/config.toml lua
+	typos
 
 lint-short:
 	selene --config selene/config.toml --display-style Quiet lua

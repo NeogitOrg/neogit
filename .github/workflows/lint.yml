@@ -12,28 +12,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Get latest selene version
-        id: selene-version
-        run: |
-          echo "SELENE_VERSION=$(curl -s -L0 https://crates.io/api/v1/crates/selene  | jq -r '.crate.max_stable_version')" >> $GITHUB_ENV
+      - uses: Swatinem/rust-cache@v2
 
-      - name: Restore Cached Selene
-        id: cache-selene-restore
-        uses: actions/cache@v3
+      - uses: taiki-e/install-action@v2
         with:
-          key: ${{ runner.os }}-selene-${{ env.SELENE_VERSION }}
-          path: ~/.cargo/bin/selene
+          tool: selene,typos-cli
 
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
-        if: ${{ steps.cache-selene-restore.outputs.cache-hit != 'true' }}
-        with:
-          toolchain: stable
-
-      - name: Install Selene
-        if: ${{ steps.cache-selene-restore.outputs.cache-hit != 'true' }}
-        run: cargo install selene --force
-
-      - name: Run Selene
+      - name: Run linters
         run: make lint
 
   stylua:

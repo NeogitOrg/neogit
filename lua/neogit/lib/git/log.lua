@@ -14,10 +14,10 @@ local commit_header_pat = "([| ]*)(%*?)([| ]*)commit (%w+)"
 ---@field graph string the graph string
 ---@field author_name string the name of the author
 ---@field author_email string the email of the author
----@field author_date string when the author commited
+---@field author_date string when the author committed
 ---@field committer_name string the name of the committer
 ---@field committer_email string the email of the committer
----@field committer_date string when the committer commited
+---@field committer_date string when the committer committed
 ---@field description string a list of lines
 ---@field commit_arg string the passed argument of the git command
 ---@field diffs any[]
