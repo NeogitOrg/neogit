@@ -1494,7 +1494,7 @@ end
 
 function M.chdir(dir)
   local destination = require("plenary.path").new(dir)
-  vim.wait(10000, function()
+  vim.wait(5000, function()
     return destination:exists()
   end)
 
