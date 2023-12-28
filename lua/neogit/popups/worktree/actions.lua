@@ -82,6 +82,12 @@ M.move = operations("move_worktree", function()
     return w.path
   end, git.worktree.list { include_main = false })
 
+
+  if #options == 0 then
+    notification.info("No worktrees present")
+    return
+  end
+
   local selected = FuzzyFinderBuffer.new(options):open_async { prompt_prefix = "move worktree" }
   if not selected then
     return
@@ -92,12 +98,19 @@ M.move = operations("move_worktree", function()
     return
   end
 
+  local change_dir = selected == vim.fn.getcwd()
+
   if git.worktree.move(selected, path) then
     notification.info(("Moved worktree to %s"):format(path))
-    -- Only CD if moving the currently checked-out worktree
-    -- if Path.new(vim.loop.cwd()):absolute() == abs_path then
-    --   status.chdir(abs_path)
-    -- end
+
+    if change_dir then
+      local destination = Path.new(path)
+      vim.wait(10000, function()
+        return destination:exists()
+      end)
+
+      status.chdir(path)
+    end
   end
 end)
 
@@ -106,26 +119,37 @@ M.delete = operations("delete_worktree", function()
     return w.path
   end, git.worktree.list { include_main = false })
 
+  if #options == 0 then
+    notification.info("No worktrees present")
+    return
+  end
+
   local selected = FuzzyFinderBuffer.new(options):open_async { prompt_prefix = "delete worktree" }
   if not selected then
     return
   end
 
-  -- CD back to MAIN if deleting the currently checked-out worktree
-  -- if Path.new(vim.loop.cwd()):absolute() == abs_path then
-  --   status.chdir(abs_path)
-  -- end
-  --
+  local change_dir = selected == vim.fn.getcwd()
+  local success = false
+
   if input.get_confirmation("Remove worktree?") then
+    if change_dir then
+      status.chdir(git.worktree.main().path)
+    end
+
     -- This might produce some error messages that need to get suppressed
     if git.worktree.remove(selected) then
-      notification.info("Worktree removed")
+      success = true
     else
       if input.get_confirmation("Worktree has untracked or modified files. Remove anyways?") then
         if git.worktree.remove(selected, { "--force" }) then
-          notification.info("Worktree removed")
+          success = true
         end
       end
+    end
+
+    if success then
+      notification.info("Worktree removed")
     end
   end
 end)
@@ -134,6 +158,11 @@ M.visit = operations("visit_worktree", function()
   local options = vim.tbl_map(function(w)
     return w.path
   end, git.worktree.list())
+
+  if #options == 0 then
+    notification.info("No worktrees present")
+    return
+  end
 
   local selected = FuzzyFinderBuffer.new(options):open_async { prompt_prefix = "visit worktree" }
   if selected then
