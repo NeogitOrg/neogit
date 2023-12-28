@@ -1,6 +1,7 @@
-*neogit.txt* A Magit clone for Neovim that is geared towards the Vim philosophy.
+*neogit.txt* A Magit inspired Git porcelain for Neovim
 *neogit*
 Author: TimUntersberger
+Maintainer: CKolkey
 License: MIT license {{{
 
   Copyright (c) 2020 Karl Yngve Lervåg
@@ -51,6 +52,7 @@ CONTENTS                                                       *neogit_contents*
        • Revert                                           |neogit_revert_popup|
        • Stash                                             |neogit_stash_popup|
        • Tag                                                 |neogit_tag_popup|
+       • Worktree                                       |neogit_worktree_popup|
 
     7. Buffers                                                 |neogit_buffers|
        • Status                                          |neogit_status_buffer|
@@ -1394,6 +1396,33 @@ Actions:                                              *neogit_tag_popup_actions*
 
   • Prune                                                     *neogit_tag_prune*
     Offers to delete tags missing locally from REMOTE, and vice versa.
+
+==============================================================================
+Worktree Popup                                           *neogit_worktree_popup*
+
+Actions:                                         *neogit_worktree_popup_actions*
+  • Checkout worktree                                 *neogit_worktree_checkout*
+    Checks out an existing branch in a new directory.
+
+    Changes CWD.
+
+  • Create branch and worktree                   *neogit_worktree_create_branch*
+    Creates a new branch and checks it out in a new worktree, at the directory
+    specified by the user.
+
+    Changes CWD.
+
+  • Goto                                                  *neogit_worktree_goto*
+    Changes CWD to an existing worktree.
+
+  • Move                                                  *neogit_worktree_move*
+    Moves a worktree to a new directory in the filesystem.
+
+  • Delete                                              *neogit_worktree_delete*
+    Removes a worktree. If uncommitted changes or untracked files exist, user
+    will be prompted to execute command forcefully. When the worktree selected
+    is the CWD, then CWD will be changed to the main worktree.
+
 
 ==============================================================================
 7. Buffers                                                      *neogit_buffers*

@@ -56,15 +56,20 @@ function M.in_prepared_repo(cb)
     local dir = M.prepare_repository()
     require("neogit").setup()
     vim.cmd("Neogit")
+
     a.util.block_on(status.reset)
+
     vim.wait(1000, function()
       return not status.is_refresh_locked()
     end, 100)
+
     a.util.block_on(function()
       local _, err = pcall(cb, dir)
       if err ~= nil then
         error(err)
       end
+
+      a.util.block_on(status.close)
     end)
   end
 end
