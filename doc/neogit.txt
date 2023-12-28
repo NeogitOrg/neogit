@@ -1063,7 +1063,7 @@ Arguments:                                              *neogit_push_popup_args*
     (tracking) reference.
 
   • --no-verify
-    Skips runing any pre-push git hooks. By default, all hooks are run.
+    Skips running any pre-push git hooks. By default, all hooks are run.
 
   • --dry-run
     Do everything except actually send the updates.
