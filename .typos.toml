@@ -1,0 +1,3 @@
+[default.extend-words]
+# `enew` is a valid nvim command
+enew = "enew"

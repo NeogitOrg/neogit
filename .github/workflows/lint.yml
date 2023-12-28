@@ -16,9 +16,9 @@ jobs:
 
       - uses: taiki-e/install-action@v2
         with:
-          tool: selene
+          tool: selene,typos-cli
 
-      - name: Run Selene
+      - name: Run linters
         run: make lint
 
   stylua:
