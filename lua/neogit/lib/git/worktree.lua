@@ -31,9 +31,16 @@ function M.remove(worktree, args)
   return result.code == 0
 end
 
+---@class Worktree
+---@field main boolean
+---@field path string
+---@field head string
+---@field type string
+---@field ref string
+
 ---Lists all worktrees for a git repo
 ---@param opts? table
----@return table
+---@return Worktree[]
 function M.list(opts)
   opts = opts or { include_main = true }
   local list = vim.split(cli.worktree.list.args("--porcelain", "-z").call().stdout_raw[1], "\n\n")
@@ -48,6 +55,14 @@ function M.list(opts)
         return { main = main, path = path, head = head, type = type, ref = ref }
       end
     end
+  end)
+end
+
+---Finds main worktree
+---@return Worktree
+function M.main()
+  return util.find(M.list { include_main = true }, function(worktree)
+    return worktree.main
   end)
 end
 
