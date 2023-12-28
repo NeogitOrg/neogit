@@ -385,8 +385,8 @@ function Buffer:call(f)
   api.nvim_buf_call(self.handle, f)
 end
 
-function Buffer.exists(name)
-  return fn.bufnr(name) ~= -1
+function Buffer:exists()
+  return fn.bufnr(self.handle) ~= -1
 end
 
 function Buffer:set_extmark(...)
@@ -516,18 +516,8 @@ function Buffer.create(config)
       local decor_ns = api.nvim_create_namespace("NeogitBufferViewDecor" .. config.name)
       local context_ns = api.nvim_create_namespace("NeogitBufferitViewContext" .. config.name)
 
-      local function frame_key()
-        return table.concat { fn.line("w0"), fn.line("w$"), fn.getcurpos()[2], buffer:get_changedtick() }
-      end
-
-      local last_frame_key = frame_key()
-
       local function on_start()
-        return buffer:is_focused() and frame_key() ~= last_frame_key
-      end
-
-      local function on_end()
-        last_frame_key = frame_key()
+        return buffer:exists() and buffer:is_focused()
       end
 
       local function on_win()
@@ -557,7 +547,7 @@ function Buffer.create(config)
         end
       end
 
-      buffer:set_decorations(decor_ns, { on_start = on_start, on_win = on_win, on_end = on_end })
+      buffer:set_decorations(decor_ns, { on_start = on_start, on_win = on_win })
     end)
   end
 

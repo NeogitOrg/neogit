@@ -1,4 +1,7 @@
 local RPC = require("neogit.lib.rpc")
+local logger = require("neogit.logger")
+local config = require("neogit.config")
+
 local fn = vim.fn
 local fmt = string.format
 
@@ -8,6 +11,8 @@ function M.get_nvim_remote_editor()
   local neogit_path = debug.getinfo(1, "S").source:sub(2, -#"lua/neogit/client.lua" - 2)
   local nvim_path = fn.shellescape(vim.v.progpath)
 
+  logger.debug("[CLIENT] Neogit path: " .. neogit_path)
+  logger.debug("[CLIENT] Neovim path: " .. nvim_path)
   local runtimepath_cmd = fn.shellescape(fmt("set runtimepath^=%s", fn.fnameescape(tostring(neogit_path))))
   local lua_cmd = fn.shellescape("lua require('neogit.client').client()")
 
@@ -44,8 +49,11 @@ function M.client()
   end
 
   local file_target = fn.fnamemodify(fn.argv()[1], ":p")
+  logger.fmt_debug("[CLIENT] File target: %s", file_target)
 
   local client = fn.serverstart()
+  logger.fmt_debug("[CLIENT] Client address: %s", client)
+
   local lua_cmd = fmt('lua require("neogit.client").editor("%s", "%s")', file_target, client)
 
   if vim.loop.os_uname().sysname == "Windows_NT" then
@@ -57,14 +65,17 @@ function M.client()
 end
 
 --- Invoked by the `client` and starts the appropriate file editor
+---@param target string Filename to open
+---@param client string Address returned from vim.fn.serverstart()
 function M.editor(target, client)
+  logger.fmt_debug("[CLIENT] Invoked editor with target: %s, from: %s", target, client)
   require("neogit.process").hide_preview_buffers()
 
-  local editor = require("neogit.editor")
-
   local rpc_client = RPC.create_connection(client)
+
+  ---on_unload callback when closing editor
+  ---@param status integer Status code to close remote nvim instance with. 0 for success, 1 for failure
   local function send_client_quit(status)
-    status = status or 0
     if status == 0 then
       rpc_client:send_cmd_async("qall")
     elseif status == 1 then
@@ -74,21 +85,29 @@ function M.editor(target, client)
     rpc_client:disconnect()
   end
 
-  if target:find("git%-rebase%-todo$") then
-    editor.rebase_editor(target, send_client_quit)
-  elseif target:find("COMMIT_EDITMSG$") then
-    editor.commit_editor(target, send_client_quit)
+  local kind
+  if target:find("COMMIT_EDITMSG$") then
+    kind = config.values.commit_editor.kind
   elseif target:find("MERGE_MSG$") then
-    editor.merge_editor(target, send_client_quit)
+    kind = config.values.merge_editor.kind
   elseif target:find("TAG_EDITMSG$") then
-    editor.tag_editor(target, send_client_quit)
+    kind = config.values.tag_editor.kind
   elseif target:find("EDIT_DESCRIPTION$") then
-    editor.description_editor(target, send_client_quit)
+    kind = config.values.description_editor.kind
+  elseif target:find("git%-rebase%-todo$") then
+    kind = config.values.rebase_editor.kind
   else
-    local notification = require("neogit.lib.notification")
-    notification.warn(target .. " has not been implemented yet")
-    send_client_quit()
+    kind = "auto"
   end
+
+  local editor
+  if target:find("git%-rebase%-todo$") then
+    editor = require("neogit.buffers.rebase_editor")
+  else
+    editor = require("neogit.buffers.editor")
+  end
+
+  editor.new(target, send_client_quit):open(kind)
 end
 
 ---@class NotifyMsg

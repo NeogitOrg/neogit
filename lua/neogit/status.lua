@@ -537,7 +537,7 @@ local function refresh(partial, reason)
     refresh_status_buffer()
 
     if M.status_buffer ~= nil and M.status_buffer:is_focused() then
-      restore_cursor_location(s, f, h)
+      pcall(restore_cursor_location, s, f, h)
     end
 
     vim.api.nvim_exec_autocmds("User", { pattern = "NeogitStatusRefreshed", modeline = false })
@@ -1308,22 +1308,6 @@ local cmd_func_map = function()
       notification.info("Refreshing Status")
       dispatch_refresh(nil, "manual")
     end,
-
-    -- INTEGRATIONS --
-
-    ["DiffAtFile"] = function()
-      if not config.check_integration("diffview") then
-        notification.error("Diffview integration is not enabled")
-        return
-      end
-
-      local dv = require("neogit.integrations.diffview")
-      local section, item = get_current_section_item()
-
-      if section and item then
-        dv.open(section.name, item.name)
-      end
-    end,
   }
 
   local popups = require("neogit.popups")
@@ -1347,18 +1331,8 @@ local function set_decoration_provider(buffer)
   local decor_ns = api.nvim_create_namespace("NeogitStatusDecor")
   local context_ns = api.nvim_create_namespace("NeogitStatusContext")
 
-  local function frame_key()
-    return table.concat { fn.line("w0"), fn.line("w$"), fn.line("."), buffer:get_changedtick() }
-  end
-
-  local last_frame_key = frame_key()
-
   local function on_start()
-    return buffer:is_focused() and frame_key() ~= last_frame_key
-  end
-
-  local function on_end()
-    last_frame_key = frame_key()
+    return buffer:exists() and buffer:is_focused()
   end
 
   local function on_win()
@@ -1411,7 +1385,7 @@ local function set_decoration_provider(buffer)
     end
   end
 
-  buffer:set_decorations(decor_ns, { on_start = on_start, on_win = on_win, on_end = on_end })
+  buffer:set_decorations(decor_ns, { on_start = on_start, on_win = on_win })
 end
 
 --- Creates a new status buffer

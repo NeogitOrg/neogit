@@ -187,7 +187,14 @@ M.reset_branch = operation("reset_branch", function(popup)
     end
   end
 
-  local options = util.merge(popup.state.env.commits, git.branch.get_all_branches(false), git.tag.list())
+  local relatives = util.compact {
+    git.branch.pushRemote_ref(),
+    git.branch.upstream(),
+  }
+
+  local options = util.deduplicate(
+    util.merge(popup.state.env.commits, relatives, git.branch.get_all_branches(false), git.tag.list())
+  )
   local current = git.branch.current()
   local to = FuzzyFinderBuffer.new(options):open_async {
     prompt_prefix = string.format("reset %s to", current),

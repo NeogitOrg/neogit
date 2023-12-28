@@ -306,10 +306,26 @@ function M.pattern_escape(str)
   return str
 end
 
+---Removes duplicate values from a table
+---@param tbl table
+---@return table
 function M.deduplicate(tbl)
   local res = {}
   for i = 1, #tbl do
     if tbl[i] and not vim.tbl_contains(res, tbl[i]) then
+      table.insert(res, tbl[i])
+    end
+  end
+  return res
+end
+
+---Removes nil values from a table
+---@param tbl table
+---@return table
+function M.compact(tbl)
+  local res = {}
+  for i = 1, #tbl do
+    if tbl[i] ~= nil then
       table.insert(res, tbl[i])
     end
   end

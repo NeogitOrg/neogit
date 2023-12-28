@@ -17,12 +17,6 @@ local function get_reversed_maps(tbl)
     end
   end
 
-  setmetatable(result, {
-    __index = function()
-      return { "<NOP>" }
-    end,
-  })
-
   return result
 end
 
@@ -114,7 +108,7 @@ end
 
 ---@alias NeogitConfigMappingsFinder "Select" | "Close" | "Next" | "Previous" | "MultiselectToggleNext" | "MultiselectTogglePrevious" | "NOP" | false
 
----@alias NeogitConfigMappingsStatus "Close" | "Depth1" | "Depth2" | "Depth3" | "Depth4" | "Toggle" | "Discard" | "Stage" | "StageUnstaged" | "StageAll" | "Unstage" | "UnstageStaged" | "DiffAtFile" | "RefreshBuffer" | "GoToFile" | "VSplitOpen" | "SplitOpen" | "TabOpen" | "GoToPreviousHunkHeader" | "GoToNextHunkHeader" | "Console" | "CommandHistory" | "InitRepo" | "YankSelected" | false | fun()
+---@alias NeogitConfigMappingsStatus "Close" | "Depth1" | "Depth2" | "Depth3" | "Depth4" | "Toggle" | "Discard" | "Stage" | "StageUnstaged" | "StageAll" | "Unstage" | "UnstageStaged" | "RefreshBuffer" | "GoToFile" | "VSplitOpen" | "SplitOpen" | "TabOpen" | "GoToPreviousHunkHeader" | "GoToNextHunkHeader" | "Console" | "CommandHistory" | "InitRepo" | "YankSelected" | false | fun()
 
 ---@alias NeogitConfigMappingsPopup "HelpPopup" | "DiffPopup" | "PullPopup" | "RebasePopup" | "MergePopup" | "PushPopup" | "CommitPopup" | "LogPopup" | "RevertPopup" | "StashPopup" | "IgnorePopup" | "CherryPickPopup" | "BranchPopup" | "FetchPopup" | "ResetPopup" | "RemotePopup" | "TagPopup" | false
 
@@ -148,7 +142,7 @@ end
 ---@field kind? WindowKind The default type of window neogit should open in
 ---@field disable_line_numbers? boolean Whether to disable line numbers
 ---@field console_timeout? integer Time in milliseconds after a console is created for long running commands
----@field auto_show_console? boolean Automatically show the console if a command takes longer than console_timout
+---@field auto_show_console? boolean Automatically show the console if a command takes longer than console_timeout
 ---@field status? { recent_commit_count: integer } Status buffer options
 ---@field commit_editor? NeogitConfigPopup Commit editor options
 ---@field commit_select_view? NeogitConfigPopup Commit select view options
@@ -166,8 +160,8 @@ end
 ---@field sections? NeogitConfigSections
 ---@field ignored_settings? string[] Settings to never persist, format: "Filetype--cli-value", i.e. "NeogitCommitPopup--author"
 ---@field mappings? NeogitConfigMappings
----@field notification_icon? String
----@field use_default_keymaps? Boolean
+---@field notification_icon? string
+---@field use_default_keymaps? boolean
 
 ---Returns the default Neogit configuration
 ---@return NeogitConfig
@@ -339,7 +333,7 @@ function M.get_default_values()
       popup = {
         ["?"] = "HelpPopup",
         ["A"] = "CherryPickPopup",
-        ["D"] = "DiffPopup",
+        ["d"] = "DiffPopup",
         ["M"] = "RemotePopup",
         ["P"] = "PushPopup",
         ["X"] = "ResetPopup",
@@ -369,7 +363,6 @@ function M.get_default_values()
         ["<c-s>"] = "StageAll",
         ["u"] = "Unstage",
         ["U"] = "UnstageStaged",
-        ["d"] = "DiffAtFile",
         ["$"] = "CommandHistory",
         ["#"] = "Console",
         ["Y"] = "YankSelected",
@@ -836,7 +829,7 @@ function M.setup(opts)
   end
 
   if opts.use_default_keymaps == false then
-    M.values.mappings = { status = {}, popup = {}, finder = {} }
+    M.values.mappings = { status = {}, popup = {}, finder = {}, commit_editor = {}, rebase_editor = {} }
   else
     -- Clear our any "false" user mappings from defaults
     for section, maps in pairs(opts.mappings or {}) do

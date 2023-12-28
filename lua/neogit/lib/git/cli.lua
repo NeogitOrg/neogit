@@ -37,6 +37,7 @@ local configurations = {
       short = "-s",
       branch = "-b",
       verbose = "-v",
+      null_separated = "-z",
     },
     options = {
       porcelain = "--porcelain",

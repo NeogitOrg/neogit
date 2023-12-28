@@ -211,7 +211,7 @@ end
 
 function Process.defer_show_preview_buffers()
   hide_console = false
-  --- Start the timers again, making all proceses show the log buffer on a long
+  --- Start the timers again, making all processes show the log buffer on a long
   --- running command
   for _, v in pairs(processes) do
     v:start_timer()
@@ -346,7 +346,7 @@ function Process:spawn(cb)
       end
 
       local message = string.format(
-        "%s:\n\n%s\n\nAn error occured.",
+        "%s:\n\n%s\n\nAn error occurred.",
         mask_command(table.concat(self.cmd, " ")),
         table.concat(output, "\n")
       )
