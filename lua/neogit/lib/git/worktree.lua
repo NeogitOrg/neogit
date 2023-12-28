@@ -18,7 +18,7 @@ end
 ---@param destination string absolute path for where to move worktree
 ---@return boolean
 function M.move(worktree, destination)
-  local result = cli.worktree.move.args(worktree, destination).call_sync()
+  local result = cli.worktree.move.args(worktree, destination).call()
   return result.code == 0
 end
 
@@ -27,7 +27,7 @@ end
 ---@param args? table
 ---@return boolean
 function M.remove(worktree, args)
-  local result = cli.worktree.remove.args(worktree).arg_list(args).call()
+  local result = cli.worktree.remove.args(worktree).arg_list(args or {}).call({ ignore_error = true })
   return result.code == 0
 end
 
