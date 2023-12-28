@@ -7,9 +7,25 @@ local in_prepared_repo = harness.in_prepared_repo
 local input = require("tests.mocks.input")
 local FuzzyFinderBuffer = require("tests.mocks.fuzzy_finder")
 
+local git = require("neogit.lib.git")
+
 local function act(normal_cmd)
   vim.fn.feedkeys(vim.api.nvim_replace_termcodes(normal_cmd, true, true, true))
   vim.fn.feedkeys("", "x") -- flush typeahead
+end
+
+local function checkout_worktree(branch)
+  harness.exec { "git", "branch", branch }
+  FuzzyFinderBuffer.value = { branch, "worktree-folder" }
+
+  act("ww")
+  operations.wait("checkout_worktree")
+end
+
+local function visit_main()
+  FuzzyFinderBuffer.value = { git.worktree.main().path }
+  act("wg")
+  operations.wait("visit_worktree")
 end
 
 describe("worktree popup", function()
@@ -22,17 +38,15 @@ describe("worktree popup", function()
         harness.exec { "git", "branch", test_branch }
         FuzzyFinderBuffer.value = { test_branch, "worktree-folder" }
 
-        local worktrees = harness.exec { "git", "worktree", "list" }
-        assert.are.same(worktrees[2], "")
+        assert.True(#git.worktree.list() == 1)
 
         act("ww")
         operations.wait("checkout_worktree")
 
-        worktrees = harness.exec { "git", "worktree", "list" }
-        local path, _, _, branch = unpack(vim.split(worktrees[2], " "))
-        assert.are.same(branch, "[" .. test_branch .. "]")
-        assert.are.same(path:match("/worktree%-folder$"), "/worktree-folder")
-        assert.are.same(path, vim.loop.cwd())
+        local worktrees = git.worktree.list()
+        assert.are.same(worktrees[2].ref, "refs/heads/a-new-branch-tree")
+        assert.are.same(worktrees[2].path:match("/worktree%-folder$"), "/worktree-folder")
+        assert.are.same(worktrees[2].path, vim.loop.cwd())
       end)
     )
   end)
@@ -44,17 +58,15 @@ describe("worktree popup", function()
         FuzzyFinderBuffer.value = { "worktree-folder-create", "master" }
         input.values = { "new-worktree-branch" }
 
-        local worktrees = harness.exec { "git", "worktree", "list" }
-        assert.are.same(worktrees[2], "")
+        assert.True(#git.worktree.list() == 1)
 
         act("wW")
         operations.wait("create_worktree")
 
-        worktrees = harness.exec { "git", "worktree", "list" }
-        local path, _, _, branch = unpack(vim.split(worktrees[2], " "))
-        assert.are.same(branch, "[new-worktree-branch]")
-        assert.are.same(path:match("/worktree%-folder%-create$"), "/worktree-folder-create")
-        assert.are.same(path, vim.loop.cwd())
+        local worktrees = git.worktree.list()
+        assert.are.same(worktrees[2].ref, "refs/heads/new-worktree-branch")
+        assert.are.same(worktrees[2].path:match("/worktree%-folder%-create$"), "/worktree-folder-create")
+        assert.are.same(worktrees[2].path, vim.loop.cwd())
       end)
     )
   end)
@@ -63,71 +75,108 @@ describe("worktree popup", function()
     it(
       "Changes CWD to the worktree path",
       in_prepared_repo(function()
-        -- Build a new worktree
-        harness.exec { "git", "branch", "a-new-goto" }
-        local worktrees = harness.exec { "git", "worktree", "list" }
-        local main_path, _, _, _ = unpack(vim.split(worktrees[1], " "))
+        -- Setup
+        checkout_worktree("a-goto-branch")
 
-        FuzzyFinderBuffer.value = { "a-new-goto", "worktree-folder-goto", main_path }
+        local worktrees = git.worktree.list()
+        assert.are.same(worktrees[2].path, vim.loop.cwd())
 
-        act("ww")
-        operations.wait("checkout_worktree")
+        -- Test
+        local main_path = git.worktree.main().path
+        FuzzyFinderBuffer.value = { main_path }
 
-        worktrees = harness.exec { "git", "worktree", "list" }
-        local path, _, _, branch = unpack(vim.split(worktrees[2], " "))
-        assert.are.same(path, vim.loop.cwd())
-
-        -- Test that we can goto the main tree
         act("wg")
         operations.wait("visit_worktree")
+
         assert.are.same(main_path, vim.loop.cwd())
       end)
     )
   end)
 
-  -- describe("Worktree Move", function()
-  --   it(
-  --     "Can move a worktree from one dir to another",
-  --     in_prepared_repo(function()
-  --       -- Setup
-  --       local test_branch = "a-new-branch-tree"
-  --
-  --       harness.exec { "git", "branch", test_branch }
-  --       FuzzyFinderBuffer.value = { test_branch, "worktree-folder" }
-  --
-  --       act("ww")
-  --       operations.wait("checkout_worktree")
-  --
-  --       local worktrees = harness.exec { "git", "worktree", "list" }
-  --       local path, _, _, branch = unpack(vim.split(worktrees[2], " "))
-  --       assert.are.same(branch, "[" .. test_branch .. "]")
-  --       assert.are.same(path:match("/worktree%-folder$"), "/worktree-folder")
-  --       assert.are.same(path, vim.loop.cwd())
-  --     end)
-  --   )
-  -- end)
+  describe("Worktree Move", function()
+    it(
+      "Changes CWD when moving the currently checked out worktree",
+      in_prepared_repo(function()
+        -- Setup
+        checkout_worktree("a-moved-branch-tree")
 
-  -- describe("Worktree Delete", function()
-  --   it(
-  --     "Can remove a worktree",
-  --     in_prepared_repo(function()
-  --       local test_branch = "a-new-branch-tree"
-  --
-  --       harness.exec { "git", "branch", test_branch }
-  --       FuzzyFinderBuffer.value = { test_branch, "worktree-folder" }
-  --
-  --       local worktrees = harness.exec { "git", "worktree", "list" }
-  --       assert.are.same(worktrees[2], "")
-  --
-  --       act("ww")
-  --       operations.wait("checkout_worktree")
-  --
-  --       worktrees = harness.exec { "git", "worktree", "list" }
-  --       local path, _, _, branch = unpack(vim.split(worktrees[2], " "))
-  --       assert.are.same(branch, "[" .. test_branch .. "]")
-  --       assert.are.same(path:match("/worktree%-folder$"), "/worktree-folder")
-  --       assert.are.same(path, vim.loop.cwd())
-  --     end)
-  --   )
-  -- end)
+        -- Test
+        local worktrees = git.worktree.list()
+        FuzzyFinderBuffer.value = { worktrees[2].path, "../moved-worktree-folder" }
+
+        act("wm")
+        operations.wait("move_worktree")
+
+        local worktrees = git.worktree.list()
+        assert.are.same(worktrees[2].ref, "refs/heads/a-moved-branch-tree")
+        assert.are.same(worktrees[2].path:match("/moved%-worktree%-folder$"), "/moved-worktree-folder")
+        assert.are.same(worktrees[2].path, vim.loop.cwd())
+      end)
+    )
+
+    it(
+      "Doesn't change CWD when moving a worktree that isn't currently checked out",
+      in_prepared_repo(function()
+        -- Setup
+        checkout_worktree("test-branch-one")
+        visit_main()
+
+        -- Test
+        local worktrees = git.worktree.list()
+        FuzzyFinderBuffer.value = { worktrees[2].path, "../moved-worktree-folder" }
+        local cwd = vim.fn.getcwd()
+
+        act("wm")
+        operations.wait("move_worktree")
+
+        assert.are.same(cwd, vim.fn.getcwd())
+      end)
+    )
+  end)
+
+  describe("Worktree Delete", function()
+    it(
+      "Can remove a worktree",
+      in_prepared_repo(function()
+        -- Setup
+        checkout_worktree("a-deleted-worktree")
+        visit_main()
+
+        -- Test
+        local worktrees = git.worktree.list()
+        assert.are.same(#worktrees, 2)
+
+        FuzzyFinderBuffer.value = { worktrees[2].path }
+        input.confirmed = true
+        act("wD")
+        operations.wait("delete_worktree")
+
+        local worktrees = git.worktree.list()
+        assert.are.same(#worktrees, 1)
+      end)
+    )
+
+    it(
+      "Can remove the current worktree",
+      in_prepared_repo(function()
+        -- Setup
+        checkout_worktree("a-deleted-worktree")
+
+        -- Test
+        local worktrees = git.worktree.list()
+        assert.are.same(#worktrees, 2)
+        assert.are.same(worktrees[2].path, vim.fn.getcwd())
+
+        FuzzyFinderBuffer.value = { worktrees[2].path }
+        input.confirmed = true
+
+        act("wD")
+        operations.wait("delete_worktree")
+
+        local worktrees = git.worktree.list()
+        assert.are.same(#worktrees, 1)
+        assert.are.same(worktrees[1].path, vim.fn.getcwd())
+      end)
+    )
+  end)
 end)
