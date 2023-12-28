@@ -82,7 +82,6 @@ M.move = operations("move_worktree", function()
     return w.path
   end, git.worktree.list { include_main = false })
 
-
   if #options == 0 then
     notification.info("No worktrees present")
     return

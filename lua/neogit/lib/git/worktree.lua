@@ -27,7 +27,7 @@ end
 ---@param args? table
 ---@return boolean
 function M.remove(worktree, args)
-  local result = cli.worktree.remove.args(worktree).arg_list(args or {}).call({ ignore_error = true })
+  local result = cli.worktree.remove.args(worktree).arg_list(args or {}).call { ignore_error = true }
   return result.code == 0
 end
 
