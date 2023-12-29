@@ -82,7 +82,7 @@ function M:show()
       local win_width = vim.fn.winwidth(0)
 
       return filter_map(self.state, function(item)
-        if item.hidden then
+        if item.hidden and not os.getenv("NEOGIT_DEBUG") then
           return
         end
 
@@ -104,6 +104,9 @@ function M:show()
 
         return col({
           row {
+            text.highlight("NeogitGraphAuthor")(
+              os.getenv("NEOGIT_DEBUG") and (item.hidden and "H" or " ") or ""
+            ),
             text.highlight(highlight_code)(code),
             text(" "),
             text(command),
