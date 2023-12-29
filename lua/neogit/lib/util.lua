@@ -449,7 +449,7 @@ local function set_timeout(timeout, callback)
   return timer
 end
 
-local DEFAULT_TIMEOUT = 1000
+local DEFAULT_TIMEOUT = os.getenv("CI") and 0 or 1000
 
 ---Memoize a function's result for a set period of time. Value will be forgotten after specified timeout, or 1 second. Timer resets with each call.
 ---@param f function Function to memoize
