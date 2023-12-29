@@ -535,4 +535,12 @@ M.branch_info = util.memoize(function(ref, remotes)
   return result
 end)
 
+function M.reflog_message(skip)
+  return cli.log
+    .format("%B")
+    .max_count(1)
+    .args("--reflog", "--no-merges", "--skip=" .. tostring(skip))
+    .call_sync({ ignore_error = true }).stdout
+end
+
 return M

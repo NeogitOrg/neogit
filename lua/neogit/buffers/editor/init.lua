@@ -2,6 +2,7 @@ local Buffer = require("neogit.lib.buffer")
 local config = require("neogit.config")
 local input = require("neogit.lib.input")
 local util = require("neogit.lib.util")
+local git = require("neogit.lib.git")
 
 local pad = util.pad_right
 
@@ -41,6 +42,9 @@ function M:open(kind)
 
   local mapping = config.get_reversed_commit_editor_maps()
   local aborted = false
+  local message_index = -1
+  local current_message
+  local footer
 
   self.buffer = Buffer.create {
     name = self.filename,
@@ -64,6 +68,8 @@ function M:open(kind)
         string.format("#   %s Close", pad_mapping("Close")),
         string.format("#   %s Submit", pad_mapping("Submit")),
         string.format("#   %s Abort", pad_mapping("Abort")),
+        string.format("#   %s Previous Message", pad_mapping("PrevMessage")),
+        string.format("#   %s Next Message", pad_mapping("NextMessage")),
       }
 
       help_lines = util.filter_map(help_lines, function(line)
@@ -76,6 +82,8 @@ function M:open(kind)
       buffer:set_lines(line, line, false, help_lines)
       buffer:write()
       buffer:move_cursor(1)
+
+      footer = buffer:get_lines(1, -1, false)
 
       -- Start insert mode if user has configured it
       local disable_insert = config.values.disable_insert_on_commit
@@ -126,6 +134,33 @@ function M:open(kind)
           aborted = true
           buffer:write()
           buffer:close(true)
+        end,
+        [mapping["PrevMessage"]] = function(buffer)
+          if message_index == -1 then
+            current_message = buffer:get_lines(0, -1, false)
+            current_message = util.slice(current_message, 1, #current_message - #footer)
+          end
+
+          message_index = message_index + 1
+
+          local message = git.log.reflog_message(message_index)
+          buffer:set_lines(0, -1, false, util.merge(message, footer))
+          buffer:move_cursor(1)
+        end,
+        [mapping["NextMessage"]] = function(buffer)
+          if message_index >= 0 then
+            message_index = message_index - 1
+          end
+
+          local message
+          if message_index < 0 then
+            message = current_message
+          else
+            message = git.log.reflog_message(message_index)
+          end
+
+          buffer:set_lines(0, -1, false, util.merge(message, footer))
+          buffer:move_cursor(1)
         end,
       },
     },
