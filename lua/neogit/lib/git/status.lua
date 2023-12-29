@@ -80,7 +80,7 @@ local function update_status(state)
       elseif header == "branch.upstream" then
         upstream.ref = value
 
-        local commit = git.log.list({ value, "--max-count=1" }, {}, {}, true)[1]
+        local commit = git.log.list({ value, "--max-count=1" }, nil, {}, true)[1]
         if commit then
           upstream.oid = commit.oid
           upstream.abbrev = git.rev_parse.abbreviate_commit(commit.oid)
