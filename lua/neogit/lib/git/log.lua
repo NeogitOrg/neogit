@@ -450,7 +450,7 @@ function M.update_ref(from, to)
 end
 
 function M.message(commit)
-  return cli.log.format("%s").args(commit).call({ hidden = true }).stdout[1]
+  return cli.log.max_count(1).format("%s").args(commit).call({ hidden = true }).stdout[1]
 end
 
 function M.present_commit(commit)
