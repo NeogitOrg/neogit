@@ -464,7 +464,7 @@ function M.memoize(f, opts)
   local timer = {}
 
   return function(...)
-    local key = vim.inspect({ ... })
+    local key = vim.inspect { ... }
 
     if cache[key] == nil then
       cache[key] = f(...)
