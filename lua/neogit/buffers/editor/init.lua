@@ -77,26 +77,27 @@ function M:open(kind)
         return pad(mapping[name] and mapping[name][1] or "<NOP>", padding)
       end
 
-      -- stylua: ignore
-      local help_lines = {
-        "#",
-        "# Commands:",
-        string.format("#   %s Close", pad_mapping("Close")),
-        string.format("#   %s Submit", pad_mapping("Submit")),
-        string.format("#   %s Abort", pad_mapping("Abort")),
-        string.format("#   %s Previous Message", pad_mapping("PrevMessage")),
-        string.format("#   %s Next Message", pad_mapping("NextMessage")),
-        string.format("#   %s Reset Message", pad_mapping("ResetMessage")),
-      }
+      if not config.values.disable_editor_help then
+        local comment_char = git.config.get_comment_char()
+        -- stylua: ignore
+        local help_lines = {
+          string.format("%s", comment_char),
+          string.format("%s Commands:", comment_char),
+          string.format("%s   %s Close", comment_char, pad_mapping("Close")),
+          string.format("%s   %s Submit", comment_char, pad_mapping("Submit")),
+          string.format("%s   %s Abort", comment_char, pad_mapping("Abort")),
+        }
 
-      help_lines = util.filter_map(help_lines, function(line)
-        if not line:match("<NOP>") then -- mapping will be <NOP> if user unbinds key
-          return line
-        end
-      end)
+        help_lines = util.filter_map(help_lines, function(line)
+          if not line:match("<NOP>") then -- mapping will be <NOP> if user unbinds key
+            return line
+          end
+        end)
 
-      local line = vim.fn.search("^#$") - 1
-      buffer:set_lines(line, line, false, help_lines)
+        local line = vim.fn.search(string.format("^%s$", comment_char)) - 1
+        buffer:set_lines(line, line, false, help_lines)
+      end
+
       buffer:write()
       buffer:move_cursor(1)
 

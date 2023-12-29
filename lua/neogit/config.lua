@@ -135,6 +135,7 @@ end
 ---@field fetch_after_checkout? boolean Perform a fetch if the newly checked out branch has an upstream or pushRemote set
 ---@field telescope_sorter? function The sorter telescope will use
 ---@field disable_insert_on_commit? boolean|"auto" Disable automatically entering insert mode in commit dialogues
+---@field disable_editor_help? boolean|"auto" Disable displaying commit/rebase editor help
 ---@field use_per_project_settings? boolean Scope persisted settings on a per-project basis
 ---@field remember_settings? boolean Whether neogit should persist flags from popups, e.g. git push flags
 ---@field auto_refresh? boolean Automatically refresh to detect git modifications without manual intervention
