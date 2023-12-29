@@ -449,28 +449,31 @@ local function set_timeout(timeout, callback)
   return timer
 end
 
----Memoize a function's result for a set period of time, clearing the stored value after
----@param key string Table key to store value under
----@param timeout integer Length of time to store value for
+local DEFAULT_TIMEOUT = 1000
+
+---Memoize a function's result for a set period of time. Value will be forgotten after specified timeout, or 1 second. Timer resets with each call.
 ---@param f function Function to memoize
+---@param opts table?
 ---@return function
-function M.memoize_timeout(key, timeout, f)
-  assert(key, "Key required to memoize")
-  assert(timeout, "Timeout must be specified")
+function M.memoize(f, opts)
+  opts = opts or {}
+
   assert(f, "Cannot memoize without function")
 
   local cache = {}
   local timer = {}
 
   return function(...)
+    local key = vim.inspect({ ... })
+
     if cache[key] == nil then
       cache[key] = f(...)
-    else
+    elseif timer[key] ~= nil then
       timer[key]:stop()
       timer[key]:close()
     end
 
-    timer[key] = set_timeout(timeout, function()
+    timer[key] = set_timeout(opts.timeout or DEFAULT_TIMEOUT, function()
       cache[key] = nil
       timer[key] = nil
     end)

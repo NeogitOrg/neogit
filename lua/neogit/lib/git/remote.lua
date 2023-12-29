@@ -48,9 +48,9 @@ function M.prune(name)
   return cli.remote.prune.args(name).call().code == 0
 end
 
-M.list = util.memoize_timeout("git_remote_list", 1000, function()
+M.list = util.memoize(function()
   return cli.remote.call_sync({ hidden = false }).stdout
-end)
+end, { timeout = 1000 })
 
 function M.get_url(name)
   return cli.remote.get_url(name).call({ hidden = true }).stdout
