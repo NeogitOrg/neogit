@@ -8,6 +8,66 @@ local watcher = require("neogit.watcher")
 
 local M = {}
 
+---@class Popup
+---@field state PopupState
+
+---@class PopupState
+---@field name string
+---@field args PopupOption[]|PopupSwitch[]|PopupHeading[]
+---@field config PopupConfig[]
+---@field actions PopupAction[][]
+---@field env table
+---@field keys table<string, boolean>
+
+---@class PopupHeading
+---@field type string
+---@field heading string
+
+---@class PopupOption
+---@field choices table
+---@field cli string
+---@field cli_prefix string
+---@field default string|integer|boolean
+---@field description string
+---@field fn function
+---@field id string
+---@field key string
+---@field key_prefix string
+---@field separator string
+---@field type string
+---@field value string
+
+---@class PopupSwitch
+---@field cli string
+---@field cli_base string
+---@field cli_prefix string
+---@field cli_suffix string
+---@field dependant table
+---@field description string
+---@field enabled boolean
+---@field fn function
+---@field id string
+---@field incompatible table
+---@field internal boolean
+---@field key string
+---@field key_prefix string
+---@field options table
+---@field type string
+---@field user_input boolean
+
+---@class PopupConfig
+---@field id string
+---@field key string
+---@field name string
+---@field entry string
+---@field value string
+---@field type string
+
+---@class PopupAction
+---@field keys table
+---@field description string
+---@field callback function
+
 function M.new(builder_fn)
   local instance = {
     state = {
@@ -137,6 +197,7 @@ function M:switch(key, cli, description, opts)
     enabled = state.get({ self.state.name, cli }, opts.enabled)
   end
 
+  ---@type PopupSwitch
   table.insert(self.state.args, {
     type = "switch",
     id = opts.key_prefix .. key,
@@ -199,6 +260,7 @@ function M:option(key, cli, value, description, opts)
     opts.setup(self)
   end
 
+  ---@type PopupOption
   table.insert(self.state.args, {
     type = "option",
     id = opts.key_prefix .. key,
@@ -221,6 +283,7 @@ end
 ---@param heading string Heading to show
 ---@return self
 function M:arg_heading(heading)
+  ---@type PopupHeading
   table.insert(self.state.args, { type = "heading", heading = heading })
   return self
 end
@@ -254,6 +317,7 @@ end
 function M:config(key, name, options)
   local entry = config.get(name)
 
+  ---@type PopupConfig
   local variable = {
     id = key,
     key = key,
