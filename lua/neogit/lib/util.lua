@@ -433,4 +433,50 @@ function M.underscore(s)
   return r
 end
 
+---Simple timeout function
+---@param timeout integer
+---@param callback function
+---@return uv_timer_t
+local function set_timeout(timeout, callback)
+  local timer = vim.loop.new_timer()
+
+  timer:start(timeout, 0, function()
+    timer:stop()
+    timer:close()
+    callback()
+  end)
+
+  return timer
+end
+
+---Memoize a function's result for a set period of time, clearing the stored value after
+---@param key string Table key to store value under
+---@param timeout integer Length of time to store value for
+---@param f function Function to memoize
+---@return function
+function M.memoize_timeout(key, timeout, f)
+  assert(key, "Key required to memoize")
+  assert(timeout, "Timeout must be specified")
+  assert(f, "Cannot memoize without function")
+
+  local cache = {}
+  local timer = {}
+
+  return function(...)
+    if cache[key] == nil then
+      cache[key] = f(...)
+    else
+      timer[key]:stop()
+      timer[key]:close()
+    end
+
+    timer[key] = set_timeout(timeout, function()
+      cache[key] = nil
+      timer[key] = nil
+    end)
+
+    return cache[key]
+  end
+end
+
 return M
