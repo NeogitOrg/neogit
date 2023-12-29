@@ -247,7 +247,7 @@ local function update_branch_information(state)
     state.head.commit_message = git.log.message(state.head.oid)
 
     if state.upstream.ref then
-      local commit = git.log.list({ state.upstream.ref, "--max-count=1" }, {}, {}, true)[1]
+      local commit = git.log.list({ state.upstream.ref, "--max-count=1" }, nil, {}, true)[1]
       -- May be done earlier by `update_status`, but this function can be called separately
       if commit then
         state.upstream.commit_message = commit.subject
@@ -257,7 +257,7 @@ local function update_branch_information(state)
 
     local pushRemote = require("neogit.lib.git").branch.pushRemote_ref()
     if pushRemote and not git.branch.is_detached() then
-      local commit = git.log.list({ pushRemote, "--max-count=1" }, {}, {}, true)[1]
+      local commit = git.log.list({ pushRemote, "--max-count=1" }, nil, {}, true)[1]
       if commit then
         state.pushRemote.commit_message = commit.subject
         state.pushRemote.abbrev = git.rev_parse.abbreviate_commit(commit.oid)
