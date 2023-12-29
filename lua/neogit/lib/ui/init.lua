@@ -168,6 +168,11 @@ function Ui:get_commit_under_cursor()
   return stack[#stack].options.oid
 end
 
+function Ui:get_item_options()
+  local stack = self:get_component_stack_under_cursor()
+  return stack[#stack].options or {}
+end
+
 function Ui.visualize_component(c, options)
   Ui._print_component(0, c, options or {})
   if c.tag == "col" or c.tag == "row" then

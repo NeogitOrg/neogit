@@ -111,10 +111,10 @@ local highlight_for_signature = {
 M.CommitEntry = Component.new(function(commit, args)
   local ref = {}
 
+  local info = git.log.branch_info(commit.ref_name, git.remote.list())
+
   -- Parse out ref names
   if args.decorate and commit.ref_name ~= "" then
-    local info = git.log.branch_info(commit.ref_name, git.remote.list())
-
     -- Render local only branches first
     for name, _ in pairs(info.locals) do
       if info.remotes[name] == nil then
@@ -222,7 +222,7 @@ M.CommitEntry = Component.new(function(commit, args)
       }
     ),
     details,
-  }, { oid = commit.oid, foldable = args.details == true, folded = true })
+  }, { oid = commit.oid, foldable = args.details == true, folded = true, remote = info.remotes[1] })
 end)
 
 M.CommitGraph = Component.new(function(commit, _)

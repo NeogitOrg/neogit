@@ -87,6 +87,10 @@ function M:open()
         [popups.mapping_for("ResetPopup")] = popups.open("reset", function(p)
           p { commit = self.buffer.ui:get_commits_in_selection()[1] }
         end),
+        [popups.mapping_for("RemotePopup")] = popups.open("remote", function(p)
+          p()
+          -- p { commit = self.buffer.ui:get_commits_in_selection()[1] }
+        end),
         [popups.mapping_for("TagPopup")] = popups.open("tag", function(p)
           p { commit = self.buffer.ui:get_commits_in_selection()[1] }
         end),
@@ -122,6 +126,10 @@ function M:open()
         end),
         [popups.mapping_for("ResetPopup")] = popups.open("reset", function(p)
           p { commit = self.buffer.ui:get_commits_in_selection()[1] }
+        end),
+        [popups.mapping_for("RemotePopup")] = popups.open("remote", function(p)
+          p()
+          -- p { commit = self.buffer.ui:get_commits_in_selection()[1] }
         end),
         [popups.mapping_for("TagPopup")] = popups.open("tag", function(p)
           p { commit = self.buffer.ui:get_commits_in_selection()[1] }
