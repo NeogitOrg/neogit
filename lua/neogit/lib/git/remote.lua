@@ -50,7 +50,7 @@ end
 
 M.list = util.memoize(function()
   return cli.remote.call_sync({ hidden = false }).stdout
-end, { timeout = 1000 })
+end)
 
 function M.get_url(name)
   return cli.remote.get_url(name).call({ hidden = true }).stdout
