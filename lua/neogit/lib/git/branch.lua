@@ -244,9 +244,7 @@ local function update_branch_information(state)
   local git = require("neogit.lib.git")
 
   if state.head.oid ~= "(initial)" then
-    local result = cli.log.max_count(1).pretty("%B").call { hidden = true }
-
-    state.head.commit_message = result.stdout[1]
+    state.head.commit_message = git.log.message(state.head.oid)
 
     if state.upstream.ref then
       local commit = git.log.list({ state.upstream.ref, "--max-count=1" }, {}, {}, true)[1]
