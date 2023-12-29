@@ -433,4 +433,53 @@ function M.underscore(s)
   return r
 end
 
+---Simple timeout function
+---@param timeout integer
+---@param callback function
+---@return uv_timer_t
+local function set_timeout(timeout, callback)
+  local timer = vim.loop.new_timer()
+
+  timer:start(timeout, 0, function()
+    timer:stop()
+    timer:close()
+    callback()
+  end)
+
+  return timer
+end
+
+local DEFAULT_TIMEOUT = os.getenv("CI") and 0 or 1000
+
+---Memoize a function's result for a set period of time. Value will be forgotten after specified timeout, or 1 second. Timer resets with each call.
+---@param f function Function to memoize
+---@param opts table?
+---@return function
+function M.memoize(f, opts)
+  opts = opts or {}
+
+  assert(f, "Cannot memoize without function")
+
+  local cache = {}
+  local timer = {}
+
+  return function(...)
+    local key = vim.inspect { ... }
+
+    if cache[key] == nil then
+      cache[key] = f(...)
+    elseif timer[key] ~= nil then
+      timer[key]:stop()
+      timer[key]:close()
+    end
+
+    timer[key] = set_timeout(opts.timeout or DEFAULT_TIMEOUT, function()
+      cache[key] = nil
+      timer[key] = nil
+    end)
+
+    return cache[key]
+  end
+end
+
 return M

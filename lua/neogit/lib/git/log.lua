@@ -293,7 +293,7 @@ end
 ---@param files? table
 ---@param color? boolean
 ---@return table
-function M.graph(options, files, color)
+M.graph = util.memoize(function(options, files, color)
   options = ensure_max(options or {})
   files = files or {}
 
@@ -306,7 +306,7 @@ function M.graph(options, files, color)
   return util.filter_map(result, function(line)
     return require("neogit.lib.ansi").parse(util.trim(line), { recolor = not color })
   end)
-end
+end)
 
 local function format(show_signature)
   local template = {
@@ -383,7 +383,7 @@ end
 ---@param hidden? boolean Hide from git history
 ---@param graph_color? boolean Render ascii graph in color
 ---@return CommitLogEntry[]
-function M.list(options, graph, files, hidden, graph_color)
+M.list = util.memoize(function(options, graph, files, hidden, graph_color)
   files = files or {}
 
   local signature = false
@@ -414,7 +414,7 @@ function M.list(options, graph, files, hidden, graph_color)
   end
 
   return parse_log(commits, graph_output)
-end
+end)
 
 ---Determines if commit a is an ancestor of commit b
 ---@param a string commit hash
@@ -438,7 +438,7 @@ local function update_recent(state)
   end
 
   state.recent.items =
-    util.filter_map(M.list({ "--max-count=" .. tostring(count) }, {}, {}, true), M.present_commit)
+    util.filter_map(M.list({ "--max-count=" .. tostring(count) }, nil, {}, true), M.present_commit)
 end
 
 function M.register(meta)
@@ -450,7 +450,7 @@ function M.update_ref(from, to)
 end
 
 function M.message(commit)
-  return cli.log.format("%s").args(commit).call({ hidden = true }).stdout[1]
+  return cli.log.max_count(1).format("%s").args(commit).call({ hidden = true }).stdout[1]
 end
 
 function M.present_commit(commit)
@@ -478,13 +478,13 @@ end
 ---@field remotes table<string, string[]> table<string, string[]> Mapping from (local) branch names to list of remotes where this branch is present
 ---@field tags string[] List of tags placed on this commit
 
---- Parse information of branches, tags and remotes from a given commit's ref output
---- @param ref string comma separated list of branches, tags and remotes, e.g.:
+---Parse information of branches, tags and remotes from a given commit's ref output
+---@param ref string comma separated list of branches, tags and remotes, e.g.:
 ---   * "origin/main, main, origin/HEAD, tag: 1.2.3, fork/develop"
 ---   * "HEAD -> main, origin/main, origin/HEAD, tag: 1.2.3, fork/develop"
---- @param remotes string[] list of remote names, e.g. by calling `require("neogit.lib.git.remote").list()`
---- @return CommitBranchInfo
-function M.branch_info(ref, remotes)
+---@param remotes string[] list of remote names, e.g. by calling `require("neogit.lib.git.remote").list()`
+---@return CommitBranchInfo
+M.branch_info = util.memoize(function(ref, remotes)
   local parts = vim.split(ref, ", ")
   local result = {
     head = nil,
@@ -519,6 +519,7 @@ function M.branch_info(ref, remotes)
         end
       end
     end
+
     if not skip then
       if remote ~= nil then
         if result.remotes[name] == nil then
@@ -530,7 +531,8 @@ function M.branch_info(ref, remotes)
       end
     end
   end
+
   return result
-end
+end)
 
 return M
