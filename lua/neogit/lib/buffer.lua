@@ -81,7 +81,7 @@ function Buffer:write()
 end
 
 function Buffer:get_lines(first, last, strict)
-  return api.nvim_buf_get_lines(self.handle, first, last, strict)
+  return api.nvim_buf_get_lines(self.handle, first, last, strict or false)
 end
 
 function Buffer:get_line(line)
@@ -148,13 +148,7 @@ function Buffer:set_text(first_line, last_line, first_col, last_col, lines)
 end
 
 function Buffer:move_cursor(line)
-  if line < 0 then
-    self:focus()
-    vim.cmd("norm! G")
-  else
-    self:focus()
-    vim.cmd("norm! " .. line .. "G")
-  end
+  api.nvim_win_set_cursor(0, { line, 0 })
 end
 
 function Buffer:close(force)

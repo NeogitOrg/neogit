@@ -193,20 +193,20 @@ function M.str_min_width(str, len, sep)
   return str .. string.rep(sep or " ", len - length)
 end
 
--- function M.slice(tbl, s, e)
---   local pos, new = 1, {}
---
---   if e == nil then
---     e = #tbl
---   end
---
---   for i = s, e do
---     new[pos] = tbl[i]
---     pos = pos + 1
---   end
---
---   return new
--- end
+function M.slice(tbl, s, e)
+  local pos, new = 1, {}
+
+  if e == nil then
+    e = #tbl
+  end
+
+  for i = s, e do
+    new[pos] = tbl[i]
+    pos = pos + 1
+  end
+
+  return new
+end
 
 -- function M.str_count(str, target)
 --   local count = 0

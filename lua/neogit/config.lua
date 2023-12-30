@@ -114,7 +114,7 @@ end
 
 ---@alias NeogitConfigMappingsRebaseEditor "Pick" | "Reword" | "Edit" | "Squash" | "Fixup" | "Execute" | "Drop" | "Break" | "MoveUp" | "MoveDown" | "Close" | "OpenCommit" | "Submit" | "Abort" | false | fun()
 ---
----@alias NeogitConfigMappingsCommitEditor "Close" | "Submit" | "Abort" | false | fun()
+---@alias NeogitConfigMappingsCommitEditor "Close" | "Submit" | "Abort" | "PrevMessage" | "ResetMessage" | "NextMessage" | false | fun()
 
 ---@class NeogitConfigMappings Consult the config file or documentation for values
 ---@field finder? { [string]: NeogitConfigMappingsFinder } A dictionary that uses finder commands to set multiple keybinds
@@ -301,6 +301,9 @@ function M.get_default_values()
         ["q"] = "Close",
         ["<c-c><c-c>"] = "Submit",
         ["<c-c><c-k>"] = "Abort",
+        ["<m-p>"] = "PrevMessage",
+        ["<m-n>"] = "NextMessage",
+        ["<m-r>"] = "ResetMessage",
       },
       rebase_editor = {
         ["p"] = "Pick",
