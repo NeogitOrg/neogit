@@ -56,6 +56,7 @@ CONTENTS                                                       *neogit_contents*
 
     7. Buffers                                                 |neogit_buffers|
        • Status                                          |neogit_status_buffer|
+       • Editor                                          |neogit_editor_buffer|
        • Log                                                |neogit_log_buffer|
        • Reflog                                          |neogit_reflog_buffer|
        • Commit                                          |neogit_commit_buffer|
@@ -1428,9 +1429,11 @@ Actions:                                         *neogit_worktree_popup_actions*
 7. Buffers                                                      *neogit_buffers*
 
 • Status                                                  |neogit_status_buffer|
+• Editor                                                  |neogit_editor_buffer|
 • Log                                                        |neogit_log_buffer|
 • Reflog                                                  |neogit_reflog_buffer|
 • Commit                                                  |neogit_commit_buffer|
+• Rebase Todo                                        |neogit_rebase_todo_buffer|
 
 ==============================================================================
 Status Buffer                                             *neogit_status_buffer*
@@ -1440,6 +1443,47 @@ Untracked Files                                 *neogit_status_buffer_untracked*
   Neogit respects status.showUntrackedFiles. It can be set to "no" to hide
   untracked files entirely, "normal" to show files and directories (default),
   or "all" to show all files in all directories.
+
+==============================================================================
+Editor Buffer                                             *neogit_editor_buffer*
+
+Commands:                                               *neogit_editor_commands*
+  • Close                                                  *neogit_editor_close*
+    Default key: `q`
+
+    Closes the editor buffer. If there are unsaved changes, user will be
+    prompted to save them. Discarding the changes will abort.
+
+  • Submit                                                *neogit_editor_submit*
+    Default key: `<c-c><c-c>`
+
+    Writes and closes the editor.
+
+  • Abort                                                  *neogit_editor_abort*
+    Default key: `<c-c><c-k>`
+
+    Closes the editor buffer, discarding any changes that might have been
+    written.
+
+  • PrevMessage                                     *neogit_editor_prev_message*
+    Default key: `<m-p>`
+
+    Replaces the current commit message with the previously used one, via
+    reflog. Messages that have been discarded via reset will be included as
+    well. Any changes a user makes to a message will be stored while the
+    editor is open.
+
+  • NextMessage                                     *neogit_editor_next_message*
+    Default key: `<m-n>`
+
+    Replaces the current commit message with the next used one, via
+    reflog. Same semantics as |neogit_editor_prev_message| apply.
+
+  • ResetMessage                                   *neogit_editor_reset_message*
+    Default key: `<m-r>`
+
+    If a user has changed a message that was found via reflog, reset it to how
+    it appeared in reflog.
 
 ==============================================================================
 Log Buffer                                                   *neogit_log_buffer*
