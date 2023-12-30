@@ -296,7 +296,6 @@ neogit.setup {
       ["<c-s>"] = "StageAll",
       ["u"] = "Unstage",
       ["U"] = "UnstageStaged",
-      ["d"] = "DiffAtFile",
       ["$"] = "CommandHistory",
       ["#"] = "Console",
       ["Y"] = "YankSelected",
