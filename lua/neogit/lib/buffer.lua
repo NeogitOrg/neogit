@@ -81,7 +81,7 @@ function Buffer:write()
 end
 
 function Buffer:get_lines(first, last, strict)
-  return api.nvim_buf_get_lines(self.handle, first, last, strict)
+  return api.nvim_buf_get_lines(self.handle, first, last, strict or false)
 end
 
 function Buffer:get_line(line)
