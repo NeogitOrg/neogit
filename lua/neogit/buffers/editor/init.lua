@@ -176,7 +176,7 @@ function M:open(kind)
           local message = current_message(buffer)
           buffer:set_lines(0, #message, false, reflog_message(message_index))
           buffer:move_cursor(1)
-        end
+        end,
       },
     },
   }
