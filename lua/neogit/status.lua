@@ -1456,6 +1456,7 @@ function M.create(kind, cwd)
       refresh(nil, "Buffer.create")
     end,
     after = function()
+      vim.cmd([[setlocal nowrap]])
       M.watcher = watcher.new(git.repo:git_path():absolute())
 
       if M.cursor_location then
