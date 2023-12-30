@@ -42,9 +42,25 @@ function M:open(kind)
 
   local mapping = config.get_reversed_commit_editor_maps()
   local aborted = false
-  local message_index = -1
-  local current_message
+
+  local message_index = 1
+  local message_buffer = { { "" } }
   local footer
+
+  local function reflog_message(index)
+    return git.log.reflog_message(index - 2)
+  end
+
+  local function commit_message()
+    return message_buffer[message_index] or reflog_message(message_index)
+  end
+
+  local function current_message(buffer)
+    local message = buffer:get_lines(0, -1)
+    message = util.slice(message, 1, math.max(1, #message - #footer))
+
+    return message
+  end
 
   self.buffer = Buffer.create {
     name = self.filename,
@@ -70,6 +86,7 @@ function M:open(kind)
         string.format("#   %s Abort", pad_mapping("Abort")),
         string.format("#   %s Previous Message", pad_mapping("PrevMessage")),
         string.format("#   %s Next Message", pad_mapping("NextMessage")),
+        string.format("#   %s Reset Message", pad_mapping("ResetMessage")),
       }
 
       help_lines = util.filter_map(help_lines, function(line)
@@ -83,7 +100,7 @@ function M:open(kind)
       buffer:write()
       buffer:move_cursor(1)
 
-      footer = buffer:get_lines(1, -1, false)
+      footer = buffer:get_lines(1, -1)
 
       -- Start insert mode if user has configured it
       local disable_insert = config.values.disable_insert_on_commit
@@ -136,32 +153,30 @@ function M:open(kind)
           buffer:close(true)
         end,
         [mapping["PrevMessage"]] = function(buffer)
-          if message_index == -1 then
-            current_message = buffer:get_lines(0, -1, false)
-            current_message = util.slice(current_message, 1, #current_message - #footer)
-          end
+          local message = current_message(buffer)
+          message_buffer[message_index] = message
 
           message_index = message_index + 1
 
-          local message = git.log.reflog_message(message_index)
-          buffer:set_lines(0, -1, false, util.merge(message, footer))
+          buffer:set_lines(0, #message, false, commit_message())
           buffer:move_cursor(1)
         end,
         [mapping["NextMessage"]] = function(buffer)
-          if message_index >= 0 then
+          local message = current_message(buffer)
+
+          if message_index > 1 then
+            message_buffer[message_index] = message
             message_index = message_index - 1
           end
 
-          local message
-          if message_index < 0 then
-            message = current_message
-          else
-            message = git.log.reflog_message(message_index)
-          end
-
-          buffer:set_lines(0, -1, false, util.merge(message, footer))
+          buffer:set_lines(0, #message, false, commit_message())
           buffer:move_cursor(1)
         end,
+        [mapping["ResetMessage"]] = function(buffer)
+          local message = current_message(buffer)
+          buffer:set_lines(0, #message, false, reflog_message(message_index))
+          buffer:move_cursor(1)
+        end
       },
     },
   }
