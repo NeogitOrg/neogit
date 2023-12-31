@@ -52,7 +52,7 @@ function M.to_upstream(popup)
   local remote, branch, set_upstream
 
   if upstream then
-    remote, branch = upstream:match("^([^/]*)/(.*)$")
+    remote, branch = git.branch.parse_remote_branch(upstream)
   else
     set_upstream = true
     branch = git.branch.current()
@@ -73,7 +73,7 @@ function M.to_elsewhere(popup)
   }
 
   if target then
-    local remote, branch = target:match("^([^/]*)/(.*)$")
+    local remote, branch = git.branch.parse_remote_branch(target)
     push_to(popup:get_arguments(), remote, branch)
   end
 end
@@ -103,7 +103,7 @@ function M.push_other(popup)
     return
   end
 
-  local remote, _ = destination:match("^([^/]*)/(.*)$")
+  local remote, _ = git.branch.parse_remote_branch(destination)
   push_to(popup:get_arguments(), remote, source .. ":" .. destination)
 end
 

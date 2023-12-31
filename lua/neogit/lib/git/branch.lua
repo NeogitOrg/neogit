@@ -55,16 +55,16 @@ function M.checkout(name, args)
     local upstream = M.upstream(name)
 
     if upstream and upstream == pushRemote then
-      local remote, branch = upstream:match("^([^/]*)/(.*)$")
+      local remote, branch = M.parse_remote_branch(upstream)
       fetch.fetch(remote, branch)
     else
       if upstream then
-        local remote, branch = upstream:match("^([^/]*)/(.*)$")
+        local remote, branch = M.parse_remote_branch(upstream)
         fetch.fetch(remote, branch)
       end
 
       if pushRemote then
-        local remote, branch = pushRemote:match("^([^/]*)/(.*)$")
+        local remote, branch = M.parse_remote_branch(pushRemote)
         fetch.fetch(remote, branch)
       end
     end
@@ -93,12 +93,28 @@ function M.is_unmerged(branch, base)
   return cli.cherry.arg_list({ base or "master", branch }).call_sync().stdout[1] ~= nil
 end
 
+---Determine if a branch exists locally
+---@param branch string
+---@return boolean
 function M.exists(branch)
   local check = cli["rev-parse"].verify
     .args(string.format("refs/heads/%s", branch))
     .call_sync({ ignore_error = true }).stdout[1]
 
   return check ~= nil
+end
+
+---Determine if a branch name ("origin/master", "fix/bug-1000", etc)
+---is a remote branch or a local branch
+---@param ref string
+---@return nil|string remote
+---@return string branch
+function M.parse_remote_branch(ref)
+  if M.exists(ref) then
+    return nil, ref
+  end
+
+  return ref:match("^([^/]*)/(.*)$")
 end
 
 function M.create(name)

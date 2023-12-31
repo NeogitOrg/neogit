@@ -86,7 +86,7 @@ local function update_status(state)
           upstream.abbrev = git.rev_parse.abbreviate_commit(commit.oid)
         end
 
-        local remote, branch = value:match("^([^/]*)/(.*)$")
+        local remote, branch = git.branch.parse_remote_branch(value)
         upstream.remote = remote
         upstream.branch = branch
       end
