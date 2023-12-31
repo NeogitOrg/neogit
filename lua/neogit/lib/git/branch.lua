@@ -55,16 +55,16 @@ function M.checkout(name, args)
     local upstream = M.upstream(name)
 
     if upstream and upstream == pushRemote then
-      local remote, branch = upstream:match("^([^/]*)/(.*)$")
+      local remote, branch = M.parse_remote_branch(upstream)
       fetch.fetch(remote, branch)
     else
       if upstream then
-        local remote, branch = upstream:match("^([^/]*)/(.*)$")
+        local remote, branch = M.parse_remote_branch(upstream)
         fetch.fetch(remote, branch)
       end
 
       if pushRemote then
-        local remote, branch = pushRemote:match("^([^/]*)/(.*)$")
+        local remote, branch = M.parse_remote_branch(pushRemote)
         fetch.fetch(remote, branch)
       end
     end
