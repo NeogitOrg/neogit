@@ -144,6 +144,22 @@ describe("branch popup", function()
     )
 
     it(
+      "can delete a local branch with a '/' in the name",
+      in_prepared_repo(function()
+        local branch = "fix/slash-branch"
+        FuzzyFinderBuffer.value = { branch }
+
+        util.system("git branch " .. branch)
+
+        assert.True(vim.tbl_contains(get_git_branches(), branch))
+
+        act("bD<cr>")
+        operations.wait("delete_branch")
+        assert.False(vim.tbl_contains(get_git_branches(), branch))
+      end)
+    )
+
+    it(
       "can abort deleting a local branch with unmerged commits",
       in_prepared_repo(function()
         FuzzyFinderBuffer.value = { "second-branch" }
