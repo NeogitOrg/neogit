@@ -104,7 +104,7 @@ function M.exists(branch)
   return check ~= nil
 end
 
----Determine if a branch name ("origin/master", "fix/bug-1000", etc) 
+---Determine if a branch name ("origin/master", "fix/bug-1000", etc)
 ---is a remote branch or a local branch
 ---@param ref string
 ---@return nil|string remote
