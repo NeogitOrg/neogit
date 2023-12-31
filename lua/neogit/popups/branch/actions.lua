@@ -14,18 +14,6 @@ local function fire_branch_event(pattern, data)
   vim.api.nvim_exec_autocmds("User", { pattern = pattern, modeline = false, data = data })
 end
 
-local function parse_remote_branch_name(ref)
-  local offset = ref:find("/")
-  if not offset then
-    return nil, ref
-  end
-
-  local remote = ref:sub(1, offset - 1)
-  local branch_name = ref:sub(offset + 1, ref:len())
-
-  return remote, branch_name
-end
-
 local function spin_off_branch(checkout)
   if git.status.is_dirty() and not checkout then
     notification.info("Staying on HEAD due to uncommitted changes")
@@ -225,7 +213,7 @@ M.delete_branch = operation("delete_branch", function()
     return
   end
 
-  local remote, branch_name = parse_remote_branch_name(selected_branch)
+  local remote, branch_name = git.branch.parse_remote_branch(selected_branch)
   local success = false
 
   if

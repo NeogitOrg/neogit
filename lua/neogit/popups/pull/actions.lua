@@ -57,7 +57,7 @@ function M.from_upstream(popup)
     end
   end
 
-  local remote, branch = upstream:match("^([^/]*)/(.*)$")
+  local remote, branch = git.branch.parse_remote_branch(upstream)
   pull_from(popup:get_arguments(), remote, branch, { set_upstream = set_upstream })
 end
 
@@ -68,7 +68,7 @@ function M.from_elsewhere(popup)
     return
   end
 
-  local remote, branch = target:match("^([^/]*)/(.*)$")
+  local remote, branch = git.branch.parse_remote_branch(target)
   pull_from(popup:get_arguments(), remote, branch)
 end
 

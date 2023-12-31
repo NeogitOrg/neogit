@@ -53,7 +53,7 @@ function M.merge_config(branch)
 
     local merge_value, remote_value
     if target:match([[/]]) then
-      local target_remote, target_branch = target:match("^([^/]*)/(.*)$")
+      local target_remote, target_branch = git.branch.parse_remote_branch(target)
       merge_value = "refs/heads/" .. target_branch
       remote_value = target_remote
     else
