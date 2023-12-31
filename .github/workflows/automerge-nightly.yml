@@ -16,6 +16,7 @@ jobs:
           git config --global user.email "${GITHUB_ACTOR}"
           git config --global user.name "${GITHUB_ACTOR}@users.noreply.github.com"
           git status
+          git fetch --unshallow
           git pull
           git checkout master
           git status
