@@ -1,4 +1,5 @@
 local cli = require("neogit.lib.git.cli")
+local json = require("neogit.lib.json")
 local repo = require("neogit.lib.git.repository")
 
 local M = {}
@@ -13,43 +14,19 @@ function M.list()
   return revisions
 end
 
-local function json_format()
-  local template = {
-    [["head":"%(HEAD)"]],
-    [["oid":"%(objectname)"]],
-    [["ref":"%(refname)"]],
-    [["name":"%(refname:short)"]],
-    [["upstream_status":"%(upstream:trackshort)"]],
-    [["upstream_name":"%(upstream:short)"]],
-    [["subject":"%(subject)"]],
-  }
-
-  return string.format("{%s},", table.concat(template, ","))
-end
-
-local json = json_format()
+local json_template = json.encode {
+  head = "%(HEAD)",
+  oid = "%(objectname)",
+  ref = "%(refname)",
+  name = "%(refname:short)",
+  upstream_status = "%(upstream:trackshort)",
+  upstream_name = "%(upstream:short)",
+  subject = "%(subject)",
+}
 
 function M.list_parsed()
-  local refs = cli["for-each-ref"].format(json).call_sync():trim().stdout
-
-  -- Wrap list of refs in an Array
-  refs = "[" .. table.concat(refs, "\\n") .. "]"
-
-  -- Remove trailing comma from last object in array
-  refs, _ = refs:gsub(",]", "]")
-
-  -- Remove escaped newlines from in-between objects
-  refs, _ = refs:gsub("},\\n{", "},{")
-
-  -- Escape any double-quote characters, or escape codes, in the subject
-  refs, _ = refs:gsub([[(,"subject":")(.-)("})]], function(before, subject, after)
-    return table.concat({ before, vim.fn.escape(subject, [[\"]]), after }, "")
-  end)
-
-  local ok, result = pcall(vim.json.decode, refs, { luanil = { object = true, array = true } })
-  if not ok then
-    assert(ok, "Failed to parse log json!: " .. result)
-  end
+  local refs = cli["for-each-ref"].format(json_template).call_sync():trim().stdout
+  local result = json.decode(refs, { escaped_fields = { "subject" } })
 
   local output = {
     local_branch = {},
