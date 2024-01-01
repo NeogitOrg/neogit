@@ -2,6 +2,7 @@ local cli = require("neogit.lib.git.cli")
 local diff_lib = require("neogit.lib.git.diff")
 local util = require("neogit.lib.util")
 local config = require("neogit.config")
+local json = require("neogit.lib.json")
 
 local M = {}
 
@@ -309,72 +310,35 @@ M.graph = util.memoize(function(options, files, color)
 end)
 
 local function format(show_signature)
-  local template = {
-    [["oid":"%H"]],
-    [["abbreviated_commit":"%h"]],
-    [["tree":"%T"]],
-    [["abbreviated_tree":"%t"]],
-    [["parent":"%P"]],
-    [["abbreviated_parent":"%p"]],
-    [["ref_name":"%D"]],
-    [["encoding":"%e"]],
-    [["subject":"%s"]],
-    [["sanitized_subject_line":"%f"]],
-    [["body":"%b"]],
-    [["commit_notes":"%N"]],
-    [["author_name":"%aN"]],
-    [["author_email":"%aE"]],
-    [["author_date":"%aD"]],
-    [["committer_name":"%cN"]],
-    [["committer_email":"%cE"]],
-    [["committer_date":"%cD"]],
-    [["rel_date":"%cr"]],
+  local fields = {
+    oid = "%H",
+    abbreviated_commit = "%h",
+    tree = "%T",
+    abbreviated_tree = "%t",
+    parent = "%P",
+    abbreviated_parent = "%p",
+    ref_name = "%D",
+    encoding = "%e",
+    subject = "%s",
+    sanitized_subject_line = "%f",
+    body = "%b",
+    commit_notes = "%N",
+    author_name = "%aN",
+    author_email = "%aE",
+    author_date = "%aD",
+    committer_name = "%cN",
+    committer_email = "%cE",
+    committer_date = "%cD",
+    rel_date = "%cr",
   }
 
   if show_signature then
-    local signature_format = {
-      [["signer":"%GS"]],
-      [["signer_key":"%GK"]],
-      [["verification_flag":"%G?"]],
-    }
-
-    table.insert(template, table.concat(signature_format, ","))
+    fields.signer = "%GS"
+    fields.signer_key = "%GK"
+    fields.verification_flag = "%G?"
   end
 
-  return string.format("{%s},", table.concat(template, ","))
-end
-
----@param output table
----@return table
-local function parse_json(output)
-  -- Wrap list of commits in an Array
-  local commits = "[" .. table.concat(output, "\\n") .. "]"
-
-  -- Remove trailing comma from last object in array
-  commits, _ = commits:gsub(",]", "]")
-
-  -- Remove escaped newlines from in-between objects
-  commits, _ = commits:gsub("},\\n{", "},{")
-
-  -- Escape any double-quote characters, or escape codes, in the body
-  commits, _ = commits:gsub([[(,"body":")(.-)(","commit_notes":")]], function(before, body, after)
-    return table.concat({ before, vim.fn.escape(body, [[\"]]), after }, "")
-  end)
-
-  -- Escape any double-quote characters, or escape codes, in the subject
-  commits, _ = commits:gsub(
-    [[(,"subject":")(.-)(","sanitized_subject_line":")]],
-    function(before, subject, after)
-      return table.concat({ before, vim.fn.escape(subject, [[\"]]), after }, "")
-    end
-  )
-
-  local ok, result = pcall(vim.json.decode, commits, { luanil = { object = true, array = true } })
-  if not ok then
-    assert(ok, "Failed to parse log json!: " .. result)
-  end
-
-  return result
+  return json.encode(fields)
 end
 
 ---@param options? string[]
@@ -394,12 +358,17 @@ M.list = util.memoize(function(options, graph, files, hidden, graph_color)
 
   local output = cli.log
     .format(format(signature))
+    .args("--no-patch")
     .arg_list(options)
     .files(unpack(files))
     .show_popup(false)
     .call({ hidden = hidden, ignore_error = hidden }).stdout
 
-  local commits = parse_json(output)
+  local commits =
+    json.decode(output, { escaped_fields = { "body", "author_name", "committer_name", "subject" } })
+  if vim.tbl_isempty(commits) then
+    return {}
+  end
 
   local graph_output
   if graph then
