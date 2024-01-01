@@ -1,7 +1,15 @@
 local M = {}
 
 local function array_wrap(lines)
-  return "[" .. table.concat(lines, ",") .. "]"
+  local array = "[" .. table.concat(lines, "\\n") .. "]"
+
+  -- Remove trailing comma from last object in array
+  array, _ = array:gsub(",]", "]")
+
+  -- Remove escaped newlines from in-between objects
+  array, _ = array:gsub("},\\n{", "},{")
+
+  return array
 end
 
 ---Escape any double-quote characters, or escape codes, in the body
@@ -23,13 +31,13 @@ local function raise_error(result, input)
 
   error(
     "Failed to parse log json!: "
-      .. result
-      .. "\n"
-      .. input:sub(char_index - 30, char_index - 1)
-      .. "<"
-      .. input:sub(char_index, char_index)
-      .. ">"
-      .. input:sub(char_index + 1, char_index + 30)
+    .. result
+    .. "\n"
+    .. input:sub(char_index - 30, char_index - 1)
+    .. "<"
+    .. input:sub(char_index, char_index)
+    .. ">"
+    .. input:sub(char_index + 1, char_index + 30)
   )
 end
 

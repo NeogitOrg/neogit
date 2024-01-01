@@ -333,14 +333,12 @@ local function format(show_signature)
   }
 
   if show_signature then
-    vim.tbl_extend("keep", fields, {
-      signer = "%GS",
-      signer_key = "%GK",
-      verification_flag = "%G?",
-    })
+    fields.signer = "%GS"
+    fields.signer_key = "%GK"
+    fields.verification_flag = "%G?"
   end
 
-  return vim.json.encode(fields)
+  return string.format("%s,", vim.json.encode(fields))
 end
 
 ---@param options? string[]
