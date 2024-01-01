@@ -4,16 +4,14 @@ local notification = require("neogit.lib.notification")
 local Buffer = require("neogit.lib.buffer")
 local config = require("neogit.config")
 local logger = require("neogit.logger")
-local util = require("neogit.lib.util")
 
 -- from: https://stackoverflow.com/questions/48948630/lua-ansi-escapes-pattern
 local function remove_escape_codes(s)
   return s:gsub("[\27\155][][()#;?%d]*[A-PRZcf-ntqry=><~]", ""):gsub("[\r\n\04\08]", "")
 end
 
-local command_mask = util.pattern_escape(
-  " --no-pager --literal-pathspecs --no-optional-locks -c core.preloadindex=true -c color.ui=always"
-)
+local command_mask =
+  vim.pesc(" --no-pager --literal-pathspecs --no-optional-locks -c core.preloadindex=true -c color.ui=always")
 
 local function mask_command(cmd)
   local command, _ = cmd:gsub(command_mask, "")
