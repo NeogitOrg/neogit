@@ -16,8 +16,6 @@ local util = require("neogit.lib.util")
 local watcher = require("neogit.watcher")
 local operation = require("neogit.operations")
 
-local fn = vim.fn
-
 local M = {}
 
 M.disabled = false
