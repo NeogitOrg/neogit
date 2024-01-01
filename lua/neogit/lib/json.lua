@@ -43,13 +43,17 @@ end
 
 ---Decode a list of json formatted lines into a lua table
 ---@param lines table
+---@param opts? table
 ---@return table
-function M.decode(lines)
+function M.decode(lines, opts)
+  opts = opts or {}
+
   local json_array = array_wrap(lines)
 
-  local escaped_fields = { "body", "author_name", "committer_name", "subject" }
-  for _, field in ipairs(escaped_fields) do
-    json_array = escape_field(json_array, field)
+  if opts.escaped_fields then
+    for _, field in ipairs(opts.escaped_fields) do
+      json_array = escape_field(json_array, field)
+    end
   end
 
   local ok, result = pcall(vim.json.decode, json_array, { luanil = { object = true, array = true } })

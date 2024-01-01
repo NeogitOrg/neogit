@@ -364,7 +364,8 @@ M.list = util.memoize(function(options, graph, files, hidden, graph_color)
     .show_popup(false)
     .call({ hidden = hidden, ignore_error = hidden }).stdout
 
-  local commits = json.decode(output)
+  local commits =
+    json.decode(output, { escaped_fields = { "body", "author_name", "committer_name", "subject" } })
   if vim.tbl_isempty(commits) then
     return {}
   end
