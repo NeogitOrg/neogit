@@ -297,15 +297,6 @@ function M.parse_command_args(args)
   return tbl
 end
 
-function M.pattern_escape(str)
-  local special_chars = { "%%", "%(", "%)", "%.", "%+", "%-", "%*", "%?", "%[", "%^", "%$" }
-  for _, char in ipairs(special_chars) do
-    str, _ = str:gsub(char, "%" .. char)
-  end
-
-  return str
-end
-
 ---Removes duplicate values from a table
 ---@param tbl table
 ---@return table
