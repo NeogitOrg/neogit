@@ -60,4 +60,12 @@ function M.decode(lines)
   return result
 end
 
+---Convert a lua table to json string. Trailing comma is added because the expectation
+---is to use json.decode from this same module to parse the result.
+---@param tbl table Key/value pairs to encode as json
+---@return string
+function M.encode(tbl)
+  return string.format("%s,", vim.json.encode(tbl))
+end
+
 return M

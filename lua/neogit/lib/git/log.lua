@@ -338,7 +338,7 @@ local function format(show_signature)
     fields.verification_flag = "%G?"
   end
 
-  return string.format("%s,", vim.json.encode(fields))
+  return json.encode(fields)
 end
 
 ---@param options? string[]
