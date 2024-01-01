@@ -1193,7 +1193,7 @@ local cmd_func_map = function()
 
       local selection = require("neogit.status").get_selection()
       if selection.item then
-        yank = selection.item.name
+        yank = selection.item.oid or selection.item.name
       elseif selection.commit then
         yank = selection.commit.oid
       elseif selection.section and selection.section.ref then
