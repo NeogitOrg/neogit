@@ -16,12 +16,17 @@ local function line_action(action)
       table.remove(line, 1)
     end
 
-    if line[1] == "break" or line[1] == "exec" then
+    -- Check if line is "break" or "exec"
+    if line[1]:sub(1, 1):match("[be]") then
       vim.cmd("normal! j")
       return
     end
 
     if line[2] and line[2]:match("%x%x%x%x%x%x%x") and line[1] ~= "Rebase" then
+      if #line[1] == 1 then
+        action = action:sub(1, 1)
+      end
+
       line[1] = action
       vim.api.nvim_set_current_line(table.concat(line, " "))
       buffer:write()
