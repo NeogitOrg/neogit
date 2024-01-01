@@ -70,6 +70,17 @@ function M.edit()
   return rebase_command(cli.rebase.edit_todo)
 end
 
+local function line_oid(line)
+  return vim.split(line, " ")[2]
+end
+
+local function format_line(line)
+  local sections = vim.split(line, " ")
+  sections[2] = sections[2]:sub(1, 7)
+
+  return table.concat(sections, " ")
+end
+
 function M.update_rebase_status(state)
   local repo = require("neogit.lib.git.repository")
   if repo.git_root == "" then
@@ -101,7 +112,7 @@ function M.update_rebase_status(state)
     if done:exists() then
       for line in done:iter() do
         if line:match("^[^#]") and line ~= "" then
-          table.insert(state.rebase.items, { name = line, done = true })
+          table.insert(state.rebase.items, { name = format_line(line), oid = line_oid(line), done = true })
         end
       end
     end
@@ -117,7 +128,7 @@ function M.update_rebase_status(state)
     if todo:exists() then
       for line in todo:iter() do
         if line:match("^[^#]") and line ~= "" then
-          table.insert(state.rebase.items, { name = line })
+          table.insert(state.rebase.items, { name = format_line(line), oid = line_oid(line) })
         end
       end
     end
