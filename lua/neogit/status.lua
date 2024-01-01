@@ -310,7 +310,7 @@ local function draw_buffer()
         end
 
         if f.done then
-          M.status_buffer:add_line_highlight(#output, "NeogitRebaseDone", { priority = 210 })
+          M.status_buffer:buffered_add_line_highlight(#output - 1, "NeogitRebaseDone", { priority = 210 })
         end
 
         local file = items_lookup[f.name] or { folded = true }
@@ -400,6 +400,7 @@ local function draw_buffer()
   render_section("Recent commits", "recent")
 
   M.status_buffer:replace_content_with(output)
+  M.status_buffer:flush_buffers()
   M.locations = new_locations
 end
 
