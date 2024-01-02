@@ -1448,22 +1448,22 @@ Untracked Files                                 *neogit_status_buffer_untracked*
 Editor Buffer                                             *neogit_editor_buffer*
 
 Commands:                                               *neogit_editor_commands*
-  • Close                                                  *neogit_editor_close*
-    Default key: `q`
-
-    Closes the editor buffer. If there are unsaved changes, user will be
-    prompted to save them. Discarding the changes will abort.
-
   • Submit                                                *neogit_editor_submit*
     Default key: `<c-c><c-c>`
 
-    Writes and closes the editor.
+    Writes and closes the editor. Available in both normal and insert modes.
 
   • Abort                                                  *neogit_editor_abort*
     Default key: `<c-c><c-k>`
 
     Closes the editor buffer, discarding any changes that might have been
-    written.
+    written. Available in both normal and insert modes.
+
+  • Close                                                  *neogit_editor_close*
+    Default key: `q`
+
+    Closes the editor buffer. If there are unsaved changes, user will be
+    prompted to save them. Discarding the changes will abort.
 
   • PrevMessage                                     *neogit_editor_prev_message*
     Default key: `<m-p>`
