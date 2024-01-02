@@ -29,7 +29,7 @@ end
 
 ---@return MappingsManager
 function MappingsManager.new(id)
-  local mappings = { n = {}, v = {} }
+  local mappings = { n = {}, v = {}, i = {} }
   local callbacks = {}
   local map_id = 1
   local manager = {
