@@ -78,7 +78,7 @@ function M:open(kind)
       end
 
       if not config.values.disable_editor_help then
-        local comment_char = git.config.get_comment_char()
+        local comment_char = git.config.get("core.commentChar"):read() or git.config.get_global("core.commentChar"):read() or "#"
         -- stylua: ignore
         local help_lines = {
           string.format("%s", comment_char),

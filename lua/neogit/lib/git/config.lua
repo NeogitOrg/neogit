@@ -147,16 +147,4 @@ function M.unset(key)
   cli.config.unset(key).call_sync()
 end
 
-function M.get_comment_char()
-  local char = M.get("core.commentChar").value
-  if char == "" then
-    char = M.get_global("core.commentChar").value
-    if char == "" then
-      char = "#"
-    end
-  end
-
-  return char
-end
-
 return M

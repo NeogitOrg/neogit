@@ -13,7 +13,7 @@ local M = {}
 local function line_action(action)
   return function(buffer)
     local line = vim.split(vim.api.nvim_get_current_line(), " ")
-    local comment_char = git.config.get_comment_char()
+    local comment_char = git.config.get("core.commentChar"):read() or git.config.get_global("core.commentChar"):read() or "#"
     if line[1] == comment_char then
       table.remove(line, 1)
     end
