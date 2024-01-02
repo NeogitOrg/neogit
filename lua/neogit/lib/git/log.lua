@@ -204,7 +204,10 @@ local function parse_log(output, graph)
 
       local oid = graph[i][1].oid
       if oid then
-        table.insert(commits, make_commit(commit_lookup[oid], graph[i]))
+        local commit = commit_lookup[oid]
+        assert(commit, "No commit found for oid: " .. oid)
+
+        table.insert(commits, make_commit(commit, graph[i]))
         current_commit = current_commit + 1
       else
         table.insert(commits, { graph = graph[i] })
