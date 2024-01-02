@@ -526,10 +526,24 @@ function M.is_refresh_locked()
   return refresh_lock.permits == 0
 end
 
-local function refresh(partial, reason)
+local function get_refresh_lock(reason)
   local permit = refresh_lock:acquire()
-  logger.debug("[STATUS BUFFER]: Acquired refresh lock: " .. (reason or "unknown"))
+  logger.debug(("[STATUS BUFFER]: Acquired refresh lock:"):format(reason or "unknown"))
 
+  vim.defer_fn(function()
+    if M.is_refresh_locked() then
+      permit:forget()
+      logger.debug(
+        ("[STATUS BUFFER]: Refresh lock for %s expired after 10 seconds"):format(reason or "unknown")
+      )
+    end
+  end, 10000)
+
+  return permit
+end
+
+local function refresh(partial, reason)
+  local permit = get_refresh_lock(reason)
   local callback = function()
     local s, f, h = save_cursor_location()
     refresh_status_buffer()
