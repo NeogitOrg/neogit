@@ -97,11 +97,11 @@ end
 ---@param branch string
 ---@return boolean
 function M.exists(branch)
-  local check = cli["rev-parse"].verify
+  local result = cli["rev-parse"].verify.quiet
     .args(string.format("refs/heads/%s", branch))
-    .call_sync({ ignore_error = true }).stdout[1]
+    .call_sync({ hidden = true, ignore_error = true })
 
-  return check ~= nil
+  return result.code == 0
 end
 
 ---Determine if a branch name ("origin/master", "fix/bug-1000", etc)

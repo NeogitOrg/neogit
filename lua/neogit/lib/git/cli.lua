@@ -508,6 +508,7 @@ local configurations = {
   ["rev-parse"] = config {
     flags = {
       verify = "--verify",
+      quiet = "--quiet",
       short = "--short",
       revs_only = "--revs-only",
       no_revs = "--no-revs",
