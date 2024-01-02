@@ -138,6 +138,19 @@ function M:open(kind)
       end,
     },
     mappings = {
+      i = {
+        [mapping["Submit"]] = function(buffer)
+          vim.cmd.stopinsert()
+          buffer:write()
+          buffer:close(true)
+        end,
+        [mapping["Abort"]] = function(buffer)
+          vim.cmd.stopinsert()
+          aborted = true
+          buffer:write()
+          buffer:close(true)
+        end,
+      },
       n = {
         [mapping["Close"]] = function(buffer)
           if buffer:get_option("modified") and not input.get_confirmation("Save changes?") then
