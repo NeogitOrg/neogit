@@ -28,7 +28,7 @@ local api = vim.api
 --- @field commit_signature table|nil
 --- @field commit_overview CommitOverview
 --- @field buffer Buffer
---- @field open fun()
+--- @field open fun(self, kind: string)
 --- @field close fun()
 --- @see CommitInfo
 --- @see Buffer
@@ -71,8 +71,9 @@ function M:close()
   self.buffer = nil
 end
 
---- Opens the CommitViewBuffer
---- If already open will close the buffer
+---Opens the CommitViewBuffer
+---If already open will close the buffer
+---@param kind? string
 function M:open(kind)
   kind = kind or config.values.commit_view.kind
 
