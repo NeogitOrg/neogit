@@ -73,7 +73,6 @@ function M:open(kind)
 
       -- stylua: ignore
       local help_lines = {
-        ("%s"):format(comment_char),
         ("%s Commands:"):format(comment_char),
         ("%s   %s pick   = use commit"):format(comment_char, pad_mapping("Pick")),
         ("%s   %s reword = use commit, but edit the commit message"):format(comment_char, pad_mapping("Reword")),
