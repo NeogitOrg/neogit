@@ -2,6 +2,7 @@ local Buffer = require("neogit.lib.buffer")
 local config = require("neogit.config")
 local input = require("neogit.lib.input")
 local util = require("neogit.lib.util")
+local git = require("neogit.lib.git")
 
 local pad = util.pad_right
 
@@ -9,10 +10,10 @@ local CommitViewBuffer = require("neogit.buffers.commit_view")
 
 local M = {}
 
-local function line_action(action)
+local function line_action(action, comment_char)
   return function(buffer)
     local line = vim.split(vim.api.nvim_get_current_line(), " ")
-    if line[1] == "#" then
+    if line[1] == comment_char then
       table.remove(line, 1)
     end
 
@@ -49,6 +50,10 @@ function M.new(filename, on_unload)
 end
 
 function M:open(kind)
+  local comment_char = git.config.get("core.commentChar"):read()
+    or git.config.get_global("core.commentChar"):read()
+    or "#"
+
   local mapping = config.get_reversed_rebase_editor_maps()
   local aborted = false
 
@@ -68,27 +73,27 @@ function M:open(kind)
 
       -- stylua: ignore
       local help_lines = {
-        "# Commands:",
-        string.format("#   %s pick   = use commit", pad_mapping("Pick")),
-        string.format("#   %s reword = use commit, but edit the commit message", pad_mapping("Reword")),
-        string.format("#   %s edit   = use commit, but stop for amending", pad_mapping("Edit")),
-        string.format("#   %s squash = use commit, but meld into previous commit", pad_mapping("Squash")),
-        string.format('#   %s fixup  = like "squash", but discard this commit\'s log message', pad_mapping("Fixup")),
-        string.format("#   %s exec   = run command (the rest of the line) using shell", pad_mapping("Execute")),
-        string.format("#   %s drop   = remove commit", pad_mapping("Drop")),
-        string.format("#   %s undo last change", pad("u", padding)),
-        string.format("#   %s tell Git to make it happen", pad_mapping("Submit")),
-        string.format("#   %s tell Git that you changed your mind, i.e. abort", pad_mapping("Abort")),
-        string.format("#   %s move the commit up", pad_mapping("MoveUp")),
-        string.format("#   %s move the commit down", pad_mapping("MoveDown")),
-        string.format("#   %s show the commit another buffer", pad_mapping("OpenCommit")),
-        "#",
-        "# These lines can be re-ordered; they are executed from top to bottom.",
-        "#",
-        "# If you remove a line here THAT COMMIT WILL BE LOST.",
-        "#",
-        "# However, if you remove everything, the rebase will be aborted.",
-        "#",
+        ("%s Commands:"):format(comment_char),
+        ("%s   %s pick   = use commit"):format(comment_char, pad_mapping("Pick")),
+        ("%s   %s reword = use commit, but edit the commit message"):format(comment_char, pad_mapping("Reword")),
+        ("%s   %s edit   = use commit, but stop for amending"):format(comment_char, pad_mapping("Edit")),
+        ("%s   %s squash = use commit, but meld into previous commit"):format(comment_char, pad_mapping("Squash")),
+        ('%s   %s fixup  = like "squash", but discard this commit\'s log message'):format(comment_char, pad_mapping("Fixup")),
+        ("%s   %s exec   = run command (the rest of the line) using shell"):format(comment_char, pad_mapping("Execute")),
+        ("%s   %s drop   = remove commit"):format(comment_char, pad_mapping("Drop")),
+        ("%s   %s undo last change"):format(comment_char, pad("u", padding)),
+        ("%s   %s tell Git to make it happen"):format(comment_char, pad_mapping("Submit")),
+        ("%s   %s tell Git that you changed your mind, i.e. abort"):format(comment_char, pad_mapping("Abort")),
+        ("%s   %s move the commit up"):format(comment_char, pad_mapping("MoveUp")),
+        ("%s   %s move the commit down"):format(comment_char, pad_mapping("MoveDown")),
+        ("%s   %s show the commit another buffer"):format(comment_char, pad_mapping("OpenCommit")),
+        ("%s"):format(comment_char),
+        ("%s These lines can be re-ordered; they are executed from top to bottom."):format(comment_char),
+        ("%s"):format(comment_char),
+        ("%s If you remove a line here THAT COMMIT WILL BE LOST."):format(comment_char),
+        ("%s"):format(comment_char),
+        ("%s However, if you remove everything, the rebase will be aborted."):format(comment_char),
+        ("%s"):format(comment_char),
       }
 
       help_lines = util.filter_map(help_lines, function(line)
@@ -97,7 +102,7 @@ function M:open(kind)
         end
       end)
 
-      buffer:set_lines(vim.fn.search("# Commands:") - 1, -1, true, {})
+      buffer:set_lines(vim.fn.search(string.format("%s Commands:", comment_char)) - 1, -1, true, {})
       buffer:set_lines(-1, -1, false, help_lines)
       buffer:write()
       buffer:move_cursor(1)
@@ -143,11 +148,11 @@ function M:open(kind)
           buffer:write()
           buffer:close(true)
         end,
-        [mapping["Pick"]] = line_action("pick"),
-        [mapping["Reword"]] = line_action("reword"),
-        [mapping["Edit"]] = line_action("edit"),
-        [mapping["Squash"]] = line_action("squash"),
-        [mapping["Fixup"]] = line_action("fixup"),
+        [mapping["Pick"]] = line_action("pick", comment_char),
+        [mapping["Reword"]] = line_action("reword", comment_char),
+        [mapping["Edit"]] = line_action("edit", comment_char),
+        [mapping["Squash"]] = line_action("squash", comment_char),
+        [mapping["Fixup"]] = line_action("fixup", comment_char),
         [mapping["Execute"]] = function(buffer)
           local exec = input.get_user_input("Execute: ")
           if not exec or exec == "" then
@@ -158,11 +163,11 @@ function M:open(kind)
         end,
         [mapping["Drop"]] = function()
           local line = vim.api.nvim_get_current_line()
-          if line:match("^# ") then
+          if line:match(string.format("^%s ", comment_char)) then
             return
           end
 
-          vim.api.nvim_set_current_line("# " .. line)
+          vim.api.nvim_set_current_line(string.format("%s %s", comment_char, line))
           vim.cmd("normal! j")
         end,
         [mapping["Break"]] = function(buffer)
