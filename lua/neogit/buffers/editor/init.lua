@@ -86,6 +86,9 @@ function M:open(kind)
           string.format("%s   %s Close", comment_char, pad_mapping("Close")),
           string.format("%s   %s Submit", comment_char, pad_mapping("Submit")),
           string.format("%s   %s Abort", comment_char, pad_mapping("Abort")),
+          string.format("%s   %s Previous Message", comment_char, pad_mapping("PrevMessage")),
+          string.format("%s   %s Next Message", comment_char, pad_mapping("NextMessage")),
+          string.format("%s   %s Reset Message", comment_char, pad_mapping("ResetMessage")),
         }
 
         help_lines = util.filter_map(help_lines, function(line)
