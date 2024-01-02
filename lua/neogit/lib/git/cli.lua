@@ -907,9 +907,9 @@ local function new_builder(subcommand)
       local p = to_process {
         verbose = opts.verbose,
         on_error = function(res)
-          local commit_aborted_msg =
-            "hint: Waiting for your editor to close the file... Aborting commit due to empty commit message."
-          if res.stdout[1] == commit_aborted_msg then
+          local commit_aborted_msg = "hint: Waiting for your editor to close the file..."
+
+          if vim.startswith(res.stdout[1], commit_aborted_msg) then
             return false
           end
 
