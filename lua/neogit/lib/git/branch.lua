@@ -99,7 +99,7 @@ end
 function M.exists(branch)
   local result = cli["rev-parse"].verify.quiet
     .args(string.format("refs/heads/%s", branch))
-    .call_sync({ hidden = true, ignore_error = true })
+    .call_sync { hidden = true, ignore_error = true }
 
   return result.code == 0
 end
