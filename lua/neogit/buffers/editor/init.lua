@@ -77,30 +77,30 @@ function M:open(kind)
         return pad(mapping[name] and mapping[name][1] or "<NOP>", padding)
       end
 
-      if not config.values.disable_editor_help then
-        local comment_char = git.config.get("core.commentChar"):read() or git.config.get_global("core.commentChar"):read() or "#"
-        -- stylua: ignore
-        local help_lines = {
-          string.format("%s", comment_char),
-          string.format("%s Commands:", comment_char),
-          string.format("%s   %s Close", comment_char, pad_mapping("Close")),
-          string.format("%s   %s Submit", comment_char, pad_mapping("Submit")),
-          string.format("%s   %s Abort", comment_char, pad_mapping("Abort")),
-          string.format("%s   %s Previous Message", comment_char, pad_mapping("PrevMessage")),
-          string.format("%s   %s Next Message", comment_char, pad_mapping("NextMessage")),
-          string.format("%s   %s Reset Message", comment_char, pad_mapping("ResetMessage")),
-        }
+      local comment_char = git.config.get("core.commentChar"):read()
+        or git.config.get_global("core.commentChar"):read()
+        or "#"
 
-        help_lines = util.filter_map(help_lines, function(line)
-          if not line:match("<NOP>") then -- mapping will be <NOP> if user unbinds key
-            return line
-          end
-        end)
+      -- stylua: ignore
+      local help_lines = {
+        ("%s"):format(comment_char),
+        ("%s Commands:"):format(comment_char),
+        ("%s   %s Close"):format(comment_char, pad_mapping("Close")),
+        ("%s   %s Submit"):format(comment_char, pad_mapping("Submit")),
+        ("%s   %s Abort"):format(comment_char, pad_mapping("Abort")),
+        ("%s   %s Previous Message"):format(comment_char, pad_mapping("PrevMessage")),
+        ("%s   %s Next Message"):format(comment_char, pad_mapping("NextMessage")),
+        ("%s   %s Reset Message"):format(comment_char, pad_mapping("ResetMessage")),
+      }
 
-        local line = vim.fn.search(string.format("^%s$", comment_char)) - 1
-        buffer:set_lines(line, line, false, help_lines)
-      end
+      help_lines = util.filter_map(help_lines, function(line)
+        if not line:match("<NOP>") then -- mapping will be <NOP> if user unbinds key
+          return line
+        end
+      end)
 
+      local line = vim.fn.search(string.format("^%s$", comment_char)) - 1
+      buffer:set_lines(line, line, false, help_lines)
       buffer:write()
       buffer:move_cursor(1)
 

@@ -10,10 +10,9 @@ local CommitViewBuffer = require("neogit.buffers.commit_view")
 
 local M = {}
 
-local function line_action(action)
+local function line_action(action, comment_char)
   return function(buffer)
     local line = vim.split(vim.api.nvim_get_current_line(), " ")
-    local comment_char = git.config.get("core.commentChar"):read() or git.config.get_global("core.commentChar"):read() or "#"
     if line[1] == comment_char then
       table.remove(line, 1)
     end
@@ -51,6 +50,10 @@ function M.new(filename, on_unload)
 end
 
 function M:open(kind)
+  local comment_char = git.config.get("core.commentChar"):read()
+    or git.config.get_global("core.commentChar"):read()
+    or "#"
+
   local mapping = config.get_reversed_rebase_editor_maps()
   local aborted = false
 
@@ -68,45 +71,40 @@ function M:open(kind)
         return pad(mapping[name] and mapping[name][1] or "<NOP>", padding)
       end
 
-      local help_lines = ""
-      if not config.values.disable_editor_help then
-        local comment_char = git.config.get_comment_char()
-        -- stylua: ignore
-        help_lines = {
-          string.format("%s", comment_char),
-          string.format("%s Commands:", comment_char),
-          string.format("%s   %s pick   = use commit", comment_char, pad_mapping("Pick")),
-          string.format("%s   %s reword = use commit, but edit the commit message", comment_char, pad_mapping("Reword")),
-          string.format("%s   %s edit   = use commit, but stop for amending", comment_char, pad_mapping("Edit")),
-          string.format("%s   %s squash = use commit, but meld into previous commit", comment_char, pad_mapping("Squash")),
-          string.format('%s   %s fixup  = like "squash", but discard this commit\'s log message', comment_char, pad_mapping("Fixup")),
-          string.format("%s   %s exec   = run command (the rest of the line) using shell", comment_char, pad_mapping("Execute")),
-          string.format("%s   %s drop   = remove commit", comment_char, pad_mapping("Drop")),
-          string.format("%s   %s undo last change", comment_char, pad("u", padding)),
-          string.format("%s   %s tell Git to make it happen",comment_char,  pad_mapping("Submit")),
-          string.format("%s   %s tell Git that you changed your mind, i.e. abort", comment_char, pad_mapping("Abort")),
-          string.format("%s   %s move the commit up", comment_char, pad_mapping("MoveUp")),
-          string.format("%s   %s move the commit down", comment_char, pad_mapping("MoveDown")),
-          string.format("%s   %s show the commit another buffer", comment_char, pad_mapping("OpenCommit")),
-          string.format("%s", comment_char),
-          string.format("%s These lines can be re-ordered; they are executed from top to bottom.", comment_char),
-          string.format("%s", comment_char),
-          string.format("%s If you remove a line here THAT COMMIT WILL BE LOST.", comment_char),
-          string.format("%s", comment_char),
-          string.format("%s However, if you remove everything, the rebase will be aborted.", comment_char),
-          string.format("%s", comment_char),
-        }
+      -- stylua: ignore
+      local help_lines = {
+        ("%s"):format(comment_char),
+        ("%s Commands:"):format(comment_char),
+        ("%s   %s pick   = use commit"):format(comment_char, pad_mapping("Pick")),
+        ("%s   %s reword = use commit, but edit the commit message"):format(comment_char, pad_mapping("Reword")),
+        ("%s   %s edit   = use commit, but stop for amending"):format(comment_char, pad_mapping("Edit")),
+        ("%s   %s squash = use commit, but meld into previous commit"):format(comment_char, pad_mapping("Squash")),
+        ('%s   %s fixup  = like "squash", but discard this commit\'s log message'):format(comment_char, pad_mapping("Fixup")),
+        ("%s   %s exec   = run command (the rest of the line) using shell"):format(comment_char, pad_mapping("Execute")),
+        ("%s   %s drop   = remove commit"):format(comment_char, pad_mapping("Drop")),
+        ("%s   %s undo last change"):format(comment_char, pad("u", padding)),
+        ("%s   %s tell Git to make it happen"):format(comment_char, pad_mapping("Submit")),
+        ("%s   %s tell Git that you changed your mind, i.e. abort"):format(comment_char, pad_mapping("Abort")),
+        ("%s   %s move the commit up"):format(comment_char, pad_mapping("MoveUp")),
+        ("%s   %s move the commit down"):format(comment_char, pad_mapping("MoveDown")),
+        ("%s   %s show the commit another buffer"):format(comment_char, pad_mapping("OpenCommit")),
+        ("%s"):format(comment_char),
+        ("%s These lines can be re-ordered; they are executed from top to bottom."):format(comment_char),
+        ("%s"):format(comment_char),
+        ("%s If you remove a line here THAT COMMIT WILL BE LOST."):format(comment_char),
+        ("%s"):format(comment_char),
+        ("%s However, if you remove everything, the rebase will be aborted."):format(comment_char),
+        ("%s"):format(comment_char),
+      }
 
-        help_lines = util.filter_map(help_lines, function(line)
-          if not line:match("<NOP>") then -- mapping will be <NOP> if user unbinds key
-            return line
-          end
-        end)
+      help_lines = util.filter_map(help_lines, function(line)
+        if not line:match("<NOP>") then -- mapping will be <NOP> if user unbinds key
+          return line
+        end
+      end)
 
-        buffer:set_lines(vim.fn.search(string.format("%s Commands:", comment_char)) - 1, -1, true, {})
-        buffer:set_lines(-1, -1, false, help_lines)
-      end
-
+      buffer:set_lines(vim.fn.search(string.format("%s Commands:", comment_char)) - 1, -1, true, {})
+      buffer:set_lines(-1, -1, false, help_lines)
       buffer:write()
       buffer:move_cursor(1)
 
@@ -151,11 +149,11 @@ function M:open(kind)
           buffer:write()
           buffer:close(true)
         end,
-        [mapping["Pick"]] = line_action("pick"),
-        [mapping["Reword"]] = line_action("reword"),
-        [mapping["Edit"]] = line_action("edit"),
-        [mapping["Squash"]] = line_action("squash"),
-        [mapping["Fixup"]] = line_action("fixup"),
+        [mapping["Pick"]] = line_action("pick", comment_char),
+        [mapping["Reword"]] = line_action("reword", comment_char),
+        [mapping["Edit"]] = line_action("edit", comment_char),
+        [mapping["Squash"]] = line_action("squash", comment_char),
+        [mapping["Fixup"]] = line_action("fixup", comment_char),
         [mapping["Execute"]] = function(buffer)
           local exec = input.get_user_input("Execute: ")
           if not exec or exec == "" then
@@ -166,7 +164,6 @@ function M:open(kind)
         end,
         [mapping["Drop"]] = function()
           local line = vim.api.nvim_get_current_line()
-          local comment_char = git.config.get_comment_char()
           if line:match(string.format("^%s ", comment_char)) then
             return
           end
