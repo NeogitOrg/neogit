@@ -535,7 +535,9 @@ local function get_refresh_lock(reason)
   vim.defer_fn(function()
     if M.is_refresh_locked() then
       permit:forget()
-      logger.debug(("[STATUS BUFFER]: Refresh lock for %s expired after 10 seconds"):format(reason or "unknown"))
+      logger.debug(
+        ("[STATUS BUFFER]: Refresh lock for %s expired after 10 seconds"):format(reason or "unknown")
+      )
     end
   end, 10000)
 
