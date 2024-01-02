@@ -168,7 +168,7 @@ function M:open(kind)
             return
           end
 
-          vim.api.nvim_set_current_line(string.format("%s " .. line, comment_char))
+          vim.api.nvim_set_current_line(string.format("%s %s", comment_char, line))
           vim.cmd("normal! j")
         end,
         [mapping["Break"]] = function(buffer)
