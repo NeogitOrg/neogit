@@ -77,16 +77,20 @@ function M:open(kind)
         return pad(mapping[name] and mapping[name][1] or "<NOP>", padding)
       end
 
+      local comment_char = git.config.get("core.commentChar"):read()
+        or git.config.get_global("core.commentChar"):read()
+        or "#"
+
       -- stylua: ignore
       local help_lines = {
-        "#",
-        "# Commands:",
-        string.format("#   %s Close", pad_mapping("Close")),
-        string.format("#   %s Submit", pad_mapping("Submit")),
-        string.format("#   %s Abort", pad_mapping("Abort")),
-        string.format("#   %s Previous Message", pad_mapping("PrevMessage")),
-        string.format("#   %s Next Message", pad_mapping("NextMessage")),
-        string.format("#   %s Reset Message", pad_mapping("ResetMessage")),
+        ("%s"):format(comment_char),
+        ("%s Commands:"):format(comment_char),
+        ("%s   %s Close"):format(comment_char, pad_mapping("Close")),
+        ("%s   %s Submit"):format(comment_char, pad_mapping("Submit")),
+        ("%s   %s Abort"):format(comment_char, pad_mapping("Abort")),
+        ("%s   %s Previous Message"):format(comment_char, pad_mapping("PrevMessage")),
+        ("%s   %s Next Message"):format(comment_char, pad_mapping("NextMessage")),
+        ("%s   %s Reset Message"):format(comment_char, pad_mapping("ResetMessage")),
       }
 
       help_lines = util.filter_map(help_lines, function(line)
@@ -95,7 +99,7 @@ function M:open(kind)
         end
       end)
 
-      local line = vim.fn.search("^#$") - 1
+      local line = vim.fn.search(string.format("^%s$", comment_char)) - 1
       buffer:set_lines(line, line, false, help_lines)
       buffer:write()
       buffer:move_cursor(1)
