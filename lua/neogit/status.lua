@@ -1480,7 +1480,7 @@ function M.create(kind, cwd)
           return not M.is_refresh_locked()
         end)
 
-        restore_cursor_location(unpack(M.cursor_location))
+        pcall(restore_cursor_location, unpack(M.cursor_location))
         M.cursor_location = nil
       end
     end,
