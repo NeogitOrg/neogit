@@ -69,7 +69,7 @@ end
 ---@param tbl table Key/value pairs to encode as json
 ---@return string
 function M.encode(tbl)
-  return string.format("%s,", vim.json.encode(tbl))
+  return string.format([[%s,]], vim.fn.json_encode(tbl):gsub(" ", ""))
 end
 
 return M
