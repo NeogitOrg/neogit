@@ -3,7 +3,7 @@ local subject = require("neogit.lib.json")
 describe("lib.json", function()
   describe("#encode", function()
     it("turns a lua table into json with a trailing comma", function()
-      assert.are.same('{"foo":"bar"},', subject.encode { foo = "bar" })
+      assert.are.same('{"foo":"bar","null":null},', subject.encode { foo = "bar" })
     end)
   end)
 
