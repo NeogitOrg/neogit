@@ -16,7 +16,7 @@ end
 ---@param json_str string unparsed json
 ---@param field string The json key to escape the body for
 local function escape_field(json_str, field)
-  local pattern = ([[("%s":")(.-)(",")]]):format(field)
+  local pattern = ([[("%s":")(.-)(","%%l)]]):format(field)
 
   json_str, _ = json_str:gsub(pattern, function(before, value, after)
     return table.concat({ before, vim.fn.escape(value, [[\"]]), after }, "")
@@ -66,10 +66,13 @@ end
 
 ---Convert a lua table to json string. Trailing comma is added because the expectation
 ---is to use json.decode from this same module to parse the result.
+---The 'null' key is because the escape_field function won't match the _last_ field in an object,
+---so by adding a null field, we can guarantee that the last _real_ field will be escaped.
 ---@param tbl table Key/value pairs to encode as json
 ---@return string
 function M.encode(tbl)
-  return string.format([[%s,]], vim.fn.json_encode(tbl):gsub(" ", ""))
+  local json, _ = string.format([[%s,]], vim.json.encode(tbl)):gsub([[}]], [[,"null":null}]])
+  return json
 end
 
 return M
