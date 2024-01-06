@@ -184,7 +184,14 @@ M.CommitEntry = Component.new(function(commit, args)
       row(graph),
       col(
         flat_map({ commit.subject, commit.body }, function(line)
-          local lines = map(util.str_wrap(line, vim.o.columns * 0.6), function(l)
+          local lines = vim.split(line, "\\n")
+
+          -- TODO: More correctly handle newlines/wrapping in messages
+          -- lines = util.flat_map(lines, function(line)
+          --   return util.str_wrap(line, vim.o.columns * 0.6)
+          -- end)
+
+          lines = map(lines, function(l)
             return row(util.merge(graph, { text(" "), text(l) }))
           end)
 
