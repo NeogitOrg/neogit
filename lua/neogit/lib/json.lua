@@ -25,20 +25,18 @@ local function escape_field(json_str, field)
   return json_str
 end
 
-local function raise_error(result, input)
+local function error_msg(result, input)
   local msg = vim.split(result, " ")
   local char_index = tonumber(msg[#msg])
 
-  error(
-    "Failed to parse log json!: "
-      .. result
-      .. "\n"
-      .. input:sub(char_index - 30, char_index - 1)
-      .. "<"
-      .. input:sub(char_index, char_index)
-      .. ">"
-      .. input:sub(char_index + 1, char_index + 30)
-  )
+  return "Failed to parse log json!: "
+    .. result
+    .. "\n"
+    .. input:sub(char_index - 30, char_index - 1)
+    .. "<"
+    .. input:sub(char_index, char_index)
+    .. ">"
+    .. input:sub(char_index + 1, char_index + 30)
 end
 
 ---Decode a list of json formatted lines into a lua table
@@ -46,6 +44,10 @@ end
 ---@param opts? table
 ---@return table
 function M.decode(lines, opts)
+  if not lines[1] then
+    return {}
+  end
+
   opts = opts or {}
 
   local json_array = array_wrap(lines)
@@ -58,7 +60,11 @@ function M.decode(lines, opts)
 
   local ok, result = pcall(vim.json.decode, json_array, { luanil = { object = true, array = true } })
   if not ok then
-    raise_error(result, json_array)
+    error(error_msg(result, json_array))
+  end
+
+  if not result then
+    error("Json failed to parse!")
   end
 
   return result
