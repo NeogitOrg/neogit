@@ -101,6 +101,11 @@ end
 ---@field rebase NeogitConfigSection|nil
 ---@field sequencer NeogitConfigSection|nil
 
+---@class HighlightOptions
+---@field italic? boolean
+---@field bold? boolean
+---@field underline? boolean
+
 ---@class NeogitFilewatcherConfig
 ---@field interval number
 ---@field enabled boolean
@@ -162,6 +167,7 @@ end
 ---@field mappings? NeogitConfigMappings
 ---@field notification_icon? string
 ---@field use_default_keymaps? boolean
+---@field highlight? HighlightOptions
 
 ---Returns the default Neogit configuration
 ---@return NeogitConfig
@@ -183,6 +189,11 @@ function M.get_default_values()
       ["github.com"] = "https://github.com/${owner}/${repository}/compare/${branch_name}?expand=1",
       ["bitbucket.org"] = "https://bitbucket.org/${owner}/${repository}/pull-requests/new?source=${branch_name}&t=1",
       ["gitlab.com"] = "https://gitlab.com/${owner}/${repository}/merge_requests/new?merge_request[source_branch]=${branch_name}",
+    },
+    highlight = {
+      italic = true,
+      bold = true,
+      underline = true,
     },
     disable_insert_on_commit = "auto",
     use_per_project_settings = true,
