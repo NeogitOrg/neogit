@@ -117,8 +117,10 @@ function M.parse_remote_branch(ref)
   return ref:match("^([^/]*)/(.*)$")
 end
 
-function M.create(name)
-  cli.branch.name(name).call_interactive()
+---@param name string
+---@param base_branch? string
+function M.create(name, base_branch)
+  cli.branch.args(name, base_branch).call_interactive()
 end
 
 function M.delete(name)
@@ -141,15 +143,18 @@ function M.delete(name)
   return result and result.code == 0 or false
 end
 
+---Returns current branch name, or nil if detached HEAD
+---@return string|nil
 function M.current()
   local head = require("neogit.lib.git").repo.head.branch
-  if head then
+  if head and head ~= "(detached)" then
     return head
   else
     local branch_name = cli.branch.current.call_sync().stdout
     if #branch_name > 0 then
       return branch_name[1]
     end
+
     return nil
   end
 end

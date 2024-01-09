@@ -44,6 +44,41 @@ local function spin_off_branch(checkout)
   end
 end
 
+---@param popup Popup
+---@param prompt string
+---@param checkout boolean
+---@return string|nil
+---@return string|nil
+local function create_branch(popup, prompt, checkout)
+  -- stylua: ignore
+  local options = util.deduplicate(util.merge(
+    { popup.state.env.commits[1] },
+    { git.branch.current() or "HEAD" },
+    git.branch.get_all_branches(false),
+    git.tag.list(),
+    git.refs.heads()
+  ))
+
+  local base_branch = FuzzyFinderBuffer.new(options):open_async { prompt_prefix = prompt }
+  if not base_branch then
+    return
+  end
+
+  local name = input.get_user_input("branch > ")
+  if not name or name == "" then
+    return
+  end
+  name, _ = name:gsub("%s", "-")
+
+  git.branch.create(name, base_branch)
+  fire_branch_event("NeogitBranchCreate", { branch_name = name, base = base_branch })
+
+  if checkout then
+    git.branch.checkout(name, popup:get_arguments())
+    fire_branch_event("NeogitBranchCheckout", { branch_name = name })
+  end
+end
+
 M.spin_off_branch = operation("spin_off_branch", function()
   spin_off_branch(true)
 end)
@@ -97,38 +132,12 @@ M.checkout_recent_branch = operation("checkout_recent_branch", function(popup)
   fire_branch_event("NeogitBranchCheckout", { branch_name = selected_branch })
 end)
 
-M.checkout_create_branch = operation("checkout_create_branch", function()
-  local branches = git.branch.get_all_branches(false)
-  local current_branch = git.branch.current()
-  if current_branch then
-    table.insert(branches, 1, current_branch)
-  end
-
-  local name = input.get_user_input("branch > ")
-  if not name or name == "" then
-    return
-  end
-  name, _ = name:gsub("%s", "-")
-
-  local base_branch = FuzzyFinderBuffer.new(branches):open_async { prompt_prefix = "base branch" }
-  if not base_branch then
-    return
-  end
-
-  git.cli.checkout.new_branch_with_start_point(name, base_branch).call_sync()
-  fire_branch_event("NeogitBranchCreate", { branch_name = name, base = base_branch })
-  fire_branch_event("NeogitBranchCheckout", { branch_name = name })
+M.checkout_create_branch = operation("checkout_create_branch", function(popup)
+  create_branch(popup, "Create and checkout branch starting at", true)
 end)
 
-M.create_branch = operation("create_branch", function()
-  local name = input.get_user_input("branch > ")
-  if not name or name == "" then
-    return
-  end
-
-  name, _ = name:gsub("%s", "-")
-  git.branch.create(name)
-  fire_branch_event("NeogitBranchCreate", { branch_name = name })
+M.create_branch = operation("create_branch", function(popup)
+  create_branch(popup, "Create branch starting at", false)
 end)
 
 M.configure_branch = operation("configure_branch", function()
@@ -141,7 +150,7 @@ M.configure_branch = operation("configure_branch", function()
 end)
 
 M.rename_branch = operation("rename_branch", function()
-  local current_branch = git.repo.head.branch
+  local current_branch = git.branch.current()
   local branches = git.branch.get_local_branches(true)
   if current_branch then
     table.insert(branches, 1, current_branch)

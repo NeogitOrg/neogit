@@ -7,8 +7,8 @@ local worktree_actions = require("neogit.popups.worktree.actions")
 local config_actions = require("neogit.popups.branch_config.actions")
 
 function M.create(env)
-  local current_branch = git.branch.current()
-  local show_config = current_branch ~= "" and current_branch ~= "(detached)"
+  local current_branch = git.branch.current() or ""
+  local show_config = current_branch ~= ""
   local pull_rebase_entry = git.config.get("pull.rebase")
   local pull_rebase = pull_rebase_entry:is_set() and pull_rebase_entry.value or "false"
 
