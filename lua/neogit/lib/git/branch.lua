@@ -120,7 +120,7 @@ end
 ---@param name string
 ---@param base_branch? string
 function M.create(name, base_branch)
-  cli.branch.args(name, base_branch).call_interactive()
+  cli.branch.args(name, base_branch).call()
 end
 
 function M.delete(name)
