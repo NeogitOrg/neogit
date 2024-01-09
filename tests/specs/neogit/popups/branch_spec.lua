@@ -63,6 +63,7 @@ describe("branch popup", function()
     "can create a new branch without checking it out",
     in_prepared_repo(function()
       input.values = { "branch-from-test-create" }
+      FuzzyFinderBuffer.value = { "master" }
       act("bn<cr><cr>")
       operations.wait("create_branch")
       eq("master", get_current_branch())
