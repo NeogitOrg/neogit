@@ -66,8 +66,8 @@ M.create_worktree = operations("create_worktree", function()
     return
   end
 
-  local name = input.get_user_input("Name for new branch: ", nil)
-  if not name or name == "" then
+  local name = input.get_user_input("Create branch", { strip_spaces = true })
+  if not name then
     return
   end
 

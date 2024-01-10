@@ -25,21 +25,36 @@ function M.get_choice(msg, options)
   return options.values[choice]:match("&(.)")
 end
 
+---@class GetUserInputOpts
+---@field strip_spaces boolean? Replace spaces with dashes
+---@field default any? Default value
+---@field completion string?
+---@field separator string?
+
 ---@param prompt string Prompt to use for user input
----@param default any Default value to use
----@param completion string? Completion type to use. See vim docs for :command-complete
+---@param opts GetUserInputOpts? Options table
 ---@return string|nil
-function M.get_user_input(prompt, default, completion)
+function M.get_user_input(prompt, opts)
+  opts = vim.tbl_extend("keep", opts or {}, { strip_spaces = false, separator = ": " })
+
   vim.fn.inputsave()
 
   local status, result = pcall(vim.fn.input, {
-    prompt = prompt,
-    default = default,
-    completion = completion,
+    prompt = ("%s%s"):format(prompt, opts.separator),
+    default = opts.default,
+    completion = opts.completion,
   })
 
   vim.fn.inputrestore()
   if not status then
+    return nil
+  end
+
+  if opts.strip_spaces then
+    result, _ = result:gsub("%s", "-")
+  end
+
+  if result == "" then
     return nil
   end
 
