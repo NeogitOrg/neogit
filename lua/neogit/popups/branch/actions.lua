@@ -20,10 +20,8 @@ local function spin_off_branch(checkout)
     checkout = true
   end
 
-  local name = input.get_user_input(
-    ("%s branch"):format(checkout and "Spin-off" or "Spin-out"),
-    { strip_spaces = true }
-  )
+  local name =
+    input.get_user_input(("%s branch"):format(checkout and "Spin-off" or "Spin-out"), { strip_spaces = true })
   if not name then
     return
   end

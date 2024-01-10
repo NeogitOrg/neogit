@@ -61,7 +61,8 @@ M.add = operation("add_remote", function(popup)
 end)
 
 function M.rename(_)
-  local selected_remote = FuzzyFinderBuffer.new(git.remote.list()):open_async { prompt_prefix = "Rename remote" }
+  local selected_remote = FuzzyFinderBuffer.new(git.remote.list())
+    :open_async { prompt_prefix = "Rename remote" }
   if not selected_remote then
     return
   end
