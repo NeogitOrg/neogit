@@ -14,7 +14,7 @@ local function parse_branches(branches, include_current)
   local remotes = "^remotes/(.*)"
   local head = "^(.*)/HEAD"
   local ref = " %-> "
-  local detached = "^%(HEAD detached at %x%x%x%x%x%x%x%x%)$"
+  local detached = "^%(HEAD detached at %x%x%x%x%x%x%x"
   local pattern = include_current and "^[* ] (.+)" or "^  (.+)"
 
   for _, b in ipairs(branches) do
