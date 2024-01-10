@@ -23,8 +23,8 @@ local function ask_to_set_pushDefault()
 end
 
 M.add = operation("add_remote", function(popup)
-  local name = input.get_user_input("Remote name: ")
-  if not name or name == "" then
+  local name = input.get_user_input("Add remote")
+  if not name then
     return
   end
 
@@ -38,8 +38,8 @@ M.add = operation("add_remote", function(popup)
     msg = string.format("%s:%s/%s.git", host, name, remote)
   end
 
-  local remote_url = input.get_user_input("Remote url: ", msg)
-  if not remote_url or remote_url == "" then
+  local remote_url = input.get_user_input("URL for " .. name, { default = msg })
+  if not remote_url then
     return
   end
 
@@ -61,13 +61,13 @@ M.add = operation("add_remote", function(popup)
 end)
 
 function M.rename(_)
-  local selected_remote = FuzzyFinderBuffer.new(git.remote.list()):open_async()
+  local selected_remote = FuzzyFinderBuffer.new(git.remote.list()):open_async { prompt_prefix = "Rename remote" }
   if not selected_remote then
     return
   end
 
-  local new_name = input.get_user_input("Rename " .. selected_remote .. " to: ")
-  if not new_name or new_name == "" then
+  local new_name = input.get_user_input("Rename '" .. selected_remote .. "' to")
+  if not new_name then
     return
   end
 

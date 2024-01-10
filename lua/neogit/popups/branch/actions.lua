@@ -20,12 +20,14 @@ local function spin_off_branch(checkout)
     checkout = true
   end
 
-  local name = input.get_user_input("branch > ")
-  if not name or name == "" then
+  local name = input.get_user_input(
+    ("%s branch"):format(checkout and "Spin-off" or "Spin-out"),
+    { strip_spaces = true }
+  )
+  if not name then
     return
   end
 
-  name, _ = name:gsub("%s", "-")
   git.branch.create(name)
 
   local current_branch_name = git.branch.current_full_name()
@@ -64,11 +66,10 @@ local function create_branch(popup, prompt, checkout)
     return
   end
 
-  local name = input.get_user_input("branch > ")
-  if not name or name == "" then
+  local name = input.get_user_input("Create branch", { strip_spaces = true })
+  if not name then
     return
   end
-  name, _ = name:gsub("%s", "-")
 
   git.branch.create(name, base_branch)
   fire_branch_event("NeogitBranchCreate", { branch_name = name, base = base_branch })
@@ -151,7 +152,7 @@ end)
 
 M.rename_branch = operation("rename_branch", function()
   local current_branch = git.branch.current()
-  local branches = git.branch.get_local_branches(true)
+  local branches = git.branch.get_local_branches(false)
   if current_branch then
     table.insert(branches, 1, current_branch)
   end
@@ -161,12 +162,11 @@ M.rename_branch = operation("rename_branch", function()
     return
   end
 
-  local new_name = input.get_user_input("new branch name > ", selected_branch)
-  if not new_name or new_name == "" then
+  local new_name = input.get_user_input(("Rename '%s' to"):format(selected_branch), { strip_spaces = true })
+  if not new_name then
     return
   end
 
-  new_name, _ = new_name:gsub("%s", "-")
   git.cli.branch.move.args(selected_branch, new_name).call()
 
   notification.info(string.format("Renamed '%s' to '%s'", selected_branch, new_name))

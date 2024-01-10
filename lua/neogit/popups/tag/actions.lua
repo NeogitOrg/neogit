@@ -12,11 +12,10 @@ local function fire_tag_event(pattern, data)
 end
 
 function M.create_tag(popup)
-  local tag_input = input.get_user_input("Tag name: ")
-  if not tag_input or tag_input == "" then
+  local tag_input = input.get_user_input("Create tag", { strip_spaces = true })
+  if not tag_input then
     return
   end
-  tag_input, _ = tag_input:gsub("%s", "-")
 
   local selected
   if popup.state.env.commit then
