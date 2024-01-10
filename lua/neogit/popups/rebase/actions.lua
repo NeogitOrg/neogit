@@ -93,6 +93,22 @@ function M.interactively(popup)
   end
 end
 
+function M.reword(popup)
+  local commit
+  if popup.state.env.commit then
+    commit = popup.state.env.commit
+  else
+    commit = CommitSelectViewBuffer.new(git.log.list()):open_async()[1]
+    if not commit then
+      return
+    end
+  end
+  local old_message = git.log.message(commit)
+  local new_message = vim.fn.input("Message: ", old_message)
+
+  git.rebase.reword(commit, new_message, popup:get_arguments())
+end
+
 function M.subset(popup)
   local newbase = FuzzyFinderBuffer.new(git.branch.get_all_branches())
     :open_async { prompt_prefix = "rebase subset onto" }

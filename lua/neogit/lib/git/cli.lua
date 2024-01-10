@@ -148,6 +148,15 @@ local configurations = {
       continue = "--continue",
       abort = "--abort",
       skip = "--skip",
+      autosquash = "--autosquash",
+      autostash = "--autostash",
+    },
+    aliases = {
+      commit = function(tbl)
+        return function(rev)
+          return tbl.args(rev .. "^")
+        end
+      end,
     },
   },
 
@@ -278,11 +287,17 @@ local configurations = {
       dry_run = "--dry-run",
       no_edit = "--no-edit",
       edit = "--edit",
+      allow_empty = "--allow-empty",
     },
     aliases = {
       with_message = function(tbl)
         return function(message)
           return tbl.args("-F", "-").input(message)
+        end
+      end,
+      message = function(tbl)
+        return function(text)
+          return tbl.args("-m", text)
         end
       end,
     },

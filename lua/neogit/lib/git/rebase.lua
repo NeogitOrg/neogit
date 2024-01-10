@@ -75,6 +75,19 @@ function M.onto(start, newbase, args)
   end
 end
 
+function M.reword(commit, message, _args)
+  local result = cli.commit.allow_empty.only.message("amend! " .. commit .. "\n\n" .. message).call_sync()
+
+  if result.code ~= 0 then
+    return
+  end
+  result = cli.rebase.env({ GIT_SEQUENCE_EDITOR = ":" }).interactive.autosquash.commit(commit).call_sync()
+  if result.code ~= 0 then
+    return
+  end
+  fire_rebase_event("ok")
+end
+
 function M.continue()
   return rebase_command(cli.rebase.continue)
 end
