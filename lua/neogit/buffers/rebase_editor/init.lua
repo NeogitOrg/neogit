@@ -167,8 +167,8 @@ function M:open(kind)
         [mapping["Squash"]] = line_action("squash", comment_char),
         [mapping["Fixup"]] = line_action("fixup", comment_char),
         [mapping["Execute"]] = function(buffer)
-          local exec = input.get_user_input("Execute: ")
-          if not exec or exec == "" then
+          local exec = input.get_user_input("Execute")
+          if not exec then
             return
           end
 

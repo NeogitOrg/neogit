@@ -248,7 +248,7 @@ function M:toggle_switch(switch)
   -- If a switch depends on user input, i.e. `-Gsomething`, prompt user to get input
   if switch.user_input then
     if switch.enabled then
-      local value = input.get_user_input(switch.cli_prefix .. switch.cli_base .. ": ")
+      local value = input.get_user_input(switch.cli_prefix .. switch.cli_base, { separator = "" })
       if value then
         switch.cli = switch.cli_base .. value
       end

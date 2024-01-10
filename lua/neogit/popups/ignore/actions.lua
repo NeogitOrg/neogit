@@ -39,7 +39,7 @@ M.shared_toplevel = operation("ignore_shared", function(popup)
 end)
 
 M.shared_subdirectory = operation("ignore_subdirectory", function(popup)
-  local subdirectory = input.get_user_input(" sub-directory > ", nil, "dir")
+  local subdirectory = input.get_user_input("Ignore sub-directory", { completion = "dir" })
   if subdirectory then
     subdirectory = Path:new(vim.loop.cwd(), subdirectory)
 

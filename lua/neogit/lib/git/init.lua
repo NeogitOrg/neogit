@@ -14,9 +14,10 @@ M.create = function(directory, sync)
   end
 end
 
+-- TODO Use path input
 M.init_repo = function()
-  local directory = input.get_user_input("Create repository in > ", "", "dir")
-  if directory == "" then
+  local directory = input.get_user_input("Create repository in", { completion = "dir" })
+  if not directory then
     return
   end
 
