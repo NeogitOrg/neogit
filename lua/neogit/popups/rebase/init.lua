@@ -7,7 +7,7 @@ local M = {}
 function M.create(env)
   local branch = git.branch.current()
   local in_rebase = git.repo.rebase.head
-  local base_branch = actions.base_branch()
+  local base_branch = git.branch.base_branch()
   local show_base_branch = branch ~= base_branch and base_branch ~= nil
 
   local p = popup

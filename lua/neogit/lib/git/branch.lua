@@ -90,7 +90,20 @@ function M.get_all_branches(include_current)
 end
 
 function M.is_unmerged(branch, base)
-  return cli.cherry.arg_list({ base or "master", branch }).call_sync().stdout[1] ~= nil
+  return cli.cherry.arg_list({ base or M.base_branch(), branch }).call_sync().stdout[1] ~= nil
+end
+
+function M.base_branch()
+  local value = config_lib.get("neogit.baseBranch")
+  if value:is_set() then
+    return value:read()
+  else
+    if M.exists("master") then
+      return "master"
+    elseif M.exists("main") then
+      return "main"
+    end
+  end
 end
 
 ---Determine if a branch exists locally
