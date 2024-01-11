@@ -103,8 +103,9 @@ function M.reword(popup)
       return
     end
   end
+  -- TODO: Support multiline input for longer commit messages
   local old_message = git.log.message(commit)
-  local new_message = vim.fn.input("Message: ", old_message)
+  local new_message = input.get_user_input("Message: ", old_message)
 
   git.rebase.reword(commit, new_message, popup:get_arguments())
 end
