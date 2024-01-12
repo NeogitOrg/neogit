@@ -44,12 +44,7 @@ local match_2 = "(.)(.) (....) (%d+) (%d+) (%d+) (%w+) (%w+) (%a%d+) ([^\t]+)\t?
 
 local function update_status(state)
   local git = require("neogit.lib.git")
-  -- git-status outputs files relative to the cwd.
-  --
-  -- Save the working directory to allow resolution to absolute paths since the
-  -- cwd may change after the status is refreshed and used, especially if using
-  -- rooter plugins with lsp integration
-  local cwd = vim.loop.cwd()
+  local cwd = state.git_root
 
   local head = {}
   local upstream = { unmerged = { items = {} }, unpulled = { items = {} }, ref = nil }
