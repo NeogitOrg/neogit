@@ -162,6 +162,7 @@ function M.setup()
     NeogitPopupActionDisabled = { link = "Comment" },
     NeogitFilePath = { fg = palette.blue, italic = palette.italic },
     NeogitCommitViewHeader = { bg = palette.bg_cyan, fg = palette.bg0 },
+    NeogitCommitViewDescription = { link = "String" },
     NeogitDiffHeader = { bg = palette.bg3, fg = palette.blue, bold = palette.bold },
     NeogitDiffHeaderHighlight = { bg = palette.bg3, fg = palette.orange, bold = palette.bold },
     NeogitCommandText = { link = "Comment" },
