@@ -203,7 +203,7 @@ M.CommitEntry = Component.new(function(commit, args)
             return lines
           end
         end),
-        { highlight = "String" }
+        { highlight = "NeogitCommitViewDescription" }
       ),
     }
   end

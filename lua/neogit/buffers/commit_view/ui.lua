@@ -66,7 +66,7 @@ function M.CommitView(info, overview, signature_block, item_filter)
   return {
     M.CommitHeader(info),
     text(""),
-    col(map(info.description, text), { sign = "NeogitCommitViewDescription", tag = "Description" }),
+    col(map(info.description, text), { highlight = "NeogitCommitViewDescription", tag = "Description" }),
     text(""),
     col(map(signature_block or {}, text), { tag = "Signature", hidden = hide_signature }),
     text("", { hidden = hide_signature }),
