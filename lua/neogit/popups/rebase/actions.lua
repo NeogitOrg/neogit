@@ -112,7 +112,7 @@ M.reword = operation("rebase_reword", function(popup)
     return
   end
 
-  git.rebase.reword(commit, new_message or "", popup:get_arguments())
+  git.rebase.reword(commit, new_message)
 end)
 
 function M.subset(popup)
