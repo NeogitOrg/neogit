@@ -107,7 +107,10 @@ M.reword = operation("rebase_reword", function(popup)
 
   -- TODO: Support multiline input for longer commit messages
   local old_message = git.log.message(commit)
-  local new_message = input.get_user_input("Message: ", old_message)
+  local new_message = input.get_user_input("Message", { default = old_message })
+  if not new_message then
+    return
+  end
 
   git.rebase.reword(commit, new_message or "", popup:get_arguments())
 end)
