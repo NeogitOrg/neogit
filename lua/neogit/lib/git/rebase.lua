@@ -3,6 +3,7 @@ local client = require("neogit.client")
 local notification = require("neogit.lib.notification")
 local cli = require("neogit.lib.git.cli")
 local rev_parse = require("neogit.lib.git.rev_parse")
+local log = require("neogit.lib.git.log")
 
 local M = {}
 
@@ -77,20 +78,21 @@ function M.onto(start, newbase, args)
 end
 
 ---@param commit string rev name of the commit to reword
----@param message string new message to put onto `commit`
----@return nil
-function M.reword(commit, message)
-  local result = cli.commit.allow_empty.only.message("amend! " .. commit .. "\n\n" .. message).call()
-  if result.code ~= 0 then
-    return
-  end
+---@return ProcessResult|nil
+function M.reword(commit)
+  local status = client.wrap(
+    cli.commit.only.allow_empty.edit.with_message(("amend! %s\n\n%s"):format(commit, log.message(commit))),
+    {
+      autocmd = "NeogitCommitComplete",
+      msg = {
+        success = "Commit Updated",
+      },
+    }
+  )
 
-  result =
-    cli.rebase.env({ GIT_SEQUENCE_EDITOR = ":" }).interactive.autosquash.autostash.commit(commit).call()
-  if result.code ~= 0 then
-    return
+  if status == 0 then
+    return M.instantly(commit, { "--autostash", "--autosquash" })
   end
-  fire_rebase_event("ok")
 end
 
 function M.modify(commit)
