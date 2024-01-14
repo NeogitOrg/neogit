@@ -323,7 +323,7 @@ local configurations = {
     aliases = {
       with_message = function(tbl)
         return function(message)
-          return tbl.args("-F", "-").input(message)
+          return tbl.args("-F", "-").input(message .. "\04")
         end
       end,
       message = function(tbl)

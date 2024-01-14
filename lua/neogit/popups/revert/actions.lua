@@ -29,7 +29,7 @@ local function build_commit_message(commits)
     table.insert(message, string.format("%s '%s'", commit:sub(1, 7), git.log.message(commit)))
   end
 
-  return table.concat(message, "\n") .. "\04"
+  return table.concat(message, "\n")
 end
 
 function M.commits(popup)
