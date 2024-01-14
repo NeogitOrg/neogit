@@ -45,4 +45,32 @@ describe("rebase popup", function()
       test_reword("HEAD~1", "foo")
     end)
   )
+
+  it(
+    "rebase to reword HEAD fires NeogitRebase autocmd",
+    in_prepared_repo(function()
+      -- Arange
+      local tx, rx = async.control.channel.oneshot()
+      local group = vim.api.nvim_create_augroup("TestCustomNeogitEvents", { clear = true })
+      vim.api.nvim_create_autocmd("User", {
+        pattern = "NeogitRebase",
+        group = group,
+        callback = function()
+          tx(true)
+        end,
+      })
+
+      -- Timeout
+      local timer = vim.loop.new_timer()
+      timer:start(500, 0, function()
+        tx(false)
+      end)
+
+      -- Act
+      test_reword("HEAD", "foobar")
+
+      -- Assert
+      assert.are.same(true, rx())
+    end)
+  )
 end)
