@@ -75,6 +75,10 @@ function M.onto(start, newbase, args)
   end
 end
 
+---@param commit string rev name of the commit to reword
+---@param message string new message to put onto `commit`
+---@param arguments table additional arguments from the popup (unused)
+---@return nil
 function M.reword(commit, message)
   local result = cli.commit.allow_empty.only.message("amend! " .. commit .. "\n\n" .. message).call()
   if result.code ~= 0 then
