@@ -75,6 +75,23 @@ function M.onto(start, newbase, args)
   end
 end
 
+---@param commit string rev name of the commit to reword
+---@param message string new message to put onto `commit`
+---@return nil
+function M.reword(commit, message)
+  local result = cli.commit.allow_empty.only.message("amend! " .. commit .. "\n\n" .. message).call()
+  if result.code ~= 0 then
+    return
+  end
+
+  result =
+    cli.rebase.env({ GIT_SEQUENCE_EDITOR = ":" }).interactive.autosquash.autostash.commit(commit).call()
+  if result.code ~= 0 then
+    return
+  end
+  fire_rebase_event("ok")
+end
+
 function M.continue()
   return rebase_command(cli.rebase.continue)
 end
