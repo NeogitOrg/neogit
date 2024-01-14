@@ -56,7 +56,6 @@ function M.commits(popup)
 
   client.wrap(commit_cmd, {
     autocmd = "NeogitRevertComplete",
-    refresh = "do_revert",
     msg = {
       success = "Reverted",
     },
