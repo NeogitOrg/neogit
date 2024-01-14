@@ -5,8 +5,8 @@ local M = {
   values = {},
 }
 
---- Add a rev name to the mocked list of commits the user selected.
---- @param rev string the rev name of the commit which the user will select once `CommitSelectViewBuffer:open_async()` is called
+---Add a rev name to the mocked list of commits the user selected.
+---@param rev string the rev name of the commit which the user will select once `CommitSelectViewBuffer:open_async()` is called
 function M.add(rev)
   table.insert(M.values, git.rev_parse.oid(rev))
 end
