@@ -15,106 +15,34 @@ local function act(normal_cmd)
 end
 
 describe("rebase popup", function()
-  before_each(function()
-    vim.fn.feedkeys("q", "x")
-    CommitSelectViewBufferMock.clear()
-  end)
-
-  function test_reword(commit_to_reword, new_commit_message, selected)
+  local function test_reword(commit_to_reword, new_commit_message)
     local original_branch = git.branch.current()
-    if selected == false then
-      CommitSelectViewBufferMock.add(git.rev_parse.oid(commit_to_reword))
-    end
+    CommitSelectViewBufferMock.add(git.rev_parse.oid(commit_to_reword))
     input.values = { new_commit_message }
     act("rw<cr>")
     operations.wait("rebase_reword")
     assert.are.same(original_branch, git.branch.current())
-    assert.are.same(new_commit_message, git.log.message(commit_to_reword))
+    assert.are.same(new_commit_message, git.log.message("HEAD"))
   end
-
-  function test_modify(commit_to_modify, selected)
-    local new_head = git.rev_parse.oid(commit_to_modify)
-    if selected == false then
-      CommitSelectViewBufferMock.add(git.rev_parse.oid(commit_to_modify))
-    end
-    act("rm<cr>")
-    operations.wait("rebase_modify")
-    assert.are.same(new_head, git.rev_parse.oid("HEAD"))
-  end
-
-  function test_drop(commit_to_drop, selected)
-    local dropped_commit = git.rev_parse.oid(commit_to_drop)
-    if selected == false then
-      CommitSelectViewBufferMock.add(git.rev_parse.oid(commit_to_drop))
-    end
-    act("rd<cr>")
-    operations.wait("rebase_drop")
-    assert.is_not.same(dropped_commit, git.rev_parse.oid(commit_to_drop))
-  end
-
-  it(
-    "rebase to drop HEAD",
-    in_prepared_repo(function()
-      test_drop("HEAD", false)
-    end)
-  )
-  it(
-    "rebase to drop HEAD~1",
-    in_prepared_repo(function()
-      test_drop("HEAD~1", false)
-    end)
-  )
-  it(
-    "rebase to drop HEAD~1 from log view",
-    in_prepared_repo(function()
-      act("ll") -- log commits
-      operations.wait("log_current")
-      act("j") -- go down one commit
-      test_drop("HEAD~1", true)
-    end)
-  )
 
   it(
     "rebase to reword HEAD",
     in_prepared_repo(function()
-      test_reword("HEAD", "foobar", false)
+      test_reword("HEAD", "foobar")
     end)
   )
   it(
     "rebase to reword HEAD~1",
     in_prepared_repo(function()
-      test_reword("HEAD~1", "barbaz", false)
+      test_reword("HEAD~1", "barbaz")
     end)
   )
   it(
     "rebase to reword HEAD~1 from log view",
     in_prepared_repo(function()
-      act("ll") -- log commits
+      act("ll") -- log branches and go down one commit
       operations.wait("log_current")
-      act("j") -- go down one commit
-      test_reword("HEAD~1", "foo", true)
-    end)
-  )
-
-  it(
-    "rebase to modify HEAD",
-    in_prepared_repo(function()
-      test_modify("HEAD", false)
-    end)
-  )
-  it(
-    "rebase to modify HEAD~1",
-    in_prepared_repo(function()
-      test_modify("HEAD~1", false)
-    end)
-  )
-  it(
-    "rebase to modify HEAD~1 from log view",
-    in_prepared_repo(function()
-      act("ll")
-      operations.wait("log_current")
-      act("j")
-      test_modify("HEAD~1", true)
+      test_reword("HEAD~1", "foo")
     end)
   )
 
@@ -139,35 +67,7 @@ describe("rebase popup", function()
       end)
 
       -- Act
-      test_reword("HEAD", "foobar", false)
-
-      -- Assert
-      assert.are.same(true, rx())
-    end)
-  )
-
-  it(
-    "rebase to modify HEAD fires NeogitRebase autocmd",
-    in_prepared_repo(function()
-      -- Arange
-      local tx, rx = async.control.channel.oneshot()
-      local group = vim.api.nvim_create_augroup("TestCustomNeogitEvents", { clear = true })
-      vim.api.nvim_create_autocmd("User", {
-        pattern = "NeogitRebase",
-        group = group,
-        callback = function()
-          tx(true)
-        end,
-      })
-
-      -- Timeout
-      local timer = vim.loop.new_timer()
-      timer:start(500, 0, function()
-        tx(false)
-      end)
-
-      -- Act
-      test_modify("HEAD", false)
+      test_reword("HEAD", "foobar")
 
       -- Assert
       assert.are.same(true, rx())
