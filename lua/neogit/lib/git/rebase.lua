@@ -20,11 +20,14 @@ end
 
 ---Instant rebase. This is a way to rebase without using the interactive editor
 ---@param commit string
----@param args string[] list of arguments to pass to git rebase
+---@param args? string[] list of arguments to pass to git rebase
 ---@return ProcessResult
 function M.instantly(commit, args)
-  local result =
-    cli.rebase.env({ GIT_SEQUENCE_EDITOR = ":" }).interactive.arg_list(args).commit(commit).call()
+  local result = cli.rebase
+    .env({ GIT_SEQUENCE_EDITOR = ":" }).interactive.autostash.autosquash
+    .arg_list(args or {})
+    .commit(commit)
+    .call()
 
   if result.code ~= 0 then
     fire_rebase_event { commit = commit, status = "failed" }
@@ -91,7 +94,7 @@ function M.reword(commit)
   )
 
   if status == 0 then
-    return M.instantly(commit, { "--autostash", "--autosquash" })
+    return M.instantly(commit)
   end
 end
 

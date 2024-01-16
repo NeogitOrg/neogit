@@ -89,7 +89,7 @@ local function commit_special(popup, method, opts)
 
   if opts.rebase then
     a.util.scheduler()
-    git.rebase.instantly(commit .. "~1", { "--autosquash", "--autostash", "--keep-empty" })
+    git.rebase.instantly(commit .. "~1", { "--keep-empty" })
   end
 end
 
