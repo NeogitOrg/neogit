@@ -1,6 +1,7 @@
 local git = require("neogit.lib.git")
 local input = require("neogit.lib.input")
 local notification = require("neogit.lib.notification")
+local operation = require("neogit.operations")
 
 local CommitSelectViewBuffer = require("neogit.buffers.commit_select_view")
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
@@ -92,6 +93,27 @@ function M.interactively(popup)
     git.rebase.rebase_interactive(commit, args)
   end
 end
+
+M.reword = operation("rebase_reword", function(popup)
+  local commit
+  if popup.state.env.commit then
+    commit = popup.state.env.commit
+  else
+    commit = CommitSelectViewBuffer.new(git.log.list()):open_async()[1]
+    if not commit then
+      return
+    end
+  end
+
+  -- TODO: Support multiline input for longer commit messages
+  local old_message = git.log.message(commit)
+  local new_message = input.get_user_input("Message", { default = old_message })
+  if not new_message then
+    return
+  end
+
+  git.rebase.reword(commit, new_message)
+end)
 
 function M.subset(popup)
   local newbase = FuzzyFinderBuffer.new(git.branch.get_all_branches())

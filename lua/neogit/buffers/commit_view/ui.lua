@@ -72,7 +72,7 @@ function M.CommitView(info, overview, signature_block, item_filter)
   return {
     M.CommitHeader(info),
     text(""),
-    col(map(info.description, text), { line_hl = "NeogitCommitViewDescription", tag = "Description" }),
+    col(map(info.description, text), { highlight = "NeogitCommitViewDescription", tag = "Description" }),
     text(""),
     M.SignatureBlock(signature_block),
     text(overview.summary),

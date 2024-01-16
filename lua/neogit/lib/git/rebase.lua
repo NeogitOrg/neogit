@@ -16,6 +16,23 @@ local function rebase_command(cmd)
   return cmd.env(client.get_envs_git_editor()).show_popup(true):in_pty(true).call { verbose = true }
 end
 
+---Instant rebase. This is a way to rebase without using the interactive editor
+---@param commit string
+---@param args string[] list of arguments to pass to git rebase
+---@return ProcessResult
+function M.instantly(commit, args)
+  local result =
+    cli.rebase.env({ GIT_SEQUENCE_EDITOR = ":" }).interactive.arg_list(args).commit(commit).call()
+
+  if result.code ~= 0 then
+    fire_rebase_event { commit = commit, status = "failed" }
+  else
+    fire_rebase_event { commit = commit, status = "ok" }
+  end
+
+  return result
+end
+
 function M.rebase_interactive(commit, args)
   if vim.tbl_contains(args, "--root") then
     commit = ""
@@ -56,6 +73,23 @@ function M.onto(start, newbase, args)
     notification.info("Rebased onto '" .. newbase .. "'")
     fire_rebase_event("ok")
   end
+end
+
+---@param commit string rev name of the commit to reword
+---@param message string new message to put onto `commit`
+---@return nil
+function M.reword(commit, message)
+  local result = cli.commit.allow_empty.only.message("amend! " .. commit .. "\n\n" .. message).call()
+  if result.code ~= 0 then
+    return
+  end
+
+  result =
+    cli.rebase.env({ GIT_SEQUENCE_EDITOR = ":" }).interactive.autosquash.autostash.commit(commit).call()
+  if result.code ~= 0 then
+    return
+  end
+  fire_rebase_event("ok")
 end
 
 function M.continue()
