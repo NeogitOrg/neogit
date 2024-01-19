@@ -50,7 +50,7 @@ end
 function Buffer:focus()
   local windows = fn.win_findbuf(self.handle)
 
-  if #windows == 0 then
+  if not windows or not windows[1] then
     return nil
   end
 
@@ -127,7 +127,7 @@ function Buffer:buffered_add_line_highlight(...)
 end
 
 function Buffer:resize(length)
-  api.nvim_buf_set_lines(self.handle, length, -1, false, {})
+  api.nvim_buf_set_lines(self.handle, length or #self.line_buffer, -1, false, {})
 end
 
 function Buffer:flush_line_buffer()
@@ -138,32 +138,48 @@ function Buffer:flush_line_buffer()
 end
 
 function Buffer:flush_highlight_buffer()
-  for _, highlight in ipairs(self.hl_buffer) do
-    self:add_highlight(unpack(highlight))
-  end
+  self:set_highlights(self.hl_buffer)
   self.hl_buffer = {}
 end
 
-function Buffer:flush_extmark_buffer()
-  for _, ext in ipairs(self.ext_buffer) do
-    self:set_extmark(unpack(ext))
+function Buffer:set_highlights(highlights)
+  for _, highlight in ipairs(highlights) do
+    self:add_highlight(unpack(highlight))
   end
+end
+
+function Buffer:flush_extmark_buffer()
+  self:set_extmarks(self.ext_buffer)
   self.ext_buffer = {}
 end
 
-function Buffer:flush_line_highlight_buffer()
-  for _, hl in ipairs(self.line_hl_buffer) do
-    self:add_line_highlight(unpack(hl))
+function Buffer:set_extmarks(extmarks)
+  for _, ext in ipairs(extmarks) do
+    self:set_extmark(unpack(ext))
   end
+end
+
+function Buffer:flush_line_highlight_buffer()
+  self:set_line_highlights(self.line_hl_buffer)
   self.line_hl_buffer = {}
 end
 
+function Buffer:set_line_highlights(highlights)
+  for _, hl in ipairs(highlights) do
+    self:add_line_highlight(unpack(hl))
+  end
+end
+
 function Buffer:flush_fold_buffer()
-  for _, fold in ipairs(self.fold_buffer) do
+  self:set_folds(self.fold_buffer)
+  self.fold_buffer = {}
+end
+
+function Buffer:set_folds(folds)
+  for _, fold in ipairs(folds) do
     self:create_fold(unpack(fold))
     self:set_fold_state(unpack(fold))
   end
-  self.fold_buffer = {}
 end
 
 function Buffer:flush_buffers()
