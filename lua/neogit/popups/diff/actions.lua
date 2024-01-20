@@ -4,8 +4,6 @@ local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 local util = require("neogit.lib.util")
 local git = require("neogit.lib.git")
 local input = require("neogit.lib.input")
-local config_lib = require("neogit.lib.git.config")
-local branch = require("neogit.lib.git.branch")
 
 -- aka "dwim" = do what I mean
 function M.this(popup)
@@ -21,19 +19,19 @@ function M.this(popup)
 end
 
 function M.range(popup)
-  local current = branch.current()
+  local current = git.branch.current()
 
   local common_ranges = {}
   if current then
     local branches_to_compare = {}
 
-    local base_branch = config_lib.get("neogit.baseBranch").value
+    local base_branch = git.branch.base_branch()
     local have_base_branch = base_branch ~= nil and base_branch ~= ""
     if have_base_branch then
       table.insert(branches_to_compare, base_branch)
     end
 
-    local upstream = branch.upstream("HEAD")
+    local upstream = git.branch.upstream("HEAD")
     if upstream ~= nil and upstream ~= "" then
       table.insert(branches_to_compare, upstream)
     end
@@ -54,7 +52,7 @@ function M.range(popup)
   local options = util.deduplicate(util.merge({ "(select first)", "(custom range)" }, common_ranges))
 
   local range = nil
-  local selection = FuzzyFinderBuffer.new(options):open_async { prompt_prefix = "Diff " }
+  local selection = FuzzyFinderBuffer.new(options):open_async { prompt_prefix = "Diff" }
   if not selection then
     return
   end
