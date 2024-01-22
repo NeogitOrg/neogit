@@ -35,16 +35,7 @@ local default_component_options = {
 local Component = {}
 
 function Component:row_range_abs()
-  if self.position.row_end == nil then
-    return 0, 0
-  end
-  local from = self.position.row_start
-  local len = self.position.row_end - from
-  if self.parent.tag ~= "_root" then
-    local p_from = self.parent:row_range_abs()
-    from = from + p_from - 1
-  end
-  return from, from + len
+  return self.position.row_start, self.position.row_end
 end
 
 function Component:get_padding_left(recurse)
