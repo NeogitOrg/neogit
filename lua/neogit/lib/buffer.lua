@@ -199,6 +199,10 @@ function Buffer:move_cursor(line)
   api.nvim_win_set_cursor(0, { line, 0 })
 end
 
+function Buffer:cursor_line()
+  return api.nvim_win_get_cursor(0)[1]
+end
+
 function Buffer:close(force)
   if force == nil then
     force = false
@@ -590,19 +594,18 @@ function Buffer.create(config)
       local function on_win()
         buffer:clear_namespace("ViewContext")
 
-        -- TODO: this is WAY to slow to be called so frequently, especially in a large buffer
-        local stack = buffer.ui:get_component_stack_under_cursor()
-        if not stack then
+        local context = buffer.ui:get_cursor_context()
+        if not context then
           return
         end
 
-        local hovered_component = stack[2] or stack[1]
-        local first, last = hovered_component:row_range_abs()
-        local top_level = hovered_component.parent and not hovered_component.parent.parent
+        local first = context.position.row_start
+        local last = context.position.row_end
 
         for line = fn.line("w0"), fn.line("w$") do
-          if first and last and line >= first and line <= last and not top_level then
-            local line_hl = buffer.ui:get_component_stack_on_line(line)[1].options.line_hl
+          if line >= first and line <= last then
+            local line_hl = buffer.ui:get_line_highlight(line)
+
             buffer:buffered_add_line_highlight(
               line - 1,
               (line_hl or "NeogitDiffContext") .. "Highlight",

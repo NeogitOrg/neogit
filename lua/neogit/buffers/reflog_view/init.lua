@@ -115,8 +115,10 @@ function M:open(_)
           self:close()
         end,
         ["<enter>"] = function()
-          local stack = self.buffer.ui:get_component_stack_under_cursor()
-          CommitViewBuffer.new(stack[#stack].options.oid):open()
+          local oid = self.buffer.ui:get_commit_under_cursor()
+          if oid then
+            CommitViewBuffer.new(oid):open()
+          end
         end,
         [popups.mapping_for("DiffPopup")] = function()
           if not config.check_integration("diffview") then

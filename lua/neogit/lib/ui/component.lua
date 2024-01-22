@@ -12,28 +12,31 @@ local default_component_options = {
 ---@field col_end integer
 
 ---@class ComponentOptions
+---@field line_hl string
+---@field highlight string
+---@field align_right integer|nil
 ---@field padding_left integer
 ---@field tag string
 ---@field foldable boolean
 ---@field folded boolean
+---@field context boolean
+---@field interactive boolean
+---@field virtual_text string
+---@field id string|nil
 
 ---@class Component
 ---@field position ComponentPosition
 ---@field parent Component
-
+---@field children Component[]
+---@field tag string|nil
+---@field options ComponentOptions
+---@field index number|nil
+---@field value string|nil
+---@field id string|nil
 local Component = {}
 
 function Component:row_range_abs()
-  if self.position.row_end == nil then
-    return 0, 0
-  end
-  local from = self.position.row_start
-  local len = self.position.row_end - from
-  if self.parent.tag ~= "_root" then
-    local p_from = self.parent:row_range_abs()
-    from = from + p_from - 1
-  end
-  return from, from + len
+  return self.position.row_start, self.position.row_end
 end
 
 function Component:get_padding_left(recurse)
@@ -43,21 +46,6 @@ function Component:get_padding_left(recurse)
     return padding_left_text
   end
   return padding_left_text .. (self.parent and self.parent:get_padding_left() or "")
-end
-
-function Component:is_under_cursor(cursor)
-  local row = cursor[1]
-  local col = cursor[2]
-  local from, to = self:row_range_abs()
-  local row_ok = from <= row and row <= to
-  local col_ok = self.position.col_end == -1
-    or (self.position.col_start <= col and col <= self.position.col_end)
-  return row_ok and col_ok
-end
-
-function Component:is_in_linewise_range(start, stop)
-  local from, to = self:row_range_abs()
-  return from >= start and from <= stop and to >= start and to <= stop
 end
 
 function Component:get_width()
