@@ -22,6 +22,11 @@ local intersperse = util.intersperse
 local List = common.List
 local Grid = common.Grid
 
+---@class PopupState
+
+---@class Popup
+---@field state PopupState
+---@field buffer Buffer
 local M = {}
 
 function M.builder()
@@ -163,13 +168,11 @@ local function construct_config_options(config, prefix, suffix)
 end
 
 ---@param id integer ID of component to be updated
----@param highlight string New highlight group for value
----@param value string|table New value to display
+---@param highlight? string New highlight group for value
+---@param value? string|table New value to display
 ---@return nil
 function M:update_component(id, highlight, value)
-  local component = self.buffer.ui:find_component(function(c)
-    return c.options.id == id
-  end)
+  local component = self.buffer.ui:find_by_id(id)
 
   assert(component, "Component not found! Cannot update.")
 
