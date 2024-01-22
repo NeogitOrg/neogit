@@ -22,6 +22,7 @@ local default_component_options = {
 ---@field context boolean
 ---@field interactive boolean
 ---@field virtual_text string
+---@field id string|nil
 
 ---@class Component
 ---@field position ComponentPosition
@@ -45,22 +46,6 @@ function Component:get_padding_left(recurse)
     return padding_left_text
   end
   return padding_left_text .. (self.parent and self.parent:get_padding_left() or "")
-end
-
-function Component:is_under_cursor(cursor)
-  local row = cursor[1]
-  local col = cursor[2]
-  local from, to = self:row_range_abs()
-  local row_ok = from <= row and row <= to
-  local col_ok = self.position.col_end == -1
-    or (self.position.col_start <= col and col <= self.position.col_end)
-
-  return row_ok and col_ok
-end
-
-function Component:is_in_linewise_range(start, stop)
-  local from, to = self:row_range_abs()
-  return from >= start and from <= stop and to >= start and to <= stop
 end
 
 function Component:get_width()
