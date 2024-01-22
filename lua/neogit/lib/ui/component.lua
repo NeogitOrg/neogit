@@ -12,15 +12,26 @@ local default_component_options = {
 ---@field col_end integer
 
 ---@class ComponentOptions
+---@field line_hl string
+---@field highlight string
+---@field align_right integer|nil
 ---@field padding_left integer
 ---@field tag string
 ---@field foldable boolean
 ---@field folded boolean
+---@field context boolean
+---@field interactive boolean
+---@field virtual_text string
 
 ---@class Component
 ---@field position ComponentPosition
 ---@field parent Component
-
+---@field children Component[]
+---@field tag string|nil
+---@field options ComponentOptions
+---@field index number|nil
+---@field value string|nil
+---@field id string|nil
 local Component = {}
 
 function Component:row_range_abs()
@@ -52,6 +63,7 @@ function Component:is_under_cursor(cursor)
   local row_ok = from <= row and row <= to
   local col_ok = self.position.col_end == -1
     or (self.position.col_start <= col and col <= self.position.col_end)
+
   return row_ok and col_ok
 end
 

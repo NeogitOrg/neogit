@@ -9,8 +9,10 @@ local filter = util.filter
 ---@field options table Component props or arguments
 ---@field children UiComponent[]
 
+---@class FindOptions
+
 ---@class Ui
----@field buf number
+---@field buf Buffer
 ---@field layout table
 local Ui = {}
 Ui.__index = Ui
@@ -80,10 +82,6 @@ function Ui._find_component(components, f, options)
   return nil
 end
 
----@class FindOptions
-
---- Finds a ui component in the buffer
----
 ---@param f fun(c: UiComponent): boolean
 ---@param options FindOptions|nil
 function Ui:find_component(f, options)

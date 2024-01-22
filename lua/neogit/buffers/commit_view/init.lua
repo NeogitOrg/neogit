@@ -39,7 +39,7 @@ local M = {
 
 ---Creates a new CommitViewBuffer
 ---@param commit_id string the id of the commit/tag
----@param filter string[]? Filter diffs to filepaths in table
+---@param filter? string[] Filter diffs to filepaths in table
 ---@return CommitViewBuffer
 function M.new(commit_id, filter)
   local commit_info =

@@ -58,6 +58,8 @@ local function section(refs, heading, head)
       col.tag("Ref")({ Ref(ref) }, {
         oid = ref.oid,
         foldable = true,
+        ---@param this Component
+        ---@param ui Ui
         on_open = a.void(function(this, ui)
           vim.cmd(string.format("echomsg 'Getting cherries for %s'", ref.oid:sub(1, 7)))
 
