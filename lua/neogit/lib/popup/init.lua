@@ -385,7 +385,7 @@ local Switch = Component.new(function(switch)
       .highlight(get_highlight_for_switch(switch)) { text(switch.cli_prefix), text(switch.cli) }
   end
 
-  return row.tag("Switch").value(switch) {
+  return row.tag("Switch").value(switch)({
     row.highlight("NeogitPopupSwitchKey") {
       text(switch.key_prefix),
       text(switch.key),
@@ -395,11 +395,11 @@ local Switch = Component.new(function(switch)
     text(" ("),
     value,
     text(")"),
-  }
+  }, { interactive = true })
 end)
 
 local Option = Component.new(function(option)
-  return row.tag("Option").value(option) {
+  return row.tag("Option").value(option)({
     row.highlight("NeogitPopupOptionKey") {
       text(option.key_prefix),
       text(option.key),
@@ -414,7 +414,7 @@ local Option = Component.new(function(option)
       text(option.value or ""),
     },
     text(")"),
-  }
+  }, { interactive = true })
 end)
 
 local Section = Component.new(function(title, items)
@@ -461,11 +461,11 @@ local Config = Component.new(function(props)
         key = config.key
       end
 
-      return row.tag("Config").value(config) {
+      return row.tag("Config").value(config)({
         row.highlight("NeogitPopupConfigKey") { text(key) },
         text(" " .. config.name .. " "),
         row.id(config.id) { unpack(value) },
-      }
+      }, { interactive = true })
     end))
   )
 
@@ -521,19 +521,17 @@ function M:show()
         self:close()
       end,
       ["<tab>"] = function()
-        local stack = self.buffer.ui:get_component_stack_under_cursor()
+        local component = self.buffer.ui:get_interactive_component_under_cursor()
+        if not component then
+          return
+        end
 
-        for _, x in ipairs(stack) do
-          if x.options.tag == "Switch" then
-            self:toggle_switch(x.options.value)
-            break
-          elseif x.options.tag == "Config" then
-            self:set_config(x.options.value)
-            break
-          elseif x.options.tag == "Option" then
-            self:set_option(x.options.value)
-            break
-          end
+        if component.options.tag == "Switch" then
+          self:toggle_switch(component.options.value)
+        elseif component.options.tag == "Config" then
+          self:set_config(component.options.value)
+        elseif component.options.tag == "Option" then
+          self:set_option(component.options.value)
         end
       end,
     },

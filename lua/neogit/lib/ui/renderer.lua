@@ -1,3 +1,44 @@
+local Component = require("neogit.lib.ui.component")
+
+---@class RendererIndex
+---@field index table
+local RendererIndex = {}
+RendererIndex.__index = RendererIndex
+
+---@param line number
+---@return Component[]
+function RendererIndex:find_by_line(line)
+  return self.index[line] or {}
+end
+
+---@param id string
+---@return Component
+function RendererIndex:find_by_id(id)
+  return self.index[id]
+end
+
+---@param node Component
+function RendererIndex:add(node)
+  if not self.index[node.position.row_start] then
+    self.index[node.position.row_start] = {}
+  end
+
+  table.insert(self.index[node.position.row_start], node)
+end
+
+---@param node Component
+function RendererIndex:add_id(node)
+  if tonumber(node.id) then
+    error("Cannot use an integer ID for a component")
+  end
+
+  self.index[node.id] = node
+end
+
+function RendererIndex.new()
+  return setmetatable({ index = {} }, RendererIndex)
+end
+
 ---@class RendererBuffer
 ---@field line string[]
 ---@field highlight table[]
@@ -13,8 +54,8 @@
 ---@field buffer RendererBuffer
 ---@field flags RendererFlags
 ---@field namespace integer
----@field current_line number
 ---@field current_column number
+---@field index table
 local Renderer = {}
 
 function Renderer:new(namespace)
@@ -27,11 +68,11 @@ function Renderer:new(namespace)
       extmark = {},
       fold = {},
     },
+    index = RendererIndex.new(),
     flags = {
       in_row = false,
       in_nested_row = false,
     },
-    curr_line = 1,
   }
 
   setmetatable(obj, self)
@@ -40,22 +81,51 @@ function Renderer:new(namespace)
   return obj
 end
 
-function Renderer:render(root)
-  self:_render(0, root, root.children)
+---@param layout table
+---@return RendererBuffer, RendererIndex
+function Renderer:render(layout)
+  local root = Component.new(function()
+    return {
+      tag = "_root",
+      children = layout,
+    }
+  end)()
 
-  return self.buffer
+  self:_render(root, root.children, 0)
+
+  return self.buffer, self.index
 end
 
-function Renderer:_render(first_col, parent, children)
-  local col_start = first_col
+function Renderer:_build_child(child, parent, index)
+  if child.id then
+    self.index:add_id(child)
+  end
 
+  child.parent = parent
+
+  child.index = index
+
+  child.position = {
+    row_start = #self.buffer.line + 1,
+    row_end = self.flags.in_row and #self.buffer.line + 1 or -1,
+    col_start = 0,
+    col_end = -1,
+  }
+end
+
+---@param parent Component
+---@param children Component[]
+---@param column integer
+function Renderer:_render(parent, children, column)
   if self.flags.in_row then
+    local col_start = column
     local col_end
     local highlights = {}
     local text = {}
 
-    for i, c in ipairs(children) do
-      col_start = self:_render_in_row_child(c, parent, i, col_start, col_end, highlights, text)
+    for index, child in ipairs(children) do
+      self:_build_child(child, parent, index)
+      col_start = self:_render_child_in_row(child, index, col_start, col_end, highlights, text)
     end
 
     if self.flags.in_nested_row then
@@ -65,40 +135,106 @@ function Renderer:_render(first_col, parent, children)
     table.insert(self.buffer.line, table.concat(text))
 
     for _, h in ipairs(highlights) do
-      table.insert(self.buffer.highlight, { self.curr_line - 1, h.from, h.to, h.name })
+      table.insert(self.buffer.highlight, { #self.buffer.line - 1, h.from, h.to, h.name })
     end
-
-    self.curr_line = self.curr_line + 1
   else
-    for i, c in ipairs(children) do
-      self:_render_child(c, parent, i)
+    for index, child in ipairs(children) do
+      self:_build_child(child, parent, index)
+      self:_render_child(child)
     end
   end
 end
 
-function Renderer:_render_in_row_child(child, parent, i, col_start, col_end, highlights, text)
-  child.parent = parent
-  child.index = i
-
-  child.position = {}
-  child.position.row_start = self.curr_line
-
+---@param child Component
+function Renderer:_render_child(child)
   if child.tag == "text" then
-    col_start = self:_render_in_row_text(child, i, col_start, highlights, text)
+    self:_render_text(child)
+  elseif child.tag == "col" then
+    self:_render_col(child)
   elseif child.tag == "row" then
-    col_start = self:_render_in_row_row(child, highlights, text, col_start, col_end)
+    self:_render_row(child)
+  end
+
+  child.position.row_end = #self.buffer.line
+
+  local line_hl = child:get_line_highlight()
+  if line_hl then
+    table.insert(self.buffer.line_highlight, { #self.buffer.line - 1, line_hl })
+  end
+
+  if child.options.virtual_text then
+    table.insert(self.buffer.extmark, {
+      self.namespace,
+      #self.buffer.line - 1,
+      0,
+      {
+        hl_mode = "combine",
+        virt_text = child.options.virtual_text,
+        virt_text_pos = "right_align",
+      },
+    })
+  end
+
+  if child.options.foldable then
+    table.insert(self.buffer.fold, {
+      #self.buffer.line - (child.position.row_end - child.position.row_start),
+      #self.buffer.line,
+      not child.options.folded,
+    })
+  end
+end
+
+---@param child Component
+function Renderer:_render_row(child)
+  self.flags.in_row = true
+  self:_render(child, child.children, 0)
+  self.flags.in_row = false
+end
+
+---@param child Component
+function Renderer:_render_col(child)
+  self:_render(child, child.children, 0)
+end
+
+---@param child Component
+function Renderer:_render_text(child)
+  local highlight = child:get_highlight()
+  if highlight then
+    table.insert(self.buffer.highlight, {
+      #self.buffer.line,
+      child.position.col_start,
+      child.position.col_end,
+      highlight,
+    })
+  end
+
+  local line_highlight = child:get_line_highlight()
+  if line_highlight then
+    table.insert(self.buffer.line_highlight, { #self.buffer.line, line_highlight })
+  end
+
+  table.insert(self.buffer.line, table.concat { child:get_padding_left(), child.value })
+  self.index:add(child)
+end
+
+-- TODO: This nested-row shit is lame. V
+
+---@param child Component
+---@param i integer index of child in parent.children
+function Renderer:_render_child_in_row(child, i, col_start, col_end, highlights, text)
+  if child.tag == "text" then
+    return self:_render_in_row_text(child, i, col_start, highlights, text)
+  elseif child.tag == "row" then
+    return self:_render_in_row_row(child, highlights, text, col_start, col_end)
   else
     error("The row component does not support having a `" .. child.tag .. "` as a child")
   end
-
-  child.position.row_end = child.position.row_start
-
-  return col_start
 end
 
+---@param child Component
+---@param index integer index of child in parent.children
 function Renderer:_render_in_row_text(child, index, col_start, highlights, text)
   local padding_left = self.flags.in_nested_row and "" or child:get_padding_left(index == 1)
-
   table.insert(text, 1, padding_left)
 
   col_start = col_start + #padding_left
@@ -116,68 +252,17 @@ function Renderer:_render_in_row_text(child, index, col_start, highlights, text)
 
   local highlight = child:get_highlight()
   if highlight then
-    table.insert(highlights, {
-      from = col_start,
-      to = col_end,
-      name = highlight,
-    })
+    table.insert(highlights, { from = col_start, to = col_end, name = highlight })
   end
 
+  self.index:add(child)
   return col_end
 end
 
-function Renderer:_render_child_text(child)
-  table.insert(self.buffer.line, table.concat { child:get_padding_left(), child.value })
-
-  local highlight = child:get_highlight()
-  if highlight then
-    table.insert(self.buffer.highlight, {
-      self.curr_line - 1,
-      child.position.col_start,
-      child.position.col_end,
-      highlight,
-    })
-  end
-
-  local line_hl = child:get_line_highlight()
-  if line_hl then
-    table.insert(self.buffer.line_highlight, { self.curr_line - 1, line_hl })
-  end
-
-  self.curr_line = self.curr_line + 1
-end
-
-function Renderer:_render_child(child, parent, i)
-  child.parent = parent
-  child.index = i
-
-  child.position = {}
-  child.position.row_start = self.curr_line
-  child.position.col_start = 0
-  child.position.col_end = -1
-
-  if child.tag == "text" then
-    self:_render_child_text(child)
-  elseif child.tag == "col" then
-    self:_render(0, child, child.children)
-  elseif child.tag == "row" then
-    self:_render_child_row(child)
-  end
-
-  child.position.row_end = self.curr_line - 1
-
-  if child.options.foldable then
-    table.insert(self.buffer.fold, {
-      #self.buffer.line - (child.position.row_end - child.position.row_start),
-      #self.buffer.line,
-      not child.options.folded,
-    })
-  end
-end
-
+---@param child Component
 function Renderer:_render_in_row_row(child, highlights, text, col_start, col_end)
   self.flags.in_nested_row = true
-  local res = self:_render(col_start, child, child.children)
+  local res = self:_render(child, child.children, col_start)
   self.flags.in_nested_row = false
 
   table.insert(text, res.text)
@@ -191,30 +276,6 @@ function Renderer:_render_in_row_row(child, highlights, text, col_start, col_end
   child.position.col_end = col_end
 
   return col_end
-end
-
-function Renderer:_render_child_row(child)
-  self.flags.in_row = true
-  self:_render(0, child, child.children)
-  self.flags.in_row = false
-
-  local line_hl = child:get_line_highlight()
-  if line_hl then
-    table.insert(self.buffer.line_highlight, { self.curr_line - 2, line_hl })
-  end
-
-  if child.options.virtual_text then
-    table.insert(self.buffer.extmark, {
-      self.namespace,
-      self.curr_line - 2,
-      0,
-      {
-        hl_mode = "combine",
-        virt_text = child.options.virtual_text,
-        virt_text_pos = "right_align",
-      },
-    })
-  end
 end
 
 return Renderer

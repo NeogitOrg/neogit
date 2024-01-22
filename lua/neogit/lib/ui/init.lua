@@ -2,8 +2,6 @@ local Component = require("neogit.lib.ui.component")
 local util = require("neogit.lib.util")
 local Renderer = require("neogit.lib.ui.renderer")
 
-local filter = util.filter
-
 ---@class UiComponent
 ---@field tag string
 ---@field options table Component props or arguments
@@ -21,47 +19,6 @@ Ui.__index = Ui
 ---@return Ui
 function Ui.new(buf)
   return setmetatable({ buf = buf, layout = {} }, Ui)
-end
-
-function Ui._print_component(indent, c, _options)
-  local output = string.rep("  ", indent)
-  if c.position then
-    local text = ""
-    if c.position.row_start == c.position.row_end then
-      text = c.position.row_start
-    else
-      text = c.position.row_start .. " - " .. c.position.row_end
-    end
-
-    if c.position.col_end ~= -1 then
-      text = text .. " | " .. c.position.col_start .. " - " .. c.position.col_end
-    end
-
-    output = output .. "[" .. text .. "]"
-  end
-
-  output = output .. " " .. c:get_tag()
-
-  if c.tag == "text" then
-    output = output .. " '" .. c.value .. "'"
-  end
-
-  for k, v in pairs(c.options) do
-    if k ~= "tag" then
-      output = output .. " " .. k .. "=" .. tostring(v)
-    end
-  end
-
-  print(output)
-end
-
-function Ui._visualize_tree(indent, components, options)
-  for _, c in ipairs(components) do
-    Ui._print_component(indent, c, options)
-    if c.tag == "col" or c.tag == "row" then
-      Ui._visualize_tree(indent + 1, c.children, options)
-    end
-  end
 end
 
 function Ui._find_component(components, f, options)
@@ -106,85 +63,103 @@ function Ui:find_components(f, options)
   return result
 end
 
+-- Check with node index
 function Ui:get_component_under_cursor()
   local cursor = vim.api.nvim_win_get_cursor(0)
+  ---@param c Component
   return self:find_component(function(c)
     return c:is_under_cursor(cursor)
   end)
 end
 
+-- Check with node index
 function Ui:get_component_on_line(line)
+  ---@param c Component
   return self:find_component(function(c)
     return c:is_under_cursor { line, 0 }
   end)
 end
 
-function Ui:get_component_stack_under_cursor()
+---@param line integer
+---@param f fun(c: Component): boolean
+---@return Component|nil
+function Ui:_find_component_by_index(line, f)
+  local node = self.node_index:find_by_line(line)[1]
+  while node do
+    if f(node) then
+      return node
+    end
+
+    node = node.parent
+  end
+end
+
+---@return Component|nil
+function Ui:get_cursor_context()
   local cursor = vim.api.nvim_win_get_cursor(0)
-  return self:find_components(function(c)
-    return c:is_under_cursor(cursor)
+  return self:_find_component_by_index(cursor[1], function(node)
+    return node.options.context
+  end)
+end
+
+---@return string|nil
+function Ui:get_line_highlight(line)
+  local component = self:_find_component_by_index(line, function(node)
+    return node.options.line_hl ~= nil
+  end)
+
+  return component and component.options.line_hl
+end
+
+---@return Component|nil
+function Ui:get_interactive_component_under_cursor()
+  local cursor = vim.api.nvim_win_get_cursor(0)
+
+  return self:_find_component_by_index(cursor[1], function(node)
+    return node.options.interactive
   end)
 end
 
 function Ui:get_fold_under_cursor()
   local cursor = vim.api.nvim_win_get_cursor(0)
-  return self:find_component(function(c)
-    return c.options.foldable and c:is_under_cursor(cursor)
-  end)
-end
 
-function Ui:get_component_stack_in_linewise_selection()
-  local range = { vim.fn.getpos("v")[2], vim.fn.getpos(".")[2] }
-  table.sort(range)
-  local start, stop = unpack(range)
-
-  return self:find_components(function(c)
-    return c:is_in_linewise_range(start, stop)
-  end)
-end
-
-function Ui:get_component_stack_on_line(line)
-  return self:find_components(function(c)
-    return c:is_under_cursor { line, 0 }
+  return self:_find_component_by_index(cursor[1], function(node)
+    return node.options.foldable
   end)
 end
 
 function Ui:get_commits_in_selection()
-  local commits = util.filter_map(self:get_component_stack_in_linewise_selection(), function(c)
-    if c.options.oid then
-      return c.options.oid
+  local range = { vim.fn.getpos("v")[2], vim.fn.getpos(".")[2] }
+  table.sort(range)
+  local start, stop = unpack(range)
+
+  local commits = {}
+  for i = start, stop do
+    local component = self:_find_component_by_index(i, function(node)
+      return node.options.oid
+    end)
+
+    if component then
+      table.insert(commits, 1, component.options.oid)
     end
+  end
+
+  return util.deduplicate(commits)
+end
+
+---@return string|nil
+function Ui:get_commit_under_cursor()
+  local cursor = vim.api.nvim_win_get_cursor(0)
+  local component = self:_find_component_by_index(cursor[1], function(node)
+    return node.options.oid
   end)
 
-  -- Reversed so that the oldest commit is the first in the list
-  return util.reverse(commits)
-end
-
-function Ui:get_commit_under_cursor()
-  local stack = self:get_component_stack_under_cursor()
-  return stack[#stack].options.oid
-end
-
-function Ui:get_item_options()
-  local stack = self:get_component_stack_under_cursor()
-  return stack[#stack].options or {}
-end
-
-function Ui.visualize_component(c, options)
-  Ui._print_component(0, c, options or {})
-  if c.tag == "col" or c.tag == "row" then
-    Ui._visualize_tree(1, c.children, options or {})
-  end
-end
-
-function Ui.visualize_tree(components, options)
-  print("root")
-  Ui._visualize_tree(1, components, options or {})
+  return component and component.options.oid
 end
 
 function Ui:render(...)
   self.layout = { ... }
-  self.layout = filter(self.layout, function(x)
+  self.layout = util.filter(self.layout, function(x)
     return type(x) == "table"
   end)
 
@@ -193,15 +168,11 @@ end
 
 -- This shouldn't be called often as it completely rewrites the whole buffer
 function Ui:update()
-  local root = Component.new(function()
-    return {
-      tag = "_root",
-      children = self.layout,
-    }
-  end)()
-
   local ns = self.buf:create_namespace("VirtualText")
-  local buffer = Renderer:new(ns):render(root)
+  local buffer, index = Renderer:new(ns):render(self.layout)
+
+  self.node_index = index
+  local cursor_line = self.buf:cursor_line()
 
   self.buf:unlock()
   self.buf:clear()
@@ -213,21 +184,14 @@ function Ui:update()
   self.buf:set_line_highlights(buffer.line_highlight)
   self.buf:set_folds(buffer.fold)
   self.buf:lock()
-end
 
---- Will only work if something has been rendered
-function Ui:print_layout_tree(options)
-  Ui.visualize_tree(self.layout, options)
-end
-
-function Ui:debug(...)
-  Ui.visualize_tree({ ... }, {})
+  self.buf:move_cursor(cursor_line)
 end
 
 Ui.col = Component.new(function(children, options)
   return {
     tag = "col",
-    children = filter(children, function(x)
+    children = util.filter(children, function(x)
       return type(x) == "table"
     end),
     options = options,
@@ -237,7 +201,7 @@ end)
 Ui.row = Component.new(function(children, options)
   return {
     tag = "row",
-    children = filter(children, function(x)
+    children = util.filter(children, function(x)
       return type(x) == "table"
     end),
     options = options,
@@ -260,8 +224,8 @@ Ui.text = Component.new(function(value, options, ...)
     __index = {
       render = function(self)
         return self.value
-      end
-    }
+      end,
+    },
   }
 end)
 
