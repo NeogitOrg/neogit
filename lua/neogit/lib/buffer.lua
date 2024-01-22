@@ -413,7 +413,7 @@ local uv_utils = require("neogit.lib.uv")
 function Buffer.create(config)
   config = config or {}
   local kind = config.kind or "split"
-  local disable_line_numbers = config.disable_line_numbers or true
+  local disable_line_numbers = (config.disable_line_numbers == nil) and true or config.disable_line_numbers
   --- This reuses a buffer with the same name
   local buffer = fn.bufnr(config.name)
 
