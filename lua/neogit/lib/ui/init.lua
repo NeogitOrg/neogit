@@ -63,21 +63,18 @@ function Ui:find_components(f, options)
   return result
 end
 
--- Check with node index
-function Ui:get_component_under_cursor()
-  local cursor = vim.api.nvim_win_get_cursor(0)
-  ---@param c Component
-  return self:find_component(function(c)
-    return c:is_under_cursor(cursor)
-  end)
+---@param fn fun(c: Component): boolean
+---@return Component|nil
+function Ui:get_component_under_cursor(fn)
+  local line = vim.api.nvim_win_get_cursor(0)[1]
+  return self:get_component_on_line(line, fn)
 end
 
--- Check with node index
-function Ui:get_component_on_line(line)
-  ---@param c Component
-  return self:find_component(function(c)
-    return c:is_under_cursor { line, 0 }
-  end)
+---@param line integer
+---@param fn fun(c: Component): boolean
+---@return Component|nil
+function Ui:get_component_on_line(line, fn)
+  return self:_find_component_by_index(line, fn)
 end
 
 ---@param line integer
@@ -92,6 +89,11 @@ function Ui:_find_component_by_index(line, f)
 
     node = node.parent
   end
+end
+
+---@return Component|nil
+function Ui:find_by_id(id)
+  return self.node_index:find_by_id(id)
 end
 
 ---@return Component|nil
