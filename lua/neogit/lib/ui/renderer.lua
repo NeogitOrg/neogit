@@ -28,11 +28,11 @@ end
 
 ---@param node Component
 function RendererIndex:add_id(node)
-  if tonumber(node.id) then
+  if tonumber(node.options.id) then
     error("Cannot use an integer ID for a component")
   end
 
-  self.index[node.id] = node
+  self.index[node.options.id] = node
 end
 
 function RendererIndex.new()
@@ -97,14 +97,12 @@ function Renderer:render(layout)
 end
 
 function Renderer:_build_child(child, parent, index)
-  if child.id then
+  if child.options.id then
     self.index:add_id(child)
   end
 
   child.parent = parent
-
   child.index = index
-
   child.position = {
     row_start = #self.buffer.line + 1,
     row_end = self.flags.in_row and #self.buffer.line + 1 or -1,
