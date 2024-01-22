@@ -102,61 +102,62 @@ function M:open(kind)
     mappings = {
       n = {
         ["<cr>"] = function()
-          local c = self.buffer.ui:get_component_on_line(vim.fn.line("."))
+          local c = self.buffer.ui:get_component_under_cursor(function(c)
+            return c.options.highlight == "NeogitFilePath"
+          end)
 
-          local diff_headers
-          -- Check we are on top of a path on the OverviewFiles
-          if c.options.highlight == "NeogitFilePath" then
-            -- Some paths are padded for formatting purposes. We need to trim them
-            -- in order to use them as match patterns.
-            local selected_path = vim.fn.trim(c.value)
+          if not c then
+            return
+          end
 
-            diff_headers = {}
+          -- Some paths are padded for formatting purposes. We need to trim them
+          -- in order to use them as match patterns.
+          local selected_path = vim.fn.trim(c.value)
 
-            -- Recursively navigate the layout until we hit NeogitDiffHeader leafs
-            -- Forward declaration required to avoid missing global error
-            local find_diff_headers
+          local diff_headers = {}
 
-            function find_diff_headers(layout)
-              if layout.children then
-                -- One layout element may have multiple children so we need to loop
-                for _, val in pairs(layout.children) do
-                  local v = find_diff_headers(val)
-                  if v then
-                    -- defensive trim
-                    diff_headers[vim.fn.trim(v[1])] = v[2]
-                  end
+          -- Recursively navigate the layout until we hit NeogitDiffHeader leafs
+          -- Forward declaration required to avoid missing global error
+          local find_diff_headers
+          function find_diff_headers(layout)
+            if layout.children then
+              -- One layout element may have multiple children so we need to loop
+              for _, val in pairs(layout.children) do
+                local v = find_diff_headers(val)
+                if v then
+                  -- defensive trim
+                  diff_headers[vim.fn.trim(v[1])] = v[2]
                 end
-              else
-                if layout.options.line_hl == "NeogitDiffHeader" then
-                  return { layout.value, layout:row_range_abs() }
-                end
+              end
+            else
+              if layout.options.line_hl == "NeogitDiffHeader" then
+                return { layout.value, layout:row_range_abs() }
               end
             end
-            -- The Diffs are in the 10th element of the layout.
-            -- TODO: Do better than assume that we care about the last item
-            find_diff_headers(self.buffer.ui.layout[#self.buffer.ui.layout])
+          end
 
-            -- Search for a match and jump if we find it
-            for path, line_nr in pairs(diff_headers) do
-              -- The gsub is to work around the fact that the OverviewFiles use
-              -- => in renames but the diff header uses ->
-              local match = string.match(path:gsub(" %-> ", " => "), selected_path)
-              if match then
-                local winid = vim.fn.win_getid()
-                vim.api.nvim_win_set_cursor(winid, { line_nr, 1 })
-                break
-              end
+          -- The Diffs are in the 10th element of the layout.
+          -- TODO: Do better than assume that we care about the last item
+          find_diff_headers(self.buffer.ui.layout[#self.buffer.ui.layout])
+
+          -- Search for a match and jump if we find it
+          for path, line_nr in pairs(diff_headers) do
+            -- The gsub is to work around the fact that the OverviewFiles use
+            -- => in renames but the diff header uses ->
+            if path:gsub(" %-> ", " => "):match(selected_path) then
+              -- Save position in jumplist
+              vim.cmd("normal! m'")
+
+              self.buffer:move_cursor(line_nr)
+              break
             end
           end
         end,
         ["{"] = function() -- Goto Previous
           local function previous_hunk_header(self, line)
-            local c = self.buffer.ui:get_component_on_line(line)
-
-            while c and not vim.tbl_contains({ "Diff", "Hunk" }, c.options.tag) do
-              c = c.parent
-            end
+            local c = self.buffer.ui:get_component_on_line(line, function(c)
+              return c.options.tag == "Diff" or c.options.tag == "Hunk"
+            end)
 
             if c then
               local first, _ = c:row_range_abs()
@@ -175,21 +176,19 @@ function M:open(kind)
           end
         end,
         ["}"] = function() -- Goto next
-          local c = self.buffer.ui:get_component_under_cursor()
-
-          while c and not vim.tbl_contains({ "Diff", "Hunk" }, c.options.tag) do
-            c = c.parent
-          end
+          local c = self.buffer.ui:get_component_under_cursor(function(c)
+            return c.options.tag == "Diff" or c.options.tag == "Hunk"
+          end)
 
           if c then
             if c.options.tag == "Diff" then
-              api.nvim_win_set_cursor(0, { vim.fn.line(".") + 1, 0 })
+              self.buffer:move_cursor(vim.fn.line(".") + 1)
             else
               local _, last = c:row_range_abs()
               if last == vim.fn.line("$") then
-                api.nvim_win_set_cursor(0, { last, 0 })
+                self.buffer:move_cursor(last)
               else
-                api.nvim_win_set_cursor(0, { last + 1, 0 })
+                self.buffer:move_cursor(last + 1)
               end
             end
             vim.cmd("normal! zt")
@@ -235,6 +234,10 @@ function M:open(kind)
         end,
         ["<tab>"] = function()
           pcall(vim.cmd, "normal! za")
+        end,
+        ["<space>"] = function()
+          -- require("neogit.lib.ui.debug")
+          -- self.buffer.ui:debug_layout()
         end,
       },
     },
