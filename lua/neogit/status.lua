@@ -1004,7 +1004,7 @@ local discard = operation("discard", function()
         table.insert(t, function()
           if section_name == "untracked" then
             a.util.scheduler()
-            vim.fn.delete(git.repo.git_root .. "/" .. item.name)
+            vim.fn.delete(vim.fn.fnameescape(item.absolute_path))
           elseif section_name == "unstaged" then
             git.index.checkout { item.name }
           elseif section_name == "staged" then
