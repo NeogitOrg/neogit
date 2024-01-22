@@ -144,6 +144,9 @@ function M.open(section_name, item_name, opts)
     end
 
     view = dv_lib.diffview_open(dv_utils.tbl_pack(range))
+  elseif section_name == "range" then
+    local range = item_name
+    view = dv_lib.diffview_open(dv_utils.tbl_pack(range))
   elseif section_name == "stashes" then
     -- TODO: Fix when no item name
     local stash_id = item_name:match("stash@{%d+}")
