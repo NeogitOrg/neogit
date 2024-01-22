@@ -2,7 +2,7 @@
 local Ui = require("neogit.lib.ui")
 
 function Ui:debug(...)
-  Ui.visualize_tree({ ... })
+  Ui.visualize_tree { ... }
 end
 
 --- Will only work if something has been rendered
@@ -14,17 +14,13 @@ function Ui.visualize_tree(components)
   local tree = {}
   Ui._visualize_tree(1, components, tree)
 
-  vim.lsp.util.open_floating_preview(
-    tree,
-    "txt",
-    {
-      relative = "editor",
-      anchor = "NW",
-      wrap = false,
-      width = vim.o.columns - 2,
-      height = vim.o.lines - 2
-    }
-  )
+  vim.lsp.util.open_floating_preview(tree, "txt", {
+    relative = "editor",
+    anchor = "NW",
+    wrap = false,
+    width = vim.o.columns - 2,
+    height = vim.o.lines - 2,
+  })
 end
 
 function Ui._visualize_tree(indent, components, tree)
