@@ -133,7 +133,10 @@ function M:open()
           self:close()
         end,
         ["<enter>"] = function()
-          CommitViewBuffer.new(self.buffer.ui:get_commit_under_cursor(), self.files):open()
+          local commit = self.buffer.ui:get_commit_under_cursor()
+          if commit then
+            CommitViewBuffer.new(commit, self.files):open()
+          end
         end,
         ["<c-k>"] = function()
           pcall(vim.cmd, "normal! zc")
