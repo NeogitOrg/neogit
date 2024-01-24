@@ -14,6 +14,10 @@ local function push_to(args, remote, branch, opts)
     table.insert(args, "--set-upstream")
   end
 
+  if vim.tbl_contains(args, "--force-with-lease") then
+    table.insert(args, "--force-if-includes")
+  end
+
   local name
   if branch then
     name = remote .. "/" .. branch
