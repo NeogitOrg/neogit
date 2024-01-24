@@ -1016,7 +1016,7 @@ local function format_discard_message(files, hunk_count)
 end
 
 function M:discard()
-  return operation("discard", function(self)
+  return operation("discard", function()
     local selection = self:get_selection()
     local mode = vim.api.nvim_get_mode()
 
