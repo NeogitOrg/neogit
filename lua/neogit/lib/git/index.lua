@@ -113,6 +113,23 @@ function M.reset(files)
   return cli.reset.files(unpack(files)).call()
 end
 
+---Creates a temp index from a revision and calls the provided function with the index path
+---@param revision string Revision to create a temp index from
+---@param fn fun(index: string): nil
+function M.with_temp_index(revision, fn)
+  assert(revision, "temp index requires a revision")
+  assert(fn, "Pass a function to call with temp index")
+
+  local tmp_index = Path:new(vim.uv.os_tmpdir(), ("index.neogit.%s"):format(revision))
+  cli["read-tree"].args(revision).index_output(tmp_index:absolute()).call({ hidden = true })
+  assert(tmp_index:exists(), "Failed to create temp index")
+
+  fn(tmp_index:absolute())
+
+  tmp_index:rm()
+  assert(not tmp_index:exists(), "Failed to remove temp index")
+end
+
 -- Make sure the index is in sync as git-status skips it
 -- Do this manually since the `cli` add --no-optional-locks
 function M.update()

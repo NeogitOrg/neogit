@@ -32,6 +32,13 @@ local configurations = {
 
   init = config {},
 
+  ["checkout-index"] = config {
+    flags = {
+      all = "--all",
+      force = "--force",
+    }
+  },
+
   worktree = config {
     flags = {
       add = "add",
