@@ -947,8 +947,8 @@ local unstage = operation("unstage", function()
   }, "unstage_finish")
 end)
 
-local function discard_message(files, hunk_count)
-  if vim.api.nvim_get_mode() == "V" then
+local function discard_message(files, hunk_count, mode)
+  if vim.tbl_contains({ "V", "v", "" }, mode) then
     return "Discard selection?"
   elseif hunk_count > 0 then
     return string.format("Discard %d hunks?", hunk_count)
@@ -1016,7 +1016,7 @@ local discard = operation("discard", function()
 
   if
     not input.get_confirmation(
-      discard_message(files, hunk_count),
+      discard_message(files, hunk_count, mode.mode),
       { values = { "&Yes", "&No" }, default = 2 }
     )
   then
