@@ -609,23 +609,22 @@ end
 
 local function toggle()
   local selection = M.get_selection()
-  if selection.section == nil then
-    return
-  end
-
+  local section = selection.section
   local item = selection.item
 
-  local hunks = item and M.get_item_hunks(item, selection.first_line, selection.last_line, false)
-  if item and hunks and #hunks > 0 then
-    for _, hunk in ipairs(hunks) do
-      hunk.hunk.folded = not hunk.hunk.folded
-    end
-
-    vim.api.nvim_win_set_cursor(0, { hunks[1].first, 0 })
+  if section then
+    section.folded = not section.folded
   elseif item then
-    item.folded = not item.folded
-  elseif selection.section ~= nil then
-    selection.section.folded = not selection.section.folded
+    local hunks = M.get_item_hunks(item, selection.first_line, selection.last_line, false)
+    if hunks and #hunks > 0 then
+      for _, hunk in ipairs(hunks) do
+        hunk.hunk.folded = not hunk.hunk.folded
+      end
+
+      vim.api.nvim_win_set_cursor(0, { hunks[1].first, 0 })
+    else
+      item.folded = not item.folded
+    end
   end
 
   refresh_status_buffer()
@@ -673,16 +672,14 @@ local function close(skip_close)
 end
 
 ---@class Selection
----@field sections SectionSelection[]
 ---@field first_line number
 ---@field last_line number
----Current items under the cursor
----@field section Section|nil
----@field item StatusItem|nil
----@field commit CommitLogEntry|nil
----
----@field commits  CommitLogEntry[]
----@field items  StatusItem[]
+---@field section Section|nil set if only the section header is selected
+---@field item StatusItem|nil set if a single item is selected
+---@field commit CommitLogEntry|nil equivalent to item.commit
+---@field sections SectionSelection[]
+---@field items StatusItem[]
+---@field commits CommitLogEntry[]
 local Selection = {}
 Selection.__index = Selection
 
@@ -803,37 +800,33 @@ function M.get_selection()
   local last_line = math.max(visual_pos, cursor_pos)
 
   local res = {
-    sections = {},
     first_line = first_line,
     last_line = last_line,
+    section = nil,
     item = nil,
     commit = nil,
-    commits = {},
+    sections = {},
     items = {},
+    commits = {},
   }
 
   for _, section in ipairs(M.locations) do
     local items = {}
 
     if section.first > last_line then
+      -- locations is sorted by first lines, so we can stop looping
       break
     end
 
     if section.last >= first_line then
-      if section.first <= first_line and section.last >= last_line then
+      local entire_section = section.first == first_line and first_line == last_line
+
+      if entire_section then
         res.section = section
       end
 
-      local entire_section = section.first == first_line and first_line == last_line
-
       for _, item in pairs(section.items) do
         if entire_section or item.first <= last_line and item.last >= first_line then
-          if not res.item and item.first <= first_line and item.last >= last_line then
-            res.item = item
-
-            res.commit = item.commit
-          end
-
           if item.commit then
             table.insert(res.commits, item.commit)
           end
@@ -852,6 +845,12 @@ function M.get_selection()
       setmetatable(section, section)
       table.insert(res.sections, section)
     end
+  end
+
+  if not res.section and #res.items == 1 then
+    res.item = res.items[1]
+
+    res.commit = res.item.commit
   end
 
   return setmetatable(res, Selection)
