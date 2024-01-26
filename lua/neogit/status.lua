@@ -676,7 +676,6 @@ end
 ---@field last_line number
 ---@field section Section|nil set if only the section header is selected
 ---@field item StatusItem|nil set if a single item is selected
----@field commit CommitLogEntry|nil equivalent to item.commit
 ---@field sections SectionSelection[]
 ---@field items StatusItem[]
 ---@field commits CommitLogEntry[]
@@ -685,10 +684,7 @@ Selection.__index = Selection
 
 ---@class SectionSelection: Section
 ---@field section Section
----@field name string
 ---@field items StatusItem[]
-
----@return string[], string[]
 
 function Selection:format()
   local lines = {}
@@ -804,7 +800,6 @@ function M.get_selection()
     last_line = last_line,
     section = nil,
     item = nil,
-    commit = nil,
     sections = {},
     items = {},
     commits = {},
@@ -849,8 +844,6 @@ function M.get_selection()
 
   if not res.section and #res.items == 1 then
     res.item = res.items[1]
-
-    res.commit = res.item.commit
   end
 
   return setmetatable(res, Selection)

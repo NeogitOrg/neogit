@@ -40,18 +40,18 @@ end
 --- Returns an array useful for creating mappings for the available popups
 ---@return table<string, Mapping>
 function M.mappings_table()
-  ---@param commit CommitLogEntry|nil
   ---@return string|nil
-  local function commit_oid(commit)
-    return commit and commit.oid
+  local function get_selected_commit_oid()
+    local s = require("neogit.status").get_selection()
+    return s.item and s.item.commit and s.item.commit.oid
   end
 
-  ---@param commits CommitLogEntry[]
   ---@return string[]
-  local function map_commits(commits)
+  local function get_selected_commit_oids()
+    local s = require("neogit.status").get_selection()
     return vim.tbl_map(function(v)
       return v.oid
-    end, commits)
+    end, s.commits)
   end
 
   return {
@@ -70,7 +70,7 @@ function M.mappings_table()
       "RebasePopup",
       "Rebase",
       M.open("rebase", function(f)
-        f { commit = commit_oid(require("neogit.status").get_selection().commit) }
+        f { commit = get_selected_commit_oid() }
       end),
     },
     { "MergePopup", "Merge", M.open("merge") },
@@ -78,14 +78,14 @@ function M.mappings_table()
       "PushPopup",
       "Push",
       M.open("push", function(f)
-        f { commit = commit_oid(require("neogit.status").get_selection().commit) }
+        f { commit = get_selected_commit_oid() }
       end),
     },
     {
       "CommitPopup",
       "Commit",
       M.open("commit", function(f)
-        f { commit = commit_oid(require("neogit.status").get_selection().commit) }
+        f { commit = get_selected_commit_oid() }
       end),
     },
     {
@@ -94,8 +94,9 @@ function M.mappings_table()
       {
         "nv",
         M.open("ignore", function(f)
+          local items = require("neogit.status").get_selection().items
           f {
-            paths = util.filter_map(require("neogit.status").get_selection().items, function(v)
+            paths = util.filter_map(items, function(v)
               return v.absolute_path
             end),
             git_root = git.repo.git_root,
@@ -107,7 +108,7 @@ function M.mappings_table()
       "TagPopup",
       "Tag",
       M.open("tag", function(f)
-        f { commit = commit_oid(require("neogit.status").get_selection().commit) }
+        f { commit = get_selected_commit_oid() }
       end),
     },
     { "LogPopup", "Log", M.open("log") },
@@ -117,7 +118,7 @@ function M.mappings_table()
       {
         "nv",
         M.open("cherry_pick", function(f)
-          f { commits = util.reverse(map_commits(require("neogit.status").get_selection().commits)) }
+          f { commits = util.reverse(get_selected_commit_oids()) }
         end),
       },
     },
@@ -127,7 +128,7 @@ function M.mappings_table()
       {
         "nv",
         M.open("branch", function(f)
-          f { commits = map_commits(require("neogit.status").get_selection().commits) }
+          f { commits = get_selected_commit_oids() }
         end),
       },
     },
@@ -138,7 +139,7 @@ function M.mappings_table()
       {
         "nv",
         M.open("reset", function(f)
-          f { commit = commit_oid(require("neogit.status").get_selection().commit) }
+          f { commit = get_selected_commit_oid() }
         end),
       },
     },
@@ -148,7 +149,7 @@ function M.mappings_table()
       {
         "nv",
         M.open("revert", function(f)
-          f { commits = util.reverse(map_commits(require("neogit.status").get_selection().commits)) }
+          f { commits = util.reverse(get_selected_commit_oids()) }
         end),
       },
     },
@@ -158,7 +159,8 @@ function M.mappings_table()
       "StashPopup",
       "Stash",
       M.open("stash", function(f)
-        f { name = require("neogit.status").status_buffer:get_current_line()[1]:match("^(stash@{%d+})") }
+        local line = require("neogit.status").status_buffer:get_current_line()[1]
+        f { name = line:match("^(stash@{%d+})") }
       end),
     },
   }
