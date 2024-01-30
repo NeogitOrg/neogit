@@ -12,28 +12,38 @@ local M = {}
 
 local function line_action(action, comment_char)
   return function(buffer)
-    local line = vim.split(vim.api.nvim_get_current_line(), " ")
-    if line[1] == comment_char then
-      table.remove(line, 1)
-    end
-
-    -- Check if line is "break" or "exec"
-    if line[1]:sub(1, 1):match("[be]") then
-      vim.cmd("normal! j")
-      return
-    end
-
-    if line[2] and line[2]:match("%x%x%x%x%x%x%x") and line[1] ~= "Rebase" then
-      if #line[1] == 1 then
-        action = action:sub(1, 1)
+    local _index = 1
+    local _count = vim.v.count1
+    local line = {}
+    while _index <= _count do
+      line = vim.split(vim.api.nvim_get_current_line(), " ")
+      if line[1] == comment_char then
+        table.remove(line, 1)
+      end
+      -- Check if line is "break" or "exec"
+      if line[1]:sub(1, 1):match("[be]") then
+        vim.cmd("normal! j")
+        if _index ~= 1 then
+          break
+        end
+        return
       end
 
-      line[1] = action
-      vim.api.nvim_set_current_line(table.concat(line, " "))
-      buffer:write()
-    end
+      if line[2] and line[2]:match("%x%x%x%x%x%x%x") and line[1] ~= "Rebase" then
+        if #line[1] == 1 then
+          action = action:sub(1, 1)
+        end
 
-    vim.cmd("normal! j")
+        line[1] = action
+        vim.api.nvim_set_current_line(table.concat(line, " "))
+      else
+        break
+      end
+
+      vim.cmd("normal! j")
+      _index = _index + 1
+    end
+    buffer:write()
   end
 end
 
