@@ -21,10 +21,11 @@ local function line_action(action, comment_char)
         table.remove(line, 1)
       end
       -- Check if line is "break" or "exec"
-      if line[1]:sub(1, 1):match("[be]") then
+      -- the original match will also skip "edit",i'm not sure is that intended
+      if line[1]:sub(1, 2):match("^(br|ex)") then
         vim.cmd("normal! j")
         if _index ~= 1 then
-          break
+          break --or continue?i think break is used in most case
         end
         return
       end
