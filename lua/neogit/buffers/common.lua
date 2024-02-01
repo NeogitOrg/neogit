@@ -18,6 +18,13 @@ local diff_add_start = "+"
 local diff_delete_start = "-"
 
 M.Diff = Component.new(function(diff)
+  return col.tag("Diff")({
+    text(string.format("%s %s", diff.kind, diff.file), { line_hl = "NeogitDiffHeader" }),
+    M.DiffHunks(diff),
+  }, { foldable = true, folded = false, context = true })
+end)
+
+M.DiffHunks = Component.new(function(diff)
   local hunk_props = map(diff.hunks, function(hunk)
     local header = diff.lines[hunk.diff_from]
 
@@ -31,13 +38,10 @@ M.Diff = Component.new(function(diff)
     }
   end)
 
-  return col.tag("Diff")({
-    text(string.format("%s %s", diff.kind, diff.file), { line_hl = "NeogitDiffHeader" }),
-    col.tag("DiffContent") {
-      col.tag("DiffInfo")(map(diff.info, text)),
-      col.tag("HunkList")(map(hunk_props, M.Hunk)),
-    },
-  }, { foldable = true, folded = false, context = true })
+  return col.tag("DiffContent") {
+    col.tag("DiffInfo")(map(diff.info, text)),
+    col.tag("HunkList")(map(hunk_props, M.Hunk)),
+  }
 end)
 
 local HunkLine = Component.new(function(line)
