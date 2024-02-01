@@ -25,6 +25,18 @@ describe("stash popup", function()
     end)
   )
 
+  -- FIXME: This is not working right now, Stashing index seems broken
+  -- it(
+  --   "create stash (index)",
+  --   in_prepared_repo(function()
+  --     act("Zi")
+  --     operations.wait("stash_index")
+  --     assert.are.same({ "stash@{0}: WIP on master: e2c2a1c b.txt" }, git.stash.list())
+  --     assert.are.same("M a.txt", harness.get_git_status("a.txt b.txt"))
+  --   end)
+  -- )
+  --
+
   it(
     "rename stash",
     in_prepared_repo(function()
