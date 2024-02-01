@@ -4,10 +4,10 @@ local M = {}
 
 function M.relpath_from_repository(path)
   local result = cli["ls-files"].others.cached.modified.deleted.full_name
-    .cwd("<current>")
     .args(path)
     .show_popup(false)
-    .call()
+    .call { hidden = true }
+
   return result.stdout[1]
 end
 

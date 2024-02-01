@@ -5,7 +5,11 @@ local M = {
 }
 
 FuzzyFinderBuffer.open_async = function()
-  return M.value
+  if type(M.value) == "table" then
+    return table.remove(M.value, 1)
+  else
+    return M.value
+  end
 end
 
 return M

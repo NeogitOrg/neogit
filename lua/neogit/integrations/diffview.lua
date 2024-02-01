@@ -9,19 +9,11 @@ local dv_lib = require("diffview.lib")
 local dv_utils = require("diffview.utils")
 
 local neogit = require("neogit")
+local repo = require("neogit.lib.git.repository")
 local status = require("neogit.status")
 local a = require("plenary.async")
 
 local old_config
-
-local function remove_trailing_blankline(lines)
-  if lines[#lines] ~= "" then
-    error("Git show did not end with a blankline")
-  end
-
-  lines[#lines] = nil
-  return lines
-end
 
 M.diffview_mappings = {
   close = function()
@@ -35,47 +27,17 @@ local function cb(name)
   return string.format(":lua require('neogit.integrations.diffview').diffview_mappings['%s']()<CR>", name)
 end
 
----Resolves a cwd local file to git root relative
-local function root_prefix(git_root, cwd, path)
-  local t = {}
-  for part in string.gmatch(cwd .. "/" .. path, "[^/\\]+") do
-    if part == ".." then
-      if #t > 0 and t[#t] ~= ".." then
-        table.remove(t, #t)
-      else
-        table.insert(t, "..")
-      end
-    else
-      table.insert(t, part)
-    end
-  end
-
-  local git_root_parts = {}
-  for part in git_root:gmatch("[^/\\]+") do
-    table.insert(git_root_parts, part)
-  end
-
-  local s = {}
-  local skipping = true
-  for i = 1, #t do
-    if not skipping or git_root_parts[i] ~= t[i] then
-      table.insert(s, t[i])
-      skipping = false
-    end
-  end
-
-  path = table.concat(s, "/")
-  return path
-end
-
-local function get_local_diff_view(selected_file_name)
+local function get_local_diff_view(section_name, item_name, opts)
   local left = Rev(RevType.STAGE)
   local right = Rev(RevType.LOCAL)
-  local git_root = neogit.cli.git_root_sync()
+
+  if section_name == "unstaged" then
+    section_name = "working"
+  end
 
   local function update_files()
     local files = {}
-    local repo = neogit.get_repo()
+
     local sections = {
       conflicting = {
         items = vim.tbl_filter(function(o)
@@ -85,13 +47,13 @@ local function get_local_diff_view(selected_file_name)
       working = repo.unstaged,
       staged = repo.staged,
     }
+
     for kind, section in pairs(sections) do
       files[kind] = {}
-      for _, item in ipairs(section.items) do
+
+      for idx, item in ipairs(section.items) do
         local file = {
-          -- use the repo.cwd instead of current as it may change since the
-          -- status was refreshed
-          path = root_prefix(git_root, repo.cwd, item.name),
+          path = item.name,
           status = item.mode and item.mode:sub(1, 1),
           stats = (item.diff and item.diff.stats) and {
             additions = item.diff.stats.additions or 0,
@@ -99,20 +61,26 @@ local function get_local_diff_view(selected_file_name)
           } or nil,
           left_null = vim.tbl_contains({ "A", "?" }, item.mode),
           right_null = false,
-          selected = item.name == selected_file_name,
+          selected = (item_name and item.name == item_name) or (not item_name and idx == 1),
         }
 
-        table.insert(files[kind], file)
+        if opts.only then
+          if (item_name and file.selected) or (not item_name and section_name == kind) then
+            table.insert(files[kind], file)
+          end
+        else
+          table.insert(files[kind], file)
+        end
       end
     end
-    selected_file_name = nil
+
     return files
   end
 
   local files = update_files()
 
   local view = CDiffView {
-    git_root = git_root,
+    git_root = repo.git_root,
     left = left,
     right = right,
     files = files,
@@ -123,16 +91,17 @@ local function get_local_diff_view(selected_file_name)
         if side == "left" then
           table.insert(args, "HEAD")
         end
-        return remove_trailing_blankline(neogit.cli.show.file(unpack(args)).call_sync().stdout)
+
+        return neogit.cli.show.file(unpack(args)).call_sync().stdout
       elseif kind == "working" then
-        local fdata = remove_trailing_blankline(neogit.cli.show.file(path).call_sync().stdout)
+        local fdata = neogit.cli.show.file(path).call_sync().stdout
         return side == "left" and fdata
       end
     end,
   }
 
   view:on_files_staged(a.void(function(_)
-    status.refresh_all({ status = true, diffs = true }, "on_files_staged")
+    status.refresh_all({ status = true, update_diffs = true }, "on_files_staged")
     view:update_files()
   end))
 
@@ -141,7 +110,8 @@ local function get_local_diff_view(selected_file_name)
   return view
 end
 
-function M.open(section_name, item_name)
+function M.open(section_name, item_name, opts)
+  opts = opts or {}
   old_config = vim.deepcopy(dv_config.get_config())
 
   local config = dv_config.get_config()
@@ -166,19 +136,30 @@ function M.open(section_name, item_name)
   local view
 
   if section_name == "recent" or section_name == "unmerged" or section_name == "log" then
-    local commit_id = item_name:match("[a-f0-9]+")
-    view = dv_lib.diffview_open(dv_utils.tbl_pack(commit_id .. "^!"))
+    local range
+    if type(item_name) == "table" then
+      range = string.format("%s..%s", item_name[1], item_name[#item_name])
+    else
+      range = string.format("%s^!", item_name:match("[a-f0-9]+"))
+    end
+
+    view = dv_lib.diffview_open(dv_utils.tbl_pack(range))
+  elseif section_name == "range" then
+    local range = item_name
+    view = dv_lib.diffview_open(dv_utils.tbl_pack(range))
   elseif section_name == "stashes" then
+    -- TODO: Fix when no item name
     local stash_id = item_name:match("stash@{%d+}")
     view = dv_lib.diffview_open(dv_utils.tbl_pack(stash_id .. "^!"))
+  elseif section_name == "commit" then
+    view = dv_lib.diffview_open(dv_utils.tbl_pack(item_name .. "^!"))
   else
-    view = get_local_diff_view(item_name)
+    view = get_local_diff_view(section_name, item_name, opts)
   end
 
   if view then
     view:open()
   end
-  return view
 end
 
 return M

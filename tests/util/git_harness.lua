@@ -57,11 +57,18 @@ function M.in_prepared_repo(cb)
     local status = require("neogit.status").create()
 
     a.util.block_on(status.reset)
+
+    vim.wait(1000, function()
+      return not status.is_refresh_locked()
+    end, 100)
+
     a.util.block_on(function()
       local _, err = pcall(cb, dir)
       if err ~= nil then
         error(err)
       end
+
+      a.util.block_on(status.close)
     end)
   end
 end
@@ -76,11 +83,12 @@ local function exec(cmd)
 end
 
 function M.get_git_status(files)
-  local result = vim.api.nvim_exec("!git status -s --porcelain=1 -- " .. (files or ""), true)
+  local result = vim.api.nvim_exec("!git status -z -s --porcelain=1 -- " .. (files or ""), true)
   local lines = vim.split(result, "\n")
   local output = {}
   for i = 3, #lines do
-    table.insert(output, lines[i])
+    local line, _ = lines[i]:gsub("%^@", "")
+    table.insert(output, line)
   end
   return table.concat(output, "\n")
 end

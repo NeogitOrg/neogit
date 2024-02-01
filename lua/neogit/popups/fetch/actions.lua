@@ -9,12 +9,16 @@ local util = require("neogit.lib.util")
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
 local function select_remote()
-  return FuzzyFinderBuffer.new(git.remote.list()):open_async { prompt_prefix = "remote > " }
+  return FuzzyFinderBuffer.new(git.remote.list()):open_async { prompt_prefix = "remote" }
 end
 
 local function fetch_from(name, remote, branch, args)
-  notification.info("Fetching from " .. name)
+  local message = notification.info("Fetching from " .. name)
   local res = git.fetch.fetch_interactive(remote, branch, args)
+
+  if message then
+    message:delete()
+  end
 
   if res and res.code == 0 then
     a.util.scheduler()
@@ -86,7 +90,7 @@ function M.fetch_another_branch(popup)
   end)
 
   local branch = FuzzyFinderBuffer.new(branches):open_async {
-    prompt_prefix = remote .. "/{branch} > ",
+    prompt_prefix = remote .. "/{branch}",
   }
   if not branch then
     return
@@ -102,12 +106,12 @@ function M.fetch_refspec(popup)
   end
 
   notification.info("Determining refspecs...")
-  local refspecs = util.map(git.cli["ls-remote"].remote(remote).call():trim().stdout, function(ref)
+  local refspecs = util.map(git.cli["ls-remote"].remote(remote).call().stdout, function(ref)
     return vim.split(ref, "\t")[2]
   end)
   notification.delete_all()
 
-  local refspec = FuzzyFinderBuffer.new(refspecs):open_async { prompt_prefix = "refspec > " }
+  local refspec = FuzzyFinderBuffer.new(refspecs):open_async { prompt_prefix = "refspec" }
   if not refspec then
     return
   end

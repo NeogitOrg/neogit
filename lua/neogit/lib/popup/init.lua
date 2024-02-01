@@ -248,7 +248,7 @@ function M:toggle_switch(switch)
   -- If a switch depends on user input, i.e. `-Gsomething`, prompt user to get input
   if switch.user_input then
     if switch.enabled then
-      local value = input.get_user_input(switch.cli_prefix .. switch.cli_base .. ": ")
+      local value = input.get_user_input(switch.cli_prefix .. switch.cli_base, { separator = "" })
       if value then
         switch.cli = switch.cli_base .. value
       end
@@ -297,6 +297,7 @@ function M:set_option(option)
   -- Prompt user to select from predetermined choices
   if option.choices then
     if not option.value or option.value == "" then
+      -- TODO: Use input.get_choice here instead
       vim.ui.select(option.choices, { prompt = option.description }, set)
     else
       set("")
@@ -385,7 +386,6 @@ local Switch = Component.new(function(switch)
   end
 
   return row.tag("Switch").value(switch) {
-    text(" "),
     row.highlight("NeogitPopupSwitchKey") {
       text(switch.key_prefix),
       text(switch.key),
@@ -400,7 +400,6 @@ end)
 
 local Option = Component.new(function(option)
   return row.tag("Option").value(option) {
-    text(" "),
     row.highlight("NeogitPopupOptionKey") {
       text(option.key_prefix),
       text(option.key),
@@ -463,7 +462,6 @@ local Config = Component.new(function(props)
       end
 
       return row.tag("Config").value(config) {
-        text(" "),
         row.highlight("NeogitPopupConfigKey") { text(key) },
         text(" " .. config.name .. " "),
         row.id(config.id) { unpack(value) },
@@ -475,9 +473,7 @@ local Config = Component.new(function(props)
 end)
 
 local function render_action(action)
-  local items = {
-    text(" "),
-  }
+  local items = {}
 
   -- selene: allow(empty_if)
   if action.keys == nil then
@@ -676,7 +672,7 @@ function M:show()
     end,
     autocmds = {
       ["WinLeave"] = function()
-        if self.buffer.kind == "floating" then
+        if self.buffer and self.buffer.kind == "floating" then
           -- We pcall this because it's possible the window was closed by a command invocation, e.g. "cc" for commits
           pcall(self.close, self)
         end

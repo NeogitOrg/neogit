@@ -2,7 +2,6 @@ local Buffer = require("neogit.lib.buffer")
 local GitCommandHistory = require("neogit.buffers.git_command_history")
 local CommitView = require("neogit.buffers.commit_view")
 local git = require("neogit.lib.git")
-local cli = require("neogit.lib.git.cli")
 local notification = require("neogit.lib.notification")
 local config = require("neogit.config")
 local a = require("plenary.async")
@@ -31,6 +30,7 @@ local status_buffers = {}
 ---@field watcher Watcher
 ---@field cwd string
 ---@field old_cwd string
+---@field cursor_location any
 ---
 ---@field locations Section[]
 ---@field outdated any
@@ -196,9 +196,10 @@ function M:draw_buffer()
   local output = LineBuffer.new()
   if not config.values.disable_hint then
     local reversed_status_map = config.get_reversed_status_maps()
+    local reversed_popup_map = config.get_reversed_popup_maps()
 
     local function hint_label(map_name, hint)
-      local keys = reversed_status_map[map_name]
+      local keys = reversed_status_map[map_name] or reversed_popup_map[map_name]
       if keys and #keys > 0 then
         return string.format("[%s] %s", table.concat(keys, " "), hint)
       else
@@ -230,12 +231,14 @@ function M:draw_buffer()
       git.repo.head.commit_message or "(no commits)"
     )
   )
+
   table.insert(new_locations, {
     name = "head_branch_header",
     first = #output,
     last = #output,
     items = {},
     ignore_sign = true,
+    commit = { oid = git.repo.head.oid },
   })
 
   if not git.branch.is_detached() then
@@ -248,12 +251,14 @@ function M:draw_buffer()
           git.repo.upstream.commit_message or "(no commits)"
         )
       )
+
       table.insert(new_locations, {
         name = "upstream_header",
         first = #output,
         last = #output,
         items = {},
         ignore_sign = true,
+        commit = { oid = git.repo.upstream.oid },
       })
     end
 
@@ -266,15 +271,18 @@ function M:draw_buffer()
           git.repo.pushRemote.commit_message or "(does not exist)"
         )
       )
+
       table.insert(new_locations, {
         name = "push_branch_header",
         first = #output,
         last = #output,
         items = {},
         ignore_sign = true,
+        ref = git.branch.pushRemote_ref(),
       })
     end
   end
+
   if git.repo.head.tag.name then
     output:append(string.format("Tag:      %s (%s)", git.repo.head.tag.name, git.repo.head.tag.distance))
     table.insert(new_locations, {
@@ -283,6 +291,7 @@ function M:draw_buffer()
       last = #output,
       items = {},
       ignore_sign = true,
+      commit = { oid = git.rev_parse.oid(git.repo.head.tag.name) },
     })
   end
 
@@ -441,7 +450,7 @@ end
 ---@param linenr number|nil
 ---@return table, table, table, number, number
 function M:save_cursor_location(linenr)
-  local line = linenr or vim.fn.line(".")
+  local line = linenr or vim.api.nvim_win_get_cursor(0)[1]
   local section_loc, file_loc, hunk_loc, first, last
 
   for li, loc in ipairs(self.locations) do
@@ -484,8 +493,9 @@ end
 
 function M:restore_cursor_location(section_loc, file_loc, hunk_loc)
   if #self.locations == 0 then
-    return vim.fn.setpos(".", { 0, 1, 0, 0 })
+    return vim.api.nvim_win_set_cursor(0, { 1, 0 })
   end
+
   if not section_loc then
     -- Skip the headers and put the cursor on the first foldable region
     local idx = 1
@@ -501,30 +511,34 @@ function M:restore_cursor_location(section_loc, file_loc, hunk_loc)
   local section = Collection.new(self.locations):find(function(s)
     return s.name == section_loc[2]
   end)
+
   if not section then
     file_loc, hunk_loc = nil, nil
     section = self.locations[section_loc[1]] or self.locations[#self.locations]
   end
+
   if not file_loc or not section.items or #section.items == 0 then
-    return vim.fn.setpos(".", { 0, section.first, 0, 0 })
+    return vim.api.nvim_win_set_cursor(0, { section.first, 0 })
   end
 
   local file = Collection.new(section.items):find(function(f)
     return f.name == file_loc[2]
   end)
+
   if not file then
     hunk_loc = nil
     file = section.items[file_loc[1]] or section.items[#section.items]
   end
+
   if not hunk_loc or not file.hunks or #file.hunks == 0 then
-    return vim.fn.setpos(".", { 0, file.first, 0, 0 })
+    return vim.api.nvim_win_set_cursor(0, { file.first, 0 })
   end
 
   local hunk = Collection.new(file.hunks):find(function(h)
     return h.hash == hunk_loc[2]
   end) or file.hunks[hunk_loc[1]] or file.hunks[#file.hunks]
 
-  vim.fn.setpos(".", { 0, hunk.first, 0, 0 })
+  return vim.api.nvim_win_set_cursor(0, { hunk.first, 0 })
 end
 
 function M:refresh_status_buffer()
@@ -547,57 +561,56 @@ function M:refresh_status_buffer()
 end
 
 local refresh_lock = a.control.Semaphore.new(1)
-local lock_holder = nil
 
-function M:refresh(which, reason)
-  logger.info("[STATUS BUFFER]: Starting refresh")
+function M.is_refresh_locked()
+  return refresh_lock.permits == 0
+end
 
-  if refresh_lock.permits == 0 then
-    logger.debug(
-      string.format(
-        "[STATUS BUFFER]: Refresh lock not available. Aborting refresh. Lock held by: %q",
-        lock_holder
-      )
-    )
-    --- Undo the deadlock fix
-    --- This is because refresh wont properly wait but return immediately if
-    --- refresh is already in progress. This breaks as waiting for refresh does
-    --- not mean that a status buffer is drawn and ready
-    a.util.scheduler()
-    -- refresh_status()
-    -- return
-  end
-
+local function get_refresh_lock(reason)
   local permit = refresh_lock:acquire()
-  lock_holder = reason or "unknown"
-  logger.debug("[STATUS BUFFER]: Acquired refresh lock: " .. lock_holder)
+  logger.debug(("[STATUS BUFFER]: Acquired refresh lock:"):format(reason or "unknown"))
 
-  a.util.scheduler()
-  local s, f, h = self:save_cursor_location()
+  vim.defer_fn(function()
+    if M.is_refresh_locked() then
+      permit:forget()
+      logger.debug(
+        ("[STATUS BUFFER]: Refresh lock for %s expired after 10 seconds"):format(reason or "unknown")
+      )
+    end
+  end, 10000)
 
-  if cli.git_root() ~= "" then
-    git.repo:refresh(which)
+  return permit
+end
+
+function M:refresh(partial, reason)
+  local permit = get_refresh_lock(reason)
+  local callback = function()
+    local s, f, h = self:save_cursor_location()
     self:refresh_status_buffer()
+
+    if self.status_buffer ~= nil and self.status_buffer:is_focused() then
+      pcall(self.restore_cursor_location, self, s, f, h)
+    end
+
     vim.api.nvim_exec_autocmds("User", { pattern = "NeogitStatusRefreshed", modeline = false })
+
+    permit:forget()
+    logger.info("[STATUS BUFFER]: Refresh lock is now free")
   end
 
-  a.util.scheduler()
-  if vim.fn.bufname() == "NeogitStatus" then
-    self:restore_cursor_location(s, f, h)
-  end
-
-  logger.info("[STATUS BUFFER]: Finished refresh")
-
-  lock_holder = nil
-  permit:forget()
-  logger.info("[STATUS BUFFER]: Refresh lock is now free")
+  git.repo:refresh { source = reason, callback = callback, partial = partial }
 end
 
 ---@param which table|boolean|nil
 ---@param reason string|nil
 function M:dispatch_refresh(which, reason)
   a.void(function()
-    self:refresh(which, reason)
+    reason = reason or "unknown"
+    if M.is_refresh_locked() then
+      logger.debug("[STATUS] Refresh lock is active. Skipping refresh from " .. reason)
+    else
+      self:refresh(which, reason)
+    end
   end)()
 end
 
@@ -611,9 +624,10 @@ function M:refresh_manually(fname)
     if not path then
       return
     end
-
-    self:refresh({ status = true, diffs = { "*:" .. path } }, "manually")
-  end)()
+    if refresh_lock.permits > 0 then
+      self:refresh({ update_diffs = { "*:" .. path } }, "manually")
+    end
+  end)
 end
 
 --- Compatibility endpoint to refresh data from an autocommand.
@@ -667,8 +681,7 @@ function M:reset()
   if not config.values.auto_refresh then
     return
   end
-
-  self:refresh(true, "reset")
+  self:refresh(nil, "reset")
 end
 
 function M:dispatch_reset()
@@ -701,11 +714,25 @@ function M.dispatch_refresh_manually_all()
 end
 
 function M:close(skip_close)
+  if self.closing then
+    return
+  end
+
+  self.closing = true
+
+  if skip_close == nil then
+    skip_close = false
+  end
+
+  M.cursor_location = { self:save_cursor_location() }
+
   if not skip_close then
     self.status_buffer:close()
   end
 
-  self.watcher:stop()
+  if self.watcher then
+    self.watcher:stop()
+  end
   notification.delete_all()
   -- self.status_buffer = nil
   vim.o.autochdir = self.prev_autochdir
@@ -720,6 +747,8 @@ function M.close_all(skip_close)
   for _, status_buffer in pairs(status_buffers) do
     status_buffer:close(skip_close)
   end
+
+  M.closing = false
 end
 
 ---@class Selection
@@ -948,13 +977,12 @@ function M:stage()
       git.index.add(files)
     end
 
-    self:refresh({
-      status = true,
-      diffs = vim.tbl_map(function(v)
+    refresh({
+      update_diffs = vim.tbl_map(function(v)
         return "*:" .. v.name
       end, selection.items),
     }, "stage_finish")
-  end, { dispatch = true })
+  end)
 end
 
 function M:unstage()
@@ -1006,7 +1034,9 @@ function M:unstage()
 end
 
 local function format_discard_message(files, hunk_count)
-  if hunk_count > 0 then
+  if vim.api.nvim_get_mode() == "V" then
+    return "Discard selection?"
+  elseif hunk_count > 0 then
     return string.format("Discard %d hunks?", hunk_count)
   elseif #files > 1 then
     return string.format("Discard %d files?", #files)
@@ -1085,7 +1115,7 @@ function M:discard()
       v()
     end
 
-    self:refresh(true, "discard")
+    self:refresh(nil, "discard")
 
     a.util.scheduler()
     vim.cmd("checktime")
@@ -1113,21 +1143,19 @@ end
 ---@param item File
 ---@see section_has_hunks
 function M:handle_section_item(item)
-  local path = item.absolute_path
-
-  if not path then
+  if not item.absolute_path then
     notification.error("Cannot open file. No path found.")
     return
   end
 
+  local row, col
   local cursor_row, cursor_col = unpack(vim.api.nvim_win_get_cursor(0))
-
   local hunk = M.get_item_hunks(item, cursor_row, cursor_row, false)[1]
 
   notification.delete_all()
   self:close()
 
-  local relpath = vim.fn.fnamemodify(path, ":.")
+  local relpath = vim.fn.fnamemodify(item.absolute_path, ":.")
 
   if not vim.o.hidden and vim.bo.buftype == "" and not vim.bo.readonly and vim.fn.bufname() ~= "" then
     vim.cmd("update")
@@ -1141,18 +1169,29 @@ function M:handle_section_item(item)
   end
 
   vim.cmd("e " .. relpath)
-
   if hunk then
     local line_offset = cursor_row - hunk.first
-
-    local row = hunk.disk_from + line_offset - 1
+    row = hunk.disk_from + line_offset - 1
     for i = 1, line_offset do
       if string.sub(hunk.lines[i], 1, 1) == "-" then
         row = row - 1
       end
     end
     -- adjust for diff sign column
-    local col = cursor_col == 0 and 0 or cursor_col - 1
+    col = math.max(0, cursor_col - 1)
+  end
+
+  notification.delete_all()
+  M.status_buffer:close()
+
+  if not vim.o.hidden and vim.bo.buftype == "" and not vim.bo.readonly and vim.fn.bufname() ~= "" then
+    vim.cmd("update")
+  end
+
+  local path = vim.fn.fnameescape(vim.fn.fnamemodify(item.absolute_path, ":~:."))
+  vim.cmd(string.format("edit %s", path))
+
+  if row and col then
     vim.api.nvim_win_set_cursor(0, { row, col })
   end
 end
@@ -1229,12 +1268,12 @@ function M:cmd_func_map()
     end),
     ["StageAll"] = a.void(function()
       git.status.stage_all()
-      self:refresh { status = true, diffs = true }
+      self:refresh({ update_diffs = true }, "StageUnstaged")
     end),
     ["Unstage"] = { "nv", self:unstage() },
     ["UnstageStaged"] = a.void(function()
       git.status.unstage_all()
-      self:refresh({ status = true, diffs = true }, "UnstageStaged")
+      self:refresh({ update_diffs = true }, "UnstageStaged")
     end),
     ["CommandHistory"] = function()
       GitCommandHistory:new():show()
@@ -1259,6 +1298,32 @@ function M:cmd_func_map()
       local _, item = self:get_current_section_item()
       if item then
         vim.cmd("split " .. item.name)
+      end
+    end,
+    ["YankSelected"] = function()
+      local yank
+
+      local selection = require("neogit.status").get_selection()
+      if selection.item then
+        yank = selection.item.oid or selection.item.name
+      elseif selection.commit then
+        yank = selection.commit.oid
+      elseif selection.section and selection.section.ref then
+        yank = selection.section.ref
+      elseif selection.section and selection.section.commit then
+        yank = selection.section.commit.oid
+      end
+
+      if yank then
+        if yank:match("^stash@{%d+}") then
+          yank = git.rev_parse.oid(yank:match("^(stash@{%d+})"))
+        end
+
+        yank = string.format("'%s'", yank)
+        vim.cmd.let("@+=" .. yank)
+        vim.cmd.echo(yank)
+      else
+        vim.cmd("echo ''")
       end
     end,
     ["GoToPreviousHunkHeader"] = function()
@@ -1322,7 +1387,6 @@ function M:cmd_func_map()
       end
     end,
     ["GoToFile"] = a.void(function()
-      -- local repo_root = cli.git_root()
       a.util.scheduler()
       local section, item = self:get_current_section_item()
       if not section then
@@ -1339,7 +1403,7 @@ function M:cmd_func_map()
             if M.commit_view and M.commit_view.is_open then
               M.commit_view:close()
             end
-            M.commit_view = CommitView.new(item.name:match("(.-):? "), true)
+            M.commit_view = CommitView.new(item.name:match("(.-):? "))
             M.commit_view:open()
           end
         end
@@ -1352,7 +1416,7 @@ function M:cmd_func_map()
           if M.commit_view and M.commit_view.is_open then
             M.commit_view:close()
           end
-          M.commit_view = CommitView.new(ref, true)
+          M.commit_view = CommitView.new(ref)
           M.commit_view:open()
         end
       end
@@ -1360,23 +1424,7 @@ function M:cmd_func_map()
 
     ["RefreshBuffer"] = function()
       notification.info("Refreshing Status")
-      self:dispatch_refresh(true, "refresh_buffer")
-    end,
-
-    -- INTEGRATIONS --
-
-    ["DiffAtFile"] = function()
-      if not config.check_integration("diffview") then
-        notification.error("Diffview integration is not enabled")
-        return
-      end
-
-      local dv = require("neogit.integrations.diffview")
-      local section, item = self:get_current_section_item()
-
-      if section and item then
-        dv.open(section.name, item.name)
-      end
+      self:dispatch_refresh(nil, "manual")
     end,
   }
 
@@ -1399,18 +1447,8 @@ function M:set_decoration_provider()
   local decor_ns = api.nvim_create_namespace("NeogitStatusDecor")
   local context_ns = api.nvim_create_namespace("NeogitStatusContext")
 
-  local function frame_key()
-    return table.concat { fn.line("w0"), fn.line("w$"), fn.line("."), self.status_buffer:get_changedtick() }
-  end
-
-  local last_frame_key = frame_key()
-
   local function on_start()
-    return self.status_buffer:is_focused() and frame_key() ~= last_frame_key
-  end
-
-  local function on_end()
-    last_frame_key = frame_key()
+    return self.status_buffer.exists() and self.status_buffer:is_focused()
   end
 
   local function on_win()
@@ -1463,7 +1501,7 @@ function M:set_decoration_provider()
     end
   end
 
-  self.status_buffer:set_decorations(decor_ns, { on_start = on_start, on_win = on_win, on_end = on_end })
+  self.status_buffer:set_decorations(decor_ns, { on_start = on_start, on_win = on_win })
 end
 
 function M.find(cwd)
@@ -1500,7 +1538,7 @@ function M.create(kind, cwd)
     name = "NeogitStatus",
     filetype = "NeogitStatus",
     kind = kind,
-    disable_line_numbers = config.values.disable_line_numbers or true,
+    disable_line_numbers = config.values.disable_line_numbers,
     ---@param buffer Buffer
     initialize = function(buffer, win)
       logger.debug("[STATUS BUFFER]: Initializing...")
@@ -1509,6 +1547,7 @@ function M.create(kind, cwd)
 
       status_buffer.prev_autochdir = vim.o.autochdir
 
+      -- Breaks when initializing a new repo in CWD
       if cwd and win then
         status_buffer.old_cwd = vim.fn.getcwd(win)
 
@@ -1521,8 +1560,9 @@ function M.create(kind, cwd)
 
       local mappings = buffer.mmanager.mappings
       local func_map = status_buffer:cmd_func_map()
+      local keys = vim.tbl_extend("error", config.values.mappings.status, config.values.mappings.popup)
 
-      for key, val in pairs(config.values.mappings.status) do
+      for key, val in pairs(keys) do
         if val and val ~= "" then
           local func = func_map[val]
 
@@ -1545,10 +1585,22 @@ function M.create(kind, cwd)
       end
 
       logger.debug("[STATUS BUFFER]: Dispatching initial render")
-      status_buffer:refresh(true, "Buffer.create")
+      status_buffe:refresh(nil, "Buffer.create")
     end,
     after = function()
-      status_buffer.watcher = watcher.new(git.repo.git_path():absolute())
+      vim.cmd([[setlocal nowrap]])
+      M.watcher = watcher.new(git.repo:git_path():absolute())
+
+      if M.cursor_location then
+        vim.wait(2000, function()
+          return not M.is_refresh_locked()
+        end)
+
+        local ok, _ = pcall(self.restore_cursor_location, self, unpack(M.cursor_location))
+        if ok then
+          M.cursor_location = nil
+        end
+      end
     end,
   }
 
@@ -1579,6 +1631,19 @@ end
 
 function M:get_status()
   return self.status
+end
+
+function M.chdir(dir)
+  local destination = require("plenary.path").new(dir)
+  vim.wait(5000, function()
+    return destination:exists()
+  end)
+
+  logger.debug("[STATUS] Changing Dir: " .. dir)
+  M.old_cwd = dir
+  vim.cmd.cd(dir)
+  vim.loop.chdir(dir)
+  reset()
 end
 
 return M

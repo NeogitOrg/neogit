@@ -74,8 +74,14 @@ function Buffer:clear()
   api.nvim_buf_set_lines(self.handle, 0, -1, false, {})
 end
 
+function Buffer:write()
+  self:call(function()
+    vim.cmd("silent w!")
+  end)
+end
+
 function Buffer:get_lines(first, last, strict)
-  return api.nvim_buf_get_lines(self.handle, first, last, strict)
+  return api.nvim_buf_get_lines(self.handle, first, last, strict or false)
 end
 
 function Buffer:get_line(line)
@@ -88,6 +94,11 @@ end
 
 function Buffer:set_lines(first, last, strict, lines)
   api.nvim_buf_set_lines(self.handle, first, last, strict, lines)
+end
+
+function Buffer:insert_line(line)
+  local line_nr = fn.line(".") - 1
+  api.nvim_buf_set_lines(self.handle, line_nr, line_nr, false, { line })
 end
 
 function Buffer:buffered_set_line(line)
@@ -137,13 +148,7 @@ function Buffer:set_text(first_line, last_line, first_col, last_col, lines)
 end
 
 function Buffer:move_cursor(line)
-  if line < 0 then
-    self:focus()
-    vim.cmd("norm G")
-  else
-    self:focus()
-    vim.cmd("norm " .. line .. "G")
-  end
+  api.nvim_win_set_cursor(0, { line, 0 })
 end
 
 function Buffer:close(force)
@@ -386,8 +391,8 @@ function Buffer:call(f)
   api.nvim_buf_call(self.handle, f)
 end
 
-function Buffer.exists(name)
-  return fn.bufnr(name) ~= -1
+function Buffer:exists()
+  return fn.bufnr(self.handle) ~= -1
 end
 
 function Buffer:set_extmark(...)
@@ -420,7 +425,7 @@ local uv_utils = require("neogit.lib.uv")
 function Buffer.create(config)
   config = config or {}
   local kind = config.kind or "split"
-  local disable_line_numbers = config.disable_line_numbers or true
+  local disable_line_numbers = (config.disable_line_numbers == nil) and true or config.disable_line_numbers
   --- This reuses a buffer with the same name
   local buffer = fn.bufnr(config.name)
 
@@ -457,8 +462,16 @@ function Buffer.create(config)
   if config.mappings then
     for mode, val in pairs(config.mappings) do
       for key, cb in pairs(val) do
-        buffer.mmanager.mappings[mode][key] = function()
-          cb(buffer)
+        if type(key) == "string" then
+          buffer.mmanager.mappings[mode][key] = function()
+            cb(buffer)
+          end
+        elseif type(key) == "table" then
+          for _, k in ipairs(key) do
+            buffer.mmanager.mappings[mode][k] = function()
+              cb(buffer)
+            end
+          end
         end
       end
     end
@@ -495,19 +508,13 @@ function Buffer.create(config)
   end
 
   buffer:call(function()
-    -- This sets fold styling for Neogit windows without overriding user styling
-    local hl = vim.wo.winhl
-    if hl ~= "" then
-      hl = hl .. ","
-    end
-    vim.wo.winhl = hl .. "Folded:NeogitFold"
+    -- Set fold styling for Neogit windows while preserving user styling
+    vim.opt_local.winhl:append("Folded:NeogitFold")
 
-    -- If signs are not disabled, avoid overrided by user settings
-    buffer:call(function()
-      if not config.disable_signs then
-        vim.wo.signcolumn = "auto"
-      end
-    end)
+    -- Set signcolumn unless disabled by user settings
+    if not config.disable_signs then
+      vim.opt_local.signcolumn = "auto"
+    end
   end)
 
   if config.context_highlight then
@@ -515,18 +522,8 @@ function Buffer.create(config)
       local decor_ns = api.nvim_create_namespace("NeogitBufferViewDecor" .. config.name)
       local context_ns = api.nvim_create_namespace("NeogitBufferitViewContext" .. config.name)
 
-      local function frame_key()
-        return table.concat { fn.line("w0"), fn.line("w$"), fn.getcurpos()[2], buffer:get_changedtick() }
-      end
-
-      local last_frame_key = frame_key()
-
       local function on_start()
-        return buffer:is_focused() and frame_key() ~= last_frame_key
-      end
-
-      local function on_end()
-        last_frame_key = frame_key()
+        return buffer:exists() and buffer:is_focused()
       end
 
       local function on_win()
@@ -556,7 +553,7 @@ function Buffer.create(config)
         end
       end
 
-      buffer:set_decorations(decor_ns, { on_start = on_start, on_win = on_win, on_end = on_end })
+      buffer:set_decorations(decor_ns, { on_start = on_start, on_win = on_win })
     end)
   end
 

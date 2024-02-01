@@ -3,7 +3,7 @@
     <table>
         <tr>
             <td>
-               <strong>A <a href="https://magit.vc">Magit</a> clone for <a href="https://neovim.io">Neovim</a>.</strong>
+               <strong>A git interface for <a href="https://neovim.io">Neovim</a>, inspired by <a href="https://magit.vc">Magit</a>.</strong>
             </td>
         </tr>
     </table>
@@ -11,6 +11,9 @@
   [![Lua](https://img.shields.io/badge/Lua-blue.svg?style=for-the-badge&logo=lua)](http://www.lua.org)
   [![Neovim](https://img.shields.io/badge/Neovim%200.9+-green.svg?style=for-the-badge&logo=neovim)](https://neovim.io)
   [![MIT](https://img.shields.io/badge/MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
+  <a href="https://dotfyle.com/plugins/NeogitOrg/neogit">
+    <img src="https://dotfyle.com/plugins/NeogitOrg/neogit/shield?style=for-the-badge" />
+  </a>
 </div>
 
 
@@ -26,12 +29,15 @@ Here's an example spec for [Lazy](https://github.com/folke/lazy.nvim), but you'r
   "NeogitOrg/neogit",
   dependencies = {
     "nvim-lua/plenary.nvim",         -- required
+    "sindrets/diffview.nvim",        -- optional - Diff integration
+
+    -- Only one of these is needed, not both.
     "nvim-telescope/telescope.nvim", -- optional
-    "sindrets/diffview.nvim",        -- optional
     "ibhagwan/fzf-lua",              -- optional
   },
   config = true
 }
+
 ```
 
 If you're not using lazy, you'll need to require and setup the plugin like so:
@@ -41,6 +47,14 @@ If you're not using lazy, you'll need to require and setup the plugin like so:
 local neogit = require('neogit')
 neogit.setup {}
 ```
+
+## Compatibility
+
+The `master` branch will always be compatible with the latest **stable** release of Neovim, and with the latest **nightly** build as well.
+
+Some features may only be available using unreleased (neovim nightly) API's - to use them, set your plugin manager to track the `nightly` branch instead. 
+
+The `nightly` branch has the same stability guarantees as the `master` branch.
 
 ## Configuration
 
@@ -59,18 +73,19 @@ neogit.setup {
   disable_context_highlighting = false,
   -- Disables signs for sections/items/hunks
   disable_signs = false,
-  -- Do not ask to confirm the commit - just do it when the buffer is closed.
-  disable_commit_confirmation = false,
   -- Changes what mode the Commit Editor starts in. `true` will leave nvim in normal mode, `false` will change nvim to
   -- insert mode, and `"auto"` will change nvim to insert mode IF the commit message is empty, otherwise leaving it in
   -- normal mode.
-  disable_insert_on_commit = true,
+  disable_insert_on_commit = "auto",
   -- When enabled, will watch the `.git/` directory for changes and refresh the status buffer in response to filesystem
   -- events.
   filewatcher = {
     interval = 1000,
     enabled = true,
   },
+  -- "ascii"   is the graph the git CLI generates
+  -- "unicode" is the graph like https://github.com/rbong/vim-flog
+  graph_style = "ascii", 
   -- Used to generate URL's for branch popup action "pull request".
   git_services = {
     ["github.com"] = "https://github.com/${owner}/${repository}/compare/${branch_name}?expand=1",
@@ -94,6 +109,14 @@ neogit.setup {
     "NeogitCommitPopup--allow-empty",
     "NeogitRevertPopup--no-edit",
   },
+  -- Configure highlight group features
+  highlight = {
+    italic = true,
+    bold = true,
+    underline = true
+  },
+  -- Set to false if you want to be responsible for creating _ALL_ keymappings
+  use_default_keymaps = true,
   -- Neogit refreshes its internal state after specific events, which can be expensive depending on the repository size.
   -- Disabling `auto_refresh` will make it so you have to manually refresh the status after you open it.
   auto_refresh = true,
@@ -114,7 +137,7 @@ neogit.setup {
     recent_commit_count = 10,
   },
   commit_editor = {
-    kind = "split",
+    kind = "auto",
   },
   commit_select_view = {
     kind = "tab",
@@ -127,16 +150,16 @@ neogit.setup {
     kind = "tab",
   },
   rebase_editor = {
-    kind = "split",
+    kind = "auto",
   },
   reflog_view = {
     kind = "tab",
   },
   merge_editor = {
-    kind = "split",
+    kind = "auto",
   },
   tag_editor = {
-    kind = "split",
+    kind = "auto",
   },
   preview_buffer = {
     kind = "split",
@@ -214,6 +237,27 @@ neogit.setup {
     },
   },
   mappings = {
+    commit_editor = {
+      ["q"] = "Close",
+      ["<c-c><c-c>"] = "Submit",
+      ["<c-c><c-k>"] = "Abort",
+    },
+    rebase_editor = {
+      ["p"] = "Pick",
+      ["r"] = "Reword",
+      ["e"] = "Edit",
+      ["s"] = "Squash",
+      ["f"] = "Fixup",
+      ["x"] = "Execute",
+      ["d"] = "Drop",
+      ["b"] = "Break",
+      ["q"] = "Close",
+      ["<cr>"] = "OpenCommit",
+      ["gk"] = "MoveUp",
+      ["gj"] = "MoveDown",
+      ["<c-c><c-c>"] = "Submit",
+      ["<c-c><c-k>"] = "Abort",
+    },
     finder = {
       ["<cr>"] = "Select",
       ["<c-c>"] = "Close",
@@ -227,6 +271,23 @@ neogit.setup {
       ["<c-j>"] = "NOP",
     },
     -- Setting any of these to `false` will disable the mapping.
+    popup = {
+      ["?"] = "HelpPopup",
+      ["A"] = "CherryPickPopup",
+      ["D"] = "DiffPopup",
+      ["M"] = "RemotePopup",
+      ["P"] = "PushPopup",
+      ["X"] = "ResetPopup",
+      ["Z"] = "StashPopup",
+      ["b"] = "BranchPopup",
+      ["c"] = "CommitPopup",
+      ["f"] = "FetchPopup",
+      ["l"] = "LogPopup",
+      ["m"] = "MergePopup",
+      ["p"] = "PullPopup",
+      ["r"] = "RebasePopup",
+      ["v"] = "RevertPopup",
+    },
     status = {
       ["q"] = "Close",
       ["I"] = "InitRepo",
@@ -241,29 +302,14 @@ neogit.setup {
       ["<c-s>"] = "StageAll",
       ["u"] = "Unstage",
       ["U"] = "UnstageStaged",
-      ["d"] = "DiffAtFile",
       ["$"] = "CommandHistory",
       ["#"] = "Console",
+      ["Y"] = "YankSelected",
       ["<c-r>"] = "RefreshBuffer",
       ["<enter>"] = "GoToFile",
       ["<c-v>"] = "VSplitOpen",
       ["<c-x>"] = "SplitOpen",
       ["<c-t>"] = "TabOpen",
-      ["?"] = "HelpPopup",
-      ["D"] = "DiffPopup",
-      ["p"] = "PullPopup",
-      ["r"] = "RebasePopup",
-      ["m"] = "MergePopup",
-      ["P"] = "PushPopup",
-      ["c"] = "CommitPopup",
-      ["l"] = "LogPopup",
-      ["v"] = "RevertPopup",
-      ["Z"] = "StashPopup",
-      ["A"] = "CherryPickPopup",
-      ["b"] = "BranchPopup",
-      ["f"] = "FetchPopup",
-      ["X"] = "ResetPopup",
-      ["M"] = "RemotePopup",
       ["{"] = "GoToPreviousHunkHeader",
       ["}"] = "GoToNextHunkHeader",
     },
@@ -370,13 +416,24 @@ See the built-in documentation for a comprehensive list of highlight groups. If 
 
 Neogit emits the following events:
 
-| Event                   | Description                      |
-|-------------------------|----------------------------------|
-| `NeogitStatusRefreshed` | Status has been reloaded         |
-| `NeogitCommitComplete`  | Commit has been created          |
-| `NeogitPushComplete`    | Push has completed               |
-| `NeogitPullComplete`    | Pull has completed               |
-| `NeogitFetchComplete`   | Fetch has completed              |
+| Event                   | Description                              | Event Data                                      |
+|-------------------------|------------------------------------------|-------------------------------------------------|
+| `NeogitStatusRefreshed` | Status has been reloaded                 | `{}`                                            |
+| `NeogitCommitComplete`  | Commit has been created                  | `{}`                                            |
+| `NeogitPushComplete`    | Push has completed                       | `{}`                                            |
+| `NeogitPullComplete`    | Pull has completed                       | `{}`                                            |
+| `NeogitFetchComplete`   | Fetch has completed                      | `{}`                                            |
+| `NeogitBranchCreate`    | Branch was created, starting from `base` | `{ branch_name: string, base: string? }`        |
+| `NeogitBranchDelete`    | Branch was deleted                       | `{ branch_name: string }`                       |
+| `NeogitBranchCheckout`  | Branch was checked out                   | `{ branch_name: string }`                       |
+| `NeogitBranchReset`     | Branch was reset to a commit/branch      | `{ branch_name: string, resetting_to: string }` |
+| `NeogitBranchRename`    | Branch was renamed                       | `{ branch_name: string, new_name: string }`     |
+| `NeogitRebase`        | A rebase finished                        | `{ commit: string, status: "ok"\|"conflict" }`    |
+| `NeogitReset`         | A branch was reset to a certain commit   | `{ commit: string, mode: "soft"\|"mixed"\|"hard"\|"keep"\|"index" }` |
+| `NeogitTagCreate`     | A tag was placed on a certain commit     | `{ name: string, ref: string }`                   |
+| `NeogitTagDelete`     | A tag was removed                        | `{ name: string }`                                |
+| `NeogitCherryPick`    | One or more commits were cherry-picked    | `{ commits: string[] }`                          |
+| `NeogitMerge`         | A merge finished                          | `{ branch: string, args = string[], status: "ok"\|"conflict" }` |
 
 You can listen to the events using the following code:
 

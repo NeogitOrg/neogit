@@ -1,5 +1,6 @@
 local M = {}
 local git = require("neogit.lib.git")
+local util = require("neogit.lib.util")
 
 ---@param name string
 ---@param f nil|fun(create: fun(...)): any
@@ -23,12 +24,24 @@ function M.open(name, f)
   end
 end
 
+---@param name string
+---@return string|string[]
+---Returns the keymapping for a popup
+function M.mapping_for(name)
+  local mappings = require("neogit.config").get_reversed_popup_maps()
+
+  if mappings[name] then
+    return mappings[name]
+  else
+    return {}
+  end
+end
+
 --- Returns an array useful for creating mappings for the available popups
 ---@param status_buffer StatusBuffer
 ---@return table<string, Mapping>
 function M.mappings_table(status_buffer)
   local util = require("neogit.lib.util")
-
   ---@param commit CommitLogEntry|nil
   ---@return string|nil
   local function commit_oid(commit)
@@ -45,7 +58,15 @@ function M.mappings_table(status_buffer)
 
   return {
     { "HelpPopup", "Help", M.open("help") },
-    { "DiffPopup", "Diff", M.open("diff") },
+    {
+      "DiffPopup",
+      "Diff",
+      M.open("diff", function(f)
+        local section, item = require("neogit.status").get_current_section_item()
+
+        f { section = section, item = item }
+      end),
+    },
     { "PullPopup", "Pull", M.open("pull") },
     {
       "RebasePopup",
@@ -79,12 +100,18 @@ function M.mappings_table(status_buffer)
             paths = util.filter_map(status_buffer:get_selection().items, function(v)
               return v.absolute_path
             end),
-            git_root = git.repo.state.git_root,
+            git_root = git.repo.git_root,
           }
         end),
       },
     },
-    { "TagPopup", "Tag", M.open("tag") },
+    {
+      "TagPopup",
+      "Tag",
+      M.open("tag", function(f)
+        f { commit = commit_oid(require("neogit.status").get_selection().commit) }
+      end),
+    },
     { "LogPopup", "Log", M.open("log") },
     {
       "CherryPickPopup",
@@ -128,6 +155,7 @@ function M.mappings_table(status_buffer)
       },
     },
     { "RemotePopup", "Remote", M.open("remote") },
+    { "WorktreePopup", "Worktree", M.open("worktree") },
     {
       "StashPopup",
       "Stash",
@@ -136,12 +164,6 @@ function M.mappings_table(status_buffer)
       end),
     },
   }
-end
-
-function M.test()
-  M.open("echo", function(f)
-    f("a", "b")
-  end)()
 end
 
 return M

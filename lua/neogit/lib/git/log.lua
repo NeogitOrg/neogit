@@ -2,6 +2,7 @@ local cli = require("neogit.lib.git.cli")
 local diff_lib = require("neogit.lib.git.diff")
 local util = require("neogit.lib.util")
 local config = require("neogit.config")
+local json = require("neogit.lib.json")
 
 local M = {}
 
@@ -14,10 +15,10 @@ local commit_header_pat = "([| ]*)(%*?)([| ]*)commit (%w+)"
 ---@field graph string the graph string
 ---@field author_name string the name of the author
 ---@field author_email string the email of the author
----@field author_date string when the author commited
+---@field author_date string when the author committed
 ---@field committer_name string the name of the committer
 ---@field committer_email string the email of the committer
----@field committer_date string when the committer commited
+---@field committer_date string when the committer committed
 ---@field description string a list of lines
 ---@field commit_arg string the passed argument of the git command
 ---@field diffs any[]
@@ -167,31 +168,14 @@ function M.parse(raw)
 end
 
 local function make_commit(entry, graph)
-  local hash, subject, author_name, rel_date, ref_name, author_date, committer_name, committer_date, committer_email, author_email, body, signature_code =
-    unpack(entry)
+  entry.graph = graph
+  entry.description = { entry.subject, entry.body }
 
-  if rel_date then
-    rel_date, _ = rel_date:gsub(" ago$", "")
+  if entry.rel_date then
+    entry.rel_date, _ = entry.rel_date:gsub(" ago$", "")
   end
 
-  return {
-    graph = graph,
-    oid = hash,
-    description = { subject, body },
-    author_name = author_name,
-    author_email = author_email,
-    author_date = author_date,
-    rel_date = rel_date,
-    ref_name = ref_name,
-    committer_date = committer_date,
-    committer_name = committer_name,
-    committer_email = committer_email,
-    body = body,
-    signature_code = signature_code,
-    -- TODO: Remove below here
-    hash = hash,
-    message = subject,
-  }
+  return entry
 end
 
 ---@param output table
@@ -210,7 +194,7 @@ local function parse_log(output, graph)
 
     local commit_lookup = {}
     for i = 1, #output do
-      commit_lookup[output[i][1]] = output[i]
+      commit_lookup[output[i]["oid"]] = output[i]
     end
 
     for i = 1, #graph do
@@ -220,7 +204,10 @@ local function parse_log(output, graph)
 
       local oid = graph[i][1].oid
       if oid then
-        table.insert(commits, make_commit(commit_lookup[oid], graph[i]))
+        local commit = commit_lookup[oid]
+        assert(commit, "No commit found for oid: " .. oid)
+
+        table.insert(commits, make_commit(commit, graph[i]))
         current_commit = current_commit + 1
       else
         table.insert(commits, { graph = graph[i] })
@@ -230,36 +217,6 @@ local function parse_log(output, graph)
 
   return commits
 end
-
----Parses log output to a table
----@param output table
----@return string[][]
-local function split_output(output)
-  output = table.concat(output, "\n")
-  output = vim.split(output, "\31", { trimempty = true })
-  output = util.map(output, function(line)
-    return vim.split(vim.trim(line:gsub("\n", " ")), "\30")
-  end)
-
-  return output
-end
-
-local format_args = {
-  "%H", -- Full Hash
-  "%s", -- Subject
-  "%aN", -- Author Name
-  "%cr", -- Commit Date (Relative)
-  "%D", -- Ref Name
-  "%ad", -- Author Date
-  "%cN", -- Committer Name
-  "%cd", -- Committer Date
-  "%ce", -- Committer Email
-  "%ae", -- Author Email
-  "%b", -- Body
-  "%G?", -- Signature status
-  "%x1F", -- Entry delimiter to split on (dec \31)
-}
-local format_delimiter = "%x1E" -- Field delimiter to split on (dec \30)
 
 --- Ensure a max is passed to the list function to prevent accidentally getting thousands of results.
 ---@param options table
@@ -325,7 +282,7 @@ end
 --- @return table, string|nil
 local function determine_order(options, graph)
   if
-    (graph or {})[1]
+    graph
     and not vim.tbl_contains(options, "--date-order")
     and not vim.tbl_contains(options, "--author-date-order")
     and not vim.tbl_contains(options, "--topo-order")
@@ -336,43 +293,66 @@ local function determine_order(options, graph)
   return options
 end
 
---- Parses the arguments needed for the format output of git log
----@param show_signature boolean Should '%G?' be omitted from the arguments
----@return string Concatenated format arguments
-local function parse_log_format(show_signature)
-  if not show_signature then
-    return table.concat(
-      vim.tbl_filter(function(value)
-        return value ~= "%G?"
-      end, format_args),
-      format_delimiter
-    )
-  end
-  return table.concat(format_args, format_delimiter)
-end
-
 ---@param options table|nil
 ---@param files? table
----@param color boolean
+---@param color? boolean
 ---@return table
-function M.graph(options, files, color)
+M.graph = util.memoize(function(options, files, color)
   options = ensure_max(options or {})
   files = files or {}
 
-  local result =
-    cli.log.format("%x1E%H%x00").graph.color.arg_list(options).files(unpack(files)).call():trim().stdout_raw
+  local result = cli.log
+    .format("%x1E%H%x00").graph.color
+    .arg_list(options)
+    .files(unpack(files))
+    .call({ ignore_error = true, hidden = true }).stdout_raw
 
   return util.filter_map(result, function(line)
     return require("neogit.lib.ansi").parse(util.trim(line), { recolor = not color })
   end)
+end)
+
+local function format(show_signature)
+  local fields = {
+    oid = "%H",
+    abbreviated_commit = "%h",
+    tree = "%T",
+    abbreviated_tree = "%t",
+    parent = "%P",
+    abbreviated_parent = "%p",
+    ref_name = "%D",
+    encoding = "%e",
+    subject = "%s",
+    sanitized_subject_line = "%f",
+    body = "%b",
+    commit_notes = "%N",
+    author_name = "%aN",
+    author_email = "%aE",
+    author_date = "%aD",
+    committer_name = "%cN",
+    committer_email = "%cE",
+    committer_date = "%cD",
+    rel_date = "%cr",
+  }
+
+  if show_signature then
+    fields.signer = "%GS"
+    fields.signer_key = "%GK"
+    fields.verification_flag = "%G?"
+  end
+
+  return json.encode(fields)
 end
 
 ---@param options? string[]
 ---@param graph? table
 ---@param files? table
+---@param hidden? boolean Hide from git history
+---@param graph_color? boolean Render ascii graph in color
 ---@return CommitLogEntry[]
-function M.list(options, graph, files)
+M.list = util.memoize(function(options, graph, files, hidden, graph_color)
   files = files or {}
+
   local signature = false
 
   options = ensure_max(options or {})
@@ -380,22 +360,47 @@ function M.list(options, graph, files)
   options, signature = show_signature(options)
 
   local output = cli.log
-    .format(parse_log_format(signature))
+    .format(format(signature))
+    .args("--no-patch")
     .arg_list(options)
     .files(unpack(files))
     .show_popup(false)
-    .call()
-    :trim().stdout
+    .call({ hidden = hidden, ignore_error = hidden }).stdout
 
-  return parse_log(split_output(output), graph or {})
-end
+  local commits =
+    json.decode(output, { escaped_fields = { "body", "author_name", "committer_name", "subject" } })
+  if vim.tbl_isempty(commits) then
+    return {}
+  end
+
+  local graph_output
+  if graph then
+    if config.values.graph_style == "unicode" then
+      graph_output = require("neogit.lib.graph").build(commits)
+    elseif config.values.graph_style == "ascii" then
+      util.remove_item_from_table(options, "--show-signature")
+      graph_output = M.graph(options, files, graph_color)
+    end
+  else
+    graph_output = {}
+  end
+
+  return parse_log(commits, graph_output)
+end)
 
 ---Determines if commit a is an ancestor of commit b
 ---@param a string commit hash
 ---@param b string commit hash
 ---@return boolean
 function M.is_ancestor(a, b)
-  return cli["merge-base"].is_ancestor.args(a, b):call_sync_ignoring_exit_code():trim().code == 0
+  return cli["merge-base"].is_ancestor.args(a, b).call_sync({ ignore_error = true, hidden = true }).code == 0
+end
+
+---Finds parent commit of a commit. If no parent exists, will return nil
+---@param commit string
+---@return string|nil
+function M.parent(commit)
+  return vim.split(cli["rev-list"].max_count(1).parents.args(commit).call({ hidden = true }).stdout[1], " ")[2]
 end
 
 local function update_recent(state)
@@ -404,7 +409,8 @@ local function update_recent(state)
     return
   end
 
-  state.recent.items = util.filter_map(M.list { "--max-count=" .. tostring(count) }, M.present_commit)
+  state.recent.items =
+    util.filter_map(M.list({ "--max-count=" .. tostring(count) }, nil, {}, true), M.present_commit)
 end
 
 function M.register(meta)
@@ -416,7 +422,7 @@ function M.update_ref(from, to)
 end
 
 function M.message(commit)
-  return cli.log.format("%s").args(commit).call():trim().stdout[1]
+  return cli.log.max_count(1).format("%s").args(commit).call({ hidden = true }).stdout[1]
 end
 
 function M.present_commit(commit)
@@ -425,7 +431,7 @@ function M.present_commit(commit)
   end
 
   return {
-    name = string.format("%s %s", commit.oid:sub(1, 7), commit.description[1] or "<empty>"),
+    name = string.format("%s %s", commit.oid:sub(1, 7), commit.subject or "<empty>"),
     oid = commit.oid,
     commit = commit,
   }
@@ -435,7 +441,78 @@ end
 ---@param commit string Hash of commit
 ---@return string The stderr output of the command
 function M.verify_commit(commit)
-  return cli["verify-commit"].args(commit).call_sync_ignoring_exit_code():trim().stderr
+  return cli["verify-commit"].args(commit).call_sync({ ignore_error = true }).stderr
+end
+
+---@class CommitBranchInfo
+---@field head string? The name of the local branch, which is currently checked out (if any)
+---@field locals table<string,boolean> Set of local branch names
+---@field remotes table<string, string[]> table<string, string[]> Mapping from (local) branch names to list of remotes where this branch is present
+---@field tags string[] List of tags placed on this commit
+
+---Parse information of branches, tags and remotes from a given commit's ref output
+---@param ref string comma separated list of branches, tags and remotes, e.g.:
+---   * "origin/main, main, origin/HEAD, tag: 1.2.3, fork/develop"
+---   * "HEAD -> main, origin/main, origin/HEAD, tag: 1.2.3, fork/develop"
+---@param remotes string[] list of remote names, e.g. by calling `require("neogit.lib.git.remote").list()`
+---@return CommitBranchInfo
+M.branch_info = util.memoize(function(ref, remotes)
+  local parts = vim.split(ref, ", ")
+  local result = {
+    head = nil,
+    locals = {},
+    remotes = {},
+    tags = {},
+  }
+
+  for _, name in pairs(parts) do
+    local skip = false
+    if name:match("^tag: .*") ~= nil then
+      local tag = name:gsub("tag: ", "")
+      table.insert(result.tags, tag)
+      skip = true
+    end
+
+    if name:match("HEAD %-> ") then
+      name = name:gsub("HEAD %-> ", "")
+      result.head = name
+    end
+
+    local remote = nil
+    for _, r in ipairs(remotes) do
+      if not skip then
+        if name:match("^" .. r .. "/") then
+          name = name:gsub("^" .. r .. "/", "")
+          if name == "HEAD" then
+            skip = true
+          else
+            remote = r
+          end
+        end
+      end
+    end
+
+    if not skip then
+      if remote ~= nil then
+        if result.remotes[name] == nil then
+          result.remotes[name] = {}
+        end
+        table.insert(result.remotes[name], remote)
+      else
+        result.locals[name] = true
+      end
+    end
+  end
+
+  return result
+end)
+
+function M.reflog_message(skip)
+  return cli.log
+    .format("%B")
+    .max_count(1)
+    .args("--reflog", "--no-merges", "--skip=" .. tostring(skip))
+    .call_sync({ ignore_error = true }).stdout
 end
 
 return M

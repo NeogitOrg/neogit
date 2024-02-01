@@ -7,57 +7,28 @@ on:
       - "master"
 
 jobs:
-  selene:
+  code_quality:
+    name: Code Quality
     runs-on: ubuntu-latest
     steps:
-      - name: Restore Cached Selene
-        id: cache-selene-restore
-        uses: actions/cache@v3
+      - uses: actions/checkout@v4
+
+      - uses: Swatinem/rust-cache@v2
+
+      - uses: taiki-e/install-action@v2
         with:
-          key: ${{ runner.os }}-selene
-          path: ~/.cargo/bin/selene
+          tool: selene,typos-cli
 
-      - uses: actions/checkout@v1
-      - name: Compare the cached Selene version against crates.io
-        id: check-selene-cache
-        run: |
-          CRATES_IO_SELENE_VERSION=$(curl -s -L0 https://crates.io/api/v1/crates/selene  | jq -r '.crate.max_stable_version')
-          CACHED_SELENE_VERSION="$((selene --version || printf "INVALID_VERSION") | awk '{print $2}')"
-
-          printf "Crates IO Selene Version: %s\n" "${CRATES_IO_SELENE_VERSION}"
-          printf "Cached Selene Version:    %s\n" "${CACHED_SELENE_VERSION}"
-
-          CACHED_SELENE_VALID=false
-          if [[ "${CRATES_IO_SELENE_VERSION}" == "${CACHED_SELENE_VERSION}" ]]; then
-            CACHED_SELENE_VALID=true
-            printf "Cache is valid!\n"
-          fi
-
-          printf "cache-valid=%s\n" "${CACHED_SELENE_VALID}" >> "${GITHUB_OUTPUT}"
-
-      - uses: actions-rs/toolchain@v1
-        if: ${{ steps.check-selene-cache.outputs.cache-valid != 'true'}}
-        with:
-          toolchain: stable
-      - name: Install Selene
-        if: ${{ steps.check-selene-cache.outputs.cache-valid != 'true'}}
-        run: cargo install selene --force
-
-      - name: Save New Selene Build to Cache
-        if: ${{ steps.check-selene-cache.outputs.cache-valid != 'true'}}
-        id: cache-selene-save
-        uses: actions/cache/save@v3
-        with:
-          key: ${{ runner.os }}-selene
-          path: ~/.cargo/bin/selene
-
-      - name: Run Selene
+      - name: Run linters
         run: make lint
-  stylua:
+
+  code_style:
+    name: Code Style
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: JohnnyMorganz/stylua-action@v1.1.2
+      - uses: actions/checkout@v4
+      - uses: JohnnyMorganz/stylua-action@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          version: latest
           args: --color always --check lua/ tests/

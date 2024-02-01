@@ -29,10 +29,7 @@ function M.setup()
         if not path then
           return
         end
-        status.refresh_all(
-          { status = true, diffs = { "*:" .. path } },
-          string.format("%s:%s", o.event, o.file)
-        )
+        status.refresh_all({ update_diffs = { "*:" .. path } }, string.format("%s:%s", o.event, o.file))
       end, function() end)
     end,
     group = group,

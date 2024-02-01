@@ -7,16 +7,24 @@ local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 local input = require("neogit.lib.input")
 local notification = require("neogit.lib.notification")
 
+local function fire_tag_event(pattern, data)
+  vim.api.nvim_exec_autocmds("User", { pattern = pattern, modeline = false, data = data })
+end
+
 function M.create_tag(popup)
-  local tag_input = input.get_user_input("Tag name: ")
-  if not tag_input or tag_input == "" then
+  local tag_input = input.get_user_input("Create tag", { strip_spaces = true })
+  if not tag_input then
     return
   end
-  tag_input, _ = tag_input:gsub("%s", "-")
 
-  local selected_branch = FuzzyFinderBuffer.new(git.refs.list()):open_async()
-  if not selected_branch then
-    return
+  local selected
+  if popup.state.env.commit then
+    selected = popup.state.env.commit
+  else
+    selected = FuzzyFinderBuffer.new(git.refs.list()):open_async()
+    if not selected then
+      return
+    end
   end
 
   local args = popup:get_arguments()
@@ -24,13 +32,16 @@ function M.create_tag(popup)
     table.insert(args, "--annotate")
   end
 
-  client.wrap(git.cli.tag.arg_list(utils.merge(args, { tag_input, selected_branch })), {
+  local code = client.wrap(git.cli.tag.arg_list(utils.merge(args, { tag_input, selected })), {
     autocmd = "NeogitTagComplete",
     msg = {
-      success = "Added tag " .. tag_input .. " on " .. selected_branch,
-      fail = "Failed to add tag " .. tag_input .. " on " .. selected_branch,
+      success = "Added tag " .. tag_input .. " on " .. selected,
+      fail = "Failed to add tag " .. tag_input .. " on " .. selected,
     },
   })
+  if code == 0 then
+    fire_tag_event("NeogitTagCreate", { name = tag_input, ref = selected })
+  end
 end
 
 --- Create a release tag for `HEAD'.
@@ -50,6 +61,9 @@ function M.delete(_)
 
   if git.tag.delete(tags) then
     notification.info("Deleted tags: " .. table.concat(tags, ","))
+    for _, tag in pairs(tags) do
+      fire_tag_event("NeogitTagDelete", { name = tag })
+    end
   end
 end
 
@@ -57,7 +71,7 @@ end
 ---@param _ table
 function M.prune(_)
   local selected_remote = FuzzyFinderBuffer.new(git.remote.list()):open_async {
-    prompt_prefix = " Prune tags using remote > ",
+    prompt_prefix = "Prune tags using remote",
   }
 
   if (selected_remote or "") == "" then

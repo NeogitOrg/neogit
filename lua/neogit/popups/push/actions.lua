@@ -52,12 +52,12 @@ function M.to_upstream(popup)
   local remote, branch, set_upstream
 
   if upstream then
-    remote, branch = upstream:match("^([^/]*)/(.*)$")
+    remote, branch = git.branch.parse_remote_branch(upstream)
   else
     set_upstream = true
     branch = git.branch.current()
     remote = git.branch.upstream_remote()
-      or FuzzyFinderBuffer.new(git.remote.list()):open_async { prompt_prefix = "remote > " }
+      or FuzzyFinderBuffer.new(git.remote.list()):open_async { prompt_prefix = "remote" }
   end
 
   if remote then
@@ -69,11 +69,11 @@ end
 
 function M.to_elsewhere(popup)
   local target = FuzzyFinderBuffer.new(git.branch.get_remote_branches()):open_async {
-    prompt_prefix = "push > ",
+    prompt_prefix = "push",
   }
 
   if target then
-    local remote, branch = target:match("^([^/]*)/(.*)$")
+    local remote, branch = git.branch.parse_remote_branch(target)
     push_to(popup:get_arguments(), remote, branch)
   end
 end
@@ -87,7 +87,7 @@ function M.push_other(popup)
     table.insert(sources, 1, popup.state.env.commit)
   end
 
-  local source = FuzzyFinderBuffer.new(sources):open_async { prompt_prefix = "push > " }
+  local source = FuzzyFinderBuffer.new(sources):open_async { prompt_prefix = "push" }
   if not source then
     return
   end
@@ -98,12 +98,12 @@ function M.push_other(popup)
   end
 
   local destination = FuzzyFinderBuffer.new(destinations)
-    :open_async { prompt_prefix = "push " .. source .. " to > " }
+    :open_async { prompt_prefix = "push " .. source .. " to" }
   if not destination then
     return
   end
 
-  local remote, _ = destination:match("^([^/]*)/(.*)$")
+  local remote, _ = git.branch.parse_remote_branch(destination)
   push_to(popup:get_arguments(), remote, source .. ":" .. destination)
 end
 
@@ -114,7 +114,7 @@ function M.push_tags(popup)
   if #remotes == 1 then
     remote = remotes[1]
   else
-    remote = FuzzyFinderBuffer.new(remotes):open_async { prompt_prefix = "push tags to > " }
+    remote = FuzzyFinderBuffer.new(remotes):open_async { prompt_prefix = "push tags to" }
   end
 
   if remote then

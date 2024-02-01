@@ -3,9 +3,9 @@ local M = {}
 
 ---@return table<string, string[]>
 --- Returns a map of commands, mapped to the list of keys which trigger them.
-function M.get_reversed_status_maps()
+local function get_reversed_maps(tbl)
   local result = {}
-  for k, v in pairs(M.values.mappings.status) do
+  for k, v in pairs(tbl) do
     -- If `v == false` the mapping is disabled
     if v then
       local current = result[v]
@@ -18,6 +18,50 @@ function M.get_reversed_status_maps()
   end
 
   return result
+end
+
+local reversed_status_maps
+---@return table<string, string[]>
+--- Returns a map of commands, mapped to the list of keys which trigger them.
+function M.get_reversed_status_maps()
+  if not reversed_status_maps then
+    reversed_status_maps = get_reversed_maps(M.values.mappings.status)
+  end
+
+  return reversed_status_maps
+end
+
+local reversed_popup_maps
+---@return table<string, string[]>
+--- Returns a map of commands, mapped to the list of keys which trigger them.
+function M.get_reversed_popup_maps()
+  if not reversed_popup_maps then
+    reversed_popup_maps = get_reversed_maps(M.values.mappings.popup)
+  end
+
+  return reversed_popup_maps
+end
+
+local reversed_rebase_editor_maps
+---@return table<string, string[]>
+--- Returns a map of commands, mapped to the list of keys which trigger them.
+function M.get_reversed_rebase_editor_maps()
+  if not reversed_rebase_editor_maps then
+    reversed_rebase_editor_maps = get_reversed_maps(M.values.mappings.rebase_editor)
+  end
+
+  return reversed_rebase_editor_maps
+end
+
+local reversed_commit_editor_maps
+---@return table<string, string[]>
+--- Returns a map of commands, mapped to the list of keys which trigger them.
+function M.get_reversed_commit_editor_maps()
+  if not reversed_commit_editor_maps then
+    reversed_commit_editor_maps = get_reversed_maps(M.values.mappings.commit_editor)
+  end
+
+  return reversed_commit_editor_maps
 end
 
 ---@alias WindowKind
@@ -57,25 +101,43 @@ end
 ---@field rebase NeogitConfigSection|nil
 ---@field sequencer NeogitConfigSection|nil
 
+---@class HighlightOptions
+---@field italic? boolean
+---@field bold? boolean
+---@field underline? boolean
+
 ---@class NeogitFilewatcherConfig
 ---@field interval number
 ---@field enabled boolean
 ---@field filewatcher NeogitFilewatcherConfig|nil
 
 ---@alias NeogitConfigMappingsFinder "Select" | "Close" | "Next" | "Previous" | "MultiselectToggleNext" | "MultiselectTogglePrevious" | "NOP" | false
----@alias NeogitConfigMappingsStatus "Close" | "InitRepo" | "Depth1" | "Depth2" | "Depth3" | "Depth4" | "Toggle" | "Discard" | "Stage" | "StageUnstaged" | "StageAll" | "Unstage" | "UnstageStaged" | "DiffAtFile" | "CommandHistory" | "Console" | "RefreshBuffer" | "GoToFile" | "VSplitOpen" | "SplitOpen" | "TabOpen" | "HelpPopup" | "DiffPopup" | "PullPopup" | "RebasePopup" | "MergePopup" | "PushPopup" | "CommitPopup" | "IgnorePopup" | "LogPopup" | "RevertPopup" | "StashPopup" | "CherryPickPopup" | "BranchPopup" | "FetchPopup" | "ResetPopup" | "RemotePopup" | "GoToPreviousHunkHeader" | "GoToNextHunkHeader" | false | fun()
+
+---@alias NeogitConfigMappingsStatus "Close" | "Depth1" | "Depth2" | "Depth3" | "Depth4" | "Toggle" | "Discard" | "Stage" | "StageUnstaged" | "StageAll" | "Unstage" | "UnstageStaged" | "RefreshBuffer" | "GoToFile" | "VSplitOpen" | "SplitOpen" | "TabOpen" | "GoToPreviousHunkHeader" | "GoToNextHunkHeader" | "Console" | "CommandHistory" | "InitRepo" | "YankSelected" | false | fun()
+
+---@alias NeogitConfigMappingsPopup "HelpPopup" | "DiffPopup" | "PullPopup" | "RebasePopup" | "MergePopup" | "PushPopup" | "CommitPopup" | "LogPopup" | "RevertPopup" | "StashPopup" | "IgnorePopup" | "CherryPickPopup" | "BranchPopup" | "FetchPopup" | "ResetPopup" | "RemotePopup" | "TagPopup" | "WorktreePopup" | false
+
+---@alias NeogitConfigMappingsRebaseEditor "Pick" | "Reword" | "Edit" | "Squash" | "Fixup" | "Execute" | "Drop" | "Break" | "MoveUp" | "MoveDown" | "Close" | "OpenCommit" | "Submit" | "Abort" | false | fun()
+---
+---@alias NeogitConfigMappingsCommitEditor "Close" | "Submit" | "Abort" | "PrevMessage" | "ResetMessage" | "NextMessage" | false | fun()
 
 ---@class NeogitConfigMappings Consult the config file or documentation for values
 ---@field finder? { [string]: NeogitConfigMappingsFinder } A dictionary that uses finder commands to set multiple keybinds
 ---@field status? { [string]: NeogitConfigMappingsStatus } A dictionary that uses status commands to set a single keybind
+---@field popup? { [string]: NeogitConfigMappingsPopup } A dictionary that uses popup commands to set a single keybind
+---@field rebase_editor? { [string]: NeogitConfigMappingsRebaseEditor } A dictionary that uses Rebase editor commands to set a single keybind
+---@field commit_editor? { [string]: NeogitConfigMappingsCommitEditor } A dictionary that uses Commit editor commands to set a single keybind
+
+---@alias NeogitGraphStyle "ascii" | "unicode"
 
 ---@class NeogitConfig Neogit configuration settings
 ---@field filewatcher? NeogitFilewatcherConfig Values for filewatcher
+---@field graph_style? NeogitGraphStyle Style for graph
 ---@field disable_hint? boolean Remove the top hint in the Status buffer
 ---@field disable_context_highlighting? boolean Disable context highlights based on cursor position
 ---@field disable_signs? boolean Special signs to draw for sections etc. in Neogit
 ---@field git_services? table Templartes to use when opening a pull request for a branch
----@field disable_commit_confirmation? boolean Disable commit confirmations
+---@field fetch_after_checkout? boolean Perform a fetch if the newly checked out branch has an upstream or pushRemote set
 ---@field telescope_sorter? function The sorter telescope will use
 ---@field disable_insert_on_commit? boolean|"auto" Disable automatically entering insert mode in commit dialogues
 ---@field use_per_project_settings? boolean Scope persisted settings on a per-project basis
@@ -85,7 +147,7 @@ end
 ---@field kind? WindowKind The default type of window neogit should open in
 ---@field disable_line_numbers? boolean Whether to disable line numbers
 ---@field console_timeout? integer Time in milliseconds after a console is created for long running commands
----@field auto_show_console? boolean Automatically show the console if a command takes longer than console_timout
+---@field auto_show_console? boolean Automatically show the console if a command takes longer than console_timeout
 ---@field status? { recent_commit_count: integer } Status buffer options
 ---@field commit_editor? NeogitConfigPopup Commit editor options
 ---@field commit_select_view? NeogitConfigPopup Commit select view options
@@ -94,6 +156,7 @@ end
 ---@field rebase_editor? NeogitConfigPopup Rebase editor options
 ---@field reflog_view? NeogitConfigPopup Reflog view options
 ---@field merge_editor? NeogitConfigPopup Merge editor options
+---@field description_editor? NeogitConfigPopup Merge editor options
 ---@field tag_editor? NeogitConfigPopup Tag editor options
 ---@field preview_buffer? NeogitConfigPopup Preview options
 ---@field popup? NeogitConfigPopup Set the default way of opening popups
@@ -102,16 +165,19 @@ end
 ---@field sections? NeogitConfigSections
 ---@field ignored_settings? string[] Settings to never persist, format: "Filetype--cli-value", i.e. "NeogitCommitPopup--author"
 ---@field mappings? NeogitConfigMappings
----@field notification_icon? String
+---@field notification_icon? string
+---@field use_default_keymaps? boolean
+---@field highlight? HighlightOptions
 
 ---Returns the default Neogit configuration
 ---@return NeogitConfig
 function M.get_default_values()
   return {
+    use_default_keymaps = true,
     disable_hint = false,
     disable_context_highlighting = false,
     disable_signs = false,
-    disable_commit_confirmation = false,
+    graph_style = "ascii",
     filewatcher = {
       interval = 1000,
       enabled = false,
@@ -124,9 +190,15 @@ function M.get_default_values()
       ["bitbucket.org"] = "https://bitbucket.org/${owner}/${repository}/pull-requests/new?source=${branch_name}&t=1",
       ["gitlab.com"] = "https://gitlab.com/${owner}/${repository}/merge_requests/new?merge_request[source_branch]=${branch_name}",
     },
-    disable_insert_on_commit = true,
+    highlight = {
+      italic = true,
+      bold = true,
+      underline = true,
+    },
+    disable_insert_on_commit = "auto",
     use_per_project_settings = true,
     remember_settings = true,
+    fetch_after_checkout = false,
     auto_refresh = true,
     sort_branches = "-committerdate",
     kind = "tab",
@@ -140,7 +212,7 @@ function M.get_default_values()
       recent_commit_count = 10,
     },
     commit_editor = {
-      kind = "split",
+      kind = "auto",
     },
     commit_select_view = {
       kind = "tab",
@@ -153,16 +225,19 @@ function M.get_default_values()
       kind = "tab",
     },
     rebase_editor = {
-      kind = "split",
+      kind = "auto",
     },
     reflog_view = {
       kind = "tab",
     },
     merge_editor = {
-      kind = "split",
+      kind = "auto",
+    },
+    description_editor = {
+      kind = "auto",
     },
     tag_editor = {
-      kind = "split",
+      kind = "auto",
     },
     preview_buffer = {
       kind = "split",
@@ -230,11 +305,33 @@ function M.get_default_values()
       "NeogitPushPopup--force-with-lease",
       "NeogitPushPopup--force",
       "NeogitPullPopup--rebase",
-      "NeogitLogPopup--",
       "NeogitCommitPopup--allow-empty",
-      "NeogitRevertPopup--no-edit", -- TODO: Fix incompatible switches with default enables
     },
     mappings = {
+      commit_editor = {
+        ["q"] = "Close",
+        ["<c-c><c-c>"] = "Submit",
+        ["<c-c><c-k>"] = "Abort",
+        ["<m-p>"] = "PrevMessage",
+        ["<m-n>"] = "NextMessage",
+        ["<m-r>"] = "ResetMessage",
+      },
+      rebase_editor = {
+        ["p"] = "Pick",
+        ["r"] = "Reword",
+        ["e"] = "Edit",
+        ["s"] = "Squash",
+        ["f"] = "Fixup",
+        ["x"] = "Execute",
+        ["d"] = "Drop",
+        ["b"] = "Break",
+        ["q"] = "Close",
+        ["<cr>"] = "OpenCommit",
+        ["gk"] = "MoveUp",
+        ["gj"] = "MoveDown",
+        ["<c-c><c-c>"] = "Submit",
+        ["<c-c><c-k>"] = "Abort",
+      },
       finder = {
         ["<cr>"] = "Select",
         ["<c-c>"] = "Close",
@@ -246,6 +343,26 @@ function M.get_default_values()
         ["<tab>"] = "MultiselectToggleNext",
         ["<s-tab>"] = "MultiselectTogglePrevious",
         ["<c-j>"] = "NOP",
+      },
+      popup = {
+        ["?"] = "HelpPopup",
+        ["A"] = "CherryPickPopup",
+        ["d"] = "DiffPopup",
+        ["M"] = "RemotePopup",
+        ["P"] = "PushPopup",
+        ["X"] = "ResetPopup",
+        ["Z"] = "StashPopup",
+        ["i"] = "IgnorePopup",
+        ["t"] = "TagPopup",
+        ["b"] = "BranchPopup",
+        ["w"] = "WorktreePopup",
+        ["c"] = "CommitPopup",
+        ["f"] = "FetchPopup",
+        ["l"] = "LogPopup",
+        ["m"] = "MergePopup",
+        ["p"] = "PullPopup",
+        ["r"] = "RebasePopup",
+        ["v"] = "RevertPopup",
       },
       status = {
         ["q"] = "Close",
@@ -261,31 +378,14 @@ function M.get_default_values()
         ["<c-s>"] = "StageAll",
         ["u"] = "Unstage",
         ["U"] = "UnstageStaged",
-        ["d"] = "DiffAtFile",
         ["$"] = "CommandHistory",
         ["#"] = "Console",
+        ["Y"] = "YankSelected",
         ["<c-r>"] = "RefreshBuffer",
         ["<enter>"] = "GoToFile",
         ["<c-v>"] = "VSplitOpen",
         ["<c-x>"] = "SplitOpen",
         ["<c-t>"] = "TabOpen",
-        ["?"] = "HelpPopup",
-        ["D"] = "DiffPopup",
-        ["p"] = "PullPopup",
-        ["r"] = "RebasePopup",
-        ["m"] = "MergePopup",
-        ["P"] = "PushPopup",
-        ["c"] = "CommitPopup",
-        ["i"] = "IgnorePopup",
-        ["t"] = "TagPopup",
-        ["l"] = "LogPopup",
-        ["v"] = "RevertPopup",
-        ["Z"] = "StashPopup",
-        ["A"] = "CherryPickPopup",
-        ["b"] = "BranchPopup",
-        ["f"] = "FetchPopup",
-        ["X"] = "ResetPopup",
-        ["M"] = "RemotePopup",
         ["{"] = "GoToPreviousHunkHeader",
         ["}"] = "GoToNextHunkHeader",
       },
@@ -551,13 +651,116 @@ function M.validate_config()
         end
       end
     end
+
+    local valid_popup_commands = {
+      false,
+    }
+
+    for _, cmd in pairs(M.get_default_values().mappings.popup) do
+      table.insert(valid_popup_commands, cmd)
+    end
+
+    if validate_type(config.mappings.popup, "mappings.popup", "table") then
+      for key, command in pairs(config.mappings.popup) do
+        if
+          validate_type(key, "mappings.popup -> " .. vim.inspect(key), "string")
+          and validate_type(command, string.format("mappings.popup['%s']", key), { "string", "boolean" })
+        then
+          if type(command) == "string" and not vim.tbl_contains(valid_popup_commands, command) then
+            local valid_popup_commands = util.map(valid_popup_commands, function(command)
+              return vim.inspect(command)
+            end)
+
+            err(
+              string.format("mappings.popup['%s']", key),
+              string.format(
+                "Expected a valid popup command, got '%s'. Valid popup commands: { %s }",
+                command,
+                table.concat(valid_popup_commands, ", ")
+              )
+            )
+          end
+        end
+      end
+    end
+
+    local valid_rebase_editor_commands = {
+      false,
+    }
+
+    for _, cmd in pairs(M.get_default_values().mappings.rebase_editor) do
+      table.insert(valid_rebase_editor_commands, cmd)
+    end
+
+    if validate_type(config.mappings.rebase_editor, "mappings.rebase_editor", "table") then
+      for key, command in pairs(config.mappings.rebase_editor) do
+        if
+          validate_type(key, "mappings.rebase_editor -> " .. vim.inspect(key), "string")
+          and validate_type(
+            command,
+            string.format("mappings.rebase_editor['%s']", key),
+            { "string", "boolean", "function" }
+          )
+        then
+          if type(command) == "string" and not vim.tbl_contains(valid_rebase_editor_commands, command) then
+            local valid_rebase_editor_commands = util.map(valid_rebase_editor_commands, function(command)
+              return vim.inspect(command)
+            end)
+
+            err(
+              string.format("mappings.rebase_editor['%s']", key),
+              string.format(
+                "Expected a valid rebase_editor command, got '%s'. Valid rebase_editor commands: { %s }",
+                command,
+                table.concat(valid_rebase_editor_commands, ", ")
+              )
+            )
+          end
+        end
+      end
+    end
+
+    local valid_commit_editor_commands = {
+      false,
+    }
+
+    for _, cmd in pairs(M.get_default_values().mappings.commit_editor) do
+      table.insert(valid_commit_editor_commands, cmd)
+    end
+
+    if validate_type(config.mappings.commit_editor, "mappings.commit_editor", "table") then
+      for key, command in pairs(config.mappings.commit_editor) do
+        if
+          validate_type(key, "mappings.commit_editor -> " .. vim.inspect(key), "string")
+          and validate_type(
+            command,
+            string.format("mappings.commit_editor['%s']", key),
+            { "string", "boolean", "function" }
+          )
+        then
+          if type(command) == "string" and not vim.tbl_contains(valid_commit_editor_commands, command) then
+            local valid_commit_editor_commands = util.map(valid_commit_editor_commands, function(command)
+              return vim.inspect(command)
+            end)
+
+            err(
+              string.format("mappings.commit_editor['%s']", key),
+              string.format(
+                "Expected a valid commit_editor command, got '%s'. Valid commit_editor commands: { %s }",
+                command,
+                table.concat(valid_commit_editor_commands, ", ")
+              )
+            )
+          end
+        end
+      end
+    end
   end
 
   if validate_type(config, "base config", "table") then
     validate_type(config.disable_hint, "disable_hint", "boolean")
     validate_type(config.disable_context_highlighting, "disable_context_highlighting", "boolean")
     validate_type(config.disable_signs, "disable_signs", "boolean")
-    validate_type(config.disable_commit_confirmation, "disable_commit_confirmation", "boolean")
     validate_type(config.telescope_sorter, "telescope_sorter", "function")
     validate_type(config.use_per_project_settings, "use_per_project_settings", "boolean")
     validate_type(config.remember_settings, "remember_settings", "boolean")
@@ -636,38 +839,55 @@ function M.check_integration(name)
 end
 
 function M.setup(opts)
-  if opts ~= nil then
-    M.values = vim.tbl_deep_extend("force", M.values, opts)
+  if opts == nil then
+    return
   end
+
+  if opts.use_default_keymaps == false then
+    M.values.mappings = { status = {}, popup = {}, finder = {}, commit_editor = {}, rebase_editor = {} }
+  else
+    -- Clear our any "false" user mappings from defaults
+    for section, maps in pairs(opts.mappings or {}) do
+      for k, v in pairs(maps) do
+        if v == false then
+          M.values.mappings[section][k] = nil
+          opts.mappings[section][k] = nil
+        end
+      end
+    end
+  end
+
+  M.values = vim.tbl_deep_extend("force", M.values, opts)
 
   local config_errs = M.validate_config()
-  if vim.tbl_count(config_errs) > 0 then
-    local header = "====Neogit Configuration Errors===="
-    local header_message = {
-      "Neogit has NOT been setup!",
-      "You have a misconfiguration in your Neogit setup!",
-      'Validate that your configuration passed to `require("neogit").setup()` is valid!',
-    }
-    local header_sep = ""
-    for _ = 0, string.len(header), 1 do
-      header_sep = header_sep .. "-"
-    end
-
-    local config_errs_message = {}
-    for config_key, err in pairs(config_errs) do
-      table.insert(config_errs_message, string.format("Config value: `%s` had error -> %s", config_key, err))
-    end
-    error(
-      string.format(
-        "\n%s\n%s\n%s\n%s",
-        header,
-        table.concat(header_message, "\n"),
-        header_sep,
-        table.concat(config_errs_message, "\n")
-      ),
-      vim.log.levels.ERROR
-    )
+  if vim.tbl_count(config_errs) == 0 then
+    return
   end
+  local header = "====Neogit Configuration Errors===="
+  local header_message = {
+    "Neogit has NOT been setup!",
+    "You have a misconfiguration in your Neogit setup!",
+    'Validate that your configuration passed to `require("neogit").setup()` is valid!',
+  }
+  local header_sep = ""
+  for _ = 0, string.len(header), 1 do
+    header_sep = header_sep .. "-"
+  end
+
+  local config_errs_message = {}
+  for config_key, err in pairs(config_errs) do
+    table.insert(config_errs_message, string.format("Config value: `%s` had error -> %s", config_key, err))
+  end
+  error(
+    string.format(
+      "\n%s\n%s\n%s\n%s",
+      header,
+      table.concat(header_message, "\n"),
+      header_sep,
+      table.concat(config_errs_message, "\n")
+    ),
+    vim.log.levels.ERROR
+  )
 end
 
 return M

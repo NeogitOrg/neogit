@@ -71,7 +71,7 @@ describe("validating a string variable", function ()
   end)
 
   it("should have content 'Hello World!'", function()
-     assert.are.same("Hello World!", our_varible)
+     assert.are.same("Hello World!", our_variable)
   )
 end)
 ```
@@ -91,7 +91,7 @@ describe("git cli", function()
     it(
       "finds the correct git root for a non symlinked directory",
       in_prepared_repo(function(root_dir)
-        local detected_root_dir = git_cli.git_root()
+        local detected_root_dir = git_cli.git_root_of_cwd()
         eq(detected_root_dir, root_dir)
       end)
     )

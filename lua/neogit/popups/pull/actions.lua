@@ -49,7 +49,7 @@ function M.from_upstream(popup)
   if not upstream then
     set_upstream = true
     upstream = FuzzyFinderBuffer.new(git.branch.get_remote_branches()):open_async {
-      prompt_prefix = "set upstream > ",
+      prompt_prefix = "set upstream",
     }
 
     if not upstream then
@@ -57,18 +57,18 @@ function M.from_upstream(popup)
     end
   end
 
-  local remote, branch = upstream:match("^([^/]*)/(.*)$")
+  local remote, branch = git.branch.parse_remote_branch(upstream)
   pull_from(popup:get_arguments(), remote, branch, { set_upstream = set_upstream })
 end
 
 function M.from_elsewhere(popup)
-  local target = FuzzyFinderBuffer.new(git.branch.get_remote_branches())
-    :open_async { prompt_prefix = "pull > " }
+  local target = FuzzyFinderBuffer.new(git.branch.get_all_branches(false))
+    :open_async { prompt_prefix = "pull" }
   if not target then
     return
   end
 
-  local remote, branch = target:match("^([^/]*)/(.*)$")
+  local remote, branch = git.branch.parse_remote_branch(target)
   pull_from(popup:get_arguments(), remote, branch)
 end
 

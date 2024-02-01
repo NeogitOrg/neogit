@@ -1,6 +1,7 @@
 local Ui = require("neogit.lib.ui")
 local Component = require("neogit.lib.ui.component")
 local util = require("neogit.lib.util")
+local git = require("neogit.lib.git")
 
 local text = Ui.text
 local col = Ui.col
@@ -112,29 +113,33 @@ M.CommitEntry = Component.new(function(commit, args)
 
   -- Parse out ref names
   if args.decorate and commit.ref_name ~= "" then
-    local ref_name, _ = commit.ref_name:gsub("HEAD %-> ", "")
-    local remote_name, local_name = unpack(vim.split(ref_name, ", "))
+    local info = git.log.branch_info(commit.ref_name, git.remote.list())
 
-    -- Sometimes the log output will list remote/local names in reverse order
-    if (local_name and local_name:match("/")) and (remote_name and not remote_name:match("/")) then
-      remote_name, local_name = local_name, remote_name
+    -- Render local only branches first
+    for name, _ in pairs(info.locals) do
+      if info.remotes[name] == nil then
+        local branch_highlight = info.head == name and "NeogitBranchHead" or "NeogitBranch"
+        table.insert(ref, text(name, { highlight = branch_highlight }))
+        table.insert(ref, text(" "))
+      end
     end
 
-    if local_name and remote_name and vim.endswith(remote_name, local_name) then
-      local remote = remote_name:match("^([^/]*)/.*$")
-      table.insert(ref, text(remote .. "/", { highlight = "String" }))
-      table.insert(ref, text(local_name, { highlight = "Macro" }))
+    -- Render tracked (local+remote) branches next
+    for name, remotes in pairs(info.remotes) do
+      if #remotes == 1 then
+        table.insert(ref, text(remotes[1] .. "/", { highlight = "NeogitRemote" }))
+      end
+      if #remotes > 1 then
+        table.insert(ref, text("{" .. table.concat(remotes, ",") .. "}/", { highlight = "NeogitRemote" }))
+      end
+      local branch_highlight = info.head == name and "NeogitBranchHead" or "NeogitBranch"
+      local locally = info.locals[name] ~= nil
+      table.insert(ref, text(name, { highlight = locally and branch_highlight or "NeogitRemote" }))
       table.insert(ref, text(" "))
-    else
-      if local_name then
-        table.insert(ref, text(local_name, { highlight = local_name:match("/") and "String" or "Macro" }))
-        table.insert(ref, text(" "))
-      end
-
-      if remote_name then
-        table.insert(ref, text(remote_name, { highlight = remote_name:match("/") and "String" or "Macro" }))
-        table.insert(ref, text(" "))
-      end
+    end
+    for _, tag in pairs(info.tags) do
+      table.insert(ref, text(tag, { highlight = "NeogitTagName" }))
+      table.insert(ref, text(" "))
     end
   end
 
@@ -153,7 +158,7 @@ M.CommitEntry = Component.new(function(commit, args)
       row(util.merge(graph, {
         text(" "),
         text("Author:     ", { highlight = "Comment" }),
-        text(commit.author_name),
+        text(commit.author_name, { highlight = "NeogitGraphAuthor" }),
         text(" <"),
         text(commit.author_email),
         text(">"),
@@ -178,8 +183,15 @@ M.CommitEntry = Component.new(function(commit, args)
       })),
       row(graph),
       col(
-        flat_map(commit.description, function(line)
-          local lines = map(util.str_wrap(line, vim.o.columns * 0.6), function(l)
+        flat_map({ commit.subject, commit.body }, function(line)
+          local lines = vim.split(line, "\\n")
+
+          -- TODO: More correctly handle newlines/wrapping in messages
+          -- lines = util.flat_map(lines, function(line)
+          --   return util.str_wrap(line, vim.o.columns * 0.6)
+          -- end)
+
+          lines = map(lines, function(l)
             return row(util.merge(graph, { text(" "), text(l) }))
           end)
 
@@ -191,7 +203,7 @@ M.CommitEntry = Component.new(function(commit, args)
             return lines
           end
         end),
-        { highlight = "String" }
+        { highlight = "NeogitCommitViewDescription" }
       ),
     }
   end
@@ -200,16 +212,17 @@ M.CommitEntry = Component.new(function(commit, args)
     row(
       util.merge({
         text(commit.oid:sub(1, 7), {
-          highlight = commit.signature_code and highlight_for_signature[commit.signature_code] or "Comment",
+          highlight = commit.verification_flag and highlight_for_signature[commit.verification_flag]
+            or "Comment",
         }),
         text(" "),
-      }, graph, { text(" ") }, ref, { text(commit.description[1]) }),
+      }, graph, { text(" ") }, ref, { text(commit.subject) }),
       {
         virtual_text = {
           { " ", "Constant" },
           {
             util.str_clamp(commit.author_name, 30 - (#commit.rel_date > 10 and #commit.rel_date or 10)),
-            "Constant",
+            "NeogitGraphAuthor",
           },
           { util.str_min_width(commit.rel_date, 10), "Special" },
         },

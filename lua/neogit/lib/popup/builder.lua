@@ -4,8 +4,69 @@ local config = require("neogit.lib.git.config")
 local util = require("neogit.lib.util")
 local notification = require("neogit.lib.notification")
 local logger = require("neogit.logger")
+local watcher = require("neogit.watcher")
 
 local M = {}
+
+---@class Popup
+---@field state PopupState
+
+---@class PopupState
+---@field name string
+---@field args PopupOption[]|PopupSwitch[]|PopupHeading[]
+---@field config PopupConfig[]
+---@field actions PopupAction[][]
+---@field env table
+---@field keys table<string, boolean>
+
+---@class PopupHeading
+---@field type string
+---@field heading string
+
+---@class PopupOption
+---@field choices table
+---@field cli string
+---@field cli_prefix string
+---@field default string|integer|boolean
+---@field description string
+---@field fn function
+---@field id string
+---@field key string
+---@field key_prefix string
+---@field separator string
+---@field type string
+---@field value string
+
+---@class PopupSwitch
+---@field cli string
+---@field cli_base string
+---@field cli_prefix string
+---@field cli_suffix string
+---@field dependant table
+---@field description string
+---@field enabled boolean
+---@field fn function
+---@field id string
+---@field incompatible table
+---@field internal boolean
+---@field key string
+---@field key_prefix string
+---@field options table
+---@field type string
+---@field user_input boolean
+
+---@class PopupConfig
+---@field id string
+---@field key string
+---@field name string
+---@field entry string
+---@field value string
+---@field type string
+
+---@class PopupAction
+---@field keys table
+---@field description string
+---@field callback function
 
 function M.new(builder_fn)
   local instance = {
@@ -81,7 +142,7 @@ end
 ---@param opts table|nil A table of options for the switch
 ---@param opts.enabled boolean Controls if the switch should default to 'on' state
 ---@param opts.internal boolean Whether the switch is internal to neogit or should be included in the cli command.
---                              If `true` we don't include it in the cli comand.
+--                              If `true` we don't include it in the cli command.
 ---@param opts.incompatible table A table of strings that represent other cli flags that this one cannot be used with
 ---@param opts.key_prefix string Allows overwriting the default '-' to toggle switch
 ---@param opts.cli_prefix string Allows overwriting the default '--' thats used to create the cli flag. Sometimes you may want
@@ -136,6 +197,7 @@ function M:switch(key, cli, description, opts)
     enabled = state.get({ self.state.name, cli }, opts.enabled)
   end
 
+  ---@type PopupSwitch
   table.insert(self.state.args, {
     type = "switch",
     id = opts.key_prefix .. key,
@@ -194,6 +256,11 @@ function M:option(key, cli, value, description, opts)
     opts.separator = "="
   end
 
+  if opts.setup then
+    opts.setup(self)
+  end
+
+  ---@type PopupOption
   table.insert(self.state.args, {
     type = "option",
     id = opts.key_prefix .. key,
@@ -216,6 +283,7 @@ end
 ---@param heading string Heading to show
 ---@return self
 function M:arg_heading(heading)
+  ---@type PopupHeading
   table.insert(self.state.args, { type = "heading", heading = heading })
   return self
 end
@@ -249,6 +317,7 @@ end
 function M:config(key, name, options)
   local entry = config.get(name)
 
+  ---@type PopupConfig
   local variable = {
     id = key,
     key = key,
@@ -279,6 +348,9 @@ function M:config_if(cond, key, name, options)
   return self
 end
 
+-- Allow user actions to be queued
+local action_lock = a.control.Semaphore.new(1)
+
 ---@param keys string|string[] Key or list of keys for the user to press that runs the action
 ---@param description string Description of action in UI
 ---@param callback function Function that gets run in async context
@@ -299,11 +371,17 @@ function M:action(keys, description, callback)
   local callback_fn
   if callback then
     callback_fn = a.void(function(...)
-      logger.fmt_debug("[ACTION] Running action from %s", self.state.name)
-      callback(...)
-      logger.fmt_debug("[ACTION] Dispatching Refresh for %s", self.state.name)
+      local permit = action_lock:acquire()
+      logger.debug(string.format("[ACTION] Running action from %s", self.state.name))
 
-      require("neogit.status").dispatch_refresh_all(true, "action")
+      watcher.pause()
+      callback(...)
+      watcher.resume()
+
+      permit:forget()
+
+      logger.debug("[ACTION] Dispatching Refresh")
+      require("neogit.status").dispatch_refresh_all(nil, "action")
     end)
   end
 

@@ -8,5 +8,6 @@
         "it",
         "describe",
         "before_each"
-    ]
+    ],
+    "workspace.checkThirdParty": "Disable"
 }

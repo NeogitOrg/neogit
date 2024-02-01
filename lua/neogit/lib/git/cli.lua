@@ -1,6 +1,4 @@
-local notification = require("neogit.lib.notification")
 local logger = require("neogit.logger")
-local a = require("plenary.async")
 local process = require("neogit.process")
 local util = require("neogit.lib.util")
 
@@ -34,11 +32,21 @@ local configurations = {
 
   init = config {},
 
+  worktree = config {
+    flags = {
+      add = "add",
+      list = "list",
+      move = "move",
+      remove = "remove",
+    },
+  },
+
   status = config {
     flags = {
       short = "-s",
       branch = "-b",
       verbose = "-v",
+      null_separated = "-z",
     },
     options = {
       porcelain = "--porcelain",
@@ -76,6 +84,7 @@ local configurations = {
       _get = "--get",
       _add = "--add",
       _unset = "--unset",
+      null = "--null",
     },
     aliases = {
       set = function(tbl)
@@ -134,9 +143,20 @@ local configurations = {
   rebase = config {
     flags = {
       interactive = "-i",
+      onto = "--onto",
+      edit_todo = "--edit-todo",
       continue = "--continue",
       abort = "--abort",
       skip = "--skip",
+      autosquash = "--autosquash",
+      autostash = "--autostash",
+    },
+    aliases = {
+      commit = function(tbl)
+        return function(rev)
+          return tbl.args(rev .. "^")
+        end
+      end,
     },
   },
 
@@ -267,11 +287,17 @@ local configurations = {
       dry_run = "--dry-run",
       no_edit = "--no-edit",
       edit = "--edit",
+      allow_empty = "--allow-empty",
     },
     aliases = {
       with_message = function(tbl)
         return function(message)
           return tbl.args("-F", "-").input(message)
+        end
+      end,
+      message = function(tbl)
+        return function(text)
+          return tbl.args("-m", text)
         end
       end,
     },
@@ -320,6 +346,7 @@ local configurations = {
       remotes = "-r",
       force = "--force",
       current = "--show-current",
+      edit_description = "--edit-description",
       very_verbose = "-vv",
       move = "-m",
     },
@@ -485,6 +512,7 @@ local configurations = {
 
   ["rev-list"] = config {
     flags = {
+      merges = "--merges",
       parents = "--parents",
     },
     options = {
@@ -495,6 +523,7 @@ local configurations = {
   ["rev-parse"] = config {
     flags = {
       verify = "--verify",
+      quiet = "--quiet",
       short = "--short",
       revs_only = "--revs-only",
       no_revs = "--no-revs",
@@ -516,13 +545,23 @@ local configurations = {
       abort = "--abort",
     },
   },
+
   ["verify-commit"] = config {},
 }
 
--- TODO: Consider returning a Path object, since consumers of this function tend to need that anyways.
-local function git_root()
-  local process =
-    process.new({ cmd = { "git", "rev-parse", "--show-toplevel" }, ignore_code = true }):spawn_blocking()
+-- NOTE: Use require("neogit.lib.git.repository").git_root instead of calling this function.
+-- repository.git_root is used by all other library functions, so it's most likely the one you want to use.
+-- git_root_of_cwd() returns the git repo of the cwd, which can change anytime
+-- after git_root_of_cwd() has been called.
+local function git_root_of_cwd()
+  local process = process
+    .new({
+      cmd = { "git", "rev-parse", "--show-toplevel" },
+      on_error = function()
+        return false
+      end,
+    })
+    :spawn_blocking()
 
   if process ~= nil and process.code == 0 then
     return process.stdout[1]
@@ -531,15 +570,7 @@ local function git_root()
   end
 end
 
-local git_root_sync = function()
-  return util.trim(vim.fn.system("git rev-parse --show-toplevel"))
-end
-
-local git_dir_path_sync = function()
-  return util.trim(vim.fn.system("git rev-parse --git-dir"))
-end
-
-local git_is_repository_sync = function(cwd)
+local is_inside_worktree = function(cwd)
   if not cwd then
     vim.fn.system("git rev-parse --is-inside-work-tree")
   else
@@ -551,9 +582,17 @@ end
 
 local history = {}
 
-local function handle_new_cmd(job, popup, hidden_text)
+---@param job any
+---@param popup any
+---@param hidden_text string Text to obfuscate from history
+---@param hide_from_history boolean Do not show this command in GitHistoryBuffer
+local function handle_new_cmd(job, popup, hidden_text, hide_from_history)
   if popup == nil then
     popup = true
+  end
+
+  if hide_from_history == nil then
+    hide_from_history = false
   end
 
   table.insert(history, {
@@ -563,12 +602,13 @@ local function handle_new_cmd(job, popup, hidden_text)
     stderr = job.stderr,
     code = job.code,
     time = job.time,
+    hidden = hide_from_history,
   })
 
   do
     local log_fn = logger.trace
     if job.code > 0 then
-      log_fn = logger.error
+      log_fn = logger.warn
     end
     if job.code > 0 then
       log_fn(
@@ -583,12 +623,6 @@ local function handle_new_cmd(job, popup, hidden_text)
     else
       log_fn(string.format("[CLI] Execution of '%s' succeeded in %d ms", job.cmd, job.time))
     end
-  end
-
-  if popup and job.code ~= 0 then
-    vim.schedule(function()
-      notification.error("Git Error (" .. job.code .. "), press $ to see the git command history")
-    end)
   end
 end
 
@@ -628,13 +662,6 @@ local mt_builder = {
     if action == "input" or action == "stdin" then
       return function(value)
         tbl[k_state].input = value
-        return tbl
-      end
-    end
-
-    if action == "cwd" then
-      return function(cwd)
-        tbl[k_state].cwd = cwd
         return tbl
       end
     end
@@ -789,11 +816,10 @@ local function new_builder(subcommand)
     input = nil,
     show_popup = true,
     in_pty = false,
-    cwd = nil,
     env = {},
   }
 
-  local function to_process(verbose, suppress_error, ignore_code)
+  local function to_process(opts)
     local cmd = {}
 
     for _, o in ipairs(state.options) do
@@ -818,19 +844,30 @@ local function new_builder(subcommand)
       table.insert(cmd, 1, state.prefix)
     end
 
-    -- Disable the pager so that the commands don't stop and wait for pagination
-    cmd = util.merge({ "git", "--no-pager", "-c", "color.ui=always", "--no-optional-locks", subcommand }, cmd)
+    -- stylua: ignore
+    cmd = util.merge(
+      {
+        "git",
+        "--no-pager",
+        "--literal-pathspecs",
+        "--no-optional-locks",
+        "-c", "core.preloadindex=true",
+        "-c", "color.ui=always",
+        subcommand
+      },
+      cmd
+    )
 
     logger.trace(string.format("[CLI]: Executing '%s': '%s'", subcommand, table.concat(cmd, " ")))
 
+    local repo = require("neogit.lib.git.repository")
     return process.new {
       cmd = cmd,
-      cwd = state.cwd,
+      cwd = repo.git_root,
       env = state.env,
       pty = state.in_pty,
-      verbose = verbose,
-      ignore_code = ignore_code,
-      on_error = suppress_error,
+      verbose = opts.verbose,
+      on_error = opts.on_error,
     }
   end
 
@@ -839,9 +876,16 @@ local function new_builder(subcommand)
     [k_config] = configuration,
     [k_command] = subcommand,
     to_process = to_process,
-    call_interactive = function(handle_line)
-      handle_line = handle_line or handle_interactive_password_questions
-      local p = to_process(true, false)
+    call_interactive = function(options)
+      local opts = options or {}
+
+      local handle_line = opts.handle_line or handle_interactive_password_questions
+      local p = to_process {
+        verbose = opts.verbose,
+        on_error = function(_res)
+          return true
+        end,
+      }
       p.pty = true
 
       p.on_partial_line = function(p, line, _)
@@ -865,28 +909,30 @@ local function new_builder(subcommand)
         stderr = result.stderr,
         code = result.code,
         time = result.time,
-      }, state.show_popup, state.hide_text)
+      }, state.show_popup, state.hide_text, opts.hidden)
 
       return result
     end,
-    call_ignoring_exit_code = function(verbose)
-      local p = to_process(verbose, false, true)
-      local result = p:spawn_async()
+    call = function(options)
+      local opts = vim.tbl_extend(
+        "keep",
+        (options or {}),
+        { verbose = false, ignore_error = not state.show_popup, hidden = false, trim = true }
+      )
 
-      assert(result, "Command did not complete")
+      local p = to_process {
+        verbose = opts.verbose,
+        on_error = function(res)
+          local commit_aborted_msg = "hint: Waiting for your editor to close the file..."
 
-      handle_new_cmd({
-        cmd = table.concat(p.cmd, " "),
-        stdout = result.stdout,
-        stderr = result.stderr,
-        code = 0,
-        time = result.time,
-      }, state.show_popup, state.hide_text)
+          if vim.startswith(res.stdout[1], commit_aborted_msg) then
+            return false
+          end
 
-      return result
-    end,
-    call = function(verbose)
-      local p = to_process(verbose, not state.show_popup)
+          return not opts.ignore_error
+        end,
+      }
+
       local result = p:spawn_async(function()
         -- Required since we need to do this before awaiting
         if state.input then
@@ -906,12 +952,26 @@ local function new_builder(subcommand)
         stderr = result.stderr,
         code = result.code,
         time = result.time,
-      }, state.show_popup, state.hide_text)
+      }, state.show_popup, state.hide_text, opts.hidden)
 
-      return result
+      if opts.trim then
+        return result:trim()
+      else
+        return result
+      end
     end,
-    call_sync = function(verbose, external_errors)
-      local p = to_process(verbose, external_errors)
+    call_sync = function(options)
+      local opts = vim.tbl_extend(
+        "keep",
+        (options or {}),
+        { verbose = false, ignore_error = not state.show_popup, hidden = false, trim = true }
+      )
+
+      local p = to_process {
+        on_error = function(_res)
+          return not opts.ignore_error
+        end,
+      }
 
       if not p:spawn() then
         error("Failed to run command")
@@ -927,97 +987,19 @@ local function new_builder(subcommand)
         stderr = result.stderr,
         code = result.code,
         time = result.time,
-      }, state.show_popup, state.hide_text)
+      }, state.show_popup, state.hide_text, opts.hidden)
 
-      return result
-    end,
-    call_sync_ignoring_exit_code = function(verbose, external_errors)
-      local p = to_process(verbose, external_errors, true)
-
-      if not p:spawn() then
-        error("Failed to run command")
-        return nil
+      if opts.trim then
+        return result:trim()
+      else
+        return result
       end
-
-      local result = p:wait()
-      assert(result, "Command did not complete")
-
-      handle_new_cmd({
-        cmd = table.concat(p.cmd, " "),
-        stdout = result.stdout,
-        stderr = result.stderr,
-        code = 0,
-        time = result.time,
-      }, state.show_popup, state.hide_text)
-
-      return result
     end,
   }, mt_builder)
 end
 
-local function new_parallel_builder(calls)
-  local state = {
-    calls = calls,
-    show_popup = true,
-    in_pty = true,
-    cwd = nil,
-  }
-
-  local function call()
-    if #state.calls == 0 then
-      return
-    end
-
-    if not state.cwd then
-      state.cwd = git_root()
-    end
-    if not state.cwd or state.cwd == "" then
-      return
-    end
-
-    for _, c in ipairs(state.calls) do
-      c.cwd(state.cwd).show_popup(state.show_popup)
-    end
-
-    local processes = {}
-    for _, c in ipairs(state.calls) do
-      table.insert(processes, c)
-    end
-
-    return a.util.join(processes)
-  end
-
-  return setmetatable({
-    call = call,
-  }, {
-    __index = function(tbl, action)
-      if action == "cwd" then
-        return function(cwd)
-          state.cwd = cwd
-          return tbl
-        end
-      end
-
-      if action == "show_popup" then
-        return function(show_popup)
-          state.show_popup = show_popup
-          return tbl
-        end
-      end
-
-      if action == "in_pty" then
-        return function(in_pty)
-          tbl[k_state].in_pty = in_pty
-          return tbl
-        end
-      end
-    end,
-    __call = call,
-  })
-end
-
 local meta = {
-  __index = function(_tbl, key)
+  __index = function(_, key)
     if configurations[key] then
       return new_builder(key)
     end
@@ -1029,14 +1011,8 @@ local meta = {
 local cli = setmetatable({
   history = history,
   insert = handle_new_cmd,
-  git_root = git_root,
-  git_root_sync = git_root_sync,
-  git_dir_path_sync = git_dir_path_sync,
-  git_is_repository_sync = git_is_repository_sync,
-  in_parallel = function(...)
-    local calls = { ... }
-    return new_parallel_builder(calls)
-  end,
+  git_root_of_cwd = git_root_of_cwd,
+  is_inside_worktree = is_inside_worktree,
 }, meta)
 
 return cli

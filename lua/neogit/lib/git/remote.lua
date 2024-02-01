@@ -1,4 +1,5 @@
 local cli = require("neogit.lib.git.cli")
+local util = require("neogit.lib.util")
 
 local M = {}
 
@@ -47,12 +48,12 @@ function M.prune(name)
   return cli.remote.prune.args(name).call().code == 0
 end
 
-function M.list()
-  return cli.remote.call_sync():trim().stdout
-end
+M.list = util.memoize(function()
+  return cli.remote.call_sync({ hidden = false }).stdout
+end)
 
 function M.get_url(name)
-  return cli.remote.get_url(name).call():trim().stdout
+  return cli.remote.get_url(name).call({ hidden = true }).stdout
 end
 
 return M

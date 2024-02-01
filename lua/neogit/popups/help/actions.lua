@@ -3,8 +3,8 @@ local M = {}
 local util = require("neogit.lib.util")
 local NONE = function() end
 
--- Using deep extend this way creates a copy of the mapping values
 local status_mappings = require("neogit.config").get_reversed_status_maps()
+local popup_mappings = require("neogit.config").get_reversed_popup_maps()
 
 local function present(commands)
   local presenter = util.map(commands, function(command)
@@ -15,7 +15,7 @@ local function present(commands)
       fn = fn[2]
     end
 
-    local keymap = status_mappings[cmd]
+    local keymap = status_mappings[cmd] or popup_mappings[cmd]
     if keymap and #keymap > 0 then
       return { { name = name, keys = keymap, cmp = table.concat(keymap):lower(), fn = fn } }
     else
@@ -67,7 +67,7 @@ M.essential = function()
       "RefreshBuffer",
       "Refresh",
       function()
-        require("neogit.status").refresh(true, "user_refresh")
+        require("neogit.status").refresh(nil, "user_refresh")
       end,
     },
     { "GoToFile", "Go to file", NONE },
