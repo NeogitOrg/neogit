@@ -128,7 +128,15 @@ local configurations = {
       apply = "apply",
       drop = "drop",
       push = "push",
+      store = "store",
       index = "--index",
+    },
+    aliases = {
+      message = function(tbl)
+        return function(text)
+          return tbl.args("-m", text)
+        end
+      end,
     },
   },
 
