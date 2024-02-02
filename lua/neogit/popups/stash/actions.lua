@@ -1,16 +1,17 @@
 local git = require("neogit.lib.git")
+local operation = require("neogit.operations")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
 local M = {}
 
-function M.both(popup)
+M.both = operation("stash_both", function(popup)
   git.stash.stash_all(popup:get_arguments())
-end
+end)
 
-function M.index(popup)
+M.index = operation("stash_index", function(popup)
   git.stash.stash_index(popup:get_arguments())
-end
+end)
 
 function M.push(popup)
   local files = FuzzyFinderBuffer.new(git.files.all()):open_async { allow_multi = true }
@@ -51,5 +52,9 @@ end
 function M.drop(popup)
   use("drop", popup.state.env.stash)
 end
+
+M.rename = operation("stash_rename", function(popup)
+  use("rename", popup.state.env.stash)
+end)
 
 return M
