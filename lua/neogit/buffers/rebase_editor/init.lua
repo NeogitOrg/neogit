@@ -12,8 +12,8 @@ local M = {}
 
 local function line_action(action, comment_char)
   return function(buffer)
-    local _index = 1
-    local _count = vim.v.count1
+    local _index = 0
+    local _count = vim.v.count
     local line = {}
     while _index <= _count do
       line = vim.split(vim.api.nvim_get_current_line(), " ")
@@ -24,7 +24,7 @@ local function line_action(action, comment_char)
       -- the original match will also skip "edit",i'm not sure is that intended
       if line[1]:sub(1, 2):match("^(br|ex)") then
         vim.cmd("normal! j")
-        if _index ~= 1 then
+        if _index ~= 0 then
           break --or continue?i think break is used in most case
         end
         return
