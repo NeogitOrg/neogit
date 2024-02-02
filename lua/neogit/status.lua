@@ -1317,10 +1317,22 @@ local cmd_func_map = function()
         end
       end
     end),
-
     ["RefreshBuffer"] = function()
       notification.info("Refreshing Status")
       dispatch_refresh(nil, "manual")
+    end,
+    ["DiffAtFile"] = function()
+      if not config.check_integration("diffview") then
+        notification.error("Diffview integration is not enabled")
+        return
+      end
+
+      local dv = require("neogit.integrations.diffview")
+      local section, item = get_current_section_item()
+
+      if section and item then
+        dv.open(section.name, item.name)
+      end
     end,
   }
 

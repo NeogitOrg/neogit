@@ -374,6 +374,7 @@ function M.get_default_values()
         ["<tab>"] = "Toggle",
         ["x"] = "Discard",
         ["s"] = "Stage",
+        ["d"] = "DiffAtFile",
         ["S"] = "StageUnstaged",
         ["<c-s>"] = "StageAll",
         ["u"] = "Unstage",
@@ -863,12 +864,8 @@ function M.setup(opts)
   if vim.tbl_count(config_errs) == 0 then
     return
   end
-  local header = "====Neogit Configuration Errors===="
-  local header_message = {
-    "Neogit has NOT been setup!",
-    "You have a misconfiguration in your Neogit setup!",
-    'Validate that your configuration passed to `require("neogit").setup()` is valid!',
-  }
+  local header = "Neogit Configuration Errors"
+  local header_message = { "You have a misconfiguration in your Neogit setup!" }
   local header_sep = ""
   for _ = 0, string.len(header), 1 do
     header_sep = header_sep .. "-"
@@ -878,7 +875,7 @@ function M.setup(opts)
   for config_key, err in pairs(config_errs) do
     table.insert(config_errs_message, string.format("Config value: `%s` had error -> %s", config_key, err))
   end
-  error(
+  vim.notify(
     string.format(
       "\n%s\n%s\n%s\n%s",
       header,
