@@ -158,12 +158,12 @@ local function update_status(state)
   if #tag == 1 then
     local tag, distance = tostring(tag[1]):match(tag_pattern)
     if tag and distance then
-      head.tag = { name = tag, distance = tonumber(distance) }
+      head.tag = { name = tag, distance = tonumber(distance), oid = git.rev_parse.oid(tag) }
     else
-      head.tag = { name = nil, distance = nil }
+      head.tag = { name = nil, distance = nil, oid = nil }
     end
   else
-    head.tag = { name = nil, distance = nil }
+    head.tag = { name = nil, distance = nil, oid = nil }
   end
 
   state.head = head

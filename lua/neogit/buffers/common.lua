@@ -32,9 +32,12 @@ M.DiffHunks = Component.new(function(diff)
       return diff.lines[i]
     end)
 
+    hunk.content = content
+
     return {
       header = header,
       content = content,
+      hunk = hunk,
     }
   end)
 
@@ -62,7 +65,7 @@ M.Hunk = Component.new(function(props)
   return col.tag("Hunk")({
     text.line_hl("NeogitHunkHeader")(props.header),
     col.tag("HunkContent")(map(props.content, HunkLine)),
-  }, { foldable = true, folded = false, context = true })
+  }, { foldable = true, folded = false, context = true, hunk = props.hunk })
 end)
 
 M.List = Component.new(function(props)

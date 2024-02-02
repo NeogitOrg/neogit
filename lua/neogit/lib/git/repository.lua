@@ -4,13 +4,16 @@ local Path = require("plenary.path")
 local cli = require("neogit.lib.git.cli")
 
 local function empty_state()
+  ---@class NeogitRepo
   return {
     git_root = cli.git_root_of_cwd(),
     head = {
       branch = nil,
+      oid = nil,
       commit_message = nil,
       tag = {
         name = nil,
+        oid = nil,
         distance = nil,
       },
     },

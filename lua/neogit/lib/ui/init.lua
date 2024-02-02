@@ -159,6 +159,49 @@ function Ui:get_commit_under_cursor()
   return component and component.options.oid
 end
 
+---@return string|nil
+function Ui:get_yankable_under_cursor()
+  local cursor = vim.api.nvim_win_get_cursor(0)
+  local component = self:_find_component_by_index(cursor[1], function(node)
+    return node.options.yankable
+  end)
+
+  return component and component.options.yankable
+end
+
+---@return string|nil
+function Ui:get_current_section()
+  local cursor = vim.api.nvim_win_get_cursor(0)
+  local component = self:_find_component_by_index(cursor[1], function(node)
+    return node.options.section
+  end)
+
+  return component and component.options.section
+end
+
+---@return table|nil
+function Ui:get_hunk_or_filename_under_cursor()
+  local cursor = vim.api.nvim_win_get_cursor(0)
+  local component = self:_find_component_by_index(cursor[1], function(node)
+    return node.options.hunk or node.options.filename
+  end)
+
+  return component and {
+    hunk = component.options.hunk,
+    filename = component.options.filename
+  }
+end
+
+---@return table|nil
+function Ui:get_item_under_cursor()
+  local cursor = vim.api.nvim_win_get_cursor(0)
+  local component = self:_find_component_by_index(cursor[1], function(node)
+    return node.options.item
+  end)
+
+  return component and component.options.item
+end
+
 function Ui:render(...)
   self.layout = { ... }
   self.layout = util.filter(self.layout, function(x)

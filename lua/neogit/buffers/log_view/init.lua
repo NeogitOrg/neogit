@@ -76,6 +76,7 @@ function M:open()
         end),
         [popups.mapping_for("PullPopup")] = popups.open("pull"),
         ["d"] = function()
+          -- TODO: Use diff popup
           if not config.check_integration("diffview") then
             notification.error("Diffview integration must be enabled for log diff")
             return
@@ -172,6 +173,7 @@ function M:open()
           pcall(vim.cmd, "normal! za")
         end,
         ["d"] = function()
+          -- TODO: Use diff popup
           if not config.check_integration("diffview") then
             notification.error("Diffview integration must be enabled for log diff")
             return
