@@ -1,5 +1,4 @@
 -- TODO
--- - When a section is collapsed, there should not be an empty line between it and the next section
 -- - Get fold markers to work
 --
 --
@@ -19,7 +18,7 @@ local map = util.map
 
 local List = common.List
 local DiffHunks = common.DiffHunks
-local EmptyLine = col({ row { text("") } })
+local EmptyLine = col { row { text("") } }
 
 local M = {}
 
@@ -53,18 +52,13 @@ local SectionTitleRemote = Component.new(function(props)
   return {
     text.highlight("NeogitSectionHeader")(props.title),
     text(" "),
-    text.highlight("NeogitRemote")(props.ref)
+    text.highlight("NeogitRemote")(props.ref),
   }
 end)
 
 local Section = Component.new(function(props)
   return col.tag("Section")({
-    row(
-      util.merge(
-        props.title,
-        { text(" ("), text(#props.items), text(")"), }
-      )
-    ),
+    row(util.merge(props.title, { text(" ("), text(#props.items), text(")") })),
     col(map(props.items, props.render)),
     EmptyLine,
   }, { foldable = true, folded = props.folded, section = props.name })
@@ -82,14 +76,14 @@ end
 
 local SectionItemFile = Component.new(function(item)
   local mode_to_text = {
-    M  = "Modified      ",
-    N  = "New File      ",
-    A  = "Added         ",
-    D  = "Deleted       ",
-    C  = "Copied        ",
-    U  = "Updated       ",
+    M = "Modified      ",
+    N = "New File      ",
+    A = "Added         ",
+    D = "Deleted       ",
+    C = "Copied        ",
+    U = "Updated       ",
     UU = "Both Modified ",
-    R  = "Renamed       ",
+    R = "Renamed       ",
     ["?"] = "", -- Untracked
   }
 
@@ -105,8 +99,8 @@ local SectionItemFile = Component.new(function(item)
   return col.tag("SectionItemFile")({
     row {
       text.highlight(highlight)(conflict and ("%s by us"):format(mode) or mode),
-      text(item.name)
-    }
+      text(item.name),
+    },
   }, {
     foldable = true,
     folded = true,
@@ -153,7 +147,7 @@ function M.Status(state, config)
           msg = state.upstream.commit_message,
           yankable = state.upstream.oid,
         },
-        state.pushRemote.ref and HEAD {  -- Do not render if HEAD is detached
+        state.pushRemote.ref and HEAD { -- Do not render if HEAD is detached
           name = "Push",
           branch = state.pushRemote.branch,
           remote = state.pushRemote.remote,
@@ -166,63 +160,64 @@ function M.Status(state, config)
           yankable = state.head.tag.oid,
         },
         EmptyLine,
-        -- TODO Rebasing (rebase)
-        -- TODO Reverting (sequencer - revert_head)
-        -- TODO Picking (sequencer - cherry_pick_head)
-        -- TODO Respect if user has section hidden
-        #state.untracked.items > 0 and Section { -- TODO: Group by directory and create a fold
-          title = SectionTitle({ title = "Untracked files" }),
-          render = SectionItemFile,
-          items = state.untracked.items,
-          folded = config.sections.untracked.folded,
-          name = "untracked",
-        },
+          -- TODO Rebasing (rebase)
+          -- TODO Reverting (sequencer - revert_head)
+          -- TODO Picking (sequencer - cherry_pick_head)
+          -- TODO Respect if user has section hidden
+        #state.untracked.items > 0
+          and Section { -- TODO: Group by directory and create a fold
+            title = SectionTitle { title = "Untracked files" },
+            render = SectionItemFile,
+            items = state.untracked.items,
+            folded = config.sections.untracked.folded,
+            name = "untracked",
+          },
         #state.unstaged.items > 0 and Section {
-          title = SectionTitle({ title = "Unstaged changes" }),
+          title = SectionTitle { title = "Unstaged changes" },
           render = SectionItemFile,
           items = state.unstaged.items,
           folded = config.sections.unstaged.folded,
           name = "unstaged",
         },
         #state.staged.items > 0 and Section {
-          title = SectionTitle({ title = "Staged changes" }),
+          title = SectionTitle { title = "Staged changes" },
           render = SectionItemFile,
           items = state.staged.items,
           folded = config.sections.staged.folded,
           name = "staged",
         },
         #state.upstream.unpulled.items > 0 and Section {
-          title = SectionTitleRemote({ title = "Unpulled from", ref = state.upstream.ref }),
+          title = SectionTitleRemote { title = "Unpulled from", ref = state.upstream.ref },
           render = SectionItemCommit,
           items = state.upstream.unpulled.items,
           folded = config.sections.unpulled_upstream.folded,
         },
         (#state.pushRemote.unpulled.items > 0 and state.pushRemote.ref ~= state.upstream.ref) and Section {
-          title = SectionTitleRemote({ title = "Unpulled from", ref = state.pushRemote.ref }),
+          title = SectionTitleRemote { title = "Unpulled from", ref = state.pushRemote.ref },
           render = SectionItemCommit,
           items = state.pushRemote.unpulled.items,
           folded = config.sections.unpulled_pushRemote.folded,
         },
         #state.upstream.unmerged.items > 0 and Section {
-          title = SectionTitleRemote({ title = "Unmerged into", ref = state.upstream.ref }),
+          title = SectionTitleRemote { title = "Unmerged into", ref = state.upstream.ref },
           render = SectionItemCommit,
           items = state.upstream.unmerged.items,
           folded = config.sections.unmerged_upstream.folded,
         },
         (#state.pushRemote.unmerged.items > 0 and state.pushRemote.ref ~= state.upstream.ref) and Section {
-          title = SectionTitleRemote({ title = "Unpushed to", ref = state.pushRemote.ref }),
+          title = SectionTitleRemote { title = "Unpushed to", ref = state.pushRemote.ref },
           render = SectionItemCommit,
           items = state.pushRemote.unmerged.items,
           folded = config.sections.unmerged_pushRemote.folded,
         },
         #state.stashes.items > 0 and Section {
-          title = SectionTitle({ title = "Stashes" }),
+          title = SectionTitle { title = "Stashes" },
           render = SectionItemStash,
           items = state.stashes.items,
           folded = config.sections.stashes.folded,
         },
         #state.recent.items > 0 and Section {
-          title = SectionTitle({ title = "Recent Commits" }),
+          title = SectionTitle { title = "Recent Commits" },
           render = SectionItemCommit,
           items = state.recent.items,
           folded = config.sections.recent.folded,
@@ -239,7 +234,7 @@ M._TEST = a.void(function()
     source = "status_test",
     callback = function()
       require("neogit.buffers.status").new(git.repo, config.values):open()
-    end
+    end,
   }
 end)
 
