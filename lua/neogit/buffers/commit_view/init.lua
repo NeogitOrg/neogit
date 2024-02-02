@@ -113,7 +113,7 @@ function M:open(kind)
 
             diff_headers = {}
 
-            -- Recursively navigate the layout until we hit NeogitDiffHeader leafs
+            -- Recursively navigate the layout until we hit NeogitDiffHeader leaves
             -- Forward declaration required to avoid missing global error
             local find_diff_headers
 
