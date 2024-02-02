@@ -188,7 +188,7 @@ function Ui:get_hunk_or_filename_under_cursor()
 
   return component and {
     hunk = component.options.hunk,
-    filename = component.options.filename
+    filename = component.options.filename,
   }
 end
 

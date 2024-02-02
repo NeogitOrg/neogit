@@ -121,7 +121,7 @@ function M.with_temp_index(revision, fn)
   assert(fn, "Pass a function to call with temp index")
 
   local tmp_index = Path:new(vim.uv.os_tmpdir(), ("index.neogit.%s"):format(revision))
-  cli["read-tree"].args(revision).index_output(tmp_index:absolute()).call({ hidden = true })
+  cli["read-tree"].args(revision).index_output(tmp_index:absolute()).call { hidden = true }
   assert(tmp_index:exists(), "Failed to create temp index")
 
   fn(tmp_index:absolute())

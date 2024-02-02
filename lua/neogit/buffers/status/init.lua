@@ -185,7 +185,8 @@ function M:open(kind)
           if stagable then
             if stagable.hunk then
               local item = self.buffer.ui:get_item_under_cursor()
-              local patch = git.index.generate_patch(item, stagable.hunk, stagable.hunk.from, stagable.hunk.to)
+              local patch =
+                git.index.generate_patch(item, stagable.hunk, stagable.hunk.from, stagable.hunk.to)
 
               git.index.apply(patch, { cached = true })
             elseif stagable.filename then

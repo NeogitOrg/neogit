@@ -37,7 +37,7 @@ local configurations = {
     flags = {
       all = "--all",
       force = "--force",
-    }
+    },
   },
 
   worktree = config {
