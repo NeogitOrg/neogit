@@ -68,8 +68,18 @@ local load_diff = function(item)
   return a.void(function(this, ui)
     this.options.on_open = nil
     this.options.folded = false
-    -- vim.cmd("norm! zE") -- Eliminate all existing folds
-    this:append(DiffHunks(item.diff))
+
+    local row, _ = this:row_range_abs()
+    row = row + 1 -- Filename row
+
+    local diff = item.diff
+    for _, hunk in ipairs(diff.hunks) do
+      hunk.first = row
+      hunk.last = row + hunk.length
+      row = hunk.last + 1
+    end
+
+    this:append(DiffHunks(diff))
     ui:update()
   end)
 end

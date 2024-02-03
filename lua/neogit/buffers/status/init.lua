@@ -122,7 +122,51 @@ function M:open(kind)
           -- TODO
         end,
         [mappings["GoToFile"]] = function()
-          -- TODO
+          local item = self.buffer.ui:get_item_under_cursor()
+
+          if item and item.absolute_path then
+            local cursor
+            if rawget(item, "diff") then
+              -- If the cursor is located within a hunk, we need to turn that back into
+              -- a line number in the file.
+              local line = self.buffer:cursor_line()
+              for _, hunk in ipairs(item.diff.hunks) do
+                if line >= hunk.first and line <= hunk.last then
+                  local offset = line - hunk.first
+                  local row = hunk.disk_from + offset - 1
+
+                  for i = 1, offset do
+                    -- If the line is a deletion, we need to adjust the row
+                    if string.sub(hunk.lines[i], 1, 1) == "-" then
+                      row = row - 1
+                    end
+                  end
+
+                  cursor = { row, 0 }
+                  break
+                end
+              end
+            end
+
+            self:close()
+
+            -- Copied from original - not sure what it's for, entirely
+            if not vim.o.hidden and vim.bo.buftype == "" and not vim.bo.readonly and vim.fn.bufname() ~= "" then
+              vim.cmd("update")
+            end
+
+            vim.cmd.edit(vim.fn.fnameescape(vim.fn.fnamemodify(item.absolute_path, ":~:.")))
+            if cursor then
+              vim.api.nvim_win_set_cursor(0, cursor)
+            end
+
+            return
+          end
+
+          local ref = self.buffer.ui:get_yankable_under_cursor()
+          if ref then
+            require("neogit.buffers.commit_view").new(ref):open()
+          end
         end,
         [mappings["GoToNextHunkHeader"]] = function()
           -- TODO: Doesn't go across file boundaries
