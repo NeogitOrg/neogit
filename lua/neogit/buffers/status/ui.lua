@@ -84,6 +84,7 @@ local load_diff = function(item)
   end)
 end
 
+-- TODO: Handle renames
 local SectionItemFile = Component.new(function(item)
   local mode_to_text = {
     M = "Modified      ",

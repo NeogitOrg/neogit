@@ -54,6 +54,7 @@ function M.mappings_table()
     end, commits)
   end
 
+  -- TODO: These can either be removed, or modified
   return {
     { "HelpPopup", "Help", M.open("help") },
     {

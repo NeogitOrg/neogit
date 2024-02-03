@@ -34,6 +34,7 @@ local fs_event_handler = function(err, filename, events)
   end
 
   logger.debug(info)
+  -- TODO: Dispatch to new buffer
   require("neogit.status").dispatch_refresh(nil, "watcher")
 end
 
