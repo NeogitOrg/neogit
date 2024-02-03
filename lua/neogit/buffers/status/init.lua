@@ -39,9 +39,12 @@ function M:close()
 end
 
 function M:refresh()
-
-  -- Update repo state
-  -- rerender UI
+  git.repo:refresh {
+    source = "status",
+    callback = function()
+      self.buffer.ui:render(unpack(ui.Status(git.repo, self.config)))
+    end,
+  }
   -- diff with current UI
   -- only update deltas
 end
@@ -242,23 +245,46 @@ function M:open(kind)
                 git.index.add { stagable.filename }
               end
             end
+
+            self:refresh()
           end
         end),
-        [mappings["StageAll"]] = function()
-          -- TODO
-        end,
-        [mappings["StageUnstaged"]] = function()
-          -- TODO
-        end,
+        [mappings["StageAll"]] = a.void(function()
+          git.status.stage_all()
+          self:refresh()
+        end),
+        [mappings["StageUnstaged"]] = a.void(function()
+          git.status.stage_modified()
+          self:refresh()
+        end),
         [mappings["TabOpen"]] = function()
           -- TODO
         end,
-        [mappings["Unstage"]] = function()
-          -- TODO
-        end,
-        [mappings["UnstageStaged"]] = function()
-          -- TODO
-        end,
+        [mappings["Unstage"]] = a.void(function()
+          local stagable = self.buffer.ui:get_hunk_or_filename_under_cursor()
+
+          if stagable then
+            if stagable.hunk then
+              local item = self.buffer.ui:get_item_under_cursor()
+              local patch =
+                git.index.generate_patch(item, stagable.hunk, stagable.hunk.from, stagable.hunk.to, true)
+
+              git.index.apply(patch, { cached = true, reverse = true })
+            elseif stagable.filename then
+              local section = self.buffer.ui:get_current_section()
+
+              if section == "staged" then
+                git.status.unstage { stagable.filename }
+              end
+            end
+
+            self:refresh()
+          end
+        end),
+        [mappings["UnstageStaged"]] = a.void(function()
+          git.status.unstage_all()
+          self:refresh()
+        end),
         [mappings["VSplitOpen"]] = function()
           -- TODO
         end,
