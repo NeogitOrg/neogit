@@ -50,4 +50,17 @@ describe("stash popup", function()
       assert.are.same({ "stash@{0}: Foobar" }, git.stash.list())
     end)
   )
+
+  it(
+    "rename stash doesn't drop stash if user presses ESC on message prompt",
+    in_prepared_repo(function()
+      util.system("git stash")
+      FuzzyFinderBuffer.value = { "stash@{0}" }
+
+      act("Zm<esc>")
+      operations.wait("stash_rename")
+
+      assert.are.same(1, #git.stash.list())
+    end)
+  )
 end)
