@@ -57,6 +57,7 @@ end
 ---@field current_column number
 ---@field index table
 local Renderer = {}
+Renderer.__index = Renderer
 
 ---@param layout table
 ---@param buffer Buffer
@@ -81,7 +82,6 @@ function Renderer:new(layout, buffer)
   }
 
   setmetatable(obj, self)
-  self.__index = self
 
   return obj
 end
