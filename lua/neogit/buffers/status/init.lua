@@ -45,8 +45,6 @@ function M:refresh()
       self.buffer.ui:render(unpack(ui.Status(git.repo, self.config)))
     end,
   }
-  -- diff with current UI
-  -- only update deltas
 end
 
 -- TODO
@@ -100,8 +98,92 @@ function M:open(kind)
     mappings = {
       v = {},
       n = {
+        [mappings["Toggle"]] = function()
+          local fold = self.buffer.ui:get_fold_under_cursor()
+          if fold then
+            if fold.options.on_open then
+              fold.options.on_open(fold, self.buffer.ui)
+            else
+              local ok, _ = pcall(vim.cmd, "normal! za")
+              if ok then
+                fold.options.folded = not fold.options.folded
+              end
+            end
+          end
+        end,
         [mappings["Close"]] = function()
           self:close()
+        end,
+        [mappings["RefreshBuffer"]] = function()
+          self:refresh()
+        end,
+        [mappings["Depth1"]] = function()
+          local section = self.buffer.ui:get_current_section()
+          if section then
+            local start, _ = section:row_range_abs()
+            self.buffer:move_cursor(start)
+            section:close_all_folds(self.buffer.ui)
+
+            self.buffer.ui:update()
+          end
+        end,
+        [mappings["Depth2"]] = function()
+          local section = self.buffer.ui:get_current_section()
+          local row = self.buffer.ui:get_component_under_cursor()
+
+          if section then
+            local start, _ = section:row_range_abs()
+            self.buffer:move_cursor(start)
+
+            section:close_all_folds(self.buffer.ui)
+            section:open_all_folds(self.buffer.ui, 1)
+
+            self.buffer.ui:update()
+
+            if row then
+              local start, _ = row:row_range_abs()
+              self.buffer:move_cursor(start)
+            end
+          end
+        end,
+        [mappings["Depth3"]] = function()
+          local section = self.buffer.ui:get_current_section()
+          local context = self.buffer.ui:get_cursor_context()
+
+          if section then
+            local start, _ = section:row_range_abs()
+            self.buffer:move_cursor(start)
+
+            section:close_all_folds(self.buffer.ui)
+            section:open_all_folds(self.buffer.ui, 2)
+            section:close_all_folds(self.buffer.ui)
+            section:open_all_folds(self.buffer.ui, 2)
+
+            self.buffer.ui:update()
+
+            if context then
+              local start, _ = context:row_range_abs()
+              self.buffer:move_cursor(start)
+            end
+          end
+        end,
+        [mappings["Depth4"]] = function()
+          local section = self.buffer.ui:get_current_section()
+          local context = self.buffer.ui:get_cursor_context()
+
+          if section then
+            local start, _ = section:row_range_abs()
+            self.buffer:move_cursor(start)
+            section:close_all_folds(self.buffer.ui)
+            section:open_all_folds(self.buffer.ui, 3)
+
+            self.buffer.ui:update()
+
+            if context then
+              local start, _ = context:row_range_abs()
+              self.buffer:move_cursor(start)
+            end
+          end
         end,
         [mappings["CommandHistory"]] = function()
           require("neogit.buffers.git_command_history"):new():show()
@@ -109,67 +191,25 @@ function M:open(kind)
         [mappings["Console"]] = function()
           require("neogit.process").show_console()
         end,
-        [mappings["Depth1"]] = function()
-          -- TODO
+        [mappings["ShowRefs"]] = function()
+          require("neogit.buffers.refs_view").new(git.refs.list_parsed()):open()
         end,
-        [mappings["Depth2"]] = function()
-          -- TODO
-        end,
-        [mappings["Depth3"]] = function()
-          -- TODO
-        end,
-        [mappings["Depth4"]] = function()
-          -- TODO
+        [mappings["YankSelected"]] = function()
+          local yank = self.buffer.ui:get_yankable_under_cursor()
+          if yank then
+            if yank:match("^stash@{%d+}") then
+              yank = git.rev_parse.oid(yank:match("^(stash@{%d+})"))
+            end
+
+            yank = string.format("'%s'", yank)
+            vim.cmd.let("@+=" .. yank)
+            vim.cmd.echo(yank)
+          else
+            vim.cmd("echo ''")
+          end
         end,
         [mappings["Discard"]] = function()
           -- TODO
-        end,
-        [mappings["GoToFile"]] = function()
-          local item = self.buffer.ui:get_item_under_cursor()
-
-          if item and item.absolute_path then
-            local cursor
-            if rawget(item, "diff") then
-              -- If the cursor is located within a hunk, we need to turn that back into
-              -- a line number in the file.
-              local line = self.buffer:cursor_line()
-              for _, hunk in ipairs(item.diff.hunks) do
-                if line >= hunk.first and line <= hunk.last then
-                  local offset = line - hunk.first
-                  local row = hunk.disk_from + offset - 1
-
-                  for i = 1, offset do
-                    -- If the line is a deletion, we need to adjust the row
-                    if string.sub(hunk.lines[i], 1, 1) == "-" then
-                      row = row - 1
-                    end
-                  end
-
-                  cursor = { row, 0 }
-                  break
-                end
-              end
-            end
-
-            self:close()
-
-            -- Copied from original - not sure what it's for, entirely
-            if not vim.o.hidden and vim.bo.buftype == "" and not vim.bo.readonly and vim.fn.bufname() ~= "" then
-              vim.cmd("update")
-            end
-
-            vim.cmd.edit(vim.fn.fnameescape(vim.fn.fnamemodify(item.absolute_path, ":~:.")))
-            if cursor then
-              vim.api.nvim_win_set_cursor(0, cursor)
-            end
-
-            return
-          end
-
-          local ref = self.buffer.ui:get_yankable_under_cursor()
-          if ref then
-            require("neogit.buffers.commit_view").new(ref):open()
-          end
         end,
         [mappings["GoToNextHunkHeader"]] = function()
           -- TODO: Doesn't go across file boundaries
@@ -217,15 +257,6 @@ function M:open(kind)
         [mappings["InitRepo"]] = function()
           git.init.init_repo()
         end,
-        [mappings["RefreshBuffer"]] = function()
-          -- TODO
-        end,
-        [mappings["ShowRefs"]] = function()
-          require("neogit.buffers.refs_view").new(git.refs.list_parsed()):open()
-        end,
-        [mappings["SplitOpen"]] = function()
-          -- TODO
-        end,
         [mappings["Stage"]] = a.void(function()
           local stagable = self.buffer.ui:get_hunk_or_filename_under_cursor()
 
@@ -238,11 +269,12 @@ function M:open(kind)
               git.index.apply(patch, { cached = true })
             elseif stagable.filename then
               local section = self.buffer.ui:get_current_section()
-
-              if section == "unstaged" then
-                git.status.stage { stagable.filename }
-              elseif section == "untracked" then
-                git.index.add { stagable.filename }
+              if section then
+                if section.options.section == "unstaged" then
+                  git.status.stage { stagable.filename }
+                elseif section.options.section == "untracked" then
+                  git.index.add { stagable.filename }
+                end
               end
             end
 
@@ -257,9 +289,6 @@ function M:open(kind)
           git.status.stage_modified()
           self:refresh()
         end),
-        [mappings["TabOpen"]] = function()
-          -- TODO
-        end,
         [mappings["Unstage"]] = a.void(function()
           local stagable = self.buffer.ui:get_hunk_or_filename_under_cursor()
 
@@ -273,7 +302,7 @@ function M:open(kind)
             elseif stagable.filename then
               local section = self.buffer.ui:get_current_section()
 
-              if section == "staged" then
+              if section and section.options.section == "staged" then
                 git.status.unstage { stagable.filename }
               end
             end
@@ -285,33 +314,146 @@ function M:open(kind)
           git.status.unstage_all()
           self:refresh()
         end),
-        [mappings["VSplitOpen"]] = function()
-          -- TODO
-        end,
-        [mappings["YankSelected"]] = function()
-          local yank = self.buffer.ui:get_yankable_under_cursor()
-          if yank then
-            if yank:match("^stash@{%d+}") then
-              yank = git.rev_parse.oid(yank:match("^(stash@{%d+})"))
+        [mappings["GoToFile"]] = function()
+          local item = self.buffer.ui:get_item_under_cursor()
+
+          -- Goto FILE
+          if item and item.escaped_path then
+            local cursor
+            -- If the cursor is located within a hunk, we need to turn that back into a line number in the file.
+            if rawget(item, "diff") then
+              local line = self.buffer:cursor_line()
+
+              for _, hunk in ipairs(item.diff.hunks) do
+                if line >= hunk.first and line <= hunk.last then
+                  local offset = line - hunk.first
+                  local row = hunk.disk_from + offset - 1
+
+                  for i = 1, offset do
+                    -- If the line is a deletion, we need to adjust the row
+                    if string.sub(hunk.lines[i], 1, 1) == "-" then
+                      row = row - 1
+                    end
+                  end
+
+                  cursor = { row, 0 }
+                  break
+                end
+              end
             end
 
-            yank = string.format("'%s'", yank)
-            vim.cmd.let("@+=" .. yank)
-            vim.cmd.echo(yank)
-          else
-            vim.cmd("echo ''")
+            self:close()
+
+            vim.cmd.edit(item.escaped_path)
+            if cursor then
+              vim.api.nvim_win_set_cursor(0, cursor)
+            end
+
+            return
+          end
+
+          -- Goto COMMIT
+          local ref = self.buffer.ui:get_yankable_under_cursor()
+          if ref then
+            require("neogit.buffers.commit_view").new(ref):open()
           end
         end,
-        [mappings["Toggle"]] = function()
-          local fold = self.buffer.ui:get_fold_under_cursor()
-          if fold then
-            if fold.options.on_open then
-              fold.options.on_open(fold, self.buffer.ui)
-            else
-              local ok, _ = pcall(vim.cmd, "normal! za")
-              if ok then
-                fold.options.folded = not fold.options.folded
+        [mappings["TabOpen"]] = function()
+          local item = self.buffer.ui:get_item_under_cursor()
+
+          if item and item.escaped_path then
+            local cursor
+            -- If the cursor is located within a hunk, we need to turn that back into a line number in the file.
+            if rawget(item, "diff") then
+              local line = self.buffer:cursor_line()
+
+              for _, hunk in ipairs(item.diff.hunks) do
+                if line >= hunk.first and line <= hunk.last then
+                  local offset = line - hunk.first
+                  local row = hunk.disk_from + offset - 1
+
+                  for i = 1, offset do
+                    -- If the line is a deletion, we need to adjust the row
+                    if string.sub(hunk.lines[i], 1, 1) == "-" then
+                      row = row - 1
+                    end
+                  end
+
+                  cursor = { row, 0 }
+                  break
+                end
               end
+            end
+
+            vim.cmd.tabedit(item.escaped_path)
+            if cursor then
+              vim.api.nvim_win_set_cursor(0, cursor)
+            end
+          end
+        end,
+        [mappings["SplitOpen"]] = function()
+          local item = self.buffer.ui:get_item_under_cursor()
+
+          if item and item.escaped_path then
+            local cursor
+            -- If the cursor is located within a hunk, we need to turn that back into a line number in the file.
+            if rawget(item, "diff") then
+              local line = self.buffer:cursor_line()
+
+              for _, hunk in ipairs(item.diff.hunks) do
+                if line >= hunk.first and line <= hunk.last then
+                  local offset = line - hunk.first
+                  local row = hunk.disk_from + offset - 1
+
+                  for i = 1, offset do
+                    -- If the line is a deletion, we need to adjust the row
+                    if string.sub(hunk.lines[i], 1, 1) == "-" then
+                      row = row - 1
+                    end
+                  end
+
+                  cursor = { row, 0 }
+                  break
+                end
+              end
+            end
+
+            vim.cmd.split(item.escaped_path)
+            if cursor then
+              vim.api.nvim_win_set_cursor(0, cursor)
+            end
+          end
+        end,
+        [mappings["VSplitOpen"]] = function()
+          local item = self.buffer.ui:get_item_under_cursor()
+
+          if item and item.escaped_path then
+            local cursor
+            -- If the cursor is located within a hunk, we need to turn that back into a line number in the file.
+            if rawget(item, "diff") then
+              local line = self.buffer:cursor_line()
+
+              for _, hunk in ipairs(item.diff.hunks) do
+                if line >= hunk.first and line <= hunk.last then
+                  local offset = line - hunk.first
+                  local row = hunk.disk_from + offset - 1
+
+                  for i = 1, offset do
+                    -- If the line is a deletion, we need to adjust the row
+                    if string.sub(hunk.lines[i], 1, 1) == "-" then
+                      row = row - 1
+                    end
+                  end
+
+                  cursor = { row, 0 }
+                  break
+                end
+              end
+            end
+
+            vim.cmd.vsplit(item.escaped_path)
+            if cursor then
+              vim.api.nvim_win_set_cursor(0, cursor)
             end
           end
         end,

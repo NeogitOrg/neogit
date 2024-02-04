@@ -63,9 +63,13 @@ function Ui:find_components(f, options)
   return result
 end
 
----@param fn fun(c: Component): boolean
+---@param fn? fun(c: Component): boolean
 ---@return Component|nil
 function Ui:get_component_under_cursor(fn)
+  fn = fn or function()
+    return true
+  end
+
   local line = vim.api.nvim_win_get_cursor(0)[1]
   return self:get_component_on_line(line, fn)
 end
@@ -169,14 +173,14 @@ function Ui:get_yankable_under_cursor()
   return component and component.options.yankable
 end
 
----@return string|nil
+---@return Component|nil
 function Ui:get_current_section()
   local cursor = vim.api.nvim_win_get_cursor(0)
   local component = self:_find_component_by_index(cursor[1], function(node)
     return node.options.section
   end)
 
-  return component and component.options.section
+  return component
 end
 
 ---@return table|nil

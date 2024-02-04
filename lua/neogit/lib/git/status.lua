@@ -12,6 +12,7 @@ local function update_file(cwd, file, mode, name, original_name)
   local mt, diff, has_diff
 
   local absolute_path = Path:new(cwd, name):absolute()
+  local escaped_path = vim.fn.fnameescape(vim.fn.fnamemodify(absolute_path, ":~:."))
 
   if file then
     mt = getmetatable(file)
@@ -29,6 +30,7 @@ local function update_file(cwd, file, mode, name, original_name)
     has_diff = has_diff,
     diff = diff,
     absolute_path = absolute_path,
+    escaped_path = escaped_path,
   }, mt or {})
 end
 

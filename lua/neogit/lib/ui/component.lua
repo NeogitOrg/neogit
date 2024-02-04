@@ -102,16 +102,81 @@ function Component:append(c)
   return self
 end
 
+---@param ui Ui
+---@param depth integer
+function Component:open_all_folds(ui, depth)
+  assert(ui, "Pass in self.buffer.ui")
+
+  if self.options.foldable then
+    if self.options.on_open then
+      self.options.on_open(self, ui)
+    end
+
+    self.options.folded = false
+    depth = depth - 1
+  end
+
+  if self.children and depth > 0 then
+    for _, child in ipairs(self.children) do
+      child:open_all_folds(ui, depth)
+    end
+  end
+end
+
+---@param ui Ui
+function Component:close_all_folds(ui)
+  assert(ui, "Pass in self.buffer.ui")
+
+  if self.options.foldable then
+    self.options.folded = true
+  end
+
+  if self.children then
+    for _, child in ipairs(self.children) do
+      child:close_all_folds(ui)
+    end
+  end
+end
+
 function Component.new(f)
-  local x = {}
-  setmetatable(x, {
+  local instance = {}
+
+  local mt = {
     __call = function(tbl, ...)
-      local x = f(...)
-      local options = vim.tbl_extend("force", default_component_options, tbl, x.options or {})
-      x.options = options
-      setmetatable(x, { __index = Component })
-      return x
+      local this = f(...)
+
+      local options = vim.tbl_extend(
+        "force",
+        default_component_options,
+        tbl,
+        this.options or {}
+      )
+      this.options = options
+
+      setmetatable(this, { __index = Component })
+
+      return this
     end,
+
+    __eq = function(this, other)
+      local same_tag = this.options.tag == other.options.tag
+      local same_index = this.index == other.index
+      local same_id = this.id == other.id
+      local have_children = this.children and other.children
+
+      if not have_children then
+        local same_value = this.value == other.value
+
+        return same_tag and same_index and same_id and same_value
+      else
+        local same_fold_state = this.options.folded == other.options.folded
+        local same_load_state = this.options.on_open == nil and other.options.on_open == nil
+        local same_child_count = #this.children == #other.children
+
+        return same_tag and same_index and same_id and same_child_count and same_fold_state and same_load_state
+      end
+    end,
+
     __index = function(tbl, name)
       local value = rawget(Component, name)
 
@@ -125,8 +190,11 @@ function Component.new(f)
 
       return value
     end,
-  })
-  return x
+  }
+
+  setmetatable(instance, mt)
+
+  return instance
 end
 
 return Component
