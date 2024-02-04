@@ -5,6 +5,9 @@ local popups = require("neogit.popups")
 local git = require("neogit.lib.git")
 local watcher = require("neogit.watcher")
 local a = require("plenary.async")
+local input = require("neogit.lib.input")
+local logger = require("neogit.logger") -- TODO: Add logging
+local notification = require("neogit.lib.notification") -- TODO
 
 local api = vim.api
 
@@ -118,6 +121,7 @@ function M:open(kind)
           self:refresh()
         end,
         [mappings["Depth1"]] = function()
+          -- TODO: Need to work with stashes/recent
           local section = self.buffer.ui:get_current_section()
           if section then
             local start, _ = section:row_range_abs()
@@ -128,6 +132,7 @@ function M:open(kind)
           end
         end,
         [mappings["Depth2"]] = function()
+          -- TODO: Need to work with stashes/recent
           local section = self.buffer.ui:get_current_section()
           local row = self.buffer.ui:get_component_under_cursor()
 
@@ -147,6 +152,7 @@ function M:open(kind)
           end
         end,
         [mappings["Depth3"]] = function()
+          -- TODO: Need to work with stashes/recent, but same as depth2
           local section = self.buffer.ui:get_current_section()
           local context = self.buffer.ui:get_cursor_context()
 
@@ -168,6 +174,7 @@ function M:open(kind)
           end
         end,
         [mappings["Depth4"]] = function()
+          -- TODO: Need to work with stashes/recent, but same as depth2
           local section = self.buffer.ui:get_current_section()
           local context = self.buffer.ui:get_cursor_context()
 
@@ -208,9 +215,46 @@ function M:open(kind)
             vim.cmd("echo ''")
           end
         end,
-        [mappings["Discard"]] = function()
-          -- TODO
-        end,
+        [mappings["Discard"]] = a.void(function()
+          git.index.update() -- Check if needed
+
+          local discardable = self.buffer.ui:get_hunk_or_filename_under_cursor()
+
+          if discardable then
+            local section = self.buffer.ui:get_current_section()
+            if not section then
+              return
+            end
+
+            if discardable.hunk then
+              local item = self.buffer.ui:get_item_under_cursor()
+              local hunk = discardable.hunk
+              local patch = git.index.generate_patch(item, hunk, hunk.from, hunk.to, true)
+
+              if input.get_permission("Discard hunk?") then
+                if section.options.section == "staged" then
+                  git.index.apply(patch, { index = true, reverse = true })
+                else
+                  git.index.apply(patch, { reverse = true })
+                end
+              end
+            elseif discardable.filename then
+              if input.get_permission(("Discard %q?"):format(discardable.filename)) then
+                if section.options.section == "staged" then
+                  git.index.reset { discardable.filename }
+                  git.index.checkout { discardable.filename }
+                elseif section.options.section == "unstaged" then
+                  git.index.checkout { discardable.filename }
+                elseif section.options.section == "untracked" then
+                  a.util.scheduler()
+                  vim.fn.delete(vim.fn.fnameescape(discardable.filename))
+                end
+              end
+            end
+
+            self:refresh()
+          end
+        end),
         [mappings["GoToNextHunkHeader"]] = function()
           -- TODO: Doesn't go across file boundaries
           local c = self.buffer.ui:get_component_under_cursor(function(c)
@@ -290,20 +334,20 @@ function M:open(kind)
           self:refresh()
         end),
         [mappings["Unstage"]] = a.void(function()
-          local stagable = self.buffer.ui:get_hunk_or_filename_under_cursor()
+          local unstagable = self.buffer.ui:get_hunk_or_filename_under_cursor()
 
-          if stagable then
-            if stagable.hunk then
+          if unstagable then
+            if unstagable.hunk then
               local item = self.buffer.ui:get_item_under_cursor()
               local patch =
-                git.index.generate_patch(item, stagable.hunk, stagable.hunk.from, stagable.hunk.to, true)
+                git.index.generate_patch(item, unstagable.hunk, unstagable.hunk.from, unstagable.hunk.to, true)
 
               git.index.apply(patch, { cached = true, reverse = true })
-            elseif stagable.filename then
+            elseif unstagable.filename then
               local section = self.buffer.ui:get_current_section()
 
               if section and section.options.section == "staged" then
-                git.status.unstage { stagable.filename }
+                git.status.unstage { unstagable.filename }
               end
             end
 
@@ -506,15 +550,16 @@ function M:open(kind)
     },
     initialize = function()
       self.prev_autochdir = vim.o.autochdir
-
       vim.o.autochdir = false
     end,
     render = function()
+      -- TODO: Figure out a way to remove the very last empty line from the last visible section.
+      --       it's created by the newline spacer between sections.
       return ui.Status(self.state, self.config)
     end,
     after = function()
       vim.cmd([[setlocal nowrap]])
-      M.watcher = watcher.new(git.repo:git_path():absolute())
+      M.watcher = watcher.new(git.repo:git_path():absolute()) -- TODO: pass self in so refresh can be sent
     end,
   }
 end
