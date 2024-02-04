@@ -222,12 +222,13 @@ function M:open(kind)
 
           if discardable then
             local section = self.buffer.ui:get_current_section()
-            if not section then
+            local item = self.buffer.ui:get_item_under_cursor()
+
+            if not section or not item then
               return
             end
 
             if discardable.hunk then
-              local item = self.buffer.ui:get_item_under_cursor()
               local hunk = discardable.hunk
               local patch = git.index.generate_patch(item, hunk, hunk.from, hunk.to, true)
 
@@ -240,12 +241,18 @@ function M:open(kind)
               end
             elseif discardable.filename then
               if input.get_permission(("Discard %q?"):format(discardable.filename)) then
-                if section.options.section == "staged" then
+                if section.options.section == "staged" and item.mode == "M" then -- Modified
                   git.index.reset { discardable.filename }
                   git.index.checkout { discardable.filename }
+                elseif section.options.section == "staged" and item.mode == "A" then -- Added
+                  -- TODO: Close any open buffers with this file
+                  git.index.reset { discardable.filename }
+                  a.util.scheduler()
+                  vim.fn.delete(vim.fn.fnameescape(discardable.filename))
                 elseif section.options.section == "unstaged" then
                   git.index.checkout { discardable.filename }
                 elseif section.options.section == "untracked" then
+                  -- TODO: Close any open buffers with this file
                   a.util.scheduler()
                   vim.fn.delete(vim.fn.fnameescape(discardable.filename))
                 end
