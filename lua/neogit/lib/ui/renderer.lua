@@ -84,15 +84,7 @@ end
 ---@param layout table
 ---@return RendererBuffer, RendererIndex
 function Renderer:render(layout)
-  local root = Component.new(function()
-    return {
-      tag = "_root",
-      children = layout,
-    }
-  end)()
-
-  self:_render(root, root.children, 0)
-
+  self:_render(layout, layout.children, 0)
   return self.buffer, self.index
 end
 

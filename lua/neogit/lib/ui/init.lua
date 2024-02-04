@@ -206,11 +206,52 @@ function Ui:get_item_under_cursor()
   return component and component.options.item
 end
 
-function Ui:render(...)
-  self.layout = { ... }
-  self.layout = util.filter(self.layout, function(x)
+local function filter_layout(layout)
+  return util.filter(layout, function(x)
     return type(x) == "table"
   end)
+end
+
+local function compare_trees(old, new)
+  if old == nil or new == nil then
+    return false
+  end
+
+  if old == new then
+    return true
+  end
+
+  if old.children and new.children then
+    for i = 1, #old.children do
+      if not compare_trees(old.children[i], new.children[i]) then
+        if old.children[i] and new.children[i] then
+          -- P({ old = old.children[i].options, new = new.children[i].options })
+
+          if not old.children[i].tag == "Section" and not new.children[i].tag == "Section" then
+            old.children[i] = new.children[i]
+          end
+        end
+
+        return false
+      end
+    end
+  end
+
+  return true
+end
+
+function Ui:render(...)
+  local layout = filter_layout { ... }
+  local root = Component.new(function()
+    return { tag = "_root", children = layout }
+  end)()
+
+  if vim.tbl_isempty(self.layout) then
+    self.layout = root
+  else
+    -- This is hard.
+    compare_trees(self.layout, root)
+  end
 
   self:update()
 end
@@ -233,16 +274,13 @@ function Ui:update()
   self.buf:set_line_highlights(buffer.line_highlight)
   self.buf:set_folds(buffer.fold)
   self.buf:lock()
-
   self.buf:move_cursor(cursor_line)
 end
 
 Ui.col = Component.new(function(children, options)
   return {
     tag = "col",
-    children = util.filter(children, function(x)
-      return type(x) == "table"
-    end),
+    children = filter_layout(children),
     options = options,
   }
 end)
@@ -250,9 +288,7 @@ end)
 Ui.row = Component.new(function(children, options)
   return {
     tag = "row",
-    children = util.filter(children, function(x)
-      return type(x) == "table"
-    end),
+    children = filter_layout(children),
     options = options,
   }
 end)
