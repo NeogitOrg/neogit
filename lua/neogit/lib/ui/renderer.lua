@@ -1,5 +1,3 @@
-local Component = require("neogit.lib.ui.component")
-
 ---@class RendererIndex
 ---@field index table
 local RendererIndex = {}
@@ -52,15 +50,22 @@ end
 
 ---@class Renderer
 ---@field buffer RendererBuffer
+---@field ui_buffer Buffer
 ---@field flags RendererFlags
 ---@field namespace integer
+---@field layout table
 ---@field current_column number
 ---@field index table
 local Renderer = {}
 
-function Renderer:new(namespace)
+---@param layout table
+---@param buffer Buffer
+---@return Renderer
+function Renderer:new(layout, buffer)
   local obj = {
-    namespace = namespace,
+    namespace = buffer:create_namespace("VirtualText"),
+    layout = layout,
+    ui_buffer = buffer,
     buffer = {
       line = {},
       highlight = {},
@@ -81,11 +86,29 @@ function Renderer:new(namespace)
   return obj
 end
 
----@param layout table
----@return RendererBuffer, RendererIndex
-function Renderer:render(layout)
-  self:_render(layout, layout.children, 0)
-  return self.buffer, self.index
+---@return Renderer
+function Renderer:render()
+  self:_render(self.layout, self.layout.children, 0)
+
+  local cursor_line = self.ui_buffer:cursor_line()
+  self.ui_buffer:unlock()
+  self.ui_buffer:clear()
+  self.ui_buffer:clear_namespace("default")
+  self.ui_buffer:resize(#self.buffer.line)
+  self.ui_buffer:set_lines(0, -1, false, self.buffer.line)
+  self.ui_buffer:set_highlights(self.buffer.highlight)
+  self.ui_buffer:set_extmarks(self.buffer.extmark)
+  self.ui_buffer:set_line_highlights(self.buffer.line_highlight)
+  self.ui_buffer:set_folds(self.buffer.fold)
+  self.ui_buffer:lock()
+  self.ui_buffer:move_cursor(cursor_line)
+
+  return self
+end
+
+---@return RendererIndex
+function Renderer:node_index()
+  return self.index
 end
 
 function Renderer:_build_child(child, parent, index)

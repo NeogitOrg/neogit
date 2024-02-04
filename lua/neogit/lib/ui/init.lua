@@ -126,6 +126,7 @@ function Ui:get_interactive_component_under_cursor()
   end)
 end
 
+---@return Component|nil
 function Ui:get_fold_under_cursor()
   local cursor = vim.api.nvim_win_get_cursor(0)
 
@@ -134,6 +135,7 @@ function Ui:get_fold_under_cursor()
   end)
 end
 
+---@return string[]
 function Ui:get_commits_in_selection()
   local range = { vim.fn.getpos("v")[2], vim.fn.getpos(".")[2] }
   table.sort(range)
@@ -206,12 +208,16 @@ function Ui:get_item_under_cursor()
   return component and component.options.item
 end
 
+---@param layout table
+---@return table[]
 local function filter_layout(layout)
   return util.filter(layout, function(x)
     return type(x) == "table"
   end)
 end
 
+---@param old table
+---@param new table
 local function compare_trees(old, new)
   if old == nil or new == nil then
     return false
@@ -256,25 +262,9 @@ function Ui:render(...)
   self:update()
 end
 
--- This shouldn't be called often as it completely rewrites the whole buffer
 function Ui:update()
-  local ns = self.buf:create_namespace("VirtualText")
-  local buffer, index = Renderer:new(ns):render(self.layout)
-
-  self.node_index = index
-  local cursor_line = self.buf:cursor_line()
-
-  self.buf:unlock()
-  self.buf:clear()
-  self.buf:clear_namespace("default")
-  self.buf:resize(#buffer.line)
-  self.buf:set_lines(0, -1, false, buffer.line)
-  self.buf:set_highlights(buffer.highlight)
-  self.buf:set_extmarks(buffer.extmark)
-  self.buf:set_line_highlights(buffer.line_highlight)
-  self.buf:set_folds(buffer.fold)
-  self.buf:lock()
-  self.buf:move_cursor(cursor_line)
+  local renderer = Renderer:new(self.layout, self.buf):render()
+  self.node_index = renderer:node_index()
 end
 
 Ui.col = Component.new(function(children, options)
