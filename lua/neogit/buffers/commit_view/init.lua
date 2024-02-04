@@ -114,12 +114,10 @@ function M:open(kind)
           -- in order to use them as match patterns.
           local selected_path = vim.fn.trim(c.value)
 
-          local diff_headers = {}
-
           -- Recursively navigate the layout until we hit NeogitDiffHeader leafs
           -- Forward declaration required to avoid missing global error
-          local find_diff_headers
-          function find_diff_headers(layout)
+          local diff_headers = {}
+          local function find_diff_headers(layout)
             if layout.children then
               -- One layout element may have multiple children so we need to loop
               for _, val in pairs(layout.children) do
@@ -136,9 +134,7 @@ function M:open(kind)
             end
           end
 
-          -- The Diffs are in the 10th element of the layout.
-          -- TODO: Do better than assume that we care about the last item
-          find_diff_headers(self.buffer.ui.layout[#self.buffer.ui.layout])
+          find_diff_headers(self.buffer.ui.layout)
 
           -- Search for a match and jump if we find it
           for path, line_nr in pairs(diff_headers) do
