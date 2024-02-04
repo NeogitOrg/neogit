@@ -12,6 +12,18 @@ function M.get_confirmation(msg, options)
   return vim.fn.confirm(msg, table.concat(options.values, "\n"), options.default) == 1
 end
 
+--- Provides the user with a confirmation. Like get_confirmation, but defaults to false
+---@param msg string Prompt to use for confirmation
+---@param options table|nil
+---@return boolean Confirmation (Yes/No)
+function M.get_permission(msg, options)
+  options = options or {}
+  options.values = options.values or { "&Yes", "&No" }
+  options.default = options.default or 2
+
+  return vim.fn.confirm(msg, table.concat(options.values, "\n"), options.default) == 1
+end
+
 ---@class UserChoiceOptions
 ---@field values table List of choices prefixed with '&'
 ---@field default integer Default choice to select
