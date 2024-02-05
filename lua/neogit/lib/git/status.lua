@@ -32,11 +32,7 @@ local function update_file(cwd, file, mode, name, original_name)
   }, mt or {})
 end
 
--- Generic pattern for matching tag ref and distance from rev
--- Unfortunately lua's pattern matching isn't that complete so
--- some cases may be dropped.
 local tag_pattern = "(.-)%-([0-9]+)%-g%x+$"
-
 local match_kind = "(.) (.+)"
 local match_u = "(..) (....) (%d+) (%d+) (%d+) (%d+) (%w+) (%w+) (%w+) (.+)"
 local match_1 = "(.)(.) (....) (%d+) (%d+) (%d+) (%w+) (%w+) (.+)"
@@ -58,9 +54,15 @@ local function update_status(state)
 
   local result = git.cli.status.null_separated.porcelain(2).branch.call { hidden = true }
   result = vim.split(result.stdout_raw[1], "\n")
-  result = util.filter_map(result, function(l)
-    if l ~= "" then
-      return l
+  result = util.collect(result, function(line, collection)
+    if line == "" then
+      return
+    end
+
+    if line ~= "" and (line:match("^[12u]%s[MTADRC%s%.%?!][MTDRC%s%.%?!]%s") or line:match("^[%?!#]%s")) then
+      table.insert(collection, line)
+    else
+      collection[#collection] = ("%s\t%s"):format(collection[#collection], line)
     end
   end)
 
