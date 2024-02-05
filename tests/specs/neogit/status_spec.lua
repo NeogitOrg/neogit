@@ -23,6 +23,27 @@ local function find(text)
 end
 
 describe("status buffer", function()
+  describe("renamed files", function()
+    it(
+      "correctly tracks renames",
+      in_prepared_repo(function()
+        harness.exec { "touch", "testfile" }
+        harness.exec { "echo", "test file content", ">testfile" }
+        harness.exec { "git", "add", "testfile" }
+        harness.exec { "git", "commit", "-m", "'added testfile'" }
+        harness.exec { "mv", "testfile", "renamed-testfile" }
+        harness.exec { "git", "add", "testfile" }
+        harness.exec { "git", "add", "renamed-testfile" }
+
+        a.util.block_on(status.reset)
+        a.util.block_on(status.refresh)
+
+        local lines = vim.api.nvim_buf_get_lines(0, 0, -1, true)
+        assert.True(vim.tbl_contains(lines, "Renamed testfile -> renamed-testfile"))
+      end)
+    )
+  end)
+
   describe("staging files - s", function()
     it(
       "Handles non-english filenames correctly",
