@@ -126,7 +126,7 @@ M.delete = operations("delete_worktree", function()
   local change_dir = selected == vim.fn.getcwd()
   local success = false
 
-  if input.get_confirmation("Remove worktree?") then
+  if input.get_permission("Remove worktree?") then
     if change_dir then
       status.chdir(git.worktree.main().path)
     end
@@ -135,7 +135,7 @@ M.delete = operations("delete_worktree", function()
     if git.worktree.remove(selected) then
       success = true
     else
-      if input.get_confirmation("Worktree has untracked or modified files. Remove anyways?") then
+      if input.get_permission("Worktree has untracked or modified files. Remove anyways?") then
         if git.worktree.remove(selected, { "--force" }) then
           success = true
         end

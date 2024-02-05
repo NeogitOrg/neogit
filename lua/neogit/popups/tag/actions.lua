@@ -112,7 +112,7 @@ function M.prune(_)
     elseif choice == "r" then
       l_tags = utils.filter(l_tags, function(tag)
         vim.cmd.redraw()
-        return input.get_confirmation("Delete local tag: " .. tag)
+        return input.get_permission("Delete local tag: " .. tag)
       end)
     else
       l_tags = {}
@@ -131,7 +131,7 @@ function M.prune(_)
     elseif choice == "r" then
       r_tags = utils.filter(r_tags, function(tag)
         vim.cmd.redraw()
-        return input.get_confirmation("Delete remote tag: " .. tag)
+        return input.get_permission("Delete remote tag: " .. tag)
       end)
     else
       r_tags = {}
