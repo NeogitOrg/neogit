@@ -216,7 +216,7 @@ function M:open(kind)
           end
         end,
         [mappings["Discard"]] = a.void(function()
-          git.index.update() -- Check if needed
+          git.index.update()
 
           local discardable = self.buffer.ui:get_hunk_or_filename_under_cursor()
 
@@ -245,15 +245,26 @@ function M:open(kind)
                   git.index.reset { discardable.filename }
                   git.index.checkout { discardable.filename }
                 elseif section.options.section == "staged" and item.mode == "A" then -- Added
-                  -- TODO: Close any open buffers with this file
                   git.index.reset { discardable.filename }
+
                   a.util.scheduler()
+
+                  local bufnr = vim.fn.bufexists(discardable.filename)
+                  if bufnr and bufnr > 0 then
+                    vim.api.nvim_buf_delete(bufnr, { force = true })
+                  end
+
                   vim.fn.delete(vim.fn.fnameescape(discardable.filename))
                 elseif section.options.section == "unstaged" then
                   git.index.checkout { discardable.filename }
                 elseif section.options.section == "untracked" then
-                  -- TODO: Close any open buffers with this file
                   a.util.scheduler()
+
+                  local bufnr = vim.fn.bufexists(discardable.filename)
+                  if bufnr and bufnr > 0 then
+                    vim.api.nvim_buf_delete(bufnr, { force = true })
+                  end
+
                   vim.fn.delete(vim.fn.fnameescape(discardable.filename))
                 end
               end
@@ -328,9 +339,11 @@ function M:open(kind)
                 end
               end
             end
-
-            self:refresh()
+          else
+            --  TODO check if section header, act on entire section
           end
+
+          self:refresh()
         end),
         [mappings["StageAll"]] = a.void(function()
           git.status.stage_all()
