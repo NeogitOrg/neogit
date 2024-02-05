@@ -75,6 +75,7 @@ function M:open(kind)
     buftype = "",
     kind = kind,
     modifiable = true,
+    disable_line_numbers = config.values.disable_line_numbers,
     readonly = false,
     after = function(buffer)
       local padding = util.max_length(util.flatten(vim.tbl_values(mapping)))
