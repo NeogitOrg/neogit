@@ -1,6 +1,7 @@
 local logger = require("neogit.logger")
 local process = require("neogit.process")
 local util = require("neogit.lib.util")
+local Path = require("plenary.path")
 
 local function config(setup)
   setup = setup or {}
@@ -135,7 +136,15 @@ local configurations = {
       apply = "apply",
       drop = "drop",
       push = "push",
+      store = "store",
       index = "--index",
+    },
+    aliases = {
+      message = function(tbl)
+        return function(text)
+          return tbl.args("-m", text)
+        end
+      end,
     },
   },
 
@@ -571,7 +580,8 @@ local function git_root_of_cwd()
     :spawn_blocking()
 
   if process ~= nil and process.code == 0 then
-    return process.stdout[1]
+    local out = process.stdout[1]
+    return Path:new(out):absolute()
   else
     return ""
   end

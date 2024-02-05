@@ -14,6 +14,18 @@ function M.map(tbl, f)
 end
 
 ---@generic T: any
+---@param tbl T[]
+---@param f fun(v: T, c: table)
+---@return table
+function M.collect(tbl, f)
+  local t = {}
+  for _, v in pairs(tbl) do
+    f(v, t)
+  end
+  return t
+end
+
+---@generic T: any
 ---@param tbl T[][]
 ---@return T[]
 --- Flattens one level of lists
