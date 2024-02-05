@@ -216,34 +216,64 @@ local function filter_layout(layout)
   end)
 end
 
+local function eq(a, b)
+  local same_tag = a.options.tag == b.options.tag
+  local same_id = a.id == b.id
+  local have_children = a.children and b.children
+
+  if not have_children then
+    local same_value = a.value == b.value
+
+    -- P({
+    --   same_id = same_id,
+    --   same_tag = same_tag,
+    --   same_value = same_value
+    -- })
+
+    return same_tag and same_id and same_value
+  else
+    local same_fold_state = a.options.folded == b.options.folded
+    local same_load_state = a.options.on_open == nil and b.options.on_open == nil
+    local same_child_count = #a.children == #b.children
+
+    -- P({
+    --   same_tag = same_tag,
+    --   same_id = same_id,
+    --   same_child_count = same_child_count,
+    --   same_fold_state = same_fold_state,
+    --   same_load_state = same_load_state
+    -- }
+    -- )
+
+    return same_tag
+      and same_id
+      and same_child_count
+      and same_fold_state
+      and same_load_state
+  end
+end
+
 ---@param old table
 ---@param new table
-local function compare_trees(old, new)
-  if old == nil or new == nil then
-    return false
+local function compare_trees(old, new, deltas)
+  if not new.children or not old.children then
+    return
   end
 
-  if old == new then
-    return true
-  end
-
-  if old.children and new.children then
-    for i = 1, #old.children do
-      if not compare_trees(old.children[i], new.children[i]) then
-        if old.children[i] and new.children[i] then
-          -- P({ old = old.children[i].options, new = new.children[i].options })
-
-          if not old.children[i].tag == "Section" and not new.children[i].tag == "Section" then
-            old.children[i] = new.children[i]
-          end
-        end
-
-        return false
-      end
+  for i = 1, #new.children do
+    if eq(new.children[i], old.children[i]) then
+      compare_trees(old.children[i], new.children[i], deltas)
+    else
+      table.insert(deltas, { old = old.children[i], new = new.children[i] })
+      -- if new.children[i].options.highlight == "NeogitSectionHeader"
+      --   and old.children[i].options.highlight == "NeogitSectionHeader"
+      -- then
+      --   old.children[i] = new.children[i]
+      -- else
+      --   P { old = old.children[i].options, new = new.children[i].options }
+      -- end
     end
   end
-
-  return true
 end
 
 function Ui:render(...)
@@ -255,8 +285,9 @@ function Ui:render(...)
   if vim.tbl_isempty(self.layout) then
     self.layout = root
   else
-    -- This is hard.
-    compare_trees(self.layout, root)
+    local deltas = {}
+    compare_trees(self.layout, root, deltas)
+    P(deltas)
   end
 
   self:update()
