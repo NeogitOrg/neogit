@@ -951,7 +951,11 @@ local function discard_message(files, hunk_count, mode)
   if vim.tbl_contains({ "V", "v", "" }, mode) then
     return "Discard selection?"
   elseif hunk_count > 0 then
-    return string.format("Discard %d hunks?", hunk_count)
+    if hunk_count == 1 then
+      return "Discard hunk?"
+    else
+      return string.format("Discard %d hunks?", hunk_count)
+    end
   elseif #files > 1 then
     return string.format("Discard %d files?", #files)
   else
@@ -1014,12 +1018,7 @@ local discard = operation("discard", function()
     end
   end
 
-  if
-    not input.get_confirmation(
-      discard_message(files, hunk_count, mode.mode),
-      { values = { "&Yes", "&No" }, default = 2 }
-    )
-  then
+  if not input.get_permission(discard_message(files, hunk_count, mode.mode)) then
     return
   end
 

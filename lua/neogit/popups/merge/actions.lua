@@ -14,20 +14,16 @@ function M.commit()
 end
 
 function M.abort()
-  if not input.get_confirmation("Abort merge?", { values = { "&Yes", "&No" }, default = 2 }) then
-    return
+  if input.get_permission("Abort merge?") then
+    git.merge.abort()
   end
-
-  git.merge.abort()
 end
 
 function M.merge(popup)
   local branch = FuzzyFinderBuffer.new(git.branch.get_all_branches()):open_async()
-  if not branch then
-    return
+  if branch then
+    git.merge.merge(branch, popup:get_arguments())
   end
-
-  git.merge.merge(branch, popup:get_arguments())
 end
 
 return M

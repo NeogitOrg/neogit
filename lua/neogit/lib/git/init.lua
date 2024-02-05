@@ -34,12 +34,7 @@ M.init_repo = function()
   vim.cmd.lcd(directory)
 
   if cli.is_inside_worktree() then
-    if
-      not input.get_confirmation(
-        string.format("Reinitialize existing repository %s?", directory),
-        { values = { "&Yes", "&No" }, default = 2 }
-      )
-    then
+    if not input.get_permission(("Reinitialize existing repository %s?"):format(directory)) then
       return
     end
   end
