@@ -25,7 +25,7 @@ local status_buffers = {}
 ---@class StatusBuffer
 ---@field disabled boolean
 ---@field prev_autochdir string
----@field status_buffer Buffer
+---@field buffer Buffer
 ---@field commit_view any
 ---@field watcher Watcher
 ---@field cwd string
@@ -127,9 +127,9 @@ local max_len = #"Modified by us"
 
 function M:draw_sign_for_item(item, name)
   if item.folded then
-    self.status_buffer:place_sign(item.first, "NeogitClosed:" .. name, "fold_markers")
+    self.buffer:place_sign(item.first, "NeogitClosed:" .. name, "fold_markers")
   else
-    self.status_buffer:place_sign(item.first, "NeogitOpen:" .. name, "fold_markers")
+    self.buffer:place_sign(item.first, "NeogitOpen:" .. name, "fold_markers")
   end
 end
 
@@ -190,8 +190,8 @@ local function format_mode(mode)
 end
 
 function M:draw_buffer()
-  self.status_buffer:clear_sign_group("hl")
-  self.status_buffer:clear_sign_group("fold_markers")
+  self.buffer:clear_sign_group("hl")
+  self.buffer:clear_sign_group("fold_markers")
 
   local output = LineBuffer.new()
   if not config.values.disable_hint then
@@ -349,7 +349,7 @@ function M:draw_buffer()
         output:append(line)
 
         if f.done then
-          self.status_buffer:place_sign(#output, "NeogitRebaseDone", "hl")
+          self.buffer:place_sign(#output, "NeogitRebaseDone", "hl")
         end
 
         local file = items_lookup[f.name] or { folded = true }
@@ -438,7 +438,7 @@ function M:draw_buffer()
 
   self:render_section("Recent commits", "recent")
 
-  self.status_buffer:replace_content_with(output)
+  self.buffer:replace_content_with(output)
   self.locations = new_locations
 end
 
@@ -542,11 +542,11 @@ function M:restore_cursor_location(section_loc, file_loc, hunk_loc)
 end
 
 function M:refresh_status_buffer()
-  if self.status_buffer == nil then
+  if self.buffer == nil then
     return
   end
 
-  self.status_buffer:unlock()
+  self.buffer:unlock()
 
   logger.debug("[STATUS BUFFER]: Redrawing")
 
@@ -555,7 +555,7 @@ function M:refresh_status_buffer()
 
   logger.debug("[STATUS BUFFER]: Finished Redrawing")
 
-  self.status_buffer:lock()
+  self.buffer:lock()
 
   vim.cmd("redraw")
 end
@@ -588,7 +588,7 @@ function M:refresh(partial, reason)
     local s, f, h = self:save_cursor_location()
     self:refresh_status_buffer()
 
-    if self.status_buffer ~= nil and self.status_buffer:is_focused() then
+    if self.buffer ~= nil and self.buffer:is_focused() then
       pcall(self.restore_cursor_location, self, s, f, h)
     end
 
@@ -691,7 +691,9 @@ function M:dispatch_reset()
 end
 
 function M.reset_all()
-  for _, status_buffer in pairs(status_buffers) do
+  print("resetting all status buffers")
+  for k, status_buffer in pairs(status_buffers) do
+    print("resetting status buffer", k)
     status_buffer:reset()
   end
 end
@@ -720,6 +722,8 @@ function M:close(skip_close)
 
   self.closing = true
 
+  status_buffers[self.cwd] = nil
+
   if skip_close == nil then
     skip_close = false
   end
@@ -727,28 +731,23 @@ function M:close(skip_close)
   M.cursor_location = { self:save_cursor_location() }
 
   if not skip_close then
-    self.status_buffer:close()
+    self.buffer:close()
   end
 
   if self.watcher then
     self.watcher:stop()
   end
   notification.delete_all()
-  -- self.status_buffer = nil
   vim.o.autochdir = self.prev_autochdir
   if self.old_cwd then
     vim.cmd.lcd(self.old_cwd)
   end
-
-  status_buffers[self.cwd] = nil
 end
 
 function M.close_all(skip_close)
   for _, status_buffer in pairs(status_buffers) do
     status_buffer:close(skip_close)
   end
-
-  M.closing = false
 end
 
 ---@class Selection
@@ -977,12 +976,12 @@ function M:stage()
       git.index.add(files)
     end
 
-    refresh({
+    self:refresh({
       update_diffs = vim.tbl_map(function(v)
         return "*:" .. v.name
       end, selection.items),
     }, "stage_finish")
-  end)
+  end, { dispatch = true })
 end
 
 function M:unstage()
@@ -1089,7 +1088,7 @@ function M:discard()
           table.insert(t, function()
             if section_name == "untracked" then
               a.util.scheduler()
-              vim.fn.delete(cli.git_root() .. "/" .. item.name)
+              vim.fn.delete(git.cli.git_root() .. "/" .. item.name)
             elseif section_name == "unstaged" then
               git.index.checkout { item.name }
             elseif section_name == "staged" then
@@ -1182,7 +1181,6 @@ function M:handle_section_item(item)
   end
 
   notification.delete_all()
-  M.status_buffer:close()
 
   if not vim.o.hidden and vim.bo.buftype == "" and not vim.bo.readonly and vim.fn.bufname() ~= "" then
     vim.cmd("update")
@@ -1448,19 +1446,19 @@ function M:set_decoration_provider()
   local context_ns = api.nvim_create_namespace("NeogitStatusContext")
 
   local function on_start()
-    return self.status_buffer.exists() and self.status_buffer:is_focused()
+    return self.buffer:exists() and self.buffer:is_focused()
   end
 
   local function on_win()
-    self.status_buffer:clear_namespace(decor_ns)
-    self.status_buffer:clear_namespace(context_ns)
+    self.buffer:clear_namespace(decor_ns)
+    self.buffer:clear_namespace(context_ns)
 
     -- first and last lines of current context based on cursor position, if available
     local _, _, _, first, last = self:save_cursor_location()
     local cursor_line = vim.fn.line(".")
 
     for line = fn.line("w0"), fn.line("w$") do
-      local text = self.status_buffer:get_line(line)[1]
+      local text = self.buffer:get_line(line)[1]
       if text then
         local highlight
         local start = string.sub(text, 1, 1)
@@ -1479,7 +1477,7 @@ function M:set_decoration_provider()
         end
 
         if highlight then
-          self.status_buffer:set_extmark(decor_ns, line - 1, 0, { line_hl_group = highlight, priority = 9 })
+          self.buffer:set_extmark(decor_ns, line - 1, 0, { line_hl_group = highlight, priority = 9 })
         end
 
         if
@@ -1490,7 +1488,7 @@ function M:set_decoration_provider()
           and line <= last
           and highlight ~= "NeogitCursorLine"
         then
-          self.status_buffer:set_extmark(
+          self.buffer:set_extmark(
             context_ns,
             line - 1,
             0,
@@ -1501,13 +1499,13 @@ function M:set_decoration_provider()
     end
   end
 
-  self.status_buffer:set_decorations(decor_ns, { on_start = on_start, on_win = on_win })
+  self.buffer:set_decorations(decor_ns, { on_start = on_start, on_win = on_win })
 end
 
 function M.find(cwd)
   local buffer = status_buffers[cwd]
   if buffer then
-    if buffer.status_buffer:is_valid() then
+    if buffer.buffer:is_valid() then
       return buffer
     else
       status_buffers[cwd] = nil
@@ -1523,7 +1521,7 @@ function M.create(kind, cwd)
   local existing = M.find(cwd)
   if existing then
     logger.debug("Status buffer already exists. Focusing the existing one")
-    existing.status_buffer:show(true)
+    existing.buffer:show(true)
     return existing
   end
 
@@ -1541,9 +1539,9 @@ function M.create(kind, cwd)
     disable_line_numbers = config.values.disable_line_numbers,
     ---@param buffer Buffer
     initialize = function(buffer, win)
-      logger.debug("[STATUS BUFFER]: Initializing...")
+      logger.debug(string.format("[STATUS BUFFER]: Initializing status buffer %d", buffer.handle))
 
-      status_buffer.status_buffer = buffer
+      status_buffer.buffer = buffer
 
       status_buffer.prev_autochdir = vim.o.autochdir
 
@@ -1585,7 +1583,7 @@ function M.create(kind, cwd)
       end
 
       logger.debug("[STATUS BUFFER]: Dispatching initial render")
-      status_buffe:refresh(nil, "Buffer.create")
+      status_buffer:refresh(nil, "Buffer.create")
     end,
     after = function()
       vim.cmd([[setlocal nowrap]])
@@ -1596,7 +1594,7 @@ function M.create(kind, cwd)
           return not M.is_refresh_locked()
         end)
 
-        local ok, _ = pcall(self.restore_cursor_location, self, unpack(M.cursor_location))
+        local ok, _ = pcall(status_buffer.restore_cursor_location, status_buffer, unpack(M.cursor_location))
         if ok then
           M.cursor_location = nil
         end
@@ -1643,7 +1641,7 @@ function M.chdir(dir)
   M.old_cwd = dir
   vim.cmd.cd(dir)
   vim.loop.chdir(dir)
-  reset()
+  M.reset_all()
 end
 
 return M

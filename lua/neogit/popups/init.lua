@@ -109,7 +109,7 @@ function M.mappings_table(status_buffer)
       "TagPopup",
       "Tag",
       M.open("tag", function(f)
-        f { commit = commit_oid(require("neogit.status").get_selection().commit) }
+        f { commit = commit_oid(require("neogit.status"):get_selection().commit) }
       end),
     },
     { "LogPopup", "Log", M.open("log") },
@@ -160,7 +160,7 @@ function M.mappings_table(status_buffer)
       "StashPopup",
       "Stash",
       M.open("stash", function(f)
-        f { name = status_buffer.status_buffer:get_current_line()[1]:match("^(stash@{%d+})") }
+        f { name = status_buffer.buffer:get_current_line()[1]:match("^(stash@{%d+})") }
       end),
     },
   }

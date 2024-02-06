@@ -68,7 +68,9 @@ function M.in_prepared_repo(cb)
         error(err)
       end
 
-      a.util.block_on(status.close)
+      a.util.block_on(function()
+        status:close()
+      end)
     end)
   end
 end

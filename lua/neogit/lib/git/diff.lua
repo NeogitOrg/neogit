@@ -110,6 +110,7 @@ end
 ---@field diff_to number
 ---@field first number
 ---@field last number
+---@field hash number
 
 ---@return Hunk
 local function build_hunks(lines)
