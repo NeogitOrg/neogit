@@ -374,14 +374,15 @@ function M:action(keys, description, callback)
       local permit = action_lock:acquire()
       logger.debug(string.format("[ACTION] Running action from %s", self.state.name))
 
-      watcher.pause()
-      callback(...)
-      watcher.resume()
+      local args = { ... }
+      watcher.suspend(function()
+        callback(unpack(args))
+      end)
 
       permit:forget()
 
       logger.debug("[ACTION] Dispatching Refresh")
-      require("neogit.status").dispatch_refresh(nil, "action")
+      require("neogit.buffers.status").instance:dispatch_refresh(nil, "action")
     end)
   end
 

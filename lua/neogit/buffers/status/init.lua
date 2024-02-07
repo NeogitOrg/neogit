@@ -6,16 +6,24 @@ local git = require("neogit.lib.git")
 local watcher = require("neogit.watcher")
 local a = require("plenary.async")
 local input = require("neogit.lib.input")
+
 local logger = require("neogit.logger") -- TODO: Add logging
 local notification = require("neogit.lib.notification") -- TODO
 
 local api = vim.api
+local fn = vim.fn
+
+---@class Semaphore
+---@field permits number
+---@field acquire function
 
 ---@class StatusBuffer
 ---@field is_open boolean whether the buffer is currently visible
 ---@field buffer Buffer instance
 ---@field state NeogitRepo
 ---@field config NeogitConfig
+---@field frozen boolean
+---@field refresh_lock Semaphore
 local M = {}
 M.__index = M
 
@@ -25,29 +33,17 @@ M.__index = M
 function M.new(state, config)
   local instance = {
     is_open = false,
+    -- frozen = false,
     state = state,
     config = config,
     buffer = nil,
+    watcher = nil,
+    refresh_lock = a.control.Semaphore.new(1),
   }
 
   setmetatable(instance, M)
 
   return instance
-end
-
-function M:close()
-  self.is_open = false
-  self.buffer:close()
-  self.buffer = nil
-end
-
-function M:refresh()
-  git.repo:refresh {
-    source = "status",
-    callback = function()
-      self.buffer.ui:render(unpack(ui.Status(git.repo, self.config)))
-    end,
-  }
 end
 
 -- TODO
@@ -67,15 +63,11 @@ end
 --  - Files in selection
 --  - Hunks in selection
 --  - Lines in selection
---
--- Mappings:
---  Ensure it will work when passing multiple mappings to the same function
---
+
 function M:open(kind)
   if M.instance and M.instance.is_open then
     M.instance:close()
   end
-
   M.instance = self
 
   if self.is_open then
@@ -94,8 +86,9 @@ function M:open(kind)
     disable_line_numbers = config.values.disable_line_numbers,
     autocmds = {
       ["BufUnload"] = function()
-        M.watcher:stop()
-        M.instance.is_open = false
+        watcher.instance:stop()
+        self.is_open = false
+        vim.o.autochdir = self.prev_autochdir
       end,
     },
     mappings = {
@@ -117,9 +110,9 @@ function M:open(kind)
         [mappings["Close"]] = function()
           self:close()
         end,
-        [mappings["RefreshBuffer"]] = function()
+        [mappings["RefreshBuffer"]] = a.void(function()
           self:refresh()
-        end,
+        end),
         [mappings["Depth1"]] = function()
           -- TODO: Need to work with stashes/recent
           local section = self.buffer.ui:get_current_section()
@@ -228,6 +221,9 @@ function M:open(kind)
               return
             end
 
+            -- TODO: Discard Commit?
+            -- TODO: Discard Stash?
+            -- TODO: Discard Section?
             if discardable.hunk then
               local hunk = discardable.hunk
               local patch = git.index.generate_patch(item, hunk, hunk.from, hunk.to, true)
@@ -249,23 +245,23 @@ function M:open(kind)
 
                   a.util.scheduler()
 
-                  local bufnr = vim.fn.bufexists(discardable.filename)
+                  local bufnr = fn.bufexists(discardable.filename)
                   if bufnr and bufnr > 0 then
-                    vim.api.nvim_buf_delete(bufnr, { force = true })
+                    api.nvim_buf_delete(bufnr, { force = true })
                   end
 
-                  vim.fn.delete(vim.fn.fnameescape(discardable.filename))
+                  fn.delete(fn.fnameescape(discardable.filename))
                 elseif section.options.section == "unstaged" then
                   git.index.checkout { discardable.filename }
                 elseif section.options.section == "untracked" then
                   a.util.scheduler()
 
-                  local bufnr = vim.fn.bufexists(discardable.filename)
+                  local bufnr = fn.bufexists(discardable.filename)
                   if bufnr and bufnr > 0 then
-                    vim.api.nvim_buf_delete(bufnr, { force = true })
+                    api.nvim_buf_delete(bufnr, { force = true })
                   end
 
-                  vim.fn.delete(vim.fn.fnameescape(discardable.filename))
+                  fn.delete(fn.fnameescape(discardable.filename))
                 end
               end
             end
@@ -281,10 +277,10 @@ function M:open(kind)
 
           if c then
             if c.options.tag == "Diff" then
-              self.buffer:move_cursor(vim.fn.line(".") + 1)
+              self.buffer:move_cursor(fn.line(".") + 1)
             else
               local _, last = c:row_range_abs()
-              if last == vim.fn.line("$") then
+              if last == fn.line("$") then
                 self.buffer:move_cursor(last)
               else
                 self.buffer:move_cursor(last + 1)
@@ -302,7 +298,7 @@ function M:open(kind)
 
             if c then
               local first, _ = c:row_range_abs()
-              if vim.fn.line(".") == first then
+              if fn.line(".") == first then
                 first = previous_hunk_header(self, line - 1)
               end
 
@@ -310,7 +306,7 @@ function M:open(kind)
             end
           end
 
-          local previous_header = previous_hunk_header(self, vim.fn.line("."))
+          local previous_header = previous_hunk_header(self, fn.line("."))
           if previous_header then
             api.nvim_win_set_cursor(0, { previous_header, 0 })
             vim.cmd("normal! zt")
@@ -320,8 +316,10 @@ function M:open(kind)
           git.init.init_repo()
         end,
         [mappings["Stage"]] = a.void(function()
+          -- TODO: Cursor Placement
           local stagable = self.buffer.ui:get_hunk_or_filename_under_cursor()
 
+          local cursor
           if stagable then
             if stagable.hunk then
               local item = self.buffer.ui:get_item_under_cursor()
@@ -329,7 +327,10 @@ function M:open(kind)
                 git.index.generate_patch(item, stagable.hunk, stagable.hunk.from, stagable.hunk.to)
 
               git.index.apply(patch, { cached = true })
+              cursor = stagable.hunk.first
             elseif stagable.filename then
+              cursor = self.buffer:cursor_line()
+
               local section = self.buffer.ui:get_current_section()
               if section then
                 if section.options.section == "unstaged" then
@@ -343,24 +344,36 @@ function M:open(kind)
             --  TODO check if section header, act on entire section
           end
 
+          if cursor then
+            self.buffer:move_cursor(cursor)
+          end
+
           self:refresh()
         end),
         [mappings["StageAll"]] = a.void(function()
+          -- TODO: Cursor Placement
           git.status.stage_all()
           self:refresh()
         end),
         [mappings["StageUnstaged"]] = a.void(function()
+          -- TODO: Cursor Placement
           git.status.stage_modified()
           self:refresh()
         end),
         [mappings["Unstage"]] = a.void(function()
           local unstagable = self.buffer.ui:get_hunk_or_filename_under_cursor()
 
+          -- TODO: Cursor Placement
           if unstagable then
             if unstagable.hunk then
               local item = self.buffer.ui:get_item_under_cursor()
-              local patch =
-                git.index.generate_patch(item, unstagable.hunk, unstagable.hunk.from, unstagable.hunk.to, true)
+              local patch = git.index.generate_patch(
+                item,
+                unstagable.hunk,
+                unstagable.hunk.from,
+                unstagable.hunk.to,
+                true
+              )
 
               git.index.apply(patch, { cached = true, reverse = true })
             elseif unstagable.filename then
@@ -375,6 +388,7 @@ function M:open(kind)
           end
         end),
         [mappings["UnstageStaged"]] = a.void(function()
+          -- TODO: Cursor Placement
           git.status.unstage_all()
           self:refresh()
         end),
@@ -410,7 +424,7 @@ function M:open(kind)
 
             vim.cmd.edit(item.escaped_path)
             if cursor then
-              vim.api.nvim_win_set_cursor(0, cursor)
+              api.nvim_win_set_cursor(0, cursor)
             end
 
             return
@@ -451,7 +465,7 @@ function M:open(kind)
 
             vim.cmd.tabedit(item.escaped_path)
             if cursor then
-              vim.api.nvim_win_set_cursor(0, cursor)
+              api.nvim_win_set_cursor(0, cursor)
             end
           end
         end,
@@ -484,7 +498,7 @@ function M:open(kind)
 
             vim.cmd.split(item.escaped_path)
             if cursor then
-              vim.api.nvim_win_set_cursor(0, cursor)
+              api.nvim_win_set_cursor(0, cursor)
             end
           end
         end,
@@ -517,7 +531,7 @@ function M:open(kind)
 
             vim.cmd.vsplit(item.escaped_path)
             if cursor then
-              vim.api.nvim_win_set_cursor(0, cursor)
+              api.nvim_win_set_cursor(0, cursor)
             end
           end
         end,
@@ -579,9 +593,103 @@ function M:open(kind)
     end,
     after = function()
       vim.cmd([[setlocal nowrap]])
-      M.watcher = watcher.new(git.repo:git_path():absolute()) -- TODO: pass self in so refresh can be sent
+
+      if config.values.filewatcher.enabled then
+        watcher.new(git.repo:git_path():absolute()):start()
+      end
     end,
   }
+end
+
+function M:close()
+  vim.o.autochdir = self.prev_autochdir
+
+  watcher.instance:stop()
+  self.is_open = false
+  self.buffer:close()
+  self.buffer = nil
+end
+
+function M:focus()
+  if self.buffer then
+    self.buffer:focus()
+  end
+end
+
+-- TODO: When launching the fuzzy finder, any refresh attempted will raise an exception because the set_folds() function
+-- cannot be called when the buffer is not focused, as it's not a proper API. We could implement some kind of freeze
+-- mechanism to prevent the buffer from refreshing while the fuzzy finder is open.
+-- function M:freeze()
+--   self.frozen = true
+-- end
+--
+-- function M:unfreeze()
+--   self.frozen = false
+-- end
+
+function M:refresh(partial, reason)
+  -- if self.frozen then
+  --   return
+  -- end
+
+  local permit = self:_get_refresh_lock(reason)
+
+  git.repo:refresh {
+    source = "status",
+    partial = partial,
+    callback = function()
+      self.buffer.ui:render(unpack(ui.Status(git.repo, self.config)))
+
+      api.nvim_exec_autocmds(
+        "User",
+        { pattern = "NeogitStatusRefreshed", modeline = false }
+      )
+
+      permit:forget()
+      logger.info("[STATUS BUFFER]: Refresh lock is now free")
+    end,
+  }
+end
+
+function M:dispatch_refresh(partial, reason)
+  a.run(function()
+    if self:_is_refresh_locked() then
+      logger.debug("[STATUS] Refresh lock is active. Skipping refresh from " .. reason)
+    else
+      self:refresh(partial, reason)
+    end
+  end)
+end
+
+function M:reset()
+  git.repo:reset()
+  self:refresh(nil, "reset")
+end
+
+function M:dispatch_reset()
+  a.run(function()
+    self:reset()
+  end)
+end
+
+function M:_is_refresh_locked()
+  return self.refresh_lock.permits == 0
+end
+
+function M:_get_refresh_lock(reason)
+  local permit = self.refresh_lock:acquire()
+  logger.debug(("[STATUS BUFFER]: Acquired refresh lock:"):format(reason or "unknown"))
+
+  vim.defer_fn(function()
+    if self:_is_refresh_locked() then
+      permit:forget()
+      logger.debug(
+        ("[STATUS BUFFER]: Refresh lock for %s expired after 10 seconds"):format(reason or "unknown")
+      )
+    end
+  end, 10000)
+
+  return permit
 end
 
 return M

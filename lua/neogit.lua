@@ -21,14 +21,47 @@ function M.setup(opts)
 
   M.autocmd_group = vim.api.nvim_create_augroup("Neogit", { clear = false })
 
-  M.status = require("neogit.status")
-  M.dispatch_reset = M.status.dispatch_reset
-  M.refresh = M.status.refresh
-  M.reset = M.status.reset
-  M.refresh_manually = M.status.refresh_manually
-  M.dispatch_refresh = M.status.dispatch_refresh
-  M.refresh_viml_compat = M.status.refresh_viml_compat
-  M.close = M.status.close
+  M.status = require("neogit.buffers.status")
+
+  M.dispatch_reset = function()
+    local instance = M.status.instance
+    if instance then
+      instance:dispatch_reset()
+    end
+  end
+
+  M.refresh = function()
+    local instance = M.status.instance
+    if instance then
+      instance:refresh()
+    end
+  end
+
+  M.reset = function()
+    local instance = M.status.instance
+    if instance then
+      instance:reset()
+    end
+  end
+
+  M.dispatch_refresh = function()
+    local instance = M.status.instance
+    if instance then
+      instance:dispatch_refresh()
+    end
+  end
+
+  M.close = function()
+    local instance = M.status.instance
+    if instance then
+      instance:close()
+    end
+  end
+
+  -- TODO ?
+  -- M.refresh_viml_compat = M.status.refresh_viml_compat
+  -- M.refresh_manually = M.status.refresh_manually
+
 
   M.lib = require("neogit.lib")
   M.cli = M.lib.git.cli
@@ -44,6 +77,53 @@ function M.setup(opts)
   folds.setup()
 end
 
+local function construct_opts(opts)
+  opts = opts or {}
+
+  if opts.cwd and not opts.no_expand then
+    opts.cwd = vim.fn.expand(opts.cwd)
+  end
+
+  if not opts.cwd then
+    local git = require("neogit.lib.git")
+    opts.cwd = git.cli.git_root_of_cwd()
+
+    if opts.cwd == "" then
+      opts.cwd = vim.fn.getcwd()
+    end
+  end
+
+  return opts
+end
+
+local function open_popup(name)
+  local has_pop, popup = pcall(require, "neogit.popups." .. name)
+
+  if not has_pop then
+    vim.api.nvim_err_writeln("Invalid popup '" .. name .. "'")
+  else
+    popup.create {}
+  end
+end
+
+local function open_status_buffer(opts)
+  local a = require("plenary.async")
+  local status = require("neogit.buffers.status")
+  local config = require("neogit.config")
+  local git = require("neogit.lib.git")
+
+  vim.cmd.lcd(opts.cwd)
+
+  a.run(function()
+    git.repo:refresh {
+      source = "initialize",
+      callback = function()
+        status.new(git.repo, config.values):open(opts.kind)
+      end,
+    }
+  end)
+end
+
 ---@alias Popup "cherry_pick" | "commit" | "branch" | "diff" | "fetch" | "log" | "merge" | "remote" | "pull" | "push" | "rebase" | "revert" | "reset" | "stash"
 ---
 ---@class OpenOpts
@@ -54,38 +134,20 @@ end
 
 ---@param opts OpenOpts|nil
 function M.open(opts)
-  local a = require("plenary.async")
-  local lib = require("neogit.lib")
-  local status = require("neogit.status")
-  local input = require("neogit.lib.input")
-  local cli = require("neogit.lib.git.cli")
-  local logger = require("neogit.logger")
   local notification = require("neogit.lib.notification")
-
-  opts = opts or {}
-
-  if opts.cwd and not opts.no_expand then
-    opts.cwd = vim.fn.expand(opts.cwd)
-  end
-
-  if not opts.cwd then
-    opts.cwd = require("neogit.lib.git.cli").git_root_of_cwd()
-  end
 
   if not did_setup then
     notification.error("Neogit has not been setup!")
-    logger.error("Neogit not setup!")
     return
   end
 
-  if not cli.is_inside_worktree(opts.cwd) then
-    if
-      input.get_confirmation(
-        string.format("Initialize repository in %s?", opts.cwd or vim.fn.getcwd()),
-        { values = { "&Yes", "&No" }, default = 2 }
-      )
-    then
-      lib.git.init.create(opts.cwd or vim.fn.getcwd(), true)
+  opts = construct_opts(opts)
+
+  local git = require("neogit.lib.git")
+  if not git.cli.is_inside_worktree(opts.cwd) then
+    local input = require("neogit.lib.input")
+    if input.get_permission(("Initialize repository in %s?"):format(opts.cwd)) then
+      git.init.create(opts.cwd, true)
     else
       notification.error("The current working directory is not a git repository")
       return
@@ -93,23 +155,9 @@ function M.open(opts)
   end
 
   if opts[1] ~= nil then
-    local popup_name = opts[1]
-    local has_pop, popup = pcall(require, "neogit.popups." .. popup_name)
-
-    if not has_pop then
-      vim.api.nvim_err_writeln("Invalid popup '" .. popup_name .. "'")
-    else
-      popup.create {}
-    end
+    open_popup(opts[1])
   else
-    a.run(function()
-      if status.status_buffer then
-        vim.cmd.lcd(opts.cwd)
-        status.refresh(nil, "open")
-      else
-        status.create(opts.kind, opts.cwd)
-      end
-    end)
+    open_status_buffer(opts)
   end
 end
 

@@ -175,14 +175,13 @@ function M.Status(state, config)
           -- TODO Reverting (sequencer - revert_head)
           -- TODO Picking (sequencer - cherry_pick_head)
           -- TODO Respect if user has section hidden
-        #state.untracked.items > 0
-          and Section { -- TODO: Group by directory and create a fold
-            title = SectionTitle { title = "Untracked files" },
-            render = SectionItemFile,
-            items = state.untracked.items,
-            folded = config.sections.untracked.folded,
-            name = "untracked",
-          },
+        #state.untracked.items > 0 and Section { -- TODO: Group by directory and create a fold
+          title = SectionTitle { title = "Untracked files" },
+          render = SectionItemFile,
+          items = state.untracked.items,
+          folded = config.sections.untracked.folded,
+          name = "untracked",
+        },
         #state.unstaged.items > 0 and Section {
           title = SectionTitle { title = "Unstaged changes" },
           render = SectionItemFile,

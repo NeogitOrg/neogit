@@ -245,11 +245,7 @@ local function eq(a, b)
     -- }
     -- )
 
-    return same_tag
-      and same_id
-      and same_child_count
-      and same_fold_state
-      and same_load_state
+    return same_tag and same_id and same_child_count and same_fold_state and same_load_state
   end
 end
 
@@ -265,13 +261,6 @@ local function compare_trees(old, new, deltas)
       compare_trees(old.children[i], new.children[i], deltas)
     else
       table.insert(deltas, { old = old.children[i], new = new.children[i] })
-      -- if new.children[i].options.highlight == "NeogitSectionHeader"
-      --   and old.children[i].options.highlight == "NeogitSectionHeader"
-      -- then
-      --   old.children[i] = new.children[i]
-      -- else
-      --   P { old = old.children[i].options, new = new.children[i].options }
-      -- end
     end
   end
 end
@@ -285,9 +274,10 @@ function Ui:render(...)
   if vim.tbl_isempty(self.layout) then
     self.layout = root
   else
-    local deltas = {}
-    compare_trees(self.layout, root, deltas)
-    P(deltas)
+    -- local deltas = {}
+    -- compare_trees(self.layout, root, deltas)
+    -- P(deltas)
+    self.layout = root
   end
 
   self:update()

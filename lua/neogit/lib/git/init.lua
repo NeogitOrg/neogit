@@ -15,6 +15,7 @@ M.create = function(directory, sync)
 end
 
 -- TODO Use path input
+-- TODO: Don't call the status buffer directly here
 M.init_repo = function()
   local directory = input.get_user_input("Create repository in", { completion = "dir" })
   if not directory then

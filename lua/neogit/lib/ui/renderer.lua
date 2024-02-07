@@ -88,6 +88,11 @@ end
 
 ---@return Renderer
 function Renderer:render()
+  -- If the buffer is not focused, trying to set folds will raise an error because it's not a proper API.
+  if not self.ui_buffer:is_focused() then
+    return self
+  end
+
   self:_render(self.layout, self.layout.children, 0)
 
   local cursor_line = self.ui_buffer:cursor_line()

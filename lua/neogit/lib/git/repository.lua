@@ -3,6 +3,7 @@ local logger = require("neogit.logger")
 local Path = require("plenary.path")
 local cli = require("neogit.lib.git.cli")
 
+---@return NeogitRepo
 local function empty_state()
   ---@class NeogitRepo
   return {
