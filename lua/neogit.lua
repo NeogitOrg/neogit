@@ -62,7 +62,6 @@ function M.setup(opts)
   -- M.refresh_viml_compat = M.status.refresh_viml_compat
   -- M.refresh_manually = M.status.refresh_manually
 
-
   M.lib = require("neogit.lib")
   M.cli = M.lib.git.cli
   M.popups = require("neogit.popups")

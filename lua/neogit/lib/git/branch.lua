@@ -141,7 +141,8 @@ function M.delete(name)
 
   local result
   if M.is_unmerged(name) then
-    if input.get_permission(("'%s' contains unmerged commits! Are you sure you want to delete it?"):format(name)) then
+    local message = ("'%s' contains unmerged commits! Are you sure you want to delete it?"):format(name)
+    if input.get_permission(message) then
       result = cli.branch.delete.force.name(name).call_sync()
     end
   else

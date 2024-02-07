@@ -171,11 +171,12 @@ function M.Status(state, config)
           yankable = state.head.tag.oid,
         },
         EmptyLine,
-          -- TODO Rebasing (rebase)
-          -- TODO Reverting (sequencer - revert_head)
-          -- TODO Picking (sequencer - cherry_pick_head)
-          -- TODO Respect if user has section hidden
-        #state.untracked.items > 0 and Section { -- TODO: Group by directory and create a fold
+        -- TODO Rebasing (rebase)
+        -- TODO Reverting (sequencer - revert_head)
+        -- TODO Picking (sequencer - cherry_pick_head)
+        -- TODO Respect if user has section hidden
+        -- TODO: Group untracked by directory and create a fold
+        #state.untracked.items > 0 and Section {
           title = SectionTitle { title = "Untracked files" },
           render = SectionItemFile,
           items = state.untracked.items,

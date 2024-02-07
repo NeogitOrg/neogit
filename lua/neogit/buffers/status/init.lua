@@ -640,10 +640,7 @@ function M:refresh(partial, reason)
     callback = function()
       self.buffer.ui:render(unpack(ui.Status(git.repo, self.config)))
 
-      api.nvim_exec_autocmds(
-        "User",
-        { pattern = "NeogitStatusRefreshed", modeline = false }
-      )
+      api.nvim_exec_autocmds("User", { pattern = "NeogitStatusRefreshed", modeline = false })
 
       permit:forget()
       logger.info("[STATUS BUFFER]: Refresh lock is now free")
