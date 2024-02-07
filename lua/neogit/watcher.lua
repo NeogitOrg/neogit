@@ -88,14 +88,16 @@ function Watcher.new(gitdir)
   return instance
 end
 
-function Watcher.suspend(callback)
+function Watcher.suspend(callback, args)
   local watcher = Watcher.instance
   if watcher then
     watcher:pause()
-    callback()
+  end
+
+  callback(unpack(args))
+
+  if watcher then
     watcher:resume()
-  else
-    callback()
   end
 end
 

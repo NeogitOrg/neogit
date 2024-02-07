@@ -374,11 +374,7 @@ function M:action(keys, description, callback)
       local permit = action_lock:acquire()
       logger.debug(string.format("[ACTION] Running action from %s", self.state.name))
 
-      local args = { ... }
-      watcher.suspend(function()
-        callback(unpack(args))
-      end)
-
+      watcher.suspend(callback, { ... })
       permit:forget()
 
       logger.debug("[ACTION] Dispatching Refresh")
