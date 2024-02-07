@@ -62,7 +62,7 @@ function M.mappings_table(status_buffer)
       "DiffPopup",
       "Diff",
       M.open("diff", function(f)
-        local section, item = require("neogit.status").get_current_section_item()
+        local section, item = status_buffer:get_current_section_item()
 
         f { section = section, item = item }
       end),
@@ -109,7 +109,7 @@ function M.mappings_table(status_buffer)
       "TagPopup",
       "Tag",
       M.open("tag", function(f)
-        f { commit = commit_oid(require("neogit.status"):get_selection().commit) }
+        f { commit = commit_oid(status_buffer:get_selection().commit) }
       end),
     },
     { "LogPopup", "Log", M.open("log") },

@@ -56,19 +56,21 @@ function M.in_prepared_repo(cb)
     require("neogit").setup {}
     local status = require("neogit.status").create()
 
-    a.util.block_on(status.reset)
+    a.util.block_on(status.reset_all)
 
     vim.wait(1000, function()
       return not status.is_refresh_locked()
     end, 100)
 
     a.util.block_on(function()
+      print("Running test")
       local _, err = pcall(cb, dir)
       if err ~= nil then
         error(err)
       end
 
       a.util.block_on(function()
+        print("Closing status buffer...")
         status:close()
       end)
     end)

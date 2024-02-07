@@ -28,7 +28,7 @@ describe("status buffer", function()
       "Handles non-english filenames correctly",
       in_prepared_repo(function()
         harness.exec { "touch", "你好.md" }
-        a.util.block_on(status.reset)
+        a.util.block_on(status.reset_all)
         a.util.block_on(status.refresh)
 
         find("你好%.md")

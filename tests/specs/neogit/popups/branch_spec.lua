@@ -189,7 +189,7 @@ describe("branch popup", function()
         input.confirmed = true
 
         local remote = harness.prepare_repository()
-        async.util.block_on(status.reset)
+        async.util.block_on(status.reset_all)
         util.system("git remote add upstream " .. remote)
         util.system([[
           git stash --include-untracked
@@ -268,7 +268,7 @@ describe("branch popup", function()
           git add .
           git commit -m 'some feature'
         ]])
-        async.util.block_on(status.reset)
+        async.util.block_on(status.reset_all)
 
         local input_branch = "spin-out-branch"
         input.values = { input_branch }
@@ -300,7 +300,7 @@ describe("branch popup", function()
           touch wip.js
           git add .
         ]])
-        async.util.block_on(status.reset)
+        async.util.block_on(status.reset_all)
 
         local input_branch = "spin-out-branch"
         input.values = { input_branch }
@@ -332,7 +332,7 @@ describe("branch popup", function()
           git add .
           git commit -m 'some feature'
         ]])
-        async.util.block_on(status.reset)
+        async.util.block_on(status.reset_all)
 
         local input_branch = "spin-off-branch"
         input.values = { input_branch }

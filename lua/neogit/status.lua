@@ -1088,7 +1088,7 @@ function M:discard()
           table.insert(t, function()
             if section_name == "untracked" then
               a.util.scheduler()
-              vim.fn.delete(git.cli.git_root() .. "/" .. item.name)
+              vim.fn.delete(git.cli.git_root_of_cwd() .. "/" .. item.name)
             elseif section_name == "unstaged" then
               git.index.checkout { item.name }
             elseif section_name == "staged" then
@@ -1516,6 +1516,7 @@ end
 --- Creates a new status buffer
 ---@return StatusBuffer
 function M.create(kind, cwd)
+  cwd = cwd or vim.fn.getcwd()
   kind = kind or config.values.kind
 
   local existing = M.find(cwd)
@@ -1600,6 +1601,16 @@ function M.create(kind, cwd)
         end
       end
     end,
+    autocmds = {
+      BufWipeout = function()
+        print("Closed neovim buffer manually")
+
+        -- Schedule to let the buffer close properly first
+        vim.schedule(function()
+          status_buffer:close()
+        end)
+      end,
+    },
   }
 
   status_buffer.buffer = buffer

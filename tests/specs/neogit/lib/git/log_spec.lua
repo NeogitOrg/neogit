@@ -9,7 +9,7 @@ local subject = require("neogit.lib.git.log")
 describe("lib.git.log", function()
   before_each(function()
     git_harness.prepare_repository()
-    plenary_async.util.block_on(status.reset)
+    plenary_async.util.block_on(status.reset_all)
   end)
 
   describe("#is_ancestor", function()

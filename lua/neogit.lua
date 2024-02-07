@@ -23,7 +23,7 @@ function M.setup(opts)
   M.status = require("neogit.status")
   M.dispatch_reset = M.status.dispatch_reset_all
   M.refresh = M.status.refresh_all
-  M.reset = M.status.reset_all
+  M.reset = M.status.reset_all_all
   M.refresh_manually = M.status.dispatch_refresh_manually_all
   M.dispatch_refresh = M.status.dispatch_refresh
   M.refresh_viml_compat = M.status.refresh_viml_compat
