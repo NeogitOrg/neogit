@@ -1,3 +1,32 @@
+-- TODO
+-- Save/restore cursor location
+-- Redrawing w/ lock, that doesn't discard opened/closed diffs, keeps cursor location
+-- on-close hook to teardown stuff
+--
+-- Actions:
+-- Staging / Unstaging / Discarding
+--
+-- Contexts:
+-- - Normal
+--  - Section
+--  - File
+--  - Hunk
+-- - Visual
+--  - Files in selection
+--  - Hunks in selection
+--  - Lines in selection
+
+-- TODO: When launching the fuzzy finder, any refresh attempted will raise an exception because the set_folds() function
+-- cannot be called when the buffer is not focused, as it's not a proper API. We could implement some kind of freeze
+-- mechanism to prevent the buffer from refreshing while the fuzzy finder is open.
+-- function M:freeze()
+--   self.frozen = true
+-- end
+--
+-- function M:unfreeze()
+--   self.frozen = false
+-- end
+
 local config = require("neogit.config")
 local Buffer = require("neogit.lib.buffer")
 local ui = require("neogit.buffers.status.ui")
@@ -45,24 +74,6 @@ function M.new(state, config)
 
   return instance
 end
-
--- TODO
--- Save/restore cursor location
--- Redrawing w/ lock, that doesn't discard opened/closed diffs, keeps cursor location
--- on-close hook to teardown stuff
---
--- Actions:
--- Staging / Unstaging / Discarding
---
--- Contexts:
--- - Normal
---  - Section
---  - File
---  - Hunk
--- - Visual
---  - Files in selection
---  - Hunks in selection
---  - Lines in selection
 
 function M:open(kind)
   if M.instance and M.instance.is_open then
@@ -615,17 +626,6 @@ function M:focus()
     self.buffer:focus()
   end
 end
-
--- TODO: When launching the fuzzy finder, any refresh attempted will raise an exception because the set_folds() function
--- cannot be called when the buffer is not focused, as it's not a proper API. We could implement some kind of freeze
--- mechanism to prevent the buffer from refreshing while the fuzzy finder is open.
--- function M:freeze()
---   self.frozen = true
--- end
---
--- function M:unfreeze()
---   self.frozen = false
--- end
 
 function M:refresh(partial, reason)
   -- if self.frozen then

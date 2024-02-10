@@ -59,15 +59,19 @@ function Watcher:resume()
 end
 
 function Watcher:start()
-  logger.debug("[WATCHER] Watching git dir: " .. self.gitdir)
-  self.paused = false
-  self.fs_event_handler:start(self.gitdir, {}, self:fs_event_callback())
+  if not self.running then
+    logger.debug("[WATCHER] Watching git dir: " .. self.gitdir)
+    self.running = true
+    self.fs_event_handler:start(self.gitdir, {}, self:fs_event_callback())
+  end
 end
 
 function Watcher:stop()
-  logger.debug("[WATCHER] Stopped watching git dir: " .. self.gitdir)
-  self.paused = true
-  self.fs_event_handler:stop()
+  if self.running then
+    logger.debug("[WATCHER] Stopped watching git dir: " .. self.gitdir)
+    self.running = false
+    self.fs_event_handler:stop()
+  end
 end
 
 function Watcher.new(gitdir)
@@ -78,7 +82,8 @@ function Watcher.new(gitdir)
 
   local instance = {
     gitdir = gitdir,
-    paused = true,
+    paused = false,
+    running = false,
     fs_event_handler = assert(uv.new_fs_event()),
   }
 
