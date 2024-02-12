@@ -36,7 +36,7 @@ local missing_parent_empty_str  = "  "
 -- See also: 
 -- https://github.com/gijit/gi/blob/7052cfb07ca8b52afaa6c2a3deee53952784bd5d/pkg/utf8/utf8.lua#L80C1-L81C47
 --
-function utf8_iter(s)
+local function utf8_iter(s)
   local i = 1
   return function()
     local b = string.byte(s, i)
