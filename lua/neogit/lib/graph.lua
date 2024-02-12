@@ -27,6 +27,45 @@ local merge_empty_str           = " "
 local missing_parent_str        = "┊ "
 local missing_parent_branch_str = "│ "
 local missing_parent_empty_str  = "  "
+
+-- Returns an iterator for traversing UTF-8 encoded strings, yielding each
+-- character as a substring. The iterator ensures correct handling of
+-- multi-byte UTF-8 characters, decoding them and returning them as separate
+-- characters.
+-- 
+-- See also: 
+-- https://github.com/gijit/gi/blob/7052cfb07ca8b52afaa6c2a3deee53952784bd5d/pkg/utf8/utf8.lua#L80C1-L81C47
+--
+function utf8_iter(s)
+  local i = 1
+  return function()
+    local b = string.byte(s, i)
+
+    if not b then
+      return nil -- string end
+    end
+
+    -- {{{
+    -- 00000000-01111111 	00-7F 	000-127 	US-ASCII (single byte)
+    -- 10000000-10111111 	80-BF 	128-191 	Second, third, or fourth byte of a multi-byte sequence
+    -- 11000000-11000001 	C0-C1 	192-193 	Overlong encoding: start of a 2-byte sequence, but code point <= 127
+    -- 11000010-11011111 	C2-DF 	194-223 	Start of 2-byte sequence
+    -- 11100000-11101111 	E0-EF 	224-239 	Start of 3-byte sequence
+    -- 11110000-11110100 	F0-F4 	240-244 	Start of 4-byte sequence
+    -- 11110101-11110111 	F5-F7 	245-247 	Restricted by RFC 3629: start of 4-byte sequence for codepoint above 10FFFF
+    -- 11111000-11111011 	F8-FB 	248-251 	Restricted by RFC 3629: start of 5-byte sequence
+    -- 11111100-11111101 	FC-FD 	252-253 	Restricted by RFC 3629: start of 6-byte sequence
+    -- 11111110-11111111 	FE-FF 	254-255 	Invalid: not defined by original UTF-8 specification
+    -- }}}
+    local w = (b >= 192 and b <= 223 and 2) or
+              (b >= 224 and b <= 239 and 3) or
+              (b >= 240 and b <= 247 and 4) or 1
+
+    local c = string.sub(s, i, i + w - 1)
+    i = i + w
+    return c
+  end
+end
 -- stylua: ignore end
 
 function M.build(commits)
@@ -509,10 +548,9 @@ function M.build(commits)
   local graph = {}
   for _, line in ipairs(vim_out) do
     local g = {}
-    line.text:gsub(".", function(c)
+    for c in utf8_iter(line.text) do
       table.insert(g, { text = c, color = line.color, oid = line.oid })
-    end)
-
+    end
     table.insert(graph, g)
   end
 
