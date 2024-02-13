@@ -216,51 +216,80 @@ local function filter_layout(layout)
   end)
 end
 
-local function eq(a, b)
-  local same_tag = a.options.tag == b.options.tag
-  local same_id = a.id == b.id
-  local have_children = a.children and b.children
-
-  if not have_children then
-    local same_value = a.value == b.value
-
-    -- P({
-    --   same_id = same_id,
-    --   same_tag = same_tag,
-    --   same_value = same_value
-    -- })
-
-    return same_tag and same_id and same_value
-  else
-    local same_fold_state = a.options.folded == b.options.folded
-    local same_load_state = a.options.on_open == nil and b.options.on_open == nil
-    local same_child_count = #a.children == #b.children
-
-    -- P({
-    --   same_tag = same_tag,
-    --   same_id = same_id,
-    --   same_child_count = same_child_count,
-    --   same_fold_state = same_fold_state,
-    --   same_load_state = same_load_state
-    -- }
-    -- )
-
-    return same_tag and same_id and same_child_count and same_fold_state and same_load_state
+local function gather_nodes(node, node_table, prefix)
+  if not node_table then
+    node_table = {}
   end
+
+  prefix = prefix or ""
+
+  if node.options.section then
+    node_table[node.options.section] = {
+      folded = node.options.folded,
+    }
+
+    if node.children then
+      for _, child in ipairs(node.children) do
+        gather_nodes(child, node_table, node.options.section)
+      end
+    end
+  else
+    if node.options.filename then
+      local key = ("%s--%s"):format(prefix, node.options.filename)
+      node_table[key] = {
+        folded = node.options.folded,
+      }
+
+      for _, child in ipairs(node.children) do
+        gather_nodes(child, node_table, key)
+      end
+    elseif node.options.hunk then
+      local key = ("%s--%s"):format(prefix, node.options.hunk.hash)
+      node_table[key] = { folded = node.options.folded }
+    elseif node.children then
+      for _, child in ipairs(node.children) do
+        gather_nodes(child, node_table, prefix)
+      end
+    end
+  end
+
+  return node_table
 end
 
----@param old table
----@param new table
-local function compare_trees(old, new, deltas)
-  if not new.children or not old.children then
-    return
-  end
+function Ui:_update_attributes(node, attributes, prefix)
+  prefix = prefix or ""
 
-  for i = 1, #new.children do
-    if eq(new.children[i], old.children[i]) then
-      compare_trees(old.children[i], new.children[i], deltas)
-    else
-      table.insert(deltas, { old = old.children[i], new = new.children[i] })
+  if node.options.section then
+    if attributes[node.options.section] then
+      node.options.folded = attributes[node.options.section].folded
+    end
+
+    if node.children then
+      for _, child in ipairs(node.children) do
+        self:_update_attributes(child, attributes, node.options.section)
+      end
+    end
+  else
+    if node.options.filename then
+      local key = ("%s--%s"):format(prefix, node.options.filename)
+      if attributes[key] and not attributes[key].folded then
+        if node.options.on_open then
+          node.options.on_open(node, self)
+        end
+      end
+
+      for _, child in ipairs(node.children) do
+        self:_update_attributes(child, attributes, key)
+      end
+    elseif node.options.hunk then
+      local key = ("%s--%s"):format(prefix, node.options.hunk.hash)
+      if attributes[key] then
+        node.options.folded = attributes[key].folded
+      end
+    elseif node.children then
+      for _, child in ipairs(node.children) do
+        self:_update_attributes(child, attributes, prefix)
+      end
     end
   end
 end
@@ -271,21 +300,22 @@ function Ui:render(...)
     return { tag = "_root", children = layout }
   end)()
 
-  if vim.tbl_isempty(self.layout) then
-    self.layout = root
-  else
-    -- local deltas = {}
-    -- compare_trees(self.layout, root, deltas)
-    -- P(deltas)
-    self.layout = root
+  if not vim.tbl_isempty(self.layout) then
+    self._old_node_attributes = gather_nodes(self.layout)
   end
 
+  self.layout = root
   self:update()
 end
 
 function Ui:update()
   local renderer = Renderer:new(self.layout, self.buf):render()
   self.node_index = renderer:node_index()
+
+  if self._old_node_attributes then
+    self:_update_attributes(self.layout, self._old_node_attributes)
+    self._old_node_attributes = nil
+  end
 end
 
 Ui.col = Component.new(function(children, options)
