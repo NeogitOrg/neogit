@@ -101,9 +101,9 @@ function Ui:find_by_id(id)
 end
 
 ---@return Component|nil
-function Ui:get_cursor_context()
-  local cursor = vim.api.nvim_win_get_cursor(0)
-  return self:_find_component_by_index(cursor[1], function(node)
+function Ui:get_cursor_context(line)
+  local cursor = line or vim.api.nvim_win_get_cursor(0)[1]
+  return self:_find_component_by_index(cursor, function(node)
     return node.options.context
   end)
 end
@@ -216,6 +216,25 @@ local function filter_layout(layout)
   end)
 end
 
+local function node_prefix(node, prefix)
+  local base = false
+  local key
+  if node.options.section then
+    key = node.options.section
+  elseif node.options.filename then
+    key = node.options.filename
+  elseif node.options.hunk then
+    base = true
+    key = node.options.hunk.hash
+  end
+
+  if key then
+    return ("%s--%s"):format(prefix, key), base
+  else
+    return nil, base
+  end
+end
+
 local function gather_nodes(node, node_table, prefix)
   if not node_table then
     node_table = {}
@@ -223,33 +242,15 @@ local function gather_nodes(node, node_table, prefix)
 
   prefix = prefix or ""
 
-  if node.options.section then
-    node_table[node.options.section] = {
-      folded = node.options.folded,
-    }
+  local key, base = node_prefix(node, prefix)
+  if key then
+    prefix = key
+    node_table[prefix] = { folded = node.options.folded }
+  end
 
-    if node.children then
-      for _, child in ipairs(node.children) do
-        gather_nodes(child, node_table, node.options.section)
-      end
-    end
-  else
-    if node.options.filename then
-      local key = ("%s--%s"):format(prefix, node.options.filename)
-      node_table[key] = {
-        folded = node.options.folded,
-      }
-
-      for _, child in ipairs(node.children) do
-        gather_nodes(child, node_table, key)
-      end
-    elseif node.options.hunk then
-      local key = ("%s--%s"):format(prefix, node.options.hunk.hash)
-      node_table[key] = { folded = node.options.folded }
-    elseif node.children then
-      for _, child in ipairs(node.children) do
-        gather_nodes(child, node_table, prefix)
-      end
+  if node.children and not base then
+    for _, child in ipairs(node.children) do
+      gather_nodes(child, node_table, prefix)
     end
   end
 
@@ -259,37 +260,23 @@ end
 function Ui:_update_attributes(node, attributes, prefix)
   prefix = prefix or ""
 
-  if node.options.section then
-    if attributes[node.options.section] then
-      node.options.folded = attributes[node.options.section].folded
-    end
+  local key, base = node_prefix(node, prefix)
+  if key then
+    prefix = key
 
-    if node.children then
-      for _, child in ipairs(node.children) do
-        self:_update_attributes(child, attributes, node.options.section)
-      end
-    end
-  else
-    if node.options.filename then
-      local key = ("%s--%s"):format(prefix, node.options.filename)
-      if attributes[key] and not attributes[key].folded then
-        if node.options.on_open then
-          node.options.on_open(node, self)
-        end
+    -- TODO: If a hunk is closed, it will be re-opened on update because the on_open callback runs async :\
+    if attributes[prefix] then
+      if node.options.on_open and not attributes[prefix].folded then
+        node.options.on_open(node, self, prefix)
       end
 
-      for _, child in ipairs(node.children) do
-        self:_update_attributes(child, attributes, key)
-      end
-    elseif node.options.hunk then
-      local key = ("%s--%s"):format(prefix, node.options.hunk.hash)
-      if attributes[key] then
-        node.options.folded = attributes[key].folded
-      end
-    elseif node.children then
-      for _, child in ipairs(node.children) do
-        self:_update_attributes(child, attributes, prefix)
-      end
+      node.options.folded = attributes[prefix].folded
+    end
+  end
+
+  if node.children and not base then
+    for _, child in ipairs(node.children) do
+      self:_update_attributes(child, attributes, prefix)
     end
   end
 end
@@ -309,8 +296,32 @@ function Ui:render(...)
 end
 
 function Ui:update()
+  -- If the buffer is not focused, trying to set folds will raise an error because it's not a proper API.
+  if not self.buf:is_focused() then
+    return
+  end
+
   local renderer = Renderer:new(self.layout, self.buf):render()
   self.node_index = renderer:node_index()
+
+  local cursor_line = self.buf:cursor_line()
+
+  self.buf:unlock()
+  self.buf:clear()
+  self.buf:clear_namespace("default")
+  self.buf:clear_namespace("ViewContext")
+  self.buf:clear_namespace("ViewDecor")
+  self.buf:resize(#renderer.buffer.line)
+  self.buf:set_lines(0, -1, false, renderer.buffer.line)
+  self.buf:set_highlights(renderer.buffer.highlight)
+  self.buf:set_extmarks(renderer.buffer.extmark)
+  self.buf:set_line_highlights(renderer.buffer.line_highlight)
+  self.buf:set_folds(renderer.buffer.fold)
+  self.buf:lock()
+
+  -- P(self:get_cursor_context(math.min(cursor_line, #renderer.buffer.line)):row_range_abs())
+
+  self.buf:move_cursor(math.min(cursor_line, #renderer.buffer.line))
 
   if self._old_node_attributes then
     self:_update_attributes(self.layout, self._old_node_attributes)

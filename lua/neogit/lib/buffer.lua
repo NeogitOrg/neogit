@@ -385,31 +385,34 @@ function Buffer:open_fold(line, reset_pos)
 end
 
 function Buffer:add_highlight(line, col_start, col_end, name, namespace)
-  api.nvim_buf_add_highlight(self.handle, self:get_namespace_id(namespace), name, line, col_start, col_end)
+  local ns_id = self:get_namespace_id(namespace)
+  if ns_id then
+    api.nvim_buf_add_highlight(self.handle, ns_id, name, line, col_start, col_end)
+  end
 end
 
 function Buffer:place_sign(line, name, opts)
   opts = opts or {}
 
-  api.nvim_buf_set_extmark(
-    self.handle,
-    self:get_namespace_id(opts.namespace),
-    line - 1,
-    0,
-    { sign_text = signs.get(name) }
-  )
+  local ns_id = self:get_namespace_id(opts.namespace)
+  if ns_id then
+    api.nvim_buf_set_extmark(self.handle, ns_id, line - 1, 0, { sign_text = signs.get(name) })
+  end
 end
 
 function Buffer:add_line_highlight(line, hl_group, opts)
   opts = opts or {}
 
-  api.nvim_buf_set_extmark(
-    self.handle,
-    self:get_namespace_id(opts.namespace),
-    line,
-    0,
-    { line_hl_group = hl_group, priority = opts.priority or 190 }
-  )
+  local ns_id = self:get_namespace_id(opts.namespace)
+  if ns_id then
+    api.nvim_buf_set_extmark(
+      self.handle,
+      ns_id,
+      line,
+      0,
+      { line_hl_group = hl_group, priority = opts.priority or 190 }
+    )
+  end
 end
 
 function Buffer:clear_namespace(name)
@@ -419,7 +422,10 @@ function Buffer:clear_namespace(name)
     return
   end
 
-  api.nvim_buf_clear_namespace(self.handle, self:get_namespace_id(name), 0, -1)
+  local ns_id = self:get_namespace_id(name)
+  if ns_id then
+    api.nvim_buf_clear_namespace(self.handle, ns_id, 0, -1)
+  end
 end
 
 function Buffer:create_namespace(name)
@@ -433,11 +439,12 @@ function Buffer:create_namespace(name)
   return self.namespaces[namespace]
 end
 
+---@param name string
+---@return number|nil
 function Buffer:get_namespace_id(name)
   local ns_id
   if name and name ~= "default" then
     ns_id = self.namespaces["neogit-buffer-" .. self.handle .. "-" .. name]
-    assert(ns_id, "Namespace ID should never be nil! Create '" .. name .. "' namespace before using it")
   else
     ns_id = self.namespaces.default
   end
@@ -462,7 +469,10 @@ function Buffer:set_extmark(...)
 end
 
 function Buffer:set_decorations(namespace, opts)
-  return api.nvim_set_decoration_provider(self:get_namespace_id(namespace), opts)
+  local ns_id = self:get_namespace_id(namespace)
+  if ns_id then
+    return api.nvim_set_decoration_provider(ns_id, opts)
+  end
 end
 
 ---@class BufferConfig

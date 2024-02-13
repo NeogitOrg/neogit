@@ -50,7 +50,6 @@ end
 
 ---@class Renderer
 ---@field buffer RendererBuffer
----@field ui_buffer Buffer
 ---@field flags RendererFlags
 ---@field namespace integer
 ---@field layout table
@@ -66,7 +65,6 @@ function Renderer:new(layout, buffer)
   local obj = {
     namespace = buffer:create_namespace("VirtualText"),
     layout = layout,
-    ui_buffer = buffer,
     buffer = {
       line = {},
       highlight = {},
@@ -88,25 +86,7 @@ end
 
 ---@return Renderer
 function Renderer:render()
-  -- If the buffer is not focused, trying to set folds will raise an error because it's not a proper API.
-  if not self.ui_buffer:is_focused() then
-    return self
-  end
-
   self:_render(self.layout, self.layout.children, 0)
-
-  local cursor_line = self.ui_buffer:cursor_line()
-  self.ui_buffer:unlock()
-  self.ui_buffer:clear()
-  self.ui_buffer:clear_namespace("default")
-  self.ui_buffer:resize(#self.buffer.line)
-  self.ui_buffer:set_lines(0, -1, false, self.buffer.line)
-  self.ui_buffer:set_highlights(self.buffer.highlight)
-  self.ui_buffer:set_extmarks(self.buffer.extmark)
-  self.ui_buffer:set_line_highlights(self.buffer.line_highlight)
-  self.ui_buffer:set_folds(self.buffer.fold)
-  self.ui_buffer:lock()
-  self.ui_buffer:move_cursor(cursor_line)
 
   return self
 end

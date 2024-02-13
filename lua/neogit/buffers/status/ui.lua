@@ -65,7 +65,7 @@ local Section = Component.new(function(props)
 end)
 
 local load_diff = function(item)
-  return a.void(function(this, ui)
+  return a.void(function(this, ui, prefix)
     this.options.on_open = nil
     this.options.folded = false
 
@@ -77,6 +77,13 @@ local load_diff = function(item)
       hunk.first = row
       hunk.last = row + hunk.length
       row = hunk.last + 1
+
+      if prefix then
+        local key = ("%s--%s"):format(prefix, hunk.hash)
+        if ui._old_node_attributes and ui._old_node_attributes[key] then
+          hunk._folded = ui._old_node_attributes[key].folded
+        end
+      end
     end
 
     this:append(DiffHunks(diff))
@@ -171,18 +178,19 @@ function M.Status(state, config)
           yankable = state.head.tag.oid,
         },
         EmptyLine,
-        -- TODO Rebasing (rebase)
-        -- TODO Reverting (sequencer - revert_head)
-        -- TODO Picking (sequencer - cherry_pick_head)
-        -- TODO Respect if user has section hidden
-        -- TODO: Group untracked by directory and create a fold
-        #state.untracked.items > 0 and Section {
-          title = SectionTitle { title = "Untracked files" },
-          render = SectionItemFile,
-          items = state.untracked.items,
-          folded = config.sections.untracked.folded,
-          name = "untracked",
-        },
+          -- TODO Rebasing (rebase)
+          -- TODO Reverting (sequencer - revert_head)
+          -- TODO Picking (sequencer - cherry_pick_head)
+          -- TODO Respect if user has section hidden
+          -- TODO: Group untracked by directory and create a fold
+        #state.untracked.items > 0
+          and Section {
+            title = SectionTitle { title = "Untracked files" },
+            render = SectionItemFile,
+            items = state.untracked.items,
+            folded = config.sections.untracked.folded,
+            name = "untracked",
+          },
         #state.unstaged.items > 0 and Section {
           title = SectionTitle { title = "Unstaged changes" },
           render = SectionItemFile,
