@@ -232,7 +232,6 @@ function M:open(kind)
               return
             end
 
-            -- TODO: Discard Commit?
             -- TODO: Discard Stash?
             -- TODO: Discard Section?
             if discardable.hunk then
@@ -329,9 +328,10 @@ function M:open(kind)
         [mappings["Stage"]] = a.void(function()
           -- TODO: Cursor Placement
           local stagable = self.buffer.ui:get_hunk_or_filename_under_cursor()
+          local section = self.buffer.ui:get_current_section()
 
-          local cursor
-          if stagable then
+          local cursor = self.buffer:cursor_line()
+          if stagable and section then
             if stagable.hunk then
               local item = self.buffer.ui:get_item_under_cursor()
               local patch =
@@ -340,19 +340,18 @@ function M:open(kind)
               git.index.apply(patch, { cached = true })
               cursor = stagable.hunk.first
             elseif stagable.filename then
-              cursor = self.buffer:cursor_line()
-
-              local section = self.buffer.ui:get_current_section()
-              if section then
-                if section.options.section == "unstaged" then
-                  git.status.stage { stagable.filename }
-                elseif section.options.section == "untracked" then
-                  git.index.add { stagable.filename }
-                end
+              if section.options.section == "unstaged" then
+                git.status.stage { stagable.filename }
+              elseif section.options.section == "untracked" then
+                git.index.add { stagable.filename }
               end
             end
-          else
-            --  TODO check if section header, act on entire section
+          elseif section then
+            if section.options.section == "untracked" then
+              git.status.stage_untracked()
+            elseif section.options.section == "unstaged" then
+              git.status.stage_modified()
+            end
           end
 
           if cursor then
@@ -627,6 +626,12 @@ function M:focus()
   end
 end
 
+-- TODO: Allow passing some kind of cursor identifier into this, which can be injected into the renderer to
+-- find the location of a new named element to set the cursor to upon update. 
+--
+-- For example, when staging all items in untracked section via `s`, cursor should be updated to go to header of
+-- staged section
+--
 function M:refresh(partial, reason)
   -- if self.frozen then
   --   return

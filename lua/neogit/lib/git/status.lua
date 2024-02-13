@@ -183,6 +183,14 @@ local status = {
   stage_modified = function()
     git.cli.add.update.call()
   end,
+  stage_untracked = function()
+    local repo = require("neogit.lib.git.repository")
+    local paths = util.map(repo.untracked.items, function(item)
+      return item.escaped_path
+    end)
+
+    git.cli.add.files(unpack(paths)).call()
+  end,
   stage_all = function()
     git.cli.add.all.call()
   end,
