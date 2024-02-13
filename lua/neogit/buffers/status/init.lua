@@ -332,6 +332,10 @@ function M:open(kind)
 
           local cursor = self.buffer:cursor_line()
           if stagable and section then
+            if section.options.section == "staged" then
+              return
+            end
+
             if stagable.hunk then
               local item = self.buffer.ui:get_item_under_cursor()
               local patch =
@@ -372,6 +376,11 @@ function M:open(kind)
         end),
         [mappings["Unstage"]] = a.void(function()
           local unstagable = self.buffer.ui:get_hunk_or_filename_under_cursor()
+
+          local section = self.buffer.ui:get_current_section()
+          if section and section.options.section ~= "staged" then
+            return
+          end
 
           -- TODO: Cursor Placement
           if unstagable then
