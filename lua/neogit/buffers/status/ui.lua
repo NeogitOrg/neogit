@@ -56,6 +56,16 @@ local SectionTitleRemote = Component.new(function(props)
   }
 end)
 
+local SectionTitleRebase = Component.new(function(props)
+  return {
+    text.highlight("NeogitSectionHeader")(props.title),
+    text(" "),
+    text.highlight("NeogitBranch")(props.head),
+    text.highlight("NeogitSectionHeader")(" onto "),
+    text.highlight("NeogitBranch")(props.onto),
+  }
+end)
+
 local Section = Component.new(function(props)
   return col.tag("Section")({
     row(util.merge(props.title, { text(" ("), text(#props.items), text(")") })),
@@ -156,6 +166,29 @@ local SectionItemCommit = Component.new(function(item)
   }, { yankable = item.commit.oid })
 end)
 
+local SectionItemRebase = Component.new(function(item)
+  if item.oid then
+    local action_hl = item.done and "NeogitRebaseDone" or "NeogitGraphOrange"
+    local oid_hl = "NeogitRebaseDone"
+    local subject_hl = item.done and "NeogitRebaseDone" or "Normal"
+
+    return row({
+      text(item.stopped and "> " or "  "),
+      text.highlight(action_hl)(item.action),
+      text(" "),
+      text.highlight(oid_hl)(item.oid:sub(1, 7)),
+      text(" "),
+      text.highlight(subject_hl)(item.subject),
+    }, { yankable = item.oid })
+  else
+    return row({
+      text.highlight("NeogitGraphOrange")(item.action),
+      text(" "),
+      text(item.subject),
+    })
+  end
+end)
+
 -- TODO: Hint at top of buffer!
 function M.Status(state, config)
   return {
@@ -187,7 +220,17 @@ function M.Status(state, config)
           yankable = state.head.tag.oid,
         },
         EmptyLine,
-          -- TODO Rebasing (rebase)
+        #state.rebase.items > 0 and Section {
+          title = SectionTitleRebase {
+            title = "Rebasing",
+            head = state.rebase.head,
+            onto = state.rebase.onto
+          },
+          render = SectionItemRebase,
+          items = state.rebase.items,
+          folded = config.sections.rebase.folded,
+          name = "rebase",
+        },
           -- TODO Reverting (sequencer - revert_head)
           -- TODO Picking (sequencer - cherry_pick_head)
           -- TODO Respect if user has section hidden

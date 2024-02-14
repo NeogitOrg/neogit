@@ -31,6 +31,17 @@ local configurations = {
     },
   },
 
+  ["name-rev"] = config {
+    flags = {
+      name_only = "--name-only",
+      no_undefined = "--no-undefined",
+    },
+    options = {
+      refs = "--refs",
+      exclude = "--exclude",
+    },
+  },
+
   init = config {},
 
   ["checkout-index"] = config {
