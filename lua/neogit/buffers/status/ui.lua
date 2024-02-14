@@ -94,14 +94,14 @@ end
 -- TODO: Handle renames
 local SectionItemFile = Component.new(function(item)
   local mode_to_text = {
-    M = "Modified      ",
-    N = "New File      ",
-    A = "Added         ",
-    D = "Deleted       ",
-    C = "Copied        ",
-    U = "Updated       ",
-    UU = "Both Modified ",
-    R = "Renamed       ",
+    M = "Modified",
+    N = "New File",
+    A = "Added",
+    D = "Deleted",
+    C = "Copied",
+    U = "Updated",
+    UU = "Both Modified",
+    R = "Renamed",
     ["?"] = "", -- Untracked
   }
 
@@ -114,9 +114,18 @@ local SectionItemFile = Component.new(function(item)
 
   local highlight = ("NeogitChange%s"):format(mode:gsub(" ", ""))
 
+  local mode_text
+  if mode == "" then
+    mode_text = ""
+  elseif conflict then
+    mode_text = util.pad_right(("%s by us"):format(mode), 15)
+  else
+    mode_text = util.pad_right(mode, 15)
+  end
+
   return col.tag("SectionItemFile")({
     row {
-      text.highlight(highlight)(conflict and ("%s by us"):format(mode) or mode),
+      text.highlight(highlight)(mode_text),
       text(item.name),
     },
   }, {
