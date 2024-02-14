@@ -594,14 +594,13 @@ function Buffer.create(config)
 
   if config.context_highlight then
     buffer:create_namespace("ViewContext")
-    buffer:create_namespace("ViewDecor")
 
     buffer:call(function()
       local function on_start()
         return buffer:exists() and buffer:is_focused()
       end
 
-      local function on_win()
+      local function on_win(_, _, _, top, bottom)
         buffer:clear_namespace("ViewContext")
 
         local context = buffer.ui:get_cursor_context()
@@ -611,15 +610,19 @@ function Buffer.create(config)
 
         local first = context.position.row_start
         local last = context.position.row_end
+        local cursor = vim.fn.line(".")
 
-        for line = fn.line("w0"), fn.line("w$") do
+        for line = top, bottom do
           if line >= first and line <= last then
             local line_hl = buffer.ui:get_line_highlight(line)
 
             buffer:buffered_add_line_highlight(
               line - 1,
-              (line_hl or "NeogitDiffContext") .. "Highlight",
-              { priority = 200, namespace = "ViewContext" }
+              ("%s%s"):format(line_hl or "NeogitDiffContext", line == cursor and "Cursor" or "Highlight"),
+              {
+                priority = 200,
+                namespace = "ViewContext"
+              }
             )
           end
         end
@@ -627,7 +630,10 @@ function Buffer.create(config)
         buffer:flush_line_highlight_buffer()
       end
 
-      buffer:set_decorations("ViewDecor", { on_start = on_start, on_win = on_win })
+      buffer:set_decorations(
+        "ViewContext",
+        { on_start = on_start, on_win = on_win }
+      )
     end)
   end
 
