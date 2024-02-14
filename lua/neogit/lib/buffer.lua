@@ -595,12 +595,11 @@ function Buffer.create(config)
   if config.context_highlight then
     buffer:create_namespace("ViewContext")
 
-    buffer:call(function()
-      local function on_start()
+    buffer:set_decorations("ViewContext", {
+      on_start = function()
         return buffer:exists() and buffer:is_focused()
-      end
-
-      local function on_win(_, _, _, top, bottom)
+      end,
+      on_win = function(_, _, _, top, bottom)
         buffer:clear_namespace("ViewContext")
 
         local context = buffer.ui:get_cursor_context()
@@ -614,27 +613,21 @@ function Buffer.create(config)
 
         for line = top, bottom do
           if line >= first and line <= last then
-            local line_hl = buffer.ui:get_line_highlight(line)
-
-            buffer:buffered_add_line_highlight(
-              line - 1,
-              ("%s%s"):format(line_hl or "NeogitDiffContext", line == cursor and "Cursor" or "Highlight"),
-              {
-                priority = 200,
-                namespace = "ViewContext"
-              }
+            local line_hl = ("%s%s"):format(
+              buffer.ui:get_line_highlight(line) or "NeogitDiffContext",
+              line == cursor and "Cursor" or "Highlight"
             )
+
+            buffer:buffered_add_line_highlight(line - 1, line_hl, {
+              priority = 200,
+              namespace = "ViewContext",
+            })
           end
         end
 
         buffer:flush_line_highlight_buffer()
-      end
-
-      buffer:set_decorations(
-        "ViewContext",
-        { on_start = on_start, on_win = on_win }
-      )
-    end)
+      end,
+    })
   end
 
   return buffer
