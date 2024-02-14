@@ -61,7 +61,7 @@ local function update_status(state)
       return
     end
 
-    if line ~= "" and (line:match("^[12u]%s[MTADRC%s%.%?!][MTDRC%s%.%?!]%s") or line:match("^[%?!#]%s")) then
+    if line ~= "" and (line:match("^[12u]%s[%u%s%.%?!][%u%s%.%?!]%s") or line:match("^[%?!#]%s")) then
       table.insert(collection, line)
     else
       collection[#collection] = ("%s\t%s"):format(collection[#collection], line)
