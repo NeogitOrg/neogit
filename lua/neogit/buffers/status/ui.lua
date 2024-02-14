@@ -101,7 +101,6 @@ local load_diff = function(item)
   end)
 end
 
--- TODO: Handle renames
 local SectionItemFile = Component.new(function(item)
   local mode_to_text = {
     M = "Modified",
@@ -136,7 +135,7 @@ local SectionItemFile = Component.new(function(item)
   return col.tag("SectionItemFile")({
     row {
       text.highlight(highlight)(mode_text),
-      text(item.name),
+      text(item.original_name and ("%s -> %s"):format(item.original_name, item.name) or item.name),
     },
   }, {
     foldable = true,
