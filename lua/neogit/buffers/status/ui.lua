@@ -56,6 +56,7 @@ local SectionTitleRemote = Component.new(function(props)
   }
 end)
 
+-- TODO: Determine if 'onto' is local or remote
 local SectionTitleRebase = Component.new(function(props)
   return {
     text.highlight("NeogitSectionHeader")(props.title),
@@ -75,6 +76,9 @@ local Section = Component.new(function(props)
 end)
 
 local load_diff = function(item)
+  ---@param this Component
+  ---@param ui Ui
+  ---@param prefix string|nil
   return a.void(function(this, ui, prefix)
     this.options.on_open = nil
     this.options.folded = false
@@ -88,6 +92,7 @@ local load_diff = function(item)
       hunk.last = row + hunk.length
       row = hunk.last + 1
 
+      -- Set fold state when called from ui:update()
       if prefix then
         local key = ("%s--%s"):format(prefix, hunk.hash)
         if ui._old_node_attributes and ui._old_node_attributes[key] then

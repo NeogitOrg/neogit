@@ -220,6 +220,7 @@ function M:open(kind)
           end
         end,
         [mappings["Discard"]] = a.void(function()
+          -- TODO: Discarding a RENAME should set the filename back to the original
           git.index.update()
 
           local discardable = self.buffer.ui:get_hunk_or_filename_under_cursor()
@@ -636,7 +637,7 @@ function M:focus()
 end
 
 -- TODO: Allow passing some kind of cursor identifier into this, which can be injected into the renderer to
--- find the location of a new named element to set the cursor to upon update. 
+-- find the location of a new named element to set the cursor to upon update.
 --
 -- For example, when staging all items in untracked section via `s`, cursor should be updated to go to header of
 -- staged section
