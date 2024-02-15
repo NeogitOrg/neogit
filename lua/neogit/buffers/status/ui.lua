@@ -22,6 +22,60 @@ local EmptyLine = col { row { text("") } }
 
 local M = {}
 
+local HINT = Component.new(function(props)
+  ---@return table<string, string[]>
+  local function reversed_lookup(tbl)
+    local result = {}
+    for k, v in pairs(tbl) do
+      if v then
+        local current = result[v]
+        if current then
+          table.insert(current, k)
+        else
+          result[v] = { k }
+        end
+      end
+    end
+
+    return result
+  end
+
+  local reversed_status_map = reversed_lookup(props.config.mappings.status)
+  local reversed_popup_map = reversed_lookup(props.config.mappings.popup)
+
+  local entry = function(name, hint)
+    local keys = reversed_status_map[name] or reversed_popup_map[name]
+    local key_hint
+
+    if keys and #keys > 0 then
+      key_hint = table.concat(keys, " ")
+    else
+      key_hint = "<unmapped>"
+    end
+
+    return row {
+      text.highlight("NeogitPopupActionKey")(key_hint),
+      text(" "),
+      text(hint),
+    }
+  end
+
+  return row {
+    text.highlight("Comment")("Hint: "),
+    entry("Toggle", "toggle"),
+    text.highlight("Comment")(" | "),
+    entry("Stage", "stage"),
+    text.highlight("Comment")(" | "),
+    entry("Unstage", "unstage"),
+    text.highlight("Comment")(" | "),
+    entry("Discard", "discard"),
+    text.highlight("Comment")(" | "),
+    entry("CommitPopup", "commit"),
+    text.highlight("Comment")(" | "),
+    entry("HelpPopup", "help"),
+  }
+end)
+
 local HEAD = Component.new(function(props)
   local highlight = props.remote and "NeogitRemote" or "NeogitBranch"
   local ref = props.remote and ("%s/%s"):format(props.remote, props.branch) or props.branch
@@ -75,38 +129,38 @@ local Section = Component.new(function(props)
   }, { foldable = true, folded = props.folded, section = props.name })
 end)
 
-local load_diff = function(item)
-  ---@param this Component
-  ---@param ui Ui
-  ---@param prefix string|nil
-  return a.void(function(this, ui, prefix)
-    this.options.on_open = nil
-    this.options.folded = false
+local SectionItemFile = Component.new(function(item)
+  local load_diff = function(item)
+    ---@param this Component
+    ---@param ui Ui
+    ---@param prefix string|nil
+    return a.void(function(this, ui, prefix)
+      this.options.on_open = nil
+      this.options.folded = false
 
-    local row, _ = this:row_range_abs()
-    row = row + 1 -- Filename row
+      local row, _ = this:row_range_abs()
+      row = row + 1 -- Filename row
 
-    local diff = item.diff
-    for _, hunk in ipairs(diff.hunks) do
-      hunk.first = row
-      hunk.last = row + hunk.length
-      row = hunk.last + 1
+      local diff = item.diff
+      for _, hunk in ipairs(diff.hunks) do
+        hunk.first = row
+        hunk.last = row + hunk.length
+        row = hunk.last + 1
 
-      -- Set fold state when called from ui:update()
-      if prefix then
-        local key = ("%s--%s"):format(prefix, hunk.hash)
-        if ui._old_node_attributes and ui._old_node_attributes[key] then
-          hunk._folded = ui._old_node_attributes[key].folded
+        -- Set fold state when called from ui:update()
+        if prefix then
+          local key = ("%s--%s"):format(prefix, hunk.hash)
+          if ui._old_node_attributes and ui._old_node_attributes[key] then
+            hunk._folded = ui._old_node_attributes[key].folded
+          end
         end
       end
-    end
 
-    this:append(DiffHunks(diff))
-    ui:update()
-  end)
-end
+      this:append(DiffHunks(diff))
+      ui:update()
+    end)
+  end
 
-local SectionItemFile = Component.new(function(item)
   local mode_to_text = {
     M = "Modified",
     N = "New File",
@@ -185,113 +239,169 @@ local SectionItemRebase = Component.new(function(item)
       text.highlight(subject_hl)(item.subject),
     }, { yankable = item.oid })
   else
-    return row({
+    return row {
       text.highlight("NeogitGraphOrange")(item.action),
       text(" "),
       text(item.subject),
-    })
+    }
   end
 end)
 
--- TODO: Hint at top of buffer!
 function M.Status(state, config)
+  -- stylua: ignore start
+  local show_hint = not config.disable_hint
+
+  local show_upstream = state.upstream.ref
+    and state.head.branch ~= "(detached)"
+
+  local show_pushRemote = state.pushRemote.ref
+    and state.head.branch ~= "(detached)"
+
+  local show_tag = state.head.tag.name
+    and state.head.branch ~= "(detached)"
+
+  local show_rebase = #state.rebase.items > 0
+    and not config.sections.rebase.hidden
+
+  local show_cherry_pick = #state.sequencer.items > 0
+    and state.sequencer.cherry_pick
+    and not config.sections.sequencer.hidden
+
+  local show_revert = #state.sequencer.items > 0
+    and state.sequencer.revert
+    and not config.sections.sequencer.hidden
+
+  local show_untracked = #state.untracked.items > 0
+    and not config.sections.untracked.hidden
+
+  local show_unstaged = #state.unstaged.items > 0
+    and not config.sections.unstaged.hidden
+
+  local show_staged = #state.staged.items > 0
+    and not config.sections.staged.hidden
+
+  local show_upstream_unpulled = #state.upstream.unpulled.items > 0
+    and not config.sections.unpulled_upstream.hidden
+
+  local show_pushRemote_unpulled = #state.pushRemote.unpulled.items > 0
+    and state.pushRemote.ref ~= state.upstream.ref
+    and not config.sections.unpulled_pushRemote.hidden
+
+  local show_upstream_unmerged = #state.upstream.unmerged.items > 0
+    and not config.sections.unmerged_upstream.hidden
+
+  local show_pushRemote_unmerged = #state.pushRemote.unmerged.items > 0
+    and state.pushRemote.ref ~= state.upstream.ref
+    and not config.sections.unmerged_pushRemote.hidden
+
+  local show_stashes = #state.stashes.items > 0
+    and not config.sections.stashes.hidden
+
+  local show_recent = #state.recent.items > 0
+    and not config.sections.recent.hidden
+  -- stylua: ignore end
+
   return {
     List {
       items = {
+        show_hint and HINT { config = config },
+        show_hint and EmptyLine,
         HEAD {
           name = "Head",
           branch = state.head.branch,
           msg = state.head.commit_message,
           yankable = state.head.oid,
         },
-        state.upstream.ref and HEAD { -- Do not render if HEAD is detached
+        show_upstream and HEAD {
           name = "Merge",
           branch = state.upstream.branch,
           remote = state.upstream.remote,
           msg = state.upstream.commit_message,
           yankable = state.upstream.oid,
         },
-        state.pushRemote.ref and HEAD { -- Do not render if HEAD is detached
+        show_pushRemote and HEAD {
           name = "Push",
           branch = state.pushRemote.branch,
           remote = state.pushRemote.remote,
           msg = state.pushRemote.commit_message,
           yankable = state.pushRemote.oid,
         },
-        state.head.tag.name and Tag {
+        show_tag and Tag {
           name = state.head.tag.name,
           distance = state.head.tag.distance,
           yankable = state.head.tag.oid,
         },
         EmptyLine,
-        #state.rebase.items > 0 and Section {
+        show_rebase and Section {
           title = SectionTitleRebase {
             title = "Rebasing",
             head = state.rebase.head,
-            onto = state.rebase.onto
+            onto = state.rebase.onto,
           },
           render = SectionItemRebase,
           items = state.rebase.items,
           folded = config.sections.rebase.folded,
           name = "rebase",
         },
-          -- TODO Reverting (sequencer - revert_head)
+        show_cherry_pick and Section {
           -- TODO Picking (sequencer - cherry_pick_head)
-          -- TODO Respect if user has section hidden
+        },
+        show_revert and Section {
+          -- TODO Reverting (sequencer - revert_head)
+        },
+        show_untracked and Section {
           -- TODO: Group untracked by directory and create a fold
-        #state.untracked.items > 0
-          and Section {
-            title = SectionTitle { title = "Untracked files" },
-            render = SectionItemFile,
-            items = state.untracked.items,
-            folded = config.sections.untracked.folded,
-            name = "untracked",
-          },
-        #state.unstaged.items > 0 and Section {
+          title = SectionTitle { title = "Untracked files" },
+          render = SectionItemFile,
+          items = state.untracked.items,
+          folded = config.sections.untracked.folded,
+          name = "untracked",
+        },
+        show_unstaged and Section {
           title = SectionTitle { title = "Unstaged changes" },
           render = SectionItemFile,
           items = state.unstaged.items,
           folded = config.sections.unstaged.folded,
           name = "unstaged",
         },
-        #state.staged.items > 0 and Section {
+        show_staged and Section {
           title = SectionTitle { title = "Staged changes" },
           render = SectionItemFile,
           items = state.staged.items,
           folded = config.sections.staged.folded,
           name = "staged",
         },
-        #state.upstream.unpulled.items > 0 and Section {
+        show_upstream_unpulled and Section {
           title = SectionTitleRemote { title = "Unpulled from", ref = state.upstream.ref },
           render = SectionItemCommit,
           items = state.upstream.unpulled.items,
           folded = config.sections.unpulled_upstream.folded,
         },
-        (#state.pushRemote.unpulled.items > 0 and state.pushRemote.ref ~= state.upstream.ref) and Section {
+        show_pushRemote_unpulled and Section {
           title = SectionTitleRemote { title = "Unpulled from", ref = state.pushRemote.ref },
           render = SectionItemCommit,
           items = state.pushRemote.unpulled.items,
           folded = config.sections.unpulled_pushRemote.folded,
         },
-        #state.upstream.unmerged.items > 0 and Section {
+        show_upstream_unmerged and Section {
           title = SectionTitleRemote { title = "Unmerged into", ref = state.upstream.ref },
           render = SectionItemCommit,
           items = state.upstream.unmerged.items,
           folded = config.sections.unmerged_upstream.folded,
         },
-        (#state.pushRemote.unmerged.items > 0 and state.pushRemote.ref ~= state.upstream.ref) and Section {
+        show_pushRemote_unmerged and Section {
           title = SectionTitleRemote { title = "Unpushed to", ref = state.pushRemote.ref },
           render = SectionItemCommit,
           items = state.pushRemote.unmerged.items,
           folded = config.sections.unmerged_pushRemote.folded,
         },
-        #state.stashes.items > 0 and Section {
+        show_stashes and Section {
           title = SectionTitle { title = "Stashes" },
           render = SectionItemStash,
           items = state.stashes.items,
           folded = config.sections.stashes.folded,
         },
-        #state.recent.items > 0 and Section {
+        show_recent and Section {
           title = SectionTitle { title = "Recent Commits" },
           render = SectionItemCommit,
           items = state.recent.items,
@@ -301,16 +411,5 @@ function M.Status(state, config)
     },
   }
 end
-
-M._TEST = a.void(function()
-  local git = require("neogit.lib.git")
-  local config = require("neogit.config")
-  git.repo:refresh {
-    source = "status_test",
-    callback = function()
-      require("neogit.buffers.status").new(git.repo, config.values):open()
-    end,
-  }
-end)
 
 return M
