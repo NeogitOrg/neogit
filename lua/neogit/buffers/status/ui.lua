@@ -226,13 +226,16 @@ end)
 
 local SectionItemRebase = Component.new(function(item)
   if item.oid then
-    local action_hl = item.done and "NeogitRebaseDone" or "NeogitGraphOrange"
+    local action_hl = (item.done and "NeogitRebaseDone")
+      or (item.action == "onto" and "NeogitGraphBlue")
+      or "NeogitGraphOrange"
+
     local oid_hl = "NeogitRebaseDone"
     local subject_hl = item.done and "NeogitRebaseDone" or "Normal"
 
     return row({
       text(item.stopped and "> " or "  "),
-      text.highlight(action_hl)(item.action),
+      text.highlight(action_hl)(util.pad_right(item.action, 6)),
       text(" "),
       text.highlight(oid_hl)(item.oid:sub(1, 7)),
       text(" "),
@@ -336,7 +339,7 @@ function M.Status(state, config)
           title = SectionTitleRebase {
             title = "Rebasing",
             head = state.rebase.head,
-            onto = state.rebase.onto,
+            onto = state.rebase.onto.ref,
           },
           render = SectionItemRebase,
           items = state.rebase.items,

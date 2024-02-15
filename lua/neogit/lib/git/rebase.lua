@@ -106,11 +106,12 @@ end
 
 function M.update_rebase_status(state)
   local repo = require("neogit.lib.git.repository")
+  local log = require("neogit.lib.git.log")
   if repo.git_root == "" then
     return
   end
 
-  state.rebase = { items = {}, head = nil, current = nil }
+  state.rebase = { items = {}, onto = {}, head = nil, current = nil }
 
   local rebase_file
   local rebase_merge = repo:git_path("rebase-merge")
@@ -133,11 +134,13 @@ function M.update_rebase_status(state)
 
     local onto = rebase_file:joinpath("onto")
     if onto:exists() then
-      state.rebase.onto = cli["name-rev"].name_only.no_undefined
+      state.rebase.onto.oid = vim.trim(onto:read())
+      state.rebase.onto.subject = log.message(state.rebase.onto.oid)
+      state.rebase.onto.ref = cli["name-rev"].name_only.no_undefined
         .refs("refs/heads/*")
         .exclude("*/HEAD")
         .exclude("*/refs/heads/*")
-        .args(vim.trim(onto:read()))
+        .args(state.rebase.onto.oid)
         .call({ hidden = true }).stdout[1]
     end
 
@@ -174,6 +177,15 @@ function M.update_rebase_status(state)
           })
         end
       end
+    end
+
+    if onto:exists() then
+      table.insert(state.rebase.items, {
+        done = false,
+        action = "onto",
+        oid = state.rebase.onto.oid,
+        subject = state.rebase.onto.subject,
+      })
     end
   end
 end
