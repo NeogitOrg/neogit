@@ -290,6 +290,8 @@ function Ui:render(...)
   if not vim.tbl_isempty(self.layout) then
     self._old_node_attributes = gather_nodes(self.layout)
 
+    -- Restoring cursor location for status buffer on update. Might need to move this, as it doesn't really make sense
+    -- here.
     local context = self:get_cursor_context()
     if context then
       if context.options.tag == "Hunk" then

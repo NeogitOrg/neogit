@@ -583,12 +583,13 @@ function M:open(kind)
           p { commit = self.buffer.ui:get_commit_under_cursor() }
         end),
         [popups.mapping_for("StashPopup")] = popups.open("stash", function(p)
-          -- TODO: Pass in stash name if its under the cursor
-          p { name = self.buffer.ui:get_commit_under_cursor() }
+          local stash = self.buffer.ui:get_yankable_under_cursor()
+          p { name = stash and stash:match("^stash@{%d+}") }
         end),
         [popups.mapping_for("DiffPopup")] = popups.open("diff", function(p)
-          -- TODO use current section/item
-          p { section = {}, item = {} }
+          local section = self.buffer.ui:get_current_section().options.section
+          local item = self.buffer.ui:get_yankable_under_cursor()
+          p { section = { name = section }, item = { name = item } }
         end),
         [popups.mapping_for("IgnorePopup")] = popups.open("ignore", function(p)
           -- TODO use current absolute paths in selection
@@ -653,6 +654,7 @@ function M:refresh(partial, reason)
     source = "status",
     partial = partial,
     callback = function()
+      -- TODO: move cursor restoration logic here?
       self.buffer.ui:render(unpack(ui.Status(git.repo, self.config)))
 
       api.nvim_exec_autocmds("User", { pattern = "NeogitStatusRefreshed", modeline = false })

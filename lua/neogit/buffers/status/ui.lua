@@ -222,7 +222,7 @@ local SectionItemCommit = Component.new(function(item)
     text.highlight("Comment")(item.commit.abbreviated_commit),
     text(" "),
     text(item.commit.subject),
-  }, { yankable = item.commit.oid })
+  }, { oid = item.commit.oid, yankable = item.commit.oid })
 end)
 
 local SectionItemRebase = Component.new(function(item)
@@ -238,7 +238,7 @@ local SectionItemRebase = Component.new(function(item)
       text.highlight("NeogitRebaseDone")(item.oid:sub(1, 7)),
       text(" "),
       text.highlight(item.done and "NeogitRebaseDone")(item.subject),
-    }, { yankable = item.oid })
+    }, { yankable = item.oid, oid = item.oid })
   else
     return row {
       text.highlight("NeogitGraphOrange")(item.action),
@@ -260,7 +260,7 @@ local SectionItemRevert = Component.new(function(item)
     text.highlight("Comment")(item.oid:sub(1, 7)),
     text(" "),
     text(item.subject),
-  }, { yankable = item.oid })
+  }, { yankable = item.oid, oid = item.oid })
 end)
 
 function M.Status(state, config)
