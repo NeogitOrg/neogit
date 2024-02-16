@@ -1,9 +1,6 @@
 -- TODO
 -- - Get fold markers to work
 --
---
--- Rule! No external state!
---
 local Ui = require("neogit.lib.ui")
 local Component = require("neogit.lib.ui.component")
 local util = require("neogit.lib.util")
@@ -230,16 +227,13 @@ local SectionItemRebase = Component.new(function(item)
       or (item.action == "onto" and "NeogitGraphBlue")
       or "NeogitGraphOrange"
 
-    local oid_hl = "NeogitRebaseDone"
-    local subject_hl = item.done and "NeogitRebaseDone" or "Normal"
-
     return row({
       text(item.stopped and "> " or "  "),
       text.highlight(action_hl)(util.pad_right(item.action, 6)),
       text(" "),
-      text.highlight(oid_hl)(item.oid:sub(1, 7)),
+      text.highlight("NeogitRebaseDone")(item.oid:sub(1, 7)),
       text(" "),
-      text.highlight(subject_hl)(item.subject),
+      text.highlight(item.done and "NeogitRebaseDone")(item.subject),
     }, { yankable = item.oid })
   else
     return row {
@@ -248,6 +242,21 @@ local SectionItemRebase = Component.new(function(item)
       text(item.subject),
     }
   end
+end)
+
+-- TODO: "gone", "work", "onto" highlighting
+local SectionItemRevert = Component.new(function(item)
+  local action_hl = (item.action == "work" and "NeogitGraphRed")
+    or (item.action == "onto" and "NeogitGraphBlue")
+    or "NeogitGraphOrange"
+
+  return row({
+    text.highlight(action_hl)(util.pad_right(item.action, 6)),
+    text(" "),
+    text.highlight("Comment")(item.oid:sub(1, 7)),
+    text(" "),
+    text(item.subject),
+  }, { yankable = item.oid })
 end)
 
 function M.Status(state, config)
@@ -350,7 +359,11 @@ function M.Status(state, config)
           -- TODO Picking (sequencer - cherry_pick_head)
         },
         show_revert and Section {
-          -- TODO Reverting (sequencer - revert_head)
+          title = SectionTitle { title = "Reverting" },
+          render = SectionItemRevert,
+          items = state.sequencer.items,
+          folded = config.sections.sequencer.folded,
+          name = "revert"
         },
         show_untracked and Section {
           -- TODO: Group untracked by directory and create a fold
