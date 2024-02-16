@@ -1001,6 +1001,21 @@ local discard = operation("discard", function()
         end
       else
         logger.fmt_debug("Discarding in section %s %s", section_name, item.name)
+        if item.mode == "UU" then
+          local choices = { "&ours", "&theirs", "&abort" }
+          local choice =
+            input.get_choice("Discard conflict by taking...", { values = choices, default = #choices })
+          if choice == "o" then
+            git.cli.checkout.ours.file(item.absolute_path).call_sync()
+          elseif choice == "t" then
+            git.cli.checkout.theirs.file(item.absolute_path).call_sync()
+          else
+            return
+          end
+          git.status.stage { item.name }
+          M.refresh(false, "Resolved conflict")
+          return
+        end
         table.insert(t, function()
           if section_name == "untracked" then
             a.util.scheduler()
