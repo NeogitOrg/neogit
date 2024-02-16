@@ -28,7 +28,7 @@ end
 ---@field stdin number|nil
 ---@field pty boolean|nil
 ---@field on_partial_line fun(process: Process, data: string, raw: string)|nil callback on complete lines
----@field on_error (fun(res: ProcessResult): boolean) Intercept the error externally, returning true prevents the error from being logged
+---@field on_error (fun(res: ProcessResult): boolean) Intercept the error externally, returning false prevents the error from being logged
 local Process = {}
 Process.__index = Process
 
