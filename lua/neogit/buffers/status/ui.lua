@@ -123,86 +123,90 @@ local Section = Component.new(function(props)
     row(util.merge(props.title, { text(" ("), text(#props.items), text(")") })),
     col(map(props.items, props.render)),
     EmptyLine,
-  }, { foldable = true, folded = props.folded, section = props.name })
+  }, { foldable = true, folded = props.folded, section = props.name, id = props.name })
 end)
 
-local SectionItemFile = Component.new(function(item)
-  local load_diff = function(item)
-    ---@param this Component
-    ---@param ui Ui
-    ---@param prefix string|nil
-    return a.void(function(this, ui, prefix)
-      this.options.on_open = nil
-      this.options.folded = false
+local SectionItemFile = function(section)
+  return Component.new(function(item)
+    local load_diff = function(item)
+      ---@param this Component
+      ---@param ui Ui
+      ---@param prefix string|nil
+      return a.void(function(this, ui, prefix)
+        this.options.on_open = nil
+        this.options.folded = false
 
-      local row, _ = this:row_range_abs()
-      row = row + 1 -- Filename row
+        local row, _ = this:row_range_abs()
+        row = row + 1 -- Filename row
 
-      local diff = item.diff
-      for _, hunk in ipairs(diff.hunks) do
-        hunk.first = row
-        hunk.last = row + hunk.length
-        row = hunk.last + 1
+        local diff = item.diff
+        for _, hunk in ipairs(diff.hunks) do
+          hunk.first = row
+          hunk.last = row + hunk.length
+          row = hunk.last + 1
 
-        -- Set fold state when called from ui:update()
-        if prefix then
-          local key = ("%s--%s"):format(prefix, hunk.hash)
-          if ui._old_node_attributes and ui._old_node_attributes[key] then
-            hunk._folded = ui._old_node_attributes[key].folded
+          -- Set fold state when called from ui:update()
+          if prefix then
+            local key = ("%s--%s"):format(prefix, hunk.hash)
+            if ui._old_node_attributes and ui._old_node_attributes[key] then
+              hunk._folded = ui._old_node_attributes[key].folded
+            end
           end
         end
-      end
 
-      this:append(DiffHunks(diff))
-      ui:update()
-    end)
-  end
+        this:append(DiffHunks(diff))
+        ui:update()
+      end)
+    end
 
-  local mode_to_text = {
-    M = "Modified",
-    N = "New File",
-    A = "Added",
-    D = "Deleted",
-    C = "Copied",
-    U = "Updated",
-    UU = "Both Modified",
-    R = "Renamed",
-    ["?"] = "", -- Untracked
-  }
+    local mode_to_text = {
+      M = "Modified",
+      N = "New File",
+      A = "Added",
+      D = "Deleted",
+      C = "Copied",
+      U = "Updated",
+      UU = "Both Modified",
+      R = "Renamed",
+      ["?"] = "", -- Untracked
+    }
 
-  local conflict = false
-  local mode = mode_to_text[item.mode]
-  if mode == nil then
-    conflict = true
-    mode = mode_to_text[item.mode:sub(1, 1)]
-  end
+    local conflict = false
+    local mode = mode_to_text[item.mode]
+    if mode == nil then
+      conflict = true
+      mode = mode_to_text[item.mode:sub(1, 1)]
+    end
 
-  local highlight = ("NeogitChange%s"):format(mode:gsub(" ", ""))
+    local highlight = ("NeogitChange%s"):format(mode:gsub(" ", ""))
 
-  local mode_text
-  if mode == "" then
-    mode_text = ""
-  elseif conflict then
-    mode_text = util.pad_right(("%s by us"):format(mode), 15)
-  else
-    mode_text = util.pad_right(mode, 15)
-  end
+    local mode_text
+    if mode == "" then
+      mode_text = ""
+    elseif conflict then
+      mode_text = util.pad_right(("%s by us"):format(mode), 15)
+    else
+      mode_text = util.pad_right(mode, 15)
+    end
 
-  return col.tag("SectionItemFile")({
-    row {
-      text.highlight(highlight)(mode_text),
-      text(item.original_name and ("%s -> %s"):format(item.original_name, item.name) or item.name),
-    },
-  }, {
-    foldable = true,
-    folded = true,
-    on_open = load_diff(item),
-    context = true,
-    yankable = item.name,
-    filename = item.name,
-    item = item,
-  })
-end)
+    return col({
+      row {
+        text.highlight(highlight)(mode_text),
+        text(item.original_name and ("%s -> %s"):format(item.original_name, item.name) or item.name),
+      },
+    }, {
+      tag = "File",
+      foldable = true,
+      folded = true,
+      on_open = load_diff(item),
+      context = true,
+      id = ("%s--%s"):format(section, item.name),
+      yankable = item.name,
+      filename = item.name,
+      item = item,
+    })
+  end)
+end
 
 local SectionItemStash = Component.new(function(item)
   local name = ("stash@{%s}"):format(item.idx)
@@ -363,26 +367,26 @@ function M.Status(state, config)
           render = SectionItemRevert,
           items = state.sequencer.items,
           folded = config.sections.sequencer.folded,
-          name = "revert"
+          name = "revert",
         },
         show_untracked and Section {
           -- TODO: Group untracked by directory and create a fold
           title = SectionTitle { title = "Untracked files" },
-          render = SectionItemFile,
+          render = SectionItemFile("untracked"),
           items = state.untracked.items,
           folded = config.sections.untracked.folded,
           name = "untracked",
         },
         show_unstaged and Section {
           title = SectionTitle { title = "Unstaged changes" },
-          render = SectionItemFile,
+          render = SectionItemFile("unstaged"),
           items = state.unstaged.items,
           folded = config.sections.unstaged.folded,
           name = "unstaged",
         },
         show_staged and Section {
           title = SectionTitle { title = "Staged changes" },
-          render = SectionItemFile,
+          render = SectionItemFile("staged"),
           items = state.staged.items,
           folded = config.sections.staged.folded,
           name = "staged",
@@ -392,36 +396,42 @@ function M.Status(state, config)
           render = SectionItemCommit,
           items = state.upstream.unpulled.items,
           folded = config.sections.unpulled_upstream.folded,
+          name = "upstream_unpulled",
         },
         show_pushRemote_unpulled and Section {
           title = SectionTitleRemote { title = "Unpulled from", ref = state.pushRemote.ref },
           render = SectionItemCommit,
           items = state.pushRemote.unpulled.items,
           folded = config.sections.unpulled_pushRemote.folded,
+          name = "pushRemote_unpulled",
         },
         show_upstream_unmerged and Section {
           title = SectionTitleRemote { title = "Unmerged into", ref = state.upstream.ref },
           render = SectionItemCommit,
           items = state.upstream.unmerged.items,
           folded = config.sections.unmerged_upstream.folded,
+          name = "upstream_unmerged",
         },
         show_pushRemote_unmerged and Section {
           title = SectionTitleRemote { title = "Unpushed to", ref = state.pushRemote.ref },
           render = SectionItemCommit,
           items = state.pushRemote.unmerged.items,
           folded = config.sections.unmerged_pushRemote.folded,
+          name = "pushRemote_unmerged",
         },
         show_stashes and Section {
           title = SectionTitle { title = "Stashes" },
           render = SectionItemStash,
           items = state.stashes.items,
           folded = config.sections.stashes.folded,
+          name = "stashes",
         },
         show_recent and Section {
           title = SectionTitle { title = "Recent Commits" },
           render = SectionItemCommit,
           items = state.recent.items,
           folded = config.sections.recent.folded,
+          name = "recent",
         },
       },
     },

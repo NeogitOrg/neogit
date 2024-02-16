@@ -289,6 +289,34 @@ function Ui:render(...)
 
   if not vim.tbl_isempty(self.layout) then
     self._old_node_attributes = gather_nodes(self.layout)
+
+    local context = self:get_cursor_context()
+    if context then
+      if context.options.tag == "Hunk" then
+        if context.index == 1 then
+          if #context.parent.children > 1 then
+            self._cursor_context_start = ({ context:row_range_abs() })[1]
+          else
+            self._cursor_context_start = ({ context:row_range_abs() })[1] - 1
+          end
+        else
+          self._cursor_context_start = ({ context.parent.children[context.index - 1]:row_range_abs() })[1]
+        end
+      elseif context.options.tag == "File" then
+        if context.index == 1 then
+          if #context.parent.children > 1 then
+            -- id is scoped by section. Advance to next file.
+            self._cursor_goto = context.parent.children[2].options.id
+          else
+            -- Yankable lets us jump from one section to the other. Go to same file in new section.
+            self._cursor_goto = context.options.yankable
+          end
+        else
+          self._cursor_goto = context.parent.children[context.index - 1].options.id
+        end
+      else
+      end
+    end
   end
 
   self.layout = root
@@ -318,13 +346,22 @@ function Ui:update()
   self.buf:set_folds(renderer.buffer.fold)
   self.buf:lock()
 
-  -- P(self:get_cursor_context(math.min(cursor_line, #renderer.buffer.line)):row_range_abs())
-
-  self.buf:move_cursor(math.min(cursor_line, #renderer.buffer.line))
-
   if self._old_node_attributes then
     self:_update_attributes(self.layout, self._old_node_attributes)
     self._old_node_attributes = nil
+  end
+
+  if self._cursor_context_start then
+    self.buf:move_cursor(self._cursor_context_start)
+    self._cursor_context_start = nil
+  elseif self._cursor_goto then
+    if self.node_index:find_by_id(self._cursor_goto) then
+      self.buf:move_cursor(self.node_index:find_by_id(self._cursor_goto):row_range_abs())
+    end
+
+    self._cursor_goto = nil
+  else
+    self.buf:move_cursor(cursor_line)
   end
 end
 

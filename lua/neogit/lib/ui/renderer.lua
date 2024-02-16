@@ -25,12 +25,16 @@ function RendererIndex:add(node)
 end
 
 ---@param node Component
-function RendererIndex:add_id(node)
-  if tonumber(node.options.id) then
+---@param id? string
+function RendererIndex:add_id(node, id)
+  id = id or node.options.id
+  assert(id, "id cannot be nil")
+
+  if tonumber(id) then
     error("Cannot use an integer ID for a component")
   end
 
-  self.index[node.options.id] = node
+  self.index[id] = node
 end
 
 function RendererIndex.new()
@@ -99,6 +103,10 @@ end
 function Renderer:_build_child(child, parent, index)
   if child.options.id then
     self.index:add_id(child)
+  end
+
+  if child.options.yankable then
+    self.index:add_id(child, child.options.yankable)
   end
 
   child.parent = parent
