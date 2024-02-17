@@ -166,32 +166,29 @@ local SectionItemFile = function(section)
       D = "Deleted",
       C = "Copied",
       U = "Updated",
-      UU = "Both Modified",
       R = "Renamed",
+      DD = "Unmerged",
+      AU = "Unmerged",
+      UD = "Unmerged",
+      UA = "Unmerged",
+      DU = "Unmerged",
+      AA = "Unmerged",
+      UU = "Unmerged",
       ["?"] = "", -- Untracked
     }
 
-    local conflict = false
     local mode = mode_to_text[item.mode]
-    if mode == nil then
-      conflict = true
-      mode = mode_to_text[item.mode:sub(1, 1)]
-    end
-
-    local highlight = ("NeogitChange%s"):format(mode:gsub(" ", ""))
 
     local mode_text
     if mode == "" then
       mode_text = ""
-    elseif conflict then
-      mode_text = util.pad_right(("%s by us"):format(mode), 15)
     else
-      mode_text = util.pad_right(mode, 15)
+      mode_text = util.pad_right(mode, 11)
     end
 
     return col({
       row {
-        text.highlight(highlight)(mode_text),
+        text.highlight(("NeogitChange%s"):format(mode:gsub(" ", "")))(mode_text),
         text(item.original_name and ("%s -> %s"):format(item.original_name, item.name) or item.name),
       },
     }, {

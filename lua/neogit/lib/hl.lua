@@ -192,7 +192,7 @@ function M.setup()
     NeogitChangeRenamed = { fg = palette.bg_purple, bold = palette.bold, italic = palette.italic },
     NeogitChangeUpdated = { fg = palette.bg_orange, bold = palette.bold, italic = palette.italic },
     NeogitChangeCopied = { fg = palette.bg_cyan, bold = palette.bold, italic = palette.italic },
-    NeogitChangeBothModified = { fg = palette.bg_yellow, bold = palette.bold, italic = palette.italic },
+    NeogitChangeUnmerged = { fg = palette.bg_yellow, bold = palette.bold, italic = palette.italic },
     NeogitChangeNewFile = { fg = palette.bg_green, bold = palette.bold, italic = palette.italic },
     NeogitSectionHeader = { fg = palette.bg_purple, bold = palette.bold },
     NeogitUntrackedfiles = { link = "NeogitSectionHeader" },
