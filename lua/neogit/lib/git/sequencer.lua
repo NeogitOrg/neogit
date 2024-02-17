@@ -22,7 +22,7 @@ end
 
 function M.update_sequencer_status(state)
   local git = require("neogit.lib.git")
-  state.sequencer = { items = {}, head = nil, head_oid = nil }
+  state.sequencer = { items = {}, head = nil, head_oid = nil, revert = false, cherry_pick = false }
 
   local revert_head = git.repo:git_path("REVERT_HEAD")
   local cherry_head = git.repo:git_path("CHERRY_PICK_HEAD")
@@ -37,6 +37,13 @@ function M.update_sequencer_status(state)
     state.sequencer.revert = true
   end
 
+  local HEAD_oid = git.rev_parse.oid("HEAD")
+  table.insert(state.sequencer.items, {
+    action = "onto",
+    oid = HEAD_oid,
+    subject = git.log.message(HEAD_oid),
+  })
+
   local todo = git.repo:git_path("sequencer/todo")
   if todo:exists() then
     for line in todo:iter() do
@@ -48,31 +55,12 @@ function M.update_sequencer_status(state)
         })
       end
     end
-  end
-
-  state.sequencer.items = util.reverse(state.sequencer.items)
-
-  -- TODO: Figure out the logic behind onto/gone/work
-  local orig = git.repo:git_path("ORIG_HEAD")
-  if state.sequencer.head_oid and orig:exists() then
-    local orig_head = vim.trim(orig:read())
-    table.insert(
-      state.sequencer.items,
-      {
-        action = "work",
-        oid = orig_head,
-        subject = git.log.message(orig_head)
-      }
-    )
-
-    table.insert(
-      state.sequencer.items,
-      {
-        action = "onto",
-        oid = state.sequencer.head_oid,
-        subject = git.log.message(state.sequencer.head_oid)
-      }
-    )
+  elseif state.sequencer.cherry_pick or state.sequencer.revert then
+    table.insert(state.sequencer.items, {
+      action = "join",
+      oid = state.sequencer.head_oid,
+      subject = git.log.message(state.sequencer.head_oid),
+    })
   end
 end
 

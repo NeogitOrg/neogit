@@ -123,7 +123,25 @@ local Section = Component.new(function(props)
     row(util.merge(props.title, { text(" ("), text(#props.items), text(")") })),
     col(map(props.items, props.render)),
     EmptyLine,
-  }, { foldable = true, folded = props.folded, section = props.name, id = props.name })
+  }, {
+    foldable = true,
+    folded = props.folded,
+    section = props.name,
+    id = props.name,
+  })
+end)
+
+local SequencerSection = Component.new(function(props)
+  return col.tag("Section")({
+    row(util.merge(props.title)),
+    col(map(props.items, props.render)),
+    EmptyLine,
+  }, {
+    foldable = true,
+    folded = props.folded,
+    section = props.name,
+    id = props.name,
+  })
 end)
 
 local SectionItemFile = function(section)
@@ -246,7 +264,7 @@ local SectionItemRebase = Component.new(function(item)
 end)
 
 -- TODO: "gone", "work", "onto" highlighting
-local SectionItemRevert = Component.new(function(item)
+local SectionItemSequencer = Component.new(function(item)
   local action_hl = (item.action == "work" and "NeogitGraphRed")
     or (item.action == "onto" and "NeogitGraphBlue")
     or "NeogitGraphOrange"
@@ -276,12 +294,10 @@ function M.Status(state, config)
   local show_rebase = #state.rebase.items > 0
     and not config.sections.rebase.hidden
 
-  local show_cherry_pick = #state.sequencer.items > 0
-    and state.sequencer.cherry_pick
+  local show_cherry_pick = state.sequencer.cherry_pick
     and not config.sections.sequencer.hidden
 
-  local show_revert = #state.sequencer.items > 0
-    and state.sequencer.revert
+  local show_revert = state.sequencer.revert
     and not config.sections.sequencer.hidden
 
   local show_untracked = #state.untracked.items > 0
@@ -356,13 +372,17 @@ function M.Status(state, config)
           folded = config.sections.rebase.folded,
           name = "rebase",
         },
-        show_cherry_pick and Section {
-          -- TODO Picking (sequencer - cherry_pick_head)
+        show_cherry_pick and SequencerSection {
+          title = SectionTitle { title = "Cherry Picking" },
+          render = SectionItemSequencer,
+          items = util.reverse(state.sequencer.items),
+          folded = config.sections.sequencer.folded,
+          name = "cherry_pick",
         },
-        show_revert and Section {
+        show_revert and SequencerSection {
           title = SectionTitle { title = "Reverting" },
-          render = SectionItemRevert,
-          items = state.sequencer.items,
+          render = SectionItemSequencer,
+          items = util.reverse(state.sequencer.items),
           folded = config.sections.sequencer.folded,
           name = "revert",
         },
