@@ -106,9 +106,13 @@ local function update_status(state)
       elseif kind == "?" then
         table.insert(untracked_files, update_file(cwd, old_files_hash.untracked_files[rest], "?", rest))
       elseif kind == "1" then
-        local mode_staged, mode_unstaged, _, _, _, _, _, _, name = rest:match(match_1)
+        local mode_staged, mode_unstaged, _, _, _, _, hH, _, name = rest:match(match_1)
 
         if mode_staged ~= "." then
+          if hH:match("^0+$") then
+            mode_staged = "N"
+          end
+
           table.insert(staged_files, update_file(cwd, old_files_hash.staged_files[name], mode_staged, name))
         end
 
