@@ -142,6 +142,7 @@ function M.update_rebase_status(state)
         .exclude("*/refs/heads/*")
         .args(state.rebase.onto.oid)
         .call({ hidden = true }).stdout[1]
+      state.rebase.onto.is_remote = not git.branch.exists(state.rebase.onto.ref)
     end
 
     local done = rebase_file:joinpath("done")

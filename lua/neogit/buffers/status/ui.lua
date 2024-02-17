@@ -107,15 +107,22 @@ local SectionTitleRemote = Component.new(function(props)
   }
 end)
 
--- TODO: Determine if 'onto' is local or remote
 local SectionTitleRebase = Component.new(function(props)
-  return {
-    text.highlight("NeogitSectionHeader")(props.title),
-    text(" "),
-    text.highlight("NeogitBranch")(props.head),
-    text.highlight("NeogitSectionHeader")(" onto "),
-    text.highlight("NeogitBranch")(props.onto),
-  }
+  if props.onto then
+    return {
+      text.highlight("NeogitSectionHeader")(props.title),
+      text(" "),
+      text.highlight("NeogitBranch")(props.head),
+      text.highlight("NeogitSectionHeader")(" onto "),
+      text.highlight(props.is_remote_ref and "NeogitRemote" or "NeogitBranch")(props.onto),
+    }
+  else
+    return {
+      text.highlight("NeogitSectionHeader")(props.title),
+      text(" "),
+      text.highlight("NeogitBranch")(props.head),
+    }
+  end
 end)
 
 local Section = Component.new(function(props)
@@ -134,6 +141,30 @@ end)
 local SequencerSection = Component.new(function(props)
   return col.tag("Section")({
     row(util.merge(props.title)),
+    col(map(props.items, props.render)),
+    EmptyLine,
+  }, {
+    foldable = true,
+    folded = props.folded,
+    section = props.name,
+    id = props.name,
+  })
+end)
+
+local RebaseSection = Component.new(function(props)
+  return col.tag("Section")({
+    row(
+      util.merge(
+        props.title,
+        {
+          text(" ("),
+          text(props.current),
+          text("/"),
+          text(#props.items - 1),
+          text(")")
+        }
+      )
+    ),
     col(map(props.items, props.render)),
     EmptyLine,
   }, {
@@ -361,13 +392,16 @@ function M.Status(state, config)
           yankable = state.head.tag.oid,
         },
         EmptyLine,
-        show_rebase and Section {
+        show_rebase and RebaseSection {
           title = SectionTitleRebase {
             title = "Rebasing",
             head = state.rebase.head,
             onto = state.rebase.onto.ref,
+            oid = state.rebase.onto.oid,
+            is_remote_ref = state.rebase.onto.is_remote,
           },
           render = SectionItemRebase,
+          current = state.rebase.current,
           items = state.rebase.items,
           folded = config.sections.rebase.folded,
           name = "rebase",
