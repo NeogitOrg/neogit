@@ -294,9 +294,8 @@ local SectionItemRebase = Component.new(function(item)
   end
 end)
 
--- TODO: "gone", "work", "onto" highlighting
 local SectionItemSequencer = Component.new(function(item)
-  local action_hl = (item.action == "work" and "NeogitGraphRed")
+  local action_hl = (item.action == "join" and "NeogitGraphRed")
     or (item.action == "onto" and "NeogitGraphBlue")
     or "NeogitGraphOrange"
 
@@ -421,7 +420,6 @@ function M.Status(state, config)
           name = "revert",
         },
         show_untracked and Section {
-          -- TODO: Group untracked by directory and create a fold
           title = SectionTitle { title = "Untracked files" },
           render = SectionItemFile("untracked"),
           items = state.untracked.items,
