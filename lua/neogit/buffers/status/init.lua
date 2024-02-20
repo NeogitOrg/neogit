@@ -161,7 +161,6 @@ function M:open(kind)
                 a.util.scheduler()
 
                 for _, file in ipairs(discardable.files.untracked) do
-
                   local bufnr = fn.bufexists(file.name)
                   if bufnr and bufnr > 0 then
                     api.nvim_buf_delete(bufnr, { force = true })
@@ -218,7 +217,6 @@ function M:open(kind)
                 a.util.scheduler()
 
                 for _, file in ipairs(discardable.files.untracked) do
-
                   local bufnr = fn.bufexists(file.name)
                   if bufnr and bufnr > 0 then
                     api.nvim_buf_delete(bufnr, { force = true })
@@ -388,7 +386,6 @@ function M:open(kind)
         [popups.mapping_for("HelpPopup")] = popups.open("help"),
         [popups.mapping_for("LogPopup")] = popups.open("log"),
         [popups.mapping_for("WorktreePopup")] = popups.open("worktree"),
-
       },
       n = {
         [mappings["Toggle"]] = function()
@@ -915,6 +912,17 @@ function M:close()
   self.is_open = false
   self.buffer:close()
   self.buffer = nil
+end
+
+function M:chdir(dir)
+  local destination = require("plenary.path").new(dir)
+  vim.wait(5000, function()
+    return destination:exists()
+  end)
+
+  logger.debug("[STATUS] Changing Dir: " .. dir)
+  vim.api.nvim_set_current_dir(dir)
+  self:dispatch_reset()
 end
 
 function M:focus()

@@ -67,7 +67,7 @@ M.essential = function()
       "RefreshBuffer",
       "Refresh",
       function()
-        require("neogit.status").refresh(nil, "user_refresh")
+        require("neogit.buffers.status").instance:dispatch_refresh(nil, "user_refresh")
       end,
     },
     { "GoToFile", "Go to file", NONE },
