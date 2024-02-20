@@ -135,6 +135,46 @@ function Ui:get_fold_under_cursor()
   end)
 end
 
+---@return table
+function Ui:get_hunks_and_filenames_in_selection()
+  local range = { vim.fn.getpos("v")[2], vim.fn.getpos(".")[2] }
+  table.sort(range)
+  local start, stop = unpack(range)
+
+  local items = {
+    hunks = {
+      untracked = {},
+      unstaged = {},
+      staged = {}
+    },
+    files = {
+      untracked = {},
+      unstaged = {},
+      staged = {}
+    },
+  }
+
+  for i = start, stop do
+    local section = self:get_current_section(i)
+
+    local component = self:_find_component_by_index(i, function(node)
+      return node.options.hunk or node.options.filename
+    end)
+
+    if component and section then
+      section = section.options.section
+
+      if component.options.hunk then
+        table.insert(items.hunks[section], component.options.hunk)
+      elseif component.options.filename then
+        table.insert(items.files[section], component.options.item)
+      end
+    end
+  end
+
+  return items
+end
+
 ---@return string[]
 function Ui:get_commits_in_selection()
   local range = { vim.fn.getpos("v")[2], vim.fn.getpos(".")[2] }
@@ -176,9 +216,9 @@ function Ui:get_yankable_under_cursor()
 end
 
 ---@return Component|nil
-function Ui:get_current_section()
-  local cursor = vim.api.nvim_win_get_cursor(0)
-  local component = self:_find_component_by_index(cursor[1], function(node)
+function Ui:get_current_section(line)
+  line = line or vim.api.nvim_win_get_cursor(0)[1]
+  local component = self:_find_component_by_index(line, function(node)
     return node.options.section
   end)
 
