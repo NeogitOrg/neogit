@@ -1,6 +1,4 @@
 -- TODO
--- Save/restore cursor location
--- Redrawing w/ lock, that doesn't discard opened/closed diffs, keeps cursor location
 -- on-close hook to teardown stuff
 --
 -- Actions:
@@ -35,6 +33,7 @@ local git = require("neogit.lib.git")
 local watcher = require("neogit.watcher")
 local a = require("plenary.async")
 local input = require("neogit.lib.input")
+local util = require("neogit.lib.util")
 
 local logger = require("neogit.logger") -- TODO: Add logging
 local notification = require("neogit.lib.notification") -- TODO
@@ -90,8 +89,8 @@ function M:open(kind)
   local mappings = config.get_reversed_status_maps()
 
   self.buffer = Buffer.create {
-    name = "NeogitStatusNew",
-    filetype = "NeogitStatusNew",
+    name = "NeogitStatus",
+    filetype = "NeogitStatus",
     context_highlight = true,
     kind = kind,
     disable_line_numbers = config.values.disable_line_numbers,
@@ -103,7 +102,294 @@ function M:open(kind)
       end,
     },
     mappings = {
-      v = {},
+      v = {
+        [mappings["Discard"]] = a.void(function()
+          -- TODO: Discard Stash?
+          -- TODO: Discard Section?
+          local discardable = self.buffer.ui:get_hunks_and_filenames_in_selection()
+
+          local total_files = #discardable.files.staged
+            + #discardable.files.unstaged
+            + #discardable.files.untracked
+
+          local total_hunks = #discardable.hunks.staged
+            + #discardable.hunks.unstaged
+            + #discardable.hunks.untracked
+
+          if total_files > 0 then
+            if input.get_permission(("Discard %s files?"):format(total_files)) then
+              if #discardable.files.staged > 0 then
+                local new_files = {}
+                local modified_files = {}
+
+                for _, file in ipairs(discardable.files.staged) do
+                  if file.mode == "A" then
+                    table.insert(new_files, file.escaped_path)
+                  else
+                    table.insert(modified_files, file.escaped_path)
+                  end
+                end
+
+                if #modified_files > 0 then
+                  git.index.reset(modified_files)
+                  git.index.checkout(modified_files)
+                end
+
+                if #new_files > 0 then
+                  git.index.reset(new_files)
+
+                  a.util.scheduler()
+
+                  for _, file in ipairs(new_files) do
+                    local bufnr = fn.bufexists(file.name)
+                    if bufnr and bufnr > 0 then
+                      api.nvim_buf_delete(bufnr, { force = true })
+                    end
+
+                    fn.delete(file.escaped_path)
+                  end
+                end
+              end
+
+              if #discardable.files.unstaged > 0 then
+                git.index.checkout(util.map(discardable.files.unstaged, function(f)
+                  return f.escaped_path
+                end))
+              end
+
+              if #discardable.files.untracked > 0 then
+                a.util.scheduler()
+
+                for _, file in ipairs(discardable.files.untracked) do
+
+                  local bufnr = fn.bufexists(file.name)
+                  if bufnr and bufnr > 0 then
+                    api.nvim_buf_delete(bufnr, { force = true })
+                  end
+
+                  fn.delete(file.escaped_path)
+                end
+              end
+            end
+          end
+
+          if total_hunks > 0 then
+            if input.get_permission(("Discard %s hunks?"):format(total_hunks)) then
+              if #discardable.files.staged > 0 then
+                local new_files = {}
+                local modified_files = {}
+
+                for _, file in ipairs(discardable.files.staged) do
+                  if file.mode == "A" then
+                    table.insert(new_files, file.escaped_path)
+                  else
+                    table.insert(modified_files, file.escaped_path)
+                  end
+                end
+
+                if #modified_files > 0 then
+                  git.index.reset(modified_files)
+                  git.index.checkout(modified_files)
+                end
+
+                if #new_files > 0 then
+                  git.index.reset(new_files)
+
+                  a.util.scheduler()
+
+                  for _, file in ipairs(new_files) do
+                    local bufnr = fn.bufexists(file.name)
+                    if bufnr and bufnr > 0 then
+                      api.nvim_buf_delete(bufnr, { force = true })
+                    end
+
+                    fn.delete(file.escaped_path)
+                  end
+                end
+              end
+
+              if #discardable.files.unstaged > 0 then
+                git.index.checkout(util.map(discardable.files.unstaged, function(f)
+                  return f.escaped_path
+                end))
+              end
+
+              if #discardable.files.untracked > 0 then
+                a.util.scheduler()
+
+                for _, file in ipairs(discardable.files.untracked) do
+
+                  local bufnr = fn.bufexists(file.name)
+                  if bufnr and bufnr > 0 then
+                    api.nvim_buf_delete(bufnr, { force = true })
+                  end
+
+                  fn.delete(file.escaped_path)
+                end
+              end
+            end
+          end
+
+          -- if discardable then
+          --   local section = self.buffer.ui:get_current_section()
+          --   local item = self.buffer.ui:get_item_under_cursor()
+          --
+          --   if not section or not item then
+          --     return
+          --   end
+          --
+          --   if discardable.hunk then
+          --     local hunk = discardable.hunk
+          --     local patch = git.index.generate_patch(item, hunk, hunk.from, hunk.to, true)
+          --
+          --     if input.get_permission("Discard hunk?") then
+          --       if section.options.section == "staged" then
+          --         git.index.apply(patch, { index = true, reverse = true })
+          --       else
+          --         git.index.apply(patch, { reverse = true })
+          --       end
+          --     end
+
+          self:refresh()
+        end),
+        [mappings["Stage"]] = a.void(function()
+          local stagable = self.buffer.ui:get_hunk_or_filename_under_cursor()
+          local section = self.buffer.ui:get_current_section()
+
+          local cursor = self.buffer:cursor_line()
+          if stagable and section then
+            if section.options.section == "staged" then
+              return
+            end
+
+            if stagable.hunk then
+              local item = self.buffer.ui:get_item_under_cursor()
+              local patch =
+                git.index.generate_patch(item, stagable.hunk, stagable.hunk.from, stagable.hunk.to)
+
+              git.index.apply(patch, { cached = true })
+              cursor = stagable.hunk.first
+            elseif stagable.filename then
+              if section.options.section == "unstaged" then
+                git.status.stage { stagable.filename }
+              elseif section.options.section == "untracked" then
+                git.index.add { stagable.filename }
+              end
+            end
+          elseif section then
+            if section.options.section == "untracked" then
+              git.status.stage_untracked()
+            elseif section.options.section == "unstaged" then
+              git.status.stage_modified()
+            end
+          end
+
+          if cursor then
+            self.buffer:move_cursor(cursor)
+          end
+
+          self:refresh()
+        end),
+        [mappings["Unstage"]] = a.void(function()
+          local unstagable = self.buffer.ui:get_hunk_or_filename_under_cursor()
+
+          local section = self.buffer.ui:get_current_section()
+          if section and section.options.section ~= "staged" then
+            return
+          end
+
+          -- TODO: Cursor Placement
+          if unstagable then
+            if unstagable.hunk then
+              local item = self.buffer.ui:get_item_under_cursor()
+              local patch = git.index.generate_patch(
+                item,
+                unstagable.hunk,
+                unstagable.hunk.from,
+                unstagable.hunk.to,
+                true
+              )
+
+              git.index.apply(patch, { cached = true, reverse = true })
+            elseif unstagable.filename then
+              local section = self.buffer.ui:get_current_section()
+
+              if section and section.options.section == "staged" then
+                git.status.unstage { unstagable.filename }
+              end
+            end
+
+            self:refresh()
+          end
+        end),
+        [popups.mapping_for("BranchPopup")] = popups.open("branch", function(p)
+          p { commits = self.buffer.ui:get_commit_under_cursor() }
+        end),
+        [popups.mapping_for("CherryPickPopup")] = popups.open("cherry_pick", function(p)
+          p { commits = self.buffer.ui:get_commits_in_selection() }
+        end),
+        [popups.mapping_for("CommitPopup")] = popups.open("commit", function(p)
+          local commits = self.buffer.ui:get_commits_in_selection()
+          if #commits == 1 then
+            p { commit = commits[1] }
+          end
+        end),
+        [popups.mapping_for("MergePopup")] = popups.open("merge", function(p)
+          local commits = self.buffer.ui:get_commits_in_selection()
+          if #commits == 1 then
+            p { commit = commits[1] }
+          end
+        end),
+        [popups.mapping_for("PushPopup")] = popups.open("push", function(p)
+          local commits = self.buffer.ui:get_commits_in_selection()
+          if #commits == 1 then
+            p { commit = commits[1] }
+          end
+        end),
+        [popups.mapping_for("RebasePopup")] = popups.open("rebase", function(p)
+          local commits = self.buffer.ui:get_commits_in_selection()
+          if #commits == 1 then
+            p { commit = commits[1] }
+          end
+        end),
+        [popups.mapping_for("RevertPopup")] = popups.open("revert", function(p)
+          p { commits = self.buffer.ui:get_commits_in_selection() }
+        end),
+        [popups.mapping_for("ResetPopup")] = popups.open("reset", function(p)
+          local commits = self.buffer.ui:get_commits_in_selection()
+          if #commits == 1 then
+            p { commit = commits[1] }
+          end
+        end),
+        [popups.mapping_for("TagPopup")] = popups.open("tag", function(p)
+          local commits = self.buffer.ui:get_commits_in_selection()
+          if #commits == 1 then
+            p { commit = commits[1] }
+          end
+        end),
+        [popups.mapping_for("StashPopup")] = popups.open("stash", function(p)
+          -- TODO: Verify
+          local stash = self.buffer.ui:get_yankable_under_cursor()
+          p { name = stash and stash:match("^stash@{%d+}") }
+        end),
+        [popups.mapping_for("DiffPopup")] = popups.open("diff", function(p)
+          -- TODO: Verify
+          local section = self.buffer.ui:get_current_section().options.section
+          local item = self.buffer.ui:get_yankable_under_cursor()
+          p { section = { name = section }, item = { name = item } }
+        end),
+        [popups.mapping_for("IgnorePopup")] = popups.open("ignore", function(p)
+          -- TODO use current absolute paths in selection
+          p { paths = {}, git_root = git.repo.git_root }
+        end),
+        [popups.mapping_for("RemotePopup")] = popups.open("remote"),
+        [popups.mapping_for("FetchPopup")] = popups.open("fetch"),
+        [popups.mapping_for("PullPopup")] = popups.open("pull"),
+        [popups.mapping_for("HelpPopup")] = popups.open("help"),
+        [popups.mapping_for("LogPopup")] = popups.open("log"),
+        [popups.mapping_for("WorktreePopup")] = popups.open("worktree"),
+
+      },
       n = {
         [mappings["Toggle"]] = function()
           local fold = self.buffer.ui:get_fold_under_cursor()
