@@ -521,7 +521,7 @@ function Buffer.create(config)
     buffer:set_window_option("foldenable", true)
     buffer:set_window_option("foldlevel", 99)
     buffer:set_window_option("foldminlines", 0)
-    buffer:set_window_option("foldtext", "v:lua.NeogitBufferFoldText()")
+    buffer:set_window_option("foldtext", "")
   end
 
   if config.filetype then

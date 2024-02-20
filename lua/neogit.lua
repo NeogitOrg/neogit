@@ -11,7 +11,6 @@ function M.setup(opts)
   local hl = require("neogit.lib.hl")
   local state = require("neogit.lib.state")
   local logger = require("neogit.logger")
-  local folds = require("neogit.lib.folds")
 
   if did_setup then
     logger.debug("Already did setup!")
@@ -73,7 +72,6 @@ function M.setup(opts)
   signs.setup()
   state.setup()
   autocmds.setup()
-  folds.setup()
 end
 
 local function construct_opts(opts)
