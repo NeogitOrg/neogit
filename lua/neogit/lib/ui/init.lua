@@ -332,33 +332,6 @@ function Ui:render(...)
 
     -- Restoring cursor location for status buffer on update. Might need to move this, as it doesn't really make sense
     -- here.
-    local context = self:get_cursor_context()
-    if context then
-      if context.options.tag == "Hunk" then
-        if context.index == 1 then
-          if #context.parent.children > 1 then
-            self._cursor_context_start = ({ context:row_range_abs() })[1]
-          else
-            self._cursor_context_start = ({ context:row_range_abs() })[1] - 1
-          end
-        else
-          self._cursor_context_start = ({ context.parent.children[context.index - 1]:row_range_abs() })[1]
-        end
-      elseif context.options.tag == "File" then
-        if context.index == 1 then
-          if #context.parent.children > 1 then
-            -- id is scoped by section. Advance to next file.
-            self._cursor_goto = context.parent.children[2].options.id
-          else
-            -- Yankable lets us jump from one section to the other. Go to same file in new section.
-            self._cursor_goto = context.options.yankable
-          end
-        else
-          self._cursor_goto = context.parent.children[context.index - 1].options.id
-        end
-      else
-      end
-    end
   end
 
   self.layout = root
@@ -373,8 +346,6 @@ function Ui:update()
 
   local renderer = Renderer:new(self.layout, self.buf):render()
   self.node_index = renderer:node_index()
-
-  local cursor_line = self.buf:cursor_line()
 
   self.buf:unlock()
   self.buf:clear()
@@ -391,19 +362,6 @@ function Ui:update()
   if self._old_node_attributes then
     self:_update_attributes(self.layout, self._old_node_attributes)
     self._old_node_attributes = nil
-  end
-
-  if self._cursor_context_start then
-    self.buf:move_cursor(self._cursor_context_start)
-    self._cursor_context_start = nil
-  elseif self._cursor_goto then
-    if self.node_index:find_by_id(self._cursor_goto) then
-      self.buf:move_cursor(self.node_index:find_by_id(self._cursor_goto):row_range_abs())
-    end
-
-    self._cursor_goto = nil
-  else
-    self.buf:move_cursor(cursor_line)
   end
 end
 

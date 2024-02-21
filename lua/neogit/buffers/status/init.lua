@@ -610,11 +610,9 @@ function M:open(kind)
           git.init.init_repo()
         end,
         [mappings["Stage"]] = a.void(function()
-          -- TODO: Cursor Placement
           local stagable = self.buffer.ui:get_hunk_or_filename_under_cursor()
           local section = self.buffer.ui:get_current_section()
 
-          local cursor = self.buffer:cursor_line()
           if stagable and section then
             if section.options.section == "staged" then
               return
@@ -626,7 +624,6 @@ function M:open(kind)
                 git.index.generate_patch(item, stagable.hunk, stagable.hunk.from, stagable.hunk.to)
 
               git.index.apply(patch, { cached = true })
-              cursor = stagable.hunk.first
             elseif stagable.filename then
               if section.options.section == "unstaged" then
                 git.status.stage { stagable.filename }
@@ -642,19 +639,13 @@ function M:open(kind)
             end
           end
 
-          if cursor then
-            self.buffer:move_cursor(cursor)
-          end
-
           self:refresh()
         end),
         [mappings["StageAll"]] = a.void(function()
-          -- TODO: Cursor Placement
           git.status.stage_all()
           self:refresh()
         end),
         [mappings["StageUnstaged"]] = a.void(function()
-          -- TODO: Cursor Placement
           git.status.stage_modified()
           self:refresh()
         end),
@@ -666,7 +657,6 @@ function M:open(kind)
             return
           end
 
-          -- TODO: Cursor Placement
           if unstagable then
             if unstagable.hunk then
               local item = self.buffer.ui:get_item_under_cursor()
@@ -875,8 +865,11 @@ function M:open(kind)
           p { section = { name = section }, item = { name = item } }
         end),
         [popups.mapping_for("IgnorePopup")] = popups.open("ignore", function(p)
-          -- TODO use current absolute paths in selection
-          p { paths = {}, git_root = git.repo.git_root }
+          local path = self.buffer.ui:get_hunk_or_filename_under_cursor()
+          p {
+            paths = { path and path.escaped_path },
+            git_root = git.repo.git_root
+          }
         end),
         [popups.mapping_for("RemotePopup")] = popups.open("remote"),
         [popups.mapping_for("FetchPopup")] = popups.open("fetch"),
@@ -952,9 +945,47 @@ function M:refresh(partial, reason)
         return
       end
 
-      -- TODO: move cursor restoration logic here?
+      local cursor_line = self.buffer:cursor_line()
+      local cursor_context_start, cursor_goto
+      local context = self.buffer.ui:get_cursor_context()
+      if context then
+        if context.options.tag == "Hunk" then
+          if context.index == 1 then
+            if #context.parent.children > 1 then
+              cursor_context_start = ({ context:row_range_abs() })[1]
+            else
+              cursor_context_start = ({ context:row_range_abs() })[1] - 1
+            end
+          else
+            cursor_context_start = ({ context.parent.children[context.index - 1]:row_range_abs() })[1]
+          end
+        elseif context.options.tag == "File" then
+          if context.index == 1 then
+            if #context.parent.children > 1 then
+              -- id is scoped by section. Advance to next file.
+              cursor_goto = context.parent.children[2].options.id
+            else
+              -- Yankable lets us jump from one section to the other. Go to same file in new section.
+              cursor_goto = context.options.yankable
+            end
+          else
+            cursor_goto = context.parent.children[context.index - 1].options.id
+          end
+        else
+          -- TODO: profit?
+        end
+      end
 
       self.buffer.ui:render(unpack(ui.Status(git.repo, self.config)))
+
+      if cursor_context_start then
+        self.buffer:move_cursor(cursor_context_start)
+      elseif cursor_goto then
+        local line, _ = self.buffer.ui.node_index:find_by_id(cursor_goto):row_range_abs()
+        self.buffer:move_cursor(line)
+      else
+        self.buffer:move_cursor(cursor_line)
+      end
 
       api.nvim_exec_autocmds("User", { pattern = "NeogitStatusRefreshed", modeline = false })
 

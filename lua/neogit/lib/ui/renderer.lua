@@ -223,8 +223,6 @@ function Renderer:_render_text(child)
   self.index:add(child)
 end
 
--- TODO: This nested-row shit is lame. V
-
 ---@param child Component
 ---@param i integer index of child in parent.children
 function Renderer:_render_child_in_row(child, i, col_start, col_end, highlights, text)
