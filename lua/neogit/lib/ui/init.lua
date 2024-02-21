@@ -347,6 +347,7 @@ function Ui:update()
   local renderer = Renderer:new(self.layout, self.buf):render()
   self.node_index = renderer:node_index()
 
+  local cursor_line = self.buf:cursor_line()
   self.buf:unlock()
   self.buf:clear()
   self.buf:clear_namespace("default")
@@ -358,6 +359,7 @@ function Ui:update()
   self.buf:set_line_highlights(renderer.buffer.line_highlight)
   self.buf:set_folds(renderer.buffer.fold)
   self.buf:lock()
+  self.buf:move_cursor(math.min(cursor_line, #renderer.buffer.line))
 
   if self._old_node_attributes then
     self:_update_attributes(self.layout, self._old_node_attributes)
