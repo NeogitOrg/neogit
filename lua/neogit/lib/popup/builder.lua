@@ -92,7 +92,7 @@ function M:name(x)
 end
 
 function M:env(x)
-  self.state.env = x
+  self.state.env = x or {}
   return self
 end
 
