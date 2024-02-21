@@ -948,7 +948,12 @@ function M:refresh(partial, reason)
     source = "status",
     partial = partial,
     callback = function()
+      if not self.buffer then
+        return
+      end
+
       -- TODO: move cursor restoration logic here?
+
       self.buffer.ui:render(unpack(ui.Status(git.repo, self.config)))
 
       api.nvim_exec_autocmds("User", { pattern = "NeogitStatusRefreshed", modeline = false })

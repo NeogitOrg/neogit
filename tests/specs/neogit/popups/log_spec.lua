@@ -5,7 +5,6 @@ local harness = require("tests.util.git_harness")
 local util = require("tests.util.util")
 local in_prepared_repo = harness.in_prepared_repo
 
-local status = require("neogit.status")
 local state = require("neogit.lib.state")
 local input = require("tests.mocks.input")
 

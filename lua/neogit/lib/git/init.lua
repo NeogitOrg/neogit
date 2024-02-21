@@ -15,7 +15,6 @@ M.create = function(directory, sync)
 end
 
 -- TODO Use path input
--- TODO: Don't call the status buffer directly here
 M.init_repo = function()
   local directory = input.get_user_input("Create repository in", { completion = "dir" })
   if not directory then
@@ -29,10 +28,8 @@ M.init_repo = function()
     notification.error("Invalid Directory")
     return
   end
-
-  local status = require("neogit.status")
-  status.cwd_changed = true
-  vim.cmd.lcd(directory)
+  local status = require("neogit.buffers.status")
+  status.instance:chdir(directory)
 
   if cli.is_inside_worktree() then
     if not input.get_permission(("Reinitialize existing repository %s?"):format(directory)) then
@@ -41,8 +38,7 @@ M.init_repo = function()
   end
 
   M.create(directory)
-
-  status.refresh(nil, "InitRepo")
+  status.instance:dispatch_refresh(nil, "InitRepo")
 end
 
 return M

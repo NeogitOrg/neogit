@@ -37,7 +37,6 @@ M.popups = function()
 
   local items = vim.list_extend({
     {
-
       "CommandHistory",
       "History",
       function()
