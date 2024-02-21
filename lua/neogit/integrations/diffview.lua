@@ -92,9 +92,9 @@ local function get_local_diff_view(section_name, item_name, opts)
           table.insert(args, "HEAD")
         end
 
-        return neogit.cli.show.file(unpack(args)).call_sync().stdout
+        return neogit.cli.show.file(unpack(args)).call_sync({ trim = false }).stdout
       elseif kind == "working" then
-        local fdata = neogit.cli.show.file(path).call_sync().stdout
+        local fdata = neogit.cli.show.file(path).call_sync({ trim = false }).stdout
         return side == "left" and fdata
       end
     end,
