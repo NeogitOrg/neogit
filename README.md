@@ -287,6 +287,7 @@ neogit.setup {
       ["p"] = "PullPopup",
       ["r"] = "RebasePopup",
       ["v"] = "RevertPopup",
+      ["w"] = "WorktreePopup",
     },
     status = {
       ["q"] = "Close",
