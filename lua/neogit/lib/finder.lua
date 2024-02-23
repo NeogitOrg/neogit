@@ -31,7 +31,14 @@ local function telescope_mappings(on_select, allow_multi, refocus_status)
         table.insert(selection, item[1])
       end
     elseif action_state.get_selected_entry() ~= nil then
-      table.insert(selection, action_state.get_selected_entry()[1])
+      local entry = action_state.get_selected_entry()[1]
+      local prompt = picker:_get_prompt()
+
+      if entry == ".." and #prompt > 0 then
+        table.insert(selection, prompt)
+      else
+        table.insert(selection, entry)
+      end
     else
       table.insert(selection, picker:_get_prompt())
     end
