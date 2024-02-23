@@ -717,6 +717,7 @@ end
 ---@class SelectedHunk: Hunk
 ---@field from number start offset from the first line of the hunk
 ---@field to number end offset from the first line of the hunk
+---@field conflict boolean true if this hunk contains conflict markers
 ---@field lines string[]
 
 ---@param item StatusItem
@@ -726,6 +727,17 @@ end
 ---@return SelectedHunk[]
 function M.get_item_hunks(item, first_line, last_line, partial)
   local hunks = {}
+
+  local diff = git.cli.diff.check.call_sync { hidden = true, ignore_error = true }
+  local conflict_markers = {}
+  if diff.code == 2 then
+    for _, out in ipairs(diff.stdout) do
+      local line = string.gsub(out, "^" .. item.name .. ":", "")
+      if line ~= out and string.match(out, "conflict") then
+        table.insert(conflict_markers, tonumber(string.match(line, "%d+")))
+      end
+    end
+  end
 
   if not item.folded and item.hunks then
     for _, h in ipairs(item.hunks) do
@@ -748,11 +760,20 @@ function M.get_item_hunks(item, first_line, last_line, partial)
           table.insert(hunk_lines, item.diff.lines[i])
         end
 
+        local conflict = false
+        for _, n in ipairs(conflict_markers) do
+          if from <= n and n <= to then
+            conflict = true
+            break
+          end
+        end
+
         local o = {
           from = from,
           to = to,
           __index = h,
           hunk = h,
+          conflict = conflict,
           lines = hunk_lines,
         }
 
