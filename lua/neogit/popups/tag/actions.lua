@@ -21,24 +21,20 @@ function M.create_tag(popup)
   if popup.state.env.commit then
     selected = popup.state.env.commit
   else
-    selected = FuzzyFinderBuffer.new(git.refs.list()):open_async()
+    selected = FuzzyFinderBuffer.new(git.refs.list()):open_async { prompt_prefix = "Create tag on" }
     if not selected then
       return
     end
   end
 
-  local args = popup:get_arguments()
-  if vim.tbl_count(args) > 0 and not vim.tbl_contains(args, "--annotate") then
-    table.insert(args, "--annotate")
-  end
-
-  local code = client.wrap(git.cli.tag.arg_list(utils.merge(args, { tag_input, selected })), {
-    autocmd = "NeogitTagComplete",
-    msg = {
-      success = "Added tag " .. tag_input .. " on " .. selected,
-      fail = "Failed to add tag " .. tag_input .. " on " .. selected,
-    },
-  })
+  local code =
+    client.wrap(git.cli.tag.arg_list(utils.merge(popup:get_arguments(), { tag_input, selected })), {
+      autocmd = "NeogitTagComplete",
+      msg = {
+        success = "Added tag " .. tag_input .. " on " .. selected,
+        fail = "Failed to add tag " .. tag_input .. " on " .. selected,
+      },
+    })
   if code == 0 then
     fire_tag_event("NeogitTagCreate", { name = tag_input, ref = selected })
   end
