@@ -71,6 +71,32 @@ function M:close()
   self.buffer = nil
 end
 
+---Opens the CommitViewBuffer if it isn't open or performs the given action
+---which is passed the window id of the commit view buffer
+---@param commit_id string commit
+---@param filter string[]? Filter diffs to filepaths in table
+---@param action fun(window_id)
+function M.open_or_run_in_window(commit_id, filter, action)
+  if not commit_id then
+    return
+  end
+  local cvb = M.instance
+  if cvb and cvb.is_open and cvb.commit_info.commit_arg == commit_id and cvb.buffer and cvb.buffer.handle then
+    local ct = vim.api.nvim_get_current_tabpage()
+    for _, win in ipairs(vim.api.nvim_tabpage_list_wins(ct)) do
+      local buf = vim.api.nvim_win_get_buf(win)
+      if buf == cvb.buffer.handle then
+        pcall(action, win)
+        break
+      end
+    end
+  else
+    local cw = vim.api.nvim_get_current_win()
+    M.new(commit_id, filter):open()
+    vim.api.nvim_set_current_win(cw)
+  end
+end
+
 ---Opens the CommitViewBuffer
 ---If already open will close the buffer
 ---@param kind? string
@@ -133,6 +159,7 @@ function M:open(kind)
                 end
               end
             end
+
             -- The Diffs are in the 10th element of the layout.
             -- TODO: Do better than assume that we care about layout[10]
             find_diff_headers(self.buffer.ui.layout[10])
