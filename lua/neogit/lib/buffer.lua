@@ -213,11 +213,17 @@ function Buffer:close(force)
     return
   end
 
+  if self.kind == "tab" then
+    vim.cmd("tabclose")
+    return
+  end
+
   if api.nvim_buf_is_valid(self.handle) then
     local winnr = fn.bufwinnr(self.handle)
     if winnr ~= -1 then
       local winid = fn.win_getid(winnr)
-      if not pcall(api.nvim_win_close, winid, force) then
+      local ok, _ = pcall(api.nvim_win_close, winid, force)
+      if not ok then
         vim.cmd("b#")
       end
     else
