@@ -145,12 +145,12 @@ function Ui:get_hunks_and_filenames_in_selection()
     hunks = {
       untracked = {},
       unstaged = {},
-      staged = {}
+      staged = {},
     },
     files = {
       untracked = {},
       unstaged = {},
-      staged = {}
+      staged = {},
     },
   }
 
