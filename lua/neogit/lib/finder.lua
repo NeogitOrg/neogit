@@ -149,7 +149,7 @@ local function default_opts()
     refocus_status = true,
     allow_multi = false,
     border = false,
-    prompt_prefix = " > ",
+    prompt_prefix = "select",
     previewer = false,
     cache_picker = false,
     layout_strategy = "bottom_pane",
