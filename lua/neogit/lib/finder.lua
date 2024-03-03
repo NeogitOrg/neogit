@@ -219,7 +219,7 @@ function Finder:find(on_select)
   elseif config.check_integration("fzf_lua") then
     local fzf_lua = require("fzf-lua")
     fzf_lua.fzf_exec(self.entries, {
-      prompt = string.format(" %s > ", self.opts.prompt_prefix),
+      prompt = string.format("%s> ", self.opts.prompt_prefix),
       fzf_opts = fzf_opts(self.opts),
       winopts = {
         height = self.opts.layout_config.height,
@@ -228,7 +228,7 @@ function Finder:find(on_select)
     })
   else
     vim.ui.select(self.entries, {
-      prompt = string.format(" %s > ", self.opts.prompt_prefix),
+      prompt = string.format("%s: ", self.opts.prompt_prefix),
       format_item = function(entry)
         return entry
       end,
