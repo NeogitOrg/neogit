@@ -296,7 +296,6 @@ function M:open(kind)
             return
           end
 
-          -- TODO: Cursor Placement
           if unstagable then
             if unstagable.hunk then
               local item = self.buffer.ui:get_item_under_cursor()
@@ -416,7 +415,6 @@ function M:open(kind)
           self:refresh()
         end),
         [mappings["Depth1"]] = function()
-          -- TODO: Need to work with stashes/recent
           local section = self.buffer.ui:get_current_section()
           if section then
             local start, _ = section:row_range_abs()
@@ -427,7 +425,6 @@ function M:open(kind)
           end
         end,
         [mappings["Depth2"]] = function()
-          -- TODO: Need to work with stashes/recent
           local section = self.buffer.ui:get_current_section()
           local row = self.buffer.ui:get_component_under_cursor()
 
@@ -447,7 +444,6 @@ function M:open(kind)
           end
         end,
         [mappings["Depth3"]] = function()
-          -- TODO: Need to work with stashes/recent, but same as depth2
           local section = self.buffer.ui:get_current_section()
           local context = self.buffer.ui:get_cursor_context()
 
@@ -469,7 +465,6 @@ function M:open(kind)
           end
         end,
         [mappings["Depth4"]] = function()
-          -- TODO: Need to work with stashes/recent, but same as depth2
           local section = self.buffer.ui:get_current_section()
           local context = self.buffer.ui:get_cursor_context()
 
@@ -695,7 +690,6 @@ function M:open(kind)
           end
         end),
         [mappings["UnstageStaged"]] = a.void(function()
-          -- TODO: Cursor Placement
           git.status.unstage_all()
           self:refresh()
         end),
@@ -898,8 +892,6 @@ function M:open(kind)
       vim.o.autochdir = false
     end,
     render = function()
-      -- TODO: Figure out a way to remove the very last empty line from the last visible section.
-      --       it's created by the newline spacer between sections.
       return ui.Status(self.state, self.config)
     end,
     after = function()
@@ -938,12 +930,6 @@ function M:focus()
   end
 end
 
--- TODO: Allow passing some kind of cursor identifier into this, which can be injected into the renderer to
--- find the location of a new named element to set the cursor to upon update.
---
--- For example, when staging all items in untracked section via `s`, cursor should be updated to go to header of
--- staged section
---
 function M:refresh(partial, reason)
   -- if self.frozen then
   --   return
