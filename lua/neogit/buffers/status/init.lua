@@ -564,30 +564,36 @@ function M:open(kind)
           end
         end),
         [mappings["GoToNextHunkHeader"]] = function()
-          -- TODO: Doesn't go across file boundaries
           local c = self.buffer.ui:get_component_under_cursor(function(c)
-            return c.options.tag == "Diff" or c.options.tag == "Hunk"
+            return c.options.tag == "Diff" or c.options.tag == "Hunk" or c.options.tag == "File"
           end)
+          local section = self.buffer.ui:get_current_section()
 
-          if c then
+          if c and section then
+            local _, section_last = section:row_range_abs()
+            local next_location
+
             if c.options.tag == "Diff" then
-              self.buffer:move_cursor(fn.line(".") + 1)
-            else
+              next_location = fn.line(".") + 1
+            elseif c.options.tag == "File" then
+              vim.cmd("normal! zo")
+              next_location = fn.line(".") + 1
+            elseif c.options.tag == "Hunk" then
               local _, last = c:row_range_abs()
-              if last == fn.line("$") then
-                self.buffer:move_cursor(last)
-              else
-                self.buffer:move_cursor(last + 1)
-              end
+              next_location = last + 1
             end
+
+            if next_location < section_last then
+              self.buffer:move_cursor(next_location)
+            end
+
             vim.cmd("normal! zt")
           end
         end,
         [mappings["GoToPreviousHunkHeader"]] = function()
-          -- TODO: Doesn't go across file boundaries
           local function previous_hunk_header(self, line)
             local c = self.buffer.ui:get_component_on_line(line, function(c)
-              return c.options.tag == "Diff" or c.options.tag == "Hunk"
+              return c.options.tag == "Diff" or c.options.tag == "Hunk" or c.options.tag == "File"
             end)
 
             if c then
