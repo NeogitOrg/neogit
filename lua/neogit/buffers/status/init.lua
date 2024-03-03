@@ -391,11 +391,19 @@ function M:open(kind)
         [mappings["Toggle"]] = function()
           local fold = self.buffer.ui:get_fold_under_cursor()
           if fold then
+            -- Do not allow folding on the last (empty) line of a section. It should be considered "not part of either
+            -- section" from a UX perspective.
+            if fold.options.tag == "Section" and self.buffer:get_current_line()[1] == "" then
+              return
+            end
+
             if fold.options.on_open then
               fold.options.on_open(fold, self.buffer.ui)
             else
+              local start, _ = fold:row_range_abs()
               local ok, _ = pcall(vim.cmd, "normal! za")
               if ok then
+                self.buffer:move_cursor(start)
                 fold.options.folded = not fold.options.folded
               end
             end
