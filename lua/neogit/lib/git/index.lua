@@ -1,6 +1,7 @@
 local cli = require("neogit.lib.git.cli")
 local repo = require("neogit.lib.git.repository")
 local Path = require("plenary.path")
+local util = require("neogit.lib.util")
 
 local M = {}
 
@@ -111,6 +112,15 @@ end
 
 function M.reset(files)
   return cli.reset.files(unpack(files)).call()
+end
+
+function M.checkout_unstaged()
+  local repo = require("neogit.lib.git.repository")
+  local items = util.map(repo.unstaged.items, function(item)
+    return item.escaped_path
+  end)
+
+  return cli.checkout.files(unpack(items)).call()
 end
 
 ---Creates a temp index from a revision and calls the provided function with the index path
