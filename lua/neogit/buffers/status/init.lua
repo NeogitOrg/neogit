@@ -254,7 +254,6 @@ function M:open(kind)
           local stagable = self.buffer.ui:get_hunk_or_filename_under_cursor()
           local section = self.buffer.ui:get_current_section()
 
-          local cursor = self.buffer:cursor_line()
           if stagable and section then
             if section.options.section == "staged" then
               return
@@ -266,7 +265,6 @@ function M:open(kind)
                 git.index.generate_patch(item, stagable.hunk, stagable.hunk.from, stagable.hunk.to)
 
               git.index.apply(patch, { cached = true })
-              cursor = stagable.hunk.first
             elseif stagable.filename then
               if section.options.section == "unstaged" then
                 git.status.stage { stagable.filename }
@@ -280,10 +278,6 @@ function M:open(kind)
             elseif section.options.section == "unstaged" then
               git.status.stage_modified()
             end
-          end
-
-          if cursor then
-            self.buffer:move_cursor(cursor)
           end
 
           self:refresh()
