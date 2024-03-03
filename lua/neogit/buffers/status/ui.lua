@@ -1,6 +1,3 @@
--- TODO
--- - Get fold markers to work
---
 local Ui = require("neogit.lib.ui")
 local Component = require("neogit.lib.ui.component")
 local util = require("neogit.lib.util")
@@ -235,13 +232,12 @@ local SectionItemFile = function(section)
       mode_text = util.pad_right(mode, 11)
     end
 
-    return col({
+    return col.tag("File")({
       row {
         text.highlight(("NeogitChange%s"):format(mode:gsub(" ", "")))(mode_text),
         text(item.original_name and ("%s -> %s"):format(item.original_name, item.name) or item.name),
       },
     }, {
-      tag = "File",
       foldable = true,
       folded = true,
       on_open = load_diff(item),
