@@ -1,6 +1,4 @@
 local M = {}
-local git = require("neogit.lib.git")
-local util = require("neogit.lib.util")
 
 ---@param name string
 ---@param f nil|fun(create: fun(...)): any
@@ -35,31 +33,6 @@ function M.mapping_for(name)
   else
     return {}
   end
-end
-
---- Returns an array useful for creating mappings for the available popups
----@return table<string, Mapping>
-function M.mappings_table()
-  return {
-    { "HelpPopup", "Help", M.open("help") },
-    { "DiffPopup", "Diff", M.open("diff") },
-    { "PullPopup", "Pull", M.open("pull") },
-    { "RebasePopup", "Rebase", M.open("rebase") },
-    { "MergePopup", "Merge", M.open("merge") },
-    { "PushPopup", "Push", M.open("push") },
-    { "CommitPopup", "Commit", M.open("commit") },
-    { "IgnorePopup", "Ignore", M.open("ignore") },
-    { "TagPopup", "Tag", M.open("tag") },
-    { "LogPopup", "Log", M.open("log") },
-    { "CherryPickPopup", "Cherry Pick", M.open("cherry_pick") },
-    { "BranchPopup", "Branch", M.open("branch") },
-    { "FetchPopup", "Fetch", M.open("fetch") },
-    { "ResetPopup", "Reset", M.open("reset") },
-    { "RevertPopup", "Revert", M.open("revert") },
-    { "RemotePopup", "Remote", M.open("remote") },
-    { "WorktreePopup", "Worktree", M.open("worktree") },
-    { "StashPopup", "Stash", M.open("stash") },
-  }
 end
 
 return M

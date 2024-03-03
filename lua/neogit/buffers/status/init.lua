@@ -873,10 +873,45 @@ function M:open(kind)
             git_root = git.repo.git_root
           }
         end),
+        [popups.mapping_for("HelpPopup")] = popups.open("help", function(p)
+          -- Since any other popup can be launched from help, build an ENV for any of them.
+          local path = self.buffer.ui:get_hunk_or_filename_under_cursor()
+          local section = self.buffer.ui:get_current_section().options.section
+          local item = self.buffer.ui:get_yankable_under_cursor()
+          local stash = self.buffer.ui:get_yankable_under_cursor()
+          local commit = self.buffer.ui:get_commit_under_cursor()
+          local commits = { commit }
+
+          -- TODO: Consume this in help popup
+          p {
+            branch = { commits = commits },
+            cherry_pick = { commits = commits },
+            commit = { commit = commit },
+            merge = { commit = commit },
+            push = { commit = commit },
+            rebase = { commit = commit },
+            revert = { commits = commits },
+            reset = { commit = commit },
+            tag = { commit = commit },
+            stash = { name = stash and stash:match("^stash@{%d+}"), },
+            diff = {
+              section = { name = section },
+              item = { name = item },
+            },
+            ignore = {
+              paths = { path and path.escaped_path },
+              git_root = git.repo.git_root,
+            },
+            remote = {},
+            fetch = {},
+            pull = {},
+            log = {},
+            worktree = {},
+          }
+        end),
         [popups.mapping_for("RemotePopup")] = popups.open("remote"),
         [popups.mapping_for("FetchPopup")] = popups.open("fetch"),
         [popups.mapping_for("PullPopup")] = popups.open("pull"),
-        [popups.mapping_for("HelpPopup")] = popups.open("help"),
         [popups.mapping_for("LogPopup")] = popups.open("log"),
         [popups.mapping_for("WorktreePopup")] = popups.open("worktree"),
       },
