@@ -178,10 +178,6 @@ Finder.__index = Finder
 ---@param opts FinderOpts
 ---@return Finder
 function Finder:new(opts)
-  if opts.prompt_prefix then
-    opts.prompt_prefix = string.format(" %s > ", opts.prompt_prefix)
-  end
-
   local this = {
     opts = vim.tbl_deep_extend("keep", opts, default_opts()),
     entries = {},
@@ -210,6 +206,8 @@ function Finder:find(on_select)
     local pickers = require("telescope.pickers")
     local finders = require("telescope.finders")
     local sorters = require("telescope.sorters")
+
+    self.opts.prompt_prefix = string.format(" %s > ", self.opts.prompt_prefix)
 
     pickers
       .new(self.opts, {
