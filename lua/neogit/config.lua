@@ -67,7 +67,7 @@ end
 ---@alias WindowKind
 ---|"split" Open in a split
 ---| "vsplit" Open in a vertical split
----| "float" Open in a floating window
+---| "floating" Open in a floating window
 ---| "tab" Open in a new tab
 
 ---@class NeogitCommitBufferConfig Commit buffer options

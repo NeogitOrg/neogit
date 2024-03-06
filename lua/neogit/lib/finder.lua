@@ -31,7 +31,14 @@ local function telescope_mappings(on_select, allow_multi, refocus_status)
         table.insert(selection, item[1])
       end
     elseif action_state.get_selected_entry() ~= nil then
-      table.insert(selection, action_state.get_selected_entry()[1])
+      local entry = action_state.get_selected_entry()[1]
+      local prompt = picker:_get_prompt()
+
+      if entry == ".." and #prompt > 0 then
+        table.insert(selection, prompt)
+      else
+        table.insert(selection, entry)
+      end
     else
       table.insert(selection, picker:_get_prompt())
     end
@@ -142,7 +149,7 @@ local function default_opts()
     refocus_status = true,
     allow_multi = false,
     border = false,
-    prompt_prefix = " > ",
+    prompt_prefix = "select",
     previewer = false,
     cache_picker = false,
     layout_strategy = "bottom_pane",
@@ -171,10 +178,6 @@ Finder.__index = Finder
 ---@param opts FinderOpts
 ---@return Finder
 function Finder:new(opts)
-  if opts.prompt_prefix then
-    opts.prompt_prefix = string.format(" %s > ", opts.prompt_prefix)
-  end
-
   local this = {
     opts = vim.tbl_deep_extend("keep", opts, default_opts()),
     entries = {},
@@ -204,6 +207,8 @@ function Finder:find(on_select)
     local finders = require("telescope.finders")
     local sorters = require("telescope.sorters")
 
+    self.opts.prompt_prefix = string.format(" %s > ", self.opts.prompt_prefix)
+
     pickers
       .new(self.opts, {
         finder = finders.new_table { results = self.entries },
@@ -214,7 +219,7 @@ function Finder:find(on_select)
   elseif config.check_integration("fzf_lua") then
     local fzf_lua = require("fzf-lua")
     fzf_lua.fzf_exec(self.entries, {
-      prompt = string.format(" %s > ", self.opts.prompt_prefix),
+      prompt = string.format("%s> ", self.opts.prompt_prefix),
       fzf_opts = fzf_opts(self.opts),
       winopts = {
         height = self.opts.layout_config.height,
@@ -223,7 +228,7 @@ function Finder:find(on_select)
     })
   else
     vim.ui.select(self.entries, {
-      prompt = string.format(" %s > ", self.opts.prompt_prefix),
+      prompt = string.format("%s: ", self.opts.prompt_prefix),
       format_item = function(entry)
         return entry
       end,

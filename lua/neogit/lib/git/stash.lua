@@ -1,4 +1,6 @@
 local cli = require("neogit.lib.git.cli")
+local input = require("neogit.lib.input")
+local rev_parse = require("neogit.lib.git.rev_parse")
 local util = require("neogit.lib.util")
 
 local M = {}
@@ -105,6 +107,17 @@ end
 
 function M.list()
   return cli.stash.args("list").call({ hidden = true }).stdout
+end
+
+function M.rename(stash)
+  local message = input.get_user_input("New name")
+  if message == nil then
+    -- User pressed ESC or entered empty message, dont drop stash
+    return
+  end
+  local oid = rev_parse.abbreviate_commit(stash)
+  cli.stash.drop.args(stash).call()
+  cli.stash.store.message(message).args(oid).call()
 end
 
 function M.register(meta)
