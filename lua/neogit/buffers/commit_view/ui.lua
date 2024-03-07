@@ -13,9 +13,9 @@ local map = util.map
 function M.OverviewFile(file)
   return row.tag("OverviewFile") {
     text.highlight("NeogitFilePath")(file.path),
-    text(" | "),
-    text.highlight("Number")(file.changes),
-    text(" "),
+    text("  | "),
+    text.highlight("Number")(util.pad_left(file.changes, 5)),
+    text("  "),
     text.highlight("NeogitDiffAdd")(file.insertions),
     text.highlight("NeogitDiffDelete")(file.deletions),
   }
