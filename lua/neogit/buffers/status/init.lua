@@ -120,48 +120,57 @@ function M:open(kind)
           local unstaged_files = {}
           local staged_files_new = {}
           local staged_files_modified = {}
+          local stashes = {}
 
           for _, section in ipairs(selection.sections) do
-            file_count = file_count + #section.items
+            if section.name == "untracked" or section.name == "unstaged" or section.name == "staged" then
+              file_count = file_count + #section.items
 
-            for _, item in ipairs(section.items) do
-              local hunks = self.buffer.ui:item_hunks(item, selection.first_line, selection.last_line, true)
+              for _, item in ipairs(section.items) do
+                local hunks = self.buffer.ui:item_hunks(item, selection.first_line, selection.last_line, true)
 
-              if #hunks > 0 then
-                logger.fmt_debug("Discarding %d hunks from %q", #hunks, item.name)
+                if #hunks > 0 then
+                  logger.fmt_debug("Discarding %d hunks from %q", #hunks, item.name)
 
-                hunk_count = hunk_count + #hunks
-                if hunk_count > 1 then
-                  discard_message = ("Discard %s hunks?"):format(hunk_count)
-                end
+                  hunk_count = hunk_count + #hunks
+                  if hunk_count > 1 then
+                    discard_message = ("Discard %s hunks?"):format(hunk_count)
+                  end
 
-                for _, hunk in ipairs(hunks) do
-                  table.insert(patches, function()
-                    local patch = git.index.generate_patch(item, hunk, hunk.from, hunk.to, true)
+                  for _, hunk in ipairs(hunks) do
+                    table.insert(patches, function()
+                      local patch = git.index.generate_patch(item, hunk, hunk.from, hunk.to, true)
 
-                    logger.fmt_debug("Discarding Patch: %s", patch)
+                      logger.fmt_debug("Discarding Patch: %s", patch)
 
-                    git.index.apply(patch, {
-                      index = section.name == "staged",
-                      reverse = true,
-                    })
-                  end)
-                end
-              else
-                discard_message = ("Discard %s files?"):format(file_count)
-                logger.fmt_debug("Discarding in section %s %s", section.name, item.name)
+                      git.index.apply(patch, {
+                        index = section.name == "staged",
+                        reverse = true,
+                      })
+                    end)
+                  end
+                else
+                  discard_message = ("Discard %s files?"):format(file_count)
+                  logger.fmt_debug("Discarding in section %s %s", section.name, item.name)
 
-                if section.name == "untracked" then
-                  table.insert(untracked_files, item.escaped_path)
-                elseif section.name == "unstaged" then
-                  table.insert(unstaged_files, item.escaped_path)
-                elseif section.name == "staged" then
-                  if item.mode == "N" then
-                    table.insert(staged_files_new, item.escaped_path)
-                  else
-                    table.insert(staged_files_modified, item.escaped_path)
+                  if section.name == "untracked" then
+                    table.insert(untracked_files, item.escaped_path)
+                  elseif section.name == "unstaged" then
+                    table.insert(unstaged_files, item.escaped_path)
+                  elseif section.name == "staged" then
+                    if item.mode == "N" then
+                      table.insert(staged_files_new, item.escaped_path)
+                    else
+                      table.insert(staged_files_modified, item.escaped_path)
+                    end
                   end
                 end
+              end
+            elseif section.name == "stashes" then
+              discard_message = ("Discard %s stashes?"):format(#selection.items)
+
+              for _, stash in ipairs(selection.items) do
+                table.insert(stashes, stash.name:match("(stash@{%d+})"))
               end
             end
           end
@@ -208,6 +217,12 @@ function M:open(kind)
             if #staged_files_modified > 0 then
               git.index.reset(staged_files_modified)
               git.index.checkout(staged_files_modified)
+            end
+
+            if #stashes > 0 then
+              for _, stash in ipairs(stashes) do
+                git.stash.drop(stash)
+              end
             end
 
             self:refresh()
