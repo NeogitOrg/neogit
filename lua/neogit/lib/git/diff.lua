@@ -108,6 +108,8 @@ end
 ---@field index_len number
 ---@field diff_from number
 ---@field diff_to number
+---@field first number First line number in buffer
+---@field last number Last line number in buffer
 
 ---@return Hunk
 local function build_hunks(lines)

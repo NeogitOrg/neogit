@@ -22,6 +22,8 @@ local default_component_options = {
 ---@field context boolean
 ---@field interactive boolean
 ---@field virtual_text string
+---@field section string|nil
+---@field item table|nil
 ---@field id string|nil
 
 ---@class Component
