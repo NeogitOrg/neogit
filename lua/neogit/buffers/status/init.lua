@@ -104,151 +104,119 @@ function M:open(kind)
     mappings = {
       v = {
         [mappings["Discard"]] = a.void(function()
-          -- TODO: Discard Stash?
-          -- TODO: Discard Section?
-          local discardable = self.buffer.ui:get_hunks_and_filenames_in_selection()
+          local selection = self.buffer.ui:get_selection()
 
-          local total_files = #discardable.files.staged
-            + #discardable.files.unstaged
-            + #discardable.files.untracked
+          local discard_message = "Discard selection?"
+          local hunk_count = 0
+          local file_count = 0
 
-          local total_hunks = #discardable.hunks.staged
-            + #discardable.hunks.unstaged
-            + #discardable.hunks.untracked
+          local patches = {}
+          local untracked_files = {}
+          local unstaged_files = {}
+          local staged_files_new = {}
+          local staged_files_modified = {}
 
-          if total_files > 0 then
-            if input.get_permission(("Discard %s files?"):format(total_files)) then
-              if #discardable.files.staged > 0 then
-                local new_files = {}
-                local modified_files = {}
 
-                for _, file in ipairs(discardable.files.staged) do
-                  if file.mode == "A" then
-                    table.insert(new_files, file.escaped_path)
+          for _, section in ipairs(selection.sections) do
+            file_count = file_count + #section.items
+
+            for _, item in ipairs(section.items) do
+              local hunks = self.buffer.ui:item_hunks(item, selection.first_line, selection.last_line, true)
+
+              if #hunks > 0 then
+                logger.fmt_debug("Discarding %d hunks from %q", #hunks, item.name)
+
+                hunk_count = hunk_count + #hunks
+                if hunk_count > 1 then
+                  discard_message = ("Discard %s hunks?"):format(hunk_count)
+                end
+
+                for _, hunk in ipairs(hunks) do
+                  table.insert(patches, function()
+                    local patch = git.index.generate_patch(
+                      item,
+                      hunk,
+                      hunk.from,
+                      hunk.to,
+                      true
+                    )
+
+                    logger.fmt_debug("Discarding Patch: %s", patch)
+
+                    git.index.apply(
+                      patch,
+                      {
+                        index = section.name == "staged",
+                        reverse = true
+                      }
+                    )
+                  end)
+                end
+              else
+                discard_message = ("Discard %s files?"):format(file_count)
+                logger.fmt_debug("Discarding in section %s %s", section.name, item.name)
+
+                if section.name == "untracked" then
+                  table.insert(untracked_files, item.escaped_path)
+                elseif section.name == "unstaged" then
+                  table.insert(unstaged_files, item.escaped_path)
+                elseif section.name == "staged" then
+                  if item.mode == "N" then
+                    table.insert(staged_files_new, item.escaped_path)
                   else
-                    table.insert(modified_files, file.escaped_path)
+                    table.insert(staged_files_modified, item.escaped_path)
                   end
-                end
-
-                if #modified_files > 0 then
-                  git.index.reset(modified_files)
-                  git.index.checkout(modified_files)
-                end
-
-                if #new_files > 0 then
-                  git.index.reset(new_files)
-
-                  a.util.scheduler()
-
-                  for _, file in ipairs(new_files) do
-                    local bufnr = fn.bufexists(file.name)
-                    if bufnr and bufnr > 0 then
-                      api.nvim_buf_delete(bufnr, { force = true })
-                    end
-
-                    fn.delete(file.escaped_path)
-                  end
-                end
-              end
-
-              if #discardable.files.unstaged > 0 then
-                git.index.checkout(util.map(discardable.files.unstaged, function(f)
-                  return f.escaped_path
-                end))
-              end
-
-              if #discardable.files.untracked > 0 then
-                a.util.scheduler()
-
-                for _, file in ipairs(discardable.files.untracked) do
-                  local bufnr = fn.bufexists(file.name)
-                  if bufnr and bufnr > 0 then
-                    api.nvim_buf_delete(bufnr, { force = true })
-                  end
-
-                  fn.delete(file.escaped_path)
                 end
               end
             end
           end
 
-          if total_hunks > 0 then
-            if input.get_permission(("Discard %s hunks?"):format(total_hunks)) then
-              if #discardable.files.staged > 0 then
-                local new_files = {}
-                local modified_files = {}
-
-                for _, file in ipairs(discardable.files.staged) do
-                  if file.mode == "A" then
-                    table.insert(new_files, file.escaped_path)
-                  else
-                    table.insert(modified_files, file.escaped_path)
-                  end
-                end
-
-                if #modified_files > 0 then
-                  git.index.reset(modified_files)
-                  git.index.checkout(modified_files)
-                end
-
-                if #new_files > 0 then
-                  git.index.reset(new_files)
-
-                  a.util.scheduler()
-
-                  for _, file in ipairs(new_files) do
-                    local bufnr = fn.bufexists(file.name)
-                    if bufnr and bufnr > 0 then
-                      api.nvim_buf_delete(bufnr, { force = true })
-                    end
-
-                    fn.delete(file.escaped_path)
-                  end
-                end
-              end
-
-              if #discardable.files.unstaged > 0 then
-                git.index.checkout(util.map(discardable.files.unstaged, function(f)
-                  return f.escaped_path
-                end))
-              end
-
-              if #discardable.files.untracked > 0 then
-                a.util.scheduler()
-
-                for _, file in ipairs(discardable.files.untracked) do
-                  local bufnr = fn.bufexists(file.name)
-                  if bufnr and bufnr > 0 then
-                    api.nvim_buf_delete(bufnr, { force = true })
-                  end
-
-                  fn.delete(file.escaped_path)
-                end
+          if input.get_permission(discard_message) then
+            if #patches > 0 then
+              for _, patch in ipairs(patches) do
+                patch()
               end
             end
+
+            if #untracked_files > 0 then
+              a.util.scheduler()
+
+              for _, file in ipairs(untracked_files) do
+                local bufnr = fn.bufexists(file.name)
+                if bufnr and bufnr > 0 then
+                  api.nvim_buf_delete(bufnr, { force = true })
+                end
+
+                fn.delete(file.escaped_path)
+              end
+            end
+
+            if #unstaged_files > 0 then
+              git.index.checkout(unstaged_files)
+            end
+
+            if #staged_files_new > 0 then
+              git.index.reset(staged_files_new)
+
+              a.util.scheduler()
+
+              for _, file in ipairs(staged_files_new) do
+                local bufnr = fn.bufexists(file.name)
+                if bufnr and bufnr > 0 then
+                  api.nvim_buf_delete(bufnr, { force = true })
+                end
+
+                fn.delete(file.escaped_path)
+              end
+            end
+
+            if #staged_files_modified > 0 then
+              git.index.reset(staged_files_modified)
+              git.index.checkout(staged_files_modified)
+            end
+
+            self:refresh()
           end
-
-          -- if discardable then
-          --   local section = self.buffer.ui:get_current_section()
-          --   local item = self.buffer.ui:get_item_under_cursor()
-          --
-          --   if not section or not item then
-          --     return
-          --   end
-          --
-          --   if discardable.hunk then
-          --     local hunk = discardable.hunk
-          --     local patch = git.index.generate_patch(item, hunk, hunk.from, hunk.to, true)
-          --
-          --     if input.get_permission("Discard hunk?") then
-          --       if section.options.section == "staged" then
-          --         git.index.apply(patch, { index = true, reverse = true })
-          --       else
-          --         git.index.apply(patch, { reverse = true })
-          --       end
-          --     end
-
-          self:refresh()
         end),
         [mappings["Stage"]] = a.void(function()
           local stagable = self.buffer.ui:get_hunk_or_filename_under_cursor()
