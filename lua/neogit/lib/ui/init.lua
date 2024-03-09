@@ -2,6 +2,18 @@ local Component = require("neogit.lib.ui.component")
 local util = require("neogit.lib.util")
 local Renderer = require("neogit.lib.ui.renderer")
 
+---@class Selection
+---@field sections SectionSelection[]
+---@field first_line number
+---@field last_line number
+---@field section Section|nil
+---@field item StatusItem|nil
+---@field commit CommitLogEntry|nil
+---@field commits  CommitLogEntry[]
+---@field items  StatusItem[]
+local Selection = {}
+Selection.__index = Selection
+
 ---@class UiComponent
 ---@field tag string
 ---@field options table Component props or arguments
@@ -135,6 +147,171 @@ function Ui:get_fold_under_cursor()
   end)
 end
 
+---@class StatusItem
+---@field name string
+---@field first number
+---@field last number
+---@field oid string|nil optional object id
+---@field commit CommitLogEntry|nil optional object id
+---@field folded boolean|nil
+---@field hunks Hunk[]|nil
+
+---@class SelectedHunk: Hunk
+---@field from number start offset from the first line of the hunk
+---@field to number end offset from the first line of the hunk
+---@field lines string[]
+---
+---@param item StatusItem
+---@param first_line number
+---@param last_line number
+---@param partial boolean
+---@return SelectedHunk[]
+function Ui:item_hunks(item, first_line, last_line, partial)
+  local hunks = {}
+
+  if not item.folded and item.diff.hunks then
+    for _, h in ipairs(item.diff.hunks) do
+      if h.first <= last_line and h.last >= first_line then
+        local from, to
+
+        if partial then
+          local cursor_offset = first_line - h.first
+          local length = last_line - first_line
+
+          from = h.diff_from + cursor_offset
+          to = from + length
+        else
+          from = h.diff_from + 1
+          to = h.diff_to
+        end
+
+        local hunk_lines = {}
+        for i = from, to do
+          table.insert(hunk_lines, item.diff.lines[i])
+        end
+
+        local o = {
+          from = from,
+          to = to,
+          __index = h,
+          hunk = h,
+          lines = hunk_lines,
+        }
+
+        setmetatable(o, o)
+
+        table.insert(hunks, o)
+      end
+    end
+  end
+
+  return hunks
+end
+
+-- function Ui:selected_hunks()
+--   local selection = self:get_selection()
+--   local first_line = selection.first_line
+--   local last_line = selection.last_line
+--   local item = selection.item
+--
+--   local hunks = {}
+--
+--   if item and item.diff.hunks then
+--     for _, h in ipairs(item.diff.hunks) do
+--       if h.first <= last_line and h.last >= first_line then
+--         local from, to
+--
+--         local cursor_offset = first_line - h.first
+--         local length = last_line - first_line
+--
+--         from = h.diff_from + cursor_offset
+--         to = from + length
+--
+--         local hunk_lines = {}
+--         for i = from, to do
+--           table.insert(hunk_lines, item.diff.lines[i])
+--         end
+--
+--         local o = {
+--           from = from,
+--           to = to,
+--           __index = h,
+--           hunk = h,
+--           lines = hunk_lines,
+--         }
+--
+--         setmetatable(o, o)
+--
+--         table.insert(hunks, o)
+--       end
+--     end
+--   end
+--
+--   return hunks
+-- end
+
+function Ui:get_selection()
+  local visual_pos = vim.fn.getpos("v")[2]
+  local cursor_pos = vim.fn.getpos(".")[2]
+
+  local first_line = math.min(visual_pos, cursor_pos)
+  local last_line = math.max(visual_pos, cursor_pos)
+
+  local res = {
+    sections = {},
+    first_line = first_line,
+    last_line = last_line,
+    item = nil,
+    commit = nil,
+    commits = {},
+    items = {},
+  }
+
+  for _, section in ipairs(self.item_index) do
+    local items = {}
+
+    if section.first > last_line then
+      break
+    end
+
+    if section.last >= first_line then
+      if section.first <= first_line and section.last >= last_line then
+        res.section = section
+      end
+
+      local entire_section = section.first == first_line and first_line == last_line
+
+      for _, item in pairs(section.items) do
+        if entire_section or item.first <= last_line and item.last >= first_line then
+          if not res.item and item.first <= first_line and item.last >= last_line then
+            res.item = item
+
+            res.commit = item.commit
+          end
+
+          if item.commit then
+            table.insert(res.commits, item.commit)
+          end
+
+          table.insert(res.items, item)
+          table.insert(items, item)
+        end
+      end
+
+      local section = {
+        section = section,
+        items = items,
+        __index = section,
+      }
+
+      setmetatable(section, section)
+      table.insert(res.sections, section)
+    end
+  end
+
+  return setmetatable(res, Selection)
+end
+
 ---@return table
 function Ui:get_hunks_and_filenames_in_selection()
   local range = { vim.fn.getpos("v")[2], vim.fn.getpos(".")[2] }
@@ -154,6 +331,8 @@ function Ui:get_hunks_and_filenames_in_selection()
     },
   }
 
+  local hunks = {}
+
   for i = start, stop do
     local section = self:get_current_section(i)
 
@@ -165,9 +344,45 @@ function Ui:get_hunks_and_filenames_in_selection()
       section = section.options.section
 
       if component.options.hunk then
-        table.insert(items.hunks[section], component.options.hunk)
+        if not hunks[component.options.hunk.hash] then
+          table.insert(items.hunks[section], component.options.hunk)
+          hunks[component.options.hunk.hash] = true
+        end
       elseif component.options.filename then
         table.insert(items.files[section], component.options.item)
+      end
+    end
+  end
+
+  return items
+end
+
+function Ui:get_items_in_selection()
+  local range = { vim.fn.getpos("v")[2], vim.fn.getpos(".")[2] }
+  table.sort(range)
+  local start, stop = unpack(range)
+
+  local items = {
+    untracked = {},
+    unstaged = {},
+    staged = {},
+  }
+
+  local items_set = {}
+
+  for i = start, stop do
+    local section = self:get_current_section(i)
+
+    local component = self:_find_component_by_index(i, function(node)
+      return node.options.item
+    end)
+
+    if component and section then
+      section = section.options.section
+
+      if not items_set[component.options.id] then
+        table.insert(items[section], component.options.item)
+        items_set[component.options.id] = true
       end
     end
   end
@@ -193,6 +408,26 @@ function Ui:get_commits_in_selection()
   end
 
   return util.deduplicate(commits)
+end
+
+---@return string[]
+function Ui:get_filepaths_in_selection()
+  local range = { vim.fn.getpos("v")[2], vim.fn.getpos(".")[2] }
+  table.sort(range)
+  local start, stop = unpack(range)
+
+  local paths = {}
+  for i = start, stop do
+    local component = self:_find_component_by_index(i, function(node)
+      return node.options.item and node.options.item.escaped_path
+    end)
+
+    if component then
+      table.insert(paths, 1, component.options.item.escaped_path)
+    end
+  end
+
+  return util.deduplicate(paths)
 end
 
 ---@return string|nil
@@ -224,6 +459,22 @@ function Ui:get_current_section(line)
 
   return component
 end
+
+-- ---@return Component[]
+-- function Ui:section_items(line)
+--   line = line or vim.api.nvim_win_get_cursor(0)[1]
+--   local section_component = self:_find_component_by_index(line, function(node)
+--     return node.options.section
+--   end)
+--
+--   if not section_component then
+--     return {}
+--   end
+--
+--   local section = section_component.options.section
+--
+--   return component
+-- end
 
 ---@return table|nil
 function Ui:get_hunk_or_filename_under_cursor()
@@ -346,6 +597,7 @@ function Ui:update()
 
   local renderer = Renderer:new(self.layout, self.buf):render()
   self.node_index = renderer:node_index()
+  self.item_index = renderer:item_index()
 
   local cursor_line = self.buf:cursor_line()
   self.buf:unlock()

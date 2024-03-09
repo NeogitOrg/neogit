@@ -287,7 +287,7 @@ function M:open(kind)
           end
         end),
         [popups.mapping_for("BranchPopup")] = popups.open("branch", function(p)
-          p { commits = self.buffer.ui:get_commit_under_cursor() }
+          p { commits = self.buffer.ui:get_commits_in_selection() }
         end),
         [popups.mapping_for("CherryPickPopup")] = popups.open("cherry_pick", function(p)
           p { commits = self.buffer.ui:get_commits_in_selection() }
@@ -332,19 +332,16 @@ function M:open(kind)
           end
         end),
         [popups.mapping_for("StashPopup")] = popups.open("stash", function(p)
-          -- TODO: Verify
           local stash = self.buffer.ui:get_yankable_under_cursor()
           p { name = stash and stash:match("^stash@{%d+}") }
         end),
         [popups.mapping_for("DiffPopup")] = popups.open("diff", function(p)
-          -- TODO: Verify
           local section = self.buffer.ui:get_current_section().options.section
           local item = self.buffer.ui:get_yankable_under_cursor()
           p { section = { name = section }, item = { name = item } }
         end),
         [popups.mapping_for("IgnorePopup")] = popups.open("ignore", function(p)
-          -- TODO use current absolute paths in selection
-          p { paths = {}, git_root = git.repo.git_root }
+          p { paths = self.buffer.ui:get_filepaths_in_selection(), git_root = git.repo.git_root }
         end),
         [popups.mapping_for("RemotePopup")] = popups.open("remote"),
         [popups.mapping_for("FetchPopup")] = popups.open("fetch"),
