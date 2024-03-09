@@ -1,5 +1,8 @@
+---@source component.lua
+
 ---@class RendererIndex
 ---@field index table
+---@field items table
 local RendererIndex = {}
 RendererIndex.__index = RendererIndex
 
@@ -37,8 +40,31 @@ function RendererIndex:add_id(node, id)
   self.index[id] = node
 end
 
+-- For tracking item locations within status buffer. Needed to make selections.
+function RendererIndex:add_section(name)
+  self.items[#self.items].name = name
+  table.insert(self.items, { items = {} })
+end
+
+function RendererIndex:add_item(item, first, last)
+  if not self.items[#self.items].first then
+    self.items[#self.items].first = first - 1
+  end
+
+  self.items[#self.items].last = last
+
+  item.first = first
+  item.last = last
+  table.insert(self.items[#self.items].items, item)
+end
+
 function RendererIndex.new()
-  return setmetatable({ index = {} }, RendererIndex)
+  return setmetatable({
+    index = {},
+    items = {
+      { items = {} }, -- First section
+    },
+  }, RendererIndex)
 end
 
 ---@class RendererBuffer
@@ -98,6 +124,11 @@ end
 ---@return RendererIndex
 function Renderer:node_index()
   return self.index
+end
+
+---@return RendererIndex
+function Renderer:item_index()
+  return self.index.items
 end
 
 function Renderer:_build_child(child, parent, index)
@@ -162,6 +193,15 @@ function Renderer:_render_child(child)
   end
 
   child.position.row_end = #self.buffer.line
+
+  if child.options.section then
+    self.index:add_section(child.options.section)
+  end
+
+  if child.options.item then
+    child.options.item.folded = child.options.folded
+    self.index:add_item(child.options.item, child.position.row_start, child.position.row_end)
+  end
 
   local line_hl = child:get_line_highlight()
   if line_hl then
