@@ -256,7 +256,7 @@ local SectionItemStash = Component.new(function(item)
     text.highlight("Comment")(name),
     text.highlight("Comment")(": "),
     text(item.message),
-  }, { yankable = name })
+  }, { yankable = name, item = item })
 end)
 
 local SectionItemCommit = Component.new(function(item)
@@ -264,7 +264,7 @@ local SectionItemCommit = Component.new(function(item)
     text.highlight("Comment")(item.commit.abbreviated_commit),
     text(" "),
     text(item.commit.subject),
-  }, { oid = item.commit.oid, yankable = item.commit.oid })
+  }, { oid = item.commit.oid, yankable = item.commit.oid, item = item })
 end)
 
 local SectionItemRebase = Component.new(function(item)
