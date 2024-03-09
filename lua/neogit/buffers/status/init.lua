@@ -76,16 +76,20 @@ end
 
 function M:open(kind)
   if M.instance and M.instance.is_open then
+    logger.debug("[STATUS] An Instance is already open - closing it")
     M.instance:close()
   end
   M.instance = self
 
   if self.is_open then
+    logger.debug("[STATUS] This Instance is already open - bailing")
     return
   end
   self.is_open = true
 
   kind = kind or config.values.kind
+  logger.debug("[STATUS] Opening kind: " .. kind)
+
   local mappings = config.get_reversed_status_maps()
 
   self.buffer = Buffer.create {
@@ -96,6 +100,7 @@ function M:open(kind)
     disable_line_numbers = config.values.disable_line_numbers,
     autocmds = {
       ["BufUnload"] = function()
+        logger.debug("[STATUS] Running BufUnload autocmd")
         watcher.instance:stop()
         self.is_open = false
         vim.o.autochdir = self.prev_autochdir
@@ -885,6 +890,7 @@ function M:open(kind)
       },
     },
     initialize = function()
+      logger.debug("[STATUS] Initializing")
       self.prev_autochdir = vim.o.autochdir
       vim.o.autochdir = false
     end,
@@ -895,6 +901,7 @@ function M:open(kind)
       vim.cmd([[setlocal nowrap]])
 
       if config.values.filewatcher.enabled then
+        logger.debug("[STATUS] Starting file watcher")
         watcher.new(git.repo:git_path():absolute()):start()
       end
     end,
@@ -923,11 +930,13 @@ end
 
 function M:focus()
   if self.buffer then
+    logger.debug("[STATUS] Focusing Buffer")
     self.buffer:focus()
   end
 end
 
 function M:refresh(partial, reason)
+  logger.debug("[STATUS] Beginning refresh from " .. (reason or "unknown"))
   -- if self.frozen then
   --   return
   -- end
@@ -995,14 +1004,16 @@ end
 function M:dispatch_refresh(partial, reason)
   a.run(function()
     if self:_is_refresh_locked() then
-      logger.debug("[STATUS] Refresh lock is active. Skipping refresh from " .. reason)
+      logger.debug("[STATUS] Refresh lock is active. Skipping refresh from " .. (reason or "unknown"))
     else
+      logger.debug("[STATUS] Dispatching Refresh")
       self:refresh(partial, reason)
     end
   end)
 end
 
 function M:reset()
+  logger.debug("[STATUS] Resetting repo and refreshing")
   git.repo:reset()
   self:refresh(nil, "reset")
 end
@@ -1019,14 +1030,12 @@ end
 
 function M:_get_refresh_lock(reason)
   local permit = self.refresh_lock:acquire()
-  logger.debug(("[STATUS BUFFER]: Acquired refresh lock:"):format(reason or "unknown"))
+  logger.debug(("[STATUS]: Acquired refresh lock:"):format(reason or "unknown"))
 
   vim.defer_fn(function()
     if self:_is_refresh_locked() then
       permit:forget()
-      logger.debug(
-        ("[STATUS BUFFER]: Refresh lock for %s expired after 10 seconds"):format(reason or "unknown")
-      )
+      logger.debug(("[STATUS]: Refresh lock for %s expired after 10 seconds"):format(reason or "unknown"))
     end
   end, 10000)
 
