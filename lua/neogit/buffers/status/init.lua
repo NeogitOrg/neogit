@@ -121,7 +121,6 @@ function M:open(kind)
           local staged_files_new = {}
           local staged_files_modified = {}
 
-
           for _, section in ipairs(selection.sections) do
             file_count = file_count + #section.items
 
@@ -138,23 +137,14 @@ function M:open(kind)
 
                 for _, hunk in ipairs(hunks) do
                   table.insert(patches, function()
-                    local patch = git.index.generate_patch(
-                      item,
-                      hunk,
-                      hunk.from,
-                      hunk.to,
-                      true
-                    )
+                    local patch = git.index.generate_patch(item, hunk, hunk.from, hunk.to, true)
 
                     logger.fmt_debug("Discarding Patch: %s", patch)
 
-                    git.index.apply(
-                      patch,
-                      {
-                        index = section.name == "staged",
-                        reverse = true
-                      }
-                    )
+                    git.index.apply(patch, {
+                      index = section.name == "staged",
+                      reverse = true,
+                    })
                   end)
                 end
               else
@@ -224,65 +214,83 @@ function M:open(kind)
           end
         end),
         [mappings["Stage"]] = a.void(function()
-          local stagable = self.buffer.ui:get_hunk_or_filename_under_cursor()
-          local section = self.buffer.ui:get_current_section()
+          local selection = self.buffer.ui:get_selection()
 
-          if stagable and section then
-            if section.options.section == "staged" then
-              return
-            end
+          local untracked_files = {}
+          local unstaged_files = {}
+          local patches = {}
 
-            if stagable.hunk then
-              local item = self.buffer.ui:get_item_under_cursor()
-              local patch =
-                git.index.generate_patch(item, stagable.hunk, stagable.hunk.from, stagable.hunk.to)
+          for _, section in ipairs(selection.sections) do
+            if section.name == "unstaged" or section.name == "untracked" then
+              for _, item in ipairs(section.items) do
+                local hunks = self.buffer.ui:item_hunks(item, selection.first_line, selection.last_line, true)
 
-              git.index.apply(patch, { cached = true })
-            elseif stagable.filename then
-              if section.options.section == "unstaged" then
-                git.status.stage { stagable.filename }
-              elseif section.options.section == "untracked" then
-                git.index.add { stagable.filename }
+                if #hunks > 0 then
+                  for _, hunk in ipairs(hunks) do
+                    table.insert(patches, git.index.generate_patch(item, hunk, hunk.from, hunk.to))
+                  end
+                else
+                  if section.name == "unstaged" then
+                    table.insert(unstaged_files, item.escaped_path)
+                  else
+                    table.insert(untracked_files, item.escaped_path)
+                  end
+                end
               end
-            end
-          elseif section then
-            if section.options.section == "untracked" then
-              git.status.stage_untracked()
-            elseif section.options.section == "unstaged" then
-              git.status.stage_modified()
             end
           end
 
-          self:refresh()
+          if #untracked_files > 0 then
+            git.index.add(untracked_files)
+          end
+
+          if #unstaged_files > 0 then
+            git.status.stage(unstaged_files)
+          end
+
+          if #patches > 0 then
+            for _, patch in ipairs(patches) do
+              git.index.apply(patch, { cached = true })
+            end
+          end
+
+          if #untracked_files > 0 or #unstaged_files > 0 or #patches > 0 then
+            self:refresh()
+          end
         end),
         [mappings["Unstage"]] = a.void(function()
-          local unstagable = self.buffer.ui:get_hunk_or_filename_under_cursor()
+          local selection = self.buffer.ui:get_selection()
 
-          local section = self.buffer.ui:get_current_section()
-          if section and section.options.section ~= "staged" then
-            return
-          end
+          local files = {}
+          local patches = {}
 
-          if unstagable then
-            if unstagable.hunk then
-              local item = self.buffer.ui:get_item_under_cursor()
-              local patch = git.index.generate_patch(
-                item,
-                unstagable.hunk,
-                unstagable.hunk.from,
-                unstagable.hunk.to,
-                true
-              )
+          for _, section in ipairs(selection.sections) do
+            if section.name == "staged" then
+              for _, item in ipairs(section.items) do
+                local hunks = self.buffer.ui:item_hunks(item, selection.first_line, selection.last_line, true)
 
-              git.index.apply(patch, { cached = true, reverse = true })
-            elseif unstagable.filename then
-              local section = self.buffer.ui:get_current_section()
-
-              if section and section.options.section == "staged" then
-                git.status.unstage { unstagable.filename }
+                if #hunks > 0 then
+                  for _, hunk in ipairs(hunks) do
+                    table.insert(patches, git.index.generate_patch(item, hunk, hunk.from, hunk.to))
+                  end
+                else
+                  table.insert(files, item.escaped_path)
+                end
               end
             end
+          end
 
+          if #files > 0 then
+            git.status.unstage(files)
+          end
+
+          if #patches > 0 then
+            for _, patch in ipairs(patches) do
+              git.index.apply(patch, { cached = true, reverse = true })
+            end
+          end
+
+          if #files > 0 or #patches > 0 then
             self:refresh()
           end
         end),
@@ -470,6 +478,7 @@ function M:open(kind)
           end
         end,
         [mappings["Discard"]] = a.void(function()
+          -- TODO: Use better selection logic
           -- TODO: Discarding a RENAME should set the filename back to the original
           git.index.update()
 
@@ -528,6 +537,21 @@ function M:open(kind)
             end
 
             self:refresh()
+          else
+            local section = self.buffer.ui:get_current_section()
+            if section then
+              if section.options.section == "unstaged" then
+                git.index.checkout_unstaged()
+              elseif section.options.section == "untracked" then
+                P("TODO")
+              elseif section.options.section == "staged" then
+                P("TODO")
+              elseif section.options.section == "stash" then
+                P("TODO")
+              end
+
+              self:refresh()
+            end
           end
         end),
         [mappings["GoToNextHunkHeader"]] = function()
@@ -575,7 +599,7 @@ function M:open(kind)
 
           local previous_header = previous_hunk_header(self, fn.line("."))
           if previous_header then
-            api.nvim_win_set_cursor(0, { previous_header, 0 })
+            self.buffer:move_cursor(previous_header)
             vim.cmd("normal! zt")
           end
         end,
@@ -834,13 +858,16 @@ function M:open(kind)
         [popups.mapping_for("DiffPopup")] = popups.open("diff", function(p)
           local section = self.buffer.ui:get_current_section().options.section
           local item = self.buffer.ui:get_yankable_under_cursor()
-          p { section = { name = section }, item = { name = item } }
+          p {
+            section = { name = section },
+            item = { name = item },
+          }
         end),
         [popups.mapping_for("IgnorePopup")] = popups.open("ignore", function(p)
           local path = self.buffer.ui:get_hunk_or_filename_under_cursor()
           p {
             paths = { path and path.escaped_path },
-            git_root = git.repo.git_root
+            git_root = git.repo.git_root,
           }
         end),
         [popups.mapping_for("HelpPopup")] = popups.open("help", function(p)
@@ -852,7 +879,6 @@ function M:open(kind)
           local commit = self.buffer.ui:get_commit_under_cursor()
           local commits = { commit }
 
-          -- TODO: Consume this in help popup
           p {
             branch = { commits = commits },
             cherry_pick = { commits = commits },
@@ -863,7 +889,7 @@ function M:open(kind)
             revert = { commits = commits },
             reset = { commit = commit },
             tag = { commit = commit },
-            stash = { name = stash and stash:match("^stash@{%d+}"), },
+            stash = { name = stash and stash:match("^stash@{%d+}") },
             diff = {
               section = { name = section },
               item = { name = item },
@@ -906,6 +932,11 @@ function M:open(kind)
 end
 
 function M:close()
+  logger.debug("[STATUS] Closing Buffer")
+  if not self.buffer then
+    return
+  end
+
   vim.o.autochdir = self.prev_autochdir
 
   watcher.instance:stop()
@@ -944,23 +975,25 @@ function M:refresh(partial, reason)
     source = "status",
     partial = partial,
     callback = function()
+      logger.debug("[STATUS][Refresh Callback] Running")
       if not self.buffer then
+        logger.debug("[STATUS][Refresh Callback] Buffer no longer exists - bail")
         return
       end
 
       local cursor_line = self.buffer:cursor_line()
-      local cursor_context_start, cursor_goto
+      local cursor_goto
       local context = self.buffer.ui:get_cursor_context()
       if context then
         if context.options.tag == "Hunk" then
           if context.index == 1 then
             if #context.parent.children > 1 then
-              cursor_context_start = ({ context:row_range_abs() })[1]
+              cursor_line = ({ context:row_range_abs() })[1]
             else
-              cursor_context_start = ({ context:row_range_abs() })[1] - 1
+              cursor_line = ({ context:row_range_abs() })[1] - 1
             end
           else
-            cursor_context_start = ({ context.parent.children[context.index - 1]:row_range_abs() })[1]
+            cursor_line = ({ context.parent.children[context.index - 1]:row_range_abs() })[1]
           end
         elseif context.options.tag == "File" then
           if context.index == 1 then
@@ -979,21 +1012,24 @@ function M:refresh(partial, reason)
         end
       end
 
+      logger.debug("[STATUS][Refresh Callback] Rendering UI")
       self.buffer.ui:render(unpack(ui.Status(git.repo, self.config)))
 
-      if cursor_context_start then
-        self.buffer:move_cursor(cursor_context_start)
-      elseif cursor_goto then
-        local line, _ = self.buffer.ui.node_index:find_by_id(cursor_goto):row_range_abs()
-        self.buffer:move_cursor(line)
-      else
-        self.buffer:move_cursor(cursor_line)
+      if cursor_goto then
+        logger.debug("[STATUS] Cursor goto: " .. cursor_goto)
+        local component = self.buffer.ui.node_index:find_by_id(cursor_goto)
+        if component then
+          cursor_line, _ = component:row_range_abs()
+        end
       end
+
+      logger.debug("[STATUS][Refresh Callback] Moving Cursor")
+      self.buffer:move_cursor(math.min(fn.line("$"), cursor_line))
 
       api.nvim_exec_autocmds("User", { pattern = "NeogitStatusRefreshed", modeline = false })
 
       permit:forget()
-      logger.info("[STATUS BUFFER]: Refresh lock is now free")
+      logger.info("[STATUS] Refresh lock is now free")
     end,
   }
 end
