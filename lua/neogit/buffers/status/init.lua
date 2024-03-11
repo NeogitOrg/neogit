@@ -775,15 +775,13 @@ function M:open(kind)
 
               git.index.apply(patch, { cached = true, reverse = true })
             elseif unstagable.filename then
-              local section = self.buffer.ui:get_current_section()
-
-              if section and section.options.section == "staged" then
-                git.status.unstage { unstagable.filename }
-              end
+              git.status.unstage { unstagable.filename }
             end
-
-            self:refresh()
+          elseif section then
+            git.status.unstage_all()
           end
+
+          self:refresh()
         end),
         [mappings["UnstageStaged"]] = a.void(function()
           git.status.unstage_all()
