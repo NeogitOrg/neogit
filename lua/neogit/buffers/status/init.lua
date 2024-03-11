@@ -819,10 +819,13 @@ function M:open(kind)
 
             self:close()
 
-            vim.cmd.edit(item.escaped_path)
-            if cursor then
-              api.nvim_win_set_cursor(0, cursor)
-            end
+            vim.schedule(function()
+              vim.cmd("edit! " .. item.escaped_path)
+
+              if cursor then
+                api.nvim_win_set_cursor(0, cursor)
+              end
+            end)
 
             return
           end

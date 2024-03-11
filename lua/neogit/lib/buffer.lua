@@ -579,6 +579,7 @@ function Buffer.create(config)
   if vim.fn.has("nvim-0.10") then
     buffer:set_window_option("spell", false)
     buffer:set_window_option("wrap", false)
+    buffer:set_window_option("winfixbuf", true)
   end
 
   if config.after then
