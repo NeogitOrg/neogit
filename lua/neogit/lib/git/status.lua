@@ -2,12 +2,15 @@ local Path = require("plenary.path")
 local util = require("neogit.lib.util")
 local Collection = require("neogit.lib.collection")
 
----@class File: StatusItem
+---@class StatusItem
 ---@field mode string
 ---@field has_diff boolean
 ---@field diff string[]
 ---@field absolute_path string
+---@field escaped_path string
+---@field original_nae string|nil
 
+---@return StatusItem
 local function update_file(cwd, file, mode, name, original_name)
   local mt, diff, has_diff
 

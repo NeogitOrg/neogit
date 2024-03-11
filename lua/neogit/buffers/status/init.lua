@@ -1,19 +1,6 @@
 -- TODO
 -- on-close hook to teardown stuff
 --
--- Actions:
--- Staging / Unstaging / Discarding
---
--- Contexts:
--- - Normal
---  - Section
---  - File
---  - Hunk
--- - Visual
---  - Files in selection
---  - Hunks in selection
---  - Lines in selection
-
 -- TODO: When launching the fuzzy finder, any refresh attempted will raise an exception because the set_folds() function
 -- cannot be called when the buffer is not focused, as it's not a proper API. We could implement some kind of freeze
 -- mechanism to prevent the buffer from refreshing while the fuzzy finder is open.
@@ -493,80 +480,186 @@ function M:open(kind)
           end
         end,
         [mappings["Discard"]] = a.void(function()
-          -- TODO: Use better selection logic
-          -- TODO: Discarding a RENAME should set the filename back to the original
           git.index.update()
 
-          local discardable = self.buffer.ui:get_hunk_or_filename_under_cursor()
+          local selection = self.buffer.ui:get_selection()
+          if not selection.section then
+            return
+          end
 
-          if discardable then
-            local section = self.buffer.ui:get_current_section()
-            local item = self.buffer.ui:get_item_under_cursor()
+          local section = selection.section.name
+          local action, message
 
-            if not section or not item then
-              return
-            end
+          if selection.item and selection.item.first == fn.line(".") then -- Discard File
+            if section == "untracked" then
+              message = ("Discard %q?"):format(selection.item.name)
+              action = function()
+                a.util.scheduler()
 
-            -- TODO: Discard Stash?
-            -- TODO: Discard Section?
-            if discardable.hunk then
-              local hunk = discardable.hunk
-              local patch = git.index.generate_patch(item, hunk, hunk.from, hunk.to, true)
+                local bufnr = fn.bufexists(selection.item.name)
+                if bufnr and bufnr > 0 then
+                  api.nvim_buf_delete(bufnr, { force = true })
+                end
 
-              if input.get_permission("Discard hunk?") then
-                if section.options.section == "staged" then
-                  git.index.apply(patch, { index = true, reverse = true })
+                fn.delete(selection.item.escaped_path)
+              end
+            elseif section == "unstaged" then
+              message = ("Discard %q?"):format(selection.item.name)
+              action = function()
+                git.index.checkout { selection.item.name }
+              end
+            elseif section == "staged" then
+              message = ("Discard %q?"):format(selection.item.name)
+              action = function()
+                if selection.item.mode == "N" then
+                  git.index.reset { selection.item.escaped_path }
+
+                  a.util.scheduler()
+
+                  local bufnr = fn.bufexists(selection.item.name)
+                  if bufnr and bufnr > 0 then
+                    api.nvim_buf_delete(bufnr, { force = true })
+                  end
+
+                  fn.delete(selection.item.escaped_path)
+                elseif selection.item.mode == "M" then
+                  git.index.reset { selection.item.escaped_path }
+                  git.index.checkout { selection.item.escaped_path }
+                elseif selection.item.mode == "R" then
+                  git.index.reset_HEAD(selection.item.name, selection.item.original_name)
+                  git.index.checkout { selection.item.original_name }
+                elseif selection.item.mode == "D" then
+                  git.index.reset_HEAD(selection.item.escaped_path)
+                  git.index.checkout { selection.item.escaped_path }
                 else
-                  git.index.apply(patch, { reverse = true })
+                  error(
+                    ("Unhandled file mode %q for %q"):format(selection.item.mode, selection.item.escaped_path)
+                  )
                 end
               end
-            elseif discardable.filename then
-              if input.get_permission(("Discard %q?"):format(discardable.filename)) then
-                if section.options.section == "staged" and item.mode == "M" then -- Modified
-                  git.index.reset { discardable.filename }
-                  git.index.checkout { discardable.filename }
-                elseif section.options.section == "staged" and item.mode == "A" then -- Added
-                  git.index.reset { discardable.filename }
-
-                  a.util.scheduler()
-
-                  local bufnr = fn.bufexists(discardable.filename)
-                  if bufnr and bufnr > 0 then
-                    api.nvim_buf_delete(bufnr, { force = true })
-                  end
-
-                  fn.delete(fn.fnameescape(discardable.filename))
-                elseif section.options.section == "unstaged" then
-                  git.index.checkout { discardable.filename }
-                elseif section.options.section == "untracked" then
-                  a.util.scheduler()
-
-                  local bufnr = fn.bufexists(discardable.filename)
-                  if bufnr and bufnr > 0 then
-                    api.nvim_buf_delete(bufnr, { force = true })
-                  end
-
-                  fn.delete(fn.fnameescape(discardable.filename))
-                end
+            elseif section == "stashes" then
+              message = ("Discard %q?"):format(selection.item.name)
+              action = function()
+                git.stash.drop(selection.item.name:match("(stash@{%d+})"))
               end
             end
+          elseif selection.item then -- Discard Hunk
+            local hunk =
+              self.buffer.ui:item_hunks(selection.item, selection.first_line, selection.last_line, false)[1]
+            local patch = git.index.generate_patch(selection.item, hunk, hunk.from, hunk.to, true)
 
-            self:refresh()
-          else
-            local section = self.buffer.ui:get_current_section()
-            if section then
-              if section.options.section == "unstaged" then
+            if section == "untracked" then
+              message = "Discard hunk?"
+              action = function()
+                local hunks =
+                  self.buffer.ui:item_hunks(selection.item, selection.first_line, selection.last_line, false)
+
+                local patch =
+                  git.index.generate_patch(selection.item, hunks[1], hunks[1].from, hunks[1].to, true)
+
+                git.index.apply(patch, { reverse = true })
+                git.index.apply(patch, { reverse = true })
+              end
+            elseif section == "unstaged" then
+              message = "Discard hunk?"
+              action = function()
+                git.index.apply(patch, { reverse = true })
+              end
+            elseif section == "staged" then
+              message = "Discard hunk?"
+              action = function()
+                git.index.apply(patch, { index = true, reverse = true })
+              end
+            end
+          else -- Discard Section
+            if section == "untracked" then
+              message = ("Discard %s files?"):format(#selection.section.items)
+              action = function()
+                a.util.scheduler()
+
+                for _, file in ipairs(selection.section.items) do
+                  local bufnr = fn.bufexists(file.name)
+                  if bufnr and bufnr > 0 then
+                    api.nvim_buf_delete(bufnr, { force = true })
+                  end
+
+                  fn.delete(file.escaped_path)
+                end
+              end
+            elseif section == "unstaged" then
+              message = ("Discard %s files?"):format(#selection.section.items)
+              action = function()
                 git.index.checkout_unstaged()
-              elseif section.options.section == "untracked" then
-                P("TODO")
-              elseif section.options.section == "staged" then
-                P("TODO")
-              elseif section.options.section == "stash" then
-                P("TODO")
               end
+            elseif section == "staged" then
+              message = ("Discard %s files?"):format(#selection.section.items)
+              action = function()
+                local staged_files_new = {}
+                local staged_files_modified = {}
+                local staged_files_renamed = {}
+                local staged_files_deleted = {}
 
-              self:refresh()
+                for _, item in ipairs(selection.section.items) do
+                  if item.mode == "N" then
+                    table.insert(staged_files_new, item.escaped_path)
+                  elseif item.mode == "M" then
+                    table.insert(staged_files_modified, item.escaped_path)
+                  elseif item.mode == "R" then
+                    table.insert(staged_files_renamed, item)
+                  elseif item.mode == "D" then
+                    table.insert(staged_files_deleted, item.escaped_path)
+                  else
+                    error(("Unknown file mode %q for %q"):format(item.mode, item.escaped_path))
+                  end
+                end
+
+                if #staged_files_new > 0 then
+                  -- ensure the file is deleted
+                  git.index.reset(staged_files_new)
+
+                  a.util.scheduler()
+
+                  for _, file in ipairs(staged_files_new) do
+                    local bufnr = fn.bufexists(file.name)
+                    if bufnr and bufnr > 0 then
+                      api.nvim_buf_delete(bufnr, { force = true })
+                    end
+
+                    fn.delete(file.escaped_path)
+                  end
+                end
+
+                if #staged_files_modified > 0 then
+                  git.index.reset(staged_files_modified)
+                  git.index.checkout(staged_files_modified)
+                end
+
+                if #staged_files_renamed > 0 then
+                  for _, item in ipairs(staged_files_renamed) do
+                    git.index.reset_HEAD(item.name, item.original_name)
+                    git.index.checkout { item.original_name }
+                    fn.delete(item.escaped_path)
+                  end
+                end
+
+                if #staged_files_deleted > 0 then
+                  git.index.reset_HEAD(unpack(staged_files_deleted))
+                  git.index.checkout(staged_files_deleted)
+                end
+              end
+            elseif section == "stashes" then
+              message = ("Discard %s stashes?"):format(#selection.section.items)
+              action = function()
+                for _, stash in ipairs(selection.section.items) do
+                  git.stash.drop(stash.name:match("(stash@{%d+})"))
+                end
+              end
             end
+          end
+
+          if action and input.get_permission(message) then
+            action()
+            self:refresh()
           end
         end),
         [mappings["GoToNextHunkHeader"]] = function()
@@ -999,6 +1092,7 @@ function M:refresh(partial, reason)
       local cursor_line = self.buffer:cursor_line()
       local cursor_goto
       local context = self.buffer.ui:get_cursor_context()
+
       if context then
         if context.options.tag == "Hunk" then
           if context.index == 1 then
@@ -1008,22 +1102,19 @@ function M:refresh(partial, reason)
               cursor_line = ({ context:row_range_abs() })[1] - 1
             end
           else
-            cursor_line = ({ context.parent.children[context.index - 1]:row_range_abs() })[1]
+            local index = math.min(#context.parent.children - 1, context.index)
+            cursor_line = ({ context.parent.children[index]:row_range_abs() })[1]
           end
         elseif context.options.tag == "File" then
-          if context.index == 1 then
-            if #context.parent.children > 1 then
-              -- id is scoped by section. Advance to next file.
-              cursor_goto = context.parent.children[2].options.id
-            else
-              -- Yankable lets us jump from one section to the other. Go to same file in new section.
-              cursor_goto = context.options.yankable
-            end
+          if #context.parent.children == 1 then
+            -- Yankable lets us jump from one section to the other. Go to same file in new section.
+            cursor_goto = context.options.yankable
           else
-            cursor_goto = context.parent.children[context.index - 1].options.id
+            local index = math.min(#context.parent.children - 1, context.index)
+            cursor_goto = context.parent.children[index].options.id
           end
         else
-          -- TODO: profit?
+          error("Unknown cursor jump")
         end
       end
 

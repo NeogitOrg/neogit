@@ -114,6 +114,10 @@ function M.reset(files)
   return cli.reset.files(unpack(files)).call()
 end
 
+function M.reset_HEAD(...)
+  return cli.reset.args("HEAD").arg_list({ ... }).call()
+end
+
 function M.checkout_unstaged()
   local repo = require("neogit.lib.git.repository")
   local items = util.map(repo.unstaged.items, function(item)

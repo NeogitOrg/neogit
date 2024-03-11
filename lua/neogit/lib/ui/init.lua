@@ -2,8 +2,11 @@ local Component = require("neogit.lib.ui.component")
 local util = require("neogit.lib.util")
 local Renderer = require("neogit.lib.ui.renderer")
 
+---@class Section
+---@field items  StatusItem[]
+
 ---@class Selection
----@field sections SectionSelection[]
+---@field sections Section[]
 ---@field first_line number
 ---@field last_line number
 ---@field section Section|nil
@@ -251,8 +254,8 @@ end
 -- end
 
 function Ui:get_selection()
-  local visual_pos = vim.fn.getpos("v")[2]
-  local cursor_pos = vim.fn.getpos(".")[2]
+  local visual_pos = vim.fn.line("v")
+  local cursor_pos = vim.fn.line(".")
 
   local first_line = math.min(visual_pos, cursor_pos)
   local last_line = math.max(visual_pos, cursor_pos)
@@ -270,7 +273,7 @@ function Ui:get_selection()
   for _, section in ipairs(self.item_index) do
     local items = {}
 
-    if section.first > last_line then
+    if not section.first or section.first > last_line then
       break
     end
 
