@@ -213,11 +213,17 @@ function Buffer:close(force)
     return
   end
 
+  if self.kind == "tab" then
+    vim.cmd("tabclose")
+    return
+  end
+
   if api.nvim_buf_is_valid(self.handle) then
     local winnr = fn.bufwinnr(self.handle)
     if winnr ~= -1 then
       local winid = fn.win_getid(winnr)
-      if not pcall(api.nvim_win_close, winid, force) then
+      local ok, _ = pcall(api.nvim_win_close, winid, force)
+      if not ok then
         vim.cmd("b#")
       end
     else
@@ -385,31 +391,34 @@ function Buffer:open_fold(line, reset_pos)
 end
 
 function Buffer:add_highlight(line, col_start, col_end, name, namespace)
-  api.nvim_buf_add_highlight(self.handle, self:get_namespace_id(namespace), name, line, col_start, col_end)
+  local ns_id = self:get_namespace_id(namespace)
+  if ns_id then
+    api.nvim_buf_add_highlight(self.handle, ns_id, name, line, col_start, col_end)
+  end
 end
 
 function Buffer:place_sign(line, name, opts)
   opts = opts or {}
 
-  api.nvim_buf_set_extmark(
-    self.handle,
-    self:get_namespace_id(opts.namespace),
-    line - 1,
-    0,
-    { sign_text = signs.get(name) }
-  )
+  local ns_id = self:get_namespace_id(opts.namespace)
+  if ns_id then
+    api.nvim_buf_set_extmark(self.handle, ns_id, line - 1, 0, { sign_text = signs.get(name) })
+  end
 end
 
 function Buffer:add_line_highlight(line, hl_group, opts)
   opts = opts or {}
 
-  api.nvim_buf_set_extmark(
-    self.handle,
-    self:get_namespace_id(opts.namespace),
-    line,
-    0,
-    { line_hl_group = hl_group, priority = opts.priority or 190 }
-  )
+  local ns_id = self:get_namespace_id(opts.namespace)
+  if ns_id then
+    api.nvim_buf_set_extmark(
+      self.handle,
+      ns_id,
+      line,
+      0,
+      { line_hl_group = hl_group, priority = opts.priority or 190 }
+    )
+  end
 end
 
 function Buffer:clear_namespace(name)
@@ -419,7 +428,10 @@ function Buffer:clear_namespace(name)
     return
   end
 
-  api.nvim_buf_clear_namespace(self.handle, self:get_namespace_id(name), 0, -1)
+  local ns_id = self:get_namespace_id(name)
+  if ns_id then
+    api.nvim_buf_clear_namespace(self.handle, ns_id, 0, -1)
+  end
 end
 
 function Buffer:create_namespace(name)
@@ -433,11 +445,12 @@ function Buffer:create_namespace(name)
   return self.namespaces[namespace]
 end
 
+---@param name string
+---@return number|nil
 function Buffer:get_namespace_id(name)
   local ns_id
   if name and name ~= "default" then
     ns_id = self.namespaces["neogit-buffer-" .. self.handle .. "-" .. name]
-    assert(ns_id, "Namespace ID should never be nil! Create '" .. name .. "' namespace before using it")
   else
     ns_id = self.namespaces.default
   end
@@ -462,7 +475,10 @@ function Buffer:set_extmark(...)
 end
 
 function Buffer:set_decorations(namespace, opts)
-  return api.nvim_set_decoration_provider(self:get_namespace_id(namespace), opts)
+  local ns_id = self:get_namespace_id(namespace)
+  if ns_id then
+    return api.nvim_set_decoration_provider(ns_id, opts)
+  end
 end
 
 ---@class BufferConfig
@@ -511,7 +527,7 @@ function Buffer.create(config)
     buffer:set_window_option("foldenable", true)
     buffer:set_window_option("foldlevel", 99)
     buffer:set_window_option("foldminlines", 0)
-    buffer:set_window_option("foldtext", "v:lua.NeogitBufferFoldText()")
+    buffer:set_window_option("foldtext", "")
   end
 
   if config.filetype then
@@ -563,6 +579,8 @@ function Buffer.create(config)
   if vim.fn.has("nvim-0.10") then
     buffer:set_window_option("spell", false)
     buffer:set_window_option("wrap", false)
+    -- TODO: Need to find a way to turn this off properly when unloading plugin
+    -- buffer:set_window_option("winfixbuf", true)
   end
 
   if config.after then
@@ -584,14 +602,12 @@ function Buffer.create(config)
 
   if config.context_highlight then
     buffer:create_namespace("ViewContext")
-    buffer:create_namespace("ViewDecor")
 
-    buffer:call(function()
-      local function on_start()
+    buffer:set_decorations("ViewContext", {
+      on_start = function()
         return buffer:exists() and buffer:is_focused()
-      end
-
-      local function on_win()
+      end,
+      on_win = function(_, _, _, top, bottom)
         buffer:clear_namespace("ViewContext")
 
         local context = buffer.ui:get_cursor_context()
@@ -601,24 +617,25 @@ function Buffer.create(config)
 
         local first = context.position.row_start
         local last = context.position.row_end
+        local cursor = vim.fn.line(".")
 
-        for line = fn.line("w0"), fn.line("w$") do
+        for line = top, bottom do
           if line >= first and line <= last then
-            local line_hl = buffer.ui:get_line_highlight(line)
-
-            buffer:buffered_add_line_highlight(
-              line - 1,
-              (line_hl or "NeogitDiffContext") .. "Highlight",
-              { priority = 200, namespace = "ViewContext" }
+            local line_hl = ("%s%s"):format(
+              buffer.ui:get_line_highlight(line) or "NeogitDiffContext",
+              line == cursor and "Cursor" or "Highlight"
             )
+
+            buffer:buffered_add_line_highlight(line - 1, line_hl, {
+              priority = 200,
+              namespace = "ViewContext",
+            })
           end
         end
 
         buffer:flush_line_highlight_buffer()
-      end
-
-      buffer:set_decorations("ViewDecor", { on_start = on_start, on_win = on_win })
-    end)
+      end,
+    })
   end
 
   return buffer

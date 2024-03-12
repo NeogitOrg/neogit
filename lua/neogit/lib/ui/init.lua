@@ -1,6 +1,23 @@
 local Component = require("neogit.lib.ui.component")
 local util = require("neogit.lib.util")
 local Renderer = require("neogit.lib.ui.renderer")
+local Collection = require("neogit.lib.collection")
+local logger = require("neogit.logger") -- TODO: Add logging
+
+---@class Section
+---@field items  StatusItem[]
+
+---@class Selection
+---@field sections Section[]
+---@field first_line number
+---@field last_line number
+---@field section Section|nil
+---@field item StatusItem|nil
+---@field commit CommitLogEntry|nil
+---@field commits  CommitLogEntry[]
+---@field items  StatusItem[]
+local Selection = {}
+Selection.__index = Selection
 
 ---@class UiComponent
 ---@field tag string
@@ -63,9 +80,13 @@ function Ui:find_components(f, options)
   return result
 end
 
----@param fn fun(c: Component): boolean
+---@param fn? fun(c: Component): boolean
 ---@return Component|nil
 function Ui:get_component_under_cursor(fn)
+  fn = fn or function()
+    return true
+  end
+
   local line = vim.api.nvim_win_get_cursor(0)[1]
   return self:get_component_on_line(line, fn)
 end
@@ -97,9 +118,9 @@ function Ui:find_by_id(id)
 end
 
 ---@return Component|nil
-function Ui:get_cursor_context()
-  local cursor = vim.api.nvim_win_get_cursor(0)
-  return self:_find_component_by_index(cursor[1], function(node)
+function Ui:get_cursor_context(line)
+  local cursor = line or vim.api.nvim_win_get_cursor(0)[1]
+  return self:_find_component_by_index(cursor, function(node)
     return node.options.context
   end)
 end
@@ -122,6 +143,7 @@ function Ui:get_interactive_component_under_cursor()
   end)
 end
 
+---@return Component|nil
 function Ui:get_fold_under_cursor()
   local cursor = vim.api.nvim_win_get_cursor(0)
 
@@ -130,6 +152,130 @@ function Ui:get_fold_under_cursor()
   end)
 end
 
+---@class StatusItem
+---@field name string
+---@field first number
+---@field last number
+---@field oid string|nil optional object id
+---@field commit CommitLogEntry|nil optional object id
+---@field folded boolean|nil
+---@field hunks Hunk[]|nil
+
+---@class SelectedHunk: Hunk
+---@field from number start offset from the first line of the hunk
+---@field to number end offset from the first line of the hunk
+---@field lines string[]
+---
+---@param item StatusItem
+---@param first_line number
+---@param last_line number
+---@param partial boolean
+---@return SelectedHunk[]
+function Ui:item_hunks(item, first_line, last_line, partial)
+  local hunks = {}
+
+  if not item.folded and item.diff.hunks then
+    for _, h in ipairs(item.diff.hunks) do
+      if h.first <= last_line and h.last >= first_line then
+        local from, to
+
+        if partial then
+          local cursor_offset = first_line - h.first
+          local length = last_line - first_line
+
+          from = h.diff_from + cursor_offset
+          to = from + length
+        else
+          from = h.diff_from + 1
+          to = h.diff_to
+        end
+
+        local hunk_lines = {}
+        for i = from, to do
+          table.insert(hunk_lines, item.diff.lines[i])
+        end
+
+        local o = {
+          from = from,
+          to = to,
+          __index = h,
+          hunk = h,
+          lines = hunk_lines,
+        }
+
+        setmetatable(o, o)
+
+        table.insert(hunks, o)
+      end
+    end
+  end
+
+  return hunks
+end
+
+function Ui:get_selection()
+  local visual_pos = vim.fn.line("v")
+  local cursor_pos = vim.fn.line(".")
+
+  local first_line = math.min(visual_pos, cursor_pos)
+  local last_line = math.max(visual_pos, cursor_pos)
+
+  local res = {
+    sections = {},
+    first_line = first_line,
+    last_line = last_line,
+    item = nil,
+    commit = nil,
+    commits = {},
+    items = {},
+  }
+
+  for _, section in ipairs(self.item_index) do
+    local items = {}
+
+    if not section.first or section.first > last_line then
+      break
+    end
+
+    if section.last >= first_line then
+      if section.first <= first_line and section.last >= last_line then
+        res.section = section
+      end
+
+      local entire_section = section.first == first_line and first_line == last_line
+
+      for _, item in pairs(section.items) do
+        if entire_section or item.first <= last_line and item.last >= first_line then
+          if not res.item and item.first <= first_line and item.last >= last_line then
+            res.item = item
+
+            res.commit = item.commit
+          end
+
+          if item.commit then
+            table.insert(res.commits, item.commit)
+          end
+
+          table.insert(res.items, item)
+          table.insert(items, item)
+        end
+      end
+
+      local section = {
+        section = section,
+        items = items,
+        __index = section,
+      }
+
+      setmetatable(section, section)
+      table.insert(res.sections, section)
+    end
+  end
+
+  return setmetatable(res, Selection)
+end
+
+---@return string[]
 function Ui:get_commits_in_selection()
   local range = { vim.fn.getpos("v")[2], vim.fn.getpos(".")[2] }
   table.sort(range)
@@ -149,53 +295,312 @@ function Ui:get_commits_in_selection()
   return util.deduplicate(commits)
 end
 
+---@return string[]
+function Ui:get_filepaths_in_selection()
+  local range = { vim.fn.getpos("v")[2], vim.fn.getpos(".")[2] }
+  table.sort(range)
+  local start, stop = unpack(range)
+
+  local paths = {}
+  for i = start, stop do
+    local component = self:_find_component_by_index(i, function(node)
+      return node.options.item and node.options.item.escaped_path
+    end)
+
+    if component then
+      table.insert(paths, 1, component.options.item.escaped_path)
+    end
+  end
+
+  return util.deduplicate(paths)
+end
+
 ---@return string|nil
 function Ui:get_commit_under_cursor()
   local cursor = vim.api.nvim_win_get_cursor(0)
   local component = self:_find_component_by_index(cursor[1], function(node)
-    return node.options.oid
+    return node.options.oid ~= nil
   end)
 
   return component and component.options.oid
 end
 
-function Ui:render(...)
-  self.layout = { ... }
-  self.layout = util.filter(self.layout, function(x)
-    return type(x) == "table"
+---@return string|nil
+function Ui:get_yankable_under_cursor()
+  local cursor = vim.api.nvim_win_get_cursor(0)
+  local component = self:_find_component_by_index(cursor[1], function(node)
+    return node.options.yankable ~= nil
   end)
 
+  return component and component.options.yankable
+end
+
+---@return Section|nil
+function Ui:first_section()
+  return self.item_index[1]
+end
+
+---@return Component|nil
+function Ui:get_current_section(line)
+  line = line or vim.api.nvim_win_get_cursor(0)[1]
+  local component = self:_find_component_by_index(line, function(node)
+    return node.options.section ~= nil
+  end)
+
+  return component
+end
+
+---@class CursorLocation
+---@field first number
+---@field last number
+---@field section {index: number, name: string}|nil
+---@field file {index: number, name: string}|nil
+---@field hunk {index: number, name: string}|nil
+
+---Encode the cursor location into a table
+---@param line number?
+---@return CursorLocation
+function Ui:get_cursor_location(line)
+  line = line or vim.api.nvim_win_get_cursor(0)[1]
+  local section_loc, file_loc, hunk_loc, first, last
+
+  for li, loc in ipairs(self.item_index) do
+    if line == loc.first then
+      section_loc = { index = li, name = loc.name }
+      first, last = loc.first, loc.last
+
+      break
+    elseif line >= loc.first and line <= loc.last then
+      section_loc = { index = li, name = loc.name }
+
+      for fi, file in ipairs(loc.items) do
+        if line == file.first then
+          file_loc = { index = fi, name = file.name }
+          first, last = file.first, file.last
+
+          break
+        elseif line >= file.first and line <= file.last then
+          file_loc = { index = fi, name = file.name }
+
+          for hi, hunk in ipairs(file.diff.hunks) do
+            if line >= hunk.first and line <= hunk.last then
+              hunk_loc = { index = hi, name = hunk.hash }
+              first, last = hunk.first, hunk.last
+
+              break
+            end
+          end
+
+          break
+        end
+      end
+
+      break
+    end
+  end
+
+  return { section = section_loc, file = file_loc, hunk = hunk_loc, first = first, last = last }
+end
+
+---@param cursor CursorLocation
+---@return number
+function Ui:resolve_cursor_location(cursor)
+  if #self.item_index == 0 then
+    logger.debug("[UI] No items to resolve cursor location")
+    return 1
+  end
+
+  if not cursor.section then
+    logger.debug("[UI] No Cursor Section")
+    cursor.section = { index = 1, name = "" }
+  end
+
+  local section = Collection.new(self.item_index):find(function(s)
+    return s.name == cursor.section.name
+  end)
+
+  if not section then
+    logger.debug("[UI] No Section Found '" .. cursor.section.name .. "'")
+
+    cursor.file = nil
+    cursor.hunk = nil
+    section = self.item_index[cursor.section.index] or self.item_index[#self.item_index]
+  end
+
+  if not cursor.file or not section.items or #section.items == 0 then
+    logger.debug("[UI] No file - using section.first")
+    return section.first
+  end
+
+  local file = Collection.new(section.items):find(function(f)
+    return f.name == cursor.file.name
+  end)
+
+  if not file then
+    logger.debug(("[UI] No file found %q"):format(cursor.file.name))
+
+    cursor.hunk = nil
+    file = section.items[cursor.file.index] or section.items[#section.items]
+  end
+
+  if not cursor.hunk or not file.diff.hunks or #file.diff.hunks == 0 then
+    logger.debug("[UI] No hunk - using file.first")
+    return file.first
+  end
+
+  local hunk = Collection.new(file.diff.hunks):find(function(h)
+    return h.hash == cursor.hunk.name
+  end) or file.diff.hunks[cursor.hunk.index] or file.diff.hunks[#file.diff.hunks]
+
+  logger.debug(("[UI] Using hunk.first %q"):format(cursor.hunk.name))
+
+  return hunk.first
+end
+
+---@return table|nil
+function Ui:get_hunk_or_filename_under_cursor()
+  local cursor = vim.api.nvim_win_get_cursor(0)
+  local component = self:_find_component_by_index(cursor[1], function(node)
+    return node.options.hunk or node.options.filename
+  end)
+
+  return component and {
+    hunk = component.options.hunk,
+    filename = component.options.filename,
+  }
+end
+
+---@return table|nil
+function Ui:get_item_under_cursor()
+  local cursor = vim.api.nvim_win_get_cursor(0)
+  local component = self:_find_component_by_index(cursor[1], function(node)
+    return node.options.item
+  end)
+
+  return component and component.options.item
+end
+
+---@param layout table
+---@return table[]
+local function filter_layout(layout)
+  return util.filter(layout, function(x)
+    return type(x) == "table"
+  end)
+end
+
+local function node_prefix(node, prefix)
+  local base = false
+  local key
+  if node.options.section then
+    key = node.options.section
+  elseif node.options.filename then
+    key = node.options.filename
+  elseif node.options.hunk then
+    base = true
+    key = node.options.hunk.hash
+  end
+
+  if key then
+    return ("%s--%s"):format(prefix, key), base
+  else
+    return nil, base
+  end
+end
+
+local function gather_nodes(node, node_table, prefix)
+  if not node_table then
+    node_table = {}
+  end
+
+  prefix = prefix or ""
+
+  local key, base = node_prefix(node, prefix)
+  if key then
+    prefix = key
+    node_table[prefix] = { folded = node.options.folded }
+  end
+
+  if node.children and not base then
+    for _, child in ipairs(node.children) do
+      gather_nodes(child, node_table, prefix)
+    end
+  end
+
+  return node_table
+end
+
+function Ui:_update_attributes(node, attributes, prefix)
+  prefix = prefix or ""
+
+  local key, base = node_prefix(node, prefix)
+  if key then
+    prefix = key
+
+    -- TODO: If a hunk is closed, it will be re-opened on update because the on_open callback runs async :\
+    if attributes[prefix] then
+      if node.options.on_open and not attributes[prefix].folded then
+        node.options.on_open(node, self, prefix)
+      end
+
+      node.options.folded = attributes[prefix].folded
+    end
+  end
+
+  if node.children and not base then
+    for _, child in ipairs(node.children) do
+      self:_update_attributes(child, attributes, prefix)
+    end
+  end
+end
+
+function Ui:render(...)
+  local layout = filter_layout { ... }
+  local root = Component.new(function()
+    return { tag = "_root", children = layout }
+  end)()
+
+  if not vim.tbl_isempty(self.layout) then
+    self._old_node_attributes = gather_nodes(self.layout)
+  end
+
+  self.layout = root
   self:update()
 end
 
--- This shouldn't be called often as it completely rewrites the whole buffer
 function Ui:update()
-  local ns = self.buf:create_namespace("VirtualText")
-  local buffer, index = Renderer:new(ns):render(self.layout)
+  -- If the buffer is not focused, trying to set folds will raise an error because it's not a proper API.
+  if not self.buf:is_focused() then
+    return
+  end
 
-  self.node_index = index
+  local renderer = Renderer:new(self.layout, self.buf):render()
+  self.node_index = renderer:node_index()
+  self.item_index = renderer:item_index()
+
   local cursor_line = self.buf:cursor_line()
-
   self.buf:unlock()
   self.buf:clear()
   self.buf:clear_namespace("default")
-  self.buf:resize(#buffer.line)
-  self.buf:set_lines(0, -1, false, buffer.line)
-  self.buf:set_highlights(buffer.highlight)
-  self.buf:set_extmarks(buffer.extmark)
-  self.buf:set_line_highlights(buffer.line_highlight)
-  self.buf:set_folds(buffer.fold)
+  self.buf:clear_namespace("ViewContext")
+  self.buf:resize(#renderer.buffer.line)
+  self.buf:set_lines(0, -1, false, renderer.buffer.line)
+  self.buf:set_highlights(renderer.buffer.highlight)
+  self.buf:set_extmarks(renderer.buffer.extmark)
+  self.buf:set_line_highlights(renderer.buffer.line_highlight)
+  self.buf:set_folds(renderer.buffer.fold)
   self.buf:lock()
+  self.buf:move_cursor(math.min(cursor_line, #renderer.buffer.line))
 
-  self.buf:move_cursor(cursor_line)
+  if self._old_node_attributes then
+    self:_update_attributes(self.layout, self._old_node_attributes)
+    self._old_node_attributes = nil
+  end
 end
 
 Ui.col = Component.new(function(children, options)
   return {
     tag = "col",
-    children = util.filter(children, function(x)
-      return type(x) == "table"
-    end),
+    children = filter_layout(children),
     options = options,
   }
 end)
@@ -203,9 +608,7 @@ end)
 Ui.row = Component.new(function(children, options)
   return {
     tag = "row",
-    children = util.filter(children, function(x)
-      return type(x) == "table"
-    end),
+    children = filter_layout(children),
     options = options,
   }
 end)

@@ -22,6 +22,8 @@ local default_component_options = {
 ---@field context boolean
 ---@field interactive boolean
 ---@field virtual_text string
+---@field section string|nil
+---@field item table|nil
 ---@field id string|nil
 
 ---@class Component
@@ -102,15 +104,55 @@ function Component:append(c)
   return self
 end
 
+---@param ui Ui
+---@param depth integer
+function Component:open_all_folds(ui, depth)
+  assert(ui, "Pass in self.buffer.ui")
+
+  if self.options.foldable then
+    if self.options.on_open then
+      self.options.on_open(self, ui)
+    end
+
+    self.options.folded = false
+    depth = depth - 1
+  end
+
+  if self.children and depth > 0 then
+    for _, child in ipairs(self.children) do
+      child:open_all_folds(ui, depth)
+    end
+  end
+end
+
+---@param ui Ui
+function Component:close_all_folds(ui)
+  assert(ui, "Pass in self.buffer.ui")
+
+  if self.options.foldable then
+    self.options.folded = true
+  end
+
+  if self.children then
+    for _, child in ipairs(self.children) do
+      child:close_all_folds(ui)
+    end
+  end
+end
+
 function Component.new(f)
-  local x = {}
-  setmetatable(x, {
+  local instance = {}
+
+  local mt = {
     __call = function(tbl, ...)
-      local x = f(...)
-      local options = vim.tbl_extend("force", default_component_options, tbl, x.options or {})
-      x.options = options
-      setmetatable(x, { __index = Component })
-      return x
+      local this = f(...)
+
+      local options = vim.tbl_extend("force", default_component_options, tbl, this.options or {})
+      this.options = options
+
+      setmetatable(this, { __index = Component })
+
+      return this
     end,
     __index = function(tbl, name)
       local value = rawget(Component, name)
@@ -125,8 +167,11 @@ function Component.new(f)
 
       return value
     end,
-  })
-  return x
+  }
+
+  setmetatable(instance, mt)
+
+  return instance
 end
 
 return Component

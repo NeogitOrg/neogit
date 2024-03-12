@@ -173,11 +173,7 @@ end)
 
 M.reset_branch = operation("reset_branch", function(popup)
   if git.status.is_dirty() then
-    local confirmation = input.get_confirmation(
-      "Uncommitted changes will be lost. Proceed?",
-      { values = { "&Yes", "&No" }, default = 2 }
-    )
-    if not confirmation then
+    if not input.get_permission("Uncommitted changes will be lost. Proceed?") then
       return
     end
   end
@@ -226,10 +222,7 @@ M.delete_branch = operation("delete_branch", function()
   if
     remote
     and branch_name
-    and input.get_confirmation(
-      string.format("Delete remote branch '%s/%s'?", remote, branch_name),
-      { values = { "&Yes", "&No" }, default = 2 }
-    )
+    and input.get_permission(("Delete remote branch '%s/%s'?"):format(remote, branch_name))
   then
     success = git.cli.push.remote(remote).delete.to(branch_name).call_sync().code == 0
   elseif not remote and branch_name == git.branch.current() then

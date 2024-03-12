@@ -3,14 +3,18 @@ local logger = require("neogit.logger")
 local Path = require("plenary.path")
 local cli = require("neogit.lib.git.cli")
 
+---@return NeogitRepo
 local function empty_state()
+  ---@class NeogitRepo
   return {
     git_root = cli.git_root_of_cwd(),
     head = {
       branch = nil,
+      oid = nil,
       commit_message = nil,
       tag = {
         name = nil,
+        oid = nil,
         distance = nil,
       },
     },
@@ -19,11 +23,16 @@ local function empty_state()
       commit_message = nil,
       remote = nil,
       ref = nil,
+      oid = nil,
       unmerged = { items = {} },
       unpulled = { items = {} },
     },
     pushRemote = {
+      branch = nil,
       commit_message = nil,
+      remote = nil,
+      ref = nil,
+      oid = nil,
       unmerged = { items = {} },
       unpulled = { items = {} },
     },

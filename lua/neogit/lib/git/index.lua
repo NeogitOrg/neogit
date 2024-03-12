@@ -1,6 +1,7 @@
 local cli = require("neogit.lib.git.cli")
 local repo = require("neogit.lib.git.repository")
 local Path = require("plenary.path")
+local util = require("neogit.lib.util")
 
 local M = {}
 
@@ -113,6 +114,19 @@ function M.reset(files)
   return cli.reset.files(unpack(files)).call()
 end
 
+function M.reset_HEAD(...)
+  return cli.reset.args("HEAD").arg_list({ ... }).call()
+end
+
+function M.checkout_unstaged()
+  local repo = require("neogit.lib.git.repository")
+  local items = util.map(repo.unstaged.items, function(item)
+    return item.escaped_path
+  end)
+
+  return cli.checkout.files(unpack(items)).call()
+end
+
 ---Creates a temp index from a revision and calls the provided function with the index path
 ---@param revision string Revision to create a temp index from
 ---@param fn fun(index: string): nil
@@ -121,7 +135,7 @@ function M.with_temp_index(revision, fn)
   assert(fn, "Pass a function to call with temp index")
 
   local tmp_index = Path:new(vim.uv.os_tmpdir(), ("index.neogit.%s"):format(revision))
-  cli["read-tree"].args(revision).index_output(tmp_index:absolute()).call({ hidden = true })
+  cli["read-tree"].args(revision).index_output(tmp_index:absolute()).call { hidden = true }
   assert(tmp_index:exists(), "Failed to create temp index")
 
   fn(tmp_index:absolute())

@@ -108,6 +108,8 @@ end
 ---@field index_len number
 ---@field diff_from number
 ---@field diff_to number
+---@field first number First line number in buffer
+---@field last number Last line number in buffer
 
 ---@return Hunk
 local function build_hunks(lines)
@@ -157,6 +159,15 @@ local function build_hunks(lines)
   if hunk then
     hunk.hash = hunk_hash(hunk_content)
     insert(hunks, hunk)
+  end
+
+  for _, hunk in ipairs(hunks) do
+    hunk.lines = {}
+    for i = hunk.diff_from + 1, hunk.diff_to do
+      table.insert(hunk.lines, lines[i])
+    end
+
+    hunk.length = hunk.diff_to - hunk.diff_from
   end
 
   return hunks

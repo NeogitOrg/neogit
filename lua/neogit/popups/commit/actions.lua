@@ -11,12 +11,11 @@ local function confirm_modifications()
   if
     git.branch.upstream()
     and #git.repo.upstream.unmerged.items < 1
-    and not input.get_confirmation(
+    and not input.get_permission(
       string.format(
         "This commit has already been published to %s, do you really want to modify it?",
         git.branch.upstream()
-      ),
-      { values = { "&Yes", "&No" }, default = 2 }
+      )
     )
   then
     return false
@@ -37,12 +36,7 @@ end
 local function commit_special(popup, method, opts)
   if not git.status.anything_staged() then
     if git.status.anything_unstaged() then
-      local stage_all = input.get_confirmation(
-        "Nothing is staged. Commit all uncommitted changed?",
-        { values = { "&Yes", "&No" }, default = 2 }
-      )
-
-      if stage_all then
+      if input.get_permission("Nothing is staged. Commit all uncommitted changed?") then
         opts.all = true
       else
         return

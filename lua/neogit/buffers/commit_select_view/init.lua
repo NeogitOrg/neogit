@@ -31,9 +31,6 @@ end
 
 ---@param action fun(commit: CommitLogEntry[])
 function M:open(action)
-  -- TODO: Pass this in as a param instead of reading state from object
-  local _, item = require("neogit.status").get_current_section_item()
-
   ---@type fun(commit: CommitLogEntry[])|nil
   local action = action
 
@@ -96,17 +93,6 @@ function M:open(action)
         end
       end,
     },
-    after = function(buffer, win)
-      if win and item and item.commit then
-        local found = buffer.ui:find_component(function(c)
-          return c.options.oid == item.commit.oid
-        end)
-
-        if found then
-          vim.api.nvim_win_set_cursor(win, { found.position.row_start, 0 })
-        end
-      end
-    end,
     render = function()
       return ui.View(self.commits)
     end,

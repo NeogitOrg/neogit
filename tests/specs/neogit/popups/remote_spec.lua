@@ -5,7 +5,7 @@ local operations = require("neogit.operations")
 local harness = require("tests.util.git_harness")
 local in_prepared_repo = harness.in_prepared_repo
 
-local status = require("neogit.status")
+local neogit = require("neogit")
 local input = require("tests.mocks.input")
 local lib = require("neogit.lib")
 
@@ -20,7 +20,7 @@ describe("remote popup", function()
     in_prepared_repo(function()
       local remote_a = harness.prepare_repository()
       local remote_b = harness.prepare_repository()
-      async.util.block_on(status.reset)
+      async.util.block_on(neogit.reset)
 
       input.values = { "foo", remote_a }
       act("Ma")

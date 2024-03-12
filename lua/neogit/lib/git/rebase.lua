@@ -104,28 +104,17 @@ function M.edit()
   return rebase_command(cli.rebase.edit_todo)
 end
 
-local function line_oid(line)
-  return vim.split(line, " ")[2]
-end
-
-local function format_line(line)
-  local sections = vim.split(line, " ")
-  sections[2] = sections[2]:sub(1, 7)
-
-  return table.concat(sections, " ")
-end
-
 function M.update_rebase_status(state)
-  local repo = require("neogit.lib.git.repository")
-  if repo.git_root == "" then
+  local git = require("neogit.lib.git")
+  if git.repo.git_root == "" then
     return
   end
 
-  state.rebase = { items = {}, head = nil, current = nil }
+  state.rebase = { items = {}, onto = {}, head = nil, current = nil }
 
   local rebase_file
-  local rebase_merge = repo:git_path("rebase-merge")
-  local rebase_apply = repo:git_path("rebase-apply")
+  local rebase_merge = git.repo:git_path("rebase-merge")
+  local rebase_apply = git.repo:git_path("rebase-apply")
 
   if rebase_merge:exists() then
     rebase_file = rebase_merge
@@ -136,17 +125,35 @@ function M.update_rebase_status(state)
   if rebase_file then
     local head = rebase_file:joinpath("head-name")
     if not head:exists() then
-      logger.error("Failed to read rebase-merge head")
+      logger.error("Failed to read rebase-merge head-name")
       return
     end
 
     state.rebase.head = head:read():match("refs/heads/([^\r\n]+)")
 
+    local onto = rebase_file:joinpath("onto")
+    if onto:exists() then
+      state.rebase.onto.oid = vim.trim(onto:read())
+      state.rebase.onto.subject = git.log.message(state.rebase.onto.oid)
+      state.rebase.onto.ref = cli["name-rev"].name_only.no_undefined
+        .refs("refs/heads/*")
+        .exclude("*/HEAD")
+        .exclude("*/refs/heads/*")
+        .args(state.rebase.onto.oid)
+        .call({ hidden = true }).stdout[1]
+      state.rebase.onto.is_remote = not git.branch.exists(state.rebase.onto.ref)
+    end
+
     local done = rebase_file:joinpath("done")
     if done:exists() then
       for line in done:iter() do
         if line:match("^[^#]") and line ~= "" then
-          table.insert(state.rebase.items, { name = format_line(line), oid = line_oid(line), done = true })
+          table.insert(state.rebase.items, {
+            action = line:match("^(%w+) "),
+            oid = line:match("^%w+ (%x+)"),
+            subject = line:match("^%w+ %x+ (.+)$"),
+            done = true,
+          })
         end
       end
     end
@@ -162,9 +169,23 @@ function M.update_rebase_status(state)
     if todo:exists() then
       for line in todo:iter() do
         if line:match("^[^#]") and line ~= "" then
-          table.insert(state.rebase.items, { name = format_line(line), oid = line_oid(line) })
+          table.insert(state.rebase.items, {
+            done = false,
+            action = line:match("^(%w+) "),
+            oid = line:match("^%w+ (%x+)"),
+            subject = line:match("^%w+ %x+ (.+)$"),
+          })
         end
       end
+    end
+
+    if onto:exists() then
+      table.insert(state.rebase.items, {
+        done = false,
+        action = "onto",
+        oid = state.rebase.onto.oid,
+        subject = state.rebase.onto.subject,
+      })
     end
   end
 end

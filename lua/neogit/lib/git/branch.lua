@@ -15,13 +15,20 @@ local function parse_branches(branches, include_current)
   local head = "^(.*)/HEAD"
   local ref = " %-> "
   local detached = "^%(HEAD detached at %x%x%x%x%x%x%x"
+  local no_branch = "^%(no branch,"
   local pattern = include_current and "^[* ] (.+)" or "^  (.+)"
 
   for _, b in ipairs(branches) do
     local branch_name = b:match(pattern)
     if branch_name then
       local name = branch_name:match(remotes) or branch_name
-      if name and not name:match(ref) and not name:match(head) and not name:match(detached) then
+      if
+        name
+        and not name:match(ref)
+        and not name:match(head)
+        and not name:match(detached)
+        and not name:match(no_branch)
+      then
         table.insert(other_branches, name)
       end
     end
@@ -141,12 +148,8 @@ function M.delete(name)
 
   local result
   if M.is_unmerged(name) then
-    if
-      input.get_confirmation(
-        string.format("'%s' contains unmerged commits! Are you sure you want to delete it?", name),
-        { values = { "&Yes", "&No" }, default = 2 }
-      )
-    then
+    local message = ("'%s' contains unmerged commits! Are you sure you want to delete it?"):format(name)
+    if input.get_permission(message) then
       result = cli.branch.delete.force.name(name).call_sync()
     end
   else
@@ -284,15 +287,22 @@ local function update_branch_information(state)
       local commit = git.log.list({ state.upstream.ref, "--max-count=1" }, nil, {}, true)[1]
       -- May be done earlier by `update_status`, but this function can be called separately
       if commit then
+        state.upstream.oid = commit.oid
         state.upstream.commit_message = commit.subject
         state.upstream.abbrev = git.rev_parse.abbreviate_commit(commit.oid)
       end
     end
 
-    local pushRemote = require("neogit.lib.git").branch.pushRemote_ref()
+    local pushRemote = git.branch.pushRemote_ref()
     if pushRemote and not git.branch.is_detached() then
+      local remote, branch = unpack(vim.split(pushRemote, "/"))
+      state.pushRemote.ref = pushRemote
+      state.pushRemote.remote = remote
+      state.pushRemote.branch = branch
+
       local commit = git.log.list({ pushRemote, "--max-count=1" }, nil, {}, true)[1]
       if commit then
+        state.pushRemote.oid = commit.oid
         state.pushRemote.commit_message = commit.subject
         state.pushRemote.abbrev = git.rev_parse.abbreviate_commit(commit.oid)
       end

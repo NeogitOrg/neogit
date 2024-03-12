@@ -10,7 +10,7 @@ function M.pick_or_revert_in_progress()
   local pick_or_revert_todo = false
 
   for _, item in ipairs(git.repo.sequencer.items) do
-    if item.name:match("^pick") or item.name:match("^revert") then
+    if item.action == "pick" or item.action == "revert" then
       pick_or_revert_todo = true
       break
     end
@@ -20,36 +20,46 @@ function M.pick_or_revert_in_progress()
 end
 
 function M.update_sequencer_status(state)
-  local repo = require("neogit.lib.git.repository")
-  state.sequencer = { items = {}, head = nil, head_oid = nil }
+  local git = require("neogit.lib.git")
+  state.sequencer = { items = {}, head = nil, head_oid = nil, revert = false, cherry_pick = false }
 
-  local revert_head = repo:git_path("REVERT_HEAD")
-  local cherry_head = repo:git_path("CHERRY_PICK_HEAD")
+  local revert_head = git.repo:git_path("REVERT_HEAD")
+  local cherry_head = git.repo:git_path("CHERRY_PICK_HEAD")
 
   if cherry_head:exists() then
     state.sequencer.head = "CHERRY_PICK_HEAD"
-    state.sequencer.head_oid = repo:git_path("CHERRY_PICK_HEAD"):read()
+    state.sequencer.head_oid = vim.trim(git.repo:git_path("CHERRY_PICK_HEAD"):read())
     state.sequencer.cherry_pick = true
   elseif revert_head:exists() then
     state.sequencer.head = "REVERT_HEAD"
-    state.sequencer.head_oid = repo:git_path("REVERT_HEAD"):read()
+    state.sequencer.head_oid = vim.trim(git.repo:git_path("REVERT_HEAD"):read())
     state.sequencer.revert = true
   end
 
-  local todo = repo:git_path("sequencer/todo")
-  local orig = repo:git_path("ORIG_HEAD")
+  local HEAD_oid = git.rev_parse.oid("HEAD")
+  table.insert(state.sequencer.items, {
+    action = "onto",
+    oid = HEAD_oid,
+    subject = git.log.message(HEAD_oid),
+  })
+
+  local todo = git.repo:git_path("sequencer/todo")
   if todo:exists() then
     for line in todo:iter() do
-      if not line:match("^#") then
-        table.insert(state.sequencer.items, { name = line })
+      if line:match("^[^#]") and line ~= "" then
+        table.insert(state.sequencer.items, {
+          action = line:match("^(%w+) "),
+          oid = line:match("^%w+ (%x+)"),
+          subject = line:match("^%w+ %x+ (.+)$"),
+        })
       end
     end
-  elseif state.sequencer.head_oid and orig:exists() then
-    local head = state.sequencer.head_oid:sub(1, 7)
-    orig = orig:read():sub(1, 7)
-    local git = require("neogit.lib.git")
-    table.insert(state.sequencer.items, { name = string.format("work %s %s", orig, git.log.message(orig)) })
-    table.insert(state.sequencer.items, { name = string.format("onto %s %s", head, git.log.message(head)) })
+  elseif state.sequencer.cherry_pick or state.sequencer.revert then
+    table.insert(state.sequencer.items, {
+      action = "join",
+      oid = state.sequencer.head_oid,
+      subject = git.log.message(state.sequencer.head_oid),
+    })
   end
 end
 

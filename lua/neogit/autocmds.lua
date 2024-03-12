@@ -2,8 +2,8 @@ local M = {}
 
 local api = vim.api
 local a = require("plenary.async")
-local status = require("neogit.status")
-local fs = require("neogit.lib.fs")
+local status_buffer = require("neogit.buffers.status")
+local git = require("neogit.lib.git")
 local group = require("neogit").autocmd_group
 
 function M.setup()
@@ -14,22 +14,25 @@ function M.setup()
 
   api.nvim_create_autocmd({ "BufWritePost", "ShellCmdPost", "VimResume" }, {
     callback = function(o)
-      -- Skip update if the buffer is not open
-      if not status.status_buffer then
+      if not status_buffer.instance then
         return
       end
 
       -- Do not trigger on neogit buffers such as commit
-      if api.nvim_buf_get_option(o.buf, "filetype"):find("Neogit") then
+      if api.nvim_get_option_value("filetype", { buf = o.buf }):find("Neogit") then
         return
       end
 
       a.run(function()
-        local path = fs.relpath_from_repository(o.file)
+        local path = git.files.relpath_from_repository(o.file)
         if not path then
           return
         end
-        status.refresh({ update_diffs = { "*:" .. path } }, string.format("%s:%s", o.event, o.file))
+
+        status_buffer.instance:dispatch_refresh(
+          { update_diffs = { "*:" .. path } },
+          string.format("%s:%s", o.event, o.file)
+        )
       end, function() end)
     end,
     group = group,

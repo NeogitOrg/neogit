@@ -1,7 +1,8 @@
-local Component = require("neogit.lib.ui.component")
+---@source component.lua
 
 ---@class RendererIndex
 ---@field index table
+---@field items table
 local RendererIndex = {}
 RendererIndex.__index = RendererIndex
 
@@ -27,16 +28,43 @@ function RendererIndex:add(node)
 end
 
 ---@param node Component
-function RendererIndex:add_id(node)
-  if tonumber(node.options.id) then
+---@param id? string
+function RendererIndex:add_id(node, id)
+  id = id or node.options.id
+  assert(id, "id cannot be nil")
+
+  if tonumber(id) then
     error("Cannot use an integer ID for a component")
   end
 
-  self.index[node.options.id] = node
+  self.index[id] = node
+end
+
+-- For tracking item locations within status buffer. Needed to make selections.
+function RendererIndex:add_section(name)
+  self.items[#self.items].name = name
+  table.insert(self.items, { items = {} })
+end
+
+function RendererIndex:add_item(item, first, last)
+  if not self.items[#self.items].first then
+    self.items[#self.items].first = first - 1
+  end
+
+  self.items[#self.items].last = last
+
+  item.first = first
+  item.last = last
+  table.insert(self.items[#self.items].items, item)
 end
 
 function RendererIndex.new()
-  return setmetatable({ index = {} }, RendererIndex)
+  return setmetatable({
+    index = {},
+    items = {
+      { items = {} }, -- First section
+    },
+  }, RendererIndex)
 end
 
 ---@class RendererBuffer
@@ -54,13 +82,19 @@ end
 ---@field buffer RendererBuffer
 ---@field flags RendererFlags
 ---@field namespace integer
+---@field layout table
 ---@field current_column number
 ---@field index table
 local Renderer = {}
+Renderer.__index = Renderer
 
-function Renderer:new(namespace)
+---@param layout table
+---@param buffer Buffer
+---@return Renderer
+function Renderer:new(layout, buffer)
   local obj = {
-    namespace = namespace,
+    namespace = buffer:create_namespace("VirtualText"),
+    layout = layout,
     buffer = {
       line = {},
       highlight = {},
@@ -76,29 +110,34 @@ function Renderer:new(namespace)
   }
 
   setmetatable(obj, self)
-  self.__index = self
 
   return obj
 end
 
----@param layout table
----@return RendererBuffer, RendererIndex
-function Renderer:render(layout)
-  local root = Component.new(function()
-    return {
-      tag = "_root",
-      children = layout,
-    }
-  end)()
+---@return Renderer
+function Renderer:render()
+  self:_render(self.layout, self.layout.children, 0)
 
-  self:_render(root, root.children, 0)
+  return self
+end
 
-  return self.buffer, self.index
+---@return RendererIndex
+function Renderer:node_index()
+  return self.index
+end
+
+---@return RendererIndex
+function Renderer:item_index()
+  return self.index.items
 end
 
 function Renderer:_build_child(child, parent, index)
   if child.options.id then
     self.index:add_id(child)
+  end
+
+  if child.options.yankable then
+    self.index:add_id(child, child.options.yankable)
   end
 
   child.parent = parent
@@ -154,6 +193,15 @@ function Renderer:_render_child(child)
   end
 
   child.position.row_end = #self.buffer.line
+
+  if child.options.section then
+    self.index:add_section(child.options.section)
+  end
+
+  if child.options.item then
+    child.options.item.folded = child.options.folded
+    self.index:add_item(child.options.item, child.position.row_start, child.position.row_end)
+  end
 
   local line_hl = child:get_line_highlight()
   if line_hl then
@@ -214,8 +262,6 @@ function Renderer:_render_text(child)
   table.insert(self.buffer.line, table.concat { child:get_padding_left(), child.value })
   self.index:add(child)
 end
-
--- TODO: This nested-row shit is lame. V
 
 ---@param child Component
 ---@param i integer index of child in parent.children

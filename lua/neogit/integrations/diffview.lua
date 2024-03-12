@@ -10,7 +10,7 @@ local dv_utils = require("diffview.utils")
 
 local neogit = require("neogit")
 local repo = require("neogit.lib.git.repository")
-local status = require("neogit.status")
+local status = require("neogit.buffers.status")
 local a = require("plenary.async")
 
 local old_config
@@ -18,7 +18,7 @@ local old_config
 M.diffview_mappings = {
   close = function()
     vim.cmd("tabclose")
-    neogit.dispatch_refresh(nil, "diffview_close")
+    neogit.dispatch_refresh()
     dv.setup(old_config)
   end,
 }
@@ -101,7 +101,7 @@ local function get_local_diff_view(section_name, item_name, opts)
   }
 
   view:on_files_staged(a.void(function(_)
-    status.refresh({ update_diffs = true }, "on_files_staged")
+    status.instance:dispatch_refresh({ update_diffs = true }, "on_files_staged")
     view:update_files()
   end))
 

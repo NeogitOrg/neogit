@@ -28,25 +28,17 @@ M.init_repo = function()
     notification.error("Invalid Directory")
     return
   end
-
-  local status = require("neogit.status")
-  status.cwd_changed = true
-  vim.cmd.lcd(directory)
+  local status = require("neogit.buffers.status")
+  status.instance:chdir(directory)
 
   if cli.is_inside_worktree() then
-    if
-      not input.get_confirmation(
-        string.format("Reinitialize existing repository %s?", directory),
-        { values = { "&Yes", "&No" }, default = 2 }
-      )
-    then
+    if not input.get_permission(("Reinitialize existing repository %s?"):format(directory)) then
       return
     end
   end
 
   M.create(directory)
-
-  status.refresh(nil, "InitRepo")
+  status.instance:dispatch_refresh(nil, "InitRepo")
 end
 
 return M

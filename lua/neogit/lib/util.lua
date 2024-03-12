@@ -392,6 +392,10 @@ function M.pad_right(s, len)
   return s .. string.rep(" ", math.max(len - #s, 0))
 end
 
+function M.pad_left(s, len)
+  return string.rep(" ", math.max(len - #s, 0)) .. s
+end
+
 --- http://lua-users.org/wiki/StringInterpolation
 --- @param template string
 --- @param values table

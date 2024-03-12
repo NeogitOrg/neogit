@@ -18,6 +18,13 @@ local diff_add_start = "+"
 local diff_delete_start = "-"
 
 M.Diff = Component.new(function(diff)
+  return col.tag("Diff")({
+    text(string.format("%s %s", diff.kind, diff.file), { line_hl = "NeogitDiffHeader" }),
+    M.DiffHunks(diff),
+  }, { foldable = true, folded = false, context = true })
+end)
+
+M.DiffHunks = Component.new(function(diff)
   local hunk_props = map(diff.hunks, function(hunk)
     local header = diff.lines[hunk.diff_from]
 
@@ -25,19 +32,20 @@ M.Diff = Component.new(function(diff)
       return diff.lines[i]
     end)
 
+    hunk.content = content
+
     return {
       header = header,
       content = content,
+      hunk = hunk,
+      folded = hunk._folded,
     }
   end)
 
-  return col.tag("Diff")({
-    text(string.format("%s %s", diff.kind, diff.file), { line_hl = "NeogitDiffHeader" }),
-    col.tag("DiffContent") {
-      col.tag("DiffInfo")(map(diff.info, text)),
-      col.tag("HunkList")(map(hunk_props, M.Hunk)),
-    },
-  }, { foldable = true, folded = false, context = true })
+  return col.tag("DiffContent") {
+    col.tag("DiffInfo")(map(diff.info, text)),
+    col.tag("HunkList")(map(hunk_props, M.Hunk)),
+  }
 end)
 
 local HunkLine = Component.new(function(line)
@@ -58,7 +66,7 @@ M.Hunk = Component.new(function(props)
   return col.tag("Hunk")({
     text.line_hl("NeogitHunkHeader")(props.header),
     col.tag("HunkContent")(map(props.content, HunkLine)),
-  }, { foldable = true, folded = false, context = true })
+  }, { foldable = true, folded = props.folded or false, context = true, hunk = props.hunk })
 end)
 
 M.List = Component.new(function(props)

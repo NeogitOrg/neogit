@@ -31,13 +31,24 @@ local configurations = {
     },
   },
 
+  ["name-rev"] = config {
+    flags = {
+      name_only = "--name-only",
+      no_undefined = "--no-undefined",
+    },
+    options = {
+      refs = "--refs",
+      exclude = "--exclude",
+    },
+  },
+
   init = config {},
 
   ["checkout-index"] = config {
     flags = {
       all = "--all",
       force = "--force",
-    }
+    },
   },
 
   worktree = config {
@@ -569,6 +580,7 @@ local configurations = {
 -- repository.git_root is used by all other library functions, so it's most likely the one you want to use.
 -- git_root_of_cwd() returns the git repo of the cwd, which can change anytime
 -- after git_root_of_cwd() has been called.
+---@return string
 local function git_root_of_cwd()
   local process = process
     .new({
@@ -580,8 +592,7 @@ local function git_root_of_cwd()
     :spawn_blocking()
 
   if process ~= nil and process.code == 0 then
-    local out = process.stdout[1]
-    return Path:new(out):absolute()
+    return Path:new(process.stdout[1]):absolute()
   else
     return ""
   end

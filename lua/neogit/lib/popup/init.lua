@@ -659,6 +659,7 @@ function M:show()
         vim.schedule(function()
           if buf:is_focused() then
             vim.cmd.resize(vim.fn.line("$") + 1)
+            buf:set_window_option("winfixheight", true)
           end
         end)
       end

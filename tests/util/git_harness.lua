@@ -1,4 +1,4 @@
-local status = require("neogit.status")
+local neogit = require("neogit")
 local a = require("plenary.async")
 local M = {}
 local util = require("tests.util.util")
@@ -57,10 +57,10 @@ function M.in_prepared_repo(cb)
     require("neogit").setup()
     vim.cmd("Neogit")
 
-    a.util.block_on(status.reset)
+    a.util.block_on(neogit.reset)
 
     vim.wait(1000, function()
-      return not status.is_refresh_locked()
+      return not neogit.status.instance:_is_refresh_locked()
     end, 100)
 
     a.util.block_on(function()
@@ -69,7 +69,9 @@ function M.in_prepared_repo(cb)
         error(err)
       end
 
-      a.util.block_on(status.close)
+      a.util.block_on(function()
+        neogit.status.instance:close()
+      end)
     end)
   end
 end
