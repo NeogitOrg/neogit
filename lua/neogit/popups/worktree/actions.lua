@@ -32,7 +32,8 @@ local function get_path(prompt)
     end
   until not dir:exists()
 
-  return dir:absolute()
+  local path, _ = dir:absolute():gsub("%s", "_")
+  return path
 end
 
 M.checkout_worktree = operations("checkout_worktree", function()
