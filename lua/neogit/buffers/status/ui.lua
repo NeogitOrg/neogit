@@ -150,18 +150,13 @@ end)
 
 local RebaseSection = Component.new(function(props)
   return col.tag("Section")({
-    row(
-      util.merge(
-        props.title,
-        {
-          text(" ("),
-          text(props.current),
-          text("/"),
-          text(#props.items - 1),
-          text(")")
-        }
-      )
-    ),
+    row(util.merge(props.title, {
+      text(" ("),
+      text(props.current),
+      text("/"),
+      text(#props.items - 1),
+      text(")"),
+    })),
     col(map(props.items, props.render)),
     EmptyLine,
   }, {

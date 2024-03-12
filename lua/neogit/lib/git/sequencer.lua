@@ -1,4 +1,3 @@
-local util = require("neogit.lib.util")
 local M = {}
 
 -- .git/sequencer/todo does not exist when there is only one commit left.

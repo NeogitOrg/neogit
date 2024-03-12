@@ -114,7 +114,7 @@ function M:open(kind)
           -- in order to use them as match patterns.
           local selected_path = vim.fn.trim(c.value)
 
-          -- Recursively navigate the layout until we hit NeogitDiffHeader leafs
+          -- Recursively navigate the layout until we hit NeogitDiffHeader leaf nodes
           -- Forward declaration required to avoid missing global error
           local diff_headers = {}
           local function find_diff_headers(layout)

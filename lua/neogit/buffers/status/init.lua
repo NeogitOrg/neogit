@@ -1,6 +1,3 @@
--- TODO
--- on-close hook to teardown stuff
---
 -- TODO: When launching the fuzzy finder, any refresh attempted will raise an exception because the set_folds() function
 -- cannot be called when the buffer is not focused, as it's not a proper API. We could implement some kind of freeze
 -- mechanism to prevent the buffer from refreshing while the fuzzy finder is open.
@@ -20,10 +17,7 @@ local git = require("neogit.lib.git")
 local watcher = require("neogit.watcher")
 local a = require("plenary.async")
 local input = require("neogit.lib.input")
-local util = require("neogit.lib.util")
-
 local logger = require("neogit.logger") -- TODO: Add logging
-local notification = require("neogit.lib.notification") -- TODO
 
 local api = vim.api
 local fn = vim.fn
@@ -1100,10 +1094,7 @@ function M:refresh(partial, reason)
       logger.debug("[STATUS][Refresh Callback] Rendering UI")
       self.buffer.ui:render(unpack(ui.Status(git.repo, self.config)))
 
-      local cursor_line = math.min(
-        fn.line("$"),
-        self.buffer.ui:resolve_cursor_location(cursor)
-      )
+      local cursor_line = math.min(fn.line("$"), self.buffer.ui:resolve_cursor_location(cursor))
 
       logger.debug("[STATUS][Refresh Callback] Moving Cursor to line " .. cursor_line)
       self.buffer:move_cursor(cursor_line)
