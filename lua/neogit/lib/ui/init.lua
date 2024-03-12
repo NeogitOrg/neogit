@@ -1,6 +1,8 @@
 local Component = require("neogit.lib.ui.component")
 local util = require("neogit.lib.util")
 local Renderer = require("neogit.lib.ui.renderer")
+local Collection = require("neogit.lib.collection")
+local logger = require("neogit.logger") -- TODO: Add logging
 
 ---@class Section
 ---@field items  StatusItem[]
@@ -211,48 +213,6 @@ function Ui:item_hunks(item, first_line, last_line, partial)
   return hunks
 end
 
--- function Ui:selected_hunks()
---   local selection = self:get_selection()
---   local first_line = selection.first_line
---   local last_line = selection.last_line
---   local item = selection.item
---
---   local hunks = {}
---
---   if item and item.diff.hunks then
---     for _, h in ipairs(item.diff.hunks) do
---       if h.first <= last_line and h.last >= first_line then
---         local from, to
---
---         local cursor_offset = first_line - h.first
---         local length = last_line - first_line
---
---         from = h.diff_from + cursor_offset
---         to = from + length
---
---         local hunk_lines = {}
---         for i = from, to do
---           table.insert(hunk_lines, item.diff.lines[i])
---         end
---
---         local o = {
---           from = from,
---           to = to,
---           __index = h,
---           hunk = h,
---           lines = hunk_lines,
---         }
---
---         setmetatable(o, o)
---
---         table.insert(hunks, o)
---       end
---     end
---   end
---
---   return hunks
--- end
-
 function Ui:get_selection()
   local visual_pos = vim.fn.line("v")
   local cursor_pos = vim.fn.line(".")
@@ -315,84 +275,6 @@ function Ui:get_selection()
   return setmetatable(res, Selection)
 end
 
----@return table
-function Ui:get_hunks_and_filenames_in_selection()
-  local range = { vim.fn.getpos("v")[2], vim.fn.getpos(".")[2] }
-  table.sort(range)
-  local start, stop = unpack(range)
-
-  local items = {
-    hunks = {
-      untracked = {},
-      unstaged = {},
-      staged = {},
-    },
-    files = {
-      untracked = {},
-      unstaged = {},
-      staged = {},
-    },
-  }
-
-  local hunks = {}
-
-  for i = start, stop do
-    local section = self:get_current_section(i)
-
-    local component = self:_find_component_by_index(i, function(node)
-      return node.options.hunk or node.options.filename
-    end)
-
-    if component and section then
-      section = section.options.section
-
-      if component.options.hunk then
-        if not hunks[component.options.hunk.hash] then
-          table.insert(items.hunks[section], component.options.hunk)
-          hunks[component.options.hunk.hash] = true
-        end
-      elseif component.options.filename then
-        table.insert(items.files[section], component.options.item)
-      end
-    end
-  end
-
-  return items
-end
-
-function Ui:get_items_in_selection()
-  local range = { vim.fn.getpos("v")[2], vim.fn.getpos(".")[2] }
-  table.sort(range)
-  local start, stop = unpack(range)
-
-  local items = {
-    untracked = {},
-    unstaged = {},
-    staged = {},
-  }
-
-  local items_set = {}
-
-  for i = start, stop do
-    local section = self:get_current_section(i)
-
-    local component = self:_find_component_by_index(i, function(node)
-      return node.options.item
-    end)
-
-    if component and section then
-      section = section.options.section
-
-      if not items_set[component.options.id] then
-        table.insert(items[section], component.options.item)
-        items_set[component.options.id] = true
-      end
-    end
-  end
-
-  return items
-end
-
 ---@return string[]
 function Ui:get_commits_in_selection()
   local range = { vim.fn.getpos("v")[2], vim.fn.getpos(".")[2] }
@@ -437,7 +319,7 @@ end
 function Ui:get_commit_under_cursor()
   local cursor = vim.api.nvim_win_get_cursor(0)
   local component = self:_find_component_by_index(cursor[1], function(node)
-    return node.options.oid
+    return node.options.oid ~= nil
   end)
 
   return component and component.options.oid
@@ -447,37 +329,133 @@ end
 function Ui:get_yankable_under_cursor()
   local cursor = vim.api.nvim_win_get_cursor(0)
   local component = self:_find_component_by_index(cursor[1], function(node)
-    return node.options.yankable
+    return node.options.yankable ~= nil
   end)
 
   return component and component.options.yankable
+end
+
+---@return Section|nil
+function Ui:first_section()
+  return self.item_index[1]
 end
 
 ---@return Component|nil
 function Ui:get_current_section(line)
   line = line or vim.api.nvim_win_get_cursor(0)[1]
   local component = self:_find_component_by_index(line, function(node)
-    return node.options.section
+    return node.options.section ~= nil
   end)
 
   return component
 end
 
--- ---@return Component[]
--- function Ui:section_items(line)
---   line = line or vim.api.nvim_win_get_cursor(0)[1]
---   local section_component = self:_find_component_by_index(line, function(node)
---     return node.options.section
---   end)
---
---   if not section_component then
---     return {}
---   end
---
---   local section = section_component.options.section
---
---   return component
--- end
+---@class CursorLocation
+---@field first number
+---@field last number
+---@field section {index: number, name: string}|nil
+---@field file {index: number, name: string}|nil
+---@field hunk {index: number, name: string}|nil
+
+---Encode the cursor location into a table
+---@param line number?
+---@return CursorLocation
+function Ui:get_cursor_location(line)
+  line = line or vim.api.nvim_win_get_cursor(0)[1]
+  local section_loc, file_loc, hunk_loc, first, last
+
+  for li, loc in ipairs(self.item_index) do
+    if line == loc.first then
+      section_loc = { index = li, name = loc.name }
+      first, last = loc.first, loc.last
+
+      break
+    elseif line >= loc.first and line <= loc.last then
+      section_loc = { index = li, name = loc.name }
+
+      for fi, file in ipairs(loc.items) do
+        if line == file.first then
+          file_loc = { index = fi, name = file.name }
+          first, last = file.first, file.last
+
+          break
+        elseif line >= file.first and line <= file.last then
+          file_loc = { index = fi, name = file.name }
+
+          for hi, hunk in ipairs(file.diff.hunks) do
+            if line >= hunk.first and line <= hunk.last then
+              hunk_loc = { index = hi, name = hunk.hash }
+              first, last = hunk.first, hunk.last
+
+              break
+            end
+          end
+
+          break
+        end
+      end
+
+      break
+    end
+  end
+
+  return { section = section_loc, file = file_loc, hunk = hunk_loc, first = first, last = last }
+end
+
+---@param cursor CursorLocation
+---@return number
+function Ui:resolve_cursor_location(cursor)
+  if #self.item_index == 0 then
+    logger.debug("[UI] No items to resolve cursor location")
+    return 1
+  end
+
+  if not cursor.section then
+    logger.debug("[UI] No Cursor Section")
+    cursor.section = { index = 1, name = "" }
+  end
+
+  local section = Collection.new(self.item_index):find(function(s)
+    return s.name == cursor.section.name
+  end)
+
+  if not section then
+    logger.debug("[UI] No Section Found '" .. cursor.section.name .. "'")
+
+    cursor.file = nil
+    cursor.hunk = nil
+    section = self.item_index[cursor.section.index] or self.item_index[#self.item_index]
+  end
+
+  if not cursor.file or not section.items or #section.items == 0 then
+    logger.debug("[UI] No file - using section.first")
+    return section.first
+  end
+
+  local file = Collection.new(section.items):find(function(f)
+    return f.name == cursor.file.name
+  end)
+
+  if not file then
+    logger.debug(("[UI] No file found %q"):format(cursor.file.name))
+
+    cursor.hunk = nil
+    file = section.items[cursor.file.index] or section.items[#section.items]
+  end
+
+  if not cursor.hunk or not file.diff.hunks or #file.diff.hunks == 0 then
+    logger.debug("[UI] No hunk - using file.first")
+    return file.first
+  end
+
+  local hunk = Collection.new(file.diff.hunks):find(function(h)
+    return h.hash == cursor.hunk.name
+  end) or file.diff.hunks[cursor.hunk.index] or file.diff.hunks[#file.diff.hunks]
+
+  logger.debug(("[UI] Using hunk.first %q"):format(cursor.hunk.name))
+
+  return hunk.first
+end
 
 ---@return table|nil
 function Ui:get_hunk_or_filename_under_cursor()
@@ -583,9 +561,6 @@ function Ui:render(...)
 
   if not vim.tbl_isempty(self.layout) then
     self._old_node_attributes = gather_nodes(self.layout)
-
-    -- Restoring cursor location for status buffer on update. Might need to move this, as it doesn't really make sense
-    -- here.
   end
 
   self.layout = root

@@ -1094,48 +1094,19 @@ function M:refresh(partial, reason)
         return
       end
 
-      local cursor_line = self.buffer:cursor_line()
-      local cursor_goto
-      local context = self.buffer.ui:get_cursor_context()
-
-      if context then
-        if context.options.tag == "Hunk" then
-          if context.index == 1 then
-            if #context.parent.children > 1 then
-              cursor_line = ({ context:row_range_abs() })[1]
-            else
-              cursor_line = ({ context:row_range_abs() })[1] - 1
-            end
-          else
-            local index = math.min(#context.parent.children - 1, context.index)
-            cursor_line = ({ context.parent.children[index]:row_range_abs() })[1]
-          end
-        elseif context.options.tag == "File" then
-          if #context.parent.children == 1 then
-            -- Yankable lets us jump from one section to the other. Go to same file in new section.
-            cursor_goto = context.options.yankable
-          else
-            local index = math.min(#context.parent.children - 1, context.index)
-            cursor_goto = context.parent.children[index].options.id
-          end
-        else
-          error("Unknown cursor jump")
-        end
-      end
+      local cursor = self.buffer.ui:get_cursor_location()
+      logger.debug("[STATUS][Refresh Callback] Cursor: " .. vim.inspect(cursor))
 
       logger.debug("[STATUS][Refresh Callback] Rendering UI")
       self.buffer.ui:render(unpack(ui.Status(git.repo, self.config)))
 
-      if cursor_goto then
-        logger.debug("[STATUS] Cursor goto: " .. cursor_goto)
-        local component = self.buffer.ui.node_index:find_by_id(cursor_goto)
-        if component then
-          cursor_line, _ = component:row_range_abs()
-        end
-      end
+      local cursor_line = math.min(
+        fn.line("$"),
+        self.buffer.ui:resolve_cursor_location(cursor)
+      )
 
-      logger.debug("[STATUS][Refresh Callback] Moving Cursor")
-      self.buffer:move_cursor(math.min(fn.line("$"), cursor_line))
+      logger.debug("[STATUS][Refresh Callback] Moving Cursor to line " .. cursor_line)
+      self.buffer:move_cursor(cursor_line)
 
       api.nvim_exec_autocmds("User", { pattern = "NeogitStatusRefreshed", modeline = false })
 
