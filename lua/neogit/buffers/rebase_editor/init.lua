@@ -12,28 +12,39 @@ local M = {}
 
 local function line_action(action, comment_char)
   return function(buffer)
-    local line = vim.split(vim.api.nvim_get_current_line(), " ")
-    if line[1] == comment_char then
-      table.remove(line, 1)
-    end
-
-    -- Check if line is "break" or "exec"
-    if line[1]:sub(1, 1):match("[be]") then
-      vim.cmd("normal! j")
-      return
-    end
-
-    if line[2] and line[2]:match("%x%x%x%x%x%x%x") and line[1] ~= "Rebase" then
-      if #line[1] == 1 then
-        action = action:sub(1, 1)
+    local _index = 0
+    local _count = vim.v.count
+    local line = {}
+    while _index <= _count do
+      line = vim.split(vim.api.nvim_get_current_line(), " ")
+      if line[1] == comment_char then
+        table.remove(line, 1)
+      end
+      -- Check if line is "break" or "exec"
+      -- the original match will also skip "edit",i'm not sure is that intended
+      if line[1]:sub(1, 2):match("^(br|ex)") then
+        vim.cmd("normal! j")
+        if _index ~= 0 then
+          break --or continue?i think break is used in most case
+        end
+        return
       end
 
-      line[1] = action
-      vim.api.nvim_set_current_line(table.concat(line, " "))
-      buffer:write()
-    end
+      if line[2] and line[2]:match("%x%x%x%x%x%x%x") and line[1] ~= "Rebase" then
+        if #line[1] == 1 then
+          action = action:sub(1, 1)
+        end
 
-    vim.cmd("normal! j")
+        line[1] = action
+        vim.api.nvim_set_current_line(table.concat(line, " "))
+      else
+        break
+      end
+
+      vim.cmd("normal! j")
+      _index = _index + 1
+    end
+    buffer:write()
   end
 end
 
@@ -64,6 +75,7 @@ function M:open(kind)
     buftype = "",
     kind = kind,
     modifiable = true,
+    disable_line_numbers = config.values.disable_line_numbers,
     readonly = false,
     after = function(buffer)
       local padding = util.max_length(util.flatten(vim.tbl_values(mapping)))
