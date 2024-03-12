@@ -118,6 +118,7 @@ end
 ---@class WrapOpts
 ---@field autocmd string
 ---@field msg NotifyMsg
+---@field interactive boolean?
 
 ---@param cmd any
 ---@param opts WrapOpts
@@ -131,7 +132,14 @@ function M.wrap(cmd, opts)
   if opts.msg.setup then
     notification.info(opts.msg.setup)
   end
-  local result = cmd.env(M.get_envs_git_editor()):in_pty(true).call { verbose = true }
+
+  local c = cmd.env(M.get_envs_git_editor()):in_pty(true)
+  local call_cmd = c.call
+  if opts.interactive then
+    call_cmd = c.call_interactive
+  end
+
+  local result = call_cmd { verbose = true }
 
   a.util.scheduler()
 
