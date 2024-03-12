@@ -1029,13 +1029,17 @@ function M:open(kind)
     render = function()
       return ui.Status(self.state, self.config)
     end,
-    after = function()
+    ---@param buffer Buffer
+    ---@param _win any
+    after = function(buffer, _win)
       vim.cmd([[setlocal nowrap]])
 
       if config.values.filewatcher.enabled then
         logger.debug("[STATUS] Starting file watcher")
         watcher.new(git.repo:git_path():absolute()):start()
       end
+
+      buffer:move_cursor(buffer.ui:first_section().first)
     end,
   }
 end
