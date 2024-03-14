@@ -139,6 +139,7 @@ local configurations = {
       name_only = "--name-only",
       no_ext_diff = "--no-ext-diff",
       no_index = "--no-index",
+      check = "--check",
     },
   },
 
@@ -233,6 +234,8 @@ local configurations = {
     flags = {
       _track = "--track",
       detach = "--detach",
+      ours = "--ours",
+      theirs = "--theirs",
     },
     aliases = {
       track = function(tbl)
@@ -263,6 +266,11 @@ local configurations = {
       new_branch_with_start_point = function(tbl)
         return function(branch, start_point)
           return tbl.args(branch, start_point).b()
+        end
+      end,
+      file = function(tbl)
+        return function(file)
+          return tbl.args(file)
         end
       end,
     },
