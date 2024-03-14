@@ -99,7 +99,7 @@ function M:open(kind)
           local patches = {}
           local untracked_files = {}
           local unstaged_files = {}
-          local staged_files_new = {}
+          local new_files = {}
           local staged_files_modified = {}
           local stashes = {}
 
@@ -137,10 +137,14 @@ function M:open(kind)
                   if section.name == "untracked" then
                     table.insert(untracked_files, item.escaped_path)
                   elseif section.name == "unstaged" then
-                    table.insert(unstaged_files, item.escaped_path)
+                    if selection.item.mode == "A" then
+                      table.insert(new_files, item.escaped_path)
+                    else
+                      table.insert(unstaged_files, item.escaped_path)
+                    end
                   elseif section.name == "staged" then
                     if item.mode == "N" then
-                      table.insert(staged_files_new, item.escaped_path)
+                      table.insert(new_files, item.escaped_path)
                     else
                       table.insert(staged_files_modified, item.escaped_path)
                     end
@@ -180,12 +184,12 @@ function M:open(kind)
               git.index.checkout(unstaged_files)
             end
 
-            if #staged_files_new > 0 then
-              git.index.reset(staged_files_new)
+            if #new_files > 0 then
+              git.index.reset(new_files)
 
               a.util.scheduler()
 
-              for _, file in ipairs(staged_files_new) do
+              for _, file in ipairs(new_files) do
                 local bufnr = fn.bufexists(file.name)
                 if bufnr and bufnr > 0 then
                   api.nvim_buf_delete(bufnr, { force = true })
@@ -500,7 +504,20 @@ function M:open(kind)
             elseif section == "unstaged" then
               message = ("Discard %q?"):format(selection.item.name)
               action = function()
-                git.index.checkout { selection.item.name }
+                if selection.item.mode == "A" then
+                  git.index.reset { selection.item.escaped_path }
+
+                  a.util.scheduler()
+
+                  local bufnr = fn.bufexists(selection.item.name)
+                  if bufnr and bufnr > 0 then
+                    api.nvim_buf_delete(bufnr, { force = true })
+                  end
+
+                  fn.delete(selection.item.escaped_path)
+                else
+                  git.index.checkout { selection.item.name }
+                end
               end
             elseif section == "staged" then
               message = ("Discard %q?"):format(selection.item.name)
@@ -588,14 +605,14 @@ function M:open(kind)
             elseif section == "staged" then
               message = ("Discard %s files?"):format(#selection.section.items)
               action = function()
-                local staged_files_new = {}
+                local new_files = {}
                 local staged_files_modified = {}
                 local staged_files_renamed = {}
                 local staged_files_deleted = {}
 
                 for _, item in ipairs(selection.section.items) do
-                  if item.mode == "N" then
-                    table.insert(staged_files_new, item.escaped_path)
+                  if item.mode == "N" or item.mode == "A" then
+                    table.insert(new_files, item.escaped_path)
                   elseif item.mode == "M" then
                     table.insert(staged_files_modified, item.escaped_path)
                   elseif item.mode == "R" then
@@ -607,13 +624,13 @@ function M:open(kind)
                   end
                 end
 
-                if #staged_files_new > 0 then
+                if #new_files > 0 then
                   -- ensure the file is deleted
-                  git.index.reset(staged_files_new)
+                  git.index.reset(new_files)
 
                   a.util.scheduler()
 
-                  for _, file in ipairs(staged_files_new) do
+                  for _, file in ipairs(new_files) do
                     local bufnr = fn.bufexists(file.name)
                     if bufnr and bufnr > 0 then
                       api.nvim_buf_delete(bufnr, { force = true })
