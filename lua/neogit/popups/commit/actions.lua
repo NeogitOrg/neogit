@@ -31,6 +31,7 @@ local function do_commit(popup, cmd)
     msg = {
       success = "Committed",
     },
+    interactive = true,
   })
 end
 
