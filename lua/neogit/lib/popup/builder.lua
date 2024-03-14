@@ -381,7 +381,7 @@ function M:action(keys, description, callback)
       permit:forget()
 
       logger.debug("[ACTION] Dispatching Refresh")
-      require("neogit.status").dispatch_refresh(nil, "action")
+      require("neogit.status").dispatch_refresh_all(nil, "action")
     end)
   end
 

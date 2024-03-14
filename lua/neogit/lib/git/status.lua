@@ -7,6 +7,32 @@ local Collection = require("neogit.lib.collection")
 ---@field has_diff boolean
 ---@field diff string[]
 ---@field absolute_path string
+---@field submodule SubmoduleStatus|nil
+
+---@class SubmoduleStatus
+---@field commit_changed boolean C
+---@field has_tracked_changes boolean M
+---@field has_untracked_changes boolean U
+
+---@param status string
+-- <sub>       A 4 character field describing the submodule state.
+--             "N..." when the entry is not a submodule.
+--             "S<c><m><u>" when the entry is a submodule.
+--             <c> is "C" if the commit changed; otherwise ".".
+--             <m> is "M" if it has tracked changes; otherwise ".".
+--             <u> is "U" if there are untracked changes; otherwise ".".
+local function parse_submodule_status(status)
+  local a, b, c, d = status:match("(.)(.)(.)(.)")
+  if a == "N" then
+    return nil
+  else
+    return {
+      commit_changed = b == "C",
+      has_tracked_changes = c == "M",
+      has_untracked_changes = d == "U",
+    }
+  end
+end
 
 local function update_file(cwd, file, mode, name, original_name)
   local mt, diff, has_diff
@@ -39,6 +65,7 @@ local match_1 = "(.)(.) (....) (%d+) (%d+) (%d+) (%w+) (%w+) (.+)"
 local match_2 = "(.)(.) (....) (%d+) (%d+) (%d+) (%w+) (%w+) (%a%d+) ([^\t]+)\t?(.+)"
 
 local function update_status(state)
+  local logger = require("neogit.logger")
   local git = require("neogit.lib.git")
   local cwd = state.git_root
 
@@ -104,37 +131,42 @@ local function update_status(state)
       elseif kind == "?" then
         table.insert(untracked_files, update_file(cwd, old_files_hash.untracked_files[rest], nil, rest))
       elseif kind == "1" then
-        local mode_staged, mode_unstaged, _, _, _, _, _, _, name = rest:match(match_1)
+        local mode_staged, mode_unstaged, submodule, _, _, _, _, _, name = rest:match(match_1)
+
+        local submodule = parse_submodule_status(submodule)
 
         if mode_staged ~= "." then
-          table.insert(staged_files, update_file(cwd, old_files_hash.staged_files[name], mode_staged, name))
+          local file = update_file(cwd, old_files_hash.staged_files[name], mode_staged, name)
+          file.submodule = submodule
+          table.insert(staged_files, file)
         end
 
         if mode_unstaged ~= "." then
-          table.insert(
-            unstaged_files,
-            update_file(cwd, old_files_hash.unstaged_files[name], mode_unstaged, name)
-          )
+          local file = update_file(cwd, old_files_hash.unstaged_files[name], mode_unstaged, name)
+          file.submodule = submodule
+          table.insert(unstaged_files, file)
         end
       elseif kind == "2" then
-        local mode_staged, mode_unstaged, _, _, _, _, _, _, _, name, orig_name = rest:match(match_2)
+        local mode_staged, mode_unstaged, submodule, _, _, _, _, _, _, name, orig_name = rest:match(match_2)
+
+        local submodule = parse_submodule_status(submodule)
 
         if mode_staged ~= "." then
-          table.insert(
-            staged_files,
-            update_file(cwd, old_files_hash.staged_files[name], mode_staged, name, orig_name)
-          )
+          local file = update_file(cwd, old_files_hash.staged_files[name], mode_staged, name, orig_name)
+          file.submodule = submodule
+          table.insert(staged_files, file)
         end
 
         if mode_unstaged ~= "." then
-          table.insert(
-            unstaged_files,
-            update_file(cwd, old_files_hash.unstaged_files[name], mode_unstaged, name, orig_name)
-          )
+          local file = update_file(cwd, old_files_hash.unstaged_files[name], mode_unstaged, name, orig_name)
+          file.submodule = submodule
+          table.insert(unstaged_files, file)
         end
       end
     end
   end
+
+  logger.fmt_info("Updated status %s", vim.inspect(head))
 
   -- These are a bit hacky - because we can _partially_ refresh repo state (for now),
   -- some things need to be carried over here.

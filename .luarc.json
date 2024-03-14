@@ -9,5 +9,5 @@
         "describe",
         "before_each"
     ],
-    "workspace.checkThirdParty": "Disable",
+    "workspace.checkThirdParty": "Disable"
 }

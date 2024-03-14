@@ -21,13 +21,13 @@ function M.setup(opts)
   M.autocmd_group = vim.api.nvim_create_augroup("Neogit", { clear = false })
 
   M.status = require("neogit.status")
-  M.dispatch_reset = M.status.dispatch_reset
-  M.refresh = M.status.refresh
-  M.reset = M.status.reset
-  M.refresh_manually = M.status.refresh_manually
+  M.dispatch_reset = M.status.dispatch_reset_all
+  M.refresh = M.status.refresh_all
+  M.reset = M.status.reset_all_all
+  M.refresh_manually = M.status.dispatch_refresh_manually_all
   M.dispatch_refresh = M.status.dispatch_refresh
   M.refresh_viml_compat = M.status.refresh_viml_compat
-  M.close = M.status.close
+  M.close = M.status.close_all
 
   M.lib = require("neogit.lib")
   M.cli = M.lib.git.cli
@@ -63,6 +63,7 @@ function M.open(opts)
   opts = opts or {}
 
   if opts.cwd and not opts.no_expand then
+    ---@diagnostic disable-next-line: assign-type-mismatch
     opts.cwd = vim.fn.expand(opts.cwd)
   end
 
@@ -101,12 +102,8 @@ function M.open(opts)
     end
   else
     a.run(function()
-      if status.status_buffer then
         vim.cmd.lcd(opts.cwd)
-        status.refresh(nil, "open")
-      else
-        status.create(opts.kind, opts.cwd)
-      end
+      status.create(opts.kind, opts.cwd)
     end)
   end
 end
