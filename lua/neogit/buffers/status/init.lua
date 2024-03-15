@@ -18,6 +18,7 @@ local watcher = require("neogit.watcher")
 local a = require("plenary.async")
 local input = require("neogit.lib.input")
 local logger = require("neogit.logger") -- TODO: Add logging
+local notification = require("neogit.lib.notification")
 
 local api = vim.api
 local fn = vim.fn
@@ -486,7 +487,7 @@ function M:open(kind)
           end
 
           local section = selection.section.name
-          local action, message
+          local action, message, choices
 
           if selection.item and selection.item.first == fn.line(".") then -- Discard File
             if section == "untracked" then
@@ -502,21 +503,42 @@ function M:open(kind)
                 fn.delete(selection.item.escaped_path)
               end
             elseif section == "unstaged" then
-              message = ("Discard %q?"):format(selection.item.name)
-              action = function()
-                if selection.item.mode == "A" then
-                  git.index.reset { selection.item.escaped_path }
+              if selection.item.mode == "UU" then
+                choices = { "&ours", "&theirs", "&conflict", "&abort" }
+                action = function()
+                  local choice = input.get_choice(
+                    "Discard conflict by taking...",
+                    { values = choices, default = #choices }
+                  )
 
-                  a.util.scheduler()
-
-                  local bufnr = fn.bufexists(selection.item.name)
-                  if bufnr and bufnr > 0 then
-                    api.nvim_buf_delete(bufnr, { force = true })
+                  if choice == "o" then
+                    git.cli.checkout.ours.files(selection.item.absolute_path).call_sync()
+                    git.status.stage { selection.item.name }
+                  elseif choice == "t" then
+                    git.cli.checkout.theirs.files(selection.item.absolute_path).call_sync()
+                    git.status.stage { selection.item.name }
+                  elseif choice == "c" then
+                    git.cli.checkout.merge.files(selection.item.absolute_path).call_sync()
+                    git.status.stage { selection.item.name }
                   end
+                end
+              else
+                message = ("Discard %q?"):format(selection.item.name)
+                action = function()
+                  if selection.item.mode == "A" then
+                    git.index.reset { selection.item.escaped_path }
 
-                  fn.delete(selection.item.escaped_path)
-                else
-                  git.index.checkout { selection.item.name }
+                    a.util.scheduler()
+
+                    local bufnr = fn.bufexists(selection.item.name)
+                    if bufnr and bufnr > 0 then
+                      api.nvim_buf_delete(bufnr, { force = true })
+                    end
+
+                    fn.delete(selection.item.escaped_path)
+                  else
+                    git.index.checkout { selection.item.name }
+                  end
                 end
               end
             elseif section == "staged" then
@@ -537,6 +559,7 @@ function M:open(kind)
                   git.index.reset { selection.item.escaped_path }
                   git.index.checkout { selection.item.escaped_path }
                 elseif selection.item.mode == "R" then
+                  -- https://github.com/magit/magit/blob/28bcd29db547ab73002fb81b05579e4a2e90f048/lisp/magit-apply.el#L675
                   git.index.reset_HEAD(selection.item.name, selection.item.original_name)
                   git.index.checkout { selection.item.original_name }
                 elseif selection.item.mode == "D" then
@@ -555,8 +578,15 @@ function M:open(kind)
               end
             end
           elseif selection.item then -- Discard Hunk
+            if selection.item.mode == "UU" then
+              -- TODO: https://github.com/emacs-mirror/emacs/blob/master/lisp/vc/smerge-mode.el
+              notification.warn("Resolve conflicts in file before discarding hunks.")
+              return
+            end
+
             local hunk =
               self.buffer.ui:item_hunks(selection.item, selection.first_line, selection.last_line, false)[1]
+
             local patch = git.index.generate_patch(selection.item, hunk, hunk.from, hunk.to, true)
 
             if section == "untracked" then
@@ -598,9 +628,23 @@ function M:open(kind)
                 end
               end
             elseif section == "unstaged" then
-              message = ("Discard %s files?"):format(#selection.section.items)
-              action = function()
-                git.index.checkout_unstaged()
+              local conflict = false
+              for _, item in ipairs(selection.section.items) do
+                if item.mode == "UU" then
+                  conflict = true
+                  break
+                end
+              end
+
+              if conflict then
+                -- TODO: https://github.com/magit/magit/blob/28bcd29db547ab73002fb81b05579e4a2e90f048/lisp/magit-apply.el#L626
+                notification.warn("Resolve conflicts before discarding section.")
+                return
+              else
+                message = ("Discard %s files?"):format(#selection.section.items)
+                action = function()
+                  git.index.checkout_unstaged()
+                end
               end
             elseif section == "staged" then
               message = ("Discard %s files?"):format(#selection.section.items)
@@ -668,7 +712,7 @@ function M:open(kind)
             end
           end
 
-          if action and input.get_permission(message) then
+          if action and (choices or input.get_permission(message)) then
             action()
             self:refresh()
           end

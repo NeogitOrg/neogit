@@ -174,6 +174,18 @@ end
 function Ui:item_hunks(item, first_line, last_line, partial)
   local hunks = {}
 
+  -- TODO: Move this to lib.git.diff
+  -- local diff = require("neogit.lib.git").cli.diff.check.call_sync { hidden = true, ignore_error = true }
+  -- local conflict_markers = {}
+  -- if diff.code == 2 then
+  --   for _, out in ipairs(diff.stdout) do
+  --     local line = string.gsub(out, "^" .. item.name .. ":", "")
+  --     if line ~= out and string.match(out, "conflict") then
+  --       table.insert(conflict_markers, tonumber(string.match(line, "%d+")))
+  --     end
+  --   end
+  -- end
+
   if not item.folded and item.diff.hunks then
     for _, h in ipairs(item.diff.hunks) do
       if h.first <= last_line and h.last >= first_line then
@@ -195,12 +207,21 @@ function Ui:item_hunks(item, first_line, last_line, partial)
           table.insert(hunk_lines, item.diff.lines[i])
         end
 
+        -- local conflict = false
+        -- for _, n in ipairs(conflict_markers) do
+        --   if from <= n and n <= to then
+        --     conflict = true
+        --     break
+        --   end
+        -- end
+
         local o = {
           from = from,
           to = to,
           __index = h,
           hunk = h,
           lines = hunk_lines,
+          -- conflict = conflict,
         }
 
         setmetatable(o, o)

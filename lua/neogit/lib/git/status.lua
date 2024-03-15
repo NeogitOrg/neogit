@@ -38,6 +38,7 @@ local function update_file(cwd, file, mode, name, original_name)
 end
 
 local tag_pattern = "(.-)%-([0-9]+)%-g%x+$"
+local match_header = "# ([%w%.]+) (.+)"
 local match_kind = "(.) (.+)"
 local match_u = "(..) (....) (%d+) (%d+) (%d+) (%d+) (%w+) (%w+) (%w+) (.+)"
 local match_1 = "(.)(.) (....) (%d+) (%d+) (%d+) (%w+) (%w+) (.+)"
@@ -72,7 +73,7 @@ local function update_status(state)
   end)
 
   for _, l in ipairs(result) do
-    local header, value = l:match("# ([%w%.]+) (.+)")
+    local header, value = l:match(match_header)
     if header then
       if header == "branch.head" then
         head.branch = value
