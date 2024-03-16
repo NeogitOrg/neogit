@@ -40,17 +40,18 @@ function RendererIndex:add_id(node, id)
   self.index[id] = node
 end
 
--- For tracking item locations within status buffer. Needed to make selections.
-function RendererIndex:add_section(name)
+---For tracking item locations within status buffer. Needed to make selections.
+---@param name string
+---@param first number
+---@param last number
+function RendererIndex:add_section(name, first, last)
   self.items[#self.items].name = name
+  self.items[#self.items].first = first
+  self.items[#self.items].last = last
   table.insert(self.items, { items = {} })
 end
 
 function RendererIndex:add_item(item, first, last)
-  if not self.items[#self.items].first then
-    self.items[#self.items].first = first - 1
-  end
-
   self.items[#self.items].last = last
 
   item.first = first
@@ -195,7 +196,7 @@ function Renderer:_render_child(child)
   child.position.row_end = #self.buffer.line
 
   if child.options.section then
-    self.index:add_section(child.options.section)
+    self.index:add_section(child.options.section, child.position.row_start, child.position.row_end)
   end
 
   if child.options.item then
