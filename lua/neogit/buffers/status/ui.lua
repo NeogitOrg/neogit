@@ -122,6 +122,14 @@ local SectionTitleRebase = Component.new(function(props)
   end
 end)
 
+local SectionTitleMerge = Component.new(function(props)
+  return {
+    text.highlight("NeogitSectionHeader")(props.title),
+    text(" "),
+    text.highlight("NeogitBranch")(props.branch),
+  }
+end)
+
 local Section = Component.new(function(props)
   return col.tag("Section")({
     row(util.merge(props.title, { text(" ("), text(#props.items), text(")") })),
@@ -290,9 +298,12 @@ local SectionItemSequencer = Component.new(function(item)
     or (item.action == "onto" and "NeogitGraphBlue")
     or "NeogitGraphOrange"
 
+  local show_action = #item.action > 0
+  local action = show_action and util.pad_right(item.action, 6) or ""
+
   return row({
-    text.highlight(action_hl)(util.pad_right(item.action, 6)),
-    text(" "),
+    text.highlight(action_hl)(action),
+    text(show_action and " " or ""),
     text.highlight("Comment")(item.oid:sub(1, 7)),
     text(" "),
     text(item.subject),
@@ -311,6 +322,9 @@ function M.Status(state, config)
 
   local show_tag = state.head.tag.name
     and state.head.branch ~= "(detached)"
+
+  local show_merge = state.merge.head
+    and not config.sections.sequencer.hidden
 
   local show_rebase = #state.rebase.items > 0
     and not config.sections.rebase.hidden
@@ -382,6 +396,13 @@ function M.Status(state, config)
           yankable = state.head.tag.oid,
         },
         EmptyLine,
+        show_merge and SequencerSection {
+          title = SectionTitleMerge { title = "Merging", branch = state.merge.branch },
+          render = SectionItemSequencer,
+          items = { { action = "", oid = state.merge.head, subject = state.merge.subject } },
+          folded = config.sections.sequencer.folded,
+          name = "merge",
+        },
         show_rebase and RebaseSection {
           title = SectionTitleRebase {
             title = "Rebasing",
