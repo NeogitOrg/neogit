@@ -275,7 +275,8 @@ M.delete_branch = operation("delete_branch", function()
 end)
 
 local function parse_remote_info(service, url)
-  local _, _, owner, repo = string.find(url, service .. ".(.+)/(.+)")
+  local delim = url:sub(1, 6) == "ssh://" and "/" or ":"
+  local _, _, owner, repo = string.find(url, string.format("%s[^%s]*%s(.+)/(.+)", service, delim, delim))
   repo, _ = repo:gsub(".git$", "")
   return { repository = repo, owner = owner, branch_name = git.branch.current() }
 end
