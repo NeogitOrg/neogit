@@ -94,7 +94,7 @@ function M.parse(url)
       info.path = url:sub(#info.proto + 4, #url):match([[/(.*)/]])
       info.owner = info.path -- Strictly for backwards compatibility.
     end
-    info.repo = url:match([[/(%w+).git]])
+    info.repo = url:match([[/(%w+)%.git]])
   end
   info.repository = info.repo
   return info
