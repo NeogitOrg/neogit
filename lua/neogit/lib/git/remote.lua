@@ -83,7 +83,7 @@ function M.parse(url)
     if protocol == "git" then
       user = "git"
       host = url:match([[@([^:]+)]])
-      owner = url:match([[:(%w+)/]])
+      owner = url:match([[:([^/]+)/]])
     else
       user = url:match([[://(%w+):?%w*@]]) -- Strip passwords.
       port = url:match([[:(%d+)]])
@@ -102,7 +102,7 @@ function M.parse(url)
       owner = path -- Strictly for backwards compatibility.
     end
 
-    repository = url:match([[/(%w+)%.git]])
+    repository = url:match([[/([^/]+)%.git]])
   end
 
   return {
