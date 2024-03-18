@@ -133,5 +133,33 @@ describe("lib.git.remote", function()
         url = "https://gitlab.priv:4443/project/path/repo.git",
       })
     end)
+
+    it("can parse 'git@github.com:owner-with-dashes/repo.git'", function()
+      local url = "git@github.com:owner-with-dashes/repo.git"
+
+      assert.are.same(git.remote.parse(url), {
+        host = "github.com",
+        owner = "owner-with-dashes",
+        protocol = "git",
+        repo = "repo",
+        repository = "repo",
+        url = "git@github.com:owner-with-dashes/repo.git",
+        user = "git",
+      })
+    end)
+
+    it("can parse 'git@github.com:owner/repo-with_specials.git'", function()
+      local url = "git@github.com:owner/repo-with_specials.git"
+
+      assert.are.same(git.remote.parse(url), {
+        host = "github.com",
+        owner = "owner",
+        protocol = "git",
+        repo = "repo-with_specials",
+        repository = "repo-with_specials",
+        url = "git@github.com:owner/repo-with_specials.git",
+        user = "git",
+      })
+    end)
   end)
 end)
