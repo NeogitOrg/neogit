@@ -56,48 +56,66 @@ function M.get_url(name)
   return cli.remote.get_url(name).call({ hidden = true }).stdout
 end
 
+---@class RemoteInfo
+---@field url string
+---@field protocol string
+---@field user string
+---@field host string
+---@field port string
+---@field path string
+---@field repo string
+---@field owner string
+---@field repository string
+
+---@param url string
+---@return RemoteInfo
 function M.parse(url)
-  local info = {
-    url = url,
-    proto = nil,
-    user = nil,
-    host = nil,
-    port = nil,
-    path = nil,
-    repo = nil,
-    owner = nil,
-    repository = nil,
-  }
+  local protocol, user, host, port, path, repository, owner
+
   for _, v in pairs { "git", "https", "http", "ssh" } do
     if url:sub(1, #v) == v then
-      info.proto = v
+      protocol = v
       break
     end
   end
-  if info.proto ~= nil then
-    if info.proto == "git" then
-      info.user = "git"
-      info.host = url:match([[@([^:]+)]])
-      info.owner = url:match([[:(%w+)/]])
+
+  if protocol ~= nil then
+    if protocol == "git" then
+      user = "git"
+      host = url:match([[@([^:]+)]])
+      owner = url:match([[:(%w+)/]])
     else
-      info.user = url:match([[://(%w+):?%w*@]]) -- Strip passwords.
-      info.port = url:match([[:(%d+)]])
-      if info.user ~= nil and info.port ~= nil then
-        info.host = url:match([[@(.*):]])
-      elseif info.user ~= nil then
-        info.host = url:match([[@(.-)/]])
-      elseif info.port ~= nil then
-        info.host = url:match([[//(.-):]])
+      user = url:match([[://(%w+):?%w*@]]) -- Strip passwords.
+      port = url:match([[:(%d+)]])
+
+      if user ~= nil and port ~= nil then
+        host = url:match([[@(.*):]])
+      elseif user ~= nil then
+        host = url:match([[@(.-)/]])
+      elseif port ~= nil then
+        host = url:match([[//(.-):]])
       else
-        info.host = url:match([[//(.-)/]])
+        host = url:match([[//(.-)/]])
       end
-      info.path = url:sub(#info.proto + 4, #url):match([[/(.*)/]])
-      info.owner = info.path -- Strictly for backwards compatibility.
+
+      path = url:sub(#protocol + 4, #url):match([[/(.*)/]])
+      owner = path -- Strictly for backwards compatibility.
     end
-    info.repo = url:match([[/(%w+)%.git]])
+
+    repository = url:match([[/(%w+)%.git]])
   end
-  info.repository = info.repo
-  return info
+
+  return {
+    url = url,
+    protocol = protocol,
+    user = user,
+    host = host,
+    port = port,
+    path = path,
+    repo = repository,
+    owner = owner,
+    repository = repository,
+  }
 end
 
 return M
