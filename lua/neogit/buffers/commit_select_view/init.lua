@@ -29,11 +29,9 @@ function M:close()
   self.buffer = nil
 end
 
+---@param item StatusItem
 ---@param action fun(commit: CommitLogEntry[])
-function M:open(action)
-  -- TODO: Pass this in as a param instead of reading state from object
-  local _, item = require("neogit.status").get_current_section_item()
-
+function M:open(item, action)
   ---@type fun(commit: CommitLogEntry[])|nil
   local action = action
 
@@ -114,8 +112,8 @@ function M:open(action)
   }
 end
 
----@type fun(self): CommitLogEntry|nil
+---@type fun(self, StatusItem): CommitLogEntry|nil
 --- Select one of more commits under the cursor or visual selection
-M.open_async = a.wrap(M.open, 2)
+M.open_async = a.wrap(M.open, 3)
 
 return M

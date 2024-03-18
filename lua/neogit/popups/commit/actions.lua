@@ -57,7 +57,7 @@ local function commit_special(popup, method, opts)
   if popup.state.env.commit then
     commit = popup.state.env.commit
   else
-    commit = CommitSelectViewBuffer.new(git.log.list()):open_async()[1]
+    commit = CommitSelectViewBuffer.new(git.log.list()):open_async(popup.state.env.item)[1]
     if not commit then
       return
     end
@@ -77,7 +77,7 @@ local function commit_special(popup, method, opts)
     if choice == "c" then
       opts.rebase = false
     elseif choice == "s" then
-      commit = CommitSelectViewBuffer.new(git.log.list()):open_async()[1]
+      commit = CommitSelectViewBuffer.new(git.log.list()):open_async(popup.state.env.item)[1]
     else
       return
     end

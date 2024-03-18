@@ -4,7 +4,8 @@ local actions = require("neogit.popups.log.actions")
 
 local M = {}
 
-function M.create()
+---@param item StatusItem
+function M.create(item)
   -- TODO: Need to figure out how this works
   -- :switch("h", "header", "Show header", { cli_prefix = "++" })
   -- :switch("p", "patch", "Show diffs")
@@ -90,6 +91,7 @@ function M.create()
     :action("O", "other", actions.reflog_other)
     :new_action_group("Other")
     :action("s", "shortlog")
+    :env({ item = item })
     :build()
 
   p:show()

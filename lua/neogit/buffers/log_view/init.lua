@@ -36,8 +36,8 @@ function M:close()
   self.buffer = nil
 end
 
-function M:open()
-  local _, item = require("neogit.status").get_current_section_item()
+---@param item StatusItem
+function M:open(item)
   self.buffer = Buffer.create {
     name = "NeogitLogView",
     filetype = "NeogitLogView",

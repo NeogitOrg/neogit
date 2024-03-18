@@ -87,7 +87,10 @@ function M.mappings_table(status_buffer)
       "CommitPopup",
       "Commit",
       M.open("commit", function(f)
-        f { commit = commit_oid(status_buffer:get_selection().commit) }
+        f {
+          commit = commit_oid(status_buffer:get_selection().commit),
+          item = status_buffer:get_current_section_item(),
+        }
       end),
     },
     {
@@ -112,7 +115,13 @@ function M.mappings_table(status_buffer)
         f { commit = commit_oid(status_buffer:get_selection().commit) }
       end),
     },
-    { "LogPopup", "Log", M.open("log") },
+    {
+      "LogPopup",
+      "Log",
+      M.open("log", function(f)
+        f { item = status_buffer:get_current_section_item() }
+      end),
+    },
     {
       "CherryPickPopup",
       "Cherry Pick",
