@@ -287,9 +287,10 @@ M.open_pull_request = operation("open_pull_request", function()
 
   if template then
     if vim.ui.open then
-      local fmt_vals = git.remote.parse(url)
-      fmt_vals["branch_name"] = git.branch.current()
-      vim.ui.open(util.format(template, fmt_vals))
+      local format_values = git.remote.parse(url)
+      format_values["branch_name"] = git.branch.current()
+
+      vim.ui.open(util.format(template, format_values))
     else
       notification.warn("Requires Neovim 0.10")
     end
