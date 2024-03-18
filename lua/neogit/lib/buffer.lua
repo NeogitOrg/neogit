@@ -524,6 +524,7 @@ function Buffer.create(config)
   buffer:set_buffer_option("swapfile", false)
 
   if win then
+    buffer:set_window_option("statuscolumn", config.status_column or "")
     buffer:set_window_option("foldenable", true)
     buffer:set_window_option("foldlevel", 99)
     buffer:set_window_option("foldminlines", 0)

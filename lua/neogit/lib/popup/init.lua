@@ -632,6 +632,7 @@ function M:show()
     filetype = "NeogitPopup",
     kind = config.values.popup.kind,
     mappings = mappings,
+    status_column = " ",
     after = function(buf, _win)
       buf:set_window_option("cursorline", false)
       buf:set_window_option("list", false)
