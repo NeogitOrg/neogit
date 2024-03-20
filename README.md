@@ -1,6 +1,6 @@
 <div align="center">
     <div>
-        <div><img src="https://github.com/NeogitOrg/neogit/assets/7228095/11eb556a-dd64-4fce-850a-d4fb25cb0ba4" width="400px"/></div>
+        <div><img src="https://github.com/NeogitOrg/neogit/assets/7228095/65aceb39-cdda-41b7-9f1c-c7c3b0e8ff56" width="400px"/></div>
         <div><h1>Neogit</h1></div>
     </div>
     <table>
