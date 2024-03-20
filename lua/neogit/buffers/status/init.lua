@@ -80,6 +80,7 @@ function M:open(kind)
     context_highlight = true,
     kind = kind,
     disable_line_numbers = config.values.disable_line_numbers,
+    status_column = " ",
     autocmds = {
       ["BufUnload"] = function()
         logger.debug("[STATUS] Running BufUnload autocmd")

@@ -42,6 +42,7 @@ function M:open()
     filetype = "NeogitLogView",
     kind = config.values.log_view.kind,
     context_highlight = false,
+    status_column = " ",
     mappings = {
       v = {
         [popups.mapping_for("CherryPickPopup")] = popups.open("cherry_pick", function(p)

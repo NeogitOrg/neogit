@@ -37,6 +37,7 @@ function M:open(action)
   self.buffer = Buffer.create {
     name = "NeogitCommitSelectView",
     filetype = "NeogitCommitSelectView",
+    status_column = " ",
     kind = config.values.commit_select_view.kind,
     mappings = {
       v = {

@@ -34,6 +34,7 @@ function M:open(_)
     name = "NeogitReflogView",
     filetype = "NeogitReflogView",
     kind = config.values.reflog_view.kind,
+    status_column = " ",
     context_highlight = true,
     mappings = {
       v = {
