@@ -69,6 +69,7 @@ function M:open(kind)
     buftype = "",
     kind = kind,
     modifiable = true,
+    status_column = " ",
     readonly = false,
     after = function(buffer)
       -- Populate help lines with mappings for buffer
