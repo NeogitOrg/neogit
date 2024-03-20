@@ -174,7 +174,7 @@ function M:open(kind)
 
               for _, file in ipairs(untracked_files) do
                 local bufnr = fn.bufexists(file.name)
-                if bufnr and bufnr > 0 then
+                if bufnr and bufnr > 0 and api.nvim_buf_is_valid(bufnr) then
                   api.nvim_buf_delete(bufnr, { force = true })
                 end
 
@@ -193,7 +193,7 @@ function M:open(kind)
 
               for _, file in ipairs(new_files) do
                 local bufnr = fn.bufexists(file.name)
-                if bufnr and bufnr > 0 then
+                if bufnr and bufnr > 0 and api.nvim_buf_is_valid(bufnr) then
                   api.nvim_buf_delete(bufnr, { force = true })
                 end
 
@@ -497,7 +497,7 @@ function M:open(kind)
                 a.util.scheduler()
 
                 local bufnr = fn.bufexists(selection.item.name)
-                if bufnr and bufnr > 0 then
+                if bufnr and bufnr > 0 and api.nvim_buf_is_valid(bufnr) then
                   api.nvim_buf_delete(bufnr, { force = true })
                 end
 
@@ -532,7 +532,7 @@ function M:open(kind)
                     a.util.scheduler()
 
                     local bufnr = fn.bufexists(selection.item.name)
-                    if bufnr and bufnr > 0 then
+                    if bufnr and bufnr > 0 and api.nvim_buf_is_valid(bufnr) then
                       api.nvim_buf_delete(bufnr, { force = true })
                     end
 
@@ -551,7 +551,7 @@ function M:open(kind)
                   a.util.scheduler()
 
                   local bufnr = fn.bufexists(selection.item.name)
-                  if bufnr and bufnr > 0 then
+                  if bufnr and bufnr > 0 and api.nvim_buf_is_valid(bufnr) then
                     api.nvim_buf_delete(bufnr, { force = true })
                   end
 
@@ -621,7 +621,7 @@ function M:open(kind)
 
                 for _, file in ipairs(selection.section.items) do
                   local bufnr = fn.bufexists(file.name)
-                  if bufnr and bufnr > 0 then
+                  if bufnr and bufnr > 0 and api.nvim_buf_is_valid(bufnr) then
                     api.nvim_buf_delete(bufnr, { force = true })
                   end
 
@@ -677,7 +677,7 @@ function M:open(kind)
 
                   for _, file in ipairs(new_files) do
                     local bufnr = fn.bufexists(file.name)
-                    if bufnr and bufnr > 0 then
+                    if bufnr and bufnr > 0 and api.nvim_buf_is_valid(bufnr) then
                       api.nvim_buf_delete(bufnr, { force = true })
                     end
 
