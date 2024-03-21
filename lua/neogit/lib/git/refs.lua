@@ -26,7 +26,7 @@ local json_template = json.encode {
 
 function M.list_parsed()
   local refs = cli["for-each-ref"].format(json_template).call_sync():trim().stdout
-  local result = json.decode(refs, { escaped_fields = { "subject" } })
+  local result = json.decode(refs)
 
   local output = {
     local_branch = {},
