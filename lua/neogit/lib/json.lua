@@ -1,4 +1,3 @@
-local logger = require("neogit.logger")
 local M = {}
 
 local function parse_line(line)
@@ -13,12 +12,13 @@ function M.decode(lines)
     return {}
   end
 
+  lines = vim.split(table.concat(lines, ""), "\30", { trimempty = true })
+
   local result = {}
   for _, line in ipairs(lines) do
     table.insert(result, parse_line(line))
   end
 
-  logger.debug(result)
   return result
 end
 
@@ -30,7 +30,7 @@ function M.encode(tbl)
     table.insert(out, string.format([=[["%s"]=[===[%s]===]]=], k, v))
   end
 
-  return table.concat(out, ",")
+  return table.concat(out, ",") .. "%x1E"
 end
 
 return M
