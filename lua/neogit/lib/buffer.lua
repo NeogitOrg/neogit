@@ -196,7 +196,7 @@ function Buffer:set_text(first_line, last_line, first_col, last_col, lines)
 end
 
 function Buffer:move_cursor(line)
-  api.nvim_win_set_cursor(0, { line, 0 })
+  pcall(api.nvim_win_set_cursor, 0, { line, 0 })
 end
 
 function Buffer:cursor_line()
