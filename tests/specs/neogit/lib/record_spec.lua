@@ -1,6 +1,6 @@
-local subject = require("neogit.lib.json")
+local subject = require("neogit.lib.record")
 
-describe("lib.json", function()
+describe("lib.record", function()
   describe("#encode", function()
     it("turns lua table into delimeted string", function()
       assert.are.same("foo%x1Dbar%x1E", subject.encode { foo = "bar" })
@@ -8,7 +8,7 @@ describe("lib.json", function()
   end)
 
   describe("#decode", function()
-    it("can decode multiple json objects", function()
+    it("can decode multiple delimeted objects", function()
       local input = {
         "baz\29boo\31foo\29bar\30",
         "biz\29bip\31bop\29bip\30",
