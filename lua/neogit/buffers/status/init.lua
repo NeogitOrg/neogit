@@ -19,6 +19,7 @@ local a = require("plenary.async")
 local input = require("neogit.lib.input")
 local logger = require("neogit.logger") -- TODO: Add logging
 local notification = require("neogit.lib.notification")
+local util = require("neogit.lib.util")
 
 local api = vim.api
 local fn = vim.fn
@@ -1173,8 +1174,9 @@ function M:refresh(partial, reason)
   }
 end
 
-function M:dispatch_refresh(partial, reason)
-  a.run(function()
+M.dispatch_refresh = util.debounce_trailing(
+  100,
+  a.void(function(self, partial, reason)
     if self:_is_refresh_locked() then
       logger.debug("[STATUS] Refresh lock is active. Skipping refresh from " .. (reason or "unknown"))
     else
@@ -1182,7 +1184,7 @@ function M:dispatch_refresh(partial, reason)
       self:refresh(partial, reason)
     end
   end)
-end
+)
 
 function M:reset()
   logger.debug("[STATUS] Resetting repo and refreshing")
