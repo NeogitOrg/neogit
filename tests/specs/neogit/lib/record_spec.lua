@@ -2,13 +2,13 @@ local subject = require("neogit.lib.record")
 
 describe("lib.record", function()
   describe("#encode", function()
-    it("turns lua table into delimeted string", function()
+    it("turns lua table into delimited string", function()
       assert.are.same("foo%x1Dbar%x1E", subject.encode { foo = "bar" })
     end)
   end)
 
   describe("#decode", function()
-    it("can decode multiple delimeted objects", function()
+    it("can decode multiple delimited objects", function()
       local input = {
         "baz\29boo\31foo\29bar\30",
         "biz\29bip\31bop\29bip\30",

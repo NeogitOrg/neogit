@@ -25,7 +25,7 @@ local function parse_record(record_string)
   return record
 end
 
----Decode a list of delimeted lines into lua tables
+---Decode a list of delimited lines into lua tables
 ---@param lines string[]
 ---@return table
 function M.decode(lines)
@@ -37,13 +37,13 @@ function M.decode(lines)
   -- lines if the subject/body fields contain \n or \r characters.
   local lines = table.concat(lines, "")
 
-  -- Split the string into records, using the record separator character as a delimeter.
+  -- Split the string into records, using the record separator character as a delimiter.
   -- If you commit message contains record separator control characters... this won't work,
   -- and you should feel bad about your choices.
   return vim.tbl_map(parse_record, vim.split(lines, record_separator.dec, { trimempty = true }))
 end
 
----@param tbl table Key/value pairs to format with delimeters
+---@param tbl table Key/value pairs to format with delimiters
 ---@return string
 function M.encode(tbl)
   local out = {}
