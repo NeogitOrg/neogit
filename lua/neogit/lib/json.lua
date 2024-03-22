@@ -1,8 +1,8 @@
 local M = {}
 
-local function parse_line(line)
-  return assert(loadstring(string.format("return { %s }", line)))()
-end
+local record_separator = { dec = "\30", hex = "%x1E" }
+local field_separator = { dec = "\31", hex = "%x1F" }
+local pair_separator = { dec = "\29", hex = "%x1D" }
 
 ---Decode a list of json formatted lines into a lua table
 ---@param lines table
@@ -12,14 +12,22 @@ function M.decode(lines)
     return {}
   end
 
-  lines = vim.split(table.concat(lines, ""), "\30", { trimempty = true })
+  local lines = table.concat(lines, "")
+  local records = vim.tbl_map(function(record)
+    local fields = vim.tbl_map(function(field)
+      return vim.split(field, pair_separator.dec, { trimempty = true })
+    end, vim.split(record, field_separator.dec, { trimempty = true }))
 
-  local result = {}
-  for _, line in ipairs(lines) do
-    table.insert(result, parse_line(line))
-  end
+    local output = {}
+    for _, field in ipairs(fields) do
+      local key, value = unpack(field)
+      output[key] = value or ""
+    end
 
-  return result
+    return output
+  end, vim.split(lines, record_separator.dec, { trimempty = true }))
+
+  return records
 end
 
 ---@param tbl table Key/value pairs to encode as json
@@ -27,10 +35,10 @@ end
 function M.encode(tbl)
   local out = {}
   for k, v in pairs(tbl) do
-    table.insert(out, string.format([=[["%s"]=[===[%s]===]]=], k, v))
+    table.insert(out, string.format("%s%s%s", k, pair_separator.hex, v))
   end
 
-  return table.concat(out, ",") .. "%x1E"
+  return table.concat(out, field_separator.hex) .. record_separator.hex
 end
 
 return M
