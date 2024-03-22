@@ -11,6 +11,11 @@ function M.add(rev)
   table.insert(M.values, git.rev_parse.oid(rev))
 end
 
+---Clear the table
+function M.clear()
+  M.values = {}
+end
+
 CommitSelectViewBuffer.open_async = function()
   return M.values
 end

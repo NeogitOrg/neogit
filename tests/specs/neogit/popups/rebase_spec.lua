@@ -15,9 +15,16 @@ local function act(normal_cmd)
 end
 
 describe("rebase popup", function()
-  function test_reword(commit_to_reword, new_commit_message)
+   before_each(function()
+    vim.fn.feedkeys("q", "x")
+    CommitSelectViewBufferMock.clear()
+  end)
+
+  function test_reword(commit_to_reword, new_commit_message, selected)
     local original_branch = git.branch.current()
-    CommitSelectViewBufferMock.add(git.rev_parse.oid(commit_to_reword))
+    if selected == false then
+      CommitSelectViewBufferMock.add(git.rev_parse.oid(commit_to_reword))
+    end
     input.values = { new_commit_message }
     act("rw<cr>")
     operations.wait("rebase_reword")
@@ -28,21 +35,22 @@ describe("rebase popup", function()
   it(
     "rebase to reword HEAD",
     in_prepared_repo(function()
-      test_reword("HEAD", "foobar")
+      test_reword("HEAD", "foobar", false)
     end)
   )
   it(
     "rebase to reword HEAD~1",
     in_prepared_repo(function()
-      test_reword("HEAD~1", "barbaz")
+      test_reword("HEAD~1", "barbaz", false)
     end)
   )
   it(
     "rebase to reword HEAD~1 from log view",
     in_prepared_repo(function()
-      act("ll") -- log branches and go down one commit
+      act("ll") -- log commits
       operations.wait("log_current")
-      test_reword("HEAD~1", "foo")
+      act("j") -- go down one commit
+      test_reword("HEAD~1", "foo", true)
     end)
   )
 
@@ -67,7 +75,7 @@ describe("rebase popup", function()
       end)
 
       -- Act
-      test_reword("HEAD", "foobar")
+      test_reword("HEAD", "foobar", false)
 
       -- Assert
       assert.are.same(true, rx())
