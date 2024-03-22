@@ -1,5 +1,5 @@
 local cli = require("neogit.lib.git.cli")
-local json = require("neogit.lib.json")
+local record = require("neogit.lib.record")
 local repo = require("neogit.lib.git.repository")
 
 local M = {}
@@ -14,7 +14,7 @@ function M.list()
   return revisions
 end
 
-local json_template = json.encode {
+local record_template = record.encode {
   head = "%(HEAD)",
   oid = "%(objectname)",
   ref = "%(refname)",
@@ -25,8 +25,8 @@ local json_template = json.encode {
 }
 
 function M.list_parsed()
-  local refs = cli["for-each-ref"].format(json_template).call_sync():trim().stdout
-  local result = json.decode(refs)
+  local refs = cli["for-each-ref"].format(record_template).call_sync():trim().stdout
+  local result = record.decode(refs)
 
   local output = {
     local_branch = {},
