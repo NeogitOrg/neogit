@@ -26,7 +26,7 @@ function M.create(env)
     :switch_if(not in_rebase, "u", "update-refs", "Update branches")
     :switch_if(not in_rebase, "d", "committer-date-is-author-date", "Use author date as committer date")
     :switch_if(not in_rebase, "t", "ignore-date", "Use current time as author date")
-    :switch_if(not in_rebase, "a", "autosquash", "Autosquash fixup and squash commits")
+    :switch_if(not in_rebase, "a", "autosquash", "Autosquash")
     :switch_if(not in_rebase, "A", "autostash", "Autostash", { enabled = true })
     :switch_if(not in_rebase, "i", "interactive", "Interactive")
     :switch_if(not in_rebase, "h", "no-verify", "Disable hooks")
@@ -43,7 +43,7 @@ function M.create(env)
     :action_if(not in_rebase, "m", "to modify a commit", actions.modify)
     :action_if(not in_rebase, "w", "to reword a commit", actions.reword)
     :action_if(not in_rebase, "k", "to remove a commit")
-    :action_if(not in_rebase, "f", "to autosquash")
+    :action_if(not in_rebase, "f", "to autosquash", actions.autosquash)
     :env({
       commit = env.commit,
       highlight = { branch, git.repo.upstream.ref, base_branch },

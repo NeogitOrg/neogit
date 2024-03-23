@@ -2,6 +2,7 @@ local git = require("neogit.lib.git")
 local input = require("neogit.lib.input")
 local notification = require("neogit.lib.notification")
 local operation = require("neogit.operations")
+local util = require("neogit.lib.util")
 
 local CommitSelectViewBuffer = require("neogit.buffers.commit_select_view")
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
@@ -160,6 +161,23 @@ end
 
 function M.edit()
   git.rebase.edit()
+end
+
+function M.autosquash(popup)
+  local base
+  if popup.state.env.commit and git.log.is_ancestor(popup.state.env.commit, "HEAD") then
+    base = popup.state.env.commit
+  else
+    base = git.rebase.merge_base_HEAD()
+  end
+
+  if base then
+    git.rebase.onto(
+      "HEAD",
+      base,
+      util.deduplicate(util.merge(popup:get_arguments(), { "--autosquash", "--keep-empty" }))
+    )
+  end
 end
 
 -- TODO: Extract to rebase lib?

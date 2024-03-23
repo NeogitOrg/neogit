@@ -119,6 +119,15 @@ function M.edit()
   return rebase_command(cli.rebase.edit_todo)
 end
 
+---Find the merge base for HEAD and it's upstream
+---@return string|nil
+function M.merge_base_HEAD()
+  local result = cli["merge-base"].args("HEAD", "HEAD@{upstream}").call { ignore_error = true, hidden = true }
+  if result.code == 0 then
+    return result.stdout[1]
+  end
+end
+
 function M.update_rebase_status(state)
   local git = require("neogit.lib.git")
   if git.repo.git_root == "" then
