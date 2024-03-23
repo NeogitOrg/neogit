@@ -20,7 +20,10 @@
 </div>
 
 
-![preview](https://github.com/NeogitOrg/neogit/assets/7228095/d964cbb4-a557-4e97-ac5b-ea571a001f5c)
+<details open>
+  <summary><h1>Status Buffer</h1></summary>
+  ![preview](https://github.com/NeogitOrg/neogit/assets/7228095/d964cbb4-a557-4e97-ac5b-ea571a001f5c)
+</details>
 
 
 ## Installation
