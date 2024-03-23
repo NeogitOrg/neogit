@@ -241,7 +241,7 @@ M.CommitEntry = Component.new(function(commit, args)
 end)
 
 M.CommitGraph = Component.new(function(commit, _)
-  return col.tag("graph").padding_left(8) { row(build_graph(commit.graph)) }
+  return col.tag("graph").padding_left(git.log.abbreviated_size() + 1) { row(build_graph(commit.graph)) }
 end)
 
 M.Grid = Component.new(function(props)

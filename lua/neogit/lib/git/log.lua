@@ -514,8 +514,8 @@ function M.reflog_message(skip)
     .call_sync({ ignore_error = true }).stdout
 end
 
-function M.abbreviated_size()
+M.abbreviated_size = util.memoize(function()
   return string.len(cli.log.format("%h").max_count(1).call({ hidden = true }).stdout[1])
-end
+end, { timeout = math.huge })
 
 return M
