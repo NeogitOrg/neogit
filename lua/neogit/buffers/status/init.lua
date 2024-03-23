@@ -1161,19 +1161,20 @@ function M:refresh(partial, reason)
         return
       end
 
-      local cursor
+      local cursor, view
       if self.buffer:is_focused() then
         cursor = self.buffer.ui:get_cursor_location()
-        logger.debug("[STATUS][Refresh Callback] Cursor: " .. vim.inspect(cursor))
+        view = self.buffer:save_view()
       end
 
       logger.debug("[STATUS][Refresh Callback] Rendering UI")
       self.buffer.ui:render(unpack(ui.Status(git.repo, self.config)))
 
-      if cursor then
-        local cursor_line = math.min(fn.line("$"), self.buffer.ui:resolve_cursor_location(cursor))
-        logger.debug("[STATUS][Refresh Callback] Moving Cursor to line " .. cursor_line)
-        self.buffer:move_cursor(cursor_line)
+      if cursor and view then
+        self.buffer:restore_view(
+          view,
+          self.buffer.ui:resolve_cursor_location(cursor)
+        )
       end
 
       api.nvim_exec_autocmds("User", { pattern = "NeogitStatusRefreshed", modeline = false })

@@ -79,6 +79,25 @@ function Buffer:clear()
   api.nvim_buf_set_lines(self.handle, 0, -1, false, {})
 end
 
+---@return table
+function Buffer:save_view()
+  local view = fn.winsaveview()
+  return {
+    topline = view.topline,
+    leftcol = 0,
+  }
+end
+
+---@param view table output of Buffer:save_view()
+---@param cursor? number
+function Buffer:restore_view(view, cursor)
+  if cursor then
+    view.lnum = math.min(fn.line("$"), cursor)
+  end
+
+  fn.winrestview(view)
+end
+
 function Buffer:write()
   self:call(function()
     vim.cmd("silent w!")
