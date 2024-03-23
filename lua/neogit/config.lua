@@ -107,7 +107,6 @@ end
 ---@field underline? boolean
 
 ---@class NeogitFilewatcherConfig
----@field interval number
 ---@field enabled boolean
 ---@field filewatcher NeogitFilewatcherConfig|nil
 
@@ -179,8 +178,7 @@ function M.get_default_values()
     disable_signs = false,
     graph_style = "ascii",
     filewatcher = {
-      interval = 1000,
-      enabled = false,
+      enabled = true,
     },
     telescope_sorter = function()
       return nil
