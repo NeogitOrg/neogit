@@ -58,10 +58,12 @@ function Buffer:focus()
   return windows[1]
 end
 
+---@return boolean
 function Buffer:is_focused()
   return api.nvim_win_get_buf(0) == self.handle
 end
 
+---@return number
 function Buffer:get_changedtick()
   return api.nvim_buf_get_changedtick(self.handle)
 end
@@ -69,10 +71,6 @@ end
 function Buffer:lock()
   self:set_buffer_option("readonly", true)
   self:set_buffer_option("modifiable", false)
-end
-
-function Buffer:define_autocmd(events, script)
-  vim.cmd(string.format("au %s <buffer=%d> %s", events, self.handle, script))
 end
 
 function Buffer:clear()
@@ -265,7 +263,7 @@ function Buffer:hide()
       api.nvim_set_current_buf(self.old_buf)
     end
   else
-    api.nvim_win_close(0, {})
+    api.nvim_win_close(0, true)
   end
 end
 
