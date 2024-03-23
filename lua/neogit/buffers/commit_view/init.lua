@@ -19,8 +19,14 @@ local api = vim.api
 ---@field description table
 
 ---@class CommitOverview
----@field summary string
----@field files table
+---@field summary string a short summary about what happened
+---@field files CommitOverviewFile[] a list of CommitOverviewFile
+
+---@class CommitOverviewFile
+---@field path string the path to the file relative to the git root
+---@field changes string how many changes were made to the file
+---@field insertions string insertion count visualized as list of `+`
+---@field deletions string deletion count visualized as list of `-`
 
 --- @class CommitViewBuffer
 --- @field is_open boolean whether the buffer is currently shown
