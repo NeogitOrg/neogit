@@ -789,22 +789,25 @@ function M:open(kind)
                 git.index.generate_patch(item, stagable.hunk, stagable.hunk.from, stagable.hunk.to)
 
               git.index.apply(patch, { cached = true })
+              self:refresh()
             elseif stagable.filename then
               if section.options.section == "unstaged" then
                 git.status.stage { stagable.filename }
+                self:refresh()
               elseif section.options.section == "untracked" then
                 git.index.add { stagable.filename }
+                self:refresh()
               end
             end
           elseif section then
             if section.options.section == "untracked" then
               git.status.stage_untracked()
+              self:refresh()
             elseif section.options.section == "unstaged" then
               git.status.stage_modified()
+              self:refresh()
             end
           end
-
-          self:refresh()
         end),
         [mappings["StageAll"]] = a.void(function()
           git.status.stage_all()
@@ -834,14 +837,15 @@ function M:open(kind)
               )
 
               git.index.apply(patch, { cached = true, reverse = true })
+              self:refresh()
             elseif unstagable.filename then
               git.status.unstage { unstagable.filename }
+              self:refresh()
             end
           elseif section then
             git.status.unstage_all()
+            self:refresh()
           end
-
-          self:refresh()
         end),
         [mappings["UnstageStaged"]] = a.void(function()
           git.status.unstage_all()
