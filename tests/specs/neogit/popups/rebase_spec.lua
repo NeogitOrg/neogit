@@ -15,7 +15,7 @@ local function act(normal_cmd)
 end
 
 describe("rebase popup", function()
-   before_each(function()
+  before_each(function()
     vim.fn.feedkeys("q", "x")
     CommitSelectViewBufferMock.clear()
   end)
