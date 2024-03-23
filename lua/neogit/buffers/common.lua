@@ -162,7 +162,7 @@ M.CommitEntry = Component.new(function(commit, args)
 
   local details
   if args.details then
-    details = col.padding_left(8) {
+    details = col.padding_left(git.log.abbreviated_size() + 1) {
       row(util.merge(graph, {
         text(" "),
         text("Author:     ", { highlight = "Comment" }),
