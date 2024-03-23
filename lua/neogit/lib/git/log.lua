@@ -516,7 +516,7 @@ function M.reflog_message(skip)
 end
 
 function M.abbreviated_size()
-  return string.len(cli.log.format("%h").max_count(1).call_sync().stdout[1])
+  return string.len(cli.log.format("%h").max_count(1).call({ hidden = true }).stdout[1])
 end
 
 return M
