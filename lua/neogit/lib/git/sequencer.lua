@@ -40,6 +40,7 @@ function M.update_sequencer_status(state)
   table.insert(state.sequencer.items, {
     action = "onto",
     oid = HEAD_oid,
+    abbreviated_commit = HEAD_oid:sub(1, git.log.abbreviated_size()),
     subject = git.log.message(HEAD_oid),
   })
 
@@ -47,9 +48,11 @@ function M.update_sequencer_status(state)
   if todo:exists() then
     for line in todo:iter() do
       if line:match("^[^#]") and line ~= "" then
+        local oid = line:match("^%w+ (%x+)")
         table.insert(state.sequencer.items, {
           action = line:match("^(%w+) "),
-          oid = line:match("^%w+ (%x+)"),
+          oid = oid,
+          abbreviated_commit = oid:sub(1, git.log.abbreviated_size()),
           subject = line:match("^%w+ %x+ (.+)$"),
         })
       end
@@ -58,6 +61,7 @@ function M.update_sequencer_status(state)
     table.insert(state.sequencer.items, {
       action = "join",
       oid = state.sequencer.head_oid,
+      abbreviated_commit = state.sequencer.head_oid:sub(1, git.log.abbreviated_size()),
       subject = git.log.message(state.sequencer.head_oid),
     })
   end

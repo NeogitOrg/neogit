@@ -186,9 +186,11 @@ function M.update_rebase_status(state)
     if done:exists() then
       for line in done:iter() do
         if line:match("^[^#]") and line ~= "" then
+          local oid = line:match("^%w+ (%x+)")
           table.insert(state.rebase.items, {
             action = line:match("^(%w+) "),
-            oid = line:match("^%w+ (%x+)"),
+            oid = oid,
+            abbreviated_commit = oid:sub(1, git.log.abbreviated_size()),
             subject = line:match("^%w+ %x+ (.+)$"),
             done = true,
           })
@@ -207,10 +209,12 @@ function M.update_rebase_status(state)
     if todo:exists() then
       for line in todo:iter() do
         if line:match("^[^#]") and line ~= "" then
+          local oid = line:match("^%w+ (%x+)")
           table.insert(state.rebase.items, {
             done = false,
             action = line:match("^(%w+) "),
-            oid = line:match("^%w+ (%x+)"),
+            oid = oid,
+            abbreviated_commit = oid:sub(1, git.log.abbreviated_size()),
             subject = line:match("^%w+ %x+ (.+)$"),
           })
         end
@@ -222,6 +226,7 @@ function M.update_rebase_status(state)
         done = false,
         action = "onto",
         oid = state.rebase.onto.oid,
+        abbreviated_commit = state.rebase.onto.oid:sub(1, git.log.abbreviated_size()),
         subject = state.rebase.onto.subject,
       })
     end
