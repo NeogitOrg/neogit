@@ -85,7 +85,10 @@ function M:open(kind)
     autocmds = {
       ["BufUnload"] = function()
         logger.debug("[STATUS] Running BufUnload autocmd")
-        watcher.instance:stop()
+        if self.watcher then
+          self.watcher:stop()
+        end
+
         self.is_open = false
         vim.o.autochdir = self.prev_autochdir
       end,
@@ -1093,7 +1096,7 @@ function M:open(kind)
 
       if config.values.filewatcher.enabled then
         logger.debug("[STATUS] Starting file watcher")
-        watcher.new(git.repo:git_path():absolute()):start()
+        self.watcher = watcher.new(git.repo:git_path():absolute()):start()
       end
 
       buffer:move_cursor(buffer.ui:first_section().first)
@@ -1109,7 +1112,10 @@ function M:close()
 
   vim.o.autochdir = self.prev_autochdir
 
-  watcher.instance:stop()
+  if self.watcher then
+    self.watcher:stop()
+  end
+
   self.is_open = false
   self.buffer:close()
   self.buffer = nil
