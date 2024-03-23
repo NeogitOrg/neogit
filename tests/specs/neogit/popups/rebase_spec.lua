@@ -42,6 +42,38 @@ describe("rebase popup", function()
     assert.are.same(new_head, git.rev_parse.oid("HEAD"))
   end
 
+  function test_drop(commit_to_drop, selected)
+    local dropped_commit = git.rev_parse.oid(commit_to_drop)
+    if selected == false then
+      CommitSelectViewBufferMock.add(git.rev_parse.oid(commit_to_drop))
+    end
+    act("rd<cr>")
+    operations.wait("rebase_drop")
+    assert.is_not.same(dropped_commit, git.rev_parse.oid(commit_to_drop))
+  end
+
+  it(
+    "rebase to drop HEAD",
+    in_prepared_repo(function()
+      test_drop("HEAD", false)
+    end)
+  )
+  it(
+    "rebase to drop HEAD~1",
+    in_prepared_repo(function()
+      test_drop("HEAD~1", false)
+    end)
+  )
+  it(
+    "rebase to drop HEAD~1 from log view",
+    in_prepared_repo(function()
+      act("ll") -- log commits
+      operations.wait("log_current")
+      act("j") -- go down one commit
+      test_drop("HEAD~1", true)
+    end)
+  )
+
   it(
     "rebase to reword HEAD",
     in_prepared_repo(function()

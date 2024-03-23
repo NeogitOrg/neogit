@@ -129,6 +129,20 @@ M.modify = operation("rebase_modify", function(popup)
   git.rebase.modify(commit)
 end)
 
+M.drop = operation("rebase_drop", function(popup)
+  local commit
+  if popup.state.env.commit then
+    commit = popup.state.env.commit
+  else
+    commit = CommitSelectViewBuffer.new(git.log.list()):open_async()[1]
+    if not commit then
+      return
+    end
+  end
+
+  git.rebase.drop(commit)
+end)
+
 function M.subset(popup)
   local newbase = FuzzyFinderBuffer.new(git.branch.get_all_branches())
     :open_async { prompt_prefix = "rebase subset onto" }

@@ -42,7 +42,7 @@ function M.create(env)
     :new_action_group_if(not in_rebase)
     :action_if(not in_rebase, "m", "to modify a commit", actions.modify)
     :action_if(not in_rebase, "w", "to reword a commit", actions.reword)
-    :action_if(not in_rebase, "k", "to remove a commit")
+    :action_if(not in_rebase, "d", "to remove a commit", actions.drop)
     :action_if(not in_rebase, "f", "to autosquash", actions.autosquash)
     :env({
       commit = env.commit,
