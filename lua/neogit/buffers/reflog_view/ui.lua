@@ -29,7 +29,7 @@ M.Entry = Component.new(function(entry, total)
 
   return col({
     row({
-      text(entry.abbreviated_commit, { highlight = "Comment" }),
+      text(entry.oid:sub(1, 7), { highlight = "Comment" }),
       text(" "),
       text(tostring(entry.index), { align_right = #tostring(total) + 1 }),
       text(entry.type, { highlight = highlight_for_type(entry.type), align_right = 16 }),
