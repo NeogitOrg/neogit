@@ -9,6 +9,10 @@ local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
 local M = {}
 
+local function base_commit(popup, list)
+  return popup.state.env.commit or CommitSelectViewBuffer.new(list or git.log.list()):open_async()[1]
+end
+
 function M.onto_base(popup)
   git.rebase.onto_branch(git.branch.base_branch(), popup:get_arguments())
 end
@@ -51,13 +55,7 @@ function M.onto_elsewhere(popup)
 end
 
 function M.interactively(popup)
-  local commit
-  if popup.state.env.commit then
-    commit = popup.state.env.commit
-  else
-    commit = CommitSelectViewBuffer.new(git.log.list({}, {}, {}, true)):open_async()[1]
-  end
-
+  local commit = base_commit(popup, git.log.list({}, {}, {}, true))
   if commit then
     if not git.log.is_ancestor(commit, "HEAD") then
       notification.warn("Commit isn't an ancestor of HEAD")
@@ -96,14 +94,9 @@ function M.interactively(popup)
 end
 
 M.reword = operation("rebase_reword", function(popup)
-  local commit
-  if popup.state.env.commit then
-    commit = popup.state.env.commit
-  else
-    commit = CommitSelectViewBuffer.new(git.log.list()):open_async()[1]
-    if not commit then
-      return
-    end
+  local commit = base_commit(popup)
+  if not commit then
+    return
   end
 
   -- TODO: Support multiline input for longer commit messages
@@ -117,30 +110,17 @@ M.reword = operation("rebase_reword", function(popup)
 end)
 
 M.modify = operation("rebase_modify", function(popup)
-  local commit
-  if popup.state.env.commit then
-    commit = popup.state.env.commit
-  else
-    commit = CommitSelectViewBuffer.new(git.log.list()):open_async()[1]
-    if not commit then
-      return
-    end
+  local commit = base_commit(popup)
+  if commit then
+    git.rebase.modify(commit)
   end
-  git.rebase.modify(commit)
 end)
 
 M.drop = operation("rebase_drop", function(popup)
-  local commit
-  if popup.state.env.commit then
-    commit = popup.state.env.commit
-  else
-    commit = CommitSelectViewBuffer.new(git.log.list()):open_async()[1]
-    if not commit then
-      return
-    end
+  local commit = base_commit(popup)
+  if commit then
+    git.rebase.drop(commit)
   end
-
-  git.rebase.drop(commit)
 end)
 
 function M.subset(popup)
