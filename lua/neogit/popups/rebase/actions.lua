@@ -2,6 +2,7 @@ local git = require("neogit.lib.git")
 local input = require("neogit.lib.input")
 local notification = require("neogit.lib.notification")
 local operation = require("neogit.operations")
+local status = require("neogit.status")
 
 local CommitSelectViewBuffer = require("neogit.buffers.commit_select_view")
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
@@ -113,6 +114,20 @@ M.reword = operation("rebase_reword", function(popup)
   end
 
   git.rebase.reword(commit, new_message)
+end)
+
+M.modify = operation("rebase_modify", function(popup)
+  local commit
+  if popup.state.env.commit then
+    commit = popup.state.env.commit
+  else
+    commit = CommitSelectViewBuffer.new(git.log.list()):open_async()[1]
+    if not commit then
+      return
+    end
+  end
+  git.rebase.modify(commit)
+  status.refresh(nil, "rebase_modify")
 end)
 
 function M.subset(popup)
