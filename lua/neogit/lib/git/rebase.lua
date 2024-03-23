@@ -2,7 +2,7 @@ local logger = require("neogit.logger")
 local client = require("neogit.client")
 local notification = require("neogit.lib.notification")
 local cli = require("neogit.lib.git.cli")
-local log = require("neogit.lib.git.log")
+local rev_parse = require("neogit.lib.git.rev_parse")
 
 local M = {}
 
@@ -94,7 +94,7 @@ function M.reword(commit, message)
 end
 
 function M.modify(commit)
-  local short_commit = string.sub(commit, 1, log.abbreviated_size())
+  local short_commit = rev_parse.abbreviate_commit(commit)
   local editor = "nvim -c '%s/^pick \\(" .. short_commit .. ".*\\)/edit \\1/' -c 'wq'"
   local result = cli.rebase
     .env({ GIT_SEQUENCE_EDITOR = editor }).interactive.autosquash.autostash
