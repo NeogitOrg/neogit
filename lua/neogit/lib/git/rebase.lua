@@ -106,6 +106,20 @@ function M.modify(commit)
   fire_rebase_event { commit = commit, status = "ok" }
 end
 
+function M.drop(commit)
+  local short_commit = require("neogit.lib.git").rev_parse.abbreviate_commit(commit)
+  local editor = "nvim -c '%s/^pick \\(" .. short_commit .. ".*\\)/drop \\1/' -c 'wq'"
+  local result = cli.rebase
+    .env({ GIT_SEQUENCE_EDITOR = editor }).interactive.autosquash.autostash
+    .in_pty(true)
+    .commit(commit)
+    .call()
+  if result.code ~= 0 then
+    return
+  end
+  fire_rebase_event { commit = commit, status = "ok" }
+end
+
 function M.continue()
   return rebase_command(cli.rebase.continue)
 end
