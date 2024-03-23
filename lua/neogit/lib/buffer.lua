@@ -568,14 +568,9 @@ function Buffer.create(config)
 
   buffer.mmanager.register()
 
-  if not config.modifiable then
-    buffer:set_buffer_option("modifiable", false)
-    buffer:set_buffer_option("modified", false)
-  end
-
-  if config.readonly == true then
-    buffer:set_buffer_option("readonly", true)
-  end
+  buffer:set_buffer_option("modifiable", config.modifiable or false)
+  buffer:set_buffer_option("modified", config.modifiable or false)
+  buffer:set_buffer_option("readonly", config.readonly or false)
 
   if vim.fn.has("nvim-0.10") == 1 then
     buffer:set_window_option("spell", false)
