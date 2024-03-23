@@ -27,7 +27,7 @@ local function Cherries(ref, head)
     return row({
       text.highlight(highlights[cherry.status])(cherry.status),
       text(" "),
-      text.highlight("Comment")(cherry.abbreviated_commit),
+      text.highlight("Comment")(cherry.oid:sub(1, git.log.abbreviated_size())),
       text(" "),
       text.highlight("NeogitGraphWhite")(cherry.subject),
     }, { oid = cherry.oid })
@@ -61,7 +61,7 @@ local function section(refs, heading, head)
         ---@param this Component
         ---@param ui Ui
         on_open = a.void(function(this, ui)
-          vim.cmd(string.format("echomsg 'Getting cherries for %s'", ref.abbreviated_commit))
+          vim.cmd(string.format("echomsg 'Getting cherries for %s'", ref.oid:sub(1, git.log.abbreviated_size())))
 
           local cherries = Cherries(ref, head)
           if cherries.children[1] then
@@ -77,11 +77,11 @@ local function section(refs, heading, head)
               string.format(
                 "redraw | echomsg 'Got %d cherries for %s'",
                 #cherries.children - 1,
-                ref.abbreviated_commit
+                ref.oid:sub(1, git.log.abbreviated_size())
               )
             )
           else
-            vim.cmd(string.format("redraw | echomsg 'No cherries found for %s'", ref.abbreviated_commit))
+            vim.cmd(string.format("redraw | echomsg 'No cherries found for %s'", ref.oid:sub(1, git.log.abbreviated_size())))
           end
         end),
       })
