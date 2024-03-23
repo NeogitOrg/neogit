@@ -580,6 +580,8 @@ function Buffer.create(config)
   if vim.fn.has("nvim-0.10") == 1 then
     buffer:set_window_option("spell", false)
     buffer:set_window_option("wrap", false)
+    buffer:set_window_option("foldmethod", "manual")
+
     -- TODO: Need to find a way to turn this off properly when unloading plugin
     -- buffer:set_window_option("winfixbuf", true)
   else
