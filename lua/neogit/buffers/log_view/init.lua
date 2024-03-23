@@ -75,16 +75,13 @@ function M:open()
           p { commit = self.buffer.ui:get_commit_under_cursor() }
         end),
         [popups.mapping_for("PullPopup")] = popups.open("pull"),
-        ["d"] = function()
-          -- TODO: Use diff popup
-          if not config.check_integration("diffview") then
-            notification.error("Diffview integration must be enabled for log diff")
-            return
-          end
-
-          local dv = require("neogit.integrations.diffview")
-          dv.open("log", self.buffer.ui:get_commits_in_selection())
-        end,
+        [popups.mapping_for("DiffPopup")] = popups.open("diff", function(p)
+          local items = self.buffer.ui:get_commits_in_selection()
+          p {
+            section = { name = "log" },
+            item = { name = items },
+          }
+        end),
       },
       n = {
         [popups.mapping_for("CherryPickPopup")] = popups.open("cherry_pick", function(p)
@@ -115,6 +112,13 @@ function M:open()
         end),
         [popups.mapping_for("TagPopup")] = popups.open("tag", function(p)
           p { commit = self.buffer.ui:get_commit_under_cursor() }
+        end),
+        [popups.mapping_for("DiffPopup")] = popups.open("diff", function(p)
+          local item = self.buffer.ui:get_commit_under_cursor()
+          p {
+            section = { name = "log" },
+            item = { name = item },
+          }
         end),
         [popups.mapping_for("PullPopup")] = popups.open("pull"),
         [status_maps["YankSelected"]] = function()
@@ -171,16 +175,6 @@ function M:open()
         end,
         ["<tab>"] = function()
           pcall(vim.cmd, "normal! za")
-        end,
-        ["d"] = function()
-          -- TODO: Use diff popup
-          if not config.check_integration("diffview") then
-            notification.error("Diffview integration must be enabled for log diff")
-            return
-          end
-
-          local dv = require("neogit.integrations.diffview")
-          dv.open("log", self.buffer.ui:get_commit_under_cursor())
         end,
       },
     },
