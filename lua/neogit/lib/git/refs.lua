@@ -7,7 +7,7 @@ local M = {}
 --- Lists revisions
 ---@return table
 function M.list()
-  local revisions = cli["for-each-ref"].format('"%(refname:short)"').call().stdout
+  local revisions = cli["for-each-ref"].format('"%(refname:short)"').call({ hidden = true }).stdout
   for i, str in ipairs(revisions) do
     revisions[i] = string.sub(str, 2, -2)
   end
@@ -25,7 +25,7 @@ local record_template = record.encode({
 }, "ref")
 
 function M.list_parsed()
-  local refs = cli["for-each-ref"].format(record_template).call_sync():trim().stdout
+  local refs = cli["for-each-ref"].format(record_template).show_popup(false).call({ hidden = true }).stdout
   local result = record.decode(refs)
 
   local output = {

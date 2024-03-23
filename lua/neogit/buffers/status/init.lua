@@ -460,15 +460,15 @@ function M:open(kind)
             end
           end
         end,
-        [mappings["CommandHistory"]] = function()
+        [mappings["CommandHistory"]] = a.void(function()
           require("neogit.buffers.git_command_history"):new():show()
-        end,
+        end),
         [mappings["Console"]] = function()
           require("neogit.process").show_console()
         end,
-        [mappings["ShowRefs"]] = function()
+        [mappings["ShowRefs"]] = a.void(function()
           require("neogit.buffers.refs_view").new(git.refs.list_parsed()):open()
-        end,
+        end),
         [mappings["YankSelected"]] = function()
           local yank = self.buffer.ui:get_yankable_under_cursor()
           if yank then
