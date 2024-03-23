@@ -1233,16 +1233,16 @@ Actions:                                           *neogit_rebase_popup_actions*
     then a START commit.
 
   • Rebase to modify a commit                      *neogit_rebase_modify_commit*
-    (TODO)
+    Begins an interactive rebase, allowing you to edit a single commit.
 
   • Rebase to reword a commit                      *neogit_rebase_reword_commit*
-    (TODO)
+    Begins an interactive rebase, letting you reword an single older commit.
 
   • Rebase to remove a commit                      *neogit_rebase_remove_commit*
-    (TODO)
+    Uses rebase to remove a single commit from the history.
 
   • Rebase to autosquash                              *neogit_rebase_autosquash*
-    (TODO)
+    Combines `squash!` and `fixup!` commits with their target commits.
 
 When a rebase is in progress, the following actions are available instead:
   • Continue                                            *neogit_rebase_continue*
