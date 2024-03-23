@@ -341,7 +341,7 @@ local function format(show_signature)
     fields.verification_flag = "%G?"
   end
 
-  return record.encode(fields)
+  return record.encode(fields, "log")
 end
 
 ---@param options? string[]

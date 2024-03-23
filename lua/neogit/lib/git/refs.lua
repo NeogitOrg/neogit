@@ -14,7 +14,7 @@ function M.list()
   return revisions
 end
 
-local record_template = record.encode {
+local record_template = record.encode({
   head = "%(HEAD)",
   oid = "%(objectname)",
   ref = "%(refname)",
@@ -22,7 +22,7 @@ local record_template = record.encode {
   upstream_status = "%(upstream:trackshort)",
   upstream_name = "%(upstream:short)",
   subject = "%(subject)",
-}
+}, "ref")
 
 function M.list_parsed()
   local refs = cli["for-each-ref"].format(record_template).call_sync():trim().stdout

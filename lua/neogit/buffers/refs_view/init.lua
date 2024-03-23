@@ -2,8 +2,6 @@ local Buffer = require("neogit.lib.buffer")
 local ui = require("neogit.buffers.refs_view.ui")
 local popups = require("neogit.popups")
 local CommitViewBuffer = require("neogit.buffers.commit_view")
-local config = require("neogit.config")
-local notification = require("neogit.lib.notification")
 
 --- @class RefsViewBuffer
 --- @field is_open boolean whether the buffer is currently shown
