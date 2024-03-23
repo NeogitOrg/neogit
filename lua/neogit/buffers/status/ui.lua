@@ -280,7 +280,7 @@ local SectionItemRebase = Component.new(function(item)
       text(item.stopped and "> " or "  "),
       text.highlight(action_hl)(util.pad_right(item.action, 6)),
       text(" "),
-      text.highlight("NeogitRebaseDone")(item.oid:sub(1, 7)),
+      text.highlight("NeogitRebaseDone")(item.abbreviated_commit),
       text(" "),
       text.highlight(item.done and "NeogitRebaseDone")(item.subject),
     }, { yankable = item.oid, oid = item.oid })
@@ -304,7 +304,7 @@ local SectionItemSequencer = Component.new(function(item)
   return row({
     text.highlight(action_hl)(action),
     text(show_action and " " or ""),
-    text.highlight("Comment")(item.oid:sub(1, 7)),
+    text.highlight("Comment")(item.abbreviated_commit),
     text(" "),
     text(item.subject),
   }, { yankable = item.oid, oid = item.oid })

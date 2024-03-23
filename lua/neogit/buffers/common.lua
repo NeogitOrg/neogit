@@ -219,7 +219,7 @@ M.CommitEntry = Component.new(function(commit, args)
   return col.tag("commit")({
     row(
       util.merge({
-        text(commit.oid:sub(1, 7), {
+        text(commit.abbreviated_commit, {
           highlight = commit.verification_flag and highlight_for_signature[commit.verification_flag]
             or "Comment",
         }),

@@ -430,7 +430,7 @@ function M.present_commit(commit)
   end
 
   return {
-    name = string.format("%s %s", commit.oid:sub(1, 7), commit.subject or "<empty>"),
+    name = string.format("%s %s", commit.abbreviated_commit, commit.subject or "<empty>"),
     oid = commit.oid,
     commit = commit,
   }
