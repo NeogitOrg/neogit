@@ -1,9 +1,12 @@
 <div align="center">
-    <h1>Neogit</h1>
+    <div>
+        <div><img src="https://github.com/NeogitOrg/neogit/assets/7228095/7684545f-47b5-40e2-aedd-ccf56e0553f4" width="400px"/></div>
+        <div><h1>Neogit</h1></div>
+    </div>
     <table>
         <tr>
             <td>
-               <strong>A git interface for <a href="https://neovim.io">Neovim</a>, inspired by <a href="https://magit.vc">Magit</a>.</strong>
+                <strong>A git interface for <a href="https://neovim.io">Neovim</a>, inspired by <a href="https://magit.vc">Magit</a>.</strong>
             </td>
         </tr>
     </table>
@@ -471,3 +474,7 @@ augroup END
 Run `make test` after checking out the repo. All dependencies should get automatically downloaded to `/tmp/neogit-test/`
 
 See [CONTRIBUTING.md](https://github.com/NeogitOrg/neogit/blob/master/CONTRIBUTING.md) for more details.
+
+## Credit
+
+Thank you to [kolja](https://github.com/kolja) for the Neogit Logo

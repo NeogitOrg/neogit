@@ -2,8 +2,9 @@ local a = require("plenary.async")
 local eq = assert.are.same
 local status = require("neogit.status")
 local operations = require("neogit.operations")
+local util = require("tests.util.util")
 local harness = require("tests.util.git_harness")
-local _ = require("tests.mocks.input")
+local input = require("tests.mocks.input")
 local in_prepared_repo = harness.in_prepared_repo
 local get_git_status = harness.get_git_status
 local get_git_diff = harness.get_git_diff
@@ -17,9 +18,10 @@ local function find(text)
   for index, line in ipairs(vim.api.nvim_buf_get_lines(0, 0, -1, true)) do
     if line:match(text) then
       vim.api.nvim_win_set_cursor(0, { index, 0 })
-      break
+      return true
     end
   end
+  return false
 end
 
 describe("status buffer", function()
@@ -384,6 +386,75 @@ describe("status buffer", function()
 ]],
           get_git_diff("b.txt", "--cached")
         )
+      end)
+    )
+    local function produce_merge_conflict(file, change)
+      util.system("git commit -am 'WIP'")
+      util.system("git switch second-branch")
+      util.system("sed -i '" .. change .. "' " .. file)
+      util.system("git commit -am 'conflict'")
+      util.system("git merge master", true)
+      eq("UU " .. file, get_git_status(file))
+      a.util.block_on(status.reset)
+      a.util.block_on(status.refresh)
+      eq(true, find("Both Modified"))
+    end
+    it(
+      "can discard a conflicted file with [O]urs",
+      in_prepared_repo(function()
+        produce_merge_conflict("a.txt", "s/manipulated/MANIPULATED/g")
+        input.choice = "o"
+
+        act("x")
+        operations.wait("discard")
+
+        eq("", get_git_status("a.txt"))
+        util.system(
+          "grep -q MANIPULATED a.txt",
+          false,
+          "Expected that after taking OUR changes we have 'MANIPULATED' in 'a.txt'"
+        )
+      end)
+    )
+    it(
+      "can discard a conflicted file with [T]heirs",
+      in_prepared_repo(function()
+        produce_merge_conflict("a.txt", "s/manipulated/MANIPULATED/g")
+        input.choice = "t"
+
+        act("x")
+        operations.wait("discard")
+
+        eq("M  a.txt", get_git_status("a.txt"))
+        util.system(
+          "grep -vq MANIPULATED a.txt",
+          false,
+          "Expected that after taking THEIR changes we don't have 'MANIPULATED' in 'a.txt' anymore"
+        )
+      end)
+    )
+    it(
+      "can abort discarding a conflicted file, leaving it conflicted",
+      in_prepared_repo(function()
+        produce_merge_conflict("a.txt", "s/manipulated/MANIPULATED/g")
+        input.choice = "a"
+
+        act("x")
+        operations.wait("discard")
+
+        eq("UU a.txt", get_git_status("a.txt"))
+      end)
+    )
+    it(
+      "quitting choice prompt does abort discard of conflicted file",
+      in_prepared_repo(function()
+        produce_merge_conflict("a.txt", "s/manipulated/MANIPULATED/g")
+        input.choice = nil -- simulate user pressed ESC
+
+        act("x")
+        operations.wait("discard")
+
+        eq("UU a.txt", get_git_status("a.txt"))
       end)
     )
   end)

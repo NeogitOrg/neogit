@@ -56,4 +56,66 @@ function M.get_url(name)
   return cli.remote.get_url(name).call({ hidden = true }).stdout
 end
 
+---@class RemoteInfo
+---@field url string
+---@field protocol string
+---@field user string
+---@field host string
+---@field port string
+---@field path string
+---@field repo string
+---@field owner string
+---@field repository string
+
+---@param url string
+---@return RemoteInfo
+function M.parse(url)
+  local protocol, user, host, port, path, repository, owner
+
+  for _, v in pairs { "git", "https", "http", "ssh" } do
+    if url:sub(1, #v) == v then
+      protocol = v
+      break
+    end
+  end
+
+  if protocol ~= nil then
+    if protocol == "git" then
+      user = "git"
+      host = url:match([[@([^:]+)]])
+      owner = url:match([[:([^/]+)/]])
+    else
+      user = url:match([[://(%w+):?%w*@]]) -- Strip passwords.
+      port = url:match([[:(%d+)]])
+
+      if user ~= nil and port ~= nil then
+        host = url:match([[@(.*):]])
+      elseif user ~= nil then
+        host = url:match([[@(.-)/]])
+      elseif port ~= nil then
+        host = url:match([[//(.-):]])
+      else
+        host = url:match([[//(.-)/]])
+      end
+
+      path = url:sub(#protocol + 4, #url):match([[/(.*)/]])
+      owner = path -- Strictly for backwards compatibility.
+    end
+
+    repository = url:match([[/([^/]+)%.git]])
+  end
+
+  return {
+    url = url,
+    protocol = protocol,
+    user = user,
+    host = host,
+    port = port,
+    path = path,
+    repo = repository,
+    owner = owner,
+    repository = repository,
+  }
+end
+
 return M

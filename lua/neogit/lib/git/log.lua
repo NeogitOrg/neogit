@@ -2,7 +2,7 @@ local cli = require("neogit.lib.git.cli")
 local diff_lib = require("neogit.lib.git.diff")
 local util = require("neogit.lib.util")
 local config = require("neogit.config")
-local json = require("neogit.lib.json")
+local record = require("neogit.lib.record")
 
 local M = {}
 
@@ -341,7 +341,7 @@ local function format(show_signature)
     fields.verification_flag = "%G?"
   end
 
-  return json.encode(fields)
+  return record.encode(fields)
 end
 
 ---@param options? string[]
@@ -367,8 +367,7 @@ M.list = util.memoize(function(options, graph, files, hidden, graph_color)
     .show_popup(false)
     .call({ hidden = hidden, ignore_error = hidden }).stdout
 
-  local commits =
-    json.decode(output, { escaped_fields = { "body", "author_name", "committer_name", "subject" } })
+  local commits = record.decode(output)
   if vim.tbl_isempty(commits) then
     return {}
   end
