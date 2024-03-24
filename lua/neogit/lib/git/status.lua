@@ -1,5 +1,4 @@
 local Path = require("plenary.path")
-local util = require("neogit.lib.util")
 local Collection = require("neogit.lib.collection")
 
 ---@class File: StatusItem
