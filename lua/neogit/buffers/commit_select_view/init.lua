@@ -7,15 +7,18 @@ local status_maps = require("neogit.config").get_reversed_status_maps()
 
 ---@class CommitSelectViewBuffer
 ---@field commits CommitLogEntry[]
+---@field header string|nil
 local M = {}
 M.__index = M
 
 ---Opens a popup for selecting a commit
 ---@param commits CommitLogEntry[]|nil
+---@param header? string
 ---@return CommitSelectViewBuffer
-function M.new(commits)
+function M.new(commits, header)
   local instance = {
     commits = commits,
+    header = header,
     buffer = nil,
   }
 
@@ -39,6 +42,7 @@ function M:open(action)
     filetype = "NeogitCommitSelectView",
     status_column = " ",
     kind = config.values.commit_select_view.kind,
+    header = self.header or "Select a commit with <cr>, or <esc> to abort",
     mappings = {
       v = {
         ["<enter>"] = function()

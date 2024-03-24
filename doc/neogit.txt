@@ -213,7 +213,6 @@ NeogitRebaseDone            Current position within rebase
 NeogitTagName               Closest Tag name
 NeogitTagDistance           Number of commits between the tag and HEAD
 
-
 STATUS BUFFER SECTION HEADERS
 NeogitSectionHeader
 
@@ -328,6 +327,9 @@ NeogitCommandTime          Execution time
 NeogitCommandCodeNormal    Applied to a successful command's exit status (0)
 NeogitCommandCodeError     When command exits with non-zero status
 
+COMMIT SELECT BUFFER
+NeogitFloatHeader          Foreground/Background for header text at top of win
+NeogitFloatHeaderHighlight Emphasized text in header
 ==============================================================================
 5. Lua API                                               *neogit_api* *neogit-lua*
 

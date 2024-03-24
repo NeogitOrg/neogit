@@ -112,7 +112,6 @@ end
 function M.setup()
   local palette = make_palette()
 
-  -- stylua: ignore start
   hl_store = {
     NeogitGraphAuthor = { fg = palette.orange },
     NeogitGraphRed = { fg = palette.red },
@@ -206,9 +205,10 @@ function M.setup()
     NeogitPicking = { link = "NeogitSectionHeader" },
     NeogitReverting = { link = "NeogitSectionHeader" },
     NeogitTagName = { fg = palette.yellow },
-    NeogitTagDistance = { fg = palette.cyan }
+    NeogitTagDistance = { fg = palette.cyan },
+    NeogitFloatHeader = { bg = palette.bg0, bold = palette.bold },
+    NeogitFloatHeaderHighlight = { bg = palette.bg2, fg = palette.cyan, bold = palette.bold },
   }
-  -- stylua: ignore end
 
   for group, hl in pairs(hl_store) do
     if not is_set(group) then
