@@ -34,6 +34,7 @@ end
 ---@return string First letter of the selected choice
 function M.get_choice(msg, options)
   local choice = vim.fn.confirm(msg, table.concat(options.values, "\n"), options.default)
+  vim.cmd("redraw")
   return options.values[choice]:match("&(.)")
 end
 
