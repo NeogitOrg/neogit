@@ -579,6 +579,8 @@ local configurations = {
   },
 
   ["verify-commit"] = config {},
+
+  ["bisect"] = config {},
 }
 
 -- NOTE: Use require("neogit.lib.git.repository").git_root instead of calling this function.

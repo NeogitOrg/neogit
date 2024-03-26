@@ -100,6 +100,7 @@ end
 ---@field recent NeogitConfigSection|nil
 ---@field rebase NeogitConfigSection|nil
 ---@field sequencer NeogitConfigSection|nil
+---@field bisect NeogitConfigSection|nil
 
 ---@class HighlightOptions
 ---@field italic? boolean
@@ -255,6 +256,10 @@ function M.get_default_values()
     },
     sections = {
       sequencer = {
+        folded = false,
+        hidden = false,
+      },
+      bisect = {
         folded = false,
         hidden = false,
       },

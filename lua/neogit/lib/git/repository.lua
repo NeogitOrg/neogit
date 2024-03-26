@@ -44,6 +44,7 @@ local function empty_state()
     rebase = { items = {}, head = nil },
     sequencer = { items = {}, head = nil },
     merge = { items = {}, head = nil, msg = nil },
+    bisect = { items = {}, finished = false },
   }
 end
 
@@ -125,6 +126,7 @@ if not M.initialized then
     "rebase",
     "sequencer",
     "merge",
+    "bisect",
   }
 
   for _, m in ipairs(modules) do

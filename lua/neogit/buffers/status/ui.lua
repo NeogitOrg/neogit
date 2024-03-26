@@ -71,8 +71,17 @@ local HINT = Component.new(function(props)
 end)
 
 local HEAD = Component.new(function(props)
-  local highlight = props.remote and "NeogitRemote" or "NeogitBranch"
-  local ref = props.remote and ("%s/%s"):format(props.remote, props.branch) or props.branch
+  local highlight, ref
+  if props.branch == "(detached)" then
+    highlight = "Comment"
+    ref = props.oid
+  elseif props.remote then
+    highlight = "NeogitRemote"
+    ref = ("%s/%s"):format(props.remote, props.branch)
+  else
+    highlight = "NeogitBranch"
+    ref = props.branch
+  end
 
   return row({
     text(util.pad_right(props.name .. ":", 10)),
@@ -83,13 +92,20 @@ local HEAD = Component.new(function(props)
 end)
 
 local Tag = Component.new(function(props)
-  return row({
-    text(util.pad_right("Tag:", 10)),
-    text.highlight("NeogitTagName")(props.name),
-    text(" ("),
-    text.highlight("NeogitTagDistance")(props.distance),
-    text(")"),
-  }, { yankable = props.yankable })
+  if props.distance then
+    return row({
+      text(util.pad_right("Tag:", 10)),
+      text.highlight("NeogitTagName")(props.name),
+      text(" ("),
+      text.highlight("NeogitTagDistance")(props.distance),
+      text(")"),
+    }, { yankable = props.yankable })
+  else
+    return row({
+      text(util.pad_right("Tag:", 10)),
+      text.highlight("NeogitTagName")(props.name),
+    }, { yankable = props.yankable })
+  end
 end)
 
 local SectionTitle = Component.new(function(props)
@@ -310,6 +326,26 @@ local SectionItemSequencer = Component.new(function(item)
   }, { yankable = item.oid, oid = item.oid })
 end)
 
+local SectionItemBisect = Component.new(function(item)
+  local highlight
+  if item.action == "good" then
+    highlight = "NeogitGraphGreen"
+  elseif item.action == "bad" then
+    highlight = "NeogitGraphRed"
+  elseif item.finished then
+    highlight = "NeogitGraphBoldOrange"
+  end
+
+  return row({
+    text(item.finished and "> " or "  "),
+    text.highlight(highlight)(util.pad_right(item.action, 5)),
+    text(" "),
+    text.highlight("Comment")(item.abbreviated_commit),
+    text(" "),
+    text(item.subject),
+  }, { yankable = item.oid, oid = item.oid })
+end)
+
 function M.Status(state, config)
   -- stylua: ignore start
   local show_hint = not config.disable_hint
@@ -321,6 +357,8 @@ function M.Status(state, config)
     and state.head.branch ~= "(detached)"
 
   local show_tag = state.head.tag.name
+
+  local show_tag_distance = state.head.tag.name
     and state.head.branch ~= "(detached)"
 
   local show_merge = state.merge.head
@@ -334,6 +372,9 @@ function M.Status(state, config)
 
   local show_revert = state.sequencer.revert
     and not config.sections.sequencer.hidden
+
+  local show_bisect = #state.bisect.items > 0
+    and not config.sections.bisect.hidden
 
   local show_untracked = #state.untracked.items > 0
     and not config.sections.untracked.hidden
@@ -373,6 +414,7 @@ function M.Status(state, config)
         HEAD {
           name = "Head",
           branch = state.head.branch,
+          oid = state.head.abbrev,
           msg = state.head.commit_message,
           yankable = state.head.oid,
         },
@@ -392,7 +434,7 @@ function M.Status(state, config)
         },
         show_tag and Tag {
           name = state.head.tag.name,
-          distance = state.head.tag.distance,
+          distance = show_tag_distance and state.head.tag.distance,
           yankable = state.head.tag.oid,
         },
         EmptyLine,
@@ -430,6 +472,13 @@ function M.Status(state, config)
           items = util.reverse(state.sequencer.items),
           folded = config.sections.sequencer.folded,
           name = "revert",
+        },
+        show_bisect and SequencerSection {
+          title = SectionTitle { title = "Bisecting" },
+          render = SectionItemBisect,
+          items = state.bisect.items,
+          folded = config.sections.bisect.folded,
+          name = "bisect",
         },
         show_untracked and Section {
           title = SectionTitle { title = "Untracked files" },

@@ -357,6 +357,9 @@ function M:open(kind)
         [popups.mapping_for("IgnorePopup")] = popups.open("ignore", function(p)
           p { paths = self.buffer.ui:get_filepaths_in_selection(), git_root = git.repo.git_root }
         end),
+        [popups.mapping_for("BisectPopup")] = popups.open("bisect", function(p)
+          p { commits = self.buffer.ui:get_commits_in_selection() }
+        end),
         [popups.mapping_for("RemotePopup")] = popups.open("remote"),
         [popups.mapping_for("FetchPopup")] = popups.open("fetch"),
         [popups.mapping_for("PullPopup")] = popups.open("pull"),
@@ -1000,7 +1003,9 @@ function M:open(kind)
         [popups.mapping_for("BranchPopup")] = popups.open("branch", function(p)
           p { commits = { self.buffer.ui:get_commit_under_cursor() } }
         end),
-        [popups.mapping_for("BisectPopup")] = popups.open("bisect"),
+        [popups.mapping_for("BisectPopup")] = popups.open("bisect", function(p)
+          p { commits = { self.buffer.ui:get_commit_under_cursor() } }
+        end),
         [popups.mapping_for("CherryPickPopup")] = popups.open("cherry_pick", function(p)
           p { commits = { self.buffer.ui:get_commit_under_cursor() } }
         end),
@@ -1172,10 +1177,7 @@ function M:refresh(partial, reason)
       self.buffer.ui:render(unpack(ui.Status(git.repo, self.config)))
 
       if cursor and view then
-        self.buffer:restore_view(
-          view,
-          self.buffer.ui:resolve_cursor_location(cursor)
-        )
+        self.buffer:restore_view(view, self.buffer.ui:resolve_cursor_location(cursor))
       end
 
       api.nvim_exec_autocmds("User", { pattern = "NeogitStatusRefreshed", modeline = false })

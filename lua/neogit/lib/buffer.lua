@@ -527,13 +527,7 @@ function Buffer:set_header(text)
   vim.wo[winid].wrap = false
   vim.wo[winid].winhl = "NormalFloat:NeogitFloatHeader"
 
-  fn.matchadd(
-    "NeogitFloatHeaderHighlight",
-    [[\v\<cr\>|\<esc\>]],
-    100,
-    -1,
-    { window = winid }
-  )
+  fn.matchadd("NeogitFloatHeaderHighlight", [[\v\<cr\>|\<esc\>]], 100, -1, { window = winid })
 
   -- Scroll the buffer viewport to the top so the header is visible
   self:call(function()
