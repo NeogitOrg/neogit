@@ -341,6 +341,8 @@ function M.Status(state, config)
     and state.head.branch ~= "(detached)"
 
   local show_tag = state.head.tag.name
+
+  local show_tag_distance = state.head.tag.name
     and state.head.branch ~= "(detached)"
 
   local show_merge = state.merge.head
@@ -415,7 +417,7 @@ function M.Status(state, config)
         },
         show_tag and Tag {
           name = state.head.tag.name,
-          distance = state.head.tag.distance,
+          distance = show_tag_distance and state.head.tag.distance,
           yankable = state.head.tag.oid,
         },
         EmptyLine,
