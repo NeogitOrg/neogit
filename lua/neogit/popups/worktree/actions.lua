@@ -37,7 +37,7 @@ local function get_path(prompt)
 end
 
 M.checkout_worktree = operations("checkout_worktree", function()
-  local options = util.merge(git.branch.get_all_branches(), git.tag.list(), git.refs.heads())
+  local options = util.merge(git.refs.list_branches(), git.refs.list_tags(), git.refs.heads())
   local selected = FuzzyFinderBuffer.new(options):open_async { prompt_prefix = "checkout" }
   if not selected then
     return
@@ -60,7 +60,7 @@ M.create_worktree = operations("create_worktree", function()
     return
   end
 
-  local options = util.merge(git.branch.get_all_branches(), git.tag.list(), git.refs.heads())
+  local options = util.merge(git.refs.list_branches(), git.refs.list_tags(), git.refs.heads())
   local selected = FuzzyFinderBuffer.new(options)
     :open_async { prompt_prefix = "Create and checkout branch starting at" }
   if not selected then

@@ -36,7 +36,7 @@ function M.onto_upstream(popup)
   if git.repo.upstream.ref then
     upstream = string.format("refs/remotes/%s", git.repo.upstream.ref)
   else
-    local target = FuzzyFinderBuffer.new(git.branch.get_remote_branches()):open_async()
+    local target = FuzzyFinderBuffer.new(git.refs.list_remote_branches()):open_async()
     if not target then
       return
     end
@@ -48,7 +48,7 @@ function M.onto_upstream(popup)
 end
 
 function M.onto_elsewhere(popup)
-  local target = FuzzyFinderBuffer.new(git.branch.get_all_branches()):open_async()
+  local target = FuzzyFinderBuffer.new(git.refs.list_branches()):open_async()
   if target then
     git.rebase.onto_branch(target, popup:get_arguments())
   end
@@ -132,9 +132,7 @@ M.drop = operation("rebase_drop", function(popup)
 end)
 
 function M.subset(popup)
-  local newbase = FuzzyFinderBuffer.new(git.branch.get_all_branches())
-    :open_async { prompt_prefix = "rebase subset onto" }
-
+  local newbase = FuzzyFinderBuffer.new(git.refs.list_branches()):open_async { prompt_prefix = "rebase subset onto" }
   if not newbase then
     return
   end
