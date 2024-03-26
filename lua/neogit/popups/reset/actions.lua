@@ -13,9 +13,8 @@ local function commit(popup, prompt)
     commit = popup.state.env.commit
   else
     local commits = util.merge(
-      { git.branch.current() },
-      git.branch.get_all_branches(false),
-      git.tag.list(),
+      git.refs.list_branches(),
+      git.refs.list_tags(),
       git.refs.heads()
     )
     commit = FuzzyFinderBuffer.new(commits):open_async { prompt_prefix = prompt }

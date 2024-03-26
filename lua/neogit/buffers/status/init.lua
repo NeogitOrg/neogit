@@ -1000,6 +1000,7 @@ function M:open(kind)
         [popups.mapping_for("BranchPopup")] = popups.open("branch", function(p)
           p { commits = { self.buffer.ui:get_commit_under_cursor() } }
         end),
+        [popups.mapping_for("BisectPopup")] = popups.open("bisect"),
         [popups.mapping_for("CherryPickPopup")] = popups.open("cherry_pick", function(p)
           p { commits = { self.buffer.ui:get_commit_under_cursor() } }
         end),

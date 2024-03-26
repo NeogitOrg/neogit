@@ -538,6 +538,7 @@ local configurations = {
   ["for-each-ref"] = config {
     options = {
       format = "--format",
+      sort = "--sort",
     },
   },
 

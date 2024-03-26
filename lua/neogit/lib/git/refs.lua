@@ -1,17 +1,55 @@
 local cli = require("neogit.lib.git.cli")
+local config = require("neogit.config")
 local record = require("neogit.lib.record")
 local repo = require("neogit.lib.git.repository")
+local util = require("neogit.lib.util")
 
 local M = {}
 
---- Lists revisions
+---@param namespaces? string[]
+---@param format? string format string passed to `git for-each-ref`
+---@param sortby? string sort by string passed to `git for-each-ref`
 ---@return table
-function M.list()
-  local revisions = cli["for-each-ref"].format('"%(refname:short)"').call({ hidden = true }).stdout
-  for i, str in ipairs(revisions) do
-    revisions[i] = string.sub(str, 2, -2)
+function M.list(namespaces, format, sortby)
+  return util.filter_map(
+    cli["for-each-ref"].format(format or "%(refname)").sort(sortby or config.values.sort_branches).call({ hidden = true }).stdout,
+    function(revision)
+      for _, namespace in ipairs(namespaces or { "refs/heads", "refs/remotes", "refs/tags" }) do
+        if revision:match("^" .. namespace) then
+          local name, _ = revision:gsub("^" .. namespace .. "/", "")
+          return name
+        end
+      end
+    end)
+end
+
+---@return string[]
+function M.list_tags()
+  return M.list({ "refs/tags" })
+end
+
+---@return string[]
+function M.list_branches()
+  return util.merge(M.list_local_branches(), M.list_remote_branches())
+end
+
+---@return string[]
+function M.list_local_branches()
+  return M.list({ "refs/heads" })
+end
+
+---@param remote? string Filter branches by remote
+---@return string[]
+function M.list_remote_branches(remote)
+  local remote_branches = M.list({ "refs/remotes" })
+
+  if remote then
+    return vim.tbl_filter(function(ref)
+      return ref:match("^" .. remote .. "/")
+    end, remote_branches)
+  else
+    return remote_branches
   end
-  return revisions
 end
 
 local record_template = record.encode({

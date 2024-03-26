@@ -41,12 +41,8 @@ function M.update_pull_rebase()
 end
 
 function M.merge_config(branch)
-  local local_branches = git.branch.get_local_branches()
-  local remote_branches = git.branch.get_remote_branches()
-  local branches = util.merge(local_branches, remote_branches)
-
   return a.void(function(popup, c)
-    local target = FuzzyFinderBuffer.new(branches):open_async { prompt_prefix = "upstream" }
+    local target = FuzzyFinderBuffer.new(git.refs.list_branches()):open_async { prompt_prefix = "upstream" }
     if not target then
       return
     end

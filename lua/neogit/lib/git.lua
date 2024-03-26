@@ -26,4 +26,5 @@ return {
   push = require("neogit.lib.git.push"),
   index = require("neogit.lib.git.index"),
   worktree = require("neogit.lib.git.worktree"),
+  bisect = require("neogit.lib.git.bisect"),
 }

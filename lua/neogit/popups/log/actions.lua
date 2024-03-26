@@ -41,7 +41,7 @@ function M.log_local_branches(popup)
 end
 
 function M.log_other(popup)
-  local branch = FuzzyFinderBuffer.new(git.branch.get_all_branches()):open_async()
+  local branch = FuzzyFinderBuffer.new(git.refs.list_branches()):open_async()
   if branch then
     LogViewBuffer.new(commits(popup, { branch }), popup:get_internal_arguments(), popup.state.env.files)
       :open()
@@ -73,7 +73,7 @@ function M.reflog_head(popup)
 end
 
 function M.reflog_other(popup)
-  local branch = FuzzyFinderBuffer.new(git.branch.get_local_branches()):open_async()
+  local branch = FuzzyFinderBuffer.new(git.refs.list_local_branches()):open_async()
   if branch then
     ReflogViewBuffer.new(git.reflog.list(branch, popup:get_arguments())):open()
   end

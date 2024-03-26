@@ -498,6 +498,49 @@ function Buffer:set_decorations(namespace, opts)
   end
 end
 
+function Buffer:set_header(text)
+  -- Create a blank line at the top of the buffer so our floating window doesn't
+  -- hide any content
+  self:set_extmark(self:get_namespace_id("default"), 0, 0, {
+    virt_lines = { { { "", "Comment" } } },
+    virt_lines_above = true,
+  })
+
+  -- Create a new buffer with the header text
+  local buf = api.nvim_create_buf(false, true)
+  api.nvim_buf_set_lines(buf, 0, -1, false, { (" %s"):format(text) })
+  vim.bo[buf].undolevels = -1
+  vim.bo[buf].bufhidden = "wipe"
+  vim.bo[buf].modified = false
+
+  -- Display the buffer in a floating window
+  local winid = api.nvim_open_win(buf, false, {
+    relative = "win",
+    width = vim.o.columns,
+    height = 1,
+    row = 0,
+    col = 0,
+    focusable = false,
+    style = "minimal",
+    noautocmd = true,
+  })
+  vim.wo[winid].wrap = false
+  vim.wo[winid].winhl = "NormalFloat:NeogitFloatHeader"
+
+  fn.matchadd(
+    "NeogitFloatHeaderHighlight",
+    [[\v\<cr\>|\<esc\>]],
+    100,
+    -1,
+    { window = winid }
+  )
+
+  -- Scroll the buffer viewport to the top so the header is visible
+  self:call(function()
+    api.nvim_input("<PageUp>")
+  end)
+end
+
 ---@class BufferConfig
 ---@field name string
 ---@field load boolean
@@ -623,12 +666,11 @@ function Buffer.create(config)
 
   if config.context_highlight then
     buffer:create_namespace("ViewContext")
-
     buffer:set_decorations("ViewContext", {
       on_start = function()
         return buffer:exists() and buffer:is_focused()
       end,
-      on_win = function(_, _, _, top, bottom)
+      on_win = function()
         buffer:clear_namespace("ViewContext")
 
         local context = buffer.ui:get_cursor_context()
@@ -636,27 +678,26 @@ function Buffer.create(config)
           return
         end
 
-        local first = context.position.row_start
-        local last = context.position.row_end
         local cursor = vim.fn.line(".")
+        for line = context.position.row_start, context.position.row_end do
+          local line_hl = ("%s%s"):format(
+            buffer.ui:get_line_highlight(line) or "NeogitDiffContext",
+            line == cursor and "Cursor" or "Highlight"
+          )
 
-        for line = top, bottom do
-          if line >= first and line <= last then
-            local line_hl = ("%s%s"):format(
-              buffer.ui:get_line_highlight(line) or "NeogitDiffContext",
-              line == cursor and "Cursor" or "Highlight"
-            )
-
-            buffer:buffered_add_line_highlight(line - 1, line_hl, {
-              priority = 200,
-              namespace = "ViewContext",
-            })
-          end
+          buffer:buffered_add_line_highlight(line - 1, line_hl, {
+            priority = 200,
+            namespace = "ViewContext",
+          })
         end
 
         buffer:flush_line_highlight_buffer()
       end,
     })
+  end
+
+  if config.header then
+    buffer:set_header(config.header)
   end
 
   return buffer
