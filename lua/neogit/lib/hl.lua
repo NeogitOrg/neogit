@@ -123,6 +123,7 @@ function M.setup()
     NeogitGraphPurple = { fg = palette.purple },
     NeogitGraphGray = { fg = palette.grey },
     NeogitGraphOrange = { fg = palette.orange },
+    NeogitGraphBoldOrange = { fg = palette.orange, bold = palette.bold },
     NeogitGraphBoldRed = { fg = palette.red, bold = palette.bold },
     NeogitGraphBoldWhite = { fg = palette.white, bold = palette.bold },
     NeogitGraphBoldYellow = { fg = palette.yellow, bold = palette.bold },

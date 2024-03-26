@@ -74,8 +74,14 @@ function M:open(_)
             item = { name = items },
           }
         end),
+        [popups.mapping_for("BisectPopup")] = popups.open("bisect", function(p)
+          p { commits = self.buffer.ui:get_commits_in_selection() }
+        end),
       },
       n = {
+        [popups.mapping_for("BisectPopup")] = popups.open("bisect", function(p)
+          p { commits = { self.buffer.ui:get_commit_under_cursor() } }
+        end),
         [popups.mapping_for("CherryPickPopup")] = popups.open("cherry_pick", function(p)
           p { commits = { self.buffer.ui:get_commit_under_cursor() } }
         end),

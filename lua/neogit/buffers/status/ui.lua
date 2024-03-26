@@ -310,6 +310,26 @@ local SectionItemSequencer = Component.new(function(item)
   }, { yankable = item.oid, oid = item.oid })
 end)
 
+local SectionItemBisect = Component.new(function(item)
+  local highlight
+  if item.action == "good" then
+    highlight = "NeogitGraphGreen"
+  elseif item.action == "bad" then
+    highlight = "NeogitGraphRed"
+  elseif item.finished then
+    highlight = "NeogitGraphBoldOrange"
+  end
+
+  return row({
+    text(item.finished and "> " or "  "),
+    text.highlight(highlight)(util.pad_right(item.action, 5)),
+    text(" "),
+    text.highlight("Comment")(item.abbreviated_commit),
+    text(" "),
+    text(item.subject),
+  }, { yankable = item.oid, oid = item.oid })
+end)
+
 function M.Status(state, config)
   -- stylua: ignore start
   local show_hint = not config.disable_hint
@@ -334,6 +354,9 @@ function M.Status(state, config)
 
   local show_revert = state.sequencer.revert
     and not config.sections.sequencer.hidden
+
+  local show_bisect = #state.bisect.items > 0
+    and not config.sections.bisect.hidden
 
   local show_untracked = #state.untracked.items > 0
     and not config.sections.untracked.hidden
@@ -430,6 +453,13 @@ function M.Status(state, config)
           items = util.reverse(state.sequencer.items),
           folded = config.sections.sequencer.folded,
           name = "revert",
+        },
+        show_bisect and SequencerSection {
+          title = SectionTitle { title = "Bisecting" },
+          render = SectionItemBisect,
+          items = state.bisect.items,
+          folded = config.sections.bisect.folded,
+          name = "bisect",
         },
         show_untracked and Section {
           title = SectionTitle { title = "Untracked files" },
