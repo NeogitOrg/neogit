@@ -71,8 +71,17 @@ local HINT = Component.new(function(props)
 end)
 
 local HEAD = Component.new(function(props)
-  local highlight = props.remote and "NeogitRemote" or "NeogitBranch"
-  local ref = props.remote and ("%s/%s"):format(props.remote, props.branch) or props.branch
+  local highlight, ref
+  if props.branch == "(detached)" then
+    highlight = "Comment"
+    ref = props.oid
+  elseif props.remote then
+    highlight = "NeogitRemote"
+    ref = ("%s/%s"):format(props.remote, props.branch)
+  else
+    highlight = "NeogitBranch"
+    ref = props.branch
+  end
 
   return row({
     text(util.pad_right(props.name .. ":", 10)),
@@ -83,13 +92,20 @@ local HEAD = Component.new(function(props)
 end)
 
 local Tag = Component.new(function(props)
-  return row({
-    text(util.pad_right("Tag:", 10)),
-    text.highlight("NeogitTagName")(props.name),
-    text(" ("),
-    text.highlight("NeogitTagDistance")(props.distance),
-    text(")"),
-  }, { yankable = props.yankable })
+  if props.distance then
+    return row({
+      text(util.pad_right("Tag:", 10)),
+      text.highlight("NeogitTagName")(props.name),
+      text(" ("),
+      text.highlight("NeogitTagDistance")(props.distance),
+      text(")"),
+    }, { yankable = props.yankable })
+  else
+    return row({
+      text(util.pad_right("Tag:", 10)),
+      text.highlight("NeogitTagName")(props.name),
+    }, { yankable = props.yankable })
+  end
 end)
 
 local SectionTitle = Component.new(function(props)
@@ -398,6 +414,7 @@ function M.Status(state, config)
         HEAD {
           name = "Head",
           branch = state.head.branch,
+          oid = state.head.abbrev,
           msg = state.head.commit_message,
           yankable = state.head.oid,
         },
