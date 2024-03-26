@@ -61,7 +61,9 @@ local function section(refs, heading, head)
         ---@param this Component
         ---@param ui Ui
         on_open = a.void(function(this, ui)
-          vim.cmd(string.format("echomsg 'Getting cherries for %s'", ref.oid:sub(1, git.log.abbreviated_size())))
+          vim.cmd(
+            string.format("echomsg 'Getting cherries for %s'", ref.oid:sub(1, git.log.abbreviated_size()))
+          )
 
           local cherries = Cherries(ref, head)
           if cherries.children[1] then
@@ -81,7 +83,12 @@ local function section(refs, heading, head)
               )
             )
           else
-            vim.cmd(string.format("redraw | echomsg 'No cherries found for %s'", ref.oid:sub(1, git.log.abbreviated_size())))
+            vim.cmd(
+              string.format(
+                "redraw | echomsg 'No cherries found for %s'",
+                ref.oid:sub(1, git.log.abbreviated_size())
+              )
+            )
           end
         end),
       })

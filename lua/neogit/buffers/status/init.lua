@@ -1177,10 +1177,7 @@ function M:refresh(partial, reason)
       self.buffer.ui:render(unpack(ui.Status(git.repo, self.config)))
 
       if cursor and view then
-        self.buffer:restore_view(
-          view,
-          self.buffer.ui:resolve_cursor_location(cursor)
-        )
+        self.buffer:restore_view(view, self.buffer.ui:resolve_cursor_location(cursor))
       end
 
       api.nvim_exec_autocmds("User", { pattern = "NeogitStatusRefreshed", modeline = false })

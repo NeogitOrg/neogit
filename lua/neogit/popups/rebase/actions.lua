@@ -132,7 +132,8 @@ M.drop = operation("rebase_drop", function(popup)
 end)
 
 function M.subset(popup)
-  local newbase = FuzzyFinderBuffer.new(git.refs.list_branches()):open_async { prompt_prefix = "rebase subset onto" }
+  local newbase = FuzzyFinderBuffer.new(git.refs.list_branches())
+    :open_async { prompt_prefix = "rebase subset onto" }
   if not newbase then
     return
   end

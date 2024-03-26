@@ -18,9 +18,14 @@ function M.start(popup)
     bad_revision = popup.state.env.commits[1]
     good_revision = popup.state.env.commits[#popup.state.env.commits]
   else
-    local refs = util.merge({ popup.state.env.commits[1] }, git.refs.list_branches(), git.refs.list_tags(), git.refs.heads())
+    local refs = util.merge(
+      { popup.state.env.commits[1] },
+      git.refs.list_branches(),
+      git.refs.list_tags(),
+      git.refs.heads()
+    )
     bad_revision = FuzzyFinderBuffer.new(refs):open_async {
-      prompt_prefix = "Start bisect with bad revision"
+      prompt_prefix = "Start bisect with bad revision",
     }
 
     if not bad_revision then
@@ -28,7 +33,7 @@ function M.start(popup)
     end
 
     good_revision = FuzzyFinderBuffer.new(refs):open_async {
-      prompt_prefix = "Good revision"
+      prompt_prefix = "Good revision",
     }
 
     if not good_revision then

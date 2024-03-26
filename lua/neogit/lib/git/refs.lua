@@ -12,7 +12,10 @@ local M = {}
 ---@return table
 function M.list(namespaces, format, sortby)
   return util.filter_map(
-    cli["for-each-ref"].format(format or "%(refname)").sort(sortby or config.values.sort_branches).call({ hidden = true }).stdout,
+    cli["for-each-ref"]
+      .format(format or "%(refname)")
+      .sort(sortby or config.values.sort_branches)
+      .call({ hidden = true }).stdout,
     function(revision)
       for _, namespace in ipairs(namespaces or { "refs/heads", "refs/remotes", "refs/tags" }) do
         if revision:match("^" .. namespace) then
@@ -20,12 +23,13 @@ function M.list(namespaces, format, sortby)
           return name
         end
       end
-    end)
+    end
+  )
 end
 
 ---@return string[]
 function M.list_tags()
-  return M.list({ "refs/tags" })
+  return M.list { "refs/tags" }
 end
 
 ---@return string[]
@@ -35,13 +39,13 @@ end
 
 ---@return string[]
 function M.list_local_branches()
-  return M.list({ "refs/heads" })
+  return M.list { "refs/heads" }
 end
 
 ---@param remote? string Filter branches by remote
 ---@return string[]
 function M.list_remote_branches(remote)
-  local remote_branches = M.list({ "refs/remotes" })
+  local remote_branches = M.list { "refs/remotes" }
 
   if remote then
     return vim.tbl_filter(function(ref)

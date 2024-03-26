@@ -23,7 +23,7 @@ function M.start(bad_revision, good_revision, args)
   local result = cli.bisect.args("start").arg_list(args).args(good_revision, bad_revision).call()
 
   if result.code == 0 then
-    fire_bisect_event({ type = "start" })
+    fire_bisect_event { type = "start" }
   end
 end
 
@@ -32,7 +32,7 @@ local function cmd(state)
   local result = cli.bisect.args(state).call()
 
   if result.code == 0 then
-    fire_bisect_event({ type = state })
+    fire_bisect_event { type = state }
   end
 end
 
@@ -72,7 +72,7 @@ local function update_bisect_information(state)
 
         finished = action == "first bad commit"
         if finished then
-          fire_bisect_event({ type = "finished", oid = oid })
+          fire_bisect_event { type = "finished", oid = oid }
         end
 
         ---@type BisectItem
@@ -81,7 +81,7 @@ local function update_bisect_information(state)
           action = action,
           subject = subject,
           oid = oid,
-          abbreviated_commit = oid:sub(1, git.log.abbreviated_size())
+          abbreviated_commit = oid:sub(1, git.log.abbreviated_size()),
         }
 
         table.insert(state.bisect.items, item)
