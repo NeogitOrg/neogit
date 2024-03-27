@@ -14,6 +14,10 @@ local function push_to(args, remote, branch, opts)
     table.insert(args, "--set-upstream")
   end
 
+  if vim.tbl_contains(args, "--force-with-lease") then
+    table.insert(args, "--force-if-includes")
+  end
+
   local name
   if branch then
     name = remote .. "/" .. branch
@@ -68,7 +72,7 @@ function M.to_upstream(popup)
 end
 
 function M.to_elsewhere(popup)
-  local target = FuzzyFinderBuffer.new(git.branch.get_remote_branches()):open_async {
+  local target = FuzzyFinderBuffer.new(git.refs.list_remote_branches()):open_async {
     prompt_prefix = "push",
   }
 
@@ -92,7 +96,7 @@ function M.push_other(popup)
     return
   end
 
-  local destinations = git.branch.get_remote_branches()
+  local destinations = git.refs.list_remote_branches()
   for _, remote in ipairs(git.remote.list()) do
     table.insert(destinations, 1, remote .. "/" .. source)
   end

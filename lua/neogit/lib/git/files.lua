@@ -18,4 +18,13 @@ function M.diff(commit)
   return cli.diff.name_only.args(commit .. "...").call_sync({ hidden = true }).stdout
 end
 
+function M.relpath_from_repository(path)
+  local result = cli["ls-files"].others.cached.modified.deleted.full_name
+    .args(path)
+    .show_popup(false)
+    .call { hidden = true }
+
+  return result.stdout[1]
+end
+
 return M

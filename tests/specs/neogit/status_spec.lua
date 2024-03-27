@@ -1,6 +1,6 @@
 local a = require("plenary.async")
 local eq = assert.are.same
-local status = require("neogit.status")
+local neogit = require("neogit")
 local operations = require("neogit.operations")
 local util = require("tests.util.util")
 local harness = require("tests.util.git_harness")
@@ -37,8 +37,8 @@ describe("status buffer", function()
         harness.exec { "git", "add", "testfile" }
         harness.exec { "git", "add", "renamed-testfile" }
 
-        a.util.block_on(status.reset)
-        a.util.block_on(status.refresh)
+        a.util.block_on(neogit.reset)
+        a.util.block_on(neogit.refresh)
 
         local lines = vim.api.nvim_buf_get_lines(0, 0, -1, true)
         assert.True(vim.tbl_contains(lines, "Renamed testfile -> renamed-testfile"))
@@ -51,8 +51,8 @@ describe("status buffer", function()
       "Handles non-english filenames correctly",
       in_prepared_repo(function()
         harness.exec { "touch", "你好.md" }
-        a.util.block_on(status.reset)
-        a.util.block_on(status.refresh)
+        a.util.block_on(neogit.reset)
+        a.util.block_on(neogit.refresh)
 
         find("你好%.md")
         act("s")

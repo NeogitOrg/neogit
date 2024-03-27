@@ -26,8 +26,7 @@ local function parse(entries)
       message = command:match("^merge (.*)") .. ": " .. message
       command = "merge"
     elseif command:match("^rebase") then
-      local type = command:match("%((.-)%)")
-      command = "rebase " .. type
+      command = "rebase " .. (command:match("%((.-)%)") or command)
     elseif command:match("commit %(.-%)") then -- amend and merge
       command = command:match("%((.-)%)")
     end

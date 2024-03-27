@@ -341,7 +341,7 @@ local function format(show_signature)
     fields.verification_flag = "%G?"
   end
 
-  return record.encode(fields)
+  return record.encode(fields, "log")
 end
 
 ---@param options? string[]
@@ -388,11 +388,13 @@ M.list = util.memoize(function(options, graph, files, hidden, graph_color)
 end)
 
 ---Determines if commit a is an ancestor of commit b
----@param a string commit hash
----@param b string commit hash
+---@param ancestor string commit hash
+---@param descendant string commit hash
 ---@return boolean
-function M.is_ancestor(a, b)
-  return cli["merge-base"].is_ancestor.args(a, b).call_sync({ ignore_error = true, hidden = true }).code == 0
+function M.is_ancestor(ancestor, descendant)
+  return cli["merge-base"].is_ancestor
+    .args(ancestor, descendant)
+    .call_sync({ ignore_error = true, hidden = true }).code == 0
 end
 
 ---Finds parent commit of a commit. If no parent exists, will return nil
@@ -424,13 +426,17 @@ function M.message(commit)
   return cli.log.max_count(1).format("%s").args(commit).call({ hidden = true }).stdout[1]
 end
 
+function M.full_message(commit)
+  return cli.log.max_count(1).format("%B").args(commit).call({ hidden = true }).stdout
+end
+
 function M.present_commit(commit)
   if not commit.oid then
     return
   end
 
   return {
-    name = string.format("%s %s", commit.oid:sub(1, 7), commit.subject or "<empty>"),
+    name = string.format("%s %s", commit.abbreviated_commit, commit.subject or "<empty>"),
     oid = commit.oid,
     commit = commit,
   }
@@ -513,5 +519,9 @@ function M.reflog_message(skip)
     .args("--reflog", "--no-merges", "--skip=" .. tostring(skip))
     .call_sync({ ignore_error = true }).stdout
 end
+
+M.abbreviated_size = util.memoize(function()
+  return string.len(cli.log.format("%h").max_count(1).call({ hidden = true }).stdout[1])
+end, { timeout = math.huge })
 
 return M

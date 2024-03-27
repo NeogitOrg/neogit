@@ -29,7 +29,7 @@ function M.create()
     :option("-", "", "", "Limit to files", {
       key_prefix = "-",
       separator = "",
-      fn = actions.limit_to_files,
+      fn = actions.limit_to_files(),
       setup = function(popup)
         local state = require("neogit.lib.state").get { "NeogitLogPopup", "" }
         if state then

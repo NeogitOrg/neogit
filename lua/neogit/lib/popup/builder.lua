@@ -92,7 +92,7 @@ function M:name(x)
 end
 
 function M:env(x)
-  self.state.env = x
+  self.state.env = x or {}
   return self
 end
 
@@ -374,14 +374,11 @@ function M:action(keys, description, callback)
       local permit = action_lock:acquire()
       logger.debug(string.format("[ACTION] Running action from %s", self.state.name))
 
-      watcher.pause()
-      callback(...)
-      watcher.resume()
-
+      watcher.suspend(callback, { ... })
       permit:forget()
 
       logger.debug("[ACTION] Dispatching Refresh")
-      require("neogit.status").dispatch_refresh(nil, "action")
+      require("neogit.buffers.status").instance:dispatch_refresh(nil, "action")
     end)
   end
 

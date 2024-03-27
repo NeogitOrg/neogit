@@ -2,6 +2,7 @@ return {
   repo = require("neogit.lib.git.repository"),
   rev_parse = require("neogit.lib.git.rev_parse"),
   cli = require("neogit.lib.git.cli"),
+  cherry = require("neogit.lib.git.cherry"),
   init = require("neogit.lib.git.init"),
   status = require("neogit.lib.git.status"),
   stash = require("neogit.lib.git.stash"),
@@ -25,4 +26,5 @@ return {
   push = require("neogit.lib.git.push"),
   index = require("neogit.lib.git.index"),
   worktree = require("neogit.lib.git.worktree"),
+  bisect = require("neogit.lib.git.bisect"),
 }

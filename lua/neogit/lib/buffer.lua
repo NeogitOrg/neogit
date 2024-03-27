@@ -1,14 +1,16 @@
 local api = vim.api
 local fn = vim.fn
-package.loaded["neogit.buffer"] = nil
-
-__BUFFER_AUTOCMD_STORE = {}
 
 local mappings_manager = require("neogit.lib.mappings_manager")
+local signs = require("neogit.lib.signs")
 local Ui = require("neogit.lib.ui")
+
+local Path = require("plenary.path")
 
 ---@class Buffer
 ---@field handle number
+---@field win_handle number
+---@field namespaces table
 ---@field mmanager MappingsManager
 ---@field ui Ui
 ---@field kind string
@@ -27,11 +29,14 @@ function Buffer:new(handle)
     border = nil,
     mmanager = mappings_manager.new(handle),
     kind = nil, -- how the buffer was opened. For more information look at the create function
-    namespace = api.nvim_create_namespace("neogit-buffer-" .. handle),
+    namespaces = {
+      default = api.nvim_create_namespace("neogit-buffer-" .. handle),
+    },
     line_buffer = {},
     hl_buffer = {},
-    sign_buffer = {},
+    line_hl_buffer = {},
     ext_buffer = {},
+    fold_buffer = {},
   }
 
   this.ui = Ui.new(this)
@@ -45,7 +50,7 @@ end
 function Buffer:focus()
   local windows = fn.win_findbuf(self.handle)
 
-  if #windows == 0 then
+  if not windows or not windows[1] then
     return nil
   end
 
@@ -53,25 +58,42 @@ function Buffer:focus()
   return windows[1]
 end
 
+---@return boolean
 function Buffer:is_focused()
   return api.nvim_win_get_buf(0) == self.handle
 end
 
+---@return number
 function Buffer:get_changedtick()
   return api.nvim_buf_get_changedtick(self.handle)
 end
 
 function Buffer:lock()
-  self:set_option("readonly", true)
-  self:set_option("modifiable", false)
-end
-
-function Buffer:define_autocmd(events, script)
-  vim.cmd(string.format("au %s <buffer=%d> %s", events, self.handle, script))
+  self:set_buffer_option("readonly", true)
+  self:set_buffer_option("modifiable", false)
 end
 
 function Buffer:clear()
   api.nvim_buf_set_lines(self.handle, 0, -1, false, {})
+end
+
+---@return table
+function Buffer:save_view()
+  local view = fn.winsaveview()
+  return {
+    topline = view.topline,
+    leftcol = 0,
+  }
+end
+
+---@param view table output of Buffer:save_view()
+---@param cursor? number
+function Buffer:restore_view(view, cursor)
+  if cursor then
+    view.lnum = math.min(fn.line("$"), cursor)
+  end
+
+  fn.winrestview(view)
 end
 
 function Buffer:write()
@@ -109,38 +131,81 @@ function Buffer:buffered_add_highlight(...)
   table.insert(self.hl_buffer, { ... })
 end
 
-function Buffer:buffered_place_sign(...)
-  table.insert(self.sign_buffer, { ... })
-end
-
 function Buffer:buffered_set_extmark(...)
   table.insert(self.ext_buffer, { ... })
 end
 
+function Buffer:buffered_create_fold(...)
+  table.insert(self.fold_buffer, { ... })
+end
+
+function Buffer:buffered_add_line_highlight(...)
+  table.insert(self.line_hl_buffer, { ... })
+end
+
 function Buffer:resize(length)
-  api.nvim_buf_set_lines(self.handle, length, -1, false, {})
+  api.nvim_buf_set_lines(self.handle, length or #self.line_buffer, -1, false, {})
+end
+
+function Buffer:flush_line_buffer()
+  if self.line_buffer[1] then
+    api.nvim_buf_set_lines(self.handle, 0, -1, false, self.line_buffer)
+    self.line_buffer = {}
+  end
+end
+
+function Buffer:flush_highlight_buffer()
+  self:set_highlights(self.hl_buffer)
+  self.hl_buffer = {}
+end
+
+function Buffer:set_highlights(highlights)
+  for _, highlight in ipairs(highlights) do
+    self:add_highlight(unpack(highlight))
+  end
+end
+
+function Buffer:flush_extmark_buffer()
+  self:set_extmarks(self.ext_buffer)
+  self.ext_buffer = {}
+end
+
+function Buffer:set_extmarks(extmarks)
+  for _, ext in ipairs(extmarks) do
+    self:set_extmark(unpack(ext))
+  end
+end
+
+function Buffer:flush_line_highlight_buffer()
+  self:set_line_highlights(self.line_hl_buffer)
+  self.line_hl_buffer = {}
+end
+
+function Buffer:set_line_highlights(highlights)
+  for _, hl in ipairs(highlights) do
+    self:add_line_highlight(unpack(hl))
+  end
+end
+
+function Buffer:flush_fold_buffer()
+  self:set_folds(self.fold_buffer)
+  self.fold_buffer = {}
+end
+
+function Buffer:set_folds(folds)
+  for _, fold in ipairs(folds) do
+    self:create_fold(unpack(fold))
+    self:set_fold_state(unpack(fold))
+  end
 end
 
 function Buffer:flush_buffers()
-  self:clear_namespace(self.namespace)
-
-  api.nvim_buf_set_lines(self.handle, 0, -1, false, self.line_buffer)
-  self.line_buffer = {}
-
-  for _, sign in ipairs(self.sign_buffer) do
-    self:place_sign(unpack(sign))
-  end
-  self.sign_buffer = {}
-
-  for _, hl in ipairs(self.hl_buffer) do
-    self:add_highlight(unpack(hl))
-  end
-  self.hl_buffer = {}
-
-  for _, ext in ipairs(self.ext_buffer) do
-    self:set_extmark(unpack(ext))
-  end
-  self.ext_buffer = {}
+  self:clear_namespace("default")
+  self:flush_line_buffer()
+  self:flush_highlight_buffer()
+  self:flush_extmark_buffer()
+  self:flush_line_highlight_buffer()
+  self:flush_fold_buffer()
 end
 
 function Buffer:set_text(first_line, last_line, first_col, last_col, lines)
@@ -148,7 +213,11 @@ function Buffer:set_text(first_line, last_line, first_col, last_col, lines)
 end
 
 function Buffer:move_cursor(line)
-  api.nvim_win_set_cursor(0, { line, 0 })
+  pcall(api.nvim_win_set_cursor, 0, { line, 0 })
+end
+
+function Buffer:cursor_line()
+  return api.nvim_win_get_cursor(0)[1]
 end
 
 function Buffer:close(force)
@@ -161,11 +230,17 @@ function Buffer:close(force)
     return
   end
 
+  if self.kind == "tab" then
+    vim.cmd("tabclose")
+    return
+  end
+
   if api.nvim_buf_is_valid(self.handle) then
     local winnr = fn.bufwinnr(self.handle)
     if winnr ~= -1 then
       local winid = fn.win_getid(winnr)
-      if not pcall(api.nvim_win_close, winid, force) then
+      local ok, _ = pcall(api.nvim_win_close, winid, force)
+      if not ok then
         vim.cmd("b#")
       end
     else
@@ -188,7 +263,7 @@ function Buffer:hide()
       api.nvim_set_current_buf(self.old_buf)
     end
   else
-    api.nvim_win_close(0, {})
+    api.nvim_win_close(0, true)
   end
 end
 
@@ -262,6 +337,13 @@ function Buffer:show()
     vim.cmd("setlocal nornu")
   end
 
+  -- Workaround UFO getting folds wrong.
+  local ufo, _ = pcall(require, "ufo")
+  if ufo then
+    require("ufo").detach()
+  end
+
+  self.win_handle = win
   return win
 end
 
@@ -274,29 +356,37 @@ function Buffer:put(lines, after, follow)
   api.nvim_put(lines, "l", after, follow)
 end
 
-function Buffer:create_fold(first, last)
-  vim.cmd(string.format(self.handle .. "bufdo %d,%dfold", first, last))
+function Buffer:create_fold(first, last, _)
+  vim.cmd(string.format("%d,%dfold", first, last))
+end
+
+function Buffer:set_fold_state(first, last, open)
+  if open then
+    vim.cmd(string.format("%d,%dfoldopen", first, last))
+  else
+    vim.cmd(string.format("%d,%dfoldclose", first, last))
+  end
 end
 
 function Buffer:unlock()
-  self:set_option("readonly", false)
-  self:set_option("modifiable", true)
+  self:set_buffer_option("readonly", false)
+  self:set_buffer_option("modifiable", true)
 end
 
 function Buffer:get_option(name)
-  return api.nvim_buf_get_option(self.handle, name)
+  return api.nvim_get_option_value(name, { buf = self.handle })
 end
 
-function Buffer:set_option(name, value)
-  api.nvim_buf_set_option(self.handle, name, value)
+function Buffer:set_buffer_option(name, value)
+  api.nvim_set_option_value(name, value, { buf = self.handle })
+end
+
+function Buffer:set_window_option(name, value)
+  api.nvim_set_option_value(name, value, { win = self.win_handle })
 end
 
 function Buffer:set_name(name)
   api.nvim_buf_set_name(self.handle, name)
-end
-
-function Buffer:set_foldlevel(level)
-  vim.cmd("setlocal foldlevel=" .. level)
 end
 
 function Buffer:replace_content_with(lines)
@@ -317,62 +407,76 @@ function Buffer:open_fold(line, reset_pos)
   end
 end
 
-function Buffer:add_highlight(line, col_start, col_end, name, ns_id)
-  local ns_id = ns_id or self.namespace
-
-  api.nvim_buf_add_highlight(self.handle, ns_id, name, line, col_start, col_end)
+function Buffer:add_highlight(line, col_start, col_end, name, namespace)
+  local ns_id = self:get_namespace_id(namespace)
+  if ns_id then
+    api.nvim_buf_add_highlight(self.handle, ns_id, name, line, col_start, col_end)
+  end
 end
 
-function Buffer:unplace_sign(id)
-  vim.cmd("sign unplace " .. id)
+function Buffer:place_sign(line, name, opts)
+  opts = opts or {}
+
+  local ns_id = self:get_namespace_id(opts.namespace)
+  if ns_id then
+    api.nvim_buf_set_extmark(self.handle, ns_id, line - 1, 0, { sign_text = signs.get(name) })
+  end
 end
 
-function Buffer:place_sign(line, name, group, id)
-  -- Sign IDs should be unique within a group, however there's no downside as
-  -- long as we don't want to uniquely identify the placed sign later. Thus,
-  -- we leave the choice to the caller
-  local sign_id = id or 1
+function Buffer:add_line_highlight(line, hl_group, opts)
+  opts = opts or {}
 
-  -- There's an equivalent function sign_place() which can automatically use
-  -- a free ID, but is considerable slower, so we use the command for now
-  local cmd = {
-    string.format("sign place %d", sign_id),
-    string.format("line=%d", line),
-    string.format("name=%s", name),
-  }
+  local ns_id = self:get_namespace_id(opts.namespace)
+  if ns_id then
+    api.nvim_buf_set_extmark(
+      self.handle,
+      ns_id,
+      line,
+      0,
+      { line_hl_group = hl_group, priority = opts.priority or 190 }
+    )
+  end
+end
 
-  if group then
-    table.insert(cmd, string.format("group=%s", group))
+function Buffer:clear_namespace(name)
+  assert(name, "Cannot clear namespace without specifying which")
+
+  if not self:is_focused() then
+    return
   end
 
-  table.insert(cmd, string.format("buffer=%d", self.handle))
-
-  vim.cmd(table.concat(cmd, " "))
-  return sign_id
-end
-
-function Buffer:get_sign_at_line(line, group)
-  group = group or "*"
-  return fn.sign_getplaced(self.handle, {
-    group = group,
-    lnum = line,
-  })[1]
-end
-
-function Buffer:clear_sign_group(group)
-  vim.cmd(string.format("sign unplace * group=%s buffer=%s", group, self.handle))
-end
-
-function Buffer:clear_namespace(namespace)
-  api.nvim_buf_clear_namespace(self.handle, namespace, 0, -1)
+  local ns_id = self:get_namespace_id(name)
+  if ns_id then
+    api.nvim_buf_clear_namespace(self.handle, ns_id, 0, -1)
+  end
 end
 
 function Buffer:create_namespace(name)
-  return api.nvim_create_namespace(name)
+  assert(name, "Namespace must have a name")
+
+  local namespace = "neogit-buffer-" .. self.handle .. "-" .. name
+  if not self.namespaces[namespace] then
+    self.namespaces[namespace] = api.nvim_create_namespace(namespace)
+  end
+
+  return self.namespaces[namespace]
+end
+
+---@param name string
+---@return number|nil
+function Buffer:get_namespace_id(name)
+  local ns_id
+  if name and name ~= "default" then
+    ns_id = self.namespaces["neogit-buffer-" .. self.handle .. "-" .. name]
+  else
+    ns_id = self.namespaces.default
+  end
+
+  return ns_id
 end
 
 function Buffer:set_filetype(ft)
-  api.nvim_buf_set_option(self.handle, "filetype", ft)
+  self:set_buffer_option("filetype", ft)
 end
 
 function Buffer:call(f)
@@ -387,19 +491,49 @@ function Buffer:set_extmark(...)
   return api.nvim_buf_set_extmark(self.handle, ...)
 end
 
-function Buffer:get_extmark(ns, id)
-  return api.nvim_buf_get_extmark_by_id(self.handle, ns, id, { details = true })
-end
-
-function Buffer:del_extmark(ns, id)
-  return api.nvim_buf_del_extmark(self.handle, ns, id)
-end
-
 function Buffer:set_decorations(namespace, opts)
-  return api.nvim_set_decoration_provider(namespace, opts)
+  local ns_id = self:get_namespace_id(namespace)
+  if ns_id then
+    return api.nvim_set_decoration_provider(ns_id, opts)
+  end
 end
 
-local uv_utils = require("neogit.lib.uv")
+function Buffer:set_header(text)
+  -- Create a blank line at the top of the buffer so our floating window doesn't
+  -- hide any content
+  self:set_extmark(self:get_namespace_id("default"), 0, 0, {
+    virt_lines = { { { "", "Comment" } } },
+    virt_lines_above = true,
+  })
+
+  -- Create a new buffer with the header text
+  local buf = api.nvim_create_buf(false, true)
+  api.nvim_buf_set_lines(buf, 0, -1, false, { (" %s"):format(text) })
+  vim.bo[buf].undolevels = -1
+  vim.bo[buf].bufhidden = "wipe"
+  vim.bo[buf].modified = false
+
+  -- Display the buffer in a floating window
+  local winid = api.nvim_open_win(buf, false, {
+    relative = "win",
+    width = vim.o.columns,
+    height = 1,
+    row = 0,
+    col = 0,
+    focusable = false,
+    style = "minimal",
+    noautocmd = true,
+  })
+  vim.wo[winid].wrap = false
+  vim.wo[winid].winhl = "NormalFloat:NeogitFloatHeader"
+
+  fn.matchadd("NeogitFloatHeaderHighlight", [[\v\<cr\>|\<esc\>]], 100, -1, { window = winid })
+
+  -- Scroll the buffer viewport to the top so the header is visible
+  self:call(function()
+    api.nvim_input("<PageUp>")
+  end)
+end
 
 ---@class BufferConfig
 ---@field name string
@@ -423,7 +557,7 @@ function Buffer.create(config)
   end
 
   if config.load then
-    local content = uv_utils.read_file_sync(config.name)
+    local content = Path:new(config.name):readlines()
     api.nvim_buf_set_lines(buffer, 0, -1, false, content)
     api.nvim_buf_call(buffer, function()
       vim.cmd("silent w!")
@@ -439,9 +573,17 @@ function Buffer.create(config)
     win = buffer:show()
   end
 
-  buffer:set_option("bufhidden", config.bufhidden or "wipe")
-  buffer:set_option("buftype", config.buftype or "nofile")
-  buffer:set_option("swapfile", false)
+  buffer:set_buffer_option("bufhidden", config.bufhidden or "wipe")
+  buffer:set_buffer_option("buftype", config.buftype or "nofile")
+  buffer:set_buffer_option("swapfile", false)
+
+  if win then
+    buffer:set_window_option("statuscolumn", config.status_column or "")
+    buffer:set_window_option("foldenable", true)
+    buffer:set_window_option("foldlevel", 99)
+    buffer:set_window_option("foldminlines", 0)
+    buffer:set_window_option("foldtext", "")
+  end
 
   if config.filetype then
     buffer:set_filetype(config.filetype)
@@ -480,13 +622,24 @@ function Buffer.create(config)
 
   buffer.mmanager.register()
 
-  if not config.modifiable then
-    buffer:set_option("modifiable", false)
-    buffer:set_option("modified", false)
-  end
+  buffer:set_buffer_option("modifiable", config.modifiable or false)
+  buffer:set_buffer_option("modified", config.modifiable or false)
+  buffer:set_buffer_option("readonly", config.readonly or false)
 
-  if config.readonly == true then
-    buffer:set_option("readonly", true)
+  if vim.fn.has("nvim-0.10") == 1 then
+    buffer:set_window_option("spell", false)
+    buffer:set_window_option("wrap", false)
+    buffer:set_window_option("foldmethod", "manual")
+
+    -- TODO: Need to find a way to turn this off properly when unloading plugin
+    -- buffer:set_window_option("winfixbuf", true)
+  else
+    -- selene: allow(global_usage)
+    _G.NeogitFoldText = function()
+      return vim.fn.getline(vim.v.foldstart)
+    end
+
+    buffer:set_buffer_option("foldtext", "v:lua._G.NeogitFoldText()")
   end
 
   if config.after then
@@ -498,6 +651,7 @@ function Buffer.create(config)
   buffer:call(function()
     -- Set fold styling for Neogit windows while preserving user styling
     vim.opt_local.winhl:append("Folded:NeogitFold")
+    vim.opt_local.fillchars:append("fold: ")
 
     -- Set signcolumn unless disabled by user settings
     if not config.disable_signs then
@@ -506,43 +660,39 @@ function Buffer.create(config)
   end)
 
   if config.context_highlight then
-    buffer:call(function()
-      local decor_ns = api.nvim_create_namespace("NeogitBufferViewDecor" .. config.name)
-      local context_ns = api.nvim_create_namespace("NeogitBufferitViewContext" .. config.name)
-
-      local function on_start()
+    buffer:create_namespace("ViewContext")
+    buffer:set_decorations("ViewContext", {
+      on_start = function()
         return buffer:exists() and buffer:is_focused()
-      end
+      end,
+      on_win = function()
+        buffer:clear_namespace("ViewContext")
 
-      local function on_win()
-        buffer:clear_namespace(context_ns)
-
-        -- TODO: this is WAY to slow to be called so frequently, especially in a large buffer
-        local stack = buffer.ui:get_component_stack_under_cursor()
-        if not stack then
+        local context = buffer.ui:get_cursor_context()
+        if not context then
           return
         end
 
-        local hovered_component = stack[2] or stack[1]
-        local first, last = hovered_component:row_range_abs()
-        local top_level = hovered_component.parent and not hovered_component.parent.parent
+        local cursor = vim.fn.line(".")
+        for line = context.position.row_start, context.position.row_end do
+          local line_hl = ("%s%s"):format(
+            buffer.ui:get_line_highlight(line) or "NeogitDiffContext",
+            line == cursor and "Cursor" or "Highlight"
+          )
 
-        for line = fn.line("w0"), fn.line("w$") do
-          if first and last and line >= first and line <= last and not top_level then
-            local sign = buffer.ui:get_component_stack_on_line(line)[1].options.sign
-
-            buffer:set_extmark(
-              context_ns,
-              line - 1,
-              0,
-              { line_hl_group = (sign or "NeogitDiffContext") .. "Highlight", priority = 10 }
-            )
-          end
+          buffer:buffered_add_line_highlight(line - 1, line_hl, {
+            priority = 200,
+            namespace = "ViewContext",
+          })
         end
-      end
 
-      buffer:set_decorations(decor_ns, { on_start = on_start, on_win = on_win })
-    end)
+        buffer:flush_line_highlight_buffer()
+      end,
+    })
+  end
+
+  if config.header then
+    buffer:set_header(config.header)
   end
 
   return buffer

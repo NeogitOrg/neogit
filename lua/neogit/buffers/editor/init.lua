@@ -45,7 +45,7 @@ function M:open(kind)
 
   local message_index = 1
   local message_buffer = { { "" } }
-  local footer
+  local amend_header, footer
 
   local function reflog_message(index)
     return git.log.reflog_message(index - 2)
@@ -69,6 +69,7 @@ function M:open(kind)
     buftype = "",
     kind = kind,
     modifiable = true,
+    status_column = " ",
     readonly = false,
     after = function(buffer)
       -- Populate help lines with mappings for buffer
@@ -103,6 +104,13 @@ function M:open(kind)
       buffer:set_lines(line, line, false, help_lines)
       buffer:write()
       buffer:move_cursor(1)
+
+      amend_header = buffer:get_lines(0, 2)
+      if amend_header[1]:match("^amend! %x+$") then
+        buffer:set_lines(0, 2, false, {}) -- remove captured header from buffer
+      else
+        amend_header = nil
+      end
 
       footer = buffer:get_lines(1, -1)
 
@@ -141,6 +149,10 @@ function M:open(kind)
       i = {
         [mapping["Submit"]] = function(buffer)
           vim.cmd.stopinsert()
+          if amend_header then
+            buffer:set_lines(0, 0, false, amend_header)
+          end
+
           buffer:write()
           buffer:close(true)
         end,
@@ -153,6 +165,10 @@ function M:open(kind)
       },
       n = {
         [mapping["Close"]] = function(buffer)
+          if amend_header then
+            buffer:set_lines(0, 0, false, amend_header)
+          end
+
           if buffer:get_option("modified") and not input.get_confirmation("Save changes?") then
             aborted = true
           end
@@ -161,6 +177,10 @@ function M:open(kind)
           buffer:close(true)
         end,
         [mapping["Submit"]] = function(buffer)
+          if amend_header then
+            buffer:set_lines(0, 0, false, amend_header)
+          end
+
           buffer:write()
           buffer:close(true)
         end,

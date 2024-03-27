@@ -11,12 +11,11 @@ local function confirm_modifications()
   if
     git.branch.upstream()
     and #git.repo.upstream.unmerged.items < 1
-    and not input.get_confirmation(
+    and not input.get_permission(
       string.format(
         "This commit has already been published to %s, do you really want to modify it?",
         git.branch.upstream()
-      ),
-      { values = { "&Yes", "&No" }, default = 2 }
+      )
     )
   then
     return false
@@ -38,12 +37,7 @@ end
 local function commit_special(popup, method, opts)
   if not git.status.anything_staged() then
     if git.status.anything_unstaged() then
-      local stage_all = input.get_confirmation(
-        "Nothing is staged. Commit all uncommitted changed?",
-        { values = { "&Yes", "&No" }, default = 2 }
-      )
-
-      if stage_all then
+      if input.get_permission("Nothing is staged. Commit all uncommitted changed?") then
         opts.all = true
       else
         return
@@ -54,14 +48,9 @@ local function commit_special(popup, method, opts)
     end
   end
 
-  local commit
-  if popup.state.env.commit then
-    commit = popup.state.env.commit
-  else
-    commit = CommitSelectViewBuffer.new(git.log.list()):open_async()[1]
-    if not commit then
-      return
-    end
+  local commit = popup.state.env.commit or CommitSelectViewBuffer.new(git.log.list()):open_async()[1]
+  if not commit then
+    return
   end
 
   if opts.rebase and not git.log.is_ancestor(commit, "HEAD") then
@@ -100,7 +89,7 @@ local function commit_special(popup, method, opts)
 
   if opts.rebase then
     a.util.scheduler()
-    git.rebase.instantly(commit .. "~1", { "--autosquash", "--autostash", "--keep-empty" })
+    git.rebase.instantly(commit .. "~1", { "--keep-empty" })
   end
 end
 

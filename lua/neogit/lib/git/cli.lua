@@ -31,7 +31,25 @@ local configurations = {
     },
   },
 
+  ["name-rev"] = config {
+    flags = {
+      name_only = "--name-only",
+      no_undefined = "--no-undefined",
+    },
+    options = {
+      refs = "--refs",
+      exclude = "--exclude",
+    },
+  },
+
   init = config {},
+
+  ["checkout-index"] = config {
+    flags = {
+      all = "--all",
+      force = "--force",
+    },
+  },
 
   worktree = config {
     flags = {
@@ -218,6 +236,7 @@ local configurations = {
       detach = "--detach",
       ours = "--ours",
       theirs = "--theirs",
+      merge = "--merge",
     },
     aliases = {
       track = function(tbl)
@@ -248,11 +267,6 @@ local configurations = {
       new_branch_with_start_point = function(tbl)
         return function(branch, start_point)
           return tbl.args(branch, start_point).b()
-        end
-      end,
-      file = function(tbl)
-        return function(file)
-          return tbl.args(file)
         end
       end,
     },
@@ -309,7 +323,7 @@ local configurations = {
     aliases = {
       with_message = function(tbl)
         return function(message)
-          return tbl.args("-F", "-").input(message)
+          return tbl.args("-F", "-").input(message .. "\04")
         end
       end,
       message = function(tbl)
@@ -524,6 +538,7 @@ local configurations = {
   ["for-each-ref"] = config {
     options = {
       format = "--format",
+      sort = "--sort",
     },
   },
 
@@ -564,12 +579,15 @@ local configurations = {
   },
 
   ["verify-commit"] = config {},
+
+  ["bisect"] = config {},
 }
 
 -- NOTE: Use require("neogit.lib.git.repository").git_root instead of calling this function.
 -- repository.git_root is used by all other library functions, so it's most likely the one you want to use.
 -- git_root_of_cwd() returns the git repo of the cwd, which can change anytime
 -- after git_root_of_cwd() has been called.
+---@return string
 local function git_root_of_cwd()
   local process = process
     .new({
@@ -581,8 +599,7 @@ local function git_root_of_cwd()
     :spawn_blocking()
 
   if process ~= nil and process.code == 0 then
-    local out = process.stdout[1]
-    return Path:new(out):absolute()
+    return Path:new(process.stdout[1]):absolute()
   else
     return ""
   end

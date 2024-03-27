@@ -85,7 +85,7 @@ function M.fetch_another_branch(popup)
     return
   end
 
-  local branches = util.filter_map(git.branch.get_all_branches(true), function(branch)
+  local branches = util.filter_map(git.refs.list_branches(), function(branch)
     return branch:match("^" .. remote .. "/(.*)")
   end)
 

@@ -2,7 +2,6 @@ local Buffer = require("neogit.lib.buffer")
 local ui = require("neogit.buffers.reflog_view.ui")
 local config = require("neogit.config")
 local popups = require("neogit.popups")
-local notification = require("neogit.lib.notification")
 local status_maps = require("neogit.config").get_reversed_status_maps()
 local CommitViewBuffer = require("neogit.buffers.commit_view")
 
@@ -34,6 +33,7 @@ function M:open(_)
     name = "NeogitReflogView",
     filetype = "NeogitReflogView",
     kind = config.values.reflog_view.kind,
+    status_column = " ",
     context_highlight = true,
     mappings = {
       v = {
@@ -66,8 +66,21 @@ function M:open(_)
           p { commit = self.buffer.ui:get_commit_under_cursor() }
         end),
         [popups.mapping_for("PullPopup")] = popups.open("pull"),
+        [popups.mapping_for("DiffPopup")] = popups.open("diff", function(p)
+          local items = self.buffer.ui:get_commits_in_selection()
+          p {
+            section = { name = "log" },
+            item = { name = items },
+          }
+        end),
+        [popups.mapping_for("BisectPopup")] = popups.open("bisect", function(p)
+          p { commits = self.buffer.ui:get_commits_in_selection() }
+        end),
       },
       n = {
+        [popups.mapping_for("BisectPopup")] = popups.open("bisect", function(p)
+          p { commits = { self.buffer.ui:get_commit_under_cursor() } }
+        end),
         [popups.mapping_for("CherryPickPopup")] = popups.open("cherry_pick", function(p)
           p { commits = { self.buffer.ui:get_commit_under_cursor() } }
         end),
@@ -98,6 +111,13 @@ function M:open(_)
           p { commit = self.buffer.ui:get_commit_under_cursor() }
         end),
         [popups.mapping_for("PullPopup")] = popups.open("pull"),
+        [popups.mapping_for("DiffPopup")] = popups.open("diff", function(p)
+          local item = self.buffer.ui:get_commit_under_cursor()
+          p {
+            section = { name = "log" },
+            item = { name = item },
+          }
+        end),
         [status_maps["YankSelected"]] = function()
           local yank = self.buffer.ui:get_commit_under_cursor()
           if yank then
@@ -115,23 +135,13 @@ function M:open(_)
           self:close()
         end,
         ["<enter>"] = function()
-          local stack = self.buffer.ui:get_component_stack_under_cursor()
-          CommitViewBuffer.new(stack[#stack].options.oid):open()
-        end,
-        [popups.mapping_for("DiffPopup")] = function()
-          if not config.check_integration("diffview") then
-            notification.error("Diffview integration must be enabled for reflog diff")
-            return
+          local oid = self.buffer.ui:get_commit_under_cursor()
+          if oid then
+            CommitViewBuffer.new(oid):open()
           end
-
-          local dv = require("neogit.integrations.diffview")
-          dv.open("log", self.buffer.ui:get_commit_under_cursor())
         end,
       },
     },
-    after = function()
-      vim.cmd([[setlocal nowrap]])
-    end,
     render = function()
       return ui.View(self.entries)
     end,

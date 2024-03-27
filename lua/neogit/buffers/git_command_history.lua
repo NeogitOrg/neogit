@@ -50,14 +50,30 @@ function M:show()
         ["<esc>"] = function()
           self:close()
         end,
-        ["<tab>"] = function()
-          local stack = self.buffer.ui:get_component_stack_under_cursor()
-          local c = stack[#stack]
+        ["<c-k>"] = function()
+          vim.cmd("normal! zc")
 
-          if c then
-            c.children[2]:toggle_hidden()
-            self.buffer.ui:update()
+          vim.cmd("normal! k")
+          while vim.fn.foldlevel(".") == 0 do
+            vim.cmd("normal! k")
           end
+
+          vim.cmd("normal! zo")
+          vim.cmd("normal! zz")
+        end,
+        ["<c-j>"] = function()
+          vim.cmd("normal! zc")
+
+          vim.cmd("normal! j")
+          while vim.fn.foldlevel(".") == 0 do
+            vim.cmd("normal! j")
+          end
+
+          vim.cmd("normal! zo")
+          vim.cmd("normal! zz")
+        end,
+        ["<tab>"] = function()
+          pcall(vim.cmd, "normal! za")
         end,
       },
     },
@@ -65,7 +81,7 @@ function M:show()
       local win_width = vim.fn.winwidth(0)
 
       return filter_map(self.state, function(item)
-        if item.hidden then
+        if item.hidden and not os.getenv("NEOGIT_DEBUG") then
           return
         end
 
@@ -85,8 +101,11 @@ function M:show()
 
         local spacing = string.rep(" ", win_width - #code - #command - #time - #stdio - 6)
 
-        return col {
+        return col({
           row {
+            text.highlight("NeogitGraphAuthor")(
+              os.getenv("NEOGIT_DEBUG") and (item.hidden and "H" or " ") or ""
+            ),
             text.highlight(highlight_code)(code),
             text(" "),
             text(command),
@@ -96,10 +115,9 @@ function M:show()
             text.highlight("NeogitCommandTime")(stdio),
           },
           col
-            .hidden(true)
             .padding_left("  | ")
             .highlight("NeogitCommandText")(map(util.merge(item.stdout, item.stderr), text)),
-        }
+        }, { foldable = true, folded = true })
       end)
     end,
   }

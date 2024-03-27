@@ -100,6 +100,7 @@ end
 ---@field recent NeogitConfigSection|nil
 ---@field rebase NeogitConfigSection|nil
 ---@field sequencer NeogitConfigSection|nil
+---@field bisect NeogitConfigSection|nil
 
 ---@class HighlightOptions
 ---@field italic? boolean
@@ -107,15 +108,14 @@ end
 ---@field underline? boolean
 
 ---@class NeogitFilewatcherConfig
----@field interval number
 ---@field enabled boolean
 ---@field filewatcher NeogitFilewatcherConfig|nil
 
 ---@alias NeogitConfigMappingsFinder "Select" | "Close" | "Next" | "Previous" | "MultiselectToggleNext" | "MultiselectTogglePrevious" | "NOP" | false
 
----@alias NeogitConfigMappingsStatus "Close" | "Depth1" | "Depth2" | "Depth3" | "Depth4" | "Toggle" | "Discard" | "Stage" | "StageUnstaged" | "StageAll" | "Unstage" | "UnstageStaged" | "RefreshBuffer" | "GoToFile" | "VSplitOpen" | "SplitOpen" | "TabOpen" | "GoToPreviousHunkHeader" | "GoToNextHunkHeader" | "Console" | "CommandHistory" | "InitRepo" | "YankSelected" | false | fun()
+---@alias NeogitConfigMappingsStatus "Close" | "Depth1" | "Depth2" | "Depth3" | "Depth4" | "Toggle" | "Discard" | "Stage" | "StageUnstaged" | "StageAll" | "Unstage" | "UnstageStaged" | "RefreshBuffer" | "GoToFile" | "VSplitOpen" | "SplitOpen" | "TabOpen" | "GoToPreviousHunkHeader" | "GoToNextHunkHeader" | "Console" | "CommandHistory" | "ShowRefs" | "InitRepo" | "YankSelected" | false | fun()
 
----@alias NeogitConfigMappingsPopup "HelpPopup" | "DiffPopup" | "PullPopup" | "RebasePopup" | "MergePopup" | "PushPopup" | "CommitPopup" | "LogPopup" | "RevertPopup" | "StashPopup" | "IgnorePopup" | "CherryPickPopup" | "BranchPopup" | "FetchPopup" | "ResetPopup" | "RemotePopup" | "TagPopup" | "WorktreePopup" | false
+---@alias NeogitConfigMappingsPopup "HelpPopup" | "DiffPopup" | "PullPopup" | "RebasePopup" | "MergePopup" | "PushPopup" | "CommitPopup" | "LogPopup" | "RevertPopup" | "StashPopup" | "IgnorePopup" | "CherryPickPopup" | "BisectPopup" | "BranchPopup" | "FetchPopup" | "ResetPopup" | "RemotePopup" | "TagPopup" | "WorktreePopup" | false
 
 ---@alias NeogitConfigMappingsRebaseEditor "Pick" | "Reword" | "Edit" | "Squash" | "Fixup" | "Execute" | "Drop" | "Break" | "MoveUp" | "MoveDown" | "Close" | "OpenCommit" | "Submit" | "Abort" | false | fun()
 ---
@@ -179,8 +179,7 @@ function M.get_default_values()
     disable_signs = false,
     graph_style = "ascii",
     filewatcher = {
-      interval = 1000,
-      enabled = false,
+      enabled = true,
     },
     telescope_sorter = function()
       return nil
@@ -257,6 +256,10 @@ function M.get_default_values()
     },
     sections = {
       sequencer = {
+        folded = false,
+        hidden = false,
+      },
+      bisect = {
         folded = false,
         hidden = false,
       },
@@ -355,6 +358,7 @@ function M.get_default_values()
         ["i"] = "IgnorePopup",
         ["t"] = "TagPopup",
         ["b"] = "BranchPopup",
+        ["B"] = "BisectPopup",
         ["w"] = "WorktreePopup",
         ["c"] = "CommitPopup",
         ["f"] = "FetchPopup",
@@ -378,6 +382,7 @@ function M.get_default_values()
         ["<c-s>"] = "StageAll",
         ["u"] = "Unstage",
         ["U"] = "UnstageStaged",
+        ["y"] = "ShowRefs",
         ["$"] = "CommandHistory",
         ["#"] = "Console",
         ["Y"] = "YankSelected",

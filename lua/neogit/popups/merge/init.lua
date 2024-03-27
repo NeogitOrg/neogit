@@ -29,15 +29,18 @@ function M.create()
     )
     :option_if(not in_merge, "s", "strategy", "", "Strategy", {
       choices = { "resolve", "recursive", "octopus", "ours", "subtree" },
+      key_prefix = "-",
     })
     :option_if(not in_merge, "X", "strategy-option", "", "Strategy Option", {
       choices = { "ours", "theirs", "patience" },
+      key_prefix = "-",
     })
     :option_if(not in_merge, "A", "Xdiff-algorithm", "", "Diff algorithm", {
-      cli_prefix = "-",
       choices = { "default", "minimal", "patience", "histogram" },
+      cli_prefix = "-",
+      key_prefix = "-",
     })
-    :option_if(not in_merge, "S", "gpg-sign", "", "Sign using gpg")
+    :option_if(not in_merge, "S", "gpg-sign", "", "Sign using gpg", { key_prefix = "-" })
     :group_heading_if(not in_merge, "Actions")
     :action_if(not in_merge, "m", "Merge", actions.merge)
     :action_if(not in_merge, "e", "Merge and edit message") -- https://github.com/magit/magit/blob/main/lisp/magit-merge.el#L105

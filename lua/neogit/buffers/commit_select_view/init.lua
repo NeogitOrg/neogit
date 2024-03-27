@@ -7,15 +7,18 @@ local status_maps = require("neogit.config").get_reversed_status_maps()
 
 ---@class CommitSelectViewBuffer
 ---@field commits CommitLogEntry[]
+---@field header string|nil
 local M = {}
 M.__index = M
 
 ---Opens a popup for selecting a commit
 ---@param commits CommitLogEntry[]|nil
+---@param header? string
 ---@return CommitSelectViewBuffer
-function M.new(commits)
+function M.new(commits, header)
   local instance = {
     commits = commits,
+    header = header,
     buffer = nil,
   }
 
@@ -31,16 +34,15 @@ end
 
 ---@param action fun(commit: CommitLogEntry[])
 function M:open(action)
-  -- TODO: Pass this in as a param instead of reading state from object
-  local _, item = require("neogit.status").get_current_section_item()
-
   ---@type fun(commit: CommitLogEntry[])|nil
   local action = action
 
   self.buffer = Buffer.create {
     name = "NeogitCommitSelectView",
     filetype = "NeogitCommitSelectView",
+    status_column = " ",
     kind = config.values.commit_select_view.kind,
+    header = self.header or "Select a commit with <cr>, or <esc> to abort",
     mappings = {
       v = {
         ["<enter>"] = function()
@@ -96,18 +98,6 @@ function M:open(action)
         end
       end,
     },
-    after = function(buffer, win)
-      if win and item and item.commit then
-        local found = buffer.ui:find_component(function(c)
-          return c.options.oid == item.commit.oid
-        end)
-
-        if found then
-          vim.api.nvim_win_set_cursor(win, { found.position.row_start, 0 })
-        end
-      end
-      vim.cmd([[setlocal nowrap]])
-    end,
     render = function()
       return ui.View(self.commits)
     end,

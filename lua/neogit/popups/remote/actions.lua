@@ -46,10 +46,7 @@ M.add = operation("add_remote", function(popup)
   local success = git.remote.add(name, remote_url, popup:get_arguments())
   if success then
     local set_default = ask_to_set_pushDefault()
-      and input.get_confirmation(
-        [[Set 'remote.pushDefault' to "]] .. name .. [["?]],
-        { values = { "&Yes", "&No" }, default = 2 }
-      )
+      and input.get_permission([[Set 'remote.pushDefault' to "]] .. name .. [["?]])
 
     if set_default then
       git.config.set("remote.pushDefault", name)

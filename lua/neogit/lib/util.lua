@@ -392,6 +392,10 @@ function M.pad_right(s, len)
   return s .. string.rep(" ", math.max(len - #s, 0))
 end
 
+function M.pad_left(s, len)
+  return string.rep(" ", math.max(len - #s, 0)) .. s
+end
+
 --- http://lua-users.org/wiki/StringInterpolation
 --- @param template string
 --- @param values table
@@ -482,6 +486,39 @@ function M.memoize(f, opts)
     end)
 
     return cache[key]
+  end
+end
+
+--- Debounces a function on the trailing edge.
+---
+--- @generic F: function
+--- @param ms number Timeout in ms
+--- @param fn F Function to debounce
+--- @param hash? integer|fun(...): any Function that determines id from arguments to fn
+--- @return F Debounced function.
+function M.debounce_trailing(ms, fn, hash)
+  local running = {} --- @type table<any,uv.uv_timer_t>
+
+  if type(hash) == "number" then
+    local hash_i = hash
+    hash = function(...)
+      return select(hash_i, ...)
+    end
+  end
+
+  return function(...)
+    local id = hash and hash(...) or true
+    if running[id] == nil then
+      running[id] = assert(vim.loop.new_timer())
+    end
+
+    local timer = running[id]
+    local argv = { ... }
+    timer:start(ms, 0, function()
+      timer:stop()
+      running[id] = nil
+      fn(unpack(argv, 1, table.maxn(argv)))
+    end)
   end
 end
 
