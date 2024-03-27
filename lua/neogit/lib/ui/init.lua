@@ -383,7 +383,7 @@ end
 ---@return CursorLocation
 function Ui:get_cursor_location(line)
   line = line or vim.api.nvim_win_get_cursor(0)[1]
-  local section_loc, file_loc, hunk_loc, first, last
+  local section_loc, section_offset, file_loc, hunk_loc, first, last
 
   for li, loc in ipairs(self.item_index) do
     if line == loc.first then
@@ -394,33 +394,44 @@ function Ui:get_cursor_location(line)
     elseif line >= loc.first and line <= loc.last then
       section_loc = { index = li, name = loc.name }
 
-      for fi, file in ipairs(loc.items) do
-        if line == file.first then
-          file_loc = { index = fi, name = file.name }
-          first, last = file.first, file.last
+      if #loc.items > 0 then
+        for fi, file in ipairs(loc.items) do
+          if line == file.first then
+            file_loc = { index = fi, name = file.name }
+            first, last = file.first, file.last
 
-          break
-        elseif line >= file.first and line <= file.last then
-          file_loc = { index = fi, name = file.name }
+            break
+          elseif line >= file.first and line <= file.last then
+            file_loc = { index = fi, name = file.name }
 
-          for hi, hunk in ipairs(file.diff.hunks) do
-            if line >= hunk.first and line <= hunk.last then
-              hunk_loc = { index = hi, name = hunk.hash }
-              first, last = hunk.first, hunk.last
+            for hi, hunk in ipairs(file.diff.hunks) do
+              if line >= hunk.first and line <= hunk.last then
+                hunk_loc = { index = hi, name = hunk.hash }
+                first, last = hunk.first, hunk.last
 
-              break
+                break
+              end
             end
-          end
 
-          break
+            break
+          end
         end
+      else
+        section_offset = line - loc.first
       end
 
       break
     end
   end
 
-  return { section = section_loc, file = file_loc, hunk = hunk_loc, first = first, last = last }
+  return {
+    section = section_loc,
+    file = file_loc,
+    hunk = hunk_loc,
+    first = first,
+    last = last,
+    section_offset = section_offset
+  }
 end
 
 ---@param cursor CursorLocation
@@ -449,8 +460,12 @@ function Ui:resolve_cursor_location(cursor)
   end
 
   if not cursor.file or not section.items or #section.items == 0 then
-    logger.debug("[UI] No file - using section.first")
-    return section.first
+    if cursor.section_offset then
+      return section.first + cursor.section_offset
+    else
+      logger.debug("[UI] No file - using section.first")
+      return section.first
+    end
   end
 
   local file = Collection.new(section.items):find(function(f)
