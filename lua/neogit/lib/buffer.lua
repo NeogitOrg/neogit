@@ -634,6 +634,7 @@ function Buffer.create(config)
     -- TODO: Need to find a way to turn this off properly when unloading plugin
     -- buffer:set_window_option("winfixbuf", true)
   else
+    -- selene: allow(global_usage)
     _G.NeogitFoldText = function()
       return vim.fn.getline(vim.v.foldstart)
     end

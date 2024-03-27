@@ -2,7 +2,6 @@ local Buffer = require("neogit.lib.buffer")
 local ui = require("neogit.buffers.log_view.ui")
 local config = require("neogit.config")
 local popups = require("neogit.popups")
-local notification = require("neogit.lib.notification")
 local status_maps = require("neogit.config").get_reversed_status_maps()
 local CommitViewBuffer = require("neogit.buffers.commit_view")
 
