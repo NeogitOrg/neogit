@@ -8,6 +8,7 @@ local ReflogViewBuffer = require("neogit.buffers.reflog_view")
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
 local operation = require("neogit.operations")
+local a = require("plenary.async")
 
 --- Runs `git log` and parses the commits
 ---@param popup table Contains the argument list
@@ -81,18 +82,11 @@ end
 
 -- TODO: Prefill the fuzzy finder with the filepath under cursor, if there is one
 ---comment
----@param popup Popup
----@param option table
----@param set function
----@return nil
-function M.limit_to_files(popup, option, set)
-  local a = require("plenary.async")
-
-  a.run(function()
+function M.limit_to_files()
+  local fn = function(popup, option)
     if option.value ~= "" then
       popup.state.env.files = nil
-      set("")
-      return
+      return ""
     end
 
     local files = FuzzyFinderBuffer.new(git.files.all_tree()):open_async {
@@ -102,8 +96,7 @@ function M.limit_to_files(popup, option, set)
 
     if not files or vim.tbl_isempty(files) then
       popup.state.env.files = nil
-      set("")
-      return
+      return ""
     end
 
     popup.state.env.files = files
@@ -111,8 +104,10 @@ function M.limit_to_files(popup, option, set)
       return string.format([[ "%s"]], file)
     end)
 
-    set(table.concat(files, ""))
-  end)
+    return table.concat(files, "")
+  end
+
+  return a.wrap(fn, 2)
 end
 
 return M
