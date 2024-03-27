@@ -119,6 +119,12 @@ function M.skip()
   git.bisect.skip()
 end
 
+function M.reset_with_permission()
+  if input.get_permission("End bisection?") then
+    git.bisect.reset()
+  end
+end
+
 function M.reset()
   git.bisect.reset()
 end
