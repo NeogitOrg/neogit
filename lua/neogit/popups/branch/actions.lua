@@ -180,10 +180,11 @@ M.reset_branch = operation("reset_branch", function(popup)
 
   local options = util.deduplicate(
     util.merge(
-      popup.state.env.commits,
+      popup.state.env.commits or {},
       relatives,
       git.refs.list_branches(),
-      git.refs.list_refs(),
+      git.refs.list_tags(),
+      git.stash.list_refs(),
       git.refs.heads()
     )
   )
