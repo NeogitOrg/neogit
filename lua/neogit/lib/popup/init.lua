@@ -153,7 +153,7 @@ function M:set_option(option)
   if option.choices then
     if not option.value or option.value == "" then
       local choice = FuzzyFinderBuffer.new(option.choices):open_async {
-        prompt_prefix = option.description
+        prompt_prefix = option.description,
       }
       if choice then
         option.value = choice
@@ -213,7 +213,6 @@ function M:set_config(config)
     config.value = result
     git.config.set(config.name, config.value)
   end
-
 
   for _, var in ipairs(self.state.config) do
     if var.passive then

@@ -430,7 +430,7 @@ function Ui:get_cursor_location(line)
     hunk = hunk_loc,
     first = first,
     last = last,
-    section_offset = section_offset
+    section_offset = section_offset,
   }
 end
 

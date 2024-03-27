@@ -94,7 +94,7 @@ function M:open(kind)
       end,
       ["BufEnter"] = function()
         self:dispatch_refresh()
-      end
+      end,
     },
     mappings = {
       v = {

@@ -106,7 +106,6 @@ function M.scripted(popup)
   end
 end
 
-
 function M.good()
   git.bisect.good()
 end
