@@ -83,8 +83,9 @@ end
 ---@param commit string rev name of the commit to reword
 ---@return ProcessResult|nil
 function M.reword(commit)
+  local message = table.concat(log.full_message(commit), "\n")
   local status = client.wrap(
-    cli.commit.only.allow_empty.edit.with_message(("amend! %s\n\n%s"):format(commit, log.message(commit))),
+    cli.commit.only.allow_empty.edit.with_message(("amend! %s\n\n%s"):format(commit, message)),
     {
       autocmd = "NeogitCommitComplete",
       msg = {

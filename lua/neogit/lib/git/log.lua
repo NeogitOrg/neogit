@@ -426,6 +426,10 @@ function M.message(commit)
   return cli.log.max_count(1).format("%s").args(commit).call({ hidden = true }).stdout[1]
 end
 
+function M.full_message(commit)
+  return cli.log.max_count(1).format("%B").args(commit).call({ hidden = true }).stdout
+end
+
 function M.present_commit(commit)
   if not commit.oid then
     return
