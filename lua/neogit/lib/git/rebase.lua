@@ -3,6 +3,7 @@ local client = require("neogit.client")
 local notification = require("neogit.lib.notification")
 local cli = require("neogit.lib.git.cli")
 local rev_parse = require("neogit.lib.git.rev_parse")
+local log = require("neogit.lib.git.log")
 
 local M = {}
 
@@ -19,11 +20,14 @@ end
 
 ---Instant rebase. This is a way to rebase without using the interactive editor
 ---@param commit string
----@param args string[] list of arguments to pass to git rebase
+---@param args? string[] list of arguments to pass to git rebase
 ---@return ProcessResult
 function M.instantly(commit, args)
-  local result =
-    cli.rebase.env({ GIT_SEQUENCE_EDITOR = ":" }).interactive.arg_list(args).commit(commit).call()
+  local result = cli.rebase
+    .env({ GIT_SEQUENCE_EDITOR = ":" }).interactive.autostash.autosquash
+    .arg_list(args or {})
+    .commit(commit)
+    .call()
 
   if result.code ~= 0 then
     fire_rebase_event { commit = commit, status = "failed" }
@@ -77,20 +81,22 @@ function M.onto(start, newbase, args)
 end
 
 ---@param commit string rev name of the commit to reword
----@param message string new message to put onto `commit`
----@return nil
-function M.reword(commit, message)
-  local result = cli.commit.allow_empty.only.message("amend! " .. commit .. "\n\n" .. message).call()
-  if result.code ~= 0 then
-    return
-  end
+---@return ProcessResult|nil
+function M.reword(commit)
+  local message = table.concat(log.full_message(commit), "\n")
+  local status = client.wrap(
+    cli.commit.only.allow_empty.edit.with_message(("amend! %s\n\n%s"):format(commit, message)),
+    {
+      autocmd = "NeogitCommitComplete",
+      msg = {
+        success = "Commit Updated",
+      },
+    }
+  )
 
-  result =
-    cli.rebase.env({ GIT_SEQUENCE_EDITOR = ":" }).interactive.autosquash.autostash.commit(commit).call()
-  if result.code ~= 0 then
-    return
+  if status == 0 then
+    return M.instantly(commit)
   end
-  fire_rebase_event("ok")
 end
 
 function M.modify(commit)
