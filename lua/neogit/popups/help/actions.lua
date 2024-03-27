@@ -81,6 +81,9 @@ M.popups = function(env)
     { "BranchPopup", "Branch", popups.open("branch", function(p)
       p(env.branch)
     end) },
+    { "BisectPopup", "Bisect", popups.open("bisect", function(p)
+      p(env.bisect)
+    end) },
     { "FetchPopup", "Fetch", popups.open("fetch", function(p)
       p(env.fetch)
     end) },

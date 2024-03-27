@@ -1066,6 +1066,7 @@ function M:open(kind)
             push = { commit = commit },
             rebase = { commit = commit },
             revert = { commits = commits },
+            bisect = { commits = commits },
             reset = { commit = commit },
             tag = { commit = commit },
             stash = { name = stash and stash:match("^stash@{%d+}") },
