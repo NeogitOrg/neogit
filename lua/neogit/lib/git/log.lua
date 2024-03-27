@@ -388,11 +388,13 @@ M.list = util.memoize(function(options, graph, files, hidden, graph_color)
 end)
 
 ---Determines if commit a is an ancestor of commit b
----@param a string commit hash
----@param b string commit hash
+---@param ancestor string commit hash
+---@param descendant string commit hash
 ---@return boolean
-function M.is_ancestor(a, b)
-  return cli["merge-base"].is_ancestor.args(a, b).call_sync({ ignore_error = true, hidden = true }).code == 0
+function M.is_ancestor(ancestor, descendant)
+  return cli["merge-base"].is_ancestor
+    .args(ancestor, descendant)
+    .call_sync({ ignore_error = true, hidden = true }).code == 0
 end
 
 ---Finds parent commit of a commit. If no parent exists, will return nil

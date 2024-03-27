@@ -346,6 +346,34 @@ local SectionItemBisect = Component.new(function(item)
   }, { yankable = item.oid, oid = item.oid })
 end)
 
+local BisectDetailsSection = Component.new(function(props)
+  return col.tag("Section")({
+    row(util.merge(props.title, { text(" "), text.highlight("Comment")(props.commit.oid) })),
+    row {
+      text.highlight("Comment")("Author:     "),
+      text((props.commit.author_name or "") .. " <" .. (props.commit.author_email or "") .. ">"),
+    },
+    row { text.highlight("Comment")("AuthorDate: "), text(props.commit.author_date) },
+    row {
+      text.highlight("Comment")("Committer:  "),
+      text((props.commit.committer_name or "") .. " <" .. (props.commit.committer_email or "") .. ">"),
+    },
+    row { text.highlight("Comment")("CommitDate: "), text(props.commit.committer_date) },
+    EmptyLine,
+    col(
+      map(props.commit.description, text),
+      { highlight = "NeogitCommitViewDescription", tag = "Description" }
+    ),
+    EmptyLine,
+  }, {
+    foldable = true,
+    folded = props.folded,
+    section = props.name,
+    yankable = props.commit.oid,
+    id = props.name,
+  })
+end)
+
 function M.Status(state, config)
   -- stylua: ignore start
   local show_hint = not config.disable_hint
@@ -473,8 +501,14 @@ function M.Status(state, config)
           folded = config.sections.sequencer.folded,
           name = "revert",
         },
+        show_bisect and BisectDetailsSection {
+          commit = state.bisect.current,
+          title = SectionTitle { title = "Bisecting at" },
+          folded = config.sections.bisect.folded,
+          name = "bisect_details",
+        },
         show_bisect and SequencerSection {
-          title = SectionTitle { title = "Bisecting" },
+          title = SectionTitle { title = "Bisecting Log" },
           render = SectionItemBisect,
           items = state.bisect.items,
           folded = config.sections.bisect.folded,

@@ -44,7 +44,7 @@ local function empty_state()
     rebase = { items = {}, head = nil },
     sequencer = { items = {}, head = nil },
     merge = { items = {}, head = nil, msg = nil },
-    bisect = { items = {}, finished = false },
+    bisect = { items = {}, finished = false, current = {} },
   }
 end
 

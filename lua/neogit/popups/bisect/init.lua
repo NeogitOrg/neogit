@@ -21,7 +21,7 @@ function M.create(env)
     :action_if(not finished and in_progress, "g", "Good", actions.good)
     :action_if(not finished and in_progress, "s", "Skip", actions.skip)
     :action_if(in_progress, "r", "Reset", actions.reset)
-    :action_if(not finished and in_progress, "S", "Run script")
+    :action_if(not finished and in_progress, "S", "Run script", actions.run)
     :env(env)
     :build()
 
