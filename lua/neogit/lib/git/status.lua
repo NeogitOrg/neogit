@@ -1,5 +1,4 @@
 local Path = require("plenary.path")
-local util = require("neogit.lib.util")
 local Collection = require("neogit.lib.collection")
 
 ---@class File: StatusItem
@@ -54,19 +53,22 @@ local function update_status(state)
 
   local result = git.cli.status.null_separated.porcelain(2).branch.call { hidden = true }
   result = vim.split(result.stdout_raw[1], "\n")
-  result = util.collect(result, function(line, collection)
-    if line == "" then
-      return
-    end
 
-    if line ~= "" and (line:match("^[12u]%s[MTADRC%s%.%?!][MTDRC%s%.%?!]%s") or line:match("^[%?!#]%s")) then
+  local collection = {}
+  local line_nr = 1
+  local prev_line = nil
+  repeat
+    local line = result[line_nr]
+    if line:match("^[12u]%s[MTADRCU%s%.%?!][MTDRCU%s%.%?!]%s") or line:match("^[%?!#]%s") then
       table.insert(collection, line)
-    else
+    elseif prev_line and prev_line:match("2%sR%.%s") then
       collection[#collection] = ("%s\t%s"):format(collection[#collection], line)
     end
-  end)
+    line_nr = line_nr + 1
+    prev_line = line
+  until line_nr > #result
 
-  for _, l in ipairs(result) do
+  for _, l in ipairs(collection) do
     local header, value = l:match("# ([%w%.]+) (.+)")
     if header then
       if header == "branch.head" then
