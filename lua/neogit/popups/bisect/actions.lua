@@ -87,6 +87,26 @@ function M.start(popup)
   end
 end
 
+function M.scripted(popup)
+  if git.status.is_dirty() then
+    notification.warn("Cannot bisect with uncommitted changes")
+    return
+  end
+
+  local revisions = revisions(popup)
+  if revisions then
+    local command = input.get_user_input("Bisect shell command")
+    if command then
+      notification.info("Bisecting...")
+
+      local bad_revision, good_revision = unpack(revisions)
+      git.bisect.start(bad_revision, good_revision, popup:get_arguments())
+      git.bisect.run(command)
+    end
+  end
+end
+
+
 function M.good()
   git.bisect.good()
 end
@@ -101,13 +121,6 @@ end
 
 function M.reset()
   git.bisect.reset()
-end
-
-function M.scripted()
-  local command = input.get_user_input("Bisect shell command")
-  if command then
-    git.bisect.run(command)
-  end
 end
 
 function M.run()
