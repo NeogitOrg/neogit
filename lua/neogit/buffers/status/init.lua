@@ -92,6 +92,9 @@ function M:open(kind)
         self.is_open = false
         vim.o.autochdir = self.prev_autochdir
       end,
+      ["BufEnter"] = function()
+        self:dispatch_refresh()
+      end
     },
     mappings = {
       v = {
