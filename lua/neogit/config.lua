@@ -244,6 +244,9 @@ function M.get_default_values()
     popup = {
       kind = "split",
     },
+    refs = {
+      kind = "tab",
+    },
     signs = {
       hunk = { "", "" },
       item = { ">", "v" },
