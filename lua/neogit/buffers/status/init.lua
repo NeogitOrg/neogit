@@ -514,7 +514,7 @@ function M:open(kind)
                 fn.delete(selection.item.escaped_path)
               end
             elseif section == "unstaged" then
-              if selection.item.mode == "UU" then
+              if selection.item.mode:match("^[UA][UA]") then
                 choices = { "&ours", "&theirs", "&conflict", "&abort" }
                 action = function()
                   local choice = input.get_choice(
