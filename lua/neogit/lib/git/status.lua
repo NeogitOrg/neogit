@@ -59,7 +59,7 @@ local function update_status(state)
   local prev_line = nil
   repeat
     local line = result[line_nr]
-    if line:match("^[12u]%s[MTADRCU%s%.%?!][MTDRCU%s%.%?!]%s") or line:match("^[%?!#]%s") then
+    if line:match("^[12u]%s[MTADRCU%s%.%?!][MTADRCU%s%.%?!]%s") or line:match("^[%?!#]%s") then
       table.insert(collection, line)
     elseif prev_line and prev_line:match("2%sR%.%s") then
       collection[#collection] = ("%s\t%s"):format(collection[#collection], line)
