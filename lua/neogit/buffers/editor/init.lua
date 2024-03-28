@@ -127,7 +127,7 @@ function M:open(kind)
       end
     end,
     autocmds = {
-      ["BufUnload"] = function()
+      ["WinClosed"] = function()
         pcall(vim.treesitter.stop, self.buffer.handle)
 
         if self.on_unload then
