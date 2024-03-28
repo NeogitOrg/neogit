@@ -267,6 +267,10 @@ function Buffer:hide()
   end
 end
 
+function Buffer:is_visible()
+  return #fn.win_findbuf(self.handle) > 0
+end
+
 ---@return number
 function Buffer:show()
   local windows = fn.win_findbuf(self.handle)

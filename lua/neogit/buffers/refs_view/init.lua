@@ -1,10 +1,11 @@
 local Buffer = require("neogit.lib.buffer")
+local config = require("neogit.config")
 local ui = require("neogit.buffers.refs_view.ui")
 local popups = require("neogit.popups")
+local status_maps = require("neogit.config").get_reversed_status_maps()
 local CommitViewBuffer = require("neogit.buffers.commit_view")
 
 --- @class RefsViewBuffer
---- @field is_open boolean whether the buffer is currently shown
 --- @field buffer Buffer
 --- @field open fun()
 --- @field close fun()
@@ -21,7 +22,6 @@ function M.new(refs)
   local instance = {
     refs = refs,
     head = "HEAD",
-    is_open = false,
     buffer = nil,
   }
 
@@ -29,39 +29,31 @@ function M.new(refs)
   return instance
 end
 
---- Closes the RefsViewBuffer
 function M:close()
-  self.is_open = false
-  self.buffer:close()
-  self.buffer = nil
+  if self.buffer then
+    self.buffer:close()
+    self.buffer = nil
+  end
+end
+
+---@return boolean
+function M.is_open()
+  return (M.instance and M.instance.buffer and M.instance.buffer:is_visible()) == true
 end
 
 --- Opens the RefsViewBuffer
---- If already open will close the buffer
 function M:open()
-  if M.instance and M.instance.is_open then
-    M.instance:close()
+  if M.is_open() then
+    return
   end
 
   M.instance = self
 
-  if self.is_open then
-    return
-  end
-
-  self.hovered_component = nil
-  self.is_open = true
-
   self.buffer = Buffer.create {
     name = "NeogitRefsView",
     filetype = "NeogitRefsView",
-    kind = "tab",
+    kind = config.values.refs.kind,
     context_highlight = false,
-    autocmds = {
-      ["BufUnload"] = function()
-        M.instance.is_open = false
-      end,
-    },
     mappings = {
       v = {
         [popups.mapping_for("CherryPickPopup")] = popups.open("cherry_pick", function(p)
@@ -144,13 +136,13 @@ function M:open()
             item = { name = item },
           }
         end),
-        ["q"] = function()
+        [status_maps["Close"]] = function()
           self:close()
         end,
         ["<esc>"] = function()
           self:close()
         end,
-        ["<enter>"] = function()
+        [status_maps["GoToFile"]] = function()
           CommitViewBuffer.new(self.buffer.ui:get_commits_in_selection()[1]):open()
         end,
         -- ["{"] = function()

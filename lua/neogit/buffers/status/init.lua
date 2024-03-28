@@ -29,7 +29,6 @@ local fn = vim.fn
 ---@field acquire function
 
 ---@class StatusBuffer
----@field is_open boolean whether the buffer is currently visible
 ---@field buffer Buffer instance
 ---@field state NeogitRepo
 ---@field config NeogitConfig
@@ -43,7 +42,6 @@ M.__index = M
 ---@return StatusBuffer
 function M.new(state, config)
   local instance = {
-    is_open = false,
     -- frozen = false,
     state = state,
     config = config,
@@ -57,18 +55,17 @@ function M.new(state, config)
   return instance
 end
 
+---@return boolean
+function M.is_open()
+  return (M.instance and M.instance.buffer and M.instance.buffer:is_visible()) == true
+end
+
 function M:open(kind)
-  if M.instance and M.instance.is_open then
+  if M.instance and M.is_open() then
     logger.debug("[STATUS] An Instance is already open - closing it")
     M.instance:close()
   end
   M.instance = self
-
-  if self.is_open then
-    logger.debug("[STATUS] This Instance is already open - bailing")
-    return
-  end
-  self.is_open = true
 
   kind = kind or config.values.kind
   logger.debug("[STATUS] Opening kind: " .. kind)
@@ -89,7 +86,6 @@ function M:open(kind)
           self.watcher:stop()
         end
 
-        self.is_open = false
         vim.o.autochdir = self.prev_autochdir
       end,
       ["BufEnter"] = function()
@@ -1130,7 +1126,6 @@ function M:close()
     self.watcher:stop()
   end
 
-  self.is_open = false
   self.buffer:close()
   self.buffer = nil
 end

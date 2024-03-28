@@ -2,6 +2,7 @@ local Buffer = require("neogit.lib.buffer")
 local Git = require("neogit.lib.git")
 local Ui = require("neogit.lib.ui")
 local util = require("neogit.lib.util")
+local status_maps = require("neogit.config").get_reversed_status_maps()
 
 local map = util.map
 local filter_map = util.filter_map
@@ -19,7 +20,6 @@ function M:new(state)
   local this = {
     buffer = nil,
     state = state or Git.cli.history,
-    is_open = false,
   }
 
   setmetatable(this, { __index = M })
@@ -28,23 +28,30 @@ function M:new(state)
 end
 
 function M:close()
-  self.is_open = false
-  self.buffer:close()
-  self.buffer = nil
+  if self.buffer then
+    self.buffer:close()
+    self.buffer = nil
+  end
+end
+
+---@return boolean
+function M.is_open()
+  return (M.instance and M.instance.buffer and M.instance.buffer:is_visible()) == true
 end
 
 function M:show()
-  if self.is_open then
+  if M.is_open() then
     return
   end
-  self.is_open = true
+
+  M.instance = self
 
   self.buffer = Buffer.create {
     name = "NeogitGitCommandHistory",
     filetype = "NeogitGitCommandHistory",
     mappings = {
       n = {
-        ["q"] = function()
+        [status_maps["Close"]] = function()
           self:close()
         end,
         ["<esc>"] = function()

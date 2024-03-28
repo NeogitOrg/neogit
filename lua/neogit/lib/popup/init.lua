@@ -29,12 +29,14 @@ function M.builder()
   return PopupBuilder.new(M.new)
 end
 
+---@param state PopupState
 function M.new(state)
   local instance = {
     state = state,
     buffer = nil,
   }
   setmetatable(instance, { __index = M })
+
   return instance
 end
 
@@ -324,7 +326,19 @@ function M:refresh()
   self.buffer.ui:render(unpack(ui.Popup(self.state)))
 end
 
+---@return boolean
+function M.is_open()
+  return (M.instance and M.instance.buffer and M.instance.buffer:is_visible()) == true
+end
+
 function M:show()
+  if M.is_open() then
+    logger.debug("[POPUP] An Instance is already open - closing it")
+    M.instance:close()
+  end
+
+  M.instance = self
+
   self.buffer = Buffer.create {
     name = self.state.name,
     filetype = "NeogitPopup",
