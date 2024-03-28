@@ -162,7 +162,7 @@ function M:open()
         end,
         ["<c-k>"] = function()
           pcall(vim.cmd, "normal! zc")
-          
+
           vim.cmd("normal! k")
           for _ = vim.fn.line("."), 0, -1 do
             if vim.fn.foldlevel(".") > 0 then
