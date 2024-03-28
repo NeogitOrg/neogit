@@ -29,7 +29,6 @@ local api = vim.api
 ---@field deletions string deletion count visualized as list of `-`
 
 --- @class CommitViewBuffer
---- @field is_open boolean whether the buffer is currently shown
 --- @field commit_info CommitInfo
 --- @field commit_signature table|nil
 --- @field commit_overview CommitOverview
@@ -57,7 +56,6 @@ function M.new(commit_id, filter)
     parser.parse_commit_overview(git.cli.show.stat.oneline.args(commit_id).call_sync().stdout)
 
   local instance = {
-    is_open = false,
     item_filter = filter,
     commit_info = commit_info,
     commit_overview = commit_overview,
@@ -72,9 +70,10 @@ end
 
 --- Closes the CommitViewBuffer
 function M:close()
-  self.is_open = false
-  self.buffer:close()
-  self.buffer = nil
+  if self.buffer then
+    self.buffer:close()
+    self.buffer = nil
+  end
 end
 
 ---Opens the CommitViewBuffer if it isn't open or performs the given action
@@ -108,34 +107,29 @@ end
 function M.open_or_scroll_up(commit_id, filter)
   M.open_or_run_in_window(commit_id, filter, "normal! " .. vim.keycode("<c-u>"))
 end
+
+---@return boolean
+function M.is_open()
+  return (M.instance and M.instance.buffer and M.instance.buffer:is_visible()) == true
+end
+
 ---Opens the CommitViewBuffer
 ---If already open will close the buffer
 ---@param kind? string
 function M:open(kind)
   kind = kind or config.values.commit_view.kind
 
-  if M.instance and M.instance.is_open then
+  if M.is_open() then
     M.instance:close()
   end
 
   M.instance = self
 
-  if self.is_open then
-    return
-  end
-
-  self.hovered_component = nil
-  self.is_open = true
   self.buffer = Buffer.create {
     name = "NeogitCommitView",
     filetype = "NeogitCommitView",
     kind = kind,
     context_highlight = true,
-    autocmds = {
-      ["BufUnload"] = function()
-        M.instance.is_open = false
-      end,
-    },
     mappings = {
       n = {
         ["<cr>"] = function()
