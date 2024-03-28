@@ -52,7 +52,7 @@ function M:open()
   self.buffer = Buffer.create {
     name = "NeogitRefsView",
     filetype = "NeogitRefsView",
-    kind = config.values.refs.kind,
+    kind = config.values.refs_view.kind,
     context_highlight = false,
     mappings = {
       v = {

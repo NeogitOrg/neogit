@@ -111,15 +111,90 @@ end
 ---@field enabled boolean
 ---@field filewatcher NeogitFilewatcherConfig|nil
 
----@alias NeogitConfigMappingsFinder "Select" | "Close" | "Next" | "Previous" | "MultiselectToggleNext" | "MultiselectTogglePrevious" | "NOP" | false
+---@alias NeogitConfigMappingsFinder "Select"
+---| "Close"
+---| "Next"
+---| "Previous"
+---| "MultiselectToggleNext"
+---| "MultiselectTogglePrevious"
+---| "NOP"
+---| false
 
----@alias NeogitConfigMappingsStatus "Close" | "Depth1" | "Depth2" | "Depth3" | "Depth4" | "Toggle" | "Discard" | "Stage" | "StageUnstaged" | "StageAll" | "Unstage" | "UnstageStaged" | "RefreshBuffer" | "GoToFile" | "VSplitOpen" | "SplitOpen" | "TabOpen" | "GoToPreviousHunkHeader" | "GoToNextHunkHeader" | "Console" | "CommandHistory" | "ShowRefs" | "InitRepo" | "YankSelected" | false | fun()
+---@alias NeogitConfigMappingsStatus "Close"
+---| "Depth1"
+---| "Depth2"
+---| "Depth3"
+---| "Depth4"
+---| "Toggle"
+---| "Discard"
+---| "Stage"
+---| "StageUnstaged"
+---| "StageAll"
+---| "Unstage"
+---| "UnstageStaged"
+---| "RefreshBuffer"
+---| "GoToFile"
+---| "VSplitOpen"
+---| "SplitOpen"
+---| "TabOpen"
+---| "GoToPreviousHunkHeader"
+---| "GoToNextHunkHeader"
+---| "Console"
+---| "CommandHistory"
+---| "ShowRefs"
+---| "InitRepo"
+---| "YankSelected"
+---| "OpenOrScrollUp"
+---| "OpenOrScrollDown"
+---| false
+---| fun()
 
----@alias NeogitConfigMappingsPopup "HelpPopup" | "DiffPopup" | "PullPopup" | "RebasePopup" | "MergePopup" | "PushPopup" | "CommitPopup" | "LogPopup" | "RevertPopup" | "StashPopup" | "IgnorePopup" | "CherryPickPopup" | "BisectPopup" | "BranchPopup" | "FetchPopup" | "ResetPopup" | "RemotePopup" | "TagPopup" | "WorktreePopup" | false
+---@alias NeogitConfigMappingsPopup "HelpPopup"
+---| "DiffPopup"
+---| "PullPopup"
+---| "RebasePopup"
+---| "MergePopup"
+---| "PushPopup"
+---| "CommitPopup"
+---| "LogPopup"
+---| "RevertPopup"
+---| "StashPopup"
+---| "IgnorePopup"
+---| "CherryPickPopup"
+---| "BisectPopup"
+---| "BranchPopup"
+---| "FetchPopup"
+---| "ResetPopup"
+---| "RemotePopup"
+---| "TagPopup"
+---| "WorktreePopup"
+---| false
 
----@alias NeogitConfigMappingsRebaseEditor "Pick" | "Reword" | "Edit" | "Squash" | "Fixup" | "Execute" | "Drop" | "Break" | "MoveUp" | "MoveDown" | "Close" | "OpenCommit" | "Submit" | "Abort" | false | fun()
----
----@alias NeogitConfigMappingsCommitEditor "Close" | "Submit" | "Abort" | "PrevMessage" | "ResetMessage" | "NextMessage" | false | fun()
+---@alias NeogitConfigMappingsRebaseEditor "Pick"
+---| "Reword"
+---| "Edit"
+---| "Squash"
+---| "Fixup"
+---| "Execute"
+---| "Drop"
+---| "Break"
+---| "MoveUp"
+---| "MoveDown"
+---| "Close"
+---| "OpenCommit"
+---| "Submit"
+---| "Abort"
+---| false
+---| fun()
+
+---@alias NeogitConfigMappingsCommitEditor "Close"
+---| "Submit"
+---| "Abort"
+---| "PrevMessage"
+---| "ResetMessage"
+---| "NextMessage"
+---| false
+---| fun()
 
 ---@class NeogitConfigMappings Consult the config file or documentation for values
 ---@field finder? { [string]: NeogitConfigMappingsFinder } A dictionary that uses finder commands to set multiple keybinds
@@ -155,6 +230,7 @@ end
 ---@field log_view? NeogitConfigPopup Log view options
 ---@field rebase_editor? NeogitConfigPopup Rebase editor options
 ---@field reflog_view? NeogitConfigPopup Reflog view options
+---@field refs_view? NeogitConfigPopup Refs view options
 ---@field merge_editor? NeogitConfigPopup Merge editor options
 ---@field description_editor? NeogitConfigPopup Merge editor options
 ---@field tag_editor? NeogitConfigPopup Tag editor options
@@ -244,7 +320,7 @@ function M.get_default_values()
     popup = {
       kind = "split",
     },
-    refs = {
+    refs_view = {
       kind = "tab",
     },
     signs = {
@@ -809,6 +885,10 @@ function M.validate_config()
     -- Reflog View
     if validate_type(config.reflog_view, "reflog_view", "table") then
       validate_kind(config.reflog_view.kind, "reflog_view.kind")
+    end
+    -- refs view
+    if validate_type(config.refs_view, "refs_view", "table") then
+      validate_kind(config.refs_view.kind, "refs_view.kind")
     end
     -- Merge Editor
     if validate_type(config.merge_editor, "merge_editor", "table") then
