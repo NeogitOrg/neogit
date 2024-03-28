@@ -48,4 +48,24 @@ function M.create_temp_dir(suffix)
   return prefix .. vim.trim(M.system(cmd))
 end
 
+function M.ensure_installed(repo, path)
+  local name = repo:match(".+/(.+)$")
+
+  local install_path = path .. name
+
+  vim.opt.runtimepath:prepend(install_path)
+
+  if not vim.loop.fs_stat(install_path) then
+    print("* Downloading " .. name .. " to '" .. install_path .. "/'")
+    vim.fn.system { "git", "clone", "--depth=1", "git@github.com:" .. repo .. ".git", install_path }
+
+    if vim.v.shell_error > 0 then
+      error(string.format("! Failed to clone plugin: '%s' in '%s'!", name, install_path),
+        vim.log.levels.ERROR)
+    end
+  end
+
+  print(vim.fn.system("ls " ..install_path))
+end
+
 return M
