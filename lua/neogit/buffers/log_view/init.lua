@@ -148,9 +148,27 @@ function M:open()
             CommitViewBuffer.new(commit, self.files):open()
           end
         end,
+        [";"] = function()
+          if self.buffer and self.buffer.ui then
+            local commit_id = self.buffer.ui:get_commit_under_cursor()
+            CommitViewBuffer.open_or_run_in_window(commit_id, self.files, function(window_id)
+              local key = vim.api.nvim_replace_termcodes("<C-d>", true, false, true)
+              vim.fn.win_execute(window_id, "normal! " .. key)
+            end)
+          end
+        end,
+        [","] = function()
+          if self.buffer and self.buffer.ui then
+            local commit_id = self.buffer.ui:get_commit_under_cursor()
+            CommitViewBuffer.open_or_run_in_window(commit_id, self.files, function(window_id)
+              local key = vim.api.nvim_replace_termcodes("<C-u>", true, false, true)
+              vim.fn.win_execute(window_id, "normal! " .. key)
+            end)
+          end
+        end,
         ["<c-k>"] = function()
           pcall(vim.cmd, "normal! zc")
-
+          
           vim.cmd("normal! k")
           for _ = vim.fn.line("."), 0, -1 do
             if vim.fn.foldlevel(".") > 0 then
