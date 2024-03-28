@@ -390,6 +390,17 @@ function M:open(kind)
         end,
         [mappings["Close"]] = function()
           self:close()
+        [mappings["OpenOrScrollDown"]] = function()
+          local commit = self.buffer.ui:get_commit_under_cursor()
+          if commit then
+            require("neogit.buffers.commit_view").open_or_scroll_down(commit)
+          end
+        end,
+        [mappings["OpenOrScrollUp"]] = function()
+          local commit = self.buffer.ui:get_commit_under_cursor()
+          if commit then
+            require("neogit.buffers.commit_view").open_or_scroll_up(commit)
+          end
         end,
         [mappings["RefreshBuffer"]] = a.void(function()
           self:refresh()

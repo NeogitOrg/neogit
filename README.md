@@ -316,6 +316,8 @@ neogit.setup {
       ["<c-t>"] = "TabOpen",
       ["{"] = "GoToPreviousHunkHeader",
       ["}"] = "GoToNextHunkHeader",
+      ["["] = "OpenOrScrollUp",
+      ["]"] = "OpenOrScrollDown",
     },
   },
 }

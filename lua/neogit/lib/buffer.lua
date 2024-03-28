@@ -487,6 +487,10 @@ function Buffer:call(f)
   api.nvim_buf_call(self.handle, f)
 end
 
+function Buffer:win_exec(cmd)
+  fn.win_execute(self.win_handle, cmd)
+end
+
 function Buffer:exists()
   return fn.bufnr(self.handle) ~= -1
 end

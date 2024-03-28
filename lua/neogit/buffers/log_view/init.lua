@@ -148,22 +148,16 @@ function M:open()
             CommitViewBuffer.new(commit, self.files):open()
           end
         end,
-        [";"] = function()
-          if self.buffer and self.buffer.ui then
-            local commit_id = self.buffer.ui:get_commit_under_cursor()
-            CommitViewBuffer.open_or_run_in_window(commit_id, self.files, function(window_id)
-              local key = vim.api.nvim_replace_termcodes("<C-d>", true, false, true)
-              vim.fn.win_execute(window_id, "normal! " .. key)
-            end)
+        [status_maps["OpenOrScrollDown"]] = function()
+          local commit = self.buffer.ui:get_commit_under_cursor()
+          if commit then
+            CommitViewBuffer.open_or_scroll_down(commit, self.files)
           end
         end,
-        [","] = function()
-          if self.buffer and self.buffer.ui then
-            local commit_id = self.buffer.ui:get_commit_under_cursor()
-            CommitViewBuffer.open_or_run_in_window(commit_id, self.files, function(window_id)
-              local key = vim.api.nvim_replace_termcodes("<C-u>", true, false, true)
-              vim.fn.win_execute(window_id, "normal! " .. key)
-            end)
+        [status_maps["OpenOrScrollUp"]] = function()
+          local commit = self.buffer.ui:get_commit_under_cursor()
+          if commit then
+            CommitViewBuffer.open_or_scroll_up(commit, self.files)
           end
         end,
         ["<c-k>"] = function()

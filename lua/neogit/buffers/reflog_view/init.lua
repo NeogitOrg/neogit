@@ -138,6 +138,16 @@ function M:open(_)
           local oid = self.buffer.ui:get_commit_under_cursor()
           if oid then
             CommitViewBuffer.new(oid):open()
+        [status_maps["OpenOrScrollDown"]] = function()
+          local commit = self.buffer.ui:get_commit_under_cursor()
+          if commit then
+            CommitViewBuffer.open_or_scroll_down(commit)
+          end
+        end,
+        [status_maps["OpenOrScrollUp"]] = function()
+          local commit = self.buffer.ui:get_commit_under_cursor()
+          if commit then
+            CommitViewBuffer.open_or_scroll_up(commit)
           end
         end,
       },

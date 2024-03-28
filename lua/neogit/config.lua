@@ -393,6 +393,8 @@ function M.get_default_values()
         ["<c-t>"] = "TabOpen",
         ["{"] = "GoToPreviousHunkHeader",
         ["}"] = "GoToNextHunkHeader",
+        ["["] = "OpenOrScrollUp",
+        ["]"] = "OpenOrScrollDown",
       },
     },
   }

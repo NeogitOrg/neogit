@@ -81,28 +81,33 @@ end
 ---which is passed the window id of the commit view buffer
 ---@param commit_id string commit
 ---@param filter string[]? Filter diffs to filepaths in table
----@param action fun(window_id)
-function M.open_or_run_in_window(commit_id, filter, action)
-  if not commit_id then
-    return
-  end
-  local cvb = M.instance
-  if cvb and cvb.is_open and cvb.commit_info.commit_arg == commit_id and cvb.buffer and cvb.buffer.handle then
-    local ct = vim.api.nvim_get_current_tabpage()
-    for _, win in ipairs(vim.api.nvim_tabpage_list_wins(ct)) do
-      local buf = vim.api.nvim_win_get_buf(win)
-      if buf == cvb.buffer.handle then
-        pcall(action, win)
-        break
-      end
-    end
+---@param cmd string vim command to run in window
+function M.open_or_run_in_window(commit_id, filter, cmd)
+  assert(commit_id, "commit id cannot be nil")
+
+  if
+    M.is_open()
+    and M.instance.commit_info.commit_arg == commit_id
+  then
+    M.instance.buffer:win_exec(cmd)
   else
-    local cw = vim.api.nvim_get_current_win()
+    local cw = api.nvim_get_current_win()
     M.new(commit_id, filter):open()
-    vim.api.nvim_set_current_win(cw)
+    api.nvim_set_current_win(cw)
   end
 end
 
+---@param commit_id string commit
+---@param filter string[]? Filter diffs to filepaths in table
+function M.open_or_scroll_down(commit_id, filter)
+  M.open_or_run_in_window(commit_id, filter, "normal! " .. vim.keycode("<c-d>"))
+end
+
+---@param commit_id string commit
+---@param filter string[]? Filter diffs to filepaths in table
+function M.open_or_scroll_up(commit_id, filter)
+  M.open_or_run_in_window(commit_id, filter, "normal! " .. vim.keycode("<c-u>"))
+end
 ---Opens the CommitViewBuffer
 ---If already open will close the buffer
 ---@param kind? string
