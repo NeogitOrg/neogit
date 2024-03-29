@@ -22,13 +22,13 @@ jobs:
         with:
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           repository: nvim-lua/plenary.nvim
-          path: tmp/
+          path: tmp/plenary/
 
       - uses: actions/checkout@v4
         with:
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           repository: nvim-telescope/telescope.nvim
-          path: tmp/
+          path: tmp/telescope/
 
       - uses: ruby/setup-ruby@v1
         with:
