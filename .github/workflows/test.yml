@@ -18,6 +18,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/checkout@v4
+        with:
+          repository: nvim-lua/plenary.nvim
+          path: tmp/
+
+      - uses: actions/checkout@v4
+        with:
+          repository: nvim-telescope/telescope.nvim
+          path: tmp/
+
       - uses: ruby/setup-ruby@v1
         with:
           bundler-cache: true
@@ -26,16 +36,6 @@ jobs:
         with:
           neovim: true
           version: ${{ matrix.release }}
-
-      - name: Install Dependencies
-        run: |
-          mkdir -p ~/.local/share/neogit-test/site/pack/plenary.nvim/start
-          cd ~/.local/share/neogit-test/site/pack/plenary.nvim/start
-          git clone https://github.com/nvim-lua/plenary.nvim
-
-          mkdir -p ~/.local/share/neogit-test/site/pack/telescope.nvim/start
-          cd ~/.local/share/neogit-test/site/pack/telescope.nvim/start
-          git clone https://github.com/nvim-telescope/telescope.nvim
 
       - name: E2E Test
         env:
