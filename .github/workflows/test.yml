@@ -20,11 +20,13 @@ jobs:
 
       - uses: actions/checkout@v4
         with:
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           repository: nvim-lua/plenary.nvim
           path: tmp/
 
       - uses: actions/checkout@v4
         with:
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           repository: nvim-telescope/telescope.nvim
           path: tmp/
 
