@@ -84,10 +84,7 @@ end
 function M.open_or_run_in_window(commit_id, filter, cmd)
   assert(commit_id, "commit id cannot be nil")
 
-  if
-    M.is_open()
-    and M.instance.commit_info.commit_arg == commit_id
-  then
+  if M.is_open() and M.instance.commit_info.commit_arg == commit_id then
     M.instance.buffer:win_exec(cmd)
   else
     local cw = api.nvim_get_current_win()
