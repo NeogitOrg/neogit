@@ -1,13 +1,11 @@
 # frozen_string_literal: true
 
-return if ENV["CI"]
-
 def dir_name(name)
   name.match(/[^\/]+\/(?<dir_name>[^\.]+)/)[:dir_name]
 end
 
 def ensure_installed(name)
-  tmp = File.join(PROJECT_DIR, "tmp")
+  tmp = File.join(PROJECT_DIR, "vendor")
   Dir.mkdir(tmp) if !Dir.exist?(tmp)
 
   dir = File.join(tmp, dir_name(name))
