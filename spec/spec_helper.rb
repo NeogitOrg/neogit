@@ -2,6 +2,7 @@
 
 require "tmpdir"
 require "git"
+require "timeout"
 require "neovim"
 require "debug"
 require "active_support/all"
@@ -9,27 +10,6 @@ require "active_support/all"
 PROJECT_DIR = File.expand_path(File.join(__dir__, ".."))
 
 Dir[File.join(File.expand_path("."), "spec", "support", "**", "*.rb")].each { |f| require f }
-
-# Thread.new do
-#   loop do
-#     sleep 10 # seconds
-#     puts "=" * 80;
-#     Thread.list.each.with_index { |t, i| puts "== Thread #{i}"; puts t.backtrace }
-#   end
-# end
-
-# module Neovim
-#   class Connection
-#     def self.child(argv)
-#       argv = argv.include?("--embed") ? argv : argv + ["--embed"]
-#
-#       io = ::IO.popen(argv, "rb+")
-#       # Process.detach(io.pid)
-#
-#       new(io, io)
-#     end
-#   end
-# end
 
 RSpec.configure do |config|
   config.expect_with :rspec do |expectations|

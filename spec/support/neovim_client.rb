@@ -28,24 +28,43 @@ class NeovimClient
       require('neogit').open()
     LUA
 
-    sleep(0.025) # Seems to be about right
+    sleep(0.1) # Seems to be about right
+    assert_alive!
   end
 
   def teardown
-    @instance.shutdown
+    # @instance.shutdown # Seems to hang sometimes
     @instance = nil
   end
 
   def print_screen
-    puts get_lines
+    @instance.command("redraw")
+
+    screen  = []
+    lines   = @instance.evaluate("&lines")
+    columns = @instance.evaluate("&columns")
+
+    lines.times do |line|
+      current_line = []
+      columns.times do |column|
+        current_line << @instance.call_function("screenstring", [line + 1, column + 1])
+      end
+
+      screen << current_line.join
+    end
+
+    puts `clear`
+    puts screen.join("\n")
   end
 
   def lua(code)
     @instance.exec_lua(code, [])
   end
 
-  def get_lines
-    @instance.current.buffer.get_lines(0, -1, true).join("\n")
+  def assert_alive!
+    return true if @instance.evaluate("1 + 2") == 3
+
+    raise "Neovim instance is not alive!"
   end
 
   # Overload vim.fn.input() to prevent blocking.
@@ -59,21 +78,27 @@ class NeovimClient
     LUA
   end
 
-  # Higher-level user input
-  def feedkeys(keys, mode: 'm')
-    @instance.feedkeys(
-      @instance.replace_termcodes(keys, true, false, true),
-      mode,
-      false
-    )
+  def keys(keys)
+    keys = keys.chars
+
+    while keys.length > 0
+      key = keys.shift
+      if key == "<"
+        key += keys.shift until key.last == ">"
+      end
+
+      if (written = @instance.input(key)).nil?
+        assert_alive!
+        raise "Failed to write key to neovim: #{key.inspect}"
+      end
+
+      print_screen unless ENV["CI"]
+      sleep(0.05)
+    end
   end
 
   def attach_child
-    if ENV["CI"]
-      Neovim.attach_child(["nvim", "--embed", "--headless"])
-  else
-      Neovim.attach_child(["nvim", "--embed", "--clean", "--headless"])
-    end
+    Neovim.attach_child(["nvim", "--embed", "--clean", "--headless"])
   end
 
   def runtime_dependencies
