@@ -128,16 +128,18 @@ function M:open(_)
             vim.cmd("echo ''")
           end
         end,
-        ["q"] = function()
-          self:close()
-        end,
         ["<esc>"] = function()
           self:close()
         end,
-        ["<enter>"] = function()
-          local oid = self.buffer.ui:get_commit_under_cursor()
-          if oid then
-            CommitViewBuffer.new(oid):open()
+        [status_maps["Close"]] = function()
+          self:close()
+        end,
+        [status_maps["GoToFile"]] = function()
+          local commit = self.buffer.ui:get_commit_under_cursor()
+          if commit then
+            CommitViewBuffer.new(commit):open()
+          end
+        end,
         [status_maps["OpenOrScrollDown"]] = function()
           local commit = self.buffer.ui:get_commit_under_cursor()
           if commit then
