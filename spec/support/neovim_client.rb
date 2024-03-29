@@ -8,16 +8,9 @@ class NeovimClient
   def setup
     @instance = attach_child
 
-    if ENV["CI"]
-      lua <<~LUA
-        vim.cmd.runtime("plugin/plenary.vim")
-        vim.cmd.runtime("plugin/neogit.lua")
-      LUA
-    else
-      # Sets up the runtimepath
-      runtime_dependencies.each do |dep|
-        lua "vim.opt.runtimepath:prepend('#{dep}')"
-      end
+    # Sets up the runtimepath
+    runtime_dependencies.each do |dep|
+      lua "vim.opt.runtimepath:prepend('#{dep}')"
     end
 
     lua "vim.opt.runtimepath:prepend('#{PROJECT_DIR}')"
@@ -102,6 +95,6 @@ class NeovimClient
   end
 
   def runtime_dependencies
-    Dir[File.join(PROJECT_DIR, "tmp", "*")].select { Dir.exist? _1 }
+    Dir[File.join(PROJECT_DIR, "vendor", "*")].select { Dir.exist? _1 }
   end
 end

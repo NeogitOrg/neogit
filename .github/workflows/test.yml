@@ -18,6 +18,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
       - uses: rhysd/action-setup-vim@v1
         with:
           neovim: true
@@ -32,15 +36,6 @@ jobs:
           mkdir -p ~/.local/share/neogit-test/site/pack/telescope.nvim/start
           cd ~/.local/share/neogit-test/site/pack/telescope.nvim/start
           git clone https://github.com/nvim-telescope/telescope.nvim
-
-      # - name: Luassert Test
-      #   continue-on-error: true
-      #   run: |
-      #     make test
-
-      - uses: ruby/setup-ruby@v1
-        with:
-          bundler-cache: true
 
       - name: E2E Test
         env:
