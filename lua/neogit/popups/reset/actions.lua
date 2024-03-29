@@ -5,7 +5,7 @@ local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
 local M = {}
 
----@param popup Popup
+---@param popup PopupData
 ---@return string|nil
 local function commit(popup, prompt)
   local commit

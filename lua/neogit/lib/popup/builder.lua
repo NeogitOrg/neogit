@@ -8,7 +8,7 @@ local watcher = require("neogit.watcher")
 
 local M = {}
 
----@class Popup
+---@class PopupData
 ---@field state PopupState
 
 ---@class PopupState

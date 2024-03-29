@@ -44,7 +44,7 @@ local function spin_off_branch(checkout)
   end
 end
 
----@param popup Popup
+---@param popup PopupData
 ---@param prompt string
 ---@param checkout boolean
 ---@return string|nil

@@ -20,7 +20,7 @@ local ui = require("neogit.lib.popup.ui")
 
 ---@class PopupState
 
----@class Popup
+---@class PopupData
 ---@field state PopupState
 ---@field buffer Buffer
 local M = {}
@@ -30,6 +30,7 @@ function M.builder()
 end
 
 ---@param state PopupState
+---@return PopupData
 function M.new(state)
   local instance = {
     state = state,
