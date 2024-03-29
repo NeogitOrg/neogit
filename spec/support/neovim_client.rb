@@ -95,6 +95,6 @@ class NeovimClient
   end
 
   def runtime_dependencies
-    Dir[File.join(PROJECT_DIR, "vendor", "*")].select { Dir.exist? _1 }
+    Dir[File.join(PROJECT_DIR, "tmp", "*")].select { Dir.exist? _1 }
   end
 end
