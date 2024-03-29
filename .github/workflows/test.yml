@@ -12,29 +12,25 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        release: [stable, nightly]
+        release: [v0.9.5, nightly]
     env:
       CI: "1"
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Neovim
-        run: |
-          wget https://github.com/neovim/neovim/releases/download/${{ matrix.release }}/nvim-linux64.tar.gz
-          tar -zxf nvim-linux64.tar.gz
-          sudo ln -s $(pwd)/nvim-linux64/bin/nvim /usr/local/bin
+      - uses: rhysd/action-setup-vim@v1
+        with:
+          neovim: true
+          version: ${{ matrix.release }}
 
       - name: Install Dependencies
         run: |
-          mkdir -p ~/.local/share/nvim/site/pack/
-          cd ~/.local/share/nvim/site/pack/
-
-          mkdir -p ./plenary.nvim/start
-          cd ./plenary.nvim/start
+          mkdir -p ~/.local/share/neogit-test/site/pack/plenary.nvim/start
+          cd ~/.local/share/neogit-test/site/pack/plenary.nvim/start
           git clone https://github.com/nvim-lua/plenary.nvim
 
-          mkdir -p ./telescope.nvim/start
-          cd ./telescope.nvim/start
+          mkdir -p ~/.local/share/neogit-test/site/pack/telescope.nvim/start
+          cd ~/.local/share/neogit-test/site/pack/telescope.nvim/start
           git clone https://github.com/nvim-telescope/telescope.nvim
 
       # - name: Luassert Test
