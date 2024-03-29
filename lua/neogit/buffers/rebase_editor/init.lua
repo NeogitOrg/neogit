@@ -66,6 +66,7 @@ function M:open(kind)
     or "#"
 
   local mapping = config.get_reversed_rebase_editor_maps()
+  local mapping_I = config.get_reversed_rebase_editor_maps_I()
   local aborted = false
 
   self.buffer = Buffer.create {
@@ -146,12 +147,12 @@ function M:open(kind)
     end,
     mappings = {
       i = {
-        [mapping["Submit"]] = function(buffer)
+        [mapping_I["Submit"]] = function(buffer)
           vim.cmd.stopinsert()
           buffer:write()
           buffer:close(true)
         end,
-        [mapping["Abort"]] = function(buffer)
+        [mapping_I["Abort"]] = function(buffer)
           vim.cmd.stopinsert()
           aborted = true
           buffer:write()

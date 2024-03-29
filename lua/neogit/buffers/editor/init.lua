@@ -41,6 +41,7 @@ function M:open(kind)
   assert(kind, "Editor must specify a kind")
 
   local mapping = config.get_reversed_commit_editor_maps()
+  local mapping_I = config.get_reversed_commit_editor_maps_I()
   local aborted = false
 
   local message_index = 1
@@ -149,7 +150,7 @@ function M:open(kind)
     end,
     mappings = {
       i = {
-        [mapping["Submit"]] = function(buffer)
+        [mapping_I["Submit"]] = function(buffer)
           vim.cmd.stopinsert()
           if amend_header then
             buffer:set_lines(0, 0, false, amend_header)
@@ -158,7 +159,7 @@ function M:open(kind)
           buffer:write()
           buffer:close(true)
         end,
-        [mapping["Abort"]] = function(buffer)
+        [mapping_I["Abort"]] = function(buffer)
           vim.cmd.stopinsert()
           aborted = true
           buffer:write()

@@ -245,6 +245,10 @@ neogit.setup {
       ["<c-c><c-c>"] = "Submit",
       ["<c-c><c-k>"] = "Abort",
     },
+    commit_editor_I = {
+      ["<c-c><c-c>"] = "Submit",
+      ["<c-c><c-k>"] = "Abort",
+    },
     rebase_editor = {
       ["p"] = "Pick",
       ["r"] = "Reword",
@@ -258,6 +262,10 @@ neogit.setup {
       ["<cr>"] = "OpenCommit",
       ["gk"] = "MoveUp",
       ["gj"] = "MoveDown",
+      ["<c-c><c-c>"] = "Submit",
+      ["<c-c><c-k>"] = "Abort",
+    },
+    rebase_editor_I = {
       ["<c-c><c-c>"] = "Submit",
       ["<c-c><c-k>"] = "Abort",
     },
