@@ -2,7 +2,6 @@
 
 require "tmpdir"
 require "git"
-require "timeout"
 require "neovim"
 require "debug"
 require "active_support/all"

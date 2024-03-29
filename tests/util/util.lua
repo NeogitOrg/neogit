@@ -60,12 +60,14 @@ function M.ensure_installed(repo, path)
     vim.fn.system { "git", "clone", "--depth=1", "git@github.com:" .. repo .. ".git", install_path }
 
     if vim.v.shell_error > 0 then
-      error(string.format("! Failed to clone plugin: '%s' in '%s'!", name, install_path),
-        vim.log.levels.ERROR)
+      error(
+        string.format("! Failed to clone plugin: '%s' in '%s'!", name, install_path),
+        vim.log.levels.ERROR
+      )
     end
   end
 
-  print(vim.fn.system("ls " ..install_path))
+  print(vim.fn.system("ls " .. install_path))
 end
 
 return M
