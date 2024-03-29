@@ -34,8 +34,9 @@ RSpec.describe "Branch Popup", :git, :nvim do
       before { git.branch("new-local-branch").checkout }
 
       it "can checkout a local branch" do
-        nvim.feedkeys("bl")
-        nvim.feedkeys("master<cr>")
+        nvim.keys("bl")
+        nvim.keys("master<cr>")
+
         expect(git.current_branch).to eq "master"
       end
 
@@ -49,16 +50,16 @@ RSpec.describe "Branch Popup", :git, :nvim do
     describe "Checkout new branch" do
       it "can create and checkout a branch" do
         nvim.input("new-branch")
-        nvim.feedkeys("bc")
-        nvim.feedkeys("master<cr>")
+        nvim.keys("bc")
+        nvim.keys("master<cr>")
 
         expect(git.current_branch).to eq "new-branch"
       end
 
       it "replaces spaces with dashes in user input" do
         nvim.input("new branch with spaces")
-        nvim.feedkeys("bc")
-        nvim.feedkeys("master<cr>")
+        nvim.keys("bc")
+        nvim.keys("master<cr>")
 
         expect(git.current_branch).to eq "new-branch-with-spaces"
       end
@@ -67,8 +68,8 @@ RSpec.describe "Branch Popup", :git, :nvim do
         git.branch("new-base-branch").checkout
 
         nvim.input("feature-branch")
-        nvim.feedkeys("bc")
-        nvim.feedkeys("master<cr>")
+        nvim.keys("bc")
+        nvim.keys("master<cr>")
 
         expect(git.current_branch).to eq "feature-branch"
 
