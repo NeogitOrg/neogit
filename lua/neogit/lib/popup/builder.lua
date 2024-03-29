@@ -377,8 +377,11 @@ function M:action(keys, description, callback)
       watcher.suspend(callback, { ... })
       permit:forget()
 
-      logger.debug("[ACTION] Dispatching Refresh")
-      require("neogit.buffers.status").instance:dispatch_refresh(nil, "action")
+      local status = require("neogit.buffers.status").instance
+      if status then
+        logger.debug("[ACTION] Dispatching Refresh")
+        status:dispatch_refresh(nil, "action")
+      end
     end)
   end
 

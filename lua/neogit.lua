@@ -152,7 +152,14 @@ function M.open(opts)
   end
 
   if opts[1] ~= nil then
-    open_popup(opts[1])
+    local a = require("plenary.async")
+    local cb = function()
+      open_popup(opts[1])
+    end
+
+    a.run(function()
+      git.repo:refresh { source = "popup", callback = cb }
+    end)
   else
     open_status_buffer(opts)
   end
