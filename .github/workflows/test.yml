@@ -40,7 +40,5 @@ jobs:
           version: ${{ matrix.release }}
 
       - name: E2E Test
-        env:
-          NVIM_RUBY_LOG_LEVEL: "debug"
         run: |
           bundle exec rspec
