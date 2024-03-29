@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+return if ENV["CI"]
+
 def dir_name(name)
   name.match(/[^\/]+\/(?<dir_name>[^\.]+)/)[:dir_name]
 end
