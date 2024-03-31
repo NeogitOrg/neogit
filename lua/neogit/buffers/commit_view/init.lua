@@ -74,6 +74,8 @@ function M:close()
     self.buffer:close()
     self.buffer = nil
   end
+
+  M.instance = nil
 end
 
 ---Opens the CommitViewBuffer if it isn't open or performs the given action

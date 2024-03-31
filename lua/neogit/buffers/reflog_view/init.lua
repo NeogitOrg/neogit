@@ -24,11 +24,27 @@ function M.new(entries)
 end
 
 function M:close()
-  self.buffer:close()
-  self.buffer = nil
+  if self.buffer then
+    self.buffer:close()
+    self.buffer = nil
+  end
+
+  M.instance = nil
+end
+
+---@return boolean
+function M.is_open()
+  return (M.instance and M.instance.buffer and M.instance.buffer:is_visible()) == true
 end
 
 function M:open(_)
+  if M.is_open() then
+    M.instance.buffer:focus()
+    return
+  end
+
+  M.instance = self
+
   self.buffer = Buffer.create {
     name = "NeogitReflogView",
     filetype = "NeogitReflogView",

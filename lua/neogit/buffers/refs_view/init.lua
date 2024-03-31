@@ -34,6 +34,8 @@ function M:close()
     self.buffer:close()
     self.buffer = nil
   end
+
+  M.instance = nil
 end
 
 ---@return boolean
@@ -44,6 +46,7 @@ end
 --- Opens the RefsViewBuffer
 function M:open()
   if M.is_open() then
+    M.instance.buffer:focus()
     return
   end
 

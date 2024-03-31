@@ -1125,19 +1125,22 @@ function M:open(kind)
 end
 
 function M:close()
-  logger.debug("[STATUS] Closing Buffer")
-  if not self.buffer then
-    return
+  if self.buffer then
+    logger.debug("[STATUS] Closing Buffer")
+    self.buffer:close()
+    self.buffer = nil
   end
 
-  vim.o.autochdir = self.prev_autochdir
-
   if self.watcher then
+    logger.debug("[STATUS] Stopping Watcher")
     self.watcher:stop()
   end
 
-  self.buffer:close()
-  self.buffer = nil
+  if self.prev_autochdir then
+    vim.o.autochdir = self.prev_autochdir
+  end
+
+  M.instance = nil
 end
 
 function M:chdir(dir)

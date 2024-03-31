@@ -32,6 +32,8 @@ function M:close()
     self.buffer:close()
     self.buffer = nil
   end
+
+  M.instance = nil
 end
 
 ---@return boolean
@@ -41,6 +43,7 @@ end
 
 function M:show()
   if M.is_open() then
+    M.instance.buffer:focus()
     return
   end
 
