@@ -521,7 +521,7 @@ function M.reflog_message(skip)
 end
 
 M.abbreviated_size = util.memoize(function()
-  return string.len(cli.log.format("%h").max_count(1).call({ hidden = true }).stdout[1])
+  return string.len(M.list({ "HEAD", "--max-count=1" })[1].abbreviated_commit)
 end, { timeout = math.huge })
 
 return M
