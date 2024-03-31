@@ -72,6 +72,10 @@ function M.setup(opts)
   signs.setup()
   state.setup()
   autocmds.setup()
+
+  if vim.fn.has("nvim-0.10") == 1 then
+    M.notification.info("The 'nightly' branch for Neogit provides support for nvim-0.10")
+  end
 end
 
 local function construct_opts(opts)
