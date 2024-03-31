@@ -145,6 +145,18 @@ function M:open()
         [status_maps["GoToFile"]] = function()
           CommitViewBuffer.new(self.buffer.ui:get_commits_in_selection()[1]):open()
         end,
+        [status_maps["OpenOrScrollDown"]] = function()
+          local commit = self.buffer.ui:get_commit_under_cursor()
+          if commit then
+            CommitViewBuffer.open_or_scroll_down(commit, self.files)
+          end
+        end,
+        [status_maps["OpenOrScrollUp"]] = function()
+          local commit = self.buffer.ui:get_commit_under_cursor()
+          if commit then
+            CommitViewBuffer.open_or_scroll_up(commit, self.files)
+          end
+        end,
         -- ["{"] = function()
         --   pcall(vim.cmd, "normal! zc")
         --
