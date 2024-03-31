@@ -29,10 +29,12 @@ function M.setup()
           return
         end
 
-        status_buffer.instance:dispatch_refresh(
-          { update_diffs = { "*:" .. path } },
-          string.format("%s:%s", o.event, o.file)
-        )
+        if status_buffer.is_open() then
+          status_buffer.instance:dispatch_refresh(
+            { update_diffs = { "*:" .. path } },
+            string.format("%s:%s", o.event, o.file)
+          )
+        end
       end, function() end)
     end,
     group = group,

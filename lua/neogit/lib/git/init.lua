@@ -29,7 +29,9 @@ M.init_repo = function()
     return
   end
   local status = require("neogit.buffers.status")
-  status.instance:chdir(directory)
+  if status.is_open() then
+    status.instance:chdir(directory)
+  end
 
   if cli.is_inside_worktree() then
     if not input.get_permission(("Reinitialize existing repository %s?"):format(directory)) then
@@ -38,7 +40,9 @@ M.init_repo = function()
   end
 
   M.create(directory)
-  status.instance:dispatch_refresh(nil, "InitRepo")
+  if status.is_open() then
+    status.instance:dispatch_refresh(nil, "InitRepo")
+  end
 end
 
 return M

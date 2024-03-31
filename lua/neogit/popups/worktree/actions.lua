@@ -50,7 +50,9 @@ M.checkout_worktree = operations("checkout_worktree", function()
 
   if git.worktree.add(selected, path) then
     notification.info("Added worktree")
-    status.instance:chdir(path)
+    if status.is_open() then
+      status.instance:chdir(path)
+    end
   end
 end)
 
@@ -74,7 +76,9 @@ M.create_worktree = operations("create_worktree", function()
 
   if git.worktree.add(selected, path, { "-b", name }) then
     notification.info("Added worktree")
-    status.instance:chdir(path)
+    if status.is_open() then
+      status.instance:chdir(path)
+    end
   end
 end)
 
@@ -103,7 +107,7 @@ M.move = operations("move_worktree", function()
   if git.worktree.move(selected, path) then
     notification.info(("Moved worktree to %s"):format(path))
 
-    if change_dir then
+    if change_dir and status.is_open() then
       status.instance:chdir(path)
     end
   end
@@ -128,7 +132,7 @@ M.delete = operations("delete_worktree", function()
   local success = false
 
   if input.get_permission("Remove worktree?") then
-    if change_dir then
+    if change_dir and status.is_open() then
       status.instance:chdir(git.worktree.main().path)
     end
 
@@ -160,7 +164,7 @@ M.visit = operations("visit_worktree", function()
   end
 
   local selected = FuzzyFinderBuffer.new(options):open_async { prompt_prefix = "visit worktree" }
-  if selected then
+  if selected and status.is_open() then
     status.instance:chdir(selected)
   end
 end)

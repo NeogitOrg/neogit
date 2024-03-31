@@ -54,13 +54,14 @@ end
 function M.in_prepared_repo(cb)
   return function()
     local dir = M.prepare_repository()
-    require("neogit").setup()
+    require("neogit").setup({})
+    local status = require("neogit.buffers.status")
     vim.cmd("Neogit")
 
     a.util.block_on(neogit.reset)
 
     vim.wait(1000, function()
-      return not neogit.status.instance:_is_refresh_locked()
+      return not status.instance and status.instance:_is_refresh_locked()
     end, 100)
 
     a.util.block_on(function()
@@ -70,7 +71,9 @@ function M.in_prepared_repo(cb)
       end
 
       a.util.block_on(function()
-        neogit.status.instance:close()
+        if status.instance then
+          status.instance:close()
+        end
       end)
     end)
   end
