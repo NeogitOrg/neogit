@@ -61,7 +61,7 @@ function M.is_open()
 end
 
 function M:open(kind)
-  if M.instance and M.is_open() then
+  if M.is_open() then
     logger.debug("[STATUS] An Instance is already open - closing it")
     M.instance:close()
   end
