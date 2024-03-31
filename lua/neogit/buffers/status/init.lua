@@ -388,21 +388,7 @@ function M:open(kind)
             end
           end
         end,
-        [mappings["Close"]] = function()
-          local commit_view = require("neogit.buffers.commit_view")
-          local popup = require("neogit.lib.popup")
-          local history = require("neogit.buffers.git_command_history")
-
-          if popup.is_open() then
-            popup.instance:close()
-          elseif commit_view.is_open() then
-            commit_view.instance:close()
-          elseif history.is_open() then
-            history.instance:close()
-          else
-            self:close()
-          end
-        end,
+        [mappings["Close"]] = require("neogit.lib.ui.helpers").close_topmost(self),
         [mappings["OpenOrScrollDown"]] = function()
           local commit = self.buffer.ui:get_commit_under_cursor()
           if commit then

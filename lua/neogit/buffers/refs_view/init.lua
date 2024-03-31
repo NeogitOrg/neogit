@@ -136,14 +136,13 @@ function M:open()
             item = { name = item },
           }
         end),
-        [status_maps["Close"]] = function()
-          self:close()
-        end,
-        ["<esc>"] = function()
-          self:close()
-        end,
+        ["<esc>"] = require("neogit.lib.ui.helpers").close_topmost(self),
+        [status_maps["Close"]] = require("neogit.lib.ui.helpers").close_topmost(self),
         [status_maps["GoToFile"]] = function()
-          CommitViewBuffer.new(self.buffer.ui:get_commits_in_selection()[1]):open()
+          local commit = self.buffer.ui:get_commit_under_cursor()
+          if commit then
+            CommitViewBuffer.new(commit):open()
+          end
         end,
         [status_maps["OpenOrScrollDown"]] = function()
           local commit = self.buffer.ui:get_commit_under_cursor()
