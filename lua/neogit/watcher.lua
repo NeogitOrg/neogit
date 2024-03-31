@@ -44,7 +44,7 @@ function Watcher:fs_event_callback()
     end
 
     logger.debug(info)
-    if status.is_open() then
+    if status.instance then
       status.instance:dispatch_refresh(nil, "watcher")
     end
   end
