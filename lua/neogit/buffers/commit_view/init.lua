@@ -256,7 +256,10 @@ function M:open(kind)
         [popups.mapping_for("BisectPopup")] = popups.open("bisect", function(p)
           p { commits = { self.commit_info.oid } }
         end),
-        ["q"] = function()
+        [status_maps["Close"]] = function()
+          self:close()
+        end,
+        ["<esc>"] = function()
           self:close()
         end,
         [status_maps["YankSelected"]] = function()
@@ -264,7 +267,7 @@ function M:open(kind)
           vim.cmd.let("@+=" .. yank)
           vim.cmd.echo(yank)
         end,
-        ["<tab>"] = function()
+        [status_maps["Toggle"]] = function()
           pcall(vim.cmd, "normal! za")
         end,
         ["<space>"] = function()
