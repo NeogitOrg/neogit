@@ -378,15 +378,21 @@ function Buffer:unlock()
 end
 
 function Buffer:get_option(name)
-  return api.nvim_get_option_value(name, { buf = self.handle })
+  if self.handle ~= nil then
+    return api.nvim_get_option_value(name, { buf = self.handle })
+  end
 end
 
 function Buffer:set_buffer_option(name, value)
-  api.nvim_set_option_value(name, value, { buf = self.handle })
+  if self.handle ~= nil then
+    api.nvim_set_option_value(name, value, { buf = self.handle })
+  end
 end
 
 function Buffer:set_window_option(name, value)
-  api.nvim_set_option_value(name, value, { win = self.win_handle })
+  if self.win_handle ~= nil then
+    api.nvim_set_option_value(name, value, { win = self.win_handle })
+  end
 end
 
 function Buffer:set_name(name)
