@@ -79,15 +79,15 @@ function M:open(kind)
     kind = kind,
     disable_line_numbers = config.values.disable_line_numbers,
     status_column = " ",
-    autocmds = {
-      ["BufUnload"] = function()
-        logger.debug("[STATUS] Running BufUnload autocmd")
-        if self.watcher then
-          self.watcher:stop()
-        end
+    on_detach = function()
+      logger.debug("[STATUS] Running on_detach")
+      if self.watcher then
+        self.watcher:stop()
+      end
 
-        vim.o.autochdir = self.prev_autochdir
-      end,
+      vim.o.autochdir = self.prev_autochdir
+    end,
+    autocmds = {
       ["BufEnter"] = function()
         self:dispatch_refresh()
       end,

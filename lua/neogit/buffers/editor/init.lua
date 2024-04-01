@@ -72,18 +72,15 @@ function M:open(kind)
     modifiable = true,
     status_column = " ",
     readonly = false,
-    initialize = function(buffer)
-      vim.api.nvim_buf_attach(buffer.handle, false, {
-        on_detach = function()
-          pcall(vim.treesitter.stop, buffer.handle)
+    on_detach = function(buffer)
+      pcall(vim.treesitter.stop, buffer.handle)
 
-          if self.on_unload then
-            self.on_unload(aborted and 1 or 0)
-          end
+      if self.on_unload then
+        self.on_unload(aborted and 1 or 0)
+      end
 
-          require("neogit.process").defer_show_preview_buffers()
-        end,
-      })
+      require("neogit.process").defer_show_preview_buffers()
+
     end,
     after = function(buffer)
       -- Populate help lines with mappings for buffer

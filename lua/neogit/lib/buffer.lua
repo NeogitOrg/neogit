@@ -662,6 +662,16 @@ function Buffer.create(config)
     end)
   end
 
+  if config.on_detach then
+    logger.debug("[BUFFER:" .. buffer.handle .. "] Setting up on_detach callback")
+    api.nvim_buf_attach(buffer.handle, false, {
+      on_detach = function()
+        logger.debug("[BUFFER:" .. buffer.handle .. "] Running on_detach")
+        config.on_detach(buffer)
+      end
+    })
+  end
+
   buffer:call(function()
     -- Set fold styling for Neogit windows while preserving user styling
     vim.opt_local.winhl:append("Folded:NeogitFold")

@@ -106,14 +106,12 @@ function M:open(action)
         end,
       },
     },
-    autocmds = {
-      ["BufUnload"] = function()
-        self.buffer = nil
-        if action then
-          action {}
-        end
-      end,
-    },
+    on_detach = function()
+      self.buffer = nil
+      if action then
+        action {}
+      end
+    end,
     render = function()
       return ui.View(self.commits)
     end,
