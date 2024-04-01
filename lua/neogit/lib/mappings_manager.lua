@@ -8,21 +8,31 @@ local managers = {}
 
 ---@class MappingsManager
 ---@field mappings table<string, Mapping>
+---@field callbacks table
+---@field id number
+---@field register fun():nil
 local MappingsManager = {}
+MappingsManager.__index = MappingsManager
 
 function MappingsManager.invoke(id, map_id)
   managers[id].callbacks[map_id]()
 end
 
-function MappingsManager.build_call_string(id, k, mode)
+---@param id number The id of the manager
+---@param index number The index of the map
+---@param mode string vim mode from vim.fn.mode()
+---@return string
+function MappingsManager.build_call_string(id, index, mode)
   return string.format(
     "<cmd>lua require('neogit.lib.mappings_manager').invoke(%d, %d)<CR>%s",
     id,
-    k,
+    index,
     mode == "v" and "<esc>" or ""
   )
 end
 
+---@param id number The id of the manager
+---@return nil
 function MappingsManager.delete(id)
   managers[id] = nil
 end
