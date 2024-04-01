@@ -1,5 +1,6 @@
 local api = vim.api
 local fn = vim.fn
+local logger = require("neogit.logger")
 
 local mappings_manager = require("neogit.lib.mappings_manager")
 local signs = require("neogit.lib.signs")
@@ -401,6 +402,9 @@ end
 
 function Buffer:replace_content_with(lines)
   api.nvim_buf_set_lines(self.handle, 0, -1, false, lines)
+  self:call(function()
+    vim.cmd("silent w!")
+  end)
 end
 
 function Buffer:open_fold(line, reset_pos)
@@ -551,59 +555,91 @@ end
 
 ---@class BufferConfig
 ---@field name string
----@field load boolean
----@field bufhidden string|nil
----@field buftype string|nil
----@field swapfile boolean
+---@field kind string
 ---@field filetype string|nil
+---@field bufhidden string|nil
+---@field header string|nil
+---@field buftype string|nil
+---@field status_column string|nil
+---@field load boolean|nil
+---@field context_highlight boolean|nil
+---@field open boolean|nil
 ---@field disable_line_numbers boolean|nil
+---@field disable_signs boolean|nil
+---@field swapfile boolean|nil
+---@field modifiable boolean|nil
+---@field readonly boolean|nil
+---@field mappings table|nil
+---@field autocmds table|nil
+---@field initialize function|nil
+---@field after function|nil
+---@field on_detach function|nil
+---@field render function|nil
+
+---@param config BufferConfig
 ---@return Buffer
 function Buffer.create(config)
-  config = config or {}
-  local kind = config.kind or "split"
-  local disable_line_numbers = (config.disable_line_numbers == nil) and true or config.disable_line_numbers
-  --- This reuses a buffer with the same name
-  local buffer = fn.bufnr(config.name)
+  assert(config, "Buffers work better if you configure them")
 
-  if buffer == -1 then
-    buffer = api.nvim_create_buf(false, false)
-    api.nvim_buf_set_name(buffer, config.name)
-  end
+  local buffer = Buffer.from_name(config.name)
+
+  buffer.kind = config.kind or "split"
+  buffer.disable_line_numbers = (config.disable_line_numbers == nil) and true or config.disable_line_numbers
 
   if config.load then
-    local content = Path:new(config.name):readlines()
-    api.nvim_buf_set_lines(buffer, 0, -1, false, content)
-    api.nvim_buf_call(buffer, function()
-      vim.cmd("silent w!")
-    end)
+    logger.debug("[BUFFER:" .. buffer.handle .. "] Loading content from file: " .. config.name)
+    buffer:replace_content_with(Path:new(config.name):readlines())
   end
-
-  local buffer = Buffer:new(buffer)
-  buffer.kind = kind
-  buffer.disable_line_numbers = disable_line_numbers
 
   local win
   if config.open ~= false then
+    logger.debug("[BUFFER:" .. buffer.handle .. "] Showing buffer in window")
     win = buffer:show()
   end
 
+  logger.debug("[BUFFER:" .. buffer.handle .. "] Setting buffer options")
+  buffer:set_buffer_option("swapfile", false)
   buffer:set_buffer_option("bufhidden", config.bufhidden or "wipe")
   buffer:set_buffer_option("buftype", config.buftype or "nofile")
-  buffer:set_buffer_option("swapfile", false)
+  buffer:set_buffer_option("modifiable", config.modifiable or false)
+  buffer:set_buffer_option("modified", config.modifiable or false)
+  buffer:set_buffer_option("readonly", config.readonly or false)
+
+  if vim.fn.has("nvim-0.10") ~= 1 then
+    logger.debug("[BUFFER:" .. buffer.handle .. "] Setting foldtext function for nvim < 0.10")
+    -- selene: allow(global_usage)
+    _G.NeogitFoldText = function()
+      return vim.fn.getline(vim.v.foldstart)
+    end
+
+    buffer:set_buffer_option("foldtext", "v:lua._G.NeogitFoldText()")
+  end
 
   if win then
+    logger.debug("[BUFFER:" .. buffer.handle .. "] Setting window options")
+
     buffer:set_window_option("statuscolumn", config.status_column or "")
     buffer:set_window_option("foldenable", true)
     buffer:set_window_option("foldlevel", 99)
     buffer:set_window_option("foldminlines", 0)
     buffer:set_window_option("foldtext", "")
+
+    if vim.fn.has("nvim-0.10") == 1 then
+      buffer:set_window_option("spell", false)
+      buffer:set_window_option("wrap", false)
+      buffer:set_window_option("foldmethod", "manual")
+      -- TODO: Need to find a way to turn this off properly when unloading plugin
+      -- buffer:set_window_option("winfixbuf", true)
+    end
   end
 
   if config.filetype then
+    logger.debug("[BUFFER:" .. buffer.handle .. "] Setting filetype: " .. config.filetype)
     buffer:set_filetype(config.filetype)
   end
 
   if config.mappings then
+    logger.debug("[BUFFER:" .. buffer.handle .. "] Building mappings table")
     for mode, val in pairs(config.mappings) do
       for key, cb in pairs(val) do
         if type(key) == "string" then
@@ -622,41 +658,26 @@ function Buffer.create(config)
   end
 
   if config.initialize then
+    logger.debug("[BUFFER:" .. buffer.handle .. "] Initializing buffer")
     config.initialize(buffer, win)
   end
 
   if config.render then
+    logger.debug("[BUFFER:" .. buffer.handle .. "] Rendering buffer")
     buffer.ui:render(unpack(config.render(buffer)))
   end
 
   local neogit_augroup = require("neogit").autocmd_group
   for event, callback in pairs(config.autocmds or {}) do
+    logger.debug("[BUFFER:" .. buffer.handle .. "] Setting autocmd: " .. event)
     api.nvim_create_autocmd(event, { callback = callback, buffer = buffer.handle, group = neogit_augroup })
   end
 
+  logger.debug("[BUFFER:" .. buffer.handle .. "] Mappings Registered")
   buffer.mmanager.register()
 
-  buffer:set_buffer_option("modifiable", config.modifiable or false)
-  buffer:set_buffer_option("modified", config.modifiable or false)
-  buffer:set_buffer_option("readonly", config.readonly or false)
-
-  if vim.fn.has("nvim-0.10") == 1 then
-    buffer:set_window_option("spell", false)
-    buffer:set_window_option("wrap", false)
-    buffer:set_window_option("foldmethod", "manual")
-
-    -- TODO: Need to find a way to turn this off properly when unloading plugin
-    -- buffer:set_window_option("winfixbuf", true)
-  else
-    -- selene: allow(global_usage)
-    _G.NeogitFoldText = function()
-      return vim.fn.getline(vim.v.foldstart)
-    end
-
-    buffer:set_buffer_option("foldtext", "v:lua._G.NeogitFoldText()")
-  end
-
   if config.after then
+    logger.debug("[BUFFER:" .. buffer.handle .. "] Running config.after callback")
     buffer:call(function()
       config.after(buffer, win)
     end)
@@ -673,6 +694,7 @@ function Buffer.create(config)
   end
 
   buffer:call(function()
+    logger.debug("[BUFFER:" .. buffer.handle .. "] Running buffer:call")
     -- Set fold styling for Neogit windows while preserving user styling
     vim.opt_local.winhl:append("Folded:NeogitFold")
     vim.opt_local.fillchars:append("fold: ")
@@ -684,6 +706,7 @@ function Buffer.create(config)
   end)
 
   if config.context_highlight then
+    logger.debug("[BUFFER:" .. buffer.handle .. "] Setting up context highlighting")
     buffer:create_namespace("ViewContext")
     buffer:set_decorations("ViewContext", {
       on_start = function()
@@ -716,10 +739,23 @@ function Buffer.create(config)
   end
 
   if config.header then
+    logger.debug("[BUFFER:" .. buffer.handle .. "] Setting header")
     buffer:set_header(config.header)
   end
 
   return buffer
+end
+
+---@param name string
+---@return Buffer
+function Buffer.from_name(name)
+  local buffer_handle = fn.bufnr(name)
+  if buffer_handle == -1 then
+    buffer_handle = api.nvim_create_buf(false, false)
+    api.nvim_buf_set_name(buffer_handle, name)
+  end
+
+  return Buffer:new(buffer_handle)
 end
 
 return Buffer
