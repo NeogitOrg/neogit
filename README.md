@@ -293,6 +293,7 @@ neogit.setup {
       ["X"] = "ResetPopup",
       ["Z"] = "StashPopup",
       ["b"] = "BranchPopup",
+      ["B"] = "BisectPopup",
       ["c"] = "CommitPopup",
       ["f"] = "FetchPopup",
       ["l"] = "LogPopup",

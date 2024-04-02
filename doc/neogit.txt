@@ -104,97 +104,107 @@ to Neovim users.
 ==============================================================================
 3. Mappings                                                    *neogit_mappings*
 
-                                                            *neogit_status_maps*
-Status Mappings
+The following mappings can all be customized via the setup function.
+>lua
+      commit_editor = {
+        ["q"]          = "Close",
+        ["<m-p>"]      = "PrevMessage",
+        ["<m-n>"]      = "NextMessage",
+        ["<m-r>"]      = "ResetMessage",
+        ["<c-c><c-c>"] = "Submit",
+        ["<c-c><c-k>"] = "Abort",
+      }
+      commit_editor_I = {
+        ["<c-c><c-c>"] = "Submit",
+        ["<c-c><c-k>"] = "Abort",
+      }
 
-                                                                      *neogit_s*
-s                       Stage file/hunk/visual-selection
+      rebase_editor = {
+        ["p"]          = "Pick",
+        ["r"]          = "Reword",
+        ["e"]          = "Edit",
+        ["s"]          = "Squash",
+        ["f"]          = "Fixup",
+        ["x"]          = "Execute",
+        ["d"]          = "Drop",
+        ["b"]          = "Break",
+        ["q"]          = "Close",
+        ["<cr>"]       = "OpenCommit",
+        ["gk"]         = "MoveUp",
+        ["gj"]         = "MoveDown",
+        ["<c-c><c-c>"] = "Submit",
+        ["<c-c><c-k>"] = "Abort",
+        ["[c"]         = "OpenOrScrollUp",
+        ["]c"]         = "OpenOrScrollDown",
+      }
+      rebase_editor_I = {
+        ["<c-c><c-c>"] = "Submit",
+        ["<c-c><c-k>"] = "Abort",
+      }
 
-                                                                      *neogit_S*
-S                       Stage unstaged changes
+      finder = {
+        ["<cr>"]    = "Select",
+        ["<c-c>"]   = "Close",
+        ["<esc>"]   = "Close",
+        ["<c-n>"]   = "Next",
+        ["<c-p>"]   = "Previous",
+        ["<down>"]  = "Next",
+        ["<up>"]    = "Previous",
+        ["<tab>"]   = "MultiselectToggleNext",
+        ["<s-tab>"] = "MultiselectTogglePrevious",
+      }
 
-                                                                  *neogit_<C-s>*
-<C-s>                   Stage Everything
+      popup = {
+        ["?"] = "HelpPopup",
+        ["A"] = "CherryPickPopup",
+        ["B"] = "BisectPopup",
+        ["b"] = "BranchPopup",
+        ["c"] = "CommitPopup",
+        ["d"] = "DiffPopup",
+        ["f"] = "FetchPopup",
+        ["i"] = "IgnorePopup",
+        ["l"] = "LogPopup",
+        ["m"] = "MergePopup",
+        ["M"] = "RemotePopup",
+        ["p"] = "PullPopup",
+        ["P"] = "PushPopup",
+        ["r"] = "RebasePopup",
+        ["t"] = "TagPopup",
+        ["v"] = "RevertPopup",
+        ["w"] = "WorktreePopup",
+        ["X"] = "ResetPopup",
+        ["Z"] = "StashPopup",
+      }
 
-                                                                      *neogit_u*
-u                       Unstage file/hunk/visual-selection
-
-                                                                      *neogit_U*
-U                       Unstage staged changes
-
-                                                                      *neogit_x*
-x                       Discard changes for file/hunk/visual-selection
-
-                                                                   *neogit_<cr>*
-<cr>                    Goto item at cursor
-
-                                                                  *neogit_<tab>*
-<tab>                   Toggle diff
-
-                                                                      *neogit_{*
-{                       Goto previous hunk
-
-                                                                      *neogit_}*
-}                       Goto next hunk
-
-                                                                  *neogit_<C-r>*
-<C-r>                   Refresh Buffer
-
-                                                                   *neogit_fold*
-1, 2, 3, 4              Set a foldlevel
-
-
-                                                             *neogit_popup_maps*
-Popup maps ~
-
-                                                                      *neogit_$*
-$                       Command History
-
-                                                                      *neogit_#*
-#                       Console Output
-
-                                                                      *neogit_L*
-l                       Open log popup
-
-                                                                      *neogit_p*
-p                       Open pull popup
-
-                                                                      *neogit_P*
-P                       Open push popup
-
-                                                                      *neogit_f*
-f                       Open fetch popup
-
-                                                                      *neogit_X*
-X                       Open reset popup
-
-                                                                      *neogit_A*
-A                       Open cherry-pick popup
-
-                                                                      *neogit_m*
-m                       Open merge popup
-
-                                                                      *neogit_v*
-v                       Open revert popup
-
-                                                                      *neogit_M*
-M                       Open remotes popup
-
-                                                                      *neogit_?*
-?                       Open help popup
-
-                                                                      *neogit_b*
-b                       Open branch popup
-
-                                                                      *neogit_c*
-c                       Open commit popup
-
-                                                                      *neogit_r*
-r                       Open rebase popup
-
-                                                                      *neogit_Z*
-Z                       Open stash popup
-
+      status = {
+        ["q"]     = "Close",
+        ["I"]     = "InitRepo",
+        ["1"]     = "Depth1",
+        ["2"]     = "Depth2",
+        ["3"]     = "Depth3",
+        ["4"]     = "Depth4",
+        ["<tab>"] = "Toggle",
+        ["x"]     = "Discard",
+        ["s"]     = "Stage",
+        ["S"]     = "StageUnstaged",
+        ["<c-s>"] = "StageAll",
+        ["u"]     = "Unstage",
+        ["U"]     = "UnstageStaged",
+        ["y"]     = "ShowRefs",
+        ["$"]     = "CommandHistory",
+        ["#"]     = "Console",
+        ["Y"]     = "YankSelected",
+        ["<c-r>"] = "RefreshBuffer",
+        ["<cr>"]  = "GoToFile",
+        ["<c-v>"] = "VSplitOpen",
+        ["<c-x>"] = "SplitOpen",
+        ["<c-t>"] = "TabOpen",
+        ["{"]     = "GoToPreviousHunkHeader",
+        ["}"]     = "GoToNextHunkHeader",
+        ["[c"]    = "OpenOrScrollUp",
+        ["]c"]    = "OpenOrScrollDown",
+      }
+<
 ==============================================================================
 4. Highlights                                                *neogit_highlights*
 
