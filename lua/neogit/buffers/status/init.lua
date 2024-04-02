@@ -14,7 +14,7 @@ local Buffer = require("neogit.lib.buffer")
 local ui = require("neogit.buffers.status.ui")
 local popups = require("neogit.popups")
 local git = require("neogit.lib.git")
-local watcher = require("neogit.watcher")
+local Watcher = require("neogit.watcher")
 local a = require("plenary.async")
 local input = require("neogit.lib.input")
 local logger = require("neogit.logger") -- TODO: Add logging
@@ -1120,7 +1120,7 @@ function M:open(kind)
 
       if config.values.filewatcher.enabled then
         logger.debug("[STATUS] Starting file watcher")
-        self.watcher = watcher.new(git.repo:git_path():absolute()):start()
+        self.watcher = Watcher.new(self, git.repo):start()
       end
 
       buffer:move_cursor(buffer.ui:first_section().first)

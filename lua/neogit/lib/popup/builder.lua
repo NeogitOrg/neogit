@@ -5,7 +5,6 @@ local config = require("neogit.lib.git.config")
 local util = require("neogit.lib.util")
 local notification = require("neogit.lib.notification")
 local logger = require("neogit.logger")
-local watcher = require("neogit.watcher")
 
 local M = {}
 
@@ -375,7 +374,7 @@ function M:action(keys, description, callback)
       local permit = action_lock:acquire()
       logger.debug(string.format("[ACTION] Running action from %s", self.state.name))
 
-      watcher.suspend(callback, { ... })
+      callback(...)
       permit:forget()
 
       local status = require("neogit.buffers.status").instance
