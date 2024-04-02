@@ -10,7 +10,7 @@
             </td>
         </tr>
     </table>
-  
+
   [![Lua](https://img.shields.io/badge/Lua-blue.svg?style=for-the-badge&logo=lua)](http://www.lua.org)
   [![Neovim](https://img.shields.io/badge/Neovim%200.9+-green.svg?style=for-the-badge&logo=neovim)](https://neovim.io)
   [![MIT](https://img.shields.io/badge/MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
@@ -55,7 +55,7 @@ neogit.setup {}
 
 The `master` branch will always be compatible with the latest **stable** release of Neovim, and with the latest **nightly** build as well.
 
-Some features may only be available using unreleased (neovim nightly) API's - to use them, set your plugin manager to track the `nightly` branch instead. 
+Some features may only be available using unreleased (neovim nightly) API's - to use them, set your plugin manager to track the `nightly` branch instead.
 
 The `nightly` branch has the same stability guarantees as the `master` branch.
 
@@ -88,7 +88,7 @@ neogit.setup {
   },
   -- "ascii"   is the graph the git CLI generates
   -- "unicode" is the graph like https://github.com/rbong/vim-flog
-  graph_style = "ascii", 
+  graph_style = "ascii",
   -- Used to generate URL's for branch popup action "pull request".
   git_services = {
     ["github.com"] = "https://github.com/${owner}/${repository}/compare/${branch_name}?expand=1",
