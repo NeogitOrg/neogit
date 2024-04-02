@@ -264,6 +264,8 @@ neogit.setup {
       ["gj"] = "MoveDown",
       ["<c-c><c-c>"] = "Submit",
       ["<c-c><c-k>"] = "Abort",
+      ["[c"] = "OpenOrScrollUp",
+      ["]c"] = "OpenOrScrollDown",
     },
     rebase_editor_I = {
       ["<c-c><c-c>"] = "Submit",
@@ -324,8 +326,8 @@ neogit.setup {
       ["<c-t>"] = "TabOpen",
       ["{"] = "GoToPreviousHunkHeader",
       ["}"] = "GoToNextHunkHeader",
-      ["["] = "OpenOrScrollUp",
-      ["]"] = "OpenOrScrollDown",
+      ["[c"] = "OpenOrScrollUp",
+      ["]c"] = "OpenOrScrollDown",
     },
   },
 }

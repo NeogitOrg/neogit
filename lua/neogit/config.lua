@@ -180,6 +180,8 @@ end
 ---| "OpenCommit"
 ---| "Submit"
 ---| "Abort"
+---| "OpenOrScrollUp"
+---| "OpenOrScrollDown"
 ---| false
 ---| fun()
 
@@ -428,6 +430,8 @@ function M.get_default_values()
         ["gj"] = "MoveDown",
         ["<c-c><c-c>"] = "Submit",
         ["<c-c><c-k>"] = "Abort",
+        ["[c"] = "OpenOrScrollUp",
+        ["]c"] = "OpenOrScrollDown",
       },
       rebase_editor_I = {
         ["<c-c><c-c>"] = "Submit",
@@ -485,14 +489,14 @@ function M.get_default_values()
         ["#"] = "Console",
         ["Y"] = "YankSelected",
         ["<c-r>"] = "RefreshBuffer",
-        ["<enter>"] = "GoToFile",
+        ["<cr>"] = "GoToFile",
         ["<c-v>"] = "VSplitOpen",
         ["<c-x>"] = "SplitOpen",
         ["<c-t>"] = "TabOpen",
         ["{"] = "GoToPreviousHunkHeader",
         ["}"] = "GoToNextHunkHeader",
-        ["["] = "OpenOrScrollUp",
-        ["]"] = "OpenOrScrollDown",
+        ["[c"] = "OpenOrScrollUp",
+        ["]c"] = "OpenOrScrollDown",
       },
     },
   }
