@@ -391,7 +391,7 @@ function Ui:get_cursor_location(line)
       first, last = loc.first, loc.last
 
       break
-    elseif line >= loc.first and line <= loc.last then
+    elseif loc.first and line >= loc.first and line <= loc.last then
       section_loc = { index = li, name = loc.name }
 
       if #loc.items > 0 then
