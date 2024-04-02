@@ -121,8 +121,29 @@ local function open_status_buffer(opts)
   end)
 end
 
----@alias Popup "cherry_pick" | "commit" | "branch" | "diff" | "fetch" | "log" | "merge" | "remote" | "pull" | "push" | "rebase" | "revert" | "reset" | "stash"
----
+---@alias Popup
+---| "bisect"
+---| "branch"
+---| "branch_config"
+---| "cherry_pick"
+---| "commit"
+---| "diff"
+---| "fetch"
+---| "help"
+---| "ignore"
+---| "log"
+---| "merge"
+---| "pull"
+---| "push"
+---| "rebase"
+---| "remote"
+---| "remote_config"
+---| "reset"
+---| "revert"
+---| "stash"
+---| "tag"
+---| "worktree"
+
 ---@class OpenOpts
 ---@field cwd string|nil
 ---@field [1] Popup|nil
@@ -230,10 +251,40 @@ function M.complete(arglead)
       "kind=auto",
     }
   end
-  -- Only complete arguments that start with arglead
+
+  if arglead:find("^cwd=") then
+    return {
+      "cwd=" .. vim.fn.getcwd(),
+    }
+  end
+
   return vim.tbl_filter(function(arg)
     return arg:match("^" .. arglead)
-  end, { "kind=", "cwd=", "commit" })
+  end, {
+    "kind=",
+    "cwd=",
+    "bisect",
+    "branch",
+    "branch_config",
+    "cherry_pick",
+    "commit",
+    "diff",
+    "fetch",
+    "help",
+    "ignore",
+    "log",
+    "merge",
+    "pull",
+    "push",
+    "rebase",
+    "remote",
+    "remote_config",
+    "reset",
+    "revert",
+    "stash",
+    "tag",
+    "worktree",
+  })
 end
 
 function M.get_log_file_path()
