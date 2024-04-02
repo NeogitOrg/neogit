@@ -1,4 +1,4 @@
-local cli = require("neogit.lib.git.cli")
+local git = require("neogit.lib.git")
 local util = require("neogit.lib.util")
 
 local M = {}
@@ -53,7 +53,7 @@ function M.list(refname, options)
   }, "%x1E")
 
   return parse(
-    cli.reflog.show.format(format).date("raw").arg_list(options or {}).args(refname, "--").call().stdout
+    git.cli.reflog.show.format(format).date("raw").arg_list(options or {}).args(refname, "--").call().stdout
   )
 end
 

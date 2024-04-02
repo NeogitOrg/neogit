@@ -1,7 +1,6 @@
-local cli = require("neogit.lib.git.cli")
+local git = require("neogit.lib.git")
 local config = require("neogit.config")
 local record = require("neogit.lib.record")
-local repo = require("neogit.lib.git.repository")
 local util = require("neogit.lib.util")
 
 local M = {}
@@ -12,7 +11,7 @@ local M = {}
 ---@return table
 function M.list(namespaces, format, sortby)
   return util.filter_map(
-    cli["for-each-ref"]
+    git.cli["for-each-ref"]
       .format(format or "%(refname)")
       .sort(sortby or config.values.sort_branches)
       .call({ hidden = true }).stdout,
@@ -67,7 +66,7 @@ local record_template = record.encode({
 }, "ref")
 
 function M.list_parsed()
-  local refs = cli["for-each-ref"].format(record_template).show_popup(false).call({ hidden = true }).stdout
+  local refs = git.cli["for-each-ref"].format(record_template).show_popup(false).call({ hidden = true }).stdout
   local result = record.decode(refs)
 
   local output = {
@@ -106,7 +105,7 @@ function M.heads()
   local heads = { "HEAD", "ORIG_HEAD", "FETCH_HEAD", "MERGE_HEAD", "CHERRY_PICK_HEAD" }
   local present = {}
   for _, head in ipairs(heads) do
-    if repo:git_path(head):exists() then
+    if git.repo:git_path(head):exists() then
       table.insert(present, head)
     end
   end

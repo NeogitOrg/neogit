@@ -1,4 +1,4 @@
-local cli = require("neogit.lib.git.cli")
+local git = require("neogit.lib.git")
 local util = require("neogit.lib.util")
 local Path = require("plenary.path")
 
@@ -9,7 +9,7 @@ local M = {}
 ---@param path string absolute path
 ---@return boolean
 function M.add(ref, path, params)
-  local result = cli.worktree.add.arg_list(params or {}).args(path, ref).call_sync()
+  local result = git.cli.worktree.add.arg_list(params or {}).args(path, ref).call_sync()
   return result.code == 0
 end
 
@@ -18,7 +18,7 @@ end
 ---@param destination string absolute path for where to move worktree
 ---@return boolean
 function M.move(worktree, destination)
-  local result = cli.worktree.move.args(worktree, destination).call()
+  local result = git.cli.worktree.move.args(worktree, destination).call()
   return result.code == 0
 end
 
@@ -27,7 +27,7 @@ end
 ---@param args? table
 ---@return boolean
 function M.remove(worktree, args)
-  local result = cli.worktree.remove.args(worktree).arg_list(args or {}).call { ignore_error = true }
+  local result = git.cli.worktree.remove.args(worktree).arg_list(args or {}).call { ignore_error = true }
   return result.code == 0
 end
 
@@ -43,7 +43,7 @@ end
 ---@return Worktree[]
 function M.list(opts)
   opts = opts or { include_main = true }
-  local list = vim.split(cli.worktree.list.args("--porcelain", "-z").call().stdout_raw[1], "\n\n")
+  local list = vim.split(git.cli.worktree.list.args("--porcelain", "-z").call().stdout_raw[1], "\n\n")
 
   return util.filter_map(list, function(w)
     local path, head, type, ref = w:match("^worktree (.-)\nHEAD (.-)\n([^ ]+) (.+)$")

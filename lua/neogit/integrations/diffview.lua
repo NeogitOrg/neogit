@@ -9,7 +9,7 @@ local dv_lib = require("diffview.lib")
 local dv_utils = require("diffview.utils")
 
 local neogit = require("neogit")
-local repo = require("neogit.lib.git.repository")
+local git = require("neogit.lib.git")
 local status = require("neogit.buffers.status")
 local a = require("plenary.async")
 
@@ -42,10 +42,10 @@ local function get_local_diff_view(section_name, item_name, opts)
       conflicting = {
         items = vim.tbl_filter(function(o)
           return o.mode and o.mode:sub(2, 2) == "U"
-        end, repo.untracked.items),
+        end, git.repo.untracked.items),
       },
-      working = repo.unstaged,
-      staged = repo.staged,
+      working = git.repo.unstaged,
+      staged = git.repo.staged,
     }
 
     for kind, section in pairs(sections) do
@@ -80,7 +80,7 @@ local function get_local_diff_view(section_name, item_name, opts)
   local files = update_files()
 
   local view = CDiffView {
-    git_root = repo.git_root,
+    git_root = git.repo.git_root,
     left = left,
     right = right,
     files = files,
@@ -92,9 +92,9 @@ local function get_local_diff_view(section_name, item_name, opts)
           table.insert(args, "HEAD")
         end
 
-        return neogit.cli.show.file(unpack(args)).call_sync({ trim = false }).stdout
+        return git.cli.show.file(unpack(args)).call_sync({ trim = false }).stdout
       elseif kind == "working" then
-        local fdata = neogit.cli.show.file(path).call_sync({ trim = false }).stdout
+        local fdata = git.cli.show.file(path).call_sync({ trim = false }).stdout
         return side == "left" and fdata
       end
     end,

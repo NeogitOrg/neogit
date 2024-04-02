@@ -1,9 +1,7 @@
 local logger = require("neogit.logger")
+local git = require("neogit.lib.git")
 local client = require("neogit.client")
 local notification = require("neogit.lib.notification")
-local cli = require("neogit.lib.git.cli")
-local rev_parse = require("neogit.lib.git.rev_parse")
-local log = require("neogit.lib.git.log")
 
 local M = {}
 
@@ -23,7 +21,7 @@ end
 ---@param args? string[] list of arguments to pass to git rebase
 ---@return ProcessResult
 function M.instantly(commit, args)
-  local result = cli.rebase
+  local result = git.cli.rebase
     .env({ GIT_SEQUENCE_EDITOR = ":" }).interactive.autostash.autosquash
     .arg_list(args or {})
     .commit(commit)
@@ -43,7 +41,7 @@ function M.rebase_interactive(commit, args)
     commit = ""
   end
 
-  local result = rebase_command(cli.rebase.interactive.arg_list(args).args(commit))
+  local result = rebase_command(git.cli.rebase.interactive.arg_list(args).args(commit))
   if result.code ~= 0 then
     if result.stdout[1]:match("^hint: Waiting for your editor to close the file%.%.%. error") then
       notification.info("Rebase aborted")
@@ -59,7 +57,7 @@ function M.rebase_interactive(commit, args)
 end
 
 function M.onto_branch(branch, args)
-  local result = rebase_command(cli.rebase.args(branch).arg_list(args))
+  local result = rebase_command(git.cli.rebase.args(branch).arg_list(args))
   if result.code ~= 0 then
     notification.error("Rebasing failed. Resolve conflicts before continuing")
     fire_rebase_event("conflict")
@@ -70,7 +68,7 @@ function M.onto_branch(branch, args)
 end
 
 function M.onto(start, newbase, args)
-  local result = rebase_command(cli.rebase.onto.args(newbase, start).arg_list(args))
+  local result = rebase_command(git.cli.rebase.onto.args(newbase, start).arg_list(args))
   if result.code ~= 0 then
     notification.error("Rebasing failed. Resolve conflicts before continuing")
     fire_rebase_event("conflict")
@@ -83,9 +81,9 @@ end
 ---@param commit string rev name of the commit to reword
 ---@return ProcessResult|nil
 function M.reword(commit)
-  local message = table.concat(log.full_message(commit), "\n")
+  local message = table.concat(git.log.full_message(commit), "\n")
   local status =
-    client.wrap(cli.commit.only.allow_empty.edit.with_message(("amend! %s\n\n%s"):format(commit, message)), {
+    client.wrap(git.cli.commit.only.allow_empty.edit.with_message(("amend! %s\n\n%s"):format(commit, message)), {
       autocmd = "NeogitCommitComplete",
       msg = {
         success = "Commit Updated",
@@ -98,9 +96,9 @@ function M.reword(commit)
 end
 
 function M.modify(commit)
-  local short_commit = rev_parse.abbreviate_commit(commit)
+  local short_commit = git.rev_parse.abbreviate_commit(commit)
   local editor = "nvim -c '%s/^pick \\(" .. short_commit .. ".*\\)/edit \\1/' -c 'wq'"
-  local result = cli.rebase
+  local result = git.cli.rebase
     .env({ GIT_SEQUENCE_EDITOR = editor }).interactive.autosquash.autostash
     .in_pty(true)
     .commit(commit)
@@ -112,9 +110,9 @@ function M.modify(commit)
 end
 
 function M.drop(commit)
-  local short_commit = rev_parse.abbreviate_commit(commit)
+  local short_commit = git.rev_parse.abbreviate_commit(commit)
   local editor = "nvim -c '%s/^pick \\(" .. short_commit .. ".*\\)/drop \\1/' -c 'wq'"
-  local result = cli.rebase
+  local result = git.cli.rebase
     .env({ GIT_SEQUENCE_EDITOR = editor }).interactive.autosquash.autostash
     .in_pty(true)
     .commit(commit)
@@ -126,28 +124,27 @@ function M.drop(commit)
 end
 
 function M.continue()
-  return rebase_command(cli.rebase.continue)
+  return rebase_command(git.cli.rebase.continue)
 end
 
 function M.skip()
-  return rebase_command(cli.rebase.skip)
+  return rebase_command(git.cli.rebase.skip)
 end
 
 function M.edit()
-  return rebase_command(cli.rebase.edit_todo)
+  return rebase_command(git.cli.rebase.edit_todo)
 end
 
 ---Find the merge base for HEAD and it's upstream
 ---@return string|nil
 function M.merge_base_HEAD()
-  local result = cli["merge-base"].args("HEAD", "HEAD@{upstream}").call { ignore_error = true, hidden = true }
+  local result = git.cli["merge-base"].args("HEAD", "HEAD@{upstream}").call { ignore_error = true, hidden = true }
   if result.code == 0 then
     return result.stdout[1]
   end
 end
 
 function M.update_rebase_status(state)
-  local git = require("neogit.lib.git")
   if git.repo.git_root == "" then
     return
   end
@@ -177,7 +174,7 @@ function M.update_rebase_status(state)
     if onto:exists() then
       state.rebase.onto.oid = vim.trim(onto:read())
       state.rebase.onto.subject = git.log.message(state.rebase.onto.oid)
-      state.rebase.onto.ref = cli["name-rev"].name_only.no_undefined
+      state.rebase.onto.ref = git.cli["name-rev"].name_only.no_undefined
         .refs("refs/heads/*")
         .exclude("*/HEAD")
         .exclude("*/refs/heads/*")

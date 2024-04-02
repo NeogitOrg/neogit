@@ -1,4 +1,4 @@
-local cli = require("neogit.lib.git.cli")
+local git = require("neogit.lib.git")
 local logger = require("neogit.logger")
 
 local M = {}
@@ -9,7 +9,7 @@ end
 
 ---@param cmd string
 local function bisect(cmd)
-  local result = cli.bisect.args(cmd).call()
+  local result = git.cli.bisect.args(cmd).call()
 
   if result.code == 0 then
     fire_bisect_event { type = cmd }
@@ -17,12 +17,10 @@ local function bisect(cmd)
 end
 
 function M.in_progress()
-  local git = require("neogit.lib.git")
   return git.repo:git_path("BISECT_LOG"):exists()
 end
 
 function M.is_finished()
-  local git = require("neogit.lib.git")
   return git.repo.bisect.finished
 end
 
@@ -30,7 +28,7 @@ end
 ---@param good_revision string
 ---@param args? table
 function M.start(bad_revision, good_revision, args)
-  local result = cli.bisect.args("start").arg_list(args).args(bad_revision, good_revision).call()
+  local result = git.cli.bisect.args("start").arg_list(args).args(bad_revision, good_revision).call()
 
   if result.code == 0 then
     fire_bisect_event { type = "start" }
@@ -55,7 +53,7 @@ end
 
 ---@param command string
 function M.run(command)
-  cli.bisect.args("run", command).call()
+  git.cli.bisect.args("run", command).call()
 end
 
 ---@class BisectItem

@@ -1,5 +1,4 @@
-local cli = require("neogit.lib.git.cli")
-local diff_lib = require("neogit.lib.git.diff")
+local git = require("neogit.lib.git")
 local util = require("neogit.lib.util")
 local config = require("neogit.config")
 local record = require("neogit.lib.record")
@@ -134,7 +133,7 @@ function M.parse(raw)
       if not line or vim.startswith(line, "diff") then
         -- There was a previous diff, parse it
         if in_diff then
-          table.insert(commit.diffs, diff_lib.parse(current_diff))
+          table.insert(commit.diffs, git.diff.parse(current_diff))
           current_diff = {}
         end
 
@@ -142,7 +141,7 @@ function M.parse(raw)
       elseif line == "" then -- A blank line signifies end of diffs
         -- Parse the last diff, consume the blankline, and exit
         if in_diff then
-          table.insert(commit.diffs, diff_lib.parse(current_diff))
+          table.insert(commit.diffs, git.diff.parse(current_diff))
           current_diff = {}
         end
 
@@ -301,7 +300,7 @@ M.graph = util.memoize(function(options, files, color)
   options = ensure_max(options or {})
   files = files or {}
 
-  local result = cli.log
+  local result = git.cli.log
     .format("%x1E%H%x00").graph.color
     .arg_list(options)
     .files(unpack(files))
@@ -359,7 +358,7 @@ M.list = util.memoize(function(options, graph, files, hidden, graph_color)
   options = determine_order(options, graph)
   options, signature = show_signature(options)
 
-  local output = cli.log
+  local output = git.cli.log
     .format(format(signature))
     .args("--no-patch")
     .arg_list(options)
@@ -392,7 +391,7 @@ end)
 ---@param descendant string commit hash
 ---@return boolean
 function M.is_ancestor(ancestor, descendant)
-  return cli["merge-base"].is_ancestor
+  return git.cli["merge-base"].is_ancestor
     .args(ancestor, descendant)
     .call_sync({ ignore_error = true, hidden = true }).code == 0
 end
@@ -401,7 +400,7 @@ end
 ---@param commit string
 ---@return string|nil
 function M.parent(commit)
-  return vim.split(cli["rev-list"].max_count(1).parents.args(commit).call({ hidden = true }).stdout[1], " ")[2]
+  return vim.split(git.cli["rev-list"].max_count(1).parents.args(commit).call({ hidden = true }).stdout[1], " ")[2]
 end
 
 local function update_recent(state)
@@ -419,15 +418,15 @@ function M.register(meta)
 end
 
 function M.update_ref(from, to)
-  cli["update-ref"].message(string.format("reset: moving to %s", to)).args(from, to).call()
+  git.cli["update-ref"].message(string.format("reset: moving to %s", to)).args(from, to).call()
 end
 
 function M.message(commit)
-  return cli.log.max_count(1).format("%s").args(commit).call({ hidden = true }).stdout[1]
+  return git.cli.log.max_count(1).format("%s").args(commit).call({ hidden = true }).stdout[1]
 end
 
 function M.full_message(commit)
-  return cli.log.max_count(1).format("%B").args(commit).call({ hidden = true }).stdout
+  return git.cli.log.max_count(1).format("%B").args(commit).call({ hidden = true }).stdout
 end
 
 function M.present_commit(commit)
@@ -446,7 +445,7 @@ end
 ---@param commit string Hash of commit
 ---@return string The stderr output of the command
 function M.verify_commit(commit)
-  return cli["verify-commit"].args(commit).call_sync({ ignore_error = true }).stderr
+  return git.cli["verify-commit"].args(commit).call_sync({ ignore_error = true }).stderr
 end
 
 ---@class CommitBranchInfo
@@ -459,7 +458,7 @@ end
 ---@param ref string comma separated list of branches, tags and remotes, e.g.:
 ---   * "origin/main, main, origin/HEAD, tag: 1.2.3, fork/develop"
 ---   * "HEAD -> main, origin/main, origin/HEAD, tag: 1.2.3, fork/develop"
----@param remotes string[] list of remote names, e.g. by calling `require("neogit.lib.git.remote").list()`
+---@param remotes string[] list of remote names, e.g. by calling `require("neogit.lib.git").remote.list()`
 ---@return CommitBranchInfo
 M.branch_info = util.memoize(function(ref, remotes)
   local parts = vim.split(ref, ", ")
@@ -513,7 +512,7 @@ M.branch_info = util.memoize(function(ref, remotes)
 end)
 
 function M.reflog_message(skip)
-  return cli.log
+  return git.cli.log
     .format("%B")
     .max_count(1)
     .args("--reflog", "--no-merges", "--skip=" .. tostring(skip))

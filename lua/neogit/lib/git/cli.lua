@@ -1,4 +1,5 @@
 local logger = require("neogit.logger")
+local git = require("neogit.lib.git")
 local process = require("neogit.process")
 local util = require("neogit.lib.util")
 local Path = require("plenary.path")
@@ -583,7 +584,7 @@ local configurations = {
   ["bisect"] = config {},
 }
 
--- NOTE: Use require("neogit.lib.git.repository").git_root instead of calling this function.
+-- NOTE: Use require("neogit.lib.git").repo.git_root instead of calling this function.
 -- repository.git_root is used by all other library functions, so it's most likely the one you want to use.
 -- git_root_of_cwd() returns the git repo of the cwd, which can change anytime
 -- after git_root_of_cwd() has been called.
@@ -895,10 +896,9 @@ local function new_builder(subcommand)
 
     logger.trace(string.format("[CLI]: Executing '%s': '%s'", subcommand, table.concat(cmd, " ")))
 
-    local repo = require("neogit.lib.git.repository")
     return process.new {
       cmd = cmd,
-      cwd = repo.git_root,
+      cwd = git.repo.git_root,
       env = state.env,
       pty = state.in_pty,
       verbose = opts.verbose,

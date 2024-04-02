@@ -1,4 +1,5 @@
 local Path = require("plenary.path")
+local git = require("neogit.lib.git")
 local util = require("neogit.lib.util")
 local Collection = require("neogit.lib.collection")
 
@@ -183,7 +184,6 @@ local function update_status(state)
   state.staged.items = staged_files
 end
 
-local git = { cli = require("neogit.lib.git.cli") }
 local status = {
   stage = function(files)
     git.cli.add.files(unpack(files)).call()
@@ -192,8 +192,7 @@ local status = {
     git.cli.add.update.call()
   end,
   stage_untracked = function()
-    local repo = require("neogit.lib.git.repository")
-    local paths = util.map(repo.untracked.items, function(item)
+    local paths = util.map(git.repo.untracked.items, function(item)
       return item.escaped_path
     end)
 
@@ -209,14 +208,13 @@ local status = {
     git.cli.reset.call()
   end,
   is_dirty = function()
-    local repo = require("neogit.lib.git.repository")
-    return #repo.staged.items > 0 or #repo.unstaged.items > 0
+    return #git.repo.staged.items > 0 or #git.repo.unstaged.items > 0
   end,
   anything_staged = function()
-    return #require("neogit.lib.git.repository").staged.items > 0
+    return #git.repo.staged.items > 0
   end,
   anything_unstaged = function()
-    return #require("neogit.lib.git.repository").unstaged.items > 0
+    return #git.repo.unstaged.items > 0
   end,
 }
 

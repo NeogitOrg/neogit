@@ -1,4 +1,4 @@
-local cli = require("neogit.lib.git.cli")
+local git = require("neogit.lib.git")
 local notification = require("neogit.lib.notification")
 local input = require("neogit.lib.input")
 
@@ -8,9 +8,9 @@ M.create = function(directory, sync)
   sync = sync or false
 
   if sync then
-    cli.init.args(directory).call_sync()
+    git.cli.init.args(directory).call_sync()
   else
-    cli.init.args(directory).call()
+    git.cli.init.args(directory).call()
   end
 end
 
@@ -33,7 +33,7 @@ M.init_repo = function()
     status.instance:chdir(directory)
   end
 
-  if cli.is_inside_worktree() then
+  if git.cli.is_inside_worktree() then
     if not input.get_permission(("Reinitialize existing repository %s?"):format(directory)) then
       return
     end

@@ -1,5 +1,4 @@
-local cli = require("neogit.lib.git.cli")
-local log = require("neogit.lib.git.log")
+local git = require("neogit.lib.git")
 local util = require("neogit.lib.util")
 
 local M = {}
@@ -10,7 +9,7 @@ local M = {}
 ---@param args string[]
 ---@return ProcessResult
 function M.push_interactive(remote, branch, args)
-  return cli.push.args(remote or "", branch or "").arg_list(args).call_interactive()
+  return git.cli.push.args(remote or "", branch or "").arg_list(args).call_interactive()
 end
 
 local function update_unmerged(state)
@@ -23,13 +22,13 @@ local function update_unmerged(state)
 
   if state.upstream.ref then
     state.upstream.unmerged.items =
-      util.filter_map(log.list({ "@{upstream}.." }, nil, {}, true), log.present_commit)
+      util.filter_map(git.log.list({ "@{upstream}.." }, nil, {}, true), git.log.present_commit)
   end
 
   local pushRemote = require("neogit.lib.git").branch.pushRemote_ref()
   if pushRemote then
     state.pushRemote.unmerged.items =
-      util.filter_map(log.list({ pushRemote .. ".." }, nil, {}, true), log.present_commit)
+      util.filter_map(git.log.list({ pushRemote .. ".." }, nil, {}, true), git.log.present_commit)
   end
 end
 

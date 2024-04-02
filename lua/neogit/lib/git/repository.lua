@@ -1,13 +1,13 @@
 local a = require("plenary.async")
 local logger = require("neogit.logger")
 local Path = require("plenary.path")
-local cli = require("neogit.lib.git.cli")
+local git = require("neogit.lib.git")
 
 ---@return NeogitRepo
 local function empty_state()
   ---@class NeogitRepo
   return {
-    git_root = cli.git_root_of_cwd(),
+    git_root = git.cli.git_root_of_cwd(),
     head = {
       branch = nil,
       oid = nil,
@@ -80,7 +80,7 @@ function M.refresh(self, opts)
   -- Needed until Process doesn't use vim.fn.*
   a.util.scheduler()
 
-  self.state.git_root = cli.git_root_of_cwd()
+  self.state.git_root = git.cli.git_root_of_cwd()
 
   -- This needs to be run before all others, because libs like Pull and Push depend on it setting some state.
   logger.debug("[REPO]: Refreshing 'update_status'")
@@ -107,6 +107,10 @@ end
 
 function M.git_path(self, ...)
   return Path.new(self.state.git_root):joinpath(".git", ...)
+end
+
+function M.instance()
+  return M
 end
 
 if not M.initialized then

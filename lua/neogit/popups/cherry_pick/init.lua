@@ -1,10 +1,11 @@
 local popup = require("neogit.lib.popup")
 local actions = require("neogit.popups.cherry_pick.actions")
+local git = require("neogit.lib.git")
 
 local M = {}
 
 function M.create(env)
-  local in_progress = require("neogit.lib.git.sequencer").pick_or_revert_in_progress()
+  local in_progress = git.sequencer.pick_or_revert_in_progress()
 
   -- TODO
   -- :switch("x", "x", "Reference cherry in commit message", { cli_prefix = "-" })

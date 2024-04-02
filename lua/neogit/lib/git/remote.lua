@@ -1,12 +1,10 @@
-local cli = require("neogit.lib.git.cli")
+local git = require("neogit.lib.git")
 local util = require("neogit.lib.util")
 
 local M = {}
 
 -- https://github.com/magit/magit/blob/main/lisp/magit-remote.el#LL141C32-L141C32
 local function cleanup_push_variables(remote, new_name)
-  local git = require("neogit.lib.git")
-
   if remote == git.config.get("remote.pushDefault").value then
     git.config.set("remote.pushDefault", new_name)
   end
@@ -23,11 +21,11 @@ local function cleanup_push_variables(remote, new_name)
 end
 
 function M.add(name, url, args)
-  return cli.remote.add.arg_list(args).args(name, url).call().code == 0
+  return git.cli.remote.add.arg_list(args).args(name, url).call().code == 0
 end
 
 function M.rename(from, to)
-  local result = cli.remote.rename.arg_list({ from, to }).call_sync()
+  local result = git.cli.remote.rename.arg_list({ from, to }).call_sync()
   if result.code == 0 then
     cleanup_push_variables(from, to)
   end
@@ -36,7 +34,7 @@ function M.rename(from, to)
 end
 
 function M.remove(name)
-  local result = cli.remote.rm.args(name).call_sync()
+  local result = git.cli.remote.rm.args(name).call_sync()
   if result.code == 0 then
     cleanup_push_variables(name)
   end
@@ -45,15 +43,15 @@ function M.remove(name)
 end
 
 function M.prune(name)
-  return cli.remote.prune.args(name).call().code == 0
+  return git.cli.remote.prune.args(name).call().code == 0
 end
 
 M.list = util.memoize(function()
-  return cli.remote.call_sync({ hidden = false }).stdout
+  return git.cli.remote.call_sync({ hidden = false }).stdout
 end)
 
 function M.get_url(name)
-  return cli.remote.get_url(name).call({ hidden = true }).stdout
+  return git.cli.remote.get_url(name).call({ hidden = true }).stdout
 end
 
 ---@class RemoteInfo

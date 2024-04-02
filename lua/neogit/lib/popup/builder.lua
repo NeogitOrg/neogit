@@ -1,4 +1,5 @@
 local a = require("plenary.async")
+local git = require("neogit.lib.git")
 local state = require("neogit.lib.state")
 local config = require("neogit.lib.git.config")
 local util = require("neogit.lib.util")
@@ -315,7 +316,7 @@ end
 ---@param options.passive boolean Controls if this config setting can be manipulated directly, or if it is managed by git, and should just be shown in UI
 ---@return self
 function M:config(key, name, options)
-  local entry = config.get(name)
+  local entry = git.config.get(name)
 
   ---@type PopupConfig
   local variable = {
