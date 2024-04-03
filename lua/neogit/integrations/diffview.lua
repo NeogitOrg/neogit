@@ -142,8 +142,10 @@ function M.open(section_name, item_name, opts)
     local range
     if type(item_name) == "table" then
       range = string.format("%s..%s", item_name[1], item_name[#item_name])
-    else
+    elseif item_name ~= nil then
       range = string.format("%s^!", item_name:match("[a-f0-9]+"))
+    else
+      return
     end
 
     view = dv_lib.diffview_open(dv_utils.tbl_pack(range))
@@ -156,8 +158,10 @@ function M.open(section_name, item_name, opts)
     view = dv_lib.diffview_open(dv_utils.tbl_pack(stash_id .. "^!"))
   elseif section_name == "commit" then
     view = dv_lib.diffview_open(dv_utils.tbl_pack(item_name .. "^!"))
-  else
+  elseif section_name ~= nil then
     view = get_local_diff_view(section_name, item_name, opts)
+  else
+    view = dv_lib.diffview_open(dv_utils.tbl_pack(item_name .. "^!"))
   end
 
   if view then
