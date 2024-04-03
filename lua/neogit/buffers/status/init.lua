@@ -424,7 +424,11 @@ function M:open(kind, cwd)
         [mappings["Depth1"]] = function()
           local section = self.buffer.ui:get_current_section()
           if section then
-            local start, _ = section:row_range_abs()
+            local start, last = section:row_range_abs()
+            if self.buffer:cursor_line() < start or self.buffer:cursor_line() >= last then
+              return
+            end
+
             self.buffer:move_cursor(start)
             section:close_all_folds(self.buffer.ui)
 
@@ -436,7 +440,11 @@ function M:open(kind, cwd)
           local row = self.buffer.ui:get_component_under_cursor()
 
           if section then
-            local start, _ = section:row_range_abs()
+            local start, last = section:row_range_abs()
+            if self.buffer:cursor_line() < start or self.buffer:cursor_line() >= last then
+              return
+            end
+
             self.buffer:move_cursor(start)
 
             section:close_all_folds(self.buffer.ui)
@@ -455,7 +463,11 @@ function M:open(kind, cwd)
           local context = self.buffer.ui:get_cursor_context()
 
           if section then
-            local start, _ = section:row_range_abs()
+            local start, last = section:row_range_abs()
+            if self.buffer:cursor_line() < start or self.buffer:cursor_line() >= last then
+              return
+            end
+
             self.buffer:move_cursor(start)
 
             section:close_all_folds(self.buffer.ui)
@@ -476,7 +488,11 @@ function M:open(kind, cwd)
           local context = self.buffer.ui:get_cursor_context()
 
           if section then
-            local start, _ = section:row_range_abs()
+            local start, last = section:row_range_abs()
+            if self.buffer:cursor_line() < start or self.buffer:cursor_line() >= last then
+              return
+            end
+
             self.buffer:move_cursor(start)
             section:close_all_folds(self.buffer.ui)
             section:open_all_folds(self.buffer.ui, 3)
