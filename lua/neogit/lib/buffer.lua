@@ -232,7 +232,12 @@ function Buffer:close(force)
   end
 
   if self.kind == "tab" then
-    vim.cmd("tabclose")
+    local ok, _ = pcall(vim.cmd, "tabclose")
+    if not ok then
+      vim.cmd("tabnew")
+      vim.cmd("tabclose #")
+    end
+
     return
   end
 
@@ -689,7 +694,7 @@ function Buffer.create(config)
       on_detach = function()
         logger.debug("[BUFFER:" .. buffer.handle .. "] Running on_detach")
         config.on_detach(buffer)
-      end
+      end,
     })
   end
 
