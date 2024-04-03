@@ -4,6 +4,7 @@ local state = require("neogit.lib.state")
 local util = require("neogit.lib.util")
 local notification = require("neogit.lib.notification")
 local logger = require("neogit.logger")
+local status = require("neogit.buffers.status")
 
 local M = {}
 
@@ -376,10 +377,9 @@ function M:action(keys, description, callback)
       callback(...)
       permit:forget()
 
-      local status = require("neogit.buffers.status").instance
-      if status then
+      if status.instance() then
         logger.debug("[ACTION] Dispatching Refresh")
-        status:dispatch_refresh(nil, "action")
+        status.instance():dispatch_refresh(nil, "action")
       end
     end)
   end

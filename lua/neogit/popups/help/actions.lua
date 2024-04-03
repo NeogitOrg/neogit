@@ -126,7 +126,7 @@ M.essential = function()
       function()
         local status = require("neogit.buffers.status")
         if status.is_open() then
-          status.instance:dispatch_refresh(nil, "user_refresh")
+          status.instance():dispatch_refresh(nil, "user_refresh")
         end
       end,
     },

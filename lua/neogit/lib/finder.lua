@@ -3,9 +3,9 @@ local a = require("plenary.async")
 
 local function refocus_status_buffer()
   local status = require("neogit.buffers.status")
-  if status.instance then
-    status.instance:focus()
-    status.instance:dispatch_refresh(nil, "finder.refocus")
+  if status.instance() then
+    status.instance():focus()
+    status.instance():dispatch_refresh(nil, "finder.refocus")
   end
 end
 

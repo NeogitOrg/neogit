@@ -37,14 +37,30 @@ local fn = vim.fn
 local M = {}
 M.__index = M
 
+local instances = {}
+
+function M.register(instance, dir)
+  instances[dir] = instance
+end
+
+function M.unregister()
+  instances[vim.uv.cwd()] = nil
+end
+
+function M.instance()
+  return instances[vim.uv.cwd()]
+end
+
 ---@param state NeogitRepo
 ---@param config NeogitConfig
+---@param root string
 ---@return StatusBuffer
-function M.new(state, config)
+function M.new(state, config, root)
   local instance = {
     -- frozen = false,
     state = state,
     config = config,
+    root = root,
     buffer = nil,
     watcher = nil,
     refresh_lock = a.control.Semaphore.new(1),
@@ -57,18 +73,18 @@ end
 
 ---@return boolean
 function M.is_open()
-  return (M.instance and M.instance.buffer and M.instance.buffer:is_visible()) == true
+  return (M.instance() and M.instance().buffer and M.instance().buffer:is_visible()) == true
 end
 
-function M:open(kind)
+---@param kind string<"floating" | "split" | "tab" | "split" | "vsplit">|nil
+---@param cwd string
+function M:open(kind, cwd)
   if M.is_open() then
     logger.debug("[STATUS] An Instance is already open - closing it")
-    M.instance:close()
+    M.instance():close()
   end
-  M.instance = self
 
-  kind = kind or config.values.kind
-  logger.debug("[STATUS] Opening kind: " .. kind)
+  M.register(self, cwd)
 
   local mappings = config.get_reversed_status_maps()
 
@@ -76,16 +92,16 @@ function M:open(kind)
     name = "NeogitStatus",
     filetype = "NeogitStatus",
     context_highlight = true,
-    kind = kind,
+    kind = kind or config.values.kind,
     disable_line_numbers = config.values.disable_line_numbers,
     status_column = " ",
     on_detach = function()
-      logger.debug("[STATUS] Running on_detach")
       if self.watcher then
         self.watcher:stop()
       end
 
       vim.o.autochdir = self.prev_autochdir
+      M.unregister()
     end,
     autocmds = {
       ["BufEnter"] = function()
@@ -372,7 +388,8 @@ function M:open(kind)
           if fold then
             -- Do not allow folding on the last (empty) line of a section. It should be considered "not part of either
             -- section" from a UX perspective. Only applies to unfolded sections.
-            if fold.options.tag == "Section"
+            if
+              fold.options.tag == "Section"
               and not fold.options.folded
               and self.buffer:get_current_line()[1] == ""
             then
@@ -1106,7 +1123,9 @@ function M:open(kind)
       },
     },
     initialize = function()
-      logger.debug("[STATUS] Initializing")
+      vim.cmd.lcd(cwd)
+      self:dispatch_refresh(nil, "initialize")
+
       self.prev_autochdir = vim.o.autochdir
       vim.o.autochdir = false
     end,
@@ -1120,11 +1139,9 @@ function M:open(kind)
     ---@param buffer Buffer
     ---@param _win any
     after = function(buffer, _win)
-      vim.cmd([[setlocal nowrap]])
-
       if config.values.filewatcher.enabled then
         logger.debug("[STATUS] Starting file watcher")
-        self.watcher = Watcher.new(self, git.repo):start()
+        self.watcher = Watcher.new(self, self.root):start()
       end
 
       buffer:move_cursor(buffer.ui:first_section().first)
@@ -1148,7 +1165,7 @@ function M:close()
     vim.o.autochdir = self.prev_autochdir
   end
 
-  M.instance = nil
+  M.unregister()
 end
 
 function M:chdir(dir)
@@ -1194,7 +1211,7 @@ function M:refresh(partial, reason)
       end
 
       logger.debug("[STATUS][Refresh Callback] Rendering UI")
-      self.buffer.ui:render(unpack(ui.Status(git.repo, self.config)))
+      self.buffer.ui:render(unpack(ui.Status(self.state, self.config)))
 
       if cursor and view then
         self.buffer:restore_view(view, self.buffer.ui:resolve_cursor_location(cursor))

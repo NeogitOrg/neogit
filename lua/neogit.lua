@@ -23,35 +23,35 @@ function M.setup(opts)
   M.status = require("neogit.buffers.status")
 
   M.dispatch_reset = function()
-    local instance = M.status.instance
+    local instance = M.status.instance()
     if instance then
       instance:dispatch_reset()
     end
   end
 
   M.refresh = function()
-    local instance = M.status.instance
+    local instance = M.status.instance()
     if instance then
       instance:refresh()
     end
   end
 
   M.reset = function()
-    local instance = M.status.instance
+    local instance = M.status.instance()
     if instance then
       instance:reset()
     end
   end
 
   M.dispatch_refresh = function()
-    local instance = M.status.instance
+    local instance = M.status.instance()
     if instance then
       instance:dispatch_refresh()
     end
   end
 
   M.close = function()
-    local instance = M.status.instance
+    local instance = M.status.instance()
     if instance then
       instance:close()
     end
@@ -95,30 +95,22 @@ end
 
 local function open_popup(name)
   local has_pop, popup = pcall(require, "neogit.popups." .. name)
-
   if not has_pop then
-    vim.api.nvim_err_writeln("Invalid popup '" .. name .. "'")
+    M.notification.error(("Invalid popup %q"):format(name))
   else
     popup.create {}
   end
 end
 
 local function open_status_buffer(opts)
-  local a = require("plenary.async")
   local status = require("neogit.buffers.status")
   local config = require("neogit.config")
-  local git = require("neogit.lib.git")
 
-  vim.cmd.lcd(opts.cwd)
-
-  a.run(function()
-    git.repo:refresh {
-      source = "initialize",
-      callback = function()
-        status.new(git.repo, config.values):open(opts.kind)
-      end,
-    }
-  end)
+  -- We need to construct the repo instance manually here since the actual CWD may not be the directory neogit is
+  -- going to open into. We will use vim.fn.lcd() in the status buffer constructor, so this will eventually be
+  -- correct.
+  local repo = require("neogit.lib.git.repository").instance(opts.cwd)
+  status.new(repo.state, config.values, repo.git_root):open(opts.kind, opts.cwd)
 end
 
 ---@alias Popup

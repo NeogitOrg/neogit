@@ -10,10 +10,10 @@ local logger = require("neogit.logger")
 local Watcher = {}
 Watcher.__index = Watcher
 
-function Watcher.new(status_buffer, repo)
+function Watcher.new(status_buffer, root)
   local instance = {
     status_buffer = status_buffer,
-    git_root = repo:git_path():absolute(),
+    git_root = root,
     running = false,
     fs_event_handler = assert(vim.loop.new_fs_event()),
   }
