@@ -529,7 +529,12 @@ function M.reflog_message(skip)
 end
 
 M.abbreviated_size = util.memoize(function()
-  return string.len(M.list({ "HEAD", "--max-count=1" })[1].abbreviated_commit)
+  local commits = M.list { "HEAD", "--max-count=1" }
+  if vim.tbl_isempty(commits) then
+    return 7
+  else
+    return string.len(commits[1].abbreviated_commit)
+  end
 end, { timeout = math.huge })
 
 return M
