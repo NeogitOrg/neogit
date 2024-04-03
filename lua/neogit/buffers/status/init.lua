@@ -43,10 +43,6 @@ function M.register(instance, dir)
   instances[dir] = instance
 end
 
-function M.unregister()
-  instances[vim.uv.cwd()] = nil
-end
-
 function M.instance()
   return instances[vim.uv.cwd()]
 end
@@ -80,8 +76,9 @@ end
 ---@param cwd string
 function M:open(kind, cwd)
   if M.is_open() then
-    logger.debug("[STATUS] An Instance is already open - closing it")
-    M.instance():close()
+    logger.debug("[STATUS] An Instance is already open - focusing it")
+    M.instance():focus()
+    return
   end
 
   M.register(self, cwd)
@@ -101,7 +98,6 @@ function M:open(kind, cwd)
       end
 
       vim.o.autochdir = self.prev_autochdir
-      M.unregister()
     end,
     autocmds = {
       ["BufEnter"] = function()
@@ -1164,8 +1160,6 @@ function M:close()
   if self.prev_autochdir then
     vim.o.autochdir = self.prev_autochdir
   end
-
-  M.unregister()
 end
 
 function M:chdir(dir)
