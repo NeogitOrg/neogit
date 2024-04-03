@@ -38,12 +38,12 @@ function M.from_pushremote(popup)
   end
 
   if pushRemote then
-    pull_from(popup:get_arguments(), pushRemote, git.repo.head.branch)
+    pull_from(popup:get_arguments(), pushRemote, git.repo.state.head.branch)
   end
 end
 
 function M.from_upstream(popup)
-  local upstream = git.repo.upstream.ref
+  local upstream = git.repo.state.upstream.ref
   local set_upstream
 
   if not upstream then

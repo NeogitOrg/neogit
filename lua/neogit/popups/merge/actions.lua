@@ -6,7 +6,7 @@ local input = require("neogit.lib.input")
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
 function M.in_merge()
-  return git.repo.merge.head
+  return git.repo.state.merge.head
 end
 
 function M.commit()

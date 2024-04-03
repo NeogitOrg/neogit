@@ -9,7 +9,7 @@ local Collection = require("neogit.lib.collection")
 ---@field diff string[]
 ---@field absolute_path string
 ---@field escaped_path string
----@field original_nae string|nil
+---@field original_name string|nil
 
 ---@return StatusItem
 local function update_file(cwd, file, mode, name, original_name)
@@ -46,7 +46,6 @@ local match_1 = "(.)(.) (....) (%d+) (%d+) (%d+) (%w+) (%w+) (.+)"
 local match_2 = "(.)(.) (....) (%d+) (%d+) (%d+) (%w+) (%w+) (%a%d+) ([^\t]+)\t?(.+)"
 
 local function update_status(state)
-  local git = require("neogit.lib.git")
   local cwd = state.git_root
 
   local head = {}
@@ -192,7 +191,7 @@ local status = {
     git.cli.add.update.call()
   end,
   stage_untracked = function()
-    local paths = util.map(git.repo.untracked.items, function(item)
+    local paths = util.map(git.repo.state.untracked.items, function(item)
       return item.escaped_path
     end)
 
@@ -208,13 +207,13 @@ local status = {
     git.cli.reset.call()
   end,
   is_dirty = function()
-    return #git.repo.staged.items > 0 or #git.repo.unstaged.items > 0
+    return #git.repo.state.staged.items > 0 or #git.repo.state.unstaged.items > 0
   end,
   anything_staged = function()
-    return #git.repo.staged.items > 0
+    return #git.repo.state.staged.items > 0
   end,
   anything_unstaged = function()
-    return #git.repo.unstaged.items > 0
+    return #git.repo.state.unstaged.items > 0
   end,
 }
 

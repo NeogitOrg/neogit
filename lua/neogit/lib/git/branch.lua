@@ -160,7 +160,7 @@ end
 ---Returns current branch name, or nil if detached HEAD
 ---@return string|nil
 function M.current()
-  local head = require("neogit.lib.git").repo.head.branch
+  local head = git.repo.state.head.branch
   if head and head ~= "(detached)" then
     return head
   else
@@ -209,12 +209,12 @@ function M.pushRemote_remote_label()
 end
 
 function M.is_detached()
-  return require("neogit.lib.git").repo.head.branch == "(detached)"
+  return git.repo.state.head.branch == "(detached)"
 end
 
 function M.set_pushRemote()
-  local remotes = require("neogit.lib.git").remote.list()
-  local pushDefault = require("neogit.lib.git").config.get("remote.pushDefault")
+  local remotes = git.remote.list()
+  local pushDefault = git.config.get("remote.pushDefault")
 
   local pushRemote
   if #remotes == 1 then
@@ -247,7 +247,7 @@ function M.upstream(name)
       return result.stdout[1]
     end
   else
-    return require("neogit.lib.git").repo.upstream.ref
+    return git.repo.state.upstream.ref
   end
 end
 
@@ -260,8 +260,7 @@ function M.upstream_remote_label()
 end
 
 function M.upstream_remote()
-  local git = require("neogit.lib.git")
-  local remote = git.repo.upstream.remote
+  local remote = git.repo.state.upstream.remote
 
   if not remote then
     local remotes = git.remote.list()

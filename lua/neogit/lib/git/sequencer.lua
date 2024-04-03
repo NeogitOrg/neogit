@@ -1,3 +1,4 @@
+local git = require("neogit.lib.git")
 local M = {}
 
 -- .git/sequencer/todo does not exist when there is only one commit left.
@@ -6,21 +7,25 @@ local M = {}
 -- And REVERT_HEAD does not exist when a conflict happens while reverting a series of commits with --no-commit.
 --
 function M.pick_or_revert_in_progress()
-  local git = require("neogit.lib.git")
   local pick_or_revert_todo = false
 
-  for _, item in ipairs(git.repo.sequencer.items) do
+  for _, item in ipairs(git.repo.state.sequencer.items) do
     if item.action == "pick" or item.action == "revert" then
       pick_or_revert_todo = true
       break
     end
   end
 
-  return git.repo.sequencer.head or pick_or_revert_todo
+  return git.repo.state.sequencer.head or pick_or_revert_todo
 end
 
+---@class SequencerItem
+---@field action string
+---@field oid string
+---@field abbreviated_commit string
+---@field subject string
+
 function M.update_sequencer_status(state)
-  local git = require("neogit.lib.git")
   state.sequencer = { items = {}, head = nil, head_oid = nil, revert = false, cherry_pick = false }
 
   local revert_head = git.repo:git_path("REVERT_HEAD")

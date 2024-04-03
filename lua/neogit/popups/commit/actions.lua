@@ -10,7 +10,7 @@ local a = require("plenary.async")
 local function confirm_modifications()
   if
     git.branch.upstream()
-    and #git.repo.upstream.unmerged.items < 1
+    and #git.repo.state.upstream.unmerged.items < 1
     and not input.get_permission(
       string.format(
         "This commit has already been published to %s, do you really want to modify it?",

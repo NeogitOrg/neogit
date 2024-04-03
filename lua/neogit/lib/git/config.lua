@@ -72,7 +72,7 @@ local config_cache = {}
 local cache_key = nil
 
 local function make_cache_key()
-  local stat = vim.loop.fs_stat(git.repo.git_root .. "/.git/config")
+  local stat = vim.loop.fs_stat(git.repo:git_path("config"):absolute())
   if stat then
     return stat.mtime.sec
   end

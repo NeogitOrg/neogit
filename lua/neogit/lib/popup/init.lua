@@ -363,7 +363,7 @@ function M:show()
           vim.fn.matchadd("NeogitPopupBranchName", self.state.env.highlight[i], 100)
         end
       else
-        vim.fn.matchadd("NeogitPopupBranchName", git.repo.head.branch, 100)
+        vim.fn.matchadd("NeogitPopupBranchName", git.repo.state.head.branch, 100)
       end
 
       if self.state.env.bold then

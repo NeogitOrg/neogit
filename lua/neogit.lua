@@ -83,7 +83,7 @@ local function construct_opts(opts)
 
   if not opts.cwd then
     local git = require("neogit.lib.git")
-    opts.cwd = git.cli.git_root_of_cwd()
+    opts.cwd = git.cli.git_root(".")
 
     if opts.cwd == "" then
       opts.cwd = vim.fn.getcwd()

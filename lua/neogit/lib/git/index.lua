@@ -118,7 +118,7 @@ function M.reset_HEAD(...)
 end
 
 function M.checkout_unstaged()
-  local items = util.map(git.repo.unstaged.items, function(item)
+  local items = util.map(git.repo.state.unstaged.items, function(item)
     return item.escaped_path
   end)
 

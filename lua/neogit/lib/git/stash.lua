@@ -116,6 +116,11 @@ function M.rename(stash)
   end
 end
 
+---@class StashItem
+---@field idx number
+---@field name string
+---@field message string
+
 function M.register(meta)
   meta.update_stashes = function(state)
     state.stashes.items = util.map(M.list(), function(line)

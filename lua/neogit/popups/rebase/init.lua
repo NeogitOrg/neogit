@@ -6,7 +6,7 @@ local M = {}
 
 function M.create(env)
   local branch = git.branch.current()
-  local in_rebase = git.repo.rebase.head
+  local in_rebase = git.repo.state.rebase.head
   local base_branch = git.branch.base_branch()
   local show_base_branch = branch ~= base_branch and base_branch ~= nil
 
@@ -46,7 +46,7 @@ function M.create(env)
     :action_if(not in_rebase, "f", "to autosquash", actions.autosquash)
     :env({
       commit = env.commit,
-      highlight = { branch, git.repo.upstream.ref, base_branch },
+      highlight = { branch, git.repo.state.upstream.ref, base_branch },
       bold = { "@{upstream}", "pushRemote" },
     })
     :build()

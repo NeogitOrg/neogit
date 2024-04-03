@@ -1111,7 +1111,11 @@ function M:open(kind)
       vim.o.autochdir = false
     end,
     render = function()
-      return ui.Status(self.state, self.config)
+      if self.state.initialized then
+        return ui.Status(self.state, self.config)
+      else
+        return {}
+      end
     end,
     ---@param buffer Buffer
     ---@param _win any

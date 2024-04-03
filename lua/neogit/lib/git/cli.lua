@@ -589,10 +589,11 @@ local configurations = {
 -- git_root_of_cwd() returns the git repo of the cwd, which can change anytime
 -- after git_root_of_cwd() has been called.
 ---@return string
-local function git_root_of_cwd()
+local function git_root(dir)
   local process = process
     .new({
-      cmd = { "git", "rev-parse", "--show-toplevel" },
+      cmd = { "git", "-C", dir, "rev-parse", "--show-toplevel" },
+      verbose = false,
       on_error = function()
         return false
       end,
@@ -1046,7 +1047,7 @@ local meta = {
 local cli = setmetatable({
   history = history,
   insert = handle_new_cmd,
-  git_root_of_cwd = git_root_of_cwd,
+  git_root = git_root,
   is_inside_worktree = is_inside_worktree,
 }, meta)
 

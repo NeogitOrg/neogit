@@ -21,7 +21,7 @@ function M.in_progress()
 end
 
 function M.is_finished()
-  return git.repo.bisect.finished
+  return git.repo.state.bisect.finished
 end
 
 ---@param bad_revision string
@@ -61,51 +61,46 @@ end
 ---@field oid string
 ---@field subject string
 ---@field abbreviated_commit string
-
-local function update_bisect_information(state)
-  logger.debug("[GIT BISECT] Starting")
-  state.bisect = { items = {}, finished = false, current = {} }
-
-  if not M.in_progress() then
-    logger.debug("[GIT BISECT] Not in progress")
-    return
-  end
-
-  logger.debug("[GIT BISECT] In progress")
-  local finished
-  local git = require("neogit.lib.git")
-
-  for line in git.repo:git_path("BISECT_LOG"):iter() do
-    if line:match("^#") and line ~= "" then
-      local action, oid, subject = line:match("^# ([^:]+): %[(.+)%] (.+)")
-
-      finished = action == "first bad commit"
-      if finished then
-        fire_bisect_event { type = "finished", oid = oid }
-      end
-
-      ---@type BisectItem
-      local item = {
-        finished = finished,
-        action = action,
-        subject = subject,
-        oid = oid,
-        abbreviated_commit = oid:sub(1, git.log.abbreviated_size()),
-      }
-
-      table.insert(state.bisect.items, item)
-    end
-  end
-
-  local expected = vim.trim(git.repo:git_path("BISECT_EXPECTED_REV"):read())
-  state.bisect.current =
-    git.log.parse(git.cli.show.format("fuller").args(expected).call_sync({ trim = false }).stdout)[1]
-
-  state.bisect.finished = finished
-end
+---@field finished boolean
 
 M.register = function(meta)
-  meta.update_bisect_information = update_bisect_information
+  meta.update_bisect_information = function(state)
+    state.bisect = { items = {}, finished = false, current = {} }
+
+    if not M.in_progress() then
+      return
+    end
+
+    local finished
+
+    for line in git.repo:git_path("BISECT_LOG"):iter() do
+      if line:match("^#") and line ~= "" then
+        local action, oid, subject = line:match("^# ([^:]+): %[(.+)%] (.+)")
+
+        finished = action == "first bad commit"
+        if finished then
+          fire_bisect_event { type = "finished", oid = oid }
+        end
+
+        ---@type BisectItem
+        local item = {
+          finished = finished,
+          action = action,
+          subject = subject,
+          oid = oid,
+          abbreviated_commit = oid:sub(1, git.log.abbreviated_size()),
+        }
+
+        table.insert(state.bisect.items, item)
+      end
+    end
+
+    local expected = vim.trim(git.repo:git_path("BISECT_EXPECTED_REV"):read())
+    state.bisect.current =
+      git.log.parse(git.cli.show.format("fuller").args(expected).call_sync({ trim = false }).stdout)[1]
+
+    state.bisect.finished = finished
+  end
 end
 
 return M

@@ -400,21 +400,24 @@ end
 ---@param commit string
 ---@return string|nil
 function M.parent(commit)
-  return vim.split(git.cli["rev-list"].max_count(1).parents.args(commit).call({ hidden = true }).stdout[1], " ")[2]
-end
-
-local function update_recent(state)
-  local count = config.values.status.recent_commit_count
-  if count < 1 then
-    return
-  end
-
-  state.recent.items =
-    util.filter_map(M.list({ "--max-count=" .. tostring(count) }, nil, {}, true), M.present_commit)
+  return vim.split(
+    git.cli["rev-list"].max_count(1).parents.args(commit).call({ hidden = true }).stdout[1],
+    " "
+  )[2]
 end
 
 function M.register(meta)
-  meta.update_recent = update_recent
+  meta.update_recent = function(state)
+    state.recent = { items = {} }
+
+    local count = config.values.status.recent_commit_count
+    if count < 1 then
+      return
+    end
+
+    local commits = M.list({ "--max-count=" .. tostring(count) }, nil, {}, true)
+    state.recent.items = util.filter_map(commits, M.present_commit)
+  end
 end
 
 function M.update_ref(from, to)
@@ -429,6 +432,12 @@ function M.full_message(commit)
   return git.cli.log.max_count(1).format("%B").args(commit).call({ hidden = true }).stdout
 end
 
+---@class CommitItem
+---@field name string
+---@field oid string
+---@field commit CommitLogEntry[]
+
+---@return nil|CommitItem
 function M.present_commit(commit)
   if not commit.oid then
     return

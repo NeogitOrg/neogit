@@ -42,10 +42,10 @@ local function get_local_diff_view(section_name, item_name, opts)
       conflicting = {
         items = vim.tbl_filter(function(o)
           return o.mode and o.mode:sub(2, 2) == "U"
-        end, git.repo.untracked.items),
+        end, git.repo.state.untracked.items),
       },
-      working = git.repo.unstaged,
-      staged = git.repo.staged,
+      working = git.repo.state.unstaged,
+      staged = git.repo.state.staged,
     }
 
     for kind, section in pairs(sections) do
@@ -102,7 +102,7 @@ local function get_local_diff_view(section_name, item_name, opts)
 
   view:on_files_staged(a.void(function(_)
     if status.is_open() then
-      status.instance:dispatch_refresh({ update_diffs = true }, "on_files_staged")
+      status.instance():dispatch_refresh({ update_diffs = true }, "on_files_staged")
     end
 
     view:update_files()
