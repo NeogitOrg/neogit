@@ -187,7 +187,6 @@ end
 ---@param args   table? CLI arguments to pass to git command
 ---@return function
 function M.action(popup, action, args)
-  local notification = require("neogit.lib.notification")
   local util = require("neogit.lib.util")
   local a = require("plenary.async")
 
@@ -215,7 +214,7 @@ function M.action(popup, action, args)
             end,
           }
         else
-          notification.error(
+          M.notification.error(
             string.format(
               "Invalid action %s for %s popup\nValid actions are: %s",
               action,
@@ -225,7 +224,7 @@ function M.action(popup, action, args)
           )
         end
       else
-        notification.error("Invalid popup: " .. popup)
+        M.notification.error("Invalid popup: " .. popup)
       end
     end)
   end
@@ -284,7 +283,7 @@ function M.get_log_file_path()
 end
 
 function M.get_config()
-  return require("neogit.config").values
+  return M.config.values
 end
 
 return M
