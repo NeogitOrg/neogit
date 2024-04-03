@@ -154,7 +154,7 @@ function M:open(kind, cwd)
                   if section.name == "untracked" then
                     table.insert(untracked_files, item.escaped_path)
                   elseif section.name == "unstaged" then
-                    if selection.item.mode == "A" then
+                    if item.mode == "A" then
                       table.insert(new_files, item.escaped_path)
                     else
                       table.insert(unstaged_files, item.escaped_path)
