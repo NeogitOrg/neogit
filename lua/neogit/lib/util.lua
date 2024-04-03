@@ -497,7 +497,7 @@ end
 --- @param hash? integer|fun(...): any Function that determines id from arguments to fn
 --- @return F Debounced function.
 function M.debounce_trailing(ms, fn, hash)
-  local running = {} --- @type table<any,uv.uv_timer_t>
+  local running = {} --- @type table<any,uv_timer_t>
 
   if type(hash) == "number" then
     local hash_i = hash
