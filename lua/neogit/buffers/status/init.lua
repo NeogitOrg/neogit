@@ -380,6 +380,33 @@ function M:open(kind, cwd)
         [popups.mapping_for("WorktreePopup")] = popups.open("worktree"),
       },
       n = {
+        ["j"] = function()
+          if vim.v.count > 0 then
+            vim.cmd("norm! " .. vim.v.count .. "j")
+          else
+            vim.cmd("norm! j")
+          end
+
+          if self.buffer:get_current_line()[1] == "" then
+            vim.cmd("norm! j")
+          end
+
+          -- TODO: The renderer should trim the last empty line instead of this
+          if self.buffer:cursor_line() == fn.line("$") then
+            vim.cmd("norm! k")
+          end
+        end,
+        ["k"] = function()
+          if vim.v.count > 0 then
+            vim.cmd("norm! " .. vim.v.count .. "k")
+          else
+            vim.cmd("norm! k")
+          end
+
+          if self.buffer:get_current_line()[1] == "" then
+            vim.cmd("norm! k")
+          end
+        end,
         [mappings["Toggle"]] = function()
           local fold = self.buffer.ui:get_fold_under_cursor()
           if fold then
