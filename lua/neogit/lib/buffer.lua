@@ -194,6 +194,8 @@ function Buffer:flush_fold_buffer()
 end
 
 function Buffer:set_folds(folds)
+  self:set_window_option("foldmethod", "manual")
+
   for _, fold in ipairs(folds) do
     self:create_fold(unpack(fold))
     self:set_fold_state(unpack(fold))
