@@ -33,6 +33,7 @@ local fn = vim.fn
 ---@field state NeogitRepo
 ---@field config NeogitConfig
 ---@field frozen boolean
+---@field root string
 ---@field refresh_lock Semaphore
 local M = {}
 M.__index = M
@@ -958,7 +959,7 @@ function M:open(kind, cwd)
         [mappings["TabOpen"]] = function()
           local item = self.buffer.ui:get_item_under_cursor()
 
-          if item and item.escaped_path then
+          if item and item.absolute_path then
             local cursor
             -- If the cursor is located within a hunk, we need to turn that back into a line number in the file.
             if rawget(item, "diff") then
@@ -982,7 +983,7 @@ function M:open(kind, cwd)
               end
             end
 
-            vim.cmd.tabedit(item.escaped_path)
+            vim.cmd.tabedit(fn.fnameescape(item.absolute_path))
             if cursor then
               api.nvim_win_set_cursor(0, cursor)
             end
@@ -991,7 +992,7 @@ function M:open(kind, cwd)
         [mappings["SplitOpen"]] = function()
           local item = self.buffer.ui:get_item_under_cursor()
 
-          if item and item.escaped_path then
+          if item and item.absolute_path then
             local cursor
             -- If the cursor is located within a hunk, we need to turn that back into a line number in the file.
             if rawget(item, "diff") then
@@ -1015,7 +1016,7 @@ function M:open(kind, cwd)
               end
             end
 
-            vim.cmd.split(item.escaped_path)
+            vim.cmd.split(fn.fnameescape(item.absolute_path))
             if cursor then
               api.nvim_win_set_cursor(0, cursor)
             end
@@ -1024,7 +1025,7 @@ function M:open(kind, cwd)
         [mappings["VSplitOpen"]] = function()
           local item = self.buffer.ui:get_item_under_cursor()
 
-          if item and item.escaped_path then
+          if item and item.absolute_path then
             local cursor
             -- If the cursor is located within a hunk, we need to turn that back into a line number in the file.
             if rawget(item, "diff") then
@@ -1048,7 +1049,7 @@ function M:open(kind, cwd)
               end
             end
 
-            vim.cmd.vsplit(item.escaped_path)
+            vim.cmd.vsplit(fn.fnameescape(item.absolute_path))
             if cursor then
               api.nvim_win_set_cursor(0, cursor)
             end
