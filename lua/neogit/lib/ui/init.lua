@@ -543,7 +543,7 @@ local function node_prefix(node, prefix)
   end
 end
 
-local function gather_nodes(node, node_table, prefix)
+local function folded_node_state(node, node_table, prefix)
   if not node_table then
     node_table = {}
   end
@@ -558,14 +558,33 @@ local function gather_nodes(node, node_table, prefix)
 
   if node.children and not base then
     for _, child in ipairs(node.children) do
-      gather_nodes(child, node_table, prefix)
+      folded_node_state(child, node_table, prefix)
     end
   end
 
   return node_table
 end
 
-function Ui:_update_attributes(node, attributes, prefix)
+function Ui:_update_fold_state(node, attributes, prefix)
+  prefix = prefix or ""
+
+  local key, base = node_prefix(node, prefix)
+  if key then
+    prefix = key
+
+    if attributes[prefix] then
+      node.options.folded = attributes[prefix].folded
+    end
+  end
+
+  if node.children and not base then
+    for _, child in ipairs(node.children) do
+      self:_update_fold_state(child, attributes, prefix)
+    end
+  end
+end
+
+function Ui:_update_on_open(node, attributes, prefix)
   prefix = prefix or ""
 
   local key, base = node_prefix(node, prefix)
@@ -577,14 +596,12 @@ function Ui:_update_attributes(node, attributes, prefix)
       if node.options.on_open and not attributes[prefix].folded then
         node.options.on_open(node, self, prefix)
       end
-
-      node.options.folded = attributes[prefix].folded
     end
   end
 
   if node.children and not base then
     for _, child in ipairs(node.children) do
-      self:_update_attributes(child, attributes, prefix)
+      self:_update_on_open(child, attributes, prefix)
     end
   end
 end
@@ -596,7 +613,7 @@ function Ui:render(...)
   end)()
 
   if not vim.tbl_isempty(self.layout) then
-    self._old_node_attributes = gather_nodes(self.layout)
+    self._node_fold_state = folded_node_state(self.layout)
   end
 
   self.layout = root
@@ -607,6 +624,11 @@ function Ui:update()
   -- If the buffer is not focused, trying to set folds will raise an error because it's not a proper API.
   if not self.buf:is_focused() then
     return
+  end
+
+  -- Copy over the old fold state _before_ buffer is rendered so the output of the fold buffer is correct
+  if self._node_fold_state then
+    self:_update_fold_state(self.layout, self._node_fold_state)
   end
 
   local renderer = Renderer:new(self.layout, self.buf):render()
@@ -624,13 +646,26 @@ function Ui:update()
   self.buf:set_extmarks(renderer.buffer.extmark)
   self.buf:set_line_highlights(renderer.buffer.line_highlight)
   self.buf:set_folds(renderer.buffer.fold)
+
+  self.statuscolumn = {}
+  self.statuscolumn.foldmarkers = {}
+
+  for i = 1, #renderer.buffer.line do
+    self.statuscolumn.foldmarkers[i] = false
+  end
+
+  for _, fold in ipairs(renderer.buffer.fold) do
+    self.statuscolumn.foldmarkers[fold[1]] = true
+  end
+
+  -- Run on_open callbacks for hunks once buffer is rendered
+  if self._node_fold_state then
+    self:_update_on_open(self.layout, self._node_fold_state)
+    self._node_fold_state = nil
+  end
+
   self.buf:lock()
   self.buf:move_cursor(math.min(cursor_line, #renderer.buffer.line))
-
-  if self._old_node_attributes then
-    self:_update_attributes(self.layout, self._old_node_attributes)
-    self._old_node_attributes = nil
-  end
 end
 
 Ui.col = Component.new(function(children, options)

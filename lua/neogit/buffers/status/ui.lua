@@ -213,8 +213,8 @@ local SectionItemFile = function(section)
           -- Set fold state when called from ui:update()
           if prefix then
             local key = ("%s--%s"):format(prefix, hunk.hash)
-            if ui._old_node_attributes and ui._old_node_attributes[key] then
-              hunk._folded = ui._old_node_attributes[key].folded
+            if ui._node_fold_state and ui._node_fold_state[key] then
+              hunk._folded = ui._node_fold_state[key].folded
             end
           end
         end
@@ -251,10 +251,13 @@ local SectionItemFile = function(section)
       mode_text = util.pad_right(mode, 11)
     end
 
+    local name = item.original_name and ("%s -> %s"):format(item.original_name, item.name) or item.name
+    local highlight = ("NeogitChange%s"):format(mode:gsub(" ", ""))
+
     return col.tag("File")({
       row {
-        text.highlight(("NeogitChange%s"):format(mode:gsub(" ", "")))(mode_text),
-        text(item.original_name and ("%s -> %s"):format(item.original_name, item.name) or item.name),
+        text.highlight(highlight)(mode_text),
+        text(name),
       },
     }, {
       foldable = true,
