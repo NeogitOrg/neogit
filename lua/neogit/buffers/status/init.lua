@@ -308,7 +308,7 @@ function M:open(kind, cwd)
           end
 
           if #files > 0 or #patches > 0 then
-            self:refresh()
+            self:refresh({ update_diffs = { "staged:*" } })
           end
         end),
         [popups.mapping_for("BranchPopup")] = popups.open("branch", function(p)
@@ -538,6 +538,7 @@ function M:open(kind, cwd)
 
           local section = selection.section.name
           local action, message, choices
+          local refresh = {}
 
           if selection.item and selection.item.first == fn.line(".") then -- Discard File
             if section == "untracked" then
@@ -552,6 +553,7 @@ function M:open(kind, cwd)
 
                 fn.delete(selection.item.escaped_path)
               end
+              refresh = { update_diffs = { "untracked:" .. selection.item.name } }
             elseif section == "unstaged" then
               if selection.item.mode:match("^[UA][UA]") then
                 choices = { "&ours", "&theirs", "&conflict", "&abort" }
@@ -572,6 +574,7 @@ function M:open(kind, cwd)
                     git.status.stage { selection.item.name }
                   end
                 end
+                refresh = { update_diffs = { "unstaged:" .. selection.item.name } }
               else
                 message = ("Discard %q?"):format(selection.item.name)
                 action = function()
@@ -591,6 +594,7 @@ function M:open(kind, cwd)
                   end
                 end
               end
+              refresh = { update_diffs = { "unstaged:" .. selection.item.name } }
             elseif section == "staged" then
               message = ("Discard %q?"):format(selection.item.name)
               action = function()
@@ -621,11 +625,13 @@ function M:open(kind, cwd)
                   )
                 end
               end
+              refresh = { update_diffs = { "staged:" .. selection.item.name } }
             elseif section == "stashes" then
               message = ("Discard %q?"):format(selection.item.name)
               action = function()
                 git.stash.drop(selection.item.name:match("(stash@{%d+})"))
               end
+              refresh = {}
             end
           elseif selection.item then -- Discard Hunk
             if selection.item.mode == "UU" then
@@ -651,16 +657,19 @@ function M:open(kind, cwd)
                 git.index.apply(patch, { reverse = true })
                 git.index.apply(patch, { reverse = true })
               end
+              refresh = { update_diffs = { "untracked:" .. selection.item.name } }
             elseif section == "unstaged" then
               message = "Discard hunk?"
               action = function()
                 git.index.apply(patch, { reverse = true })
               end
+              refresh = { update_diffs = { "unstaged:" .. selection.item.name } }
             elseif section == "staged" then
               message = "Discard hunk?"
               action = function()
                 git.index.apply(patch, { index = true, reverse = true })
               end
+              refresh = { update_diffs = { "staged:" .. selection.item.name } }
             end
           else -- Discard Section
             if section == "untracked" then
@@ -677,6 +686,7 @@ function M:open(kind, cwd)
                   fn.delete(file.escaped_path)
                 end
               end
+              refresh = { update_diffs = { "untracked:*" } }
             elseif section == "unstaged" then
               local conflict = false
               for _, item in ipairs(selection.section.items) do
@@ -695,6 +705,7 @@ function M:open(kind, cwd)
                 action = function()
                   git.index.checkout_unstaged()
                 end
+                refresh = { update_diffs = { "unstaged:*" } }
               end
             elseif section == "staged" then
               message = ("Discard %s files?"):format(#selection.section.items)
@@ -752,6 +763,7 @@ function M:open(kind, cwd)
                   git.index.checkout(staged_files_deleted)
                 end
               end
+              refresh = { update_diffs = { "staged:*" } }
             elseif section == "stashes" then
               message = ("Discard %s stashes?"):format(#selection.section.items)
               action = function()
@@ -764,7 +776,7 @@ function M:open(kind, cwd)
 
           if action and (choices or input.get_permission(message)) then
             action()
-            self:refresh()
+            self:refresh(refresh)
           end
         end),
         [mappings["GoToNextHunkHeader"]] = function()
@@ -834,23 +846,23 @@ function M:open(kind, cwd)
                 git.index.generate_patch(item, stagable.hunk, stagable.hunk.from, stagable.hunk.to)
 
               git.index.apply(patch, { cached = true })
-              self:refresh()
+              self:refresh({ update_diffs = { "*:" .. item.escaped_path } })
             elseif stagable.filename then
               if section.options.section == "unstaged" then
                 git.status.stage { stagable.filename }
-                self:refresh()
+                self:refresh({ update_diffs = { "unstaged:" .. stagable.filename } })
               elseif section.options.section == "untracked" then
                 git.index.add { stagable.filename }
-                self:refresh()
+                self:refresh({ update_diffs = { "untracked:" .. stagable.filename } })
               end
             end
           elseif section then
             if section.options.section == "untracked" then
               git.status.stage_untracked()
-              self:refresh()
+              self:refresh({ update_diffs = { "untracked:*" } })
             elseif section.options.section == "unstaged" then
               git.status.stage_modified()
-              self:refresh()
+              self:refresh({ update_diffs = { "unstaged:*" } })
             end
           end
         end),
@@ -860,7 +872,7 @@ function M:open(kind, cwd)
         end),
         [mappings["StageUnstaged"]] = a.void(function()
           git.status.stage_modified()
-          self:refresh()
+          self:refresh({ update_diffs = { "unstaged:*" } })
         end),
         [mappings["Unstage"]] = a.void(function()
           local unstagable = self.buffer.ui:get_hunk_or_filename_under_cursor()
@@ -882,19 +894,19 @@ function M:open(kind, cwd)
               )
 
               git.index.apply(patch, { cached = true, reverse = true })
-              self:refresh()
+              self:refresh({ update_diffs = { "*:" .. item.escaped_path } })
             elseif unstagable.filename then
               git.status.unstage { unstagable.filename }
-              self:refresh()
+              self:refresh({ update_diffs = { "*:" .. unstagable.filename } })
             end
           elseif section then
             git.status.unstage_all()
-            self:refresh()
+            self:refresh({ update_diffs = { "staged:*" } })
           end
         end),
         [mappings["UnstageStaged"]] = a.void(function()
           git.status.unstage_all()
-          self:refresh()
+          self:refresh({ update_diffs = { "staged:*" } })
         end),
         [mappings["GoToFile"]] = function()
           local item = self.buffer.ui:get_item_under_cursor()

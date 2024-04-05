@@ -205,13 +205,12 @@ function Repo:git_path(...)
 end
 
 function Repo:refresh(opts)
-  self.state.initialized = true
-
   if self.git_root == "" then
     logger.debug("[REPO] No git root found - skipping refresh")
     return
   end
 
+  self.state.initialized = true
   opts = opts or {}
   logger.fmt_info("[REPO]: Refreshing START (source: %s)", opts.source or "UNKNOWN")
 

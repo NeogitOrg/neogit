@@ -204,8 +204,6 @@ local function build_metatable(f, raw_output_fn)
       end
     end,
   })
-
-  f.has_diff = true
 end
 
 -- Doing a git-diff with untracked files will exit(1) if a difference is observed, which we can ignore.
@@ -249,7 +247,7 @@ end
 
 local function invalidate_diff(filter, section, item)
   if not filter or filter:accepts(section, item.name) then
-    logger.fmt_debug("[DIFF] Invalidating cached diff for: %s", item.name)
+    logger.debug(("[DIFF] Invalidating cached diff for: %s"):format(item.name))
     item.diff = nil
   end
 end

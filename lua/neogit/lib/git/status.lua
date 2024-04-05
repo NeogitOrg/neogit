@@ -5,7 +5,6 @@ local Collection = require("neogit.lib.collection")
 
 ---@class StatusItem
 ---@field mode string
----@field has_diff boolean
 ---@field diff string[]
 ---@field absolute_path string
 ---@field escaped_path string
@@ -13,15 +12,12 @@ local Collection = require("neogit.lib.collection")
 
 ---@return StatusItem
 local function update_file(cwd, file, mode, name, original_name)
-  local mt, diff, has_diff
-
   local absolute_path = Path:new(cwd, name):absolute()
   local escaped_path = vim.fn.fnameescape(vim.fn.fnamemodify(absolute_path, ":~:."))
 
+  local mt, diff
   if file then
     mt = getmetatable(file)
-    has_diff = file.has_diff
-
     if rawget(file, "diff") then
       diff = file.diff
     end
@@ -31,7 +27,6 @@ local function update_file(cwd, file, mode, name, original_name)
     mode = mode,
     name = name,
     original_name = original_name,
-    has_diff = has_diff,
     diff = diff,
     absolute_path = absolute_path,
     escaped_path = escaped_path,
