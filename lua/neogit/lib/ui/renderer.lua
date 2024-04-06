@@ -227,6 +227,7 @@ function Renderer:_render_child(child)
       #self.buffer.line - (child.position.row_end - child.position.row_start),
       #self.buffer.line,
       not child.options.folded,
+      child.options.tag
     })
   end
 end

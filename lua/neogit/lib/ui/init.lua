@@ -655,7 +655,7 @@ function Ui:update()
   end
 
   for _, fold in ipairs(renderer.buffer.fold) do
-    self.statuscolumn.foldmarkers[fold[1]] = true
+    self.statuscolumn.foldmarkers[fold[1]] = fold[4]
   end
 
   -- Run on_open callbacks for hunks once buffer is rendered

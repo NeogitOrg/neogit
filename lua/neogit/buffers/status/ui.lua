@@ -254,7 +254,7 @@ local SectionItemFile = function(section)
     local name = item.original_name and ("%s -> %s"):format(item.original_name, item.name) or item.name
     local highlight = ("NeogitChange%s"):format(mode:gsub(" ", ""))
 
-    return col.tag("File")({
+    return col.tag("Item")({
       row {
         text.highlight(highlight)(mode_text),
         text(name),

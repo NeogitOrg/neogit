@@ -92,7 +92,7 @@ function M:open(kind, cwd)
     context_highlight = true,
     kind = kind or config.values.kind,
     disable_line_numbers = config.values.disable_line_numbers,
-    status_column = " ",
+    status_column = "%{%v:lua.require('neogit.buffers.status').eval_statuscolumn()%}",
     on_detach = function()
       if self.watcher then
         self.watcher:stop()
@@ -809,7 +809,7 @@ function M:open(kind, cwd)
         end),
         [mappings["GoToNextHunkHeader"]] = function()
           local c = self.buffer.ui:get_component_under_cursor(function(c)
-            return c.options.tag == "Diff" or c.options.tag == "Hunk" or c.options.tag == "File"
+            return c.options.tag == "Diff" or c.options.tag == "Hunk" or c.options.tag == "Item"
           end)
           local section = self.buffer.ui:get_current_section()
 
@@ -819,7 +819,7 @@ function M:open(kind, cwd)
 
             if c.options.tag == "Diff" then
               next_location = fn.line(".") + 1
-            elseif c.options.tag == "File" then
+            elseif c.options.tag == "Item" then
               vim.cmd("normal! zo")
               next_location = fn.line(".") + 1
             elseif c.options.tag == "Hunk" then
@@ -837,7 +837,7 @@ function M:open(kind, cwd)
         [mappings["GoToPreviousHunkHeader"]] = function()
           local function previous_hunk_header(self, line)
             local c = self.buffer.ui:get_component_on_line(line, function(c)
-              return c.options.tag == "Diff" or c.options.tag == "Hunk" or c.options.tag == "File"
+              return c.options.tag == "Diff" or c.options.tag == "Hunk" or c.options.tag == "Item"
             end)
 
             if c then
@@ -1315,6 +1315,37 @@ function M:_get_refresh_lock(reason)
   end, 10000)
 
   return permit
+end
+
+local function fold_opened()
+  return vim.fn.foldclosed(vim.v.lnum) == -1
+end
+
+function M.eval_statuscolumn()
+  if config.values.disable_signs and config.values.disable_line_numbers then
+    return " "
+  elseif config.values.disable_signs and not config.values.disable_line_numbers then
+    return "%l%r "
+  end
+
+  local foldmarkers = M.instance().buffer.ui.statuscolumn.foldmarkers
+
+  local fold
+  if foldmarkers[vim.v.lnum] then
+    if fold_opened() then
+      fold = config.values.signs[string.lower(foldmarkers[vim.v.lnum])][2]
+    else
+      fold = config.values.signs[string.lower(foldmarkers[vim.v.lnum])][1]
+    end
+  else
+    fold = " "
+  end
+
+  if config.values.disable_line_numbers then
+    return ("%s "):format(fold)
+  else
+    return ("%s%s "):format("%l%r ", fold)
+  end
 end
 
 return M
