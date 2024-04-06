@@ -85,6 +85,8 @@ local HEAD = Component.new(function(props)
 
   return row({
     text(util.pad_right(props.name .. ":", 10)),
+    text.highlight("Comment")(props.show_oid and props.yankable:sub(1, 7) or ""),
+    text(props.show_oid and " " or ""),
     text.highlight(highlight)(ref),
     text(" "),
     text(props.msg or "(no commits)"),
@@ -448,6 +450,7 @@ function M.Status(state, config)
           oid = state.head.abbrev,
           msg = state.head.commit_message,
           yankable = state.head.oid,
+          show_oid = config.show_head_commit_hash,
         },
         show_upstream and HEAD {
           name = "Merge",
@@ -455,6 +458,7 @@ function M.Status(state, config)
           remote = state.upstream.remote,
           msg = state.upstream.commit_message,
           yankable = state.upstream.oid,
+          show_oid = config.show_head_commit_hash,
         },
         show_pushRemote and HEAD {
           name = "Push",
@@ -462,6 +466,7 @@ function M.Status(state, config)
           remote = state.pushRemote.remote,
           msg = state.pushRemote.commit_message,
           yankable = state.pushRemote.oid,
+          show_oid = config.show_head_commit_hash,
         },
         show_tag and Tag {
           name = state.head.tag.name,

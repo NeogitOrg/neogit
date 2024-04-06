@@ -234,6 +234,7 @@ end
 ---@field sort_branches? string Value used for `--sort` for the `git branch` command
 ---@field kind? WindowKind The default type of window neogit should open in
 ---@field disable_line_numbers? boolean Whether to disable line numbers
+---@field show_head_commit_hash? boolean Show the commit hash for HEADs in the status buffer
 ---@field console_timeout? integer Time in milliseconds after a console is created for long running commands
 ---@field auto_show_console? boolean Automatically show the console if a command takes longer than console_timeout
 ---@field status? { recent_commit_count: integer } Status buffer options
@@ -285,6 +286,7 @@ function M.get_default_values()
     },
     disable_insert_on_commit = "auto",
     use_per_project_settings = true,
+    show_head_commit_hash = true,
     remember_settings = true,
     fetch_after_checkout = false,
     auto_refresh = true,
@@ -941,6 +943,7 @@ function M.validate_config()
   if validate_type(config, "base config", "table") then
     validate_type(config.disable_hint, "disable_hint", "boolean")
     validate_type(config.disable_context_highlighting, "disable_context_highlighting", "boolean")
+    validate_type(config.show_head_commit_hash, "show_head_commit_hash", "boolean")
     validate_type(config.disable_signs, "disable_signs", "boolean")
     validate_type(config.telescope_sorter, "telescope_sorter", "function")
     validate_type(config.use_per_project_settings, "use_per_project_settings", "boolean")
