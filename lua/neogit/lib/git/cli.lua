@@ -918,7 +918,14 @@ local function new_builder(subcommand)
       local handle_line = opts.handle_line or handle_interactive_password_questions
       local p = to_process {
         verbose = opts.verbose,
-        on_error = function(_res)
+        on_error = function(res)
+          -- When aborting, don't alert the user. exit(1) is expected.
+          for _, line in ipairs(res.stdout) do
+            if line:match("^hint: Waiting for your editor to close the file...") then
+              return false
+            end
+          end
+
           return true
         end,
       }
@@ -959,10 +966,11 @@ local function new_builder(subcommand)
       local p = to_process {
         verbose = opts.verbose,
         on_error = function(res)
-          local commit_aborted_msg = "hint: Waiting for your editor to close the file..."
-
-          if vim.startswith(res.stdout[1], commit_aborted_msg) then
-            return false
+          -- When aborting, don't alert the user. exit(1) is expected.
+          for _, line in ipairs(res.stdout) do
+            if line:match("^hint: Waiting for your editor to close the file...") then
+              return false
+            end
           end
 
           return not opts.ignore_error

@@ -153,6 +153,7 @@ function M.wrap(cmd, opts)
       notification.warn(opts.msg.fail, { dismiss = true })
     end
   end
+
   return result.code
 end
 
