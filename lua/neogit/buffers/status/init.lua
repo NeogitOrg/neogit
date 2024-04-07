@@ -390,11 +390,6 @@ function M:open(kind, cwd)
           if self.buffer:get_current_line()[1] == "" then
             vim.cmd("norm! j")
           end
-
-          -- TODO: The renderer should trim the last empty line instead of this
-          if self.buffer:cursor_line() == fn.line("$") then
-            vim.cmd("norm! k")
-          end
         end,
         ["k"] = function()
           if vim.v.count > 0 then

@@ -4,6 +4,7 @@ local common = require("neogit.buffers.common")
 local Ui = require("neogit.lib.ui")
 local util = require("neogit.lib.util")
 
+local EmptyLine = common.EmptyLine
 local List = common.List
 local Grid = common.Grid
 local col = Ui.col
@@ -14,8 +15,6 @@ local Component = Ui.Component
 local intersperse = util.intersperse
 local filter_map = util.filter_map
 local map = util.map
-
-local EmptyLine = col { row { text("") } }
 
 -- Builds config component to be rendered
 ---@return table
@@ -237,7 +236,7 @@ function M.items(state)
 
   if state.config[1] then
     table.insert(items, Config { state = state.config })
-    table.insert(items, EmptyLine)
+    table.insert(items, EmptyLine())
   end
 
   if state.args[1] then
@@ -251,7 +250,7 @@ function M.items(state)
       elseif item.type == "heading" then
         if section[1] then -- If there are items in the section, flush to items table with current name
           table.insert(items, Section(name, section))
-          table.insert(items, EmptyLine)
+          table.insert(items, EmptyLine())
           section = {}
         end
 
@@ -260,7 +259,7 @@ function M.items(state)
     end
 
     table.insert(items, Section(name, section))
-    table.insert(items, EmptyLine)
+    table.insert(items, EmptyLine())
   end
 
   if state.actions[1] then

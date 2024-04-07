@@ -14,6 +14,10 @@ local range = util.range
 
 local M = {}
 
+M.EmptyLine = Component.new(function()
+  return col { row { text("") } }
+end)
+
 local diff_add_start = "+"
 local diff_delete_start = "-"
 

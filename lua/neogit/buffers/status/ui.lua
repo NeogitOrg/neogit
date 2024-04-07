@@ -10,9 +10,9 @@ local text = Ui.text
 
 local map = util.map
 
+local EmptyLine = common.EmptyLine
 local List = common.List
 local DiffHunks = common.DiffHunks
-local EmptyLine = col { row { text("") } }
 
 local M = {}
 
@@ -161,7 +161,7 @@ local Section = Component.new(function(props)
   return col.tag("Section")({
     row(util.merge(props.title, { text(" ("), text(#props.items), text(")") })),
     col(map(props.items, props.render)),
-    EmptyLine,
+    EmptyLine(),
   }, {
     foldable = true,
     folded = props.folded,
@@ -174,7 +174,7 @@ local SequencerSection = Component.new(function(props)
   return col.tag("Section")({
     row(util.merge(props.title)),
     col(map(props.items, props.render)),
-    EmptyLine,
+    EmptyLine(),
   }, {
     foldable = true,
     folded = props.folded,
@@ -193,7 +193,7 @@ local RebaseSection = Component.new(function(props)
       text(")"),
     })),
     col(map(props.items, props.render)),
-    EmptyLine,
+    EmptyLine(),
   }, {
     foldable = true,
     folded = props.folded,
@@ -373,12 +373,12 @@ local BisectDetailsSection = Component.new(function(props)
       text((props.commit.committer_name or "") .. " <" .. (props.commit.committer_email or "") .. ">"),
     },
     row { text.highlight("Comment")("CommitDate: "), text(props.commit.committer_date) },
-    EmptyLine,
+    EmptyLine(),
     col(
       map(props.commit.description, text),
       { highlight = "NeogitCommitViewDescription", tag = "Description" }
     ),
-    EmptyLine,
+    EmptyLine(),
   }, {
     foldable = true,
     folded = props.folded,
@@ -452,7 +452,7 @@ function M.Status(state, config)
     List {
       items = {
         show_hint and HINT { config = config },
-        show_hint and EmptyLine,
+        show_hint and EmptyLine(),
         HEAD {
           name = "Head",
           branch = state.head.branch,
@@ -482,7 +482,7 @@ function M.Status(state, config)
           distance = show_tag_distance and state.head.tag.distance,
           yankable = state.head.tag.oid,
         },
-        EmptyLine,
+        EmptyLine(),
         show_merge and SequencerSection {
           title = SectionTitleMerge { title = "Merging", branch = state.merge.branch },
           render = SectionItemSequencer,
