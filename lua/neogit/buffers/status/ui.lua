@@ -71,10 +71,12 @@ local HINT = Component.new(function(props)
 end)
 
 local HEAD = Component.new(function(props)
+  local show_oid = props.show_oid
   local highlight, ref
   if props.branch == "(detached)" then
-    highlight = "Comment"
-    ref = props.oid
+    highlight = "NeogitBranch"
+    ref = props.branch
+    show_oid = true
   elseif props.remote then
     highlight = "NeogitRemote"
     ref = ("%s/%s"):format(props.remote, props.branch)
@@ -83,10 +85,17 @@ local HEAD = Component.new(function(props)
     ref = props.branch
   end
 
+  local oid = props.yankable
+  if not oid or oid == "(initial)" then
+    oid = "0000000"
+  else
+    oid = oid:sub(1, 7)
+  end
+
   return row({
     text(util.pad_right(props.name .. ":", 10)),
-    text.highlight("Comment")(props.show_oid and props.yankable:sub(1, 7) or ""),
-    text(props.show_oid and " " or ""),
+    text.highlight("Comment")(show_oid and oid or ""),
+    text(show_oid and " " or ""),
     text.highlight(highlight)(ref),
     text(" "),
     text(props.msg or "(no commits)"),
