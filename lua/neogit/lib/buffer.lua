@@ -567,6 +567,7 @@ end
 ---@field bufhidden string|nil
 ---@field header string|nil
 ---@field buftype string|nil
+---@field cwd string|nil
 ---@field status_column string|nil
 ---@field load boolean|nil
 ---@field context_highlight boolean|nil
@@ -748,6 +749,11 @@ function Buffer.create(config)
   if config.header then
     logger.debug("[BUFFER:" .. buffer.handle .. "] Setting header")
     buffer:set_header(config.header)
+  end
+
+  if config.cwd then
+    logger.debug("[BUFFER:" .. buffer.handle .. "] Setting CWD to: " .. config.cwd)
+    vim.cmd.lcd(config.cwd)
   end
 
   return buffer

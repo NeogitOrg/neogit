@@ -44,8 +44,10 @@ function M.register(instance, dir)
   instances[dir] = instance
 end
 
-function M.instance()
-  return instances[vim.uv.cwd()]
+---@param dir? string
+---@return StatusBuffer
+function M.instance(dir)
+  return instances[dir or vim.uv.cwd()]
 end
 
 ---@param state NeogitRepo
@@ -75,11 +77,12 @@ end
 
 ---@param kind string<"floating" | "split" | "tab" | "split" | "vsplit">|nil
 ---@param cwd string
+---@return StatusBuffer
 function M:open(kind, cwd)
   if M.is_open() then
     logger.debug("[STATUS] An Instance is already open - focusing it")
     M.instance():focus()
-    return
+    return M.instance()
   end
 
   M.register(self, cwd)
@@ -89,6 +92,7 @@ function M:open(kind, cwd)
   self.buffer = Buffer.create {
     name = "NeogitStatus",
     filetype = "NeogitStatus",
+    cwd = cwd,
     context_highlight = true,
     kind = kind or config.values.kind,
     disable_line_numbers = config.values.disable_line_numbers,
@@ -1175,9 +1179,6 @@ function M:open(kind, cwd)
       },
     },
     initialize = function()
-      vim.cmd.lcd(cwd)
-      self:dispatch_refresh(nil, "initialize")
-
       self.prev_autochdir = vim.o.autochdir
       vim.o.autochdir = false
     end,
@@ -1199,6 +1200,8 @@ function M:open(kind, cwd)
       buffer:move_cursor(buffer.ui:first_section().first)
     end,
   }
+
+  return self
 end
 
 function M:close()
@@ -1326,6 +1329,10 @@ function M.eval_statuscolumn()
     return " "
   elseif config.values.disable_signs and not config.values.disable_line_numbers then
     return "%l%r "
+  end
+
+  if not M.is_open() then
+    return " "
   end
 
   local foldmarkers = M.instance().buffer.ui.statuscolumn.foldmarkers
