@@ -405,17 +405,6 @@ function M:open(kind, cwd)
         [mappings["Toggle"]] = function()
           local fold = self.buffer.ui:get_fold_under_cursor()
           if fold then
-            -- Do not allow folding on the last (empty) line of a section. It should be considered "not part of either
-            -- section" from a UX perspective. Only applies to unfolded sections.
-            if
-              fold.options.tag == "Section"
-              and not fold.options.folded
-              and self.buffer:get_current_line()[1] == ""
-            then
-              logger.info("Toggle early return")
-              return
-            end
-
             if fold.options.on_open then
               fold.options.on_open(fold, self.buffer.ui)
             else
