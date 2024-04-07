@@ -1333,9 +1333,9 @@ function M.eval_statuscolumn()
   end
 
   if config.values.disable_line_numbers then
-    return ("%s "):format(fold)
+    return ("%s"):format(fold)
   else
-    return ("%s%s "):format("%l%r ", fold)
+    return ("%s %s"):format("%l%r", fold)
   end
 end
 
