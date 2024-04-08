@@ -310,6 +310,20 @@ local configurations = {
     },
   },
 
+  absorb = config {
+    flags = {
+      verbose = "--verbose",
+      and_rebase = "--and-rebase"
+    },
+    aliases = {
+      base = function(tbl)
+        return function(commit)
+          return tbl.args("--base", commit)
+        end
+      end
+    }
+  },
+
   commit = config {
     flags = {
       all = "--all",
