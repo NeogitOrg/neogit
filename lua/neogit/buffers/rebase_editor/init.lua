@@ -205,19 +205,22 @@ function M:open(kind)
           vim.cmd("move +1")
         end,
         [mapping["OpenCommit"]] = function()
-          local oid = vim.api.nvim_get_current_line():match("(" .. string.rep("%x", git.log.abbreviated_size()) .. ")")
+          local oid =
+            vim.api.nvim_get_current_line():match("(" .. string.rep("%x", git.log.abbreviated_size()) .. ")")
           if oid then
             CommitViewBuffer.new(oid):open("tab")
           end
         end,
         [mapping["OpenOrScrollDown"]] = function()
-          local oid = vim.api.nvim_get_current_line():match("(" .. string.rep("%x", git.log.abbreviated_size()) .. ")")
+          local oid =
+            vim.api.nvim_get_current_line():match("(" .. string.rep("%x", git.log.abbreviated_size()) .. ")")
           if oid then
             CommitViewBuffer.open_or_scroll_down(oid)
           end
         end,
         [mapping["OpenOrScrollUp"]] = function()
-          local oid = vim.api.nvim_get_current_line():match("(" .. string.rep("%x", git.log.abbreviated_size()) .. ")")
+          local oid =
+            vim.api.nvim_get_current_line():match("(" .. string.rep("%x", git.log.abbreviated_size()) .. ")")
           if oid then
             CommitViewBuffer.open_or_scroll_up(oid)
           end

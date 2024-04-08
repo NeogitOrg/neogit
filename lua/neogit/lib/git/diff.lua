@@ -239,7 +239,8 @@ end
 local function raw_staged_renamed(name, original)
   return function()
     local diff = git.cli.diff.no_ext_diff.cached.files(name, original).call({ hidden = true }).stdout
-    local stats = git.cli.diff.no_ext_diff.cached.shortstat.files(name, original).call({ hidden = true }).stdout
+    local stats =
+      git.cli.diff.no_ext_diff.cached.shortstat.files(name, original).call({ hidden = true }).stdout
 
     return { diff, stats }
   end

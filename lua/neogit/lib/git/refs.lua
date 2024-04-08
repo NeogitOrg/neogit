@@ -66,7 +66,8 @@ local record_template = record.encode({
 }, "ref")
 
 function M.list_parsed()
-  local refs = git.cli["for-each-ref"].format(record_template).show_popup(false).call({ hidden = true }).stdout
+  local refs =
+    git.cli["for-each-ref"].format(record_template).show_popup(false).call({ hidden = true }).stdout
   local result = record.decode(refs)
 
   local output = {

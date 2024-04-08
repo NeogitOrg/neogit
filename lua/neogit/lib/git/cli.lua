@@ -974,7 +974,10 @@ local function new_builder(subcommand)
           end
 
           -- When opening in a brand new repo, HEAD will cause an error.
-          if res.stderr[1] == "fatal: ambiguous argument 'HEAD': unknown revision or path not in the working tree." then
+          if
+            res.stderr[1]
+            == "fatal: ambiguous argument 'HEAD': unknown revision or path not in the working tree."
+          then
             return false
           end
 

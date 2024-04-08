@@ -54,7 +54,7 @@ end
 function M.in_prepared_repo(cb)
   return function()
     local dir = M.prepare_repository()
-    require("neogit").setup({})
+    require("neogit").setup {}
     local status = require("neogit.buffers.status")
     vim.cmd("Neogit")
 

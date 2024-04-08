@@ -3,7 +3,9 @@ local git = require("neogit.lib.git")
 local M = {}
 
 function M.all()
-  return git.cli["ls-files"].full_name.deleted.modified.exclude_standard.deduplicate.call_sync({ hidden = true }).stdout
+  return git.cli["ls-files"].full_name.deleted.modified.exclude_standard.deduplicate.call_sync({
+    hidden = true,
+  }).stdout
 end
 
 function M.untracked()

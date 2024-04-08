@@ -112,13 +112,14 @@ local function open_status_buffer(opts)
   -- correct.
   local repo = require("neogit.lib.git.repository").instance(opts.cwd)
 
-  local instance = status.new(repo.state, config.values, repo.git_root)
-    :open(opts.kind, opts.cwd)
+  local instance = status.new(repo.state, config.values, repo.git_root):open(opts.kind, opts.cwd)
 
   a.run(function()
-    repo:refresh({ callback = function()
-      instance:dispatch_refresh()
-    end })
+    repo:refresh {
+      callback = function()
+        instance:dispatch_refresh()
+      end,
+    }
   end)
 end
 

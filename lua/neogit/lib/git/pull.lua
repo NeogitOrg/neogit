@@ -24,8 +24,10 @@ local function update_unpulled(state)
 
   local pushRemote = require("neogit.lib.git").branch.pushRemote_ref()
   if pushRemote then
-    state.pushRemote.unpulled.items =
-      util.filter_map(git.log.list({ string.format("..%s", pushRemote) }, nil, {}, true), git.log.present_commit)
+    state.pushRemote.unpulled.items = util.filter_map(
+      git.log.list({ string.format("..%s", pushRemote) }, nil, {}, true),
+      git.log.present_commit
+    )
   end
 end
 

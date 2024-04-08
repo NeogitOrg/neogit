@@ -80,7 +80,6 @@ function M:open(kind)
       end
 
       require("neogit.process").defer_show_preview_buffers()
-
     end,
     after = function(buffer)
       -- Populate help lines with mappings for buffer

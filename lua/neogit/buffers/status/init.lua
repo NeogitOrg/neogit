@@ -313,7 +313,7 @@ function M:open(kind, cwd)
           end
 
           if #files > 0 or #patches > 0 then
-            self:refresh({ update_diffs = { "staged:*" } })
+            self:refresh { update_diffs = { "staged:*" } }
           end
         end),
         [popups.mapping_for("BranchPopup")] = popups.open("branch", function(p)
@@ -862,23 +862,23 @@ function M:open(kind, cwd)
                 git.index.generate_patch(item, stagable.hunk, stagable.hunk.from, stagable.hunk.to)
 
               git.index.apply(patch, { cached = true })
-              self:refresh({ update_diffs = { "*:" .. item.escaped_path } })
+              self:refresh { update_diffs = { "*:" .. item.escaped_path } }
             elseif stagable.filename then
               if section.options.section == "unstaged" then
                 git.status.stage { stagable.filename }
-                self:refresh({ update_diffs = { "unstaged:" .. stagable.filename } })
+                self:refresh { update_diffs = { "unstaged:" .. stagable.filename } }
               elseif section.options.section == "untracked" then
                 git.index.add { stagable.filename }
-                self:refresh({ update_diffs = { "untracked:" .. stagable.filename } })
+                self:refresh { update_diffs = { "untracked:" .. stagable.filename } }
               end
             end
           elseif section then
             if section.options.section == "untracked" then
               git.status.stage_untracked()
-              self:refresh({ update_diffs = { "untracked:*" } })
+              self:refresh { update_diffs = { "untracked:*" } }
             elseif section.options.section == "unstaged" then
               git.status.stage_modified()
-              self:refresh({ update_diffs = { "unstaged:*" } })
+              self:refresh { update_diffs = { "unstaged:*" } }
             end
           end
         end),
@@ -888,7 +888,7 @@ function M:open(kind, cwd)
         end),
         [mappings["StageUnstaged"]] = a.void(function()
           git.status.stage_modified()
-          self:refresh({ update_diffs = { "unstaged:*" } })
+          self:refresh { update_diffs = { "unstaged:*" } }
         end),
         [mappings["Unstage"]] = a.void(function()
           local unstagable = self.buffer.ui:get_hunk_or_filename_under_cursor()
@@ -910,19 +910,19 @@ function M:open(kind, cwd)
               )
 
               git.index.apply(patch, { cached = true, reverse = true })
-              self:refresh({ update_diffs = { "*:" .. item.escaped_path } })
+              self:refresh { update_diffs = { "*:" .. item.escaped_path } }
             elseif unstagable.filename then
               git.status.unstage { unstagable.filename }
-              self:refresh({ update_diffs = { "*:" .. unstagable.filename } })
+              self:refresh { update_diffs = { "*:" .. unstagable.filename } }
             end
           elseif section then
             git.status.unstage_all()
-            self:refresh({ update_diffs = { "staged:*" } })
+            self:refresh { update_diffs = { "staged:*" } }
           end
         end),
         [mappings["UnstageStaged"]] = a.void(function()
           git.status.unstage_all()
-          self:refresh({ update_diffs = { "staged:*" } })
+          self:refresh { update_diffs = { "staged:*" } }
         end),
         [mappings["GoToFile"]] = function()
           local item = self.buffer.ui:get_item_under_cursor()
