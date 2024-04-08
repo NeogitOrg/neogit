@@ -842,6 +842,16 @@ Actions:                                           *neogit_commit_popup_actions*
     Creates a new commit on the current branch from the currently staged
     changes.
 
+  • Absorb                                                *neogit_commit_absorb*
+    (Requires `https://github.com/tummychow/git-absorb`)
+
+    `git absorb` will automatically identify which commits are safe to modify,
+    and which staged changes belong to each of those commits. It will then
+    write fixup! commits for each of those changes.
+
+    The `--with-rebase` flag is passed, meaning these fixup commits will be
+    automatically integrated into the corresponding ones via rebase.
+
   • Extend                                                *neogit_commit_extend*
     Amends the last commit without editing the commit message.
 
