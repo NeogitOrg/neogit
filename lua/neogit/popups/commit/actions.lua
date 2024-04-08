@@ -149,4 +149,34 @@ function M.instant_squash(popup)
   commit_special(popup, "squash", { rebase = true, edit = false })
 end
 
+function M.absorb(popup)
+  if vim.fn.executable("git-absorb") == 0 then
+    notification.info("Absorb requires `https://github.com/tummychow/git-absorb` to be installed.")
+    return
+  end
+
+  if not git.status.anything_staged() then
+    if git.status.anything_unstaged() then
+      if input.get_permission("Nothing is staged. Absorb all unstaged changed?") then
+        git.status.stage_modified()
+      else
+        return
+      end
+    else
+      notification.warn("There are no changes that could be absorbed")
+      return
+    end
+  end
+
+  local commit = popup.state.env.commit or CommitSelectViewBuffer.new(
+    git.log.list { "HEAD" },
+    "Select a base commit for the absorb stack with <cr>, or <esc> to abort"
+  ):open_async()[1]
+  if not commit then
+    return
+  end
+
+  -- git.cli.absorb.verbose.base(commit).call()
+end
+
 return M
