@@ -176,7 +176,7 @@ function M.absorb(popup)
     return
   end
 
-  -- git.cli.absorb.verbose.base(commit).call()
+  git.cli.absorb.verbose.base(commit).and_rebase.call()
 end
 
 return M
