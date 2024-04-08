@@ -1,6 +1,7 @@
 -- Adapted from https://github.com/lewis6991/gitsigns.nvim/blob/main/lua/gitsigns/watcher.lua#L103
 
 local logger = require("neogit.logger")
+local Path = require("plenary.path")
 
 ---@class Watcher
 ---@field git_root string
@@ -13,7 +14,7 @@ Watcher.__index = Watcher
 function Watcher.new(status_buffer, root)
   local instance = {
     status_buffer = status_buffer,
-    git_root = root,
+    git_root = Path.new(root):joinpath(".git"):absolute(),
     running = false,
     fs_event_handler = assert(vim.loop.new_fs_event()),
   }
