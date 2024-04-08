@@ -104,11 +104,6 @@ function M:open(kind, cwd)
 
       vim.o.autochdir = self.prev_autochdir
     end,
-    autocmds = {
-      ["BufEnter"] = function()
-        self:dispatch_refresh()
-      end,
-    },
     mappings = {
       v = {
         [mappings["Discard"]] = a.void(function()
