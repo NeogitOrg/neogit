@@ -135,6 +135,7 @@ local configurations = {
   diff = config {
     flags = {
       cached = "--cached",
+      stat = "--stat",
       shortstat = "--shortstat",
       patch = "--patch",
       name_only = "--name-only",

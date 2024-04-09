@@ -63,9 +63,12 @@ function M:open(kind)
     return message
   end
 
+  local filetype = filetypes[self.filename:match("[%u_]+$")] or "NeogitEditor"
+  local diff_view
+
   self.buffer = Buffer.create {
     name = self.filename,
-    filetype = filetypes[self.filename:match("[%u_]+$")] or "NeogitEditor",
+    filetype = filetype,
     load = true,
     buftype = "",
     kind = kind,
@@ -80,6 +83,10 @@ function M:open(kind)
       end
 
       require("neogit.process").defer_show_preview_buffers()
+
+      if diff_view then
+        diff_view:close()
+      end
     end,
     after = function(buffer)
       -- Populate help lines with mappings for buffer
@@ -142,6 +149,12 @@ function M:open(kind)
         vim.treesitter.start(buffer.handle, "gitcommit")
       else
         vim.cmd.source("$VIMRUNTIME/syntax/gitcommit.vim")
+      end
+
+      if filetype == "NeogitCommitMessage" then
+        diff_view = require("neogit.buffers.diff"):new()
+        diff_view:open()
+        buffer:focus()
       end
     end,
     mappings = {

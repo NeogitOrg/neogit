@@ -44,7 +44,7 @@ function M:open()
   self.buffer = Buffer.create {
     name = "NeogitDiffView",
     filetype = "NeogitDiffView",
-    kind = "split",
+    kind = "auto",
     context_highlight = true,
     mappings = {
       n = {
