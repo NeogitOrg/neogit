@@ -255,6 +255,44 @@ end
 
 return {
   parse = parse_diff,
+  staged_stats = function()
+    -- TODO: Use call instead of call_sync
+    local raw = git.cli.diff.no_ext_diff.cached.args("--stat").call_sync({ hidden = true }).stdout
+    local files = {}
+    local summary
+
+    local idx = 1
+    local function advance()
+      idx = idx + 1
+    end
+
+    local function peek()
+      return raw[idx]
+    end
+
+    while true do
+      local line = peek()
+
+      if line:match("^ %d+ file[s ]+changed,") then
+        summary = vim.trim(line)
+        break
+      else
+        table.insert(files, {
+          path = vim.trim(line:match("^ ([^ ]+)")),
+          changes = line:match("|%s+(%d+)"),
+          insertions = line:match("|%s+%d+ (%+*)"),
+          deletions = line:match("|%s+%d+ %+*(%-*)$"),
+        })
+
+        advance()
+      end
+    end
+
+    return {
+      summary = summary,
+      files = files,
+    }
+  end,
   register = function(meta)
     meta.update_diffs = function(repo, filter)
       filter = filter or false
