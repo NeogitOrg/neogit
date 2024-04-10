@@ -11,40 +11,37 @@ local api = vim.api
 --- @field close fun()
 --- @see Buffer
 --- @see Ui
-local M = {
-  instance = nil,
-}
-
+local M = {}
 M.__index = M
 
-function M:new()
+---@param header string
+---@return DiffBuffer
+function M:new(header)
   local instance = {
     buffer = nil,
+    header = header,
   }
 
   setmetatable(instance, self)
   return instance
 end
 
---- Closes the Diff
+--- Closes the DiffBuffer
 function M:close()
   if self.buffer then
     self.buffer:close()
     self.buffer = nil
   end
-
-  M.instance = nil
 end
 
 ---Opens the DiffBuffer
 ---If already open will close the buffer
+---@return DiffBuffer
 function M:open()
-  M.instance = self
-
   self.buffer = Buffer.create {
     name = "NeogitDiffView",
     filetype = "NeogitDiffView",
-    kind = "auto",
+    kind = "split",
     context_highlight = true,
     mappings = {
       n = {
@@ -101,12 +98,14 @@ function M:open()
         return item.diff
       end, git.repo.state.staged.items)
 
-      return ui.DiffView(stats, diffs)
+      return ui.DiffView(self.header, stats, diffs)
     end,
     after = function()
       vim.cmd("normal! zR")
     end,
   }
+
+  return self
 end
 
 return M
