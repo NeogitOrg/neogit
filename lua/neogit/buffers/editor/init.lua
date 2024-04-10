@@ -4,6 +4,8 @@ local input = require("neogit.lib.input")
 local util = require("neogit.lib.util")
 local git = require("neogit.lib.git")
 
+local DiffViewBuffer = require("neogit.buffers.diff")
+
 local pad = util.pad_right
 
 local M = {}
@@ -46,7 +48,7 @@ function M:open(kind)
 
   local message_index = 1
   local message_buffer = { { "" } }
-  local amend_header, footer
+  local amend_header, footer, diff_view
 
   local function reflog_message(index)
     return git.log.reflog_message(index - 2)
@@ -64,7 +66,6 @@ function M:open(kind)
   end
 
   local filetype = filetypes[self.filename:match("[%u_]+$")] or "NeogitEditor"
-  local diff_view
 
   self.buffer = Buffer.create {
     name = self.filename,
@@ -152,9 +153,7 @@ function M:open(kind)
       end
 
       if filetype == "NeogitCommitMessage" then
-        diff_view = require("neogit.buffers.diff"):new()
-        diff_view:open()
-        buffer:focus()
+        diff_view = DiffViewBuffer:new("Staged Changes"):open()
       end
     end,
     mappings = {
