@@ -803,7 +803,9 @@ local mt_builder = {
 ---@param line string
 local function handle_interactive_password_questions(p, line)
   process.hide_preview_buffers()
+
   logger.debug(string.format("Matching interactive cmd output: '%s'", line))
+
   if vim.startswith(line, "Are you sure you want to continue connecting ") then
     logger.debug("[CLI]: Confirming whether to continue with unauthenticated host")
     local prompt = line
