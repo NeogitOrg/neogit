@@ -705,12 +705,12 @@ function Buffer.create(config)
     logger.debug("[BUFFER:" .. buffer.handle .. "] Running buffer:call")
     -- Set fold styling for Neogit windows while preserving user styling
     vim.opt_local.winhl:append("Folded:NeogitFold")
-    -- vim.opt_local.fillchars:append("fold: ")
+    vim.opt_local.fillchars:append("fold: ")
 
-    -- -- Set signcolumn unless disabled by user settings
-    -- if not config.disable_signs then
-    --   vim.opt_local.signcolumn = "auto"
-    -- end
+    -- Set signcolumn unless disabled by user settings
+    if not config.disable_signs then
+      vim.opt_local.signcolumn = "auto"
+    end
   end)
 
   if config.context_highlight then
