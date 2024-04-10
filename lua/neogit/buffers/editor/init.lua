@@ -152,6 +152,9 @@ function M:open(kind)
         vim.cmd.source("$VIMRUNTIME/syntax/gitcommit.vim")
       end
 
+      vim.fn.matchadd("NeogitBranch", git.branch.current(), 100)
+      vim.fn.matchadd("NeogitRemote", git.branch.upstream(), 100)
+
       if filetype == "NeogitCommitMessage" then
         diff_view = DiffViewBuffer:new("Staged Changes"):open()
       end
