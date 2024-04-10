@@ -40,6 +40,10 @@ function M.setup(opts)
   signs.setup()
   state.setup()
   autocmds.setup()
+
+  if vim.fn.has("nvim-0.10") == 1 then
+    M.notification.info("The 'nightly' branch for Neogit provides support for nvim-0.10")
+  end
 end
 
 ---@alias Popup "cherry_pick" | "commit" | "branch" | "diff" | "fetch" | "log" | "merge" | "remote" | "pull" | "push" | "rebase" | "revert" | "reset" | "stash"
