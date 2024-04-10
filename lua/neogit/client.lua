@@ -34,10 +34,19 @@ end
 
 function M.get_envs_git_editor()
   local nvim_cmd = M.get_nvim_remote_editor()
-  return {
+
+  local env = {
     GIT_SEQUENCE_EDITOR = nvim_cmd,
     GIT_EDITOR = nvim_cmd,
   }
+
+  if os.getenv("NEOGIT_DEBUG") then
+    env.NEOGIT_LOG_LEVEL = "debug"
+    env.NEOGIT_LOG_FILE = "true"
+    env.NEOGIT_DEBUG = true
+  end
+
+  return env
 end
 
 --- Entry point for the headless client.
@@ -139,9 +148,11 @@ function M.wrap(cmd, opts)
     call_cmd = c.call_interactive
   end
 
+  logger.debug("[CLIENT] Calling editor command")
   local result = call_cmd { verbose = true }
 
   a.util.scheduler()
+  logger.debug("[CLIENT] DONE editor command")
 
   if result.code == 0 then
     if opts.msg.success then
