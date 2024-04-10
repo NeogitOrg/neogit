@@ -361,9 +361,9 @@ function M:open(kind, cwd)
           p { name = stash and stash:match("^stash@{%d+}") }
         end),
         [popups.mapping_for("DiffPopup")] = popups.open("diff", function(p)
-          local section = self.buffer.ui:get_selection().sections[1]
+          local section = self.buffer.ui:get_selection().section
           local item = self.buffer.ui:get_yankable_under_cursor()
-          p { section = { name = section }, item = { name = item } }
+          p { section = { name = section and section.name }, item = { name = item } }
         end),
         [popups.mapping_for("IgnorePopup")] = popups.open("ignore", function(p)
           p { paths = self.buffer.ui:get_filepaths_in_selection(), git_root = git.repo.git_root }
@@ -1100,10 +1100,10 @@ function M:open(kind, cwd)
           p { name = stash and stash:match("^stash@{%d+}") }
         end),
         [popups.mapping_for("DiffPopup")] = popups.open("diff", function(p)
-          local section = self.buffer.ui:get_selection().sections[1]
+          local section = self.buffer.ui:get_selection().section
           local item = self.buffer.ui:get_yankable_under_cursor()
           p {
-            section = { name = section },
+            section = { name = section and section.name },
             item = { name = item },
           }
         end),
@@ -1117,7 +1117,11 @@ function M:open(kind, cwd)
         [popups.mapping_for("HelpPopup")] = popups.open("help", function(p)
           -- Since any other popup can be launched from help, build an ENV for any of them.
           local path = self.buffer.ui:get_hunk_or_filename_under_cursor()
-          local section = self.buffer.ui:get_selection().sections[1]
+          local section = self.buffer.ui:get_selection().section
+          if section then
+            section = section.name
+          end
+
           local item = self.buffer.ui:get_yankable_under_cursor()
           local stash = self.buffer.ui:get_yankable_under_cursor()
           local commit = self.buffer.ui:get_commit_under_cursor()
