@@ -4,7 +4,8 @@ Author: TimUntersberger
 Maintainer: CKolkey
 License: MIT license {{{
 
-  Copyright (c) 2020 Karl Yngve Lervåg
+  Copyright (c) 2020-2023 TimUntersberger
+  Copyright (c) 2024-2025 CKolkey
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to
@@ -28,39 +29,43 @@ License: MIT license {{{
 ==============================================================================
 CONTENTS                                                       *neogit_contents*
 
-    1. Intro                                                     |neogit_intro|
-    2. Commands                                               |neogit_commands|
-    3. Mappings                                               |neogit_mappings|
-    4. Highlights                                           |neogit_highlights|
-    5. API                                                         |neogit_api|
-    6. Popups                                                   |neogit_popups|
-       • Branch                                           |neogit_branch_popup|
-       • Branch Config                             |neogit_branch_config_popup|
-       • Cherry Pick                                 |neogit_cherry_pick_popup|
-       • Commit                                           |neogit_commit_popup|
-       • Diff                                               |neogit_diff_popup|
-       • Fetch                                             |neogit_fetch_popup|
-       • Ignore                                           |neogit_ignore_popup|
-       • Log                                                 |neogit_log_popup|
-       • Merge                                             |neogit_merge_popup|
-       • Pull                                               |neogit_pull_popup|
-       • Push                                               |neogit_push_popup|
-       • Rebase                                           |neogit_rebase_popup|
-       • Remote                                           |neogit_remote_popup|
-       • Remote Config                             |neogit_remote_config_popup|
-       • Reset                                             |neogit_reset_popup|
-       • Revert                                           |neogit_revert_popup|
-       • Stash                                             |neogit_stash_popup|
-       • Tag                                                 |neogit_tag_popup|
-       • Worktree                                       |neogit_worktree_popup|
+    1. Intro                                                      |neogit_intro|
+    2. Commands                                                |neogit_commands|
+    3. Mappings                                                |neogit_mappings|
+    4. Highlights                                            |neogit_highlights|
+    5. API                                                          |neogit_api|
+    6. Usage                                                      |neogit_usage|
 
-    7. Buffers                                                 |neogit_buffers|
-       • Status                                          |neogit_status_buffer|
-       • Editor                                          |neogit_editor_buffer|
-       • Log                                                |neogit_log_buffer|
-       • Reflog                                          |neogit_reflog_buffer|
-       • Commit                                          |neogit_commit_buffer|
-       • Rebase Todo                                |neogit_rebase_todo_buffer|
+    7. Popups                                                    *neogit_popups*
+       • Bisect                                            |neogit_bisect_popup|
+       • Branch                                            |neogit_branch_popup|
+       • Branch Config                              |neogit_branch_config_popup|
+       • Cherry Pick                                  |neogit_cherry_pick_popup|
+       • Commit                                            |neogit_commit_popup|
+       • Diff                                                |neogit_diff_popup|
+       • Fetch                                              |neogit_fetch_popup|
+       • Ignore                                            |neogit_ignore_popup|
+       • Log                                                  |neogit_log_popup|
+       • Merge                                              |neogit_merge_popup|
+       • Pull                                                |neogit_pull_popup|
+       • Push                                                |neogit_push_popup|
+       • Rebase                                            |neogit_rebase_popup|
+       • Remote                                            |neogit_remote_popup|
+       • Remote Config                              |neogit_remote_config_popup|
+       • Reset                                              |neogit_reset_popup|
+       • Revert                                            |neogit_revert_popup|
+       • Stash                                              |neogit_stash_popup|
+       • Tag                                                  |neogit_tag_popup|
+       • Worktree                                        |neogit_worktree_popup|
+
+    8. Buffers                                                  *neogit_buffers*
+       • Status                                           |neogit_status_buffer|
+       • Editor                                           |neogit_editor_buffer|
+       • Log                                                 |neogit_log_buffer|
+       • Reflog                                           |neogit_reflog_buffer|
+       • Refs                                               |neogit_refs_buffer|
+       • Commit                                           |neogit_commit_buffer|
+       • Rebase Todo                                 |neogit_rebase_todo_buffer|
 
 ==============================================================================
 1. Intro                                                          *neogit_intro*
@@ -402,62 +407,14 @@ neogit.action({popup}, {action}, {args})                       *neogit.action()*
       • {args}   (table|nil)
         CLI arguments to pass to git command
 
+
 ==============================================================================
-6. Popups                                                        *neogit_popups*
+5. Usage                                                          *neogit_usage*
+(TODO)
 
-A Neogit popup is a client interface over a git subcommand or other
-git mechanism.
-
-                                                                 *neogit_branch*
-"branch"             see :Man git-branch or |neogit_branch_popup|
-
-                                                          *neogit_branch_config*
-"branch_config"      Common configuration for branch/repo
-
-                                                            *neogit_cherry_pick*
-"cherry_pick"        see :Man git-cherry-pick
-
-                                                                 *neogit_commit*
-"commit"             see :Man git-commit
-
-                                                                   *neogit_diff*
-"diff"               see :Man git-diff
-
-                                                                  *neogit_fetch*
-"fetch"              see :Man git-fetch
-
-                                                                   *neogit_help*
-"help"               Overview of different popups
-
-                                                                    *neogit_log*
-"log"                see :Man git-log
-
-                                                                  *neogit_merge*
-"merge"              see :Man git-merge
-
-                                                                   *neogit_pull*
-"pull"               see :Man git-pull
-
-                                                                   *neogit_push*
-"push"               see :Man git-push
-
-                                                                 *neogit_rebase*
-"rebase"             see :Man git-rebase
-
-                                                                 *neogit_remote*
-"remote"             see :Man git-remote
-
-                                                          *neogit_remote_config*
-"remote_config"      Common configuration for remote
-
-                                                                  *neogit_reset*
-"reset"              see :Man git-reset
-
-                                                                 *neogit_revert*
-"revert"             see :Man git-revert
-
-                                                                  *neogit_stash*
-"stash"              see :Man git-stash
+==============================================================================
+Bisect Popup                                               *neogit_bisect_popup*
+(TODO)
 
 ==============================================================================
 Cherry-Pick Popup                                     *neogit_cherry_pick_popup*
@@ -1448,16 +1405,6 @@ Actions:                                         *neogit_worktree_popup_actions*
 
 
 ==============================================================================
-7. Buffers                                                      *neogit_buffers*
-
-• Status                                                  |neogit_status_buffer|
-• Editor                                                  |neogit_editor_buffer|
-• Log                                                        |neogit_log_buffer|
-• Reflog                                                  |neogit_reflog_buffer|
-• Commit                                                  |neogit_commit_buffer|
-• Rebase Todo                                        |neogit_rebase_todo_buffer|
-
-==============================================================================
 Status Buffer                                             *neogit_status_buffer*
 (TODO)
 
@@ -1517,6 +1464,10 @@ Reflog Buffer                                             *neogit_reflog_buffer*
 
 ==============================================================================
 Commit Buffer                                             *neogit_commit_buffer*
+(TODO)
+
+==============================================================================
+Refs Buffer                                                 *neogit_refs_buffer*
 (TODO)
 
 ==============================================================================
