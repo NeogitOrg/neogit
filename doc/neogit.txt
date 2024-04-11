@@ -358,8 +358,9 @@ The following mappings can all be customized via the setup function.
 :NeogitResetState       Performs a full reset of saved flags for all popups.
 
 ==============================================================================
-3. Events                                                        *neogit_events*
+4. Events                                                        *neogit_events*
 (TODO)
+
 ==============================================================================
 5. Highlights                                                *neogit_highlights*
 
