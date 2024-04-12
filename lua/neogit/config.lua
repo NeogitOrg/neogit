@@ -450,6 +450,12 @@ function M.get_default_values()
         ["<tab>"] = "MultiselectToggleNext",
         ["<s-tab>"] = "MultiselectTogglePrevious",
         ["<c-j>"] = "NOP",
+        ["<ScrollWheelDown>"] = "ScrollWheelDown",
+        ["<ScrollWheelUp>"] = "ScrollWheelUp",
+        ["<ScrollWheelLeft>"] = "NOP",
+        ["<ScrollWheelRight>"] = "NOP",
+        ["<LeftMouse>"] = "MouseClick",
+        ["<2-LeftMouse>"] = "NOP",
       },
       popup = {
         ["?"] = "HelpPopup",
