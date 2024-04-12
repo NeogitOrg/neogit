@@ -631,6 +631,8 @@ function Buffer.create(config)
     buffer:set_window_option("foldlevel", 99)
     buffer:set_window_option("foldminlines", 0)
     buffer:set_window_option("foldtext", "")
+    buffer:set_window_option("listchars", "")
+    buffer:set_window_option("list", false)
 
     if vim.fn.has("nvim-0.10") == 1 then
       buffer:set_window_option("spell", false)
@@ -707,7 +709,6 @@ function Buffer.create(config)
     vim.opt_local.winhl:append("Folded:NeogitFold")
     vim.opt_local.fillchars:append("fold: ")
 
-    -- Set signcolumn unless disabled by user settings
     if not config.disable_signs then
       vim.opt_local.signcolumn = "auto"
     end
@@ -729,7 +730,9 @@ function Buffer.create(config)
         end
 
         local cursor = vim.fn.line(".")
-        for line = context.position.row_start, context.position.row_end do
+        local start = math.max(context.position.row_start, vim.fn.line("w0"))
+        local stop = math.min(context.position.row_end, vim.fn.line("w$"))
+        for line = start, stop do
           local line_hl = ("%s%s"):format(
             buffer.ui:get_line_highlight(line) or "NeogitDiffContext",
             line == cursor and "Cursor" or "Highlight"
