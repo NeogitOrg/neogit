@@ -139,6 +139,28 @@ function M:open()
             item = { name = item },
           }
         end),
+        ["j"] = function()
+          if vim.v.count > 0 then
+            vim.cmd("norm! " .. vim.v.count .. "j")
+          else
+            vim.cmd("norm! j")
+          end
+
+          if self.buffer:get_current_line()[1] == "  " then
+            vim.cmd("norm! j")
+          end
+        end,
+        ["k"] = function()
+          if vim.v.count > 0 then
+            vim.cmd("norm! " .. vim.v.count .. "k")
+          else
+            vim.cmd("norm! k")
+          end
+
+          if self.buffer:get_current_line()[1] == "  " then
+            vim.cmd("norm! k")
+          end
+        end,
         ["<esc>"] = require("neogit.lib.ui.helpers").close_topmost(self),
         [status_maps["Close"]] = require("neogit.lib.ui.helpers").close_topmost(self),
         [status_maps["GoToFile"]] = function()

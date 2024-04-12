@@ -205,6 +205,36 @@ function M:open()
         ["<tab>"] = function()
           pcall(vim.cmd, "normal! za")
         end,
+        ["j"] = function()
+          if vim.v.count > 0 then
+            vim.cmd("norm! " .. vim.v.count .. "j")
+          else
+            vim.cmd("norm! j")
+          end
+
+          while self.buffer:get_current_line()[1]:sub(1, 1) == " " do
+            if vim.fn.line(".") == vim.fn.line("$") then
+              break
+            end
+
+            vim.cmd("norm! j")
+          end
+        end,
+        ["k"] = function()
+          if vim.v.count > 0 then
+            vim.cmd("norm! " .. vim.v.count .. "k")
+          else
+            vim.cmd("norm! k")
+          end
+
+          while self.buffer:get_current_line()[1]:sub(1, 1) == " " do
+            if vim.fn.line(".") == 1 then
+              break
+            end
+
+            vim.cmd("norm! k")
+          end
+        end,
       },
     },
     render = function()
