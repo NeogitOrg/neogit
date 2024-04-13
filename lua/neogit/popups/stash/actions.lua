@@ -53,6 +53,10 @@ function M.drop(popup)
   use("drop", popup.state.env.stash)
 end
 
+function M.list(popup)
+  use("list", popup.state.env.stash)
+end
+
 M.rename = operation("stash_rename", function(popup)
   use("rename", popup.state.env.stash)
 end)
