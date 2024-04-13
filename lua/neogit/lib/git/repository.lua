@@ -187,7 +187,7 @@ function Repo.new(dir)
   for name, fn in pairs(instance.lib) do
     if name ~= "update_status" then
       table.insert(instance.updates, function()
-        logger.fmt_debug("[REPO]: Refreshing %s", name)
+        logger.debug(("[REPO]: Refreshing %s"):format(name))
         fn(instance.state)
       end)
     end
@@ -212,7 +212,7 @@ function Repo:refresh(opts)
 
   self.state.initialized = true
   opts = opts or {}
-  logger.fmt_info("[REPO]: Refreshing START (source: %s)", opts.source or "UNKNOWN")
+  logger.info(("[REPO]: Refreshing START (source: %s)"):format(opts.source or "UNKNOWN"))
 
   -- Needed until Process doesn't use vim.fn.*
   a.util.scheduler()
@@ -228,7 +228,7 @@ function Repo:refresh(opts)
         local filter = type(opts.partial[name]) == "table" and opts.partial[name]
 
         table.insert(tasks, function()
-          logger.fmt_debug("[REPO]: Refreshing %s", name)
+          logger.debug(("[REPO]: Refreshing %s"):format(name))
           fn(self.state, filter)
         end)
       end

@@ -1024,11 +1024,11 @@ function M.check_integration(name)
 
   if enabled == nil or enabled == "auto" then
     local success, _ = pcall(require, name)
-    logger.fmt_info("[CONFIG] Found auto integration '%s = %s'", name, success)
+    logger.info(("[CONFIG] Found auto integration '%s = %s'"):format(name, success))
     return success
   end
 
-  logger.fmt_info("[CONFIG] Found explicit integration '%s' = %s", name, enabled)
+  logger.info(("[CONFIG] Found explicit integration '%s' = %s"):format(name, enabled))
   return enabled
 end
 

@@ -128,7 +128,7 @@ function M:open(kind, cwd)
                 local hunks = self.buffer.ui:item_hunks(item, selection.first_line, selection.last_line, true)
 
                 if #hunks > 0 then
-                  logger.fmt_debug("Discarding %d hunks from %q", #hunks, item.name)
+                  logger.debug(("Discarding %d hunks from %q"):format(#hunks, item.name))
 
                   hunk_count = hunk_count + #hunks
                   if hunk_count > 1 then
@@ -139,7 +139,7 @@ function M:open(kind, cwd)
                     table.insert(patches, function()
                       local patch = git.index.generate_patch(item, hunk, hunk.from, hunk.to, true)
 
-                      logger.fmt_debug("Discarding Patch: %s", patch)
+                      logger.debug(("Discarding Patch: %s"):format(patch))
 
                       git.index.apply(patch, {
                         index = section.name == "staged",
@@ -149,7 +149,7 @@ function M:open(kind, cwd)
                   end
                 else
                   discard_message = ("Discard %s files?"):format(file_count)
-                  logger.fmt_debug("Discarding in section %s %s", section.name, item.name)
+                  logger.debug(("Discarding in section %s %s"):format(section.name, item.name))
 
                   if section.name == "untracked" then
                     table.insert(untracked_files, item.escaped_path)

@@ -58,10 +58,10 @@ function M.client()
   end
 
   local file_target = fn.fnamemodify(fn.argv()[1], ":p")
-  logger.fmt_debug("[CLIENT] File target: %s", file_target)
+  logger.debug(("[CLIENT] File target: %s"):format(file_target))
 
   local client = fn.serverstart()
-  logger.fmt_debug("[CLIENT] Client address: %s", client)
+  logger.debug(("[CLIENT] Client address: %s"):format(client))
 
   local lua_cmd = fmt('lua require("neogit.client").editor("%s", "%s")', file_target, client)
 
@@ -77,7 +77,7 @@ end
 ---@param target string Filename to open
 ---@param client string Address returned from vim.fn.serverstart()
 function M.editor(target, client)
-  logger.fmt_debug("[CLIENT] Invoked editor with target: %s, from: %s", target, client)
+  logger.debug(("[CLIENT] Invoked editor with target: %s, from: %s"):format(target, client))
   require("neogit.process").hide_preview_buffers()
 
   local rpc_client = RPC.create_connection(client)
