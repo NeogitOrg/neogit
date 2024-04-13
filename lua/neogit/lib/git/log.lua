@@ -512,7 +512,11 @@ M.branch_info = util.memoize(function(ref, remotes)
         end
         table.insert(result.remotes[name], remote)
       else
-        result.locals[name] = true
+        if name == "HEAD" then
+          result.locals["@"] = true
+        elseif name ~= "" then
+          result.locals[name] = true
+        end
       end
     end
   end
