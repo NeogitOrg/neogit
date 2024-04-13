@@ -83,7 +83,7 @@ function M:open(kind)
     status_column = " ",
     readonly = false,
     autocmds = {
-      ["BufWinLeave"] = function()
+      ["BufWinLeave"] = function() -- For :wq compatibility
         if diff_view then
           diff_view:close()
           diff_view = nil
