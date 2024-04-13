@@ -14,9 +14,6 @@ local function telescope_mappings(on_select, allow_multi, refocus_status)
   local actions = require("telescope.actions")
 
   local function close_action(prompt_bufnr)
-    -- Make sure to notify the caller that we aborted to avoid hanging on the async task forever
-    on_select(nil)
-
     actions.close(prompt_bufnr)
 
     if refocus_status then
@@ -62,7 +59,11 @@ local function telescope_mappings(on_select, allow_multi, refocus_status)
   return function(_, map)
     local commands = {
       ["Select"] = select_action,
-      ["Close"] = close_action,
+      ["Close"] = function(...)
+        -- Make sure to notify the caller that we aborted to avoid hanging on the async task forever
+        on_select(nil)
+        close_action(...)
+      end,
       ["Next"] = actions.move_selection_next,
       ["Previous"] = actions.move_selection_previous,
       ["NOP"] = actions.nop,
