@@ -249,7 +249,9 @@ function Buffer:close(force)
       local winid = fn.win_getid(winnr)
       local ok, _ = pcall(api.nvim_win_close, winid, force)
       if not ok then
-        vim.cmd("b#")
+        vim.schedule(function()
+          vim.cmd("b#")
+        end)
       end
     else
       api.nvim_buf_delete(self.handle, { force = force })
