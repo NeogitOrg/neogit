@@ -241,20 +241,20 @@ local SectionItemFile = function(section)
     end
 
     local mode_to_text = {
-      M = "Modified",
-      N = "New File",
-      A = "Added",
-      D = "Deleted",
-      C = "Copied",
-      U = "Updated",
-      R = "Renamed",
-      DD = "Unmerged",
-      AU = "Unmerged",
-      UD = "Unmerged",
-      UA = "Unmerged",
-      DU = "Unmerged",
-      AA = "Unmerged",
-      UU = "Unmerged",
+      M = "modified",
+      N = "new file",
+      A = "added",
+      D = "deleted",
+      C = "copied",
+      U = "updated",
+      R = "renamed",
+      DD = "unmerged",
+      AU = "unmerged",
+      UD = "unmerged",
+      UA = "unmerged",
+      DU = "unmerged",
+      AA = "unmerged",
+      UU = "unmerged",
       ["?"] = "", -- Untracked
     }
 
