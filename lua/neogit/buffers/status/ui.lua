@@ -158,8 +158,13 @@ local SectionTitleMerge = Component.new(function(props)
 end)
 
 local Section = Component.new(function(props)
+  local count
+  if props.count then
+    count = { text(" ("), text(#props.items), text(")") }
+  end
+
   return col.tag("Section")({
-    row(util.merge(props.title, { text(" ("), text(#props.items), text(")") })),
+    row(util.merge(props.title, count or {})),
     col(map(props.items, props.render)),
     EmptyLine(),
   }, {
@@ -574,6 +579,7 @@ function M.Status(state, config)
         },
         show_untracked and Section {
           title = SectionTitle { title = "Untracked files" },
+          count = true,
           render = SectionItemFile("untracked"),
           items = state.untracked.items,
           folded = config.sections.untracked.folded,
@@ -581,6 +587,7 @@ function M.Status(state, config)
         },
         show_unstaged and Section {
           title = SectionTitle { title = "Unstaged changes" },
+          count = true,
           render = SectionItemFile("unstaged"),
           items = state.unstaged.items,
           folded = config.sections.unstaged.folded,
@@ -588,13 +595,23 @@ function M.Status(state, config)
         },
         show_staged and Section {
           title = SectionTitle { title = "Staged changes" },
+          count = true,
           render = SectionItemFile("staged"),
           items = state.staged.items,
           folded = config.sections.staged.folded,
           name = "staged",
         },
+        show_stashes and Section {
+          title = SectionTitle { title = "Stashes" },
+          count = true,
+          render = SectionItemStash,
+          items = state.stashes.items,
+          folded = config.sections.stashes.folded,
+          name = "stashes",
+        },
         show_upstream_unpulled and Section {
           title = SectionTitleRemote { title = "Unpulled from", ref = state.upstream.ref },
+          count = true,
           render = SectionItemCommit,
           items = state.upstream.unpulled.items,
           folded = config.sections.unpulled_upstream.folded,
@@ -602,6 +619,7 @@ function M.Status(state, config)
         },
         show_pushRemote_unpulled and Section {
           title = SectionTitleRemote { title = "Unpulled from", ref = state.pushRemote.ref },
+          count = true,
           render = SectionItemCommit,
           items = state.pushRemote.unpulled.items,
           folded = config.sections.unpulled_pushRemote.folded,
@@ -609,6 +627,7 @@ function M.Status(state, config)
         },
         show_upstream_unmerged and Section {
           title = SectionTitleRemote { title = "Unmerged into", ref = state.upstream.ref },
+          count = true,
           render = SectionItemCommit,
           items = state.upstream.unmerged.items,
           folded = config.sections.unmerged_upstream.folded,
@@ -616,20 +635,15 @@ function M.Status(state, config)
         },
         show_pushRemote_unmerged and Section {
           title = SectionTitleRemote { title = "Unpushed to", ref = state.pushRemote.ref },
+          count = true,
           render = SectionItemCommit,
           items = state.pushRemote.unmerged.items,
           folded = config.sections.unmerged_pushRemote.folded,
           name = "pushRemote_unmerged",
         },
-        show_stashes and Section {
-          title = SectionTitle { title = "Stashes" },
-          render = SectionItemStash,
-          items = state.stashes.items,
-          folded = config.sections.stashes.folded,
-          name = "stashes",
-        },
-        show_recent and Section {
+        not show_upstream_unmerged and show_recent and Section {
           title = SectionTitle { title = "Recent Commits" },
+          count = false,
           render = SectionItemCommit,
           items = state.recent.items,
           folded = config.sections.recent.folded,
