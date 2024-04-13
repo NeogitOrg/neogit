@@ -245,6 +245,9 @@ function M.get_default_values()
     popup = {
       kind = "split",
     },
+    stash = {
+      kind = "split",
+    },
     signs = {
       hunk = { "", "" },
       item = { ">", "v" },
