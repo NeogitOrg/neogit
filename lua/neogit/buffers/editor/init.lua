@@ -22,6 +22,7 @@ local filetypes = {
 ---@class EditorBuffer
 ---@field filename string filename of buffer
 ---@field on_unload function callback invoked when buffer is unloaded
+---@field show_diff boolean show the diff view or not
 ---@field buffer Buffer
 ---@see Buffer
 
@@ -29,8 +30,9 @@ local filetypes = {
 ---@param filename string the filename of buffer
 ---@param on_unload function the event dispatched on buffer unload
 ---@return EditorBuffer
-function M.new(filename, on_unload)
+function M.new(filename, on_unload, show_diff)
   local instance = {
+    show_diff = show_diff,
     filename = filename,
     on_unload = on_unload,
     buffer = nil,
@@ -184,7 +186,7 @@ function M:open(kind)
         vim.fn.matchadd("NeogitRemote", git.branch.upstream(), 100)
       end
 
-      if filetype == "NeogitCommitMessage" then
+      if self.show_diff then
         logger.debug("[EDITOR] Opening Diffview for staged changes")
         diff_view = DiffViewBuffer:new("Staged Changes"):open()
       end
