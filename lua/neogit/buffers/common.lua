@@ -122,6 +122,7 @@ local highlight_for_signature = {
 
 M.CommitEntry = Component.new(function(commit, args)
   local ref = {}
+  local ref_last = {}
 
   local info = git.log.branch_info(commit.ref_name, git.remote.list())
 
@@ -129,7 +130,10 @@ M.CommitEntry = Component.new(function(commit, args)
   if args.decorate and commit.ref_name ~= "" then
     -- Render local only branches first
     for name, _ in pairs(info.locals) do
-      if info.remotes[name] == nil then
+      if name:match("^refs/") then
+        table.insert(ref_last, text(name, { highlight = "NeogitGraphGray" }))
+        table.insert(ref_last, text(" "))
+      elseif info.remotes[name] == nil then
         local branch_highlight = info.head == name and "NeogitBranchHead" or "NeogitBranch"
         table.insert(ref, text(name, { highlight = branch_highlight }))
         table.insert(ref, text(" "))
@@ -149,6 +153,8 @@ M.CommitEntry = Component.new(function(commit, args)
       table.insert(ref, text(name, { highlight = locally and branch_highlight or "NeogitRemote" }))
       table.insert(ref, text(" "))
     end
+
+    -- Render tags
     for _, tag in pairs(info.tags) do
       table.insert(ref, text(tag, { highlight = "NeogitTagName" }))
       table.insert(ref, text(" "))
@@ -228,7 +234,7 @@ M.CommitEntry = Component.new(function(commit, args)
             or "Comment",
         }),
         text(" "),
-      }, graph, { text(" ") }, ref, { text(commit.subject) }),
+      }, graph, { text(" ") }, ref, ref_last, { text(commit.subject) }),
       {
         virtual_text = {
           { " ", "Constant" },

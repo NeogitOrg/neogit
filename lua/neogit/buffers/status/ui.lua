@@ -293,11 +293,52 @@ local SectionItemStash = Component.new(function(item)
 end)
 
 local SectionItemCommit = Component.new(function(item)
-  return row({
-    text.highlight("Comment")(item.commit.abbreviated_commit),
-    text(" "),
-    text(item.commit.subject),
-  }, { oid = item.commit.oid, yankable = item.commit.oid, item = item })
+  local ref = {}
+  local ref_last = {}
+
+  if item.commit.ref_name ~= "" then
+    -- Render local only branches first
+    for name, _ in pairs(item.decoration.locals) do
+      if name:match("^refs/") then
+        table.insert(ref_last, text(name, { highlight = "NeogitGraphGray" }))
+        table.insert(ref_last, text(" "))
+      elseif item.decoration.remotes[name] == nil then
+        local branch_highlight = item.decoration.head == name and "NeogitBranchHead" or "NeogitBranch"
+        table.insert(ref, text(name, { highlight = branch_highlight }))
+        table.insert(ref, text(" "))
+      end
+    end
+
+    -- Render tracked (local+remote) branches next
+    for name, remotes in pairs(item.decoration.remotes) do
+      if #remotes == 1 then
+        table.insert(ref, text(remotes[1] .. "/", { highlight = "NeogitRemote" }))
+      end
+
+      if #remotes > 1 then
+        table.insert(ref, text("{" .. table.concat(remotes, ",") .. "}/", { highlight = "NeogitRemote" }))
+      end
+
+      local branch_highlight = item.decoration.head == name and "NeogitBranchHead" or "NeogitBranch"
+      local locally = item.decoration.locals[name] ~= nil
+      table.insert(ref, text(name, { highlight = locally and branch_highlight or "NeogitRemote" }))
+      table.insert(ref, text(" "))
+    end
+
+    -- Render tags
+    for _, tag in pairs(item.decoration.tags) do
+      table.insert(ref, text(tag, { highlight = "NeogitTagName" }))
+      table.insert(ref, text(" "))
+    end
+  end
+
+  return row(util.merge(
+    { text.highlight("Comment")(item.commit.abbreviated_commit) },
+    { text(" ") },
+    ref,
+    ref_last,
+    { text(item.commit.subject) }
+  ), { oid = item.commit.oid, yankable = item.commit.oid, item = item })
 end)
 
 local SectionItemRebase = Component.new(function(item)

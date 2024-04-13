@@ -411,12 +411,10 @@ function M.register(meta)
     state.recent = { items = {} }
 
     local count = config.values.status.recent_commit_count
-    if count < 1 then
-      return
+    if count > 0 then
+      state.recent.items =
+        util.filter_map(M.list({ "--max-count=" .. tostring(count) }, nil, {}, true), M.present_commit)
     end
-
-    local commits = M.list({ "--max-count=" .. tostring(count) }, nil, {}, true)
-    state.recent.items = util.filter_map(commits, M.present_commit)
   end
 end
 
@@ -435,6 +433,7 @@ end
 ---@class CommitItem
 ---@field name string
 ---@field oid string
+---@field decoration CommitBranchInfo
 ---@field commit CommitLogEntry[]
 
 ---@return nil|CommitItem
@@ -445,6 +444,7 @@ function M.present_commit(commit)
 
   return {
     name = string.format("%s %s", commit.abbreviated_commit, commit.subject or "<empty>"),
+    decoration = M.branch_info(commit.ref_name, git.remote.list()),
     oid = commit.oid,
     commit = commit,
   }
