@@ -80,6 +80,14 @@ function M:open(kind)
     modifiable = true,
     status_column = " ",
     readonly = false,
+    autocmds = {
+      ["BufWinLeave"] = function()
+        if diff_view then
+          diff_view:close()
+          diff_view = nil
+        end
+      end
+    },
     on_detach = function(buffer)
       logger.debug("[EDITOR] Cleaning Up")
       pcall(vim.treesitter.stop, buffer.handle)
@@ -94,6 +102,7 @@ function M:open(kind)
       if diff_view then
         logger.debug("[EDITOR] Closing diff view")
         diff_view:close()
+        diff_view = nil
       end
 
       logger.debug("[EDITOR] Done cleaning up")
