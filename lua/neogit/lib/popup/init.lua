@@ -312,22 +312,15 @@ function M:mappings()
             local permit = action_lock:acquire()
             logger.debug(string.format("[POPUP]: Invoking action %q of %s", key, self.state.name))
 
-            local act = function()
-              action.callback(self)
+            self:close()
+            action.callback(self)
+
+            if status.instance() then
+              logger.debug("[ACTION] Dispatching Refresh to Status Buffer")
+              status.instance():dispatch_refresh(nil, "action")
             end
 
-            local callback = function()
-              self:close()
-
-              if status.instance() then
-                logger.debug("[ACTION] Dispatching Refresh to Status Buffer")
-                status.instance():dispatch_refresh(nil, "action")
-              end
-
-              permit:forget()
-            end
-
-            a.run(act, callback)
+            permit:forget()
           end)
         end
       else
