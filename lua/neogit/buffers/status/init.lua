@@ -9,6 +9,8 @@ local logger = require("neogit.logger") -- TODO: Add logging
 local util = require("neogit.lib.util")
 
 local api = vim.api
+local fn = vim.fn
+local uv = vim.uv or vim.loop
 
 ---@class Semaphore
 ---@field permits number
