@@ -1,4 +1,5 @@
 local PopupBuilder = require("neogit.lib.popup.builder")
+local status = require("neogit.buffers.status")
 local Buffer = require("neogit.lib.buffer")
 local logger = require("neogit.logger")
 local util = require("neogit.lib.util")
@@ -231,6 +232,9 @@ function M:set_config(config)
   end
 end
 
+-- Allow user actions to be queued
+local action_lock = a.control.Semaphore.new(1)
+
 function M:mappings()
   local mappings = {
     n = {
@@ -303,11 +307,27 @@ function M:mappings()
         -- nothing
       elseif action.callback then
         for _, key in ipairs(action.keys) do
-          mappings.n[key] = function()
-            logger.debug(string.format("[POPUP]: Invoking action '%s' of %s", key, self.state.name))
-            action.callback(self)
-            self:close()
-          end
+          mappings.n[key] = a.void(function()
+            local permit = action_lock:acquire()
+            logger.debug(string.format("[POPUP]: Invoking action %q of %s", key, self.state.name))
+
+            local act = function()
+              action.callback(self)
+            end
+
+            local callback = function()
+              self:close()
+
+              if status.instance() then
+                logger.debug("[ACTION] Dispatching Refresh to Status Buffer")
+                status.instance():dispatch_refresh(nil, "action")
+              end
+
+              permit:forget()
+            end
+
+            a.run(act, callback)
+          end)
         end
       else
         for _, key in ipairs(action.keys) do

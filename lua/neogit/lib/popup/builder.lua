@@ -4,7 +4,6 @@ local state = require("neogit.lib.state")
 local util = require("neogit.lib.util")
 local notification = require("neogit.lib.notification")
 local logger = require("neogit.logger")
-local status = require("neogit.buffers.status")
 
 local M = {}
 
@@ -348,9 +347,6 @@ function M:config_if(cond, key, name, options)
   return self
 end
 
--- Allow user actions to be queued
-local action_lock = a.control.Semaphore.new(1)
-
 ---@param keys string|string[] Key or list of keys for the user to press that runs the action
 ---@param description string Description of action in UI
 ---@param callback function Function that gets run in async context
@@ -365,29 +361,14 @@ function M:action(keys, description, callback)
       notification.error(string.format("[POPUP] Duplicate key mapping %q", key))
       return self
     end
+
     self.state.keys[key] = true
-  end
-
-  local callback_fn
-  if callback then
-    callback_fn = a.void(function(...)
-      local permit = action_lock:acquire()
-      logger.debug(string.format("[ACTION] Running action from %s", self.state.name))
-
-      callback(...)
-      permit:forget()
-
-      if status.instance() then
-        logger.debug("[ACTION] Dispatching Refresh")
-        status.instance():dispatch_refresh(nil, "action")
-      end
-    end)
   end
 
   table.insert(self.state.actions[#self.state.actions], {
     keys = keys,
     description = description,
-    callback = callback_fn,
+    callback = callback,
   })
 
   return self
