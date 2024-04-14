@@ -337,13 +337,16 @@ local SectionItemCommit = Component.new(function(item)
     end
   end
 
-  return row(util.merge(
-    { text.highlight("Comment")(item.commit.abbreviated_commit) },
-    { text(" ") },
-    ref,
-    ref_last,
-    { text(item.commit.subject) }
-  ), { oid = item.commit.oid, yankable = item.commit.oid, item = item })
+  return row(
+    util.merge(
+      { text.highlight("Comment")(item.commit.abbreviated_commit) },
+      { text(" ") },
+      ref,
+      ref_last,
+      { text(item.commit.subject) }
+    ),
+    { oid = item.commit.oid, yankable = item.commit.oid, item = item }
+  )
 end)
 
 local SectionItemRebase = Component.new(function(item)
@@ -609,22 +612,6 @@ function M.Status(state, config)
           folded = config.sections.stashes.folded,
           name = "stashes",
         },
-        show_upstream_unpulled and Section {
-          title = SectionTitleRemote { title = "Unpulled from", ref = state.upstream.ref },
-          count = true,
-          render = SectionItemCommit,
-          items = state.upstream.unpulled.items,
-          folded = config.sections.unpulled_upstream.folded,
-          name = "upstream_unpulled",
-        },
-        show_pushRemote_unpulled and Section {
-          title = SectionTitleRemote { title = "Unpulled from", ref = state.pushRemote.ref },
-          count = true,
-          render = SectionItemCommit,
-          items = state.pushRemote.unpulled.items,
-          folded = config.sections.unpulled_pushRemote.folded,
-          name = "pushRemote_unpulled",
-        },
         show_upstream_unmerged and Section {
           title = SectionTitleRemote { title = "Unmerged into", ref = state.upstream.ref },
           count = true,
@@ -648,6 +635,22 @@ function M.Status(state, config)
           items = state.recent.items,
           folded = config.sections.recent.folded,
           name = "recent",
+        },
+        show_upstream_unpulled and Section {
+          title = SectionTitleRemote { title = "Unpulled from", ref = state.upstream.ref },
+          count = true,
+          render = SectionItemCommit,
+          items = state.upstream.unpulled.items,
+          folded = config.sections.unpulled_upstream.folded,
+          name = "upstream_unpulled",
+        },
+        show_pushRemote_unpulled and Section {
+          title = SectionTitleRemote { title = "Unpulled from", ref = state.pushRemote.ref },
+          count = true,
+          render = SectionItemCommit,
+          items = state.pushRemote.unpulled.items,
+          folded = config.sections.unpulled_pushRemote.folded,
+          name = "pushRemote_unpulled",
         },
       },
     },
