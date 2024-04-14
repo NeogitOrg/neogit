@@ -3,6 +3,7 @@ local git = require("neogit.lib.git")
 local process = require("neogit.process")
 local util = require("neogit.lib.util")
 local Path = require("plenary.path")
+local input = require("neogit.lib.input")
 
 local function config(setup)
   setup = setup or {}
@@ -799,62 +800,70 @@ local mt_builder = {
   end,
 }
 
+---@param line string
+---@return string
+local function handle_interactive_authenticity(line)
+  logger.debug("[CLI]: Confirming whether to continue with unauthenticated host")
+
+  local prompt = line
+  return input.get_user_input(
+    "The authenticity of the host can't be established." .. prompt .. "",
+    { cancel = "__CANCEL__" }
+  ) or "__CANCEL__"
+end
+
+---@param line string
+---@return string
+local function handle_interactive_username(line)
+  logger.debug("[CLI]: Asking for username")
+
+  local prompt = line:match("(.*:?):.*")
+  return input.get_user_input(prompt, { cancel = "__CANCEL__" }) or "__CANCEL__"
+end
+
+---@param line string
+---@return string
+local function handle_interactive_password(line)
+  logger.debug("[CLI]: Asking for password")
+
+  local prompt = line:match("(.*:?):.*")
+  return input.get_secret_user_input(prompt, { cancel = "__CANCEL__" }) or "__CANCEL__"
+end
+
 ---@param p Process
 ---@param line string
-local function handle_interactive_password_questions(p, line)
-  process.hide_preview_buffers()
-
+---@return boolean
+local function handle_line_interactive(p, line)
   logger.debug(string.format("Matching interactive cmd output: '%s'", line))
 
-  if vim.startswith(line, "Are you sure you want to continue connecting ") then
-    logger.debug("[CLI]: Confirming whether to continue with unauthenticated host")
-    local prompt = line
-    local value = vim.fn.input {
-      prompt = "The authenticity of the host can't be established. " .. prompt .. " ",
-      cancelreturn = "__CANCEL__",
-    }
-    if value ~= "__CANCEL__" then
-      logger.debug("[CLI]: Received answer")
-      p:send(value .. "\r\n")
-    else
+  local handler
+  if line:match("^Are you sure you want to continue connecting ") then
+    handler = handle_interactive_authenticity
+  elseif line:match("^Username for ") then
+    handler = handle_interactive_username
+  elseif line:match("^Enter passphrase")
+    or line:match("^Password for") then
+    handler = handle_interactive_password
+  end
+
+  if handler then
+    process.hide_preview_buffers()
+
+    local value = handler(line)
+    if value == "__CANCEL__" then
       logger.debug("[CLI]: Cancelling the interactive cmd")
       p:stop()
-    end
-  elseif vim.startswith(line, "Username for ") then
-    logger.debug("[CLI]: Asking for username")
-    local prompt = line:match("(.*:?):.*")
-    local value = vim.fn.input {
-      prompt = prompt .. " ",
-      cancelreturn = "__CANCEL__",
-    }
-    if value ~= "__CANCEL__" then
-      logger.debug("[CLI]: Received username")
-      p:send(value .. "\r\n")
     else
-      logger.debug("[CLI]: Cancelling the interactive cmd")
-      p:stop()
-    end
-  elseif vim.startswith(line, "Enter passphrase") or vim.startswith(line, "Password for") then
-    logger.debug("[CLI]: Asking for password")
-    local prompt = line:match("(.*:?):.*")
-    local value = vim.fn.inputsecret {
-      prompt = prompt .. " ",
-      cancelreturn = "__CANCEL__",
-    }
-    if value ~= "__CANCEL__" then
-      logger.debug("[CLI]: Received password")
+      logger.debug("[CLI]: Sending user input")
       p:send(value .. "\r\n")
-    else
-      logger.debug("[CLI]: Cancelling the interactive cmd")
-      p:stop()
     end
+
+    process.defer_show_preview_buffers()
+    return true
   else
     process.defer_show_preview_buffers()
     return false
   end
-
-  process.defer_show_preview_buffers()
-  return true
 end
 
 local function new_builder(subcommand)
@@ -932,7 +941,7 @@ local function new_builder(subcommand)
     call_interactive = function(options)
       local opts = options or {}
 
-      local handle_line = opts.handle_line or handle_interactive_password_questions
+      local handle_line = opts.handle_line or handle_line_interactive
       local p = to_process {
         verbose = opts.verbose,
         on_error = function(res)
