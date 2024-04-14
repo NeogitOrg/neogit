@@ -5,11 +5,20 @@ require "spec_helper"
 RSpec.describe "Branch Popup", :git, :nvim do
   describe "Variables" do
     describe "branch.<current>.description" do
-      it "can edit branch description"
+      it "can edit branch description" do
+        nvim.keys("bd")
+        nvim.keys("describe the branch<esc>")
+        nvim.keys(":wq<cr>")
+
+        expect(git.config("branch.master.description")).to eq("describe the branch\n")
+      end
     end
 
     describe "branch.<current>.{merge,remote}" do
-      it "can set the upstream for current branch"
+      fit "can set the upstream for current branch" do
+        nvim.keys("bu")
+        sleep 2
+      end
     end
 
     describe "branch.<current>.rebase" do
@@ -78,49 +87,51 @@ RSpec.describe "Branch Popup", :git, :nvim do
         ).to eq(git.revparse("master"))
       end
     end
-  end
 
-  describe "Checkout new spin-off" do
-    it "can create and checkout a spin-off branch"
-  end
-
-  describe "Checkout new worktree" do
-    it "can create and checkout a worktree"
-  end
-
-  describe "Create new branch" do
-    it "can create a new branch"
-  end
-
-  describe "Create new spin-off" do
-    it "can create a new spin-off"
-
-    context "when there are uncommitted changes" do
-      it "checks out the spun-off branch"
+    describe "Checkout new spin-off" do
+      it "can create and checkout a spin-off branch"
     end
-  end
 
-  describe "Create new worktree" do
-    it "can create a new worktree"
-  end
+    describe "Checkout new worktree" do
+      it "can create and checkout a worktree"
+    end
 
-  describe "Configure" do
-    it "Launches the configuration popup"
-  end
+    describe "Create new branch" do
+      it "can create a new branch" do
 
-  describe "Rename" do
-    it "can rename a branch"
-  end
+      end
+    end
 
-  describe "reset" do
-    it "can reset a branch"
-  end
+    describe "Create new spin-off" do
+      it "can create a new spin-off"
 
-  describe "delete" do
-    it "can delete a branch"
-  end
+      context "when there are uncommitted changes" do
+        it "checks out the spun-off branch"
+      end
+    end
 
-  describe "pull request" do
-    # Requires Neovim 0.10
+    describe "Create new worktree" do
+      it "can create a new worktree"
+    end
+
+    describe "Configure" do
+      it "Launches the configuration popup"
+    end
+
+    describe "Rename" do
+      it "can rename a branch"
+    end
+
+    describe "reset" do
+      it "can reset a branch"
+    end
+
+    describe "delete" do
+      it "can delete a branch"
+    end
+
+    describe "pull request" do
+      # Requires Neovim 0.10
+    end
   end
 end
