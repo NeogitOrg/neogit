@@ -1,9 +1,7 @@
-local a = require("plenary.async")
 local git = require("neogit.lib.git")
 local state = require("neogit.lib.state")
 local util = require("neogit.lib.util")
 local notification = require("neogit.lib.notification")
-local logger = require("neogit.logger")
 
 local M = {}
 
@@ -67,6 +65,29 @@ local M = {}
 ---@field description string
 ---@field callback function
 
+---@class PopupSwitchOpts
+---@field enabled boolean Controls if the switch should default to 'on' state
+---@field internal boolean Whether the switch is internal to neogit or should be included in the cli command. If `true` we don't include it in the cli command.
+---@field incompatible table A table of strings that represent other cli flags that this one cannot be used with
+---@field key_prefix string Allows overwriting the default '-' to toggle switch
+---@field cli_prefix string Allows overwriting the default '--' thats used to create the cli flag. Sometimes you may want to use '++' or '-'.
+---@field cli_suffix string
+---@field options table
+---@field value string Allows for pre-building cli flags that can be customised by user input
+---@field user_input boolean If true, allows user to customise the value of the cli flag
+---@field dependant string[] other switches with a state dependency on this one
+
+---@class PopupOptionsOpts
+---@field key_prefix string Allows overwriting the default '=' to set option
+---@field cli_prefix string Allows overwriting the default '--' cli prefix
+---@field choices table Table of predefined choices that a user can select for option
+---@field default string|integer|boolean Default value for option, if the user attempts to unset value
+
+---@class PopupConfigOpts
+---@field options { display: string, value: string, config: function? }
+---@field passive boolean Controls if this config setting can be manipulated directly, or if it is managed by git, and should just be shown in UI
+--                        A 'condition' key with function value can also be present in the option, which controls if the option gets shown by returning boolean.
+
 function M.new(builder_fn)
   local instance = {
     state = {
@@ -95,17 +116,17 @@ function M:env(x)
   return self
 end
 
--- Adds new column to actions section of popup
----@param heading string|nil
+---Adds new column to actions section of popup
+---@param heading string?
 ---@return self
 function M:new_action_group(heading)
   table.insert(self.state.actions, { { heading = heading or "" } })
   return self
 end
 
--- Conditionally adds new column to actions section of popup
+---Conditionally adds new column to actions section of popup
 ---@param cond boolean
----@param heading string|nil
+---@param heading string?
 ---@return self
 function M:new_action_group_if(cond, heading)
   if cond then
@@ -115,7 +136,7 @@ function M:new_action_group_if(cond, heading)
   return self
 end
 
--- Adds new heading to current column within actions section of popup
+---Adds new heading to current column within actions section of popup
 ---@param heading string
 ---@return self
 function M:group_heading(heading)
@@ -138,16 +159,7 @@ end
 ---@param key string Which key triggers switch
 ---@param cli string Git cli flag to use
 ---@param description string Description text to show user
----@param opts table|nil A table of options for the switch
----@param opts.enabled boolean Controls if the switch should default to 'on' state
----@param opts.internal boolean Whether the switch is internal to neogit or should be included in the cli command.
---                              If `true` we don't include it in the cli command.
----@param opts.incompatible table A table of strings that represent other cli flags that this one cannot be used with
----@param opts.key_prefix string Allows overwriting the default '-' to toggle switch
----@param opts.cli_prefix string Allows overwriting the default '--' thats used to create the cli flag. Sometimes you may want
---                               to use '++' or '-'.
----@param opts.value string Allows for pre-building cli flags that can be customised by user input
----@param opts.user_input boolean If true, allows user to customise the value of the cli flag
+---@param opts PopupSwitchOpts?
 ---@return self
 function M:switch(key, cli, description, opts)
   opts = opts or {}
@@ -222,6 +234,10 @@ end
 -- Conditionally adds a switch.
 ---@see M:switch
 ---@param cond boolean
+---@param key string Which key triggers switch
+---@param cli string Git cli flag to use
+---@param description string Description text to show user
+---@param opts PopupSwitchOpts?
 ---@return self
 function M:switch_if(cond, key, cli, description, opts)
   if cond then
@@ -235,11 +251,6 @@ end
 ---@param cli string CLI value used
 ---@param value string Current value of option
 ---@param description string Description of option, presented to user
----@param opts table|nil
----@param opts.key_prefix string Allows overwriting the default '=' to set option
----@param opts.cli_prefix string Allows overwriting the default '--' cli prefix
----@param opts.choices table Table of predefined choices that a user can select for option
----@param opts.default string|integer|boolean Default value for option, if the user attempts to unset value
 function M:option(key, cli, value, description, opts)
   opts = opts or {}
 
@@ -282,7 +293,6 @@ end
 ---@param heading string Heading to show
 ---@return self
 function M:arg_heading(heading)
-  ---@type PopupHeading
   table.insert(self.state.args, { type = "heading", heading = heading })
   return self
 end
@@ -307,11 +317,7 @@ end
 
 ---@param key string Key for user to use that engages config
 ---@param name string Name of config
----@param options table|nil
----@param options.options table Table of tables, each consisting of `{ display = "", value = "" }`
---                              where 'display' is what is shown to the user, and 'value' is what gets used by the cli.
---                              A 'condition' key with function value can also be present in the option, which controls if the option gets shown by returning boolean.
----@param options.passive boolean Controls if this config setting can be manipulated directly, or if it is managed by git, and should just be shown in UI
+---@param options PopupConfigOpts?
 ---@return self
 function M:config(key, name, options)
   local entry = git.config.get(name)
