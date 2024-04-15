@@ -376,6 +376,7 @@ function M.get_default_values()
         ["s"] = "Stage",
         ["S"] = "StageUnstaged",
         ["<c-s>"] = "StageAll",
+        ["e"] = "StageEdit",
         ["u"] = "Unstage",
         ["U"] = "UnstageStaged",
         ["$"] = "CommandHistory",

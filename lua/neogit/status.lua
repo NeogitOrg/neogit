@@ -925,6 +925,34 @@ local stage = operation("stage", function()
   }, "stage_finish")
 end)
 
+local stage_edit = operation("stage_edit", function()
+  local selection = M.get_selection()
+  local files = {}
+
+  for _, section in ipairs(selection.sections) do
+    for _, item in ipairs(section.items) do
+      table.insert(files, item.name)
+    end
+  end
+
+  local client = require("neogit.client")
+  local result = git.status.stage_edit(files, client.get_envs_git_editor())
+
+  if result.code ~= 0 then
+    if not result.stdout[1]:match("^hint: Waiting for your editor to close the file%.%.%. error") then
+      notification.error("Staging failed. Patch did not apply.")
+    end
+  else
+    notification.info("Staged successfully!")
+  end
+
+  refresh({
+    update_diffs = vim.tbl_map(function(v)
+      return "*:" .. v.name
+    end, selection.items),
+  }, "stage_finish")
+end)
+
 local unstage = operation("unstage", function()
   local selection = M.get_selection()
   local mode = vim.api.nvim_get_mode()
@@ -1197,6 +1225,7 @@ local cmd_func_map = function()
     ["Toggle"] = toggle,
     ["Discard"] = { "nv", a.void(discard) },
     ["Stage"] = { "nv", a.void(stage) },
+    ["StageEdit"] = { "nv", a.void(stage_edit) },
     ["StageUnstaged"] = a.void(function()
       git.status.stage_modified()
       refresh({ update_diffs = true }, "StageUnstaged")

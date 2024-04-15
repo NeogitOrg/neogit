@@ -186,6 +186,9 @@ local status = {
   stage_all = function()
     git.cli.add.all.call()
   end,
+  stage_edit = function(files, env)
+    return git.cli.add.edit.files(unpack(files)).env(env).show_popup(true):in_pty(true).call()
+  end,
   unstage = function(files)
     git.cli.reset.files(unpack(files)).call()
   end,

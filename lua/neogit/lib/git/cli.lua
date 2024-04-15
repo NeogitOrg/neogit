@@ -292,6 +292,7 @@ local configurations = {
     flags = {
       update = "-u",
       all = "-A",
+      edit = "--edit",
     },
   },
 
