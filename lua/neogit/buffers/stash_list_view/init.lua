@@ -7,6 +7,15 @@ local status_maps = require("neogit.config").get_reversed_status_maps()
 local CommitViewBuffer = require("neogit.buffers.commit_view")
 
 local M = {}
+M.__index = M
+
+---Opens a popup for viewing all stashes
+function M.new(stashes)
+  local instance = {}
+
+  setmetatable(instance, M)
+  return instance
+end
 
 function M.close()
   self.buffer:close()

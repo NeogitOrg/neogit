@@ -2,6 +2,7 @@ local git = require("neogit.lib.git")
 local operation = require("neogit.operations")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
+local StashViewBuffer = require("neogit.buffers.stash_list_view")
 
 local M = {}
 
@@ -53,9 +54,13 @@ function M.drop(popup)
   use("drop", popup.state.env.stash)
 end
 
-M.list = operation("stash list", function(popup)
-  use("list", popup.state.env.stash)
-end)
+--- git stash list
+function M.list(popup)
+  -- This will create a buffer for git stash list
+  -- To build the buffer take example from
+  -- popups/log/actions.lua L36-40
+  StashViewBuffer:open()
+end
 
 M.rename = operation("stash_rename", function(popup)
   use("rename", popup.state.env.stash)

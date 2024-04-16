@@ -27,7 +27,6 @@ function M.create(stash)
     :action("a", "apply", actions.apply)
     :action("d", "drop", actions.drop)
     :new_action_group("Inspect")
-    -- Only way to add functionality is to add `actions.list` to `stash/actions.lua`
     :action("l", "List", actions.list)
     :action("v", "Show")
     :new_action_group("Transform")
