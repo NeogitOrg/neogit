@@ -1,17 +1,18 @@
 local Buffer = require("neogit.lib.buffer")
-local ui = require("neogit.buffers.log_view.ui")
 local config = require("neogit.config")
-local popups = require("neogit.popups")
-local notification = require("neogit.lib.notification")
-local status_maps = require("neogit.config").get_reversed_status_maps()
-local CommitViewBuffer = require("neogit.buffers.commit_view")
+local StashEntry = require("neogit.lib.git.stash")
 
+---@class StashListBuffer
+---@field stashes StashEntry[]
 local M = {}
 M.__index = M
 
 ---Opens a popup for viewing all stashes
+---@param stashes StashEntry[]
 function M.new(stashes)
-  local instance = {}
+  local instance = {
+    stashes = stashes
+  }
 
   setmetatable(instance, M)
   return instance
@@ -28,6 +29,7 @@ function M.open()
     filetype = "NeogitStashView",
     kind = config.values.stash.kind,
     context_higlight = true,
+    -- Include mapping to turn on options for git stash refer to git-log(1)
     mappings = {
         ["q"] = function()
           self:close()

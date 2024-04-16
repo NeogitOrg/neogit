@@ -5,6 +5,10 @@ local util = require("neogit.lib.util")
 
 local M = {}
 
+---@class StashEntry
+---@field stash_id string the id of the stash i.e. stash@{7}
+---@field message string the message associated with each stash.
+
 local function perform_stash(include)
   if not include then
     return
