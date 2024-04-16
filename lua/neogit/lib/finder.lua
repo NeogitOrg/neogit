@@ -69,10 +69,16 @@ local function telescope_mappings(on_select, allow_multi, refocus_status)
       ["NOP"] = actions.nop,
       ["MultiselectToggleNext"] = actions.toggle_selection + actions.move_selection_worse,
       ["MultiselectTogglePrevious"] = actions.toggle_selection + actions.move_selection_better,
-      ["ScrollWheelDown"] = actions.move_selection_next,
-      ["ScrollWheelUp"] = actions.move_selection_previous,
-      ["MouseClick"] = actions.mouse_click,
     }
+
+    -- Telescope HEAD has mouse click support, but not the latest tag. Need to check if the user has
+    -- support for mouse click, while avoiding the error that the metatable raises.
+    -- stylua: ignore
+    if pcall(function() return actions.mouse_click and true end) then
+      commands.ScrollWheelDown = actions.move_selection_next
+      commands.ScrollWheelUp = actions.move_selection_previous
+      commands.MouseClick = actions.mouse_click
+    end
 
     for mapping, command in pairs(config.values.mappings.finder) do
       if command and command:match("^Multiselect") then
