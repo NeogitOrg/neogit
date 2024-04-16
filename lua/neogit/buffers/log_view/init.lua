@@ -4,11 +4,16 @@ local config = require("neogit.config")
 local popups = require("neogit.popups")
 local status_maps = require("neogit.config").get_reversed_status_maps()
 local CommitViewBuffer = require("neogit.buffers.commit_view")
+local util = require("neogit.lib.util")
+local a = require("plenary.async")
 
 ---@class LogViewBuffer
 ---@field commits CommitLogEntry[]
 ---@field internal_args table
 ---@field files string[]
+---@field buffer Buffer
+---@field fetch_func fun(offset: number): CommitLogEntry[]
+---@field refresh_lock Semaphore
 local M = {}
 M.__index = M
 
@@ -16,18 +21,29 @@ M.__index = M
 ---@param commits CommitLogEntry[]|nil
 ---@param internal_args table|nil
 ---@param files string[]|nil list of files to filter by
+---@param fetch_func fun(offset: number): CommitLogEntry[]
 ---@return LogViewBuffer
-function M.new(commits, internal_args, files)
+function M.new(commits, internal_args, files, fetch_func)
   local instance = {
     files = files,
     commits = commits,
     internal_args = internal_args,
+    fetch_func = fetch_func,
     buffer = nil,
+    refresh_lock = a.control.Semaphore.new(1),
   }
 
   setmetatable(instance, M)
 
   return instance
+end
+
+function M:commit_count()
+  return #util.filter_map(self.commits, function(commit)
+    if commit.oid then
+      return 1
+    end
+  end)
 end
 
 function M:close()
@@ -202,6 +218,14 @@ function M:open()
           pcall(vim.cmd, "normal! zo")
           vim.cmd("normal! zz")
         end,
+        ["+"] = a.void(function()
+          local permit = self.refresh_lock:acquire()
+
+          self.commits = util.merge(self.commits, self.fetch_func(self:commit_count()))
+          self.buffer.ui:render(unpack(ui.View(self.commits, self.internal_args)))
+
+          permit:forget()
+        end),
         ["<tab>"] = function()
           pcall(vim.cmd, "normal! za")
         end,

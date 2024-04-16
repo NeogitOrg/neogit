@@ -24,44 +24,75 @@ local function commits(popup, flags)
   )
 end
 
+---@param popup table
+---@param flags table
+---@return fun(offset: number): CommitLogEntry[]
+local function fetch_more_commits(popup, flags)
+  return function(offset)
+    return commits(popup, util.merge(flags, { ("--skip=%s"):format(offset) }))
+  end
+end
+
 -- TODO: Handle when head is detached
 M.log_current = operation("log_current", function(popup)
-  LogViewBuffer.new(commits(popup, {}), popup:get_internal_arguments(), popup.state.env.files):open()
+  LogViewBuffer.new(
+    commits(popup, {}),
+    popup:get_internal_arguments(),
+    popup.state.env.files,
+    fetch_more_commits(popup, {})
+  ):open()
 end)
 
 function M.log_head(popup)
-  LogViewBuffer.new(commits(popup, { "HEAD" }), popup:get_internal_arguments(), popup.state.env.files):open()
+  local flags = { "HEAD" }
+  LogViewBuffer.new(
+    commits(popup, flags),
+    popup:get_internal_arguments(),
+    popup.state.env.files,
+    fetch_more_commits(popup, flags)
+  ):open()
 end
 
 function M.log_local_branches(popup)
+  local flags = { git.branch.is_detached() and "" or "HEAD", "--branches" }
   LogViewBuffer.new(
-    commits(popup, { git.branch.is_detached() and "" or "HEAD", "--branches" }),
+    commits(popup, flags),
     popup:get_internal_arguments(),
-    popup.state.env.files
+    popup.state.env.files,
+    fetch_more_commits(popup, flags)
   ):open()
 end
 
 function M.log_other(popup)
   local branch = FuzzyFinderBuffer.new(git.refs.list_branches()):open_async()
   if branch then
-    LogViewBuffer.new(commits(popup, { branch }), popup:get_internal_arguments(), popup.state.env.files)
-      :open()
+    local flags = { branch }
+    LogViewBuffer.new(
+      commits(popup, flags),
+      popup:get_internal_arguments(),
+      popup.state.env.files,
+      fetch_more_commits(popup, flags)
+    ):open()
   end
 end
 
 function M.log_all_branches(popup)
+  local flags = { git.branch.is_detached() and "" or "HEAD", "--branches", "--remotes" }
   LogViewBuffer.new(
-    commits(popup, { git.branch.is_detached() and "" or "HEAD", "--branches", "--remotes" }),
+    commits(popup, flags),
     popup:get_internal_arguments(),
-    popup.state.env.files
+    popup.state.env.files,
+    fetch_more_commits(popup, flags)
   ):open()
 end
 
 function M.log_all_references(popup)
+  local flags = { git.branch.is_detached() and "" or "HEAD", "--all" }
   LogViewBuffer.new(
-    commits(popup, { git.branch.is_detached() and "" or "HEAD", "--all" }),
+    commits(popup, flags),
     popup:get_internal_arguments(),
-    popup.state.env.files
+    popup.state.env.files,
+    fetch_more_commits(popup, flags)
   ):open()
 end
 
