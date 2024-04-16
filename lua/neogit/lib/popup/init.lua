@@ -55,7 +55,7 @@ function M:get_arguments()
       table.insert(flags, arg.cli_prefix .. arg.cli .. arg.cli_suffix)
     end
 
-    if arg.type == "option" and arg.cli ~= "" and #arg.value ~= 0 and not arg.internal then
+    if arg.type == "option" and arg.cli ~= "" and (arg.value and #arg.value ~= 0) and not arg.internal then
       table.insert(flags, arg.cli_prefix .. arg.cli .. "=" .. arg.value)
     end
   end
