@@ -1443,6 +1443,14 @@ Reset Popup                                                 *neogit_reset_popup*
 All actions will default to the commit under cursor if there is one, or prompt
 the user to select one if there is not.
 
+Variables:                                        *neogit_reset_popup_variables*
+  • neogit.resetThisTo                                    *neogit_reset_this_to*
+    When "Commit", will pass the commit hash to `git reset` unaltered. This has
+    the effect of resetting "to" the commit.
+
+    When "Parent", will append "^" to the commit hash when calling `git reset`.
+    This has the effect of resetting the commit itself.
+
 Actions:                                            *neogit_reset_popup_actions*
   • Mixed                                                   *neogit_reset_mixed*
     Resets the index but not the working tree (i.e., the changed files are

@@ -8,6 +8,12 @@ function M.create(env)
   local p = popup
     .builder()
     :name("NeogitResetPopup")
+    :config("R", "neogit.resetThisTo", {
+      options = {
+        { display = "Commit", value = "" },
+        { display = "Parent", value = "true" },
+      },
+    })
     :group_heading("Reset")
     :action("f", "file", actions.a_file)
     :action("b", "branch", branch_actions.reset_branch)

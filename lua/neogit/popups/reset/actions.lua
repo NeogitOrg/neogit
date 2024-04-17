@@ -19,6 +19,10 @@ local function commit(popup, prompt)
     end
   end
 
+  if git.config.get("neogit.resetThisTo"):read() then
+    commit = commit .. "^"
+  end
+
   return commit
 end
 
