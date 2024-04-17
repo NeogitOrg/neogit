@@ -57,27 +57,11 @@ end
 --- git stash list
 function M.list(popup)
   -- git stash list has its own options same as git log from git-log(1)
-  -- So after uses press `l`, a new popup should show with new options.
-  -- After the user selects options and stuff then show the output.
-  -- The output is shown in a buffer.
-  popup:close() -- from popups/diff/actions.lua
-
-  local p = popup
-    .builder()
-    :name("NeogitStashPopup")
-    :arg_heading("Options")
-    :option("f", "follow", { key_prefix = "-" })
-    :option("d", "decorate", { default = "no", user_input = true, key_prefix = "-"})
-    :group_heading("Grouping 2")
-    :action("t", "test")
-    :build()
-
-  p:show()
 
   -- To build the buffer take example from
   -- popups/log/actions.lua L36-40
   -- From `popups/branch/actions.lua`
-  StashViewBuffer:open()
+  StashViewBuffer:new():open()
 end
 
 M.rename = operation("stash_rename", function(popup)
