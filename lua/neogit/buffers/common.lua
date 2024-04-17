@@ -334,4 +334,12 @@ M.Grid = Component.new(function(props)
   return col(rendered)
 end)
 
+---Parses output of `git stash list` and splits elements into table
+M.Stash = Component.new(function(stash)
+  -- Sample output
+  -- { "stash@{0}: WIP on master: da897b8 Monday, 15th April 2024", "stash@{1}: WIP on remote: 8cf1149 Organization changes and templater script", "stash@{2}: WIP on master: da897b8 Monday, 15th A
+  -- pril 2024", "stash@{3}: WIP on (no branch): 8cf1149 Organization changes and templater script", "stash@{4}: WIP on master: da897b8 Monday, 15th April 2024", "stash@{5}: WIP on test: da897b8 M
+  -- onday, 15th April 2024", "stash@{6}: WIP on test: da897b8 Monday, 15th April 2024", "stash@{7}: WIP on master: da897b8 Monday, 15th April 2024" }
+end)
+
 return M
