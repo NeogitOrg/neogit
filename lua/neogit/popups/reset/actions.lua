@@ -11,16 +11,16 @@ local function commit(popup, prompt)
   local commit
   if popup.state.env.commit then
     commit = popup.state.env.commit
+
+    if git.config.get("neogit.resetThisTo"):read() then
+      commit = commit .. "^"
+    end
   else
     local commits = util.merge(git.refs.list_branches(), git.refs.list_tags(), git.refs.heads())
     commit = FuzzyFinderBuffer.new(commits):open_async { prompt_prefix = prompt }
     if not commit then
       return
     end
-  end
-
-  if git.config.get("neogit.resetThisTo"):read() then
-    commit = commit .. "^"
   end
 
   return commit

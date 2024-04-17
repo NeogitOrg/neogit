@@ -1451,6 +1451,9 @@ Variables:                                        *neogit_reset_popup_variables*
     When "Parent", will append "^" to the commit hash when calling `git reset`.
     This has the effect of resetting the commit itself.
 
+    Only applies when a commit is selected before launching the popup. Commits
+    chosen via the finder will be used unmodified, ignoring this setting.
+
 Actions:                                            *neogit_reset_popup_actions*
   • Mixed                                                   *neogit_reset_mixed*
     Resets the index but not the working tree (i.e., the changed files are

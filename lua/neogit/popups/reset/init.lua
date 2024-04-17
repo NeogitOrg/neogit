@@ -8,7 +8,7 @@ function M.create(env)
   local p = popup
     .builder()
     :name("NeogitResetPopup")
-    :config("R", "neogit.resetThisTo", {
+    :config_if(env.commit ~= nil, "R", "neogit.resetThisTo", {
       options = {
         { display = "Commit", value = "" },
         { display = "Parent", value = "true" },
