@@ -952,8 +952,13 @@ function M:open(kind, cwd)
             vim.schedule(function()
               vim.cmd("edit! " .. fn.fnameescape(item.absolute_path))
 
-              if cursor then
-                api.nvim_win_set_cursor(0, cursor)
+              local buf = Buffer.from_name(fn.fnameescape(item.absolute_path))
+              if self.user_statuscolumn then
+                buf:set_window_option("statuscolumn", self.user_statuscolumn)
+              end
+
+              if buf:is_focused() and cursor then
+                buf:move_cursor(cursor)
               end
             end)
 
@@ -994,8 +999,13 @@ function M:open(kind, cwd)
             end
 
             vim.cmd.tabedit(fn.fnameescape(item.absolute_path))
-            if cursor then
-              api.nvim_win_set_cursor(0, cursor)
+            local buf = Buffer.from_name(fn.fnameescape(item.absolute_path))
+            if self.user_statuscolumn then
+              buf:set_window_option("statuscolumn", self.user_statuscolumn)
+            end
+
+            if buf:is_focused() and cursor then
+              buf:move_cursor(cursor)
             end
           end
         end,
@@ -1027,8 +1037,13 @@ function M:open(kind, cwd)
             end
 
             vim.cmd.split(fn.fnameescape(item.absolute_path))
-            if cursor then
-              api.nvim_win_set_cursor(0, cursor)
+            local buf = Buffer.from_name(fn.fnameescape(item.absolute_path))
+            if self.user_statuscolumn then
+              buf:set_window_option("statuscolumn", self.user_statuscolumn)
+            end
+
+            if buf:is_focused() and cursor then
+              buf:move_cursor(cursor)
             end
           end
         end,
@@ -1060,8 +1075,13 @@ function M:open(kind, cwd)
             end
 
             vim.cmd.vsplit(fn.fnameescape(item.absolute_path))
-            if cursor then
-              api.nvim_win_set_cursor(0, cursor)
+            local buf = Buffer.from_name(fn.fnameescape(item.absolute_path))
+            if self.user_statuscolumn then
+              buf:set_window_option("statuscolumn", self.user_statuscolumn)
+            end
+
+            if buf:is_focused() and cursor then
+              buf:move_cursor(cursor)
             end
           end
         end,
@@ -1162,6 +1182,10 @@ function M:open(kind, cwd)
       },
     },
     initialize = function()
+      if vim.wo.statuscolumn ~= "" then
+        self.user_statuscolumn = vim.wo.statuscolumn
+      end
+
       self.prev_autochdir = vim.o.autochdir
       vim.o.autochdir = false
     end,

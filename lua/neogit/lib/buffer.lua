@@ -23,10 +23,12 @@ local Buffer = {
 Buffer.__index = Buffer
 
 ---@param handle number
+---@param win_handle number
 ---@return Buffer
-function Buffer:new(handle)
+function Buffer:new(handle, win_handle)
   local this = {
     handle = handle,
+    win_handle = win_handle,
     border = nil,
     mmanager = mappings_manager.new(handle),
     kind = nil, -- how the buffer was opened. For more information look at the create function
@@ -625,26 +627,6 @@ function Buffer.create(config)
     buffer:set_buffer_option("foldtext", "v:lua._G.NeogitFoldText()")
   end
 
-  if win then
-    logger.debug("[BUFFER:" .. buffer.handle .. "] Setting window options")
-
-    buffer:set_window_option("statuscolumn", config.status_column or "")
-    buffer:set_window_option("foldenable", true)
-    buffer:set_window_option("foldlevel", 99)
-    buffer:set_window_option("foldminlines", 0)
-    buffer:set_window_option("foldtext", "")
-    buffer:set_window_option("listchars", "")
-    buffer:set_window_option("list", false)
-
-    if vim.fn.has("nvim-0.10") == 1 then
-      buffer:set_window_option("spell", false)
-      buffer:set_window_option("wrap", false)
-      buffer:set_window_option("foldmethod", "manual")
-      -- TODO: Need to find a way to turn this off properly when unloading plugin
-      -- buffer:set_window_option("winfixbuf", true)
-    end
-  end
-
   if config.filetype then
     logger.debug("[BUFFER:" .. buffer.handle .. "] Setting filetype: " .. config.filetype)
     buffer:set_filetype(config.filetype)
@@ -672,6 +654,26 @@ function Buffer.create(config)
   if config.initialize then
     logger.debug("[BUFFER:" .. buffer.handle .. "] Initializing buffer")
     config.initialize(buffer, win)
+  end
+
+  if win then
+    logger.debug("[BUFFER:" .. buffer.handle .. "] Setting window options")
+
+    buffer:set_window_option("statuscolumn", config.status_column or "")
+    buffer:set_window_option("foldenable", true)
+    buffer:set_window_option("foldlevel", 99)
+    buffer:set_window_option("foldminlines", 0)
+    buffer:set_window_option("foldtext", "")
+    buffer:set_window_option("listchars", "")
+    buffer:set_window_option("list", false)
+
+    if vim.fn.has("nvim-0.10") == 1 then
+      buffer:set_window_option("spell", false)
+      buffer:set_window_option("wrap", false)
+      buffer:set_window_option("foldmethod", "manual")
+      -- TODO: Need to find a way to turn this off properly when unloading plugin
+      -- buffer:set_window_option("winfixbuf", true)
+    end
   end
 
   if config.render then
@@ -773,7 +775,9 @@ function Buffer.from_name(name)
     api.nvim_buf_set_name(buffer_handle, name)
   end
 
-  return Buffer:new(buffer_handle)
+  local window_handle = fn.win_findbuf(buffer_handle)
+
+  return Buffer:new(buffer_handle, window_handle[1])
 end
 
 return Buffer
