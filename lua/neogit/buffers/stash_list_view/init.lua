@@ -10,7 +10,7 @@ local ui = require("neogit.buffers.stash_list_view.ui")
 local M = {}
 M.__index = M
 
---- Gets all current stashes 
+--- Gets all current stashes
 function M.new()
   local instance = {
     stashes = git.stash.list()
@@ -27,7 +27,7 @@ end
 
 --- Creates a buffer populated with output of `git stash list`
 --- and supports related operations.
-function M.open()
+function M:open()
   self.buffer = Buffer.create {
     name = "NeogitStashListView",
     filetype = "NeogitStashView",
@@ -36,6 +36,7 @@ function M.open()
     -- Define the available mappings here. `git stash list` has the same options
     -- as `git log` refer to git-log(1) for more info.
     mappings = {
+      n = {
         ["q"] = function()
           self:close()
         end,
@@ -46,10 +47,13 @@ function M.open()
           -- Still looking for how to view a stash
           -- CommitViewBuffer.new(self.buffer.ui:get_commit_under_cursor(), self.files):open()
         end,
+      }
     },
+    after = function(buffer, win)
+    end,
     render = function()
       return ui.View(self.stashes)
-    end
+    end,
   }
 end
 
