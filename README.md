@@ -137,12 +137,7 @@ neogit.setup {
   -- Automatically show console if a command takes more than console_timeout milliseconds
   auto_show_console = true,
   status = {
-    -- Number of commits to show in recent commit section
     recent_commit_count = 10,
-    -- Can be "commit" or "parent". When "parent" is set and the reset popup is invoked with a commit selected/under
-    -- the cursor, the argument used will be suffixed with "^", resetting the index to the _parent_ commit of the target.
-    -- When left as "commit", it will perform like normal, resetting to the given commit.
-    reset_style = "commit",
   },
   commit_editor = {
     kind = "auto",

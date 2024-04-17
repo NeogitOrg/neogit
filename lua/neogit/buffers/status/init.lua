@@ -347,10 +347,6 @@ function M:open(kind, cwd)
         [popups.mapping_for("ResetPopup")] = popups.open("reset", function(p)
           local commits = self.buffer.ui:get_commits_in_selection()
           if #commits == 1 then
-            if config.values.status.reset_style == "parent" then
-              commits[1] = commits[1] .. "^"
-            end
-
             p { commit = commits[1] }
           end
         end),
@@ -1094,12 +1090,7 @@ function M:open(kind, cwd)
           p { commits = { self.buffer.ui:get_commit_under_cursor() } }
         end),
         [popups.mapping_for("ResetPopup")] = popups.open("reset", function(p)
-          local commit = self.buffer.ui:get_commit_under_cursor()
-          if commit and config.values.status.reset_style == "parent" then
-            commit = commit .. "^"
-          end
-
-          p { commit = commit }
+          p { commit = self.buffer.ui:get_commit_under_cursor() }
         end),
         [popups.mapping_for("TagPopup")] = popups.open("tag", function(p)
           p { commit = self.buffer.ui:get_commit_under_cursor() }

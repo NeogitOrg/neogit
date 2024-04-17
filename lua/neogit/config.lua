@@ -239,7 +239,7 @@ end
 ---@field show_head_commit_hash? boolean Show the commit hash for HEADs in the status buffer
 ---@field console_timeout? integer Time in milliseconds after a console is created for long running commands
 ---@field auto_show_console? boolean Automatically show the console if a command takes longer than console_timeout
----@field status? { recent_commit_count?: integer, reset_style?: "parent" | "commit" } Status buffer options
+---@field status? { recent_commit_count: integer } Status buffer options
 ---@field commit_editor? NeogitConfigPopup Commit editor options
 ---@field commit_select_view? NeogitConfigPopup Commit select view options
 ---@field commit_view? NeogitCommitBufferConfig Commit buffer options
@@ -302,7 +302,6 @@ function M.get_default_values()
     notification_icon = "󰊢",
     status = {
       recent_commit_count = 10,
-      reset_style = "commit",
     },
     commit_editor = {
       kind = "tab",
@@ -966,7 +965,6 @@ function M.validate_config()
     validate_type(config.auto_show_console, "auto_show_console", "boolean")
     if validate_type(config.status, "status", "table") then
       validate_type(config.status.recent_commit_count, "status.recent_commit_count", "number")
-      validate_type(config.status.reset_style, "status.reset_style", "string")
     end
     validate_signs()
     validate_trinary_auto(config.disable_insert_on_commit, "disable_insert_on_commit")
