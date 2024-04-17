@@ -35,6 +35,11 @@ end
 function M.get_choice(msg, options)
   local choice = vim.fn.confirm(msg, table.concat(options.values, "\n"), options.default)
   vim.cmd("redraw")
+
+  if choice == 0 then -- User cancelled
+    choice = options.default
+  end
+
   return options.values[choice]:match("&(.)")
 end
 
