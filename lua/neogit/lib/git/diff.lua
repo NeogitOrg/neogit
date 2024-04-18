@@ -271,6 +271,9 @@ return {
 
     while true do
       local line = peek()
+      if not line then
+        break
+      end
 
       if line:match("^ %d+ file[s ]+changed,") then
         summary = vim.trim(line)

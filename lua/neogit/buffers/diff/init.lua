@@ -5,12 +5,15 @@ local status_maps = require("neogit.config").get_reversed_status_maps()
 
 local api = vim.api
 
---- @class DiffBuffer
---- @field buffer Buffer
---- @field open fun(self, kind: string)
---- @field close fun()
---- @see Buffer
---- @see Ui
+---@class DiffBuffer
+---@field buffer Buffer
+---@field open fun(self, kind: string)
+---@field close fun()
+---@field stats table
+---@field diffs table
+---@field header string
+---@see Buffer
+---@see Ui
 local M = {}
 M.__index = M
 
@@ -20,6 +23,10 @@ function M:new(header)
   local instance = {
     buffer = nil,
     header = header,
+    stats = git.diff.staged_stats(),
+    diffs = vim.tbl_map(function(item)
+      return item.diff
+    end, git.repo.state.staged.items)
   }
 
   setmetatable(instance, self)
@@ -38,6 +45,10 @@ end
 ---If already open will close the buffer
 ---@return DiffBuffer
 function M:open()
+  if vim.tbl_isempty(self.stats.files) then
+    return self
+  end
+
   self.buffer = Buffer.create {
     name = "NeogitDiffView",
     filetype = "NeogitDiffView",
@@ -92,13 +103,7 @@ function M:open()
       },
     },
     render = function()
-      local stats = git.diff.staged_stats()
-
-      local diffs = vim.tbl_map(function(item)
-        return item.diff
-      end, git.repo.state.staged.items)
-
-      return ui.DiffView(self.header, stats, diffs)
+      return ui.DiffView(self.header, self.stats, self.diffs)
     end,
     after = function()
       vim.cmd("normal! zR")
