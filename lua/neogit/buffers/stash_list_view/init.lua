@@ -20,7 +20,7 @@ function M.new()
   return instance
 end
 
-function M.close()
+function M:close()
   self.buffer:close()
   self.buffer = nil
 end
@@ -49,8 +49,6 @@ function M:open()
         end,
       }
     },
-    after = function(buffer, win)
-    end,
     render = function()
       return ui.View(self.stashes)
     end,
