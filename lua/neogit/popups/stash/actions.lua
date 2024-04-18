@@ -2,7 +2,7 @@ local git = require("neogit.lib.git")
 local operation = require("neogit.operations")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
-local StashViewBuffer = require("neogit.buffers.stash_list_view")
+local StashListBuffer = require("neogit.buffers.stash_list_view")
 
 local M = {}
 
@@ -56,12 +56,7 @@ end
 
 --- git stash list
 function M.list(popup)
-  -- git stash list has its own options same as git log from git-log(1)
-
-  -- To build the buffer take example from
-  -- popups/log/actions.lua L36-40
-  -- From `popups/branch/actions.lua`
-  StashViewBuffer:new():open()
+  StashListBuffer.new():open()
 end
 
 M.rename = operation("stash_rename", function(popup)
