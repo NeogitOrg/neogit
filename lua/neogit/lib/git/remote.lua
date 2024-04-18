@@ -100,7 +100,7 @@ function M.parse(url)
       owner = path -- Strictly for backwards compatibility.
     end
 
-    repository = url:match([[/([^/]+)%.git]])
+    repository = url:match([[/([^/]+)%.git]]) or url:match([[/([^/]+)$]])
   end
 
   return {

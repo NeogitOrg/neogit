@@ -161,5 +161,19 @@ describe("lib.git.remote", function()
         user = "git",
       })
     end)
+
+    it("can parse 'https://github.com/my-org/myrepo' - no .git suffix", function()
+      local url = "https://github.com/my-org/myrepo"
+
+      assert.are.same(git.remote.parse(url), {
+        host = "github.com",
+        owner = "my-org",
+        protocol = "https",
+        repo = "myrepo",
+        repository = "myrepo",
+        path = "my-org",
+        url = "https://github.com/my-org/myrepo",
+      })
+    end)
   end)
 end)
