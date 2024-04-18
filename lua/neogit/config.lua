@@ -246,7 +246,7 @@ function M.get_default_values()
       kind = "split",
     },
     stash = {
-      kind = "split",
+      kind = "tab",
     },
     signs = {
       hunk = { "", "" },
