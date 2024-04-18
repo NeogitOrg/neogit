@@ -244,12 +244,12 @@ local SectionItemFile = function(section, config)
     local mode_text
     if mode == "" then
       mode_text = ""
-    else
+    elseif config.status.mode_padding > 0 then
       mode_text = util.pad_right(mode, util.max_length(vim.tbl_values(config.status.mode_text)) + config.status.mode_padding)
     end
 
     local name = item.original_name and ("%s -> %s"):format(item.original_name, item.name) or item.name
-    local highlight = ("NeogitChange%s"):format(mode:gsub(" ", ""))
+    local highlight = ("NeogitChange%s"):format(item.mode:gsub("%?", "Untracked"))
 
     return col.tag("Item")({
       row {
