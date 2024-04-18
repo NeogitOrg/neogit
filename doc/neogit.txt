@@ -388,6 +388,7 @@ NeogitUnpulledFrom          ^
 NeogitUntrackedfiles        ^
 NeogitUnstagedchanges       ^
 NeogitUnmergedchanges       ^
+NeogitUnpushedchanges       ^
 NeogitUnpulledchanges       ^
 NeogitRecentcommits         ^
 NeogitStagedchanges         ^
@@ -395,6 +396,8 @@ NeogitStashes               ^
 NeogitRebasing              ^
 NeogitReverting             ^
 NeogitPicking               ^
+NeogitMerging               ^
+NeogitBisecting             ^
 
 STATUS BUFFER FILE
 Applied to the label on the left of filenames.

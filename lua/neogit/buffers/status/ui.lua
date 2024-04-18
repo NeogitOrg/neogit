@@ -120,12 +120,12 @@ local Tag = Component.new(function(props)
 end)
 
 local SectionTitle = Component.new(function(props)
-  return { text.highlight("NeogitSectionHeader")(props.title) }
+  return { text.highlight(props.highlight or "NeogitSectionHeader")(props.title) }
 end)
 
 local SectionTitleRemote = Component.new(function(props)
   return {
-    text.highlight("NeogitSectionHeader")(props.title),
+    text.highlight(props.highlight or "NeogitSectionHeader")(props.title),
     text(" "),
     text.highlight("NeogitRemote")(props.ref),
   }
@@ -134,7 +134,7 @@ end)
 local SectionTitleRebase = Component.new(function(props)
   if props.onto then
     return {
-      text.highlight("NeogitSectionHeader")(props.title),
+      text.highlight(props.highlight or "NeogitSectionHeader")(props.title),
       text(" "),
       text.highlight("NeogitBranch")(props.head),
       text.highlight("NeogitSectionHeader")(" onto "),
@@ -142,7 +142,7 @@ local SectionTitleRebase = Component.new(function(props)
     }
   else
     return {
-      text.highlight("NeogitSectionHeader")(props.title),
+      text.highlight(props.highlight or "NeogitSectionHeader")(props.title),
       text(" "),
       text.highlight("NeogitBranch")(props.head),
     }
@@ -151,7 +151,7 @@ end)
 
 local SectionTitleMerge = Component.new(function(props)
   return {
-    text.highlight("NeogitSectionHeader")(props.title),
+    text.highlight(props.highlight or "NeogitSectionHeader")(props.title),
     text(" "),
     text.highlight("NeogitBranch")(props.branch),
   }
@@ -533,7 +533,7 @@ function M.Status(state, config)
         },
         EmptyLine(),
         show_merge and SequencerSection {
-          title = SectionTitleMerge { title = "Merging", branch = state.merge.branch },
+          title = SectionTitleMerge { title = "Merging", branch = state.merge.branch, highlight = "NeogitMerging" },
           render = SectionItemSequencer,
           items = { { action = "", oid = state.merge.head, subject = state.merge.subject } },
           folded = config.sections.sequencer.folded,
@@ -546,6 +546,7 @@ function M.Status(state, config)
             onto = state.rebase.onto.ref,
             oid = state.rebase.onto.oid,
             is_remote_ref = state.rebase.onto.is_remote,
+            highlight = "NeogitRebasing"
           },
           render = SectionItemRebase,
           current = state.rebase.current,
@@ -554,34 +555,34 @@ function M.Status(state, config)
           name = "rebase",
         },
         show_cherry_pick and SequencerSection {
-          title = SectionTitle { title = "Cherry Picking" },
+          title = SectionTitle { title = "Cherry Picking", highlight = "NeogitPicking" },
           render = SectionItemSequencer,
           items = util.reverse(state.sequencer.items),
           folded = config.sections.sequencer.folded,
           name = "cherry_pick",
         },
         show_revert and SequencerSection {
-          title = SectionTitle { title = "Reverting" },
+          title = SectionTitle { title = "Reverting", highlight = "NeogitReverting" },
           render = SectionItemSequencer,
           items = util.reverse(state.sequencer.items),
           folded = config.sections.sequencer.folded,
           name = "revert",
         },
         show_bisect and BisectDetailsSection {
+          title = SectionTitle { title = "Bisecting at", highlight = "NeogitBisecting" },
           commit = state.bisect.current,
-          title = SectionTitle { title = "Bisecting at" },
           folded = config.sections.bisect.folded,
           name = "bisect_details",
         },
         show_bisect and SequencerSection {
-          title = SectionTitle { title = "Bisecting Log" },
+          title = SectionTitle { title = "Bisecting Log", highlight = "NeogitBisecting" },
           render = SectionItemBisect,
           items = state.bisect.items,
           folded = config.sections.bisect.folded,
           name = "bisect",
         },
         show_untracked and Section {
-          title = SectionTitle { title = "Untracked files" },
+          title = SectionTitle { title = "Untracked files", highlight = "NeogitUntrackedfiles" },
           count = true,
           render = SectionItemFile("untracked"),
           items = state.untracked.items,
@@ -589,7 +590,7 @@ function M.Status(state, config)
           name = "untracked",
         },
         show_unstaged and Section {
-          title = SectionTitle { title = "Unstaged changes" },
+          title = SectionTitle { title = "Unstaged changes", highlight = "NeogitUnstagedchanges" },
           count = true,
           render = SectionItemFile("unstaged"),
           items = state.unstaged.items,
@@ -597,7 +598,7 @@ function M.Status(state, config)
           name = "unstaged",
         },
         show_staged and Section {
-          title = SectionTitle { title = "Staged changes" },
+          title = SectionTitle { title = "Staged changes", highlight = "NeogitStagedchanges" },
           count = true,
           render = SectionItemFile("staged"),
           items = state.staged.items,
@@ -605,7 +606,7 @@ function M.Status(state, config)
           name = "staged",
         },
         show_stashes and Section {
-          title = SectionTitle { title = "Stashes" },
+          title = SectionTitle { title = "Stashes", highlight = "NeogitStashes" },
           count = true,
           render = SectionItemStash,
           items = state.stashes.items,
@@ -613,7 +614,7 @@ function M.Status(state, config)
           name = "stashes",
         },
         show_upstream_unmerged and Section {
-          title = SectionTitleRemote { title = "Unmerged into", ref = state.upstream.ref },
+          title = SectionTitleRemote { title = "Unmerged into", ref = state.upstream.ref, highlight = "NeogitUnmergedchanges" },
           count = true,
           render = SectionItemCommit,
           items = state.upstream.unmerged.items,
@@ -621,7 +622,7 @@ function M.Status(state, config)
           name = "upstream_unmerged",
         },
         show_pushRemote_unmerged and Section {
-          title = SectionTitleRemote { title = "Unpushed to", ref = state.pushRemote.ref },
+          title = SectionTitleRemote { title = "Unpushed to", ref = state.pushRemote.ref, highlight = "NeogitUnpushedchanges" },
           count = true,
           render = SectionItemCommit,
           items = state.pushRemote.unmerged.items,
@@ -629,7 +630,7 @@ function M.Status(state, config)
           name = "pushRemote_unmerged",
         },
         not show_upstream_unmerged and show_recent and Section {
-          title = SectionTitle { title = "Recent Commits" },
+          title = SectionTitle { title = "Recent Commits", highlight = "NeogitRecentcommits" },
           count = false,
           render = SectionItemCommit,
           items = state.recent.items,
@@ -637,7 +638,7 @@ function M.Status(state, config)
           name = "recent",
         },
         show_upstream_unpulled and Section {
-          title = SectionTitleRemote { title = "Unpulled from", ref = state.upstream.ref },
+          title = SectionTitleRemote { title = "Unpulled from", ref = state.upstream.ref, highlight = "NeogitUnpulledchanges" },
           count = true,
           render = SectionItemCommit,
           items = state.upstream.unpulled.items,
@@ -645,7 +646,7 @@ function M.Status(state, config)
           name = "upstream_unpulled",
         },
         show_pushRemote_unpulled and Section {
-          title = SectionTitleRemote { title = "Unpulled from", ref = state.pushRemote.ref },
+          title = SectionTitleRemote { title = "Unpulled from", ref = state.pushRemote.ref, highlight = "NeogitUnpulledchanges" },
           count = true,
           render = SectionItemCommit,
           items = state.pushRemote.unpulled.items,
