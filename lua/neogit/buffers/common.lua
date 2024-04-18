@@ -219,7 +219,7 @@ M.CommitEntry = Component.new(function(commit, args)
       }, graph, { text(" ") }, ref, { text(commit.subject) }),
       {
         virtual_text = {
-          { " ", "Constant" },
+          { " ",                                     "Constant" },
           {
             util.str_clamp(commit.author_name, 30 - (#commit.rel_date > 10 and #commit.rel_date or 10)),
             "NeogitGraphAuthor",
@@ -335,11 +335,16 @@ M.Grid = Component.new(function(props)
 end)
 
 ---Parses output of `git stash list` and splits elements into table
-M.Stash = Component.new(function(stash)
-  -- Sample output
-  -- { "stash@{0}: WIP on master: da897b8 Monday, 15th April 2024", "stash@{1}: WIP on remote: 8cf1149 Organization changes and templater script", "stash@{2}: WIP on master: da897b8 Monday, 15th A
-  -- pril 2024", "stash@{3}: WIP on (no branch): 8cf1149 Organization changes and templater script", "stash@{4}: WIP on master: da897b8 Monday, 15th April 2024", "stash@{5}: WIP on test: da897b8 M
-  -- onday, 15th April 2024", "stash@{6}: WIP on test: da897b8 Monday, 15th April 2024", "stash@{7}: WIP on master: da897b8 Monday, 15th April 2024" }
+M.Stash = Component.new(function(stashes)
+  for _, stash in ipairs(stashes) do
+    local raw = util.split(stash, ":")
+    -- stash@{<num>}
+    local stash_id = raw[1]
+    -- WIP on <branch.: <commit> <msg>"
+    local stash_msg = raw[2] .. ":" .. raw[3]
+  end
+
+  return row(text("hi"))
 end)
 
 return M
