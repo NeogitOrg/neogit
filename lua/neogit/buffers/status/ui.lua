@@ -207,7 +207,7 @@ local RebaseSection = Component.new(function(props)
   })
 end)
 
-local SectionItemFile = function(section)
+local SectionItemFile = function(section, config)
   return Component.new(function(item)
     local load_diff = function(item)
       ---@param this Component
@@ -240,31 +240,12 @@ local SectionItemFile = function(section)
       end)
     end
 
-    local mode_to_text = {
-      M = "modified",
-      N = "new file",
-      A = "added",
-      D = "deleted",
-      C = "copied",
-      U = "updated",
-      R = "renamed",
-      DD = "unmerged",
-      AU = "unmerged",
-      UD = "unmerged",
-      UA = "unmerged",
-      DU = "unmerged",
-      AA = "unmerged",
-      UU = "unmerged",
-      ["?"] = "", -- Untracked
-    }
-
-    local mode = mode_to_text[item.mode]
-
+    local mode = config.status.mode_text[item.mode]
     local mode_text
     if mode == "" then
       mode_text = ""
     else
-      mode_text = util.pad_right(mode, 11)
+      mode_text = util.pad_right(mode, util.max_length(vim.tbl_values(config.status.mode_text)) + config.status.mode_padding)
     end
 
     local name = item.original_name and ("%s -> %s"):format(item.original_name, item.name) or item.name
@@ -584,7 +565,7 @@ function M.Status(state, config)
         show_untracked and Section {
           title = SectionTitle { title = "Untracked files", highlight = "NeogitUntrackedfiles" },
           count = true,
-          render = SectionItemFile("untracked"),
+          render = SectionItemFile("untracked", config),
           items = state.untracked.items,
           folded = config.sections.untracked.folded,
           name = "untracked",
@@ -592,7 +573,7 @@ function M.Status(state, config)
         show_unstaged and Section {
           title = SectionTitle { title = "Unstaged changes", highlight = "NeogitUnstagedchanges" },
           count = true,
-          render = SectionItemFile("unstaged"),
+          render = SectionItemFile("unstaged", config),
           items = state.unstaged.items,
           folded = config.sections.unstaged.folded,
           name = "unstaged",
@@ -600,7 +581,7 @@ function M.Status(state, config)
         show_staged and Section {
           title = SectionTitle { title = "Staged changes", highlight = "NeogitStagedchanges" },
           count = true,
-          render = SectionItemFile("staged"),
+          render = SectionItemFile("staged", config),
           items = state.staged.items,
           folded = config.sections.staged.folded,
           name = "staged",

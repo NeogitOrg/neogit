@@ -211,6 +211,11 @@ end
 ---| "ascii"
 ---| "unicode"
 
+---@class NeogitConfigStatusOptions
+---@field recent_commit_count? integer The number of recent commits to display
+---@field mode_padding? integer The amount of padding to add to the right of the mode column
+---@field mode_text? { [string]: string } The text to display for each mode
+
 ---@class NeogitConfigMappings Consult the config file or documentation for values
 ---@field finder? { [string]: NeogitConfigMappingsFinder } A dictionary that uses finder commands to set multiple keybinds
 ---@field status? { [string]: NeogitConfigMappingsStatus } A dictionary that uses status commands to set a single keybind
@@ -239,7 +244,7 @@ end
 ---@field show_head_commit_hash? boolean Show the commit hash for HEADs in the status buffer
 ---@field console_timeout? integer Time in milliseconds after a console is created for long running commands
 ---@field auto_show_console? boolean Automatically show the console if a command takes longer than console_timeout
----@field status? { recent_commit_count: integer } Status buffer options
+---@field status? NeogitConfigStatusOptions Status buffer options
 ---@field commit_editor? NeogitConfigPopup Commit editor options
 ---@field commit_select_view? NeogitConfigPopup Commit select view options
 ---@field commit_view? NeogitCommitBufferConfig Commit buffer options
@@ -302,6 +307,24 @@ function M.get_default_values()
     notification_icon = "󰊢",
     status = {
       recent_commit_count = 10,
+      mode_padding = 3,
+      mode_text = {
+        M = "modified",
+        N = "new file",
+        A = "added",
+        D = "deleted",
+        C = "copied",
+        U = "updated",
+        R = "renamed",
+        DD = "unmerged",
+        AU = "unmerged",
+        UD = "unmerged",
+        UA = "unmerged",
+        DU = "unmerged",
+        AA = "unmerged",
+        UU = "unmerged",
+        ["?"] = "",
+      },
     },
     commit_editor = {
       kind = "tab",
@@ -965,6 +988,8 @@ function M.validate_config()
     validate_type(config.auto_show_console, "auto_show_console", "boolean")
     if validate_type(config.status, "status", "table") then
       validate_type(config.status.recent_commit_count, "status.recent_commit_count", "number")
+      validate_type(config.status.mode_padding, "status.mode_padding", "number")
+      validate_type(config.status.mode_text, "status.mode_text", "table")
     end
     validate_signs()
     validate_trinary_auto(config.disable_insert_on_commit, "disable_insert_on_commit")
