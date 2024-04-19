@@ -29,7 +29,7 @@ end
 --- and supports related operations.
 function M:open()
   self.buffer = Buffer.create {
-    name = "NeogitStashListView",
+    name = "NeogitStashView",
     filetype = "NeogitStashView",
     kind = config.values.stash.kind,
     context_higlight = true,
