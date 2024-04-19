@@ -245,7 +245,10 @@ local SectionItemFile = function(section, config)
     if mode == "" then
       mode_text = ""
     elseif config.status.mode_padding > 0 then
-      mode_text = util.pad_right(mode, util.max_length(vim.tbl_values(config.status.mode_text)) + config.status.mode_padding)
+      mode_text = util.pad_right(
+        mode,
+        util.max_length(vim.tbl_values(config.status.mode_text)) + config.status.mode_padding
+      )
     end
 
     local name = item.original_name and ("%s -> %s"):format(item.original_name, item.name) or item.name
@@ -476,7 +479,6 @@ function M.Status(state, config)
 
   local show_recent = #state.recent.items > 0
     and not config.sections.recent.hidden
-  -- stylua: ignore end
 
   return {
     List {
@@ -514,7 +516,11 @@ function M.Status(state, config)
         },
         EmptyLine(),
         show_merge and SequencerSection {
-          title = SectionTitleMerge { title = "Merging", branch = state.merge.branch, highlight = "NeogitMerging" },
+          title = SectionTitleMerge {
+            title = "Merging",
+            branch = state.merge.branch,
+            highlight = "NeogitMerging",
+          },
           render = SectionItemSequencer,
           items = { { action = "", oid = state.merge.head, subject = state.merge.subject } },
           folded = config.sections.sequencer.folded,
@@ -527,7 +533,7 @@ function M.Status(state, config)
             onto = state.rebase.onto.ref,
             oid = state.rebase.onto.oid,
             is_remote_ref = state.rebase.onto.is_remote,
-            highlight = "NeogitRebasing"
+            highlight = "NeogitRebasing",
           },
           render = SectionItemRebase,
           current = state.rebase.current,
@@ -595,7 +601,11 @@ function M.Status(state, config)
           name = "stashes",
         },
         show_upstream_unmerged and Section {
-          title = SectionTitleRemote { title = "Unmerged into", ref = state.upstream.ref, highlight = "NeogitUnmergedchanges" },
+          title = SectionTitleRemote {
+            title = "Unmerged into",
+            ref = state.upstream.ref,
+            highlight = "NeogitUnmergedchanges",
+          },
           count = true,
           render = SectionItemCommit,
           items = state.upstream.unmerged.items,
@@ -603,7 +613,11 @@ function M.Status(state, config)
           name = "upstream_unmerged",
         },
         show_pushRemote_unmerged and Section {
-          title = SectionTitleRemote { title = "Unpushed to", ref = state.pushRemote.ref, highlight = "NeogitUnpushedchanges" },
+          title = SectionTitleRemote {
+            title = "Unpushed to",
+            ref = state.pushRemote.ref,
+            highlight = "NeogitUnpushedchanges",
+          },
           count = true,
           render = SectionItemCommit,
           items = state.pushRemote.unmerged.items,
@@ -619,7 +633,11 @@ function M.Status(state, config)
           name = "recent",
         },
         show_upstream_unpulled and Section {
-          title = SectionTitleRemote { title = "Unpulled from", ref = state.upstream.ref, highlight = "NeogitUnpulledchanges" },
+          title = SectionTitleRemote {
+            title = "Unpulled from",
+            ref = state.upstream.ref,
+            highlight = "NeogitUnpulledchanges",
+          },
           count = true,
           render = SectionItemCommit,
           items = state.upstream.unpulled.items,
@@ -627,7 +645,11 @@ function M.Status(state, config)
           name = "upstream_unpulled",
         },
         show_pushRemote_unpulled and Section {
-          title = SectionTitleRemote { title = "Unpulled from", ref = state.pushRemote.ref, highlight = "NeogitUnpulledchanges" },
+          title = SectionTitleRemote {
+            title = "Unpulled from",
+            ref = state.pushRemote.ref,
+            highlight = "NeogitUnpulledchanges",
+          },
           count = true,
           render = SectionItemCommit,
           items = state.pushRemote.unpulled.items,
@@ -638,5 +660,6 @@ function M.Status(state, config)
     },
   }
 end
+-- stylua: ignore end
 
 return M
