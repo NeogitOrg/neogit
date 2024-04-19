@@ -6,55 +6,56 @@ local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 local M = {}
 
 ---@param popup PopupData
+---@param prompt string
 ---@return string|nil
-local function commit(popup, prompt)
-  local commit
+local function target(popup, prompt)
+  local commit = {}
   if popup.state.env.commit then
-    commit = popup.state.env.commit
-
-    if git.config.get("neogit.resetThisTo"):read() then
-      commit = commit .. "^"
-    end
-  else
-    local commits = util.merge(git.refs.list_branches(), git.refs.list_tags(), git.refs.heads())
-    commit = FuzzyFinderBuffer.new(commits):open_async { prompt_prefix = prompt }
-    if not commit then
-      return
-    end
+    commit = { popup.state.env.commit, popup.state.env.commit .. "^" }
   end
 
-  return commit
+  local refs = util.merge(commit, git.refs.list_branches(), git.refs.list_tags(), git.refs.heads())
+  return FuzzyFinderBuffer.new(refs):open_async { prompt_prefix = prompt }
 end
 
+---@param type string
+---@param popup PopupData
+---@param prompt string
 local function reset(type, popup, prompt)
-  local target = commit(popup, prompt)
+  local target = target(popup, prompt)
   if target then
     git.reset[type](target)
   end
 end
 
+---@param popup PopupData
 function M.mixed(popup)
   reset("mixed", popup, ("Reset %s to"):format(git.branch.current()))
 end
 
+---@param popup PopupData
 function M.soft(popup)
   reset("soft", popup, ("Soft reset %s to"):format(git.branch.current()))
 end
 
+---@param popup PopupData
 function M.hard(popup)
   reset("hard", popup, ("Hard reset %s to"):format(git.branch.current()))
 end
 
+---@param popup PopupData
 function M.keep(popup)
   reset("keep", popup, ("Reset %s to"):format(git.branch.current()))
 end
 
+---@param popup PopupData
 function M.index(popup)
   reset("index", popup, "Reset index to")
 end
 
+---@param popup PopupData
 function M.worktree(popup)
-  local target = commit(popup, "Reset worktree to")
+  local target = target(popup, "Reset worktree to")
   if target then
     git.index.with_temp_index(target, function(index)
       git.cli["checkout-index"].all.force.env({ GIT_INDEX_FILE = index }).call()
@@ -63,8 +64,9 @@ function M.worktree(popup)
   end
 end
 
+---@param popup PopupData
 function M.a_file(popup)
-  local target = commit(popup, "Checkout from revision")
+  local target = target(popup, "Checkout from revision")
   if not target then
     return
   end
