@@ -12,7 +12,7 @@ local StashEntry = require("neogit.lib.git.stash").StashEntry
 local M = {}
 
 ---Parses output of `git stash list` and splits elements into table
-local M.Stash = Component.new(function(stashes)
+M.Stash = Component.new(function(stashes)
   local children = {}
   for _, stash in ipairs(stashes) do
     -- Split raw output as the stash_id is useful later.
