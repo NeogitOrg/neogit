@@ -336,15 +336,20 @@ end)
 
 ---Parses output of `git stash list` and splits elements into table
 M.Stash = Component.new(function(stashes)
+  local children = {}
   for _, stash in ipairs(stashes) do
+    -- Split raw output as the stash_id is useful later.
     local raw = util.split(stash, ":")
-    -- stash@{<num>}
-    local stash_id = raw[1]
-    -- WIP on <branch.: <commit> <msg>"
-    local stash_msg = raw[2] .. ":" .. raw[3]
+    local stash_id = raw[1] -- stash@{<num>}
+    local stash_msg = raw[2] .. ":" .. raw[3] -- WIP on <branch>: <commit> <msg>"
+    local entry = row({
+      text(stash_id), text(stash_msg)
+    })
+
+    table.insert(children, entry)
   end
 
-  return row(text("hi"))
+  return col(children)
 end)
 
 return M
