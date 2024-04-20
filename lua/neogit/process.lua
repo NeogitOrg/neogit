@@ -6,8 +6,10 @@ local config = require("neogit.config")
 local logger = require("neogit.logger")
 
 -- from: https://stackoverflow.com/questions/48948630/lua-ansi-escapes-pattern
+local pattern_1 = "[\27\155][][()#;?%d]*[A-PRZcf-ntqry=><~]"
+local pattern_2 = "[\r\n\04\08]"
 local function remove_escape_codes(s)
-  return s:gsub("[\27\155][][()#;?%d]*[A-PRZcf-ntqry=><~]", ""):gsub("[\r\n\04\08]", "")
+  return s:gsub(pattern_1, ""):gsub(pattern_2, "")
 end
 
 local command_mask =
