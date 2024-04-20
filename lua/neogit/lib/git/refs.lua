@@ -5,30 +5,30 @@ local util = require("neogit.lib.util")
 
 local M = {}
 
----@param namespaces? string[]
----@param format? string format string passed to `git for-each-ref`
----@param sortby? string sort by string passed to `git for-each-ref`
----@return table
+---@return fun(format?: string, sortby?: string, filter?: table): string[]
+local refs = util.memoize(function(format, sortby, filter)
+  return git.cli["for-each-ref"]
+    .format(format or "%(refname)")
+    .sort(sortby or config.values.sort_branches)
+    .arg_list(filter or {})
+    .call({ hidden = true }).stdout
+end)
+
+---@return string[]
 function M.list(namespaces, format, sortby)
-  return util.filter_map(
-    git.cli["for-each-ref"]
-      .format(format or "%(refname)")
-      .sort(sortby or config.values.sort_branches)
-      .call({ hidden = true }).stdout,
-    function(revision)
-      for _, namespace in ipairs(namespaces or { "refs/heads", "refs/remotes", "refs/tags" }) do
-        if revision:match("^" .. namespace) then
-          local name, _ = revision:gsub("^" .. namespace .. "/", "")
-          return name
-        end
-      end
-    end
-  )
+  local filter = util.map(namespaces or {}, function(namespace)
+    return namespace:sub(2, -1)
+  end)
+
+  return util.map(refs(format, sortby, filter), function(revision)
+    local name, _ = revision:gsub("^refs/[^/]*/", "")
+    return name
+  end)
 end
 
 ---@return string[]
 function M.list_tags()
-  return M.list { "refs/tags" }
+  return M.list { "^refs/tags/" }
 end
 
 ---@return string[]
@@ -38,13 +38,13 @@ end
 
 ---@return string[]
 function M.list_local_branches()
-  return M.list { "refs/heads" }
+  return M.list { "^refs/heads/" }
 end
 
 ---@param remote? string Filter branches by remote
 ---@return string[]
 function M.list_remote_branches(remote)
-  local remote_branches = M.list { "refs/remotes" }
+  local remote_branches = M.list { "^refs/remotes/" }
 
   if remote then
     return vim.tbl_filter(function(ref)
@@ -66,9 +66,7 @@ local record_template = record.encode({
 }, "ref")
 
 function M.list_parsed()
-  local refs =
-    git.cli["for-each-ref"].format(record_template).show_popup(false).call({ hidden = true }).stdout
-  local result = record.decode(refs)
+  local result = record.decode(refs(record_template))
 
   local output = {
     local_branch = {},
@@ -102,7 +100,7 @@ end
 
 -- TODO: Use in more places
 --- Determines what HEAD's exist in repo, and enumerates them
-function M.heads()
+M.heads = util.memoize(function()
   local heads = { "HEAD", "ORIG_HEAD", "FETCH_HEAD", "MERGE_HEAD", "CHERRY_PICK_HEAD" }
   local present = {}
   for _, head in ipairs(heads) do
@@ -112,6 +110,6 @@ function M.heads()
   end
 
   return present
-end
+end)
 
 return M
