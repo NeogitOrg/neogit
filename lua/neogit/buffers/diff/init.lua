@@ -26,7 +26,7 @@ function M:new(header)
     stats = git.diff.staged_stats(),
     diffs = vim.tbl_map(function(item)
       return item.diff
-    end, git.repo.state.staged.items)
+    end, git.repo.state.staged.items),
   }
 
   setmetatable(instance, self)
@@ -99,6 +99,9 @@ function M:open()
         end,
         [status_maps["Toggle"]] = function()
           pcall(vim.cmd, "normal! za")
+        end,
+        [status_maps["Close"]] = function()
+          self:close()
         end,
       },
     },
