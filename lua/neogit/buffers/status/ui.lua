@@ -94,7 +94,7 @@ local HEAD = Component.new(function(props)
 
   return row({
     text(util.pad_right(props.name .. ":", 10)),
-    text.highlight("Comment")(show_oid and oid or ""),
+    text.highlight("NeogitObjectId")(show_oid and oid or ""),
     text(show_oid and " " or ""),
     text.highlight(highlight)(ref),
     text(" "),
@@ -323,7 +323,7 @@ local SectionItemCommit = Component.new(function(item)
 
   return row(
     util.merge(
-      { text.highlight("Comment")(item.commit.abbreviated_commit) },
+      { text.highlight("NeogitObjectId")(item.commit.abbreviated_commit) },
       { text(" ") },
       ref,
       ref_last,
@@ -367,7 +367,7 @@ local SectionItemSequencer = Component.new(function(item)
   return row({
     text.highlight(action_hl)(action),
     text(show_action and " " or ""),
-    text.highlight("Comment")(item.abbreviated_commit),
+    text.highlight("NeogitObjectId")(item.abbreviated_commit),
     text(" "),
     text(item.subject),
   }, { yankable = item.oid, oid = item.oid })
@@ -387,7 +387,7 @@ local SectionItemBisect = Component.new(function(item)
     text(item.finished and "> " or "  "),
     text.highlight(highlight)(util.pad_right(item.action, 5)),
     text(" "),
-    text.highlight("Comment")(item.abbreviated_commit),
+    text.highlight("NeogitObjectId")(item.abbreviated_commit),
     text(" "),
     text(item.subject),
   }, { yankable = item.oid, oid = item.oid })
@@ -395,7 +395,7 @@ end)
 
 local BisectDetailsSection = Component.new(function(props)
   return col.tag("Section")({
-    row(util.merge(props.title, { text(" "), text.highlight("Comment")(props.commit.oid) })),
+    row(util.merge(props.title, { text(" "), text.highlight("NeogitObjectId")(props.commit.oid) })),
     row {
       text.highlight("Comment")("Author:     "),
       text((props.commit.author_name or "") .. " <" .. (props.commit.author_email or "") .. ">"),

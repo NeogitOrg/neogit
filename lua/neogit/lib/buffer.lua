@@ -531,7 +531,7 @@ function Buffer:set_header(text)
   -- Create a blank line at the top of the buffer so our floating window doesn't
   -- hide any content
   self:set_extmark(self:get_namespace_id("default"), 0, 0, {
-    virt_lines = { { { "", "Comment" } } },
+    virt_lines = { { { "", "NeogitObjectId" } } },
     virt_lines_above = true,
   })
 

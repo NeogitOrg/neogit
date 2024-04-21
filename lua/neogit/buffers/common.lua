@@ -231,7 +231,7 @@ M.CommitEntry = Component.new(function(commit, args)
       util.merge({
         text(commit.abbreviated_commit, {
           highlight = commit.verification_flag and highlight_for_signature[commit.verification_flag]
-            or "Comment",
+            or "NeogitObjectId",
         }),
         text(" "),
       }, graph, { text(" ") }, ref, ref_last, { text(commit.subject) }),

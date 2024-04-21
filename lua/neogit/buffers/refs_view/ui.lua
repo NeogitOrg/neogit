@@ -27,7 +27,7 @@ local function Cherries(ref, head)
     return row({
       text.highlight(highlights[cherry.status])(cherry.status),
       text(" "),
-      text.highlight("Comment")(cherry.oid:sub(1, git.log.abbreviated_size())),
+      text.highlight("NeogitObjectId")(cherry.oid:sub(1, git.log.abbreviated_size())),
       text(" "),
       text.highlight("NeogitGraphWhite")(cherry.subject),
     }, { oid = cherry.oid })

@@ -23,7 +23,7 @@ end
 
 local function commit_header_arg(info)
   if info.oid ~= info.commit_arg then
-    return row { text(info.commit_arg .. " "), text.highlight("Comment")(info.oid) }
+    return row { text(info.commit_arg .. " "), text.highlight("NeogitObjectId")(info.oid) }
   else
     return row {}
   end
