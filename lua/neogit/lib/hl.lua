@@ -188,7 +188,6 @@ function M.setup()
     NeogitObjectId = { link = "NeogitSubtleText" },
     NeogitStash = { link = "NeogitSubtleText" },
     NeogitRebaseDone = { link = "NeogitSubtleText" },
-    NeogitCursorLine = { bg = palette.bg1 },
     NeogitFold = { fg = "None", bg = "None" },
     NeogitChangeM = { link = "NeogitChangeModified" },
     NeogitChangeA = { link = "NeogitChangeAdded" },

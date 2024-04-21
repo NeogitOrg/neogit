@@ -424,15 +424,18 @@ SIGNS FOR LINE HIGHLIGHTING CURRENT CONTEXT
 These are essentially an accented version of the above highlight groups. Only
 applies to the current context the cursor is within.
 
+The "Cursor" suffix applies only to the Cursor line
+
 NeogitHunkHeaderHighlight
 NeogitDiffContextHighlight
 NeogitDiffAddHighlight
 NeogitDiffDeleteHighlight
 NeogitDiffHeaderHighlight
-
-NeogitCursorLine            Applies a "fake" cursorline highlight because
-                            signs will otherwise take precedence over normal
-                            CursorLine HL group
+NeogitHunkHeaderCursor
+NeogitDiffContextCursor
+NeogitDiffAddCursor
+NeogitDiffDeleteCursor
+NeogitDiffHeaderCursor
 
 COMMIT BUFFER
 NeogitFilePath              Applied to filepath
