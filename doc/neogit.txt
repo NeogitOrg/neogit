@@ -408,8 +408,8 @@ NeogitChangeDeleted
 NeogitChangeRenamed
 NeogitChangeUpdated
 NeogitChangeCopied
-NeogitChangeBothModified
 NeogitChangeNewFile
+NeogitChangeUnmerged
 
 SIGNS FOR LINE HIGHLIGHTING
 Used to highlight different sections of the status buffer or commit buffer.
