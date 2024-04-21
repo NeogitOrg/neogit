@@ -184,6 +184,7 @@ function M.setup()
     NeogitUnmergedInto = { fg = palette.bg_purple, bold = palette.bold },
     NeogitUnpushedTo = { fg = palette.bg_purple, bold = palette.bold },
     NeogitUnpulledFrom = { fg = palette.bg_purple, bold = palette.bold },
+    NeogitStatusHEAD = {},
     NeogitObjectId = { link = "NeogitSubtleText" },
     NeogitStash = { link = "NeogitSubtleText" },
     NeogitRebaseDone = { link = "NeogitSubtleText" },

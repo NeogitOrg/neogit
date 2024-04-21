@@ -93,7 +93,7 @@ local HEAD = Component.new(function(props)
   end
 
   return row({
-    text(util.pad_right(props.name .. ":", 10)),
+    text.highlight("NeogitStatusHEAD")(util.pad_right(props.name .. ":", 10)),
     text.highlight("NeogitObjectId")(show_oid and oid or ""),
     text(show_oid and " " or ""),
     text.highlight(highlight)(ref),

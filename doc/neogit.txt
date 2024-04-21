@@ -378,10 +378,10 @@ NeogitFold                  Folded text highlight
 NeogitRebaseDone            Current position within rebase
 NeogitTagName               Closest Tag name
 NeogitTagDistance           Number of commits between the tag and HEAD
+NeogitStatusHEAD            The left text in the HEAD section
 
 STATUS BUFFER SECTION HEADERS
 NeogitSectionHeader
-
 NeogitUnpushedTo            Linked to NeogitSectionHeader
 NeogitUnmergedInto          ^
 NeogitUnpulledFrom          ^
