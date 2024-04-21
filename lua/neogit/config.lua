@@ -214,6 +214,7 @@ end
 ---@class NeogitConfigStatusOptions
 ---@field recent_commit_count? integer The number of recent commits to display
 ---@field mode_padding? integer The amount of padding to add to the right of the mode column
+---@field HEAD_padding? integer The amount of padding to add to the right of the HEAD label
 ---@field mode_text? { [string]: string } The text to display for each mode
 
 ---@class NeogitConfigMappings Consult the config file or documentation for values
@@ -307,6 +308,7 @@ function M.get_default_values()
     notification_icon = "󰊢",
     status = {
       recent_commit_count = 10,
+      HEAD_padding = 10,
       mode_padding = 3,
       mode_text = {
         M = "modified",
@@ -989,6 +991,7 @@ function M.validate_config()
     if validate_type(config.status, "status", "table") then
       validate_type(config.status.recent_commit_count, "status.recent_commit_count", "number")
       validate_type(config.status.mode_padding, "status.mode_padding", "number")
+      validate_type(config.status.HEAD_padding, "status.HEAD_padding", "number")
       validate_type(config.status.mode_text, "status.mode_text", "table")
     end
     validate_signs()

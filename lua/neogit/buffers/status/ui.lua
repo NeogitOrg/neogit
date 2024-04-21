@@ -93,7 +93,7 @@ local HEAD = Component.new(function(props)
   end
 
   return row({
-    text.highlight("NeogitStatusHEAD")(util.pad_right(props.name .. ":", 10)),
+    text.highlight("NeogitStatusHEAD")(util.pad_right(props.name .. ": ", props.HEAD_padding)),
     text.highlight("NeogitObjectId")(show_oid and oid or ""),
     text(show_oid and " " or ""),
     text.highlight(highlight)(ref),
@@ -105,7 +105,7 @@ end)
 local Tag = Component.new(function(props)
   if props.distance then
     return row({
-      text(util.pad_right("Tag:", 10)),
+      text.highlight("NeogitStatusHEAD")(util.pad_right("Tag: ", props.HEAD_padding)),
       text.highlight("NeogitTagName")(props.name),
       text(" ("),
       text.highlight("NeogitTagDistance")(props.distance),
@@ -113,7 +113,7 @@ local Tag = Component.new(function(props)
     }, { yankable = props.yankable })
   else
     return row({
-      text(util.pad_right("Tag:", 10)),
+      text(util.pad_right("Tag: ", props.HEAD_padding)),
       text.highlight("NeogitTagName")(props.name),
     }, { yankable = props.yankable })
   end
@@ -492,6 +492,7 @@ function M.Status(state, config)
           msg = state.head.commit_message,
           yankable = state.head.oid,
           show_oid = config.show_head_commit_hash,
+          HEAD_padding = config.status.HEAD_padding,
         },
         show_upstream and HEAD {
           name = "Merge",
@@ -500,6 +501,7 @@ function M.Status(state, config)
           msg = state.upstream.commit_message,
           yankable = state.upstream.oid,
           show_oid = config.show_head_commit_hash,
+          HEAD_padding = config.status.HEAD_padding,
         },
         show_pushRemote and HEAD {
           name = "Push",
@@ -508,11 +510,13 @@ function M.Status(state, config)
           msg = state.pushRemote.commit_message,
           yankable = state.pushRemote.oid,
           show_oid = config.show_head_commit_hash,
+          HEAD_padding = config.status.HEAD_padding,
         },
         show_tag and Tag {
           name = state.head.tag.name,
           distance = show_tag_distance and state.head.tag.distance,
           yankable = state.head.tag.oid,
+          HEAD_padding = config.status.HEAD_padding,
         },
         EmptyLine(),
         show_merge and SequencerSection {
