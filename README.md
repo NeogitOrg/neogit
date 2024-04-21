@@ -138,6 +138,7 @@ neogit.setup {
   auto_show_console = true,
   status = {
     recent_commit_count = 10,
+    HEAD_padding = 10,
     mode_padding = 3,
     mode_text = {
       M = "modified",
