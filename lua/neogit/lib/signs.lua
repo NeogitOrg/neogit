@@ -1,10 +1,15 @@
 local config = require("neogit.config")
 local M = {}
 
-local signs = {}
+local signs = { NeogitBlank = " " }
 
 function M.get(name)
-  return signs[name]
+  local sign = signs[name]
+  if sign == "" then
+    return " "
+  else
+    return sign
+  end
 end
 
 function M.setup()

@@ -444,7 +444,11 @@ function Buffer:place_sign(line, name, opts)
 
   local ns_id = self:get_namespace_id(opts.namespace)
   if ns_id then
-    api.nvim_buf_set_extmark(self.handle, ns_id, line - 1, 0, { sign_text = signs.get(name) })
+    api.nvim_buf_set_extmark(self.handle, ns_id, line - 1, 0, {
+      sign_text = signs.get(name),
+      sign_hl_group = opts.highlight,
+      cursorline_hl_group = opts.cursor_hl,
+    })
   end
 end
 
@@ -587,6 +591,7 @@ end
 ---@field after function|nil
 ---@field on_detach function|nil
 ---@field render function|nil
+---@field foldmarkers boolean|nil
 
 ---@param config BufferConfig
 ---@return Buffer
@@ -659,7 +664,6 @@ function Buffer.create(config)
   if win then
     logger.debug("[BUFFER:" .. buffer.handle .. "] Setting window options")
 
-    buffer:set_window_option("statuscolumn", config.status_column or "")
     buffer:set_window_option("foldenable", true)
     buffer:set_window_option("foldlevel", 99)
     buffer:set_window_option("foldminlines", 0)
@@ -723,7 +727,7 @@ function Buffer.create(config)
     buffer:create_namespace("ViewContext")
     buffer:set_decorations("ViewContext", {
       on_start = function()
-        return buffer:exists() and buffer:is_focused()
+        return buffer:exists() and buffer:is_valid() and buffer:is_focused()
       end,
       on_win = function()
         buffer:clear_namespace("ViewContext")
@@ -733,9 +737,10 @@ function Buffer.create(config)
           return
         end
 
-        local cursor = vim.fn.line(".")
-        local start = math.max(context.position.row_start, vim.fn.line("w0"))
-        local stop = math.min(context.position.row_end, vim.fn.line("w$"))
+        local cursor = fn.line(".")
+        local start = math.max(context.position.row_start, fn.line("w0"))
+        local stop = math.min(context.position.row_end, fn.line("w$"))
+
         for line = start, stop do
           local line_hl = ("%s%s"):format(
             buffer.ui:get_line_highlight(line) or "NeogitDiffContext",
@@ -749,6 +754,42 @@ function Buffer.create(config)
         end
 
         buffer:flush_line_highlight_buffer()
+      end,
+    })
+  end
+
+  if config.foldmarkers then
+    logger.debug("[BUFFER:" .. buffer.handle .. "] Setting up foldmarkers")
+    buffer:create_namespace("FoldSigns")
+    buffer:set_decorations("FoldSigns", {
+      on_start = function()
+        return buffer:exists() and buffer:is_valid() and buffer:is_focused()
+      end,
+      on_win = function()
+        buffer:clear_namespace("FoldSigns")
+        local foldmarkers = buffer.ui.statuscolumn.foldmarkers
+        for line = fn.line("w0"), fn.line("w$") do
+          if foldmarkers[line] then
+            local fold
+
+            if fn.foldclosed(line) == -1 then
+              fold = "NeogitOpen"
+            else
+              fold = "NeogitClosed"
+            end
+
+            buffer:place_sign(line, fold .. string.lower(foldmarkers[line]), {
+              namespace = "FoldSigns",
+              highlight = "NeogitSubtleText",
+              cursor_hl = "NeogitCursorLine",
+            })
+          else
+            buffer:place_sign(line, "NeogitBlank", {
+              namespace = "FoldSigns",
+              cursor_hl = "NeogitCursorLine",
+            })
+          end
+        end
       end,
     })
   end

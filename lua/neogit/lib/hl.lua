@@ -148,6 +148,7 @@ function M.setup()
     NeogitSignatureGoodExpired    = { link = "NeogitGraphOrange" },
     NeogitSignatureGoodExpiredKey = { link = "NeogitGraphYellow" },
     NeogitSignatureGoodRevokedKey = { link = "NeogitGraphRed" },
+    NeogitCursorLine              = { link = "CursorLine" },
     NeogitHunkHeader              = { fg = palette.bg0, bg = palette.grey, bold = palette.bold },
     NeogitHunkHeaderHighlight     = { fg = palette.bg0, bg = palette.md_purple, bold = palette.bold },
     NeogitHunkHeaderCursor        = { fg = palette.bg0, bg = palette.md_purple, bold = palette.bold },

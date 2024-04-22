@@ -96,7 +96,7 @@ function M:open(kind, cwd)
     context_highlight = true,
     kind = kind or config.values.kind,
     disable_line_numbers = config.values.disable_line_numbers,
-    status_column = "%{%v:lua.require('neogit.buffers.status').eval_statuscolumn()%}",
+    foldmarkers = not config.values.disable_signs,
     on_detach = function()
       if self.watcher then
         self.watcher:stop()
@@ -953,10 +953,6 @@ function M:open(kind, cwd)
               vim.cmd("edit! " .. fn.fnameescape(item.absolute_path))
 
               local buf = Buffer.from_name(fn.fnameescape(item.absolute_path))
-              if self.user_statuscolumn then
-                buf:set_window_option("statuscolumn", self.user_statuscolumn)
-              end
-
               if buf:is_focused() and cursor then
                 buf:move_cursor(cursor)
               end
@@ -1000,10 +996,6 @@ function M:open(kind, cwd)
 
             vim.cmd.tabedit(fn.fnameescape(item.absolute_path))
             local buf = Buffer.from_name(fn.fnameescape(item.absolute_path))
-            if self.user_statuscolumn then
-              buf:set_window_option("statuscolumn", self.user_statuscolumn)
-            end
-
             if buf:is_focused() and cursor then
               buf:move_cursor(cursor)
             end
@@ -1038,10 +1030,6 @@ function M:open(kind, cwd)
 
             vim.cmd.split(fn.fnameescape(item.absolute_path))
             local buf = Buffer.from_name(fn.fnameescape(item.absolute_path))
-            if self.user_statuscolumn then
-              buf:set_window_option("statuscolumn", self.user_statuscolumn)
-            end
-
             if buf:is_focused() and cursor then
               buf:move_cursor(cursor)
             end
@@ -1076,10 +1064,6 @@ function M:open(kind, cwd)
 
             vim.cmd.vsplit(fn.fnameescape(item.absolute_path))
             local buf = Buffer.from_name(fn.fnameescape(item.absolute_path))
-            if self.user_statuscolumn then
-              buf:set_window_option("statuscolumn", self.user_statuscolumn)
-            end
-
             if buf:is_focused() and cursor then
               buf:move_cursor(cursor)
             end
@@ -1182,10 +1166,6 @@ function M:open(kind, cwd)
       },
     },
     initialize = function()
-      if vim.wo.statuscolumn ~= "" then
-        self.user_statuscolumn = vim.wo.statuscolumn
-      end
-
       self.prev_autochdir = vim.o.autochdir
       vim.o.autochdir = false
     end,
@@ -1325,41 +1305,6 @@ function M:_get_refresh_lock(reason)
   end, 10000)
 
   return permit
-end
-
-local function fold_opened()
-  return vim.fn.foldclosed(vim.v.lnum) == -1
-end
-
-function M.eval_statuscolumn()
-  if config.values.disable_signs and config.values.disable_line_numbers then
-    return " "
-  elseif config.values.disable_signs and not config.values.disable_line_numbers then
-    return "%l%r "
-  end
-
-  if not M.is_open() then
-    return " "
-  end
-
-  local foldmarkers = M.instance().buffer.ui.statuscolumn.foldmarkers
-
-  local fold
-  if foldmarkers[vim.v.lnum] then
-    if fold_opened() then
-      fold = config.values.signs[string.lower(foldmarkers[vim.v.lnum])][2]
-    else
-      fold = config.values.signs[string.lower(foldmarkers[vim.v.lnum])][1]
-    end
-  else
-    fold = " "
-  end
-
-  if config.values.disable_line_numbers then
-    return ("%s "):format(fold)
-  else
-    return ("%s %s "):format("%l%r", fold)
-  end
 end
 
 return M
