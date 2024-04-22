@@ -239,7 +239,6 @@ end
 ---@field disable_insert_on_commit? boolean|"auto" Disable automatically entering insert mode in commit dialogues
 ---@field use_per_project_settings? boolean Scope persisted settings on a per-project basis
 ---@field remember_settings? boolean Whether neogit should persist flags from popups, e.g. git push flags
----@field auto_refresh? boolean Automatically refresh to detect git modifications without manual intervention
 ---@field sort_branches? string Value used for `--sort` for the `git branch` command
 ---@field kind? WindowKind The default type of window neogit should open in
 ---@field disable_line_numbers? boolean Whether to disable line numbers
@@ -296,7 +295,6 @@ function M.get_default_values()
     use_per_project_settings = true,
     remember_settings = true,
     fetch_after_checkout = false,
-    auto_refresh = true,
     sort_branches = "-committerdate",
     kind = "tab",
     disable_line_numbers = true,
@@ -980,7 +978,6 @@ function M.validate_config()
     validate_type(config.telescope_sorter, "telescope_sorter", "function")
     validate_type(config.use_per_project_settings, "use_per_project_settings", "boolean")
     validate_type(config.remember_settings, "remember_settings", "boolean")
-    validate_type(config.auto_refresh, "auto_refresh", "boolean")
     validate_type(config.sort_branches, "sort_branches", "string")
     validate_type(config.notification_icon, "notification_icon", "string")
     validate_type(config.console_timeout, "console_timeout", "number")
