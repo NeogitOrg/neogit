@@ -491,7 +491,7 @@ function M.Status(state, config)
           oid = state.head.abbrev,
           msg = state.head.commit_message,
           yankable = state.head.oid,
-          show_oid = config.show_head_commit_hash,
+          show_oid = config.status.show_head_commit_hash,
           HEAD_padding = config.status.HEAD_padding,
         },
         show_upstream and HEAD {
@@ -500,7 +500,7 @@ function M.Status(state, config)
           remote = state.upstream.remote,
           msg = state.upstream.commit_message,
           yankable = state.upstream.oid,
-          show_oid = config.show_head_commit_hash,
+          show_oid = config.status.show_head_commit_hash,
           HEAD_padding = config.status.HEAD_padding,
         },
         show_pushRemote and HEAD {
@@ -509,7 +509,7 @@ function M.Status(state, config)
           remote = state.pushRemote.remote,
           msg = state.pushRemote.commit_message,
           yankable = state.pushRemote.oid,
-          show_oid = config.show_head_commit_hash,
+          show_oid = config.status.show_head_commit_hash,
           HEAD_padding = config.status.HEAD_padding,
         },
         show_tag and Tag {

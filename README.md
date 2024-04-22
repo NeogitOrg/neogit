@@ -137,6 +137,7 @@ neogit.setup {
   -- Automatically show console if a command takes more than console_timeout milliseconds
   auto_show_console = true,
   status = {
+    show_head_commit_hash = true,
     recent_commit_count = 10,
     HEAD_padding = 10,
     mode_padding = 3,
