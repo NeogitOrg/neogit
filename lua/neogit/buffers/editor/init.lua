@@ -80,7 +80,7 @@ function M:open(kind)
     buftype = "",
     kind = kind,
     modifiable = true,
-    status_column = " ",
+    status_column = "",
     readonly = false,
     autocmds = {
       ["QuitPre"] = function() -- For :wq compatibility

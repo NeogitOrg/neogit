@@ -720,10 +720,6 @@ function Buffer.create(config)
     -- Set fold styling for Neogit windows while preserving user styling
     vim.opt_local.winhl:append("Folded:NeogitFold")
     vim.opt_local.fillchars:append("fold: ")
-
-    if not config.disable_signs then
-      vim.opt_local.signcolumn = "auto"
-    end
   end)
 
   if config.context_highlight then
@@ -762,7 +758,14 @@ function Buffer.create(config)
     })
   end
 
-  if config.foldmarkers then
+  if config.status_column then
+    vim.opt_local.statuscolumn = config.status_column
+    vim.opt_local.signcolumn = "no"
+  end
+
+  if config.foldmarkers and not config.disable_signs then
+    vim.opt_local.signcolumn = "auto"
+
     logger.debug("[BUFFER:" .. buffer.handle .. "] Setting up foldmarkers")
     buffer:create_namespace("FoldSigns")
     buffer:set_decorations("FoldSigns", {

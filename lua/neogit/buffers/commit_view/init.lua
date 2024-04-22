@@ -128,6 +128,7 @@ function M:open(kind)
     name = "NeogitCommitView",
     filetype = "NeogitCommitView",
     kind = kind,
+    status_column = "",
     context_highlight = true,
     mappings = {
       n = {
