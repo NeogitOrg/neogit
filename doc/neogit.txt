@@ -398,6 +398,7 @@ NeogitReverting             ^
 NeogitPicking               ^
 NeogitMerging               ^
 NeogitBisecting             ^
+NeogitSectionHeaderCount    The number, for sections with a number.
 
 STATUS BUFFER FILE
 Applied to the label on the left of filenames.

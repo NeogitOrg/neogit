@@ -160,7 +160,7 @@ end)
 local Section = Component.new(function(props)
   local count
   if props.count then
-    count = { text(" ("), text(#props.items), text(")") }
+    count = { text(" ("), text.highlight("NeogitSectionHeaderCount")(#props.items), text(")") }
   end
 
   return col.tag("Section")({

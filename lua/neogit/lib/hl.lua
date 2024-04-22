@@ -220,6 +220,7 @@ function M.setup()
     NeogitChangeUnmerged          = { fg = palette.bg_yellow, bold = palette.bold, italic = palette.italic },
     NeogitChangeNewFile           = { fg = palette.bg_green, bold = palette.bold, italic = palette.italic },
     NeogitSectionHeader           = { fg = palette.bg_purple, bold = palette.bold },
+    NeogitSectionHeaderCount      = {},
     NeogitUntrackedfiles          = { link = "NeogitSectionHeader" },
     NeogitUnstagedchanges         = { link = "NeogitSectionHeader" },
     NeogitUnmergedchanges         = { link = "NeogitSectionHeader" },
