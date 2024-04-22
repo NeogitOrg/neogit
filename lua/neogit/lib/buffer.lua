@@ -687,8 +687,12 @@ function Buffer.create(config)
 
   local neogit_augroup = require("neogit").autocmd_group
   for event, callback in pairs(config.autocmds or {}) do
-    logger.debug("[BUFFER:" .. buffer.handle .. "] Setting autocmd: " .. event)
-    api.nvim_create_autocmd(event, { callback = callback, buffer = buffer.handle, group = neogit_augroup })
+    logger.debug("[BUFFER:" .. buffer.handle .. "] Setting autocmd for: " .. event)
+    api.nvim_create_autocmd(event, {
+      callback = callback,
+      buffer = buffer.handle,
+      group = neogit_augroup,
+    })
   end
 
   logger.debug("[BUFFER:" .. buffer.handle .. "] Mappings Registered")
