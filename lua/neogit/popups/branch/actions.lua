@@ -268,7 +268,7 @@ M.open_pull_request = operation("open_pull_request", function()
   local url = git.remote.get_url(git.branch.upstream_remote())[1]
 
   for s, v in pairs(config.values.git_services) do
-    if url:match(s) then
+    if url:match(util.pattern_escape(s)) then
       template = v
       break
     end

@@ -388,6 +388,15 @@ function M.lists_equal(l1, l2)
   return true
 end
 
+local special_chars = { "%%", "%(", "%)", "%.", "%+", "%-", "%*", "%?", "%[", "%^", "%$" }
+function M.pattern_escape(str)
+  for _, char in ipairs(special_chars) do
+    str, _ = str:gsub(char, "%" .. char)
+  end
+
+  return str
+end
+
 function M.pad_right(s, len)
   return s .. string.rep(" ", math.max(len - #s, 0))
 end
