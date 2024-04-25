@@ -178,6 +178,7 @@ local function update_status(state)
   state.staged.items = staged_files
 end
 
+---@class NeogitGitStatus
 local status = {
   stage = function(files)
     git.cli.add.files(unpack(files)).call()

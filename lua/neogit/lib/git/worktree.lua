@@ -2,6 +2,7 @@ local git = require("neogit.lib.git")
 local util = require("neogit.lib.util")
 local Path = require("plenary.path")
 
+---@class NeogitGitWorktree
 local M = {}
 
 ---Creates new worktree at path for ref

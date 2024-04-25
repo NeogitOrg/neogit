@@ -1,5 +1,6 @@
 local git = require("neogit.lib.git")
 
+---@class NeogitGitTag
 local M = {}
 
 --- Outputs a list of tags locally

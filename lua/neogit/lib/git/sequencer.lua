@@ -1,4 +1,6 @@
 local git = require("neogit.lib.git")
+
+---@class NeogitGitSequencer
 local M = {}
 
 -- .git/sequencer/todo does not exist when there is only one commit left.

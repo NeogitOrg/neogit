@@ -1,7 +1,8 @@
-local M = {}
-
 local git = require("neogit.lib.git")
 local util = require("neogit.lib.util")
+
+---@class NeogitGitRevParse
+local M = {}
 
 ---@param oid string
 ---@return string

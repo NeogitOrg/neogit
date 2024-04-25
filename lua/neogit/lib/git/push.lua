@@ -1,6 +1,7 @@
 local git = require("neogit.lib.git")
 local util = require("neogit.lib.util")
 
+---@class NeogitGitPush
 local M = {}
 
 ---Pushes to the remote and handles password questions

@@ -2,6 +2,7 @@ local git = require("neogit.lib.git")
 local Path = require("plenary.path")
 local util = require("neogit.lib.util")
 
+---@class NeogitGitIndex
 local M = {}
 
 ---Generates a patch that can be applied to index

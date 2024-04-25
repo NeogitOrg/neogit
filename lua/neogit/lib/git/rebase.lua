@@ -3,6 +3,7 @@ local git = require("neogit.lib.git")
 local client = require("neogit.client")
 local notification = require("neogit.lib.notification")
 
+---@class NeogitGitRebase
 local M = {}
 
 local a = require("plenary.async")

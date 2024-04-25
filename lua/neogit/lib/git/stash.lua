@@ -2,6 +2,7 @@ local git = require("neogit.lib.git")
 local input = require("neogit.lib.input")
 local util = require("neogit.lib.util")
 
+---@class NeogitGitStash
 local M = {}
 
 local function perform_stash(include)

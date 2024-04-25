@@ -1,5 +1,6 @@
 local git = require("neogit.lib.git")
 
+---@class NeogitGitFiles
 local M = {}
 
 function M.all()

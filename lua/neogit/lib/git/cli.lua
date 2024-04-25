@@ -1086,6 +1086,7 @@ local meta = {
   end,
 }
 
+---@class NeogitGitCLI
 local cli = setmetatable({
   history = history,
   insert = handle_new_cmd,

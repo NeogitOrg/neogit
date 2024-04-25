@@ -4,6 +4,7 @@ local util = require("neogit.lib.util")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
+---@class NeogitGitBranch
 local M = {}
 
 local function parse_branches(branches, include_current)

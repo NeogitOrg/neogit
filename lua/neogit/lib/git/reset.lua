@@ -2,6 +2,7 @@ local notification = require("neogit.lib.notification")
 local git = require("neogit.lib.git")
 local a = require("plenary.async")
 
+---@class NeogitGitReset
 local M = {}
 
 local function fire_reset_event(data)

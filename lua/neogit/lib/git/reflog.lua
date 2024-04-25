@@ -1,6 +1,7 @@
 local git = require("neogit.lib.git")
 local util = require("neogit.lib.util")
 
+---@class NeogitGitReflog
 local M = {}
 
 ---@class ReflogEntry

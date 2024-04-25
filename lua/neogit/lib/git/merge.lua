@@ -2,9 +2,10 @@ local client = require("neogit.client")
 local git = require("neogit.lib.git")
 local notification = require("neogit.lib.notification")
 
-local M = {}
-
 local a = require("plenary.async")
+
+---@class NeogitGitMerge
+local M = {}
 
 local function merge_command(cmd)
   local envs = client.get_envs_git_editor()

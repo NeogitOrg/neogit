@@ -1,5 +1,6 @@
 local git = require("neogit.lib.git")
 
+---@class NeogitGitFetch
 local M = {}
 
 ---Fetches from the remote and handles password questions

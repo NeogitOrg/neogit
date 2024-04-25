@@ -2,6 +2,7 @@ local git = require("neogit.lib.git")
 local notification = require("neogit.lib.notification")
 local input = require("neogit.lib.input")
 
+---@class NeogitGitInit
 local M = {}
 
 M.create = function(directory, sync)

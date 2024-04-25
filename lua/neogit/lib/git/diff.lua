@@ -253,6 +253,7 @@ local function invalidate_diff(filter, section, item)
   end
 end
 
+---@class NeogitGitDiff
 return {
   parse = parse_diff,
   staged_stats = function()

@@ -1,6 +1,7 @@
 local git = require("neogit.lib.git")
 local util = require("neogit.lib.util")
 
+---@class NeogitGitRevert
 local M = {}
 
 function M.commits(commits, args)

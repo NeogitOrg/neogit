@@ -2,6 +2,7 @@ local git = require("neogit.lib.git")
 local notification = require("neogit.lib.notification")
 local util = require("neogit.lib.util")
 
+---@class NeogitGitCherryPick
 local M = {}
 
 local function fire_cherrypick_event(data)

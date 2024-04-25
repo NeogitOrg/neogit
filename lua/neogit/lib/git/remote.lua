@@ -1,6 +1,7 @@
 local git = require("neogit.lib.git")
 local util = require("neogit.lib.util")
 
+---@class NeogitGitRemote
 local M = {}
 
 -- https://github.com/magit/magit/blob/main/lisp/magit-remote.el#LL141C32-L141C32

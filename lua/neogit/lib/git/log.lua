@@ -3,6 +3,7 @@ local util = require("neogit.lib.util")
 local config = require("neogit.config")
 local record = require("neogit.lib.record")
 
+---@class NeogitGitLog
 local M = {}
 
 local commit_header_pat = "([| ]*)(%*?)([| ]*)commit (%w+)"

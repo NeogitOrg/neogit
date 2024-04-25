@@ -3,6 +3,7 @@ local config = require("neogit.config")
 local record = require("neogit.lib.record")
 local util = require("neogit.lib.util")
 
+---@class NeogitGitRefs
 local M = {}
 
 ---@return fun(format?: string, sortby?: string, filter?: table): string[]

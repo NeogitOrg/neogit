@@ -1,6 +1,6 @@
 local git = require("neogit.lib.git")
-local logger = require("neogit.logger")
 
+---@class NeogitGitBisect
 local M = {}
 
 local function fire_bisect_event(data)
