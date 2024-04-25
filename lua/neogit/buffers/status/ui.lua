@@ -252,7 +252,7 @@ local SectionItemFile = function(section, config)
     end
 
     local name = item.original_name and ("%s -> %s"):format(item.original_name, item.name) or item.name
-    local highlight = ("NeogitChange%s"):format(item.mode:gsub("%?", "Untracked"))
+    local highlight = ("NeogitChange%s%s"):format(item.mode:gsub("%?", "Untracked"), section)
 
     return col.tag("Item")({
       row {
