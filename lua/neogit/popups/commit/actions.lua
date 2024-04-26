@@ -5,6 +5,7 @@ local git = require("neogit.lib.git")
 local client = require("neogit.client")
 local input = require("neogit.lib.input")
 local notification = require("neogit.lib.notification")
+local config = require("neogit.config")
 local a = require("plenary.async")
 
 local function confirm_modifications()
@@ -31,7 +32,7 @@ local function do_commit(popup, cmd)
       success = "Committed",
     },
     interactive = true,
-    show_diff = true,
+    show_diff = config.values.commit_editor.show_staged_diff,
   })
 end
 

@@ -161,6 +161,7 @@ neogit.setup {
   },
   commit_editor = {
     kind = "auto",
+    show_staged_diff = true,
   },
   commit_select_view = {
     kind = "tab",

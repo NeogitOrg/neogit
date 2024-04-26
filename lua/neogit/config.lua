@@ -57,7 +57,7 @@ function M.get_reversed_commit_editor_maps_I()
 end
 
 ---@alias WindowKind
----|"split" Open in a split
+---| "split" Open in a split
 ---| "vsplit" Open in a vertical split
 ---| "floating" Open in a floating window
 ---| "tab" Open in a new tab
@@ -68,6 +68,10 @@ end
 
 ---@class NeogitConfigPopup Popup window options
 ---@field kind WindowKind The type of window that should be opened
+
+---@class NeogitCommitEditorConfigPopup Popup window options
+---@field kind WindowKind The type of window that should be opened
+---@field show_staged_diff? boolean Display staged changes in a buffer when committing
 
 ---@alias NeogitConfigSignsIcon { [1]: string, [2]: string }
 
@@ -245,7 +249,7 @@ end
 ---@field console_timeout? integer Time in milliseconds after a console is created for long running commands
 ---@field auto_show_console? boolean Automatically show the console if a command takes longer than console_timeout
 ---@field status? NeogitConfigStatusOptions Status buffer options
----@field commit_editor? NeogitConfigPopup Commit editor options
+---@field commit_editor? NeogitCommitEditorConfigPopup Commit editor options
 ---@field commit_select_view? NeogitConfigPopup Commit select view options
 ---@field commit_view? NeogitCommitBufferConfig Commit buffer options
 ---@field log_view? NeogitConfigPopup Log view options
@@ -328,6 +332,7 @@ function M.get_default_values()
     },
     commit_editor = {
       kind = "tab",
+      show_staged_diff = true,
     },
     commit_select_view = {
       kind = "tab",
@@ -995,6 +1000,7 @@ function M.validate_config()
     validate_trinary_auto(config.disable_insert_on_commit, "disable_insert_on_commit")
     -- Commit Editor
     if validate_type(config.commit_editor, "commit_editor", "table") then
+      validate_type(config.commit_editor.show_staged_diff, "show_staged_diff", "boolean")
       validate_kind(config.commit_editor.kind, "commit_editor")
     end
     -- Commit Select View
