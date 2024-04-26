@@ -217,8 +217,20 @@ function Buffer:set_text(first_line, last_line, first_col, last_col, lines)
   api.nvim_buf_set_text(self.handle, first_line, first_col, last_line, last_col, lines)
 end
 
+---@param line nil|number|number[]
 function Buffer:move_cursor(line)
-  pcall(api.nvim_win_set_cursor, 0, { line, 0 })
+  if not line then
+    return
+  end
+
+  local position = { line, 0 }
+
+  if type(line) == "table" then
+    position = line
+  end
+
+  -- pcall used in case the line is out of bounds
+  pcall(api.nvim_win_set_cursor, self.win_handle, position)
 end
 
 function Buffer:cursor_line()
