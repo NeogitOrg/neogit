@@ -24,6 +24,21 @@ local util = require("neogit.lib.util")
 local api = vim.api
 local fn = vim.fn
 
+local function cleanup_items(...)
+  if vim.in_fast_event() then
+    a.util.scheduler()
+  end
+
+  for _, item in ipairs({ ... }) do
+    local bufnr = fn.bufexists(item.name)
+    if bufnr and bufnr > 0 and api.nvim_buf_is_valid(bufnr) then
+      api.nvim_buf_delete(bufnr, { force = true })
+    end
+
+    fn.delete(item.escaped_path)
+  end
+end
+
 ---@class Semaphore
 ---@field permits number
 ---@field acquire function
@@ -185,16 +200,7 @@ function M:open(kind, cwd)
             end
 
             if #untracked_files > 0 then
-              a.util.scheduler()
-
-              for _, file in ipairs(untracked_files) do
-                local bufnr = fn.bufexists(file.name)
-                if bufnr and bufnr > 0 and api.nvim_buf_is_valid(bufnr) then
-                  api.nvim_buf_delete(bufnr, { force = true })
-                end
-
-                fn.delete(file.escaped_path)
-              end
+              cleanup_items(unpack(untracked_files))
             end
 
             if #unstaged_files > 0 then
@@ -203,17 +209,7 @@ function M:open(kind, cwd)
 
             if #new_files > 0 then
               git.index.reset(new_files)
-
-              a.util.scheduler()
-
-              for _, file in ipairs(new_files) do
-                local bufnr = fn.bufexists(file.name)
-                if bufnr and bufnr > 0 and api.nvim_buf_is_valid(bufnr) then
-                  api.nvim_buf_delete(bufnr, { force = true })
-                end
-
-                fn.delete(file.escaped_path)
-              end
+              cleanup_items(unpack(new_files))
             end
 
             if #staged_files_modified > 0 then
@@ -555,14 +551,7 @@ function M:open(kind, cwd)
             if section == "untracked" then
               message = ("Discard %q?"):format(selection.item.name)
               action = function()
-                a.util.scheduler()
-
-                local bufnr = fn.bufexists(selection.item.name)
-                if bufnr and bufnr > 0 and api.nvim_buf_is_valid(bufnr) then
-                  api.nvim_buf_delete(bufnr, { force = true })
-                end
-
-                fn.delete(selection.item.escaped_path)
+                cleanup_items(selection.item)
               end
               refresh = { update_diffs = { "untracked:" .. selection.item.name } }
             elseif section == "unstaged" then
@@ -591,15 +580,7 @@ function M:open(kind, cwd)
                 action = function()
                   if selection.item.mode == "A" then
                     git.index.reset { selection.item.escaped_path }
-
-                    a.util.scheduler()
-
-                    local bufnr = fn.bufexists(selection.item.name)
-                    if bufnr and bufnr > 0 and api.nvim_buf_is_valid(bufnr) then
-                      api.nvim_buf_delete(bufnr, { force = true })
-                    end
-
-                    fn.delete(selection.item.escaped_path)
+                    cleanup_items(selection.item)
                   else
                     git.index.checkout { selection.item.name }
                   end
@@ -611,22 +592,14 @@ function M:open(kind, cwd)
               action = function()
                 if selection.item.mode == "N" then
                   git.index.reset { selection.item.escaped_path }
-
-                  a.util.scheduler()
-
-                  local bufnr = fn.bufexists(selection.item.name)
-                  if bufnr and bufnr > 0 and api.nvim_buf_is_valid(bufnr) then
-                    api.nvim_buf_delete(bufnr, { force = true })
-                  end
-
-                  fn.delete(selection.item.escaped_path)
+                  cleanup_items(selection.item)
                 elseif selection.item.mode == "M" then
                   git.index.reset { selection.item.escaped_path }
                   git.index.checkout { selection.item.escaped_path }
                 elseif selection.item.mode == "R" then
-                  -- https://github.com/magit/magit/blob/28bcd29db547ab73002fb81b05579e4a2e90f048/lisp/magit-apply.el#L675
                   git.index.reset_HEAD(selection.item.name, selection.item.original_name)
                   git.index.checkout { selection.item.original_name }
+                  cleanup_items(selection.item)
                 elseif selection.item.mode == "D" then
                   git.index.reset_HEAD(selection.item.escaped_path)
                   git.index.checkout { selection.item.escaped_path }
@@ -686,16 +659,7 @@ function M:open(kind, cwd)
             if section == "untracked" then
               message = ("Discard %s files?"):format(#selection.section.items)
               action = function()
-                a.util.scheduler()
-
-                for _, file in ipairs(selection.section.items) do
-                  local bufnr = fn.bufexists(file.name)
-                  if bufnr and bufnr > 0 and api.nvim_buf_is_valid(bufnr) then
-                    api.nvim_buf_delete(bufnr, { force = true })
-                  end
-
-                  fn.delete(file.escaped_path)
-                end
+                cleanup_items(unpack(selection.section.items))
               end
               refresh = { update_diffs = { "untracked:*" } }
             elseif section == "unstaged" then
@@ -708,7 +672,7 @@ function M:open(kind, cwd)
               end
 
               if conflict then
-                -- TODO: https://github.com/magit/magit/blob/28bcd29db547ab73002fb81b05579e4a2e90f048/lisp/magit-apply.el#L626
+                -- TODO: https://github.com/magit/magit/blob/28bcd29db547ab73002fb81b05579e4a2e90f048/lisp/magit-apply.el#Lair
                 notification.warn("Resolve conflicts before discarding section.")
                 return
               else
@@ -743,17 +707,7 @@ function M:open(kind, cwd)
                 if #new_files > 0 then
                   -- ensure the file is deleted
                   git.index.reset(new_files)
-
-                  a.util.scheduler()
-
-                  for _, file in ipairs(new_files) do
-                    local bufnr = fn.bufexists(file.name)
-                    if bufnr and bufnr > 0 and api.nvim_buf_is_valid(bufnr) then
-                      api.nvim_buf_delete(bufnr, { force = true })
-                    end
-
-                    fn.delete(file.escaped_path)
-                  end
+                  cleanup_items(unpack(new_files))
                 end
 
                 if #staged_files_modified > 0 then
@@ -853,6 +807,7 @@ function M:open(kind, cwd)
 
             if stagable.hunk then
               local item = self.buffer.ui:get_item_under_cursor()
+              assert(item, "Item cannot be nil")
               local patch =
                 git.index.generate_patch(item, stagable.hunk, stagable.hunk.from, stagable.hunk.to)
 
@@ -896,6 +851,7 @@ function M:open(kind, cwd)
           if unstagable then
             if unstagable.hunk then
               local item = self.buffer.ui:get_item_under_cursor()
+              assert(item, "Item cannot be nil")
               local patch = git.index.generate_patch(
                 item,
                 unstagable.hunk,
@@ -949,6 +905,7 @@ function M:open(kind, cwd)
 
             self:close()
 
+            -- TODO: Does this work?
             vim.schedule(function()
               vim.cmd("edit! " .. fn.fnameescape(item.absolute_path))
 
@@ -1131,6 +1088,7 @@ function M:open(kind, cwd)
           local commit = self.buffer.ui:get_commit_under_cursor()
           local commits = { commit }
 
+          -- TODO: Pass selection here so we can stage/unstage etc stuff
           p {
             branch = { commits = commits },
             cherry_pick = { commits = commits },
