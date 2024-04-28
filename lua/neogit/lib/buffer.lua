@@ -1,6 +1,7 @@
 local api = vim.api
 local fn = vim.fn
 local logger = require("neogit.logger")
+local util = require("neogit.lib.util")
 
 local signs = require("neogit.lib.signs")
 local Ui = require("neogit.lib.ui")
@@ -660,12 +661,8 @@ function Buffer.create(config)
 
         local opts = { buffer = buffer.handle, silent = true, nowait = true }
 
-        if type(key) == "string" then
-          vim.keymap.set(mode, key, fn, opts)
-        elseif type(key) == "table" then
-          for _, k in ipairs(key) do
-            vim.keymap.set(mode, k, fn, opts)
-          end
+        for _, k in ipairs(util.tbl_wrap(key)) do
+          vim.keymap.set(mode, k, fn, opts)
         end
       end
     end

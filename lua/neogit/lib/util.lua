@@ -531,4 +531,10 @@ function M.debounce_trailing(ms, fn, hash)
   end
 end
 
+---@param value any
+---@return table
+function M.tbl_wrap(value)
+  return type(value) == "table" and value or { value }
+end
+
 return M
