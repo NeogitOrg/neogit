@@ -621,11 +621,6 @@ function Ui:render(...)
 end
 
 function Ui:update()
-  -- If the buffer is not focused, trying to set folds will raise an error because it's not a proper API.
-  if not self.buf:is_focused() then
-    return
-  end
-
   -- Copy over the old fold state _before_ buffer is rendered so the output of the fold buffer is correct
   if self._node_fold_state then
     self:_update_fold_state(self.layout, self._node_fold_state)

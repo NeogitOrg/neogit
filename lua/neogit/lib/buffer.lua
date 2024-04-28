@@ -98,9 +98,7 @@ function Buffer:restore_view(view, cursor)
 end
 
 function Buffer:write()
-  self:call(function()
-    vim.cmd("silent w!")
-  end)
+  self:win_exec("silent w!")
 end
 
 function Buffer:get_lines(first, last, strict)
@@ -383,14 +381,14 @@ function Buffer:put(lines, after, follow)
 end
 
 function Buffer:create_fold(first, last, _)
-  vim.cmd(string.format("%d,%dfold", first, last))
+  self:win_exec(string.format("%d,%dfold", first, last))
 end
 
 function Buffer:set_fold_state(first, last, open)
   if open then
-    vim.cmd(string.format("%d,%dfoldopen", first, last))
+    self:win_exec(string.format("%d,%dfoldopen", first, last))
   else
-    vim.cmd(string.format("%d,%dfoldclose", first, last))
+    self:win_exec(string.format("%d,%dfoldclose", first, last))
   end
 end
 
@@ -429,23 +427,7 @@ end
 
 function Buffer:replace_content_with(lines)
   api.nvim_buf_set_lines(self.handle, 0, -1, false, lines)
-  self:call(function()
-    vim.cmd("silent w!")
-  end)
-end
-
-function Buffer:open_fold(line, reset_pos)
-  local pos
-  if reset_pos == true then
-    pos = fn.getpos()
-  end
-
-  fn.setpos(".", { self.handle, line, 0, 0 })
-  vim.cmd("normal zo")
-
-  if reset_pos == true then
-    fn.setpos(".", pos)
-  end
+  self:write()
 end
 
 function Buffer:add_highlight(line, col_start, col_end, name, namespace)
@@ -818,7 +800,7 @@ function Buffer.create(config)
 
   if config.cwd then
     logger.debug("[BUFFER:" .. buffer.handle .. "] Setting CWD to: " .. config.cwd)
-    vim.cmd.lcd(config.cwd)
+    buffer:win_exec("lcd " .. config.cwd)
   end
 
   return buffer
