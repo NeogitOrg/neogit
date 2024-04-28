@@ -405,6 +405,12 @@ function Buffer:get_option(name)
   end
 end
 
+function Buffer:get_window_option(name)
+  if self.win_handle ~= nil then
+    return api.nvim_get_option_value(name, { win = self.win_handle })
+  end
+end
+
 function Buffer:set_buffer_option(name, value)
   if self.handle ~= nil then
     api.nvim_set_option_value(name, value, { buf = self.handle })
@@ -620,8 +626,8 @@ function Buffer.create(config)
 
   local win
   if config.open ~= false then
-    logger.debug("[BUFFER:" .. buffer.handle .. "] Showing buffer in window")
     win = buffer:show()
+    logger.debug("[BUFFER:" .. buffer.handle .. "] Showing buffer in window " .. win)
   end
 
   logger.debug("[BUFFER:" .. buffer.handle .. "] Setting buffer options")
@@ -682,6 +688,8 @@ function Buffer.create(config)
     buffer:set_window_option("foldtext", "")
     buffer:set_window_option("listchars", "")
     buffer:set_window_option("list", false)
+    buffer:set_window_option("winhl", buffer:get_window_option("winhl") .. ",Folded:NeogitFold")
+    buffer:set_window_option("fillchars", buffer:get_window_option("fillchars") .. ",fold: ")
 
     if vim.fn.has("nvim-0.10") == 1 then
       buffer:set_window_option("spell", false)
@@ -723,13 +731,6 @@ function Buffer.create(config)
       end,
     })
   end
-
-  buffer:call(function()
-    logger.debug("[BUFFER:" .. buffer.handle .. "] Running buffer:call")
-    -- Set fold styling for Neogit windows while preserving user styling
-    vim.opt_local.winhl:append("Folded:NeogitFold")
-    vim.opt_local.fillchars:append("fold: ")
-  end)
 
   if config.context_highlight then
     logger.debug("[BUFFER:" .. buffer.handle .. "] Setting up context highlighting")
