@@ -2,7 +2,6 @@ local api = vim.api
 local fn = vim.fn
 local logger = require("neogit.logger")
 
-local mappings_manager = require("neogit.lib.mappings_manager")
 local signs = require("neogit.lib.signs")
 local Ui = require("neogit.lib.ui")
 
@@ -12,7 +11,6 @@ local Path = require("plenary.path")
 ---@field handle number
 ---@field win_handle number
 ---@field namespaces table
----@field mmanager MappingsManager
 ---@field ui Ui
 ---@field kind string
 ---@field disable_line_numbers boolean
@@ -30,7 +28,6 @@ function Buffer:new(handle, win_handle)
     handle = handle,
     win_handle = win_handle,
     border = nil,
-    mmanager = mappings_manager.new(handle),
     kind = nil, -- how the buffer was opened. For more information look at the create function
     namespaces = {
       default = api.nvim_create_namespace("neogit-buffer-" .. handle),
@@ -650,18 +647,24 @@ function Buffer.create(config)
   end
 
   if config.mappings then
-    logger.debug("[BUFFER:" .. buffer.handle .. "] Building mappings table")
+    logger.debug("[BUFFER:" .. buffer.handle .. "] Building mappings")
     for mode, val in pairs(config.mappings) do
       for key, cb in pairs(val) do
-        if type(key) == "string" then
-          buffer.mmanager.mappings[mode][key] = function()
-            cb(buffer)
+        local fn = function()
+          cb(buffer)
+
+          if mode == "v" then
+            api.nvim_feedkeys(api.nvim_replace_termcodes("<esc>", true, false, true), "n", false)
           end
+        end
+
+        local opts = { buffer = buffer.handle, silent = true, nowait = true }
+
+        if type(key) == "string" then
+          vim.keymap.set(mode, key, fn, opts)
         elseif type(key) == "table" then
           for _, k in ipairs(key) do
-            buffer.mmanager.mappings[mode][k] = function()
-              cb(buffer)
-            end
+            vim.keymap.set(mode, k, fn, opts)
           end
         end
       end
@@ -706,9 +709,6 @@ function Buffer.create(config)
       group = neogit_augroup,
     })
   end
-
-  logger.debug("[BUFFER:" .. buffer.handle .. "] Mappings Registered")
-  buffer.mmanager.register()
 
   if config.after then
     logger.debug("[BUFFER:" .. buffer.handle .. "] Running config.after callback")
