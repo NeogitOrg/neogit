@@ -8,10 +8,11 @@ describe("lib.git.remote", function()
       assert.are.same(git.remote.parse(url), {
         host = "github.com",
         owner = "owner",
-        protocol = "git",
+        path = "owner",
+        protocol = "ssh",
         repo = "repo",
         repository = "repo",
-        url = "git@github.com:owner/repo.git",
+        url = "ssh://git@github.com/owner/repo.git",
         user = "git",
       })
     end)
@@ -36,10 +37,11 @@ describe("lib.git.remote", function()
       assert.are.same(git.remote.parse(url), {
         host = "gitlab.com",
         owner = "owner",
-        protocol = "git",
+        path = "owner",
+        protocol = "ssh",
         repo = "repo",
         repository = "repo",
-        url = "git@gitlab.com:owner/repo.git",
+        url = "ssh://git@gitlab.com/owner/repo.git",
         user = "git",
       })
     end)
@@ -69,6 +71,21 @@ describe("lib.git.remote", function()
         repo = "repo",
         repository = "repo",
         url = "ssh://git@gitlab.priv/project/path/repo.git",
+        user = "git",
+      })
+    end)
+
+    it("can parse 'git@gitlab.private-with-dash:project/path/repo.git'", function()
+      local url = "git@gitlab.private-with-dash:project/path/repo.git"
+
+      assert.are.same(git.remote.parse(url), {
+        host = "gitlab.private-with-dash",
+        owner = "project/path",
+        path = "project/path",
+        protocol = "ssh",
+        repo = "repo",
+        repository = "repo",
+        url = "ssh://git@gitlab.private-with-dash/project/path/repo.git",
         user = "git",
       })
     end)
@@ -140,10 +157,11 @@ describe("lib.git.remote", function()
       assert.are.same(git.remote.parse(url), {
         host = "github.com",
         owner = "owner-with-dashes",
-        protocol = "git",
+        path = "owner-with-dashes",
+        protocol = "ssh",
         repo = "repo",
         repository = "repo",
-        url = "git@github.com:owner-with-dashes/repo.git",
+        url = "ssh://git@github.com/owner-with-dashes/repo.git",
         user = "git",
       })
     end)
@@ -154,10 +172,26 @@ describe("lib.git.remote", function()
       assert.are.same(git.remote.parse(url), {
         host = "github.com",
         owner = "owner",
+        path = "owner",
+        protocol = "ssh",
+        repo = "repo-with_specials",
+        repository = "repo-with_specials",
+        url = "ssh://git@github.com/owner/repo-with_specials.git",
+        user = "git",
+      })
+    end)
+
+    it("can parse 'git://git@github.com/owner/repo-with_specials.git'", function()
+      local url = "git://git@github.com/owner/repo-with_specials.git"
+
+      assert.are.same(git.remote.parse(url), {
+        host = "github.com",
+        owner = "owner",
+        path = "owner",
         protocol = "git",
         repo = "repo-with_specials",
         repository = "repo-with_specials",
-        url = "git@github.com:owner/repo-with_specials.git",
+        url = "git://git@github.com/owner/repo-with_specials.git",
         user = "git",
       })
     end)
