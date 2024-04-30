@@ -114,7 +114,7 @@ end
 
 ---@return ConfigEntry
 function M.get_global(key)
-  local result = git.cli.config.global.get(key).call_sync({ ignore_error = true }).stdout[1]
+  local result = git.cli.config.get(key).call_sync({ ignore_error = true }).stdout[1]
   return ConfigEntry.new(key, result, "global")
 end
 

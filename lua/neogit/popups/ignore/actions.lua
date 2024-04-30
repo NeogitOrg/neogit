@@ -13,7 +13,9 @@ local function make_rules(popup, relative)
 
   return util.deduplicate(vim.tbl_map(function(v)
     if vim.startswith(v, relative) then
-      return "/" .. Path:new(v):make_relative(relative)
+      return Path:new(v):make_relative(relative)
+    else
+      return v
     end
   end, files))
 end

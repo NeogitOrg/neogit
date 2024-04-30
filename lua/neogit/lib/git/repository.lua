@@ -1,6 +1,6 @@
 local a = require("plenary.async")
 local logger = require("neogit.logger")
-local Path = require("plenary.path")
+local Path = require("plenary.path") ---@class Path
 local git = require("neogit.lib.git")
 
 local modules = {
@@ -18,6 +18,8 @@ local modules = {
 }
 
 ---@class NeogitRepo
+---@field git_path       fun(self, ...):Path
+---@field refresh        fun(self, table)
 ---@field initialized    boolean
 ---@field git_root       string
 ---@field head           NeogitRepoHead
@@ -151,6 +153,7 @@ local function empty_state()
   }
 end
 
+---@class NeogitRepo
 local Repo = {}
 Repo.__index = Repo
 
