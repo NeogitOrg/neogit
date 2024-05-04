@@ -1,8 +1,12 @@
+---@class Popups
+---@field open fun(name: string, f: nil|fun(create: fun(...): any)): fun(): any
+---@field mapping_for fun(name: string):string|string[]
 local M = {}
 
+---Creates a curried function which will open the popup with the given name when called
 ---@param name string
 ---@param f nil|fun(create: fun(...)): any
---- Creates a curried function which will open the popup with the given name when called
+---@return fun(): any
 function M.open(name, f)
   f = f or function(c)
     c()
@@ -22,9 +26,9 @@ function M.open(name, f)
   end
 end
 
+---Returns the keymapping for a popup
 ---@param name string
 ---@return string|string[]
----Returns the keymapping for a popup
 function M.mapping_for(name)
   local mappings = require("neogit.config").get_reversed_popup_maps()
 

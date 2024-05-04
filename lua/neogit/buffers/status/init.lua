@@ -1,14 +1,3 @@
--- TODO: When launching the fuzzy finder, any refresh attempted will raise an exception because the set_folds() function
--- cannot be called when the buffer is not focused, as it's not a proper API. We could implement some kind of freeze
--- mechanism to prevent the buffer from refreshing while the fuzzy finder is open.
--- function M:freeze()
---   self.frozen = true
--- end
---
--- function M:unfreeze()
---   self.frozen = false
--- end
-
 local config = require("neogit.config")
 local Buffer = require("neogit.lib.buffer")
 local ui = require("neogit.buffers.status.ui")
@@ -29,7 +18,7 @@ local function cleanup_items(...)
     a.util.scheduler()
   end
 
-  for _, item in ipairs({ ... }) do
+  for _, item in ipairs { ... } do
     local bufnr = fn.bufexists(item.name)
     if bufnr and bufnr > 0 and api.nvim_buf_is_valid(bufnr) then
       api.nvim_buf_delete(bufnr, { force = true })
@@ -47,7 +36,6 @@ end
 ---@field buffer Buffer instance
 ---@field state NeogitRepo
 ---@field config NeogitConfig
----@field frozen boolean
 ---@field root string
 ---@field refresh_lock Semaphore
 local M = {}
@@ -71,7 +59,6 @@ end
 ---@return StatusBuffer
 function M.new(state, config, root)
   local instance = {
-    -- frozen = false,
     state = state,
     config = config,
     root = root,
@@ -88,6 +75,13 @@ end
 ---@return boolean
 function M.is_open()
   return (M.instance() and M.instance().buffer and M.instance().buffer:is_visible()) == true
+end
+
+function M:_action(name)
+  local action = require("neogit.buffers.status.actions")[name]
+  assert(action, ("Status Buffer action %q is undefined"):format(name))
+
+  return action(self)
 end
 
 ---@param kind string<"floating" | "split" | "tab" | "split" | "vsplit">|nil
@@ -119,1010 +113,83 @@ function M:open(kind, cwd)
 
       vim.o.autochdir = self.prev_autochdir
     end,
+    --stylua: ignore start
     mappings = {
       v = {
-        [mappings["Discard"]] = a.void(function()
-          local selection = self.buffer.ui:get_selection()
-
-          local discard_message = "Discard selection?"
-          local hunk_count = 0
-          local file_count = 0
-
-          local patches = {}
-          local untracked_files = {}
-          local unstaged_files = {}
-          local new_files = {}
-          local staged_files_modified = {}
-          local stashes = {}
-
-          for _, section in ipairs(selection.sections) do
-            if section.name == "untracked" or section.name == "unstaged" or section.name == "staged" then
-              file_count = file_count + #section.items
-
-              for _, item in ipairs(section.items) do
-                local hunks = self.buffer.ui:item_hunks(item, selection.first_line, selection.last_line, true)
-
-                if #hunks > 0 then
-                  logger.debug(("Discarding %d hunks from %q"):format(#hunks, item.name))
-
-                  hunk_count = hunk_count + #hunks
-                  if hunk_count > 1 then
-                    discard_message = ("Discard %s hunks?"):format(hunk_count)
-                  end
-
-                  for _, hunk in ipairs(hunks) do
-                    table.insert(patches, function()
-                      local patch = git.index.generate_patch(item, hunk, hunk.from, hunk.to, true)
-
-                      logger.debug(("Discarding Patch: %s"):format(patch))
-
-                      git.index.apply(patch, {
-                        index = section.name == "staged",
-                        reverse = true,
-                      })
-                    end)
-                  end
-                else
-                  discard_message = ("Discard %s files?"):format(file_count)
-                  logger.debug(("Discarding in section %s %s"):format(section.name, item.name))
-
-                  if section.name == "untracked" then
-                    table.insert(untracked_files, item.escaped_path)
-                  elseif section.name == "unstaged" then
-                    if item.mode == "A" then
-                      table.insert(new_files, item.escaped_path)
-                    else
-                      table.insert(unstaged_files, item.escaped_path)
-                    end
-                  elseif section.name == "staged" then
-                    if item.mode == "N" then
-                      table.insert(new_files, item.escaped_path)
-                    else
-                      table.insert(staged_files_modified, item.escaped_path)
-                    end
-                  end
-                end
-              end
-            elseif section.name == "stashes" then
-              discard_message = ("Discard %s stashes?"):format(#selection.items)
-
-              for _, stash in ipairs(selection.items) do
-                table.insert(stashes, stash.name:match("(stash@{%d+})"))
-              end
-            end
-          end
-
-          if input.get_permission(discard_message) then
-            if #patches > 0 then
-              for _, patch in ipairs(patches) do
-                patch()
-              end
-            end
-
-            if #untracked_files > 0 then
-              cleanup_items(unpack(untracked_files))
-            end
-
-            if #unstaged_files > 0 then
-              git.index.checkout(unstaged_files)
-            end
-
-            if #new_files > 0 then
-              git.index.reset(new_files)
-              cleanup_items(unpack(new_files))
-            end
-
-            if #staged_files_modified > 0 then
-              git.index.reset(staged_files_modified)
-              git.index.checkout(staged_files_modified)
-            end
-
-            if #stashes > 0 then
-              for _, stash in ipairs(stashes) do
-                git.stash.drop(stash)
-              end
-            end
-
-            self:refresh()
-          end
-        end),
-        [mappings["Stage"]] = a.void(function()
-          local selection = self.buffer.ui:get_selection()
-
-          local untracked_files = {}
-          local unstaged_files = {}
-          local patches = {}
-
-          for _, section in ipairs(selection.sections) do
-            if section.name == "unstaged" or section.name == "untracked" then
-              for _, item in ipairs(section.items) do
-                local hunks = self.buffer.ui:item_hunks(item, selection.first_line, selection.last_line, true)
-
-                if #hunks > 0 then
-                  for _, hunk in ipairs(hunks) do
-                    table.insert(patches, git.index.generate_patch(item, hunk, hunk.from, hunk.to))
-                  end
-                else
-                  if section.name == "unstaged" then
-                    table.insert(unstaged_files, item.escaped_path)
-                  else
-                    table.insert(untracked_files, item.escaped_path)
-                  end
-                end
-              end
-            end
-          end
-
-          if #untracked_files > 0 then
-            git.index.add(untracked_files)
-          end
-
-          if #unstaged_files > 0 then
-            git.status.stage(unstaged_files)
-          end
-
-          if #patches > 0 then
-            for _, patch in ipairs(patches) do
-              git.index.apply(patch, { cached = true })
-            end
-          end
-
-          if #untracked_files > 0 or #unstaged_files > 0 or #patches > 0 then
-            self:refresh()
-          end
-        end),
-        [mappings["Unstage"]] = a.void(function()
-          local selection = self.buffer.ui:get_selection()
-
-          local files = {}
-          local patches = {}
-
-          for _, section in ipairs(selection.sections) do
-            if section.name == "staged" then
-              for _, item in ipairs(section.items) do
-                local hunks = self.buffer.ui:item_hunks(item, selection.first_line, selection.last_line, true)
-
-                if #hunks > 0 then
-                  for _, hunk in ipairs(hunks) do
-                    table.insert(patches, git.index.generate_patch(item, hunk, hunk.from, hunk.to))
-                  end
-                else
-                  table.insert(files, item.escaped_path)
-                end
-              end
-            end
-          end
-
-          if #files > 0 then
-            git.status.unstage(files)
-          end
-
-          if #patches > 0 then
-            for _, patch in ipairs(patches) do
-              git.index.apply(patch, { cached = true, reverse = true })
-            end
-          end
-
-          if #files > 0 or #patches > 0 then
-            self:refresh { update_diffs = { "staged:*" } }
-          end
-        end),
-        [popups.mapping_for("BranchPopup")] = popups.open("branch", function(p)
-          p { commits = self.buffer.ui:get_commits_in_selection() }
-        end),
-        [popups.mapping_for("CherryPickPopup")] = popups.open("cherry_pick", function(p)
-          p { commits = self.buffer.ui:get_commits_in_selection() }
-        end),
-        [popups.mapping_for("CommitPopup")] = popups.open("commit", function(p)
-          local commits = self.buffer.ui:get_commits_in_selection()
-          if #commits == 1 then
-            p { commit = commits[1] }
-          end
-        end),
-        [popups.mapping_for("MergePopup")] = popups.open("merge", function(p)
-          local commits = self.buffer.ui:get_commits_in_selection()
-          if #commits == 1 then
-            p { commit = commits[1] }
-          end
-        end),
-        [popups.mapping_for("PushPopup")] = popups.open("push", function(p)
-          local commits = self.buffer.ui:get_commits_in_selection()
-          if #commits == 1 then
-            p { commit = commits[1] }
-          end
-        end),
-        [popups.mapping_for("RebasePopup")] = popups.open("rebase", function(p)
-          local commits = self.buffer.ui:get_commits_in_selection()
-          if #commits == 1 then
-            p { commit = commits[1] }
-          end
-        end),
-        [popups.mapping_for("RevertPopup")] = popups.open("revert", function(p)
-          p { commits = self.buffer.ui:get_commits_in_selection() }
-        end),
-        [popups.mapping_for("ResetPopup")] = popups.open("reset", function(p)
-          local commits = self.buffer.ui:get_commits_in_selection()
-          if #commits == 1 then
-            p { commit = commits[1] }
-          end
-        end),
-        [popups.mapping_for("TagPopup")] = popups.open("tag", function(p)
-          local commits = self.buffer.ui:get_commits_in_selection()
-          if #commits == 1 then
-            p { commit = commits[1] }
-          end
-        end),
-        [popups.mapping_for("StashPopup")] = popups.open("stash", function(p)
-          local stash = self.buffer.ui:get_yankable_under_cursor()
-          p { name = stash and stash:match("^stash@{%d+}") }
-        end),
-        [popups.mapping_for("DiffPopup")] = popups.open("diff", function(p)
-          local section = self.buffer.ui:get_selection().section
-          local item = self.buffer.ui:get_yankable_under_cursor()
-          p { section = { name = section and section.name }, item = { name = item } }
-        end),
-        [popups.mapping_for("IgnorePopup")] = popups.open("ignore", function(p)
-          p { paths = self.buffer.ui:get_filepaths_in_selection(), git_root = git.repo.git_root }
-        end),
-        [popups.mapping_for("BisectPopup")] = popups.open("bisect", function(p)
-          p { commits = self.buffer.ui:get_commits_in_selection() }
-        end),
-        [popups.mapping_for("RemotePopup")] = popups.open("remote"),
-        [popups.mapping_for("FetchPopup")] = popups.open("fetch"),
-        [popups.mapping_for("PullPopup")] = popups.open("pull"),
-        [popups.mapping_for("HelpPopup")] = popups.open("help"),
-        [popups.mapping_for("LogPopup")] = popups.open("log"),
-        [popups.mapping_for("WorktreePopup")] = popups.open("worktree"),
+        [mappings["Discard"]]                   = self:_action("v_discard"),
+        [mappings["Stage"]]                     = self:_action("v_stage"),
+        [mappings["Unstage"]]                   = self:_action("v_unstage"),
+        [popups.mapping_for("BisectPopup")]     = self:_action("v_bisect_popup"),
+        [popups.mapping_for("BranchPopup")]     = self:_action("v_branch_popup"),
+        [popups.mapping_for("CherryPickPopup")] = self:_action("v_cherry_pick_popup"),
+        [popups.mapping_for("CommitPopup")]     = self:_action("v_commit_popup"),
+        [popups.mapping_for("DiffPopup")]       = self:_action("v_diff_popup"),
+        [popups.mapping_for("FetchPopup")]      = self:_action("v_fetch_popup"),
+        [popups.mapping_for("HelpPopup")]       = self:_action("v_help_popup"),
+        [popups.mapping_for("IgnorePopup")]     = self:_action("v_ignore_popup"),
+        [popups.mapping_for("LogPopup")]        = self:_action("v_log_popup"),
+        [popups.mapping_for("MergePopup")]      = self:_action("v_merge_popup"),
+        [popups.mapping_for("PullPopup")]       = self:_action("v_pull_popup"),
+        [popups.mapping_for("PushPopup")]       = self:_action("v_push_popup"),
+        [popups.mapping_for("RebasePopup")]     = self:_action("v_rebase_popup"),
+        [popups.mapping_for("RemotePopup")]     = self:_action("v_remote_popup"),
+        [popups.mapping_for("ResetPopup")]      = self:_action("v_reset_popup"),
+        [popups.mapping_for("RevertPopup")]     = self:_action("v_revert_popup"),
+        [popups.mapping_for("StashPopup")]      = self:_action("v_stash_popup"),
+        [popups.mapping_for("TagPopup")]        = self:_action("v_tag_popup"),
+        [popups.mapping_for("WorktreePopup")]   = self:_action("v_worktree_popup"),
       },
       n = {
-        ["j"] = function()
-          if vim.v.count > 0 then
-            vim.cmd("norm! " .. vim.v.count .. "j")
-          else
-            vim.cmd("norm! j")
-          end
-
-          if self.buffer:get_current_line()[1] == "" then
-            vim.cmd("norm! j")
-          end
-        end,
-        ["k"] = function()
-          if vim.v.count > 0 then
-            vim.cmd("norm! " .. vim.v.count .. "k")
-          else
-            vim.cmd("norm! k")
-          end
-
-          if self.buffer:get_current_line()[1] == "" then
-            vim.cmd("norm! k")
-          end
-        end,
-        [mappings["Toggle"]] = function()
-          local fold = self.buffer.ui:get_fold_under_cursor()
-          if fold then
-            if fold.options.on_open then
-              fold.options.on_open(fold, self.buffer.ui)
-            else
-              local start, _ = fold:row_range_abs()
-              local ok, _ = pcall(vim.cmd, "normal! za")
-              if ok then
-                self.buffer:move_cursor(start)
-                fold.options.folded = not fold.options.folded
-              end
-            end
-          end
-        end,
-        [mappings["Close"]] = require("neogit.lib.ui.helpers").close_topmost(self),
-        [mappings["OpenOrScrollDown"]] = function()
-          local commit = self.buffer.ui:get_commit_under_cursor()
-          if commit then
-            require("neogit.buffers.commit_view").open_or_scroll_down(commit)
-          end
-        end,
-        [mappings["OpenOrScrollUp"]] = function()
-          local commit = self.buffer.ui:get_commit_under_cursor()
-          if commit then
-            require("neogit.buffers.commit_view").open_or_scroll_up(commit)
-          end
-        end,
-        [mappings["RefreshBuffer"]] = a.void(function()
-          self:refresh()
-        end),
-        [mappings["Depth1"]] = function()
-          local section = self.buffer.ui:get_current_section()
-          if section then
-            local start, last = section:row_range_abs()
-            if self.buffer:cursor_line() < start or self.buffer:cursor_line() >= last then
-              return
-            end
-
-            self.buffer:move_cursor(start)
-            section:close_all_folds(self.buffer.ui)
-
-            self.buffer.ui:update()
-          end
-        end,
-        [mappings["Depth2"]] = function()
-          local section = self.buffer.ui:get_current_section()
-          local row = self.buffer.ui:get_component_under_cursor()
-
-          if section then
-            local start, last = section:row_range_abs()
-            if self.buffer:cursor_line() < start or self.buffer:cursor_line() >= last then
-              return
-            end
-
-            self.buffer:move_cursor(start)
-
-            section:close_all_folds(self.buffer.ui)
-            section:open_all_folds(self.buffer.ui, 1)
-
-            self.buffer.ui:update()
-
-            if row then
-              local start, _ = row:row_range_abs()
-              self.buffer:move_cursor(start)
-            end
-          end
-        end,
-        [mappings["Depth3"]] = function()
-          local section = self.buffer.ui:get_current_section()
-          local context = self.buffer.ui:get_cursor_context()
-
-          if section then
-            local start, last = section:row_range_abs()
-            if self.buffer:cursor_line() < start or self.buffer:cursor_line() >= last then
-              return
-            end
-
-            self.buffer:move_cursor(start)
-
-            section:close_all_folds(self.buffer.ui)
-            section:open_all_folds(self.buffer.ui, 2)
-            section:close_all_folds(self.buffer.ui)
-            section:open_all_folds(self.buffer.ui, 2)
-
-            self.buffer.ui:update()
-
-            if context then
-              local start, _ = context:row_range_abs()
-              self.buffer:move_cursor(start)
-            end
-          end
-        end,
-        [mappings["Depth4"]] = function()
-          local section = self.buffer.ui:get_current_section()
-          local context = self.buffer.ui:get_cursor_context()
-
-          if section then
-            local start, last = section:row_range_abs()
-            if self.buffer:cursor_line() < start or self.buffer:cursor_line() >= last then
-              return
-            end
-
-            self.buffer:move_cursor(start)
-            section:close_all_folds(self.buffer.ui)
-            section:open_all_folds(self.buffer.ui, 3)
-
-            self.buffer.ui:update()
-
-            if context then
-              local start, _ = context:row_range_abs()
-              self.buffer:move_cursor(start)
-            end
-          end
-        end,
-        [mappings["CommandHistory"]] = a.void(function()
-          require("neogit.buffers.git_command_history"):new():show()
-        end),
-        [mappings["Console"]] = function()
-          require("neogit.process").show_console()
-        end,
-        [mappings["ShowRefs"]] = a.void(function()
-          require("neogit.buffers.refs_view").new(git.refs.list_parsed()):open()
-        end),
-        [mappings["YankSelected"]] = function()
-          local yank = self.buffer.ui:get_yankable_under_cursor()
-          if yank then
-            if yank:match("^stash@{%d+}") then
-              yank = git.rev_parse.oid(yank:match("^(stash@{%d+})"))
-            end
-
-            yank = string.format("'%s'", yank)
-            vim.cmd.let("@+=" .. yank)
-            vim.cmd.echo(yank)
-          else
-            vim.cmd("echo ''")
-          end
-        end,
-        [mappings["Discard"]] = a.void(function()
-          git.index.update()
-
-          local selection = self.buffer.ui:get_selection()
-          if not selection.section then
-            return
-          end
-
-          local section = selection.section.name
-          local action, message, choices
-          local refresh = {}
-
-          if selection.item and selection.item.first == fn.line(".") then -- Discard File
-            if section == "untracked" then
-              message = ("Discard %q?"):format(selection.item.name)
-              action = function()
-                cleanup_items(selection.item)
-              end
-              refresh = { update_diffs = { "untracked:" .. selection.item.name } }
-            elseif section == "unstaged" then
-              if selection.item.mode:match("^[UA][UA]") then
-                choices = { "&ours", "&theirs", "&conflict", "&abort" }
-                action = function()
-                  local choice = input.get_choice(
-                    "Discard conflict by taking...",
-                    { values = choices, default = #choices }
-                  )
-
-                  if choice == "o" then
-                    git.cli.checkout.ours.files(selection.item.absolute_path).call_sync()
-                    git.status.stage { selection.item.name }
-                  elseif choice == "t" then
-                    git.cli.checkout.theirs.files(selection.item.absolute_path).call_sync()
-                    git.status.stage { selection.item.name }
-                  elseif choice == "c" then
-                    git.cli.checkout.merge.files(selection.item.absolute_path).call_sync()
-                    git.status.stage { selection.item.name }
-                  end
-                end
-                refresh = { update_diffs = { "unstaged:" .. selection.item.name } }
-              else
-                message = ("Discard %q?"):format(selection.item.name)
-                action = function()
-                  if selection.item.mode == "A" then
-                    git.index.reset { selection.item.escaped_path }
-                    cleanup_items(selection.item)
-                  else
-                    git.index.checkout { selection.item.name }
-                  end
-                end
-              end
-              refresh = { update_diffs = { "unstaged:" .. selection.item.name } }
-            elseif section == "staged" then
-              message = ("Discard %q?"):format(selection.item.name)
-              action = function()
-                if selection.item.mode == "N" then
-                  git.index.reset { selection.item.escaped_path }
-                  cleanup_items(selection.item)
-                elseif selection.item.mode == "M" then
-                  git.index.reset { selection.item.escaped_path }
-                  git.index.checkout { selection.item.escaped_path }
-                elseif selection.item.mode == "R" then
-                  git.index.reset_HEAD(selection.item.name, selection.item.original_name)
-                  git.index.checkout { selection.item.original_name }
-                  cleanup_items(selection.item)
-                elseif selection.item.mode == "D" then
-                  git.index.reset_HEAD(selection.item.escaped_path)
-                  git.index.checkout { selection.item.escaped_path }
-                else
-                  error(
-                    ("Unhandled file mode %q for %q"):format(selection.item.mode, selection.item.escaped_path)
-                  )
-                end
-              end
-              refresh = { update_diffs = { "staged:" .. selection.item.name } }
-            elseif section == "stashes" then
-              message = ("Discard %q?"):format(selection.item.name)
-              action = function()
-                git.stash.drop(selection.item.name:match("(stash@{%d+})"))
-              end
-              refresh = {}
-            end
-          elseif selection.item then -- Discard Hunk
-            if selection.item.mode == "UU" then
-              -- TODO: https://github.com/emacs-mirror/emacs/blob/master/lisp/vc/smerge-mode.el
-              notification.warn("Resolve conflicts in file before discarding hunks.")
-              return
-            end
-
-            local hunk =
-              self.buffer.ui:item_hunks(selection.item, selection.first_line, selection.last_line, false)[1]
-
-            local patch = git.index.generate_patch(selection.item, hunk, hunk.from, hunk.to, true)
-
-            if section == "untracked" then
-              message = "Discard hunk?"
-              action = function()
-                local hunks =
-                  self.buffer.ui:item_hunks(selection.item, selection.first_line, selection.last_line, false)
-
-                local patch =
-                  git.index.generate_patch(selection.item, hunks[1], hunks[1].from, hunks[1].to, true)
-
-                git.index.apply(patch, { reverse = true })
-                git.index.apply(patch, { reverse = true })
-              end
-              refresh = { update_diffs = { "untracked:" .. selection.item.name } }
-            elseif section == "unstaged" then
-              message = "Discard hunk?"
-              action = function()
-                git.index.apply(patch, { reverse = true })
-              end
-              refresh = { update_diffs = { "unstaged:" .. selection.item.name } }
-            elseif section == "staged" then
-              message = "Discard hunk?"
-              action = function()
-                git.index.apply(patch, { index = true, reverse = true })
-              end
-              refresh = { update_diffs = { "staged:" .. selection.item.name } }
-            end
-          else -- Discard Section
-            if section == "untracked" then
-              message = ("Discard %s files?"):format(#selection.section.items)
-              action = function()
-                cleanup_items(unpack(selection.section.items))
-              end
-              refresh = { update_diffs = { "untracked:*" } }
-            elseif section == "unstaged" then
-              local conflict = false
-              for _, item in ipairs(selection.section.items) do
-                if item.mode == "UU" then
-                  conflict = true
-                  break
-                end
-              end
-
-              if conflict then
-                -- TODO: https://github.com/magit/magit/blob/28bcd29db547ab73002fb81b05579e4a2e90f048/lisp/magit-apply.el#Lair
-                notification.warn("Resolve conflicts before discarding section.")
-                return
-              else
-                message = ("Discard %s files?"):format(#selection.section.items)
-                action = function()
-                  git.index.checkout_unstaged()
-                end
-                refresh = { update_diffs = { "unstaged:*" } }
-              end
-            elseif section == "staged" then
-              message = ("Discard %s files?"):format(#selection.section.items)
-              action = function()
-                local new_files = {}
-                local staged_files_modified = {}
-                local staged_files_renamed = {}
-                local staged_files_deleted = {}
-
-                for _, item in ipairs(selection.section.items) do
-                  if item.mode == "N" or item.mode == "A" then
-                    table.insert(new_files, item.escaped_path)
-                  elseif item.mode == "M" then
-                    table.insert(staged_files_modified, item.escaped_path)
-                  elseif item.mode == "R" then
-                    table.insert(staged_files_renamed, item)
-                  elseif item.mode == "D" then
-                    table.insert(staged_files_deleted, item.escaped_path)
-                  else
-                    error(("Unknown file mode %q for %q"):format(item.mode, item.escaped_path))
-                  end
-                end
-
-                if #new_files > 0 then
-                  -- ensure the file is deleted
-                  git.index.reset(new_files)
-                  cleanup_items(unpack(new_files))
-                end
-
-                if #staged_files_modified > 0 then
-                  git.index.reset(staged_files_modified)
-                  git.index.checkout(staged_files_modified)
-                end
-
-                if #staged_files_renamed > 0 then
-                  for _, item in ipairs(staged_files_renamed) do
-                    git.index.reset_HEAD(item.name, item.original_name)
-                    git.index.checkout { item.original_name }
-                    fn.delete(item.escaped_path)
-                  end
-                end
-
-                if #staged_files_deleted > 0 then
-                  git.index.reset_HEAD(unpack(staged_files_deleted))
-                  git.index.checkout(staged_files_deleted)
-                end
-              end
-              refresh = { update_diffs = { "staged:*" } }
-            elseif section == "stashes" then
-              message = ("Discard %s stashes?"):format(#selection.section.items)
-              action = function()
-                for _, stash in ipairs(selection.section.items) do
-                  git.stash.drop(stash.name:match("(stash@{%d+})"))
-                end
-              end
-            end
-          end
-
-          if action and (choices or input.get_permission(message)) then
-            action()
-            self:refresh(refresh)
-          end
-        end),
-        [mappings["GoToNextHunkHeader"]] = function()
-          local c = self.buffer.ui:get_component_under_cursor(function(c)
-            return c.options.tag == "Diff" or c.options.tag == "Hunk" or c.options.tag == "Item"
-          end)
-          local section = self.buffer.ui:get_current_section()
-
-          if c and section then
-            local _, section_last = section:row_range_abs()
-            local next_location
-
-            if c.options.tag == "Diff" then
-              next_location = fn.line(".") + 1
-            elseif c.options.tag == "Item" then
-              vim.cmd("normal! zo")
-              next_location = fn.line(".") + 1
-            elseif c.options.tag == "Hunk" then
-              local _, last = c:row_range_abs()
-              next_location = last + 1
-            end
-
-            if next_location < section_last then
-              self.buffer:move_cursor(next_location)
-            end
-
-            vim.cmd("normal! zt")
-          end
-        end,
-        [mappings["GoToPreviousHunkHeader"]] = function()
-          local function previous_hunk_header(self, line)
-            local c = self.buffer.ui:get_component_on_line(line, function(c)
-              return c.options.tag == "Diff" or c.options.tag == "Hunk" or c.options.tag == "Item"
-            end)
-
-            if c then
-              local first, _ = c:row_range_abs()
-              if fn.line(".") == first then
-                first = previous_hunk_header(self, line - 1)
-              end
-
-              return first
-            end
-          end
-
-          local previous_header = previous_hunk_header(self, fn.line("."))
-          if previous_header then
-            self.buffer:move_cursor(previous_header)
-            vim.cmd("normal! zt")
-          end
-        end,
-        [mappings["InitRepo"]] = function()
-          git.init.init_repo()
-        end,
-        [mappings["Stage"]] = a.void(function()
-          local stagable = self.buffer.ui:get_hunk_or_filename_under_cursor()
-          local section = self.buffer.ui:get_current_section()
-
-          if stagable and section then
-            if section.options.section == "staged" then
-              return
-            end
-
-            if stagable.hunk then
-              local item = self.buffer.ui:get_item_under_cursor()
-              assert(item, "Item cannot be nil")
-              local patch =
-                git.index.generate_patch(item, stagable.hunk, stagable.hunk.from, stagable.hunk.to)
-
-              git.index.apply(patch, { cached = true })
-              self:refresh { update_diffs = { "*:" .. item.escaped_path } }
-            elseif stagable.filename then
-              if section.options.section == "unstaged" then
-                git.status.stage { stagable.filename }
-                self:refresh { update_diffs = { "unstaged:" .. stagable.filename } }
-              elseif section.options.section == "untracked" then
-                git.index.add { stagable.filename }
-                self:refresh { update_diffs = { "untracked:" .. stagable.filename } }
-              end
-            end
-          elseif section then
-            if section.options.section == "untracked" then
-              git.status.stage_untracked()
-              self:refresh { update_diffs = { "untracked:*" } }
-            elseif section.options.section == "unstaged" then
-              git.status.stage_modified()
-              self:refresh { update_diffs = { "unstaged:*" } }
-            end
-          end
-        end),
-        [mappings["StageAll"]] = a.void(function()
-          git.status.stage_all()
-          self:refresh()
-        end),
-        [mappings["StageUnstaged"]] = a.void(function()
-          git.status.stage_modified()
-          self:refresh { update_diffs = { "unstaged:*" } }
-        end),
-        [mappings["Unstage"]] = a.void(function()
-          local unstagable = self.buffer.ui:get_hunk_or_filename_under_cursor()
-
-          local section = self.buffer.ui:get_current_section()
-          if section and section.options.section ~= "staged" then
-            return
-          end
-
-          if unstagable then
-            if unstagable.hunk then
-              local item = self.buffer.ui:get_item_under_cursor()
-              assert(item, "Item cannot be nil")
-              local patch = git.index.generate_patch(
-                item,
-                unstagable.hunk,
-                unstagable.hunk.from,
-                unstagable.hunk.to,
-                true
-              )
-
-              git.index.apply(patch, { cached = true, reverse = true })
-              self:refresh { update_diffs = { "*:" .. item.escaped_path } }
-            elseif unstagable.filename then
-              git.status.unstage { unstagable.filename }
-              self:refresh { update_diffs = { "*:" .. unstagable.filename } }
-            end
-          elseif section then
-            git.status.unstage_all()
-            self:refresh { update_diffs = { "staged:*" } }
-          end
-        end),
-        [mappings["UnstageStaged"]] = a.void(function()
-          git.status.unstage_all()
-          self:refresh { update_diffs = { "staged:*" } }
-        end),
-        [mappings["GoToFile"]] = function()
-          local item = self.buffer.ui:get_item_under_cursor()
-
-          -- Goto FILE
-          if item and item.absolute_path then
-            local cursor
-            -- If the cursor is located within a hunk, we need to turn that back into a line number in the file.
-            if rawget(item, "diff") then
-              local line = self.buffer:cursor_line()
-
-              for _, hunk in ipairs(item.diff.hunks) do
-                if line >= hunk.first and line <= hunk.last then
-                  local offset = line - hunk.first
-                  local row = hunk.disk_from + offset - 1
-
-                  for i = 1, offset do
-                    -- If the line is a deletion, we need to adjust the row
-                    if string.sub(hunk.lines[i], 1, 1) == "-" then
-                      row = row - 1
-                    end
-                  end
-
-                  cursor = { row, 0 }
-                  break
-                end
-              end
-            end
-
-            self:close()
-
-            -- TODO: Does this work?
-            vim.schedule(function()
-              vim.cmd("edit! " .. fn.fnameescape(item.absolute_path))
-
-              local buf = Buffer.from_name(fn.fnameescape(item.absolute_path))
-              if buf:is_focused() and cursor then
-                buf:move_cursor(cursor)
-              end
-            end)
-
-            return
-          end
-
-          -- Goto COMMIT
-          local ref = self.buffer.ui:get_yankable_under_cursor()
-          if ref then
-            require("neogit.buffers.commit_view").new(ref):open()
-          end
-        end,
-        [mappings["TabOpen"]] = function()
-          local item = self.buffer.ui:get_item_under_cursor()
-
-          if item and item.absolute_path then
-            local cursor
-            -- If the cursor is located within a hunk, we need to turn that back into a line number in the file.
-            if rawget(item, "diff") then
-              local line = self.buffer:cursor_line()
-
-              for _, hunk in ipairs(item.diff.hunks) do
-                if line >= hunk.first and line <= hunk.last then
-                  local offset = line - hunk.first
-                  local row = hunk.disk_from + offset - 1
-
-                  for i = 1, offset do
-                    -- If the line is a deletion, we need to adjust the row
-                    if string.sub(hunk.lines[i], 1, 1) == "-" then
-                      row = row - 1
-                    end
-                  end
-
-                  cursor = { row, 0 }
-                  break
-                end
-              end
-            end
-
-            vim.cmd.tabedit(fn.fnameescape(item.absolute_path))
-            local buf = Buffer.from_name(fn.fnameescape(item.absolute_path))
-            if buf:is_focused() and cursor then
-              buf:move_cursor(cursor)
-            end
-          end
-        end,
-        [mappings["SplitOpen"]] = function()
-          local item = self.buffer.ui:get_item_under_cursor()
-
-          if item and item.absolute_path then
-            local cursor
-            -- If the cursor is located within a hunk, we need to turn that back into a line number in the file.
-            if rawget(item, "diff") then
-              local line = self.buffer:cursor_line()
-
-              for _, hunk in ipairs(item.diff.hunks) do
-                if line >= hunk.first and line <= hunk.last then
-                  local offset = line - hunk.first
-                  local row = hunk.disk_from + offset - 1
-
-                  for i = 1, offset do
-                    -- If the line is a deletion, we need to adjust the row
-                    if string.sub(hunk.lines[i], 1, 1) == "-" then
-                      row = row - 1
-                    end
-                  end
-
-                  cursor = { row, 0 }
-                  break
-                end
-              end
-            end
-
-            vim.cmd.split(fn.fnameescape(item.absolute_path))
-            local buf = Buffer.from_name(fn.fnameescape(item.absolute_path))
-            if buf:is_focused() and cursor then
-              buf:move_cursor(cursor)
-            end
-          end
-        end,
-        [mappings["VSplitOpen"]] = function()
-          local item = self.buffer.ui:get_item_under_cursor()
-
-          if item and item.absolute_path then
-            local cursor
-            -- If the cursor is located within a hunk, we need to turn that back into a line number in the file.
-            if rawget(item, "diff") then
-              local line = self.buffer:cursor_line()
-
-              for _, hunk in ipairs(item.diff.hunks) do
-                if line >= hunk.first and line <= hunk.last then
-                  local offset = line - hunk.first
-                  local row = hunk.disk_from + offset - 1
-
-                  for i = 1, offset do
-                    -- If the line is a deletion, we need to adjust the row
-                    if string.sub(hunk.lines[i], 1, 1) == "-" then
-                      row = row - 1
-                    end
-                  end
-
-                  cursor = { row, 0 }
-                  break
-                end
-              end
-            end
-
-            vim.cmd.vsplit(fn.fnameescape(item.absolute_path))
-            local buf = Buffer.from_name(fn.fnameescape(item.absolute_path))
-            if buf:is_focused() and cursor then
-              buf:move_cursor(cursor)
-            end
-          end
-        end,
-        [popups.mapping_for("BranchPopup")] = popups.open("branch", function(p)
-          p { commits = { self.buffer.ui:get_commit_under_cursor() } }
-        end),
-        [popups.mapping_for("BisectPopup")] = popups.open("bisect", function(p)
-          p { commits = { self.buffer.ui:get_commit_under_cursor() } }
-        end),
-        [popups.mapping_for("CherryPickPopup")] = popups.open("cherry_pick", function(p)
-          p { commits = { self.buffer.ui:get_commit_under_cursor() } }
-        end),
-        [popups.mapping_for("CommitPopup")] = popups.open("commit", function(p)
-          p { commit = self.buffer.ui:get_commit_under_cursor() }
-        end),
-        [popups.mapping_for("MergePopup")] = popups.open("merge", function(p)
-          p { commit = self.buffer.ui:get_commit_under_cursor() }
-        end),
-        [popups.mapping_for("PushPopup")] = popups.open("push", function(p)
-          p { commit = self.buffer.ui:get_commit_under_cursor() }
-        end),
-        [popups.mapping_for("RebasePopup")] = popups.open("rebase", function(p)
-          p { commit = self.buffer.ui:get_commit_under_cursor() }
-        end),
-        [popups.mapping_for("RevertPopup")] = popups.open("revert", function(p)
-          p { commits = { self.buffer.ui:get_commit_under_cursor() } }
-        end),
-        [popups.mapping_for("ResetPopup")] = popups.open("reset", function(p)
-          p { commit = self.buffer.ui:get_commit_under_cursor() }
-        end),
-        [popups.mapping_for("TagPopup")] = popups.open("tag", function(p)
-          p { commit = self.buffer.ui:get_commit_under_cursor() }
-        end),
-        [popups.mapping_for("StashPopup")] = popups.open("stash", function(p)
-          local stash = self.buffer.ui:get_yankable_under_cursor()
-          p { name = stash and stash:match("^stash@{%d+}") }
-        end),
-        [popups.mapping_for("DiffPopup")] = popups.open("diff", function(p)
-          local section = self.buffer.ui:get_selection().section
-          local item = self.buffer.ui:get_yankable_under_cursor()
-          p {
-            section = { name = section and section.name },
-            item = { name = item },
-          }
-        end),
-        [popups.mapping_for("IgnorePopup")] = popups.open("ignore", function(p)
-          local path = self.buffer.ui:get_hunk_or_filename_under_cursor()
-          p {
-            paths = { path and path.escaped_path },
-            git_root = git.repo.git_root,
-          }
-        end),
-        [popups.mapping_for("HelpPopup")] = popups.open("help", function(p)
-          -- Since any other popup can be launched from help, build an ENV for any of them.
-          local path = self.buffer.ui:get_hunk_or_filename_under_cursor()
-          local section = self.buffer.ui:get_selection().section
-          if section then
-            section = section.name
-          end
-
-          local item = self.buffer.ui:get_yankable_under_cursor()
-          local stash = self.buffer.ui:get_yankable_under_cursor()
-          local commit = self.buffer.ui:get_commit_under_cursor()
-          local commits = { commit }
-
-          -- TODO: Pass selection here so we can stage/unstage etc stuff
-          p {
-            branch = { commits = commits },
-            cherry_pick = { commits = commits },
-            commit = { commit = commit },
-            merge = { commit = commit },
-            push = { commit = commit },
-            rebase = { commit = commit },
-            revert = { commits = commits },
-            bisect = { commits = commits },
-            reset = { commit = commit },
-            tag = { commit = commit },
-            stash = { name = stash and stash:match("^stash@{%d+}") },
-            diff = {
-              section = { name = section },
-              item = { name = item },
-            },
-            ignore = {
-              paths = { path and path.escaped_path },
-              git_root = git.repo.git_root,
-            },
-            remote = {},
-            fetch = {},
-            pull = {},
-            log = {},
-            worktree = {},
-          }
-        end),
-        [popups.mapping_for("RemotePopup")] = popups.open("remote"),
-        [popups.mapping_for("FetchPopup")] = popups.open("fetch"),
-        [popups.mapping_for("PullPopup")] = popups.open("pull"),
-        [popups.mapping_for("LogPopup")] = popups.open("log"),
-        [popups.mapping_for("WorktreePopup")] = popups.open("worktree"),
+        ["j"]                                   = self:_action("n_down"),
+        ["k"]                                   = self:_action("n_up"),
+        [mappings["Toggle"]]                    = self:_action("n_toggle"),
+        [mappings["Close"]]                     = self:_action("n_close"),
+        [mappings["OpenOrScrollDown"]]          = self:_action("n_open_or_scroll_down"),
+        [mappings["OpenOrScrollUp"]]            = self:_action("n_open_or_scroll_up"),
+        [mappings["RefreshBuffer"]]             = self:_action("n_refresh_buffer"),
+        [mappings["Depth1"]]                    = self:_action("n_depth1"),
+        [mappings["Depth2"]]                    = self:_action("n_depth2"),
+        [mappings["Depth3"]]                    = self:_action("n_depth3"),
+        [mappings["Depth4"]]                    = self:_action("n_depth4"),
+        [mappings["CommandHistory"]]            = self:_action("n_command_history"),
+        [mappings["Console"]]                   = self:_action("n_console"),
+        [mappings["ShowRefs"]]                  = self:_action("n_show_refs"),
+        [mappings["YankSelected"]]              = self:_action("n_yank_selected"),
+        [mappings["Discard"]]                   = self:_action("n_discard"),
+        [mappings["GoToNextHunkHeader"]]        = self:_action("n_go_to_next_hunk_header"),
+        [mappings["GoToPreviousHunkHeader"]]    = self:_action("n_go_to_previous_hunk_header"),
+        [mappings["InitRepo"]]                  = self:_action("n_init_repo"),
+        [mappings["Stage"]]                     = self:_action("n_stage"),
+        [mappings["StageAll"]]                  = self:_action("n_stage_all"),
+        [mappings["StageUnstaged"]]             = self:_action("n_stage_unstaged"),
+        [mappings["Unstage"]]                   = self:_action("n_unstage"),
+        [mappings["UnstageStaged"]]             = self:_action("n_unstage_staged"),
+        [mappings["GoToFile"]]                  = self:_action("n_goto_file"),
+        [mappings["TabOpen"]]                   = self:_action("n_tab_open"),
+        [mappings["SplitOpen"]]                 = self:_action("n_split_open"),
+        [mappings["VSplitOpen"]]                = self:_action("n_vertical_split_open"),
+        [popups.mapping_for("BisectPopup")]     = self:_action("n_bisect_popup"),
+        [popups.mapping_for("BranchPopup")]     = self:_action("n_branch_popup"),
+        [popups.mapping_for("CherryPickPopup")] = self:_action("n_cherry_pick_popup"),
+        [popups.mapping_for("CommitPopup")]     = self:_action("n_commit_popup"),
+        [popups.mapping_for("DiffPopup")]       = self:_action("n_diff_popup"),
+        [popups.mapping_for("FetchPopup")]      = self:_action("n_fetch_popup"),
+        [popups.mapping_for("HelpPopup")]       = self:_action("n_help_popup"),
+        [popups.mapping_for("IgnorePopup")]     = self:_action("n_ignore_popup"),
+        [popups.mapping_for("LogPopup")]        = self:_action("n_log_popup"),
+        [popups.mapping_for("MergePopup")]      = self:_action("n_merge_popup"),
+        [popups.mapping_for("PullPopup")]       = self:_action("n_pull_popup"),
+        [popups.mapping_for("PushPopup")]       = self:_action("n_push_popup"),
+        [popups.mapping_for("RebasePopup")]     = self:_action("n_rebase_popup"),
+        [popups.mapping_for("RemotePopup")]     = self:_action("n_remote_popup"),
+        [popups.mapping_for("ResetPopup")]      = self:_action("n_reset_popup"),
+        [popups.mapping_for("RevertPopup")]     = self:_action("n_revert_popup"),
+        [popups.mapping_for("StashPopup")]      = self:_action("n_stash_popup"),
+        [popups.mapping_for("TagPopup")]        = self:_action("n_tag_popup"),
+        [popups.mapping_for("WorktreePopup")]   = self:_action("n_worktree_popup"),
       },
     },
+    --stylua: ignore end
     initialize = function()
       self.prev_autochdir = vim.o.autochdir
       vim.o.autochdir = false
@@ -1186,10 +253,6 @@ end
 
 function M:refresh(partial, reason)
   logger.debug("[STATUS] Beginning refresh from " .. (reason or "unknown"))
-  -- if self.frozen then
-  --   return
-  -- end
-
   local permit = self:_get_refresh_lock(reason)
 
   git.repo:refresh {
