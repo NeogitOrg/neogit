@@ -1,6 +1,7 @@
 local Buffer = require("neogit.lib.buffer")
 local ui = require("neogit.buffers.diff.ui")
 local git = require("neogit.lib.git")
+local config = require("neogit.config")
 local status_maps = require("neogit.config").get_reversed_status_maps()
 
 local api = vim.api
@@ -54,7 +55,7 @@ function M:open()
     filetype = "NeogitDiffView",
     status_column = "",
     kind = "split",
-    context_highlight = true,
+    context_highlight = not config.values.disable_context_highlighting,
     mappings = {
       n = {
         ["{"] = function() -- Goto Previous

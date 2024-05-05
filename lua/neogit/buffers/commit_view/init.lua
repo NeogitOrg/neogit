@@ -129,7 +129,7 @@ function M:open(kind)
     filetype = "NeogitCommitView",
     kind = kind,
     status_column = "",
-    context_highlight = true,
+    context_highlight = not config.values.disable_context_highlighting,
     mappings = {
       n = {
         ["<cr>"] = function()

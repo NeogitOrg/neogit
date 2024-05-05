@@ -102,7 +102,7 @@ function M:open(kind, cwd)
     name = "NeogitStatus",
     filetype = "NeogitStatus",
     cwd = cwd,
-    context_highlight = true,
+    context_highlight = not config.values.disable_context_highlighting,
     kind = kind or config.values.kind,
     disable_line_numbers = config.values.disable_line_numbers,
     foldmarkers = not config.values.disable_signs,
