@@ -375,7 +375,7 @@ function Process:spawn(cb)
   })
 
   if job <= 0 then
-    error("Failed to start process: ", vim.inspect(self))
+    error("Failed to start process: " .. vim.inspect(self))
     if cb then
       cb(nil)
     end
