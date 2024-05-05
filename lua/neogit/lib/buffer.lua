@@ -13,9 +13,11 @@ local Ui = require("neogit.lib.ui")
 ---@field ui Ui
 ---@field kind string
 ---@field disable_line_numbers boolean
+---@field disable_relative_line_numbers boolean
 local Buffer = {
   kind = "split",
   disable_line_numbers = true,
+  disable_relative_line_numbers = true,
 }
 Buffer.__index = Buffer
 
@@ -259,6 +261,9 @@ function Buffer:show()
 
   if self.disable_line_numbers then
     vim.cmd("setlocal nonu")
+  end
+
+  if self.disable_relative_line_numbers then
     vim.cmd("setlocal nornu")
   end
 
@@ -409,11 +414,14 @@ local uv_utils = require("neogit.lib.uv")
 ---@field swapfile boolean
 ---@field filetype string|nil
 ---@field disable_line_numbers boolean|nil
+---@field disable_relative_line_numbers boolean|nil
 ---@return Buffer
 function Buffer.create(config)
   config = config or {}
   local kind = config.kind or "split"
   local disable_line_numbers = (config.disable_line_numbers == nil) and true or config.disable_line_numbers
+  local disable_relative_line_numbers = (config.disable_relative_line_numbers == nil) and true
+    or config.disable_relative_line_numbers
   --- This reuses a buffer with the same name
   local buffer = fn.bufnr(config.name)
 
@@ -433,6 +441,7 @@ function Buffer.create(config)
   local buffer = Buffer:new(buffer)
   buffer.kind = kind
   buffer.disable_line_numbers = disable_line_numbers
+  buffer.disable_relative_line_numbers = disable_relative_line_numbers
 
   local win
   if config.open ~= false then

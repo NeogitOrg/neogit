@@ -1455,6 +1455,7 @@ function M.create(kind, cwd)
     filetype = "NeogitStatus",
     kind = kind,
     disable_line_numbers = config.values.disable_line_numbers,
+    disable_relative_line_numbers = config.values.disable_relative_line_numbers,
     ---@param buffer Buffer
     initialize = function(buffer, win)
       logger.debug("[STATUS BUFFER]: Initializing...")
