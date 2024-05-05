@@ -76,6 +76,7 @@ function M:open(kind)
     kind = kind,
     modifiable = true,
     disable_line_numbers = config.values.disable_line_numbers,
+    disable_relative_line_numbers = config.values.disable_relative_line_numbers,
     readonly = false,
     initialize = function(buffer)
       vim.api.nvim_buf_attach(buffer.handle, false, {
