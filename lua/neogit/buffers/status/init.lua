@@ -5,28 +5,10 @@ local popups = require("neogit.popups")
 local git = require("neogit.lib.git")
 local Watcher = require("neogit.watcher")
 local a = require("plenary.async")
-local input = require("neogit.lib.input")
 local logger = require("neogit.logger") -- TODO: Add logging
-local notification = require("neogit.lib.notification")
 local util = require("neogit.lib.util")
 
 local api = vim.api
-local fn = vim.fn
-
-local function cleanup_items(...)
-  if vim.in_fast_event() then
-    a.util.scheduler()
-  end
-
-  for _, item in ipairs { ... } do
-    local bufnr = fn.bufexists(item.name)
-    if bufnr and bufnr > 0 and api.nvim_buf_is_valid(bufnr) then
-      api.nvim_buf_delete(bufnr, { force = true })
-    end
-
-    fn.delete(item.escaped_path)
-  end
-end
 
 ---@class Semaphore
 ---@field permits number
