@@ -101,7 +101,7 @@ local function update_status(state)
       if kind == "u" then
         local mode, _, _, _, _, _, _, _, _, name = rest:match(match_u)
 
-        table.insert(unstaged_files, update_file(cwd, old_files_hash.unstaged_files[name], mode, name))
+        table.insert(staged_files, update_file(cwd, old_files_hash.staged_files[name], mode, name))
       elseif kind == "?" then
         table.insert(untracked_files, update_file(cwd, old_files_hash.untracked_files[rest], "?", rest))
       elseif kind == "1" then
