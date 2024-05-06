@@ -589,13 +589,24 @@ local function git_root_of_cwd()
 end
 
 local is_inside_worktree = function(cwd)
-  if not cwd then
-    vim.fn.system("git rev-parse --is-inside-work-tree")
-  else
-    vim.fn.system(string.format("git -C %q rev-parse --is-inside-work-tree", cwd))
+  local job = require("plenary.job")
+  local args = { "rev-parse", "--is-inside-work-tree" }
+  local returnval = false
+  if cwd then
+    table.insert(args, { "-C", cwd })
   end
-
-  return vim.v.shell_error == 0
+  job
+    :new({
+      command = "git",
+      args = args,
+      on_exit = function(_, return_val)
+        if return_val == 0 then
+          returnval = true
+        end
+      end,
+    })
+    :sync()
+  return returnval
 end
 
 local history = {}
