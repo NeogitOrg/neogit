@@ -83,11 +83,11 @@ function M.open(opts)
   if not cli.is_inside_worktree(opts.cwd) then
     if
       input.get_confirmation(
-        string.format("Initialize repository in %s?", opts.cwd or vim.fn.getcwd()),
+        string.format("Initialize repository in %s?", opts.cwd),
         { values = { "&Yes", "&No" }, default = 2 }
       )
     then
-      lib.git.init.create(opts.cwd or vim.fn.getcwd(), true)
+      lib.git.init.create(opts.cwd, true)
     else
       notification.error("The current working directory is not a git repository")
       return
