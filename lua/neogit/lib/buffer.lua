@@ -281,6 +281,7 @@ function Buffer:hide()
   elseif self.kind == "replace" then
     if self.old_buf and api.nvim_buf_is_loaded(self.old_buf) then
       api.nvim_set_current_buf(self.old_buf)
+      self.old_buf = nil
     end
   else
     api.nvim_win_close(0, true)
@@ -311,26 +312,17 @@ function Buffer:show()
   local win
   local kind = self.kind
 
+  -- https://github.com/nvim-telescope/telescope.nvim/blame/49650f5d749fef3d1e6cf52ba031c02163a59158/lua/telescope/actions/set.lua#L93
   if kind == "replace" then
     self.old_buf = api.nvim_get_current_buf()
-    api.nvim_set_current_buf(self.handle)
-    win = api.nvim_get_current_win()
   elseif kind == "tab" then
-    vim.cmd("tab split")
-    api.nvim_set_current_buf(self.handle)
-    win = api.nvim_get_current_win()
+    vim.cmd("tabnew")
   elseif kind == "split" then
-    vim.cmd("below split")
-    api.nvim_set_current_buf(self.handle)
-    win = api.nvim_get_current_win()
+    vim.cmd("new")
   elseif kind == "split_above" then
-    vim.cmd("top split")
-    api.nvim_set_current_buf(self.handle)
-    win = api.nvim_get_current_win()
+    vim.cmd("top new")
   elseif kind == "vsplit" then
-    vim.cmd("bot vsplit")
-    api.nvim_set_current_buf(self.handle)
-    win = api.nvim_get_current_win()
+    vim.cmd("vnew")
   elseif kind == "floating" then
     -- Creates the border window
     local vim_height = vim.o.lines
@@ -356,6 +348,11 @@ function Buffer:show()
     win = content_window
   end
 
+  if kind ~= "floating" then
+    api.nvim_set_current_buf(self.handle)
+    win = api.nvim_get_current_win()
+  end
+
   if self.disable_line_numbers then
     vim.cmd("setlocal nonu")
     vim.cmd("setlocal nornu")
@@ -375,21 +372,12 @@ function Buffer:is_valid()
   return api.nvim_buf_is_valid(self.handle)
 end
 
-function Buffer:put(lines, after, follow)
-  self:focus()
-  api.nvim_put(lines, "l", after, follow)
-end
-
 function Buffer:create_fold(first, last, _)
   self:win_exec(string.format("%d,%dfold", first, last))
 end
 
 function Buffer:set_fold_state(first, last, open)
-  if open then
-    self:win_exec(string.format("%d,%dfoldopen", first, last))
-  else
-    self:win_exec(string.format("%d,%dfoldclose", first, last))
-  end
+  self:win_exec(string.format("%d,%dfold%s", first, last, open and "open" or "close"))
 end
 
 function Buffer:unlock()
