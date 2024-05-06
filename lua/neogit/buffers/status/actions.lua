@@ -645,9 +645,21 @@ M.n_discard = function(self)
         end
         refresh = { update_diffs = { "untracked:" .. selection.item.name } }
       elseif section == "unstaged" then
-        if selection.item.mode:match("^[UA][UA]") then
-          choices = { "&ours", "&theirs", "&conflict", "&abort" }
-          action = function()
+        message = ("Discard %q?"):format(selection.item.name)
+        action = function()
+          if selection.item.mode == "A" then
+            git.index.reset { selection.item.escaped_path }
+            cleanup_items(selection.item)
+          else
+            git.index.checkout { selection.item.name }
+          end
+        end
+        refresh = { update_diffs = { "unstaged:" .. selection.item.name } }
+      elseif section == "staged" then
+        message = ("Discard %q?"):format(selection.item.name)
+        action = function()
+          if selection.item.mode:match("^[UAD][UAD]") then
+            choices = { "&ours", "&theirs", "&conflict", "&abort" }
             local choice =
               input.get_choice("Discard conflict by taking...", { values = choices, default = #choices })
 
@@ -661,24 +673,7 @@ M.n_discard = function(self)
               git.cli.checkout.merge.files(selection.item.absolute_path).call_sync()
               git.status.stage { selection.item.name }
             end
-          end
-          refresh = { update_diffs = { "unstaged:" .. selection.item.name } }
-        else
-          message = ("Discard %q?"):format(selection.item.name)
-          action = function()
-            if selection.item.mode == "A" then
-              git.index.reset { selection.item.escaped_path }
-              cleanup_items(selection.item)
-            else
-              git.index.checkout { selection.item.name }
-            end
-          end
-        end
-        refresh = { update_diffs = { "unstaged:" .. selection.item.name } }
-      elseif section == "staged" then
-        message = ("Discard %q?"):format(selection.item.name)
-        action = function()
-          if selection.item.mode == "N" then
+          elseif selection.item.mode == "N" then
             git.index.reset { selection.item.escaped_path }
             cleanup_items(selection.item)
           elseif selection.item.mode == "M" then
