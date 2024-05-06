@@ -596,7 +596,7 @@ local is_inside_worktree = function(cwd)
   local args = { "rev-parse", "--is-inside-work-tree" }
   local returnval = false
   if cwd then
-    table.insert(args, { "-C", cwd })
+    args = { "-C", cwd, "rev-parse", "--is-inside-work-tree" }
   end
   job
     :new({
