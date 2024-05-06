@@ -251,6 +251,15 @@ local SectionItemFile = function(section, config)
       )
     end
 
+    local unmerged_types = {
+      ["DD"] = " (both deleted)",
+      ["DU"] = " (deleted by us)",
+      ["UD"] = " (deleted by them)",
+      ["AA"] = " (both added)",
+      ["AU"] = " (added by us)",
+      ["UA"] = " (added by them)",
+    }
+
     local name = item.original_name and ("%s -> %s"):format(item.original_name, item.name) or item.name
     local highlight = ("NeogitChange%s%s"):format(item.mode:gsub("%?", "Untracked"), section)
 
@@ -258,6 +267,7 @@ local SectionItemFile = function(section, config)
       row {
         text.highlight(highlight)(mode_text),
         text(name),
+        text.highlight("NeogitSubtleText")(unmerged_types[item.mode] or ""),
       },
     }, {
       foldable = true,
