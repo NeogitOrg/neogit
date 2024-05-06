@@ -55,8 +55,8 @@ function M.drop(popup)
 end
 
 --- git stash list
-function M.list(popup)
-  StashListBuffer.new():open()
+function M.list()
+  StashListBuffer.new(git.repo.state.stashes.items):open()
 end
 
 M.rename = operation("stash_rename", function(popup)

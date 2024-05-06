@@ -1,8 +1,7 @@
 local Buffer = require("neogit.lib.buffer")
 local config = require("neogit.config")
-local git = require("neogit.lib.git")
+local CommitViewBuffer = require("neogit.buffers.commit_view")
 
-local StashEntry = require("neogit.lib.git.stash")
 local ui = require("neogit.buffers.stash_list_view.ui")
 
 ---@class StashListBuffer
@@ -11,9 +10,9 @@ local M = {}
 M.__index = M
 
 --- Gets all current stashes
-function M.new()
+function M.new(stashes)
   local instance = {
-    stashes = git.stash.list()
+    stashes = stashes,
   }
 
   setmetatable(instance, M)
@@ -45,10 +44,13 @@ function M:open()
         end,
         ["<enter>"] = function()
           -- Still looking for how to view a stash
-          -- CommitViewBuffer.new(self.buffer.ui:get_commit_under_cursor(), self.files):open()
+          CommitViewBuffer.new(self.buffer.ui:get_commit_under_cursor()):open()
         end,
       }
     },
+    after = function()
+      vim.cmd([[setlocal nowrap]])
+    end,
     render = function()
       return ui.View(self.stashes)
     end,
