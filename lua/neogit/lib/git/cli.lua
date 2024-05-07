@@ -62,6 +62,12 @@ local configurations = {
     },
   },
 
+  rm = config {
+    flags = {
+      cached = "--cached"
+    }
+  },
+
   status = config {
     flags = {
       short = "-s",
@@ -528,6 +534,7 @@ local configurations = {
       deduplicate = "--deduplicate",
       exclude_standard = "--exclude-standard",
       full_name = "--full-name",
+      error_unmatch = "--error-unmatch",
     },
   },
 

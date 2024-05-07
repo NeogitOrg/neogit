@@ -336,6 +336,7 @@ neogit.setup {
       ["s"] = "Stage",
       ["S"] = "StageUnstaged",
       ["<c-s>"] = "StageAll",
+      ["K"] = "Untrack",
       ["u"] = "Unstage",
       ["U"] = "UnstageStaged",
       ["$"] = "CommandHistory",

@@ -101,6 +101,7 @@ function M:open(kind, cwd)
         [mappings["Discard"]]                   = self:_action("v_discard"),
         [mappings["Stage"]]                     = self:_action("v_stage"),
         [mappings["Unstage"]]                   = self:_action("v_unstage"),
+        [mappings["Untrack"]]                   = self:_action("v_untrack"),
         [popups.mapping_for("BisectPopup")]     = self:_action("v_bisect_popup"),
         [popups.mapping_for("BranchPopup")]     = self:_action("v_branch_popup"),
         [popups.mapping_for("CherryPickPopup")] = self:_action("v_cherry_pick_popup"),
@@ -124,6 +125,7 @@ function M:open(kind, cwd)
       n = {
         ["j"]                                   = self:_action("n_down"),
         ["k"]                                   = self:_action("n_up"),
+        [mappings["Untrack"]]                   = self:_action("n_untrack"),
         [mappings["Toggle"]]                    = self:_action("n_toggle"),
         [mappings["Close"]]                     = self:_action("n_close"),
         [mappings["OpenOrScrollDown"]]          = self:_action("n_open_or_scroll_down"),

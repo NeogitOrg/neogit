@@ -30,4 +30,12 @@ function M.relpath_from_repository(path)
   return result.stdout[1]
 end
 
+function M.is_tracked(path)
+  return git.cli["ls-files"].error_unmatch.files(path).call({ hidden = true, ignore_error = true }).code == 0
+end
+
+function M.untrack(paths)
+  return git.cli.rm.cached.files(unpack(paths)).call({ hidden = true }).stdout
+end
+
 return M

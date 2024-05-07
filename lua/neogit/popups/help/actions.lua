@@ -115,6 +115,7 @@ M.actions = function()
     { "Unstage", "Unstage", NONE },
     { "UnstageStaged", "Unstage-Staged", NONE },
     { "Discard", "Discard", NONE },
+    { "Untrack", "Untrack", NONE },
   }
 end
 

@@ -130,6 +130,7 @@ end
 ---| "StageAll"
 ---| "Unstage"
 ---| "UnstageStaged"
+---| "Untrack"
 ---| "RefreshBuffer"
 ---| "GoToFile"
 ---| "VSplitOpen"
@@ -521,6 +522,7 @@ function M.get_default_values()
         ["S"] = "StageUnstaged",
         ["<c-s>"] = "StageAll",
         ["u"] = "Unstage",
+        ["K"] = "Untrack",
         ["U"] = "UnstageStaged",
         ["y"] = "ShowRefs",
         ["$"] = "CommandHistory",
