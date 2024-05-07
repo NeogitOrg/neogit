@@ -35,7 +35,7 @@ function M.is_tracked(path)
 end
 
 function M.untrack(paths)
-  return git.cli.rm.cached.files(unpack(paths)).call({ hidden = true }).stdout
+  return git.cli.rm.cached.files(unpack(paths)).call({ hidden = true }).code == 0
 end
 
 return M

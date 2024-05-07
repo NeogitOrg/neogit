@@ -928,9 +928,10 @@ M.n_untrack = function(self)
         return
       end
 
-      git.files.untrack({ selection.item.escaped_path })
-      notification.info(("%q untracked"):format(selection.item.escaped_path))
-      self:refresh()
+      if git.files.untrack({ selection.item.escaped_path }) then
+        notification.info(("%q untracked"):format(selection.item.escaped_path))
+        self:refresh()
+      end
     end
   end)
 end
@@ -951,9 +952,10 @@ M.v_untrack = function(self)
         return
       end
 
-      git.files.untrack(paths)
-      notification.info(("%s files untracked"):format(#paths))
-      self:refresh()
+      if git.files.untrack(paths) then
+        notification.info(("%s files untracked"):format(#paths))
+        self:refresh()
+      end
     end
   end)
 end
