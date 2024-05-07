@@ -645,21 +645,9 @@ M.n_discard = function(self)
         end
         refresh = { update_diffs = { "untracked:" .. selection.item.name } }
       elseif section == "unstaged" then
-        message = ("Discard %q?"):format(selection.item.name)
-        action = function()
-          if selection.item.mode == "A" then
-            git.index.reset { selection.item.escaped_path }
-            cleanup_items(selection.item)
-          else
-            git.index.checkout { selection.item.name }
-          end
-        end
-        refresh = { update_diffs = { "unstaged:" .. selection.item.name } }
-      elseif section == "staged" then
-        message = ("Discard %q?"):format(selection.item.name)
-        action = function()
-          if selection.item.mode:match("^[UAD][UAD]") then
-            choices = { "&ours", "&theirs", "&conflict", "&abort" }
+        if selection.item.mode:match("^[UAD][UAD]") then
+          choices = { "&ours", "&theirs", "&conflict", "&abort" }
+          action = function()
             local choice =
               input.get_choice("Discard conflict by taking...", { values = choices, default = #choices })
 
@@ -673,24 +661,63 @@ M.n_discard = function(self)
               git.cli.checkout.merge.files(selection.item.absolute_path).call_sync()
               git.status.stage { selection.item.name }
             end
-          elseif selection.item.mode == "N" then
-            git.index.reset { selection.item.escaped_path }
-            cleanup_items(selection.item)
-          elseif selection.item.mode == "M" then
-            git.index.reset { selection.item.escaped_path }
-            git.index.checkout { selection.item.escaped_path }
-          elseif selection.item.mode == "R" then
-            git.index.reset_HEAD(selection.item.name, selection.item.original_name)
-            git.index.checkout { selection.item.original_name }
-            cleanup_items(selection.item)
-          elseif selection.item.mode == "D" then
-            git.index.reset_HEAD(selection.item.escaped_path)
-            git.index.checkout { selection.item.escaped_path }
-          else
-            error(("Unhandled file mode %q for %q"):format(selection.item.mode, selection.item.escaped_path))
+          end
+          refresh = { update_diffs = { "unstaged:" .. selection.item.name } }
+        else
+          message = ("Discard %q?"):format(selection.item.name)
+          action = function()
+            if selection.item.mode == "A" then
+              git.index.reset { selection.item.escaped_path }
+              cleanup_items(selection.item)
+            else
+              git.index.checkout { selection.item.name }
+            end
           end
         end
-        refresh = { update_diffs = { "staged:" .. selection.item.name } }
+        refresh = { update_diffs = { "unstaged:" .. selection.item.name } }
+      elseif section == "staged" then
+        if selection.item.mode:match("^[UAD][UAD]") then
+          choices = { "&ours", "&theirs", "&conflict", "&abort" }
+          action = function()
+            local choice =
+              input.get_choice("Discard conflict by taking...", { values = choices, default = #choices })
+
+            if choice == "o" then
+              git.cli.checkout.ours.files(selection.item.absolute_path).call_sync()
+              git.status.stage { selection.item.name }
+            elseif choice == "t" then
+              git.cli.checkout.theirs.files(selection.item.absolute_path).call_sync()
+              git.status.stage { selection.item.name }
+            elseif choice == "c" then
+              git.cli.checkout.merge.files(selection.item.absolute_path).call_sync()
+              git.status.stage { selection.item.name }
+            end
+          end
+          refresh = { update_diffs = { "unstaged:" .. selection.item.name } }
+        else
+          message = ("Discard %q?"):format(selection.item.name)
+          action = function()
+            if selection.item.mode == "N" then
+              git.index.reset { selection.item.escaped_path }
+              cleanup_items(selection.item)
+            elseif selection.item.mode == "M" then
+              git.index.reset { selection.item.escaped_path }
+              git.index.checkout { selection.item.escaped_path }
+            elseif selection.item.mode == "R" then
+              git.index.reset_HEAD(selection.item.name, selection.item.original_name)
+              git.index.checkout { selection.item.original_name }
+              cleanup_items(selection.item)
+            elseif selection.item.mode == "D" then
+              git.index.reset_HEAD(selection.item.escaped_path)
+              git.index.checkout { selection.item.escaped_path }
+            else
+              error(
+                ("Unhandled file mode %q for %q"):format(selection.item.mode, selection.item.escaped_path)
+              )
+            end
+          end
+          refresh = { update_diffs = { "staged:" .. selection.item.name } }
+        end
       elseif section == "stashes" then
         message = ("Discard %q?"):format(selection.item.name)
         action = function()

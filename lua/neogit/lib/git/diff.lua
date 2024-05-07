@@ -227,6 +227,15 @@ local function raw_unstaged(name)
   end
 end
 
+local function raw_staged_unmerged(name)
+  return function()
+    local diff = git.cli.diff.no_ext_diff.files(name).call({ hidden = true }).stdout
+    local stats = git.cli.diff.no_ext_diff.shortstat.files(name).call({ hidden = true }).stdout
+
+    return { diff, stats }
+  end
+end
+
 local function raw_staged(name)
   return function()
     local diff = git.cli.diff.no_ext_diff.cached.files(name).call({ hidden = true }).stdout
@@ -317,6 +326,8 @@ return {
         invalidate_diff(filter, "staged", f)
         if f.mode == "R" then
           build_metatable(f, raw_staged_renamed(f.name, f.original_name))
+        elseif f.mode:match("^[UAD][UAD]") then
+          build_metatable(f, raw_staged_unmerged(f.name))
         else
           build_metatable(f, raw_staged(f.name))
         end
