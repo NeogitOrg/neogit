@@ -55,17 +55,17 @@ local HINT = Component.new(function(props)
   end
 
   return row {
-    text.highlight("Comment")("Hint: "),
+    text.highlight("NeogitSubtleText")("Hint: "),
     entry("Toggle", "toggle"),
-    text.highlight("Comment")(" | "),
+    text.highlight("NeogitSubtleText")(" | "),
     entry("Stage", "stage"),
-    text.highlight("Comment")(" | "),
+    text.highlight("NeogitSubtleText")(" | "),
     entry("Unstage", "unstage"),
-    text.highlight("Comment")(" | "),
+    text.highlight("NeogitSubtleText")(" | "),
     entry("Discard", "discard"),
-    text.highlight("Comment")(" | "),
+    text.highlight("NeogitSubtleText")(" | "),
     entry("CommitPopup", "commit"),
-    text.highlight("Comment")(" | "),
+    text.highlight("NeogitSubtleText")(" | "),
     entry("HelpPopup", "help"),
   }
 end)
@@ -285,8 +285,8 @@ end
 local SectionItemStash = Component.new(function(item)
   local name = ("stash@{%s}"):format(item.idx)
   return row({
-    text.highlight("Comment")(name),
-    text.highlight("Comment")(": "),
+    text.highlight("NeogitSubtleText")(name),
+    text.highlight("NeogitSubtleText")(": "),
     text(item.message),
   }, { yankable = name, item = item })
 end)
@@ -407,15 +407,15 @@ local BisectDetailsSection = Component.new(function(props)
   return col.tag("Section")({
     row(util.merge(props.title, { text(" "), text.highlight("NeogitObjectId")(props.commit.oid) })),
     row {
-      text.highlight("Comment")("Author:     "),
+      text.highlight("NeogitSubtleText")("Author:     "),
       text((props.commit.author_name or "") .. " <" .. (props.commit.author_email or "") .. ">"),
     },
-    row { text.highlight("Comment")("AuthorDate: "), text(props.commit.author_date) },
+    row { text.highlight("NeogitSubtleText")("AuthorDate: "), text(props.commit.author_date) },
     row {
-      text.highlight("Comment")("Committer:  "),
+      text.highlight("NeogitSubtleText")("Committer:  "),
       text((props.commit.committer_name or "") .. " <" .. (props.commit.committer_email or "") .. ">"),
     },
-    row { text.highlight("Comment")("CommitDate: "), text(props.commit.committer_date) },
+    row { text.highlight("NeogitSubtleText")("CommitDate: "), text(props.commit.committer_date) },
     EmptyLine(),
     col(
       map(props.commit.description, text),

@@ -175,7 +175,7 @@ M.CommitEntry = Component.new(function(commit, args)
     details = col.padding_left(git.log.abbreviated_size() + 1) {
       row(util.merge(graph, {
         text(" "),
-        text("Author:     ", { highlight = "Comment" }),
+        text("Author:     ", { highlight = "NeogitSubtleText" }),
         text(commit.author_name, { highlight = "NeogitGraphAuthor" }),
         text(" <"),
         text(commit.author_email),
@@ -183,12 +183,12 @@ M.CommitEntry = Component.new(function(commit, args)
       })),
       row(util.merge(graph, {
         text(" "),
-        text("AuthorDate: ", { highlight = "Comment" }),
+        text("AuthorDate: ", { highlight = "NeogitSubtleText" }),
         text(commit.author_date),
       })),
       row(util.merge(graph, {
         text(" "),
-        text("Commit:     ", { highlight = "Comment" }),
+        text("Commit:     ", { highlight = "NeogitSubtleText" }),
         text(commit.committer_name),
         text(" <"),
         text(commit.committer_email),
@@ -196,7 +196,7 @@ M.CommitEntry = Component.new(function(commit, args)
       })),
       row(util.merge(graph, {
         text(" "),
-        text("CommitDate: ", { highlight = "Comment" }),
+        text("CommitDate: ", { highlight = "NeogitSubtleText" }),
         text(commit.committer_date),
       })),
       row(graph),

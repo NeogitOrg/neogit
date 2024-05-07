@@ -34,15 +34,15 @@ function M.CommitHeader(info)
     text.line_hl("NeogitCommitViewHeader")("Commit " .. info.commit_arg),
     commit_header_arg(info),
     row {
-      text.highlight("Comment")("Author:     "),
+      text.highlight("NeogitSubtleText")("Author:     "),
       text((info.author_name or "") .. " <" .. (info.author_email or "") .. ">"),
     },
-    row { text.highlight("Comment")("AuthorDate: "), text(info.author_date) },
+    row { text.highlight("NeogitSubtleText")("AuthorDate: "), text(info.author_date) },
     row {
-      text.highlight("Comment")("Committer:  "),
+      text.highlight("NeogitSubtleText")("Committer:  "),
       text((info.committer_name or "") .. " <" .. (info.committer_email or "") .. ">"),
     },
-    row { text.highlight("Comment")("CommitDate: "), text(info.committer_date) },
+    row { text.highlight("NeogitSubtleText")("CommitDate: "), text(info.committer_date) },
   }
 end
 
