@@ -64,8 +64,8 @@ local configurations = {
 
   rm = config {
     flags = {
-      cached = "--cached"
-    }
+      cached = "--cached",
+    },
   },
 
   status = config {
@@ -321,15 +321,15 @@ local configurations = {
   absorb = config {
     flags = {
       verbose = "--verbose",
-      and_rebase = "--and-rebase"
+      and_rebase = "--and-rebase",
     },
     aliases = {
       base = function(tbl)
         return function(commit)
           return tbl.args("--base", commit)
         end
-      end
-    }
+      end,
+    },
   },
 
   commit = config {
@@ -612,45 +612,15 @@ local configurations = {
 -- git_root_of_cwd() returns the git repo of the cwd, which can change anytime
 -- after git_root_of_cwd() has been called.
 local function git_root(dir)
-  local job = require("plenary.job")
-  local args = { "-C", dir, "rev-parse", "--show-toplevel" }
-  local gitdir = Path:new(dir):absolute() -- default to current directory
-  job
-    :new({
-      command = "git",
-      args = args,
-      on_exit = function(job_output, return_val)
-        if return_val == 0 then
-          -- Replace directory with the output of the git toplevel directory
-          gitdir = Path:new(job_output):absolute()
-        else
-          logger.warn("[CLI]: ", job_output)
-        end
-      end,
-    })
-    :sync()
-  return gitdir
+  local cmd = { "git", "-C", dir, "rev-parse", "--show-toplevel" }
+  local result = vim.system(cmd, { text = true }):wait()
+  return Path:new(vim.trim(result.stdout)):absolute()
 end
 
-local is_inside_worktree = function(cwd)
-  local job = require("plenary.job")
-  local args = { "rev-parse", "--is-inside-work-tree" }
-  local returnval = false
-  if cwd then
-    args = { "-C", cwd, "rev-parse", "--is-inside-work-tree" }
-  end
-  job
-    :new({
-      command = "git",
-      args = args,
-      on_exit = function(_, return_val)
-        if return_val == 0 then
-          returnval = true
-        end
-      end,
-    })
-    :sync()
-  return returnval
+local function is_inside_worktree(dir)
+  local cmd = { "git", "-C", dir, "rev-parse", "--is-inside-work-tree" }
+  local result = vim.system(cmd):wait()
+  return result.code == 0
 end
 
 local history = {}
@@ -861,8 +831,7 @@ local function handle_line_interactive(p, line)
     handler = handle_interactive_authenticity
   elseif line:match("^Username for ") then
     handler = handle_interactive_username
-  elseif line:match("^Enter passphrase")
-    or line:match("^Password for") then
+  elseif line:match("^Enter passphrase") or line:match("^Password for") then
     handler = handle_interactive_password
   end
 
