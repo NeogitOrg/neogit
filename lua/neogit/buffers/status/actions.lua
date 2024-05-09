@@ -187,6 +187,11 @@ M.v_stage = function(self)
     for _, section in ipairs(selection.sections) do
       if section.name == "unstaged" or section.name == "untracked" then
         for _, item in ipairs(section.items) do
+          if item.mode == "UU" then
+            notification.info("Conflicts must be resolved before staging lines")
+            return
+          end
+
           local hunks = self.buffer.ui:item_hunks(item, selection.first_line, selection.last_line, true)
 
           if #hunks > 0 then
@@ -987,6 +992,12 @@ M.n_stage = function(self)
       if stagable.hunk then
         local item = self.buffer.ui:get_item_under_cursor()
         assert(item, "Item cannot be nil")
+
+        if item.mode == "UU" then
+          notification.info("Conflicts must be resolved before staging hunks")
+          return
+        end
+
         local patch = git.index.generate_patch(item, stagable.hunk, stagable.hunk.from, stagable.hunk.to)
 
         git.index.apply(patch, { cached = true })
