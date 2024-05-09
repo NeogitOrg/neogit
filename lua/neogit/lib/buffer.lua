@@ -15,9 +15,11 @@ local Path = require("plenary.path")
 ---@field ui Ui
 ---@field kind string
 ---@field disable_line_numbers boolean
+---@field disable_relative_line_numbers boolean
 local Buffer = {
   kind = "split",
   disable_line_numbers = true,
+  disable_relative_line_numbers = true,
 }
 Buffer.__index = Buffer
 
@@ -355,6 +357,9 @@ function Buffer:show()
 
   if self.disable_line_numbers then
     vim.cmd("setlocal nonu")
+  end
+
+  if self.disable_relative_line_numbers then
     vim.cmd("setlocal nornu")
   end
 
@@ -567,6 +572,7 @@ end
 ---@field context_highlight boolean|nil
 ---@field open boolean|nil
 ---@field disable_line_numbers boolean|nil
+---@field disable_relative_line_numbers boolean|nil
 ---@field disable_signs boolean|nil
 ---@field swapfile boolean|nil
 ---@field modifiable boolean|nil
@@ -587,7 +593,9 @@ function Buffer.create(config)
   local buffer = Buffer.from_name(config.name)
 
   buffer.kind = config.kind or "split"
-  buffer.disable_line_numbers = (config.disable_line_numbers == nil) and true or config.disable_line_numbers
+  buffer.disable_line_numbers = (config.disable_line_numbers == nil) or config.disable_line_numbers
+  buffer.disable_relative_line_numbers = (config.disable_relative_line_numbers == nil)
+    or config.disable_relative_line_numbers
 
   if config.load then
     logger.debug("[BUFFER:" .. buffer.handle .. "] Loading content from file: " .. config.name)
