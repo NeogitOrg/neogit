@@ -9,6 +9,8 @@ local input = require("neogit.lib.input")
 local notification = require("neogit.lib.notification")
 local util = require("neogit.lib.util")
 
+local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
+
 local fn = vim.fn
 local api = vim.api
 
@@ -922,16 +924,25 @@ end
 M.n_untrack = function(self)
   return a.void(function()
     local selection = self.buffer.ui:get_selection()
-    if selection.item and selection.item.escaped_path then
-      if not git.files.is_tracked(selection.item.escaped_path) then
-        notification.warn(("File %q isn't tracked"):format(selection.item.escaped_path))
-        return
+    local paths = git.files.all_tree()
+
+    if selection.item
+      and selection.item.escaped_path
+      and git.files.is_tracked(selection.item.escaped_path) then
+      paths = util.deduplicate(util.merge({ selection.item.escaped_path }, paths))
+    end
+
+    local selected = FuzzyFinderBuffer.new(paths):open_async { prompt_prefix = "Untrack file(s)", allow_multi = true }
+    if selected and #selected > 0 and git.files.untrack(selected) then
+      local message
+      if #selected > 1 then
+        message = ("%s files untracked"):format(#selected)
+      else
+        message = ("%q untracked"):format(selected[1])
       end
 
-      if git.files.untrack({ selection.item.escaped_path }) then
-        notification.info(("%q untracked"):format(selection.item.escaped_path))
-        self:refresh()
-      end
+      notification.info(message)
+      self:refresh()
     end
   end)
 end
@@ -940,22 +951,24 @@ end
 M.v_untrack = function(self)
   return a.void(function()
     local selection = self.buffer.ui:get_selection()
-    if selection.items then
-      local paths = util.filter_map(selection.items, function(item)
-        if git.files.is_tracked(item.escaped_path) then
-          return item.escaped_path
-        end
-      end)
+    local selected_paths = util.filter_map(selection.items or {}, function(item)
+      if git.files.is_tracked(item.escaped_path) then
+        return item.escaped_path
+      end
+    end)
 
-      if #paths == 0 then
-        notification.warn(("Nothing to untrack"))
-        return
+    local paths = util.deduplicate(util.merge(selected_paths, git.files.all_tree()))
+    local selected = FuzzyFinderBuffer.new(paths):open_async { prompt_prefix = "Untrack file(s)", allow_multi = true }
+    if selected and #selected > 0 and git.files.untrack(selected) then
+      local message
+      if #selected > 1 then
+        message = ("Untracked %s files"):format(#selected)
+      else
+        message = ("%q untracked"):format(selected[1])
       end
 
-      if git.files.untrack(paths) then
-        notification.info(("%s files untracked"):format(#paths))
-        self:refresh()
-      end
+      notification.info(message)
+      self:refresh()
     end
   end)
 end
