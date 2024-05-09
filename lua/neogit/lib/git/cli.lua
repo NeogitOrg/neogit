@@ -611,33 +611,46 @@ local configurations = {
 -- repository.git_root is used by all other library functions, so it's most likely the one you want to use.
 -- git_root_of_cwd() returns the git repo of the cwd, which can change anytime
 -- after git_root_of_cwd() has been called.
----@return string
 local function git_root(dir)
-  local process = process
-    .new({
-      cmd = { "git", "-C", dir, "rev-parse", "--show-toplevel" },
-      verbose = false,
-      on_error = function()
-        return false
+  local job = require("plenary.job")
+  local args = { "-C", dir, "rev-parse", "--show-toplevel" }
+  local gitdir = Path:new(dir):absolute() -- default to current directory
+  job
+    :new({
+      command = "git",
+      args = args,
+      on_exit = function(job_output, return_val)
+        if return_val == 0 then
+          -- Replace directory with the output of the git toplevel directory
+          gitdir = Path:new(job_output):absolute()
+        else
+          logger.warn("[CLI]: ", job_output)
+        end
       end,
     })
-    :spawn_blocking()
-
-  if process ~= nil and process.code == 0 then
-    return Path:new(process.stdout[1]):absolute()
-  else
-    return ""
-  end
+    :sync()
+  return gitdir
 end
 
 local is_inside_worktree = function(cwd)
-  if not cwd then
-    vim.fn.system("git rev-parse --is-inside-work-tree")
-  else
-    vim.fn.system(string.format("git -C %q rev-parse --is-inside-work-tree", cwd))
+  local job = require("plenary.job")
+  local args = { "rev-parse", "--is-inside-work-tree" }
+  local returnval = false
+  if cwd then
+    args = { "-C", cwd, "rev-parse", "--is-inside-work-tree" }
   end
-
-  return vim.v.shell_error == 0
+  job
+    :new({
+      command = "git",
+      args = args,
+      on_exit = function(_, return_val)
+        if return_val == 0 then
+          returnval = true
+        end
+      end,
+    })
+    :sync()
+  return returnval
 end
 
 local history = {}
