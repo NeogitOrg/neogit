@@ -581,9 +581,9 @@ local function git_root_of_cwd()
       on_exit = function(job_output, return_val)
         if return_val == 0 then
           -- Replace directory with the output of the git toplevel directory
-          gitdir = Path:new(job_output):absolute()
+          gitdir = Path:new(job_output:result()):absolute()
         else
-          logger.warn("[CLI]: ", job_output)
+          logger.warn("[CLI]: ", job_output:result())
         end
       end,
     })
