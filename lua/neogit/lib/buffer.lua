@@ -35,11 +35,6 @@ function Buffer:new(handle, win_handle)
     namespaces = {
       default = api.nvim_create_namespace("neogit-buffer-" .. handle),
     },
-    line_buffer = {},
-    hl_buffer = {},
-    line_hl_buffer = {},
-    ext_buffer = {},
-    fold_buffer = {},
   }
 
   this.ui = Ui.new(this)
@@ -124,40 +119,8 @@ function Buffer:insert_line(line)
   api.nvim_buf_set_lines(self.handle, line_nr, line_nr, false, { line })
 end
 
-function Buffer:buffered_set_line(line)
-  table.insert(self.line_buffer, line)
-end
-
-function Buffer:buffered_add_highlight(...)
-  table.insert(self.hl_buffer, { ... })
-end
-
-function Buffer:buffered_set_extmark(...)
-  table.insert(self.ext_buffer, { ... })
-end
-
-function Buffer:buffered_create_fold(...)
-  table.insert(self.fold_buffer, { ... })
-end
-
-function Buffer:buffered_add_line_highlight(...)
-  table.insert(self.line_hl_buffer, { ... })
-end
-
 function Buffer:resize(length)
-  api.nvim_buf_set_lines(self.handle, length or #self.line_buffer, -1, false, {})
-end
-
-function Buffer:flush_line_buffer()
-  if self.line_buffer[1] then
-    api.nvim_buf_set_lines(self.handle, 0, -1, false, self.line_buffer)
-    self.line_buffer = {}
-  end
-end
-
-function Buffer:flush_highlight_buffer()
-  self:set_highlights(self.hl_buffer)
-  self.hl_buffer = {}
+  api.nvim_buf_set_lines(self.handle, length, -1, false, {})
 end
 
 function Buffer:set_highlights(highlights)
@@ -166,20 +129,10 @@ function Buffer:set_highlights(highlights)
   end
 end
 
-function Buffer:flush_extmark_buffer()
-  self:set_extmarks(self.ext_buffer)
-  self.ext_buffer = {}
-end
-
 function Buffer:set_extmarks(extmarks)
   for _, ext in ipairs(extmarks) do
     self:set_extmark(unpack(ext))
   end
-end
-
-function Buffer:flush_line_highlight_buffer()
-  self:set_line_highlights(self.line_hl_buffer)
-  self.line_hl_buffer = {}
 end
 
 function Buffer:set_line_highlights(highlights)
@@ -188,10 +141,6 @@ function Buffer:set_line_highlights(highlights)
   end
 end
 
-function Buffer:flush_fold_buffer()
-  self:set_folds(self.fold_buffer)
-  self.fold_buffer = {}
-end
 
 function Buffer:set_folds(folds)
   self:set_window_option("foldmethod", "manual")
@@ -200,15 +149,6 @@ function Buffer:set_folds(folds)
     self:create_fold(unpack(fold))
     self:set_fold_state(unpack(fold))
   end
-end
-
-function Buffer:flush_buffers()
-  self:clear_namespace("default")
-  self:flush_line_buffer()
-  self:flush_highlight_buffer()
-  self:flush_extmark_buffer()
-  self:flush_line_highlight_buffer()
-  self:flush_fold_buffer()
 end
 
 function Buffer:set_text(first_line, last_line, first_col, last_col, lines)
@@ -740,13 +680,11 @@ function Buffer.create(config)
             line == cursor and "Cursor" or "Highlight"
           )
 
-          buffer:buffered_add_line_highlight(line - 1, line_hl, {
+          buffer:add_line_highlight(line - 1, line_hl, {
             priority = 200,
             namespace = "ViewContext",
           })
         end
-
-        buffer:flush_line_highlight_buffer()
       end,
     })
   end
