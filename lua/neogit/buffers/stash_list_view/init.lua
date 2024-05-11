@@ -44,7 +44,6 @@ function M:open()
           self:close()
         end,
         ["<enter>"] = function()
-          -- Still looking for how to view a stash
           CommitViewBuffer.new(git.rev_parse.oid(self.buffer.ui:get_commit_under_cursor())):open("tab")
         end,
       }

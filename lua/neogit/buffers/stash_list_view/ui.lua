@@ -10,7 +10,7 @@ local M = {}
 
 ---Parses output of `git stash list` and splits elements into table
 M.Stash = Component.new(function(stash)
-  local label = table.concat({" stash@{", stash.idx, "}" }, "")
+  local label = table.concat({"stash@{", stash.idx, "}" }, "")
   return col({
     row({
       text.highlight("Comment")(label),
