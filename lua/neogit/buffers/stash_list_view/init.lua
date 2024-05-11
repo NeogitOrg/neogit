@@ -2,6 +2,7 @@ local Buffer = require("neogit.lib.buffer")
 local config = require("neogit.config")
 local CommitViewBuffer = require("neogit.buffers.commit_view")
 
+local git = require("neogit.lib.git")
 local ui = require("neogit.buffers.stash_list_view.ui")
 
 ---@class StashListBuffer
@@ -44,7 +45,7 @@ function M:open()
         end,
         ["<enter>"] = function()
           -- Still looking for how to view a stash
-          CommitViewBuffer.new(self.buffer.ui:get_commit_under_cursor()):open()
+          CommitViewBuffer.new(git.rev_parse.oid(self.buffer.ui:get_commit_under_cursor())):open("tab")
         end,
       }
     },
