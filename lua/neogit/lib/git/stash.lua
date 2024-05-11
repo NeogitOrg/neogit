@@ -135,7 +135,7 @@ function M.register(meta)
         rel_date = cli.log
           .max_count(1)
           .format("%cr")
-          .args("stash@{" .. idx .. "}")
+          .args(("stash@{%s}"):format(idx))
           .call({ hidden = true }).stdout[1],
         idx = tonumber(idx),
         name = line,
