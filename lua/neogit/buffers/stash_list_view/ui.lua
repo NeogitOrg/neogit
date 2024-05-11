@@ -6,14 +6,11 @@ local text = Ui.text
 local col = Ui.col
 local row = Ui.row
 
--- local StashEntry = require("neogit.lib.git.stash").StashEntry
-
 local M = {}
 
 ---Parses output of `git stash list` and splits elements into table
 M.Stash = Component.new(function(stash)
-  local children = {}
-  local table = table.concat({" stash@{", stash.idx, "}" }, "")
+  local label = table.concat({" stash@{", stash.idx, "}" }, "")
   return col({
     row({
       text.highlight("Comment")(label),
