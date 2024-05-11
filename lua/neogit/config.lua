@@ -146,6 +146,7 @@ end
 ---@field sort_branches? string Value used for `--sort` for the `git branch` command
 ---@field kind? WindowKind The default type of window neogit should open in
 ---@field disable_line_numbers? boolean Whether to disable line numbers
+---@field disable_relative_line_numbers? boolean Whether to disable line numbers
 ---@field console_timeout? integer Time in milliseconds after a console is created for long running commands
 ---@field auto_show_console? boolean Automatically show the console if a command takes longer than console_timeout
 ---@field status? { recent_commit_count: integer } Status buffer options
@@ -203,6 +204,7 @@ function M.get_default_values()
     sort_branches = "-committerdate",
     kind = "tab",
     disable_line_numbers = true,
+    disable_relative_line_numbers = true,
     -- The time after which an output console is shown for slow running commands
     console_timeout = 2000,
     -- Automatically show console if a command takes more than console_timeout milliseconds
@@ -773,6 +775,7 @@ function M.validate_config()
     validate_type(config.console_timeout, "console_timeout", "number")
     validate_kind(config.kind, "kind")
     validate_type(config.disable_line_numbers, "disable_line_numbers", "boolean")
+    validate_type(config.disable_relative_line_numbers, "disable_relative_line_numbers", "boolean")
     validate_type(config.auto_show_console, "auto_show_console", "boolean")
     if validate_type(config.status, "status", "table") then
       validate_type(config.status.recent_commit_count, "status.recent_commit_count", "number")

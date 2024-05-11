@@ -72,35 +72,36 @@ end
 function M.parse(url)
   local protocol, user, host, port, path, repository, owner
 
-  for _, v in pairs { "git", "https", "http", "ssh" } do
-    if url:sub(1, #v) == v then
+  for _, v in pairs { "https", "http", "ssh", "git" } do
+    if url:sub(1, #v + 3) == (v .. "://") then
       protocol = v
       break
     end
   end
 
+  if protocol == nil then
+    -- handle case where url is in the user@ form by translating it to ssh://user@
+    -- note that this will fail for complex structures, but these would fail now as well.
+    url = url:gsub("^(.*@[^:]+):(.+)$", "ssh://%1/%2")
+    protocol = "ssh"
+  end
+
   if protocol ~= nil then
-    if protocol == "git" then
-      user = "git"
-      host = url:match([[@([^:]+)]])
-      owner = url:match([[:([^/]+)/]])
+    user = url:match([[://(%w+):?%w*@]]) -- Strip passwords.
+    port = url:match([[:(%d+)]])
+
+    if user ~= nil and port ~= nil then
+      host = url:match([[@(.*):]])
+    elseif user ~= nil then
+      host = url:match([[@(.-)/]])
+    elseif port ~= nil then
+      host = url:match([[//(.-):]])
     else
-      user = url:match([[://(%w+):?%w*@]]) -- Strip passwords.
-      port = url:match([[:(%d+)]])
-
-      if user ~= nil and port ~= nil then
-        host = url:match([[@(.*):]])
-      elseif user ~= nil then
-        host = url:match([[@(.-)/]])
-      elseif port ~= nil then
-        host = url:match([[//(.-):]])
-      else
-        host = url:match([[//(.-)/]])
-      end
-
-      path = url:sub(#protocol + 4, #url):match([[/(.*)/]])
-      owner = path -- Strictly for backwards compatibility.
+      host = url:match([[//(.-)/]])
     end
+
+    path = url:sub(#protocol + 4, #url):match([[/(.*)/]])
+    owner = path -- Strictly for backwards compatibility.
 
     repository = url:match([[/([^/]+)%.git]])
   end

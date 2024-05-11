@@ -1022,7 +1022,7 @@ local discard = operation("discard", function()
         end
       else
         logger.fmt_debug("Discarding in section %s %s", section_name, item.name)
-        if item.mode:match("^[UA][AU]") then
+        if item.mode ~= nil and item.mode:match("^[UA][AU]") then
           local choices = { "&ours", "&theirs", "&abort" }
           local choice =
             input.get_choice("Discard conflict by taking...", { values = choices, default = #choices })
@@ -1455,6 +1455,7 @@ function M.create(kind, cwd)
     filetype = "NeogitStatus",
     kind = kind,
     disable_line_numbers = config.values.disable_line_numbers,
+    disable_relative_line_numbers = config.values.disable_relative_line_numbers,
     ---@param buffer Buffer
     initialize = function(buffer, win)
       logger.debug("[STATUS BUFFER]: Initializing...")
