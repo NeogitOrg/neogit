@@ -12,6 +12,7 @@ local Path = require("plenary.path")
 ---@field handle number
 ---@field win_handle number
 ---@field namespaces table
+---@field autocmd_group number
 ---@field ui Ui
 ---@field kind string
 ---@field disable_line_numbers boolean
@@ -28,6 +29,7 @@ Buffer.__index = Buffer
 ---@return Buffer
 function Buffer:new(handle, win_handle)
   local this = {
+    autocmd_group = api.nvim_create_augroup("Neogit-augroup-" .. handle, { clear = true }),
     handle = handle,
     win_handle = win_handle,
     border = nil,
@@ -283,7 +285,7 @@ function Buffer:show()
       row = row,
       style = "minimal",
       focusable = false,
-      border = "single",
+      border = "rounded",
     })
 
     api.nvim_win_set_cursor(content_window, { 1, 0 })
@@ -439,8 +441,15 @@ function Buffer:set_filetype(ft)
   self:set_buffer_option("filetype", ft)
 end
 
-function Buffer:call(f)
-  api.nvim_buf_call(self.handle, f)
+function Buffer:call(f, ...)
+  local args = { ... }
+  api.nvim_buf_call(self.handle, function()
+    f(unpack(args))
+  end)
+end
+
+function Buffer:chan_send(data)
+  api.nvim_chan_send(api.nvim_open_term(self.handle, {}), data)
 end
 
 function Buffer:win_exec(cmd)
@@ -505,7 +514,7 @@ end
 ---@field filetype string|nil
 ---@field bufhidden string|nil
 ---@field header string|nil
----@field buftype string|nil
+---@field buftype string|nil|boolean
 ---@field cwd string|nil
 ---@field status_column string|nil
 ---@field load boolean|nil
@@ -551,10 +560,13 @@ function Buffer.create(config)
   logger.debug("[BUFFER:" .. buffer.handle .. "] Setting buffer options")
   buffer:set_buffer_option("swapfile", false)
   buffer:set_buffer_option("bufhidden", config.bufhidden or "wipe")
-  buffer:set_buffer_option("buftype", config.buftype or "nofile")
   buffer:set_buffer_option("modifiable", config.modifiable or false)
   buffer:set_buffer_option("modified", config.modifiable or false)
   buffer:set_buffer_option("readonly", config.readonly or false)
+
+  if config.buftype ~= false then
+    buffer:set_buffer_option("buftype", config.buftype or "nofile")
+  end
 
   if vim.fn.has("nvim-0.10") ~= 1 then
     logger.debug("[BUFFER:" .. buffer.handle .. "] Setting foldtext function for nvim < 0.10")
@@ -628,13 +640,19 @@ function Buffer.create(config)
     buffer.ui:render(unpack(config.render(buffer)))
   end
 
-  local neogit_augroup = require("neogit").autocmd_group
   for event, callback in pairs(config.autocmds or {}) do
     logger.debug("[BUFFER:" .. buffer.handle .. "] Setting autocmd for: " .. event)
     api.nvim_create_autocmd(event, {
       callback = callback,
       buffer = buffer.handle,
-      group = neogit_augroup,
+      group = buffer.autocmd_group,
+    })
+
+    api.nvim_buf_attach(buffer.handle, false, {
+      on_detach = function()
+        logger.debug("[BUFFER:" .. buffer.handle .. "] Clearing autocmd group")
+        api.nvim_del_augroup_by_id(buffer.autocmd_group)
+      end,
     })
   end
 

@@ -138,7 +138,6 @@ end
 ---| "TabOpen"
 ---| "GoToPreviousHunkHeader"
 ---| "GoToNextHunkHeader"
----| "Console"
 ---| "CommandHistory"
 ---| "ShowRefs"
 ---| "InitRepo"
@@ -363,7 +362,7 @@ function M.get_default_values()
       kind = "auto",
     },
     preview_buffer = {
-      kind = "split",
+      kind = "floating",
     },
     popup = {
       kind = "split",
@@ -528,7 +527,6 @@ function M.get_default_values()
         ["U"] = "UnstageStaged",
         ["y"] = "ShowRefs",
         ["$"] = "CommandHistory",
-        ["#"] = "Console",
         ["Y"] = "YankSelected",
         ["<c-r>"] = "RefreshBuffer",
         ["<cr>"] = "GoToFile",

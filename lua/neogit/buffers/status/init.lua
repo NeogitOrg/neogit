@@ -136,7 +136,6 @@ function M:open(kind, cwd)
         [mappings["Depth3"]]                    = self:_action("n_depth3"),
         [mappings["Depth4"]]                    = self:_action("n_depth4"),
         [mappings["CommandHistory"]]            = self:_action("n_command_history"),
-        [mappings["Console"]]                   = self:_action("n_console"),
         [mappings["ShowRefs"]]                  = self:_action("n_show_refs"),
         [mappings["YankSelected"]]              = self:_action("n_yank_selected"),
         [mappings["Discard"]]                   = self:_action("n_discard"),

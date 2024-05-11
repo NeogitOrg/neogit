@@ -600,13 +600,6 @@ M.n_command_history = function(self)
 end
 
 ---@param self StatusBuffer
-M.n_console = function(self)
-  return function()
-    require("neogit.process").show_console()
-  end
-end
-
----@param self StatusBuffer
 M.n_show_refs = function(self)
   return a.void(function()
     require("neogit.buffers.refs_view").new(git.refs.list_parsed()):open()
