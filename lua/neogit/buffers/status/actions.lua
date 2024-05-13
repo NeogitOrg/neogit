@@ -55,13 +55,7 @@ local function translate_cursor_location(self, item)
 end
 
 local function open(type, path, cursor)
-  path = fn.fnameescape(path)
-  vim.cmd[type](path)
-
-  local buf = Buffer.from_name(path)
-  if buf:is_focused() and cursor then
-    buf:move_cursor(cursor)
-  end
+  vim.cmd(("silent! %s %s | %s | norm! zz"):format(type, fn.fnameescape(path), cursor and cursor[1] or "1"))
 end
 
 local M = {}
@@ -1079,17 +1073,7 @@ M.n_goto_file = function(self)
     if item and item.absolute_path then
       local cursor = translate_cursor_location(self, item)
       self:close()
-
-      -- TODO: Does this work?
-      vim.schedule(function()
-        vim.cmd("edit! " .. fn.fnameescape(item.absolute_path))
-
-        local buf = Buffer.from_name(fn.fnameescape(item.absolute_path))
-        if buf:is_focused() and cursor then
-          buf:move_cursor(cursor)
-        end
-      end)
-
+      open("edit", item.absolute_path, cursor)
       return
     end
 
