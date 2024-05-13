@@ -5,6 +5,7 @@ local git = require("neogit.lib.git")
 local config = require("neogit.config")
 local popups = require("neogit.popups")
 local status_maps = require("neogit.config").get_reversed_status_maps()
+local notification = require("neogit.lib.notification")
 
 local api = vim.api
 
@@ -278,6 +279,15 @@ function M:open(kind)
               api.nvim_win_set_cursor(0, { first, 0 })
             end
           end
+        end,
+        ["d"] = function()
+          if not config.check_integration("diffview") then
+            notification.error("Diffview integration must be enabled for commit diff")
+            return
+          end
+
+          local dv = require("neogit.integrations.diffview")
+          dv.open("commit", self.commit_info.oid)
         end,
       },
     },
