@@ -251,6 +251,12 @@ function M:open(kind)
           p { commit = self.commit_info.oid }
         end),
         [popups.mapping_for("PullPopup")] = popups.open("pull"),
+        [popups.mapping_for("DiffPopup")] = popups.open("diff", function(p)
+          p {
+            section = { name = "log" },
+            item = { name = self.commit_info.oid },
+          }
+        end),
         [popups.mapping_for("BisectPopup")] = popups.open("bisect", function(p)
           p { commits = { self.commit_info.oid } }
         end),
