@@ -40,7 +40,8 @@ M.log_current = operation("log_current", function(popup)
     popup:get_internal_arguments(),
     popup.state.env.files,
     fetch_more_commits(popup, {})
-  ):open()
+  )
+    :open()
 end)
 
 function M.log_head(popup)

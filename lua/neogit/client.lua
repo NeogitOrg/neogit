@@ -14,7 +14,8 @@ function M.get_nvim_remote_editor(show_diff)
   logger.debug("[CLIENT] Neogit path: " .. neogit_path)
   logger.debug("[CLIENT] Neovim path: " .. nvim_path)
   local runtimepath_cmd = fn.shellescape(fmt("set runtimepath^=%s", fn.fnameescape(tostring(neogit_path))))
-  local lua_cmd = fn.shellescape("lua require('neogit.client').client({ show_diff = " .. tostring(show_diff) .. " })")
+  local lua_cmd =
+    fn.shellescape("lua require('neogit.client').client({ show_diff = " .. tostring(show_diff) .. " })")
 
   local shell_cmd = {
     nvim_path,
@@ -63,7 +64,8 @@ function M.client(opts)
   local client = fn.serverstart()
   logger.debug(("[CLIENT] Client address: %s"):format(client))
 
-  local lua_cmd = fmt('lua require("neogit.client").editor("%s", "%s", %s)', file_target, client, opts.show_diff)
+  local lua_cmd =
+    fmt('lua require("neogit.client").editor("%s", "%s", %s)', file_target, client, opts.show_diff)
 
   if vim.loop.os_uname().sysname == "Windows_NT" then
     lua_cmd = lua_cmd:gsub("\\", "/")

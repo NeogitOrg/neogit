@@ -918,13 +918,16 @@ M.n_untrack = function(self)
     local selection = self.buffer.ui:get_selection()
     local paths = git.files.all_tree()
 
-    if selection.item
+    if
+      selection.item
       and selection.item.escaped_path
-      and git.files.is_tracked(selection.item.escaped_path) then
+      and git.files.is_tracked(selection.item.escaped_path)
+    then
       paths = util.deduplicate(util.merge({ selection.item.escaped_path }, paths))
     end
 
-    local selected = FuzzyFinderBuffer.new(paths):open_async { prompt_prefix = "Untrack file(s)", allow_multi = true }
+    local selected = FuzzyFinderBuffer.new(paths)
+      :open_async { prompt_prefix = "Untrack file(s)", allow_multi = true }
     if selected and #selected > 0 and git.files.untrack(selected) then
       local message
       if #selected > 1 then
@@ -950,7 +953,8 @@ M.v_untrack = function(self)
     end)
 
     local paths = util.deduplicate(util.merge(selected_paths, git.files.all_tree()))
-    local selected = FuzzyFinderBuffer.new(paths):open_async { prompt_prefix = "Untrack file(s)", allow_multi = true }
+    local selected = FuzzyFinderBuffer.new(paths)
+      :open_async { prompt_prefix = "Untrack file(s)", allow_multi = true }
     if selected and #selected > 0 and git.files.untrack(selected) then
       local message
       if #selected > 1 then

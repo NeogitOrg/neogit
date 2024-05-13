@@ -143,7 +143,6 @@ function Buffer:set_line_highlights(highlights)
   end
 end
 
-
 function Buffer:set_folds(folds)
   self:set_window_option("foldmethod", "manual")
 

@@ -231,7 +231,7 @@ function Process:spawn(cb)
     table.insert(res.stdout_raw, raw)
     if self.verbose then
       table.insert(res.output, line)
-        self.buffer:append(raw)
+      self.buffer:append(raw)
     end
   end)
 

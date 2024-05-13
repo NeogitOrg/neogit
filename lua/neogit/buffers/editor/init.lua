@@ -88,7 +88,7 @@ function M:open(kind)
           diff_view:close()
           diff_view = nil
         end
-      end
+      end,
     },
     on_detach = function(buffer)
       logger.debug("[EDITOR] Cleaning Up")

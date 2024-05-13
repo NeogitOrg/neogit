@@ -170,14 +170,11 @@ function M:set_option(option)
   elseif option.fn then
     option.value = option.fn(self, option)
   else
-    local input = input.get_user_input(
-      option.cli,
-      {
-        separator = "=",
-        default = option.value,
-        cancel = option.value,
-      }
-    )
+    local input = input.get_user_input(option.cli, {
+      separator = "=",
+      default = option.value,
+      cancel = option.value,
+    })
 
     -- If the option specifies a default value, and the user set the value to be empty, defer to default value.
     -- This is handy to prevent the user from accidentally loading thousands of log entries by accident.
@@ -210,10 +207,7 @@ function M:set_config(config)
   elseif config.fn then
     config.value = config.fn(self, config)
   else
-    local result = input.get_user_input(
-      config.name,
-      { default = config.value, cancel = config.value }
-    )
+    local result = input.get_user_input(config.name, { default = config.value, cancel = config.value })
 
     config.value = result
     git.config.set(config.name, config.value)

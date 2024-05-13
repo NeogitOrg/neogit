@@ -21,11 +21,7 @@ function M.abort()
 end
 
 function M.merge(popup)
-  local refs = util.merge(
-    { popup.state.env.commit },
-    git.refs.list_branches(),
-    git.refs.list_tags()
-  )
+  local refs = util.merge({ popup.state.env.commit }, git.refs.list_branches(), git.refs.list_tags())
 
   local ref = FuzzyFinderBuffer.new(refs):open_async()
   if ref then
@@ -36,11 +32,7 @@ function M.merge(popup)
 end
 
 function M.squash(popup)
-  local refs = util.merge(
-    { popup.state.env.commit },
-    git.refs.list_branches(),
-    git.refs.list_tags()
-  )
+  local refs = util.merge({ popup.state.env.commit }, git.refs.list_branches(), git.refs.list_tags())
 
   local ref = FuzzyFinderBuffer.new(refs):open_async()
   if ref then
@@ -51,11 +43,7 @@ function M.squash(popup)
 end
 
 function M.merge_edit(popup)
-  local refs = util.merge(
-    { popup.state.env.commit },
-    git.refs.list_branches(),
-    git.refs.list_tags()
-  )
+  local refs = util.merge({ popup.state.env.commit }, git.refs.list_branches(), git.refs.list_tags())
 
   local ref = FuzzyFinderBuffer.new(refs):open_async()
   if ref then
@@ -71,11 +59,7 @@ function M.merge_edit(popup)
 end
 
 function M.merge_nocommit(popup)
-  local refs = util.merge(
-    { popup.state.env.commit },
-    git.refs.list_branches(),
-    git.refs.list_tags()
-  )
+  local refs = util.merge({ popup.state.env.commit }, git.refs.list_branches(), git.refs.list_tags())
 
   local ref = FuzzyFinderBuffer.new(refs):open_async()
   if ref then

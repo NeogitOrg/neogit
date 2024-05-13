@@ -170,10 +170,12 @@ function M.absorb(popup)
     end
   end
 
-  local commit = popup.state.env.commit or CommitSelectViewBuffer.new(
-    git.log.list { "HEAD" },
-    "Select a base commit for the absorb stack with <cr>, or <esc> to abort"
-  ):open_async()[1]
+  local commit = popup.state.env.commit
+    or CommitSelectViewBuffer.new(
+      git.log.list { "HEAD" },
+      "Select a base commit for the absorb stack with <cr>, or <esc> to abort"
+    )
+      :open_async()[1]
   if not commit then
     return
   end

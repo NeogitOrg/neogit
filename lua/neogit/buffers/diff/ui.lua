@@ -25,7 +25,9 @@ function M.OverviewFile(file_padding)
 end
 
 function M.DiffView(header, stats, diffs)
-  local file_padding = util.max_length(map(diffs, function(diff) return diff.file end))
+  local file_padding = util.max_length(map(diffs, function(diff)
+    return diff.file
+  end))
 
   return {
     text.highlight("NeogitFloatHeaderHighlight")(header),
