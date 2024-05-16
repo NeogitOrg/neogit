@@ -504,10 +504,11 @@ augroup DefaultRefreshEvents
 augroup END
 ```
 
-## Contributing
+## Versioning
 
-> [!IMPORTANT]  
-> Until neovim 0.10 is released, please base any changes on the `nightly` branch.
+Neogit follows semantic versioning.
+
+## Contributing
 
 See [CONTRIBUTING.md](https://github.com/NeogitOrg/neogit/blob/master/CONTRIBUTING.md) for more details.
 
