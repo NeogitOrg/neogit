@@ -1,7 +1,7 @@
 local Finder = require("neogit.lib.finder")
 
 local function buffer_height(count)
-  if count < (vim.fn.winheight(0) / 2) then
+  if count < (vim.o.lines / 2) then
     return count + 2
   else
     return 0.5
@@ -30,10 +30,9 @@ function M.new(list)
 end
 
 function M:open(opts, action)
-  opts = opts or {
-    allow_multi = false,
+  opts = vim.tbl_deep_extend("keep", opts or {}, {
     layout_config = { height = buffer_height(#self.list) },
-  }
+  })
 
   Finder.create(opts):add_entries(self.list):find(action)
 end
@@ -42,10 +41,9 @@ end
 ---@return any|nil
 --- Asynchronously prompt the user for the selection, and return the selected item or nil if aborted.
 function M:open_async(opts)
-  opts = opts or {
-    allow_multi = false,
+  opts = vim.tbl_deep_extend("keep", opts or {}, {
     layout_config = { height = buffer_height(#self.list) },
-  }
+  })
 
   return Finder.create(opts):add_entries(self.list):find_async()
 end

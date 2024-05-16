@@ -66,6 +66,7 @@ function M:open(kind)
     or "#"
 
   local mapping = config.get_reversed_rebase_editor_maps()
+  local mapping_I = config.get_reversed_rebase_editor_maps_I()
   local aborted = false
 
   self.buffer = Buffer.create {
@@ -73,23 +74,20 @@ function M:open(kind)
     load = true,
     filetype = "NeogitRebaseTodo",
     buftype = "",
+    status_column = "",
     kind = kind,
     modifiable = true,
     disable_line_numbers = config.values.disable_line_numbers,
     disable_relative_line_numbers = config.values.disable_relative_line_numbers,
     readonly = false,
-    initialize = function(buffer)
-      vim.api.nvim_buf_attach(buffer.handle, false, {
-        on_detach = function()
-          pcall(vim.treesitter.stop, buffer.handle)
+    on_detach = function(buffer)
+      pcall(vim.treesitter.stop, buffer.handle)
 
-          if self.on_unload then
-            self.on_unload(aborted and 1 or 0)
-          end
+      if self.on_unload then
+        self.on_unload(aborted and 1 or 0)
+      end
 
-          require("neogit.process").defer_show_preview_buffers()
-        end,
-      })
+      require("neogit.process").defer_show_preview_buffers()
     end,
     after = function(buffer)
       local padding = util.max_length(util.flatten(vim.tbl_values(mapping)))
@@ -146,12 +144,12 @@ function M:open(kind)
     end,
     mappings = {
       i = {
-        [mapping["Submit"]] = function(buffer)
+        [mapping_I["Submit"]] = function(buffer)
           vim.cmd.stopinsert()
           buffer:write()
           buffer:close(true)
         end,
-        [mapping["Abort"]] = function(buffer)
+        [mapping_I["Abort"]] = function(buffer)
           vim.cmd.stopinsert()
           aborted = true
           buffer:write()
@@ -208,9 +206,24 @@ function M:open(kind)
           vim.cmd("move +1")
         end,
         [mapping["OpenCommit"]] = function()
-          local oid = vim.api.nvim_get_current_line():match("(%x%x%x%x%x%x%x)")
+          local oid =
+            vim.api.nvim_get_current_line():match("(" .. string.rep("%x", git.log.abbreviated_size()) .. ")")
           if oid then
             CommitViewBuffer.new(oid):open("tab")
+          end
+        end,
+        [mapping["OpenOrScrollDown"]] = function()
+          local oid =
+            vim.api.nvim_get_current_line():match("(" .. string.rep("%x", git.log.abbreviated_size()) .. ")")
+          if oid then
+            CommitViewBuffer.open_or_scroll_down(oid)
+          end
+        end,
+        [mapping["OpenOrScrollUp"]] = function()
+          local oid =
+            vim.api.nvim_get_current_line():match("(" .. string.rep("%x", git.log.abbreviated_size()) .. ")")
+          if oid then
+            CommitViewBuffer.open_or_scroll_up(oid)
           end
         end,
       },

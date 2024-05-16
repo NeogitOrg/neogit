@@ -1,14 +1,11 @@
-local fn = vim.fn
-
+---@class RPC
+---@field address string
+---@field ch string
 local RPC = {}
 
--- @class RPC
--- @field address
--- @field ch
---
---- Creates a new rpc channel
--- @param address
--- @return RPC
+---Creates a new rpc channel
+---@param address string
+---@return RPC
 function RPC.new(address)
   local instance = {
     address = address,
@@ -28,11 +25,11 @@ function RPC.create_connection(address)
 end
 
 function RPC:connect()
-  self.ch = fn.sockconnect("pipe", self.address, { rpc = true })
+  self.ch = vim.fn.sockconnect("pipe", self.address, { rpc = true })
 end
 
 function RPC:disconnect()
-  fn.chanclose(self.ch)
+  vim.fn.chanclose(self.ch)
   self.ch = nil
 end
 

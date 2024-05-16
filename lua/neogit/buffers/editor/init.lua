@@ -3,6 +3,10 @@ local config = require("neogit.config")
 local input = require("neogit.lib.input")
 local util = require("neogit.lib.util")
 local git = require("neogit.lib.git")
+local logger = require("neogit.logger")
+local process = require("neogit.process")
+
+local DiffViewBuffer = require("neogit.buffers.diff")
 
 local pad = util.pad_right
 
@@ -18,6 +22,7 @@ local filetypes = {
 ---@class EditorBuffer
 ---@field filename string filename of buffer
 ---@field on_unload function callback invoked when buffer is unloaded
+---@field show_diff boolean show the diff view or not
 ---@field buffer Buffer
 ---@see Buffer
 
@@ -25,8 +30,9 @@ local filetypes = {
 ---@param filename string the filename of buffer
 ---@param on_unload function the event dispatched on buffer unload
 ---@return EditorBuffer
-function M.new(filename, on_unload)
+function M.new(filename, on_unload, show_diff)
   local instance = {
+    show_diff = show_diff,
     filename = filename,
     on_unload = on_unload,
     buffer = nil,
@@ -39,13 +45,15 @@ end
 
 function M:open(kind)
   assert(kind, "Editor must specify a kind")
+  logger.debug("[EDITOR] Opening editor as " .. kind)
 
   local mapping = config.get_reversed_commit_editor_maps()
+  local mapping_I = config.get_reversed_commit_editor_maps_I()
   local aborted = false
 
   local message_index = 1
   local message_buffer = { { "" } }
-  local footer
+  local amend_header, footer, diff_view
 
   local function reflog_message(index)
     return git.log.reflog_message(index - 2)
@@ -62,26 +70,44 @@ function M:open(kind)
     return message
   end
 
+  local filetype = filetypes[self.filename:match("[%u_]+$")] or "NeogitEditor"
+  logger.debug("[EDITOR] Filetype " .. filetype)
+
   self.buffer = Buffer.create {
     name = self.filename,
-    filetype = filetypes[self.filename:match("[%u_]+$")] or "NeogitEditor",
+    filetype = filetype,
     load = true,
     buftype = "",
     kind = kind,
     modifiable = true,
+    status_column = "",
     readonly = false,
-    initialize = function(buffer)
-      vim.api.nvim_buf_attach(buffer.handle, false, {
-        on_detach = function()
-          pcall(vim.treesitter.stop, buffer.handle)
+    autocmds = {
+      ["QuitPre"] = function() -- For :wq compatibility
+        if diff_view then
+          diff_view:close()
+          diff_view = nil
+        end
+      end,
+    },
+    on_detach = function(buffer)
+      logger.debug("[EDITOR] Cleaning Up")
+      pcall(vim.treesitter.stop, buffer.handle)
 
-          if self.on_unload then
-            self.on_unload(aborted and 1 or 0)
-          end
+      if self.on_unload then
+        logger.debug("[EDITOR] Running on_unload callback")
+        self.on_unload(aborted and 1 or 0)
+      end
 
-          require("neogit.process").defer_show_preview_buffers()
-        end,
-      })
+      process.defer_show_preview_buffers()
+
+      if diff_view then
+        logger.debug("[EDITOR] Closing diff view")
+        diff_view:close()
+        diff_view = nil
+      end
+
+      logger.debug("[EDITOR] Done cleaning up")
     end,
     after = function(buffer)
       -- Populate help lines with mappings for buffer
@@ -93,6 +119,8 @@ function M:open(kind)
       local comment_char = git.config.get("core.commentChar"):read()
         or git.config.get_global("core.commentChar"):read()
         or "#"
+
+      logger.debug("[EDITOR] Using comment character '" .. comment_char .. "'")
 
       -- stylua: ignore
       local help_lines = {
@@ -117,6 +145,15 @@ function M:open(kind)
       buffer:write()
       buffer:move_cursor(1)
 
+      amend_header = buffer:get_lines(0, 2)
+      if amend_header[1]:match("^amend! %x+$") then
+        logger.debug("[EDITOR] Found 'amend!' header")
+
+        buffer:set_lines(0, 2, false, {}) -- remove captured header from buffer
+      else
+        amend_header = nil
+      end
+
       footer = buffer:get_lines(1, -1)
 
       -- Start insert mode if user has configured it
@@ -134,19 +171,40 @@ function M:open(kind)
       -- Apply syntax highlighting
       local ok, _ = pcall(vim.treesitter.language.inspect, "gitcommit")
       if ok then
+        logger.debug("[EDITOR] Loading treesitter for gitcommit")
         vim.treesitter.start(buffer.handle, "gitcommit")
       else
+        logger.debug("[EDITOR] Loading syntax for gitcommit")
         vim.cmd.source("$VIMRUNTIME/syntax/gitcommit.vim")
+      end
+
+      if git.branch.current() then
+        vim.fn.matchadd("NeogitBranch", git.branch.current(), 100)
+      end
+
+      if git.branch.upstream() then
+        vim.fn.matchadd("NeogitRemote", git.branch.upstream(), 100)
+      end
+
+      if self.show_diff then
+        logger.debug("[EDITOR] Opening Diffview for staged changes")
+        diff_view = DiffViewBuffer:new("Staged Changes"):open()
       end
     end,
     mappings = {
       i = {
-        [mapping["Submit"]] = function(buffer)
+        [mapping_I["Submit"]] = function(buffer)
+          logger.debug("[EDITOR] Action I: Submit")
           vim.cmd.stopinsert()
+          if amend_header then
+            buffer:set_lines(0, 0, false, amend_header)
+          end
+
           buffer:write()
           buffer:close(true)
         end,
-        [mapping["Abort"]] = function(buffer)
+        [mapping_I["Abort"]] = function(buffer)
+          logger.debug("[EDITOR] Action I: Abort")
           vim.cmd.stopinsert()
           aborted = true
           buffer:write()
@@ -155,6 +213,11 @@ function M:open(kind)
       },
       n = {
         [mapping["Close"]] = function(buffer)
+          logger.debug("[EDITOR] Action N: Close")
+          if amend_header then
+            buffer:set_lines(0, 0, false, amend_header)
+          end
+
           if buffer:get_option("modified") and not input.get_confirmation("Save changes?") then
             aborted = true
           end
@@ -163,15 +226,22 @@ function M:open(kind)
           buffer:close(true)
         end,
         [mapping["Submit"]] = function(buffer)
+          logger.debug("[EDITOR] Action N: Submit")
+          if amend_header then
+            buffer:set_lines(0, 0, false, amend_header)
+          end
+
           buffer:write()
           buffer:close(true)
         end,
         [mapping["Abort"]] = function(buffer)
+          logger.debug("[EDITOR] Action N: Abort")
           aborted = true
           buffer:write()
           buffer:close(true)
         end,
         [mapping["PrevMessage"]] = function(buffer)
+          logger.debug("[EDITOR] Action N: PrevMessage")
           local message = current_message(buffer)
           message_buffer[message_index] = message
 
@@ -181,6 +251,7 @@ function M:open(kind)
           buffer:move_cursor(1)
         end,
         [mapping["NextMessage"]] = function(buffer)
+          logger.debug("[EDITOR] Action N: NextMessage")
           local message = current_message(buffer)
 
           if message_index > 1 then
@@ -192,6 +263,7 @@ function M:open(kind)
           buffer:move_cursor(1)
         end,
         [mapping["ResetMessage"]] = function(buffer)
+          logger.debug("[EDITOR] Action N: ResetMessage")
           local message = current_message(buffer)
           buffer:set_lines(0, #message, false, reflog_message(message_index))
           buffer:move_cursor(1)

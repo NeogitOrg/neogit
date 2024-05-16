@@ -1,7 +1,7 @@
 local a = require("plenary.async")
+local git = require("neogit.lib.git")
 local util = require("neogit.lib.util")
 local logger = require("neogit.logger")
-local cli = require("neogit.lib.git.cli")
 
 local ItemFilter = require("neogit.lib.item_filter")
 
@@ -108,6 +108,8 @@ end
 ---@field index_len number
 ---@field diff_from number
 ---@field diff_to number
+---@field first number First line number in buffer
+---@field last number Last line number in buffer
 
 ---@return Hunk
 local function build_hunks(lines)
@@ -159,6 +161,15 @@ local function build_hunks(lines)
     insert(hunks, hunk)
   end
 
+  for _, hunk in ipairs(hunks) do
+    hunk.lines = {}
+    for i = hunk.diff_from + 1, hunk.diff_to do
+      table.insert(hunk.lines, lines[i])
+    end
+
+    hunk.length = hunk.diff_to - hunk.diff_from
+  end
+
   return hunks
 end
 
@@ -193,14 +204,12 @@ local function build_metatable(f, raw_output_fn)
       end
     end,
   })
-
-  f.has_diff = true
 end
 
 -- Doing a git-diff with untracked files will exit(1) if a difference is observed, which we can ignore.
 local function raw_untracked(name)
   return function()
-    local diff = cli.diff.no_ext_diff.no_index
+    local diff = git.cli.diff.no_ext_diff.no_index
       .files("/dev/null", name)
       .call({ hidden = true, ignore_error = true }).stdout
     local stats = {}
@@ -211,8 +220,17 @@ end
 
 local function raw_unstaged(name)
   return function()
-    local diff = cli.diff.no_ext_diff.files(name).call({ hidden = true }).stdout
-    local stats = cli.diff.no_ext_diff.shortstat.files(name).call({ hidden = true }).stdout
+    local diff = git.cli.diff.no_ext_diff.files(name).call({ hidden = true }).stdout
+    local stats = git.cli.diff.no_ext_diff.shortstat.files(name).call({ hidden = true }).stdout
+
+    return { diff, stats }
+  end
+end
+
+local function raw_staged_unmerged(name)
+  return function()
+    local diff = git.cli.diff.no_ext_diff.files(name).call({ hidden = true }).stdout
+    local stats = git.cli.diff.no_ext_diff.shortstat.files(name).call({ hidden = true }).stdout
 
     return { diff, stats }
   end
@@ -220,8 +238,8 @@ end
 
 local function raw_staged(name)
   return function()
-    local diff = cli.diff.no_ext_diff.cached.files(name).call({ hidden = true }).stdout
-    local stats = cli.diff.no_ext_diff.cached.shortstat.files(name).call({ hidden = true }).stdout
+    local diff = git.cli.diff.no_ext_diff.cached.files(name).call({ hidden = true }).stdout
+    local stats = git.cli.diff.no_ext_diff.cached.shortstat.files(name).call({ hidden = true }).stdout
 
     return { diff, stats }
   end
@@ -229,8 +247,9 @@ end
 
 local function raw_staged_renamed(name, original)
   return function()
-    local diff = cli.diff.no_ext_diff.cached.files(name, original).call({ hidden = true }).stdout
-    local stats = cli.diff.no_ext_diff.cached.shortstat.files(name, original).call({ hidden = true }).stdout
+    local diff = git.cli.diff.no_ext_diff.cached.files(name, original).call({ hidden = true }).stdout
+    local stats =
+      git.cli.diff.no_ext_diff.cached.shortstat.files(name, original).call({ hidden = true }).stdout
 
     return { diff, stats }
   end
@@ -238,13 +257,54 @@ end
 
 local function invalidate_diff(filter, section, item)
   if not filter or filter:accepts(section, item.name) then
-    logger.fmt_debug("[DIFF] Invalidating cached diff for: %s", item.name)
+    logger.debug(("[DIFF] Invalidating cached diff for: %s"):format(item.name))
     item.diff = nil
   end
 end
 
+---@class NeogitGitDiff
 return {
   parse = parse_diff,
+  staged_stats = function()
+    local raw = git.cli.diff.no_ext_diff.cached.stat.call_sync({ hidden = true }).stdout
+    local files = {}
+    local summary
+
+    local idx = 1
+    local function advance()
+      idx = idx + 1
+    end
+
+    local function peek()
+      return raw[idx]
+    end
+
+    while true do
+      local line = peek()
+      if not line then
+        break
+      end
+
+      if line:match("^ %d+ file[s ]+changed,") then
+        summary = vim.trim(line)
+        break
+      else
+        table.insert(files, {
+          path = vim.trim(line:match("^ ([^ ]+)")),
+          changes = line:match("|%s+(%d+)"),
+          insertions = line:match("|%s+%d+ (%+*)"),
+          deletions = line:match("|%s+%d+ %+*(%-*)$"),
+        })
+
+        advance()
+      end
+    end
+
+    return {
+      summary = summary,
+      files = files,
+    }
+  end,
   register = function(meta)
     meta.update_diffs = function(repo, filter)
       filter = filter or false
@@ -266,6 +326,8 @@ return {
         invalidate_diff(filter, "staged", f)
         if f.mode == "R" then
           build_metatable(f, raw_staged_renamed(f.name, f.original_name))
+        elseif f.mode:match("^[UAD][UAD]") then
+          build_metatable(f, raw_staged_unmerged(f.name))
         else
           build_metatable(f, raw_staged(f.name))
         end

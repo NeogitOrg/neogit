@@ -9,8 +9,8 @@ local dv_lib = require("diffview.lib")
 local dv_utils = require("diffview.utils")
 
 local neogit = require("neogit")
-local repo = require("neogit.lib.git.repository")
-local status = require("neogit.status")
+local git = require("neogit.lib.git")
+local status = require("neogit.buffers.status")
 local a = require("plenary.async")
 
 local old_config
@@ -18,7 +18,7 @@ local old_config
 M.diffview_mappings = {
   close = function()
     vim.cmd("tabclose")
-    neogit.dispatch_refresh(nil, "diffview_close")
+    neogit.dispatch_refresh()
     dv.setup(old_config)
   end,
 }
@@ -42,10 +42,10 @@ local function get_local_diff_view(section_name, item_name, opts)
       conflicting = {
         items = vim.tbl_filter(function(o)
           return o.mode and o.mode:sub(2, 2) == "U"
-        end, repo.untracked.items),
+        end, git.repo.state.untracked.items),
       },
-      working = repo.unstaged,
-      staged = repo.staged,
+      working = git.repo.state.unstaged,
+      staged = git.repo.state.staged,
     }
 
     for kind, section in pairs(sections) do
@@ -80,7 +80,7 @@ local function get_local_diff_view(section_name, item_name, opts)
   local files = update_files()
 
   local view = CDiffView {
-    git_root = repo.git_root,
+    git_root = git.repo.git_root,
     left = left,
     right = right,
     files = files,
@@ -92,16 +92,19 @@ local function get_local_diff_view(section_name, item_name, opts)
           table.insert(args, "HEAD")
         end
 
-        return neogit.cli.show.file(unpack(args)).call_sync({ trim = false }).stdout
+        return git.cli.show.file(unpack(args)).call_sync({ trim = false }).stdout
       elseif kind == "working" then
-        local fdata = neogit.cli.show.file(path).call_sync({ trim = false }).stdout
+        local fdata = git.cli.show.file(path).call_sync({ trim = false }).stdout
         return side == "left" and fdata
       end
     end,
   }
 
   view:on_files_staged(a.void(function(_)
-    status.refresh({ update_diffs = true }, "on_files_staged")
+    if status.is_open() then
+      status.instance():dispatch_refresh({ update_diffs = true }, "on_files_staged")
+    end
+
     view:update_files()
   end))
 
@@ -139,8 +142,10 @@ function M.open(section_name, item_name, opts)
     local range
     if type(item_name) == "table" then
       range = string.format("%s..%s", item_name[1], item_name[#item_name])
-    else
+    elseif item_name ~= nil then
       range = string.format("%s^!", item_name:match("[a-f0-9]+"))
+    else
+      return
     end
 
     view = dv_lib.diffview_open(dv_utils.tbl_pack(range))
@@ -153,8 +158,10 @@ function M.open(section_name, item_name, opts)
     view = dv_lib.diffview_open(dv_utils.tbl_pack(stash_id .. "^!"))
   elseif section_name == "commit" then
     view = dv_lib.diffview_open(dv_utils.tbl_pack(item_name .. "^!"))
-  else
+  elseif section_name ~= nil then
     view = get_local_diff_view(section_name, item_name, opts)
+  else
+    view = dv_lib.diffview_open(dv_utils.tbl_pack(item_name .. "^!"))
   end
 
   if view then

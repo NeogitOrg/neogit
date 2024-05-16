@@ -1,27 +1,44 @@
 local util = require("neogit.lib.util")
 
 local default_component_options = {
+  foldable = false,
   folded = false,
-  hidden = false,
 }
 
+---@class ComponentPosition
+---@field row_start integer
+---@field row_end integer
+---@field col_start integer
+---@field col_end integer
+
+---@class ComponentOptions
+---@field line_hl string
+---@field highlight string
+---@field align_right integer|nil
+---@field padding_left integer
+---@field tag string
+---@field foldable boolean
+---@field folded boolean
+---@field context boolean
+---@field interactive boolean
+---@field virtual_text string
+---@field section string|nil
+---@field item table|nil
+---@field id string|nil
+
+---@class Component
+---@field position ComponentPosition
+---@field parent Component
+---@field children Component[]
+---@field tag string|nil
+---@field options ComponentOptions
+---@field index number|nil
+---@field value string|nil
+---@field id string|nil
 local Component = {}
 
 function Component:row_range_abs()
-  if self.position.row_end == nil then
-    return 0, 0
-  end
-  local from = self.position.row_start
-  local len = self.position.row_end - from
-  if self.parent.tag ~= "_root" then
-    local p_from = self.parent:row_range_abs()
-    from = from + p_from - 1
-  end
-  return from, from + len
-end
-
-function Component:toggle_hidden()
-  self.options.hidden = not self.options.hidden
+  return self.position.row_start, self.position.row_end
 end
 
 function Component:get_padding_left(recurse)
@@ -31,32 +48,6 @@ function Component:get_padding_left(recurse)
     return padding_left_text
   end
   return padding_left_text .. (self.parent and self.parent:get_padding_left() or "")
-end
-
-function Component:is_hidden()
-  return self.options.hidden or (self.parent and self.parent:is_hidden())
-end
-
-function Component:is_under_cursor(cursor)
-  if self:is_hidden() then
-    return false
-  end
-  local row = cursor[1]
-  local col = cursor[2]
-  local from, to = self:row_range_abs()
-  local row_ok = from <= row and row <= to
-  local col_ok = self.position.col_end == -1
-    or (self.position.col_start <= col and col <= self.position.col_end)
-  return row_ok and col_ok
-end
-
-function Component:is_in_linewise_range(start, stop)
-  if self:is_hidden() then
-    return false
-  end
-
-  local from, to = self:row_range_abs()
-  return from >= start and from <= stop and to >= start and to <= stop
 end
 
 function Component:get_width()
@@ -100,23 +91,68 @@ function Component:get_tag()
   end
 end
 
-function Component:get_sign()
-  return self.options.sign or (self.parent and self.parent:get_sign() or nil)
+function Component:get_line_highlight()
+  return self.options.line_hl or (self.parent and self.parent:get_line_highlight() or nil)
 end
 
 function Component:get_highlight()
   return self.options.highlight or (self.parent and self.parent:get_highlight() or nil)
 end
 
+function Component:append(c)
+  table.insert(self.children, c)
+  return self
+end
+
+---@param ui Ui
+---@param depth integer
+function Component:open_all_folds(ui, depth)
+  assert(ui, "Pass in self.buffer.ui")
+
+  if self.options.foldable then
+    if self.options.on_open then
+      self.options.on_open(self, ui)
+    end
+
+    self.options.folded = false
+    depth = depth - 1
+  end
+
+  if self.children and depth > 0 then
+    for _, child in ipairs(self.children) do
+      child:open_all_folds(ui, depth)
+    end
+  end
+end
+
+---@param ui Ui
+function Component:close_all_folds(ui)
+  assert(ui, "Pass in self.buffer.ui")
+
+  if self.options.foldable then
+    self.options.folded = true
+  end
+
+  if self.children then
+    for _, child in ipairs(self.children) do
+      child:close_all_folds(ui)
+    end
+  end
+end
+
 function Component.new(f)
-  local x = {}
-  setmetatable(x, {
+  local instance = {}
+
+  local mt = {
     __call = function(tbl, ...)
-      local x = f(...)
-      local options = vim.tbl_extend("force", default_component_options, tbl, x.options or {})
-      x.options = options
-      setmetatable(x, { __index = Component })
-      return x
+      local this = f(...)
+
+      local options = vim.tbl_extend("force", default_component_options, tbl, this.options or {})
+      this.options = options
+
+      setmetatable(this, { __index = Component })
+
+      return this
     end,
     __index = function(tbl, name)
       local value = rawget(Component, name)
@@ -131,8 +167,11 @@ function Component.new(f)
 
       return value
     end,
-  })
-  return x
+  }
+
+  setmetatable(instance, mt)
+
+  return instance
 end
 
 return Component

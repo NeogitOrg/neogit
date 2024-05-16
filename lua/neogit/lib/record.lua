@@ -1,8 +1,8 @@
 local M = {}
 
-local record_separator = { dec = "\30", hex = "%x1E" }
-local field_separator = { dec = "\31", hex = "%x1F" }
-local pair_separator = { dec = "\29", hex = "%x1D" }
+local record_separator = { dec = "\30", hex_log = "%x1E", hex_ref = "%1E" }
+local field_separator = { dec = "\31", hex_log = "%x1F", hex_ref = "%1F" }
+local pair_separator = { dec = "\29", hex_log = "%x1D", hex_ref = "%1D" }
 
 -- Matches/captures each key/value pair of fields in a record
 -- 1. \31?         - Optionally has a leading field separator (first field won't have this)
@@ -44,14 +44,16 @@ function M.decode(lines)
 end
 
 ---@param tbl table Key/value pairs to format with delimiters
+---@param type string Git log takes a different formatting string for escape literals than for-each-ref.
 ---@return string
-function M.encode(tbl)
+function M.encode(tbl, type)
+  local hex = "hex_" .. type
   local out = {}
   for k, v in pairs(tbl) do
-    table.insert(out, string.format("%s%s%s", k, pair_separator.hex, v))
+    table.insert(out, string.format("%s%s%s", k, pair_separator[hex], v))
   end
 
-  return table.concat(out, field_separator.hex) .. record_separator.hex
+  return table.concat(out, field_separator[hex]) .. record_separator[hex]
 end
 
 return M

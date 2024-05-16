@@ -1,5 +1,6 @@
 local actions = require("neogit.popups.ignore.actions")
 local Path = require("plenary.path")
+local git = require("neogit.lib.git")
 local popup = require("neogit.lib.popup")
 
 local M = {}
@@ -7,7 +8,7 @@ local M = {}
 ---@class IgnoreEnv
 ---@field files string[] Absolute paths
 function M.create(env)
-  local excludesFile = require("neogit.lib.git.config").get_global("core.excludesfile")
+  local excludesFile = git.config.get_global("core.excludesfile")
 
   local p = popup
     .builder()

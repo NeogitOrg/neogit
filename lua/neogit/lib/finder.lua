@@ -2,10 +2,10 @@ local config = require("neogit.config")
 local a = require("plenary.async")
 
 local function refocus_status_buffer()
-  local status = require("neogit.status")
-  if status.status_buffer then
-    status.status_buffer:focus()
-    status.dispatch_refresh(nil, "finder.refocus")
+  local status = require("neogit.buffers.status")
+  if status.instance() then
+    status.instance():focus()
+    status.instance():dispatch_refresh(nil, "finder.refocus")
   end
 end
 
@@ -71,12 +71,21 @@ local function telescope_mappings(on_select, allow_multi, refocus_status)
       ["MultiselectTogglePrevious"] = actions.toggle_selection + actions.move_selection_better,
     }
 
+    -- Telescope HEAD has mouse click support, but not the latest tag. Need to check if the user has
+    -- support for mouse click, while avoiding the error that the metatable raises.
+    -- stylua: ignore
+    if pcall(function() return actions.mouse_click and true end) then
+      commands.ScrollWheelDown = actions.move_selection_next
+      commands.ScrollWheelUp = actions.move_selection_previous
+      commands.MouseClick = actions.mouse_click
+    end
+
     for mapping, command in pairs(config.values.mappings.finder) do
-      if command:match("^Multiselect") then
+      if command and command:match("^Multiselect") then
         if allow_multi then
           map({ "i" }, mapping, commands[command])
         end
-      else
+      elseif command then
         map({ "i" }, mapping, commands[command])
       end
     end

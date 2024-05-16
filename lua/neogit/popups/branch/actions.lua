@@ -44,7 +44,7 @@ local function spin_off_branch(checkout)
   end
 end
 
----@param popup Popup
+---@param popup PopupData
 ---@param prompt string
 ---@param checkout boolean
 ---@return string|nil
@@ -54,8 +54,8 @@ local function create_branch(popup, prompt, checkout)
   local options = util.deduplicate(util.merge(
     { popup.state.env.commits[1] },
     { git.branch.current() or "HEAD" },
-    git.branch.get_all_branches(false),
-    git.tag.list(),
+    git.refs.list_branches(),
+    git.refs.list_tags(),
     git.refs.heads()
   ))
 
@@ -87,7 +87,8 @@ M.spin_out_branch = operation("spin_out_branch", function()
 end)
 
 M.checkout_branch_revision = operation("checkout_branch_revision", function(popup)
-  local options = util.merge(popup.state.env.commits, git.branch.get_all_branches(false), git.tag.list())
+  local options =
+    util.merge(popup.state.env.commits, git.refs.list_branches(), git.refs.list_tags(), git.refs.heads())
   local selected_branch = FuzzyFinderBuffer.new(options):open_async()
   if not selected_branch then
     return
@@ -98,8 +99,8 @@ M.checkout_branch_revision = operation("checkout_branch_revision", function(popu
 end)
 
 M.checkout_local_branch = operation("checkout_local_branch", function(popup)
-  local local_branches = git.branch.get_local_branches(true)
-  local remote_branches = util.filter_map(git.branch.get_remote_branches(), function(name)
+  local local_branches = git.refs.list_local_branches()
+  local remote_branches = util.filter_map(git.refs.list_remote_branches(), function(name)
     local branch_name = name:match([[%/(.*)$]])
     -- Remove remote branches that have a local branch by the same name
     if branch_name and not vim.tbl_contains(local_branches, branch_name) then
@@ -140,7 +141,7 @@ M.create_branch = operation("create_branch", function(popup)
 end)
 
 M.configure_branch = operation("configure_branch", function()
-  local branch_name = FuzzyFinderBuffer.new(git.branch.get_local_branches(true)):open_async()
+  local branch_name = FuzzyFinderBuffer.new(git.refs.list_local_branches()):open_async()
   if not branch_name then
     return
   end
@@ -149,13 +150,7 @@ M.configure_branch = operation("configure_branch", function()
 end)
 
 M.rename_branch = operation("rename_branch", function()
-  local current_branch = git.branch.current()
-  local branches = git.branch.get_local_branches(false)
-  if current_branch then
-    table.insert(branches, 1, current_branch)
-  end
-
-  local selected_branch = FuzzyFinderBuffer.new(branches):open_async()
+  local selected_branch = FuzzyFinderBuffer.new(git.refs.list_local_branches()):open_async()
   if not selected_branch then
     return
   end
@@ -173,11 +168,7 @@ end)
 
 M.reset_branch = operation("reset_branch", function(popup)
   if git.status.is_dirty() then
-    local confirmation = input.get_confirmation(
-      "Uncommitted changes will be lost. Proceed?",
-      { values = { "&Yes", "&No" }, default = 2 }
-    )
-    if not confirmation then
+    if not input.get_permission("Uncommitted changes will be lost. Proceed?") then
       return
     end
   end
@@ -189,10 +180,11 @@ M.reset_branch = operation("reset_branch", function(popup)
 
   local options = util.deduplicate(
     util.merge(
-      popup.state.env.commits,
+      popup.state.env.commits or {},
       relatives,
-      git.branch.get_all_branches(false),
-      git.tag.list(),
+      git.refs.list_branches(),
+      git.refs.list_tags(),
+      git.stash.list_refs(),
       git.refs.heads()
     )
   )
@@ -214,7 +206,7 @@ M.reset_branch = operation("reset_branch", function(popup)
 end)
 
 M.delete_branch = operation("delete_branch", function()
-  local branches = git.branch.get_all_branches(true)
+  local branches = git.refs.list_branches()
   local selected_branch = FuzzyFinderBuffer.new(branches):open_async()
   if not selected_branch then
     return
@@ -226,10 +218,7 @@ M.delete_branch = operation("delete_branch", function()
   if
     remote
     and branch_name
-    and input.get_confirmation(
-      string.format("Delete remote branch '%s/%s'?", remote, branch_name),
-      { values = { "&Yes", "&No" }, default = 2 }
-    )
+    and input.get_permission(("Delete remote branch '%s/%s'?"):format(remote, branch_name))
   then
     success = git.cli.push.remote(remote).delete.to(branch_name).call_sync().code == 0
   elseif not remote and branch_name == git.branch.current() then
@@ -279,7 +268,7 @@ M.open_pull_request = operation("open_pull_request", function()
   local url = git.remote.get_url(git.branch.upstream_remote())[1]
 
   for s, v in pairs(config.values.git_services) do
-    if url:match(s) then
+    if url:match(util.pattern_escape(s)) then
       template = v
       break
     end

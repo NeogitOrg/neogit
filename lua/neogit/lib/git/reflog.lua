@@ -1,6 +1,7 @@
-local cli = require("neogit.lib.git.cli")
+local git = require("neogit.lib.git")
 local util = require("neogit.lib.util")
 
+---@class NeogitGitReflog
 local M = {}
 
 ---@class ReflogEntry
@@ -26,8 +27,7 @@ local function parse(entries)
       message = command:match("^merge (.*)") .. ": " .. message
       command = "merge"
     elseif command:match("^rebase") then
-      local type = command:match("%((.-)%)")
-      command = "rebase " .. type
+      command = "rebase " .. (command:match("%((.-)%)") or command)
     elseif command:match("commit %(.-%)") then -- amend and merge
       command = command:match("%((.-)%)")
     end
@@ -54,7 +54,7 @@ function M.list(refname, options)
   }, "%x1E")
 
   return parse(
-    cli.reflog.show.format(format).date("raw").arg_list(options or {}).args(refname, "--").call().stdout
+    git.cli.reflog.show.format(format).date("raw").arg_list(options or {}).args(refname, "--").call().stdout
   )
 end
 

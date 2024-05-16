@@ -1,5 +1,6 @@
-local cli = require("neogit.lib.git.cli")
+local git = require("neogit.lib.git")
 
+---@class NeogitGitFetch
 local M = {}
 
 ---Fetches from the remote and handles password questions
@@ -8,11 +9,11 @@ local M = {}
 ---@param args string[]
 ---@return ProcessResult
 function M.fetch_interactive(remote, branch, args)
-  return cli.fetch.args(remote or "", branch or "").arg_list(args).call_interactive()
+  return git.cli.fetch.args(remote or "", branch or "").arg_list(args).call_interactive()
 end
 
 function M.fetch(remote, branch)
-  cli.fetch.args(remote, branch).call { ignore_error = true }
+  git.cli.fetch.args(remote, branch).call { ignore_error = true }
 end
 
 return M

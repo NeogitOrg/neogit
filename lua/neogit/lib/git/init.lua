@@ -1,16 +1,17 @@
-local cli = require("neogit.lib.git.cli")
+local git = require("neogit.lib.git")
 local notification = require("neogit.lib.notification")
 local input = require("neogit.lib.input")
 
+---@class NeogitGitInit
 local M = {}
 
 M.create = function(directory, sync)
   sync = sync or false
 
   if sync then
-    cli.init.args(directory).call_sync()
+    git.cli.init.args(directory).call_sync()
   else
-    cli.init.args(directory).call()
+    git.cli.init.args(directory).call()
   end
 end
 
@@ -28,25 +29,21 @@ M.init_repo = function()
     notification.error("Invalid Directory")
     return
   end
+  local status = require("neogit.buffers.status")
+  if status.is_open() then
+    status.instance():chdir(directory)
+  end
 
-  local status = require("neogit.status")
-  status.cwd_changed = true
-  vim.cmd.lcd(directory)
-
-  if cli.is_inside_worktree() then
-    if
-      not input.get_confirmation(
-        string.format("Reinitialize existing repository %s?", directory),
-        { values = { "&Yes", "&No" }, default = 2 }
-      )
-    then
+  if git.cli.is_inside_worktree() then
+    if not input.get_permission(("Reinitialize existing repository %s?"):format(directory)) then
       return
     end
   end
 
   M.create(directory)
-
-  status.refresh(nil, "InitRepo")
+  if status.is_open() then
+    status.instance():dispatch_refresh(nil, "InitRepo")
+  end
 end
 
 return M

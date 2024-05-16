@@ -1,8 +1,8 @@
-local cli = require("neogit.lib.git.cli")
+local git = require("neogit.lib.git")
 local input = require("neogit.lib.input")
-local rev_parse = require("neogit.lib.git.rev_parse")
 local util = require("neogit.lib.util")
 
+---@class NeogitGitStash
 local M = {}
 
 local function perform_stash(include)
@@ -11,19 +11,19 @@ local function perform_stash(include)
   end
 
   local index =
-    cli["commit-tree"].no_gpg_sign.parent("HEAD").tree(cli["write-tree"].call().stdout).call().stdout
+    git.cli["commit-tree"].no_gpg_sign.parent("HEAD").tree(git.cli["write-tree"].call().stdout).call().stdout
 
-  cli["read-tree"].merge.index_output(".git/NEOGIT_TMP_INDEX").args(index).call()
+  git.cli["read-tree"].merge.index_output(".git/NEOGIT_TMP_INDEX").args(index).call()
 
   if include.worktree then
-    local files = cli.diff.no_ext_diff.name_only
+    local files = git.cli.diff.no_ext_diff.name_only
       .args("HEAD")
       .env({
         GIT_INDEX_FILE = ".git/NEOGIT_TMP_INDEX",
       })
       .call()
 
-    cli["update-index"].add.remove
+    git.cli["update-index"].add.remove
       .files(unpack(files))
       .env({
         GIT_INDEX_FILE = ".git/NEOGIT_TMP_INDEX",
@@ -31,15 +31,15 @@ local function perform_stash(include)
       .call()
   end
 
-  local tree = cli["commit-tree"].no_gpg_sign
+  local tree = git.cli["commit-tree"].no_gpg_sign
     .parents("HEAD", index)
-    .tree(cli["write-tree"].call())
+    .tree(git.cli["write-tree"].call())
     .env({
       GIT_INDEX_FILE = ".git/NEOGIT_TMP_INDEX",
     })
     .call()
 
-  cli["update-ref"].create_reflog.args("refs/stash", tree).call()
+  git.cli["update-ref"].create_reflog.args("refs/stash", tree).call()
 
   -- selene: allow(empty_if)
   if include.worktree and include.index then
@@ -52,16 +52,15 @@ local function perform_stash(include)
     --.commit('HEAD')
     --.call()
   elseif include.index then
-    local diff = cli.diff.no_ext_diff.cached.call().stdout[1] .. "\n"
+    local diff = git.cli.diff.no_ext_diff.cached.call().stdout[1] .. "\n"
 
-    cli.apply.reverse.cached.input(diff).call()
-
-    cli.apply.reverse.input(diff).call()
+    git.cli.apply.reverse.cached.input(diff).call()
+    git.cli.apply.reverse.input(diff).call()
   end
 end
 
 function M.list_refs()
-  local result = cli.reflog.show.format("%h").args("stash").call { ignore_error = true }
+  local result = git.cli.reflog.show.format("%h").args("stash").call { ignore_error = true }
   if result.code > 0 then
     return {}
   else
@@ -70,7 +69,7 @@ function M.list_refs()
 end
 
 function M.stash_all(args)
-  cli.stash.arg_list(args).call()
+  git.cli.stash.arg_list(args).call()
   -- this should work, but for some reason doesn't.
   --return perform_stash({ worktree = true, index = true })
 end
@@ -80,45 +79,48 @@ function M.stash_index()
 end
 
 function M.push(args, files)
-  cli.stash.push.arg_list(args).files(unpack(files)).call()
+  git.cli.stash.push.arg_list(args).files(unpack(files)).call()
 end
 
 function M.pop(stash)
-  local result = cli.stash.apply.index.args(stash).show_popup(false).call()
+  local result = git.cli.stash.apply.index.args(stash).show_popup(false).call()
 
   if result.code == 0 then
-    cli.stash.drop.args(stash).call()
+    git.cli.stash.drop.args(stash).call()
   else
-    cli.stash.apply.args(stash).call()
+    git.cli.stash.apply.args(stash).call()
   end
 end
 
 function M.apply(stash)
-  local result = cli.stash.apply.index.args(stash).show_popup(false).call()
+  local result = git.cli.stash.apply.index.args(stash).show_popup(false).call()
 
   if result.code ~= 0 then
-    cli.stash.apply.args(stash).call()
+    git.cli.stash.apply.args(stash).call()
   end
 end
 
 function M.drop(stash)
-  cli.stash.drop.args(stash).call()
+  git.cli.stash.drop.args(stash).call()
 end
 
 function M.list()
-  return cli.stash.args("list").call({ hidden = true }).stdout
+  return git.cli.stash.args("list").call({ hidden = true }).stdout
 end
 
 function M.rename(stash)
   local message = input.get_user_input("New name")
-  if message == nil then
-    -- User pressed ESC or entered empty message, dont drop stash
-    return
+  if message then
+    local oid = git.rev_parse.abbreviate_commit(stash)
+    git.cli.stash.drop.args(stash).call()
+    git.cli.stash.store.message(message).args(oid).call()
   end
-  local oid = rev_parse.abbreviate_commit(stash)
-  cli.stash.drop.args(stash).call()
-  cli.stash.store.message(message).args(oid).call()
 end
+
+---@class StashItem
+---@field idx number
+---@field name string
+---@field message string
 
 function M.register(meta)
   meta.update_stashes = function(state)

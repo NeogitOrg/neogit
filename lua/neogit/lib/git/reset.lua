@@ -1,7 +1,8 @@
-local cli = require("neogit.lib.git.cli")
 local notification = require("neogit.lib.notification")
+local git = require("neogit.lib.git")
 local a = require("plenary.async")
 
+---@class NeogitGitReset
 local M = {}
 
 local function fire_reset_event(data)
@@ -11,7 +12,7 @@ end
 function M.mixed(commit)
   a.util.scheduler()
 
-  local result = cli.reset.mixed.args(commit).call()
+  local result = git.cli.reset.mixed.args(commit).call()
   if result.code ~= 0 then
     notification.error("Reset Failed")
   else
@@ -23,7 +24,7 @@ end
 function M.soft(commit)
   a.util.scheduler()
 
-  local result = cli.reset.soft.args(commit).call()
+  local result = git.cli.reset.soft.args(commit).call()
   if result.code ~= 0 then
     notification.error("Reset Failed")
   else
@@ -35,7 +36,7 @@ end
 function M.hard(commit)
   a.util.scheduler()
 
-  local result = cli.reset.hard.args(commit).call()
+  local result = git.cli.reset.hard.args(commit).call()
   if result.code ~= 0 then
     notification.error("Reset Failed")
   else
@@ -47,7 +48,7 @@ end
 function M.keep(commit)
   a.util.scheduler()
 
-  local result = cli.reset.keep.args(commit).call()
+  local result = git.cli.reset.keep.args(commit).call()
   if result.code ~= 0 then
     notification.error("Reset Failed")
   else
@@ -59,7 +60,7 @@ end
 function M.index(commit)
   a.util.scheduler()
 
-  local result = cli.reset.args(commit).files(".").call()
+  local result = git.cli.reset.args(commit).files(".").call()
   if result.code ~= 0 then
     notification.error("Reset Failed")
   else
@@ -79,7 +80,7 @@ end
 -- end
 
 function M.file(commit, files)
-  local result = cli.checkout.rev(commit).files(unpack(files)).call_sync()
+  local result = git.cli.checkout.rev(commit).files(unpack(files)).call_sync()
   if result.code ~= 0 then
     notification.error("Reset Failed")
   else

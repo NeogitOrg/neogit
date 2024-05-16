@@ -10,7 +10,7 @@
             </td>
         </tr>
     </table>
-  
+
   [![Lua](https://img.shields.io/badge/Lua-blue.svg?style=for-the-badge&logo=lua)](http://www.lua.org)
   [![Neovim](https://img.shields.io/badge/Neovim%200.9+-green.svg?style=for-the-badge&logo=neovim)](https://neovim.io)
   [![MIT](https://img.shields.io/badge/MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
@@ -55,7 +55,7 @@ neogit.setup {}
 
 The `master` branch will always be compatible with the latest **stable** release of Neovim, and with the latest **nightly** build as well.
 
-Some features may only be available using unreleased (neovim nightly) API's - to use them, set your plugin manager to track the `nightly` branch instead. 
+Some features may only be available using unreleased (neovim nightly) API's - to use them, set your plugin manager to track the `nightly` branch instead.
 
 The `nightly` branch has the same stability guarantees as the `master` branch.
 
@@ -88,7 +88,7 @@ neogit.setup {
   },
   -- "ascii"   is the graph the git CLI generates
   -- "unicode" is the graph like https://github.com/rbong/vim-flog
-  graph_style = "ascii", 
+  graph_style = "ascii",
   -- Used to generate URL's for branch popup action "pull request".
   git_services = {
     ["github.com"] = "https://github.com/${owner}/${repository}/compare/${branch_name}?expand=1",
@@ -137,10 +137,31 @@ neogit.setup {
   -- Automatically show console if a command takes more than console_timeout milliseconds
   auto_show_console = true,
   status = {
+    show_head_commit_hash = true,
     recent_commit_count = 10,
+    HEAD_padding = 10,
+    mode_padding = 3,
+    mode_text = {
+      M = "modified",
+      N = "new file",
+      A = "added",
+      D = "deleted",
+      C = "copied",
+      U = "updated",
+      R = "renamed",
+      DD = "unmerged",
+      AU = "unmerged",
+      UD = "unmerged",
+      UA = "unmerged",
+      DU = "unmerged",
+      AA = "unmerged",
+      UU = "unmerged",
+      ["?"] = "",
+    },
   },
   commit_editor = {
     kind = "auto",
+    show_staged_diff = true,
   },
   commit_select_view = {
     kind = "tab",
@@ -245,6 +266,10 @@ neogit.setup {
       ["<c-c><c-c>"] = "Submit",
       ["<c-c><c-k>"] = "Abort",
     },
+    commit_editor_I = {
+      ["<c-c><c-c>"] = "Submit",
+      ["<c-c><c-k>"] = "Abort",
+    },
     rebase_editor = {
       ["p"] = "Pick",
       ["r"] = "Reword",
@@ -258,6 +283,12 @@ neogit.setup {
       ["<cr>"] = "OpenCommit",
       ["gk"] = "MoveUp",
       ["gj"] = "MoveDown",
+      ["<c-c><c-c>"] = "Submit",
+      ["<c-c><c-k>"] = "Abort",
+      ["[c"] = "OpenOrScrollUp",
+      ["]c"] = "OpenOrScrollDown",
+    },
+    rebase_editor_I = {
       ["<c-c><c-c>"] = "Submit",
       ["<c-c><c-k>"] = "Abort",
     },
@@ -283,6 +314,7 @@ neogit.setup {
       ["X"] = "ResetPopup",
       ["Z"] = "StashPopup",
       ["b"] = "BranchPopup",
+      ["B"] = "BisectPopup",
       ["c"] = "CommitPopup",
       ["f"] = "FetchPopup",
       ["l"] = "LogPopup",
@@ -304,6 +336,7 @@ neogit.setup {
       ["s"] = "Stage",
       ["S"] = "StageUnstaged",
       ["<c-s>"] = "StageAll",
+      ["K"] = "Untrack",
       ["u"] = "Unstage",
       ["U"] = "UnstageStaged",
       ["$"] = "CommandHistory",
@@ -316,6 +349,8 @@ neogit.setup {
       ["<c-t>"] = "TabOpen",
       ["{"] = "GoToPreviousHunkHeader",
       ["}"] = "GoToNextHunkHeader",
+      ["[c"] = "OpenOrScrollUp",
+      ["]c"] = "OpenOrScrollDown",
     },
   },
 }
