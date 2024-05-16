@@ -504,9 +504,10 @@ augroup DefaultRefreshEvents
 augroup END
 ```
 
-## Testing
+## Contributing
 
-Run `make test` after checking out the repo. All dependencies should get automatically downloaded to `/tmp/neogit-test/`
+> [!IMPORTANT]  
+> Until neovim 0.10 is released, please base any changes on the `nightly` branch.
 
 See [CONTRIBUTING.md](https://github.com/NeogitOrg/neogit/blob/master/CONTRIBUTING.md) for more details.
 
