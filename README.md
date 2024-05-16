@@ -53,11 +53,7 @@ neogit.setup {}
 
 ## Compatibility
 
-The `master` branch will always be compatible with the latest **stable** release of Neovim, and with the latest **nightly** build as well.
-
-Some features may only be available using unreleased (neovim nightly) API's - to use them, set your plugin manager to track the `nightly` branch instead.
-
-The `nightly` branch has the same stability guarantees as the `master` branch.
+The `master` branch will always be compatible with the latest **stable** release of Neovim, and usually with the latest **nightly** build as well.
 
 ## Configuration
 
@@ -473,36 +469,6 @@ Neogit emits the following events:
 | `NeogitTagDelete`     | A tag was removed                        | `{ name: string }`                                |
 | `NeogitCherryPick`    | One or more commits were cherry-picked    | `{ commits: string[] }`                          |
 | `NeogitMerge`         | A merge finished                          | `{ branch: string, args = string[], status: "ok"\|"conflict" }` |
-
-You can listen to the events using the following code:
-
-```vim
-autocmd User NeogitStatusRefreshed echo "Hello World!"
-```
-
-Or, if you prefer to configure autocommands via Lua:
-
-```lua
-local group = vim.api.nvim_create_augroup('MyCustomNeogitEvents', { clear = true })
-vim.api.nvim_create_autocmd('User', {
-  pattern = 'NeogitPushComplete',
-  group = group,
-  callback = require('neogit').close,
-})
-```
-
-## Refreshing Neogit
-
-If you would like to refresh Neogit manually, you can use `neogit#refresh_manually` in Vimscript or `require('neogit').refresh_manually` in lua. They both require a single file parameter.
-
-This allows you to refresh Neogit on your own custom events
-
-```vim
-augroup DefaultRefreshEvents
-  au!
-  au BufWritePost,BufEnter,FocusGained,ShellCmdPost,VimResume * call <SID>neogit#refresh_manually(expand('<afile>'))
-augroup END
-```
 
 ## Versioning
 
