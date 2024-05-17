@@ -69,9 +69,16 @@ end
 ---@class NeogitConfigPopup Popup window options
 ---@field kind WindowKind The type of window that should be opened
 
+---@alias StagedDiffSplitKind
+---| "split" Open in a split
+---| "vsplit" Open in a vertical split
+---| "split_above" Like :top split
+---| "auto" "vsplit" if window would have 80 cols, otherwise "split"
+
 ---@class NeogitCommitEditorConfigPopup Popup window options
 ---@field kind WindowKind The type of window that should be opened
 ---@field show_staged_diff? boolean Display staged changes in a buffer when committing
+---@field staged_diff_split_kind? StagedDiffSplitKind Whether to show staged changes in a vertical or horizontal split
 
 ---@alias NeogitConfigSignsIcon { [1]: string, [2]: string }
 
@@ -335,6 +342,7 @@ function M.get_default_values()
     commit_editor = {
       kind = "tab",
       show_staged_diff = true,
+      staged_diff_split_kind = "split",
     },
     commit_select_view = {
       kind = "tab",
