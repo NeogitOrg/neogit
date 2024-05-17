@@ -240,6 +240,22 @@ function M:open(kind)
           buffer:write()
           buffer:close(true)
         end,
+        ["ZZ"] = function(buffer)
+          logger.debug("[EDITOR] Action N: ZZ (submit)")
+          if amend_header then
+            buffer:set_lines(0, 0, false, amend_header)
+            amend_header = nil
+          end
+
+          buffer:write()
+          buffer:close(true)
+        end,
+        ["ZQ"] = function(buffer)
+          logger.debug("[EDITOR] Action N: ZQ (abort)")
+          aborted = true
+          buffer:write()
+          buffer:close(true)
+        end,
         [mapping["PrevMessage"]] = function(buffer)
           logger.debug("[EDITOR] Action N: PrevMessage")
           local message = current_message(buffer)
