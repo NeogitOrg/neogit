@@ -174,6 +174,15 @@ function M:open(kind)
           buffer:write()
           buffer:close(true)
         end,
+        ["ZZ"] = function(buffer) -- Submit
+          buffer:write()
+          buffer:close(true)
+        end,
+        ["ZQ"] = function(buffer) -- abort
+          aborted = true
+          buffer:write()
+          buffer:close(true)
+        end,
         [mapping["Pick"]] = line_action("pick", comment_char),
         [mapping["Reword"]] = line_action("reword", comment_char),
         [mapping["Edit"]] = line_action("edit", comment_char),
