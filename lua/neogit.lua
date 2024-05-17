@@ -5,6 +5,11 @@ local did_setup = false
 ---Setup neogit
 ---@param opts NeogitConfig
 function M.setup(opts)
+  if vim.fn.has("nvim-0.10") ~= 1 then
+    vim.notify("Neogit HEAD requires at least NVIM 0.10 - Pin to tag 'v0.0.1' for NVIM 0.9.x")
+    return
+  end
+
   local config = require("neogit.config")
   local signs = require("neogit.lib.signs")
   local autocmds = require("neogit.autocmds")
