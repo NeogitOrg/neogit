@@ -84,6 +84,11 @@ function M:open(kind)
     readonly = false,
     autocmds = {
       ["QuitPre"] = function() -- For :wq compatibility
+        if not aborted and amend_header then
+          self.buffer:set_lines(0, 0, false, amend_header)
+          self.buffer:write()
+        end
+
         if diff_view then
           diff_view:close()
           diff_view = nil
@@ -198,6 +203,7 @@ function M:open(kind)
           vim.cmd.stopinsert()
           if amend_header then
             buffer:set_lines(0, 0, false, amend_header)
+            amend_header = nil
           end
 
           buffer:write()
@@ -216,6 +222,7 @@ function M:open(kind)
           logger.debug("[EDITOR] Action N: Close")
           if amend_header then
             buffer:set_lines(0, 0, false, amend_header)
+            amend_header = nil
           end
 
           if buffer:get_option("modified") and not input.get_confirmation("Save changes?") then
@@ -229,6 +236,7 @@ function M:open(kind)
           logger.debug("[EDITOR] Action N: Submit")
           if amend_header then
             buffer:set_lines(0, 0, false, amend_header)
+            amend_header = nil
           end
 
           buffer:write()
