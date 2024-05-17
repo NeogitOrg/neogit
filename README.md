@@ -373,74 +373,49 @@ local neogit = require('neogit')
 -- open using defaults
 neogit.open()
 
--- open commit popup
+-- open a specific popup
 neogit.open({ "commit" })
 
--- open with split kind
+-- open as a split
 neogit.open({ kind = "split" })
 
--- open home directory
+-- open with different project
 neogit.open({ cwd = "~" })
 ```
 
 The `kind` option can be one of the following values:
 - `tab`      (default)
 - `replace`
-- `floating` (EXPERIMENTAL! This currently doesn't work with popups. Very unstable)
 - `split`
 - `split_above`
 - `vsplit`
 - `auto` (`vsplit` if window would have 80 cols, otherwise `split`)
 
-## Buffers
+## Popups
 
-### Log Buffer
+The following popup menus are available from all buffers:
+- Bisect
+- Branch + Branch Config
+- Cherry Pick
+- Commit
+- Diff
+- Fetch
+- Ignore
+- Log
+- Merge
+- Pull
+- Push
+- Rebase
+- Remote + Remote Config
+- Reset
+- Revert
+- Stash
+- Tag
+- Worktree
 
-`ll`, `lh`, `lo`, ...
+Many popups will use whatever is currently under the cursor or selected as input for an action. For example, to cherry-pick a range of commits from the log view, a linewise visual selection can be made, and using either `apply` or `pick` from the cherry-pick menu will use the selection.
 
-Shows a graph of the commit history. Hitting `<cr>` will open the Commit View for that commit.
-
-The following popups are available from the log buffer, and will use the commit under the cursor, or selected, instead of prompting:
-* Branch Popup
-* Cherry Pick Popup
-* Revert Popup
-* Rebase Popup
-* Commit Popup
-* Reset Popup
-
-### Reflog Buffer
-
-`lr`, `lH`, `lO`
-
-Shows your reflog history. Hitting `<cr>` will open the Commit View for that commit.
-
-The following popups are available from the reflog buffer, and will use the commit under the cursor, or selected, instead of prompting:
-* Branch Popup
-* Cherry Pick Popup
-* Revert Popup
-* Rebase Popup
-* Commit Popup
-* Reset Popup
-
-### Commit View
-
-`<cr>` on a commit.
-
-Shows details for a specific commit.
-The following popups are available from the commit buffer, using it's SHA instead of prompting:
-* Branch Popup
-* Cherry Pick Popup
-* Revert Popup
-* Rebase Popup
-* Commit Popup
-* Reset Popup
-
-### Status Buffer
-A full list of status buffer commands can be found above under "configuration".
-
-### Fuzzy Finder
-A full list of fuzzy-finder commands can be found above under "configuration".
-If [nvim-telescope](https://github.com/nvim-telescope/telescope.nvim) is installed, a custom finder will be used that allows for multi-select (in some places) and some other cool things. Otherwise, `vim.ui.select` will be used as a slightly less featurefull fallback.
+This works for just about everything that has an object-ID in git, and if you find one that you think _should_ work but doesn't, open an issue :)
 
 ## Highlight Groups
 
