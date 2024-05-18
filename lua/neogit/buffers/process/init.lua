@@ -90,7 +90,7 @@ function M:open()
       end,
     },
     mappings = {
-      n = {
+      t = {
         [status_maps["Close"]] = function()
           self:hide()
         end,
