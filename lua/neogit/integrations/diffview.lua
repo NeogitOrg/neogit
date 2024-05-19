@@ -161,6 +161,7 @@ function M.open(section_name, item_name, opts)
   elseif section_name ~= nil then
     view = get_local_diff_view(section_name, item_name, opts)
   else
+    -- selene: allow(if_same_then_else)
     view = dv_lib.diffview_open(dv_utils.tbl_pack(item_name .. "^!"))
   end
 
