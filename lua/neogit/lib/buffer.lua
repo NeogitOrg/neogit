@@ -567,16 +567,6 @@ function Buffer.create(config)
     buffer:set_buffer_option("buftype", config.buftype or "nofile")
   end
 
-  if vim.fn.has("nvim-0.10") ~= 1 then
-    logger.debug("[BUFFER:" .. buffer.handle .. "] Setting foldtext function for nvim < 0.10")
-    -- selene: allow(global_usage)
-    _G.NeogitFoldText = function()
-      return vim.fn.getline(vim.v.foldstart)
-    end
-
-    buffer:set_buffer_option("foldtext", "v:lua._G.NeogitFoldText()")
-  end
-
   if config.filetype then
     logger.debug("[BUFFER:" .. buffer.handle .. "] Setting filetype: " .. config.filetype)
     buffer:set_filetype(config.filetype)
@@ -625,13 +615,11 @@ function Buffer.create(config)
       vim.opt_local.fillchars:append("fold: ")
     end)
 
-    if vim.fn.has("nvim-0.10") == 1 then
-      buffer:set_window_option("spell", false)
-      buffer:set_window_option("wrap", false)
-      buffer:set_window_option("foldmethod", "manual")
-      -- TODO: Need to find a way to turn this off properly when unloading plugin
-      -- buffer:set_window_option("winfixbuf", true)
-    end
+    buffer:set_window_option("spell", false)
+    buffer:set_window_option("wrap", false)
+    buffer:set_window_option("foldmethod", "manual")
+    -- TODO: Need to find a way to turn this off properly when unloading plugin
+    -- buffer:set_window_option("winfixbuf", true)
   end
 
   if config.render then
