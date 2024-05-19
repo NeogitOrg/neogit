@@ -121,7 +121,7 @@ describe("rebase popup", function()
   it(
     "rebase to reword HEAD fires NeogitRebase autocmd",
     in_prepared_repo(function()
-      -- Arange
+      -- Arrange
       local tx, rx = async.control.channel.oneshot()
       local group = vim.api.nvim_create_augroup("TestCustomNeogitEvents", { clear = true })
       vim.api.nvim_create_autocmd("User", {
@@ -149,7 +149,7 @@ describe("rebase popup", function()
   it(
     "rebase to modify HEAD fires NeogitRebase autocmd",
     in_prepared_repo(function()
-      -- Arange
+      -- Arrange
       local tx, rx = async.control.channel.oneshot()
       local group = vim.api.nvim_create_augroup("TestCustomNeogitEvents", { clear = true })
       vim.api.nvim_create_autocmd("User", {
