@@ -3,7 +3,6 @@
 local a = require("plenary.async")
 local git = require("neogit.lib.git")
 local popups = require("neogit.popups")
-local Buffer = require("neogit.lib.buffer")
 local logger = require("neogit.logger")
 local input = require("neogit.lib.input")
 local notification = require("neogit.lib.notification")
@@ -375,33 +374,33 @@ M.v_bisect_popup = function(self)
   end)
 end
 
----@param self StatusBuffer
-M.v_remote_popup = function(self)
+---@param _self StatusBuffer
+M.v_remote_popup = function(_self)
   return popups.open("remote")
 end
 
----@param self StatusBuffer
-M.v_fetch_popup = function(self)
+---@param _self StatusBuffer
+M.v_fetch_popup = function(_self)
   return popups.open("fetch")
 end
 
----@param self StatusBuffer
-M.v_pull_popup = function(self)
+---@param _self StatusBuffer
+M.v_pull_popup = function(_self)
   return popups.open("pull")
 end
 
----@param self StatusBuffer
-M.v_help_popup = function(self)
+---@param _self StatusBuffer
+M.v_help_popup = function(_self)
   return popups.open("help")
 end
 
----@param self StatusBuffer
-M.v_log_popup = function(self)
+---@param _self StatusBuffer
+M.v_log_popup = function(_self)
   return popups.open("log")
 end
 
----@param self StatusBuffer
-M.v_worktree_popup = function(self)
+---@param _self StatusBuffer
+M.v_worktree_popup = function(_self)
   return popups.open("worktree")
 end
 
@@ -586,15 +585,15 @@ M.n_depth4 = function(self)
   end
 end
 
----@param self StatusBuffer
-M.n_command_history = function(self)
+---@param _self StatusBuffer
+M.n_command_history = function(_self)
   return a.void(function()
     require("neogit.buffers.git_command_history"):new():show()
   end)
 end
 
----@param self StatusBuffer
-M.n_show_refs = function(self)
+---@param _self StatusBuffer
+M.n_show_refs = function(_self)
   return a.void(function()
     require("neogit.buffers.refs_view").new(git.refs.list_parsed()):open()
   end)
@@ -905,8 +904,8 @@ M.n_go_to_previous_hunk_header = function(self)
   end
 end
 
----@param self StatusBuffer
-M.n_init_repo = function(self)
+---@param _self StatusBuffer
+M.n_init_repo = function(_self)
   return function()
     git.init.init_repo()
   end
@@ -1268,28 +1267,28 @@ M.n_help_popup = function(self)
   end)
 end
 
----@param self StatusBuffer
-M.n_remote_popup = function(self)
+---@param _self StatusBuffer
+M.n_remote_popup = function(_self)
   return popups.open("remote")
 end
 
----@param self StatusBuffer
-M.n_fetch_popup = function(self)
+---@param _self StatusBuffer
+M.n_fetch_popup = function(_self)
   return popups.open("fetch")
 end
 
----@param self StatusBuffer
-M.n_pull_popup = function(self)
+---@param _self StatusBuffer
+M.n_pull_popup = function(_self)
   return popups.open("pull")
 end
 
----@param self StatusBuffer
-M.n_log_popup = function(self)
+---@param _self StatusBuffer
+M.n_log_popup = function(_self)
   return popups.open("log")
 end
 
----@param self StatusBuffer
-M.n_worktree_popup = function(self)
+---@param _self StatusBuffer
+M.n_worktree_popup = function(_self)
   return popups.open("worktree")
 end
 
