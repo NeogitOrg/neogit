@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        release: [v0.9.5, nightly]
+        release: [v0.10.0, nightly]
     env:
       CI: "1"
     steps:
