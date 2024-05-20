@@ -3,12 +3,12 @@
 return if ENV["CI"]
 
 def dir_name(name)
-  name.match(/[^\/]+\/(?<dir_name>[^\.]+)/)[:dir_name]
+  name.match(%r{[^/]+/(?<dir_name>[^\.]+)})[:dir_name]
 end
 
 def ensure_installed(name)
   tmp = File.join(PROJECT_DIR, "tmp")
-  Dir.mkdir(tmp) if !Dir.exist?(tmp)
+  FileUtils.mkdir_p(tmp)
 
   dir = File.join(tmp, dir_name(name))
 

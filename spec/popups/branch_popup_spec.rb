@@ -116,9 +116,7 @@ RSpec.describe "Branch Popup", :git, :nvim do
     end
 
     describe "Create new branch" do
-      it "can create a new branch" do
-
-      end
+      it "can create a new branch"
     end
 
     describe "Create new spin-off" do
@@ -150,6 +148,7 @@ RSpec.describe "Branch Popup", :git, :nvim do
     end
 
     describe "pull request" do
+      it "can open a pull-request"
     end
   end
 end

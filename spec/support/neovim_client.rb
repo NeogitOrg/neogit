@@ -5,7 +5,7 @@ class NeovimClient
     @instance = nil
   end
 
-  def setup
+  def setup # rubocop:disable Metrics/MethodLength
     @instance = attach_child
 
     # Sets up the runtimepath
@@ -30,7 +30,7 @@ class NeovimClient
     @instance = nil
   end
 
-  def print_screen
+  def print_screen # rubocop:disable Metrics/MethodLength
     @instance.command("redraw")
 
     screen  = []
@@ -63,7 +63,7 @@ class NeovimClient
   # Overload vim.fn.input() to prevent blocking.
   def input(*args)
     lua <<~LUA
-      local inputs = { #{args.map(&:inspect).join(",")} }
+      local inputs = { #{args.map(&:inspect).join(',')} }
 
       vim.fn.input = function()
         return table.remove(inputs, 1)
@@ -71,16 +71,14 @@ class NeovimClient
     LUA
   end
 
-  def keys(keys)
+  def keys(keys) # rubocop:disable Metrics/MethodLength
     keys = keys.chars
 
-    while keys.length > 0
+    until keys.empty?
       key = keys.shift
-      if key == "<"
-        key += keys.shift until key.last == ">"
-      end
+      key += keys.shift until key.last == ">" if key == "<"
 
-      if (written = @instance.input(key)).nil?
+      if @instance.input(key).nil?
         assert_alive!
         raise "Failed to write key to neovim: #{key.inspect}"
       end

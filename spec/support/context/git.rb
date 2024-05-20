@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.shared_context "git", :git do
+RSpec.shared_context "with git", :git do
   let(:git) { Git.open(Dir.pwd) }
 
   before do

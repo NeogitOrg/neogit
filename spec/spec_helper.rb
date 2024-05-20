@@ -29,7 +29,7 @@ RSpec.configure do |config|
 
   config.include Helpers
 
-  config.around(:each) do |example|
+  config.around do |example|
     with_remote = example.metadata.fetch(:with_remote_origin, false)
 
     Dir.mktmpdir do |local|

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.shared_context "nvim", :nvim do
+RSpec.shared_context "with nvim", :nvim do
   let(:nvim) { NeovimClient.new }
 
   before { nvim.setup }
