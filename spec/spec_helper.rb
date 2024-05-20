@@ -30,10 +30,17 @@ RSpec.configure do |config|
   config.include Helpers
 
   config.around(:each) do |example|
-    Dir.mktmpdir do |tmp|
-      Dir.chdir(tmp) do
-        Git.init
-        example.run
+    with_remote = example.metadata.fetch(:with_remote_origin, false)
+
+    Dir.mktmpdir do |local|
+      Dir.mktmpdir do |remote|
+        Git.init(remote) if with_remote
+
+        Dir.chdir(local) do
+          local_repo = Git.init
+          local_repo.add_remote("origin", remote) if with_remote
+          example.run
+        end
       end
     end
   end
