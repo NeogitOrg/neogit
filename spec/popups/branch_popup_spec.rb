@@ -26,6 +26,8 @@ RSpec.describe "Branch Popup", :git, :nvim do
     end
 
     describe "branch.<current>.rebase" do
+      before { git.config("pull.rebase", "false") }
+
       it "can change rebase setting" do
         expect(git.config("branch.#{git.branch.name}.rebase")).to eq("")
         expect(git.config("pull.rebase")).to eq("false")
