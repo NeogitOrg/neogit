@@ -13,6 +13,8 @@ GEM
       tzinfo (~> 2.0)
     addressable (2.8.6)
       public_suffix (>= 2.0.2, < 6.0)
+    amazing_print (1.6.0)
+    ast (2.4.2)
     attr_extras (7.1.0)
     base64 (0.2.0)
     bigdecimal (3.1.5)
@@ -37,6 +39,8 @@ GEM
     irb (1.11.0)
       rdoc
       reline (>= 0.3.8)
+    json (2.7.2)
+    language_server-protocol (3.17.0.3)
     minitest (5.20.0)
     msgpack (1.7.2)
     multi_json (1.15.0)
@@ -45,6 +49,10 @@ GEM
       msgpack (~> 1.1)
       multi_json (~> 1.0)
     optimist (3.1.0)
+    parallel (1.24.0)
+    parser (3.3.1.0)
+      ast (~> 2.4.1)
+      racc
     patience_diff (1.2.0)
       optimist (~> 3.0)
     psych (5.1.2)
@@ -52,11 +60,16 @@ GEM
     public_suffix (5.0.4)
     quickfix_formatter (0.1.0)
       rspec (>= 3.12.0)
+    racc (1.8.0)
+    rainbow (3.1.1)
     rchardet (1.8.0)
     rdoc (6.6.2)
       psych (>= 4.0.0)
+    regexp_parser (2.9.2)
     reline (0.4.1)
       io-console (~> 0.5)
+    rexml (3.2.8)
+      strscan (>= 3.0.9)
     rspec (3.12.0)
       rspec-core (~> 3.12.0)
       rspec-expectations (~> 3.12.0)
@@ -70,9 +83,37 @@ GEM
       diff-lcs (>= 1.2.0, < 2.0)
       rspec-support (~> 3.12.0)
     rspec-support (3.12.1)
+    rubocop (1.63.5)
+      json (~> 2.3)
+      language_server-protocol (>= 3.17.0)
+      parallel (~> 1.10)
+      parser (>= 3.3.0.2)
+      rainbow (>= 2.2.2, < 4.0)
+      regexp_parser (>= 1.8, < 3.0)
+      rexml (>= 3.2.5, < 4.0)
+      rubocop-ast (>= 1.31.1, < 2.0)
+      ruby-progressbar (~> 1.7)
+      unicode-display_width (>= 2.4.0, < 3.0)
+    rubocop-ast (1.31.3)
+      parser (>= 3.3.1.0)
+    rubocop-capybara (2.20.0)
+      rubocop (~> 1.41)
+    rubocop-factory_bot (2.25.1)
+      rubocop (~> 1.41)
+    rubocop-performance (1.21.0)
+      rubocop (>= 1.48.1, < 2.0)
+      rubocop-ast (>= 1.31.1, < 2.0)
+    rubocop-rspec (2.29.2)
+      rubocop (~> 1.40)
+      rubocop-capybara (~> 2.17)
+      rubocop-factory_bot (~> 2.22)
+      rubocop-rspec_rails (~> 2.28)
+    rubocop-rspec_rails (2.28.3)
+      rubocop (~> 1.40)
     ruby-progressbar (1.13.0)
     ruby2_keywords (0.0.5)
     stringio (3.1.0)
+    strscan (3.1.0)
     super_diff (0.10.0)
       attr_extras (>= 6.2.4)
       diff-lcs
@@ -81,6 +122,7 @@ GEM
       fileutils
     tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)
+    unicode-display_width (2.5.0)
 
 PLATFORMS
   arm64-darwin-22
@@ -90,17 +132,21 @@ PLATFORMS
 
 DEPENDENCIES
   activesupport
+  amazing_print
   debug
   fuubar
   git
   neovim
   quickfix_formatter
   rspec
+  rubocop
+  rubocop-performance
+  rubocop-rspec
   super_diff
   tmpdir
 
 RUBY VERSION
-   ruby 3.3.0p0
+   ruby 3.3.1p55
 
 BUNDLED WITH
    2.4.21
