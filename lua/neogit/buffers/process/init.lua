@@ -53,19 +53,25 @@ function M:show()
     self:open()
   end
 
-  self.buffer:chan_send(self.content)
   self.buffer:show()
-  self.buffer:call(vim.cmd.normal, "G")
+  self:refresh()
 end
 
 function M:is_visible()
   return self.buffer and self.buffer:is_visible()
 end
 
+function M:refresh()
+  self.buffer:chan_send(self.content)
+  self.buffer:call(vim.cmd.normal, "G")
+end
+
 function M:append(data)
-  vim.schedule(function()
-    self.content = table.concat({ self.content, data }, "\r\n")
-  end)
+  self.content = table.concat({ self.content, data }, "\r\n")
+
+  if self:is_visible() then
+    self:refresh()
+  end
 end
 
 ---@return ProcessBuffer

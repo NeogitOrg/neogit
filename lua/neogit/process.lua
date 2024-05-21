@@ -94,20 +94,20 @@ function Process:start_timer()
 
         self:stop_timer()
 
-        if not self.result or (self.result.code ~= 0) then
+        if self.result then
+          return
+        end
+
+        if config.values.auto_show_console then
+          self.buffer:show()
+        else
           local message = string.format(
             "Command %q running for more than: %.1f seconds",
             mask_command(table.concat(self.cmd, " ")),
             math.ceil((vim.loop.now() - self.start) / 100) / 10
           )
 
-          self.buffer:append(message)
-
-          if config.values.auto_show_console then
-            self.buffer:show()
-          else
-            notification.warn(message .. "\n\nOpen the console for details")
-          end
+          notification.warn(message .. "\n\nOpen the command history for details")
         end
       end)
     )
