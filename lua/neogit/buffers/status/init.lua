@@ -194,6 +194,17 @@ function M:open(kind, cwd)
 
       buffer:move_cursor(buffer.ui:first_section().first)
     end,
+    user_autocmds = {
+      ["NeogitPushComplete"] = function()
+        self:dispatch_refresh(nil, "push_complete")
+      end,
+      ["NeogitPullComplete"] = function()
+        self:dispatch_refresh(nil, "pull_complete")
+      end,
+      ["NeogitFetchComplete"] = function()
+        self:dispatch_refresh(nil, "fetch_complete")
+      end,
+    },
   }
 
   return self
