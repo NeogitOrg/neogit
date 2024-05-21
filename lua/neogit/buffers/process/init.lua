@@ -74,6 +74,12 @@ function M:append(data)
   end
 end
 
+local function hide(self)
+  return function()
+    self:hide()
+  end
+end
+
 ---@return ProcessBuffer
 function M:open()
   if self.buffer then
@@ -96,13 +102,13 @@ function M:open()
       end,
     },
     mappings = {
+      t = {
+        [status_maps["Close"]] = hide(self),
+        ["<esc>"] = hide(self),
+      },
       n = {
-        [status_maps["Close"]] = function()
-          self:hide()
-        end,
-        ["<esc>"] = function()
-          self:hide()
-        end,
+        [status_maps["Close"]] = hide(self),
+        ["<esc>"] = hide(self),
       },
     },
   }
