@@ -527,6 +527,7 @@ end
 ---@field readonly boolean|nil
 ---@field mappings table|nil
 ---@field autocmds table|nil
+---@field user_autocmds table|nil
 ---@field initialize function|nil
 ---@field after function|nil
 ---@field on_detach function|nil
@@ -634,7 +635,18 @@ function Buffer.create(config)
       buffer = buffer.handle,
       group = buffer.autocmd_group,
     })
+  end
 
+  for event, callback in pairs(config.user_autocmds or {}) do
+    logger.debug("[BUFFER:" .. buffer.handle .. "] Setting user autocmd for: " .. event)
+    api.nvim_create_autocmd("User", {
+      pattern = event,
+      callback = callback,
+      group = buffer.autocmd_group,
+    })
+  end
+
+  if config.autocmds or config.user_autocmds then
     api.nvim_buf_attach(buffer.handle, false, {
       on_detach = function()
         logger.debug("[BUFFER:" .. buffer.handle .. "] Clearing autocmd group")
