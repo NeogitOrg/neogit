@@ -17,7 +17,7 @@ function M.OverviewFile(file)
     text.highlight("Number")(util.pad_left(file.changes, 5)),
     text("  "),
     text.highlight("NeogitDiffAdditions")(file.insertions),
-    text.highlight("NeogitDiffDeletetions")(file.deletions),
+    text.highlight("NeogitDiffDeletions")(file.deletions),
   }
 end
 
