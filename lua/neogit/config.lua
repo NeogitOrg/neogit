@@ -1,71 +1,63 @@
 local util = require("neogit.lib.util")
 local M = {}
 
+local mappings = {}
+
+---Returns a map of commands, mapped to the list of keys which trigger them.
 ---@return table<string, string[]>
---- Returns a map of commands, mapped to the list of keys which trigger them.
-local function get_reversed_maps(tbl)
-  local result = {}
-  for k, v in pairs(tbl) do
-    -- If `v == false` the mapping is disabled
-    if v then
-      local current = result[v]
-      if current then
-        table.insert(current, k)
-      else
-        result[v] = { k }
+local function get_reversed_maps(set)
+  if not mappings[set] then
+    local result = {}
+    for k, v in pairs(M.values.mappings[set]) do
+      -- If `v == false` the mapping is disabled
+      if v then
+        local current = result[v]
+        if current then
+          table.insert(current, k)
+        else
+          result[v] = { k }
+        end
       end
     end
+
+    mappings[set] = result
   end
 
-  return result
+  return mappings[set]
 end
 
-local reversed_status_maps
 ---@return table<string, string[]>
---- Returns a map of commands, mapped to the list of keys which trigger them.
 function M.get_reversed_status_maps()
-  if not reversed_status_maps then
-    reversed_status_maps = get_reversed_maps(M.values.mappings.status)
-  end
-
-  return reversed_status_maps
+  return get_reversed_maps("status")
 end
 
-local reversed_popup_maps
 ---@return table<string, string[]>
---- Returns a map of commands, mapped to the list of keys which trigger them.
 function M.get_reversed_popup_maps()
-  if not reversed_popup_maps then
-    reversed_popup_maps = get_reversed_maps(M.values.mappings.popup)
-  end
-
-  return reversed_popup_maps
+  return get_reversed_maps("popup")
 end
 
-local reversed_rebase_editor_maps
 ---@return table<string, string[]>
---- Returns a map of commands, mapped to the list of keys which trigger them.
 function M.get_reversed_rebase_editor_maps()
-  if not reversed_rebase_editor_maps then
-    reversed_rebase_editor_maps = get_reversed_maps(M.values.mappings.rebase_editor)
-  end
-
-  return reversed_rebase_editor_maps
+  return get_reversed_maps("rebase_editor")
 end
 
-local reversed_commit_editor_maps
 ---@return table<string, string[]>
---- Returns a map of commands, mapped to the list of keys which trigger them.
-function M.get_reversed_commit_editor_maps()
-  if not reversed_commit_editor_maps then
-    reversed_commit_editor_maps = get_reversed_maps(M.values.mappings.commit_editor)
-  end
+function M.get_reversed_rebase_editor_maps_I()
+  return get_reversed_maps("rebase_editor_I")
+end
 
-  return reversed_commit_editor_maps
+---@return table<string, string[]>
+function M.get_reversed_commit_editor_maps()
+  return get_reversed_maps("commit_editor")
+end
+
+---@return table<string, string[]>
+function M.get_reversed_commit_editor_maps_I()
+  return get_reversed_maps("commit_editor_I")
 end
 
 ---@alias WindowKind
----|"split" Open in a split
+---| "split" Open in a split
 ---| "vsplit" Open in a vertical split
 ---| "floating" Open in a floating window
 ---| "tab" Open in a new tab
@@ -76,6 +68,17 @@ end
 
 ---@class NeogitConfigPopup Popup window options
 ---@field kind WindowKind The type of window that should be opened
+
+---@alias StagedDiffSplitKind
+---| "split" Open in a split
+---| "vsplit" Open in a vertical split
+---| "split_above" Like :top split
+---| "auto" "vsplit" if window would have 80 cols, otherwise "split"
+
+---@class NeogitCommitEditorConfigPopup Popup window options
+---@field kind WindowKind The type of window that should be opened
+---@field show_staged_diff? boolean Display staged changes in a buffer when committing
+---@field staged_diff_split_kind? StagedDiffSplitKind Whether to show staged changes in a vertical or horizontal split
 
 ---@alias NeogitConfigSignsIcon { [1]: string, [2]: string }
 
@@ -100,6 +103,7 @@ end
 ---@field recent NeogitConfigSection|nil
 ---@field rebase NeogitConfigSection|nil
 ---@field sequencer NeogitConfigSection|nil
+---@field bisect NeogitConfigSection|nil
 
 ---@class HighlightOptions
 ---@field italic? boolean
@@ -107,28 +111,132 @@ end
 ---@field underline? boolean
 
 ---@class NeogitFilewatcherConfig
----@field interval number
 ---@field enabled boolean
 ---@field filewatcher NeogitFilewatcherConfig|nil
 
----@alias NeogitConfigMappingsFinder "Select" | "Close" | "Next" | "Previous" | "MultiselectToggleNext" | "MultiselectTogglePrevious" | "NOP" | false
+---@alias NeogitConfigMappingsFinder
+---| "Select"
+---| "Close"
+---| "Next"
+---| "Previous"
+---| "MultiselectToggleNext"
+---| "MultiselectTogglePrevious"
+---| "NOP"
+---| false
 
----@alias NeogitConfigMappingsStatus "Close" | "Depth1" | "Depth2" | "Depth3" | "Depth4" | "Toggle" | "Discard" | "Stage" | "StageUnstaged" | "StageAll" | "Unstage" | "UnstageStaged" | "RefreshBuffer" | "GoToFile" | "VSplitOpen" | "SplitOpen" | "TabOpen" | "GoToPreviousHunkHeader" | "GoToNextHunkHeader" | "Console" | "CommandHistory" | "InitRepo" | "YankSelected" | false | fun()
+---@alias NeogitConfigMappingsStatus
+---| "Close"
+---| "Depth1"
+---| "Depth2"
+---| "Depth3"
+---| "Depth4"
+---| "Toggle"
+---| "Discard"
+---| "Stage"
+---| "StageUnstaged"
+---| "StageAll"
+---| "Unstage"
+---| "UnstageStaged"
+---| "Untrack"
+---| "RefreshBuffer"
+---| "GoToFile"
+---| "VSplitOpen"
+---| "SplitOpen"
+---| "TabOpen"
+---| "GoToPreviousHunkHeader"
+---| "GoToNextHunkHeader"
+---| "CommandHistory"
+---| "ShowRefs"
+---| "InitRepo"
+---| "YankSelected"
+---| "OpenOrScrollUp"
+---| "OpenOrScrollDown"
+---| false
+---| fun()
 
----@alias NeogitConfigMappingsPopup "HelpPopup" | "DiffPopup" | "PullPopup" | "RebasePopup" | "MergePopup" | "PushPopup" | "CommitPopup" | "LogPopup" | "RevertPopup" | "StashPopup" | "IgnorePopup" | "CherryPickPopup" | "BranchPopup" | "FetchPopup" | "ResetPopup" | "RemotePopup" | "TagPopup" | "WorktreePopup" | false
+---@alias NeogitConfigMappingsPopup
+---| "HelpPopup"
+---| "DiffPopup"
+---| "PullPopup"
+---| "RebasePopup"
+---| "MergePopup"
+---| "PushPopup"
+---| "CommitPopup"
+---| "LogPopup"
+---| "RevertPopup"
+---| "StashPopup"
+---| "IgnorePopup"
+---| "CherryPickPopup"
+---| "BisectPopup"
+---| "BranchPopup"
+---| "FetchPopup"
+---| "ResetPopup"
+---| "RemotePopup"
+---| "TagPopup"
+---| "WorktreePopup"
+---| false
 
----@alias NeogitConfigMappingsRebaseEditor "Pick" | "Reword" | "Edit" | "Squash" | "Fixup" | "Execute" | "Drop" | "Break" | "MoveUp" | "MoveDown" | "Close" | "OpenCommit" | "Submit" | "Abort" | false | fun()
----
----@alias NeogitConfigMappingsCommitEditor "Close" | "Submit" | "Abort" | "PrevMessage" | "ResetMessage" | "NextMessage" | false | fun()
+---@alias NeogitConfigMappingsRebaseEditor
+---| "Pick"
+---| "Reword"
+---| "Edit"
+---| "Squash"
+---| "Fixup"
+---| "Execute"
+---| "Drop"
+---| "Break"
+---| "MoveUp"
+---| "MoveDown"
+---| "Close"
+---| "OpenCommit"
+---| "Submit"
+---| "Abort"
+---| "OpenOrScrollUp"
+---| "OpenOrScrollDown"
+---| false
+---| fun()
+
+---@alias NeogitConfigMappingsCommitEditor
+---| "Close"
+---| "Submit"
+---| "Abort"
+---| "PrevMessage"
+---| "ResetMessage"
+---| "NextMessage"
+---| false
+---| fun()
+
+---@alias NeogitConfigMappingsCommitEditor_I
+---| "Submit"
+---| "Abort"
+---| false
+---| fun()
+
+---@alias NeogitConfigMappingsRebaseEditor_I
+---| "Submit"
+---| "Abort"
+---| false
+---| fun()
+
+---@alias NeogitGraphStyle
+---| "ascii"
+---| "unicode"
+
+---@class NeogitConfigStatusOptions
+---@field recent_commit_count? integer The number of recent commits to display
+---@field mode_padding? integer The amount of padding to add to the right of the mode column
+---@field HEAD_padding? integer The amount of padding to add to the right of the HEAD label
+---@field mode_text? { [string]: string } The text to display for each mode
+---@field show_head_commit_hash? boolean Show the commit hash for HEADs in the status buffer
 
 ---@class NeogitConfigMappings Consult the config file or documentation for values
 ---@field finder? { [string]: NeogitConfigMappingsFinder } A dictionary that uses finder commands to set multiple keybinds
 ---@field status? { [string]: NeogitConfigMappingsStatus } A dictionary that uses status commands to set a single keybind
 ---@field popup? { [string]: NeogitConfigMappingsPopup } A dictionary that uses popup commands to set a single keybind
 ---@field rebase_editor? { [string]: NeogitConfigMappingsRebaseEditor } A dictionary that uses Rebase editor commands to set a single keybind
+---@field rebase_editor_I? { [string]: NeogitConfigMappingsRebaseEditor_I } A dictionary that uses Rebase editor commands to set a single keybind
 ---@field commit_editor? { [string]: NeogitConfigMappingsCommitEditor } A dictionary that uses Commit editor commands to set a single keybind
-
----@alias NeogitGraphStyle "ascii" | "unicode"
+---@field commit_editor_I? { [string]: NeogitConfigMappingsCommitEditor_I } A dictionary that uses Commit editor commands to set a single keybind
 
 ---@class NeogitConfig Neogit configuration settings
 ---@field filewatcher? NeogitFilewatcherConfig Values for filewatcher
@@ -142,20 +250,20 @@ end
 ---@field disable_insert_on_commit? boolean|"auto" Disable automatically entering insert mode in commit dialogues
 ---@field use_per_project_settings? boolean Scope persisted settings on a per-project basis
 ---@field remember_settings? boolean Whether neogit should persist flags from popups, e.g. git push flags
----@field auto_refresh? boolean Automatically refresh to detect git modifications without manual intervention
 ---@field sort_branches? string Value used for `--sort` for the `git branch` command
 ---@field kind? WindowKind The default type of window neogit should open in
 ---@field disable_line_numbers? boolean Whether to disable line numbers
 ---@field disable_relative_line_numbers? boolean Whether to disable line numbers
 ---@field console_timeout? integer Time in milliseconds after a console is created for long running commands
 ---@field auto_show_console? boolean Automatically show the console if a command takes longer than console_timeout
----@field status? { recent_commit_count: integer } Status buffer options
----@field commit_editor? NeogitConfigPopup Commit editor options
+---@field status? NeogitConfigStatusOptions Status buffer options
+---@field commit_editor? NeogitCommitEditorConfigPopup Commit editor options
 ---@field commit_select_view? NeogitConfigPopup Commit select view options
 ---@field commit_view? NeogitCommitBufferConfig Commit buffer options
 ---@field log_view? NeogitConfigPopup Log view options
 ---@field rebase_editor? NeogitConfigPopup Rebase editor options
 ---@field reflog_view? NeogitConfigPopup Reflog view options
+---@field refs_view? NeogitConfigPopup Refs view options
 ---@field merge_editor? NeogitConfigPopup Merge editor options
 ---@field description_editor? NeogitConfigPopup Merge editor options
 ---@field tag_editor? NeogitConfigPopup Tag editor options
@@ -180,8 +288,7 @@ function M.get_default_values()
     disable_signs = false,
     graph_style = "ascii",
     filewatcher = {
-      interval = 1000,
-      enabled = false,
+      enabled = true,
     },
     telescope_sorter = function()
       return nil
@@ -200,7 +307,6 @@ function M.get_default_values()
     use_per_project_settings = true,
     remember_settings = true,
     fetch_after_checkout = false,
-    auto_refresh = true,
     sort_branches = "-committerdate",
     kind = "tab",
     disable_line_numbers = true,
@@ -211,10 +317,32 @@ function M.get_default_values()
     auto_show_console = true,
     notification_icon = "󰊢",
     status = {
+      show_head_commit_hash = true,
       recent_commit_count = 10,
+      HEAD_padding = 10,
+      mode_padding = 3,
+      mode_text = {
+        M = "modified",
+        N = "new file",
+        A = "added",
+        D = "deleted",
+        C = "copied",
+        U = "updated",
+        R = "renamed",
+        DD = "unmerged",
+        AU = "unmerged",
+        UD = "unmerged",
+        UA = "unmerged",
+        DU = "unmerged",
+        AA = "unmerged",
+        UU = "unmerged",
+        ["?"] = "",
+      },
     },
     commit_editor = {
-      kind = "auto",
+      kind = "tab",
+      show_staged_diff = true,
+      staged_diff_split_kind = "split",
     },
     commit_select_view = {
       kind = "tab",
@@ -242,12 +370,15 @@ function M.get_default_values()
       kind = "auto",
     },
     preview_buffer = {
-      kind = "split",
+      kind = "floating",
     },
     popup = {
       kind = "split",
     },
     stash = {
+      kind = "tab",
+    },
+    refs_view = {
       kind = "tab",
     },
     signs = {
@@ -262,6 +393,10 @@ function M.get_default_values()
     },
     sections = {
       sequencer = {
+        folded = false,
+        hidden = false,
+      },
+      bisect = {
         folded = false,
         hidden = false,
       },
@@ -321,6 +456,10 @@ function M.get_default_values()
         ["<m-n>"] = "NextMessage",
         ["<m-r>"] = "ResetMessage",
       },
+      commit_editor_I = {
+        ["<c-c><c-c>"] = "Submit",
+        ["<c-c><c-k>"] = "Abort",
+      },
       rebase_editor = {
         ["p"] = "Pick",
         ["r"] = "Reword",
@@ -336,6 +475,12 @@ function M.get_default_values()
         ["gj"] = "MoveDown",
         ["<c-c><c-c>"] = "Submit",
         ["<c-c><c-k>"] = "Abort",
+        ["[c"] = "OpenOrScrollUp",
+        ["]c"] = "OpenOrScrollDown",
+      },
+      rebase_editor_I = {
+        ["<c-c><c-c>"] = "Submit",
+        ["<c-c><c-k>"] = "Abort",
       },
       finder = {
         ["<cr>"] = "Select",
@@ -348,6 +493,12 @@ function M.get_default_values()
         ["<tab>"] = "MultiselectToggleNext",
         ["<s-tab>"] = "MultiselectTogglePrevious",
         ["<c-j>"] = "NOP",
+        ["<ScrollWheelDown>"] = "ScrollWheelDown",
+        ["<ScrollWheelUp>"] = "ScrollWheelUp",
+        ["<ScrollWheelLeft>"] = "NOP",
+        ["<ScrollWheelRight>"] = "NOP",
+        ["<LeftMouse>"] = "MouseClick",
+        ["<2-LeftMouse>"] = "NOP",
       },
       popup = {
         ["?"] = "HelpPopup",
@@ -360,6 +511,7 @@ function M.get_default_values()
         ["i"] = "IgnorePopup",
         ["t"] = "TagPopup",
         ["b"] = "BranchPopup",
+        ["B"] = "BisectPopup",
         ["w"] = "WorktreePopup",
         ["c"] = "CommitPopup",
         ["f"] = "FetchPopup",
@@ -382,17 +534,20 @@ function M.get_default_values()
         ["S"] = "StageUnstaged",
         ["<c-s>"] = "StageAll",
         ["u"] = "Unstage",
+        ["K"] = "Untrack",
         ["U"] = "UnstageStaged",
+        ["y"] = "ShowRefs",
         ["$"] = "CommandHistory",
-        ["#"] = "Console",
         ["Y"] = "YankSelected",
         ["<c-r>"] = "RefreshBuffer",
-        ["<enter>"] = "GoToFile",
+        ["<cr>"] = "GoToFile",
         ["<c-v>"] = "VSplitOpen",
         ["<c-x>"] = "SplitOpen",
         ["<c-t>"] = "TabOpen",
         ["{"] = "GoToPreviousHunkHeader",
         ["}"] = "GoToNextHunkHeader",
+        ["[c"] = "OpenOrScrollUp",
+        ["]c"] = "OpenOrScrollDown",
       },
     },
   }
@@ -725,6 +880,78 @@ function M.validate_config()
       end
     end
 
+    local valid_rebase_editor_I_commands = {
+      false,
+    }
+
+    for _, cmd in pairs(M.get_default_values().mappings.rebase_editor_I) do
+      table.insert(valid_rebase_editor_I_commands, cmd)
+    end
+
+    if validate_type(config.mappings.rebase_editor_I, "mappings.rebase_editor_I", "table") then
+      for key, command in pairs(config.mappings.rebase_editor_I) do
+        if
+          validate_type(key, "mappings.rebase_editor_I -> " .. vim.inspect(key), "string")
+          and validate_type(
+            command,
+            string.format("mappings.rebase_editor_I['%s']", key),
+            { "string", "boolean", "function" }
+          )
+        then
+          if type(command) == "string" and not vim.tbl_contains(valid_rebase_editor_I_commands, command) then
+            local valid_rebase_editor_I_commands = util.map(valid_rebase_editor_I_commands, function(command)
+              return vim.inspect(command)
+            end)
+
+            err(
+              string.format("mappings.rebase_editor_I['%s']", key),
+              string.format(
+                "Expected a valid rebase_editor_I command, got '%s'. Valid rebase_editor_I commands: { %s }",
+                command,
+                table.concat(valid_rebase_editor_I_commands, ", ")
+              )
+            )
+          end
+        end
+      end
+    end
+
+    local valid_commit_editor_I_commands = {
+      false,
+    }
+
+    for _, cmd in pairs(M.get_default_values().mappings.commit_editor_I) do
+      table.insert(valid_commit_editor_I_commands, cmd)
+    end
+
+    if validate_type(config.mappings.commit_editor_I, "mappings.commit_editor_I", "table") then
+      for key, command in pairs(config.mappings.commit_editor_I) do
+        if
+          validate_type(key, "mappings.commit_editor_I -> " .. vim.inspect(key), "string")
+          and validate_type(
+            command,
+            string.format("mappings.commit_editor_I['%s']", key),
+            { "string", "boolean", "function" }
+          )
+        then
+          if type(command) == "string" and not vim.tbl_contains(valid_commit_editor_I_commands, command) then
+            local valid_commit_editor_I_commands = util.map(valid_commit_editor_I_commands, function(command)
+              return vim.inspect(command)
+            end)
+
+            err(
+              string.format("mappings.commit_editor_I['%s']", key),
+              string.format(
+                "Expected a valid commit_editor_I command, got '%s'. Valid commit_editor_I commands: { %s }",
+                command,
+                table.concat(valid_commit_editor_I_commands, ", ")
+              )
+            )
+          end
+        end
+      end
+    end
+
     local valid_commit_editor_commands = {
       false,
     }
@@ -769,7 +996,6 @@ function M.validate_config()
     validate_type(config.telescope_sorter, "telescope_sorter", "function")
     validate_type(config.use_per_project_settings, "use_per_project_settings", "boolean")
     validate_type(config.remember_settings, "remember_settings", "boolean")
-    validate_type(config.auto_refresh, "auto_refresh", "boolean")
     validate_type(config.sort_branches, "sort_branches", "string")
     validate_type(config.notification_icon, "notification_icon", "string")
     validate_type(config.console_timeout, "console_timeout", "number")
@@ -778,12 +1004,17 @@ function M.validate_config()
     validate_type(config.disable_relative_line_numbers, "disable_relative_line_numbers", "boolean")
     validate_type(config.auto_show_console, "auto_show_console", "boolean")
     if validate_type(config.status, "status", "table") then
+      validate_type(config.status.show_head_commit_hash, "status.show_head_commit_hash", "boolean")
       validate_type(config.status.recent_commit_count, "status.recent_commit_count", "number")
+      validate_type(config.status.mode_padding, "status.mode_padding", "number")
+      validate_type(config.status.HEAD_padding, "status.HEAD_padding", "number")
+      validate_type(config.status.mode_text, "status.mode_text", "table")
     end
     validate_signs()
     validate_trinary_auto(config.disable_insert_on_commit, "disable_insert_on_commit")
     -- Commit Editor
     if validate_type(config.commit_editor, "commit_editor", "table") then
+      validate_type(config.commit_editor.show_staged_diff, "show_staged_diff", "boolean")
       validate_kind(config.commit_editor.kind, "commit_editor")
     end
     -- Commit Select View
@@ -805,6 +1036,10 @@ function M.validate_config()
     -- Reflog View
     if validate_type(config.reflog_view, "reflog_view", "table") then
       validate_kind(config.reflog_view.kind, "reflog_view.kind")
+    end
+    -- refs view
+    if validate_type(config.refs_view, "refs_view", "table") then
+      validate_kind(config.refs_view.kind, "refs_view.kind")
     end
     -- Merge Editor
     if validate_type(config.merge_editor, "merge_editor", "table") then
@@ -836,11 +1071,11 @@ function M.check_integration(name)
 
   if enabled == nil or enabled == "auto" then
     local success, _ = pcall(require, name)
-    logger.fmt_info("[CONFIG] Found auto integration '%s = %s'", name, success)
+    logger.info(("[CONFIG] Found auto integration '%s = %s'"):format(name, success))
     return success
   end
 
-  logger.fmt_info("[CONFIG] Found explicit integration '%s' = %s", name, enabled)
+  logger.info(("[CONFIG] Found explicit integration '%s' = %s"):format(name, enabled))
   return enabled
 end
 

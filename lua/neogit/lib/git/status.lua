@@ -1,21 +1,23 @@
 local Path = require("plenary.path")
+local git = require("neogit.lib.git")
+local util = require("neogit.lib.util")
 local Collection = require("neogit.lib.collection")
 
----@class File: StatusItem
+---@class StatusItem
 ---@field mode string
----@field has_diff boolean
 ---@field diff string[]
 ---@field absolute_path string
+---@field escaped_path string
+---@field original_name string|nil
 
+---@return StatusItem
 local function update_file(cwd, file, mode, name, original_name)
-  local mt, diff, has_diff
-
   local absolute_path = Path:new(cwd, name):absolute()
+  local escaped_path = vim.fn.fnameescape(vim.fn.fnamemodify(absolute_path, ":~:."))
 
+  local mt, diff
   if file then
     mt = getmetatable(file)
-    has_diff = file.has_diff
-
     if rawget(file, "diff") then
       diff = file.diff
     end
@@ -25,20 +27,20 @@ local function update_file(cwd, file, mode, name, original_name)
     mode = mode,
     name = name,
     original_name = original_name,
-    has_diff = has_diff,
     diff = diff,
     absolute_path = absolute_path,
+    escaped_path = escaped_path,
   }, mt or {})
 end
 
 local tag_pattern = "(.-)%-([0-9]+)%-g%x+$"
+local match_header = "# ([%w%.]+) (.+)"
 local match_kind = "(.) (.+)"
 local match_u = "(..) (....) (%d+) (%d+) (%d+) (%d+) (%w+) (%w+) (%w+) (.+)"
 local match_1 = "(.)(.) (....) (%d+) (%d+) (%d+) (%w+) (%w+) (.+)"
 local match_2 = "(.)(.) (....) (%d+) (%d+) (%d+) (%w+) (%w+) (%a%d+) ([^\t]+)\t?(.+)"
 
 local function update_status(state)
-  local git = require("neogit.lib.git")
   local cwd = state.git_root
 
   local head = {}
@@ -53,23 +55,20 @@ local function update_status(state)
 
   local result = git.cli.status.null_separated.porcelain(2).branch.call { hidden = true }
   result = vim.split(result.stdout_raw[1], "\n")
+  result = util.collect(result, function(line, collection)
+    if line == "" then
+      return
+    end
 
-  local collection = {}
-  local line_nr = 1
-  local prev_line = nil
-  repeat
-    local line = result[line_nr]
-    if line:match("^[12u]%s[MTADRCU%s%.%?!][MTADRCU%s%.%?!]%s") or line:match("^[%?!#]%s") then
+    if line ~= "" and (line:match("^[12u]%s[%u%s%.%?!][%u%s%.%?!]%s") or line:match("^[%?!#]%s")) then
       table.insert(collection, line)
-    elseif prev_line and prev_line:match("^2%sR") then
+    else
       collection[#collection] = ("%s\t%s"):format(collection[#collection], line)
     end
-    line_nr = line_nr + 1
-    prev_line = line
-  until line_nr > #result
+  end)
 
-  for _, l in ipairs(collection) do
-    local header, value = l:match("# ([%w%.]+) (.+)")
+  for _, l in ipairs(result) do
+    local header, value = l:match(match_header)
     if header then
       if header == "branch.head" then
         head.branch = value
@@ -104,11 +103,15 @@ local function update_status(state)
 
         table.insert(unstaged_files, update_file(cwd, old_files_hash.unstaged_files[name], mode, name))
       elseif kind == "?" then
-        table.insert(untracked_files, update_file(cwd, old_files_hash.untracked_files[rest], nil, rest))
+        table.insert(untracked_files, update_file(cwd, old_files_hash.untracked_files[rest], "?", rest))
       elseif kind == "1" then
-        local mode_staged, mode_unstaged, _, _, _, _, _, _, name = rest:match(match_1)
+        local mode_staged, mode_unstaged, _, _, _, _, hH, _, name = rest:match(match_1)
 
         if mode_staged ~= "." then
+          if hH:match("^0+$") then
+            mode_staged = "N"
+          end
+
           table.insert(staged_files, update_file(cwd, old_files_hash.staged_files[name], mode_staged, name))
         end
 
@@ -160,12 +163,12 @@ local function update_status(state)
   if #tag == 1 then
     local tag, distance = tostring(tag[1]):match(tag_pattern)
     if tag and distance then
-      head.tag = { name = tag, distance = tonumber(distance) }
+      head.tag = { name = tag, distance = tonumber(distance), oid = git.rev_parse.oid(tag) }
     else
-      head.tag = { name = nil, distance = nil }
+      head.tag = { name = nil, distance = nil, oid = nil }
     end
   else
-    head.tag = { name = nil, distance = nil }
+    head.tag = { name = nil, distance = nil, oid = nil }
   end
 
   state.head = head
@@ -175,13 +178,20 @@ local function update_status(state)
   state.staged.items = staged_files
 end
 
-local git = { cli = require("neogit.lib.git.cli") }
+---@class NeogitGitStatus
 local status = {
   stage = function(files)
     git.cli.add.files(unpack(files)).call()
   end,
   stage_modified = function()
     git.cli.add.update.call()
+  end,
+  stage_untracked = function()
+    local paths = util.map(git.repo.state.untracked.items, function(item)
+      return item.escaped_path
+    end)
+
+    git.cli.add.files(unpack(paths)).call()
   end,
   stage_all = function()
     git.cli.add.all.call()
@@ -193,14 +203,13 @@ local status = {
     git.cli.reset.call()
   end,
   is_dirty = function()
-    local repo = require("neogit.lib.git.repository")
-    return #repo.staged.items > 0 or #repo.unstaged.items > 0
+    return #git.repo.state.staged.items > 0 or #git.repo.state.unstaged.items > 0
   end,
   anything_staged = function()
-    return #require("neogit.lib.git.repository").staged.items > 0
+    return #git.repo.state.staged.items > 0
   end,
   anything_unstaged = function()
-    return #require("neogit.lib.git.repository").unstaged.items > 0
+    return #git.repo.state.unstaged.items > 0
   end,
 }
 

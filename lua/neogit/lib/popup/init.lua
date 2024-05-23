@@ -1,7 +1,6 @@
 local PopupBuilder = require("neogit.lib.popup.builder")
+local status = require("neogit.buffers.status")
 local Buffer = require("neogit.lib.buffer")
-local common = require("neogit.buffers.common")
-local Ui = require("neogit.lib.ui")
 local logger = require("neogit.logger")
 local util = require("neogit.lib.util")
 local config = require("neogit.config")
@@ -9,31 +8,37 @@ local state = require("neogit.lib.state")
 local input = require("neogit.lib.input")
 local notification = require("neogit.lib.notification")
 
+local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
+
 local git = require("neogit.lib.git")
 
-local col = Ui.col
-local row = Ui.row
-local text = Ui.text
-local Component = Ui.Component
-local map = util.map
+local a = require("plenary.async")
+
 local filter_map = util.filter_map
 local build_reverse_lookup = util.build_reverse_lookup
-local intersperse = util.intersperse
-local List = common.List
-local Grid = common.Grid
 
+local ui = require("neogit.lib.popup.ui")
+
+---@class PopupState
+
+---@class PopupData
+---@field state PopupState
+---@field buffer Buffer
 local M = {}
 
 function M.builder()
   return PopupBuilder.new(M.new)
 end
 
+---@param state PopupState
+---@return PopupData
 function M.new(state)
   local instance = {
     state = state,
     buffer = nil,
   }
   setmetatable(instance, { __index = M })
+
   return instance
 end
 
@@ -50,7 +55,7 @@ function M:get_arguments()
       table.insert(flags, arg.cli_prefix .. arg.cli .. arg.cli_suffix)
     end
 
-    if arg.type == "option" and arg.cli ~= "" and #arg.value ~= 0 and not arg.internal then
+    if arg.type == "option" and arg.cli ~= "" and (arg.value and #arg.value ~= 0) and not arg.internal then
       table.insert(flags, arg.cli_prefix .. arg.cli .. "=" .. arg.value)
     end
   end
@@ -85,135 +90,6 @@ function M:close()
   end
 end
 
--- Determines the correct highlight group for a switch based on it's state.
----@return string
-local function get_highlight_for_switch(switch)
-  if switch.enabled then
-    return "NeogitPopupSwitchEnabled"
-  end
-
-  return "NeogitPopupSwitchDisabled"
-end
-
--- Determines the correct highlight group for an option based on it's state.
----@return string
-local function get_highlight_for_option(option)
-  if option.value ~= nil and option.value ~= "" then
-    return "NeogitPopupOptionEnabled"
-  end
-
-  return "NeogitPopupOptionDisabled"
-end
-
--- Determines the correct highlight group for a config based on it's type and state.
----@return string
-local function get_highlight_for_config(config)
-  if config.value and config.value ~= "" then
-    return config.type or "NeogitPopupConfigEnabled"
-  end
-
-  return "NeogitPopupConfigDisabled"
-end
-
--- Builds config component to be rendered
----@return table
-local function construct_config_options(config, prefix, suffix)
-  local set = false
-  local options = filter_map(config.options, function(option)
-    if option.display == "" then
-      return
-    end
-
-    if option.condition and not option.condition() then
-      return
-    end
-
-    local highlight
-    if config.value == option.value then
-      set = true
-      highlight = "NeogitPopupConfigEnabled"
-    else
-      highlight = "NeogitPopupConfigDisabled"
-    end
-
-    return text.highlight(highlight)(option.display)
-  end)
-
-  local value = intersperse(options, text.highlight("NeogitPopupConfigDisabled")("|"))
-  table.insert(value, 1, text.highlight("NeogitPopupConfigDisabled")("["))
-  table.insert(value, #value + 1, text.highlight("NeogitPopupConfigDisabled")("]"))
-
-  if prefix then
-    table.insert(
-      value,
-      1,
-      text.highlight(set and "NeogitPopupConfigEnabled" or "NeogitPopupConfigDisabled")(prefix)
-    )
-  end
-
-  if suffix then
-    table.insert(
-      value,
-      #value + 1,
-      text.highlight(set and "NeogitPopupConfigEnabled" or "NeogitPopupConfigDisabled")(suffix)
-    )
-  end
-
-  return value
-end
-
----@param id integer ID of component to be updated
----@param highlight string New highlight group for value
----@param value string|table New value to display
----@return nil
-function M:update_component(id, highlight, value)
-  local component = self.buffer.ui:find_component(function(c)
-    return c.options.id == id
-  end)
-
-  assert(component, "Component not found! Cannot update.")
-
-  if highlight then
-    if component.options.highlight then
-      component.options.highlight = highlight
-    elseif component.children then
-      component.children[1].options.highlight = highlight
-    end
-  end
-
-  if type(value) == "string" then
-    local new
-    if value == "" then
-      local last_child = component.children[#component.children - 1]
-      if (last_child and last_child.value == "=") or component.options.id == "--" then
-        -- Check if this is a CLI option - the value should get blanked out for these
-        new = ""
-      else
-        -- If the component is NOT a cli option, use "unset" string
-        new = "unset"
-      end
-    else
-      new = value
-    end
-
-    component.children[#component.children].value = new
-  elseif type(value) == "table" then
-    -- Remove last n children from row
-    for _ = 1, #value do
-      table.remove(component.children)
-    end
-
-    -- insert new items to row
-    for _, text in ipairs(value) do
-      table.insert(component.children, text)
-    end
-  else
-    logger.error(string.format("[POPUP]: Unhandled component value type! (%s)", type(value)))
-  end
-
-  self.buffer.ui:update()
-end
-
 -- Toggle a switch on/off
 ---@param switch table
 ---@return nil
@@ -230,15 +106,8 @@ function M:toggle_switch(switch)
     local index = options[switch.cli or ""]
     switch.cli = options[(index + 1)] or options[1]
     switch.value = switch.cli
-
     switch.enabled = switch.cli ~= ""
-
     state.set({ self.state.name, switch.cli_suffix }, switch.cli)
-    self:update_component(
-      switch.id,
-      get_highlight_for_switch(switch),
-      construct_config_options(switch, switch.cli_prefix, switch.cli_suffix)
-    )
 
     return
   end
@@ -257,9 +126,7 @@ function M:toggle_switch(switch)
     end
   end
 
-  -- Update internal state and UI.
   state.set({ self.state.name, switch.cli }, switch.enabled)
-  self:update_component(switch.id, get_highlight_for_switch(switch), switch.cli)
 
   -- Ensure that other switches that are incompatible with this one are disabled
   if switch.enabled and #switch.incompatible > 0 then
@@ -267,7 +134,6 @@ function M:toggle_switch(switch)
       if var.type == "switch" and var.enabled and switch.incompatible[var.cli] then
         var.enabled = false
         state.set({ self.state.name, var.cli }, var.enabled)
-        self:update_component(var.id, get_highlight_for_switch(var))
       end
     end
   end
@@ -278,7 +144,6 @@ function M:toggle_switch(switch)
       if var.type == "switch" and var.enabled and switch.dependant[var.cli] then
         var.enabled = false
         state.set({ self.state.name, var.cli }, var.enabled)
-        self:update_component(var.id, get_highlight_for_switch(var))
       end
     end
   end
@@ -288,38 +153,39 @@ end
 ---@param option table
 ---@return nil
 function M:set_option(option)
-  local set = function(value)
-    option.value = value
-    state.set({ self.state.name, option.cli }, option.value)
-    self:update_component(option.id, get_highlight_for_option(option), option.value)
-  end
-
   -- Prompt user to select from predetermined choices
   if option.choices then
     if not option.value or option.value == "" then
-      -- TODO: Use input.get_choice here instead
-      vim.ui.select(option.choices, { prompt = option.description }, set)
+      local choice = FuzzyFinderBuffer.new(option.choices):open_async {
+        prompt_prefix = option.description,
+      }
+      if choice then
+        option.value = choice
+      else
+        option.value = ""
+      end
     else
-      set("")
+      option.value = ""
     end
   elseif option.fn then
-    option.fn(self, option, set)
+    option.value = option.fn(self, option)
   else
-    -- ...Otherwise get the value via input.
-    local input = vim.fn.input {
-      prompt = option.cli .. "=",
+    local input = input.get_user_input(option.cli, {
+      separator = "=",
       default = option.value,
-      cancelreturn = option.value,
-    }
+      cancel = option.value,
+    })
 
     -- If the option specifies a default value, and the user set the value to be empty, defer to default value.
     -- This is handy to prevent the user from accidentally loading thousands of log entries by accident.
     if option.default and input == "" then
-      set(option.default)
+      option.value = option.default
     else
-      set(input)
+      option.value = input
     end
   end
+
+  state.set({ self.state.name, option.cli }, option.value)
 end
 
 -- Set a config value
@@ -337,181 +203,34 @@ function M:set_config(config)
 
     local index = options[config.value or ""]
     config.value = options[(index + 1)] or options[1]
+    git.config.set(config.name, config.value)
   elseif config.fn then
-    config.fn(self, config)
-    return
+    config.value = config.fn(self, config)
   else
-    local result = vim.fn.input {
-      prompt = config.name .. " > ",
-      default = config.value,
-      cancelreturn = config.value,
-    }
+    local result = input.get_user_input(config.name, { default = config.value, cancel = config.value })
 
     config.value = result
+    git.config.set(config.name, config.value)
   end
 
-  git.config.set(config.name, config.value)
-
-  self:repaint_config()
+  for _, var in ipairs(self.state.config) do
+    if var.passive then
+      local c_value = git.config.get(var.name)
+      if c_value:is_set() then
+        var.value = c_value.value
+      end
+    end
+  end
 
   if config.callback then
     config.callback(self, config)
   end
 end
 
-function M:repaint_config()
-  for _, var in ipairs(self.state.config) do
-    if var.passive then
-      local c_value = git.config.get(var.name)
-      if c_value:is_set() then
-        var.value = c_value.value
-        self:update_component(var.id, nil, var.value)
-      end
-    elseif var.options then
-      self:update_component(var.id, nil, construct_config_options(var))
-    else
-      self:update_component(var.id, get_highlight_for_config(var), var.value)
-    end
-  end
-end
+-- Allow user actions to be queued
+local action_lock = a.control.Semaphore.new(1)
 
-local Switch = Component.new(function(switch)
-  local value
-  if switch.options then
-    value = row.id(switch.id)(construct_config_options(switch, switch.cli_prefix, switch.cli_suffix))
-  else
-    value = row
-      .id(switch.id)
-      .highlight(get_highlight_for_switch(switch)) { text(switch.cli_prefix), text(switch.cli) }
-  end
-
-  return row.tag("Switch").value(switch) {
-    row.highlight("NeogitPopupSwitchKey") {
-      text(switch.key_prefix),
-      text(switch.key),
-    },
-    text(" "),
-    text(switch.description),
-    text(" ("),
-    value,
-    text(")"),
-  }
-end)
-
-local Option = Component.new(function(option)
-  return row.tag("Option").value(option) {
-    row.highlight("NeogitPopupOptionKey") {
-      text(option.key_prefix),
-      text(option.key),
-    },
-    text(" "),
-    text(option.description),
-    text(" ("),
-    row.id(option.id).highlight(get_highlight_for_option(option)) {
-      text(option.cli_prefix),
-      text(option.cli),
-      text(option.separator),
-      text(option.value or ""),
-    },
-    text(")"),
-  }
-end)
-
-local Section = Component.new(function(title, items)
-  return col {
-    text.highlight("NeogitPopupSectionTitle")(title),
-    col(items),
-  }
-end)
-
-local Config = Component.new(function(props)
-  local c = {}
-
-  if not props.state[1].heading then
-    table.insert(c, text.highlight("NeogitPopupSectionTitle")("Variables"))
-  end
-
-  table.insert(
-    c,
-    col(map(props.state, function(config)
-      if config.heading then
-        return row.highlight("NeogitPopupSectionTitle") { text(config.heading) }
-      end
-
-      local value
-      if config.options then
-        value = construct_config_options(config)
-      else
-        local value_text
-        if not config.value or config.value == "" then
-          value_text = "unset"
-        else
-          value_text = config.value
-        end
-
-        value = { text.highlight(get_highlight_for_config(config))(value_text) }
-      end
-
-      local key
-      if config.passive then
-        key = " "
-      elseif #config.key > 1 then
-        key = table.concat(vim.split(config.key, ""), " ")
-      else
-        key = config.key
-      end
-
-      return row.tag("Config").value(config) {
-        row.highlight("NeogitPopupConfigKey") { text(key) },
-        text(" " .. config.name .. " "),
-        row.id(config.id) { unpack(value) },
-      }
-    end))
-  )
-
-  return col(c)
-end)
-
-local function render_action(action)
-  local items = {}
-
-  -- selene: allow(empty_if)
-  if action.keys == nil then
-    -- Action group heading
-  elseif #action.keys == 0 then
-    table.insert(items, text.highlight("NeogitPopupActionDisabled")("_"))
-  else
-    for i, key in ipairs(action.keys) do
-      table.insert(items, text.highlight("NeogitPopupActionKey")(key))
-      if i < #action.keys then
-        table.insert(items, text(","))
-      end
-    end
-  end
-  table.insert(items, text(" "))
-  table.insert(items, text(action.description))
-  return items
-end
-
-local Actions = Component.new(function(props)
-  return col {
-    Grid.padding_left(1) {
-      items = props.state,
-      gap = 3,
-      render_item = function(item)
-        if item.heading then
-          return row.highlight("NeogitPopupSectionTitle") { text(item.heading) }
-        elseif not item.callback then
-          return row.highlight("NeogitPopupActionDisabled")(render_action(item))
-        else
-          return row(render_action(item))
-        end
-      end,
-    },
-  }
-end)
-
-function M:show()
+function M:mappings()
   local mappings = {
     n = {
       ["q"] = function()
@@ -521,20 +240,20 @@ function M:show()
         self:close()
       end,
       ["<tab>"] = function()
-        local stack = self.buffer.ui:get_component_stack_under_cursor()
-
-        for _, x in ipairs(stack) do
-          if x.options.tag == "Switch" then
-            self:toggle_switch(x.options.value)
-            break
-          elseif x.options.tag == "Config" then
-            self:set_config(x.options.value)
-            break
-          elseif x.options.tag == "Option" then
-            self:set_option(x.options.value)
-            break
-          end
+        local component = self.buffer.ui:get_interactive_component_under_cursor()
+        if not component then
+          return
         end
+
+        if component.options.tag == "Switch" then
+          self:toggle_switch(component.options.value)
+        elseif component.options.tag == "Config" then
+          self:set_config(component.options.value)
+        elseif component.options.tag == "Option" then
+          self:set_option(component.options.value)
+        end
+
+        self:refresh()
       end,
     },
   }
@@ -543,15 +262,18 @@ function M:show()
   for _, arg in pairs(self.state.args) do
     if arg.id then
       arg_prefixes[arg.key_prefix] = true
-      mappings.n[arg.id] = function()
+      mappings.n[arg.id] = a.void(function()
         if arg.type == "switch" then
           self:toggle_switch(arg)
         elseif arg.type == "option" then
           self:set_option(arg)
         end
-      end
+
+        self:refresh()
+      end)
     end
   end
+
   for prefix, _ in pairs(arg_prefixes) do
     mappings.n[prefix] = function()
       local c = vim.fn.getcharstr()
@@ -566,9 +288,10 @@ function M:show()
     if config.heading then
       -- nothing
     elseif not config.passive then
-      mappings.n[config.id] = function()
+      mappings.n[config.id] = a.void(function()
         self:set_config(config)
-      end
+        self:refresh()
+      end)
     end
   end
 
@@ -579,11 +302,20 @@ function M:show()
         -- nothing
       elseif action.callback then
         for _, key in ipairs(action.keys) do
-          mappings.n[key] = function()
-            logger.debug(string.format("[POPUP]: Invoking action '%s' of %s", key, self.state.name))
-            action.callback(self)
+          mappings.n[key] = a.void(function()
+            local permit = action_lock:acquire()
+            logger.debug(string.format("[POPUP]: Invoking action %q of %s", key, self.state.name))
+
             self:close()
-          end
+            action.callback(self)
+
+            if status.instance() then
+              logger.debug("[ACTION] Dispatching Refresh to Status Buffer")
+              status.instance():dispatch_refresh(nil, "action")
+            end
+
+            permit:forget()
+          end)
         end
       else
         for _, key in ipairs(action.keys) do
@@ -595,52 +327,51 @@ function M:show()
     end
   end
 
-  local items = {}
+  return mappings
+end
 
-  if self.state.config[1] then
-    table.insert(items, Config { state = self.state.config })
+function M:refresh()
+  self.buffer:focus()
+  self.buffer.ui:render(unpack(ui.Popup(self.state)))
+end
+
+---@return boolean
+function M.is_open()
+  return (M.instance and M.instance.buffer and M.instance.buffer:is_visible()) == true
+end
+
+function M:show()
+  if M.is_open() then
+    logger.debug("[POPUP] An Instance is already open - closing it")
+    M.instance:close()
   end
 
-  if self.state.args[1] then
-    local section = {}
-    local name = "Arguments"
-    for _, item in ipairs(self.state.args) do
-      if item.type == "option" then
-        table.insert(section, Option(item))
-      elseif item.type == "switch" then
-        table.insert(section, Switch(item))
-      elseif item.type == "heading" then
-        if section[1] then -- If there are items in the section, flush to items table with current name
-          table.insert(items, Section(name, section))
-          section = {}
-        end
-
-        name = item.heading
-      end
-    end
-
-    table.insert(items, Section(name, section))
-  end
-
-  if self.state.actions[1] then
-    table.insert(items, Actions { state = self.state.actions })
-  end
+  M.instance = self
 
   self.buffer = Buffer.create {
     name = self.state.name,
     filetype = "NeogitPopup",
     kind = config.values.popup.kind,
-    mappings = mappings,
-    after = function(buf, win)
-      vim.api.nvim_set_option_value("cursorline", false, { win = win })
-      vim.api.nvim_set_option_value("list", false, { win = win })
+    mappings = self:mappings(),
+    status_column = " ",
+    autocmds = {
+      ["WinLeave"] = function()
+        if self.buffer and self.buffer.kind == "floating" then
+          -- We pcall this because it's possible the window was closed by a command invocation, e.g. "cc" for commits
+          pcall(self.close, self)
+        end
+      end,
+    },
+    after = function(buf, _win)
+      buf:set_window_option("cursorline", false)
+      buf:set_window_option("list", false)
 
       if self.state.env.highlight then
         for i = 1, #self.state.env.highlight, 1 do
           vim.fn.matchadd("NeogitPopupBranchName", self.state.env.highlight[i], 100)
         end
       else
-        vim.fn.matchadd("NeogitPopupBranchName", git.repo.head.branch, 100)
+        vim.fn.matchadd("NeogitPopupBranchName", git.repo.state.head.branch, 100)
       end
 
       if self.state.env.bold then
@@ -658,26 +389,14 @@ function M:show()
         vim.schedule(function()
           if buf:is_focused() then
             vim.cmd.resize(vim.fn.line("$") + 1)
+            buf:set_window_option("winfixheight", true)
           end
         end)
       end
     end,
     render = function()
-      return {
-        List {
-          separator = "",
-          items = items,
-        },
-      }
+      return ui.Popup(self.state)
     end,
-    autocmds = {
-      ["WinLeave"] = function()
-        if self.buffer and self.buffer.kind == "floating" then
-          -- We pcall this because it's possible the window was closed by a command invocation, e.g. "cc" for commits
-          pcall(self.close, self)
-        end
-      end,
-    },
   }
 end
 

@@ -2,12 +2,16 @@ local git = require("neogit.lib.git")
 local input = require("neogit.lib.input")
 local notification = require("neogit.lib.notification")
 local operation = require("neogit.operations")
-local status = require("neogit.status")
+local util = require("neogit.lib.util")
 
 local CommitSelectViewBuffer = require("neogit.buffers.commit_select_view")
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
 local M = {}
+
+local function base_commit(popup, list, header)
+  return popup.state.env.commit or CommitSelectViewBuffer.new(list, header):open_async()[1]
+end
 
 function M.onto_base(popup)
   git.rebase.onto_branch(git.branch.base_branch(), popup:get_arguments())
@@ -29,10 +33,10 @@ end
 
 function M.onto_upstream(popup)
   local upstream
-  if git.repo.upstream.ref then
-    upstream = string.format("refs/remotes/%s", git.repo.upstream.ref)
+  if git.repo.state.upstream.ref then
+    upstream = string.format("refs/remotes/%s", git.repo.state.upstream.ref)
   else
-    local target = FuzzyFinderBuffer.new(git.branch.get_remote_branches()):open_async()
+    local target = FuzzyFinderBuffer.new(git.refs.list_remote_branches()):open_async()
     if not target then
       return
     end
@@ -44,20 +48,18 @@ function M.onto_upstream(popup)
 end
 
 function M.onto_elsewhere(popup)
-  local target = FuzzyFinderBuffer.new(git.branch.get_all_branches()):open_async()
+  local target = FuzzyFinderBuffer.new(git.refs.list_branches()):open_async()
   if target then
     git.rebase.onto_branch(target, popup:get_arguments())
   end
 end
 
 function M.interactively(popup)
-  local commit
-  if popup.state.env.commit then
-    commit = popup.state.env.commit
-  else
-    commit = CommitSelectViewBuffer.new(git.log.list({}, {}, {}, true)):open_async()[1]
-  end
-
+  local commit = base_commit(
+    popup,
+    git.log.list({}, {}, {}, true),
+    "Select a commit with <cr> to rebase it and all commits above it, or <esc> to abort"
+  )
   if commit then
     if not git.log.is_ancestor(commit, "HEAD") then
       notification.warn("Commit isn't an ancestor of HEAD")
@@ -96,58 +98,35 @@ function M.interactively(popup)
 end
 
 M.reword = operation("rebase_reword", function(popup)
-  local commit
-  if popup.state.env.commit then
-    commit = popup.state.env.commit
-  else
-    commit = CommitSelectViewBuffer.new(git.log.list()):open_async()[1]
-    if not commit then
-      return
-    end
-  end
-
-  -- TODO: Support multiline input for longer commit messages
-  local old_message = git.log.message(commit)
-  local new_message = input.get_user_input("Message", { default = old_message })
-  if not new_message then
+  local commit = base_commit(
+    popup,
+    git.log.list(),
+    "Select a commit to with <cr> to reword its message, or <esc> to abort"
+  )
+  if not commit then
     return
   end
 
-  git.rebase.reword(commit, new_message)
+  git.rebase.reword(commit)
 end)
 
 M.modify = operation("rebase_modify", function(popup)
-  local commit
-  if popup.state.env.commit then
-    commit = popup.state.env.commit
-  else
-    commit = CommitSelectViewBuffer.new(git.log.list()):open_async()[1]
-    if not commit then
-      return
-    end
+  local commit = base_commit(popup, git.log.list(), "Select a commit to edit with <cr>, or <esc> to abort")
+  if commit then
+    git.rebase.modify(commit)
   end
-  git.rebase.modify(commit)
-  status.refresh(nil, "rebase_modify")
 end)
 
 M.drop = operation("rebase_drop", function(popup)
-  local commit
-  if popup.state.env.commit then
-    commit = popup.state.env.commit
-  else
-    commit = CommitSelectViewBuffer.new(git.log.list()):open_async()[1]
-    if not commit then
-      return
-    end
+  local commit = base_commit(popup, git.log.list(), "Select a commit to remove with <cr>, or <esc> to abort")
+  if commit then
+    git.rebase.drop(commit)
   end
-  git.rebase.drop(commit)
-  status.refresh(nil, "drop")
 end)
 
 function M.subset(popup)
-  local newbase = FuzzyFinderBuffer.new(git.branch.get_all_branches())
+  local newbase = FuzzyFinderBuffer.new(git.refs.list_branches())
     :open_async { prompt_prefix = "rebase subset onto" }
-
   if not newbase then
     return
   end
@@ -156,14 +135,16 @@ function M.subset(popup)
   if popup.state.env.commit and git.log.is_ancestor(popup.state.env.commit, "HEAD") then
     start = popup.state.env.commit
   else
-    start = CommitSelectViewBuffer.new(git.log.list { "HEAD" }):open_async()[1]
+    start = CommitSelectViewBuffer.new(
+      git.log.list { "HEAD" },
+      "Select a commit with <cr> to rebase it and commits above it onto " .. newbase .. ", or <esc> to abort"
+    )
+      :open_async()[1]
   end
 
-  if not start then
-    return
+  if start then
+    git.rebase.onto(start, newbase, popup:get_arguments())
   end
-
-  git.rebase.onto(start, newbase, popup:get_arguments())
 end
 
 function M.continue()
@@ -178,9 +159,26 @@ function M.edit()
   git.rebase.edit()
 end
 
+function M.autosquash(popup)
+  local base
+  if popup.state.env.commit and git.log.is_ancestor(popup.state.env.commit, "HEAD") then
+    base = popup.state.env.commit
+  else
+    base = git.rebase.merge_base_HEAD()
+  end
+
+  if base then
+    git.rebase.onto(
+      "HEAD",
+      base,
+      util.deduplicate(util.merge(popup:get_arguments(), { "--autosquash", "--keep-empty" }))
+    )
+  end
+end
+
 -- TODO: Extract to rebase lib?
 function M.abort()
-  if input.get_confirmation("Abort rebase?", { values = { "&Yes", "&No" }, default = 2 }) then
+  if input.get_permission("Abort rebase?") then
     git.cli.rebase.abort.call_sync()
   end
 end

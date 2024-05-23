@@ -1,13 +1,14 @@
 local a = require("plenary.async")
 local notification = require("neogit.lib.notification")
 
-local Buffer = require("neogit.lib.buffer")
 local config = require("neogit.config")
 local logger = require("neogit.logger")
 
 -- from: https://stackoverflow.com/questions/48948630/lua-ansi-escapes-pattern
+local pattern_1 = "[\27\155][][()#;?%d]*[A-PRZcf-ntqry=><~]"
+local pattern_2 = "[\r\n\04\08]"
 local function remove_escape_codes(s)
-  return s:gsub("[\27\155][][()#;?%d]*[A-PRZcf-ntqry=><~]", ""):gsub("[\r\n\04\08]", "")
+  return s:gsub(pattern_1, ""):gsub(pattern_2, "")
 end
 
 local command_mask =
@@ -27,6 +28,7 @@ end
 ---@field job number|nil
 ---@field stdin number|nil
 ---@field pty boolean|nil
+---@field buffer ProcessBuffer
 ---@field on_partial_line fun(process: Process, data: string, raw: string)|nil callback on complete lines
 ---@field on_error (fun(res: ProcessResult): boolean) Intercept the error externally, returning false prevents the error from being logged
 local Process = {}
@@ -34,6 +36,7 @@ Process.__index = Process
 
 ---@type { number: Process }
 local processes = {}
+setmetatable(processes, { __mode = "k" })
 
 ---@class ProcessResult
 ---@field stdout string[]
@@ -62,112 +65,25 @@ ProcessResult.__index = ProcessResult
 ---@param process Process
 ---@return Process
 function Process.new(process)
+  process.buffer = require("neogit.buffers.process"):new(process)
   return setmetatable(process, Process)
-end
-
-local preview_buffer = nil
-
-local function create_preview_buffer()
-  local kind = config.values.preview_buffer.kind
-
-  -- May be called multiple times due to scheduling
-  if preview_buffer then
-    if preview_buffer.buffer then
-      logger.trace("[PROCESS] Preview buffer already exists. Focusing the existing one")
-      preview_buffer.buffer:focus()
-    end
-    return
-  end
-
-  local name = "NeogitConsole"
-  local cur = vim.fn.bufnr(name)
-  if cur and cur ~= -1 then
-    vim.api.nvim_buf_delete(cur, { force = true })
-  end
-
-  local buffer = Buffer.create {
-    name = name,
-    bufhidden = "hide",
-    filetype = "NeogitConsole",
-    kind = kind,
-    open = false,
-    mappings = {
-      n = {
-        ["q"] = function(buffer)
-          buffer:hide(true)
-        end,
-        ["<esc>"] = function(buffer)
-          buffer:hide(true)
-        end,
-      },
-    },
-    autocmds = {
-      ["BufUnload"] = function()
-        preview_buffer = nil
-      end,
-    },
-  }
-
-  preview_buffer = {
-    buffer = buffer,
-    current_span = nil,
-    content = "",
-  }
-end
-
-function Process.show_console()
-  create_preview_buffer()
-
-  vim.api.nvim_chan_send(vim.api.nvim_open_term(preview_buffer.buffer.handle, {}), preview_buffer.content)
-  preview_buffer.buffer:show()
-  -- Scroll to the end of viewable text
-  vim.cmd.startinsert()
-  vim.defer_fn(vim.cmd.stopinsert, 50)
-
-  -- vim.api.nvim_win_call(win, function()
-  --   vim.cmd.normal("G")
-  -- end)
-end
-
----@param process Process
----@param data string
-local function append_log(process, data)
-  local function append()
-    if data == "" then
-      return
-    end
-
-    if preview_buffer.current_span ~= process.job then
-      preview_buffer.content = preview_buffer.content
-        .. string.format("> %s\r\n", table.concat(process.cmd, " "))
-      preview_buffer.current_span = process.job
-    end
-
-    preview_buffer.content = preview_buffer.content .. data .. "\r\n"
-  end
-
-  vim.schedule(function()
-    create_preview_buffer()
-    append()
-  end)
 end
 
 local hide_console = false
 function Process.hide_preview_buffers()
   hide_console = true
+
   --- Stop all times from opening the buffer
   for _, v in pairs(processes) do
     v:stop_timer()
-  end
-
-  if preview_buffer then
-    preview_buffer.buffer:hide()
   end
 end
 
 function Process:start_timer()
   if self.timer == nil then
     local timer = vim.loop.new_timer()
+    self.timer = timer
+
     timer:start(
       config.values.console_timeout,
       0,
@@ -175,24 +91,26 @@ function Process:start_timer()
         if not self.timer then
           return
         end
+
         self:stop_timer()
-        if not self.result or (self.result.code ~= 0) then
+
+        if self.result then
+          return
+        end
+
+        if config.values.auto_show_console then
+          self.buffer:show()
+        else
           local message = string.format(
             "Command %q running for more than: %.1f seconds",
-            table.concat(self.cmd, " "),
+            mask_command(table.concat(self.cmd, " ")),
             math.ceil((vim.loop.now() - self.start) / 100) / 10
           )
 
-          append_log(self, message)
-          if config.values.auto_show_console then
-            Process.show_console()
-          else
-            notification.warn(message .. "\n\nOpen the console for details")
-          end
+          notification.warn(message .. "\n\nOpen the command history for details")
         end
       end)
     )
-    self.timer = timer
   end
 end
 
@@ -201,6 +119,7 @@ function Process:stop_timer()
     local timer = self.timer
     self.timer = nil
     timer:stop()
+
     if not timer:is_closing() then
       timer:close()
     end
@@ -275,7 +194,7 @@ function Process:spawn(cb)
   }, ProcessResult)
 
   assert(self.job == nil, "Process started twice")
-  -- An empty table is treated as an array
+
   self.env = self.env or {}
   self.env.TERM = "xterm-256color"
 
@@ -312,14 +231,14 @@ function Process:spawn(cb)
     table.insert(res.stdout_raw, raw)
     if self.verbose then
       table.insert(res.output, line)
-      append_log(self, raw)
+      self.buffer:append(raw)
     end
   end)
 
   local on_stderr, stderr_cleanup = handle_output(function() end, function(line, raw)
     table.insert(res.stderr, line)
     table.insert(res.output, line)
-    append_log(self, raw)
+    self.buffer:append(raw)
   end)
 
   local function on_exit(_, code)
@@ -334,9 +253,9 @@ function Process:spawn(cb)
     stdout_cleanup()
     stderr_cleanup()
 
-    if not hide_console and code > 0 and self.on_error(res) then
-      append_log(self, string.format("Process exited with code: %d", code))
+    self.buffer:append(string.format("Process exited with code: %d", code))
 
+    if not self.buffer:is_visible() and code > 0 and self.on_error(res) then
       local output = {}
       local start = math.max(#res.output - 16, 1)
       for i = start, math.min(#res.output, start + 16) do
@@ -364,7 +283,7 @@ function Process:spawn(cb)
   local job = vim.fn.jobstart(self.cmd, {
     cwd = self.cwd,
     env = self.env,
-    pty = not not self.pty, -- Fake a small standard terminal
+    pty = not not self.pty,
     width = 80,
     height = 24,
     on_stdout = on_stdout,
@@ -373,7 +292,7 @@ function Process:spawn(cb)
   })
 
   if job <= 0 then
-    error("Failed to start process: ", vim.inspect(self))
+    error("Failed to start process: " .. vim.inspect(self))
     if cb then
       cb(nil)
     end

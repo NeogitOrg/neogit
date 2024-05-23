@@ -14,10 +14,18 @@ local range = util.range
 
 local M = {}
 
-local diff_add_start = "+"
-local diff_delete_start = "-"
+M.EmptyLine = Component.new(function()
+  return col { row { text("") } }
+end)
 
 M.Diff = Component.new(function(diff)
+  return col.tag("Diff")({
+    text(string.format("%s %s", diff.kind, diff.file), { line_hl = "NeogitDiffHeader" }),
+    M.DiffHunks(diff),
+  }, { foldable = true, folded = false, context = true })
+end)
+
+M.DiffHunks = Component.new(function(diff)
   local hunk_props = map(diff.hunks, function(hunk)
     local header = diff.lines[hunk.diff_from]
 
@@ -25,40 +33,64 @@ M.Diff = Component.new(function(diff)
       return diff.lines[i]
     end)
 
+    hunk.content = content
+
     return {
       header = header,
       content = content,
+      hunk = hunk,
+      folded = hunk._folded,
     }
   end)
 
-  return col.tag("Diff") {
-    text(string.format("%s %s", diff.kind, diff.file), { sign = "NeogitDiffHeader" }),
-    col.tag("DiffContent") {
-      col.tag("DiffInfo")(map(diff.info, text)),
-      col.tag("HunkList")(map(hunk_props, M.Hunk)),
-    },
+  return col.tag("DiffContent") {
+    col.tag("DiffInfo")(map(diff.info, text)),
+    col.tag("HunkList")(map(hunk_props, M.Hunk)),
   }
 end)
 
-local HunkLine = Component.new(function(line)
-  local sign
+local diff_add_start = "+"
+local diff_add_start_2 = " +"
+local diff_delete_start = "-"
+local diff_delete_start_2 = " -"
 
-  if string.sub(line, 1, 1) == diff_add_start then
-    sign = "NeogitDiffAdd"
-  elseif string.sub(line, 1, 1) == diff_delete_start then
-    sign = "NeogitDiffDelete"
+local HunkLine = Component.new(function(line)
+  local line_hl
+
+  -- TODO: Should use file mode, not merge head
+  if git.repo.state.merge.head then
+    if
+      line:match("..<<<<<<<")
+      or line:match("..|||||||")
+      or line:match("..=======")
+      or line:match("..>>>>>>>")
+    then
+      line_hl = "NeogitHunkMergeHeader"
+    elseif string.sub(line, 1, 1) == diff_add_start or string.sub(line, 1, 2) == diff_add_start_2 then
+      line_hl = "NeogitDiffAdd"
+    elseif string.sub(line, 1, 1) == diff_delete_start or string.sub(line, 1, 2) == diff_delete_start_2 then
+      line_hl = "NeogitDiffDelete"
+    else
+      line_hl = "NeogitDiffContext"
+    end
   else
-    sign = "NeogitDiffContext"
+    if string.sub(line, 1, 1) == diff_add_start then
+      line_hl = "NeogitDiffAdd"
+    elseif string.sub(line, 1, 1) == diff_delete_start then
+      line_hl = "NeogitDiffDelete"
+    else
+      line_hl = "NeogitDiffContext"
+    end
   end
 
-  return text(line, { sign = sign })
+  return text(line, { line_hl = line_hl })
 end)
 
 M.Hunk = Component.new(function(props)
-  return col.tag("Hunk") {
-    text.sign("NeogitHunkHeader")(props.header),
+  return col.tag("Hunk")({
+    text.line_hl("NeogitHunkHeader")(props.header),
     col.tag("HunkContent")(map(props.content, HunkLine)),
-  }
+  }, { foldable = true, folded = props.folded or false, context = true, hunk = props.hunk })
 end)
 
 M.List = Component.new(function(props)
@@ -110,14 +142,18 @@ local highlight_for_signature = {
 
 M.CommitEntry = Component.new(function(commit, args)
   local ref = {}
+  local ref_last = {}
+
+  local info = git.log.branch_info(commit.ref_name, git.remote.list())
 
   -- Parse out ref names
   if args.decorate and commit.ref_name ~= "" then
-    local info = git.log.branch_info(commit.ref_name, git.remote.list())
-
     -- Render local only branches first
     for name, _ in pairs(info.locals) do
-      if info.remotes[name] == nil then
+      if name:match("^refs/") then
+        table.insert(ref_last, text(name, { highlight = "NeogitGraphGray" }))
+        table.insert(ref_last, text(" "))
+      elseif info.remotes[name] == nil then
         local branch_highlight = info.head == name and "NeogitBranchHead" or "NeogitBranch"
         table.insert(ref, text(name, { highlight = branch_highlight }))
         table.insert(ref, text(" "))
@@ -137,6 +173,8 @@ M.CommitEntry = Component.new(function(commit, args)
       table.insert(ref, text(name, { highlight = locally and branch_highlight or "NeogitRemote" }))
       table.insert(ref, text(" "))
     end
+
+    -- Render tags
     for _, tag in pairs(info.tags) do
       table.insert(ref, text(tag, { highlight = "NeogitTagName" }))
       table.insert(ref, text(" "))
@@ -154,10 +192,10 @@ M.CommitEntry = Component.new(function(commit, args)
 
   local details
   if args.details then
-    details = col.hidden(true).padding_left(8) {
+    details = col.padding_left(git.log.abbreviated_size() + 1) {
       row(util.merge(graph, {
         text(" "),
-        text("Author:     ", { highlight = "Comment" }),
+        text("Author:     ", { highlight = "NeogitSubtleText" }),
         text(commit.author_name, { highlight = "NeogitGraphAuthor" }),
         text(" <"),
         text(commit.author_email),
@@ -165,12 +203,12 @@ M.CommitEntry = Component.new(function(commit, args)
       })),
       row(util.merge(graph, {
         text(" "),
-        text("AuthorDate: ", { highlight = "Comment" }),
+        text("AuthorDate: ", { highlight = "NeogitSubtleText" }),
         text(commit.author_date),
       })),
       row(util.merge(graph, {
         text(" "),
-        text("Commit:     ", { highlight = "Comment" }),
+        text("Commit:     ", { highlight = "NeogitSubtleText" }),
         text(commit.committer_name),
         text(" <"),
         text(commit.committer_email),
@@ -178,7 +216,7 @@ M.CommitEntry = Component.new(function(commit, args)
       })),
       row(util.merge(graph, {
         text(" "),
-        text("CommitDate: ", { highlight = "Comment" }),
+        text("CommitDate: ", { highlight = "NeogitSubtleText" }),
         text(commit.committer_date),
       })),
       row(graph),
@@ -208,15 +246,15 @@ M.CommitEntry = Component.new(function(commit, args)
     }
   end
 
-  return col({
+  return col.tag("commit")({
     row(
       util.merge({
-        text(commit.oid:sub(1, 7), {
+        text(commit.abbreviated_commit, {
           highlight = commit.verification_flag and highlight_for_signature[commit.verification_flag]
-            or "Comment",
+            or "NeogitObjectId",
         }),
         text(" "),
-      }, graph, { text(" ") }, ref, { text(commit.subject) }),
+      }, graph, { text(" ") }, ref, ref_last, { text(commit.subject) }),
       {
         virtual_text = {
           { " ",                                     "Constant" },
@@ -229,11 +267,11 @@ M.CommitEntry = Component.new(function(commit, args)
       }
     ),
     details,
-  }, { oid = commit.oid })
+  }, { oid = commit.oid, foldable = args.details == true, folded = true, remote = info.remotes[1] })
 end)
 
 M.CommitGraph = Component.new(function(commit, _)
-  return col.padding_left(8) { row(build_graph(commit.graph)) }
+  return col.tag("graph").padding_left(git.log.abbreviated_size() + 1) { row(build_graph(commit.graph)) }
 end)
 
 M.Grid = Component.new(function(props)
@@ -273,14 +311,6 @@ M.Grid = Component.new(function(props)
   for i = 1, #props.items do
     local children = {}
 
-    -- TODO: seems to be a leftover from when the grid was column major
-    -- if i ~= 1 then
-    --   children = map(range(props.gap), function()
-    --     return text("")
-    --   end)
-    -- end
-
-    -- current row
     local r = props.items[i]
 
     for j = 1, #r do

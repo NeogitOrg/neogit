@@ -1,7 +1,8 @@
-local cli = require("neogit.lib.git.cli")
-local repo = require("neogit.lib.git.repository")
+local git = require("neogit.lib.git")
 local Path = require("plenary.path")
+local util = require("neogit.lib.util")
 
+---@class NeogitGitIndex
 local M = {}
 
 ---Generates a patch that can be applied to index
@@ -66,7 +67,7 @@ function M.generate_patch(item, hunk, from, to, reverse)
     string.format("@@ -%d,%d +%d,%d @@", hunk.index_from, len_start, hunk.index_from, len_start + len_offset)
   )
 
-  local git_root = repo.git_root
+  local git_root = git.repo.git_root
 
   assert(item.absolute_path, "Item is not a path")
   local path = Path:new(item.absolute_path):make_relative(git_root)
@@ -84,7 +85,7 @@ end
 function M.apply(patch, opts)
   opts = opts or { reverse = false, cached = false, index = false }
 
-  local cmd = cli.apply
+  local cmd = git.cli.apply
 
   if opts.reverse then
     cmd = cmd.reverse
@@ -102,15 +103,44 @@ function M.apply(patch, opts)
 end
 
 function M.add(files)
-  return cli.add.files(unpack(files)).call()
+  return git.cli.add.files(unpack(files)).call()
 end
 
 function M.checkout(files)
-  return cli.checkout.files(unpack(files)).call()
+  return git.cli.checkout.files(unpack(files)).call()
 end
 
 function M.reset(files)
-  return cli.reset.files(unpack(files)).call()
+  return git.cli.reset.files(unpack(files)).call()
+end
+
+function M.reset_HEAD(...)
+  return git.cli.reset.args("HEAD").arg_list({ ... }).call()
+end
+
+function M.checkout_unstaged()
+  local items = util.map(git.repo.state.unstaged.items, function(item)
+    return item.escaped_path
+  end)
+
+  return git.cli.checkout.files(unpack(items)).call()
+end
+
+---Creates a temp index from a revision and calls the provided function with the index path
+---@param revision string Revision to create a temp index from
+---@param fn fun(index: string): nil
+function M.with_temp_index(revision, fn)
+  assert(revision, "temp index requires a revision")
+  assert(fn, "Pass a function to call with temp index")
+
+  local tmp_index = Path:new(vim.uv.os_tmpdir(), ("index.neogit.%s"):format(revision))
+  git.cli["read-tree"].args(revision).index_output(tmp_index:absolute()).call { hidden = true }
+  assert(tmp_index:exists(), "Failed to create temp index")
+
+  fn(tmp_index:absolute())
+
+  tmp_index:rm()
+  assert(not tmp_index:exists(), "Failed to remove temp index")
 end
 
 -- Make sure the index is in sync as git-status skips it

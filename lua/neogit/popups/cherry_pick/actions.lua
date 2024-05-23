@@ -11,7 +11,10 @@ local function get_commits(popup)
   if #popup.state.env.commits > 0 then
     commits = popup.state.env.commits
   else
-    commits = CommitSelectViewBuffer.new(git.log.list { "--max-count=256" }):open_async()
+    commits = CommitSelectViewBuffer.new(
+      git.log.list { "--max-count=256" },
+      "Select one or more commits to cherry pick with <cr>, or <esc> to abort"
+    ):open_async()
   end
 
   return commits or {}

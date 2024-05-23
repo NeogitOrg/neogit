@@ -2,6 +2,7 @@ local Buffer = require("neogit.lib.buffer")
 local Git = require("neogit.lib.git")
 local Ui = require("neogit.lib.ui")
 local util = require("neogit.lib.util")
+local status_maps = require("neogit.config").get_reversed_status_maps()
 
 local map = util.map
 local filter_map = util.filter_map
@@ -19,7 +20,6 @@ function M:new(state)
   local this = {
     buffer = nil,
     state = state or Git.cli.history,
-    is_open = false,
   }
 
   setmetatable(this, { __index = M })
@@ -28,36 +28,63 @@ function M:new(state)
 end
 
 function M:close()
-  self.is_open = false
-  self.buffer:close()
-  self.buffer = nil
+  if self.buffer then
+    self.buffer:close()
+    self.buffer = nil
+  end
+
+  M.instance = nil
+end
+
+---@return boolean
+function M.is_open()
+  return (M.instance and M.instance.buffer and M.instance.buffer:is_visible()) == true
 end
 
 function M:show()
-  if self.is_open then
+  if M.is_open() then
+    M.instance.buffer:focus()
     return
   end
-  self.is_open = true
+
+  M.instance = self
 
   self.buffer = Buffer.create {
+    kind = "split",
     name = "NeogitGitCommandHistory",
     filetype = "NeogitGitCommandHistory",
     mappings = {
       n = {
-        ["q"] = function()
+        [status_maps["Close"]] = function()
           self:close()
         end,
         ["<esc>"] = function()
           self:close()
         end,
-        ["<tab>"] = function()
-          local stack = self.buffer.ui:get_component_stack_under_cursor()
-          local c = stack[#stack]
+        ["<c-k>"] = function()
+          vim.cmd("normal! zc")
 
-          if c then
-            c.children[2]:toggle_hidden()
-            self.buffer.ui:update()
+          vim.cmd("normal! k")
+          while vim.fn.foldlevel(".") == 0 do
+            vim.cmd("normal! k")
           end
+
+          vim.cmd("normal! zo")
+          vim.cmd("normal! zz")
+        end,
+        ["<c-j>"] = function()
+          vim.cmd("normal! zc")
+
+          vim.cmd("normal! j")
+          while vim.fn.foldlevel(".") == 0 do
+            vim.cmd("normal! j")
+          end
+
+          vim.cmd("normal! zo")
+          vim.cmd("normal! zz")
+        end,
+        ["<tab>"] = function()
+          pcall(vim.cmd, "normal! za")
         end,
       },
     },
@@ -65,7 +92,7 @@ function M:show()
       local win_width = vim.fn.winwidth(0)
 
       return filter_map(self.state, function(item)
-        if item.hidden then
+        if item.hidden and not os.getenv("NEOGIT_DEBUG") then
           return
         end
 
@@ -85,8 +112,11 @@ function M:show()
 
         local spacing = string.rep(" ", win_width - #code - #command - #time - #stdio - 6)
 
-        return col {
+        return col({
           row {
+            text.highlight("NeogitGraphAuthor")(
+              os.getenv("NEOGIT_DEBUG") and (item.hidden and "H" or " ") or ""
+            ),
             text.highlight(highlight_code)(code),
             text(" "),
             text(command),
@@ -96,10 +126,9 @@ function M:show()
             text.highlight("NeogitCommandTime")(stdio),
           },
           col
-            .hidden(true)
             .padding_left("  | ")
             .highlight("NeogitCommandText")(map(util.merge(item.stdout, item.stderr), text)),
-        }
+        }, { foldable = true, folded = true })
       end)
     end,
   }

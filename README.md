@@ -10,7 +10,7 @@
             </td>
         </tr>
     </table>
-  
+
   [![Lua](https://img.shields.io/badge/Lua-blue.svg?style=for-the-badge&logo=lua)](http://www.lua.org)
   [![Neovim](https://img.shields.io/badge/Neovim%200.9+-green.svg?style=for-the-badge&logo=neovim)](https://neovim.io)
   [![MIT](https://img.shields.io/badge/MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
@@ -53,11 +53,7 @@ neogit.setup {}
 
 ## Compatibility
 
-The `master` branch will always be compatible with the latest **stable** release of Neovim, and with the latest **nightly** build as well.
-
-Some features may only be available using unreleased (neovim nightly) API's - to use them, set your plugin manager to track the `nightly` branch instead. 
-
-The `nightly` branch has the same stability guarantees as the `master` branch.
+The `master` branch will always be compatible with the latest **stable** release of Neovim, and usually with the latest **nightly** build as well.
 
 ## Configuration
 
@@ -88,7 +84,7 @@ neogit.setup {
   },
   -- "ascii"   is the graph the git CLI generates
   -- "unicode" is the graph like https://github.com/rbong/vim-flog
-  graph_style = "ascii", 
+  graph_style = "ascii",
   -- Used to generate URL's for branch popup action "pull request".
   git_services = {
     ["github.com"] = "https://github.com/${owner}/${repository}/compare/${branch_name}?expand=1",
@@ -137,10 +133,37 @@ neogit.setup {
   -- Automatically show console if a command takes more than console_timeout milliseconds
   auto_show_console = true,
   status = {
+    show_head_commit_hash = true,
     recent_commit_count = 10,
+    HEAD_padding = 10,
+    mode_padding = 3,
+    mode_text = {
+      M = "modified",
+      N = "new file",
+      A = "added",
+      D = "deleted",
+      C = "copied",
+      U = "updated",
+      R = "renamed",
+      DD = "unmerged",
+      AU = "unmerged",
+      UD = "unmerged",
+      UA = "unmerged",
+      DU = "unmerged",
+      AA = "unmerged",
+      UU = "unmerged",
+      ["?"] = "",
+    },
   },
   commit_editor = {
-    kind = "auto",
+    kind = "tab",
+    show_staged_diff = true,
+    -- Accepted values:
+    -- "split" to show the staged diff below the commit editor
+    -- "vsplit" to show it to the right
+    -- "split_above" Like :top split
+    -- "auto" "vsplit" if window would have 80 cols, otherwise "split"
+    staged_diff_split_kind = "split"
   },
   commit_select_view = {
     kind = "tab",
@@ -245,6 +268,10 @@ neogit.setup {
       ["<c-c><c-c>"] = "Submit",
       ["<c-c><c-k>"] = "Abort",
     },
+    commit_editor_I = {
+      ["<c-c><c-c>"] = "Submit",
+      ["<c-c><c-k>"] = "Abort",
+    },
     rebase_editor = {
       ["p"] = "Pick",
       ["r"] = "Reword",
@@ -258,6 +285,12 @@ neogit.setup {
       ["<cr>"] = "OpenCommit",
       ["gk"] = "MoveUp",
       ["gj"] = "MoveDown",
+      ["<c-c><c-c>"] = "Submit",
+      ["<c-c><c-k>"] = "Abort",
+      ["[c"] = "OpenOrScrollUp",
+      ["]c"] = "OpenOrScrollDown",
+    },
+    rebase_editor_I = {
       ["<c-c><c-c>"] = "Submit",
       ["<c-c><c-k>"] = "Abort",
     },
@@ -283,6 +316,7 @@ neogit.setup {
       ["X"] = "ResetPopup",
       ["Z"] = "StashPopup",
       ["b"] = "BranchPopup",
+      ["B"] = "BisectPopup",
       ["c"] = "CommitPopup",
       ["f"] = "FetchPopup",
       ["l"] = "LogPopup",
@@ -304,6 +338,7 @@ neogit.setup {
       ["s"] = "Stage",
       ["S"] = "StageUnstaged",
       ["<c-s>"] = "StageAll",
+      ["K"] = "Untrack",
       ["u"] = "Unstage",
       ["U"] = "UnstageStaged",
       ["$"] = "CommandHistory",
@@ -316,6 +351,8 @@ neogit.setup {
       ["<c-t>"] = "TabOpen",
       ["{"] = "GoToPreviousHunkHeader",
       ["}"] = "GoToNextHunkHeader",
+      ["[c"] = "OpenOrScrollUp",
+      ["]c"] = "OpenOrScrollDown",
     },
   },
 }
@@ -342,74 +379,49 @@ local neogit = require('neogit')
 -- open using defaults
 neogit.open()
 
--- open commit popup
+-- open a specific popup
 neogit.open({ "commit" })
 
--- open with split kind
+-- open as a split
 neogit.open({ kind = "split" })
 
--- open home directory
+-- open with different project
 neogit.open({ cwd = "~" })
 ```
 
 The `kind` option can be one of the following values:
 - `tab`      (default)
 - `replace`
-- `floating` (EXPERIMENTAL! This currently doesn't work with popups. Very unstable)
 - `split`
 - `split_above`
 - `vsplit`
 - `auto` (`vsplit` if window would have 80 cols, otherwise `split`)
 
-## Buffers
+## Popups
 
-### Log Buffer
+The following popup menus are available from all buffers:
+- Bisect
+- Branch + Branch Config
+- Cherry Pick
+- Commit
+- Diff
+- Fetch
+- Ignore
+- Log
+- Merge
+- Pull
+- Push
+- Rebase
+- Remote + Remote Config
+- Reset
+- Revert
+- Stash
+- Tag
+- Worktree
 
-`ll`, `lh`, `lo`, ...
+Many popups will use whatever is currently under the cursor or selected as input for an action. For example, to cherry-pick a range of commits from the log view, a linewise visual selection can be made, and using either `apply` or `pick` from the cherry-pick menu will use the selection.
 
-Shows a graph of the commit history. Hitting `<cr>` will open the Commit View for that commit.
-
-The following popups are available from the log buffer, and will use the commit under the cursor, or selected, instead of prompting:
-* Branch Popup
-* Cherry Pick Popup
-* Revert Popup
-* Rebase Popup
-* Commit Popup
-* Reset Popup
-
-### Reflog Buffer
-
-`lr`, `lH`, `lO`
-
-Shows your reflog history. Hitting `<cr>` will open the Commit View for that commit.
-
-The following popups are available from the reflog buffer, and will use the commit under the cursor, or selected, instead of prompting:
-* Branch Popup
-* Cherry Pick Popup
-* Revert Popup
-* Rebase Popup
-* Commit Popup
-* Reset Popup
-
-### Commit View
-
-`<cr>` on a commit.
-
-Shows details for a specific commit.
-The following popups are available from the commit buffer, using it's SHA instead of prompting:
-* Branch Popup
-* Cherry Pick Popup
-* Revert Popup
-* Rebase Popup
-* Commit Popup
-* Reset Popup
-
-### Status Buffer
-A full list of status buffer commands can be found above under "configuration".
-
-### Fuzzy Finder
-A full list of fuzzy-finder commands can be found above under "configuration".
-If [nvim-telescope](https://github.com/nvim-telescope/telescope.nvim) is installed, a custom finder will be used that allows for multi-select (in some places) and some other cool things. Otherwise, `vim.ui.select` will be used as a slightly less featurefull fallback.
+This works for just about everything that has an object-ID in git, and if you find one that you think _should_ work but doesn't, open an issue :)
 
 ## Highlight Groups
 
@@ -439,39 +451,11 @@ Neogit emits the following events:
 | `NeogitCherryPick`    | One or more commits were cherry-picked    | `{ commits: string[] }`                          |
 | `NeogitMerge`         | A merge finished                          | `{ branch: string, args = string[], status: "ok"\|"conflict" }` |
 
-You can listen to the events using the following code:
+## Versioning
 
-```vim
-autocmd User NeogitStatusRefreshed echo "Hello World!"
-```
+Neogit follows semantic versioning.
 
-Or, if you prefer to configure autocommands via Lua:
-
-```lua
-local group = vim.api.nvim_create_augroup('MyCustomNeogitEvents', { clear = true })
-vim.api.nvim_create_autocmd('User', {
-  pattern = 'NeogitPushComplete',
-  group = group,
-  callback = require('neogit').close,
-})
-```
-
-## Refreshing Neogit
-
-If you would like to refresh Neogit manually, you can use `neogit#refresh_manually` in Vimscript or `require('neogit').refresh_manually` in lua. They both require a single file parameter.
-
-This allows you to refresh Neogit on your own custom events
-
-```vim
-augroup DefaultRefreshEvents
-  au!
-  au BufWritePost,BufEnter,FocusGained,ShellCmdPost,VimResume * call <SID>neogit#refresh_manually(expand('<afile>'))
-augroup END
-```
-
-## Testing
-
-Run `make test` after checking out the repo. All dependencies should get automatically downloaded to `/tmp/neogit-test/`
+## Contributing
 
 See [CONTRIBUTING.md](https://github.com/NeogitOrg/neogit/blob/master/CONTRIBUTING.md) for more details.
 

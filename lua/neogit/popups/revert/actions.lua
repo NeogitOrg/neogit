@@ -12,7 +12,10 @@ local function get_commits(popup)
   if #popup.state.env.commits > 0 then
     commits = popup.state.env.commits
   else
-    commits = CommitSelectViewBuffer.new(git.log.list { "--max-count=256" }):open_async()
+    commits = CommitSelectViewBuffer.new(
+      git.log.list { "--max-count=256" },
+      "Select one or more commits to revert with <cr>, or <esc> to abort"
+    ):open_async()
   end
 
   return commits or {}
@@ -26,7 +29,7 @@ local function build_commit_message(commits)
     table.insert(message, string.format("%s '%s'", commit:sub(1, 7), git.log.message(commit)))
   end
 
-  return table.concat(message, "\n") .. "\04"
+  return table.concat(message, "\n")
 end
 
 function M.commits(popup)
@@ -53,7 +56,6 @@ function M.commits(popup)
 
   client.wrap(commit_cmd, {
     autocmd = "NeogitRevertComplete",
-    refresh = "do_revert",
     msg = {
       success = "Reverted",
     },

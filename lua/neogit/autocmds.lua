@@ -1,9 +1,10 @@
 local M = {}
 
 local api = vim.api
+
 local a = require("plenary.async")
-local status = require("neogit.status")
-local fs = require("neogit.lib.fs")
+local status_buffer = require("neogit.buffers.status")
+local git = require("neogit.lib.git")
 local group = require("neogit").autocmd_group
 
 function M.setup()
@@ -12,27 +13,33 @@ function M.setup()
     group = group,
   })
 
+  local autocmd_disabled = false
   api.nvim_create_autocmd({ "BufWritePost", "ShellCmdPost", "VimResume" }, {
-    callback = function(o)
-      -- Skip update if the buffer is not open
-      if not status.status_buffer then
-        return
-      end
-
-      -- Do not trigger on neogit buffers such as commit
-      if api.nvim_buf_get_option(o.buf, "filetype"):find("Neogit") then
-        return
-      end
-
-      a.run(function()
-        local path = fs.relpath_from_repository(o.file)
-        if not path then
-          return
+    callback = a.void(function(o)
+      if
+        not autocmd_disabled
+        and status_buffer.is_open()
+        and not api.nvim_get_option_value("filetype", { buf = o.buf }):match("^Neogit")
+      then
+        local path = git.files.relpath_from_repository(o.file)
+        if path then
+          status_buffer
+            .instance()
+            :dispatch_refresh({ update_diffs = { "*:" .. path } }, string.format("%s:%s", o.event, path))
         end
-        status.refresh({ update_diffs = { "*:" .. path } }, string.format("%s:%s", o.event, o.file))
-      end, function() end)
-    end,
+      end
+    end),
     group = group,
+  })
+
+  --- vimpgrep creates and deletes lots of buffers so attaching to each one will
+  --- waste lots of resource and even slow down vimgrep.
+  api.nvim_create_autocmd({ "QuickFixCmdPre", "QuickFixCmdPost" }, {
+    group = group,
+    pattern = "*vimgrep*",
+    callback = function(args)
+      autocmd_disabled = args.event == "QuickFixCmdPre"
+    end,
   })
 end
 

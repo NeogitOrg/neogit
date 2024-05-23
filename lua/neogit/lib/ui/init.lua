@@ -1,98 +1,61 @@
 local Component = require("neogit.lib.ui.component")
 local util = require("neogit.lib.util")
+local Renderer = require("neogit.lib.ui.renderer")
+local Collection = require("neogit.lib.collection")
+local logger = require("neogit.logger") -- TODO: Add logging
 
-local filter = util.filter
+---@class Section
+---@field items  StatusItem[]
+
+---@class Selection
+---@field sections Section[]
+---@field first_line number
+---@field last_line number
+---@field section Section|nil
+---@field item StatusItem|nil
+---@field commit CommitLogEntry|nil
+---@field commits  CommitLogEntry[]
+---@field items  StatusItem[]
+local Selection = {}
+Selection.__index = Selection
 
 ---@class UiComponent
 ---@field tag string
 ---@field options table Component props or arguments
 ---@field children UiComponent[]
 
+---@class FindOptions
+
 ---@class Ui
----@field buf number
+---@field buf Buffer
 ---@field layout table
 local Ui = {}
+Ui.__index = Ui
 
+---@param buf Buffer
+---@return Ui
 function Ui.new(buf)
-  local this = {
-    buf = buf,
-    layout = {},
-  }
-  setmetatable(this, { __index = Ui })
-  return this
-end
-
-function Ui._print_component(indent, c, _options)
-  local output = string.rep("  ", indent)
-  if c.options.hidden then
-    output = output .. "(H)"
-  elseif c.position then
-    local text = ""
-    if c.position.row_start == c.position.row_end then
-      text = c.position.row_start
-    else
-      text = c.position.row_start .. " - " .. c.position.row_end
-    end
-
-    if c.position.col_end ~= -1 then
-      text = text .. " | " .. c.position.col_start .. " - " .. c.position.col_end
-    end
-
-    output = output .. "[" .. text .. "]"
-  end
-
-  output = output .. " " .. c:get_tag()
-
-  if c.tag == "text" then
-    output = output .. " '" .. c.value .. "'"
-  end
-
-  for k, v in pairs(c.options) do
-    if k ~= "tag" and k ~= "hidden" then
-      output = output .. " " .. k .. "=" .. tostring(v)
-    end
-  end
-
-  print(output)
-end
-
-function Ui._visualize_tree(indent, components, options)
-  for _, c in ipairs(components) do
-    Ui._print_component(indent, c, options)
-    if
-      (c.tag == "col" or c.tag == "row")
-      and not (options.collapse_hidden_components and c.options.hidden)
-    then
-      Ui._visualize_tree(indent + 1, c.children, options)
-    end
-  end
+  return setmetatable({ buf = buf, layout = {} }, Ui)
 end
 
 function Ui._find_component(components, f, options)
   for _, c in ipairs(components) do
-    if (options.include_hidden and c.options.hidden) or not c.options.hidden then
-      if c.tag == "col" or c.tag == "row" then
-        local res = Ui._find_component(c.children, f, options)
+    if c.tag == "col" or c.tag == "row" then
+      local res = Ui._find_component(c.children, f, options)
 
-        if res then
-          return res
-        end
+      if res then
+        return res
       end
+    end
 
-      if f(c) then
-        return c
-      end
+    if f(c) then
+      return c
     end
   end
 
   return nil
 end
 
----@class FindOptions
----@field include_hidden boolean
-
---- Finds a ui component in the buffer
----
 ---@param f fun(c: UiComponent): boolean
 ---@param options FindOptions|nil
 function Ui:find_component(f, options)
@@ -117,279 +80,593 @@ function Ui:find_components(f, options)
   return result
 end
 
-function Ui:get_component_under_cursor()
+---@param fn? fun(c: Component): boolean
+---@return Component|nil
+function Ui:get_component_under_cursor(fn)
+  fn = fn or function()
+    return true
+  end
+
+  local line = vim.api.nvim_win_get_cursor(0)[1]
+  return self:get_component_on_line(line, fn)
+end
+
+---@param line integer
+---@param fn fun(c: Component): boolean
+---@return Component|nil
+function Ui:get_component_on_line(line, fn)
+  return self:_find_component_by_index(line, fn)
+end
+
+---@param line integer
+---@param f fun(c: Component): boolean
+---@return Component|nil
+function Ui:_find_component_by_index(line, f)
+  local node = self.node_index:find_by_line(line)[1]
+  while node do
+    if f(node) then
+      return node
+    end
+
+    node = node.parent
+  end
+end
+
+---@return Component|nil
+function Ui:find_by_id(id)
+  return self.node_index:find_by_id(id)
+end
+
+---@return Component|nil
+function Ui:get_cursor_context(line)
+  local cursor = line or vim.api.nvim_win_get_cursor(0)[1]
+  return self:_find_component_by_index(cursor, function(node)
+    return node.options.context
+  end)
+end
+
+---@return string|nil
+function Ui:get_line_highlight(line)
+  local component = self:_find_component_by_index(line, function(node)
+    return node.options.line_hl ~= nil
+  end)
+
+  return component and component.options.line_hl
+end
+
+---@return Component|nil
+function Ui:get_interactive_component_under_cursor()
   local cursor = vim.api.nvim_win_get_cursor(0)
-  return self:find_component(function(c)
-    return c:is_under_cursor(cursor)
+
+  return self:_find_component_by_index(cursor[1], function(node)
+    return node.options.interactive
   end)
 end
 
-function Ui:get_component_on_line(line)
-  return self:find_component(function(c)
-    return c:is_under_cursor { line, 0 }
-  end)
-end
-
-function Ui:get_component_stack_under_cursor()
+---@return Component|nil
+function Ui:get_fold_under_cursor()
   local cursor = vim.api.nvim_win_get_cursor(0)
-  return self:find_components(function(c)
-    return c:is_under_cursor(cursor)
+
+  return self:_find_component_by_index(cursor[1], function(node)
+    return node.options.foldable
   end)
 end
 
-function Ui:get_component_stack_in_linewise_selection()
+---@class StatusItem
+---@field name string
+---@field first number
+---@field last number
+---@field oid string|nil optional object id
+---@field commit CommitLogEntry|nil optional object id
+---@field folded boolean|nil
+---@field hunks Hunk[]|nil
+
+---@class SelectedHunk: Hunk
+---@field from number start offset from the first line of the hunk
+---@field to number end offset from the first line of the hunk
+---@field lines string[]
+---
+---@param item StatusItem
+---@param first_line number
+---@param last_line number
+---@param partial boolean
+---@return SelectedHunk[]
+function Ui:item_hunks(item, first_line, last_line, partial)
+  local hunks = {}
+
+  -- TODO: Move this to lib.git.diff
+  -- local diff = require("neogit.lib.git").cli.diff.check.call_sync { hidden = true, ignore_error = true }
+  -- local conflict_markers = {}
+  -- if diff.code == 2 then
+  --   for _, out in ipairs(diff.stdout) do
+  --     local line = string.gsub(out, "^" .. item.name .. ":", "")
+  --     if line ~= out and string.match(out, "conflict") then
+  --       table.insert(conflict_markers, tonumber(string.match(line, "%d+")))
+  --     end
+  --   end
+  -- end
+
+  if not item.folded and item.diff.hunks then
+    for _, h in ipairs(item.diff.hunks) do
+      if h.first <= last_line and h.last >= first_line then
+        local from, to
+
+        if partial then
+          local cursor_offset = first_line - h.first
+          local length = last_line - first_line
+
+          from = h.diff_from + cursor_offset
+          to = from + length
+        else
+          from = h.diff_from + 1
+          to = h.diff_to
+        end
+
+        local hunk_lines = {}
+        for i = from, to do
+          table.insert(hunk_lines, item.diff.lines[i])
+        end
+
+        -- local conflict = false
+        -- for _, n in ipairs(conflict_markers) do
+        --   if from <= n and n <= to then
+        --     conflict = true
+        --     break
+        --   end
+        -- end
+
+        local o = {
+          from = from,
+          to = to,
+          __index = h,
+          hunk = h,
+          lines = hunk_lines,
+          -- conflict = conflict,
+        }
+
+        setmetatable(o, o)
+
+        table.insert(hunks, o)
+      end
+    end
+  end
+
+  return hunks
+end
+
+function Ui:get_selection()
+  local visual_pos = vim.fn.line("v")
+  local cursor_pos = vim.fn.line(".")
+
+  local first_line = math.min(visual_pos, cursor_pos)
+  local last_line = math.max(visual_pos, cursor_pos)
+
+  local res = {
+    sections = {},
+    first_line = first_line,
+    last_line = last_line,
+    item = nil,
+    commit = nil,
+    commits = {},
+    items = {},
+  }
+
+  for _, section in ipairs(self.item_index) do
+    local items = {}
+
+    if not section.first or section.first > last_line then
+      break
+    end
+
+    if section.last >= first_line then
+      if section.first <= first_line and section.last >= last_line then
+        res.section = section
+      end
+
+      local entire_section = section.first == first_line and first_line == last_line
+
+      for _, item in pairs(section.items) do
+        if entire_section or item.first <= last_line and item.last >= first_line then
+          if not res.item and item.first <= first_line and item.last >= last_line then
+            res.item = item
+
+            res.commit = item.commit
+          end
+
+          if item.commit then
+            table.insert(res.commits, item.commit)
+          end
+
+          table.insert(res.items, item)
+          table.insert(items, item)
+        end
+      end
+
+      local section = {
+        section = section,
+        items = items,
+        __index = section,
+      }
+
+      setmetatable(section, section)
+      table.insert(res.sections, section)
+    end
+  end
+
+  return setmetatable(res, Selection)
+end
+
+---@return string[]
+function Ui:get_commits_in_selection()
   local range = { vim.fn.getpos("v")[2], vim.fn.getpos(".")[2] }
   table.sort(range)
   local start, stop = unpack(range)
 
-  return self:find_components(function(c)
-    return c:is_in_linewise_range(start, stop)
-  end)
-end
+  local commits = {}
+  for i = start, stop do
+    local component = self:_find_component_by_index(i, function(node)
+      return node.options.oid
+    end)
 
-function Ui:get_component_stack_on_line(line)
-  return self:find_components(function(c)
-    return c:is_under_cursor { line, 0 }
-  end)
-end
-
-function Ui:get_commits_in_selection()
-  local commits = util.filter_map(self:get_component_stack_in_linewise_selection(), function(c)
-    if c.options.oid then
-      return c.options.oid
+    if component then
+      table.insert(commits, 1, component.options.oid)
     end
-  end)
+  end
 
-  -- Reversed so that the oldest commit is the first in the list
-  return util.reverse(commits)
+  return util.deduplicate(commits)
 end
 
+---@return string[]
+function Ui:get_filepaths_in_selection()
+  local range = { vim.fn.getpos("v")[2], vim.fn.getpos(".")[2] }
+  table.sort(range)
+  local start, stop = unpack(range)
+
+  local paths = {}
+  for i = start, stop do
+    local component = self:_find_component_by_index(i, function(node)
+      return node.options.item and node.options.item.escaped_path
+    end)
+
+    if component then
+      table.insert(paths, 1, component.options.item.escaped_path)
+    end
+  end
+
+  return util.deduplicate(paths)
+end
+
+---@return string|nil
 function Ui:get_commit_under_cursor()
-  local stack = self:get_component_stack_under_cursor()
-  return stack[#stack].options.oid
+  local cursor = vim.api.nvim_win_get_cursor(0)
+  local component = self:_find_component_by_index(cursor[1], function(node)
+    return node.options.oid ~= nil
+  end)
+
+  return component and component.options.oid
 end
 
-function Ui.visualize_component(c, options)
-  Ui._print_component(0, c, options or {})
-  if c.tag == "col" or c.tag == "row" then
-    Ui._visualize_tree(1, c.children, options or {})
-  end
+---@return string|nil
+function Ui:get_yankable_under_cursor()
+  local cursor = vim.api.nvim_win_get_cursor(0)
+  local component = self:_find_component_by_index(cursor[1], function(node)
+    return node.options.yankable ~= nil
+  end)
+
+  return component and component.options.yankable
 end
 
-function Ui.visualize_tree(components, options)
-  print("root")
-  Ui._visualize_tree(1, components, options or {})
+---@return Section|nil
+function Ui:first_section()
+  return self.item_index[1]
 end
 
-function Ui:_render(first_line, first_col, parent, components, flags)
-  local curr_line = first_line
+---@return Component|nil
+function Ui:get_current_section(line)
+  line = line or vim.api.nvim_win_get_cursor(0)[1]
+  local component = self:_find_component_by_index(line, function(node)
+    return node.options.section ~= nil
+  end)
 
-  if flags.in_row then
-    local col_start = first_col
-    local col_end
-    local highlights = {}
-    local text = {}
+  return component
+end
 
-    for i, c in ipairs(components) do
-      c.parent = parent
-      c.index = i
+---@class CursorLocation
+---@field first number
+---@field last number
+---@field section {index: number, name: string}|nil
+---@field file {index: number, name: string}|nil
+---@field hunk {index: number, name: string}|nil
 
-      if not c.options.hidden then
-        c.position = {}
-        c.position.row_start = curr_line - first_line + 1
+---Encode the cursor location into a table
+---@param line number?
+---@return CursorLocation
+function Ui:get_cursor_location(line)
+  line = line or vim.api.nvim_win_get_cursor(0)[1]
+  local section_loc, section_offset, file_loc, hunk_loc, first, last
 
-        local highlight = c:get_highlight()
+  for li, loc in ipairs(self.item_index) do
+    if line == loc.first then
+      section_loc = { index = li, name = loc.name }
+      first, last = loc.first, loc.last
 
-        if c.tag == "text" then
-          local padding_left = flags.in_nested_row and "" or c:get_padding_left(i == 1)
-          table.insert(text, 1, padding_left)
+      break
+    elseif loc.first and line >= loc.first and line <= loc.last then
+      section_loc = { index = li, name = loc.name }
 
-          col_start = col_start + #padding_left
-          col_end = col_start + c:get_width()
-          c.position.col_start = col_start
-          c.position.col_end = col_end - 1
+      if #loc.items > 0 then
+        for fi, file in ipairs(loc.items) do
+          if line == file.first then
+            file_loc = { index = fi, name = file.name }
+            first, last = file.first, file.last
 
-          if c.options.align_right then
-            table.insert(text, c.value)
-            table.insert(text, (" "):rep(c.options.align_right - #c.value))
-          else
-            table.insert(text, c.value)
-          end
+            break
+          elseif line >= file.first and line <= file.last then
+            file_loc = { index = fi, name = file.name }
 
-          if highlight then
-            table.insert(highlights, {
-              from = col_start,
-              to = col_end,
-              name = highlight,
-            })
-          end
+            for hi, hunk in ipairs(file.diff.hunks) do
+              if line >= hunk.first and line <= hunk.last then
+                hunk_loc = { index = hi, name = hunk.hash }
+                first, last = hunk.first, hunk.last
 
-          col_start = col_end
-        elseif c.tag == "row" then
-          flags.in_nested_row = true
-
-          local padding_left = flags.in_nested_row and "" or c:get_padding_left(i == 1)
-          local res = self:_render(curr_line, col_start, c, c.children, flags)
-
-          flags.in_nested_row = false
-
-          if c.position.col_end then
-            c.position.col_end = c.position.col_end + #padding_left
-          end
-
-          table.insert(text, padding_left)
-          table.insert(text, res.text)
-
-          for _, h in ipairs(res.highlights) do
-            h.to = h.to + #padding_left
-            table.insert(highlights, h)
-          end
-
-          col_end = col_start + vim.fn.strdisplaywidth(res.text)
-          c.position.col_start = col_start
-          c.position.col_end = col_end
-          col_start = col_end
-        else
-          error("The row component does not support having a `" .. c.tag .. "` as child")
-        end
-
-        c.position.row_end = c.position.row_start
-      end
-    end
-
-    if flags.in_nested_row then
-      return {
-        text = table.concat(text),
-        highlights = highlights,
-      }
-    end
-
-    if not flags.hidden then
-      self.buf:buffered_set_line(table.concat(text))
-
-      for _, h in ipairs(highlights) do
-        self.buf:buffered_add_highlight(curr_line - 1, h.from, h.to, h.name)
-      end
-
-      curr_line = curr_line + 1
-    end
-  else
-    for i, c in ipairs(components) do
-      c.parent = parent
-      c.index = i
-
-      if not c.options.hidden then
-        c.position = {}
-        c.position.row_start = curr_line - first_line + 1
-        c.position.col_start = 0
-        c.position.col_end = -1
-        local sign = c:get_sign()
-        local highlight = c:get_highlight()
-
-        if c.tag == "text" then
-          if not flags.hidden then
-            self.buf:buffered_set_line(table.concat { c:get_padding_left(), c.value })
-
-            if highlight then
-              self.buf:buffered_add_highlight(
-                curr_line - 1,
-                c.position.col_start,
-                c.position.col_end,
-                highlight
-              )
+                break
+              end
             end
 
-            if sign then
-              self.buf:buffered_place_sign(curr_line, sign, "hl")
-            end
-
-            curr_line = curr_line + 1
+            break
           end
-        elseif c.tag == "col" then
-          curr_line = curr_line + self:_render(curr_line, 0, c, c.children, flags)
-        elseif c.tag == "row" then
-          flags.in_row = true
-          curr_line = curr_line + self:_render(curr_line, 0, c, c.children, flags)
-
-          if not flags.hidden and sign then
-            self.buf:buffered_place_sign(curr_line - 1, sign, "hl")
-          end
-
-          if not flags.hidden and c.options.virtual_text then
-            local ns = self.buf:create_namespace("NeogitBufferVirtualText")
-            self.buf:buffered_set_extmark(ns, curr_line - 2, 0, {
-              hl_mode = "combine",
-              virt_text = c.options.virtual_text,
-              virt_text_pos = "right_align",
-            })
-          end
-
-          flags.in_row = false
         end
-
-        c.position.row_end = curr_line - first_line
       else
-        flags.hidden = true
+        section_offset = line - loc.first
+      end
 
-        if c.tag == "col" then
-          self:_render(curr_line, 0, c, c.children, flags)
-        elseif c.tag == "row" then
-          flags.in_row = true
-          self:_render(curr_line, 0, c, c.children, flags)
-          flags.in_row = false
-        end
+      break
+    end
+  end
 
-        flags.hidden = false
+  return {
+    section = section_loc,
+    file = file_loc,
+    hunk = hunk_loc,
+    first = first,
+    last = last,
+    section_offset = section_offset,
+  }
+end
+
+---@param cursor CursorLocation
+---@return number
+function Ui:resolve_cursor_location(cursor)
+  if #self.item_index == 0 then
+    logger.debug("[UI] No items to resolve cursor location")
+    return 1
+  end
+
+  if not cursor.section then
+    logger.debug("[UI] No Cursor Section")
+    cursor.section = { index = 1, name = "" }
+  end
+
+  local section = Collection.new(self.item_index):find(function(s)
+    return s.name == cursor.section.name
+  end)
+
+  if not section then
+    logger.debug("[UI] No Section Found '" .. cursor.section.name .. "'")
+
+    cursor.file = nil
+    cursor.hunk = nil
+    section = self.item_index[cursor.section.index] or self.item_index[#self.item_index]
+  end
+
+  if not cursor.file or not section.items or #section.items == 0 then
+    if cursor.section_offset then
+      return section.first + cursor.section_offset
+    else
+      logger.debug("[UI] No file - using section.first")
+      return section.first
+    end
+  end
+
+  local file = Collection.new(section.items):find(function(f)
+    return f.name == cursor.file.name
+  end)
+
+  if not file then
+    logger.debug(("[UI] No file found %q"):format(cursor.file.name))
+
+    cursor.hunk = nil
+    file = section.items[cursor.file.index] or section.items[#section.items]
+  end
+
+  if not cursor.hunk or not file.diff.hunks or #file.diff.hunks == 0 then
+    logger.debug("[UI] No hunk - using file.first")
+    return file.first
+  end
+
+  local hunk = Collection.new(file.diff.hunks):find(function(h)
+    return h.hash == cursor.hunk.name
+  end) or file.diff.hunks[cursor.hunk.index] or file.diff.hunks[#file.diff.hunks]
+
+  logger.debug(("[UI] Using hunk.first %q"):format(cursor.hunk.name))
+
+  return hunk.first
+end
+
+---@return table|nil
+function Ui:get_hunk_or_filename_under_cursor()
+  local cursor = vim.api.nvim_win_get_cursor(0)
+  local component = self:_find_component_by_index(cursor[1], function(node)
+    return node.options.hunk or node.options.filename
+  end)
+
+  return component and {
+    hunk = component.options.hunk,
+    filename = component.options.filename,
+  }
+end
+
+---@return table|nil
+function Ui:get_item_under_cursor()
+  local cursor = vim.api.nvim_win_get_cursor(0)
+  local component = self:_find_component_by_index(cursor[1], function(node)
+    return node.options.item
+  end)
+
+  return component and component.options.item
+end
+
+---@param layout table
+---@return table[]
+local function filter_layout(layout)
+  return util.filter(layout, function(x)
+    return type(x) == "table"
+  end)
+end
+
+local function node_prefix(node, prefix)
+  local base = false
+  local key
+  if node.options.section then
+    key = node.options.section
+  elseif node.options.filename then
+    key = node.options.filename
+  elseif node.options.hunk then
+    base = true
+    key = node.options.hunk.hash
+  end
+
+  if key then
+    return ("%s--%s"):format(prefix, key), base
+  else
+    return nil, base
+  end
+end
+
+local function folded_node_state(node, node_table, prefix)
+  if not node_table then
+    node_table = {}
+  end
+
+  prefix = prefix or ""
+
+  local key, base = node_prefix(node, prefix)
+  if key then
+    prefix = key
+    node_table[prefix] = { folded = node.options.folded }
+  end
+
+  if node.children and not base then
+    for _, child in ipairs(node.children) do
+      folded_node_state(child, node_table, prefix)
+    end
+  end
+
+  return node_table
+end
+
+function Ui:_update_fold_state(node, attributes, prefix)
+  prefix = prefix or ""
+
+  local key, base = node_prefix(node, prefix)
+  if key then
+    prefix = key
+
+    if attributes[prefix] then
+      node.options.folded = attributes[prefix].folded
+    end
+  end
+
+  if node.children and not base then
+    for _, child in ipairs(node.children) do
+      self:_update_fold_state(child, attributes, prefix)
+    end
+  end
+end
+
+function Ui:_update_on_open(node, attributes, prefix)
+  prefix = prefix or ""
+
+  local key, base = node_prefix(node, prefix)
+  if key then
+    prefix = key
+
+    -- TODO: If a hunk is closed, it will be re-opened on update because the on_open callback runs async :\
+    if attributes[prefix] then
+      if node.options.on_open and not attributes[prefix].folded then
+        node.options.on_open(node, self, prefix)
       end
     end
   end
 
-  return curr_line - first_line
+  if node.children and not base then
+    for _, child in ipairs(node.children) do
+      self:_update_on_open(child, attributes, prefix)
+    end
+  end
 end
 
 function Ui:render(...)
-  self.layout = { ... }
-  self.layout = filter(self.layout, function(x)
-    return type(x) == "table"
-  end)
+  local layout = filter_layout { ... }
+  local root = Component.new(function()
+    return { tag = "_root", children = layout }
+  end)()
+
+  if not vim.tbl_isempty(self.layout) then
+    self._node_fold_state = folded_node_state(self.layout)
+  end
+
+  self.layout = root
   self:update()
 end
 
--- This shouldn't be called often as it completely rewrites the whole buffer
 function Ui:update()
+  -- Copy over the old fold state _before_ buffer is rendered so the output of the fold buffer is correct
+  if self._node_fold_state then
+    self:_update_fold_state(self.layout, self._node_fold_state)
+  end
+
+  local renderer = Renderer:new(self.layout, self.buf):render()
+  self.node_index = renderer:node_index()
+  self.item_index = renderer:item_index()
+
+  local cursor_line = self.buf:cursor_line()
   self.buf:unlock()
-  local lines_used = self:_render(
-    1,
-    0,
-    Component.new(function()
-      return {
-        tag = "_root",
-        children = self.layout,
-      }
-    end)(),
-    self.layout,
-    {}
-  )
-  self.buf:resize(lines_used)
-  self.buf:flush_buffers()
+  self.buf:clear()
+  self.buf:clear_namespace("default")
+  self.buf:clear_namespace("ViewContext")
+  self.buf:resize(#renderer.buffer.line)
+  self.buf:set_lines(0, -1, false, renderer.buffer.line)
+  self.buf:set_highlights(renderer.buffer.highlight)
+  self.buf:set_extmarks(renderer.buffer.extmark)
+  self.buf:set_line_highlights(renderer.buffer.line_highlight)
+  self.buf:set_folds(renderer.buffer.fold)
+
+  self.statuscolumn = {}
+  self.statuscolumn.foldmarkers = {}
+
+  for i = 1, #renderer.buffer.line do
+    self.statuscolumn.foldmarkers[i] = false
+  end
+
+  for _, fold in ipairs(renderer.buffer.fold) do
+    self.statuscolumn.foldmarkers[fold[1]] = fold[4]
+  end
+
+  -- Run on_open callbacks for hunks once buffer is rendered
+  if self._node_fold_state then
+    self:_update_on_open(self.layout, self._node_fold_state)
+    self._node_fold_state = nil
+  end
+
   self.buf:lock()
-end
-
---- Will only work if something has been rendered
-function Ui:print_layout_tree(options)
-  Ui.visualize_tree(self.layout, options)
-end
-
-function Ui:debug(...)
-  Ui.visualize_tree({ ... }, {})
+  self.buf:move_cursor(math.min(cursor_line, #renderer.buffer.line))
 end
 
 Ui.col = Component.new(function(children, options)
   return {
     tag = "col",
-    children = filter(children, function(x)
-      return type(x) == "table"
-    end),
+    children = filter_layout(children),
     options = options,
   }
 end)
@@ -397,9 +674,7 @@ end)
 Ui.row = Component.new(function(children, options)
   return {
     tag = "row",
-    children = filter(children, function(x)
-      return type(x) == "table"
-    end),
+    children = filter_layout(children),
     options = options,
   }
 end)
@@ -417,9 +692,14 @@ Ui.text = Component.new(function(value, options, ...)
     tag = "text",
     value = value or "",
     options = type(options) == "table" and options or nil,
+    __index = {
+      render = function(self)
+        return self.value
+      end,
+    },
   }
 end)
 
-Ui.Component = require("neogit.lib.ui.component")
+Ui.Component = Component
 
 return Ui

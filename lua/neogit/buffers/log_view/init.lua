@@ -2,14 +2,18 @@ local Buffer = require("neogit.lib.buffer")
 local ui = require("neogit.buffers.log_view.ui")
 local config = require("neogit.config")
 local popups = require("neogit.popups")
-local notification = require("neogit.lib.notification")
 local status_maps = require("neogit.config").get_reversed_status_maps()
 local CommitViewBuffer = require("neogit.buffers.commit_view")
+local util = require("neogit.lib.util")
+local a = require("plenary.async")
 
 ---@class LogViewBuffer
 ---@field commits CommitLogEntry[]
 ---@field internal_args table
 ---@field files string[]
+---@field buffer Buffer
+---@field fetch_func fun(offset: number): CommitLogEntry[]
+---@field refresh_lock Semaphore
 local M = {}
 M.__index = M
 
@@ -17,13 +21,16 @@ M.__index = M
 ---@param commits CommitLogEntry[]|nil
 ---@param internal_args table|nil
 ---@param files string[]|nil list of files to filter by
+---@param fetch_func fun(offset: number): CommitLogEntry[]
 ---@return LogViewBuffer
-function M.new(commits, internal_args, files)
+function M.new(commits, internal_args, files, fetch_func)
   local instance = {
     files = files,
     commits = commits,
     internal_args = internal_args,
+    fetch_func = fetch_func,
     buffer = nil,
+    refresh_lock = a.control.Semaphore.new(1),
   }
 
   setmetatable(instance, M)
@@ -31,18 +38,42 @@ function M.new(commits, internal_args, files)
   return instance
 end
 
+function M:commit_count()
+  return #util.filter_map(self.commits, function(commit)
+    if commit.oid then
+      return 1
+    end
+  end)
+end
+
 function M:close()
-  self.buffer:close()
-  self.buffer = nil
+  if self.buffer then
+    self.buffer:close()
+    self.buffer = nil
+  end
+
+  M.instance = nil
+end
+
+---@return boolean
+function M.is_open()
+  return (M.instance and M.instance.buffer and M.instance.buffer:is_visible()) == true
 end
 
 function M:open()
-  local _, item = require("neogit.status").get_current_section_item()
+  if M.is_open() then
+    M.instance.buffer:focus()
+    return
+  end
+
+  M.instance = self
+
   self.buffer = Buffer.create {
     name = "NeogitLogView",
     filetype = "NeogitLogView",
     kind = config.values.log_view.kind,
     context_highlight = false,
+    status_column = "",
     mappings = {
       v = {
         [popups.mapping_for("CherryPickPopup")] = popups.open("cherry_pick", function(p)
@@ -75,17 +106,21 @@ function M:open()
           p { commit = self.buffer.ui:get_commit_under_cursor() }
         end),
         [popups.mapping_for("PullPopup")] = popups.open("pull"),
-        ["d"] = function()
-          if not config.check_integration("diffview") then
-            notification.error("Diffview integration must be enabled for log diff")
-            return
-          end
-
-          local dv = require("neogit.integrations.diffview")
-          dv.open("log", self.buffer.ui:get_commits_in_selection())
-        end,
+        [popups.mapping_for("BisectPopup")] = popups.open("bisect", function(p)
+          p { commits = self.buffer.ui:get_commits_in_selection() }
+        end),
+        [popups.mapping_for("DiffPopup")] = popups.open("diff", function(p)
+          local items = self.buffer.ui:get_commits_in_selection()
+          p {
+            section = { name = "log" },
+            item = { name = items },
+          }
+        end),
       },
       n = {
+        [popups.mapping_for("BisectPopup")] = popups.open("bisect", function(p)
+          p { commits = { self.buffer.ui:get_commit_under_cursor() } }
+        end),
         [popups.mapping_for("CherryPickPopup")] = popups.open("cherry_pick", function(p)
           p { commits = { self.buffer.ui:get_commit_under_cursor() } }
         end),
@@ -115,6 +150,13 @@ function M:open()
         [popups.mapping_for("TagPopup")] = popups.open("tag", function(p)
           p { commit = self.buffer.ui:get_commit_under_cursor() }
         end),
+        [popups.mapping_for("DiffPopup")] = popups.open("diff", function(p)
+          local item = self.buffer.ui:get_commit_under_cursor()
+          p {
+            section = { name = "log" },
+            item = { name = item },
+          }
+        end),
         [popups.mapping_for("PullPopup")] = popups.open("pull"),
         [status_maps["YankSelected"]] = function()
           local yank = self.buffer.ui:get_commit_under_cursor()
@@ -126,101 +168,99 @@ function M:open()
             vim.cmd("echo ''")
           end
         end,
-        ["q"] = function()
-          self:close()
-        end,
-        ["<esc>"] = function()
-          self:close()
-        end,
-        ["<enter>"] = function()
-          CommitViewBuffer.new(self.buffer.ui:get_commit_under_cursor(), self.files):open()
-        end,
-        [";"] = function()
-          if self.buffer and self.buffer.ui then
-            local commit_id = self.buffer.ui:get_commit_under_cursor()
-            CommitViewBuffer.open_or_run_in_window(commit_id, self.files, function(window_id)
-              local key = vim.api.nvim_replace_termcodes("<C-d>", true, false, true)
-              vim.fn.win_execute(window_id, "normal! " .. key)
-            end)
+        ["<esc>"] = require("neogit.lib.ui.helpers").close_topmost(self),
+        [status_maps["Close"]] = require("neogit.lib.ui.helpers").close_topmost(self),
+        [status_maps["GoToFile"]] = function()
+          local commit = self.buffer.ui:get_commit_under_cursor()
+          if commit then
+            CommitViewBuffer.new(commit, self.files):open()
           end
         end,
-        [","] = function()
-          if self.buffer and self.buffer.ui then
-            local commit_id = self.buffer.ui:get_commit_under_cursor()
-            CommitViewBuffer.open_or_run_in_window(commit_id, self.files, function(window_id)
-              local key = vim.api.nvim_replace_termcodes("<C-u>", true, false, true)
-              vim.fn.win_execute(window_id, "normal! " .. key)
-            end)
+        [status_maps["OpenOrScrollDown"]] = function()
+          local commit = self.buffer.ui:get_commit_under_cursor()
+          if commit then
+            CommitViewBuffer.open_or_scroll_down(commit, self.files)
           end
         end,
-        ["<c-k>"] = function(buffer)
-          local stack = self.buffer.ui:get_component_stack_under_cursor()
-          local c = stack[#stack]
-          c.children[2].options.hidden = true
-
-          local t_idx = math.max(c.index - 1, 1)
-          local target = c.parent.children[t_idx]
-          while not target.children[2] do
-            t_idx = t_idx - 1
-            target = c.parent.children[t_idx]
+        [status_maps["OpenOrScrollUp"]] = function()
+          local commit = self.buffer.ui:get_commit_under_cursor()
+          if commit then
+            CommitViewBuffer.open_or_scroll_up(commit, self.files)
           end
-
-          target.children[2].options.hidden = false
-
-          buffer.ui:update()
-          self.buffer:move_cursor(target.position.row_start)
         end,
-        ["<c-j>"] = function(buffer)
-          local stack = self.buffer.ui:get_component_stack_under_cursor()
-          local c = stack[#stack]
-          c.children[2].options.hidden = true
+        ["<c-k>"] = function()
+          pcall(vim.cmd, "normal! zc")
 
-          local t_idx = math.min(c.index + 1, #c.parent.children)
-          local target = c.parent.children[t_idx]
-          while not target.children[2] do
-            t_idx = t_idx + 1
-            target = c.parent.children[t_idx]
+          vim.cmd("normal! k")
+          for _ = vim.fn.line("."), 0, -1 do
+            if vim.fn.foldlevel(".") > 0 then
+              break
+            end
+
+            vim.cmd("normal! k")
           end
 
-          target.children[2].options.hidden = false
-
-          buffer.ui:update()
-          buffer:move_cursor(target.position.row_start)
+          pcall(vim.cmd, "normal! zo")
           vim.cmd("normal! zz")
         end,
-        ["<tab>"] = function()
-          local stack = self.buffer.ui:get_component_stack_under_cursor()
-          local c = stack[#stack]
+        ["<c-j>"] = function()
+          pcall(vim.cmd, "normal! zc")
 
-          if c.children[2] then
-            c.children[2]:toggle_hidden()
-            self.buffer.ui:update()
+          vim.cmd("normal! j")
+          for _ = vim.fn.line("."), vim.fn.line("$"), 1 do
+            if vim.fn.foldlevel(".") > 0 then
+              break
+            end
+
+            vim.cmd("normal! j")
+          end
+
+          pcall(vim.cmd, "normal! zo")
+          vim.cmd("normal! zz")
+        end,
+        ["+"] = a.void(function()
+          local permit = self.refresh_lock:acquire()
+
+          self.commits = util.merge(self.commits, self.fetch_func(self:commit_count()))
+          self.buffer.ui:render(unpack(ui.View(self.commits, self.internal_args)))
+
+          permit:forget()
+        end),
+        ["<tab>"] = function()
+          pcall(vim.cmd, "normal! za")
+        end,
+        ["j"] = function()
+          if vim.v.count > 0 then
+            vim.cmd("norm! " .. vim.v.count .. "j")
+          else
+            vim.cmd("norm! j")
+          end
+
+          while self.buffer:get_current_line()[1]:sub(1, 1) == " " do
+            if vim.fn.line(".") == vim.fn.line("$") then
+              break
+            end
+
+            vim.cmd("norm! j")
           end
         end,
-        ["d"] = function()
-          if not config.check_integration("diffview") then
-            notification.error("Diffview integration must be enabled for log diff")
-            return
+        ["k"] = function()
+          if vim.v.count > 0 then
+            vim.cmd("norm! " .. vim.v.count .. "k")
+          else
+            vim.cmd("norm! k")
           end
 
-          local dv = require("neogit.integrations.diffview")
-          dv.open("log", self.buffer.ui:get_commit_under_cursor())
+          while self.buffer:get_current_line()[1]:sub(1, 1) == " " do
+            if vim.fn.line(".") == 1 then
+              break
+            end
+
+            vim.cmd("norm! k")
+          end
         end,
       },
     },
-    after = function(buffer, win)
-      if win and item and item.commit then
-        local found = buffer.ui:find_component(function(c)
-          return c.options.oid == item.commit.oid
-        end)
-
-        if found then
-          vim.api.nvim_win_set_cursor(win, { found.position.row_start, 0 })
-        end
-      end
-
-      vim.cmd([[setlocal nowrap]])
-    end,
     render = function()
       return ui.View(self.commits, self.internal_args)
     end,

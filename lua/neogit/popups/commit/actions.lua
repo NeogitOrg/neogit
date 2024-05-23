@@ -5,18 +5,18 @@ local git = require("neogit.lib.git")
 local client = require("neogit.client")
 local input = require("neogit.lib.input")
 local notification = require("neogit.lib.notification")
+local config = require("neogit.config")
 local a = require("plenary.async")
 
 local function confirm_modifications()
   if
     git.branch.upstream()
-    and #git.repo.upstream.unmerged.items < 1
-    and not input.get_confirmation(
+    and #git.repo.state.upstream.unmerged.items < 1
+    and not input.get_permission(
       string.format(
         "This commit has already been published to %s, do you really want to modify it?",
         git.branch.upstream()
-      ),
-      { values = { "&Yes", "&No" }, default = 2 }
+      )
     )
   then
     return false
@@ -32,18 +32,14 @@ local function do_commit(popup, cmd)
       success = "Committed",
     },
     interactive = true,
+    show_diff = config.values.commit_editor.show_staged_diff,
   })
 end
 
 local function commit_special(popup, method, opts)
   if not git.status.anything_staged() then
     if git.status.anything_unstaged() then
-      local stage_all = input.get_confirmation(
-        "Nothing is staged. Commit all uncommitted changed?",
-        { values = { "&Yes", "&No" }, default = 2 }
-      )
-
-      if stage_all then
+      if input.get_permission("Nothing is staged. Commit all uncommitted changed?") then
         opts.all = true
       else
         return
@@ -54,14 +50,9 @@ local function commit_special(popup, method, opts)
     end
   end
 
-  local commit
-  if popup.state.env.commit then
-    commit = popup.state.env.commit
-  else
-    commit = CommitSelectViewBuffer.new(git.log.list()):open_async()[1]
-    if not commit then
-      return
-    end
+  local commit = popup.state.env.commit or CommitSelectViewBuffer.new(git.log.list()):open_async()[1]
+  if not commit then
+    return
   end
 
   if opts.rebase and not git.log.is_ancestor(commit, "HEAD") then
@@ -100,7 +91,7 @@ local function commit_special(popup, method, opts)
 
   if opts.rebase then
     a.util.scheduler()
-    git.rebase.instantly(commit .. "~1", { "--autosquash", "--autostash", "--keep-empty" })
+    git.rebase.instantly(commit .. "~1", { "--keep-empty" })
   end
 end
 
@@ -158,6 +149,38 @@ function M.instant_squash(popup)
   end
 
   commit_special(popup, "squash", { rebase = true, edit = false })
+end
+
+function M.absorb(popup)
+  if vim.fn.executable("git-absorb") == 0 then
+    notification.info("Absorb requires `https://github.com/tummychow/git-absorb` to be installed.")
+    return
+  end
+
+  if not git.status.anything_staged() then
+    if git.status.anything_unstaged() then
+      if input.get_permission("Nothing is staged. Absorb all unstaged changed?") then
+        git.status.stage_modified()
+      else
+        return
+      end
+    else
+      notification.warn("There are no changes that could be absorbed")
+      return
+    end
+  end
+
+  local commit = popup.state.env.commit
+    or CommitSelectViewBuffer.new(
+      git.log.list { "HEAD" },
+      "Select a base commit for the absorb stack with <cr>, or <esc> to abort"
+    )
+      :open_async()[1]
+  if not commit then
+    return
+  end
+
+  git.cli.absorb.verbose.base(commit).and_rebase.call()
 end
 
 return M

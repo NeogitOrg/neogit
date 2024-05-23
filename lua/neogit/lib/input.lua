@@ -12,6 +12,18 @@ function M.get_confirmation(msg, options)
   return vim.fn.confirm(msg, table.concat(options.values, "\n"), options.default) == 1
 end
 
+--- Provides the user with a confirmation. Like get_confirmation, but defaults to false
+---@param msg string Prompt to use for confirmation
+---@param options table|nil
+---@return boolean Confirmation (Yes/No)
+function M.get_permission(msg, options)
+  options = options or {}
+  options.values = options.values or { "&Yes", "&No" }
+  options.default = options.default or 2
+
+  return vim.fn.confirm(msg, table.concat(options.values, "\n"), options.default) == 1
+end
+
 ---@class UserChoiceOptions
 ---@field values table List of choices prefixed with '&'
 ---@field default integer Default choice to select
@@ -22,6 +34,12 @@ end
 ---@return string First letter of the selected choice
 function M.get_choice(msg, options)
   local choice = vim.fn.confirm(msg, table.concat(options.values, "\n"), options.default)
+  vim.cmd("redraw")
+
+  if choice == 0 then -- User cancelled
+    choice = options.default
+  end
+
   return options.values[choice]:match("&(.)")
 end
 
@@ -30,6 +48,7 @@ end
 ---@field default any? Default value
 ---@field completion string?
 ---@field separator string?
+---@field cancel string?
 
 ---@param prompt string Prompt to use for user input
 ---@param opts GetUserInputOpts? Options table
@@ -43,6 +62,7 @@ function M.get_user_input(prompt, opts)
     prompt = ("%s%s"):format(prompt, opts.separator),
     default = opts.default,
     completion = opts.completion,
+    cancelreturn = opts.cancel,
   })
 
   vim.fn.inputrestore()
@@ -61,11 +81,19 @@ function M.get_user_input(prompt, opts)
   return result
 end
 
-function M.get_secret_user_input(prompt)
-  vim.fn.inputsave()
-  local status, result = pcall(vim.fn.inputsecret, prompt)
-  vim.fn.inputrestore()
+---@param prompt string
+---@param opts? table
+---@return string|nil
+function M.get_secret_user_input(prompt, opts)
+  opts = vim.tbl_extend("keep", opts or {}, { separator = ": " })
 
+  vim.fn.inputsave()
+  local status, result = pcall(vim.fn.inputsecret, {
+    prompt = ("%s%s"):format(prompt, opts.separator),
+    cancelreturn = opts.cancel,
+  })
+
+  vim.fn.inputrestore()
   if not status then
     return nil
   end

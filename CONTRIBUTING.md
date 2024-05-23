@@ -1,3 +1,6 @@
+> [!IMPORTANT]  
+> Until neovim 0.10 is released, please base any changes on the `nightly` branch.
+
 # Contributing
 
 Contributions of all kinds are very welcome. If you are planning to implement a larger feature please open an issue

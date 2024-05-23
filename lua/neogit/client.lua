@@ -7,14 +7,15 @@ local fmt = string.format
 
 local M = {}
 
-function M.get_nvim_remote_editor()
+function M.get_nvim_remote_editor(show_diff)
   local neogit_path = debug.getinfo(1, "S").source:sub(2, -#"lua/neogit/client.lua" - 2)
   local nvim_path = fn.shellescape(vim.v.progpath)
 
   logger.debug("[CLIENT] Neogit path: " .. neogit_path)
   logger.debug("[CLIENT] Neovim path: " .. nvim_path)
   local runtimepath_cmd = fn.shellescape(fmt("set runtimepath^=%s", fn.fnameescape(tostring(neogit_path))))
-  local lua_cmd = fn.shellescape("lua require('neogit.client').client()")
+  local lua_cmd =
+    fn.shellescape("lua require('neogit.client').client({ show_diff = " .. tostring(show_diff) .. " })")
 
   local shell_cmd = {
     nvim_path,
@@ -32,29 +33,39 @@ function M.get_nvim_remote_editor()
   return table.concat(shell_cmd, " ")
 end
 
-function M.get_envs_git_editor()
-  local nvim_cmd = M.get_nvim_remote_editor()
-  return {
+function M.get_envs_git_editor(show_diff)
+  local nvim_cmd = M.get_nvim_remote_editor(show_diff)
+
+  local env = {
     GIT_SEQUENCE_EDITOR = nvim_cmd,
     GIT_EDITOR = nvim_cmd,
   }
+
+  if os.getenv("NEOGIT_DEBUG") then
+    env.NEOGIT_LOG_LEVEL = "debug"
+    env.NEOGIT_LOG_FILE = "true"
+    env.NEOGIT_DEBUG = true
+  end
+
+  return env
 end
 
 --- Entry point for the headless client.
 --- Starts a server and connects to the parent process rpc, opening an editor
-function M.client()
+function M.client(opts)
   local nvim_server = vim.env.NVIM
   if not nvim_server then
     error("NVIM server address not set")
   end
 
   local file_target = fn.fnamemodify(fn.argv()[1], ":p")
-  logger.fmt_debug("[CLIENT] File target: %s", file_target)
+  logger.debug(("[CLIENT] File target: %s"):format(file_target))
 
   local client = fn.serverstart()
-  logger.fmt_debug("[CLIENT] Client address: %s", client)
+  logger.debug(("[CLIENT] Client address: %s"):format(client))
 
-  local lua_cmd = fmt('lua require("neogit.client").editor("%s", "%s")', file_target, client)
+  local lua_cmd =
+    fmt('lua require("neogit.client").editor("%s", "%s", %s)', file_target, client, opts.show_diff)
 
   if vim.loop.os_uname().sysname == "Windows_NT" then
     lua_cmd = lua_cmd:gsub("\\", "/")
@@ -67,8 +78,9 @@ end
 --- Invoked by the `client` and starts the appropriate file editor
 ---@param target string Filename to open
 ---@param client string Address returned from vim.fn.serverstart()
-function M.editor(target, client)
-  logger.fmt_debug("[CLIENT] Invoked editor with target: %s, from: %s", target, client)
+---@param show_diff boolean
+function M.editor(target, client, show_diff)
+  logger.debug(("[CLIENT] Invoked editor with target: %s, from: %s"):format(target, client))
   require("neogit.process").hide_preview_buffers()
 
   local rpc_client = RPC.create_connection(client)
@@ -107,7 +119,7 @@ function M.editor(target, client)
     editor = require("neogit.buffers.editor")
   end
 
-  editor.new(target, send_client_quit):open(kind)
+  editor.new(target, send_client_quit, show_diff):open(kind)
 end
 
 ---@class NotifyMsg
@@ -118,6 +130,7 @@ end
 ---@class WrapOpts
 ---@field autocmd string
 ---@field msg NotifyMsg
+---@field show_diff boolean?
 ---@field interactive boolean?
 
 ---@param cmd any
@@ -133,15 +146,17 @@ function M.wrap(cmd, opts)
     notification.info(opts.msg.setup)
   end
 
-  local c = cmd.env(M.get_envs_git_editor()):in_pty(true)
+  local c = cmd.env(M.get_envs_git_editor(opts.show_diff)):in_pty(true)
   local call_cmd = c.call
   if opts.interactive then
     call_cmd = c.call_interactive
   end
 
+  logger.debug("[CLIENT] Calling editor command")
   local result = call_cmd { verbose = true }
 
   a.util.scheduler()
+  logger.debug("[CLIENT] DONE editor command")
 
   if result.code == 0 then
     if opts.msg.success then
@@ -153,6 +168,7 @@ function M.wrap(cmd, opts)
       notification.warn(opts.msg.fail, { dismiss = true })
     end
   end
+
   return result.code
 end
 

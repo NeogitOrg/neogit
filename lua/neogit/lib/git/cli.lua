@@ -1,7 +1,9 @@
 local logger = require("neogit.logger")
+local git = require("neogit.lib.git")
 local process = require("neogit.process")
 local util = require("neogit.lib.util")
 local Path = require("plenary.path")
+local input = require("neogit.lib.input")
 
 local function config(setup)
   setup = setup or {}
@@ -31,7 +33,25 @@ local configurations = {
     },
   },
 
+  ["name-rev"] = config {
+    flags = {
+      name_only = "--name-only",
+      no_undefined = "--no-undefined",
+    },
+    options = {
+      refs = "--refs",
+      exclude = "--exclude",
+    },
+  },
+
   init = config {},
+
+  ["checkout-index"] = config {
+    flags = {
+      all = "--all",
+      force = "--force",
+    },
+  },
 
   worktree = config {
     flags = {
@@ -39,6 +59,12 @@ local configurations = {
       list = "list",
       move = "move",
       remove = "remove",
+    },
+  },
+
+  rm = config {
+    flags = {
+      cached = "--cached",
     },
   },
 
@@ -116,6 +142,7 @@ local configurations = {
   diff = config {
     flags = {
       cached = "--cached",
+      stat = "--stat",
       shortstat = "--shortstat",
       patch = "--patch",
       name_only = "--name-only",
@@ -218,6 +245,7 @@ local configurations = {
       detach = "--detach",
       ours = "--ours",
       theirs = "--theirs",
+      merge = "--merge",
     },
     aliases = {
       track = function(tbl)
@@ -248,11 +276,6 @@ local configurations = {
       new_branch_with_start_point = function(tbl)
         return function(branch, start_point)
           return tbl.args(branch, start_point).b()
-        end
-      end,
-      file = function(tbl)
-        return function(file)
-          return tbl.args(file)
         end
       end,
     },
@@ -295,6 +318,20 @@ local configurations = {
     },
   },
 
+  absorb = config {
+    flags = {
+      verbose = "--verbose",
+      and_rebase = "--and-rebase",
+    },
+    aliases = {
+      base = function(tbl)
+        return function(commit)
+          return tbl.args("--base", commit)
+        end
+      end,
+    },
+  },
+
   commit = config {
     flags = {
       all = "--all",
@@ -309,7 +346,7 @@ local configurations = {
     aliases = {
       with_message = function(tbl)
         return function(message)
-          return tbl.args("-F", "-").input(message)
+          return tbl.args("-F", "-").input(message .. "\04")
         end
       end,
       message = function(tbl)
@@ -497,6 +534,7 @@ local configurations = {
       deduplicate = "--deduplicate",
       exclude_standard = "--exclude-standard",
       full_name = "--full-name",
+      error_unmatch = "--error-unmatch",
     },
   },
 
@@ -524,6 +562,7 @@ local configurations = {
   ["for-each-ref"] = config {
     options = {
       format = "--format",
+      sort = "--sort",
     },
   },
 
@@ -564,52 +603,24 @@ local configurations = {
   },
 
   ["verify-commit"] = config {},
+
+  ["bisect"] = config {},
 }
 
--- NOTE: Use require("neogit.lib.git.repository").git_root instead of calling this function.
+-- NOTE: Use require("neogit.lib.git").repo.git_root instead of calling this function.
 -- repository.git_root is used by all other library functions, so it's most likely the one you want to use.
 -- git_root_of_cwd() returns the git repo of the cwd, which can change anytime
 -- after git_root_of_cwd() has been called.
-local function git_root_of_cwd()
-  local job = require("plenary.job")
-  local args = { "rev-parse", "--show-toplevel" }
-  local gitdir = Path:new(vim.fn.getcwd()):absolute() -- default to current directory
-  job
-    :new({
-      command = "git",
-      args = args,
-      on_exit = function(job_output, return_val)
-        if return_val == 0 then
-          -- Replace directory with the output of the git toplevel directory
-          gitdir = Path:new(job_output:result()):absolute()
-        else
-          logger.warn("[CLI]: ", job_output:result())
-        end
-      end,
-    })
-    :sync()
-  return gitdir
+local function git_root(dir)
+  local cmd = { "git", "-C", dir, "rev-parse", "--show-toplevel" }
+  local result = vim.system(cmd, { text = true }):wait()
+  return Path:new(vim.trim(result.stdout)):absolute()
 end
 
-local is_inside_worktree = function(cwd)
-  local job = require("plenary.job")
-  local args = { "rev-parse", "--is-inside-work-tree" }
-  local returnval = false
-  if cwd then
-    args = { "-C", cwd, "rev-parse", "--is-inside-work-tree" }
-  end
-  job
-    :new({
-      command = "git",
-      args = args,
-      on_exit = function(_, return_val)
-        if return_val == 0 then
-          returnval = true
-        end
-      end,
-    })
-    :sync()
-  return returnval
+local function is_inside_worktree(dir)
+  local cmd = { "git", "-C", dir, "rev-parse", "--is-inside-work-tree" }
+  local result = vim.system(cmd):wait()
+  return result.code == 0
 end
 
 local history = {}
@@ -779,60 +790,69 @@ local mt_builder = {
   end,
 }
 
+---@param line string
+---@return string
+local function handle_interactive_authenticity(line)
+  logger.debug("[CLI]: Confirming whether to continue with unauthenticated host")
+
+  local prompt = line
+  return input.get_user_input(
+    "The authenticity of the host can't be established." .. prompt .. "",
+    { cancel = "__CANCEL__" }
+  ) or "__CANCEL__"
+end
+
+---@param line string
+---@return string
+local function handle_interactive_username(line)
+  logger.debug("[CLI]: Asking for username")
+
+  local prompt = line:match("(.*:?):.*")
+  return input.get_user_input(prompt, { cancel = "__CANCEL__" }) or "__CANCEL__"
+end
+
+---@param line string
+---@return string
+local function handle_interactive_password(line)
+  logger.debug("[CLI]: Asking for password")
+
+  local prompt = line:match("(.*:?):.*")
+  return input.get_secret_user_input(prompt, { cancel = "__CANCEL__" }) or "__CANCEL__"
+end
+
 ---@param p Process
 ---@param line string
-local function handle_interactive_password_questions(p, line)
-  process.hide_preview_buffers()
+---@return boolean
+local function handle_line_interactive(p, line)
   logger.debug(string.format("Matching interactive cmd output: '%s'", line))
-  if vim.startswith(line, "Are you sure you want to continue connecting ") then
-    logger.debug("[CLI]: Confirming whether to continue with unauthenticated host")
-    local prompt = line
-    local value = vim.fn.input {
-      prompt = "The authenticity of the host can't be established. " .. prompt .. " ",
-      cancelreturn = "__CANCEL__",
-    }
-    if value ~= "__CANCEL__" then
-      logger.debug("[CLI]: Received answer")
-      p:send(value .. "\r\n")
-    else
+
+  local handler
+  if line:match("^Are you sure you want to continue connecting ") then
+    handler = handle_interactive_authenticity
+  elseif line:match("^Username for ") then
+    handler = handle_interactive_username
+  elseif line:match("^Enter passphrase") or line:match("^Password for") then
+    handler = handle_interactive_password
+  end
+
+  if handler then
+    process.hide_preview_buffers()
+
+    local value = handler(line)
+    if value == "__CANCEL__" then
       logger.debug("[CLI]: Cancelling the interactive cmd")
       p:stop()
-    end
-  elseif vim.startswith(line, "Username for ") then
-    logger.debug("[CLI]: Asking for username")
-    local prompt = line:match("(.*:?):.*")
-    local value = vim.fn.input {
-      prompt = prompt .. " ",
-      cancelreturn = "__CANCEL__",
-    }
-    if value ~= "__CANCEL__" then
-      logger.debug("[CLI]: Received username")
-      p:send(value .. "\r\n")
     else
-      logger.debug("[CLI]: Cancelling the interactive cmd")
-      p:stop()
-    end
-  elseif vim.startswith(line, "Enter passphrase") or vim.startswith(line, "Password for") then
-    logger.debug("[CLI]: Asking for password")
-    local prompt = line:match("(.*:?):.*")
-    local value = vim.fn.inputsecret {
-      prompt = prompt .. " ",
-      cancelreturn = "__CANCEL__",
-    }
-    if value ~= "__CANCEL__" then
-      logger.debug("[CLI]: Received password")
+      logger.debug("[CLI]: Sending user input")
       p:send(value .. "\r\n")
-    else
-      logger.debug("[CLI]: Cancelling the interactive cmd")
-      p:stop()
     end
+
+    process.defer_show_preview_buffers()
+    return true
   else
     process.defer_show_preview_buffers()
     return false
   end
-
-  process.defer_show_preview_buffers()
-  return true
 end
 
 local function new_builder(subcommand)
@@ -892,10 +912,9 @@ local function new_builder(subcommand)
 
     logger.trace(string.format("[CLI]: Executing '%s': '%s'", subcommand, table.concat(cmd, " ")))
 
-    local repo = require("neogit.lib.git.repository")
     return process.new {
       cmd = cmd,
-      cwd = repo.git_root,
+      cwd = git.repo.git_root,
       env = state.env,
       pty = state.in_pty,
       verbose = opts.verbose,
@@ -911,10 +930,17 @@ local function new_builder(subcommand)
     call_interactive = function(options)
       local opts = options or {}
 
-      local handle_line = opts.handle_line or handle_interactive_password_questions
+      local handle_line = opts.handle_line or handle_line_interactive
       local p = to_process {
         verbose = opts.verbose,
-        on_error = function(_res)
+        on_error = function(res)
+          -- When aborting, don't alert the user. exit(1) is expected.
+          for _, line in ipairs(res.stdout) do
+            if line:match("^hint: Waiting for your editor to close the file...") then
+              return false
+            end
+          end
+
           return true
         end,
       }
@@ -955,9 +981,18 @@ local function new_builder(subcommand)
       local p = to_process {
         verbose = opts.verbose,
         on_error = function(res)
-          local commit_aborted_msg = "hint: Waiting for your editor to close the file..."
+          -- When aborting, don't alert the user. exit(1) is expected.
+          for _, line in ipairs(res.stdout) do
+            if line:match("^hint: Waiting for your editor to close the file...") then
+              return false
+            end
+          end
 
-          if vim.startswith(res.stdout[1], commit_aborted_msg) then
+          -- When opening in a brand new repo, HEAD will cause an error.
+          if
+            res.stderr[1]
+            == "fatal: ambiguous argument 'HEAD': unknown revision or path not in the working tree."
+          then
             return false
           end
 
@@ -1040,10 +1075,11 @@ local meta = {
   end,
 }
 
+---@class NeogitGitCLI
 local cli = setmetatable({
   history = history,
   insert = handle_new_cmd,
-  git_root_of_cwd = git_root_of_cwd,
+  git_root = git_root,
   is_inside_worktree = is_inside_worktree,
 }, meta)
 

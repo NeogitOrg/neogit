@@ -1,74 +1,88 @@
-local a = require("plenary.async")
 local git = require("neogit.lib.git")
 local util = require("neogit.lib.util")
-
-local CommitSelectViewBuffer = require("neogit.buffers.commit_select_view")
+local notification = require("neogit.lib.notification")
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
 local M = {}
 
-local function reset(type, popup)
-  local commit
+---@param popup PopupData
+---@param prompt string
+---@return string|nil
+local function target(popup, prompt)
+  local commit = {}
   if popup.state.env.commit then
-    commit = popup.state.env.commit
-  else
-    commit = CommitSelectViewBuffer.new(git.log.list()):open_async()[1]
-    if not commit then
-      return
-    end
+    commit = { popup.state.env.commit, popup.state.env.commit .. "^" }
   end
 
-  git.reset[type](commit)
+  local refs = util.merge(commit, git.refs.list_branches(), git.refs.list_tags(), git.refs.heads())
+  return FuzzyFinderBuffer.new(refs):open_async { prompt_prefix = prompt }
 end
 
+---@param type string
+---@param popup PopupData
+---@param prompt string
+local function reset(type, popup, prompt)
+  local target = target(popup, prompt)
+  if target then
+    git.reset[type](target)
+  end
+end
+
+---@param popup PopupData
 function M.mixed(popup)
-  reset("mixed", popup)
+  reset("mixed", popup, ("Reset %s to"):format(git.branch.current()))
 end
 
+---@param popup PopupData
 function M.soft(popup)
-  reset("soft", popup)
+  reset("soft", popup, ("Soft reset %s to"):format(git.branch.current()))
 end
 
+---@param popup PopupData
 function M.hard(popup)
-  reset("hard", popup)
+  reset("hard", popup, ("Hard reset %s to"):format(git.branch.current()))
 end
 
+---@param popup PopupData
 function M.keep(popup)
-  reset("keep", popup)
+  reset("keep", popup, ("Reset %s to"):format(git.branch.current()))
 end
 
+---@param popup PopupData
 function M.index(popup)
-  reset("index", popup)
+  reset("index", popup, "Reset index to")
 end
 
--- https://github.com/magit/magit/blob/main/lisp/magit-reset.el#L87
--- function M.worktree()
--- end
-
-function M.a_file(popup)
-  local commit
-  if popup.state.env.commit then
-    commit = popup.state.env.commit
-  else
-    local commits = git.log.list(util.merge({ "--all" }, git.stash.list_refs()))
-    commit = CommitSelectViewBuffer.new(commits):open_async()[1]
-    if not commit then
-      return
-    end
+---@param popup PopupData
+function M.worktree(popup)
+  local target = target(popup, "Reset worktree to")
+  if target then
+    git.index.with_temp_index(target, function(index)
+      git.cli["checkout-index"].all.force.env({ GIT_INDEX_FILE = index }).call()
+      notification.info(("Reset worktree to %s"):format(target))
+    end)
   end
+end
 
-  local files = util.deduplicate(util.merge(git.files.all(), git.files.diff(commit)))
-  if not files[1] then
+---@param popup PopupData
+function M.a_file(popup)
+  local target = target(popup, "Checkout from revision")
+  if not target then
     return
   end
 
-  a.util.scheduler()
+  local files = util.deduplicate(util.merge(git.files.all(), git.files.diff(target)))
+  if not files[1] then
+    notification.info(("No files differ between HEAD and %s"):format(target))
+    return
+  end
+
   local files = FuzzyFinderBuffer.new(files):open_async { allow_multi = true }
   if not files[1] then
     return
   end
 
-  git.reset.file(commit, files)
+  git.reset.file(target, files)
 end
 
 return M

@@ -20,7 +20,7 @@ describe("rebase popup", function()
     CommitSelectViewBufferMock.clear()
   end)
 
-  function test_reword(commit_to_reword, new_commit_message, selected)
+  local function test_reword(commit_to_reword, new_commit_message, selected)
     local original_branch = git.branch.current()
     if selected == false then
       CommitSelectViewBufferMock.add(git.rev_parse.oid(commit_to_reword))
@@ -32,7 +32,7 @@ describe("rebase popup", function()
     assert.are.same(new_commit_message, git.log.message(commit_to_reword))
   end
 
-  function test_modify(commit_to_modify, selected)
+  local function test_modify(commit_to_modify, selected)
     local new_head = git.rev_parse.oid(commit_to_modify)
     if selected == false then
       CommitSelectViewBufferMock.add(git.rev_parse.oid(commit_to_modify))
@@ -42,7 +42,7 @@ describe("rebase popup", function()
     assert.are.same(new_head, git.rev_parse.oid("HEAD"))
   end
 
-  function test_drop(commit_to_drop, selected)
+  local function test_drop(commit_to_drop, selected)
     local dropped_commit = git.rev_parse.oid(commit_to_drop)
     if selected == false then
       CommitSelectViewBufferMock.add(git.rev_parse.oid(commit_to_drop))
@@ -121,7 +121,7 @@ describe("rebase popup", function()
   it(
     "rebase to reword HEAD fires NeogitRebase autocmd",
     in_prepared_repo(function()
-      -- Arange
+      -- Arrange
       local tx, rx = async.control.channel.oneshot()
       local group = vim.api.nvim_create_augroup("TestCustomNeogitEvents", { clear = true })
       vim.api.nvim_create_autocmd("User", {
@@ -149,7 +149,7 @@ describe("rebase popup", function()
   it(
     "rebase to modify HEAD fires NeogitRebase autocmd",
     in_prepared_repo(function()
-      -- Arange
+      -- Arrange
       local tx, rx = async.control.channel.oneshot()
       local group = vim.api.nvim_create_augroup("TestCustomNeogitEvents", { clear = true })
       vim.api.nvim_create_autocmd("User", {
