@@ -187,10 +187,8 @@ function Buffer:close(force)
   end
 
   if self.kind == "tab" then
-    local ok, _ = pcall(vim.cmd, "tabclose")
-    if not ok then
-      vim.cmd("tabnew")
-      vim.cmd("tabclose #")
+    for _, win in ipairs(api.nvim_tabpage_list_wins(0)) do
+      api.nvim_buf_delete(api.nvim_win_get_buf(win), { force = force })
     end
 
     return
