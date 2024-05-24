@@ -31,6 +31,7 @@ end
 ---@field buffer ProcessBuffer
 ---@field on_partial_line fun(process: Process, data: string, raw: string)|nil callback on complete lines
 ---@field on_error (fun(res: ProcessResult): boolean) Intercept the error externally, returning false prevents the error from being logged
+---@field on_success string? Event to emit if the process exits 0
 local Process = {}
 Process.__index = Process
 
@@ -254,6 +255,10 @@ function Process:spawn(cb)
     stderr_cleanup()
 
     self.buffer:append(string.format("Process exited with code: %d", code))
+
+    if self.on_success and code == 0 then
+      vim.api.nvim_exec_autocmds("User", { pattern = self.on_success, modeline = false })
+    end
 
     if not self.buffer:is_visible() and code > 0 and self.on_error(res) then
       local output = {}

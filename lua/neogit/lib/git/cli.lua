@@ -919,6 +919,7 @@ local function new_builder(subcommand)
       pty = state.in_pty,
       verbose = opts.verbose,
       on_error = opts.on_error,
+      on_success = opts.on_success,
     }
   end
 
@@ -980,6 +981,7 @@ local function new_builder(subcommand)
 
       local p = to_process {
         verbose = opts.verbose,
+        on_success = opts.event,
         on_error = function(res)
           -- When aborting, don't alert the user. exit(1) is expected.
           for _, line in ipairs(res.stdout) do
