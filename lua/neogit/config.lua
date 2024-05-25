@@ -599,14 +599,14 @@ function M.validate_config()
     if
       validate_type(val, name, "string")
       and not vim.tbl_contains(
-        { "split", "vsplit", "split_above", "tab", "floating", "replace", "auto" },
+        { "split", "vsplit", "split_above", "vsplit_left", "tab", "floating", "replace", "auto" },
         val
       )
     then
       err(
         name,
         string.format(
-          "Expected `%s` to be one of 'split', 'vsplit', 'split_above', 'tab', 'floating', 'replace' or 'auto', got '%s'",
+          "Expected `%s` to be one of 'split', 'vsplit', 'split_above', 'vsplit_left', tab', 'floating', 'replace' or 'auto', got '%s'",
           name,
           val
         )

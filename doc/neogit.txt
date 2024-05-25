@@ -560,6 +560,7 @@ neogit.open({*opts})                                             *neogit.open()*
                     - "split"         like :below split
                     - "split_above"   like :top split
                     - "vsplit"        like :vsplit
+                    - "vsplit_left"   like :vsplit, but open to the left
                     - "floating" not-yet-implemented
 
                 • cwd (string) optional: Path to git repository.
