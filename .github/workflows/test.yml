@@ -42,3 +42,13 @@ jobs:
       - name: E2E Test
         run: |
           bundle exec rspec
+
+      - name: Install Dependencies
+        run: |
+          mkdir -p ~/.local/share/neogit-test/site/pack/plenary.nvim/start
+          cd ~/.local/share/neogit-test/site/pack/plenary.nvim/start
+          git clone https://github.com/nvim-lua/plenary.nvim
+
+      - name: Unit Test
+        run: |
+          make test
