@@ -260,8 +260,7 @@ function Buffer:show()
     api.nvim_set_current_buf(self.handle)
     win = api.nvim_get_current_win()
   elseif kind == "tab" then
-    vim.cmd("tabnew")
-    api.nvim_set_current_buf(self.handle)
+    vim.cmd("tab sb " .. self.handle)
     win = api.nvim_get_current_win()
   elseif kind == "split" then
     win = api.nvim_open_win(self.handle, true, { split = "below" })
