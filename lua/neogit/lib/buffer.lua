@@ -269,6 +269,8 @@ function Buffer:show()
     win = api.nvim_open_win(self.handle, true, { split = "above" })
   elseif kind == "vsplit" then
     win = api.nvim_open_win(self.handle, true, { split = "right", vertical = true })
+  elseif kind == "vsplit_left" then
+    win = api.nvim_open_win(self.handle, true, { split = "left", vertical = true })
   elseif kind == "floating" then
     -- Creates the border window
     local vim_height = vim.o.lines
