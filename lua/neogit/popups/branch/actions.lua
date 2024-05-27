@@ -52,7 +52,7 @@ end
 local function create_branch(popup, prompt, checkout)
   -- stylua: ignore
   local options = util.deduplicate(util.merge(
-    { popup.state.env.commits[1] },
+    { popup.state.env.commits and popup.state.env.commits[1] },
     { git.branch.current() or "HEAD" },
     git.refs.list_branches(),
     git.refs.list_tags(),
