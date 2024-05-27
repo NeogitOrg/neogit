@@ -126,6 +126,8 @@ end
 
 ---@alias NeogitConfigMappingsStatus
 ---| "Close"
+---| "MoveDown"
+---| "MoveUp"
 ---| "Depth1"
 ---| "Depth2"
 ---| "Depth3"
@@ -521,6 +523,8 @@ function M.get_default_values()
         ["v"] = "RevertPopup",
       },
       status = {
+        ["j"] = "MoveDown",
+        ["k"] = "MoveUp",
         ["q"] = "Close",
         ["I"] = "InitRepo",
         ["1"] = "Depth1",
