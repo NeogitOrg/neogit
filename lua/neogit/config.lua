@@ -256,6 +256,7 @@ end
 ---@field disable_relative_line_numbers? boolean Whether to disable line numbers
 ---@field console_timeout? integer Time in milliseconds after a console is created for long running commands
 ---@field auto_show_console? boolean Automatically show the console if a command takes longer than console_timeout
+---@field auto_close_console? boolean Automatically hide the console if the process exits with a 0 status
 ---@field status? NeogitConfigStatusOptions Status buffer options
 ---@field commit_editor? NeogitCommitEditorConfigPopup Commit editor options
 ---@field commit_select_view? NeogitConfigPopup Commit select view options
@@ -315,6 +316,7 @@ function M.get_default_values()
     console_timeout = 2000,
     -- Automatically show console if a command takes more than console_timeout milliseconds
     auto_show_console = true,
+    auto_close_console = true,
     notification_icon = "󰊢",
     status = {
       show_head_commit_hash = true,
@@ -1000,6 +1002,7 @@ function M.validate_config()
     validate_type(config.disable_line_numbers, "disable_line_numbers", "boolean")
     validate_type(config.disable_relative_line_numbers, "disable_relative_line_numbers", "boolean")
     validate_type(config.auto_show_console, "auto_show_console", "boolean")
+    validate_type(config.auto_close_console, "auto_close_console", "boolean")
     if validate_type(config.status, "status", "table") then
       validate_type(config.status.show_head_commit_hash, "status.show_head_commit_hash", "boolean")
       validate_type(config.status.recent_commit_count, "status.recent_commit_count", "number")
