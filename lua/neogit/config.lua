@@ -128,6 +128,7 @@ end
 ---| "Close"
 ---| "MoveDown"
 ---| "MoveUp"
+---| "OpenTree"
 ---| "Depth1"
 ---| "Depth2"
 ---| "Depth3"
@@ -525,6 +526,7 @@ function M.get_default_values()
       status = {
         ["j"] = "MoveDown",
         ["k"] = "MoveUp",
+        ["o"] = "OpenTree",
         ["q"] = "Close",
         ["I"] = "InitRepo",
         ["1"] = "Depth1",

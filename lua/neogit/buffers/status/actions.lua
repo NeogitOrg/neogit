@@ -1292,4 +1292,17 @@ M.n_worktree_popup = function(_self)
   return popups.open("worktree")
 end
 
+---@param _self StatusBuffer
+M.n_open_tree = function(_self)
+  return a.void(function()
+    local template = "https://${host}/${owner}/${repository}/tree/${branch_name}"
+
+    local url = git.remote.get_url(git.branch.upstream_remote())[1]
+    local format_values = git.remote.parse(url)
+    format_values["branch_name"] = git.branch.current()
+
+    vim.ui.open(util.format(template, format_values))
+  end)
+end
+
 return M
