@@ -123,6 +123,7 @@ function M:open(kind, cwd)
         [popups.mapping_for("WorktreePopup")]   = self:_action("v_worktree_popup"),
       },
       n = {
+        [mappings["OpenTree"]]                  = self:_action("n_open_tree"),
         [mappings["MoveDown"]]                  = self:_action("n_down"),
         [mappings["MoveUp"]]                    = self:_action("n_up"),
         [mappings["Untrack"]]                   = self:_action("n_untrack"),

@@ -333,6 +333,7 @@ neogit.setup {
       ["k"] = "MoveUp",
       ["j"] = "MoveDown",
       ["q"] = "Close",
+      ["o"] = "OpenTree",
       ["I"] = "InitRepo",
       ["1"] = "Depth1",
       ["2"] = "Depth2",
