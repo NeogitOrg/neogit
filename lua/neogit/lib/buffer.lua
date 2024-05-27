@@ -255,17 +255,21 @@ function Buffer:show()
   local win
   local kind = self.kind
 
-  -- https://github.com/nvim-telescope/telescope.nvim/blame/49650f5d749fef3d1e6cf52ba031c02163a59158/lua/telescope/actions/set.lua#L93
   if kind == "replace" then
     self.old_buf = api.nvim_get_current_buf()
+    api.nvim_set_current_buf(self.handle)
+    win = api.nvim_get_current_win()
   elseif kind == "tab" then
-    vim.cmd("tabnew")
+    vim.cmd("tab sb " .. self.handle)
+    win = api.nvim_get_current_win()
   elseif kind == "split" then
-    vim.cmd("new")
+    win = api.nvim_open_win(self.handle, true, { split = "below" })
   elseif kind == "split_above" then
-    vim.cmd("top new")
+    win = api.nvim_open_win(self.handle, true, { split = "above" })
   elseif kind == "vsplit" then
-    vim.cmd("vnew")
+    win = api.nvim_open_win(self.handle, true, { split = "right", vertical = true })
+  elseif kind == "vsplit_left" then
+    win = api.nvim_open_win(self.handle, true, { split = "left", vertical = true })
   elseif kind == "floating" then
     -- Creates the border window
     local vim_height = vim.o.lines
@@ -291,18 +295,15 @@ function Buffer:show()
     win = content_window
   end
 
-  if kind ~= "floating" then
-    api.nvim_set_current_buf(self.handle)
-    win = api.nvim_get_current_win()
-  end
+  api.nvim_win_call(win, function()
+    if self.disable_line_numbers then
+      vim.cmd("setlocal nonu")
+    end
 
-  if self.disable_line_numbers then
-    vim.cmd("setlocal nonu")
-  end
-
-  if self.disable_relative_line_numbers then
-    vim.cmd("setlocal nornu")
-  end
+    if self.disable_relative_line_numbers then
+      vim.cmd("setlocal nornu")
+    end
+  end)
 
   -- Workaround UFO getting folds wrong.
   local ufo, _ = pcall(require, "ufo")
@@ -527,6 +528,7 @@ end
 ---@field readonly boolean|nil
 ---@field mappings table|nil
 ---@field autocmds table|nil
+---@field user_autocmds table|nil
 ---@field initialize function|nil
 ---@field after function|nil
 ---@field on_detach function|nil
@@ -634,7 +636,18 @@ function Buffer.create(config)
       buffer = buffer.handle,
       group = buffer.autocmd_group,
     })
+  end
 
+  for event, callback in pairs(config.user_autocmds or {}) do
+    logger.debug("[BUFFER:" .. buffer.handle .. "] Setting user autocmd for: " .. event)
+    api.nvim_create_autocmd("User", {
+      pattern = event,
+      callback = callback,
+      group = buffer.autocmd_group,
+    })
+  end
+
+  if config.autocmds or config.user_autocmds then
     api.nvim_buf_attach(buffer.handle, false, {
       on_detach = function()
         logger.debug("[BUFFER:" .. buffer.handle .. "] Clearing autocmd group")

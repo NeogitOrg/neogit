@@ -164,6 +164,7 @@ neogit.setup {
     -- "split" to show the staged diff below the commit editor
     -- "vsplit" to show it to the right
     -- "split_above" Like :top split
+    -- "vsplit_left" like :vsplit, but open to the left
     -- "auto" "vsplit" if window would have 80 cols, otherwise "split"
     staged_diff_split_kind = "split"
   },
@@ -344,7 +345,6 @@ neogit.setup {
       ["u"] = "Unstage",
       ["U"] = "UnstageStaged",
       ["$"] = "CommandHistory",
-      ["#"] = "Console",
       ["Y"] = "YankSelected",
       ["<c-r>"] = "RefreshBuffer",
       ["<enter>"] = "GoToFile",
