@@ -330,6 +330,8 @@ neogit.setup {
       ["w"] = "WorktreePopup",
     },
     status = {
+      ["k"] = "MoveUp",
+      ["j"] = "MoveDown",
       ["q"] = "Close",
       ["I"] = "InitRepo",
       ["1"] = "Depth1",
