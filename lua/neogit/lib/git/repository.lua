@@ -173,6 +173,7 @@ function Repo.instance(dir)
     instances[cwd] = Repo.new(cwd)
   end
 
+  logger.debug("[REPO]: Loaded Repository for: " .. cwd)
   return instances[cwd]
 end
 

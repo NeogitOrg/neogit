@@ -28,7 +28,10 @@ local instances = {}
 ---@param instance StatusBuffer
 ---@param dir string
 function M.register(instance, dir)
-  instances[vim.fs.normalize(dir)] = instance
+  local dir = vim.fs.normalize(dir)
+  logger.debug("[STATUS] Registering instance for: " .. dir)
+
+  instances[dir] = instance
 end
 
 ---@param dir? string
@@ -37,7 +40,10 @@ function M.instance(dir)
   local dir = dir or vim.uv.cwd()
   assert(dir, "cannot locate a status buffer with no cwd")
 
-  return instances[vim.fs.normalize(dir)]
+  dir = vim.fs.normalize(dir)
+  logger.debug("[STATUS] Using instance for: " .. dir)
+
+  return instances[dir]
 end
 
 ---@param state NeogitRepoState
