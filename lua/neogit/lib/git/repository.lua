@@ -17,7 +17,7 @@ local modules = {
   "bisect",
 }
 
----@class NeogitRepo
+---@class NeogitRepoState
 ---@field git_path       fun(self, ...):Path
 ---@field refresh        fun(self, table)
 ---@field initialized    boolean
@@ -88,7 +88,7 @@ local modules = {
 ---@field finished       boolean
 ---@field current        CommitLogEntry
 
----@return NeogitRepo
+---@return NeogitRepoState
 local function empty_state()
   return {
     initialized = false,
@@ -154,21 +154,31 @@ local function empty_state()
 end
 
 ---@class NeogitRepo
+---@field lib table
+---@field updates table
+---@field state NeogitRepoState
+---@field git_root string
 local Repo = {}
 Repo.__index = Repo
 
 local instances = {}
 
+---@param dir? string
 function Repo.instance(dir)
-  local cwd = dir or vim.loop.cwd()
-  if cwd and not instances[cwd] then
+  dir = dir or vim.uv.cwd()
+  assert(dir, "cannot create a repo without a cwd")
+
+  local cwd = vim.fs.normalize(dir)
+  if not instances[cwd] then
     instances[cwd] = Repo.new(cwd)
   end
 
+  logger.debug("[REPO]: Loaded Repository for: " .. cwd)
   return instances[cwd]
 end
 
 -- Use Repo.instance when calling directly to ensure it's registered
+---@param dir string
 function Repo.new(dir)
   logger.debug("[REPO]: Initializing Repository")
 

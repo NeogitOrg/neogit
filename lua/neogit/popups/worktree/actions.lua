@@ -102,7 +102,9 @@ M.move = operations("move_worktree", function()
     return
   end
 
-  local change_dir = selected == vim.fn.getcwd()
+  local cwd = vim.uv.cwd()
+  assert(cwd, "cannot determine cwd")
+  local change_dir = vim.fs.normalize(selected) == vim.fs.normalize(cwd)
 
   if git.worktree.move(selected, path) then
     notification.info(("Moved worktree to %s"):format(path))
@@ -128,7 +130,9 @@ M.delete = operations("delete_worktree", function()
     return
   end
 
-  local change_dir = selected == vim.fn.getcwd()
+  local cwd = vim.uv.cwd()
+  assert(cwd, "cannot determine cwd")
+  local change_dir = vim.fs.normalize(selected) == vim.fs.normalize(cwd)
   local success = false
 
   if input.get_permission("Remove worktree?") then
