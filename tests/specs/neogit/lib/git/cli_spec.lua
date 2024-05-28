@@ -8,8 +8,8 @@ describe("git cli", function()
     it(
       "finds the correct git root for a non symlinked directory",
       in_prepared_repo(function(root_dir)
-        local detected_root_dir = git_cli.git_root_of_cwd()
-        eq(detected_root_dir, root_dir)
+        local detected_root_dir = git_cli.git_root()
+        eq(detected_root_dir, root_dir .. "/")
       end)
     )
 
@@ -35,7 +35,7 @@ describe("git cli", function()
         vim.fn.system(cmd)
         vim.api.nvim_set_current_dir(symlink_dir)
 
-        local detected_root_dir = git_cli.git_root_of_cwd()
+        local detected_root_dir = git_cli.git_root()
         eq(detected_root_dir, git_dir)
       end)
     )

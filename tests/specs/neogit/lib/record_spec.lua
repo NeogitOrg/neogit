@@ -2,8 +2,12 @@ local subject = require("neogit.lib.record")
 
 describe("lib.record", function()
   describe("#encode", function()
-    it("turns lua table into delimited string", function()
-      assert.are.same("foo%x1Dbar%x1E", subject.encode { foo = "bar" })
+    it("turns lua table into delimited string (log)", function()
+      assert.are.same("foo%x1Dbar%x1E", subject.encode({ foo = "bar" }, "log"))
+    end)
+
+    it("turns lua table into delimited string (for-each-ref)", function()
+      assert.are.same("foo%1Dbar%1E", subject.encode({ foo = "bar" }, "ref"))
     end)
   end)
 
