@@ -16,7 +16,7 @@ local api = vim.api
 
 ---@class StatusBuffer
 ---@field buffer Buffer instance
----@field state NeogitRepo
+---@field state NeogitRepoState
 ---@field config NeogitConfig
 ---@field root string
 ---@field refresh_lock Semaphore
@@ -25,17 +25,22 @@ M.__index = M
 
 local instances = {}
 
+---@param instance StatusBuffer
+---@param dir string
 function M.register(instance, dir)
-  instances[dir] = instance
+  instances[vim.fs.normalize(dir)] = instance
 end
 
 ---@param dir? string
 ---@return StatusBuffer
 function M.instance(dir)
-  return instances[dir or vim.uv.cwd()]
+  local dir = dir or vim.uv.cwd()
+  assert(dir, "cannot locate a status buffer with no cwd")
+
+  return instances[vim.fs.normalize(dir)]
 end
 
----@param state NeogitRepo
+---@param state NeogitRepoState
 ---@param config NeogitConfig
 ---@param root string
 ---@return StatusBuffer

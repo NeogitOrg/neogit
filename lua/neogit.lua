@@ -91,7 +91,7 @@ local function construct_opts(opts)
     opts.cwd = git.cli.git_root(".")
 
     if opts.cwd == "" then
-      opts.cwd = vim.fn.getcwd()
+      opts.cwd = vim.uv.cwd()
     end
   end
 
@@ -260,7 +260,7 @@ function M.complete(arglead)
 
   if arglead:find("^cwd=") then
     return {
-      "cwd=" .. vim.fn.getcwd(),
+      "cwd=" .. vim.uv.cwd(),
     }
   end
 
