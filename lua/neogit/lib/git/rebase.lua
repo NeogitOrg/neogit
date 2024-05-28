@@ -6,15 +6,12 @@ local notification = require("neogit.lib.notification")
 ---@class NeogitGitRebase
 local M = {}
 
-local a = require("plenary.async")
-
 local function fire_rebase_event(data)
   vim.api.nvim_exec_autocmds("User", { pattern = "NeogitRebase", modeline = false, data = data })
 end
 
 local function rebase_command(cmd)
-  a.util.scheduler()
-  return cmd.env(client.get_envs_git_editor()).show_popup(true):in_pty(true).call { verbose = true }
+  return cmd.env(client.get_envs_git_editor()).call_interactive { verbose = true }
 end
 
 ---Instant rebase. This is a way to rebase without using the interactive editor
@@ -26,7 +23,7 @@ function M.instantly(commit, args)
     .env({ GIT_SEQUENCE_EDITOR = ":" }).interactive.autostash.autosquash
     .arg_list(args or {})
     .commit(commit)
-    .call()
+    .call_interactive()
 
   if result.code ~= 0 then
     fire_rebase_event { commit = commit, status = "failed" }
