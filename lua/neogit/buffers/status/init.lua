@@ -216,6 +216,12 @@ function M:open(kind, cwd)
       ["NeogitFetchComplete"] = function()
         self:dispatch_refresh(nil, "fetch_complete")
       end,
+      ["NeogitRebase"] = function()
+        self:dispatch_refresh(nil, "rebase")
+      end,
+      ["NeogitMerge"] = function()
+        self:dispatch_refresh(nil, "merge")
+      end,
     },
   }
 

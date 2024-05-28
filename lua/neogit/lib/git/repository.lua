@@ -170,10 +170,10 @@ function Repo.instance(dir)
 
   local cwd = vim.fs.normalize(dir)
   if not instances[cwd] then
+    logger.debug("[REPO]: Registered Repository for: " .. cwd)
     instances[cwd] = Repo.new(cwd)
   end
 
-  logger.debug("[REPO]: Loaded Repository for: " .. cwd)
   return instances[cwd]
 end
 
