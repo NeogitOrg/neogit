@@ -13,6 +13,7 @@ jobs:
     strategy:
       matrix:
         release: [v0.10.0, nightly]
+        os: [ubuntu-latest, windows-latest]
     env:
       CI: "1"
     steps:
