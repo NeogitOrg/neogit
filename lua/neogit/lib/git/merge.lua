@@ -8,8 +8,7 @@ local a = require("plenary.async")
 local M = {}
 
 local function merge_command(cmd)
-  local envs = client.get_envs_git_editor()
-  return cmd.env(envs).show_popup(true):in_pty(true).call { verbose = true }
+  return cmd.env(client.get_envs_git_editor()).call_interactive { verbose = true }
 end
 
 local function fire_merge_event(data)

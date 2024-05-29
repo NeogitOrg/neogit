@@ -12,9 +12,37 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        release: [stable, nightly]
+        release: [v0.10.0, nightly]
+        os: [ubuntu-latest, windows-latest]
+    env:
+      CI: "1"
     steps:
       - uses: actions/checkout@v4
+
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          repository: nvim-lua/plenary.nvim
+          path: tmp/plenary/
+
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          repository: nvim-telescope/telescope.nvim
+          path: tmp/telescope/
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - uses: rhysd/action-setup-vim@v1
+        with:
+          neovim: true
+          version: ${{ matrix.release }}
+
+      - name: E2E Test
+        run: |
+          bundle exec rspec
 
       - name: Install Dependencies
         run: |
@@ -22,19 +50,6 @@ jobs:
           cd ~/.local/share/neogit-test/site/pack/plenary.nvim/start
           git clone https://github.com/nvim-lua/plenary.nvim
 
-          mkdir -p ~/.local/share/neogit-test/site/pack/telescope.nvim/start
-          cd ~/.local/share/neogit-test/site/pack/telescope.nvim/start
-          git clone https://github.com/nvim-telescope/telescope.nvim
-
-      - name: Install Neovim
-        run: |
-          wget https://github.com/neovim/neovim/releases/download/${{ matrix.release }}/nvim-linux64.tar.gz
-          tar -zxf nvim-linux64.tar.gz
-          sudo ln -s $(pwd)/nvim-linux64/bin/nvim /usr/local/bin
-
-      - name: Test
-        continue-on-error: false
-        env:
-          ci: "1"
+      - name: Unit Test
         run: |
           make test

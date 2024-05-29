@@ -43,7 +43,7 @@ end)
 M.shared_subdirectory = operation("ignore_subdirectory", function(popup)
   local subdirectory = input.get_user_input("Ignore sub-directory", { completion = "dir" })
   if subdirectory then
-    subdirectory = Path:new(vim.loop.cwd(), subdirectory)
+    subdirectory = Path:new(vim.uv.cwd(), subdirectory)
 
     local ignore_file = subdirectory:joinpath(".gitignore")
     local rules = make_rules(popup, tostring(subdirectory))

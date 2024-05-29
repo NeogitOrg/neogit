@@ -163,7 +163,7 @@ M.v_discard = function(self)
         end
       end
 
-      self:refresh()
+      self:dispatch_refresh()
     end
   end)
 end
@@ -217,7 +217,7 @@ M.v_stage = function(self)
     end
 
     if #untracked_files > 0 or #unstaged_files > 0 or #patches > 0 then
-      self:refresh()
+      self:dispatch_refresh()
     end
   end)
 end
@@ -257,7 +257,7 @@ M.v_unstage = function(self)
     end
 
     if #files > 0 or #patches > 0 then
-      self:refresh { update_diffs = { "staged:*" } }
+      self:dispatch_refresh { update_diffs = { "staged:*" } }
     end
   end)
 end
@@ -481,7 +481,7 @@ end
 ---@param self StatusBuffer
 M.n_refresh_buffer = function(self)
   return a.void(function()
-    self:refresh()
+    self:dispatch_refresh()
   end)
 end
 
@@ -842,7 +842,7 @@ M.n_discard = function(self)
 
     if action and (choices or input.get_permission(message)) then
       action()
-      self:refresh(refresh)
+      self:dispatch_refresh(refresh)
     end
   end)
 end
@@ -936,7 +936,7 @@ M.n_untrack = function(self)
       end
 
       notification.info(message)
-      self:refresh()
+      self:dispatch_refresh()
     end
   end)
 end
@@ -963,7 +963,7 @@ M.v_untrack = function(self)
       end
 
       notification.info(message)
-      self:refresh()
+      self:dispatch_refresh()
     end
   end)
 end
@@ -991,23 +991,23 @@ M.n_stage = function(self)
         local patch = git.index.generate_patch(item, stagable.hunk, stagable.hunk.from, stagable.hunk.to)
 
         git.index.apply(patch, { cached = true })
-        self:refresh { update_diffs = { "*:" .. item.escaped_path } }
+        self:dispatch_refresh { update_diffs = { "*:" .. item.escaped_path } }
       elseif stagable.filename then
         if section.options.section == "unstaged" then
           git.status.stage { stagable.filename }
-          self:refresh { update_diffs = { "unstaged:" .. stagable.filename } }
+          self:dispatch_refresh { update_diffs = { "unstaged:" .. stagable.filename } }
         elseif section.options.section == "untracked" then
           git.index.add { stagable.filename }
-          self:refresh { update_diffs = { "untracked:" .. stagable.filename } }
+          self:dispatch_refresh { update_diffs = { "untracked:" .. stagable.filename } }
         end
       end
     elseif section then
       if section.options.section == "untracked" then
         git.status.stage_untracked()
-        self:refresh { update_diffs = { "untracked:*" } }
+        self:dispatch_refresh { update_diffs = { "untracked:*" } }
       elseif section.options.section == "unstaged" then
         git.status.stage_modified()
-        self:refresh { update_diffs = { "unstaged:*" } }
+        self:dispatch_refresh { update_diffs = { "unstaged:*" } }
       end
     end
   end)
@@ -1017,7 +1017,7 @@ end
 M.n_stage_all = function(self)
   return a.void(function()
     git.status.stage_all()
-    self:refresh()
+    self:dispatch_refresh()
   end)
 end
 
@@ -1025,7 +1025,7 @@ end
 M.n_stage_unstaged = function(self)
   return a.void(function()
     git.status.stage_modified()
-    self:refresh { update_diffs = { "unstaged:*" } }
+    self:dispatch_refresh { update_diffs = { "unstaged:*" } }
   end)
 end
 
@@ -1047,14 +1047,14 @@ M.n_unstage = function(self)
           git.index.generate_patch(item, unstagable.hunk, unstagable.hunk.from, unstagable.hunk.to, true)
 
         git.index.apply(patch, { cached = true, reverse = true })
-        self:refresh { update_diffs = { "*:" .. item.escaped_path } }
+        self:dispatch_refresh { update_diffs = { "*:" .. item.escaped_path } }
       elseif unstagable.filename then
         git.status.unstage { unstagable.filename }
-        self:refresh { update_diffs = { "*:" .. unstagable.filename } }
+        self:dispatch_refresh { update_diffs = { "*:" .. unstagable.filename } }
       end
     elseif section then
       git.status.unstage_all()
-      self:refresh { update_diffs = { "staged:*" } }
+      self:dispatch_refresh { update_diffs = { "staged:*" } }
     end
   end)
 end
@@ -1063,7 +1063,7 @@ end
 M.n_unstage_staged = function(self)
   return a.void(function()
     git.status.unstage_all()
-    self:refresh { update_diffs = { "staged:*" } }
+    self:dispatch_refresh { update_diffs = { "staged:*" } }
   end)
 end
 
@@ -1290,6 +1290,19 @@ end
 ---@param _self StatusBuffer
 M.n_worktree_popup = function(_self)
   return popups.open("worktree")
+end
+
+---@param _self StatusBuffer
+M.n_open_tree = function(_self)
+  return a.void(function()
+    local template = "https://${host}/${owner}/${repository}/tree/${branch_name}"
+
+    local url = git.remote.get_url(git.branch.upstream_remote())[1]
+    local format_values = git.remote.parse(url)
+    format_values["branch_name"] = git.branch.current()
+
+    vim.ui.open(util.format(template, format_values))
+  end)
 end
 
 return M

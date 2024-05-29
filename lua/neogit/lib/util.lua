@@ -480,7 +480,7 @@ function M.memoize(f, opts)
   local timer = {}
 
   return function(...)
-    local key = vim.inspect { vim.loop.cwd(), ... }
+    local key = vim.inspect { vim.fs.normalize(vim.uv.cwd()), ... }
 
     if cache[key] == nil then
       cache[key] = f(...)
@@ -526,7 +526,7 @@ function M.debounce_trailing(ms, fn, hash)
     timer:start(ms, 0, function()
       timer:stop()
       running[id] = nil
-      fn(unpack(argv, 1, table.maxn(argv)))
+      vim.schedule_wrap(fn)(unpack(argv, 1, table.maxn(argv)))
     end)
   end
 end

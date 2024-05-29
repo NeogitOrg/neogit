@@ -132,6 +132,8 @@ neogit.setup {
   console_timeout = 2000,
   -- Automatically show console if a command takes more than console_timeout milliseconds
   auto_show_console = true,
+  -- Automatically close the console if the process exits with a 0 (success) status
+  auto_close_console = true,
   status = {
     show_head_commit_hash = true,
     recent_commit_count = 10,
@@ -162,6 +164,7 @@ neogit.setup {
     -- "split" to show the staged diff below the commit editor
     -- "vsplit" to show it to the right
     -- "split_above" Like :top split
+    -- "vsplit_left" like :vsplit, but open to the left
     -- "auto" "vsplit" if window would have 80 cols, otherwise "split"
     staged_diff_split_kind = "split"
   },
@@ -327,7 +330,10 @@ neogit.setup {
       ["w"] = "WorktreePopup",
     },
     status = {
+      ["k"] = "MoveUp",
+      ["j"] = "MoveDown",
       ["q"] = "Close",
+      ["o"] = "OpenTree",
       ["I"] = "InitRepo",
       ["1"] = "Depth1",
       ["2"] = "Depth2",
@@ -342,7 +348,6 @@ neogit.setup {
       ["u"] = "Unstage",
       ["U"] = "UnstageStaged",
       ["$"] = "CommandHistory",
-      ["#"] = "Console",
       ["Y"] = "YankSelected",
       ["<c-r>"] = "RefreshBuffer",
       ["<enter>"] = "GoToFile",
