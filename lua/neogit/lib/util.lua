@@ -526,7 +526,7 @@ function M.debounce_trailing(ms, fn, hash)
     timer:start(ms, 0, function()
       timer:stop()
       running[id] = nil
-      fn(unpack(argv, 1, table.maxn(argv)))
+      vim.schedule_wrap(fn)(unpack(argv, 1, table.maxn(argv)))
     end)
   end
 end

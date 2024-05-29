@@ -1,16 +1,17 @@
 local gb = require("neogit.lib.git.branch")
 local neogit = require("neogit")
-local plenary_async = require("plenary.async")
 local git_harness = require("tests.util.git_harness")
 local neogit_util = require("neogit.lib.util")
 local util = require("tests.util.util")
 local input = require("tests.mocks.input")
 
+neogit.setup {}
+
 describe("lib.git.branch", function()
   describe("#exists", function()
     before_each(function()
       git_harness.prepare_repository()
-      plenary_async.util.block_on(neogit.reset)
+      neogit.reset()
     end)
 
     it("returns true when branch exists", function()
@@ -25,7 +26,7 @@ describe("lib.git.branch", function()
   describe("#is_unmerged", function()
     before_each(function()
       git_harness.prepare_repository()
-      plenary_async.util.block_on(neogit.reset)
+      neogit.reset()
     end)
 
     it("returns true when feature branch has commits base branch doesn't", function()
@@ -73,7 +74,7 @@ describe("lib.git.branch", function()
   describe("#delete", function()
     before_each(function()
       git_harness.prepare_repository()
-      plenary_async.util.block_on(neogit.reset)
+      neogit.reset()
     end)
 
     describe("when branch is unmerged", function()
@@ -117,7 +118,7 @@ describe("lib.git.branch", function()
   describe("recent branches", function()
     before_each(function()
       git_harness.prepare_repository()
-      plenary_async.util.block_on(neogit.reset)
+      neogit.reset()
     end)
 
     it(
@@ -173,7 +174,7 @@ describe("lib.git.branch", function()
 
     before_each(function()
       git_harness.prepare_repository()
-      plenary_async.util.block_on(neogit.reset)
+      neogit.reset()
       setup_local_git_branches()
     end)
 

@@ -1,15 +1,16 @@
 local neogit = require("neogit")
-local plenary_async = require("plenary.async")
 local git_harness = require("tests.util.git_harness")
 local util = require("tests.util.util")
 local remote = require("neogit.lib.git.remote")
 
 local subject = require("neogit.lib.git.log")
 
+neogit.setup {}
+
 describe("lib.git.log", function()
   before_each(function()
     git_harness.prepare_repository()
-    plenary_async.util.block_on(neogit.reset)
+    neogit.reset()
   end)
 
   describe("#is_ancestor", function()
@@ -127,7 +128,50 @@ describe("lib.git.log.parse", function()
               hash = "29ceb3dbfe9397ecb886d9ef8ac138af0ea3b46125318c94852a7289dd5be6b8",
               index_from = 692,
               index_len = 33,
+              length = 40,
               line = "@@ -692,33 +692,28 @@ end",
+              lines = {
+                " ---@param first_line number",
+                " ---@param last_line number",
+                " ---@param partial boolean",
+                "----@return SelectedHunk[],string[]",
+                "+---@return SelectedHunk[]",
+                " function M.get_item_hunks(item, first_line, last_line, partial)",
+                "   if item.folded or item.hunks == nil then",
+                "-    return {}, {}",
+                "+    return {}",
+                "   end",
+                " ",
+                "   local hunks = {}",
+                "-  local lines = {}",
+                " ",
+                "   for _, h in ipairs(item.hunks) do",
+                "-    -- Transform to be relative to the current item/file",
+                "-    local first_line = first_line - item.first",
+                "-    local last_line = last_line - item.first",
+                "-",
+                "-    if h.diff_from <= last_line and h.diff_to >= first_line then",
+                "-      -- Relative to the hunk",
+                "+    if h.first <= last_line and h.last >= first_line then",
+                "       local from, to",
+                "+",
+                "       if partial then",
+                "-        from = h.diff_from + math.max(first_line - h.diff_from, 0)",
+                "-        to = math.min(last_line, h.diff_to)",
+                "+        local length = last_line - first_line",
+                "+        from = h.diff_from + math.max((first_line - item.first) - h.diff_from, 0)",
+                "+        to = from + length",
+                "       else",
+                "         from = h.diff_from + 1",
+                "         to = h.diff_to",
+                "       end",
+                " ",
+                "       local hunk_lines = {}",
+                "-",
+                "       for i = from, to do",
+                "         table.insert(hunk_lines, item.diff.lines[i])",
+                "       end",
+              },
             },
             {
               diff_from = 42,
@@ -137,7 +181,25 @@ describe("lib.git.log.parse", function()
               hash = "07d81a3a449c3535229b434007b918e33be3fe02edc60be16209f5b4a05becee",
               index_from = 734,
               index_len = 14,
+              length = 15,
               line = "@@ -734,14 +729,10 @@ function M.get_item_hunks(item, first_line, last_line, partial)",
+              lines = {
+                "       setmetatable(o, o)",
+                " ",
+                "       table.insert(hunks, o)",
+                "-",
+                "-      for i = from, to do",
+                "-        table.insert(lines, item.diff.lines[i + h.diff_from])",
+                "-      end",
+                "     end",
+                "   end",
+                " ",
+                "-  return hunks, lines",
+                "+  return hunks",
+                " end",
+                " ",
+                " ---@param selection Selection",
+              },
             },
           },
           info = {},
@@ -210,25 +272,7 @@ describe("lib.git.log.parse", function()
       oid = "a7cde0fe1356fe06a2a1f14f421512a6c4cc5acc",
     }
 
-    local parsed_commit = subject.parse(commit)[1]
-
-    local keys = vim.tbl_keys(parsed_commit)
-    table.sort(keys)
-    assert.are.same(keys, {
-      "author_date",
-      "author_email",
-      "author_name",
-      "committer_date",
-      "committer_email",
-      "committer_name",
-      "description",
-      "diffs",
-      "oid",
-    })
-
-    for k, v in pairs(parsed_commit) do
-      assert.are.same(v, expected[k])
-    end
+    assert.are.same(subject.parse(commit)[1], expected)
   end)
 
   it("parses commit without message", function()
@@ -277,7 +321,19 @@ describe("lib.git.log.parse", function()
               hash = "092d9a04537ba4a006a439721537adeeb69d1d692f1d763e6d859d01a317e92e",
               index_from = 1,
               index_len = 7,
+              length = 9,
               line = "@@ -1,7 +1,9 @@",
+              lines = {
+                " MIT License",
+                " ",
+                "+hello",
+                " Copyright (c) 2020 TimUntersberger",
+                " ",
+                "+world",
+                " Permission is hereby granted, free of charge, to any person obtaining a copy",
+                ' of this software and associated documentation files (the "Software"), to deal',
+                " in the Software without restriction, including without limitation the rights",
+              },
             },
           },
           info = {},
@@ -302,25 +358,7 @@ describe("lib.git.log.parse", function()
       },
     }
 
-    local parsed_commit = subject.parse(commit)[1]
-
-    local keys = vim.tbl_keys(parsed_commit)
-    table.sort(keys)
-    assert.are.same(keys, {
-      "author_date",
-      "author_email",
-      "author_name",
-      "committer_date",
-      "committer_email",
-      "committer_name",
-      "description",
-      "diffs",
-      "oid",
-    })
-
-    for k, v in pairs(parsed_commit) do
-      assert.are.same(v, expected[k])
-    end
+    assert.are.same(subject.parse(commit)[1], expected)
   end)
 
   it("lib.git.log.branch_info extracts local branch name", function()
