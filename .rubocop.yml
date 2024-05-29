@@ -1,0 +1,17 @@
+require:
+  - rubocop-rspec
+AllCops:
+  NewCops: enable
+  TargetRubyVersion: 3.3.1
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+RSpec/DescribeClass:
+  Enabled: false
+RSpec/MultipleExpectations:
+  Enabled: false
+RSpec/ExampleLength:
+  Enabled: false
+RSpec/NestedGroups:
+  Enabled: false
+Style/NestedModifier:
+  Enabled: false

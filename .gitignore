@@ -6,3 +6,4 @@ doc/tags
 
 # Environment
 .envrc
+/tests/.min/*

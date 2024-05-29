@@ -607,16 +607,18 @@ local configurations = {
   ["bisect"] = config {},
 }
 
--- NOTE: Use require("neogit.lib.git").repo.git_root instead of calling this function.
--- repository.git_root is used by all other library functions, so it's most likely the one you want to use.
--- git_root_of_cwd() returns the git repo of the cwd, which can change anytime
--- after git_root_of_cwd() has been called.
+--- NOTE: Use require("neogit.lib.git").repo.git_root instead of calling this function.
+--- repository.git_root is used by all other library functions, so it's most likely the one you want to use.
+--- git_root_of_cwd() returns the git repo of the cwd, which can change anytime
+--- after git_root_of_cwd() has been called.
+---@param dir string
 local function git_root(dir)
   local cmd = { "git", "-C", dir, "rev-parse", "--show-toplevel" }
   local result = vim.system(cmd, { text = true }):wait()
   return Path:new(vim.trim(result.stdout)):absolute()
 end
 
+---@param dir string
 local function is_inside_worktree(dir)
   local cmd = { "git", "-C", dir, "rev-parse", "--is-inside-work-tree" }
   local result = vim.system(cmd):wait()

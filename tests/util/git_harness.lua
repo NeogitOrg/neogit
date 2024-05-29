@@ -61,7 +61,7 @@ function M.in_prepared_repo(cb)
     a.util.block_on(neogit.reset)
 
     vim.wait(1000, function()
-      return not status.instance and status.instance:_is_refresh_locked()
+      return not status.instance() and status.instance():_is_refresh_locked()
     end, 100)
 
     a.util.block_on(function()
@@ -71,8 +71,8 @@ function M.in_prepared_repo(cb)
       end
 
       a.util.block_on(function()
-        if status.instance then
-          status.instance:close()
+        if status.instance() then
+          status.instance():close()
         end
       end)
     end)
