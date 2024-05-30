@@ -274,10 +274,6 @@ function M:open(kind)
         [status_maps["Toggle"]] = function()
           pcall(vim.cmd, "normal! za")
         end,
-        ["<space>"] = function()
-          -- require("neogit.lib.ui.debug")
-          -- self.buffer.ui:debug_layout()
-        end,
       },
     },
     render = function()
