@@ -7,6 +7,10 @@ local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
 local M = {}
 
+---@param args string[]
+---@param remote string
+---@param branch string
+---@param opts table|nil
 local function pull_from(args, remote, branch, opts)
   opts = opts or {}
 
@@ -37,8 +41,9 @@ function M.from_pushremote(popup)
     pushRemote = git.branch.set_pushRemote()
   end
 
-  if pushRemote then
-    pull_from(popup:get_arguments(), pushRemote, git.repo.state.head.branch)
+  local current = git.branch.current()
+  if pushRemote and current then
+    pull_from(popup:get_arguments(), pushRemote, current)
   end
 end
 
@@ -58,17 +63,21 @@ function M.from_upstream(popup)
   end
 
   local remote, branch = git.branch.parse_remote_branch(upstream)
-  pull_from(popup:get_arguments(), remote, branch, { set_upstream = set_upstream })
+  if remote and branch then
+    pull_from(popup:get_arguments(), remote, branch, { set_upstream = set_upstream })
+  end
 end
 
 function M.from_elsewhere(popup)
-  local target = FuzzyFinderBuffer.new(git.refs.list_branches()):open_async { prompt_prefix = "pull" }
+  local target = FuzzyFinderBuffer.new(git.refs.list_remote_branches()):open_async { prompt_prefix = "pull" }
   if not target then
     return
   end
 
   local remote, branch = git.branch.parse_remote_branch(target)
-  pull_from(popup:get_arguments(), remote, branch)
+  if remote and branch then
+    pull_from(popup:get_arguments(), remote, branch)
+  end
 end
 
 function M.configure()
