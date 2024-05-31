@@ -159,6 +159,21 @@ end
 ---@field ref string
 ---@field is_remote boolean
 
+local function rev_name(oid)
+  local result = git.cli["name-rev"].name_only.no_undefined
+    .refs("refs/heads/*")
+    .exclude("*/HEAD")
+    .exclude("*/refs/heads/*")
+    .args(oid)
+    .call { hidden = true, ignore_error = true }
+
+  if result.code == 0 then
+    return result.stdout[1]
+  else
+    return oid
+  end
+end
+
 function M.update_rebase_status(state)
   state.rebase = { items = {}, onto = {}, head = nil, current = nil }
 
@@ -185,12 +200,7 @@ function M.update_rebase_status(state)
     if onto:exists() then
       state.rebase.onto.oid = vim.trim(onto:read())
       state.rebase.onto.subject = git.log.message(state.rebase.onto.oid)
-      state.rebase.onto.ref = git.cli["name-rev"].name_only.no_undefined
-        .refs("refs/heads/*")
-        .exclude("*/HEAD")
-        .exclude("*/refs/heads/*")
-        .args(state.rebase.onto.oid)
-        .call({ hidden = true }).stdout[1]
+      state.rebase.onto.ref = rev_name(state.rebase.onto.oid)
       state.rebase.onto.is_remote = not git.branch.exists(state.rebase.onto.ref)
     end
 
