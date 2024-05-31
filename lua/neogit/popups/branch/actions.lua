@@ -166,6 +166,11 @@ function M.rename_branch()
 end
 
 function M.reset_branch(popup)
+  if not git.branch.current() then
+    notification.warn("Cannot reset with detached HEAD")
+    return
+  end
+
   if git.status.is_dirty() then
     if not input.get_permission("Uncommitted changes will be lost. Proceed?") then
       return
