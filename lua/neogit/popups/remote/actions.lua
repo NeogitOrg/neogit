@@ -7,7 +7,6 @@ local notification = require("neogit.lib.notification")
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 local RemoteConfigPopup = require("neogit.popups.remote_config")
 
-local operation = require("neogit.operations")
 
 local function ask_to_set_pushDefault()
   local repo_config = git.config.get("neogit.askSetPushDefault")
@@ -22,7 +21,7 @@ local function ask_to_set_pushDefault()
   end
 end
 
-M.add = operation("add_remote", function(popup)
+function M.add(popup)
   local name = input.get_user_input("Add remote")
   if not name then
     return
