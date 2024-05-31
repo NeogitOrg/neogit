@@ -213,6 +213,7 @@ function M.is_detached()
   return git.repo.state.head.branch == "(detached)"
 end
 
+---@return string|nil
 function M.set_pushRemote()
   local remotes = git.remote.list()
   local pushDefault = git.config.get("remote.pushDefault")
