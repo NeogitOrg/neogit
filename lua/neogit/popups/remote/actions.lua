@@ -7,7 +7,6 @@ local notification = require("neogit.lib.notification")
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 local RemoteConfigPopup = require("neogit.popups.remote_config")
 
-
 local function ask_to_set_pushDefault()
   local repo_config = git.config.get("neogit.askSetPushDefault")
   local current_value = git.config.get("remote.pushDefault")
@@ -54,7 +53,7 @@ function M.add(popup)
       notification.info("Added remote " .. name)
     end
   end
-end)
+end
 
 function M.rename(_)
   local selected_remote = FuzzyFinderBuffer.new(git.remote.list())
