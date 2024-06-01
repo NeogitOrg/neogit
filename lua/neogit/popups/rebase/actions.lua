@@ -1,7 +1,6 @@
 local git = require("neogit.lib.git")
 local input = require("neogit.lib.input")
 local notification = require("neogit.lib.notification")
-local operation = require("neogit.operations")
 local util = require("neogit.lib.util")
 
 local CommitSelectViewBuffer = require("neogit.buffers.commit_select_view")
@@ -97,7 +96,7 @@ function M.interactively(popup)
   end
 end
 
-M.reword = operation("rebase_reword", function(popup)
+function M.reword(popup)
   local commit = base_commit(
     popup,
     git.log.list(),
@@ -108,21 +107,21 @@ M.reword = operation("rebase_reword", function(popup)
   end
 
   git.rebase.reword(commit)
-end)
+end
 
-M.modify = operation("rebase_modify", function(popup)
+function M.modify(popup)
   local commit = base_commit(popup, git.log.list(), "Select a commit to edit with <cr>, or <esc> to abort")
   if commit then
     git.rebase.modify(commit)
   end
-end)
+end
 
-M.drop = operation("rebase_drop", function(popup)
+function M.drop(popup)
   local commit = base_commit(popup, git.log.list(), "Select a commit to remove with <cr>, or <esc> to abort")
   if commit then
     git.rebase.drop(commit)
   end
-end)
+end
 
 function M.subset(popup)
   local newbase = FuzzyFinderBuffer.new(git.refs.list_branches())
