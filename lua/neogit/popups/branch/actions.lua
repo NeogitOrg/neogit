@@ -218,7 +218,7 @@ function M.reset_branch(popup)
   fire_branch_event("NeogitBranchReset", { branch_name = current, resetting_to = to })
 end
 
-function M.delete_branch()
+function M.delete_branch(popup)
   local options = util.deduplicate(util.merge(
     { popup.state.env.ref_name },
     git.refs.list_branches()
