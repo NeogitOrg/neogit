@@ -65,6 +65,12 @@ local record_template = record.encode({
   upstream_name = "%(upstream:short)",
   subject = "%(subject)",
 }, "ref")
+---
+---@class ParsedRef
+---@field type string
+---@field name string
+---@field unambiguous_name string
+---@field remote string|nil
 
 function M.list_parsed()
   local result = record.decode(refs(record_template))
@@ -80,6 +86,7 @@ function M.list_parsed()
 
     if ref.ref:match("^refs/heads/") then
       ref.type = "local_branch"
+      ref.unambiguous_name = ref.name
       table.insert(output.local_branch, ref)
     elseif ref.ref:match("^refs/remotes/") then
       local remote, branch = ref.ref:match("^refs/remotes/([^/]*)/(.*)$")
@@ -89,9 +96,12 @@ function M.list_parsed()
 
       ref.type = "remote_branch"
       ref.name = branch
+      ref.unambiguous_name = remote .. "/" .. branch
+      ref.remote = remote
       table.insert(output.remote_branch[remote], ref)
     elseif ref.ref:match("^refs/tags/") then
       ref.type = "tag"
+      ref.unambiguous_name = "tags/" .. ref.name
       table.insert(output.tag, ref)
     end
   end
