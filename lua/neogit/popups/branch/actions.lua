@@ -65,7 +65,10 @@ local function create_branch(popup, prompt, checkout)
     return
   end
 
-  local name = input.get_user_input("Create branch", { strip_spaces = true })
+  local name = input.get_user_input("Create branch", {
+    strip_spaces = true,
+    default = popup.state.env.suggested_branch_name
+  })
   if not name then
     return
   end
