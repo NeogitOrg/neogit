@@ -4,7 +4,6 @@ local ui = require("neogit.buffers.refs_view.ui")
 local popups = require("neogit.popups")
 local status_maps = require("neogit.config").get_reversed_status_maps()
 local CommitViewBuffer = require("neogit.buffers.commit_view")
-local logger = require("neogit.logger")
 
 --- @class RefsViewBuffer
 --- @field buffer Buffer
@@ -106,7 +105,6 @@ function M:open()
         end),
         [popups.mapping_for("BranchPopup")] = popups.open("branch", function(p)
           local ref = self.buffer.ui:get_ref_under_cursor()
-          logger.debug("ref: " .. vim.inspect(ref))
           p {
             ref_name = ref and ref.unambiguous_name,
             commits = self.buffer.ui:get_commits_in_selection(),
