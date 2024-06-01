@@ -380,6 +380,9 @@ function M.get_default_values()
     popup = {
       kind = "split",
     },
+    stash = {
+      kind = "tab",
+    },
     refs_view = {
       kind = "tab",
     },

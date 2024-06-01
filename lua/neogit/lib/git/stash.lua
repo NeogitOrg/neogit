@@ -5,6 +5,11 @@ local util = require("neogit.lib.util")
 ---@class NeogitGitStash
 local M = {}
 
+---@class StashEntry
+---@field stash_id string the id of the stash i.e. stash@{7}
+---@field rel_date string relative timestamp
+---@field message string the message associated with each stash.
+
 local function perform_stash(include)
   if not include then
     return
@@ -127,7 +132,13 @@ function M.register(meta)
     state.stashes.items = util.map(M.list(), function(line)
       local idx, message = line:match("stash@{(%d*)}: (.*)")
 
+      ---@class StashEntry
       return {
+        rel_date = cli.log
+          .max_count(1)
+          .format("%cr")
+          .args(("stash@{%s}"):format(idx))
+          .call({ hidden = true }).stdout[1],
         idx = tonumber(idx),
         name = line,
         message = message,

@@ -3,6 +3,7 @@ local operation = require("neogit.operations")
 local input = require("neogit.lib.input")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
+local StashListBuffer = require("neogit.buffers.stash_list_view")
 
 local M = {}
 
@@ -62,6 +63,11 @@ end
 
 function M.drop(popup)
   use("drop", popup.state.env.stash, { confirm = true })
+end
+
+--- git stash list
+function M.list()
+  StashListBuffer.new(git.repo.state.stashes.items):open()
 end
 
 M.rename = operation("stash_rename", function(popup)
