@@ -5,7 +5,6 @@ local config = require("neogit.config")
 local input = require("neogit.lib.input")
 local util = require("neogit.lib.util")
 local notification = require("neogit.lib.notification")
-local operation = require("neogit.operations")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 local BranchConfigPopup = require("neogit.popups.branch_config")
@@ -82,15 +81,15 @@ local function create_branch(popup, prompt, checkout)
   end
 end
 
-M.spin_off_branch = operation("spin_off_branch", function()
+function M.spin_off_branch()
   spin_off_branch(true)
-end)
+end
 
-M.spin_out_branch = operation("spin_out_branch", function()
+function M.spin_out_branch()
   spin_off_branch(false)
-end)
+end
 
-M.checkout_branch_revision = operation("checkout_branch_revision", function(popup)
+function M.checkout_branch_revision(popup)
   local options = util.deduplicate(util.merge(
     { popup.state.env.ref_name },
     popup.state.env.commits or {},
@@ -105,9 +104,9 @@ M.checkout_branch_revision = operation("checkout_branch_revision", function(popu
 
   git.cli.checkout.branch(selected_branch).arg_list(popup:get_arguments()).call_sync()
   fire_branch_event("NeogitBranchCheckout", { branch_name = selected_branch })
-end)
+end
 
-M.checkout_local_branch = operation("checkout_local_branch", function(popup)
+function M.checkout_local_branch(popup)
   local local_branches = git.refs.list_local_branches()
   local remote_branches = util.filter_map(git.refs.list_remote_branches(), function(name)
     local branch_name = name:match([[%/(.*)$]])
@@ -129,9 +128,9 @@ M.checkout_local_branch = operation("checkout_local_branch", function(popup)
     end
     fire_branch_event("NeogitBranchCheckout", { branch_name = target })
   end
-end)
+end
 
-M.checkout_recent_branch = operation("checkout_recent_branch", function(popup)
+function M.checkout_recent_branch(popup)
   local selected_branch = FuzzyFinderBuffer.new(git.branch.get_recent_local_branches()):open_async()
   if not selected_branch then
     return
@@ -139,26 +138,26 @@ M.checkout_recent_branch = operation("checkout_recent_branch", function(popup)
 
   git.branch.checkout(selected_branch, popup:get_arguments())
   fire_branch_event("NeogitBranchCheckout", { branch_name = selected_branch })
-end)
+end
 
-M.checkout_create_branch = operation("checkout_create_branch", function(popup)
+function M.checkout_create_branch(popup)
   create_branch(popup, "Create and checkout branch starting at", true)
-end)
+end
 
-M.create_branch = operation("create_branch", function(popup)
+function M.create_branch(popup)
   create_branch(popup, "Create branch starting at", false)
-end)
+end
 
-M.configure_branch = operation("configure_branch", function()
+function M.configure_branch()
   local branch_name = FuzzyFinderBuffer.new(git.refs.list_local_branches()):open_async()
   if not branch_name then
     return
   end
 
   BranchConfigPopup.create(branch_name)
-end)
+end
 
-M.rename_branch = operation("rename_branch", function()
+function M.rename_branch()
   local selected_branch = FuzzyFinderBuffer.new(git.refs.list_local_branches()):open_async()
   if not selected_branch then
     return
@@ -173,9 +172,9 @@ M.rename_branch = operation("rename_branch", function()
 
   notification.info(string.format("Renamed '%s' to '%s'", selected_branch, new_name))
   fire_branch_event("NeogitBranchRename", { branch_name = selected_branch, new_name = new_name })
-end)
+end
 
-M.reset_branch = operation("reset_branch", function(popup)
+function M.reset_branch(popup)
   if not git.branch.current() then
     notification.warn("Cannot reset with detached HEAD")
     return
@@ -217,9 +216,9 @@ M.reset_branch = operation("reset_branch", function(popup)
 
   notification.info(string.format("Reset '%s' to '%s'", current, to))
   fire_branch_event("NeogitBranchReset", { branch_name = current, resetting_to = to })
-end)
+end
 
-M.delete_branch = operation("delete_branch", function(popup)
+function M.delete_branch()
   local options = util.deduplicate(util.merge(
     { popup.state.env.ref_name },
     git.refs.list_branches()
@@ -278,9 +277,9 @@ M.delete_branch = operation("delete_branch", function(popup)
     end
     fire_branch_event("NeogitBranchDelete", { branch_name = branch_name })
   end
-end)
+end
 
-M.open_pull_request = operation("open_pull_request", function()
+function M.open_pull_request()
   local template
   local url = git.remote.get_url(git.branch.upstream_remote())[1]
 
@@ -303,6 +302,6 @@ M.open_pull_request = operation("open_pull_request", function()
   else
     notification.warn("Pull request URL template not found for this branch's upstream")
   end
-end)
+end
 
 return M

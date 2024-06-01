@@ -7,7 +7,6 @@ local LogViewBuffer = require("neogit.buffers.log_view")
 local ReflogViewBuffer = require("neogit.buffers.reflog_view")
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
-local operation = require("neogit.operations")
 local a = require("plenary.async")
 
 --- Runs `git log` and parses the commits
@@ -34,7 +33,7 @@ local function fetch_more_commits(popup, flags)
 end
 
 -- TODO: Handle when head is detached
-M.log_current = operation("log_current", function(popup)
+function M.log_current(popup)
   LogViewBuffer.new(
     commits(popup, {}),
     popup:get_internal_arguments(),
@@ -42,7 +41,7 @@ M.log_current = operation("log_current", function(popup)
     fetch_more_commits(popup, {})
   )
     :open()
-end)
+end
 
 function M.log_head(popup)
   local flags = { "HEAD" }

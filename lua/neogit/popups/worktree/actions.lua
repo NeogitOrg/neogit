@@ -5,7 +5,6 @@ local input = require("neogit.lib.input")
 local util = require("neogit.lib.util")
 local status = require("neogit.buffers.status")
 local notification = require("neogit.lib.notification")
-local operations = require("neogit.operations")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 local Path = require("plenary.path")
@@ -36,7 +35,7 @@ local function get_path(prompt)
   return path
 end
 
-M.checkout_worktree = operations("checkout_worktree", function()
+function M.checkout_worktree()
   local options = util.merge(git.refs.list_branches(), git.refs.list_tags(), git.refs.heads())
   local selected = FuzzyFinderBuffer.new(options):open_async { prompt_prefix = "checkout" }
   if not selected then
@@ -54,9 +53,9 @@ M.checkout_worktree = operations("checkout_worktree", function()
       status.instance():chdir(path)
     end
   end
-end)
+end
 
-M.create_worktree = operations("create_worktree", function()
+function M.create_worktree()
   local path = get_path("Create worktree")
   if not path then
     return
@@ -80,9 +79,9 @@ M.create_worktree = operations("create_worktree", function()
       status.instance():chdir(path)
     end
   end
-end)
+end
 
-M.move = operations("move_worktree", function()
+function M.move()
   local options = vim.tbl_map(function(w)
     return w.path
   end, git.worktree.list { include_main = false })
@@ -113,9 +112,9 @@ M.move = operations("move_worktree", function()
       status.instance():chdir(path)
     end
   end
-end)
+end
 
-M.delete = operations("delete_worktree", function()
+function M.delete()
   local options = vim.tbl_map(function(w)
     return w.path
   end, git.worktree.list { include_main = false })
@@ -155,9 +154,9 @@ M.delete = operations("delete_worktree", function()
       notification.info("Worktree removed")
     end
   end
-end)
+end
 
-M.visit = operations("visit_worktree", function()
+function M.visit()
   local options = vim.tbl_map(function(w)
     return w.path
   end, git.worktree.list())
@@ -171,6 +170,6 @@ M.visit = operations("visit_worktree", function()
   if selected and status.is_open() then
     status.instance():chdir(selected)
   end
-end)
+end
 
 return M

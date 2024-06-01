@@ -2,7 +2,6 @@ local M = {}
 
 local Path = require("plenary.path")
 local git = require("neogit.lib.git")
-local operation = require("neogit.operations")
 local util = require("neogit.lib.util")
 local input = require("neogit.lib.input")
 
@@ -33,14 +32,14 @@ local function add_rules(path, rules)
   path:write(table.concat(selected, "\n") .. "\n", "a+")
 end
 
-M.shared_toplevel = operation("ignore_shared", function(popup)
+function M.shared_toplevel(popup)
   local ignore_file = Path:new(git.repo.git_root, ".gitignore")
   local rules = make_rules(popup, git.repo.git_root)
 
   add_rules(ignore_file, rules)
-end)
+end
 
-M.shared_subdirectory = operation("ignore_subdirectory", function(popup)
+function M.shared_subdirectory(popup)
   local subdirectory = input.get_user_input("Ignore sub-directory", { completion = "dir" })
   if subdirectory then
     subdirectory = Path:new(vim.uv.cwd(), subdirectory)
@@ -50,20 +49,20 @@ M.shared_subdirectory = operation("ignore_subdirectory", function(popup)
 
     add_rules(ignore_file, rules)
   end
-end)
+end
 
-M.private_local = operation("ignore_private", function(popup)
+function M.private_local(popup)
   local ignore_file = git.repo:git_path("info", "exclude")
   local rules = make_rules(popup, git.repo.git_root)
 
   add_rules(ignore_file, rules)
-end)
+end
 
-M.private_global = operation("ignore_private_global", function(popup)
+function M.private_global(popup)
   local ignore_file = Path:new(git.config.get_global("core.excludesfile"):read())
   local rules = make_rules(popup, git.repo.git_root)
 
   add_rules(ignore_file, rules)
-end)
+end
 
 return M
