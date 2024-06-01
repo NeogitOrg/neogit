@@ -346,6 +346,16 @@ function Ui:get_commit_under_cursor()
   return component and component.options.oid
 end
 
+---@return ParsedRef|nil
+function Ui:get_ref_under_cursor()
+  local cursor = vim.api.nvim_win_get_cursor(0)
+  local component = self:_find_component_by_index(cursor[1], function(node)
+    return node.options.ref ~= nil
+  end)
+
+  return component and component.options.ref
+end
+
 ---@return string|nil
 function Ui:get_yankable_under_cursor()
   local cursor = vim.api.nvim_win_get_cursor(0)
