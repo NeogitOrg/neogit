@@ -219,9 +219,12 @@ M.reset_branch = operation("reset_branch", function(popup)
   fire_branch_event("NeogitBranchReset", { branch_name = current, resetting_to = to })
 end)
 
-M.delete_branch = operation("delete_branch", function()
-  local branches = git.refs.list_branches()
-  local selected_branch = FuzzyFinderBuffer.new(branches):open_async()
+M.delete_branch = operation("delete_branch", function(popup)
+  local options = util.deduplicate(util.merge(
+    { popup.state.env.ref_name },
+    git.refs.list_branches()
+  ))
+  local selected_branch = FuzzyFinderBuffer.new(options):open_async()
   if not selected_branch then
     return
   end
