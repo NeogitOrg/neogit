@@ -2,6 +2,9 @@ local util = require("tests.util.util")
 
 if os.getenv("CI") then
   vim.opt.runtimepath:prepend(vim.fn.getcwd())
+  vim.opt.runtimepath:prepend(vim.fn.getcwd() .. "/tmp/plenary")
+  vim.opt.runtimepath:prepend(vim.fn.getcwd() .. "/tmp/telescope")
+
   vim.cmd([[runtime! plugin/plenary.vim]])
   vim.cmd([[runtime! plugin/neogit.lua]])
 else

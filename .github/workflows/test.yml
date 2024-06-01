@@ -9,27 +9,15 @@ on:
 jobs:
   test:
     name: Test
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        release: [v0.10.0, nightly]
-        os: [ubuntu-latest, windows-latest]
+        release: [stable, nightly]
+        os: [ubuntu-latest]
     env:
       CI: "1"
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-          repository: nvim-lua/plenary.nvim
-          path: tmp/plenary/
-
-      - uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-          repository: nvim-telescope/telescope.nvim
-          path: tmp/telescope/
 
       - uses: ruby/setup-ruby@v1
         with:
@@ -40,15 +28,15 @@ jobs:
           neovim: true
           version: ${{ matrix.release }}
 
+      - name: Install Dependencies
+        run: |
+          git config --global core.compression 0
+          git clone https://github.com/nvim-lua/plenary.nvim tmp/plenary
+          git clone https://github.com/nvim-telescope/telescope.nvim tmp/telescope
+
       - name: E2E Test
         run: |
           bundle exec rspec
-
-      - name: Install Dependencies
-        run: |
-          mkdir -p ~/.local/share/neogit-test/site/pack/plenary.nvim/start
-          cd ~/.local/share/neogit-test/site/pack/plenary.nvim/start
-          git clone https://github.com/nvim-lua/plenary.nvim
 
       - name: Unit Test
         run: |
