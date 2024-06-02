@@ -51,6 +51,7 @@ end
 local function create_branch(popup, prompt, checkout)
   -- stylua: ignore
   local options = util.deduplicate(util.merge(
+    { popup.state.env.ref_name },
     { popup.state.env.commits and popup.state.env.commits[1] },
     { git.branch.current() or "HEAD" },
     git.refs.list_branches(),
@@ -63,7 +64,10 @@ local function create_branch(popup, prompt, checkout)
     return
   end
 
-  local name = input.get_user_input("Create branch", { strip_spaces = true })
+  local name = input.get_user_input("Create branch", {
+    strip_spaces = true,
+    default = popup.state.env.suggested_branch_name,
+  })
   if not name then
     return
   end
@@ -86,8 +90,15 @@ function M.spin_out_branch()
 end
 
 function M.checkout_branch_revision(popup)
-  local options =
-    util.merge(popup.state.env.commits, git.refs.list_branches(), git.refs.list_tags(), git.refs.heads())
+  local options = util.deduplicate(
+    util.merge(
+      { popup.state.env.ref_name },
+      popup.state.env.commits or {},
+      git.refs.list_branches(),
+      git.refs.list_tags(),
+      git.refs.heads()
+    )
+  )
   local selected_branch = FuzzyFinderBuffer.new(options):open_async()
   if not selected_branch then
     return
@@ -209,9 +220,9 @@ function M.reset_branch(popup)
   fire_branch_event("NeogitBranchReset", { branch_name = current, resetting_to = to })
 end
 
-function M.delete_branch()
-  local branches = git.refs.list_branches()
-  local selected_branch = FuzzyFinderBuffer.new(branches):open_async()
+function M.delete_branch(popup)
+  local options = util.deduplicate(util.merge({ popup.state.env.ref_name }, git.refs.list_branches()))
+  local selected_branch = FuzzyFinderBuffer.new(options):open_async()
   if not selected_branch then
     return
   end

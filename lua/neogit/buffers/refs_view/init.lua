@@ -104,7 +104,12 @@ function M:open()
           p { commits = self.buffer.ui:get_commits_in_selection() }
         end),
         [popups.mapping_for("BranchPopup")] = popups.open("branch", function(p)
-          p { commits = self.buffer.ui:get_commits_in_selection() }
+          local ref = self.buffer.ui:get_ref_under_cursor()
+          p {
+            ref_name = ref and ref.unambiguous_name,
+            commits = self.buffer.ui:get_commits_in_selection(),
+            suggested_branch_name = ref and ref.name,
+          }
         end),
         [popups.mapping_for("CommitPopup")] = popups.open("commit", function(p)
           p { commit = self.buffer.ui:get_commits_in_selection()[1] }

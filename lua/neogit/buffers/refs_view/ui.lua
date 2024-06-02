@@ -57,6 +57,7 @@ local function section(refs, heading, head)
       rows,
       col.tag("Ref")({ Ref(ref) }, {
         oid = ref.oid,
+        ref = ref,
         foldable = true,
         ---@param this Component
         ---@param ui Ui
@@ -70,6 +71,7 @@ local function section(refs, heading, head)
             this.options.on_open = nil -- Don't call this again
             this.options.foldable = true
             this.options.folded = false
+            this.options.ref = ref
 
             vim.cmd("norm! zE") -- Eliminate all existing folds
             this:append(cherries)
