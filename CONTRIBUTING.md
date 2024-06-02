@@ -60,8 +60,9 @@ verbose logging.
 ```lua
 local logger = require("neogit.logger")
 
-logger.fmt_info("This is a log message: %d", 2)
-logger.fmt_debug("This is a verbose log message: %q", status)
+logger.info("This is a log message")
+logger.debug(("This is a verbose log message: %q"):format(str_to_quote))
+logger.debug(("This is a verbose log message: %s"):format(vim.inspect(thing)))
 ```
 
 If suitable, prefer to scope your logs using `[ SCOPE ]` to make it easier to find the source of a message, such as:

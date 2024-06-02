@@ -31,6 +31,11 @@ local function is_macos()
   return vim.loop.os_uname().sysname == "Darwin"
 end
 
+local function is_gnu_mktemp()
+  vim.fn.system { "bash", "-c", "mktemp --version | grep GNU" }
+  return vim.v.shell_error == 0
+end
+
 ---Create a temporary directory for use
 ---@param suffix string? The suffix to be appended to the temp directory, ideally avoid spaces in your suffix
 ---@return string The path to the temporary directory
@@ -38,10 +43,11 @@ function M.create_temp_dir(suffix)
   suffix = "neogit-" .. (suffix or "")
 
   local cmd
-  if is_macos() then
-    cmd = string.format("mktemp -d -t %s", suffix)
-  else
+  if is_gnu_mktemp() then
     cmd = string.format("mktemp -d --suffix=%s", suffix)
+  else
+    -- assumes BSD mktemp for macos
+    cmd = string.format("mktemp -d -t %s", suffix)
   end
 
   local prefix = is_macos() and "/private" or ""
