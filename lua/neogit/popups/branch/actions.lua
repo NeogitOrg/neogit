@@ -66,7 +66,7 @@ local function create_branch(popup, prompt, checkout)
 
   local name = input.get_user_input("Create branch", {
     strip_spaces = true,
-    default = popup.state.env.suggested_branch_name
+    default = popup.state.env.suggested_branch_name,
   })
   if not name then
     return
@@ -90,13 +90,15 @@ function M.spin_out_branch()
 end
 
 function M.checkout_branch_revision(popup)
-  local options = util.deduplicate(util.merge(
-    { popup.state.env.ref_name },
-    popup.state.env.commits or {},
-    git.refs.list_branches(),
-    git.refs.list_tags(),
-    git.refs.heads()
-  ))
+  local options = util.deduplicate(
+    util.merge(
+      { popup.state.env.ref_name },
+      popup.state.env.commits or {},
+      git.refs.list_branches(),
+      git.refs.list_tags(),
+      git.refs.heads()
+    )
+  )
   local selected_branch = FuzzyFinderBuffer.new(options):open_async()
   if not selected_branch then
     return
@@ -219,10 +221,7 @@ function M.reset_branch(popup)
 end
 
 function M.delete_branch(popup)
-  local options = util.deduplicate(util.merge(
-    { popup.state.env.ref_name },
-    git.refs.list_branches()
-  ))
+  local options = util.deduplicate(util.merge({ popup.state.env.ref_name }, git.refs.list_branches()))
   local selected_branch = FuzzyFinderBuffer.new(options):open_async()
   if not selected_branch then
     return
