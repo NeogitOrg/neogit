@@ -8,4 +8,7 @@ lint:
 lint-short:
 	selene --config selene/config.toml --display-style Quiet lua
 
-.PHONY: lint test
+format:
+	stylua .
+
+.PHONY: format lint test
