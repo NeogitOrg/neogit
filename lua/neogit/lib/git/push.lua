@@ -14,14 +14,16 @@ function M.push_interactive(remote, branch, args)
 end
 
 local function update_unmerged(state)
+  local status = git.branch.status()
+
   state.upstream.unmerged.items = {}
   state.pushRemote.unmerged.items = {}
 
-  if state.head.branch == "(detached)" then
+  if status.detached then
     return
   end
 
-  if state.upstream.ref then
+  if status.upstream then
     state.upstream.unmerged.items =
       util.filter_map(git.log.list({ "@{upstream}.." }, nil, {}, true), git.log.present_commit)
   end
