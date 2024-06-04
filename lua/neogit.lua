@@ -119,13 +119,14 @@ local function open_status_buffer(opts)
 
   local instance = status.new(repo.state, config.values, repo.git_root):open(opts.kind, opts.cwd)
 
-  a.run(function()
+  a.void(function()
     repo:refresh {
+      source = "open_buffer",
       callback = function()
-        instance:dispatch_refresh()
+        instance:dispatch_refresh(nil, "open_buffer")
       end,
     }
-  end)
+  end)()
 end
 
 ---@alias Popup
