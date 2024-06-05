@@ -3,8 +3,6 @@ local git = require("neogit.lib.git")
 local util = require("neogit.lib.util")
 local logger = require("neogit.logger")
 
-local ItemFilter = require("neogit.lib.item_filter")
-
 local insert = table.insert
 local sha256 = vim.fn.sha256
 
