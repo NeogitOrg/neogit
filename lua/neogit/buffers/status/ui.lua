@@ -436,15 +436,15 @@ function M.Status(state, config)
   local show_hint = not config.disable_hint
 
   local show_upstream = state.upstream.ref
-    and state.head.branch ~= "(detached)"
+    and not state.head.detached
 
   local show_pushRemote = state.pushRemote.ref
-    and state.head.branch ~= "(detached)"
+    and not state.head.detached
 
   local show_tag = state.head.tag.name
 
   local show_tag_distance = state.head.tag.name
-    and state.head.branch ~= "(detached)"
+    and not state.head.detached
 
   local show_merge = state.merge.head
     and not config.sections.sequencer.hidden
