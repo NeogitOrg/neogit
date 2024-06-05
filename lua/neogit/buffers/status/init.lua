@@ -272,6 +272,12 @@ function M:refresh(partial, reason)
   vim.uv.update_time()
   local start = vim.loop.now()
 
+  local cursor, view
+  if self.buffer:is_focused() then
+    cursor = self.buffer.ui:get_cursor_location()
+    view = self.buffer:save_view()
+  end
+
   git.repo:refresh {
     source = "status",
     partial = partial,
@@ -279,12 +285,6 @@ function M:refresh(partial, reason)
       if not self.buffer then
         logger.debug("[STATUS][Refresh Callback] Buffer no longer exists - bail")
         return
-      end
-
-      local cursor, view
-      if self.buffer:is_focused() then
-        cursor = self.buffer.ui:get_cursor_location()
-        view = self.buffer:save_view()
       end
 
       logger.debug("[STATUS][Refresh Callback] Rendering UI")
