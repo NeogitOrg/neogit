@@ -6,7 +6,6 @@ local git = require("neogit.lib.git")
 local Watcher = require("neogit.watcher")
 local a = require("plenary.async")
 local logger = require("neogit.logger") -- TODO: Add logging
-local util = require("neogit.lib.util")
 
 local api = vim.api
 
@@ -57,6 +56,7 @@ function M.new(state, config, root)
     root = root,
     buffer = nil,
     watcher = nil,
+    last_refreshed = 0,
     refresh_lock = a.control.Semaphore.new(1),
   }
 
@@ -222,6 +222,9 @@ function M:open(kind, cwd)
       ["NeogitMerge"] = function()
         self:dispatch_refresh(nil, "merge")
       end,
+      ["NeogitReset"] = function()
+        self:dispatch_refresh(nil, "reset_complete")
+      end,
     },
   }
 
@@ -264,14 +267,15 @@ function M:focus()
 end
 
 function M:refresh(partial, reason)
-  logger.debug("[STATUS] Beginning refresh from " .. (reason or "unknown"))
-  local permit = self:_get_refresh_lock(reason)
+  logger.debug("[STATUS] Beginning refresh from " .. (reason or "UNKNOWN"))
+
+  vim.uv.update_time()
+  local start = vim.loop.now()
 
   git.repo:refresh {
     source = "status",
     partial = partial,
     callback = function()
-      logger.debug("[STATUS][Refresh Callback] Running")
       if not self.buffer then
         logger.debug("[STATUS][Refresh Callback] Buffer no longer exists - bail")
         return
@@ -292,23 +296,23 @@ function M:refresh(partial, reason)
 
       api.nvim_exec_autocmds("User", { pattern = "NeogitStatusRefreshed", modeline = false })
 
-      permit:forget()
-      logger.info("[STATUS] Refresh lock is now free")
+      vim.uv.update_time()
+      local now = vim.uv.now()
+      logger.info("[STATUS][Refresh Callback] Refreshed in " .. now - start .. " ms")
+      self.last_refreshed = now
     end,
   }
 end
 
-M.dispatch_refresh = util.debounce_trailing(
-  100,
-  a.void(function(self, partial, reason)
-    if self:_is_refresh_locked() then
-      logger.debug("[STATUS] Refresh lock is active. Skipping refresh from " .. (reason or "unknown"))
-    else
-      logger.debug("[STATUS] Dispatching Refresh")
-      self:refresh(partial, reason)
-    end
-  end)
-)
+M.dispatch_refresh = a.void(function(self, partial, reason)
+  local now = vim.uv.now()
+  local delta_t = now - self.last_refreshed
+  if reason == "watcher" and delta_t < 250 then
+    logger.debug("[STATUS] Refreshed within last 250ms - skipping watcher (dt: " .. delta_t .. " ms)")
+  else
+    self:refresh(partial, reason)
+  end
+end)
 
 function M:reset()
   logger.debug("[STATUS] Resetting repo and refreshing")
@@ -320,24 +324,6 @@ function M:dispatch_reset()
   a.run(function()
     self:reset()
   end)
-end
-
-function M:_is_refresh_locked()
-  return self.refresh_lock.permits == 0
-end
-
-function M:_get_refresh_lock(reason)
-  local permit = self.refresh_lock:acquire()
-  logger.debug(("[STATUS]: Acquired refresh lock:"):format(reason or "unknown"))
-
-  vim.defer_fn(function()
-    if self:_is_refresh_locked() then
-      permit:forget()
-      logger.debug(("[STATUS]: Refresh lock for %s expired after 10 seconds"):format(reason or "unknown"))
-    end
-  end, 10000)
-
-  return permit
 end
 
 return M
