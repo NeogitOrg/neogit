@@ -6,6 +6,7 @@ local logger = require("neogit.logger") -- TODO: Add logging
 
 ---@class Section
 ---@field items  StatusItem[]
+---@field name string
 
 ---@class Selection
 ---@field sections Section[]
