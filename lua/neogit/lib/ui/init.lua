@@ -176,7 +176,7 @@ function Ui:item_hunks(item, first_line, last_line, partial)
   local hunks = {}
 
   -- TODO: Move this to lib.git.diff
-  -- local diff = require("neogit.lib.git").cli.diff.check.call_sync { hidden = true, ignore_error = true }
+  -- local diff = require("neogit.lib.git").cli.diff.check.call { hidden = true, ignore_error = true }
   -- local conflict_markers = {}
   -- if diff.code == 2 then
   --   for _, out in ipairs(diff.stdout) do

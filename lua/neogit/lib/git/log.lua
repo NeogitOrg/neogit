@@ -381,7 +381,7 @@ end)
 function M.is_ancestor(ancestor, descendant)
   return git.cli["merge-base"].is_ancestor
     .args(ancestor, descendant)
-    .call_sync({ ignore_error = true, hidden = true }).code == 0
+    .call({ ignore_error = true, hidden = true }).code == 0
 end
 
 ---Finds parent commit of a commit. If no parent exists, will return nil
@@ -442,7 +442,7 @@ end
 ---@param commit string Hash of commit
 ---@return string The stderr output of the command
 function M.verify_commit(commit)
-  return git.cli["verify-commit"].args(commit).call_sync({ ignore_error = true }).stderr
+  return git.cli["verify-commit"].args(commit).call({ ignore_error = true }).stderr
 end
 
 ---@class CommitBranchInfo
@@ -517,7 +517,7 @@ function M.reflog_message(skip)
     .format("%B")
     .max_count(1)
     .args("--reflog", "--no-merges", "--skip=" .. tostring(skip))
-    .call_sync({ ignore_error = true }).stdout
+    .call({ ignore_error = true }).stdout
 end
 
 M.abbreviated_size = util.memoize(function()

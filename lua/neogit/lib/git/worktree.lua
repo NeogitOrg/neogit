@@ -10,7 +10,7 @@ local M = {}
 ---@param path string absolute path
 ---@return boolean
 function M.add(ref, path, params)
-  local result = git.cli.worktree.add.arg_list(params or {}).args(path, ref).call_sync()
+  local result = git.cli.worktree.add.arg_list(params or {}).args(path, ref).call()
   return result.code == 0
 end
 

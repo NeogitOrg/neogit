@@ -9,7 +9,7 @@ M.create = function(directory, sync)
   sync = sync or false
 
   if sync then
-    git.cli.init.args(directory).call_sync()
+    git.cli.init.args(directory).call()
   else
     git.cli.init.args(directory).call()
   end

@@ -21,7 +21,7 @@ end, { timeout = math.huge })
 ---@return string
 ---@async
 function M.oid(rev)
-  return git.cli["rev-parse"].args(rev).call_sync({ hidden = true, ignore_error = true }).stdout[1]
+  return git.cli["rev-parse"].args(rev).call({ hidden = true, ignore_error = true }).stdout[1]
 end
 
 return M

@@ -41,7 +41,7 @@ function M.get_recent_local_branches()
   local valid_branches = M.get_local_branches()
 
   local branches = util.filter_map(
-    git.cli.reflog.show.format("%gs").date("relative").call_sync().stdout,
+    git.cli.reflog.show.format("%gs").date("relative").call().stdout,
     function(ref)
       local name = ref:match("^checkout: moving from .* to (.*)$")
       if vim.tbl_contains(valid_branches, name) then
@@ -54,7 +54,7 @@ function M.get_recent_local_branches()
 end
 
 function M.checkout(name, args)
-  git.cli.checkout.branch(name).arg_list(args or {}).call_sync()
+  git.cli.checkout.branch(name).arg_list(args or {}).call()
 
   if config.values.fetch_after_checkout then
     local pushRemote = M.pushRemote_ref(name)
@@ -78,16 +78,16 @@ function M.checkout(name, args)
 end
 
 function M.track(name, args)
-  git.cli.checkout.track(name).arg_list(args or {}).call_sync()
+  git.cli.checkout.track(name).arg_list(args or {}).call()
 end
 
 function M.get_local_branches(include_current)
-  local branches = git.cli.branch.list(config.values.sort_branches).call_sync().stdout
+  local branches = git.cli.branch.list(config.values.sort_branches).call().stdout
   return parse_branches(branches, include_current)
 end
 
 function M.get_remote_branches(include_current)
-  local branches = git.cli.branch.remotes.list(config.values.sort_branches).call_sync().stdout
+  local branches = git.cli.branch.remotes.list(config.values.sort_branches).call().stdout
   return parse_branches(branches, include_current)
 end
 
@@ -96,7 +96,7 @@ function M.get_all_branches(include_current)
 end
 
 function M.is_unmerged(branch, base)
-  return git.cli.cherry.arg_list({ base or M.base_branch(), branch }).call_sync().stdout[1] ~= nil
+  return git.cli.cherry.arg_list({ base or M.base_branch(), branch }).call().stdout[1] ~= nil
 end
 
 function M.base_branch()
@@ -118,7 +118,7 @@ end
 function M.exists(branch)
   local result = git.cli["rev-parse"].verify.quiet
     .args(string.format("refs/heads/%s", branch))
-    .call_sync { hidden = true, ignore_error = true }
+    .call { hidden = true, ignore_error = true }
 
   return result.code == 0
 end
@@ -149,10 +149,10 @@ function M.delete(name)
   if M.is_unmerged(name) then
     local message = ("'%s' contains unmerged commits! Are you sure you want to delete it?"):format(name)
     if input.get_permission(message) then
-      result = git.cli.branch.delete.force.name(name).call_sync()
+      result = git.cli.branch.delete.force.name(name).call()
     end
   else
-    result = git.cli.branch.delete.name(name).call_sync()
+    result = git.cli.branch.delete.name(name).call()
   end
 
   return result and result.code == 0 or false
@@ -165,7 +165,7 @@ function M.current()
   if head and head ~= "(detached)" then
     return head
   else
-    local branch_name = git.cli.branch.current.call_sync().stdout
+    local branch_name = git.cli.branch.current.call().stdout
     if #branch_name > 0 then
       return branch_name[1]
     end
@@ -177,7 +177,7 @@ end
 function M.current_full_name()
   local current = M.current()
   if current then
-    return git.cli["rev-parse"].symbolic_full_name.args(current).call_sync().stdout[1]
+    return git.cli["rev-parse"].symbolic_full_name.args(current).call().stdout[1]
   end
 end
 

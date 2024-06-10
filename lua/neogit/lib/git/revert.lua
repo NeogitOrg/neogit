@@ -9,15 +9,15 @@ function M.commits(commits, args)
 end
 
 function M.continue()
-  git.cli.revert.continue.call_sync()
+  git.cli.revert.continue.call()
 end
 
 function M.skip()
-  git.cli.revert.skip.call_sync()
+  git.cli.revert.skip.call()
 end
 
 function M.abort()
-  git.cli.revert.abort.call_sync()
+  git.cli.revert.abort.call()
 end
 
 return M

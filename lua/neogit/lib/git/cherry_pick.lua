@@ -34,15 +34,15 @@ function M.apply(commits, args)
 end
 
 function M.continue()
-  git.cli["cherry-pick"].continue.call_sync()
+  git.cli["cherry-pick"].continue.call()
 end
 
 function M.skip()
-  git.cli["cherry-pick"].skip.call_sync()
+  git.cli["cherry-pick"].skip.call()
 end
 
 function M.abort()
-  git.cli["cherry-pick"].abort.call_sync()
+  git.cli["cherry-pick"].abort.call()
 end
 
 return M

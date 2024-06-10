@@ -92,9 +92,9 @@ local function get_local_diff_view(section_name, item_name, opts)
           table.insert(args, "HEAD")
         end
 
-        return git.cli.show.file(unpack(args)).call_sync({ trim = false }).stdout
+        return git.cli.show.file(unpack(args)).call({ trim = false }).stdout
       elseif kind == "working" then
-        local fdata = git.cli.show.file(path).call_sync({ trim = false }).stdout
+        local fdata = git.cli.show.file(path).call({ trim = false }).stdout
         return side == "left" and fdata
       end
     end,

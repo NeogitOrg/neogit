@@ -83,7 +83,7 @@ local function build_config()
   local result = {}
 
   local out = vim.split(
-    table.concat(git.cli.config.list.null._local.call_sync({ hidden = true }).stdout_raw, "\0"),
+    table.concat(git.cli.config.list.null._local.call({ hidden = true }).stdout_raw, "\0"),
     "\n"
   )
   for _, option in ipairs(out) do
@@ -114,7 +114,7 @@ end
 
 ---@return ConfigEntry
 function M.get_global(key)
-  local result = git.cli.config.get(key).call_sync({ ignore_error = true }).stdout[1]
+  local result = git.cli.config.get(key).call({ ignore_error = true }).stdout[1]
   return ConfigEntry.new(key, result, "global")
 end
 
@@ -135,7 +135,7 @@ function M.set(key, value)
   if not value or value == "" then
     M.unset(key)
   else
-    git.cli.config.set(key, value).call_sync()
+    git.cli.config.set(key, value).call()
   end
 end
 
@@ -146,7 +146,7 @@ function M.unset(key)
   end
 
   cache_key = nil
-  git.cli.config.unset(key).call_sync()
+  git.cli.config.unset(key).call()
 end
 
 return M

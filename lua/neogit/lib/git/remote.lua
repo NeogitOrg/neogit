@@ -26,7 +26,7 @@ function M.add(name, url, args)
 end
 
 function M.rename(from, to)
-  local result = git.cli.remote.rename.arg_list({ from, to }).call_sync()
+  local result = git.cli.remote.rename.arg_list({ from, to }).call()
   if result.code == 0 then
     cleanup_push_variables(from, to)
   end
@@ -35,7 +35,7 @@ function M.rename(from, to)
 end
 
 function M.remove(name)
-  local result = git.cli.remote.rm.args(name).call_sync()
+  local result = git.cli.remote.rm.args(name).call()
   if result.code == 0 then
     cleanup_push_variables(name)
   end
@@ -48,7 +48,7 @@ function M.prune(name)
 end
 
 M.list = util.memoize(function()
-  return git.cli.remote.call_sync({ hidden = false }).stdout
+  return git.cli.remote.call({ hidden = false }).stdout
 end)
 
 function M.get_url(name)

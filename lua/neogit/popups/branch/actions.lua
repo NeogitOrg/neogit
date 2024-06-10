@@ -104,7 +104,7 @@ function M.checkout_branch_revision(popup)
     return
   end
 
-  git.cli.checkout.branch(selected_branch).arg_list(popup:get_arguments()).call_sync()
+  git.cli.checkout.branch(selected_branch).arg_list(popup:get_arguments()).call()
   fire_branch_event("NeogitBranchCheckout", { branch_name = selected_branch })
 end
 
@@ -213,7 +213,7 @@ function M.reset_branch(popup)
   end
 
   -- Reset the current branch to the desired state & update reflog
-  git.cli.reset.hard.args(to).call_sync()
+  git.cli.reset.hard.args(to).call()
   git.log.update_ref(git.branch.current_full_name(), to)
 
   notification.info(string.format("Reset '%s' to '%s'", current, to))
@@ -235,7 +235,7 @@ function M.delete_branch(popup)
     and branch_name
     and input.get_permission(("Delete remote branch '%s/%s'?"):format(remote, branch_name))
   then
-    success = git.cli.push.remote(remote).delete.to(branch_name).call_sync().code == 0
+    success = git.cli.push.remote(remote).delete.to(branch_name).call().code == 0
   elseif not remote and branch_name == git.branch.current() then
     local choices = {
       "&detach HEAD and delete",
@@ -253,16 +253,16 @@ function M.delete_branch(popup)
     )
 
     if choice == "d" then
-      git.cli.checkout.detach.call_sync()
+      git.cli.checkout.detach.call()
     elseif choice == "c" then
-      git.cli.checkout.branch(upstream).call_sync()
+      git.cli.checkout.branch(upstream).call()
     else
       return
     end
 
     success = git.branch.delete(branch_name)
     if not success then -- Reset HEAD if unsuccessful
-      git.cli.checkout.branch(branch_name).call_sync()
+      git.cli.checkout.branch(branch_name).call()
     end
   elseif not remote and branch_name then
     success = git.branch.delete(branch_name)
