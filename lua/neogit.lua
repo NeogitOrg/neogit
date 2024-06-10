@@ -173,7 +173,7 @@ function M.open(opts)
   if not git.cli.is_inside_worktree(opts.cwd) then
     local input = require("neogit.lib.input")
     if input.get_permission(("Initialize repository in %s?"):format(opts.cwd)) then
-      git.init.create(opts.cwd, true)
+      git.init.create(opts.cwd)
     else
       notification.error("The current working directory is not a git repository")
       return
