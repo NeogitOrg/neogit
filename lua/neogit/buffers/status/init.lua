@@ -273,7 +273,7 @@ function M:refresh(partial, reason)
   local start = vim.loop.now()
 
   local cursor, view
-  if self.buffer:is_focused() then
+  if self.buffer and self.buffer:is_focused() then
     cursor = self.buffer.ui:get_cursor_location()
     view = self.buffer:save_view()
   end
