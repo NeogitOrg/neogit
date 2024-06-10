@@ -24,7 +24,7 @@ local function cleanup_items(...)
       api.nvim_buf_delete(bufnr, { force = true })
     end
 
-    fn.delete(item.escaped_path)
+    fn.delete(item.name)
   end
 end
 
@@ -110,18 +110,18 @@ M.v_discard = function(self)
             table.insert(invalidated_diffs, section.name .. ":" .. item.name)
 
             if section.name == "untracked" then
-              table.insert(untracked_files, item.escaped_path)
+              table.insert(untracked_files, item)
             elseif section.name == "unstaged" then
               if item.mode == "A" then
-                table.insert(new_files, item.escaped_path)
+                table.insert(new_files, item)
               else
-                table.insert(unstaged_files, item.escaped_path)
+                table.insert(unstaged_files, item)
               end
             elseif section.name == "staged" then
               if item.mode == "N" then
-                table.insert(new_files, item.escaped_path)
+                table.insert(new_files, item)
               else
-                table.insert(staged_files_modified, item.escaped_path)
+                table.insert(staged_files_modified, item)
               end
             end
           end
@@ -147,17 +147,24 @@ M.v_discard = function(self)
       end
 
       if #unstaged_files > 0 then
-        git.index.checkout(unstaged_files)
+        git.index.checkout(util.map(unstaged_files, function(item)
+          return item.escaped_path
+        end))
       end
 
       if #new_files > 0 then
-        git.index.reset(new_files)
+        git.index.reset(util.map(unstaged_files, function(item)
+          return item.escaped_path
+        end))
         cleanup_items(unpack(new_files))
       end
 
       if #staged_files_modified > 0 then
-        git.index.reset(staged_files_modified)
-        git.index.checkout(staged_files_modified)
+        local paths = git.index.reset(util.map(staged_files_modified, function(item)
+          return item.escaped_path
+        end))
+        git.index.reset(paths)
+        git.index.checkout(paths)
       end
 
       if #stashes > 0 then
