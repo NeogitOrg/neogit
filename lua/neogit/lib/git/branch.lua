@@ -1,6 +1,10 @@
 local git = require("neogit.lib.git")
 local config = require("neogit.config")
 local util = require("neogit.lib.util")
+local notification = require("neogit.lib.notification")
+local logger = require("neogit.logger")
+
+local a = require("plenary.async")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
@@ -57,23 +61,36 @@ function M.checkout(name, args)
   git.cli.checkout.branch(name).arg_list(args or {}).call_sync()
 
   if config.values.fetch_after_checkout then
-    local pushRemote = M.pushRemote_ref(name)
-    local upstream = M.upstream(name)
+    a.void(function()
+      local pushRemote = M.pushRemote_ref(name)
+      local upstream = M.upstream(name)
 
-    if upstream and upstream == pushRemote then
-      local remote, branch = M.parse_remote_branch(upstream)
-      git.fetch.fetch(remote, branch)
-    else
+      local tasks = {}
+
       if upstream then
-        local remote, branch = M.parse_remote_branch(upstream)
-        git.fetch.fetch(remote, branch)
+        table.insert(tasks, function()
+          local remote, branch = M.parse_remote_branch(upstream)
+          git.fetch.fetch(remote, branch)
+          notification.info("Fetched from " .. remote .. "/" .. branch, { dismiss = true })
+          logger.debug("[Fetch After Checkout] Fetched from " .. remote .. "/" .. branch)
+        end)
       end
 
-      if pushRemote then
-        local remote, branch = M.parse_remote_branch(pushRemote)
-        git.fetch.fetch(remote, branch)
+      if pushRemote and pushRemote ~= upstream then
+        table.insert(tasks, function()
+          local remote, branch = M.parse_remote_branch(pushRemote)
+          git.fetch.fetch(remote, branch)
+          notification.info("Fetched from " .. remote .. "/" .. branch, { dismiss = true })
+          logger.debug("[Fetch After Checkout] Fetched from " .. remote .. "/" .. branch)
+        end)
       end
-    end
+
+      if #tasks > 0 then
+        a.util.run_all(tasks, function()
+          vim.api.nvim_exec_autocmds("User", { pattern = "NeogitFetchComplete", modeline = false })
+        end)
+      end
+    end)()
   end
 end
 
