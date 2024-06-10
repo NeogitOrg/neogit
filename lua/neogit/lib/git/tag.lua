@@ -24,4 +24,24 @@ function M.list_remote(remote)
   return git.cli["ls-remote"].tags.args(remote).call().stdout
 end
 
+local tag_pattern = "(.-)%-([0-9]+)%-g%x+$"
+
+function M.register(meta)
+  meta.update_tags = function(state)
+    state.head.tag = { name = nil, distance = nil, oid = nil }
+
+    local tag = git.cli.describe.long.tags.args("HEAD").call({ hidden = true, ignore_error = true }).stdout
+    if #tag == 1 then
+      local tag, distance = tostring(tag[1]):match(tag_pattern)
+      if tag and distance then
+        state.head.tag = {
+          name = tag,
+          distance = tonumber(distance),
+          oid = git.rev_parse.oid(tag),
+        }
+      end
+    end
+  end
+end
+
 return M

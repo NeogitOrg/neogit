@@ -11,19 +11,21 @@ function M.pull_interactive(remote, branch, args)
 end
 
 local function update_unpulled(state)
+  local status = git.branch.status()
+
   state.upstream.unpulled.items = {}
   state.pushRemote.unpulled.items = {}
 
-  if state.head.branch == "(detached)" then
+  if status.detached then
     return
   end
 
-  if state.upstream.ref then
+  if status.upstream then
     state.upstream.unpulled.items =
       util.filter_map(git.log.list({ "..@{upstream}" }, nil, {}, true), git.log.present_commit)
   end
 
-  local pushRemote = require("neogit.lib.git").branch.pushRemote_ref()
+  local pushRemote = git.branch.pushRemote_ref()
   if pushRemote then
     state.pushRemote.unpulled.items = util.filter_map(
       git.log.list({ string.format("..%s", pushRemote) }, nil, {}, true),

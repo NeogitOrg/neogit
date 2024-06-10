@@ -5,6 +5,58 @@ local util = require("neogit.lib.util")
 local Path = require("plenary.path")
 local input = require("neogit.lib.input")
 
+---@class GitCommand
+---@field flags table
+---@field options table
+---@field aliases table
+---@field short_opts table
+
+---@class NeogitGitCLI
+---@field show GitCommand
+---@field name-rev GitCommand
+---@field init GitCommand
+---@field checkout-index GitCommand
+---@field worktree GitCommand
+---@field rm GitCommand
+---@field status GitCommand
+---@field log GitCommand
+---@field config GitCommand
+---@field describe GitCommand
+---@field diff GitCommand
+---@field stash GitCommand
+---@field tag GitCommand
+---@field rebase GitCommand
+---@field merge GitCommand
+---@field merge-base GitCommand
+---@field reset GitCommand
+---@field checkout GitCommand
+---@field remote GitCommand
+---@field apply GitCommand
+---@field add GitCommand
+---@field absorb GitCommand
+---@field commit GitCommand
+---@field push GitCommand
+---@field pull GitCommand
+---@field cherry GitCommand
+---@field branch GitCommand
+---@field fetch GitCommand
+---@field read-tree GitCommand
+---@field write-tree GitCommand
+---@field commit-tree GitCommand
+---@field update-index GitCommand
+---@field show-ref GitCommand
+---@field show-branch GitCommand
+---@field update-ref GitCommand
+---@field ls-files GitCommand
+---@field ls-tree GitCommand
+---@field ls-remote GitCommand
+---@field for-each-ref GitCommand
+---@field rev-list GitCommand
+---@field rev-parse GitCommand
+---@field cherry-pick GitCommand
+---@field verify-commit GitCommand
+---@field bisect GitCommand
+
 local function config(setup)
   setup = setup or {}
   setup.flags = setup.flags or {}
@@ -1077,7 +1129,6 @@ local meta = {
   end,
 }
 
----@class NeogitGitCLI
 local cli = setmetatable({
   history = history,
   insert = handle_new_cmd,

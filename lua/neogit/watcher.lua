@@ -2,6 +2,7 @@
 
 local logger = require("neogit.logger")
 local Path = require("plenary.path")
+local util = require("neogit.lib.util")
 
 ---@class Watcher
 ---@field git_root string
@@ -42,7 +43,18 @@ function Watcher:stop()
   end
 end
 
+local WATCH_IGNORE = {
+  ORIG_HEAD = true,
+  FETCH_HEAD = true,
+  COMMIT_EDITMSG = true,
+}
+
 function Watcher:fs_event_callback()
+  local refresh_debounced = util.debounce_trailing(200, function(info)
+    logger.debug(info)
+    self.status_buffer:dispatch_refresh(nil, "watcher")
+  end, 1)
+
   return function(err, filename, events)
     if err then
       logger.error(string.format("[WATCHER] Git dir update error: %s", err))
@@ -58,17 +70,15 @@ function Watcher:fs_event_callback()
     -- stylua: ignore
     if
       filename == nil or
-      filename:match("%.lock$") or
-      filename:match("COMMIT_EDITMSG") or
-      filename:match("~$") or
+      WATCH_IGNORE[filename] or
+      vim.endswith(filename, ".lock") or
+      vim.endswith(filename, "~") or
       filename:match("%d%d%d%d")
     then
-      logger.debug(string.format("%s (ignoring)", info))
       return
     end
 
-    logger.debug(info)
-    self.status_buffer:dispatch_refresh(nil, "watcher")
+    refresh_debounced(info)
   end
 end
 

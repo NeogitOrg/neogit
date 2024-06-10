@@ -276,13 +276,66 @@ function M.upstream_remote()
   return remote
 end
 
-local function update_branch_information(state)
-  if state.head.oid ~= "(initial)" then
-    state.head.commit_message = git.log.message(state.head.oid)
+---@class BranchStatus
+---@field ab string|nil
+---@field detached boolean
+---@field oid string
+---@field head string
+---@field upstream string|nil
 
-    if state.upstream.ref then
-      local commit = git.log.list({ state.upstream.ref, "--max-count=1" }, nil, {}, true)[1]
-      -- May be done earlier by `update_status`, but this function can be called separately
+---@return BranchStatus
+function M.status()
+  local result = git.cli.status.porcelain(2).branch.call { hidden = true }
+  local status = {}
+  for _, line in ipairs(result.stdout) do
+    if line:match("^# branch") then
+      local key, value = line:match("^# branch%.([^%s]+) (.*)$")
+      status[key] = value
+    else
+      break
+    end
+  end
+
+  status.detached = status.head == "(detached)"
+
+  return status
+end
+
+local INITIAL_COMMIT = "(initial)"
+
+---@param state NeogitRepoState
+local function update_branch_information(state)
+  local status = M.status()
+
+  state.upstream.ref = nil
+  state.upstream.remote = nil
+  state.upstream.branch = nil
+  state.upstream.oid = nil
+  state.upstream.commit_message = nil
+  state.upstream.abbrev = nil
+
+  state.pushRemote.ref = nil
+  state.pushRemote.remote = nil
+  state.pushRemote.branch = nil
+  state.pushRemote.oid = nil
+  state.pushRemote.commit_message = nil
+  state.pushRemote.abbrev = nil
+
+  state.head.branch = status.head
+  state.head.oid = status.oid
+  state.head.detached = status.detached
+
+  if status.oid ~= INITIAL_COMMIT then
+    state.head.abbrev = git.rev_parse.abbreviate_commit(status.oid)
+    state.head.commit_message = git.log.message(status.oid)
+
+    if status.upstream then
+      local remote, branch = git.branch.parse_remote_branch(status.upstream)
+      state.upstream.remote = remote
+      state.upstream.branch = branch
+      state.upstream.ref = status.upstream
+
+      local commit = git.log.list({ status.upstream, "--max-count=1" }, nil, {}, true)[1]
       if commit then
         state.upstream.oid = commit.oid
         state.upstream.commit_message = commit.subject
@@ -291,7 +344,7 @@ local function update_branch_information(state)
     end
 
     local pushRemote = git.branch.pushRemote_ref()
-    if pushRemote and not git.branch.is_detached() then
+    if pushRemote and not status.detached then
       local remote, branch = unpack(vim.split(pushRemote, "/"))
       state.pushRemote.ref = pushRemote
       state.pushRemote.remote = remote

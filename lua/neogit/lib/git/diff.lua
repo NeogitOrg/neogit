@@ -3,8 +3,6 @@ local git = require("neogit.lib.git")
 local util = require("neogit.lib.util")
 local logger = require("neogit.logger")
 
-local ItemFilter = require("neogit.lib.item_filter")
-
 local insert = table.insert
 local sha256 = vim.fn.sha256
 
@@ -255,10 +253,19 @@ local function raw_staged_renamed(name, original)
   end
 end
 
-local function invalidate_diff(filter, section, item)
-  if not filter or filter:accepts(section, item.name) then
-    logger.debug(("[DIFF] Invalidating cached diff for: %s"):format(item.name))
-    item.diff = nil
+local function build(section, file)
+  if section == "untracked" then
+    build_metatable(file, raw_untracked(file.name))
+  elseif section == "unstaged" then
+    build_metatable(file, raw_unstaged(file.name))
+  elseif section == "staged" and file.mode == "R" then
+    build_metatable(file, raw_staged_renamed(file.name, file.original_name))
+  elseif section == "staged" and file.mode:match("^[UAD][UAD]") then
+    build_metatable(file, raw_staged_unmerged(file.name))
+  elseif section == "staged" then
+    build_metatable(file, raw_staged(file.name))
+  else
+    error("Unknown section: " .. vim.inspect(section))
   end
 end
 
@@ -305,33 +312,5 @@ return {
       files = files,
     }
   end,
-  register = function(meta)
-    meta.update_diffs = function(repo, filter)
-      filter = filter or false
-      if filter and type(filter) == "table" then
-        filter = ItemFilter.create(filter)
-      end
-
-      for _, f in ipairs(repo.untracked.items) do
-        invalidate_diff(filter, "untracked", f)
-        build_metatable(f, raw_untracked(f.name))
-      end
-
-      for _, f in ipairs(repo.unstaged.items) do
-        invalidate_diff(filter, "unstaged", f)
-        build_metatable(f, raw_unstaged(f.name))
-      end
-
-      for _, f in ipairs(repo.staged.items) do
-        invalidate_diff(filter, "staged", f)
-        if f.mode == "R" then
-          build_metatable(f, raw_staged_renamed(f.name, f.original_name))
-        elseif f.mode:match("^[UAD][UAD]") then
-          build_metatable(f, raw_staged_unmerged(f.name))
-        else
-          build_metatable(f, raw_staged(f.name))
-        end
-      end
-    end
-  end,
+  build = build,
 }

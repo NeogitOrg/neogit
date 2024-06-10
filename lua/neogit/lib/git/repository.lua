@@ -2,11 +2,11 @@ local a = require("plenary.async")
 local logger = require("neogit.logger")
 local Path = require("plenary.path") ---@class Path
 local git = require("neogit.lib.git")
+local ItemFilter = require("neogit.lib.item_filter")
 
 local modules = {
   "status",
   "branch",
-  "diff",
   "stash",
   "pull",
   "push",
@@ -15,6 +15,7 @@ local modules = {
   "sequencer",
   "merge",
   "bisect",
+  "tag",
 }
 
 ---@class NeogitRepoState
@@ -22,6 +23,7 @@ local modules = {
 ---@field refresh        fun(self, table)
 ---@field initialized    boolean
 ---@field git_root       string
+---@field refresh_lock   Semaphore
 ---@field head           NeogitRepoHead
 ---@field upstream       NeogitRepoRemote
 ---@field pushRemote     NeogitRepoRemote
@@ -38,6 +40,8 @@ local modules = {
 ---@class NeogitRepoHead
 ---@field branch         string|nil
 ---@field oid            string|nil
+---@field abbrev         string|nil
+---@field detached       boolean
 ---@field commit_message string|nil
 ---@field tag            NeogitRepoHeadTag
 ---
@@ -51,6 +55,7 @@ local modules = {
 ---@field commit_message string|nil
 ---@field remote         string|nil
 ---@field ref            string|nil
+---@field abbrev         string|nil
 ---@field oid            string|nil
 ---@field unmerged       NeogitRepoIndex
 ---@field unpulled       NeogitRepoIndex
@@ -95,8 +100,10 @@ local function empty_state()
     git_root = "",
     head = {
       branch = nil,
-      oid = nil,
+      detached = false,
       commit_message = nil,
+      abbrev = nil,
+      oid = nil,
       tag = {
         name = nil,
         oid = nil,
@@ -106,6 +113,7 @@ local function empty_state()
     upstream = {
       branch = nil,
       commit_message = nil,
+      abbrev = nil,
       remote = nil,
       ref = nil,
       oid = nil,
@@ -115,6 +123,7 @@ local function empty_state()
     pushRemote = {
       branch = nil,
       commit_message = nil,
+      abbrev = nil,
       remote = nil,
       ref = nil,
       oid = nil,
@@ -155,7 +164,6 @@ end
 
 ---@class NeogitRepo
 ---@field lib table
----@field updates table
 ---@field state NeogitRepoState
 ---@field git_root string
 local Repo = {}
@@ -184,9 +192,9 @@ function Repo.new(dir)
 
   local instance = {
     lib = {},
-    updates = {},
     state = empty_state(),
     git_root = git.cli.git_root(dir),
+    refresh_lock = a.control.Semaphore.new(1),
   }
 
   instance.state.git_root = instance.git_root
@@ -197,15 +205,6 @@ function Repo.new(dir)
     require("neogit.lib.git." .. m).register(instance.lib)
   end
 
-  for name, fn in pairs(instance.lib) do
-    if name ~= "update_status" then
-      table.insert(instance.updates, function()
-        logger.debug(("[REPO]: Refreshing %s"):format(name))
-        fn(instance.state)
-      end)
-    end
-  end
-
   return instance
 end
 
@@ -214,7 +213,33 @@ function Repo:reset()
 end
 
 function Repo:git_path(...)
-  return Path.new(self.git_root):joinpath(".git", ...)
+  return Path:new(self.git_root):joinpath(".git", ...)
+end
+
+function Repo:tasks(filter)
+  local tasks = {}
+  for name, fn in pairs(self.lib) do
+    table.insert(tasks, function()
+      local start = vim.uv.now()
+      fn(self.state, filter)
+      logger.debug(("[REPO]: Refreshed %s in %d ms"):format(name, vim.uv.now() - start))
+    end)
+  end
+
+  return tasks
+end
+
+function Repo:acquire_lock()
+  local permit = self.refresh_lock:acquire()
+
+  vim.defer_fn(function()
+    if self.refresh_lock.permits == 0 then
+      logger.debug("[REPO]: Refresh lock expired after 10 seconds")
+      permit:forget()
+    end
+  end, 10000)
+
+  return permit
 end
 
 function Repo:refresh(opts)
@@ -223,41 +248,34 @@ function Repo:refresh(opts)
     return
   end
 
-  self.state.initialized = true
-  opts = opts or {}
-  logger.info(("[REPO]: Refreshing START (source: %s)"):format(opts.source or "UNKNOWN"))
-
-  -- Needed until Process doesn't use vim.fn.*
-  a.util.scheduler()
-
-  -- This needs to be run before all others, because libs like Pull and Push depend on it setting some state.
-  logger.debug("[REPO]: Refreshing 'update_status'")
-  self.lib.update_status(self.state)
-
-  local tasks = {}
-  if opts.partial then
-    for name, fn in pairs(self.lib) do
-      if opts.partial[name] then
-        local filter = type(opts.partial[name]) == "table" and opts.partial[name]
-
-        table.insert(tasks, function()
-          logger.debug(("[REPO]: Refreshing %s"):format(name))
-          fn(self.state, filter)
-        end)
-      end
-    end
-  else
-    tasks = self.updates
+  if not self.state.initialized then
+    self.state.initialized = true
   end
 
-  a.util.run_all(tasks, function()
-    logger.debug("[REPO]: Refreshes complete")
+  local start = vim.uv.now()
+  opts = opts or {}
+
+  local permit = self:acquire_lock()
+  logger.info(("[REPO]: Acquired Refresh Lock for %s"):format(opts.source or "UNKNOWN"))
+
+  local on_complete = function()
+    logger.debug("[REPO]: Refreshes complete in " .. vim.uv.now() - start .. " ms")
 
     if opts.callback then
       logger.debug("[REPO]: Running refresh callback")
       opts.callback()
     end
-  end)
+
+    logger.info(("[REPO]: Releasing Lock for %s"):format(opts.source or "UNKNOWN"))
+    permit:forget()
+  end
+
+  local filter = ItemFilter.create { "*:*" }
+  if opts.partial and opts.partial.update_diffs then
+    filter = ItemFilter.create(opts.partial.update_diffs)
+  end
+
+  a.util.run_all(self:tasks(filter), on_complete)
 end
 
 return Repo

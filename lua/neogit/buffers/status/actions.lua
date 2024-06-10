@@ -69,6 +69,7 @@ M.v_discard = function(self)
     local file_count = 0
 
     local patches = {}
+    local invalidated_diffs = {}
     local untracked_files = {}
     local unstaged_files = {}
     local new_files = {}
@@ -91,6 +92,7 @@ M.v_discard = function(self)
             end
 
             for _, hunk in ipairs(hunks) do
+              table.insert(invalidated_diffs, section.name .. ":" .. item.name)
               table.insert(patches, function()
                 local patch = git.index.generate_patch(item, hunk, hunk.from, hunk.to, true)
 
@@ -105,6 +107,7 @@ M.v_discard = function(self)
           else
             discard_message = ("Discard %s files?"):format(file_count)
             logger.debug(("Discarding in section %s %s"):format(section.name, item.name))
+            table.insert(invalidated_diffs, section.name .. ":" .. item.name)
 
             if section.name == "untracked" then
               table.insert(untracked_files, item.escaped_path)
@@ -163,7 +166,7 @@ M.v_discard = function(self)
         end
       end
 
-      self:dispatch_refresh()
+      self:dispatch_refresh({ update_diff = invalidated_diffs }, "v_discard")
     end
   end)
 end
@@ -176,6 +179,7 @@ M.v_stage = function(self)
     local untracked_files = {}
     local unstaged_files = {}
     local patches = {}
+    local invalidated_diffs = {}
 
     for _, section in ipairs(selection.sections) do
       if section.name == "unstaged" or section.name == "untracked" then
@@ -186,6 +190,7 @@ M.v_stage = function(self)
           end
 
           local hunks = self.buffer.ui:item_hunks(item, selection.first_line, selection.last_line, true)
+          table.insert(invalidated_diffs, section.name .. ":" .. item.name)
 
           if #hunks > 0 then
             for _, hunk in ipairs(hunks) do
@@ -217,7 +222,7 @@ M.v_stage = function(self)
     end
 
     if #untracked_files > 0 or #unstaged_files > 0 or #patches > 0 then
-      self:dispatch_refresh()
+      self:dispatch_refresh({ update_diffs = invalidated_diffs }, "n_stage")
     end
   end)
 end
@@ -229,11 +234,13 @@ M.v_unstage = function(self)
 
     local files = {}
     local patches = {}
+    local invalidated_diffs = {}
 
     for _, section in ipairs(selection.sections) do
       if section.name == "staged" then
         for _, item in ipairs(section.items) do
           local hunks = self.buffer.ui:item_hunks(item, selection.first_line, selection.last_line, true)
+          table.insert(invalidated_diffs, section.name .. ":" .. item.name)
 
           if #hunks > 0 then
             for _, hunk in ipairs(hunks) do
@@ -257,7 +264,7 @@ M.v_unstage = function(self)
     end
 
     if #files > 0 or #patches > 0 then
-      self:dispatch_refresh { update_diffs = { "staged:*" } }
+      self:dispatch_refresh({ update_diffs = invalidated_diffs }, "v_unstage")
     end
   end)
 end
@@ -481,7 +488,7 @@ end
 ---@param self StatusBuffer
 M.n_refresh_buffer = function(self)
   return a.void(function()
-    self:dispatch_refresh()
+    self:dispatch_refresh({ update_diffs = { "*:*" } }, "n_refresh_buffer")
   end)
 end
 
@@ -842,7 +849,7 @@ M.n_discard = function(self)
 
     if action and (choices or input.get_permission(message)) then
       action()
-      self:dispatch_refresh(refresh)
+      self:dispatch_refresh(refresh, "n_discard")
     end
   end)
 end
@@ -936,7 +943,7 @@ M.n_untrack = function(self)
       end
 
       notification.info(message)
-      self:dispatch_refresh()
+      self:dispatch_refresh({ update_diffs = { "*:*" } }, "n_untrack")
     end
   end)
 end
@@ -963,7 +970,7 @@ M.v_untrack = function(self)
       end
 
       notification.info(message)
-      self:dispatch_refresh()
+      self:dispatch_refresh({ update_diffs = { "*:*" } }, "v_untrack")
     end
   end)
 end
@@ -991,23 +998,23 @@ M.n_stage = function(self)
         local patch = git.index.generate_patch(item, stagable.hunk, stagable.hunk.from, stagable.hunk.to)
 
         git.index.apply(patch, { cached = true })
-        self:dispatch_refresh { update_diffs = { "*:" .. item.escaped_path } }
+        self:dispatch_refresh({ update_diffs = { "*:" .. item.escaped_path } }, "n_stage")
       elseif stagable.filename then
         if section.options.section == "unstaged" then
           git.status.stage { stagable.filename }
-          self:dispatch_refresh { update_diffs = { "unstaged:" .. stagable.filename } }
+          self:dispatch_refresh({ update_diffs = { "unstaged:" .. stagable.filename } }, "n_stage")
         elseif section.options.section == "untracked" then
           git.index.add { stagable.filename }
-          self:dispatch_refresh { update_diffs = { "untracked:" .. stagable.filename } }
+          self:dispatch_refresh({ update_diffs = { "untracked:" .. stagable.filename } }, "n_stage")
         end
       end
     elseif section then
       if section.options.section == "untracked" then
         git.status.stage_untracked()
-        self:dispatch_refresh { update_diffs = { "untracked:*" } }
+        self:dispatch_refresh({ update_diffs = { "untracked:*" } }, "n_stage")
       elseif section.options.section == "unstaged" then
         git.status.stage_modified()
-        self:dispatch_refresh { update_diffs = { "unstaged:*" } }
+        self:dispatch_refresh({ update_diffs = { "unstaged:*" } }, "n_stage")
       end
     end
   end)
@@ -1017,7 +1024,7 @@ end
 M.n_stage_all = function(self)
   return a.void(function()
     git.status.stage_all()
-    self:dispatch_refresh()
+    self:dispatch_refresh({ update_diffs = { "*:*" } }, "n_stage_all")
   end)
 end
 
@@ -1025,7 +1032,7 @@ end
 M.n_stage_unstaged = function(self)
   return a.void(function()
     git.status.stage_modified()
-    self:dispatch_refresh { update_diffs = { "unstaged:*" } }
+    self:dispatch_refresh({ update_diffs = { "unstaged:*" } }, "n_stage_unstaged")
   end)
 end
 
@@ -1047,14 +1054,14 @@ M.n_unstage = function(self)
           git.index.generate_patch(item, unstagable.hunk, unstagable.hunk.from, unstagable.hunk.to, true)
 
         git.index.apply(patch, { cached = true, reverse = true })
-        self:dispatch_refresh { update_diffs = { "*:" .. item.escaped_path } }
+        self:dispatch_refresh({ update_diffs = { "*:" .. item.escaped_path } }, "n_unstage")
       elseif unstagable.filename then
         git.status.unstage { unstagable.filename }
-        self:dispatch_refresh { update_diffs = { "*:" .. unstagable.filename } }
+        self:dispatch_refresh({ update_diffs = { "*:" .. unstagable.filename } }, "n_unstage")
       end
     elseif section then
       git.status.unstage_all()
-      self:dispatch_refresh { update_diffs = { "staged:*" } }
+      self:dispatch_refresh({ update_diffs = { "staged:*" } }, "n_unstage")
     end
   end)
 end
@@ -1063,7 +1070,7 @@ end
 M.n_unstage_staged = function(self)
   return a.void(function()
     git.status.unstage_all()
-    self:dispatch_refresh { update_diffs = { "staged:*" } }
+    self:dispatch_refresh({ update_diffs = { "staged:*" } }, "n_unstage_all")
   end)
 end
 
