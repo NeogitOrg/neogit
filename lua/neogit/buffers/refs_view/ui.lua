@@ -111,11 +111,22 @@ function M.Branches(branches, head)
   return { section(branches, { text.highlight("NeogitBranch")("Branches") }, head) }
 end
 
+local function sorted_names(remotes)
+  local remote_names = {}
+  for name, _ in pairs(remotes) do
+    table.insert(remote_names, name)
+  end
+  table.sort(remote_names)
+
+  return remote_names
+end
+
 function M.Remotes(remotes, head)
   local out = {}
   local max_len = util.max_length(vim.tbl_keys(remotes))
 
-  for name, branches in pairs(remotes) do
+  for _, name in pairs(sorted_names(remotes)) do
+    local branches = remotes[name]
     table.insert(
       out,
       section(branches, {
