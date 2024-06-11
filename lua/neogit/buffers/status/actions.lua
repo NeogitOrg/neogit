@@ -609,7 +609,7 @@ end
 ---@param _self StatusBuffer
 M.n_show_refs = function(_self)
   return a.void(function()
-    require("neogit.buffers.refs_view").new(git.refs.list_parsed()):open()
+    require("neogit.buffers.refs_view").new(git.refs.list_parsed(), git.repo.git_root):open()
   end)
 end
 

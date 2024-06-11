@@ -123,4 +123,10 @@ M.heads = util.memoize(function()
   return present
 end)
 
+function M.register(meta)
+  meta.update_refs = function(state)
+    state.refs = M.list_parsed()
+  end
+end
+
 return M
