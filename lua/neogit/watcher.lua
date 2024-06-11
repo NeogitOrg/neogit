@@ -32,6 +32,8 @@ function Watcher:start()
     logger.debug("[WATCHER] Watching git dir: " .. self.git_root)
     self.fs_event_handler:start(self.git_root, {}, self:fs_event_callback())
   end
+
+  return self
 end
 
 function Watcher:stop()
