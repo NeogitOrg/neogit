@@ -6,15 +6,15 @@ local util = require("neogit.lib.util")
 
 ---@class Watcher
 ---@field git_root string
----@field status_buffer StatusBuffer
+---@field buffer StatusBuffer
 ---@field running boolean
 ---@field fs_event_handler uv_fs_event_t
 local Watcher = {}
 Watcher.__index = Watcher
 
-function Watcher.new(status_buffer, root)
+function Watcher.new(buffer, root)
   local instance = {
-    status_buffer = status_buffer,
+    buffer = buffer,
     git_root = Path.new(root):joinpath(".git"):absolute(),
     running = false,
     fs_event_handler = assert(vim.loop.new_fs_event()),
@@ -54,7 +54,7 @@ local WATCH_IGNORE = {
 function Watcher:fs_event_callback()
   local refresh_debounced = util.debounce_trailing(200, function(info)
     logger.debug(info)
-    self.status_buffer:dispatch_refresh(nil, "watcher")
+    self.buffer:dispatch_refresh(nil, "watcher")
   end, 1)
 
   return function(err, filename, events)
