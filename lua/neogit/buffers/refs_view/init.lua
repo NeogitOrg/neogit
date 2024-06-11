@@ -4,6 +4,10 @@ local ui = require("neogit.buffers.refs_view.ui")
 local popups = require("neogit.popups")
 local status_maps = require("neogit.config").get_reversed_status_maps()
 local CommitViewBuffer = require("neogit.buffers.commit_view")
+local Watcher = require("neogit.watcher")
+local logger = require("neogit.logger")
+local a = require("plenary.async")
+local git = require("neogit.lib.git")
 
 --- @class RefsViewBuffer
 --- @field buffer Buffer
@@ -18,11 +22,14 @@ local M = {
 
 --- Creates a new RefsViewBuffer
 --- @return RefsViewBuffer
-function M.new(refs)
+function M.new(refs, root)
   local instance = {
     refs = refs,
+    root = root,
     head = "HEAD",
     buffer = nil,
+    watcher = nil,
+    last_refreshed = 0,
   }
 
   setmetatable(instance, { __index = M })
@@ -33,6 +40,11 @@ function M:close()
   if self.buffer then
     self.buffer:close()
     self.buffer = nil
+  end
+
+  if self.watcher then
+    logger.debug("[REFS] Stopping Watcher")
+    self.watcher:stop()
   end
 
   M.instance = nil
@@ -57,6 +69,11 @@ function M:open()
     filetype = "NeogitRefsView",
     kind = config.values.refs_view.kind,
     context_highlight = false,
+    on_detach = function()
+      if self.watcher then
+        self.watcher:stop()
+      end
+    end,
     mappings = {
       v = {
         [popups.mapping_for("CherryPickPopup")] = popups.open("cherry_pick", function(p)
@@ -233,6 +250,64 @@ function M:open()
     },
     render = function()
       return ui.RefsView(self.refs, self.head)
+    end,
+    ---@param buffer Buffer
+    ---@param _win any
+    after = function(buffer, _win)
+      if config.values.filewatcher.enabled then
+        logger.debug("[REFS] Starting file watcher")
+        self.watcher = Watcher.new(self, self.root):start()
+      end
+
+      buffer:move_cursor(buffer.ui:first_section().first)
+    end,
+  }
+end
+
+M.dispatch_refresh = a.void(function(self, partial, reason)
+  local now = vim.uv.now()
+  local delta_t = now - self.last_refreshed
+  if reason == "watcher" and delta_t < 250 then
+    logger.debug("[REFS] Refreshed within last 250ms - skipping watcher (dt: " .. delta_t .. " ms)")
+  else
+    self:refresh(partial, reason)
+  end
+end)
+
+function M:refresh(partial, reason)
+  logger.debug("[REFS] Beginning refresh from " .. (reason or "UNKNOWN"))
+
+  vim.uv.update_time()
+  local start = vim.loop.now()
+
+  local cursor, view
+  if self.buffer and self.buffer:is_focused() then
+    cursor = self.buffer.ui:get_cursor_location()
+    view = self.buffer:save_view()
+  end
+
+  git.repo:refresh {
+    source = "refs",
+    partial = partial,
+    callback = function()
+      if not self.buffer then
+        logger.debug("[REFS][Refresh Callback] Buffer no longer exists - bail")
+        return
+      end
+
+      logger.debug("[REFS][Refresh Callback] Rendering UI")
+      self.buffer.ui:render(unpack(ui.RefsView(git.refs.list_parsed(), self.head)))
+
+      if cursor and view then
+        self.buffer:restore_view(view, self.buffer.ui:resolve_cursor_location(cursor))
+      end
+
+      vim.api.nvim_exec_autocmds("User", { pattern = "NeogitRefsRefreshed", modeline = false })
+
+      vim.uv.update_time()
+      local now = vim.uv.now()
+      logger.info("[REFS][Refresh Callback] Refreshed in " .. now - start .. " ms")
+      self.last_refreshed = now
     end,
   }
 end

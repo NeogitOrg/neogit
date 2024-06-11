@@ -16,6 +16,7 @@ local modules = {
   "merge",
   "bisect",
   "tag",
+  "refs",
 }
 
 ---@class NeogitRepoState
@@ -159,6 +160,7 @@ local function empty_state()
       finished = false,
       current = {},
     },
+    refs = {},
   }
 end
 
