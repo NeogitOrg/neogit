@@ -246,6 +246,9 @@ function M:open()
             end
           end
         end,
+        [status_maps["RefreshBuffer"]] = function()
+          self:dispatch_refresh({ update_refs = {} }, "n_refresh_buffer")
+        end,
       },
     },
     render = function()
