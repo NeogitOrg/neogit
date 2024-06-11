@@ -105,6 +105,7 @@ function M:open()
           p { commit = self.buffer.ui:get_commits_in_selection()[1] }
         end),
         [popups.mapping_for("PullPopup")] = popups.open("pull"),
+        [popups.mapping_for("FetchPopup")] = popups.open("fetch"),
         [popups.mapping_for("BisectPopup")] = popups.open("bisect", function(p)
           p { commits = self.buffer.ui:get_commits_in_selection() }
         end),
@@ -154,6 +155,7 @@ function M:open()
           p { commit = self.buffer.ui:get_commits_in_selection()[1] }
         end),
         [popups.mapping_for("PullPopup")] = popups.open("pull"),
+        [popups.mapping_for("FetchPopup")] = popups.open("fetch"),
         [popups.mapping_for("DiffPopup")] = popups.open("diff", function(p)
           local item = self.buffer.ui:get_commit_under_cursor()
           p {
