@@ -59,7 +59,8 @@ local function create_branch(popup, prompt, checkout)
     git.refs.heads()
   ))
 
-  local base_branch = FuzzyFinderBuffer.new(options):open_async { prompt_prefix = prompt }
+  local base_branch = FuzzyFinderBuffer.new(options)
+    :open_async { prompt_prefix = prompt, refocus_status = false }
   if not base_branch then
     return
   end
@@ -99,7 +100,7 @@ function M.checkout_branch_revision(popup)
       git.refs.heads()
     )
   )
-  local selected_branch = FuzzyFinderBuffer.new(options):open_async()
+  local selected_branch = FuzzyFinderBuffer.new(options):open_async { refocus_status = false }
   if not selected_branch then
     return
   end
@@ -120,6 +121,7 @@ function M.checkout_local_branch(popup)
 
   local target = FuzzyFinderBuffer.new(util.merge(local_branches, remote_branches)):open_async {
     prompt_prefix = "branch",
+    refocus_status = false,
   }
 
   if target then
@@ -151,7 +153,8 @@ function M.create_branch(popup)
 end
 
 function M.configure_branch()
-  local branch_name = FuzzyFinderBuffer.new(git.refs.list_local_branches()):open_async()
+  local branch_name = FuzzyFinderBuffer.new(git.refs.list_local_branches())
+    :open_async { refocus_status = false }
   if not branch_name then
     return
   end
@@ -160,7 +163,8 @@ function M.configure_branch()
 end
 
 function M.rename_branch()
-  local selected_branch = FuzzyFinderBuffer.new(git.refs.list_local_branches()):open_async()
+  local selected_branch = FuzzyFinderBuffer.new(git.refs.list_local_branches())
+    :open_async { refocus_status = false }
   if not selected_branch then
     return
   end
@@ -222,7 +226,7 @@ end
 
 function M.delete_branch(popup)
   local options = util.deduplicate(util.merge({ popup.state.env.ref_name }, git.refs.list_branches()))
-  local selected_branch = FuzzyFinderBuffer.new(options):open_async()
+  local selected_branch = FuzzyFinderBuffer.new(options):open_async { refocus_status = false }
   if not selected_branch then
     return
   end
