@@ -229,6 +229,7 @@ end
 ---@field recent_commit_count? integer The number of recent commits to display
 ---@field mode_padding? integer The amount of padding to add to the right of the mode column
 ---@field HEAD_padding? integer The amount of padding to add to the right of the HEAD label
+---@field HEAD_folded? boolean Whether or not this section should be open or closed by default
 ---@field mode_text? { [string]: string } The text to display for each mode
 ---@field show_head_commit_hash? boolean Show the commit hash for HEADs in the status buffer
 
@@ -325,6 +326,7 @@ function M.get_default_values()
       show_head_commit_hash = true,
       recent_commit_count = 10,
       HEAD_padding = 10,
+      HEAD_folded = false,
       mode_padding = 3,
       mode_text = {
         M = "modified",

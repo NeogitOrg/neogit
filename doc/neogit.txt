@@ -121,6 +121,7 @@ TODO: Detail what these do
     notification_icon = "󰊢",
     status = {
       recent_commit_count = 10,
+      HEAD_folded = false,
     },
     commit_editor = {
       kind = "tab",
