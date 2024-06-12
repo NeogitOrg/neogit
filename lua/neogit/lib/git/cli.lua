@@ -885,7 +885,7 @@ local function handle_line_interactive(p, line)
     handler = handle_interactive_authenticity
   elseif line:match("^Username for ") then
     handler = handle_interactive_username
-  elseif line:match("^Enter passphrase") or line:match("^Password for") then
+  elseif line:match("^Enter passphrase") or line:match("^Password for") or line:match("^Passphrase") then
     handler = handle_interactive_password
   end
 
