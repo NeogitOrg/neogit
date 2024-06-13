@@ -245,6 +245,12 @@ to properly integrate the password authentication with Neogit:
   Note: If you are not using Homebrew you may need to change the path for
         `pinentry-program
 
+  Note: The location of these config files may not be in "~/.gnupg/" depending
+        on your system configuration. To find where they should be placed run
+        "gpgconf --list-dirs" and place them in the path which follows the
+        line starting "homedir:". For example this could be
+        "$XDG_DATA_HOME/gnupg/"
+
 ==============================================================================
 Mappings                                                 *neogit_setup_mappings*
 
