@@ -43,14 +43,18 @@ local function checkout_branch(target, args)
   end
 end
 
+local function get_branch_name_user_input(prompt, default)
+  default = default or config.values.initial_branch_name
+  return input.get_user_input(prompt, { strip_spaces = true, default = default })
+end
+
 local function spin_off_branch(checkout)
   if git.status.is_dirty() and not checkout then
     notification.info("Staying on HEAD due to uncommitted changes")
     checkout = true
   end
 
-  local name =
-    input.get_user_input(("%s branch"):format(checkout and "Spin-off" or "Spin-out"), { strip_spaces = true })
+  local name = get_branch_name_user_input(("%s branch"):format(checkout and "Spin-off" or "Spin-out"))
   if not name then
     return
   end
@@ -215,7 +219,7 @@ function M.rename_branch()
     return
   end
 
-  local new_name = input.get_user_input(("Rename '%s' to"):format(selected_branch), { strip_spaces = true })
+  local new_name = get_branch_name_user_input(("Rename '%s' to"):format(selected_branch))
   if not new_name then
     return
   end

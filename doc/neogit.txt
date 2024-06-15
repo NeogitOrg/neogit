@@ -113,6 +113,7 @@ TODO: Detail what these do
     fetch_after_checkout = false,
     auto_refresh = true,
     sort_branches = "-committerdate",
+    initial_branch_name = "",
     kind = "tab",
     disable_line_numbers = true,
     -- The time after which an output console is shown for slow running commands
