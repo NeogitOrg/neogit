@@ -129,6 +129,7 @@ local configurations = {
     },
     options = {
       porcelain = "--porcelain",
+      untracked_files = "--untracked-files",
     },
   },
 
