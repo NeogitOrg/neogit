@@ -102,7 +102,7 @@ local function get_local_diff_view(section_name, item_name, opts)
 
   view:on_files_staged(a.void(function(_)
     if status.is_open() then
-      status.instance():dispatch_refresh({ update_diffs = true }, "on_files_staged")
+      status.instance():dispatch_refresh({ update_diffs = { "staged:*" } }, "on_files_staged")
     end
 
     view:update_files()
