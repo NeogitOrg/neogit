@@ -102,7 +102,7 @@ local function get_local_diff_view(section_name, item_name, opts)
 
   view:on_files_staged(a.void(function(_)
     if status.is_open() then
-      status.instance():dispatch_refresh({ update_diffs = true }, "on_files_staged")
+      status.instance():dispatch_refresh({ update_diffs = { "staged:*" } }, "on_files_staged")
     end
 
     view:update_files()
@@ -162,7 +162,11 @@ function M.open(section_name, item_name, opts)
     view = get_local_diff_view(section_name, item_name, opts)
   else
     -- selene: allow(if_same_then_else)
-    view = dv_lib.diffview_open(dv_utils.tbl_pack(item_name .. "^!"))
+    if item_name ~= nil then
+      view = dv_lib.diffview_open(dv_utils.tbl_pack(item_name .. "^!"))
+    else
+      view = dv_lib.diffview_open()
+    end
   end
 
   if view then
