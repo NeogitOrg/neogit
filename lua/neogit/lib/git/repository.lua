@@ -3,6 +3,7 @@ local logger = require("neogit.logger")
 local Path = require("plenary.path") ---@class Path
 local git = require("neogit.lib.git")
 local ItemFilter = require("neogit.lib.item_filter")
+local util = require("neogit.lib.util")
 
 local modules = {
   "status",
@@ -168,12 +169,14 @@ end
 ---@field lib table
 ---@field state NeogitRepoState
 ---@field git_root string
+---@field refresh_lock Semaphore
 local Repo = {}
 Repo.__index = Repo
 
 local instances = {}
 
 ---@param dir? string
+---@return NeogitRepo
 function Repo.instance(dir)
   dir = dir or vim.uv.cwd()
   assert(dir, "cannot create a repo without a cwd")
@@ -189,6 +192,7 @@ end
 
 -- Use Repo.instance when calling directly to ensure it's registered
 ---@param dir string
+---@return NeogitRepo
 function Repo.new(dir)
   logger.debug("[REPO]: Initializing Repository")
 
@@ -245,6 +249,8 @@ function Repo:acquire_lock()
 end
 
 function Repo:refresh(opts)
+  opts = opts or {}
+
   if self.git_root == "" then
     logger.debug("[REPO] No git root found - skipping refresh")
     return
@@ -254,13 +260,19 @@ function Repo:refresh(opts)
     self.state.initialized = true
   end
 
+  vim.uv.update_time()
   local start = vim.uv.now()
-  opts = opts or {}
+
+  local filter = ItemFilter.create { "*:*" }
+  if opts.partial and opts.partial.update_diffs then
+    filter = ItemFilter.create(opts.partial.update_diffs)
+  end
 
   local permit = self:acquire_lock()
   logger.info(("[REPO]: Acquired Refresh Lock for %s"):format(opts.source or "UNKNOWN"))
 
-  local on_complete = function()
+  local on_complete = a.void(function()
+    vim.uv.update_time()
     logger.debug("[REPO]: Refreshes complete in " .. vim.uv.now() - start .. " ms")
 
     if opts.callback then
@@ -270,14 +282,13 @@ function Repo:refresh(opts)
 
     logger.info(("[REPO]: Releasing Lock for %s"):format(opts.source or "UNKNOWN"))
     permit:forget()
-  end
-
-  local filter = ItemFilter.create { "*:*" }
-  if opts.partial and opts.partial.update_diffs then
-    filter = ItemFilter.create(opts.partial.update_diffs)
-  end
+  end)
 
   a.util.run_all(self:tasks(filter), on_complete)
 end
+
+Repo.dispatch_refresh = util.throttle_by_id(a.void(function(self, opts)
+  self:refresh(opts)
+end))
 
 return Repo
