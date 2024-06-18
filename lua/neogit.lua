@@ -120,7 +120,7 @@ local function open_status_buffer(opts)
   local instance = status.new(repo.state, config.values, repo.git_root):open(opts.kind, opts.cwd)
 
   a.void(function()
-    repo:refresh {
+    repo:dispatch_refresh {
       source = "open_buffer",
       callback = function()
         instance:dispatch_refresh(nil, "open_buffer")
@@ -186,9 +186,9 @@ function M.open(opts)
       open_popup(opts[1])
     end
 
-    a.run(function()
-      git.repo:refresh { source = "popup", callback = cb }
-    end)
+    a.void(function()
+      git.repo:dispatch_refresh { source = "popup", callback = cb }
+    end)()
   else
     open_status_buffer(opts)
   end
@@ -215,7 +215,7 @@ function M.action(popup, action, args)
   }
 
   return function()
-    a.run(function()
+    a.void(function()
       local ok, actions = pcall(require, "neogit.popups." .. popup .. ".actions")
       if ok then
         local fn = actions[action]
@@ -242,7 +242,7 @@ function M.action(popup, action, args)
       else
         M.notification.error("Invalid popup: " .. popup)
       end
-    end)
+    end)()
   end
 end
 
