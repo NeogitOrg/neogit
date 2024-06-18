@@ -1000,7 +1000,7 @@ local function new_builder(subcommand)
       }
       p.pty = true
 
-      p.on_partial_line = function(p, line, _)
+      p.on_partial_line = function(p, line)
         if line ~= "" then
           handle_line(p, line)
         end

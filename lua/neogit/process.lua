@@ -4,13 +4,6 @@ local notification = require("neogit.lib.notification")
 local config = require("neogit.config")
 local logger = require("neogit.logger")
 
--- from: https://stackoverflow.com/questions/48948630/lua-ansi-escapes-pattern
-local pattern_1 = "[\27\155][][()#;?%d]*[A-PRZcf-ntqry=><~]"
-local pattern_2 = "[\r\n\04\08]"
-local function remove_escape_codes(s)
-  return s:gsub(pattern_1, ""):gsub(pattern_2, "")
-end
-
 local command_mask =
   vim.pesc(" --no-pager --literal-pathspecs --no-optional-locks -c core.preloadindex=true -c color.ui=always")
 
@@ -29,7 +22,7 @@ end
 ---@field stdin number|nil
 ---@field pty boolean|nil
 ---@field buffer ProcessBuffer
----@field on_partial_line fun(process: Process, data: string, raw: string)|nil callback on complete lines
+---@field on_partial_line fun(process: Process, data: string)|nil callback on complete lines
 ---@field on_error (fun(res: ProcessResult): boolean) Intercept the error externally, returning false prevents the error from being logged
 local Process = {}
 Process.__index = Process
@@ -181,6 +174,34 @@ function Process:spawn_blocking(timeout)
   return self:wait(timeout)
 end
 
+local function handle_output(on_partial, on_line)
+  local prev_line = ""
+
+  local on_text = function(_, lines)
+    -- Complete previous line
+    prev_line = prev_line .. lines[1]
+
+    on_partial(lines[1])
+
+    for i = 2, #lines do
+      on_line(prev_line)
+      prev_line = ""
+
+      -- Before pushing a new line, invoke the stdout for components
+      prev_line = lines[i]
+      on_partial(lines[i])
+    end
+  end
+
+  local cleanup = function()
+    on_line(prev_line)
+  end
+
+  return on_text, cleanup
+end
+
+local insert = table.insert
+
 ---Spawns a process in the background and returns immediately
 ---@param cb fun(result: ProcessResult|nil)|nil
 ---@return boolean success
@@ -198,48 +219,36 @@ function Process:spawn(cb)
   self.env = self.env or {}
   self.env.TERM = "xterm-256color"
 
-  local start = vim.loop.now()
+  vim.uv.update_time()
+  local start = vim.uv.now()
   self.start = start
 
-  local function handle_output(on_partial, on_line)
-    local prev_line = ""
-
-    return function(_, lines)
-      -- Complete previous line
-      prev_line = prev_line .. lines[1]
-
-      on_partial(remove_escape_codes(lines[1]), lines[1])
-
-      for i = 2, #lines do
-        on_line(remove_escape_codes(prev_line), prev_line)
-        prev_line = ""
-        -- Before pushing a new line, invoke the stdout for components
-        prev_line = lines[i]
-        on_partial(remove_escape_codes(lines[i]), lines[i])
-      end
-    end, function()
-      on_line(remove_escape_codes(prev_line), prev_line)
+  local stdout_on_partial = function(line)
+    if self.on_partial_line then
+      self:on_partial_line(line)
     end
   end
 
-  local on_stdout, stdout_cleanup = handle_output(function(line, raw)
-    if self.on_partial_line then
-      self.on_partial_line(self, line, raw)
-    end
-  end, function(line, raw)
-    table.insert(res.stdout, line)
-    table.insert(res.stdout_raw, raw)
-    if self.verbose then
-      table.insert(res.output, line)
-      self.buffer:append(raw)
-    end
-  end)
+  local stdout_on_line = function(line)
+    insert(res.stdout, line)
+    insert(res.stdout_raw, line)
 
-  local on_stderr, stderr_cleanup = handle_output(function() end, function(line, raw)
-    table.insert(res.stderr, line)
-    table.insert(res.output, line)
-    self.buffer:append(raw)
-  end)
+    if self.verbose then
+      insert(res.output, line)
+      self.buffer:append(line)
+    end
+  end
+
+  local stderr_on_partial = function() end
+
+  local stderr_on_line = function(line)
+    insert(res.stderr, line)
+    insert(res.output, line)
+    self.buffer:append(line)
+  end
+
+  local on_stdout, stdout_cleanup = handle_output(stdout_on_partial, stdout_on_line)
+  local on_stderr, stderr_cleanup = handle_output(stderr_on_partial, stderr_on_line)
 
   local function on_exit(_, code)
     res.code = code
@@ -259,7 +268,7 @@ function Process:spawn(cb)
       local output = {}
       local start = math.max(#res.output - 16, 1)
       for i = start, math.min(#res.output, start + 16) do
-        table.insert(output, "    " .. res.output[i])
+        insert(output, "    " .. res.output[i])
       end
 
       local message = string.format(
