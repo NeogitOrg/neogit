@@ -3,19 +3,22 @@
 local logger = require("neogit.logger")
 local Path = require("plenary.path")
 local util = require("neogit.lib.util")
+local config = require("neogit.config")
 
 ---@class Watcher
 ---@field git_root string
----@field buffer StatusBuffer
+---@field buffers table<StatusBuffer|RefsViewBuffer>
 ---@field running boolean
 ---@field fs_event_handler uv_fs_event_t
 local Watcher = {}
 Watcher.__index = Watcher
 
-function Watcher.new(buffer, root)
+---@param root string
+---@return Watcher
+function Watcher.new(root)
   local instance = {
-    buffer = buffer,
-    git_root = Path.new(root):joinpath(".git"):absolute(),
+    buffers = {},
+    git_root = Path:new(root):joinpath(".git"):absolute(),
     running = false,
     fs_event_handler = assert(vim.loop.new_fs_event()),
   }
@@ -25,17 +28,46 @@ function Watcher.new(buffer, root)
   return instance
 end
 
-function Watcher:start()
-  if not self.running then
-    self.running = true
+local instances = {}
 
-    logger.debug("[WATCHER] Watching git dir: " .. self.git_root)
-    self.fs_event_handler:start(self.git_root, {}, self:fs_event_callback())
+---@param root string
+---@return Watcher
+function Watcher.instance(root)
+  if not instances[root] then
+    instances[root] = Watcher.new(root)
+  end
+
+  return instances[root]
+end
+
+---@param buffer StatusBuffer|RefsViewBuffer
+---@return Watcher
+function Watcher:register(buffer)
+  self.buffers[buffer:id()] = buffer
+  return self:start()
+end
+
+---@return Watcher
+function Watcher:unregister(buffer)
+  self.buffers[buffer:id()] = nil
+  if vim.tbl_isempty(self.buffers) then
+    self:stop()
   end
 
   return self
 end
 
+---@return Watcher
+function Watcher:start()
+  if config.values.filewatcher.enabled and not self.running then
+    self.running = true
+
+    logger.debug("[WATCHER] Watching git dir: " .. self.git_root)
+    self.fs_event_handler:start(self.git_root, {}, self:fs_event_callback())
+  end
+end
+
+---@return Watcher
 function Watcher:stop()
   if self.running then
     self.running = false
@@ -43,6 +75,8 @@ function Watcher:stop()
     logger.debug("[WATCHER] Stopped watching git dir: " .. self.git_root)
     self.fs_event_handler:stop()
   end
+
+  return self
 end
 
 local WATCH_IGNORE = {
@@ -54,8 +88,12 @@ local WATCH_IGNORE = {
 function Watcher:fs_event_callback()
   local refresh_debounced = util.debounce_trailing(200, function(info)
     logger.debug(info)
-    self.buffer:dispatch_refresh(nil, "watcher")
-  end, 1)
+
+    for name, buffer in pairs(self.buffers) do
+      logger.debug("[WATCHER] Dispatching refresh to " .. name)
+      buffer:dispatch_refresh(nil, "watcher")
+    end
+  end)
 
   return function(err, filename, events)
     if err then

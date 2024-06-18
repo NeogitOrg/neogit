@@ -18,7 +18,6 @@ local api = vim.api
 ---@field state NeogitRepoState
 ---@field config NeogitConfig
 ---@field root string
----@field refresh_lock Semaphore
 local M = {}
 M.__index = M
 
@@ -39,10 +38,7 @@ function M.instance(dir)
   local dir = dir or vim.uv.cwd()
   assert(dir, "cannot locate a status buffer with no cwd")
 
-  dir = vim.fs.normalize(dir)
-  logger.debug("[STATUS] Using instance for: " .. dir)
-
-  return instances[dir]
+  return instances[vim.fs.normalize(dir)]
 end
 
 ---@param state NeogitRepoState
@@ -55,9 +51,6 @@ function M.new(state, config, root)
     config = config,
     root = root,
     buffer = nil,
-    watcher = nil,
-    last_refreshed = 0,
-    refresh_lock = a.control.Semaphore.new(1),
   }
 
   setmetatable(instance, M)
@@ -100,10 +93,7 @@ function M:open(kind, cwd)
     disable_line_numbers = config.values.disable_line_numbers,
     foldmarkers = not config.values.disable_signs,
     on_detach = function()
-      if self.watcher then
-        self.watcher:stop()
-      end
-
+      Watcher.instance(self.root):unregister(self)
       vim.o.autochdir = self.prev_autochdir
     end,
     --stylua: ignore start
@@ -199,11 +189,7 @@ function M:open(kind, cwd)
     ---@param buffer Buffer
     ---@param _win any
     after = function(buffer, _win)
-      if config.values.filewatcher.enabled then
-        logger.debug("[STATUS] Starting file watcher")
-        self.watcher = Watcher.new(self, self.root):start()
-      end
-
+      Watcher.instance(self.root):register(self)
       buffer:move_cursor(buffer.ui:first_section().first)
     end,
     user_autocmds = {
@@ -238,11 +224,7 @@ function M:close()
     self.buffer = nil
   end
 
-  if self.watcher then
-    logger.debug("[STATUS] Stopping Watcher")
-    self.watcher:stop()
-  end
-
+  Watcher.instance(self.root):unregister(self)
   if self.prev_autochdir then
     vim.o.autochdir = self.prev_autochdir
   end
@@ -269,17 +251,14 @@ end
 function M:refresh(partial, reason)
   logger.debug("[STATUS] Beginning refresh from " .. (reason or "UNKNOWN"))
 
-  vim.uv.update_time()
-  local start = vim.loop.now()
-
   local cursor, view
   if self.buffer and self.buffer:is_focused() then
     cursor = self.buffer.ui:get_cursor_location()
     view = self.buffer:save_view()
   end
 
-  git.repo:refresh {
-    source = "status",
+  git.repo:dispatch_refresh {
+    source = "status/" .. (reason or "UNKNOWN"),
     partial = partial,
     callback = function()
       if not self.buffer then
@@ -295,23 +274,13 @@ function M:refresh(partial, reason)
       end
 
       api.nvim_exec_autocmds("User", { pattern = "NeogitStatusRefreshed", modeline = false })
-
-      vim.uv.update_time()
-      local now = vim.uv.now()
-      logger.info("[STATUS][Refresh Callback] Refreshed in " .. now - start .. " ms")
-      self.last_refreshed = now
+      logger.info("[STATUS][Refresh Callback] Refresh complete")
     end,
   }
 end
 
 M.dispatch_refresh = a.void(function(self, partial, reason)
-  local now = vim.uv.now()
-  local delta_t = now - self.last_refreshed
-  if reason == "watcher" and delta_t < 250 then
-    logger.debug("[STATUS] Refreshed within last 250ms - skipping watcher (dt: " .. delta_t .. " ms)")
-  else
-    self:refresh(partial, reason)
-  end
+  self:refresh(partial, reason)
 end)
 
 function M:reset()
@@ -320,10 +289,12 @@ function M:reset()
   self:refresh(nil, "reset")
 end
 
-function M:dispatch_reset()
-  a.run(function()
-    self:reset()
-  end)
+M.dispatch_reset = a.void(function(self)
+  self:reset()
+end)
+
+function M:id()
+  return "StatusBuffer"
 end
 
 return M
