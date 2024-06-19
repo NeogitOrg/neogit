@@ -1044,48 +1044,31 @@ local function new_builder(subcommand)
         end,
       }
 
-      local result = p:spawn_async(function()
-        -- Required since we need to do this before awaiting
-        if state.input then
-          logger.debug("Sending input:" .. vim.inspect(state.input))
-          -- Include EOT, otherwise git-apply will not work as expects the
-          -- stream to end
-          p:send(state.input .. "\04")
-          p:close_stdin()
+      local result
+      local function run_async()
+        result = p:spawn_async(function()
+          -- Required since we need to do this before awaiting
+          if state.input then
+            logger.debug("Sending input:" .. vim.inspect(state.input))
+            -- Include EOT, otherwise git-apply will not work as expects the
+            -- stream to end
+            p:send(state.input .. "\04")
+            p:close_stdin()
+          end
+        end)
+      end
+
+      local ok, _ = pcall(run_async)
+      if not ok then
+        logger.debug("Running command async failed - awaiting instead")
+        if not p:spawn() then
+          error("Failed to run command")
+          return nil
         end
-      end)
 
-      assert(result, "Command did not complete")
-
-      handle_new_cmd({
-        cmd = table.concat(p.cmd, " "),
-        stdout = result.stdout,
-        stderr = result.stderr,
-        code = result.code,
-        time = result.time,
-      }, state.hide_text, opts.hidden)
-
-      if opts.trim then
-        return result:trim()
-      else
-        return result
-      end
-    end,
-    call_sync = function(options)
-      local opts = vim.tbl_extend("keep", (options or {}), { verbose = false, hidden = false, trim = true })
-
-      local p = to_process {
-        on_error = function(_res)
-          return not opts.ignore_error
-        end,
-      }
-
-      if not p:spawn() then
-        error("Failed to run command")
-        return nil
+        result = p:wait()
       end
 
-      local result = p:wait()
       assert(result, "Command did not complete")
 
       handle_new_cmd({

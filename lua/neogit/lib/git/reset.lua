@@ -80,7 +80,7 @@ end
 -- end
 
 function M.file(commit, files)
-  local result = git.cli.checkout.rev(commit).files(unpack(files)).call_sync()
+  local result = git.cli.checkout.rev(commit).files(unpack(files)).call()
   if result.code ~= 0 then
     notification.error("Reset Failed")
   else
