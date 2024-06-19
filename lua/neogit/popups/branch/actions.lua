@@ -25,11 +25,13 @@ local function spin_off_branch(checkout)
     return
   end
 
+  fire_branch_event("NeogitBranchCreate", { branch_name = name })
   git.branch.create(name)
 
   local current_branch_name = git.branch.current_full_name()
 
   if checkout then
+    fire_branch_event("NeogitBranchCheckout", { branch_name = name })
     git.cli.checkout.branch(name).call()
   end
 
