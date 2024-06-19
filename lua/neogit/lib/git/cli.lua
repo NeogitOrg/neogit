@@ -680,14 +680,9 @@ end
 local history = {}
 
 ---@param job any
----@param popup any
 ---@param hidden_text string Text to obfuscate from history
 ---@param hide_from_history boolean Do not show this command in GitHistoryBuffer
-local function handle_new_cmd(job, popup, hidden_text, hide_from_history)
-  if popup == nil then
-    popup = true
-  end
-
+local function handle_new_cmd(job, hidden_text, hide_from_history)
   if hide_from_history == nil then
     hide_from_history = false
   end
@@ -775,13 +770,6 @@ local mt_builder = {
         for k, v in pairs(cfg) do
           tbl[k_state].env[k] = v
         end
-        return tbl
-      end
-    end
-
-    if action == "show_popup" then
-      return function(show_popup)
-        tbl[k_state].show_popup = show_popup
         return tbl
       end
     end
@@ -927,7 +915,6 @@ local function new_builder(subcommand)
     arguments = {},
     files = {},
     input = nil,
-    show_popup = true,
     in_pty = false,
     env = {},
   }
@@ -1028,7 +1015,7 @@ local function new_builder(subcommand)
         stderr = result.stderr,
         code = result.code,
         time = result.time,
-      }, state.show_popup, state.hide_text, opts.hidden)
+      }, state.hide_text, opts.hidden)
 
       return result
     end,
@@ -1036,7 +1023,7 @@ local function new_builder(subcommand)
       local opts = vim.tbl_extend(
         "keep",
         (options or {}),
-        { verbose = false, ignore_error = not state.show_popup, hidden = false, trim = true }
+        { verbose = false, hidden = false, trim = true }
       )
 
       local p = to_process {
@@ -1080,7 +1067,7 @@ local function new_builder(subcommand)
         stderr = result.stderr,
         code = result.code,
         time = result.time,
-      }, state.show_popup, state.hide_text, opts.hidden)
+      }, state.hide_text, opts.hidden)
 
       if opts.trim then
         return result:trim()
@@ -1092,7 +1079,7 @@ local function new_builder(subcommand)
       local opts = vim.tbl_extend(
         "keep",
         (options or {}),
-        { verbose = false, ignore_error = not state.show_popup, hidden = false, trim = true }
+        { verbose = false, hidden = false, trim = true }
       )
 
       local p = to_process {
@@ -1115,7 +1102,7 @@ local function new_builder(subcommand)
         stderr = result.stderr,
         code = result.code,
         time = result.time,
-      }, state.show_popup, state.hide_text, opts.hidden)
+      }, state.hide_text, opts.hidden)
 
       if opts.trim then
         return result:trim()
