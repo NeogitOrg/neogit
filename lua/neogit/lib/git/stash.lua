@@ -5,6 +5,11 @@ local util = require("neogit.lib.util")
 ---@class NeogitGitStash
 local M = {}
 
+---@param pattern string
+local function fire_stash_event(pattern)
+  vim.api.nvim_exec_autocmds("User", { pattern = pattern, modeline = false })
+end
+
 local function perform_stash(include)
   if not include then
     return
@@ -57,6 +62,8 @@ local function perform_stash(include)
     git.cli.apply.reverse.cached.input(diff).call()
     git.cli.apply.reverse.input(diff).call()
   end
+
+  fire_stash_event("NeogitStash")
 end
 
 function M.list_refs()
@@ -70,6 +77,7 @@ end
 
 function M.stash_all(args)
   git.cli.stash.arg_list(args).call()
+  fire_stash_event("NeogitStash")
   -- this should work, but for some reason doesn't.
   --return perform_stash({ worktree = true, index = true })
 end
@@ -83,25 +91,30 @@ function M.push(args, files)
 end
 
 function M.pop(stash)
-  local result = git.cli.stash.apply.index.args(stash).show_popup(false).call()
+  local result = git.cli.stash.apply.index.args(stash).call()
 
   if result.code == 0 then
     git.cli.stash.drop.args(stash).call()
   else
     git.cli.stash.apply.args(stash).call()
   end
+
+  fire_stash_event("NeogitStash")
 end
 
 function M.apply(stash)
-  local result = git.cli.stash.apply.index.args(stash).show_popup(false).call()
+  local result = git.cli.stash.apply.index.args(stash).call()
 
   if result.code ~= 0 then
     git.cli.stash.apply.args(stash).call()
   end
+
+  fire_stash_event("NeogitStash")
 end
 
 function M.drop(stash)
   git.cli.stash.drop.args(stash).call()
+  fire_stash_event("NeogitStash")
 end
 
 function M.list()
