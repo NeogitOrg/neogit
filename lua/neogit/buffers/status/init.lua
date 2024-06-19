@@ -219,15 +219,6 @@ function M:open(kind, cwd)
       ["NeogitStash"] = function()
         self:dispatch_refresh(nil, "stash")
       end,
-      -- ["NeogitBranchCheckout"] = function()
-      --   self:dispatch_refresh(nil, "branch_checkout")
-      -- end,
-      -- ["NeogitBranchReset"] = function()
-      --   self:dispatch_refresh(nil, "branch_reset")
-      -- end,
-      -- ["NeogitBranchRename"] = function()
-      --   self:dispatch_refresh(nil, "branch_rename")
-      -- end,
     },
   }
 
