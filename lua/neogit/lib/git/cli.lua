@@ -843,6 +843,12 @@ local mt_builder = {
     return tbl.call(...)
   end,
 }
+-- from: https://stackoverflow.com/questions/48948630/lua-ansi-escapes-pattern
+local pattern_1 = "[\27\155][][()#;?%d]*[A-PRZcf-ntqry=><~]"
+local pattern_2 = "[\r\n\04\08]"
+local function remove_escape_codes(s)
+  return s:gsub(pattern_1, ""):gsub(pattern_2, "")
+end
 
 ---@param line string
 ---@return string
@@ -878,6 +884,7 @@ end
 ---@param line string
 ---@return boolean
 local function handle_line_interactive(p, line)
+  line = remove_escape_codes(line)
   logger.debug(string.format("Matching interactive cmd output: '%s'", line))
 
   local handler
