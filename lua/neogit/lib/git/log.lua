@@ -292,7 +292,7 @@ M.graph = util.memoize(function(options, files, color)
     .format("%x1E%H%x00").graph.color
     .arg_list(options)
     .files(unpack(files))
-    .call({ ignore_error = true, hidden = true }).stdout_raw
+    .call({ ignore_error = true, hidden = true }).stdout
 
   return util.filter_map(result, function(line)
     return require("neogit.lib.ansi").parse(util.trim(line), { recolor = not color })
@@ -351,7 +351,6 @@ M.list = util.memoize(function(options, graph, files, hidden, graph_color)
     .args("--no-patch")
     .arg_list(options)
     .files(unpack(files))
-    .show_popup(false)
     .call({ hidden = hidden, ignore_error = hidden }).stdout
 
   local commits = record.decode(output)

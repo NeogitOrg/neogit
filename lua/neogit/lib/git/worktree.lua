@@ -44,7 +44,7 @@ end
 ---@return Worktree[]
 function M.list(opts)
   opts = opts or { include_main = true }
-  local list = vim.split(git.cli.worktree.list.args("--porcelain", "-z").call().stdout_raw[1], "\n\n")
+  local list = vim.split(git.cli.worktree.list.args("--porcelain", "-z").call().stdout[1], "\n\n")
 
   return util.filter_map(list, function(w)
     local path, head, type, ref = w:match("^worktree (.-)\nHEAD (.-)\n([^ ]+) (.+)$")

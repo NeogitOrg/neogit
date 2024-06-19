@@ -33,7 +33,6 @@ setmetatable(processes, { __mode = "k" })
 
 ---@class ProcessResult
 ---@field stdout string[]
----@field stdout_raw string[]
 ---@field stderr string[]
 ---@field output string[]
 ---@field code number
@@ -209,7 +208,6 @@ function Process:spawn(cb)
   ---@type ProcessResult
   local res = setmetatable({
     stdout = {},
-    stdout_raw = {},
     stderr = {},
     output = {},
   }, ProcessResult)
@@ -231,12 +229,8 @@ function Process:spawn(cb)
 
   local stdout_on_line = function(line)
     insert(res.stdout, line)
-    insert(res.stdout_raw, line)
-
-    if self.verbose then
-      insert(res.output, line)
-      self.buffer:append(line)
-    end
+    insert(res.output, line)
+    self.buffer:append(line)
   end
 
   local stderr_on_partial = function() end
