@@ -106,10 +106,13 @@ log.new = function(config, standalone)
     -- Output to log file
     if config.use_file then
       vim.uv.update_time()
+      local time = tostring(vim.uv.now())
 
+      local m = time:sub(4, 4)
+      local s = time:sub(5, 6)
+      local ms = time:sub(7)
       local fp = io.open(outfile, "a")
-      local ms = tostring(vim.uv.now()):sub(7)
-      local str = string.format("[%s %s.%s] %-30s %s\n", nameupper, os.date("%H:%M:%S"), ms, lineinfo, msg)
+      local str = string.format("[%s %d.%d.%-3d] %-30s %s\n", nameupper, m, s, ms, lineinfo, msg)
       if fp then
         fp:write(str)
         fp:close()
