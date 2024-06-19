@@ -110,23 +110,12 @@ end
 local function open_status_buffer(opts)
   local status = require("neogit.buffers.status")
   local config = require("neogit.config")
-  local a = require("plenary.async")
 
   -- We need to construct the repo instance manually here since the actual CWD may not be the directory neogit is
   -- going to open into. We will use vim.fn.lcd() in the status buffer constructor, so this will eventually be
   -- correct.
   local repo = require("neogit.lib.git.repository").instance(opts.cwd)
-
-  local instance = status.new(repo.state, config.values, repo.git_root):open(opts.kind, opts.cwd)
-
-  a.void(function()
-    repo:dispatch_refresh {
-      source = "open_buffer",
-      callback = function()
-        instance:dispatch_refresh(nil, "open_buffer")
-      end,
-    }
-  end)()
+  status.new(repo.state, config.values, repo.git_root):open(opts.kind, opts.cwd):dispatch_refresh()
 end
 
 ---@alias Popup

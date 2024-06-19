@@ -192,6 +192,11 @@ function M:open(kind, cwd)
       Watcher.instance(self.root):register(self)
       buffer:move_cursor(buffer.ui:first_section().first)
     end,
+    autocmds = {
+      ["FocusGained"] = function()
+        self:dispatch_refresh(nil, "focus_gained")
+      end,
+    },
     user_autocmds = {
       ["NeogitPushComplete"] = function()
         self:dispatch_refresh(nil, "push_complete")
@@ -211,6 +216,15 @@ function M:open(kind, cwd)
       ["NeogitReset"] = function()
         self:dispatch_refresh(nil, "reset_complete")
       end,
+      -- ["NeogitBranchCheckout"] = function()
+      --   self:dispatch_refresh(nil, "branch_checkout")
+      -- end,
+      -- ["NeogitBranchReset"] = function()
+      --   self:dispatch_refresh(nil, "branch_reset")
+      -- end,
+      -- ["NeogitBranchRename"] = function()
+      --   self:dispatch_refresh(nil, "branch_rename")
+      -- end,
     },
   }
 
@@ -261,22 +275,27 @@ function M:refresh(partial, reason)
     source = "status/" .. (reason or "UNKNOWN"),
     partial = partial,
     callback = function()
-      if not self.buffer then
-        logger.debug("[STATUS][Refresh Callback] Buffer no longer exists - bail")
-        return
-      end
-
-      logger.debug("[STATUS][Refresh Callback] Rendering UI")
-      self.buffer.ui:render(unpack(ui.Status(self.state, self.config)))
-
-      if cursor and view then
-        self.buffer:restore_view(view, self.buffer.ui:resolve_cursor_location(cursor))
-      end
-
+      self:redraw(cursor, view)
       api.nvim_exec_autocmds("User", { pattern = "NeogitStatusRefreshed", modeline = false })
-      logger.info("[STATUS][Refresh Callback] Refresh complete")
+      logger.info("[STATUS] Refresh complete")
     end,
   }
+end
+
+---@param cursor CursorLocation?
+---@param view table?
+function M:redraw(cursor, view)
+  if not self.buffer then
+    logger.debug("[STATUS] Buffer no longer exists - bail")
+    return
+  end
+
+  logger.debug("[STATUS] Rendering UI")
+  self.buffer.ui:render(unpack(ui.Status(self.state, self.config)))
+
+  if cursor and view then
+    self.buffer:restore_view(view, self.buffer.ui:resolve_cursor_location(cursor))
+  end
 end
 
 M.dispatch_refresh = a.void(function(self, partial, reason)
