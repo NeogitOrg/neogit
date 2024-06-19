@@ -174,6 +174,11 @@ local function rev_name(oid)
   end
 end
 
+---@return boolean
+function M.in_rebase()
+  return git.repo.state.rebase.head ~= nil
+end
+
 function M.update_rebase_status(state)
   state.rebase = { items = {}, onto = {}, head = nil, current = nil }
 

@@ -35,6 +35,11 @@ function M.abort()
   return merge_command(git.cli.merge.abort)
 end
 
+---@return boolean
+function M.in_merge()
+  return git.repo.state.merge.head ~= nil
+end
+
 ---@class MergeItem
 ---Not used, just for a consistent interface
 
