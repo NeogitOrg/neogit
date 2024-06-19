@@ -22,8 +22,9 @@ function M.diff(commit)
 end
 
 function M.relpath_from_repository(path)
-  local result =
-    git.cli["ls-files"].others.cached.modified.deleted.full_name.args(path).call { hidden = true, ignore_error = true }
+  local result = git.cli["ls-files"].others.cached.modified.deleted.full_name
+    .args(path)
+    .call { hidden = true, ignore_error = true }
 
   return result.stdout[1]
 end

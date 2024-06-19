@@ -1020,11 +1020,7 @@ local function new_builder(subcommand)
       return result
     end,
     call = function(options)
-      local opts = vim.tbl_extend(
-        "keep",
-        (options or {}),
-        { verbose = false, hidden = false, trim = true }
-      )
+      local opts = vim.tbl_extend("keep", (options or {}), { verbose = false, hidden = false, trim = true })
 
       local p = to_process {
         verbose = opts.verbose,
@@ -1076,11 +1072,7 @@ local function new_builder(subcommand)
       end
     end,
     call_sync = function(options)
-      local opts = vim.tbl_extend(
-        "keep",
-        (options or {}),
-        { verbose = false, hidden = false, trim = true }
-      )
+      local opts = vim.tbl_extend("keep", (options or {}), { verbose = false, hidden = false, trim = true })
 
       local p = to_process {
         on_error = function(_res)

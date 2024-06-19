@@ -1,5 +1,4 @@
 local PopupBuilder = require("neogit.lib.popup.builder")
-local status = require("neogit.buffers.status")
 local Buffer = require("neogit.lib.buffer")
 local logger = require("neogit.logger")
 local util = require("neogit.lib.util")
@@ -227,9 +226,6 @@ function M:set_config(config)
     config.callback(self, config)
   end
 end
-
--- Allow user actions to be queued
-local action_lock = a.control.Semaphore.new(1)
 
 function M:mappings()
   local mappings = {
