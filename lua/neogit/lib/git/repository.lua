@@ -17,7 +17,6 @@ local modules = {
   "merge",
   "bisect",
   "tag",
-  "refs",
 }
 
 ---@class NeogitRepoState

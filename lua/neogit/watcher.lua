@@ -3,7 +3,9 @@
 local logger = require("neogit.logger")
 local Path = require("plenary.path")
 local util = require("neogit.lib.util")
+local git = require("neogit.lib.git")
 local config = require("neogit.config")
+local a = require("plenary.async")
 
 ---@class Watcher
 ---@field git_root string
@@ -30,14 +32,19 @@ end
 
 local instances = {}
 
----@param root string
+---@param root string?
 ---@return Watcher
 function Watcher.instance(root)
-  if not instances[root] then
-    instances[root] = Watcher.new(root)
+  local dir = root or vim.uv.cwd()
+  assert(dir, "Root must exist")
+
+  dir = vim.fs.normalize(dir)
+
+  if not instances[dir] then
+    instances[dir] = Watcher.new(dir)
   end
 
-  return instances[root]
+  return instances[dir]
 end
 
 ---@param buffer StatusBuffer|RefsViewBuffer
@@ -65,6 +72,8 @@ function Watcher:start()
     logger.debug("[WATCHER] Watching git dir: " .. self.git_root)
     self.fs_event_handler:start(self.git_root, {}, self:fs_event_callback())
   end
+
+  return self
 end
 
 ---@return Watcher
@@ -86,14 +95,13 @@ local WATCH_IGNORE = {
 }
 
 function Watcher:fs_event_callback()
-  local refresh_debounced = util.debounce_trailing(200, function(info)
-    logger.debug(info)
-
-    for name, buffer in pairs(self.buffers) do
-      logger.debug("[WATCHER] Dispatching refresh to " .. name)
-      buffer:dispatch_refresh(nil, "watcher")
-    end
-  end)
+  local refresh_debounced = util.debounce_trailing(
+    200,
+    a.void(util.throttle_by_id(function(info)
+      logger.debug(info)
+      self:dispatch_refresh()
+    end, true))
+  )
 
   return function(err, filename, events)
     if err then
@@ -120,6 +128,17 @@ function Watcher:fs_event_callback()
 
     refresh_debounced(info)
   end
+end
+
+function Watcher:dispatch_refresh()
+  git.repo:dispatch_refresh {
+    callback = function()
+      for name, buffer in pairs(self.buffers) do
+        logger.debug("[WATCHER] Dispatching redraw to " .. name)
+        buffer:redraw()
+      end
+    end,
+  }
 end
 
 return Watcher

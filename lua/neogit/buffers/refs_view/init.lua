@@ -240,9 +240,9 @@ function M:open()
             end
           end
         end,
-        [status_maps["RefreshBuffer"]] = function()
-          self:dispatch_refresh({ update_refs = {} }, "n_refresh_buffer")
-        end,
+        [status_maps["RefreshBuffer"]] = a.void(function()
+          self:redraw()
+        end),
       },
     },
     render = function()
@@ -257,16 +257,12 @@ function M:open()
   }
 end
 
-M.dispatch_refresh = a.void(function(self, partial, reason)
-  self:refresh(partial, reason)
-end)
-
-function M:refresh(_, reason)
-  logger.debug("[REFS] Beginning refresh from " .. (reason or "UNKNOWN"))
+function M:redraw()
+  logger.debug("[REFS] Beginning redraw")
   self.buffer.ui:render(unpack(ui.RefsView(git.refs.list_parsed(), self.head)))
 
   vim.api.nvim_exec_autocmds("User", { pattern = "NeogitRefsRefreshed", modeline = false })
-  logger.info("[REFS] Refresh complete")
+  logger.info("[REFS] Redraw complete")
 end
 
 function M:id()

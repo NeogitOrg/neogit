@@ -7,6 +7,7 @@ local config = require("neogit.config")
 local state = require("neogit.lib.state")
 local input = require("neogit.lib.input")
 local notification = require("neogit.lib.notification")
+local Watcher = require("neogit.watcher")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
@@ -303,18 +304,10 @@ function M:mappings()
       elseif action.callback then
         for _, key in ipairs(action.keys) do
           mappings.n[key] = a.void(function()
-            local permit = action_lock:acquire()
             logger.debug(string.format("[POPUP]: Invoking action %q of %s", key, self.state.name))
-
             self:close()
             action.callback(self)
-
-            if status.instance() then
-              logger.debug("[ACTION] Dispatching Refresh to Status Buffer")
-              status.instance():dispatch_refresh(nil, "action")
-            end
-
-            permit:forget()
+            Watcher.instance():dispatch_refresh()
           end)
         end
       else
