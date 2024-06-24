@@ -53,7 +53,7 @@ function M:open(kind)
 
   local message_index = 1
   local message_buffer = { { "" } }
-  local amend_header, footer, diff_view
+  local amend_header, footer
 
   local function reflog_message(index)
     return git.log.reflog_message(index - 2)
@@ -89,9 +89,9 @@ function M:open(kind)
           self.buffer:write()
         end
 
-        if diff_view then
-          diff_view:close()
-          diff_view = nil
+        if self.diff_view then
+          self.diff_view:close()
+          self.diff_view = nil
         end
       end,
     },
@@ -106,10 +106,10 @@ function M:open(kind)
 
       process.defer_show_preview_buffers()
 
-      if diff_view then
+      if self.diff_view then
         logger.debug("[EDITOR] Closing diff view")
-        diff_view:close()
-        diff_view = nil
+        self.diff_view:close()
+        self.diff_view = nil
       end
 
       logger.debug("[EDITOR] Done cleaning up")
@@ -193,7 +193,7 @@ function M:open(kind)
 
       if self.show_diff then
         logger.debug("[EDITOR] Opening Diffview for staged changes")
-        diff_view = DiffViewBuffer:new("Staged Changes"):open()
+        self.diff_view = DiffViewBuffer:new("Staged Changes"):open()
       end
     end,
     mappings = {
