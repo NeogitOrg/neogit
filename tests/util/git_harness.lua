@@ -13,20 +13,22 @@ function M.setup_bare_repo()
 
   local workspace_dir = util.create_temp_dir("base-dir")
   vim.api.nvim_set_current_dir(project_dir)
-  util.system("cp -r tests/.repo " .. workspace_dir)
+  util.system { "cp", "-r", "tests/.repo", workspace_dir }
   vim.api.nvim_set_current_dir(workspace_dir)
-  util.system([[
-    mv ./.repo/.git.orig ./.git
-    mv ./.repo/* .
-    git config user.email "test@neogit-test.test"
-    git config user.name "Neogit Test"
-    git add .
-    git commit -m "temp commit to be soft unstaged later"
-  ]])
+  util.system { "mv", "./.repo/.git.orig", "./.git" }
+
+  for name, _ in vim.fs.dir("./.repo") do
+    util.system { "mv", workspace_dir .. "/.repo/" .. name, workspace_dir .. "/" }
+  end
+
+  util.system { "git", "config", "user.email", "test@neogit-test.test" }
+  util.system { "git", "config", "user.name", "Neogit Test" }
+  util.system { "git", "add", "." }
+  util.system { "git", "commit", "-m", "temp commit to be soft unstaged later" }
 
   bare_repo_path = util.create_temp_dir("bare-dir")
 
-  util.system(string.format("git clone --bare %s %s", workspace_dir, bare_repo_path))
+  util.system { "git", "clone", "--bare", workspace_dir, bare_repo_path }
 
   return bare_repo_path
 end
@@ -36,46 +38,24 @@ function M.prepare_repository()
 
   local working_dir = util.create_temp_dir("working-dir")
   vim.api.nvim_set_current_dir(working_dir)
-  util.system(string.format("git clone %s %s", bare_repo_path, working_dir))
-  util.system([[
-    git reset --soft HEAD~1
-    git rm --cached untracked.txt
-    git restore --staged a.txt
-    git checkout second-branch
-    git switch master
-    git config remote.origin.url git@github.com:example/example.git
-    git config user.email "test@neogit-test.test"
-    git config user.name "Neogit Test"
-  ]])
+  util.system { "git", "clone", bare_repo_path, working_dir }
+  util.system { "git", "reset", "--soft", "HEAD~1" }
+  util.system { "git", "rm", "--cached", "untracked.txt" }
+  util.system { "git", "restore", "--staged", "a.txt" }
+  util.system { "git", "checkout", "second-branch" }
+  util.system { "git", "switch", "master" }
+  util.system { "git", "config", "remote.origin.url", "git@github.com:example/example.git" }
+  util.system { "git", "config", "user.email", "test@neogit-test.test" }
+  util.system { "git", "config", "user.name", "Neogit Test" }
 
   return working_dir
 end
 
 function M.in_prepared_repo(cb)
   return function()
-    local dir = M.prepare_repository()
+    M.prepare_repository()
     require("neogit").setup {}
-    local status = require("neogit.buffers.status")
     vim.cmd("Neogit")
-
-    a.util.block_on(neogit.reset)
-
-    vim.wait(1000, function()
-      return not status.instance() and status.instance():_is_refresh_locked()
-    end, 100)
-
-    a.util.block_on(function()
-      local _, err = pcall(cb, dir)
-      if err ~= nil then
-        error(err)
-      end
-
-      a.util.block_on(function()
-        if status.instance() then
-          status.instance():close()
-        end
-      end)
-    end)
   end
 end
 

@@ -5,11 +5,11 @@ M.project_dir = vim.fn.getcwd()
 ---Returns the path to the raw test files directory
 ---@return string The path to the project directory
 function M.get_fixtures_dir()
-  return M.project_dir .. "/tests/fixtures/"
+  return vim.fn.getcwd() .. "/tests/fixtures/"
 end
 
 ---Runs a system command and errors if it fails
----@param cmd string | table Command to be ran
+---@param cmd string[] Command to be ran
 ---@param ignore_err boolean? Whether the error should be ignored
 ---@param error_msg string? The error message to be emitted on command failure
 ---@return string The output of the system command
@@ -18,11 +18,22 @@ function M.system(cmd, ignore_err, error_msg)
     ignore_err = false
   end
 
-  local output = vim.fn.system(cmd)
-  if vim.v.shell_error ~= 0 and not ignore_err then
-    error(error_msg or ("Command failed: ↓\n" .. cmd .. "\nOutput from command: ↓\n" .. output))
+  local result = vim.system(cmd, { text = true }):wait()
+  if result.code > 0 and not ignore_err then
+    error(
+      error_msg
+        or (
+          "Command failed: ↓\n"
+          .. table.concat(cmd, " ")
+          .. "\nOutput from command: ↓\n"
+          .. result.stdout
+          .. "\n"
+          .. result.stderr
+        )
+    )
   end
-  return output
+
+  return result.stdout
 end
 
 M.neogit_test_base_dir = "/tmp/neogit-testing/"
@@ -51,7 +62,7 @@ function M.create_temp_dir(suffix)
   end
 
   local prefix = is_macos() and "/private" or ""
-  return prefix .. vim.trim(M.system(cmd))
+  return prefix .. vim.trim(M.system(vim.split(cmd, " ")))
 end
 
 function M.ensure_installed(repo, path)
