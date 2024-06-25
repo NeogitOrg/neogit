@@ -579,4 +579,17 @@ function M.throttle_by_id(fn, schedule)
     end
   end
 end
+
+-- from: https://stackoverflow.com/questions/48948630/lua-ansi-escapes-pattern
+local pattern_1 = "[\27\155][][()#;?%d]*[A-PRZcf-ntqry=><~]"
+local pattern_2 = "[\r\n\04\08]"
+local BLANK = ""
+local gsub = string.gsub
+
+function M.remove_ansi_escape_codes(s)
+  s, _ = gsub(s, pattern_1, BLANK)
+  s, _ = gsub(s, pattern_2, BLANK)
+  return s
+end
+
 return M
