@@ -34,22 +34,26 @@ class NeovimClient
     lua "require('neogit.buffers.status').instance():dispatch_refresh()"
   end
 
-  def print_screen # rubocop:disable Metrics/MethodLength
+  def screen # rubocop:disable Metrics/MethodLength
     @instance.command("redraw")
 
     screen  = []
-    lines   = @instance.evaluate("&lines")
-    columns = @instance.evaluate("&columns")
+    lines   = evaluate "&lines"
+    columns = evaluate "&columns"
 
     lines.times do |line|
       current_line = []
       columns.times do |column|
-        current_line << @instance.call_function("screenstring", [line + 1, column + 1])
+        current_line << fn("screenstring", [line + 1, column + 1])
       end
 
       screen << current_line.join
     end
 
+    screen
+  end
+
+  def print_screen
     puts `clear`
     puts screen.join("\n")
   end
@@ -58,8 +62,28 @@ class NeovimClient
     @instance.exec_lua(code, [])
   end
 
+  def fn(function, ...)
+    @instance.call_function(function, ...)
+  end
+
+  def evaluate(expr)
+    @instance.evaluate expr
+  end
+
+  def cmd(command)
+    @instance.command_output(command).lines
+  end
+
+  def errors
+    cmd("messages").grep(/^E\d+: /).map(&:strip)
+  end
+
+  def filetype
+    evaluate "&filetype"
+  end
+
   def assert_alive!
-    return true if @instance.evaluate("1 + 2") == 3
+    return true if evaluate("1 + 2") == 3
 
     raise "Neovim instance is not alive!"
   end
