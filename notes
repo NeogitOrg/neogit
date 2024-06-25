@@ -1,0 +1,9 @@
+- Remove all EVENT firing from lib/git/* - this should be in the action
+- Remove all IO from lib/git/* - these should all be (nearly) pure functions that take IO as arguments
+  - IO (user input, etc) belongs in the actions functions
+  - Find a nicer way to mock/stub the CLI in tests so we can just assert on strings instead of requiring git stuff/state
+
+- The actions are our imperative shell - the lib is the functional core
+
+- Pass git dir for all CLI commands to be used with `-C ...` flag to better handle CWD stuff?
+
