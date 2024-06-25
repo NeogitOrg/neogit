@@ -56,7 +56,7 @@ function M.list_remote_branches(remote)
   end
 end
 
-local record_template = record.encode({
+local RECORD_TEMPLATE = record.encode({
   head = "%(HEAD)",
   oid = "%(objectname)",
   ref = "%(refname)",
@@ -65,15 +65,31 @@ local record_template = record.encode({
   upstream_name = "%(upstream:short)",
   subject = "%(subject)",
 }, "ref")
----
+
 ---@class ParsedRef
 ---@field type string
 ---@field name string
 ---@field unambiguous_name string
 ---@field remote string|nil
 
+local insert = table.insert
+local format = string.format
+local match = string.match
+local substring = string.sub
+
+local LOCAL_BRANCH = "local_branch"
+local REMOTE_BRANCH = "remote_branch"
+local TAG = "tag"
+local TAG_TEMPLATE = "tags/%s"
+local BRANCH_TEMPLATE = "%s/%s"
+local REMOTE_BRANCH_PATTERN = "^refs/remotes/([^/]*)/(.*)$"
+local HEAD = "*"
+local head = "h"
+local remote = "r"
+local tag = "t"
+
 function M.list_parsed()
-  local result = record.decode(refs(record_template))
+  local result = record.decode(refs(RECORD_TEMPLATE))
 
   local output = {
     local_branch = {},
@@ -82,27 +98,28 @@ function M.list_parsed()
   }
 
   for _, ref in ipairs(result) do
-    ref.head = ref.head == "*"
+    ref.head = ref.head == HEAD
 
-    if ref.ref:match("^refs/heads/") then
-      ref.type = "local_branch"
+    local ref_type = substring(ref.ref, 6, 6)
+    if ref_type == head then
+      ref.type = LOCAL_BRANCH
       ref.unambiguous_name = ref.name
-      table.insert(output.local_branch, ref)
-    elseif ref.ref:match("^refs/remotes/") then
-      local remote, branch = ref.ref:match("^refs/remotes/([^/]*)/(.*)$")
+      insert(output.local_branch, ref)
+    elseif ref_type == remote then
+      local remote, branch = match(ref.ref, REMOTE_BRANCH_PATTERN)
       if not output.remote_branch[remote] then
         output.remote_branch[remote] = {}
       end
 
-      ref.type = "remote_branch"
+      ref.type = REMOTE_BRANCH
       ref.name = branch
-      ref.unambiguous_name = remote .. "/" .. branch
+      ref.unambiguous_name = format(BRANCH_TEMPLATE, remote, branch)
       ref.remote = remote
-      table.insert(output.remote_branch[remote], ref)
-    elseif ref.ref:match("^refs/tags/") then
-      ref.type = "tag"
-      ref.unambiguous_name = "tags/" .. ref.name
-      table.insert(output.tag, ref)
+      insert(output.remote_branch[remote], ref)
+    elseif ref_type == tag then
+      ref.type = TAG
+      ref.unambiguous_name = format(TAG_TEMPLATE, ref.name)
+      insert(output.tag, ref)
     end
   end
 

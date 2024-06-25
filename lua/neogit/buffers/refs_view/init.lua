@@ -4,23 +4,28 @@ local ui = require("neogit.buffers.refs_view.ui")
 local popups = require("neogit.popups")
 local status_maps = require("neogit.config").get_reversed_status_maps()
 local CommitViewBuffer = require("neogit.buffers.commit_view")
+local Watcher = require("neogit.watcher")
+local logger = require("neogit.logger")
+local a = require("plenary.async")
+local git = require("neogit.lib.git")
 
---- @class RefsViewBuffer
---- @field buffer Buffer
---- @field open fun()
---- @field close fun()
---- @see RefsInfo
---- @see Buffer
---- @see Ui
+---@class RefsViewBuffer
+---@field buffer Buffer
+---@field open fun()
+---@field close fun()
+---@see RefsInfo
+---@see Buffer
+---@see Ui
 local M = {
   instance = nil,
 }
 
---- Creates a new RefsViewBuffer
---- @return RefsViewBuffer
-function M.new(refs)
+---Creates a new RefsViewBuffer
+---@return RefsViewBuffer
+function M.new(refs, root)
   local instance = {
     refs = refs,
+    root = root,
     head = "HEAD",
     buffer = nil,
   }
@@ -35,6 +40,7 @@ function M:close()
     self.buffer = nil
   end
 
+  Watcher.instance(self.root):unregister(self)
   M.instance = nil
 end
 
@@ -57,6 +63,9 @@ function M:open()
     filetype = "NeogitRefsView",
     kind = config.values.refs_view.kind,
     context_highlight = false,
+    on_detach = function()
+      Watcher.instance(self.root):unregister(self)
+    end,
     mappings = {
       v = {
         [popups.mapping_for("CherryPickPopup")] = popups.open("cherry_pick", function(p)
@@ -88,6 +97,7 @@ function M:open()
           p { commit = self.buffer.ui:get_commits_in_selection()[1] }
         end),
         [popups.mapping_for("PullPopup")] = popups.open("pull"),
+        [popups.mapping_for("FetchPopup")] = popups.open("fetch"),
         [popups.mapping_for("BisectPopup")] = popups.open("bisect", function(p)
           p { commits = self.buffer.ui:get_commits_in_selection() }
         end),
@@ -137,6 +147,7 @@ function M:open()
           p { commit = self.buffer.ui:get_commits_in_selection()[1] }
         end),
         [popups.mapping_for("PullPopup")] = popups.open("pull"),
+        [popups.mapping_for("FetchPopup")] = popups.open("fetch"),
         [popups.mapping_for("DiffPopup")] = popups.open("diff", function(p)
           local item = self.buffer.ui:get_commit_under_cursor()
           p {
@@ -229,12 +240,33 @@ function M:open()
             end
           end
         end,
+        [status_maps["RefreshBuffer"]] = a.void(function()
+          self:redraw()
+        end),
       },
     },
     render = function()
       return ui.RefsView(self.refs, self.head)
     end,
+    ---@param buffer Buffer
+    ---@param _win any
+    after = function(buffer, _win)
+      Watcher.instance(self.root):register(self)
+      buffer:move_cursor(buffer.ui:first_section().first)
+    end,
   }
+end
+
+function M:redraw()
+  logger.debug("[REFS] Beginning redraw")
+  self.buffer.ui:render(unpack(ui.RefsView(git.refs.list_parsed(), self.head)))
+
+  vim.api.nvim_exec_autocmds("User", { pattern = "NeogitRefsRefreshed", modeline = false })
+  logger.info("[REFS] Redraw complete")
+end
+
+function M:id()
+  return "RefsViewBuffer"
 end
 
 return M

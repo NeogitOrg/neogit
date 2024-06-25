@@ -30,6 +30,10 @@ class NeovimClient
     @instance = nil
   end
 
+  def refresh
+    lua "require('neogit.buffers.status').instance():dispatch_refresh()"
+  end
+
   def print_screen # rubocop:disable Metrics/MethodLength
     @instance.command("redraw")
 

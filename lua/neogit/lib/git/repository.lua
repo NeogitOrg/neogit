@@ -1,8 +1,10 @@
 local a = require("plenary.async")
 local logger = require("neogit.logger")
 local Path = require("plenary.path") ---@class Path
+local Watcher = require("neogit.watcher")
 local git = require("neogit.lib.git")
 local ItemFilter = require("neogit.lib.item_filter")
+local util = require("neogit.lib.util")
 
 local modules = {
   "status",
@@ -159,6 +161,7 @@ local function empty_state()
       finished = false,
       current = {},
     },
+    refs = {},
   }
 end
 
@@ -166,12 +169,15 @@ end
 ---@field lib table
 ---@field state NeogitRepoState
 ---@field git_root string
+---@field running boolean
+---@field refresh_callbacks function[]
 local Repo = {}
 Repo.__index = Repo
 
 local instances = {}
 
 ---@param dir? string
+---@return NeogitRepo
 function Repo.instance(dir)
   dir = dir or vim.uv.cwd()
   assert(dir, "cannot create a repo without a cwd")
@@ -180,6 +186,7 @@ function Repo.instance(dir)
   if not instances[cwd] then
     logger.debug("[REPO]: Registered Repository for: " .. cwd)
     instances[cwd] = Repo.new(cwd)
+    instances[cwd]:dispatch_refresh()
   end
 
   return instances[cwd]
@@ -187,6 +194,7 @@ end
 
 -- Use Repo.instance when calling directly to ensure it's registered
 ---@param dir string
+---@return NeogitRepo
 function Repo.new(dir)
   logger.debug("[REPO]: Initializing Repository")
 
@@ -194,7 +202,8 @@ function Repo.new(dir)
     lib = {},
     state = empty_state(),
     git_root = git.cli.git_root(dir),
-    refresh_lock = a.control.Semaphore.new(1),
+    running = false,
+    refresh_callbacks = {},
   }
 
   instance.state.git_root = instance.git_root
@@ -229,20 +238,35 @@ function Repo:tasks(filter)
   return tasks
 end
 
-function Repo:acquire_lock()
-  local permit = self.refresh_lock:acquire()
+function Repo:register_callback(fn)
+  logger.debug("[REPO] Callback registered")
+  table.insert(self.refresh_callbacks, fn)
+end
 
-  vim.defer_fn(function()
-    if self.refresh_lock.permits == 0 then
-      logger.debug("[REPO]: Refresh lock expired after 10 seconds")
-      permit:forget()
-    end
-  end, 10000)
-
-  return permit
+function Repo:run_callbacks()
+  for n, cb in ipairs(self.refresh_callbacks) do
+    logger.debug(("[REPO]: Running refresh callback (%d)"):format(n))
+    cb()
+  end
+  self.refresh_callbacks = {}
 end
 
 function Repo:refresh(opts)
+  opts = opts or {}
+
+  vim.uv.update_time()
+  local start = vim.uv.now()
+
+  if opts.callback then
+    self:register_callback(opts.callback)
+  end
+
+  if self.running then
+    logger.debug("[REPO] Already running - abort")
+    return
+  end
+  self.running = true
+
   if self.git_root == "" then
     logger.debug("[REPO] No git root found - skipping refresh")
     return
@@ -252,30 +276,34 @@ function Repo:refresh(opts)
     self.state.initialized = true
   end
 
-  local start = vim.uv.now()
-  opts = opts or {}
-
-  local permit = self:acquire_lock()
-  logger.info(("[REPO]: Acquired Refresh Lock for %s"):format(opts.source or "UNKNOWN"))
-
-  local on_complete = function()
-    logger.debug("[REPO]: Refreshes complete in " .. vim.uv.now() - start .. " ms")
-
-    if opts.callback then
-      logger.debug("[REPO]: Running refresh callback")
-      opts.callback()
-    end
-
-    logger.info(("[REPO]: Releasing Lock for %s"):format(opts.source or "UNKNOWN"))
-    permit:forget()
-  end
-
   local filter = ItemFilter.create { "*:*" }
   if opts.partial and opts.partial.update_diffs then
     filter = ItemFilter.create(opts.partial.update_diffs)
   end
 
+  local on_complete = a.void(function()
+    vim.uv.update_time()
+    logger.debug("[REPO]: Refreshes complete in " .. vim.uv.now() - start .. " ms")
+    self:run_callbacks()
+    self.running = false
+
+    if
+      git.rebase.in_progress()
+      or git.merge.in_progress()
+      or git.bisect.in_progress()
+      or git.sequencer.pick_or_revert_in_progress()
+    then
+      Watcher.instance(self.git_root):start()
+    else
+      Watcher.instance(self.git_root):stop()
+    end
+  end)
+
   a.util.run_all(self:tasks(filter), on_complete)
 end
+
+Repo.dispatch_refresh = a.void(util.throttle_by_id(function(self, opts)
+  self:refresh(opts)
+end, true))
 
 return Repo

@@ -21,7 +21,7 @@ describe("lib.git.status", function()
     -- end)
 
     it("returns false when there are no staged items", function()
-      util.system("git reset")
+      util.system { "git", "reset" }
       neogit.refresh()
 
       assert.False(subject.anything_staged())
@@ -37,7 +37,7 @@ describe("lib.git.status", function()
     -- end)
 
     it("returns false when there are no unstaged items", function()
-      util.system("git add --all")
+      util.system { "git", "add", "--all" }
       neogit.refresh()
 
       assert.False(subject.anything_unstaged())

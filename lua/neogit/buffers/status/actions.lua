@@ -609,7 +609,7 @@ end
 ---@param _self StatusBuffer
 M.n_show_refs = function(_self)
   return a.void(function()
-    require("neogit.buffers.refs_view").new(git.refs.list_parsed()):open()
+    require("neogit.buffers.refs_view").new(git.refs.list_parsed(), git.repo.git_root):open()
   end)
 end
 
@@ -660,13 +660,13 @@ M.n_discard = function(self)
               input.get_choice("Discard conflict by taking...", { values = choices, default = #choices })
 
             if choice == "o" then
-              git.cli.checkout.ours.files(selection.item.absolute_path).call_sync()
+              git.cli.checkout.ours.files(selection.item.absolute_path).call()
               git.status.stage { selection.item.name }
             elseif choice == "t" then
-              git.cli.checkout.theirs.files(selection.item.absolute_path).call_sync()
+              git.cli.checkout.theirs.files(selection.item.absolute_path).call()
               git.status.stage { selection.item.name }
             elseif choice == "c" then
-              git.cli.checkout.merge.files(selection.item.absolute_path).call_sync()
+              git.cli.checkout.merge.files(selection.item.absolute_path).call()
               git.status.stage { selection.item.name }
             end
           end
@@ -691,13 +691,13 @@ M.n_discard = function(self)
               input.get_choice("Discard conflict by taking...", { values = choices, default = #choices })
 
             if choice == "o" then
-              git.cli.checkout.ours.files(selection.item.absolute_path).call_sync()
+              git.cli.checkout.ours.files(selection.item.absolute_path).call()
               git.status.stage { selection.item.name }
             elseif choice == "t" then
-              git.cli.checkout.theirs.files(selection.item.absolute_path).call_sync()
+              git.cli.checkout.theirs.files(selection.item.absolute_path).call()
               git.status.stage { selection.item.name }
             elseif choice == "c" then
-              git.cli.checkout.merge.files(selection.item.absolute_path).call_sync()
+              git.cli.checkout.merge.files(selection.item.absolute_path).call()
               git.status.stage { selection.item.name }
             end
           end

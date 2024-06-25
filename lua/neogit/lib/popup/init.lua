@@ -1,5 +1,4 @@
 local PopupBuilder = require("neogit.lib.popup.builder")
-local status = require("neogit.buffers.status")
 local Buffer = require("neogit.lib.buffer")
 local logger = require("neogit.logger")
 local util = require("neogit.lib.util")
@@ -7,6 +6,7 @@ local config = require("neogit.config")
 local state = require("neogit.lib.state")
 local input = require("neogit.lib.input")
 local notification = require("neogit.lib.notification")
+local Watcher = require("neogit.watcher")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
@@ -227,9 +227,6 @@ function M:set_config(config)
   end
 end
 
--- Allow user actions to be queued
-local action_lock = a.control.Semaphore.new(1)
-
 function M:mappings()
   local mappings = {
     n = {
@@ -303,18 +300,10 @@ function M:mappings()
       elseif action.callback then
         for _, key in ipairs(action.keys) do
           mappings.n[key] = a.void(function()
-            local permit = action_lock:acquire()
             logger.debug(string.format("[POPUP]: Invoking action %q of %s", key, self.state.name))
-
             self:close()
             action.callback(self)
-
-            if status.instance() then
-              logger.debug("[ACTION] Dispatching Refresh to Status Buffer")
-              status.instance():dispatch_refresh(nil, "action")
-            end
-
-            permit:forget()
+            Watcher.instance():dispatch_refresh()
           end)
         end
       else

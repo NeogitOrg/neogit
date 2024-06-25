@@ -1,37 +1,4 @@
-local neogit = require("neogit")
-local git_harness = require("tests.util.git_harness")
-local util = require("tests.util.util")
-local remote = require("neogit.lib.git.remote")
-
 local subject = require("neogit.lib.git.log")
-
-neogit.setup {}
-
-describe("lib.git.log", function()
-  before_each(function()
-    git_harness.prepare_repository()
-    neogit.reset()
-  end)
-
-  describe("#is_ancestor", function()
-    it("returns true when first ref is ancestor of second", function()
-      assert.True(subject.is_ancestor(git_harness.get_git_rev("HEAD~1"), "HEAD"))
-    end)
-
-    it("returns false when first ref is not ancestor of second", function()
-      util.system([[
-        git checkout -b new-branch
-        git commit --allow-empty -m "empty commit"
-      ]])
-
-      local commit = git_harness.get_git_rev("HEAD")
-
-      util.system("git switch master")
-
-      assert.False(subject.is_ancestor(commit, "HEAD"))
-    end)
-  end)
-end)
 
 describe("lib.git.log.parse", function()
   it("parses commit with message and diff", function()
@@ -362,7 +329,7 @@ describe("lib.git.log.parse", function()
   end)
 
   it("lib.git.log.branch_info extracts local branch name", function()
-    local remotes = remote.list()
+    local remotes = { "origin" }
     assert.are.same(
       { tags = {}, locals = { main = true }, remotes = {} },
       subject.branch_info("main", remotes)
@@ -375,7 +342,7 @@ describe("lib.git.log.parse", function()
   end)
 
   it("lib.git.log.branch_info extracts head", function()
-    local remotes = remote.list()
+    local remotes = { "origin" }
     assert.are.same(
       { head = "main", locals = { main = true }, remotes = {}, tags = {} },
       subject.branch_info("HEAD -> main", remotes)

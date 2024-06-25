@@ -10,7 +10,7 @@ local M = {}
 ---@param path string absolute path
 ---@return boolean
 function M.add(ref, path, params)
-  local result = git.cli.worktree.add.arg_list(params or {}).args(path, ref).call_sync()
+  local result = git.cli.worktree.add.arg_list(params or {}).args(path, ref).call()
   return result.code == 0
 end
 
@@ -44,7 +44,7 @@ end
 ---@return Worktree[]
 function M.list(opts)
   opts = opts or { include_main = true }
-  local list = vim.split(git.cli.worktree.list.args("--porcelain", "-z").call().stdout_raw[1], "\n\n")
+  local list = vim.split(git.cli.worktree.list.args("--porcelain", "-z").call().stdout[1], "\n\n")
 
   return util.filter_map(list, function(w)
     local path, head, type, ref = w:match("^worktree (.-)\nHEAD (.-)\n([^ ]+) (.+)$")

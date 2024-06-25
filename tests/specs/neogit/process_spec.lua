@@ -49,7 +49,7 @@ describe("process execution", function()
 
     local result = process.new({ cmd = { "cat", tmp_dir .. "/output" } }):spawn_blocking(1)
     assert(result)
-    assert.are.same(input, result.stdout)
+    assert.are.same({ "This is a line", "This is another line", "", "\04" }, result.stdout)
   end)
 
   it("basic command trim", function()

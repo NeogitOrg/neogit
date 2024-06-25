@@ -680,14 +680,9 @@ end
 local history = {}
 
 ---@param job any
----@param popup any
 ---@param hidden_text string Text to obfuscate from history
 ---@param hide_from_history boolean Do not show this command in GitHistoryBuffer
-local function handle_new_cmd(job, popup, hidden_text, hide_from_history)
-  if popup == nil then
-    popup = true
-  end
-
+local function handle_new_cmd(job, hidden_text, hide_from_history)
   if hide_from_history == nil then
     hide_from_history = false
   end
@@ -779,13 +774,6 @@ local mt_builder = {
       end
     end
 
-    if action == "show_popup" then
-      return function(show_popup)
-        tbl[k_state].show_popup = show_popup
-        return tbl
-      end
-    end
-
     if action == "in_pty" then
       return function(in_pty)
         tbl[k_state].in_pty = in_pty
@@ -843,6 +831,12 @@ local mt_builder = {
     return tbl.call(...)
   end,
 }
+-- from: https://stackoverflow.com/questions/48948630/lua-ansi-escapes-pattern
+local pattern_1 = "[\27\155][][()#;?%d]*[A-PRZcf-ntqry=><~]"
+local pattern_2 = "[\r\n\04\08]"
+local function remove_escape_codes(s)
+  return s:gsub(pattern_1, ""):gsub(pattern_2, "")
+end
 
 ---@param line string
 ---@return string
@@ -878,6 +872,7 @@ end
 ---@param line string
 ---@return boolean
 local function handle_line_interactive(p, line)
+  line = remove_escape_codes(line)
   logger.debug(string.format("Matching interactive cmd output: '%s'", line))
 
   local handler
@@ -920,7 +915,6 @@ local function new_builder(subcommand)
     arguments = {},
     files = {},
     input = nil,
-    show_popup = true,
     in_pty = false,
     env = {},
   }
@@ -1000,7 +994,7 @@ local function new_builder(subcommand)
       }
       p.pty = true
 
-      p.on_partial_line = function(p, line, _)
+      p.on_partial_line = function(p, line)
         if line ~= "" then
           handle_line(p, line)
         end
@@ -1021,16 +1015,12 @@ local function new_builder(subcommand)
         stderr = result.stderr,
         code = result.code,
         time = result.time,
-      }, state.show_popup, state.hide_text, opts.hidden)
+      }, state.hide_text, opts.hidden)
 
       return result
     end,
     call = function(options)
-      local opts = vim.tbl_extend(
-        "keep",
-        (options or {}),
-        { verbose = false, ignore_error = not state.show_popup, hidden = false, trim = true }
-      )
+      local opts = vim.tbl_extend("keep", (options or {}), { verbose = false, hidden = false, trim = true })
 
       local p = to_process {
         verbose = opts.verbose,
@@ -1054,16 +1044,30 @@ local function new_builder(subcommand)
         end,
       }
 
-      local result = p:spawn_async(function()
-        -- Required since we need to do this before awaiting
-        if state.input then
-          logger.debug("Sending input:" .. vim.inspect(state.input))
-          -- Include EOT, otherwise git-apply will not work as expects the
-          -- stream to end
-          p:send(state.input .. "\04")
-          p:close_stdin()
+      local result
+      local function run_async()
+        result = p:spawn_async(function()
+          -- Required since we need to do this before awaiting
+          if state.input then
+            logger.debug("Sending input:" .. vim.inspect(state.input))
+            -- Include EOT, otherwise git-apply will not work as expects the
+            -- stream to end
+            p:send(state.input .. "\04")
+            p:close_stdin()
+          end
+        end)
+      end
+
+      local ok, _ = pcall(run_async)
+      if not ok then
+        logger.debug("Running command async failed - awaiting instead")
+        if not p:spawn() then
+          error("Failed to run command")
+          return nil
         end
-      end)
+
+        result = p:wait()
+      end
 
       assert(result, "Command did not complete")
 
@@ -1073,42 +1077,7 @@ local function new_builder(subcommand)
         stderr = result.stderr,
         code = result.code,
         time = result.time,
-      }, state.show_popup, state.hide_text, opts.hidden)
-
-      if opts.trim then
-        return result:trim()
-      else
-        return result
-      end
-    end,
-    call_sync = function(options)
-      local opts = vim.tbl_extend(
-        "keep",
-        (options or {}),
-        { verbose = false, ignore_error = not state.show_popup, hidden = false, trim = true }
-      )
-
-      local p = to_process {
-        on_error = function(_res)
-          return not opts.ignore_error
-        end,
-      }
-
-      if not p:spawn() then
-        error("Failed to run command")
-        return nil
-      end
-
-      local result = p:wait()
-      assert(result, "Command did not complete")
-
-      handle_new_cmd({
-        cmd = table.concat(p.cmd, " "),
-        stdout = result.stdout,
-        stderr = result.stderr,
-        code = result.code,
-        time = result.time,
-      }, state.show_popup, state.hide_text, opts.hidden)
+      }, state.hide_text, opts.hidden)
 
       if opts.trim then
         return result:trim()

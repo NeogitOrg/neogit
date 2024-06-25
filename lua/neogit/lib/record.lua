@@ -11,6 +11,14 @@ local pair_separator = { dec = "\29", hex_log = "%x1D", hex_ref = "%1D" }
 -- 4. ([^\31]*)    - Capture all characters that are not field separators
 -- 5. \31?         - Optionally has a trailing field separator (last field won't have this)
 local pattern = "\31?([^\31\29]*)\29([^\31]*)\31?"
+local BLANK = ""
+
+local concat = table.concat
+local insert = table.insert
+local gmatch = string.gmatch
+local format = string.format
+local split = vim.split
+local map = vim.tbl_map
 
 ---Parses a record string into a lua table
 ---@param record_string string
@@ -18,8 +26,8 @@ local pattern = "\31?([^\31\29]*)\29([^\31]*)\31?"
 local function parse_record(record_string)
   local record = {}
 
-  for key, value in string.gmatch(record_string, pattern) do
-    record[key] = value or ""
+  for key, value in gmatch(record_string, pattern) do
+    record[key] = value or BLANK
   end
 
   return record
@@ -35,12 +43,13 @@ function M.decode(lines)
 
   -- join lines into one string, since a record could potentially span multiple
   -- lines if the subject/body fields contain \n or \r characters.
-  local lines = table.concat(lines, "")
+  local lines = concat(lines, "")
 
   -- Split the string into records, using the record separator character as a delimiter.
   -- If you commit message contains record separator control characters... this won't work,
   -- and you should feel bad about your choices.
-  return vim.tbl_map(parse_record, vim.split(lines, record_separator.dec, { trimempty = true }))
+  local records = split(lines, record_separator.dec, { trimempty = true })
+  return map(parse_record, records)
 end
 
 ---@param tbl table Key/value pairs to format with delimiters
@@ -50,10 +59,10 @@ function M.encode(tbl, type)
   local hex = "hex_" .. type
   local out = {}
   for k, v in pairs(tbl) do
-    table.insert(out, string.format("%s%s%s", k, pair_separator[hex], v))
+    insert(out, format("%s%s%s", k, pair_separator[hex], v))
   end
 
-  return table.concat(out, field_separator[hex]) .. record_separator[hex]
+  return concat(out, field_separator[hex]) .. record_separator[hex]
 end
 
 return M

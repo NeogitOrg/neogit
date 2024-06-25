@@ -25,11 +25,13 @@ local function spin_off_branch(checkout)
     return
   end
 
+  fire_branch_event("NeogitBranchCreate", { branch_name = name })
   git.branch.create(name)
 
   local current_branch_name = git.branch.current_full_name()
 
   if checkout then
+    fire_branch_event("NeogitBranchCheckout", { branch_name = name })
     git.cli.checkout.branch(name).call()
   end
 
@@ -59,7 +61,8 @@ local function create_branch(popup, prompt, checkout)
     git.refs.heads()
   ))
 
-  local base_branch = FuzzyFinderBuffer.new(options):open_async { prompt_prefix = prompt }
+  local base_branch = FuzzyFinderBuffer.new(options)
+    :open_async { prompt_prefix = prompt, refocus_status = false }
   if not base_branch then
     return
   end
@@ -99,12 +102,12 @@ function M.checkout_branch_revision(popup)
       git.refs.heads()
     )
   )
-  local selected_branch = FuzzyFinderBuffer.new(options):open_async()
+  local selected_branch = FuzzyFinderBuffer.new(options):open_async { refocus_status = false }
   if not selected_branch then
     return
   end
 
-  git.cli.checkout.branch(selected_branch).arg_list(popup:get_arguments()).call_sync()
+  git.cli.checkout.branch(selected_branch).arg_list(popup:get_arguments()).call()
   fire_branch_event("NeogitBranchCheckout", { branch_name = selected_branch })
 end
 
@@ -120,6 +123,7 @@ function M.checkout_local_branch(popup)
 
   local target = FuzzyFinderBuffer.new(util.merge(local_branches, remote_branches)):open_async {
     prompt_prefix = "branch",
+    refocus_status = false,
   }
 
   if target then
@@ -151,7 +155,8 @@ function M.create_branch(popup)
 end
 
 function M.configure_branch()
-  local branch_name = FuzzyFinderBuffer.new(git.refs.list_local_branches()):open_async()
+  local branch_name = FuzzyFinderBuffer.new(git.refs.list_local_branches())
+    :open_async { refocus_status = false }
   if not branch_name then
     return
   end
@@ -160,7 +165,8 @@ function M.configure_branch()
 end
 
 function M.rename_branch()
-  local selected_branch = FuzzyFinderBuffer.new(git.refs.list_local_branches()):open_async()
+  local selected_branch = FuzzyFinderBuffer.new(git.refs.list_local_branches())
+    :open_async { refocus_status = false }
   if not selected_branch then
     return
   end
@@ -213,7 +219,7 @@ function M.reset_branch(popup)
   end
 
   -- Reset the current branch to the desired state & update reflog
-  git.cli.reset.hard.args(to).call_sync()
+  git.cli.reset.hard.args(to).call()
   git.log.update_ref(git.branch.current_full_name(), to)
 
   notification.info(string.format("Reset '%s' to '%s'", current, to))
@@ -222,7 +228,7 @@ end
 
 function M.delete_branch(popup)
   local options = util.deduplicate(util.merge({ popup.state.env.ref_name }, git.refs.list_branches()))
-  local selected_branch = FuzzyFinderBuffer.new(options):open_async()
+  local selected_branch = FuzzyFinderBuffer.new(options):open_async { refocus_status = false }
   if not selected_branch then
     return
   end
@@ -235,7 +241,7 @@ function M.delete_branch(popup)
     and branch_name
     and input.get_permission(("Delete remote branch '%s/%s'?"):format(remote, branch_name))
   then
-    success = git.cli.push.remote(remote).delete.to(branch_name).call_sync().code == 0
+    success = git.cli.push.remote(remote).delete.to(branch_name).call().code == 0
   elseif not remote and branch_name == git.branch.current() then
     local choices = {
       "&detach HEAD and delete",
@@ -253,16 +259,16 @@ function M.delete_branch(popup)
     )
 
     if choice == "d" then
-      git.cli.checkout.detach.call_sync()
+      git.cli.checkout.detach.call()
     elseif choice == "c" then
-      git.cli.checkout.branch(upstream).call_sync()
+      git.cli.checkout.branch(upstream).call()
     else
       return
     end
 
     success = git.branch.delete(branch_name)
     if not success then -- Reset HEAD if unsuccessful
-      git.cli.checkout.branch(branch_name).call_sync()
+      git.cli.checkout.branch(branch_name).call()
     end
   elseif not remote and branch_name then
     success = git.branch.delete(branch_name)

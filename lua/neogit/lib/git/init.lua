@@ -5,14 +5,8 @@ local input = require("neogit.lib.input")
 ---@class NeogitGitInit
 local M = {}
 
-M.create = function(directory, sync)
-  sync = sync or false
-
-  if sync then
-    git.cli.init.args(directory).call_sync()
-  else
-    git.cli.init.args(directory).call()
-  end
+M.create = function(directory)
+  git.cli.init.args(directory).call()
 end
 
 -- TODO Use path input

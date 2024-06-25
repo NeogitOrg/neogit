@@ -273,7 +273,7 @@ end
 return {
   parse = parse_diff,
   staged_stats = function()
-    local raw = git.cli.diff.no_ext_diff.cached.stat.call_sync({ hidden = true }).stdout
+    local raw = git.cli.diff.no_ext_diff.cached.stat.call({ hidden = true }).stdout
     local files = {}
     local summary
 
