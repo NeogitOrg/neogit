@@ -90,6 +90,9 @@ function M:show()
     },
     render = function()
       local win_width = vim.fn.winwidth(0)
+      local function wrap_text(str)
+        return text(util.remove_ansi_escape_codes(str))
+      end
 
       return filter_map(self.state, function(item)
         if item.hidden and not os.getenv("NEOGIT_DEBUG") then
@@ -127,7 +130,7 @@ function M:show()
           },
           col
             .padding_left("  | ")
-            .highlight("NeogitCommandText")(map(util.merge(item.stdout, item.stderr), text)),
+            .highlight("NeogitCommandText")(map(util.merge(item.stdout, item.stderr), wrap_text)),
         }, { foldable = true, folded = true })
       end)
     end,
