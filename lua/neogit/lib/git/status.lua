@@ -62,7 +62,7 @@ local function update_status(state, filter)
   state.untracked.items = {}
   state.unstaged.items = {}
 
-  local result = git.cli.status.null_separated.porcelain(2).call { hidden = true }
+  local result = git.cli.status.null_separated.porcelain(2).call { hidden = true, remove_ansi = false }
   result = vim.split(result.stdout[1] or "", "\n")
   result = util.collect(result, function(line, collection)
     if line == "" then

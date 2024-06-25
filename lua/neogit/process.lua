@@ -3,6 +3,7 @@ local notification = require("neogit.lib.notification")
 
 local config = require("neogit.config")
 local logger = require("neogit.logger")
+local util = require("neogit.lib.util")
 
 local command_mask =
   vim.pesc(" --no-pager --literal-pathspecs --no-optional-locks -c core.preloadindex=true -c color.ui=always")
@@ -42,16 +43,31 @@ local ProcessResult = {}
 ---Removes empty lines from output
 ---@return ProcessResult
 function ProcessResult:trim()
+  local BLANK = ""
   self.stdout = vim.tbl_filter(function(v)
-    return v ~= ""
+    return v ~= BLANK
   end, self.stdout)
 
   self.stderr = vim.tbl_filter(function(v)
-    return v ~= ""
+    return v ~= BLANK
   end, self.stderr)
 
   return self
 end
+
+function ProcessResult:remove_ansi()
+  local remove_ansi_escape_codes = util.remove_ansi_escape_codes
+  self.stdout = vim.tbl_map(function(v)
+    return remove_ansi_escape_codes(v)
+  end, self.stdout)
+
+  self.stderr = vim.tbl_map(function(v)
+    return remove_ansi_escape_codes(v)
+  end, self.stderr)
+
+  return self
+end
+
 ProcessResult.__index = ProcessResult
 
 ---@param process Process

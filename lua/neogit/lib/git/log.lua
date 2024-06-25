@@ -292,7 +292,7 @@ M.graph = util.memoize(function(options, files, color)
     .format("%x1E%H%x00").graph.color
     .arg_list(options)
     .files(unpack(files))
-    .call({ ignore_error = true, hidden = true }).stdout
+    .call({ ignore_error = true, hidden = true, remove_ansi = false }).stdout
 
   return util.filter_map(result, function(line)
     return require("neogit.lib.ansi").parse(util.trim(line), { recolor = not color })

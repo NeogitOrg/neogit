@@ -831,12 +831,6 @@ local mt_builder = {
     return tbl.call(...)
   end,
 }
--- from: https://stackoverflow.com/questions/48948630/lua-ansi-escapes-pattern
-local pattern_1 = "[\27\155][][()#;?%d]*[A-PRZcf-ntqry=><~]"
-local pattern_2 = "[\r\n\04\08]"
-local function remove_escape_codes(s)
-  return s:gsub(pattern_1, ""):gsub(pattern_2, "")
-end
 
 ---@param line string
 ---@return string
@@ -872,7 +866,7 @@ end
 ---@param line string
 ---@return boolean
 local function handle_line_interactive(p, line)
-  line = remove_escape_codes(line)
+  line = util.remove_ansi_escape_codes(line)
   logger.debug(string.format("Matching interactive cmd output: '%s'", line))
 
   local handler
@@ -1020,7 +1014,11 @@ local function new_builder(subcommand)
       return result
     end,
     call = function(options)
-      local opts = vim.tbl_extend("keep", (options or {}), { verbose = false, hidden = false, trim = true })
+      local opts = vim.tbl_extend(
+        "keep",
+        (options or {}),
+        { verbose = false, hidden = false, trim = true, remove_ansi = true }
+      )
 
       local p = to_process {
         verbose = opts.verbose,
@@ -1080,10 +1078,14 @@ local function new_builder(subcommand)
       }, state.hide_text, opts.hidden)
 
       if opts.trim then
-        return result:trim()
-      else
-        return result
+        result:trim()
       end
+
+      if opts.remove_ansi then
+        result:remove_ansi()
+      end
+
+      return result
     end,
   }, mt_builder)
 end
