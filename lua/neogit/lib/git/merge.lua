@@ -36,7 +36,7 @@ function M.abort()
 end
 
 ---@return boolean
-function M.in_merge()
+function M.in_progress()
   return git.repo.state.merge.head ~= nil
 end
 

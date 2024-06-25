@@ -175,7 +175,7 @@ local function rev_name(oid)
 end
 
 ---@return boolean
-function M.in_rebase()
+function M.in_progress()
   return git.repo.state.rebase.head ~= nil
 end
 

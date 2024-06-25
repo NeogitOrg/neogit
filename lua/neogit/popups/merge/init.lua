@@ -1,10 +1,11 @@
 local popup = require("neogit.lib.popup")
 local actions = require("neogit.popups.merge.actions")
+local git = require("neogit.lib.git")
 
 local M = {}
 
 function M.create(env)
-  local in_merge = actions.in_merge()
+  local in_merge = git.merge.in_progress()
   local p = popup
     .builder()
     :name("NeogitMergePopup")
