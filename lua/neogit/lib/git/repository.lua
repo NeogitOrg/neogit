@@ -287,7 +287,8 @@ function Repo:refresh(opts)
     self:run_callbacks()
     self.running = false
 
-    if git.rebase.in_progress()
+    if
+      git.rebase.in_progress()
       or git.merge.in_progress()
       or git.bisect.in_progress()
       or git.sequencer.pick_or_revert_in_progress()
