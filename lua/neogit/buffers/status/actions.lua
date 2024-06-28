@@ -92,7 +92,7 @@ M.v_discard = function(self)
             end
 
             for _, hunk in ipairs(hunks) do
-              table.insert(invalidated_diffs, section.name .. ":" .. item.name)
+              table.insert(invalidated_diffs, "*:" .. item.name)
               table.insert(patches, function()
                 local patch = git.index.generate_patch(item, hunk, hunk.from, hunk.to, true)
 
@@ -107,7 +107,7 @@ M.v_discard = function(self)
           else
             discard_message = ("Discard %s files?"):format(file_count)
             logger.debug(("Discarding in section %s %s"):format(section.name, item.name))
-            table.insert(invalidated_diffs, section.name .. ":" .. item.name)
+            table.insert(invalidated_diffs, "*:" .. item.name)
 
             if section.name == "untracked" then
               table.insert(untracked_files, item)
