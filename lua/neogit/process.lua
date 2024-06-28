@@ -23,6 +23,7 @@ end
 ---@field stdin number|nil
 ---@field pty boolean|nil
 ---@field buffer ProcessBuffer
+---@field input string|nil
 ---@field on_partial_line fun(process: Process, data: string)|nil callback on complete lines
 ---@field on_error (fun(res: ProcessResult): boolean) Intercept the error externally, returning false prevents the error from being logged
 local Process = {}
@@ -328,6 +329,15 @@ function Process:spawn(cb)
 
   if not hide_console then
     self:start_timer()
+  end
+
+  -- Required since we need to do this before awaiting
+  if self.input then
+    logger.debug("Sending input:" .. vim.inspect(self.input))
+    self:send(self.input)
+    -- Include EOT, otherwise git-apply will not work as expects the stream to end
+    self:send("\04")
+    self:close_stdin()
   end
 
   return true

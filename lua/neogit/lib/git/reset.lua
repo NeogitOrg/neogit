@@ -9,7 +9,7 @@ local function fire_reset_event(data)
 end
 
 function M.mixed(commit)
-  local result = git.cli.reset.mixed.args(commit).call()
+  local result = git.cli.reset.mixed.args(commit).call { async = false }
   if result.code ~= 0 then
     notification.error("Reset Failed")
   else
@@ -19,7 +19,7 @@ function M.mixed(commit)
 end
 
 function M.soft(commit)
-  local result = git.cli.reset.soft.args(commit).call()
+  local result = git.cli.reset.soft.args(commit).call { async = false }
   if result.code ~= 0 then
     notification.error("Reset Failed")
   else
@@ -29,7 +29,7 @@ function M.soft(commit)
 end
 
 function M.hard(commit)
-  local result = git.cli.reset.hard.args(commit).call()
+  local result = git.cli.reset.hard.args(commit).call { async = false }
   if result.code ~= 0 then
     notification.error("Reset Failed")
   else
@@ -39,7 +39,7 @@ function M.hard(commit)
 end
 
 function M.keep(commit)
-  local result = git.cli.reset.keep.args(commit).call()
+  local result = git.cli.reset.keep.args(commit).call { async = false }
   if result.code ~= 0 then
     notification.error("Reset Failed")
   else
@@ -49,7 +49,7 @@ function M.keep(commit)
 end
 
 function M.index(commit)
-  local result = git.cli.reset.args(commit).files(".").call()
+  local result = git.cli.reset.args(commit).files(".").call { async = false }
   if result.code ~= 0 then
     notification.error("Reset Failed")
   else
@@ -69,7 +69,7 @@ end
 -- end
 
 function M.file(commit, files)
-  local result = git.cli.checkout.rev(commit).files(unpack(files)).call()
+  local result = git.cli.checkout.rev(commit).files(unpack(files)).call { async = false }
   if result.code ~= 0 then
     notification.error("Reset Failed")
   else

@@ -59,8 +59,8 @@ local function perform_stash(include)
   elseif include.index then
     local diff = git.cli.diff.no_ext_diff.cached.call().stdout[1] .. "\n"
 
-    git.cli.apply.reverse.cached.input(diff).call()
-    git.cli.apply.reverse.input(diff).call()
+    git.cli.apply.reverse.cached.input(diff).call { async = false }
+    git.cli.apply.reverse.input(diff).call { async = false }
   end
 
   fire_stash_event("NeogitStash")
@@ -76,7 +76,7 @@ function M.list_refs()
 end
 
 function M.stash_all(args)
-  git.cli.stash.arg_list(args).call()
+  git.cli.stash.arg_list(args).call { async = false }
   fire_stash_event("NeogitStash")
   -- this should work, but for some reason doesn't.
   --return perform_stash({ worktree = true, index = true })
@@ -87,33 +87,33 @@ function M.stash_index()
 end
 
 function M.push(args, files)
-  git.cli.stash.push.arg_list(args).files(unpack(files)).call()
+  git.cli.stash.push.arg_list(args).files(unpack(files)).call { async = false }
 end
 
 function M.pop(stash)
-  local result = git.cli.stash.apply.index.args(stash).call()
+  local result = git.cli.stash.apply.index.args(stash).call { async = false }
 
   if result.code == 0 then
-    git.cli.stash.drop.args(stash).call()
+    git.cli.stash.drop.args(stash).call { async = false }
   else
-    git.cli.stash.apply.args(stash).call()
+    git.cli.stash.apply.args(stash).call { async = false }
   end
 
   fire_stash_event("NeogitStash")
 end
 
 function M.apply(stash)
-  local result = git.cli.stash.apply.index.args(stash).call()
+  local result = git.cli.stash.apply.index.args(stash).call { async = false }
 
   if result.code ~= 0 then
-    git.cli.stash.apply.args(stash).call()
+    git.cli.stash.apply.args(stash).call { async = false }
   end
 
   fire_stash_event("NeogitStash")
 end
 
 function M.drop(stash)
-  git.cli.stash.drop.args(stash).call()
+  git.cli.stash.drop.args(stash).call { async = false }
   fire_stash_event("NeogitStash")
 end
 
@@ -125,8 +125,8 @@ function M.rename(stash)
   local message = input.get_user_input("New name")
   if message then
     local oid = git.rev_parse.abbreviate_commit(stash)
-    git.cli.stash.drop.args(stash).call()
-    git.cli.stash.store.message(message).args(oid).call()
+    git.cli.stash.drop.args(stash).call { async = false }
+    git.cli.stash.store.message(message).args(oid).call { async = false }
   end
 end
 
