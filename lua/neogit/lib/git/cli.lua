@@ -955,6 +955,7 @@ local function new_builder(subcommand)
     logger.trace(string.format("[CLI]: Executing '%s': '%s'", subcommand, table.concat(cmd, " ")))
 
     return process.new {
+      input = state.input,
       cmd = cmd,
       cwd = git.repo.git_root,
       env = state.env,
@@ -1044,21 +1045,10 @@ local function new_builder(subcommand)
 
       local result
       local function run_async()
-        result = p:spawn_async(function()
-          -- Required since we need to do this before awaiting
-          if state.input then
-            logger.debug("Sending input:" .. vim.inspect(state.input))
-            -- Include EOT, otherwise git-apply will not work as expects the
-            -- stream to end
-            p:send(state.input .. "\04")
-            p:close_stdin()
-          end
-        end)
+        result = p:spawn_async()
       end
 
-      local ok, _ = pcall(run_async)
-      if not ok then
-        logger.debug("Running command async failed - awaiting instead")
+      local function run_sync()
         if not p:spawn() then
           error("Failed to run command")
           return nil
