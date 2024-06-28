@@ -10,7 +10,7 @@ local function fire_cherrypick_event(data)
 end
 
 function M.pick(commits, args)
-  local result = git.cli["cherry-pick"].arg_list(util.merge(args, commits)).call()
+  local result = git.cli["cherry-pick"].arg_list(util.merge(args, commits)).call { async = false }
   if result.code ~= 0 then
     notification.error("Cherry Pick failed. Resolve conflicts before continuing")
   else
@@ -25,7 +25,7 @@ function M.apply(commits, args)
     end
   end)
 
-  local result = git.cli["cherry-pick"].no_commit.arg_list(util.merge(args, commits)).call()
+  local result = git.cli["cherry-pick"].no_commit.arg_list(util.merge(args, commits)).call { async = false }
   if result.code ~= 0 then
     notification.error("Cherry Pick failed. Resolve conflicts before continuing")
   else

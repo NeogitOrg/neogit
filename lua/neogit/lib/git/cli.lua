@@ -1017,7 +1017,7 @@ local function new_builder(subcommand)
       local opts = vim.tbl_extend(
         "keep",
         (options or {}),
-        { verbose = false, hidden = false, trim = true, remove_ansi = true }
+        { verbose = false, hidden = false, trim = true, remove_ansi = true, async = true }
       )
 
       local p = to_process {
@@ -1065,6 +1065,18 @@ local function new_builder(subcommand)
         end
 
         result = p:wait()
+      end
+
+      if opts.async then
+        logger.debug("Running command async: " .. vim.inspect(p.cmd))
+        local ok, _ = pcall(run_async)
+        if not ok then
+          logger.debug("Running command async failed - awaiting instead")
+          run_sync()
+        end
+      else
+        logger.debug("Running command sync: " .. vim.inspect(p.cmd))
+        run_sync()
       end
 
       assert(result, "Command did not complete")
