@@ -710,7 +710,7 @@ function Buffer.create(config)
     vim.opt_local.signcolumn = "no"
   end
 
-  if config.foldmarkers and not config.disable_signs then
+  if config.foldmarkers then
     vim.opt_local.signcolumn = "auto"
 
     logger.debug("[BUFFER:" .. buffer.handle .. "] Setting up foldmarkers")

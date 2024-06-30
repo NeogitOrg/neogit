@@ -49,7 +49,7 @@ function M:open(_)
     name = "NeogitReflogView",
     filetype = "NeogitReflogView",
     kind = config.values.reflog_view.kind,
-    status_column = "",
+    status_column = not config.values.disable_signs and "" or nil,
     context_highlight = true,
     mappings = {
       v = {

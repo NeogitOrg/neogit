@@ -74,7 +74,7 @@ function M:open(kind)
     load = true,
     filetype = "NeogitRebaseTodo",
     buftype = "",
-    status_column = "",
+    status_column = not config.values.disable_signs and "" or nil,
     kind = kind,
     modifiable = true,
     disable_line_numbers = config.values.disable_line_numbers,
