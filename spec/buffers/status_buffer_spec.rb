@@ -20,7 +20,7 @@ RSpec.describe "Status Buffer", :git, :nvim do
     end
   end
 
-  context "with disabled mapping" do
+  context "with disabled mapping and no replacement" do
     let(:neogit_config) { "{ mappings = { status = { j = false }, popup = { b = false } } }" }
 
     it "renders, raising no errors" do
