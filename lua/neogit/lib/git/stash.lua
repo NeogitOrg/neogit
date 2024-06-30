@@ -87,6 +87,17 @@ function M.stash_index()
   fire_stash_event("NeogitStash")
 end
 
+function M.stash_keep_index()
+  local files = git.cli["ls-files"].call().stdout
+  -- for some reason complains if not passed files,
+  -- but this seems to be a git cli error; running:
+  --    git --literal-pathspecs stash --keep-index
+  -- fails with a bizarre error:
+  -- error: pathspec ':/' did not match any file(s) known to git
+  git.cli.stash.keep_index.files(unpack(files)).call { async = false }
+  fire_stash_event("NeogitStash")
+end
+
 function M.push(args, files)
   git.cli.stash.push.arg_list(args).files(unpack(files)).call { async = false }
 end
