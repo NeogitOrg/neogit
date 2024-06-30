@@ -83,7 +83,8 @@ function M.stash_all(args)
 end
 
 function M.stash_index()
-  return perform_stash { worktree = false, index = true }
+  git.cli.stash.staged.call { async = false }
+  fire_stash_event("NeogitStash")
 end
 
 function M.push(args, files)
