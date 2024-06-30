@@ -257,7 +257,7 @@ M.CommitEntry = Component.new(function(commit, args)
       }, graph, { text(" ") }, ref, ref_last, { text(commit.subject) }),
       {
         virtual_text = {
-          { " ",                                     "Constant" },
+          { " ", "Constant" },
           {
             util.str_clamp(commit.author_name, 30 - (#commit.rel_date > 10 and #commit.rel_date or 10)),
             "NeogitGraphAuthor",
