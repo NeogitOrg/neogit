@@ -20,6 +20,12 @@ local function get_reversed_maps(set)
       end
     end
 
+    setmetatable(result, {
+      __index = function()
+        return "<nop>"
+      end,
+    })
+
     mappings[set] = result
   end
 
@@ -54,6 +60,22 @@ end
 ---@return table<string, string[]>
 function M.get_reversed_commit_editor_maps_I()
   return get_reversed_maps("commit_editor_I")
+end
+
+---@param set string
+---@return table<string, string[]>
+function M.get_user_mappings(set)
+  local mappings = {}
+
+  for k, v in pairs(get_reversed_maps(set)) do
+    if type(k) == "function" then
+      for _, trigger in ipairs(v) do
+        mappings[trigger] = k
+      end
+    end
+  end
+
+  return mappings
 end
 
 ---@alias WindowKind

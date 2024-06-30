@@ -175,6 +175,7 @@ function M:open(kind, cwd)
       },
     },
     --stylua: ignore end
+    user_mappings = config.get_user_mappings("status"),
     initialize = function()
       self.prev_autochdir = vim.o.autochdir
       vim.o.autochdir = false

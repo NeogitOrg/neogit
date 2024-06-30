@@ -19,4 +19,13 @@ RSpec.describe "Status Buffer", :git, :nvim do
       expect(nvim.filetype).to eq("NeogitStatus")
     end
   end
+
+  context "with disabled mapping and no replacement" do
+    let(:neogit_config) { "{ mappings = { status = { j = false }, popup = { b = false } } }" }
+
+    it "renders, raising no errors" do
+      expect(nvim.errors).to be_empty
+      expect(nvim.filetype).to eq("NeogitStatus")
+    end
+  end
 end

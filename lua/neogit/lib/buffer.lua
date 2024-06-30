@@ -525,6 +525,7 @@ end
 ---@field modifiable boolean|nil
 ---@field readonly boolean|nil
 ---@field mappings table|nil
+---@field user_mappings table|nil
 ---@field autocmds table|nil
 ---@field user_autocmds table|nil
 ---@field initialize function|nil
@@ -572,8 +573,17 @@ function Buffer.create(config)
     buffer:set_filetype(config.filetype)
   end
 
+  if config.user_mappings then
+    logger.debug("[BUFFER:" .. buffer.handle .. "] Building user key-mappings")
+
+    local opts = { buffer = buffer.handle, silent = true, nowait = true }
+    for key, fn in pairs(config.user_mappings) do
+      vim.keymap.set("n", key, fn, opts)
+    end
+  end
+
   if config.mappings then
-    logger.debug("[BUFFER:" .. buffer.handle .. "] Building mappings")
+    logger.debug("[BUFFER:" .. buffer.handle .. "] Setting key-mappings")
     for mode, val in pairs(config.mappings) do
       for key, cb in pairs(val) do
         local fn = function()

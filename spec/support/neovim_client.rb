@@ -5,7 +5,7 @@ class NeovimClient
     @instance = nil
   end
 
-  def setup # rubocop:disable Metrics/MethodLength
+  def setup(neogit_config) # rubocop:disable Metrics/MethodLength
     @instance = attach_child
 
     # Sets up the runtimepath
@@ -17,7 +17,7 @@ class NeovimClient
 
     lua <<~LUA
       require("plenary")
-      require('neogit').setup()
+      require('neogit').setup(#{neogit_config})
       require('neogit').open()
     LUA
 
