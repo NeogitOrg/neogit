@@ -80,7 +80,7 @@ function M:open(kind)
     buftype = "",
     kind = kind,
     modifiable = true,
-    status_column = "",
+    status_column = not config.values.disable_signs and "" or nil,
     readonly = false,
     autocmds = {
       ["QuitPre"] = function() -- For :wq compatibility

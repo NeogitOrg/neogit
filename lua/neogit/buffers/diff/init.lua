@@ -54,7 +54,7 @@ function M:open()
   self.buffer = Buffer.create {
     name = "NeogitDiffView",
     filetype = "NeogitDiffView",
-    status_column = "",
+    status_column = not config.values.disable_signs and "" or nil,
     kind = config.values.commit_editor.staged_diff_split_kind,
     context_highlight = not config.values.disable_context_highlighting,
     mappings = {
