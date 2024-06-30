@@ -286,10 +286,12 @@ end
 
 function M.open_pull_request()
   local template
+  local service
   local url = git.remote.get_url(git.branch.upstream_remote())[1]
 
   for s, v in pairs(config.values.git_services) do
     if url:match(util.pattern_escape(s)) then
+      service = s
       template = v
       break
     end
@@ -299,6 +301,23 @@ function M.open_pull_request()
     if vim.ui.open then
       local format_values = git.remote.parse(url)
       format_values["branch_name"] = git.branch.current()
+
+      -- azure prepends a `v3/` to the owner name but the pull request URL errors out
+      -- if you include it
+      if service == "azure.com" then
+        local correctedOwner = string.gsub(format_values["path"], "v3/", "")
+        format_values["path"] = correctedOwner
+        format_values["owner"] = correctedOwner
+
+        local remote_branches = util.map(git.refs.list_remote_branches("origin"), function(branch)
+          branch = string.gsub(branch, "origin/", "")
+          return branch
+        end)
+        local target = FuzzyFinderBuffer.new(util.merge(remote_branches)):open_async {
+          prompt_prefix = "Select target branch",
+        }
+        format_values["target"] = target
+      end
 
       vim.ui.open(util.format(template, format_values))
     else
