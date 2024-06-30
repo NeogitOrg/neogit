@@ -20,6 +20,12 @@ local function get_reversed_maps(set)
       end
     end
 
+    setmetatable(result, {
+      __index = function()
+        return "<nop>"
+      end,
+    })
+
     mappings[set] = result
   end
 
