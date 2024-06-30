@@ -12,12 +12,6 @@ function RendererIndex:find_by_line(line)
   return self.index[line] or {}
 end
 
----@param id string
----@return Component
-function RendererIndex:find_by_id(id)
-  return self.index[id]
-end
-
 ---@param node Component
 function RendererIndex:add(node)
   if not self.index[node.position.row_start] then
@@ -25,19 +19,6 @@ function RendererIndex:add(node)
   end
 
   table.insert(self.index[node.position.row_start], node)
-end
-
----@param node Component
----@param id? string
-function RendererIndex:add_id(node, id)
-  id = id or node.options.id
-  assert(id, "id cannot be nil")
-
-  if tonumber(id) then
-    error("Cannot use an integer ID for a component")
-  end
-
-  self.index[id] = node
 end
 
 ---For tracking item locations within status buffer. Needed to make selections.
@@ -133,14 +114,6 @@ function Renderer:item_index()
 end
 
 function Renderer:_build_child(child, parent, index)
-  if child.options.id then
-    self.index:add_id(child)
-  end
-
-  if child.options.yankable then
-    self.index:add_id(child, child.options.yankable)
-  end
-
   child.parent = parent
   child.index = index
   child.position = {

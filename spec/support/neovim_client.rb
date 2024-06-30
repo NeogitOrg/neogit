@@ -75,7 +75,11 @@ class NeovimClient
   end
 
   def errors
-    cmd("messages").grep(/^E\d+: /).map(&:strip)
+    messages   = cmd("messages")
+    vim_errors = messages.grep(/^E\d+: /)
+    lua_errors = messages.grep(/The coroutine failed with this message/)
+
+    (vim_errors + lua_errors).map(&:strip)
   end
 
   def filetype

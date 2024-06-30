@@ -114,11 +114,6 @@ function Ui:_find_component_by_index(line, f)
 end
 
 ---@return Component|nil
-function Ui:find_by_id(id)
-  return self.node_index:find_by_id(id)
-end
-
----@return Component|nil
 function Ui:get_cursor_context(line)
   local cursor = line or vim.api.nvim_win_get_cursor(0)[1]
   return self:_find_component_by_index(cursor, function(node)
