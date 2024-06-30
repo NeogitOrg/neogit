@@ -10,62 +10,6 @@ local function fire_stash_event(pattern)
   vim.api.nvim_exec_autocmds("User", { pattern = pattern, modeline = false })
 end
 
-local function perform_stash(include)
-  if not include then
-    return
-  end
-
-  local index =
-    git.cli["commit-tree"].no_gpg_sign.parent("HEAD").tree(git.cli["write-tree"].call().stdout).call().stdout
-
-  git.cli["read-tree"].merge.index_output(".git/NEOGIT_TMP_INDEX").args(index).call()
-
-  if include.worktree then
-    local files = git.cli.diff.no_ext_diff.name_only
-      .args("HEAD")
-      .env({
-        GIT_INDEX_FILE = ".git/NEOGIT_TMP_INDEX",
-      })
-      .call()
-
-    git.cli["update-index"].add.remove
-      .files(unpack(files))
-      .env({
-        GIT_INDEX_FILE = ".git/NEOGIT_TMP_INDEX",
-      })
-      .call()
-  end
-
-  local tree = git.cli["commit-tree"].no_gpg_sign
-    .parents("HEAD", index)
-    .tree(git.cli["write-tree"].call())
-    .env({
-      GIT_INDEX_FILE = ".git/NEOGIT_TMP_INDEX",
-    })
-    .call()
-
-  git.cli["update-ref"].create_reflog.args("refs/stash", tree).call()
-
-  -- selene: allow(empty_if)
-  if include.worktree and include.index then
-    -- disabled because stashing both worktree and index via this function
-    -- leaves a malformed stash entry, so reverting the changes is
-    -- destructive until fixed.
-    --
-    --cli.reset
-    --.hard
-    --.commit('HEAD')
-    --.call()
-  elseif include.index then
-    local diff = git.cli.diff.no_ext_diff.cached.call().stdout[1] .. "\n"
-
-    git.cli.apply.reverse.cached.input(diff).call { async = false }
-    git.cli.apply.reverse.input(diff).call { async = false }
-  end
-
-  fire_stash_event("NeogitStash")
-end
-
 function M.list_refs()
   local result = git.cli.reflog.show.format("%h").args("stash").call { ignore_error = true }
   if result.code > 0 then
