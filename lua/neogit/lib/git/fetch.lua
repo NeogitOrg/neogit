@@ -13,7 +13,7 @@ function M.fetch_interactive(remote, branch, args)
 end
 
 function M.fetch(remote, branch)
-  git.cli.fetch.args(remote, branch).call { ignore_error = true }
+  git.cli.fetch.args(remote, branch).call { ignore_error = true, event = "NeogitFetchComplete" }
 end
 
 return M
