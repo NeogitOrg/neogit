@@ -46,7 +46,7 @@ function M:open()
         ["<enter>"] = function()
           CommitViewBuffer.new(git.rev_parse.oid(self.buffer.ui:get_commit_under_cursor())):open("tab")
         end,
-      }
+      },
     },
     after = function()
       vim.cmd([[setlocal nowrap]])
