@@ -56,6 +56,11 @@ describe("Neogit config", function()
         assert.True(vim.tbl_count(require("neogit.config").validate_config()) ~= 0)
       end)
 
+      it("should return invalid when initial_branch_name isn't a string", function()
+        config.values.initial_branch_name = false
+        assert.True(vim.tbl_count(require("neogit.config").validate_config()) ~= 0)
+      end)
+
       it("should return invalid when kind isn't a string", function()
         config.values.kind = true
         assert.True(vim.tbl_count(require("neogit.config").validate_config()) ~= 0)
