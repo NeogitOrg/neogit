@@ -32,7 +32,7 @@ function M:open()
     name = "NeogitStashView",
     filetype = "NeogitStashView",
     kind = config.values.stash.kind,
-    context_higlight = true,
+    context_highlight = true,
     -- Define the available mappings here. `git stash list` has the same options
     -- as `git log` refer to git-log(1) for more info.
     mappings = {
