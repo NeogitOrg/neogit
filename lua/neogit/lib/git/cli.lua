@@ -211,6 +211,8 @@ local configurations = {
       push = "push",
       store = "store",
       index = "--index",
+      staged = "--staged",
+      keep_index = "--keep-index",
     },
     aliases = {
       message = function(tbl)
