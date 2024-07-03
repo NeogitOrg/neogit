@@ -63,7 +63,7 @@ end
 
 function M:refresh()
   self.buffer:chan_send(self.content)
-  self.buffer:call(vim.cmd.normal, "G")
+  self.buffer:move_cursor(self.buffer:line_count())
 end
 
 function M:append(data)

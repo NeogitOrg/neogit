@@ -469,6 +469,10 @@ function Buffer:set_decorations(namespace, opts)
   end
 end
 
+function Buffer:line_count()
+  return api.nvim_buf_line_count(self.handle)
+end
+
 function Buffer:set_header(text)
   -- Create a blank line at the top of the buffer so our floating window doesn't
   -- hide any content
