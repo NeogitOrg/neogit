@@ -176,7 +176,7 @@ function M.rename_branch()
     return
   end
 
-  git.cli.branch.move.args(selected_branch, new_name).call()
+  git.cli.branch.move.args(selected_branch, new_name).call { async = false }
 
   notification.info(string.format("Renamed '%s' to '%s'", selected_branch, new_name))
   fire_branch_event("NeogitBranchRename", { branch_name = selected_branch, new_name = new_name })
