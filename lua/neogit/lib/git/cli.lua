@@ -352,6 +352,7 @@ local configurations = {
 
   apply = config {
     flags = {
+      ignore_space_change = "--ignore-space-change",
       cached = "--cached",
       reverse = "--reverse",
       index = "--index",
