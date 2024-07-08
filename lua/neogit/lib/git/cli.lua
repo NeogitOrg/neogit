@@ -399,7 +399,7 @@ local configurations = {
     aliases = {
       with_message = function(tbl)
         return function(message)
-          return tbl.args("-F", "-").input(message .. "\04")
+          return tbl.args("-F", "-").input(message)
         end
       end,
       message = function(tbl)
@@ -937,6 +937,10 @@ local function new_builder(subcommand)
 
     if state.prefix then
       table.insert(cmd, 1, state.prefix)
+    end
+
+    if state.input and cmd[#cmd] ~= "-" then
+      table.insert(cmd, "-")
     end
 
     -- stylua: ignore
