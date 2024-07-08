@@ -971,19 +971,15 @@ local function new_builder(subcommand)
   end
 
   local function make_options(options)
-    local opts = vim.tbl_extend(
-      "keep",
-      (options or {}),
-      {
-        verbose = false,
-        hidden = false,
-        trim = true,
-        remove_ansi = true,
-        async = true,
-        long = false,
-        pty = false
-      }
-    )
+    local opts = vim.tbl_extend("keep", (options or {}), {
+      verbose = false,
+      hidden = false,
+      trim = true,
+      remove_ansi = true,
+      async = true,
+      long = false,
+      pty = false,
+    })
 
     if opts.pty then
       opts.async = true
@@ -1004,7 +1000,10 @@ local function new_builder(subcommand)
         on_error = function(res)
           -- When aborting, don't alert the user. exit(1) is expected.
           for _, line in ipairs(res.stdout) do
-            if line:match("^hint: Waiting for your editor to close the file...") then
+            if
+              line:match("^hint: Waiting for your editor to close the file...")
+              or line:match("error: there was a problem with the editor")
+            then
               return false
             end
           end

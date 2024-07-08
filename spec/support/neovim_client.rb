@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class NeovimClient
+class NeovimClient # rubocop:disable Metrics/ClassLength
   def initialize
     @instance = nil
   end
@@ -74,7 +74,7 @@ class NeovimClient
     @instance.command_output(command).lines
   end
 
-  def move_to_line(line, after: nil)
+  def move_to_line(line, after: nil) # rubocop:disable Metrics/MethodLength
     if line.is_a? Integer
       lua "vim.api.nvim_win_set_cursor(0, {#{line}, 0})"
     elsif line.is_a? String

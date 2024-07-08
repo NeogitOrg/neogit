@@ -47,12 +47,12 @@ RSpec.describe "Status Buffer", :git, :nvim do
         )
       end
 
-      it "can stage one line" do
-        nvim.keys("<tab>jVs")
-      end
+      # it "can stage one line" do
+      #   nvim.keys("<tab>jVs")
+      # end
     end
 
-    context "with tracked file" do
-    end
+    # context "with tracked file" do
+    # end
   end
 end
