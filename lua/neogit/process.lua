@@ -5,6 +5,9 @@ local config = require("neogit.config")
 local logger = require("neogit.logger")
 local util = require("neogit.lib.util")
 
+local api = vim.api
+local fn = vim.fn
+
 local command_mask =
   vim.pesc(" --no-pager --literal-pathspecs --no-optional-locks -c core.preloadindex=true -c color.ui=always")
 
@@ -152,9 +155,9 @@ function Process:wait(timeout)
     error("Process not started")
   end
   if timeout then
-    vim.fn.jobwait({ self.job }, timeout)
+    fn.jobwait({ self.job }, timeout)
   else
-    vim.fn.jobwait { self.job }
+    fn.jobwait { self.job }
   end
 
   return self.result
@@ -162,7 +165,7 @@ end
 
 function Process:stop()
   if self.job then
-    vim.fn.jobstop(self.job)
+    fn.jobstop(self.job)
   end
 end
 
@@ -304,7 +307,7 @@ function Process:spawn(cb)
   end
 
   logger.trace("[PROCESS] Spawning: " .. vim.inspect(self.cmd))
-  local job = vim.fn.jobstart(self.cmd, {
+  local job = fn.jobstart(self.cmd, {
     cwd = self.cwd,
     env = self.env,
     pty = not not self.pty,
@@ -335,6 +338,8 @@ function Process:spawn(cb)
   if self.input then
     logger.debug("Sending input:" .. vim.inspect(self.input))
     self:send(self.input)
+
+    -- NOTE: rebase/reword doesn't want/need this
     -- Include EOT, otherwise git-apply will not work as expects the stream to end
     self:send("\04")
     self:close_stdin()
@@ -347,7 +352,7 @@ function Process:close_stdin()
   -- Send eof
   if self.stdin then
     self.stdin = nil
-    vim.fn.chanclose(self.job, "stdin")
+    fn.chanclose(self.job, "stdin")
   end
 end
 
@@ -356,7 +361,7 @@ end
 function Process:send(data)
   if self.stdin then
     assert(type(data) == "string", "Data must be of type string")
-    vim.api.nvim_chan_send(self.job, data)
+    api.nvim_chan_send(self.job, data)
   end
 end
 
