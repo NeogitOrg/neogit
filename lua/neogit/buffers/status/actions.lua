@@ -660,13 +660,13 @@ M.n_discard = function(self)
               input.get_choice("Discard conflict by taking...", { values = choices, default = #choices })
 
             if choice == "o" then
-              git.cli.checkout.ours.files(selection.item.absolute_path).call()
+              git.cli.checkout.ours.files(selection.item.absolute_path).call({ async = false })
               git.status.stage { selection.item.name }
             elseif choice == "t" then
-              git.cli.checkout.theirs.files(selection.item.absolute_path).call()
+              git.cli.checkout.theirs.files(selection.item.absolute_path).call({ async = false })
               git.status.stage { selection.item.name }
             elseif choice == "c" then
-              git.cli.checkout.merge.files(selection.item.absolute_path).call()
+              git.cli.checkout.merge.files(selection.item.absolute_path).call({ async = false })
               git.status.stage { selection.item.name }
             end
           end
@@ -691,13 +691,13 @@ M.n_discard = function(self)
               input.get_choice("Discard conflict by taking...", { values = choices, default = #choices })
 
             if choice == "o" then
-              git.cli.checkout.ours.files(selection.item.absolute_path).call()
+              git.cli.checkout.ours.files(selection.item.absolute_path).call({ async = false })
               git.status.stage { selection.item.name }
             elseif choice == "t" then
-              git.cli.checkout.theirs.files(selection.item.absolute_path).call()
+              git.cli.checkout.theirs.files(selection.item.absolute_path).call({ async = false })
               git.status.stage { selection.item.name }
             elseif choice == "c" then
-              git.cli.checkout.merge.files(selection.item.absolute_path).call()
+              git.cli.checkout.merge.files(selection.item.absolute_path).call({ async = false })
               git.status.stage { selection.item.name }
             end
           end

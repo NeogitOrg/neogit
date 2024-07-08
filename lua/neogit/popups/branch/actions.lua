@@ -107,7 +107,7 @@ function M.checkout_branch_revision(popup)
     return
   end
 
-  git.cli.checkout.branch(selected_branch).arg_list(popup:get_arguments()).call()
+  git.cli.checkout.branch(selected_branch).arg_list(popup:get_arguments()).call { async = false }
   fire_branch_event("NeogitBranchCheckout", { branch_name = selected_branch })
 end
 
