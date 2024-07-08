@@ -251,7 +251,7 @@ M.v_unstage = function(self)
 
           if #hunks > 0 then
             for _, hunk in ipairs(hunks) do
-              table.insert(patches, git.index.generate_patch(item, hunk, hunk.from, hunk.to))
+              table.insert(patches, git.index.generate_patch(item, hunk, hunk.from, hunk.to, true))
             end
           else
             table.insert(files, item.escaped_path)
