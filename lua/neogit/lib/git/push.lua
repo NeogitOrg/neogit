@@ -10,7 +10,7 @@ local M = {}
 ---@param args string[]
 ---@return ProcessResult
 function M.push_interactive(remote, branch, args)
-  return git.cli.push.args(remote or "", branch or "").arg_list(args).call_interactive()
+  return git.cli.push.args(remote or "", branch or "").arg_list(args).call { pty = true }
 end
 
 local function update_unmerged(state)

@@ -966,62 +966,35 @@ local function new_builder(subcommand)
     }
   end
 
+  local function make_options(options)
+    local opts = vim.tbl_extend(
+      "keep",
+      (options or {}),
+      {
+        verbose = false,
+        hidden = false,
+        trim = true,
+        remove_ansi = true,
+        async = true,
+        long = false,
+        pty = false
+      }
+    )
+
+    if opts.pty then
+      opts.async = true
+    end
+
+    return opts
+  end
+
   return setmetatable({
     [k_state] = state,
     [k_config] = configuration,
     [k_command] = subcommand,
     to_process = to_process,
-    call_interactive = function(options)
-      local opts = options or {}
-
-      local handle_line = opts.handle_line or handle_line_interactive
-      local p = to_process {
-        verbose = opts.verbose,
-        on_error = function(res)
-          -- When aborting, don't alert the user. exit(1) is expected.
-          for _, line in ipairs(res.stdout) do
-            if line:match("^hint: Waiting for your editor to close the file...") then
-              return false
-            end
-          end
-
-          return true
-        end,
-      }
-      p.pty = true
-
-      p.on_partial_line = function(p, line)
-        if line ~= "" then
-          handle_line(p, line)
-        end
-      end
-
-      local result = p:spawn_async(function()
-        -- Required since we need to do this before awaiting
-        if state.input then
-          p:send(state.input)
-        end
-      end)
-
-      assert(result, "Command did not complete")
-
-      handle_new_cmd({
-        cmd = table.concat(p.cmd, " "),
-        stdout = result.stdout,
-        stderr = result.stderr,
-        code = result.code,
-        time = result.time,
-      }, state.hide_text, opts.hidden)
-
-      return result
-    end,
     call = function(options)
-      local opts = vim.tbl_extend(
-        "keep",
-        (options or {}),
-        { verbose = false, hidden = false, trim = true, remove_ansi = true, async = true }
-      )
-
+      local opts = make_options(options)
       local p = to_process {
         verbose = opts.verbose,
         on_error = function(res)
@@ -1044,9 +1017,22 @@ local function new_builder(subcommand)
         end,
       }
 
+      if opts.pty then
+        p.on_partial_line = function(p, line)
+          if line ~= "" then
+            handle_line_interactive(p, line)
+          end
+        end
+
+        p.pty = true
+      end
+
       local result
       local function run_async()
         result = p:spawn_async()
+        if options.long then
+          p:stop_timer()
+        end
       end
 
       local function run_sync()

@@ -9,7 +9,7 @@ local M = {}
 ---@param args string[]
 ---@return ProcessResult
 function M.fetch_interactive(remote, branch, args)
-  return git.cli.fetch.args(remote or "", branch or "").arg_list(args).call_interactive()
+  return git.cli.fetch.args(remote or "", branch or "").arg_list(args).call { pty = true }
 end
 
 function M.fetch(remote, branch)
