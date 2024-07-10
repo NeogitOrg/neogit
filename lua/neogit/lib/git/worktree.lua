@@ -10,7 +10,7 @@ local M = {}
 ---@param path string absolute path
 ---@return boolean
 function M.add(ref, path, params)
-  local result = git.cli.worktree.add.arg_list(params or {}).args(path, ref).call()
+  local result = git.cli.worktree.add.arg_list(params or {}).args(path, ref).call { async = false }
   return result.code == 0
 end
 
@@ -44,19 +44,28 @@ end
 ---@return Worktree[]
 function M.list(opts)
   opts = opts or { include_main = true }
-  local list = vim.split(git.cli.worktree.list.args("--porcelain", "-z").call().stdout[1], "\n\n")
+  local list = git.cli.worktree.list.args("--porcelain").call().stdout
 
-  return util.filter_map(list, function(w)
-    local path, head, type, ref = w:match("^worktree (.-)\nHEAD (.-)\n([^ ]+) (.+)$")
+  local worktrees = {}
+  for i = 1, #list, 3 do
+    local path = list[i]:match("^worktree (.-)$")
+    local head = list[i]:match("^HEAD (.-)$")
+    local type, ref = list[i + 2]:match("^([^ ]+) (.+)$")
+
     if path then
       local main = Path.new(path, ".git"):is_dir()
       if not opts.include_main and main then
-        return nil
+        -- no-op
       else
-        return { main = main, path = path, head = head, type = type, ref = ref }
+        table.insert(worktrees, {
+          head = head, type = type, ref = ref, main = main, path = path
+        })
       end
     end
-  end)
+
+  end
+
+  return worktrees
 end
 
 ---Finds main worktree

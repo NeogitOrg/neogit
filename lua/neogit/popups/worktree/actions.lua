@@ -134,7 +134,7 @@ function M.delete()
   local change_dir = vim.fs.normalize(selected) == vim.fs.normalize(cwd)
   local success = false
 
-  if input.get_permission("Remove worktree?") then
+  if input.get_permission(("Remove worktree at %q?"):format(selected)) then
     if change_dir and status.is_open() then
       status.instance():chdir(git.worktree.main().path)
     end
