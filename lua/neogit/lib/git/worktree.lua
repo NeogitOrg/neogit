@@ -54,15 +54,22 @@ function M.list(opts)
 
     if path then
       local main = Path.new(path, ".git"):is_dir()
-      if not opts.include_main and main then
-        -- no-op
-      else
-        table.insert(worktrees, {
-          head = head, type = type, ref = ref, main = main, path = path
-        })
-      end
+      table.insert(worktrees, {
+        head = head,
+        type = type,
+        ref = ref,
+        main = main,
+        path = path,
+      })
     end
+  end
 
+  if not opts.include_main then
+    worktrees = util.filter(worktrees, function(worktree)
+      if not worktree.main then
+        return worktree
+      end
+    end)
   end
 
   return worktrees
