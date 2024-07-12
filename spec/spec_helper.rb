@@ -6,6 +6,8 @@ require "neovim"
 require "debug"
 require "active_support/all"
 
+ENV["GIT_CONFIG_GLOBAL"] = ""
+
 PROJECT_DIR = File.expand_path(File.join(__dir__, ".."))
 
 Dir[File.join(File.expand_path("."), "spec", "support", "**", "*.rb")].each { |f| require f }

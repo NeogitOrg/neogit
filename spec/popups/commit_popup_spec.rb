@@ -31,16 +31,33 @@ RSpec.describe "Commit Popup", :git, :nvim do
       end
 
       it "Amends previous commit without editing message" do
-        expect(git.log(1).entries.first.diff_parent.patch).to eq "example.txt --- Text\n1 hello, world\n"
+        expect(git.log(1).entries.first.diff_parent.patch).to eq <<~DIFF.strip
+          diff --git a/example.txt b/example.txt
+          deleted file mode 100644
+          index 8c01d89..0000000
+          --- a/example.txt
+          +++ /dev/null
+          @@ -1 +0,0 @@
+          -hello, world
+          \\ No newline at end of file
+        DIFF
 
         File.write("example.txt", "hello, world\ngoodbye, space")
         nvim.refresh
         nvim.move_to_line "example.txt"
         nvim.keys("sce")
 
-        expect(git.log(1).entries.first.diff_parent.patch).to eq(
-          "example.txt --- Text\n1 hello, world\n2 goodbye, space\n"
-        )
+        expect(git.log(1).entries.first.diff_parent.patch).to eq <<~DIFF.strip
+          diff --git a/example.txt b/example.txt
+          deleted file mode 100644
+          index cfbe699..0000000
+          --- a/example.txt
+          +++ /dev/null
+          @@ -1,2 +0,0 @@
+          -hello, world
+          -goodbye, space
+          \\ No newline at end of file
+        DIFF
       end
     end
 
@@ -62,7 +79,16 @@ RSpec.describe "Commit Popup", :git, :nvim do
       end
 
       it "Amends previous commit and edits message" do
-        expect(git.log(1).entries.first.diff_parent.patch).to eq "example.txt --- Text\n1 hello, world\n"
+        expect(git.log(1).entries.first.diff_parent.patch).to eq <<~DIFF.strip
+          diff --git a/example.txt b/example.txt
+          deleted file mode 100644
+          index 8c01d89..0000000
+          --- a/example.txt
+          +++ /dev/null
+          @@ -1 +0,0 @@
+          -hello, world
+          \\ No newline at end of file
+        DIFF
 
         File.write("example.txt", "hello, world\ngoodbye, space")
         nvim.refresh
@@ -72,9 +98,18 @@ RSpec.describe "Commit Popup", :git, :nvim do
         nvim.keys("amended!<esc>q")
 
         expect(git.log(1).entries.first.message).to eq("amended!")
-        expect(git.log(1).entries.first.diff_parent.patch).to eq(
-          "example.txt --- Text\n1 hello, world\n2 goodbye, space\n"
-        )
+        expect(git.log(1).entries.first.diff_parent.patch).to eq(<<~DIFF.strip
+          diff --git a/example.txt b/example.txt
+          deleted file mode 100644
+          index cfbe699..0000000
+          --- a/example.txt
+          +++ /dev/null
+          @@ -1,2 +0,0 @@
+          -hello, world
+          -goodbye, space
+          \\ No newline at end of file
+        DIFF
+                                                                )
       end
     end
     # describe "Fixup" do
