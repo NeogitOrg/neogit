@@ -14,12 +14,12 @@ def now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 
 def print_time(time)
   color = case time
-          when 0..0.01   then :green
-          when 0.01..1.0 then :yellow
-          when 1..100    then :red
+          when ..1  then :green
+          when 1..3 then :yellow
+          when 3..  then :red
           end
 
-  COLOR.send(color, time)
+  COLOR.send(color, "#{time}s")
 end
 
 tests = Dir["spec/**/*_spec.rb"]
@@ -42,12 +42,12 @@ Sync do |parent|
   tests.shuffle.map do |test|
     parent.async do
       spinner = spinners.register(
-        ":test:padding",
+        ":test:padding\t",
         success_mark: COLOR.green.bold("+"),
         error_mark: COLOR.red.bold("x")
       )
 
-      title = test.gsub(File.join(Dir.pwd, "spec/"), "")
+      title = test.gsub("spec/", "")
       spinner.update(test: title, padding: " " * (length - test.length))
       spinner.auto_spin
 
@@ -60,11 +60,11 @@ Sync do |parent|
       time = print_time(results[test].dig("summary", "duration").round(3))
       if wait.value.success?
         spinner.update(test: COLOR.green(title))
-        spinner.success("\t#{time}s")
+        spinner.success(time)
       else
         failures << test
         spinner.update(test: COLOR.red(title))
-        spinner.error("\t#{time}s")
+        spinner.error(time)
       end
     end
   end.map(&:wait)
