@@ -12,6 +12,7 @@ local a = require("plenary.async")
 ---@field internal_args table
 ---@field files string[]
 ---@field buffer Buffer
+---@field header string
 ---@field fetch_func fun(offset: number): CommitLogEntry[]
 ---@field refresh_lock Semaphore
 local M = {}
@@ -22,8 +23,9 @@ M.__index = M
 ---@param internal_args table|nil
 ---@param files string[]|nil list of files to filter by
 ---@param fetch_func fun(offset: number): CommitLogEntry[]
+---@param header string
 ---@return LogViewBuffer
-function M.new(commits, internal_args, files, fetch_func)
+function M.new(commits, internal_args, files, fetch_func, header)
   local instance = {
     files = files,
     commits = commits,
@@ -31,6 +33,7 @@ function M.new(commits, internal_args, files, fetch_func)
     fetch_func = fetch_func,
     buffer = nil,
     refresh_lock = a.control.Semaphore.new(1),
+    header = header,
   }
 
   setmetatable(instance, M)
@@ -73,6 +76,7 @@ function M:open()
     filetype = "NeogitLogView",
     kind = config.values.log_view.kind,
     context_highlight = false,
+    header = self.header,
     status_column = not config.values.disable_signs and "" or nil,
     mappings = {
       v = {

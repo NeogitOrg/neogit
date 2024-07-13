@@ -38,9 +38,9 @@ function M.log_current(popup)
     commits(popup, {}),
     popup:get_internal_arguments(),
     popup.state.env.files,
-    fetch_more_commits(popup, {})
-  )
-    :open()
+    fetch_more_commits(popup, {}),
+    "Commits in " .. git.branch.current()
+  ):open()
 end
 
 function M.log_head(popup)
@@ -49,7 +49,8 @@ function M.log_head(popup)
     commits(popup, flags),
     popup:get_internal_arguments(),
     popup.state.env.files,
-    fetch_more_commits(popup, flags)
+    fetch_more_commits(popup, flags),
+    "Commits in HEAD"
   ):open()
 end
 
@@ -59,7 +60,8 @@ function M.log_local_branches(popup)
     commits(popup, flags),
     popup:get_internal_arguments(),
     popup.state.env.files,
-    fetch_more_commits(popup, flags)
+    fetch_more_commits(popup, flags),
+    "Commits in --branches"
   ):open()
 end
 
@@ -71,7 +73,8 @@ function M.log_other(popup)
       commits(popup, flags),
       popup:get_internal_arguments(),
       popup.state.env.files,
-      fetch_more_commits(popup, flags)
+      fetch_more_commits(popup, flags),
+      "Commits in " .. branch
     ):open()
   end
 end
@@ -82,7 +85,8 @@ function M.log_all_branches(popup)
     commits(popup, flags),
     popup:get_internal_arguments(),
     popup.state.env.files,
-    fetch_more_commits(popup, flags)
+    fetch_more_commits(popup, flags),
+    "Commits in --branches --remotes"
   ):open()
 end
 
@@ -92,7 +96,8 @@ function M.log_all_references(popup)
     commits(popup, flags),
     popup:get_internal_arguments(),
     popup.state.env.files,
-    fetch_more_commits(popup, flags)
+    fetch_more_commits(popup, flags),
+    "Commits in --all"
   ):open()
 end
 
