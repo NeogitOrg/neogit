@@ -28,7 +28,7 @@ tests = Dir["spec/**/*_spec.rb"]
 
 length = tests.max_by(&:size).size
 spinners = TTY::Spinner::Multi.new(
-  COLOR.blue(":spinner Running #{tests.size} tests"),
+  COLOR.blue(":spinner Running #{tests.size} specs"),
   format: :bouncing_ball,
   hide_cursor: true
 )

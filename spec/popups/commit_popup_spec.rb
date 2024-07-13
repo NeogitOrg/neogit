@@ -65,7 +65,7 @@ RSpec.describe "Commit Popup", :git, :nvim do
       it "Opens editor to reword a commit" do
         nvim.keys("cw")
         nvim.keys("cc")
-        nvim.keys("reworded!<esc>q")
+        nvim.keys("reworded!<esc>:w<cr>q")
         expect(git.log(1).entries.first.message).to eq("reworded!")
       end
     end
@@ -95,10 +95,10 @@ RSpec.describe "Commit Popup", :git, :nvim do
         nvim.move_to_line "example.txt"
         nvim.keys("sca")
         nvim.keys("cc")
-        nvim.keys("amended!<esc>q")
+        nvim.keys("amended!<esc>:w<cr>q")
 
         expect(git.log(1).entries.first.message).to eq("amended!")
-        expect(git.log(1).entries.first.diff_parent.patch).to eq(<<~DIFF.strip
+        expect(git.log(1).entries.first.diff_parent.patch).to eq <<~DIFF.strip
           diff --git a/example.txt b/example.txt
           deleted file mode 100644
           index cfbe699..0000000
@@ -109,7 +109,6 @@ RSpec.describe "Commit Popup", :git, :nvim do
           -goodbye, space
           \\ No newline at end of file
         DIFF
-                                                                )
       end
     end
     # describe "Fixup" do
