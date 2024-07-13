@@ -276,6 +276,44 @@ function M.upstream_remote()
   return remote
 end
 
+---@return string[]
+function M.related()
+  local current = M.current()
+  local related = {}
+  local target, upstream, upup
+
+  if current then
+    table.insert(related, current)
+
+    target = M.pushRemote(current)
+    if target then
+      table.insert(related, target)
+    end
+
+    upstream = M.upstream(current)
+    if upstream then
+      table.insert(related, upstream)
+    end
+
+    if upstream and vim.tbl_contains(git.refs.list_local_branches(), upstream) then
+      upup = M.upstream(upstream)
+      if upup then
+        table.insert(related, upup)
+      end
+    end
+  else
+    table.insert(related, "HEAD")
+
+    if git.rebase.in_progress() then
+      table.insert(related, git.rebase.current_HEAD())
+    else
+      table.insert(related, M.get_recent_local_branches()[1])
+    end
+  end
+
+  return related
+end
+
 ---@class BranchStatus
 ---@field ab string|nil
 ---@field detached boolean

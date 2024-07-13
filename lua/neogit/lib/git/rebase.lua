@@ -179,8 +179,13 @@ function M.in_progress()
   return git.repo.state.rebase.head ~= nil
 end
 
+---@return string|nil
+function M.current_HEAD()
+  return git.repo.state.rebase.head_oid
+end
+
 function M.update_rebase_status(state)
-  state.rebase = { items = {}, onto = {}, head = nil, current = nil }
+  state.rebase = { items = {}, onto = {}, head_oid = nil, head = nil, current = nil }
 
   local rebase_file
   local rebase_merge = git.repo:git_path("rebase-merge")
@@ -199,7 +204,9 @@ function M.update_rebase_status(state)
       return
     end
 
-    state.rebase.head = head:read():match("refs/heads/([^\r\n]+)")
+    head = head:read()
+    state.rebase.head = head:match("refs/heads/([^\r\n]+)")
+    state.rebase.head_oid = git.rev_parse.verify(head)
 
     local onto = rebase_file:joinpath("onto")
     if onto:exists() then

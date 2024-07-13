@@ -43,6 +43,17 @@ function M.log_current(popup)
   ):open()
 end
 
+function M.log_related(popup)
+  local flags = git.branch.related()
+  LogViewBuffer.new(
+    commits(popup, flags),
+    popup:get_internal_arguments(),
+    popup.state.env.files,
+    fetch_more_commits(popup, flags),
+    "Commits in " .. table.concat(flags, ", ")
+  ):open()
+end
+
 function M.log_head(popup)
   local flags = { "HEAD" }
   LogViewBuffer.new(
