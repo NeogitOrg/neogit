@@ -41,7 +41,7 @@ function M.get_recent_local_branches()
   local valid_branches = M.get_local_branches()
 
   local branches = util.filter_map(
-    git.cli.reflog.show.format("%gs").date("relative").call().stdout,
+    git.cli.reflog.show.format("%gs").date("relative").call({ hidden = true }).stdout,
     function(ref)
       local name = ref:match("^checkout: moving from .* to (.*)$")
       if vim.tbl_contains(valid_branches, name) then
