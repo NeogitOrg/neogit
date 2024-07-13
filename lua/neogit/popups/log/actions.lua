@@ -114,17 +114,21 @@ function M.log_all_references(popup)
 end
 
 function M.reflog_current(popup)
-  ReflogViewBuffer.new(git.reflog.list(git.branch.current(), popup:get_arguments())):open()
+  ReflogViewBuffer.new(
+    git.reflog.list(git.branch.current(), popup:get_arguments()),
+    "Reflog for " .. git.branch.current()
+  )
+    :open()
 end
 
 function M.reflog_head(popup)
-  ReflogViewBuffer.new(git.reflog.list("HEAD", popup:get_arguments())):open()
+  ReflogViewBuffer.new(git.reflog.list("HEAD", popup:get_arguments()), "Reflog for HEAD"):open()
 end
 
 function M.reflog_other(popup)
   local branch = FuzzyFinderBuffer.new(git.refs.list_local_branches()):open_async()
   if branch then
-    ReflogViewBuffer.new(git.reflog.list(branch, popup:get_arguments())):open()
+    ReflogViewBuffer.new(git.reflog.list(branch, popup:get_arguments()), "Reflog for " .. branch):open()
   end
 end
 
