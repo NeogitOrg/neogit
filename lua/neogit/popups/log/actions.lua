@@ -77,7 +77,8 @@ function M.log_local_branches(popup)
 end
 
 function M.log_other(popup)
-  local branch = FuzzyFinderBuffer.new(git.refs.list_branches()):open_async()
+  local options = util.merge(git.refs.list_branches(), git.refs.heads(), git.refs.list_tags())
+  local branch = FuzzyFinderBuffer.new(options):open_async()
   if branch then
     local flags = { branch }
     LogViewBuffer.new(
