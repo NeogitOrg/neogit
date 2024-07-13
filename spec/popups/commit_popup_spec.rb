@@ -43,9 +43,8 @@ RSpec.describe "Commit Popup", :git, :nvim do
         DIFF
 
         File.write("example.txt", "hello, world\ngoodbye, space")
-        nvim.refresh
-        nvim.move_to_line "example.txt"
-        nvim.keys("sce")
+        git.add("example.txt")
+        nvim.keys("ce")
 
         expect(git.log(1).entries.first.diff_parent.patch).to eq <<~DIFF.strip
           diff --git a/example.txt b/example.txt
@@ -91,11 +90,8 @@ RSpec.describe "Commit Popup", :git, :nvim do
         DIFF
 
         File.write("example.txt", "hello, world\ngoodbye, space")
-        nvim.refresh
-        nvim.move_to_line "example.txt"
-        nvim.keys("sca")
-        nvim.keys("cc")
-        nvim.keys("amended!<esc>:w<cr>q")
+        git.add("example.txt")
+        nvim.keys("caccamended!<esc>:w<cr>q")
 
         expect(git.log(1).entries.first.message).to eq("amended!")
         expect(git.log(1).entries.first.diff_parent.patch).to eq <<~DIFF.strip
@@ -111,6 +107,7 @@ RSpec.describe "Commit Popup", :git, :nvim do
         DIFF
       end
     end
+    #
     # describe "Fixup" do
     # end
     #
