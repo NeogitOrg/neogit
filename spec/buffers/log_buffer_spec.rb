@@ -2,15 +2,15 @@
 
 require "spec_helper"
 
-RSpec.describe "Refs View Buffer", :git, :nvim do
+RSpec.describe "Log Buffer", :git, :nvim do
   it "renders, raising no errors" do
-    nvim.keys("lr")
+    nvim.keys("ll")
     expect(nvim.errors).to be_empty
-    expect(nvim.filetype).to eq("NeogitReflogView")
+    expect(nvim.filetype).to eq("NeogitLogView")
   end
 
   it "can open CommitView" do
-    nvim.keys("lr<enter>")
+    nvim.keys("ll<enter>")
     expect(nvim.errors).to be_empty
     expect(nvim.filetype).to eq("NeogitCommitView")
   end
