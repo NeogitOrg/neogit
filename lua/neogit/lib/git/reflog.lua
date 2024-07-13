@@ -13,12 +13,16 @@ local M = {}
 local function parse(entries)
   local index = -1
 
-  return util.map(entries, function(entry)
+  return util.filter_map(entries, function(entry)
     index = index + 1
     local hash, author, name, subject, date = unpack(vim.split(entry, "\30"))
     local command, message = subject:match([[^(.-): (.*)]])
     if not command then
       command = subject:match([[^(.-):]])
+    end
+
+    if not command then
+      return nil
     end
 
     if command:match("^pull") then
