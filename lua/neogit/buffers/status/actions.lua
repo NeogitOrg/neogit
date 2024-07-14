@@ -197,7 +197,7 @@ M.v_stage = function(self)
           end
 
           local hunks = self.buffer.ui:item_hunks(item, selection.first_line, selection.last_line, true)
-          table.insert(invalidated_diffs, section.name .. ":" .. item.name)
+          table.insert(invalidated_diffs, "*:" .. item.name)
 
           if #hunks > 0 then
             for _, hunk in ipairs(hunks) do
@@ -247,11 +247,11 @@ M.v_unstage = function(self)
       if section.name == "staged" then
         for _, item in ipairs(section.items) do
           local hunks = self.buffer.ui:item_hunks(item, selection.first_line, selection.last_line, true)
-          table.insert(invalidated_diffs, section.name .. ":" .. item.name)
+          table.insert(invalidated_diffs, "*:" .. item.name)
 
           if #hunks > 0 then
             for _, hunk in ipairs(hunks) do
-              table.insert(patches, git.index.generate_patch(item, hunk, hunk.from, hunk.to))
+              table.insert(patches, git.index.generate_patch(item, hunk, hunk.from, hunk.to, true))
             end
           else
             table.insert(files, item.escaped_path)
@@ -660,13 +660,13 @@ M.n_discard = function(self)
               input.get_choice("Discard conflict by taking...", { values = choices, default = #choices })
 
             if choice == "o" then
-              git.cli.checkout.ours.files(selection.item.absolute_path).call()
+              git.cli.checkout.ours.files(selection.item.absolute_path).call { async = false }
               git.status.stage { selection.item.name }
             elseif choice == "t" then
-              git.cli.checkout.theirs.files(selection.item.absolute_path).call()
+              git.cli.checkout.theirs.files(selection.item.absolute_path).call { async = false }
               git.status.stage { selection.item.name }
             elseif choice == "c" then
-              git.cli.checkout.merge.files(selection.item.absolute_path).call()
+              git.cli.checkout.merge.files(selection.item.absolute_path).call { async = false }
               git.status.stage { selection.item.name }
             end
           end
@@ -691,13 +691,13 @@ M.n_discard = function(self)
               input.get_choice("Discard conflict by taking...", { values = choices, default = #choices })
 
             if choice == "o" then
-              git.cli.checkout.ours.files(selection.item.absolute_path).call()
+              git.cli.checkout.ours.files(selection.item.absolute_path).call { async = false }
               git.status.stage { selection.item.name }
             elseif choice == "t" then
-              git.cli.checkout.theirs.files(selection.item.absolute_path).call()
+              git.cli.checkout.theirs.files(selection.item.absolute_path).call { async = false }
               git.status.stage { selection.item.name }
             elseif choice == "c" then
-              git.cli.checkout.merge.files(selection.item.absolute_path).call()
+              git.cli.checkout.merge.files(selection.item.absolute_path).call { async = false }
               git.status.stage { selection.item.name }
             end
           end
@@ -1009,10 +1009,10 @@ M.n_stage = function(self)
       elseif stagable.filename then
         if section.options.section == "unstaged" then
           git.status.stage { stagable.filename }
-          self:dispatch_refresh({ update_diffs = { "unstaged:" .. stagable.filename } }, "n_stage")
+          self:dispatch_refresh({ update_diffs = { "*:" .. stagable.filename } }, "n_stage")
         elseif section.options.section == "untracked" then
           git.index.add { stagable.filename }
-          self:dispatch_refresh({ update_diffs = { "untracked:" .. stagable.filename } }, "n_stage")
+          self:dispatch_refresh({ update_diffs = { "*:" .. stagable.filename } }, "n_stage")
         end
       end
     elseif section then
@@ -1021,7 +1021,7 @@ M.n_stage = function(self)
         self:dispatch_refresh({ update_diffs = { "untracked:*" } }, "n_stage")
       elseif section.options.section == "unstaged" then
         git.status.stage_modified()
-        self:dispatch_refresh({ update_diffs = { "unstaged:*" } }, "n_stage")
+        self:dispatch_refresh({ update_diffs = { "*:*" } }, "n_stage")
       end
     end
   end)
@@ -1039,7 +1039,7 @@ end
 M.n_stage_unstaged = function(self)
   return a.void(function()
     git.status.stage_modified()
-    self:dispatch_refresh({ update_diffs = { "unstaged:*" } }, "n_stage_unstaged")
+    self:dispatch_refresh({ update_diffs = { "*:*" } }, "n_stage_unstaged")
   end)
 end
 
@@ -1068,7 +1068,7 @@ M.n_unstage = function(self)
       end
     elseif section then
       git.status.unstage_all()
-      self:dispatch_refresh({ update_diffs = { "staged:*" } }, "n_unstage")
+      self:dispatch_refresh({ update_diffs = { "*:*" } }, "n_unstage")
     end
   end)
 end
@@ -1077,7 +1077,7 @@ end
 M.n_unstage_staged = function(self)
   return a.void(function()
     git.status.unstage_all()
-    self:dispatch_refresh({ update_diffs = { "staged:*" } }, "n_unstage_all")
+    self:dispatch_refresh({ update_diffs = { "*:*" } }, "n_unstage_all")
   end)
 end
 

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class NeovimClient
+class NeovimClient # rubocop:disable Metrics/ClassLength
   def initialize
     @instance = nil
   end
@@ -72,6 +72,22 @@ class NeovimClient
 
   def cmd(command)
     @instance.command_output(command).lines
+  end
+
+  def move_to_line(line, after: nil) # rubocop:disable Metrics/MethodLength
+    if line.is_a? Integer
+      lua "vim.api.nvim_win_set_cursor(0, {#{line}, 0})"
+    elsif line.is_a? String
+      preceding_found = after.nil?
+
+      screen.each_with_index do |content, i|
+        preceding_found ||= content.include?(after)
+        if preceding_found && content.include?(line)
+          lua "vim.api.nvim_win_set_cursor(0, {#{i}, 0})"
+          break
+        end
+      end
+    end
   end
 
   def errors

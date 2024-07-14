@@ -24,6 +24,8 @@ function M.View(commits, args)
     end
   end)
 
+  table.insert(graph, 1, col { row { text("") } })
+
   table.insert(
     graph,
     col {

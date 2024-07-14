@@ -1,0 +1,86 @@
+#! /usr/bin/env ruby
+# frozen_string_literal: true
+
+require "bundler/inline"
+gemfile do
+  gem "async"
+  gem "open3"
+  gem "tty-spinner"
+  gem "pastel"
+end
+
+COLOR = Pastel.new
+def now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+
+def print_time(time)
+  color = case time
+          when ..1  then :green
+          when 1..3 then :yellow
+          when 3..  then :red
+          end
+
+  COLOR.send(color, "#{time}s")
+end
+
+tests = Dir["spec/**/*_spec.rb"]
+# .to_h { [_1, File.readlines(_1).filter_map.with_index { |line, i| i if line.match?(/^ *it /) }] }
+# .flat_map { |k, v| v.map { |lnum| "#{File.join(Dir.pwd, k)}:#{lnum + 1}" } }
+
+length = tests.max_by(&:size).size
+spinners = TTY::Spinner::Multi.new(
+  COLOR.blue(":spinner Running #{tests.size} specs"),
+  format: :bouncing_ball,
+  hide_cursor: true
+)
+
+results = {}
+failures = []
+
+start = now
+
+Sync do |parent|
+  tests.shuffle.map do |test|
+    parent.async do
+      spinner = spinners.register(
+        ":test:padding\t",
+        success_mark: COLOR.green.bold("+"),
+        error_mark: COLOR.red.bold("x")
+      )
+
+      title = test.gsub("spec/", "")
+      spinner.update(test: title, padding: " " * (length - test.length))
+      spinner.auto_spin
+
+      stdin, stdout, wait = Open3.popen2({ "CI" => "1" }, "bundle exec rspec #{test} --format json --order random")
+      stdin.close
+
+      results[test] = JSON.parse(stdout.read)
+      stdout.close
+
+      time = print_time(results[test].dig("summary", "duration").round(3))
+      if wait.value.success?
+        spinner.update(test: COLOR.green(title))
+        spinner.success(time)
+      else
+        failures << test
+        spinner.update(test: COLOR.red(title))
+        spinner.error(time)
+      end
+    end
+  end.map(&:wait)
+end
+
+puts "\nDone in #{(now - start).round(3)}s"
+
+if failures.any?
+  failures.each do |test|
+    output = results[test]
+
+    puts "\nFail: #{output.dig('examples', 0, 'full_description')}"
+    puts "      #{test}"
+    puts "      #{output.dig('examples', 0, 'exception', 'class')}"
+    puts "      #{output.dig('examples', 0, 'exception', 'message')}"
+  end
+
+  abort("\n#{failures.size} Failed specs")
+end

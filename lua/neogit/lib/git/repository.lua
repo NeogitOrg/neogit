@@ -82,6 +82,7 @@ local modules = {
 ---@field items          RebaseItem[]
 ---@field onto           RebaseOnto
 ---@field head           string|nil
+---@field head_oid       string|nil
 ---@field current        string|nil
 ---
 ---@class NeogitRepoMerge

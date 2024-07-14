@@ -31,8 +31,8 @@ local function spin_off_branch(checkout)
   local current_branch_name = git.branch.current_full_name()
 
   if checkout then
-    fire_branch_event("NeogitBranchCheckout", { branch_name = name })
     git.cli.checkout.branch(name).call()
+    fire_branch_event("NeogitBranchCheckout", { branch_name = name })
   end
 
   local upstream = git.branch.upstream()
@@ -107,7 +107,7 @@ function M.checkout_branch_revision(popup)
     return
   end
 
-  git.cli.checkout.branch(selected_branch).arg_list(popup:get_arguments()).call()
+  git.cli.checkout.branch(selected_branch).arg_list(popup:get_arguments()).call { async = false }
   fire_branch_event("NeogitBranchCheckout", { branch_name = selected_branch })
 end
 

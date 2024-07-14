@@ -41,7 +41,7 @@ function M.get_recent_local_branches()
   local valid_branches = M.get_local_branches()
 
   local branches = util.filter_map(
-    git.cli.reflog.show.format("%gs").date("relative").call().stdout,
+    git.cli.reflog.show.format("%gs").date("relative").call({ hidden = true }).stdout,
     function(ref)
       local name = ref:match("^checkout: moving from .* to (.*)$")
       if vim.tbl_contains(valid_branches, name) then
@@ -274,6 +274,44 @@ function M.upstream_remote()
   end
 
   return remote
+end
+
+---@return string[]
+function M.related()
+  local current = M.current()
+  local related = {}
+  local target, upstream, upup
+
+  if current then
+    table.insert(related, current)
+
+    target = M.pushRemote(current)
+    if target then
+      table.insert(related, target)
+    end
+
+    upstream = M.upstream(current)
+    if upstream then
+      table.insert(related, upstream)
+    end
+
+    if upstream and vim.tbl_contains(git.refs.list_local_branches(), upstream) then
+      upup = M.upstream(upstream)
+      if upup then
+        table.insert(related, upup)
+      end
+    end
+  else
+    table.insert(related, "HEAD")
+
+    if git.rebase.in_progress() then
+      table.insert(related, git.rebase.current_HEAD())
+    else
+      table.insert(related, M.get_recent_local_branches()[1])
+    end
+  end
+
+  return related
 end
 
 ---@class BranchStatus
