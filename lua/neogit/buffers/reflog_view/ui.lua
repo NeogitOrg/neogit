@@ -48,9 +48,13 @@ end)
 ---@return table
 function M.View(entries)
   local total = #entries
-  return util.map(entries, function(entry)
+  local entries = util.map(entries, function(entry)
     return M.Entry(entry, total)
   end)
+
+  -- TODO: Add the "+ for more" here
+
+  return entries
 end
 
 return M
