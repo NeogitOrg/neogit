@@ -146,14 +146,9 @@ function M.wrap(cmd, opts)
     notification.info(opts.msg.setup)
   end
 
-  local c = cmd.env(M.get_envs_git_editor(opts.show_diff)):in_pty(true)
-  local call_cmd = c.call
-  if opts.interactive then
-    call_cmd = c.call_interactive
-  end
-
   logger.debug("[CLIENT] Calling editor command")
-  local result = call_cmd { verbose = true }
+  local result =
+    cmd.env(M.get_envs_git_editor(opts.show_diff)).call { verbose = true, pty = opts.interactive }
 
   a.util.scheduler()
   logger.debug("[CLIENT] DONE editor command")

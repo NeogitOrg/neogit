@@ -112,7 +112,7 @@ log.new = function(config, standalone)
       local s = time:sub(5, 6)
       local ms = time:sub(7)
       local fp = io.open(outfile, "a")
-      local str = string.format("[%s %d.%d.%-3d] %-30s %s\n", nameupper, m, s, ms, lineinfo, msg)
+      local str = string.format("[%s %s.%s.%-3s] %-30s %s\n", nameupper, m, s, ms, lineinfo, msg)
       if fp then
         fp:write(str)
         fp:close()

@@ -24,4 +24,11 @@ function M.oid(rev)
   return git.cli["rev-parse"].args(rev).call({ hidden = true, ignore_error = true }).stdout[1]
 end
 
+---@param rev string
+---@return string
+---@async
+function M.verify(rev)
+  return git.cli["rev-parse"].verify.abbrev_ref(rev).call({ hidden = true, ignore_error = true }).stdout[1]
+end
+
 return M

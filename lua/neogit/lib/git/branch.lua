@@ -41,7 +41,7 @@ function M.get_recent_local_branches()
   local valid_branches = M.get_local_branches()
 
   local branches = util.filter_map(
-    git.cli.reflog.show.format("%gs").date("relative").call().stdout,
+    git.cli.reflog.show.format("%gs").date("relative").call({ hidden = true }).stdout,
     function(ref)
       local name = ref:match("^checkout: moving from .* to (.*)$")
       if vim.tbl_contains(valid_branches, name) then
@@ -54,7 +54,7 @@ function M.get_recent_local_branches()
 end
 
 function M.checkout(name, args)
-  git.cli.checkout.branch(name).arg_list(args or {}).call()
+  git.cli.checkout.branch(name).arg_list(args or {}).call { async = false }
 
   if config.values.fetch_after_checkout then
     local pushRemote = M.pushRemote_ref(name)
@@ -78,7 +78,7 @@ function M.checkout(name, args)
 end
 
 function M.track(name, args)
-  git.cli.checkout.track(name).arg_list(args or {}).call()
+  git.cli.checkout.track(name).arg_list(args or {}).call { async = false }
 end
 
 function M.get_local_branches(include_current)
@@ -139,7 +139,7 @@ end
 ---@param name string
 ---@param base_branch? string
 function M.create(name, base_branch)
-  git.cli.branch.args(name, base_branch).call()
+  git.cli.branch.args(name, base_branch).call { async = false }
 end
 
 function M.delete(name)
@@ -149,10 +149,10 @@ function M.delete(name)
   if M.is_unmerged(name) then
     local message = ("'%s' contains unmerged commits! Are you sure you want to delete it?"):format(name)
     if input.get_permission(message) then
-      result = git.cli.branch.delete.force.name(name).call()
+      result = git.cli.branch.delete.force.name(name).call { async = false }
     end
   else
-    result = git.cli.branch.delete.name(name).call()
+    result = git.cli.branch.delete.name(name).call { async = false }
   end
 
   return result and result.code == 0 or false
@@ -274,6 +274,44 @@ function M.upstream_remote()
   end
 
   return remote
+end
+
+---@return string[]
+function M.related()
+  local current = M.current()
+  local related = {}
+  local target, upstream, upup
+
+  if current then
+    table.insert(related, current)
+
+    target = M.pushRemote(current)
+    if target then
+      table.insert(related, target)
+    end
+
+    upstream = M.upstream(current)
+    if upstream then
+      table.insert(related, upstream)
+    end
+
+    if upstream and vim.tbl_contains(git.refs.list_local_branches(), upstream) then
+      upup = M.upstream(upstream)
+      if upup then
+        table.insert(related, upup)
+      end
+    end
+  else
+    table.insert(related, "HEAD")
+
+    if git.rebase.in_progress() then
+      table.insert(related, git.rebase.current_HEAD())
+    else
+      table.insert(related, M.get_recent_local_branches()[1])
+    end
+  end
+
+  return related
 end
 
 ---@class BranchStatus

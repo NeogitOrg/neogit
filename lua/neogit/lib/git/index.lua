@@ -100,7 +100,7 @@ function M.apply(patch, opts)
     cmd = cmd.index
   end
 
-  return cmd.with_patch(patch).call { async = false }
+  return cmd.ignore_space_change.with_patch(patch).call { async = false }
 end
 
 function M.add(files)

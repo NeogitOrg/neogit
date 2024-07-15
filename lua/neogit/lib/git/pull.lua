@@ -7,7 +7,7 @@ local M = {}
 function M.pull_interactive(remote, branch, args)
   local client = require("neogit.client")
   local envs = client.get_envs_git_editor()
-  return git.cli.pull.env(envs).args(remote or "", branch or "").arg_list(args).call_interactive()
+  return git.cli.pull.env(envs).args(remote or "", branch or "").arg_list(args).call { pty = true }
 end
 
 local function update_unpulled(state)

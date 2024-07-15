@@ -15,7 +15,11 @@ local function present(commands)
       fn = fn[2]
     end
 
-    local keymap = status_mappings[cmd] or popup_mappings[cmd]
+    local keymap = status_mappings[cmd]
+    if not keymap or keymap == "<nop>" then
+      keymap = popup_mappings[cmd]
+    end
+
     if type(keymap) == "table" and next(keymap) then
       return { { name = name, keys = keymap, cmp = table.concat(keymap):lower(), fn = fn } }
     else

@@ -38,9 +38,20 @@ function M.log_current(popup)
     commits(popup, {}),
     popup:get_internal_arguments(),
     popup.state.env.files,
-    fetch_more_commits(popup, {})
-  )
-    :open()
+    fetch_more_commits(popup, {}),
+    "Commits in " .. git.branch.current()
+  ):open()
+end
+
+function M.log_related(popup)
+  local flags = git.branch.related()
+  LogViewBuffer.new(
+    commits(popup, flags),
+    popup:get_internal_arguments(),
+    popup.state.env.files,
+    fetch_more_commits(popup, flags),
+    "Commits in " .. table.concat(flags, ", ")
+  ):open()
 end
 
 function M.log_head(popup)
@@ -49,7 +60,8 @@ function M.log_head(popup)
     commits(popup, flags),
     popup:get_internal_arguments(),
     popup.state.env.files,
-    fetch_more_commits(popup, flags)
+    fetch_more_commits(popup, flags),
+    "Commits in HEAD"
   ):open()
 end
 
@@ -59,19 +71,22 @@ function M.log_local_branches(popup)
     commits(popup, flags),
     popup:get_internal_arguments(),
     popup.state.env.files,
-    fetch_more_commits(popup, flags)
+    fetch_more_commits(popup, flags),
+    "Commits in --branches"
   ):open()
 end
 
 function M.log_other(popup)
-  local branch = FuzzyFinderBuffer.new(git.refs.list_branches()):open_async()
+  local options = util.merge(git.refs.list_branches(), git.refs.heads(), git.refs.list_tags())
+  local branch = FuzzyFinderBuffer.new(options):open_async()
   if branch then
     local flags = { branch }
     LogViewBuffer.new(
       commits(popup, flags),
       popup:get_internal_arguments(),
       popup.state.env.files,
-      fetch_more_commits(popup, flags)
+      fetch_more_commits(popup, flags),
+      "Commits in " .. branch
     ):open()
   end
 end
@@ -82,7 +97,8 @@ function M.log_all_branches(popup)
     commits(popup, flags),
     popup:get_internal_arguments(),
     popup.state.env.files,
-    fetch_more_commits(popup, flags)
+    fetch_more_commits(popup, flags),
+    "Commits in --branches --remotes"
   ):open()
 end
 
@@ -92,22 +108,27 @@ function M.log_all_references(popup)
     commits(popup, flags),
     popup:get_internal_arguments(),
     popup.state.env.files,
-    fetch_more_commits(popup, flags)
+    fetch_more_commits(popup, flags),
+    "Commits in --all"
   ):open()
 end
 
 function M.reflog_current(popup)
-  ReflogViewBuffer.new(git.reflog.list(git.branch.current(), popup:get_arguments())):open()
+  ReflogViewBuffer.new(
+    git.reflog.list(git.branch.current(), popup:get_arguments()),
+    "Reflog for " .. git.branch.current()
+  )
+    :open()
 end
 
 function M.reflog_head(popup)
-  ReflogViewBuffer.new(git.reflog.list("HEAD", popup:get_arguments())):open()
+  ReflogViewBuffer.new(git.reflog.list("HEAD", popup:get_arguments()), "Reflog for HEAD"):open()
 end
 
 function M.reflog_other(popup)
   local branch = FuzzyFinderBuffer.new(git.refs.list_local_branches()):open_async()
   if branch then
-    ReflogViewBuffer.new(git.reflog.list(branch, popup:get_arguments())):open()
+    ReflogViewBuffer.new(git.reflog.list(branch, popup:get_arguments()), "Reflog for " .. branch):open()
   end
 end
 

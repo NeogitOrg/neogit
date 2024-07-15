@@ -7,14 +7,17 @@ local CommitViewBuffer = require("neogit.buffers.commit_view")
 
 ---@class ReflogViewBuffer
 ---@field entries ReflogEntry[]
+---@field header string
 local M = {}
 M.__index = M
 
 ---@param entries ReflogEntry[]|nil
+---@param header string
 ---@return ReflogViewBuffer
-function M.new(entries)
+function M.new(entries, header)
   local instance = {
     entries = entries,
+    header = header,
     buffer = nil,
   }
 
@@ -49,6 +52,7 @@ function M:open(_)
     name = "NeogitReflogView",
     filetype = "NeogitReflogView",
     kind = config.values.reflog_view.kind,
+    header = self.header,
     status_column = not config.values.disable_signs and "" or nil,
     context_highlight = true,
     mappings = {

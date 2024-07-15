@@ -9,7 +9,7 @@ end
 
 ---@param cmd string
 local function bisect(cmd)
-  local result = git.cli.bisect.args(cmd).call()
+  local result = git.cli.bisect.args(cmd).call { long = true }
 
   if result.code == 0 then
     fire_bisect_event { type = cmd }
@@ -28,7 +28,8 @@ end
 ---@param good_revision string
 ---@param args? table
 function M.start(bad_revision, good_revision, args)
-  local result = git.cli.bisect.args("start").arg_list(args).args(bad_revision, good_revision).call()
+  local result =
+    git.cli.bisect.args("start").arg_list(args).args(bad_revision, good_revision).call { long = true }
 
   if result.code == 0 then
     fire_bisect_event { type = "start" }
@@ -53,7 +54,7 @@ end
 
 ---@param command string
 function M.run(command)
-  git.cli.bisect.args("run", command).call()
+  git.cli.bisect.args("run", command).call { long = true }
 end
 
 ---@class BisectItem
