@@ -13,6 +13,10 @@ function M.index(popup)
   git.stash.stash_index(popup:get_arguments())
 end
 
+function M.keep_index(popup)
+  git.stash.stash_keep_index(popup:get_arguments())
+end
+
 function M.push(popup)
   local files = FuzzyFinderBuffer.new(git.files.all()):open_async { allow_multi = true }
   if not files or not files[1] then
