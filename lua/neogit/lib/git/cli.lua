@@ -1027,6 +1027,8 @@ local function new_builder(subcommand)
         end
 
         p.pty = true
+        local Watcher = require("neogit.watcher")
+        Watcher.instance(git.repo.git_root):start()
       end
 
       local result

@@ -2,6 +2,7 @@ local logger = require("neogit.logger")
 local git = require("neogit.lib.git")
 local client = require("neogit.client")
 local notification = require("neogit.lib.notification")
+local util = require("neogit.lib.util")
 
 ---@class NeogitGitRebase
 local M = {}
@@ -184,6 +185,20 @@ function M.current_HEAD()
   return git.repo.state.rebase.head_oid
 end
 
+---@param line string
+---@param done boolean
+---@return RebaseItem
+local function rebase_item(line, done)
+  local oid = line:match("^%w+ (%x+)")
+  return {
+    action = line:match("^(%w+) "),
+    oid = oid,
+    abbreviated_commit = oid:sub(1, git.log.abbreviated_size()),
+    subject = line:match("^%w+ %x+ (.+)$"),
+    done = done,
+  }
+end
+
 function M.update_rebase_status(state)
   state.rebase = { items = {}, onto = {}, head_oid = nil, head = nil, current = nil }
 
@@ -216,45 +231,39 @@ function M.update_rebase_status(state)
       state.rebase.onto.is_remote = not git.branch.exists(state.rebase.onto.ref)
     end
 
+    local done_items = {}
+    local todo_items = {}
+
     local done = rebase_file:joinpath("done")
     if done:exists() then
       for line in done:iter() do
         if line:match("^[^#]") and line ~= "" then
-          local oid = line:match("^%w+ (%x+)")
-          table.insert(state.rebase.items, {
-            action = line:match("^(%w+) "),
-            oid = oid,
-            abbreviated_commit = oid:sub(1, git.log.abbreviated_size()),
-            subject = line:match("^%w+ %x+ (.+)$"),
-            done = true,
-          })
+          table.insert(done_items, rebase_item(line, true))
         end
       end
-    end
-
-    local cur = state.rebase.items[#state.rebase.items]
-    if cur then
-      cur.done = false
-      cur.stopped = true
-      state.rebase.current = #state.rebase.items
     end
 
     local todo = rebase_file:joinpath("git-rebase-todo")
     if todo:exists() then
       for line in todo:iter() do
         if line:match("^[^#]") and line ~= "" then
-          local oid = line:match("^%w+ (%x+)")
-          table.insert(state.rebase.items, {
-            done = false,
-            action = line:match("^(%w+) "),
-            oid = oid,
-            abbreviated_commit = oid:sub(1, git.log.abbreviated_size()),
-            subject = line:match("^%w+ %x+ (.+)$"),
-          })
+          table.insert(todo_items, rebase_item(line, false))
         end
       end
     end
 
+    if todo_items[1] then
+      todo_items[1].stopped = true
+      state.rebase.current = #done_items
+    end
+
+    -- If git rebase fails for some reason, like a pre-commit hook, a done entry might be added, but it isn't actually
+    -- "done". In that case, don't display it as done.
+    if done_items[#done_items] and todo_items[1] and done_items[#done_items].oid == todo_items[1].oid then
+      done_items[#done_items] = nil
+    end
+
+    state.rebase.items = util.merge(done_items, todo_items)
     if onto:exists() then
       table.insert(state.rebase.items, {
         done = false,

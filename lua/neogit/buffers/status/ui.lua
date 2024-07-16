@@ -453,6 +453,7 @@ function M.Status(state, config)
     and not config.sections.rebase.hidden
 
   local show_cherry_pick = state.sequencer.cherry_pick
+    and #state.rebase.items == 0
     and not config.sections.sequencer.hidden
 
   local show_revert = state.sequencer.revert
