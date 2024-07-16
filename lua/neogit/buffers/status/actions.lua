@@ -54,7 +54,15 @@ local function translate_cursor_location(self, item)
 end
 
 local function open(type, path, cursor)
-  vim.cmd(("silent! %s %s | %s | norm! zz"):format(type, fn.fnameescape(path), cursor and cursor[1] or "1"))
+  local command = ("silent! %s %s | %s | norm! zz"):format(
+    type,
+    fn.fnameescape(path),
+    cursor and cursor[1] or "1"
+  )
+
+  logger.debug("[Status - Open] '" .. command .. "'")
+
+  vim.cmd(command)
 end
 
 local M = {}
