@@ -636,7 +636,21 @@ function Ui:update()
   self.node_index = renderer:node_index()
   self.item_index = renderer:item_index()
 
+  -- Store the cursor and top line positions to be restored later
   local cursor_line = self.buf:cursor_line()
+  local scrolloff = vim.api.nvim_get_option_value("scrolloff", { win = 0 })
+  local top_line = vim.fn.line("w0")
+
+  -- We must traverse `scrolloff` lines from `top_line`, skipping over any closed folds
+  local top_line_nofold = top_line
+  for _ = 1, scrolloff do
+    top_line_nofold = top_line_nofold + 1
+    -- If the line is within a closed fold, skip to the end of the fold
+    if vim.fn.foldclosed(top_line_nofold) ~= -1 then
+      top_line_nofold = vim.fn.foldclosedend(top_line_nofold)
+    end
+  end
+
   self.buf:unlock()
   self.buf:clear()
   self.buf:clear_namespace("default")
@@ -666,6 +680,9 @@ function Ui:update()
   end
 
   self.buf:lock()
+
+  -- First restore the top line, then restore the cursor after
+  self.buf:move_top_line(math.min(top_line_nofold, #renderer.buffer.line))
   self.buf:move_cursor(math.min(cursor_line, #renderer.buffer.line))
 end
 
