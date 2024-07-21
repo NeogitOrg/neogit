@@ -1,6 +1,3 @@
-> [!IMPORTANT]  
-> Until neovim 0.10 is released, please base any changes on the `nightly` branch.
-
 # Contributing
 
 Contributions of all kinds are very welcome. If you are planning to implement a larger feature please open an issue
@@ -77,7 +74,7 @@ rather than:
 
 ### Testing
 
-Neogit is tested using [`Plenary`](https://github.com/nvim-lua/plenary.nvim#plenarytest_harness).
+Neogit is tested using [`Plenary`](https://github.com/nvim-lua/plenary.nvim#plenarytest_harness) for unit tests, and `rspec` (yes, ruby) for e2e tests.
 
 It uses a *Busted* style testing, where each lua file inside [`./tests/specs/{test_name}_spec.lua`] is run.
 

@@ -54,7 +54,15 @@ local function translate_cursor_location(self, item)
 end
 
 local function open(type, path, cursor)
-  vim.cmd(("silent! %s %s | %s | norm! zz"):format(type, fn.fnameescape(path), cursor and cursor[1] or "1"))
+  local command = ("silent! %s %s | %s | redraw! | norm! zz"):format(
+    type,
+    fn.fnameescape(path),
+    cursor and cursor[1] or "1"
+  )
+
+  logger.debug("[Status - Open] '" .. command .. "'")
+
+  vim.cmd(command)
 end
 
 local M = {}
@@ -1090,7 +1098,7 @@ M.n_goto_file = function(self)
     if item and item.absolute_path then
       local cursor = translate_cursor_location(self, item)
       self:close()
-      open("edit", item.absolute_path, cursor)
+      vim.schedule_wrap(open)("edit", item.absolute_path, cursor)
       return
     end
 
