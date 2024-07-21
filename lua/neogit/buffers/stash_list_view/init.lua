@@ -55,7 +55,10 @@ function M:open()
         [status_maps["Discard"]] = function()
           local stashes = self.buffer.ui:get_commits_in_selection()
           if stashes then
-            if stashes and input.get_permission(table.concat(stashes, "\n") .. "\n\nDrop " .. #stashes .. " stashes?") then
+            if
+              stashes
+              and input.get_permission(table.concat(stashes, "\n") .. "\n\nDrop " .. #stashes .. " stashes?")
+            then
               for _, stash in ipairs(stashes) do
                 git.stash.drop(stash)
               end
