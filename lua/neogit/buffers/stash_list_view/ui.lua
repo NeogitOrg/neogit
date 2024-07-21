@@ -25,7 +25,7 @@ M.Stash = Component.new(function(stash)
   }, { oid = label })
 end)
 
----@param stashes StashEntry[]
+---@param stashes StashItem[]
 ---@return table
 function M.View(stashes)
   return util.map(stashes, function(stash)
