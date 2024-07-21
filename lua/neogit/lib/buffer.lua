@@ -172,6 +172,22 @@ function Buffer:move_cursor(line)
   pcall(api.nvim_win_set_cursor, self.win_handle, position)
 end
 
+---@param line nil|number|number[]
+function Buffer:move_top_line(line)
+  if not line then
+    return
+  end
+
+  local position = { line, 0 }
+
+  if type(line) == "table" then
+    position = line
+  end
+
+  -- pcall used in case the line is out of bounds
+  pcall(vim.api.nvim_command, "normal! " .. position[1] .. "zt")
+end
+
 function Buffer:cursor_line()
   return api.nvim_win_get_cursor(0)[1]
 end
