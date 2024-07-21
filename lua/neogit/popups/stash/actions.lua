@@ -2,6 +2,7 @@ local git = require("neogit.lib.git")
 local input = require("neogit.lib.input")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
+local StashListBuffer = require("neogit.buffers.stash_list_view")
 
 local M = {}
 
@@ -69,6 +70,11 @@ end
 
 function M.rename(popup)
   use("rename", popup.state.env.stash)
+end
+
+--- git stash list
+function M.list()
+  StashListBuffer.new(git.repo.state.stashes.items):open()
 end
 
 return M

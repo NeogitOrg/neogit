@@ -87,16 +87,23 @@ function M.rename(stash)
 end
 
 ---@class StashItem
----@field idx number
+---@field idx number string the id of the stash i.e. stash@{7}
 ---@field name string
----@field message string
+---@field rel_date string relative timestamp
+---@field message string the message associated with each stash.
 
 function M.register(meta)
   meta.update_stashes = function(state)
     state.stashes.items = util.map(M.list(), function(line)
       local idx, message = line:match("stash@{(%d*)}: (.*)")
 
+      ---@class StashItem
       return {
+        rel_date = git.cli.log
+          .max_count(1)
+          .format("%cr")
+          .args(("stash@{%s}"):format(idx))
+          .call({ hidden = true }).stdout[1],
         idx = tonumber(idx),
         name = line,
         message = message,
