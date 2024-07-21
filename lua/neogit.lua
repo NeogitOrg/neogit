@@ -72,8 +72,6 @@ function M.setup(opts)
   M.config = config
   M.notification = require("neogit.lib.notification")
 
-  M.notification.info("You are using the `nightly` branch for neogit.\nThis branch will no longer be receiving updates - use `master` to stay up-to-date.")
-
   config.setup(opts)
   hl.setup()
   signs.setup()
