@@ -238,7 +238,7 @@ function Buffer:hide()
       self.old_buf = nil
     end
   else
-    vim.schedule_wrap(util.safe_win_close)(0, true)
+    util.safe_win_close(0, true)
   end
 end
 
