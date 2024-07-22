@@ -592,4 +592,15 @@ function M.remove_ansi_escape_codes(s)
   return s
 end
 
+--- Safely close a window
+---@param winid integer
+---@param force boolean
+function M.safe_win_close(winid, force)
+  local ok, _ = pcall(vim.api.nvim_win_close, winid, force)
+
+  if not ok then
+    vim.cmd("b#")
+  end
+end
+
 return M
