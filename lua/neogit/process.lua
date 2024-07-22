@@ -249,7 +249,6 @@ function Process:spawn(cb)
 
   local stdout_on_line = function(line)
     insert(res.stdout, line)
-    insert(res.output, line)
     self.buffer:append(line)
   end
 
@@ -257,7 +256,6 @@ function Process:spawn(cb)
 
   local stderr_on_line = function(line)
     insert(res.stderr, line)
-    insert(res.output, line)
     self.buffer:append(line)
   end
 

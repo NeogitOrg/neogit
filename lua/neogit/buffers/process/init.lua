@@ -3,6 +3,8 @@ local config = require("neogit.config")
 local status_maps = require("neogit.config").get_reversed_status_maps()
 
 ---@class ProcessBuffer
+---@field lines integer
+---@field truncated boolean
 ---@field buffer Buffer
 ---@field open fun(self)
 ---@field hide fun(self)
@@ -24,6 +26,8 @@ function M:new(process)
     content = string.format("> %s\r\n", table.concat(process.cmd, " ")),
     process = process,
     buffer = nil,
+    lines = 0,
+    truncated = false,
   }
 
   setmetatable(instance, self)
@@ -67,6 +71,20 @@ function M:refresh()
 end
 
 function M:append(data)
+  self.lines = self.lines + 1
+  if self.lines > 300 then
+    if not self.truncated then
+      self.content = table.concat({ self.content, "\r\n[Output too long - Truncated]" }, "\r\n")
+      self.truncated = true
+
+      if self:is_visible() then
+        self:refresh()
+      end
+    end
+
+    return
+  end
+
   self.content = table.concat({ self.content, data }, "\r\n")
 
   if self:is_visible() then
