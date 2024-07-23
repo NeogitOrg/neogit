@@ -178,6 +178,10 @@ function Buffer:move_top_line(line)
     return
   end
 
+  if vim.o.lines < vim.fn.line("$") then
+    return
+  end
+
   local position = { line, 0 }
 
   if type(line) == "table" then
