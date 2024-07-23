@@ -10,9 +10,15 @@ function M.create(env)
   local p = popup
     .builder()
     :name("NeogitCherryPickPopup")
-    :switch_if(not in_progress, "F", "ff", "Attempt fast-forward", { enabled = true })
+    :switch_if(
+      not in_progress,
+      "F",
+      "ff",
+      "Attempt fast-forward",
+      { enabled = true, incompatible = { "edit" } }
+    )
     :switch_if(not in_progress, "x", "x", "Reference cherry in commit message", { cli_prefix = "-" })
-    :switch_if(not in_progress, "e", "edit", "Edit commit messages", false)
+    :switch_if(not in_progress, "e", "edit", "Edit commit messages", { incompatible = { "ff" } })
     :switch_if(not in_progress, "s", "signoff", "Add Signed-off-by lines", false)
     :option_if(not in_progress, "m", "mainline", "", "Replay merge relative to parent")
     :option_if(not in_progress, "s", "strategy", "", "Strategy")
