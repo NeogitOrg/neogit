@@ -13,7 +13,7 @@ end
 ---@param tags table List of tags
 ---@return boolean Successfully deleted
 function M.delete(tags)
-  local result = git.cli.tag.delete.arg_list(tags).call()
+  local result = git.cli.tag.delete.arg_list(tags).call { await = true }
   return result.code == 0
 end
 

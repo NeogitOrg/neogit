@@ -54,7 +54,7 @@ function M.get_recent_local_branches()
 end
 
 function M.checkout(name, args)
-  git.cli.checkout.branch(name).arg_list(args or {}).call { async = false }
+  git.cli.checkout.branch(name).arg_list(args or {}).call { await = true }
 
   if config.values.fetch_after_checkout then
     local pushRemote = M.pushRemote_ref(name)
@@ -78,7 +78,7 @@ function M.checkout(name, args)
 end
 
 function M.track(name, args)
-  git.cli.checkout.track(name).arg_list(args or {}).call { async = false }
+  git.cli.checkout.track(name).arg_list(args or {}).call { await = true }
 end
 
 function M.get_local_branches(include_current)
@@ -139,7 +139,7 @@ end
 ---@param name string
 ---@param base_branch? string
 function M.create(name, base_branch)
-  git.cli.branch.args(name, base_branch).call { async = false }
+  git.cli.branch.args(name, base_branch).call { await = true }
 end
 
 function M.delete(name)
@@ -149,10 +149,10 @@ function M.delete(name)
   if M.is_unmerged(name) then
     local message = ("'%s' contains unmerged commits! Are you sure you want to delete it?"):format(name)
     if input.get_permission(message) then
-      result = git.cli.branch.delete.force.name(name).call { async = false }
+      result = git.cli.branch.delete.force.name(name).call { await = true }
     end
   else
-    result = git.cli.branch.delete.name(name).call { async = false }
+    result = git.cli.branch.delete.name(name).call { await = true }
   end
 
   return result and result.code == 0 or false

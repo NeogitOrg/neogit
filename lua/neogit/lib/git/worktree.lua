@@ -10,7 +10,7 @@ local M = {}
 ---@param path string absolute path
 ---@return boolean
 function M.add(ref, path, params)
-  local result = git.cli.worktree.add.arg_list(params or {}).args(path, ref).call { async = false }
+  local result = git.cli.worktree.add.arg_list(params or {}).args(path, ref).call { await = true }
   return result.code == 0
 end
 
@@ -19,7 +19,7 @@ end
 ---@param destination string absolute path for where to move worktree
 ---@return boolean
 function M.move(worktree, destination)
-  local result = git.cli.worktree.move.args(worktree, destination).call()
+  local result = git.cli.worktree.move.args(worktree, destination).call { await = true }
   return result.code == 0
 end
 
@@ -28,7 +28,8 @@ end
 ---@param args? table
 ---@return boolean
 function M.remove(worktree, args)
-  local result = git.cli.worktree.remove.args(worktree).arg_list(args or {}).call { ignore_error = true }
+  local result =
+    git.cli.worktree.remove.args(worktree).arg_list(args or {}).call { ignore_error = true, await = true }
   return result.code == 0
 end
 
