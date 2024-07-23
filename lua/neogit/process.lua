@@ -279,7 +279,7 @@ function Process:spawn(cb)
       local output = {}
       local start = math.max(#res.stderr - 16, 1)
       for i = start, math.min(#res.stderr, start + 16) do
-        insert(output, "> " .. res.stderr[i])
+        insert(output, "> " .. util.remove_ansi_escape_codes(res.stderr[i]))
       end
 
       local message =
