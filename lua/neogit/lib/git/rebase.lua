@@ -11,7 +11,7 @@ local function fire_rebase_event(data)
 end
 
 local function rebase_command(cmd)
-  return cmd.env(client.get_envs_git_editor()).call { verbose = true, long = true, pty = true }
+  return cmd.env(client.get_envs_git_editor()).call { long = true, pty = true }
 end
 
 ---Instant rebase. This is a way to rebase without using the interactive editor
