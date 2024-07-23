@@ -1,6 +1,5 @@
 local M = {}
 local config = require("neogit.config")
-local util = require("neogit.lib.util")
 
 ---@param message string  message to send
 ---@param level   integer vim.log.levels.X
@@ -11,11 +10,7 @@ local function create(message, level, opts)
   end
 
   vim.schedule(function()
-    vim.notify(
-      util.remove_ansi_escape_codes(message),
-      level,
-      { title = "Neogit", icon = config.values.notification_icon }
-    )
+    vim.notify(message, level, { title = "Neogit", icon = config.values.notification_icon })
   end)
 end
 

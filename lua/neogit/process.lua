@@ -277,16 +277,13 @@ function Process:spawn(cb)
 
     if not self.buffer:is_visible() and code > 0 and self.on_error(res) then
       local output = {}
-      local start = math.max(#res.output - 16, 1)
-      for i = start, math.min(#res.output, start + 16) do
-        insert(output, "    " .. res.output[i])
+      local start = math.max(#res.stderr - 16, 1)
+      for i = start, math.min(#res.stderr, start + 16) do
+        insert(output, "> " .. util.remove_ansi_escape_codes(res.stderr[i]))
       end
 
-      local message = string.format(
-        "%s:\n\n%s\n\nAn error occurred.",
-        mask_command(table.concat(self.cmd, " ")),
-        table.concat(output, "\n")
-      )
+      local message =
+        string.format("%s:\n\n%s", mask_command(table.concat(self.cmd, " ")), table.concat(output, "\n"))
 
       notification.warn(message)
     end

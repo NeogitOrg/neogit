@@ -2,8 +2,6 @@ local client = require("neogit.client")
 local git = require("neogit.lib.git")
 local notification = require("neogit.lib.notification")
 
-local a = require("plenary.async")
-
 ---@class NeogitGitMerge
 local M = {}
 
@@ -16,7 +14,6 @@ local function fire_merge_event(data)
 end
 
 function M.merge(branch, args)
-  a.util.scheduler()
   local result = merge_command(git.cli.merge.args(branch).arg_list(args))
   if result.code ~= 0 then
     notification.error("Merging failed. Resolve conflicts before continuing")
