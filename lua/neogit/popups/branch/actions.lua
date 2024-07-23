@@ -107,7 +107,7 @@ function M.checkout_branch_revision(popup)
     return
   end
 
-  git.cli.checkout.branch(selected_branch).arg_list(popup:get_arguments()).call { async = false }
+  git.cli.checkout.branch(selected_branch).arg_list(popup:get_arguments()).call { await = true }
   fire_branch_event("NeogitBranchCheckout", { branch_name = selected_branch })
 end
 
@@ -176,7 +176,7 @@ function M.rename_branch()
     return
   end
 
-  git.cli.branch.move.args(selected_branch, new_name).call { async = false }
+  git.cli.branch.move.args(selected_branch, new_name).call { await = true }
 
   notification.info(string.format("Renamed '%s' to '%s'", selected_branch, new_name))
   fire_branch_event("NeogitBranchRename", { branch_name = selected_branch, new_name = new_name })

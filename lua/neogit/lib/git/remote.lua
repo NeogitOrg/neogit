@@ -22,11 +22,11 @@ local function cleanup_push_variables(remote, new_name)
 end
 
 function M.add(name, url, args)
-  return git.cli.remote.add.arg_list(args).args(name, url).call().code == 0
+  return git.cli.remote.add.arg_list(args).args(name, url).call({ await = true }).code == 0
 end
 
 function M.rename(from, to)
-  local result = git.cli.remote.rename.arg_list({ from, to }).call()
+  local result = git.cli.remote.rename.arg_list({ from, to }).call { await = true }
   if result.code == 0 then
     cleanup_push_variables(from, to)
   end
@@ -35,7 +35,7 @@ function M.rename(from, to)
 end
 
 function M.remove(name)
-  local result = git.cli.remote.rm.args(name).call()
+  local result = git.cli.remote.rm.args(name).call { await = true }
   if result.code == 0 then
     cleanup_push_variables(name)
   end

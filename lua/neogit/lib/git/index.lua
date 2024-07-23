@@ -100,23 +100,23 @@ function M.apply(patch, opts)
     cmd = cmd.index
   end
 
-  return cmd.ignore_space_change.with_patch(patch).call { async = false }
+  return cmd.ignore_space_change.with_patch(patch).call { await = true }
 end
 
 function M.add(files)
-  return git.cli.add.files(unpack(files)).call { async = false }
+  return git.cli.add.files(unpack(files)).call { await = true }
 end
 
 function M.checkout(files)
-  return git.cli.checkout.files(unpack(files)).call { async = false }
+  return git.cli.checkout.files(unpack(files)).call { await = true }
 end
 
 function M.reset(files)
-  return git.cli.reset.files(unpack(files)).call { async = false }
+  return git.cli.reset.files(unpack(files)).call { await = true }
 end
 
 function M.reset_HEAD(...)
-  return git.cli.reset.args("HEAD").arg_list({ ... }).call { async = false }
+  return git.cli.reset.args("HEAD").arg_list({ ... }).call { await = true }
 end
 
 function M.checkout_unstaged()
@@ -124,7 +124,7 @@ function M.checkout_unstaged()
     return item.escaped_path
   end)
 
-  return git.cli.checkout.files(unpack(items)).call { async = false }
+  return git.cli.checkout.files(unpack(items)).call { await = true }
 end
 
 ---Creates a temp index from a revision and calls the provided function with the index path
