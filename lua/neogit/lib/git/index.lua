@@ -150,7 +150,6 @@ function M.update()
   require("neogit.process")
     .new({
       cmd = { "git", "update-index", "-q", "--refresh" },
-      verbose = false,
       on_error = function(_)
         return false
       end,

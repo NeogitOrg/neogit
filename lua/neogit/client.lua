@@ -147,8 +147,7 @@ function M.wrap(cmd, opts)
   end
 
   logger.debug("[CLIENT] Calling editor command")
-  local result =
-    cmd.env(M.get_envs_git_editor(opts.show_diff)).call { verbose = true, pty = opts.interactive }
+  local result = cmd.env(M.get_envs_git_editor(opts.show_diff)).call { pty = opts.interactive }
 
   a.util.scheduler()
   logger.debug("[CLIENT] DONE editor command")
