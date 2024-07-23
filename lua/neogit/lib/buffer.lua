@@ -158,7 +158,7 @@ end
 
 ---@param line nil|number|number[]
 function Buffer:move_cursor(line)
-  if not line then
+  if not line or not self:is_focused() then
     return
   end
 
@@ -174,7 +174,7 @@ end
 
 ---@param line nil|number|number[]
 function Buffer:move_top_line(line)
-  if not line then
+  if not line or not self:is_focused() then
     return
   end
 

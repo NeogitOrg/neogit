@@ -288,7 +288,7 @@ function M:redraw(cursor, view)
   logger.debug("[STATUS] Rendering UI")
   self.buffer.ui:render(unpack(ui.Status(self.state, self.config)))
 
-  if cursor and view then
+  if cursor and view and self.buffer:is_focused() then
     self.buffer:restore_view(view, self.buffer.ui:resolve_cursor_location(cursor))
   end
 end
