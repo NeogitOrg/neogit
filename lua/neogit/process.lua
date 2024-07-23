@@ -282,11 +282,8 @@ function Process:spawn(cb)
         insert(output, "> " .. res.stderr[i])
       end
 
-      local message = string.format(
-        "%s:\n\n%s",
-        mask_command(table.concat(self.cmd, " ")),
-        table.concat(output, "\n")
-      )
+      local message =
+        string.format("%s:\n\n%s", mask_command(table.concat(self.cmd, " ")), table.concat(output, "\n"))
 
       notification.warn(message)
     end
