@@ -1,6 +1,5 @@
 local M = {}
 local config = require("neogit.config")
-local util = require("neogit.lib.util")
 
 ---@param message string  message to send
 ---@param level   integer vim.log.levels.X
