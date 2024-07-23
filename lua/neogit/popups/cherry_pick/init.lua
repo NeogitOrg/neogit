@@ -15,7 +15,13 @@ function M.create(env)
       key_prefix = "=",
       choices = { "octopus", "ours", "resolve", "subtree", "recursive" },
     })
-    :switch_if(not in_progress, "F", "ff", "Attempt fast-forward", { enabled = true, incompatible = { "edit" } })
+    :switch_if(
+      not in_progress,
+      "F",
+      "ff",
+      "Attempt fast-forward",
+      { enabled = true, incompatible = { "edit" } }
+    )
     :switch_if(not in_progress, "x", "x", "Reference cherry in commit message", { cli_prefix = "-" })
     :switch_if(not in_progress, "e", "edit", "Edit commit messages", { incompatible = { "ff" } })
     :switch_if(not in_progress, "s", "signoff", "Add Signed-off-by lines")
