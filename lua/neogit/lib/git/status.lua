@@ -145,26 +145,26 @@ end
 ---@class NeogitGitStatus
 local status = {
   stage = function(files)
-    git.cli.add.files(unpack(files)).call { async = false }
+    git.cli.add.files(unpack(files)).call { await = true }
   end,
   stage_modified = function()
-    git.cli.add.update.call { async = false }
+    git.cli.add.update.call { await = true }
   end,
   stage_untracked = function()
     local paths = util.map(git.repo.state.untracked.items, function(item)
       return item.escaped_path
     end)
 
-    git.cli.add.files(unpack(paths)).call { async = false }
+    git.cli.add.files(unpack(paths)).call { await = true }
   end,
   stage_all = function()
-    git.cli.add.all.call { async = false }
+    git.cli.add.all.call { await = true }
   end,
   unstage = function(files)
-    git.cli.reset.files(unpack(files)).call { async = false }
+    git.cli.reset.files(unpack(files)).call { await = true }
   end,
   unstage_all = function()
-    git.cli.reset.call { async = false }
+    git.cli.reset.call { await = true }
   end,
   is_dirty = function()
     return #git.repo.state.staged.items > 0 or #git.repo.state.unstaged.items > 0

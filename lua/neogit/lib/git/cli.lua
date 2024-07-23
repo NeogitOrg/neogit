@@ -978,13 +978,13 @@ local function new_builder(subcommand)
       hidden = false,
       trim = true,
       remove_ansi = true,
-      async = true,
+      await = false,
       long = false,
       pty = false,
     })
 
     if opts.pty then
-      opts.async = true
+      opts.await = false
     end
 
     return opts
@@ -1040,7 +1040,7 @@ local function new_builder(subcommand)
         end
       end
 
-      local function run_sync()
+      local function run_await()
         if not p:spawn() then
           error("Failed to run command")
           return nil
@@ -1049,16 +1049,16 @@ local function new_builder(subcommand)
         result = p:wait()
       end
 
-      if opts.async then
+      if opts.await then
+        logger.debug("Running command await: " .. vim.inspect(p.cmd))
+        run_await()
+      else
         logger.debug("Running command async: " .. vim.inspect(p.cmd))
         local ok, _ = pcall(run_async)
         if not ok then
           logger.debug("Running command async failed - awaiting instead")
-          run_sync()
+          run_await()
         end
-      else
-        logger.debug("Running command sync: " .. vim.inspect(p.cmd))
-        run_sync()
       end
 
       assert(result, "Command did not complete")

@@ -5,7 +5,7 @@ local util = require("neogit.lib.util")
 local M = {}
 
 function M.commits(commits, args)
-  return git.cli.revert.no_commit.arg_list(util.merge(args, commits)).call({ async = false }).code == 0
+  return git.cli.revert.no_commit.arg_list(util.merge(args, commits)).call({ await = true }).code == 0
 end
 
 function M.continue()
