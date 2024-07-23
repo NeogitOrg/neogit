@@ -15,7 +15,7 @@ function M.create(env)
     :switch_if(not in_merge, "f", "ff-only", "Fast-forward only", { incompatible = { "no-ff" } })
     :switch_if(not in_merge, "n", "no-ff", "No fast-forward", { incompatible = { "ff-only" } })
     :option_if(not in_merge, "s", "strategy", "", "Strategy", {
-      choices = { "resolve", "recursive", "octopus", "ours", "subtree" },
+      choices = { "octopus", "ours", "resolve", "subtree", "recursive" },
       key_prefix = "-",
     })
     :option_if(not in_merge, "X", "strategy-option", "", "Strategy Option", {
