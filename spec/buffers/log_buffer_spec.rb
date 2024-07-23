@@ -53,7 +53,7 @@ RSpec.describe "Log Buffer", :git, :nvim do
   end
 
   it "can open CommitView" do
-    nvim.keys("ll<up><down><enter>")
+    nvim.keys("ll<up><enter>")
     expect(nvim.errors).to be_empty
     expect(nvim.filetype).to eq("NeogitCommitView")
   end
