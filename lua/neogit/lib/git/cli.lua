@@ -967,14 +967,12 @@ local function new_builder(subcommand)
       cwd = git.repo.git_root,
       env = state.env,
       pty = state.in_pty,
-      verbose = opts.verbose,
       on_error = opts.on_error,
     }
   end
 
   local function make_options(options)
     local opts = vim.tbl_extend("keep", (options or {}), {
-      verbose = false,
       hidden = false,
       trim = true,
       remove_ansi = true,
@@ -998,7 +996,6 @@ local function new_builder(subcommand)
     call = function(options)
       local opts = make_options(options)
       local p = to_process {
-        verbose = opts.verbose,
         on_error = function(res)
           -- When aborting, don't alert the user. exit(1) is expected.
           for _, line in ipairs(res.stdout) do

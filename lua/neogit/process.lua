@@ -20,7 +20,6 @@ end
 ---@field cmd string[]
 ---@field cwd string|nil
 ---@field env table<string, string>|nil
----@field verbose boolean If true, stdout will be written to the console buffer
 ---@field result ProcessResult|nil
 ---@field job number|nil
 ---@field stdin number|nil
