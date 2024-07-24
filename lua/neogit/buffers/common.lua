@@ -25,23 +25,21 @@ M.Diff = Component.new(function(diff)
   }, { foldable = true, folded = false, context = true })
 end)
 
+-- Use vim iter api?
 M.DiffHunks = Component.new(function(diff)
-  local hunk_props = map(diff.hunks, function(hunk)
-    local header = diff.lines[hunk.diff_from]
+  local hunk_props = vim
+    .iter(diff.hunks)
+    :map(function(hunk)
+      hunk.content = vim.iter(diff.lines):slice(hunk.diff_from + 1, hunk.diff_to):totable()
 
-    local content = map(range(hunk.diff_from + 1, hunk.diff_to), function(i)
-      return diff.lines[i]
+      return {
+        header = diff.lines[hunk.diff_from],
+        content = hunk.content,
+        hunk = hunk,
+        folded = hunk._folded,
+      }
     end)
-
-    hunk.content = content
-
-    return {
-      header = header,
-      content = content,
-      hunk = hunk,
-      folded = hunk._folded,
-    }
-  end)
+    :totable()
 
   return col.tag("DiffContent") {
     col.tag("DiffInfo")(map(diff.info, text)),

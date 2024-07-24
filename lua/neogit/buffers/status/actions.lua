@@ -140,6 +140,9 @@ M.v_discard = function(self)
         for _, stash in ipairs(selection.items) do
           table.insert(stashes, stash.name:match("(stash@{%d+})"))
         end
+
+        table.sort(stashes)
+        stashes = util.reverse(stashes)
       end
     end
 
@@ -175,6 +178,7 @@ M.v_discard = function(self)
         git.index.checkout(paths)
       end
 
+      -- TODO: Investigate why, when dropping multiple stashes, the UI doesn't get updated at the end
       if #stashes > 0 then
         for _, stash in ipairs(stashes) do
           git.stash.drop(stash)
