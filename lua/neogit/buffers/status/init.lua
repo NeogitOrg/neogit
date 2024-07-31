@@ -15,7 +15,6 @@ local api = vim.api
 
 ---@class StatusBuffer
 ---@field buffer Buffer instance
----@field state NeogitRepoState
 ---@field config NeogitConfig
 ---@field root string
 local M = {}
@@ -41,13 +40,11 @@ function M.instance(dir)
   return instances[vim.fs.normalize(dir)]
 end
 
----@param state NeogitRepoState
 ---@param config NeogitConfig
 ---@param root string
 ---@return StatusBuffer
-function M.new(state, config, root)
+function M.new(config, root)
   local instance = {
-    state = state,
     config = config,
     root = root,
     buffer = nil,
@@ -181,8 +178,8 @@ function M:open(kind, cwd)
       vim.o.autochdir = false
     end,
     render = function()
-      if self.state.initialized then
-        return ui.Status(self.state, self.config)
+      if git.repo.state.initialized then
+        return ui.Status(git.repo.state, self.config)
       else
         return {}
       end
@@ -286,7 +283,7 @@ function M:redraw(cursor, view)
   end
 
   logger.debug("[STATUS] Rendering UI")
-  self.buffer.ui:render(unpack(ui.Status(self.state, self.config)))
+  self.buffer.ui:render(unpack(ui.Status(git.repo.state, self.config)))
 
   if cursor and view and self.buffer:is_focused() then
     self.buffer:restore_view(view, self.buffer.ui:resolve_cursor_location(cursor))
