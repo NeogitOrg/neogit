@@ -97,17 +97,32 @@ function M.register(meta)
     state.stashes.items = util.map(M.list(), function(line)
       local idx, message = line:match("stash@{(%d*)}: (.*)")
 
+      idx = tonumber(idx)
+      assert(idx)
+
       ---@class StashItem
-      return {
-        rel_date = git.cli.log
-          .max_count(1)
-          .format("%cr")
-          .args(("stash@{%s}"):format(idx))
-          .call({ hidden = true }).stdout[1],
-        idx = tonumber(idx),
+      local item = {
+        idx = idx,
         name = line,
         message = message,
       }
+
+      -- These calls can be somewhat expensive, so lazy load them
+      setmetatable(item, {
+        __index = function(self, key)
+          if key == "rel_date" then
+            self.rel_date = git.cli.log
+              .max_count(1)
+              .format("%cr")
+              .args(("stash@{%s}"):format(idx))
+              .call({ hidden = true }).stdout[1]
+
+            return self.rel_date
+          end
+        end,
+      })
+
+      return item
     end)
   end
 end
