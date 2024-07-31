@@ -41,6 +41,7 @@ local function spin_off_branch(checkout)
       git.log.update_ref(current_branch_name, upstream)
     else
       git.cli.reset.hard.args(upstream).call()
+      fire_branch_event("NeogitReset", { commit = name, mode = "hard" })
     end
   end
 end
