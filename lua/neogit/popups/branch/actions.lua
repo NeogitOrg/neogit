@@ -48,14 +48,15 @@ end
 ---@param popup PopupData
 ---@param prompt string
 ---@param checkout boolean
+---@param name? string
 ---@return string|nil
 ---@return string|nil
-local function create_branch(popup, prompt, checkout)
+local function create_branch(popup, prompt, checkout, name)
   -- stylua: ignore
   local options = util.deduplicate(util.merge(
     { popup.state.env.ref_name },
     { popup.state.env.commits and popup.state.env.commits[1] },
-    { git.branch.current() or "HEAD" },
+    { git.branch.current(), "HEAD" },
     git.refs.list_branches(),
     git.refs.list_tags(),
     git.refs.heads()
@@ -67,10 +68,12 @@ local function create_branch(popup, prompt, checkout)
     return
   end
 
-  local name = input.get_user_input("Create branch", {
-    strip_spaces = true,
-    default = popup.state.env.suggested_branch_name,
-  })
+  name = name
+    or input.get_user_input("Create branch", {
+      strip_spaces = true,
+      default = popup.state.env.suggested_branch_name,
+    })
+
   if not name then
     return
   end
@@ -129,9 +132,12 @@ function M.checkout_local_branch(popup)
   if target then
     if vim.tbl_contains(remote_branches, target) then
       git.branch.track(target, popup:get_arguments())
-    elseif target then
+    elseif vim.tbl_contains(git.refs.list_local_branches(), target) then
       git.branch.checkout(target, popup:get_arguments())
+    else
+      create_branch(popup, ("Create %q starting at"):format(target), true, target)
     end
+
     fire_branch_event("NeogitBranchCheckout", { branch_name = target })
   end
 end
