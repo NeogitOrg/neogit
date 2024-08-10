@@ -281,6 +281,12 @@ function Buffer:show()
     win = api.nvim_open_win(self.handle, true, { split = "below" })
   elseif kind == "split_above" then
     win = api.nvim_open_win(self.handle, true, { split = "above" })
+  elseif kind == "split_above_all" then
+    win = api.nvim_open_win(self.handle, true, { split = "above", win = -1 })
+  elseif kind == "split_below" then
+    win = api.nvim_open_win(self.handle, true, { split = "below" })
+  elseif kind == "split_below_all" then
+    win = api.nvim_open_win(self.handle, true, { split = "below", win = -1 })
   elseif kind == "vsplit" then
     win = api.nvim_open_win(self.handle, true, { split = "right", vertical = true })
   elseif kind == "vsplit_left" then

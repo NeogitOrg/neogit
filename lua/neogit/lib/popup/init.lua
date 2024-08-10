@@ -369,7 +369,13 @@ function M:show()
         end
       end
 
-      if config.values.popup.kind == "split" or config.values.popup.kind == "split_above" then
+      if
+        config.values.popup.kind == "split"
+        or config.values.popup.kind == "split_above"
+        or config.values.popup.kind == "split_above_all"
+        or config.values.popup.kind == "split_below"
+        or config.values.popup.kind == "split_below_all"
+      then
         vim.cmd.resize(vim.fn.line("$") + 1)
 
         -- We do it again because things like the BranchConfigPopup come from an async context,
