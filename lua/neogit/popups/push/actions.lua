@@ -2,6 +2,7 @@ local a = require("plenary.async")
 local git = require("neogit.lib.git")
 local logger = require("neogit.logger")
 local notification = require("neogit.lib.notification")
+local input = require("neogit.lib.input")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
@@ -37,6 +38,25 @@ local function push_to(args, remote, branch, opts)
     vim.api.nvim_exec_autocmds("User", { pattern = "NeogitPushComplete", modeline = false })
   else
     logger.error("Failed to push to " .. name)
+
+    -- Only ask the user whether to force push if not already specified
+    if vim.tbl_contains(args, "--force") or vim.tbl_contains(args, "--force-with-lease") then
+      return
+    end
+
+    local stdout = table.concat(res.stdout)
+    if string.find(stdout, "Updates were rejected") == nil then
+      return
+    end
+
+    local message = "Your branch has diverged from the remote branch. Do you want to force push?"
+    if not input.get_confirmation(message) then
+      return
+    end
+
+    -- Ignore if it still errors
+    table.insert(args, "--force")
+    local _ = git.push.push_interactive(remote, branch, args)
   end
 end
 
