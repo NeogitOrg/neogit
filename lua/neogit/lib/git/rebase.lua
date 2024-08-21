@@ -12,7 +12,7 @@ local function fire_rebase_event(data)
 end
 
 local function rebase_command(cmd)
-  return cmd.env(client.get_envs_git_editor()).call { long = true, pty = true }
+  return cmd.env(client.get_envs_git_editor()).call { pty = true }
 end
 
 ---Instant rebase. This is a way to rebase without using the interactive editor
@@ -24,7 +24,7 @@ function M.instantly(commit, args)
     .env({ GIT_SEQUENCE_EDITOR = ":" }).interactive.autostash.autosquash
     .arg_list(args or {})
     .commit(commit)
-    .call { long = true, pty = true }
+    .call { pty = true }
 
   if result.code ~= 0 then
     fire_rebase_event { commit = commit, status = "failed" }

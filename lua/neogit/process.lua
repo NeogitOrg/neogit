@@ -41,32 +41,28 @@ setmetatable(processes, { __mode = "k" })
 ---@field output string[]
 ---@field code number
 ---@field time number seconds
+---@field cmd string
 local ProcessResult = {}
+
+local remove_ansi_escape_codes = util.remove_ansi_escape_codes
+
+local not_blank = function(v)
+  return v ~= ""
+end
 
 ---Removes empty lines from output
 ---@return ProcessResult
 function ProcessResult:trim()
-  local BLANK = ""
-  self.stdout = vim.tbl_filter(function(v)
-    return v ~= BLANK
-  end, self.stdout)
-
-  self.stderr = vim.tbl_filter(function(v)
-    return v ~= BLANK
-  end, self.stderr)
+  self.stdout = vim.tbl_filter(not_blank, self.stdout)
+  self.stderr = vim.tbl_filter(not_blank, self.stderr)
 
   return self
 end
 
+---@return ProcessResult
 function ProcessResult:remove_ansi()
-  local remove_ansi_escape_codes = util.remove_ansi_escape_codes
-  self.stdout = vim.tbl_map(function(v)
-    return remove_ansi_escape_codes(v)
-  end, self.stdout)
-
-  self.stderr = vim.tbl_map(function(v)
-    return remove_ansi_escape_codes(v)
-  end, self.stderr)
+  self.stdout = vim.tbl_map(remove_ansi_escape_codes, self.stdout)
+  self.stderr = vim.tbl_map(remove_ansi_escape_codes, self.stderr)
 
   return self
 end
@@ -262,6 +258,7 @@ function Process:spawn(cb)
   local on_stderr, stderr_cleanup = handle_output(stderr_on_partial, stderr_on_line)
 
   local function on_exit(_, code)
+    res.cmd = mask_command(table.concat(self.cmd, " "))
     res.code = code
     res.time = (vim.loop.now() - start)
 
@@ -275,21 +272,37 @@ function Process:spawn(cb)
 
     self.buffer:append(string.format("Process exited with code: %d", code))
 
-    if not self.buffer:is_visible() and code > 0 and self.on_error(res) then
-      local output = {}
-      local start = math.max(#res.stderr - 16, 1)
-      for i = start, math.min(#res.stderr, start + 16) do
-        insert(output, "> " .. util.remove_ansi_escape_codes(res.stderr[i]))
+    -- if not self.buffer:is_visible() and code > 0 and self.on_error(res) then
+    --   local output = {}
+    --   local start = math.max(#res.stderr - 16, 1)
+    --   for i = start, math.min(#res.stderr, start + 16) do
+    --     insert(output, "> " .. util.remove_ansi_escape_codes(res.stderr[i]))
+    --   end
+    --
+    --   local message =
+    --     string.format("%s:\n\n%s", mask_command(table.concat(self.cmd, " ")), table.concat(output, "\n"))
+    --
+    --   notification.warn(message)
+    -- end
+
+    if code > 0 then
+      logger.trace(string.format("FAILED: '%s' with code %d after %d ms", res.cmd, res.code, res.time))
+
+      for _, line in ipairs(res.stderr) do
+        if line ~= "" then
+          logger.trace(string.format("[STDERR] %s", line))
+        end
       end
 
-      local message =
-        string.format("%s:\n\n%s", mask_command(table.concat(self.cmd, " ")), table.concat(output, "\n"))
+      if self.on_error(res) then
+        self.buffer:show()
+      end
+    else
+      logger.trace(string.format("SUCCESS: '%s' in %d ms", res.cmd, res.time))
 
-      notification.warn(message)
-    end
-
-    if config.values.auto_close_console and self.buffer:is_visible() and code == 0 then
-      self.buffer:close()
+      if config.values.auto_close_console and self.buffer:is_visible() then
+        self.buffer:close()
+      end
     end
 
     self.stdin = nil
@@ -300,7 +313,7 @@ function Process:spawn(cb)
     end
   end
 
-  logger.trace("[PROCESS] Spawning: " .. vim.inspect(self.cmd))
+  logger.trace("[PROCESS] Spawning: " .. mask_command(table.concat(self.cmd, " ")))
   local job = fn.jobstart(self.cmd, {
     cwd = self.cwd,
     env = self.env,

@@ -11,7 +11,7 @@ local M = {}
 local function target(popup, prompt)
   local commit = {}
   if popup.state.env.commit then
-    commit = { popup.state.env.commit, popup.state.env.commit .. "^" }
+    commit = { popup.state.env.commit }
   end
 
   local refs = util.merge(commit, git.refs.list_branches(), git.refs.list_tags(), git.refs.heads())

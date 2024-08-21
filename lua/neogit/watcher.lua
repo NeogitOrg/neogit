@@ -97,10 +97,10 @@ local WATCH_IGNORE = {
 function Watcher:fs_event_callback()
   local refresh_debounced = util.debounce_trailing(
     200,
-    a.void(util.throttle_by_id(function(info)
+    a.void(function(info)
       logger.debug(info)
       self:dispatch_refresh()
-    end, true))
+    end)
   )
 
   return function(err, filename, events)

@@ -22,11 +22,8 @@ def print_time(time)
   COLOR.send(color, "#{time}s")
 end
 
-tests = Dir["spec/**/*_spec.rb"]
-# .to_h { [_1, File.readlines(_1).filter_map.with_index { |line, i| i if line.match?(/^ *it /) }] }
-# .flat_map { |k, v| v.map { |lnum| "#{File.join(Dir.pwd, k)}:#{lnum + 1}" } }
-
-length = tests.max_by(&:size).size
+tests    = Dir["spec/**/*_spec.rb"]
+length   = tests.max_by(&:size).size
 spinners = TTY::Spinner::Multi.new(
   COLOR.blue(":spinner Running #{tests.size} specs"),
   format: :bouncing_ball,

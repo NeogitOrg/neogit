@@ -682,7 +682,7 @@ end
 
 local history = {}
 
----@param job any
+---@param job ProcessResult
 ---@param hidden_text string Text to obfuscate from history
 ---@param hide_from_history boolean Do not show this command in GitHistoryBuffer
 local function handle_new_cmd(job, hidden_text, hide_from_history)
@@ -699,26 +699,6 @@ local function handle_new_cmd(job, hidden_text, hide_from_history)
     time = job.time,
     hidden = hide_from_history,
   })
-
-  do
-    local log_fn = logger.trace
-    if job.code > 0 then
-      log_fn = logger.warn
-    end
-    if job.code > 0 then
-      log_fn(
-        string.format("[CLI] Execution of '%s' failed with code %d after %d ms", job.cmd, job.code, job.time)
-      )
-
-      for _, line in ipairs(job.stderr) do
-        if line ~= "" then
-          log_fn(string.format("[CLI] [STDERR] %s", line))
-        end
-      end
-    else
-      log_fn(string.format("[CLI] Execution of '%s' succeeded in %d ms", job.cmd, job.time))
-    end
-  end
 end
 
 local k_state = {}
@@ -959,9 +939,8 @@ local function new_builder(subcommand)
       cmd
     )
 
-    logger.trace(string.format("[CLI]: Executing '%s': '%s'", subcommand, table.concat(cmd, " ")))
-
     return process.new {
+      buffer = nil,
       input = state.input,
       cmd = cmd,
       cwd = git.repo.git_root,
@@ -977,7 +956,6 @@ local function new_builder(subcommand)
       trim = true,
       remove_ansi = true,
       await = false,
-      long = false,
       pty = false,
     })
 
@@ -1034,9 +1012,6 @@ local function new_builder(subcommand)
       local result
       local function run_async()
         result = p:spawn_async()
-        if options.long then
-          p:stop_timer()
-        end
       end
 
       local function run_await()
@@ -1049,26 +1024,20 @@ local function new_builder(subcommand)
       end
 
       if opts.await then
-        logger.debug("Running command await: " .. vim.inspect(p.cmd))
+        logger.trace("Running command await: " .. vim.inspect(p.cmd))
         run_await()
       else
-        logger.debug("Running command async: " .. vim.inspect(p.cmd))
+        logger.trace("Running command async: " .. vim.inspect(p.cmd))
         local ok, _ = pcall(run_async)
         if not ok then
-          logger.debug("Running command async failed - awaiting instead")
+          logger.trace("Running command async failed - awaiting instead")
           run_await()
         end
       end
 
       assert(result, "Command did not complete")
 
-      handle_new_cmd({
-        cmd = table.concat(p.cmd, " "),
-        stdout = result.stdout,
-        stderr = result.stderr,
-        code = result.code,
-        time = result.time,
-      }, state.hide_text, opts.hidden)
+      handle_new_cmd(result, state.hide_text, opts.hidden)
 
       if opts.trim then
         result:trim()

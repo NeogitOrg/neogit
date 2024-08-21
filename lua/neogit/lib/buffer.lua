@@ -528,7 +528,7 @@ function Buffer:set_header(text)
 
   -- Scroll the buffer viewport to the top so the header is visible
   self:call(function()
-    api.nvim_input("<PageUp>")
+    api.nvim_input("<c-u>")
   end)
 end
 

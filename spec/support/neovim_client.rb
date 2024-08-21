@@ -3,6 +3,9 @@
 class NeovimClient # rubocop:disable Metrics/ClassLength
   def initialize
     @instance = nil
+    @cleared  = false
+    @lines    = nil
+    @columns  = nil
   end
 
   def setup(neogit_config) # rubocop:disable Metrics/MethodLength
@@ -23,6 +26,9 @@ class NeovimClient # rubocop:disable Metrics/ClassLength
 
     sleep(0.1) # Seems to be about right
     assert_alive!
+
+    @lines = evaluate "&lines"
+    @columns = evaluate "&columns"
   end
 
   def teardown
@@ -34,16 +40,14 @@ class NeovimClient # rubocop:disable Metrics/ClassLength
     lua "require('neogit.buffers.status').instance():dispatch_refresh()"
   end
 
-  def screen # rubocop:disable Metrics/MethodLength
+  def screen
     @instance.command("redraw")
 
-    screen  = []
-    lines   = evaluate "&lines"
-    columns = evaluate "&columns"
+    screen = []
 
-    lines.times do |line|
+    @lines.times do |line|
       current_line = []
-      columns.times do |column|
+      @columns.times do |column|
         current_line << fn("screenstring", [line + 1, column + 1])
       end
 
@@ -54,7 +58,12 @@ class NeovimClient # rubocop:disable Metrics/ClassLength
   end
 
   def print_screen
-    puts `clear`
+    unless @cleared
+      puts `clear`
+      @cleared = true
+    end
+
+    puts "\e[H" # Sets cursor back to 0,0
     puts screen.join("\n")
   end
 
@@ -140,7 +149,7 @@ class NeovimClient # rubocop:disable Metrics/ClassLength
       end
 
       print_screen unless ENV["CI"]
-      sleep(0.05)
+      sleep(0.1)
     end
   end
 

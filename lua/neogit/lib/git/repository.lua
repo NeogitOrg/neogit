@@ -205,6 +205,7 @@ function Repo.new(dir)
     git_root = git.cli.git_root(dir),
     running = false,
     refresh_callbacks = {},
+    semaphore = a.control.Semaphore.new(1),
   }
 
   instance.state.git_root = instance.git_root
@@ -227,66 +228,45 @@ function Repo:git_path(...)
 end
 
 function Repo:tasks(filter)
-  local tasks = {}
-  for name, fn in pairs(self.lib) do
-    table.insert(tasks, function()
-      local start = vim.uv.now()
-      fn(self.state, filter)
-      logger.debug(("[REPO]: Refreshed %s in %d ms"):format(name, vim.uv.now() - start))
-    end)
+  return function(state)
+    local tasks = {}
+    for name, fn in pairs(self.lib) do
+      table.insert(tasks, function()
+        local start = vim.uv.now()
+
+        fn(state, filter)
+        logger.debug(("[REPO]: Refreshed %s in %d ms"):format(name, vim.uv.now() - start))
+      end)
+    end
+
+    return tasks
   end
-
-  return tasks
 end
 
-function Repo:register_callback(fn)
-  logger.debug("[REPO] Callback registered")
-  table.insert(self.refresh_callbacks, fn)
-end
-
-function Repo:run_callbacks()
-  for n, cb in ipairs(self.refresh_callbacks) do
-    logger.debug(("[REPO]: Running refresh callback (%d)"):format(n))
-    cb()
-  end
-  self.refresh_callbacks = {}
-end
-
-function Repo:refresh(opts)
+function Repo:refresh(opts, permit, start)
   opts = opts or {}
-
-  vim.uv.update_time()
-  local start = vim.uv.now()
-
-  if opts.callback then
-    self:register_callback(opts.callback)
-  end
-
-  if self.running then
-    logger.debug("[REPO] Already running - abort")
-    return
-  end
-  self.running = true
 
   if self.git_root == "" then
     logger.debug("[REPO] No git root found - skipping refresh")
     return
   end
 
-  if not self.state.initialized then
-    self.state.initialized = true
-  end
-
   local filter = ItemFilter.create { "*:*" }
-  if opts.partial and opts.partial.update_diffs then
-    filter = ItemFilter.create(opts.partial.update_diffs)
-  end
+  -- if opts.partial and opts.partial.update_diffs then
+  --   filter = ItemFilter.create(opts.partial.update_diffs)
+  -- end
 
-  local on_complete = a.void(function()
+  local new_state = empty_state()
+  new_state.initialized = true
+  new_state.git_root = self.state.git_root
+
+  local on_complete = function()
+    self.state = new_state
     vim.uv.update_time()
     logger.debug("[REPO]: Refreshes complete in " .. vim.uv.now() - start .. " ms")
-    self:run_callbacks()
-    self.running = false
+    if opts.callback then
+      opts.callback()
+    end
 
     if
       git.rebase.in_progress()
@@ -298,13 +278,32 @@ function Repo:refresh(opts)
     else
       Watcher.instance(self.git_root):stop()
     end
-  end)
 
-  a.util.run_all(self:tasks(filter), on_complete)
+    permit:forget()
+    logger.debug("[REPO] Released lock " .. start)
+  end
+
+  a.util.run_all(self:tasks(filter)(new_state), on_complete)
 end
 
-Repo.dispatch_refresh = a.void(util.throttle_by_id(function(self, opts)
-  self:refresh(opts)
-end, true))
+Repo.dispatch_refresh = a.void(function(self, opts)
+  vim.uv.update_time()
+  local start = vim.uv.now()
+  local permit = self.semaphore:acquire()
+
+  vim.uv.update_time()
+  local start2 = vim.uv.now()
+  self.lock = start2
+  logger.debug("[REPO] Acquired lock " .. self.lock .. " after " .. start2 - start)
+
+  vim.defer_fn(function()
+    if self.lock == start and self.semaphore.permits < 1 then
+      logger.debug("[REPO] Timeout - released lock " .. self.lock)
+      permit:forget()
+    end
+  end, 1000)
+
+  self:refresh(opts, permit, start2)
+end)
 
 return Repo

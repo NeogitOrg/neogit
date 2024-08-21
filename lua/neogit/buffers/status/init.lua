@@ -17,6 +17,7 @@ local api = vim.api
 ---@field buffer Buffer instance
 ---@field config NeogitConfig
 ---@field root string
+---@field semaphore Semaphore
 local M = {}
 M.__index = M
 
@@ -47,6 +48,7 @@ function M.new(config, root)
   local instance = {
     config = config,
     root = root,
+    semaphore = a.control.Semaphore.new(1),
     buffer = nil,
   }
 
@@ -263,13 +265,24 @@ function M:refresh(partial, reason)
     view = self.buffer:save_view()
   end
 
+  local permit = self.semaphore:acquire()
+  logger.debug("[STATUS] Acquired lock")
+
+  vim.defer_fn(function()
+    if self.semaphore.permits < 1 then
+      logger.debug("[STATUS] Timeout - released lock")
+      permit:forget()
+    end
+  end, 1000)
+
   git.repo:dispatch_refresh {
     source = "status/" .. (reason or "UNKNOWN"),
     partial = partial,
     callback = function()
       self:redraw(cursor, view)
       api.nvim_exec_autocmds("User", { pattern = "NeogitStatusRefreshed", modeline = false })
-      logger.info("[STATUS] Refresh complete")
+      permit:forget()
+      logger.debug("[STATUS] Released lock")
     end,
   }
 end
