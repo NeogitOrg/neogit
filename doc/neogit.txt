@@ -566,7 +566,9 @@ neogit.open({*opts})                                             *neogit.open()*
                     - "tab" (default) like :tab split
                     - "replace"       like :enew
                     - "split"         like :below split
-                    - "split_above"   like :top split
+                    - "split_above"   like :above split
+                    - "split_top"     like :top split
+                    - "split_bottom"  like :bottom split
                     - "vsplit"        like :vsplit
                     - "vsplit_left"   like :vsplit, but open to the left
                     - "floating" not-yet-implemented

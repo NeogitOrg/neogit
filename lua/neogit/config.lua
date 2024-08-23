@@ -80,9 +80,14 @@ end
 
 ---@alias WindowKind
 ---| "split" Open in a split
+---| "split_above" Like :above split
+---| "split_top" Like :top split
+---| "split_bottom" Like :bottom split
 ---| "vsplit" Open in a vertical split
+---| "vsplit_left" like :vsplit, but open to the left
 ---| "floating" Open in a floating window
 ---| "tab" Open in a new tab
+---| "auto" "vsplit" if window would have 80 cols, otherwise "split"
 
 ---@class NeogitCommitBufferConfig Commit buffer options
 ---@field kind WindowKind The type of window that should be opened
@@ -93,8 +98,11 @@ end
 
 ---@alias StagedDiffSplitKind
 ---| "split" Open in a split
+---| "split_above" Like :above split
+---| "split_top" Like :top split
+---| "split_bottom" Like :bottom split
 ---| "vsplit" Open in a vertical split
----| "split_above" Like :top split
+---| "vsplit_left" like :vsplit, but open to the left
 ---| "auto" "vsplit" if window would have 80 cols, otherwise "split"
 
 ---@class NeogitCommitEditorConfigPopup Popup window options
@@ -635,14 +643,14 @@ function M.validate_config()
     if
       validate_type(val, name, "string")
       and not vim.tbl_contains(
-        { "split", "vsplit", "split_above", "vsplit_left", "tab", "floating", "replace", "auto" },
+        { "split", "vsplit", "split_above", "split_top", "split_bottom", "vsplit_left", "tab", "floating", "replace", "auto" },
         val
       )
     then
       err(
         name,
         string.format(
-          "Expected `%s` to be one of 'split', 'vsplit', 'split_above', 'vsplit_left', tab', 'floating', 'replace' or 'auto', got '%s'",
+          "Expected `%s` to be one of 'split', 'vsplit', 'split_above', 'split_top', 'split_bottom', 'vsplit_left', tab', 'floating', 'replace' or 'auto', got '%s'",
           name,
           val
         )

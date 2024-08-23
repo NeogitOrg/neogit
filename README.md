@@ -165,7 +165,9 @@ neogit.setup {
     -- Accepted values:
     -- "split" to show the staged diff below the commit editor
     -- "vsplit" to show it to the right
-    -- "split_above" Like :top split
+    -- "split_above" Like :above split
+    -- "split_bottom" Like :bottom split
+    -- "split_top" Like :top split
     -- "vsplit_left" like :vsplit, but open to the left
     -- "auto" "vsplit" if window would have 80 cols, otherwise "split"
     staged_diff_split_kind = "split"
@@ -401,7 +403,10 @@ The `kind` option can be one of the following values:
 - `replace`
 - `split`
 - `split_above`
+- `split_top`
+- `split_bottom`
 - `vsplit`
+- `vsplit_left`
 - `auto` (`vsplit` if window would have 80 cols, otherwise `split`)
 
 ## Popups

@@ -242,6 +242,8 @@ function M.complete(arglead)
       "kind=tab",
       "kind=split",
       "kind=split_above",
+      "kind=split_top",
+      "kind=split_bottom",
       "kind=vsplit",
       "kind=floating",
       "kind=auto",
