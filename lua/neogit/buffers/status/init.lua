@@ -70,7 +70,7 @@ function M:_action(name)
   return action(self)
 end
 
----@param kind string<"floating" | "split" | "tab" | "split" | "vsplit">|nil
+---@param kind ?WindowKind
 ---@param cwd string
 ---@return StatusBuffer
 function M:open(kind, cwd)

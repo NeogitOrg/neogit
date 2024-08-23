@@ -14,7 +14,7 @@ local Path = require("plenary.path")
 ---@field namespaces table
 ---@field autocmd_group number
 ---@field ui Ui
----@field kind string
+---@field kind WindowKind
 ---@field disable_line_numbers boolean
 ---@field disable_relative_line_numbers boolean
 local Buffer = {
@@ -533,7 +533,7 @@ end
 
 ---@class BufferConfig
 ---@field name string
----@field kind string
+---@field kind ?WindowKind
 ---@field filetype string|nil
 ---@field bufhidden string|nil
 ---@field header string|nil
