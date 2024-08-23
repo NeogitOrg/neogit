@@ -480,7 +480,7 @@ describe("Neogit config", function()
       end)
 
       it("should return valid when kind is a valid window kind", function()
-        config.values.kind = "floating"
+        config.values.kind = "auto"
         assert.True(vim.tbl_count(require("neogit.config").validate_config()) == 0)
       end)
 
@@ -495,7 +495,7 @@ describe("Neogit config", function()
       end)
 
       it("should return valid when commit_select_view.kind is a valid window kind", function()
-        config.values.commit_select_view.kind = "tab"
+        config.values.commit_select_view.kind = "split_top"
         assert.True(vim.tbl_count(require("neogit.config").validate_config()) == 0)
       end)
 
@@ -505,7 +505,7 @@ describe("Neogit config", function()
       end)
 
       it("should return valid when log_view.kind is a valid window kind", function()
-        config.values.log_view.kind = "vsplit"
+        config.values.log_view.kind = "split_bottom"
         assert.True(vim.tbl_count(require("neogit.config").validate_config()) == 0)
       end)
 
@@ -515,7 +515,7 @@ describe("Neogit config", function()
       end)
 
       it("should return valid when reflog_view.kind is a valid window kind", function()
-        config.values.reflog_view.kind = "vsplit"
+        config.values.reflog_view.kind = "split"
         assert.True(vim.tbl_count(require("neogit.config").validate_config()) == 0)
       end)
 
@@ -525,7 +525,7 @@ describe("Neogit config", function()
       end)
 
       it("should return valid when preview_buffer.kind is a valid window kind", function()
-        config.values.preview_buffer.kind = "floating"
+        config.values.preview_buffer.kind = "vsplit_left"
         assert.True(vim.tbl_count(require("neogit.config").validate_config()) == 0)
       end)
 
