@@ -400,7 +400,7 @@ function M.get_default_values()
       kind = "auto",
     },
     preview_buffer = {
-      kind = "floating",
+      kind = "split",
     },
     popup = {
       kind = "split",
