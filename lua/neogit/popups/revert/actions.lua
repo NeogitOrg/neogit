@@ -2,7 +2,7 @@ local M = {}
 
 local git = require("neogit.lib.git")
 local client = require("neogit.client")
-local notification = require("neogit.lib.notification")
+local util = require("neogit.lib.util")
 local CommitSelectViewBuffer = require("neogit.buffers.commit_select_view")
 
 ---@param popup any
@@ -10,7 +10,7 @@ local CommitSelectViewBuffer = require("neogit.buffers.commit_select_view")
 local function get_commits(popup)
   local commits
   if #popup.state.env.commits > 0 then
-    commits = popup.state.env.commits
+    commits = util.reverse(popup.state.env.commits)
   else
     commits = CommitSelectViewBuffer.new(
       git.log.list { "--max-count=256" },
@@ -21,17 +21,6 @@ local function get_commits(popup)
   return commits or {}
 end
 
-local function build_commit_message(commits)
-  local message = {}
-  table.insert(message, string.format("Revert %d commits\n", #commits))
-
-  for _, commit in ipairs(commits) do
-    table.insert(message, string.format("%s '%s'", commit:sub(1, 7), git.log.message(commit)))
-  end
-
-  return table.concat(message, "\n")
-end
-
 function M.commits(popup)
   local commits = get_commits(popup)
   if #commits == 0 then
@@ -40,24 +29,13 @@ function M.commits(popup)
 
   local args = popup:get_arguments()
 
-  local success = git.revert.commits(commits, args)
+  local revert_cmd = git.cli.revert.arg_list(util.merge(args, commits))
 
-  if not success then
-    notification.error("Revert failed. Resolve conflicts before continuing")
-    return
-  end
-
-  local commit_cmd = git.cli.commit.no_verify.with_message(build_commit_message(commits))
-  if vim.tbl_contains(args, "--edit") then
-    commit_cmd = commit_cmd.edit
-  else
-    commit_cmd = commit_cmd.no_edit
-  end
-
-  client.wrap(commit_cmd, {
+  client.wrap(revert_cmd, {
     autocmd = "NeogitRevertComplete",
     msg = {
       success = "Reverted",
+      fail = "Revert failed. Resolve conflicts before continuing",
     },
   })
 end
