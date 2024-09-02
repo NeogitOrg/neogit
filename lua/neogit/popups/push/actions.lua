@@ -31,38 +31,34 @@ local function push_to(args, remote, branch, opts)
 
   local res = git.push.push_interactive(remote, branch, args)
 
+  -- Inform the user about missing permissions
+  if res.code == 128 then
+    notification.info(table.concat(res.stdout, "\n"))
+    return
+  end
+
+  local using_force = vim.tbl_contains(args, "--force") or vim.tbl_contains(args, "--force-with-lease")
+  local updates_rejected = string.find(table.concat(res.stdout), "Updates were rejected") ~= nil
+
+  -- Only ask the user whether to force push if not already specified
+  if res and res.code ~= 0 and not using_force and updates_rejected then
+    logger.error("Attempting force push to " .. name)
+
+    local message = "Your branch has diverged from the remote branch. Do you want to force push?"
+    if input.get_permission(message) then
+      table.insert(args, "--force")
+      res = git.push.push_interactive(remote, branch, args)
+    end
+  end
+
   if res and res.code == 0 then
     a.util.scheduler()
     logger.debug("Pushed to " .. name)
     notification.info("Pushed to " .. name, { dismiss = true })
     vim.api.nvim_exec_autocmds("User", { pattern = "NeogitPushComplete", modeline = false })
   else
-    logger.error("Failed to push to " .. name)
-
-    -- Inform the user about missing permissions
-    if res.code == 128 then
-      notification.info(table.concat(res.stdout, "\n"))
-      return
-    end
-
-    -- Only ask the user whether to force push if not already specified
-    if vim.tbl_contains(args, "--force") or vim.tbl_contains(args, "--force-with-lease") then
-      return
-    end
-
-    local stdout = table.concat(res.stdout)
-    if string.find(stdout, "Updates were rejected") == nil then
-      return
-    end
-
-    local message = "Your branch has diverged from the remote branch. Do you want to force push?"
-    if not input.get_confirmation(message) then
-      return
-    end
-
-    -- Ignore if it still errors
-    table.insert(args, "--force")
-    local _ = git.push.push_interactive(remote, branch, args)
+    logger.debug("Failed to push to " .. name)
+    notification.error("Failed to push to " .. name, { dismiss = true })
   end
 end
 
