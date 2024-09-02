@@ -401,6 +401,9 @@ The `kind` option can be one of the following values:
 - `replace`
 - `split`
 - `split_above`
+- `split_above_all`
+- `split_below`
+- `split_below_all`
 - `vsplit`
 - `auto` (`vsplit` if window would have 80 cols, otherwise `split`)
 
