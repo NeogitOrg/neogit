@@ -119,6 +119,14 @@ class NeovimClient # rubocop:disable Metrics/ClassLength
     LUA
   end
 
+  def confirm(state)
+    lua <<~LUA
+      vim.fn.confirm = function()
+        return #{state ? 1 : 0}
+      end
+    LUA
+  end
+
   def keys(keys) # rubocop:disable Metrics/MethodLength
     keys = keys.chars
 

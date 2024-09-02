@@ -36,7 +36,7 @@ RSpec.configure do |config|
 
     Dir.mktmpdir do |local|
       Dir.mktmpdir do |remote|
-        Git.init(remote) if with_remote
+        Git.init(remote, { bare: true }) if with_remote
 
         Dir.chdir(local) do
           local_repo = Git.init
