@@ -39,7 +39,7 @@ failures = []
 start = now
 
 Sync do |parent|
-  tests.shuffle.map do |test|
+  tests.map do |test|
     parent.async do
       spinner = spinners.register(
         ":test:padding\t",
