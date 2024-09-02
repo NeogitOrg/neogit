@@ -634,22 +634,19 @@ function M.validate_config()
   local function validate_kind(val, name)
     if
       validate_type(val, name, "string")
-      and not vim.tbl_contains(
-        {
-          "split",
-          "vsplit",
-          "split_above",
-          "split_above_all",
-          "split_below",
-          "split_below_all",
-          "vsplit_left",
-          "tab",
-          "floating",
-          "replace",
-          "auto",
-        },
-        val
-      )
+      and not vim.tbl_contains({
+        "split",
+        "vsplit",
+        "split_above",
+        "split_above_all",
+        "split_below",
+        "split_below_all",
+        "vsplit_left",
+        "tab",
+        "floating",
+        "replace",
+        "auto",
+      }, val)
     then
       err(
         name,
