@@ -39,6 +39,12 @@ local function push_to(args, remote, branch, opts)
   else
     logger.error("Failed to push to " .. name)
 
+    -- Inform the user about missing permissions
+    if res.code == 128 then
+      notification.info(table.concat(res.stdout, "\n"))
+      return
+    end
+
     -- Only ask the user whether to force push if not already specified
     if vim.tbl_contains(args, "--force") or vim.tbl_contains(args, "--force-with-lease") then
       return
