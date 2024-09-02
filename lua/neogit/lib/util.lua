@@ -574,7 +574,7 @@ function M.throttle_by_id(fn, schedule)
     while scheduled[id] do
       scheduled[id] = nil
       running[id] = true
-      fn(id, ...)
+      pcall(fn, id, ...)
       running[id] = nil
     end
   end
