@@ -1113,7 +1113,7 @@ function M.check_integration(name)
   local enabled = M.values.integrations[name]
 
   if enabled == nil or enabled == "auto" then
-    local success, _ = pcall(require, name)
+    local success, _ = pcall(require, name:gsub("_", "-"))
     logger.info(("[CONFIG] Found auto integration '%s = %s'"):format(name, success))
     return success
   end
