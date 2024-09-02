@@ -193,7 +193,7 @@ neogit.setup {
     kind = "auto",
   },
   preview_buffer = {
-    kind = "split",
+    kind = "floating",
   },
   popup = {
     kind = "split",
