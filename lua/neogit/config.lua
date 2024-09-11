@@ -297,7 +297,7 @@ end
 ---@field preview_buffer? NeogitConfigPopup Preview options
 ---@field popup? NeogitConfigPopup Set the default way of opening popups
 ---@field signs? NeogitConfigSigns Signs used for toggled regions
----@field integrations? { diffview: boolean, telescope: boolean, fzf_lua: boolean } Which integrations to enable
+---@field integrations? { diffview: boolean, telescope: boolean, fzf_lua: boolean, mini_pick: boolean } Which integrations to enable
 ---@field sections? NeogitConfigSections
 ---@field ignored_settings? string[] Settings to never persist, format: "Filetype--cli-value", i.e. "NeogitCommitPopup--author"
 ---@field mappings? NeogitConfigMappings
@@ -420,6 +420,7 @@ function M.get_default_values()
       telescope = nil,
       diffview = nil,
       fzf_lua = nil,
+      mini_pick = nil,
     },
     sections = {
       sequencer = {
@@ -716,7 +717,7 @@ function M.validate_config()
   end
 
   local function validate_integrations()
-    local valid_integrations = { "diffview", "telescope", "fzf_lua" }
+    local valid_integrations = { "diffview", "telescope", "fzf_lua", "mini_pick" }
     if not validate_type(config.integrations, "integrations", "table") or #config.integrations == 0 then
       return
     end

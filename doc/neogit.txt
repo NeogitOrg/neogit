@@ -170,6 +170,7 @@ TODO: Detail what these do
       telescope = nil,
       diffview = nil,
       fzf_lua = nil,
+      mini_pick = nil,
     },
     sections = {
       sequencer = {
