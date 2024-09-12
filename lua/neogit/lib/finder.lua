@@ -235,6 +235,9 @@ function Finder:find(on_select)
       },
       actions = fzf_actions(on_select, self.opts.allow_multi, self.opts.refocus_status),
     })
+  elseif config.check_integration("mini_pick") then
+    local mini_pick = require("mini.pick")
+    mini_pick.start { source = { items = self.entries, choose = on_select } }
   else
     vim.ui.select(self.entries, {
       prompt = string.format("%s: ", self.opts.prompt_prefix),
