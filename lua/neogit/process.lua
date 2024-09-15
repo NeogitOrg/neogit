@@ -105,6 +105,7 @@ function Process:start_timer()
           return
         end
 
+        -- Check what git-hooks exist and show if the command would trigger that
         if config.values.auto_show_console then
           self.buffer:show()
         else

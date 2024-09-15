@@ -7,7 +7,7 @@ RSpec.describe "Push Popup", :git, :nvim, :with_remote_origin do
     describe "Push to branch.pushRemote" do
       context "when branch.pushRemote is unset" do
         it "sets branch.pushRemote" do
-          nvim.keys("Pp")
+          input("Pp")
           expect(git.config("branch.master.pushRemote")).to eq("origin")
         end
 
@@ -16,7 +16,7 @@ RSpec.describe "Push Popup", :git, :nvim, :with_remote_origin do
           git.add("example.txt")
           nvim.refresh
 
-          nvim.keys("Pp")
+          input("Pp")
           expect(git.show("HEAD").split[1]).to eq(git.remotes.first.branch.gcommit.sha)
         end
       end
@@ -28,15 +28,15 @@ RSpec.describe "Push Popup", :git, :nvim, :with_remote_origin do
           git.commit("commit A")
           nvim.refresh
 
-          nvim.keys("Pp")
-          # nvim.keys("XhHEAD^<cr>") TODO
+          input("Pp")
+          # input("XhHEAD^<cr>") TODO
           `git reset --hard HEAD^`
           File.write("example.txt", "hello, world, again")
           git.add("example.txt")
           git.commit("commit B")
 
           nvim.confirm(true)
-          nvim.keys("Pp")
+          input("Pp")
 
           expect(git.show("HEAD").split[1]).to eq(git.remotes.first.branch.gcommit.sha)
         end
@@ -47,15 +47,15 @@ RSpec.describe "Push Popup", :git, :nvim, :with_remote_origin do
           git.commit("commit A")
           nvim.refresh
 
-          nvim.keys("Pp")
-          # nvim.keys("XhHEAD^<cr>") TODO
+          input("Pp")
+          # input("XhHEAD^<cr>") TODO
           `git reset --hard HEAD^`
           File.write("example.txt", "hello, world, again")
           git.add("example.txt")
           git.commit("commit B")
 
           nvim.confirm(false)
-          nvim.keys("Pp")
+          input("Pp")
 
           expect(git.show("HEAD").split[1]).not_to eq(git.remotes.first.branch.gcommit.sha)
         end

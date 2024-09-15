@@ -48,6 +48,8 @@ CONTENTS                                                       *neogit_contents*
        • Refs                                               |neogit_refs_buffer|
        • Commit                                           |neogit_commit_buffer|
        • Rebase Todo                                 |neogit_rebase_todo_buffer|
+   10. Git Performance                                      |neogit_performance|
+
 
 ==============================================================================
 1. Intro                                                          *neogit_intro*
@@ -1693,6 +1695,27 @@ The following keys, in normal mode, will act on the commit under the cursor:
 • `x`    Insert command to execute
 • `b`    Insert breakpoint
 • `<cr>` Open current commit in Commit Buffer
+
+==============================================================================
+10. Git Performance                                         *neogit_performance*
+
+For most repos, performance shouldn't be a concern. However, for very large
+repos, the performance of the git commands will begin to have an impact on the
+responsiveness of Neogit.
+
+Specifically, if running `git log HEAD --max-count=1 --topo-order` is slow,
+you're going to have a bad time.
+
+Fortunately, there is a very easy solution: `git commit-graph write` [1]. This
+command pre-computes the graph to _greatly_ speed up operations that need to
+walk the repositories object graph.
+
+The above command is a one-time fix, though, as it is a cache that will go
+stale. A long-term solution is to use `git maintenance register` [2] to
+automate the process of keeping the commit graph up-to-date.
+
+[1] https://git-scm.com/docs/git-commit-graph
+[2] https://git-scm.com/docs/git-maintenance
 
 ------------------------------------------------------------------------------
 vim:tw=78:ts=8:ft=help:norl:

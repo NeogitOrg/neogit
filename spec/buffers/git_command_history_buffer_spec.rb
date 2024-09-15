@@ -4,7 +4,7 @@ require "spec_helper"
 
 RSpec.describe "Git Command History Buffer", :git, :nvim do
   it "renders, raising no errors" do
-    nvim.keys("$")
+    input("$")
     expect(nvim.errors).to be_empty
     expect(nvim.filetype).to eq("NeogitGitCommandHistory")
   end

@@ -4,7 +4,7 @@ require "spec_helper"
 
 RSpec.describe "Help Popup", :git, :nvim do
   it "renders, raising no errors" do
-    nvim.keys("?")
+    input("?")
     expect(nvim.errors).to be_empty
     expect(nvim.filetype).to eq("NeogitPopup")
     expect(nvim.screen[10..]).to eq(

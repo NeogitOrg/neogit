@@ -38,7 +38,7 @@ RSpec.describe "Status Buffer", :git, :nvim do
       end
 
       it "can stage a file" do
-        nvim.keys("s")
+        input("s")
         expect(nvim.screen[5..6]).to eq(
           [
             "v Staged changes (1)                                                            ",
@@ -48,7 +48,7 @@ RSpec.describe "Status Buffer", :git, :nvim do
       end
 
       # it "can stage one line" do
-      #   nvim.keys("<tab>jVs")
+      #   input("<tab>jVs")
       # end
     end
 

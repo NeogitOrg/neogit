@@ -5,5 +5,5 @@ RSpec.shared_context "with nvim", :nvim do
   let(:neogit_config) { "{}" }
 
   before { nvim.setup(neogit_config) }
-  after { nvim.teardown }
+  after  { nvim.teardown }
 end

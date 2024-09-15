@@ -9,6 +9,10 @@ module Helpers
     expect(&).to raise_error(Git::FailedError)
   end
 
+  def input(keys)
+    nvim.keys(keys)
+  end
+
   # def wait_for_expect
   #   last_error = nil
   #   success = false

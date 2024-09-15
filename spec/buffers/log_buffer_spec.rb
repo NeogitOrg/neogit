@@ -4,56 +4,56 @@ require "spec_helper"
 
 RSpec.describe "Log Buffer", :git, :nvim do
   it "renders current, raising no errors" do
-    nvim.keys("ll")
+    input("ll")
     expect(nvim.errors).to be_empty
     expect(nvim.filetype).to eq("NeogitLogView")
     expect(nvim.screen[1].strip).to eq("Commits in master")
   end
 
   it "renders HEAD, raising no errors" do
-    nvim.keys("lh")
+    input("lh")
     expect(nvim.errors).to be_empty
     expect(nvim.filetype).to eq("NeogitLogView")
     expect(nvim.screen[1].strip).to eq("Commits in HEAD")
   end
 
   it "renders related, raising no errors" do
-    nvim.keys("lu")
+    input("lu")
     expect(nvim.errors).to be_empty
     expect(nvim.filetype).to eq("NeogitLogView")
     expect(nvim.screen[1].strip).to eq("Commits in master")
   end
 
   it "renders other, raising no errors" do
-    nvim.keys("lo<cr>")
+    input("lo<cr>")
     expect(nvim.errors).to be_empty
     expect(nvim.filetype).to eq("NeogitLogView")
     expect(nvim.screen[1].strip).to eq("Commits in master")
   end
 
   it "renders local branches, raising no errors" do
-    nvim.keys("lL")
+    input("lL")
     expect(nvim.errors).to be_empty
     expect(nvim.filetype).to eq("NeogitLogView")
     expect(nvim.screen[1].strip).to eq("Commits in --branches")
   end
 
   it "renders all branches, raising no errors" do
-    nvim.keys("lb")
+    input("lb")
     expect(nvim.errors).to be_empty
     expect(nvim.filetype).to eq("NeogitLogView")
     expect(nvim.screen[1].strip).to eq("Commits in --branches --remotes")
   end
 
   it "renders all references, raising no errors" do
-    nvim.keys("la")
+    input("la")
     expect(nvim.errors).to be_empty
     expect(nvim.filetype).to eq("NeogitLogView")
     expect(nvim.screen[1].strip).to eq("Commits in --all")
   end
 
   it "can open CommitView" do
-    nvim.keys("ll<up><enter>")
+    input("ll<down><enter>")
     expect(nvim.errors).to be_empty
     expect(nvim.filetype).to eq("NeogitCommitView")
   end

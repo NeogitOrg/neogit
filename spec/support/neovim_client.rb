@@ -1,20 +1,21 @@
 # frozen_string_literal: true
 
+require "pastel"
+
 class NeovimClient # rubocop:disable Metrics/ClassLength
   def initialize
     @instance = nil
     @cleared  = false
     @lines    = nil
     @columns  = nil
+    @pastel   = Pastel.new
   end
 
   def setup(neogit_config) # rubocop:disable Metrics/MethodLength
     @instance = attach_child
 
     # Sets up the runtimepath
-    runtime_dependencies.each do |dep|
-      lua "vim.opt.runtimepath:prepend('#{dep}')"
-    end
+    runtime_dependencies.each { lua "vim.opt.runtimepath:prepend('#{_1}')" }
 
     lua "vim.opt.runtimepath:prepend('#{PROJECT_DIR}')"
 
@@ -37,7 +38,9 @@ class NeovimClient # rubocop:disable Metrics/ClassLength
   end
 
   def refresh
-    lua "require('neogit.buffers.status').instance():dispatch_refresh()"
+    lua <<~LUA
+      require('neogit.buffers.status').instance():dispatch_refresh()
+    LUA
   end
 
   def screen
@@ -57,14 +60,27 @@ class NeovimClient # rubocop:disable Metrics/ClassLength
     screen
   end
 
-  def print_screen
+  def print_screen # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
+    cursor_line = fn("screenrow", []) - 1
+    cursor_col  = fn("screencol", []) - 1
+
     unless @cleared
       puts `clear`
       @cleared = true
     end
 
     puts "\e[H" # Sets cursor back to 0,0
-    puts screen.join("\n")
+    screen.each_with_index do |line, i|
+      puts(
+        if i == cursor_line
+          line[...cursor_col] +
+          @pastel.black.on_yellow(line[cursor_col]) +
+          line[(cursor_col + 1..)]
+        else
+          line
+        end
+      )
+    end
   end
 
   def lua(code)
@@ -136,20 +152,18 @@ class NeovimClient # rubocop:disable Metrics/ClassLength
     LUA
   end
 
-  def keys(keys) # rubocop:disable Metrics/MethodLength
+  def keys(keys)
     keys = keys.chars
 
     until keys.empty?
       key = keys.shift
       key += keys.shift until key.last == ">" if key == "<"
 
-      if @instance.input(key).nil?
-        assert_alive!
-        raise "Failed to write key to neovim: #{key.inspect}"
-      end
+      assert_alive! if @instance.input(key).nil?
 
       print_screen unless ENV["CI"]
-      sleep(0.1)
+      # sleep(0.035)
+      sleep(0.5)
     end
   end
 

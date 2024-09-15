@@ -14,9 +14,9 @@ RSpec.describe "Commit Popup", :git, :nvim do
       it "can make a commit" do
         head = git.show("HEAD").split("\n").first
 
-        nvim.keys("cc")
-        nvim.keys("commit message")
-        nvim.keys("<esc>q")
+        input("cc")
+        input("commit message")
+        input("<esc>q")
 
         expect(git.show("HEAD").split("\n").first).not_to eq head
       end
@@ -44,7 +44,7 @@ RSpec.describe "Commit Popup", :git, :nvim do
 
         File.write("example.txt", "hello, world\ngoodbye, space")
         git.add("example.txt")
-        nvim.keys("ce")
+        input("ce")
 
         expect(git.log(1).entries.first.diff_parent.patch).to eq <<~DIFF.strip
           diff --git a/example.txt b/example.txt
@@ -62,9 +62,10 @@ RSpec.describe "Commit Popup", :git, :nvim do
 
     describe "Reword" do
       it "Opens editor to reword a commit" do
-        nvim.keys("cw")
-        nvim.keys("cc")
-        nvim.keys("reworded!<esc>:w<cr>q")
+        input("cw")
+        input("cc")
+        input("reworded!")
+        input("<esc>:w<cr>q")
         expect(git.log(1).entries.first.message).to eq("reworded!")
       end
     end
@@ -91,7 +92,7 @@ RSpec.describe "Commit Popup", :git, :nvim do
 
         File.write("example.txt", "hello, world\ngoodbye, space")
         git.add("example.txt")
-        nvim.keys("caccamended!<esc>:w<cr>q")
+        input("caccamended!<esc>:w<cr>q")
 
         expect(git.log(1).entries.first.message).to eq("amended!")
         expect(git.log(1).entries.first.diff_parent.patch).to eq <<~DIFF.strip

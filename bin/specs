@@ -51,7 +51,7 @@ Sync do |parent|
       stdin, stdout, wait = Open3.popen2({ "CI" => "1" }, "bundle exec rspec #{test} --format json --order random")
       stdin.close
 
-      results[test] = JSON.parse(stdout.read)
+      results[test] = JSON.parse(stdout.read.lines.last)
       stdout.close
 
       time = print_time(results[test].dig("summary", "duration").round(3))
@@ -69,15 +69,21 @@ end
 
 puts "\nDone in #{(now - start).round(3)}s"
 
-if failures.any?
-  failures.each do |test|
-    output = results[test]
+exit(0) if failures.empty?
 
-    puts "\nFail: #{output.dig('examples', 0, 'full_description')}"
-    puts "      #{test}"
-    puts "      #{output.dig('examples', 0, 'exception', 'class')}"
-    puts "      #{output.dig('examples', 0, 'exception', 'message')}"
-  end
-
-  abort("\n#{failures.size} Failed specs")
+def print_failure(failure)
+  puts ""
+  puts <<~FAILURE
+    Fail: #{failure['full_description']}
+          #{failure['exception']['message']}
+          #{failure['file_path']}:#{failure['line_number']}
+  FAILURE
 end
+
+failures.each do |test|
+  results.dig(test, "examples")
+         .reject { _1["status"] == "passed" }
+         .each { |failure| print_failure(failure) }
+end
+
+exit(1)

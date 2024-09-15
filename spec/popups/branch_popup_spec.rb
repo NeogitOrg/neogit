@@ -6,11 +6,11 @@ RSpec.describe "Branch Popup", :git, :nvim do
   describe "Variables" do
     describe "branch.<current>.description" do
       it "can edit branch description" do
-        nvim.keys("bd")
-        nvim.keys("describe the branch<esc>")
-        nvim.keys(":wq<cr>")
+        input("bd")
+        input("hi mom<esc>")
+        input(":wq<cr>")
 
-        expect(git.config("branch.master.description")).to eq("describe the branch\n")
+        expect(git.config("branch.master.description")).to eq("hi mom\n")
       end
     end
 
@@ -19,7 +19,7 @@ RSpec.describe "Branch Popup", :git, :nvim do
         expect_git_failure { git.config("branch.#{git.branch.name}.remote") }
         expect_git_failure { git.config("branch.#{git.branch.name}.merge") }
 
-        nvim.keys("bumaster<cr>")
+        input("bumas<cr>")
         expect(git.config("branch.#{git.branch.name}.remote")).to eq(".")
         expect(git.config("branch.#{git.branch.name}.merge")).to eq("refs/heads/master")
       end
@@ -31,11 +31,11 @@ RSpec.describe "Branch Popup", :git, :nvim do
       it "can change rebase setting" do
         expect_git_failure { git.config("branch.#{git.branch.name}.rebase") }
         expect(git.config("pull.rebase")).to eq("false")
-        nvim.keys("bR")
+        input("bR")
         expect(git.config("branch.#{git.branch.name}.rebase")).to eq("true")
-        nvim.keys("R")
+        input("R")
         expect(git.config("branch.#{git.branch.name}.rebase")).to eq("false")
-        nvim.keys("R")
+        input("R")
         expect_git_failure { git.config("branch.#{git.branch.name}.rebase") }
       end
     end
@@ -43,7 +43,7 @@ RSpec.describe "Branch Popup", :git, :nvim do
     describe "branch.<current>.pushRemote", :with_remote_origin do
       it "can change pushRemote for current branch" do
         expect_git_failure { git.config("branch.master.pushRemote") }
-        nvim.keys("bp")
+        input("bp")
         expect(git.config("branch.master.pushRemote")).to eq("origin")
       end
     end
@@ -62,8 +62,8 @@ RSpec.describe "Branch Popup", :git, :nvim do
       before { git.branch("new-local-branch").checkout }
 
       it "can checkout a local branch" do
-        nvim.keys("bl")
-        nvim.keys("master<cr>")
+        input("bl")
+        input("ma<cr>") # master
 
         expect(git.current_branch).to eq "master"
       end
@@ -71,9 +71,9 @@ RSpec.describe "Branch Popup", :git, :nvim do
       it "creates and checks out a new local branch when choosing a remote"
 
       it "creates and checks out a new local branch when name doesn't match existing local branch", skip: "requires FZF sorter" do # rubocop:disable Layout/LineLength
-        nvim.keys("bl")
-        nvim.keys("this branch doesnt exist<cr>")
-        nvim.keys("master<cr>")
+        input("bl")
+        input("this branch doesnt exist<cr>")
+        input("ma<cr>") # master
         expect(git.current_branch).to eq "this-branch-doesnt-exist"
       end
     end
@@ -85,16 +85,16 @@ RSpec.describe "Branch Popup", :git, :nvim do
     describe "Checkout new branch" do
       it "can create and checkout a branch" do
         nvim.input("new-branch")
-        nvim.keys("bc")
-        nvim.keys("master<cr>")
+        input("bc")
+        input("ma<cr>") # master
 
         expect(git.current_branch).to eq "new-branch"
       end
 
       it "replaces spaces with dashes in user input" do
         nvim.input("new branch with spaces")
-        nvim.keys("bc")
-        nvim.keys("master<cr>")
+        input("bc")
+        input("ma<cr>") # master
 
         expect(git.current_branch).to eq "new-branch-with-spaces"
       end
@@ -103,8 +103,8 @@ RSpec.describe "Branch Popup", :git, :nvim do
         git.branch("new-base-branch").checkout
 
         nvim.input("feature-branch")
-        nvim.keys("bc")
-        nvim.keys("master<cr>")
+        input("bc")
+        # input("ma<cr>") # master
 
         expect(git.current_branch).to eq "feature-branch"
 
