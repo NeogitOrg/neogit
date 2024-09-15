@@ -554,6 +554,7 @@ end
 ---@field user_mappings table|nil
 ---@field autocmds table|nil
 ---@field user_autocmds table|nil
+---@field spell_check boolean|nil
 ---@field initialize function|nil
 ---@field after function|nil
 ---@field on_detach function|nil
@@ -651,7 +652,7 @@ function Buffer.create(config)
       vim.opt_local.fillchars:append("fold: ")
     end)
 
-    buffer:set_window_option("spell", false)
+    buffer:set_window_option("spell", config.spell_check or false)
     buffer:set_window_option("wrap", false)
     buffer:set_window_option("foldmethod", "manual")
     -- TODO: Need to find a way to turn this off properly when unloading plugin

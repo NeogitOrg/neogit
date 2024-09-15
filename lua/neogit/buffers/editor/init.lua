@@ -77,6 +77,7 @@ function M:open(kind)
     name = self.filename,
     filetype = filetype,
     load = true,
+    spell_check = true,
     buftype = "",
     kind = kind,
     modifiable = true,
