@@ -101,6 +101,7 @@ end
 ---@field kind WindowKind The type of window that should be opened
 ---@field show_staged_diff? boolean Display staged changes in a buffer when committing
 ---@field staged_diff_split_kind? StagedDiffSplitKind Whether to show staged changes in a vertical or horizontal split
+---@field spell_check? boolean Enable/Disable spell checking
 
 ---@alias NeogitConfigSignsIcon { [1]: string, [2]: string }
 
@@ -373,6 +374,7 @@ function M.get_default_values()
       kind = "tab",
       show_staged_diff = true,
       staged_diff_split_kind = "split",
+      spell_check = true,
     },
     commit_select_view = {
       kind = "tab",
@@ -1059,6 +1061,7 @@ function M.validate_config()
     -- Commit Editor
     if validate_type(config.commit_editor, "commit_editor", "table") then
       validate_type(config.commit_editor.show_staged_diff, "show_staged_diff", "boolean")
+      validate_type(config.commit_editor.spell_check, "spell_check", "boolean")
       validate_kind(config.commit_editor.kind, "commit_editor")
     end
     -- Commit Select View

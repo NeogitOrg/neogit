@@ -77,7 +77,7 @@ function M:open(kind)
     name = self.filename,
     filetype = filetype,
     load = true,
-    spell_check = true,
+    spell_check = config.values.commit_editor.spell_check,
     buftype = "",
     kind = kind,
     modifiable = true,
