@@ -192,7 +192,7 @@ function M:open(kind)
         vim.fn.matchadd("NeogitRemote", git.branch.upstream(), 100)
       end
 
-      if self.show_diff then
+      if self.show_diff and kind ~= "floating" then
         logger.debug("[EDITOR] Opening Diffview for staged changes")
         self.diff_view = DiffViewBuffer:new("Staged Changes"):open()
       end
