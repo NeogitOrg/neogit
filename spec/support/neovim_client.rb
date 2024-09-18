@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
 class NeovimClient # rubocop:disable Metrics/ClassLength
-  def initialize
+  def initialize(mode)
+    @mode = mode
+    @pid = nil
     @instance = nil
   end
 
@@ -26,6 +28,11 @@ class NeovimClient # rubocop:disable Metrics/ClassLength
   end
 
   def teardown
+    if @mode == :tcp
+      system("kill -9 #{@pid}")
+      @pid = nil
+    end
+
     # @instance.shutdown # Seems to hang sometimes
     @instance = nil
   end
@@ -145,7 +152,16 @@ class NeovimClient # rubocop:disable Metrics/ClassLength
   end
 
   def attach_child
-    Neovim.attach_child(["nvim", "--embed", "--clean", "--headless"])
+    if @mode == :pipe
+      Neovim.attach_child(["nvim", "--embed", "--clean", "--headless"])
+    elsif @mode == :tcp
+      @pid = spawn("nvim", "--embed", "--headless", "--clean", "--listen", "127.0.0.1:9999")
+      Process.detach(@pid)
+      sleep 0.1
+      Neovim.attach_tcp("127.0.0.1", "9999")
+    else
+      raise "Unknown mode"
+    end
   end
 
   def runtime_dependencies
