@@ -25,7 +25,9 @@ function RPC.create_connection(address)
 end
 
 function RPC:connect()
-  self.ch = vim.fn.sockconnect("pipe", self.address, { rpc = true })
+  -- assume TPC if the address ends with :<some numbers>
+  local mode = self.address:match(":%d+$") and "tcp" or "pipe"
+  self.ch = vim.fn.sockconnect(mode, self.address, { rpc = true })
 end
 
 function RPC:disconnect()
