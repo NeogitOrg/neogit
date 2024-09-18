@@ -20,6 +20,22 @@ RSpec.describe "Commit Popup", :git, :nvim do
 
         expect(git.show("HEAD").split("\n").first).not_to eq head
       end
+
+      if ENV["CI"].nil? # Fails in GHA :'(
+        context "when connected via TCP" do
+          let(:nvim_mode) { :tcp }
+
+          it "can make a commit" do
+            head = git.show("HEAD").split("\n").first
+
+            nvim.keys("cc")
+            nvim.keys("commit message")
+            nvim.keys("<esc>q")
+
+            expect(git.show("HEAD").split("\n").first).not_to eq head
+          end
+        end
+      end
     end
 
     describe "Extend" do

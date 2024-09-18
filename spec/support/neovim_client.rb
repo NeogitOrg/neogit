@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
 class NeovimClient # rubocop:disable Metrics/ClassLength
-  def initialize
+  def initialize(mode)
+    @mode = mode
+    @pid = nil
     @instance = nil
   end
 
@@ -26,6 +28,11 @@ class NeovimClient # rubocop:disable Metrics/ClassLength
   end
 
   def teardown
+    if @mode == :tcp
+      system("kill -9 #{@pid}")
+      @pid = nil
+    end
+
     # @instance.shutdown # Seems to hang sometimes
     @instance = nil
   end
@@ -145,10 +152,34 @@ class NeovimClient # rubocop:disable Metrics/ClassLength
   end
 
   def attach_child
-    Neovim.attach_child(["nvim", "--embed", "--clean", "--headless"])
+    case @mode
+    when :pipe then attach_pipe
+    when :tcp  then attach_tcp
+    end
   end
 
   def runtime_dependencies
     Dir[File.join(PROJECT_DIR, "tmp", "*")].select { Dir.exist? _1 }
+  end
+
+  private
+
+  def attach_pipe
+    Neovim.attach_child(["nvim", "--embed", "--clean", "--headless"])
+  end
+
+  def attach_tcp
+    @pid = spawn("nvim", "--embed", "--headless", "--clean", "--listen", "localhost:9999")
+    Process.detach(@pid)
+
+    attempts = 0
+    loop do
+      return Neovim.attach_tcp("localhost", "9999")
+    rescue Errno::ECONNREFUSED
+      attempts += 1
+      raise "Couldn't connect via TCP after 10 seconds" if attempts > 100
+
+      sleep 0.1
+    end
   end
 end
