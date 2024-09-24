@@ -1124,6 +1124,13 @@ M.n_goto_file = function(self)
   return function()
     local item = self.buffer.ui:get_item_under_cursor()
 
+    -- Goto PLUGIN (TODO, etc...)
+    if item and item.goto_path and item.goto_cursor then
+      self:close()
+      vim.schedule_wrap(open)("edit", item.goto_path, item.goto_cursor)
+      return
+    end
+
     -- Goto FILE
     if item and item.absolute_path then
       local cursor = translate_cursor_location(self, item)
@@ -1145,6 +1152,12 @@ M.n_tab_open = function(self)
   return function()
     local item = self.buffer.ui:get_item_under_cursor()
 
+    -- Goto PLUGIN (TODO, etc...)
+    if item and item.goto_path and item.goto_cursor then
+      open("tabedit", item.goto_path, item.goto_cursor)
+      return
+    end
+
     if item and item.absolute_path then
       open("tabedit", item.absolute_path, translate_cursor_location(self, item))
     end
@@ -1156,6 +1169,12 @@ M.n_split_open = function(self)
   return function()
     local item = self.buffer.ui:get_item_under_cursor()
 
+    -- Goto PLUGIN (TODO, etc...)
+    if item and item.goto_path and item.goto_cursor then
+      open("split", item.goto_path, item.goto_cursor)
+      return
+    end
+
     if item and item.absolute_path then
       open("split", item.absolute_path, translate_cursor_location(self, item))
     end
@@ -1166,6 +1185,12 @@ end
 M.n_vertical_split_open = function(self)
   return function()
     local item = self.buffer.ui:get_item_under_cursor()
+
+    -- Goto PLUGIN (TODO, etc...)
+    if item and item.goto_path and item.goto_cursor then
+      open("vsplit", item.goto_path, item.goto_cursor)
+      return
+    end
 
     if item and item.absolute_path then
       open("vsplit", item.absolute_path, translate_cursor_location(self, item))
