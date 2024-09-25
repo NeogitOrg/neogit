@@ -31,6 +31,9 @@ RSpec.configure do |config|
 
   config.include Helpers
 
+  config.before(:suite) { puts "\e[?25l" } # Hide Cursor
+  config.after(:suite)  { puts "\e[?25h" } # Show Cursor
+
   config.around do |example|
     with_remote = example.metadata.fetch(:with_remote_origin, false)
 
