@@ -481,7 +481,7 @@ function M.memoize(f, opts)
 
   return function(...)
     local cwd = vim.uv.cwd()
-    assert(cwd)
+    assert(cwd, "no cwd")
 
     local key = vim.inspect { vim.fs.normalize(cwd), ... }
 

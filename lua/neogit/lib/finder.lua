@@ -34,9 +34,10 @@ local function telescope_mappings(on_select, allow_multi, refocus_status)
       local entry = action_state.get_selected_entry()[1]
       local prompt = picker:_get_prompt()
 
-      if entry == ".." and #prompt > 0 then
-        table.insert(selection, prompt)
-      elseif prompt:match("%^") or prompt:match("~") or prompt:match("@") or prompt:match(":") then
+      local navigate_up_level = entry == ".." and #prompt > 0
+      local input_git_refspec = prompt:match("%^") or prompt:match("~") or prompt:match("@") or prompt:match(":")
+
+      if navigate_up_level or input_git_refspec then
         table.insert(selection, prompt)
       else
         table.insert(selection, entry)
@@ -66,6 +67,7 @@ local function telescope_mappings(on_select, allow_multi, refocus_status)
 
   local function completion_action(prompt_bufnr)
     local picker = action_state.get_current_picker(prompt_bufnr)
+    -- selene: allow(empty_if)
     if #picker:get_multi_selection() > 0 then
       -- Don't autocomplete with multiple selection
     elseif action_state.get_selected_entry() ~= nil then

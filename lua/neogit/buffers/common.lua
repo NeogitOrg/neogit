@@ -10,7 +10,6 @@ local map = util.map
 local flat_map = util.flat_map
 local filter = util.filter
 local intersperse = util.intersperse
-local range = util.range
 
 local M = {}
 

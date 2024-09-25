@@ -98,7 +98,7 @@ function M.register(meta)
       local idx, message = line:match("stash@{(%d*)}: (.*)")
 
       idx = tonumber(idx)
-      assert(idx)
+      assert(idx, "indx cannot be nil")
 
       ---@class StashItem
       local item = {
