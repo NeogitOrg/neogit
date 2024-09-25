@@ -272,7 +272,7 @@ function M:open()
     after = function(buffer)
       -- First line is empty, so move cursor to second line.
       buffer:move_cursor(2)
-    end
+    end,
   }
 end
 

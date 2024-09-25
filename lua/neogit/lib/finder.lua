@@ -35,7 +35,10 @@ local function telescope_mappings(on_select, allow_multi, refocus_status)
       local prompt = picker:_get_prompt()
 
       local navigate_up_level = entry == ".." and #prompt > 0
-      local input_git_refspec = prompt:match("%^") or prompt:match("~") or prompt:match("@") or prompt:match(":")
+      local input_git_refspec = prompt:match("%^")
+        or prompt:match("~")
+        or prompt:match("@")
+        or prompt:match(":")
 
       if navigate_up_level or input_git_refspec then
         table.insert(selection, prompt)
