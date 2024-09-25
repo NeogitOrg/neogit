@@ -36,6 +36,7 @@ function M:open()
     name = "NeogitStashView",
     filetype = "NeogitStashView",
     header = "Stashes (" .. #self.stashes .. ")",
+    scroll_header = true,
     kind = config.values.stash.kind,
     context_highlight = true,
     mappings = {

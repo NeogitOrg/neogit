@@ -59,6 +59,7 @@ function M:open(action)
     status_column = not config.values.disable_signs and "" or nil,
     kind = config.values.commit_select_view.kind,
     header = self.header or "Select a commit with <cr>, or <esc> to abort",
+    scroll_header = true,
     mappings = {
       v = {
         ["<enter>"] = function()

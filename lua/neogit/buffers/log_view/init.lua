@@ -77,6 +77,7 @@ function M:open()
     kind = config.values.log_view.kind,
     context_highlight = false,
     header = self.header,
+    scroll_header = false,
     status_column = not config.values.disable_signs and "" or nil,
     mappings = {
       v = {
@@ -268,6 +269,10 @@ function M:open()
     render = function()
       return ui.View(self.commits, self.internal_args)
     end,
+    after = function(buffer)
+      -- First line is empty, so move cursor to second line.
+      buffer:move_cursor(2)
+    end
   }
 end
 
