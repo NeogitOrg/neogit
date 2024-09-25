@@ -140,6 +140,9 @@ M.v_discard = function(self)
         for _, stash in ipairs(selection.items) do
           table.insert(stashes, stash.name:match("(stash@{%d+})"))
         end
+
+        table.sort(stashes)
+        stashes = util.reverse(stashes)
       end
     end
 
