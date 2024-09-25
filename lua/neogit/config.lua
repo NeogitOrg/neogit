@@ -144,6 +144,7 @@ end
 ---| "Previous"
 ---| "MultiselectToggleNext"
 ---| "MultiselectTogglePrevious"
+---| "InsertCompletion"
 ---| "NOP"
 ---| false
 
@@ -523,8 +524,9 @@ function M.get_default_values()
         ["<c-p>"] = "Previous",
         ["<down>"] = "Next",
         ["<up>"] = "Previous",
-        ["<tab>"] = "MultiselectToggleNext",
-        ["<s-tab>"] = "MultiselectTogglePrevious",
+        ["<tab>"] = "InsertCompletion",
+        ["<space>"] = "MultiselectToggleNext",
+        ["<s-space>"] = "MultiselectTogglePrevious",
         ["<c-j>"] = "NOP",
         ["<ScrollWheelDown>"] = "ScrollWheelDown",
         ["<ScrollWheelUp>"] = "ScrollWheelUp",

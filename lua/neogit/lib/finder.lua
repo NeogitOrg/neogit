@@ -36,6 +36,8 @@ local function telescope_mappings(on_select, allow_multi, refocus_status)
 
       if entry == ".." and #prompt > 0 then
         table.insert(selection, prompt)
+      elseif prompt:match("%^") or prompt:match("~") or prompt:match("@") or prompt:match(":") then
+        table.insert(selection, prompt)
       else
         table.insert(selection, entry)
       end
@@ -56,19 +58,32 @@ local function telescope_mappings(on_select, allow_multi, refocus_status)
     end
   end
 
+  local function close(...)
+    -- Make sure to notify the caller that we aborted to avoid hanging on the async task forever
+    on_select(nil)
+    close_action(...)
+  end
+
+  local function completion_action(prompt_bufnr)
+    local picker = action_state.get_current_picker(prompt_bufnr)
+    if #picker:get_multi_selection() > 0 then
+      -- Don't autocomplete with multiple selection
+    elseif action_state.get_selected_entry() ~= nil then
+      picker:set_prompt(action_state.get_selected_entry()[1])
+    end
+  end
+
   return function(_, map)
     local commands = {
       ["Select"] = select_action,
-      ["Close"] = function(...)
-        -- Make sure to notify the caller that we aborted to avoid hanging on the async task forever
-        on_select(nil)
-        close_action(...)
-      end,
+      ["Close"] = close,
+      ["InsertCompletion"] = completion_action,
       ["Next"] = actions.move_selection_next,
       ["Previous"] = actions.move_selection_previous,
       ["NOP"] = actions.nop,
       ["MultiselectToggleNext"] = actions.toggle_selection + actions.move_selection_worse,
       ["MultiselectTogglePrevious"] = actions.toggle_selection + actions.move_selection_better,
+      ["MultiselectToggle"] = actions.toggle_selection,
     }
 
     -- Telescope HEAD has mouse click support, but not the latest tag. Need to check if the user has
@@ -218,10 +233,22 @@ function Finder:find(on_select)
 
     self.opts.prompt_prefix = string.format(" %s > ", self.opts.prompt_prefix)
 
+    local default_sorter
+    local native_sorter = function()
+      local fzf_extension = require("telescope").extensions.fzf
+      if fzf_extension then
+        default_sorter = fzf_extension.native_fzf_sorter()
+      end
+    end
+
+    if not pcall(native_sorter) then
+      default_sorter = sorters.get_generic_fuzzy_sorter()
+    end
+
     pickers
       .new(self.opts, {
         finder = finders.new_table { results = self.entries },
-        sorter = config.values.telescope_sorter() or sorters.fuzzy_with_index_bias(),
+        sorter = config.values.telescope_sorter() or default_sorter,
         attach_mappings = telescope_mappings(on_select, self.opts.allow_multi, self.opts.refocus_status),
       })
       :find()
