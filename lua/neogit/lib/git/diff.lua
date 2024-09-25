@@ -162,7 +162,7 @@ local function build_hunks(lines)
   for _, hunk in ipairs(hunks) do
     hunk.lines = {}
     for i = hunk.diff_from + 1, hunk.diff_to do
-      table.insert(hunk.lines, lines[i])
+      insert(hunk.lines, lines[i])
     end
 
     hunk.length = hunk.diff_to - hunk.diff_from
