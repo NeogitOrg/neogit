@@ -109,7 +109,7 @@ function M:show()
         local highlight_code = "NeogitCommandCodeNormal"
 
         if is_err then
-          stdio = string.format("[%s %d]", "stderr", #item.stderr)
+          stdio = string.format("[%s %3d]", "stderr", #item.stderr)
           highlight_code = "NeogitCommandCodeError"
         end
 
