@@ -1060,6 +1060,12 @@ Arguments:                                             *neogit_fetch_popup_args*
     pruning, even if --prune is used (though tags may be pruned anyway if
     they are also the destination of an explicit refspec; see --prune).
 
+  • --force
+    When git fetch is used with <src>:<dst> refspec, it may refuse to update
+    the local branch. This option overrides that check. See `man git-fetch`
+    for more detail.
+
+
 Actions:                                            *neogit_fetch_popup_actions*
   • Fetch from pushRemote                              *neogit_fetch_pushremote*
     Fetches from the current pushRemote.
