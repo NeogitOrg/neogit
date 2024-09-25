@@ -48,7 +48,7 @@ function M.prune(name)
 end
 
 M.list = util.memoize(function()
-  return git.cli.remote.call({ hidden = false }).stdout
+  return git.cli.remote.call({ hidden = true }).stdout
 end)
 
 function M.get_url(name)
