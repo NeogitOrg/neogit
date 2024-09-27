@@ -50,14 +50,19 @@ end
 ---@param buffer StatusBuffer|RefsViewBuffer
 ---@return Watcher
 function Watcher:register(buffer)
+  logger.debug("[WATCHER] Registered buffer " .. buffer:id())
+
   self.buffers[buffer:id()] = buffer
   return self:start()
 end
 
 ---@return Watcher
 function Watcher:unregister(buffer)
+  logger.debug("[WATCHER] Unregistered buffer " .. buffer:id())
+
   self.buffers[buffer:id()] = nil
   if vim.tbl_isempty(self.buffers) then
+    logger.debug("[WATCHER] No registered buffers - stopping")
     self:stop()
   end
 
@@ -66,25 +71,33 @@ end
 
 ---@return Watcher
 function Watcher:start()
-  if config.values.filewatcher.enabled and not self.running then
-    self.running = true
-
-    logger.debug("[WATCHER] Watching git dir: " .. self.git_root)
-    self.fs_event_handler:start(self.git_root, {}, self:fs_event_callback())
+  if not config.values.filewatcher.enabled then
+    return self
   end
 
+  if self.running then
+    return self
+  end
+
+  logger.debug("[WATCHER] Watching git dir: " .. self.git_root)
+  self.running = true
+  self.fs_event_handler:start(self.git_root, {}, self:fs_event_callback())
   return self
 end
 
 ---@return Watcher
 function Watcher:stop()
-  if self.running then
-    self.running = false
-
-    logger.debug("[WATCHER] Stopped watching git dir: " .. self.git_root)
-    self.fs_event_handler:stop()
+  if not config.values.filewatcher.enabled then
+    return self
   end
 
+  if not self.running then
+    return self
+  end
+
+  logger.debug("[WATCHER] Stopped watching git dir: " .. self.git_root)
+  self.running = false
+  self.fs_event_handler:stop()
   return self
 end
 
