@@ -247,7 +247,10 @@ function Buffer:hide()
 end
 
 function Buffer:is_visible()
-  return #fn.win_findbuf(self.handle) > 0
+  local buffer_in_window = #fn.win_findbuf(self.handle) > 0
+  local window_in_tabpage = vim.tbl_contains(api.nvim_tabpage_list_wins(0), self.win_handle)
+
+  return buffer_in_window and window_in_tabpage
 end
 
 ---@return number
