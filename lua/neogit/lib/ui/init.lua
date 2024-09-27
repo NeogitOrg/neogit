@@ -383,6 +383,7 @@ end
 ---@field section {index: number, name: string}|nil
 ---@field file {index: number, name: string}|nil
 ---@field hunk {index: number, name: string}|nil
+---@field section_offset number
 
 ---Encode the cursor location into a table
 ---@param line number?
