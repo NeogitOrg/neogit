@@ -176,14 +176,16 @@ local Repo = {}
 Repo.__index = Repo
 
 local instances = {}
+local lastDir = vim.uv.cwd()
 
 ---@param dir? string
 ---@return NeogitRepo
 function Repo.instance(dir)
-  dir = dir or vim.uv.cwd()
-  assert(dir, "cannot create a repo without a cwd")
+  if dir and dir ~= lastDir then
+    lastDir = dir
+  end
 
-  local cwd = vim.fs.normalize(dir)
+  local cwd = vim.fs.normalize(lastDir)
   if not instances[cwd] then
     logger.debug("[REPO]: Registered Repository for: " .. cwd)
     instances[cwd] = Repo.new(cwd)
