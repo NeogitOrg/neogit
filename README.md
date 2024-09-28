@@ -126,6 +126,8 @@ neogit.setup {
   -- Flag description: https://git-scm.com/docs/git-branch#Documentation/git-branch.txt---sortltkeygt
   -- Sorting keys: https://git-scm.com/docs/git-for-each-ref#_options
   sort_branches = "-committerdate",
+  -- Default for new branch name prompts
+  initial_branch_name = "",
   -- Change the default way of opening neogit
   kind = "tab",
   -- Disable line numbers and relative line numbers
