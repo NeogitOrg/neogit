@@ -258,7 +258,8 @@ function M:refresh(partial, reason)
   logger.debug("[STATUS] Beginning refresh from " .. (reason or "UNKNOWN"))
 
   local cursor, view
-  if self.buffer and self.buffer:is_focused() then
+  -- Dont store cursor for focus_gained, it causes some jank on the position restoration.
+  if self.buffer and self.buffer:is_focused() and reason ~= "focus_gained" then
     cursor = self.buffer.ui:get_cursor_location()
     view = self.buffer:save_view()
   end
