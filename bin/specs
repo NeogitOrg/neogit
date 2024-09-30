@@ -7,6 +7,7 @@ gemfile do
   gem "open3"
   gem "tty-spinner"
   gem "pastel"
+  gem "debug"
 end
 
 COLOR = Pastel.new
@@ -54,7 +55,8 @@ Sync do |parent|
       stdin, stdout, wait = Open3.popen2({ "CI" => "1" }, "bundle exec rspec #{test} --format json --order random")
       stdin.close
 
-      results[test] = JSON.parse(stdout.read)
+      output = stdout.read.lines.last
+      results[test] = JSON.parse(output)
       stdout.close
 
       time = print_time(results[test].dig("summary", "duration").round(3))
