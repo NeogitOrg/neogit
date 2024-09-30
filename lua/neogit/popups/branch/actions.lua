@@ -49,9 +49,10 @@ end
 ---@param popup PopupData
 ---@param prompt string
 ---@param checkout boolean
+---@param name? string
 ---@return string|nil
 ---@return string|nil
-local function create_branch(popup, prompt, checkout)
+local function create_branch(popup, prompt, checkout, name)
   -- stylua: ignore
   local options = util.deduplicate(util.merge(
     { popup.state.env.ref_name },
@@ -68,7 +69,7 @@ local function create_branch(popup, prompt, checkout)
     return
   end
 
-  local name = input.get_user_input("Create branch", {
+  local name = name or input.get_user_input("Create branch", {
     strip_spaces = true,
     default = popup.state.env.suggested_branch_name,
   })
@@ -108,7 +109,7 @@ function M.checkout_branch_revision(popup)
     return
   end
 
-  git.cli.checkout.branch(selected_branch).arg_list(popup:get_arguments()).call { await = true }
+  git.branch.checkout(selected_branch, popup:get_arguments())
   fire_branch_event("NeogitBranchCheckout", { branch_name = selected_branch })
 end
 
@@ -122,7 +123,8 @@ function M.checkout_local_branch(popup)
     end
   end)
 
-  local target = FuzzyFinderBuffer.new(util.merge(local_branches, remote_branches)):open_async {
+  local options = util.merge(local_branches, remote_branches)
+  local target = FuzzyFinderBuffer.new(options):open_async {
     prompt_prefix = "branch",
     refocus_status = false,
   }
@@ -130,10 +132,14 @@ function M.checkout_local_branch(popup)
   if target then
     if vim.tbl_contains(remote_branches, target) then
       git.branch.track(target, popup:get_arguments())
-    elseif target then
+      fire_branch_event("NeogitBranchCheckout", { branch_name = target })
+    elseif not vim.tbl_contains(options, target) then
+      target, _ = target:gsub("%s", "-")
+      create_branch(popup, "Create " .. target .. " starting at", true, target)
+    else
       git.branch.checkout(target, popup:get_arguments())
+      fire_branch_event("NeogitBranchCheckout", { branch_name = target })
     end
-    fire_branch_event("NeogitBranchCheckout", { branch_name = target })
   end
 end
 
