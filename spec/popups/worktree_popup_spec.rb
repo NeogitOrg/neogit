@@ -46,13 +46,13 @@ RSpec.describe "Worktree Popup", :git, :nvim do
       end
     end
 
-    describe "Goto" do
-    end
+    # describe "Goto" do
+    # end
 
-    describe "Move" do
-    end
+    # describe "Move" do
+    # end
 
-    describe "Delete" do
-    end
+    # describe "Delete" do
+    # end
   end
 end

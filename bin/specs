@@ -39,7 +39,7 @@ failures = []
 
 start = now
 
-Sync do |parent|
+Sync do |parent| # rubocop:disable Metrics/BlockLength
   tests.map do |test|
     parent.async do
       spinner = spinners.register(

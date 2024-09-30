@@ -33,7 +33,8 @@ function M.range(popup)
     return
   end
 
-  local range_to = FuzzyFinderBuffer.new(options):open_async { prompt_prefix = "Diff from " .. range_from .. " to" }
+  local range_to = FuzzyFinderBuffer.new(options)
+    :open_async { prompt_prefix = "Diff from " .. range_from .. " to" }
   if not range_to then
     return
   end
@@ -41,7 +42,7 @@ function M.range(popup)
   local choices = {
     "&1. " .. range_from .. ".." .. range_to,
     "&2. " .. range_from .. "..." .. range_to,
-    "&3. Cancel"
+    "&3. Cancel",
   }
   local choice = input.get_choice("Select range", { values = choices, default = #choices })
 
