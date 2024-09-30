@@ -70,11 +70,12 @@ RSpec.describe "Branch Popup", :git, :nvim do
 
       it "creates and checks out a new local branch when choosing a remote"
 
-      it "creates and checks out a new local branch when name doesn't match existing local branch", skip: "requires FZF sorter" do # rubocop:disable Layout/LineLength
+      it "creates and checks out a new local branch when name doesn't match existing local branch" do
         nvim.keys("bl")
-        nvim.keys("this branch doesnt exist<cr>")
-        nvim.keys("master<cr>")
-        expect(git.current_branch).to eq "this-branch-doesnt-exist"
+        nvim.keys("tmp<cr>") # Enter branch that doesn't exist
+        nvim.keys("mas<cr>") # Set base branch
+
+        expect(git.current_branch).to eq "tmp"
       end
     end
 
