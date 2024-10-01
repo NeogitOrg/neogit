@@ -17,6 +17,7 @@ local api = vim.api
 ---@field buffer Buffer instance
 ---@field config NeogitConfig
 ---@field root string
+---@field cwd string
 local M = {}
 M.__index = M
 
@@ -42,15 +43,23 @@ end
 
 ---@param config NeogitConfig
 ---@param root string
+---@param cwd string
 ---@return StatusBuffer
-function M.new(config, root)
+function M.new(config, root, cwd)
+  if M.instance(cwd) then
+    logger.debug("Found instance for cwd " .. cwd)
+    return M.instance(cwd)
+  end
+
   local instance = {
     config = config,
     root = root,
+    cwd = cwd,
     buffer = nil,
   }
 
   setmetatable(instance, M)
+  M.register(instance, cwd)
 
   return instance
 end
@@ -68,23 +77,20 @@ function M:_action(name)
 end
 
 ---@param kind string<"floating" | "split" | "tab" | "split" | "vsplit">|nil
----@param cwd string
 ---@return StatusBuffer
-function M:open(kind, cwd)
-  if M.is_open() then
+function M:open(kind)
+  if self.buffer and self.buffer:is_visible() then
     logger.debug("[STATUS] An Instance is already open - focusing it")
-    M.instance():focus()
-    return M.instance()
+    self.buffer:focus()
+    return self
   end
-
-  M.register(self, cwd)
 
   local mappings = config.get_reversed_status_maps()
 
   self.buffer = Buffer.create {
     name = "NeogitStatus",
     filetype = "NeogitStatus",
-    cwd = cwd,
+    cwd = self.cwd,
     context_highlight = not config.values.disable_context_highlighting,
     kind = kind or config.values.kind,
     disable_line_numbers = config.values.disable_line_numbers,
@@ -244,6 +250,7 @@ function M:chdir(dir)
 
   logger.debug("[STATUS] Changing Dir: " .. dir)
   vim.api.nvim_set_current_dir(dir)
+  self.cwd = dir
   self:dispatch_reset()
 end
 
