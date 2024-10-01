@@ -265,7 +265,7 @@ function M:refresh(partial, reason)
   end
 
   git.repo:dispatch_refresh {
-    source = "status/" .. (reason or "UNKNOWN"),
+    source = "status",
     partial = partial,
     callback = function()
       self:redraw(cursor, view)

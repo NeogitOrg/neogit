@@ -145,6 +145,7 @@ end
 
 function Watcher:dispatch_refresh()
   git.repo:dispatch_refresh {
+    source = "watcher",
     callback = function()
       for name, buffer in pairs(self.buffers) do
         logger.debug("[WATCHER] Dispatching redraw to " .. name)
