@@ -327,7 +327,7 @@ M.dispatch_refresh = a.void(function(self, partial, reason)
 end)
 
 function M:reset()
-  logger.debug("[STATUS] Resetting repo and refreshing")
+  logger.debug("[STATUS] Resetting repo and refreshing - CWD: " .. vim.uv.cwd())
   git.repo:reset()
   self:refresh(nil, "reset")
 end
