@@ -56,6 +56,9 @@ function M.new(config, root, cwd)
     root = root,
     cwd = cwd,
     buffer = nil,
+    fold_state = nil,
+    cursor_state = nil,
+    view_state = nil,
   }
 
   setmetatable(instance, M)
@@ -231,6 +234,10 @@ end
 
 function M:close()
   if self.buffer then
+    self.fold_state = self.buffer.ui:get_fold_state()
+    self.cursor_state = self.buffer:cursor_line()
+    self.view_state = self.buffer:save_view()
+
     logger.debug("[STATUS] Closing Buffer")
     self.buffer:close()
     self.buffer = nil
@@ -266,6 +273,7 @@ function M:refresh(partial, reason)
 
   local cursor, view
   -- Dont store cursor for focus_gained, it causes some jank on the position restoration.
+  -- Needs to be captured _before_ refresh because the diffs are needed, but will be changed by refreshing.
   if self.buffer and self.buffer:is_focused() and reason ~= "focus_gained" then
     cursor = self.buffer.ui:get_cursor_location()
     view = self.buffer:save_view()
@@ -293,7 +301,23 @@ function M:redraw(cursor, view)
   logger.debug("[STATUS] Rendering UI")
   self.buffer.ui:render(unpack(ui.Status(git.repo.state, self.config)))
 
-  if cursor and view and self.buffer:is_focused() then
+  if not self.buffer:is_focused() then
+    logger.debug("[STATUS] Buffer is not focused - not restoring state")
+    return
+  end
+
+  if self.fold_state then
+    logger.debug("[STATUS] Restoring fold state")
+    self.buffer.ui:set_fold_state(self.fold_state)
+    self.fold_state = nil
+  end
+
+  if self.cursor_state and self.view_state then
+    logger.debug("[STATUS] Restoring cursor and view state")
+    self.buffer:restore_view(self.view_state, self.cursor_state)
+    self.view_state = nil
+    self.cursor_state = nil
+  elseif cursor and view then
     self.buffer:restore_view(view, self.buffer.ui:resolve_cursor_location(cursor))
   end
 end
