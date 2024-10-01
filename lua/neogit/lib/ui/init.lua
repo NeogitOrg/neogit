@@ -550,6 +550,10 @@ local function node_prefix(node, prefix)
   end
 end
 
+---@param node table
+---@param node_table? table
+---@param prefix? string
+---@return table
 local function folded_node_state(node, node_table, prefix)
   if not node_table then
     node_table = {}
@@ -611,6 +615,17 @@ function Ui:_update_on_open(node, attributes, prefix)
       self:_update_on_open(child, attributes, prefix)
     end
   end
+end
+
+---@return table
+function Ui:get_fold_state()
+  return folded_node_state(self.layout)
+end
+
+---@param state table
+function Ui:set_fold_state(state)
+  self._node_fold_state = state
+  self:update()
 end
 
 function Ui:render(...)
