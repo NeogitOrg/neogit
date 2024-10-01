@@ -113,10 +113,11 @@ end
 ---@param ... table
 ---@return table
 function M.merge(...)
+  local insert = table.insert
   local res = {}
   for _, tbl in ipairs { ... } do
     for _, item in ipairs(tbl) do
-      table.insert(res, item)
+      insert(res, item)
     end
   end
   return res
@@ -558,7 +559,7 @@ end
 --- @return F throttled function.
 function M.throttle_by_id(fn, schedule)
   local scheduled = {} --- @type table<any,boolean>
-  local running = {} --- @type table<any,boolean>
+  local running = {}   --- @type table<any,boolean>
 
   return function(id, ...)
     if scheduled[id] then
