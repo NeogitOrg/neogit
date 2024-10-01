@@ -701,22 +701,18 @@ local function handle_new_cmd(job, hidden_text, hide_from_history)
   })
 
   do
-    local log_fn = logger.trace
     if job.code > 0 then
-      log_fn = logger.warn
-    end
-    if job.code > 0 then
-      log_fn(
+      logger.trace(
         string.format("[CLI] Execution of '%s' failed with code %d after %d ms", job.cmd, job.code, job.time)
       )
 
       for _, line in ipairs(job.stderr) do
         if line ~= "" then
-          log_fn(string.format("[CLI] [STDERR] %s", line))
+          logger.trace(string.format("[CLI] [STDERR] %s", line))
         end
       end
     else
-      log_fn(string.format("[CLI] Execution of '%s' succeeded in %d ms", job.cmd, job.time))
+      logger.trace(string.format("[CLI] Execution of '%s' succeeded in %d ms", job.cmd, job.time))
     end
   end
 end
@@ -1047,13 +1043,13 @@ local function new_builder(subcommand)
       end
 
       if opts.await then
-        logger.debug("Running command await: " .. vim.inspect(p.cmd))
+        logger.trace("Running command await: " .. vim.inspect(p.cmd))
         run_await()
       else
-        logger.debug("Running command async: " .. vim.inspect(p.cmd))
+        logger.trace("Running command async: " .. vim.inspect(p.cmd))
         local ok, _ = pcall(run_async)
         if not ok then
-          logger.debug("Running command async failed - awaiting instead")
+          logger.trace("Running command async failed - awaiting instead")
           run_await()
         end
       end
