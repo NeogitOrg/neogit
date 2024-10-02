@@ -802,7 +802,7 @@ function Buffer.create(config)
 
   if config.cwd then
     logger.debug("[BUFFER:" .. buffer.handle .. "] Setting CWD to: " .. config.cwd)
-    buffer:win_exec("lcd " .. config.cwd)
+    buffer:win_exec("lcd " .. fn.fnameescape(config.cwd))
   end
 
   return buffer
