@@ -54,7 +54,7 @@ function M.new(config, root, cwd)
   local instance = {
     config = config,
     root = root,
-    cwd = cwd,
+    cwd = vim.fs.normalize(cwd),
     buffer = nil,
     fold_state = nil,
     cursor_state = nil,
