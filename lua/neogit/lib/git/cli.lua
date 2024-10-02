@@ -56,6 +56,9 @@ local input = require("neogit.lib.input")
 ---@field cherry-pick GitCommand
 ---@field verify-commit GitCommand
 ---@field bisect GitCommand
+---@field git_root fun(dir: string):string
+---@field is_inside_worktree fun(dir: string):boolean
+---@field history table
 
 local function config(setup)
   setup = setup or {}
@@ -667,6 +670,7 @@ local configurations = {
 --- git_root_of_cwd() returns the git repo of the cwd, which can change anytime
 --- after git_root_of_cwd() has been called.
 ---@param dir string
+---@return string
 local function git_root(dir)
   local cmd = { "git", "-C", dir, "rev-parse", "--show-toplevel" }
   local result = vim.system(cmd, { text = true }):wait()
@@ -674,6 +678,7 @@ local function git_root(dir)
 end
 
 ---@param dir string
+---@return boolean
 local function is_inside_worktree(dir)
   local cmd = { "git", "-C", dir, "rev-parse", "--is-inside-work-tree" }
   local result = vim.system(cmd):wait()
