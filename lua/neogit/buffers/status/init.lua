@@ -95,7 +95,7 @@ function M:open(kind)
     filetype = "NeogitStatus",
     cwd = self.cwd,
     context_highlight = not config.values.disable_context_highlighting,
-    kind = kind or config.values.kind,
+    kind = kind or config.values.kind or "tab",
     disable_line_numbers = config.values.disable_line_numbers,
     foldmarkers = not config.values.disable_signs,
     on_detach = function()
