@@ -687,23 +687,9 @@ end
 
 local history = {}
 
----@param job any
----@param hidden_text string Text to obfuscate from history
----@param hide_from_history boolean Do not show this command in GitHistoryBuffer
-local function handle_new_cmd(job, hidden_text, hide_from_history)
-  if hide_from_history == nil then
-    hide_from_history = false
-  end
-
-  table.insert(history, {
-    cmd = hidden_text and job.cmd:gsub(hidden_text, string.rep("*", #hidden_text)) or job.cmd,
-    raw_cmd = job.cmd,
-    stdout = job.stdout,
-    stderr = job.stderr,
-    code = job.code,
-    time = job.time,
-    hidden = hide_from_history,
-  })
+---@param job ProcessResult
+local function store_process_result(job)
+  table.insert(history, job)
 
   do
     if job.code > 0 then
@@ -1060,14 +1046,12 @@ local function new_builder(subcommand)
       end
 
       assert(result, "Command did not complete")
+      if state.hide_text then
+        result.cmd = result.cmd:gsub(state.hide_text, string.rep("*", #state.hide_text))
+      end
 
-      handle_new_cmd({
-        cmd = table.concat(p.cmd, " "),
-        stdout = result.stdout,
-        stderr = result.stderr,
-        code = result.code,
-        time = result.time,
-      }, state.hide_text, opts.hidden)
+      result.hidden = opts.hidden or false
+      store_process_result(result)
 
       if opts.trim then
         result:trim()
@@ -1094,7 +1078,6 @@ local meta = {
 
 local cli = setmetatable({
   history = history,
-  insert = handle_new_cmd,
   git_root = git_root,
   is_inside_worktree = is_inside_worktree,
 }, meta)

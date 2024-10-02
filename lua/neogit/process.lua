@@ -41,6 +41,7 @@ setmetatable(processes, { __mode = "k" })
 ---@field output string[]
 ---@field code number
 ---@field time number seconds
+---@field cmd string
 local ProcessResult = {}
 
 ---Removes empty lines from output
@@ -229,6 +230,7 @@ function Process:spawn(cb)
     stdout = {},
     stderr = {},
     output = {},
+    cmd = table.concat(self.cmd, " "),
   }, ProcessResult)
 
   assert(self.job == nil, "Process started twice")
