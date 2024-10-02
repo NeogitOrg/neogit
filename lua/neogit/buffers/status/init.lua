@@ -187,11 +187,7 @@ function M:open(kind)
       vim.o.autochdir = false
     end,
     render = function()
-      if git.repo.state.initialized then
-        return ui.Status(git.repo.state, self.config)
-      else
-        return {}
-      end
+      return ui.Status(git.repo.state, self.config)
     end,
     ---@param buffer Buffer
     ---@param _win any

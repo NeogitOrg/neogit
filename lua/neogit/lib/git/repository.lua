@@ -23,7 +23,6 @@ local modules = {
 ---@class NeogitRepoState
 ---@field git_path       fun(self, ...):Path
 ---@field refresh        fun(self, table)
----@field initialized    boolean
 ---@field git_root       string
 ---@field refresh_lock   Semaphore
 ---@field head           NeogitRepoHead
@@ -99,7 +98,6 @@ local modules = {
 ---@return NeogitRepoState
 local function empty_state()
   return {
-    initialized = false,
     git_root = "",
     head = {
       branch = nil,
@@ -273,10 +271,6 @@ function Repo:refresh(opts)
   if self.git_root == "" then
     logger.debug("[REPO] No git root found - skipping refresh")
     return
-  end
-
-  if not self.state.initialized then
-    self.state.initialized = true
   end
 
   local filter = ItemFilter.create { "*:*" }
