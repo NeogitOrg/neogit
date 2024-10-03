@@ -168,7 +168,9 @@ end
 ---@field lib table
 ---@field state NeogitRepoState
 ---@field git_root string
----@field running boolean
+---@field running table
+---@field interrupt table
+---@field tmp_state table
 ---@field refresh_callbacks function[]
 local Repo = {}
 Repo.__index = Repo
@@ -183,6 +185,7 @@ function Repo.instance(dir)
     lastDir = dir
   end
 
+  assert(lastDir)
   local cwd = vim.fs.normalize(lastDir)
   if not instances[cwd] then
     logger.debug("[REPO]: Registered Repository for: " .. cwd)
@@ -203,8 +206,10 @@ function Repo.new(dir)
     lib = {},
     state = empty_state(),
     git_root = git.cli.git_root(dir),
-    running = false,
-    refresh_callbacks = {},
+    running = util.weak_table(),
+    refresh_callbacks = util.weak_table(),
+    interrupt = util.weak_table(),
+    tmp_state = util.weak_table(),
   }
 
   instance.state.git_root = instance.git_root
@@ -226,12 +231,12 @@ function Repo:git_path(...)
   return Path:new(self.git_root):joinpath(".git", ...)
 end
 
-function Repo:tasks(filter)
+function Repo:tasks(filter, state)
   local tasks = {}
   for name, fn in pairs(self.lib) do
     table.insert(tasks, function()
       local start = vim.uv.now()
-      fn(self.state, filter)
+      fn(state, filter)
       logger.debug(("[REPO]: Refreshed %s in %d ms"):format(name, vim.uv.now() - start))
     end)
   end
@@ -239,68 +244,100 @@ function Repo:tasks(filter)
   return tasks
 end
 
-function Repo:register_callback(fn)
-  logger.debug("[REPO] Callback registered")
-  table.insert(self.refresh_callbacks, fn)
+function Repo:register_callback(source, fn)
+  logger.debug("[REPO] Callback registered from " .. source)
+  self.refresh_callbacks[source] = fn
 end
 
-function Repo:run_callbacks()
-  for n, cb in ipairs(self.refresh_callbacks) do
-    logger.debug(("[REPO]: Running refresh callback (%d)"):format(n))
-    cb()
+function Repo:run_callbacks(id)
+  for source, fn in pairs(self.refresh_callbacks) do
+    logger.debug("[REPO]: (" .. id .. ") Running callback for " .. source)
+    fn()
   end
+
   self.refresh_callbacks = {}
 end
 
-function Repo:refresh(opts)
-  opts = opts or {}
+local DEFAULT_FILTER = ItemFilter.create { "*:*" }
 
+local function timestamp()
   vim.uv.update_time()
-  local start = vim.uv.now()
+  return vim.uv.now()
+end
 
-  if opts.callback then
-    self:register_callback(opts.callback)
+local function action_in_progress()
+  return git.rebase.in_progress()
+    or git.merge.in_progress()
+    or git.bisect.in_progress()
+    or git.sequencer.pick_or_revert_in_progress()
+end
+
+function Repo:current_state(id)
+  if not self.tmp_state[id] then
+    self.tmp_state[id] = vim.deepcopy(self.state)
   end
+  return self.tmp_state[id]
+end
 
-  if self.running then
-    logger.debug("[REPO] Already running - abort")
-    return
-  end
-  self.running = true
+function Repo:set_state(id)
+  self.state = self:current_state(id)
+end
 
+function Repo:refresh(opts)
   if self.git_root == "" then
     logger.debug("[REPO] No git root found - skipping refresh")
     return
   end
 
-  local filter = ItemFilter.create { "*:*" }
+  opts = opts or {}
+
+  local start = timestamp()
+
+  if opts.callback then
+    self:register_callback(opts.source, opts.callback)
+  end
+
+  if vim.tbl_keys(self.running)[1] then
+    for k, v in pairs(self.running) do
+      if v then
+        logger.debug("[REPO] (" .. start .. ") Already running - setting interrupt for " .. k)
+        self.interrupt[k] = true
+      end
+    end
+  end
+
+  self.running[start] = true
+
+  local filter
   if opts.partial and opts.partial.update_diffs then
     filter = ItemFilter.create(opts.partial.update_diffs)
+  else
+    filter = DEFAULT_FILTER
   end
 
   local on_complete = a.void(function()
-    vim.uv.update_time()
-    logger.debug("[REPO]: Refreshes complete in " .. vim.uv.now() - start .. " ms")
-    self:run_callbacks()
-    self.running = false
+    self.running[start] = false
+    if self.interrupt[start] then
+      logger.debug("[REPO]: (" .. start .. ") Interruping on_complete callback")
+      return
+    end
 
-    if
-      git.rebase.in_progress()
-      or git.merge.in_progress()
-      or git.bisect.in_progress()
-      or git.sequencer.pick_or_revert_in_progress()
-    then
+    logger.debug("[REPO]: (" .. start .. ") Refreshes complete in " .. timestamp() - start .. " ms")
+    self:set_state(start)
+    self:run_callbacks(start)
+
+    if action_in_progress() then
       Watcher.instance(self.git_root):start()
     else
       Watcher.instance(self.git_root):stop()
     end
   end)
 
-  a.util.run_all(self:tasks(filter), on_complete)
+  a.util.run_all(self:tasks(filter, self:current_state(start)), on_complete)
 end
 
-Repo.dispatch_refresh = a.void(util.throttle_by_id(function(self, opts)
+Repo.dispatch_refresh = a.void(function(self, opts)
   self:refresh(opts)
-end, true))
+end)
 
 return Repo
