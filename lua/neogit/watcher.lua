@@ -58,10 +58,14 @@ end
 
 ---@return Watcher
 function Watcher:unregister(buffer)
+  if not self.buffers[buffer:id()] then
+    return self
+  end
+  self.buffers[buffer:id()] = nil
+
   logger.debug("[WATCHER] Unregistered buffer " .. buffer:id())
 
-  self.buffers[buffer:id()] = nil
-  if vim.tbl_isempty(self.buffers) then
+  if vim.tbl_isempty(self.buffers) and self.running then
     logger.debug("[WATCHER] No registered buffers - stopping")
     self:stop()
   end
