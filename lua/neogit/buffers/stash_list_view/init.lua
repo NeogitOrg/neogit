@@ -186,6 +186,13 @@ function M:open()
             CommitViewBuffer.new(commit):open()
           end
         end,
+        [status_maps["PeekFile"]] = function()
+          local commit = self.buffer.ui:get_commit_under_cursor()
+          if commit then
+            CommitViewBuffer.new(commit):open()
+            self.buffer:focus()
+          end
+        end,
         [status_maps["OpenOrScrollDown"]] = function()
           local commit = self.buffer.ui:get_commit_under_cursor()
           if commit then
@@ -196,6 +203,28 @@ function M:open()
           local commit = self.buffer.ui:get_commit_under_cursor()
           if commit then
             CommitViewBuffer.open_or_scroll_up(commit)
+          end
+        end,
+        [status_maps["PeekUp"]] = function()
+          vim.cmd("normal! k")
+          local commit = self.buffer.ui:get_commit_under_cursor()
+          if commit then
+            if CommitViewBuffer.is_open() then
+              CommitViewBuffer.instance:update(commit)
+            else
+              CommitViewBuffer.new(commit):open()
+            end
+          end
+        end,
+        [status_maps["PeekDown"]] = function()
+          vim.cmd("normal! j")
+          local commit = self.buffer.ui:get_commit_under_cursor()
+          if commit then
+            if CommitViewBuffer.is_open() then
+              CommitViewBuffer.instance:update(commit)
+            else
+              CommitViewBuffer.new(commit):open()
+            end
           end
         end,
       },

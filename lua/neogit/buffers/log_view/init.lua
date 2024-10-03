@@ -181,6 +181,13 @@ function M:open()
             CommitViewBuffer.new(commit, self.files):open()
           end
         end,
+        [status_maps["PeekFile"]] = function()
+          local commit = self.buffer.ui:get_commit_under_cursor()
+          if commit then
+            CommitViewBuffer.new(commit, self.files):open()
+            self.buffer:focus()
+          end
+        end,
         [status_maps["OpenOrScrollDown"]] = function()
           local commit = self.buffer.ui:get_commit_under_cursor()
           if commit then
@@ -193,7 +200,8 @@ function M:open()
             CommitViewBuffer.open_or_scroll_up(commit, self.files)
           end
         end,
-        ["<c-k>"] = function()
+        [status_maps["PeekUp"]] = function()
+          -- Open prev fold
           pcall(vim.cmd, "normal! zc")
 
           vim.cmd("normal! k")
@@ -205,10 +213,17 @@ function M:open()
             vim.cmd("normal! k")
           end
 
-          pcall(vim.cmd, "normal! zo")
-          vim.cmd("normal! zz")
+          if CommitViewBuffer.is_open() then
+            local commit = self.buffer.ui:get_commit_under_cursor()
+            if commit then
+              CommitViewBuffer.instance:update(commit, self.files)
+            end
+          else
+            pcall(vim.cmd, "normal! zo")
+            vim.cmd("normal! zz")
+          end
         end,
-        ["<c-j>"] = function()
+        [status_maps["PeekDown"]] = function()
           pcall(vim.cmd, "normal! zc")
 
           vim.cmd("normal! j")
@@ -220,8 +235,15 @@ function M:open()
             vim.cmd("normal! j")
           end
 
-          pcall(vim.cmd, "normal! zo")
-          vim.cmd("normal! zz")
+          if CommitViewBuffer.is_open() then
+            local commit = self.buffer.ui:get_commit_under_cursor()
+            if commit then
+              CommitViewBuffer.instance:update(commit, self.files)
+            end
+          else
+            pcall(vim.cmd, "normal! zo")
+            vim.cmd("normal! zz")
+          end
         end,
         ["+"] = a.void(function()
           local permit = self.refresh_lock:acquire()

@@ -348,6 +348,7 @@ The following mappings can all be customized via the setup function.
         ["Y"]     = "YankSelected",
         ["<c-r>"] = "RefreshBuffer",
         ["<cr>"]  = "GoToFile",
+        ["<s-cr>"]  = "PeekFile",
         ["<c-v>"] = "VSplitOpen",
         ["<c-x>"] = "SplitOpen",
         ["<c-t>"] = "TabOpen",
@@ -355,6 +356,8 @@ The following mappings can all be customized via the setup function.
         ["}"]     = "GoToNextHunkHeader",
         ["[c"]    = "OpenOrScrollUp",
         ["]c"]    = "OpenOrScrollDown",
+        ["<c-k>"] = "PeekUp",
+        ["<c-j>"] = "PeekDown",
       }
 <
 ==============================================================================

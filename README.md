@@ -359,7 +359,8 @@ neogit.setup {
       ["$"] = "CommandHistory",
       ["Y"] = "YankSelected",
       ["<c-r>"] = "RefreshBuffer",
-      ["<enter>"] = "GoToFile",
+      ["<cr>"] = "GoToFile",
+      ["<s-cr>"] = "PeekFile",
       ["<c-v>"] = "VSplitOpen",
       ["<c-x>"] = "SplitOpen",
       ["<c-t>"] = "TabOpen",
@@ -367,6 +368,8 @@ neogit.setup {
       ["}"] = "GoToNextHunkHeader",
       ["[c"] = "OpenOrScrollUp",
       ["]c"] = "OpenOrScrollDown",
+      ["<c-k>"] = "PeekUp",
+      ["<c-j>"] = "PeekDown",
     },
   },
 }

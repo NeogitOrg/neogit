@@ -33,7 +33,7 @@ local api = vim.api
 --- @field commit_signature table|nil
 --- @field commit_overview CommitOverview
 --- @field buffer Buffer
---- @field open fun(self, kind: string)
+--- @field open fun(self, kind?: string)
 --- @field close fun()
 --- @see CommitInfo
 --- @see Buffer
@@ -110,6 +110,29 @@ end
 ---@return boolean
 function M.is_open()
   return (M.instance and M.instance.buffer and M.instance.buffer:is_visible()) == true
+end
+
+---Updates an already open buffer to show a new commit
+---@param commit_id string commit
+---@param filter string[]? Filter diffs to filepaths in table
+function M:update(commit_id, filter)
+  assert(commit_id, "commit id cannot be nil")
+
+  local commit_info =
+    git.log.parse(git.cli.show.format("fuller").args(commit_id).call({ trim = false }).stdout)[1]
+  local commit_overview =
+    parser.parse_commit_overview(git.cli.show.stat.oneline.args(commit_id).call().stdout)
+
+  commit_info.commit_arg = commit_id
+
+  self.item_filter = filter
+  self.commit_info = commit_info
+  self.commit_overview = commit_overview
+  self.commit_signature = config.values.commit_view.verify_commit and git.log.verify_commit(commit_id) or {}
+
+  self.buffer.ui:render(
+    unpack(ui.CommitView(self.commit_info, self.commit_overview, self.commit_signature, self.item_filter))
+  )
 end
 
 ---Opens the CommitViewBuffer
