@@ -100,7 +100,10 @@ function M:open(kind)
     foldmarkers = not config.values.disable_signs,
     on_detach = function()
       Watcher.instance(self.root):unregister(self)
-      vim.o.autochdir = self.prev_autochdir
+
+      if self.prev_autochdir then
+        vim.o.autochdir = self.prev_autochdir
+      end
     end,
     --stylua: ignore start
     mappings = {
@@ -178,7 +181,7 @@ function M:open(kind)
         [popups.mapping_for("StashPopup")]      = self:_action("n_stash_popup"),
         [popups.mapping_for("TagPopup")]        = self:_action("n_tag_popup"),
         [popups.mapping_for("WorktreePopup")]   = self:_action("n_worktree_popup"),
-        ["V"] = function()
+        ["V"]                                   = function()
           vim.cmd("norm! V")
         end,
       },
@@ -240,11 +243,6 @@ function M:close()
     logger.debug("[STATUS] Closing Buffer")
     self.buffer:close()
     self.buffer = nil
-  end
-
-  Watcher.instance(self.root):unregister(self)
-  if self.prev_autochdir then
-    vim.o.autochdir = self.prev_autochdir
   end
 end
 
