@@ -178,6 +178,9 @@ function M:open(kind)
         [popups.mapping_for("StashPopup")]      = self:_action("n_stash_popup"),
         [popups.mapping_for("TagPopup")]        = self:_action("n_tag_popup"),
         [popups.mapping_for("WorktreePopup")]   = self:_action("n_worktree_popup"),
+        ["V"] = function()
+          vim.cmd("norm! V")
+        end,
       },
     },
     --stylua: ignore end
