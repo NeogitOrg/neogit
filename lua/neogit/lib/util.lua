@@ -607,4 +607,12 @@ function M.safe_win_close(winid, force)
   end
 end
 
+function M.weak_table()
+  local a = {}
+  local b = {}
+  setmetatable(a, b)
+  b.__mode = "k"
+  return a
+end
+
 return M
