@@ -185,7 +185,7 @@ function Repo.instance(dir)
     lastDir = dir
   end
 
-  assert(lastDir)
+  assert(lastDir, "No last dir")
   local cwd = vim.fs.normalize(lastDir)
   if not instances[cwd] then
     logger.debug("[REPO]: Registered Repository for: " .. cwd)
@@ -318,7 +318,7 @@ function Repo:refresh(opts)
   local on_complete = a.void(function()
     self.running[start] = false
     if self.interrupt[start] then
-      logger.debug("[REPO]: (" .. start .. ") Interruping on_complete callback")
+      logger.debug("[REPO]: (" .. start .. ") Interrupting on_complete callback")
       return
     end
 

@@ -559,7 +559,7 @@ end
 --- @return F throttled function.
 function M.throttle_by_id(fn, schedule)
   local scheduled = {} --- @type table<any,boolean>
-  local running = {}   --- @type table<any,boolean>
+  local running = {} --- @type table<any,boolean>
 
   return function(id, ...)
     if scheduled[id] then

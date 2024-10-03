@@ -78,7 +78,7 @@ ProcessResult.__index = ProcessResult
 ---@return Process
 function Process.new(process)
   process.buffer = require("neogit.buffers.process"):new(process)
-  assert(process.buffer)
+  assert(process.buffer, "Process buffer not found")
 
   return setmetatable(process, Process)
 end

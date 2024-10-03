@@ -23,7 +23,6 @@ local function fetch_remote_branch(target)
   end
 end
 
-
 local function checkout_branch(target, args)
   git.branch.checkout(target, args)
   fire_branch_event("NeogitBranchCheckout", { branch_name = target })
@@ -33,11 +32,12 @@ local function checkout_branch(target, args)
       local pushRemote = git.branch.pushRemote_ref(target)
       local upstream = git.branch.upstream(target)
 
-      if upstream and upstream == pushRemote then
+      if upstream then
         fetch_remote_branch(upstream)
-      else
-        if upstream then fetch_remote_branch(upstream) end
-        if pushRemote then fetch_remote_branch(pushRemote) end
+      end
+
+      if pushRemote and pushRemote ~= upstream then
+        fetch_remote_branch(pushRemote)
       end
     end)()
   end

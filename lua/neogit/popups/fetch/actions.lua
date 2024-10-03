@@ -20,14 +20,11 @@ local function fetch_from(name, remote, branch, args)
     a.util.scheduler()
     notification.info("Fetched from " .. name, { dismiss = true })
     logger.debug("Fetched from " .. name)
-    vim.api.nvim_exec_autocmds(
-      "User",
-      {
-        pattern = "NeogitFetchComplete",
-        modeline = false,
-        data = { remote = remote, branch = branch }
-      }
-    )
+    vim.api.nvim_exec_autocmds("User", {
+      pattern = "NeogitFetchComplete",
+      modeline = false,
+      data = { remote = remote, branch = branch },
+    })
   else
     logger.error("Failed to fetch from " .. name)
   end
