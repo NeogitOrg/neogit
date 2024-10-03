@@ -10,6 +10,8 @@ local input = require("neogit.lib.input")
 ---@field options table
 ---@field aliases table
 ---@field short_opts table
+---@field args fun(...): table
+---@field arg_list fun(table): table
 
 ---@class NeogitGitCLI
 ---@field show GitCommand

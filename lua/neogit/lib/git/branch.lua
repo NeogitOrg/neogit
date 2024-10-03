@@ -53,28 +53,9 @@ function M.get_recent_local_branches()
   return util.deduplicate(branches)
 end
 
+---@return ProcessResult
 function M.checkout(name, args)
-  git.cli.checkout.branch(name).arg_list(args or {}).call { await = true }
-
-  if config.values.fetch_after_checkout then
-    local pushRemote = M.pushRemote_ref(name)
-    local upstream = M.upstream(name)
-
-    if upstream and upstream == pushRemote then
-      local remote, branch = M.parse_remote_branch(upstream)
-      git.fetch.fetch(remote, branch)
-    else
-      if upstream then
-        local remote, branch = M.parse_remote_branch(upstream)
-        git.fetch.fetch(remote, branch)
-      end
-
-      if pushRemote then
-        local remote, branch = M.parse_remote_branch(pushRemote)
-        git.fetch.fetch(remote, branch)
-      end
-    end
-  end
+  return git.cli.checkout.branch(name).arg_list(args or {}).call { await = true }
 end
 
 function M.track(name, args)

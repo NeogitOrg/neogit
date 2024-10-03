@@ -5,12 +5,42 @@ local config = require("neogit.config")
 local input = require("neogit.lib.input")
 local util = require("neogit.lib.util")
 local notification = require("neogit.lib.notification")
+local a = require("plenary.async")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 local BranchConfigPopup = require("neogit.popups.branch_config")
 
 local function fire_branch_event(pattern, data)
   vim.api.nvim_exec_autocmds("User", { pattern = pattern, modeline = false, data = data })
+end
+
+local function fetch_remote_branch(target)
+  local remote, branch = git.branch.parse_remote_branch(target)
+  if remote then
+    notification.info("Fetching from " .. remote .. "/" .. branch)
+    git.fetch.fetch(remote, branch)
+    fire_branch_event("NeogitFetchComplete", { branch = branch, remote = remote })
+  end
+end
+
+
+local function checkout_branch(target, args)
+  git.branch.checkout(target, args)
+  fire_branch_event("NeogitBranchCheckout", { branch_name = target })
+
+  if config.values.fetch_after_checkout then
+    a.void(function()
+      local pushRemote = git.branch.pushRemote_ref(target)
+      local upstream = git.branch.upstream(target)
+
+      if upstream and upstream == pushRemote then
+        fetch_remote_branch(upstream)
+      else
+        if upstream then fetch_remote_branch(upstream) end
+        if pushRemote then fetch_remote_branch(pushRemote) end
+      end
+    end)()
+  end
 end
 
 local function spin_off_branch(checkout)
@@ -82,8 +112,7 @@ local function create_branch(popup, prompt, checkout, name)
   fire_branch_event("NeogitBranchCreate", { branch_name = name, base = base_branch })
 
   if checkout then
-    git.branch.checkout(name, popup:get_arguments())
-    fire_branch_event("NeogitBranchCheckout", { branch_name = name })
+    checkout_branch(name, popup:get_arguments())
   end
 end
 
@@ -110,8 +139,7 @@ function M.checkout_branch_revision(popup)
     return
   end
 
-  git.branch.checkout(selected_branch, popup:get_arguments())
-  fire_branch_event("NeogitBranchCheckout", { branch_name = selected_branch })
+  checkout_branch(selected_branch, popup:get_arguments())
 end
 
 function M.checkout_local_branch(popup)
@@ -138,8 +166,7 @@ function M.checkout_local_branch(popup)
       target, _ = target:gsub("%s", "-")
       create_branch(popup, "Create " .. target .. " starting at", true, target)
     else
-      git.branch.checkout(target, popup:get_arguments())
-      fire_branch_event("NeogitBranchCheckout", { branch_name = target })
+      checkout_branch(target, popup:get_arguments())
     end
   end
 end
@@ -150,8 +177,7 @@ function M.checkout_recent_branch(popup)
     return
   end
 
-  git.branch.checkout(selected_branch, popup:get_arguments())
-  fire_branch_event("NeogitBranchCheckout", { branch_name = selected_branch })
+  checkout_branch(selected_branch, popup:get_arguments())
 end
 
 function M.checkout_create_branch(popup)

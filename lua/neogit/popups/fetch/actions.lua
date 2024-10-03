@@ -13,18 +13,21 @@ local function select_remote()
 end
 
 local function fetch_from(name, remote, branch, args)
-  local message = notification.info("Fetching from " .. name)
+  notification.info("Fetching from " .. name)
   local res = git.fetch.fetch_interactive(remote, branch, args)
-
-  if message then
-    message:delete()
-  end
 
   if res and res.code == 0 then
     a.util.scheduler()
     notification.info("Fetched from " .. name, { dismiss = true })
     logger.debug("Fetched from " .. name)
-    vim.api.nvim_exec_autocmds("User", { pattern = "NeogitFetchComplete", modeline = false })
+    vim.api.nvim_exec_autocmds(
+      "User",
+      {
+        pattern = "NeogitFetchComplete",
+        modeline = false,
+        data = { remote = remote, branch = branch }
+      }
+    )
   else
     logger.error("Failed to fetch from " .. name)
   end

@@ -12,8 +12,11 @@ function M.fetch_interactive(remote, branch, args)
   return git.cli.fetch.args(remote or "", branch or "").arg_list(args).call { pty = true }
 end
 
+---@param remote string
+---@param branch string
+---@return ProcessResult
 function M.fetch(remote, branch)
-  git.cli.fetch.args(remote, branch).call { ignore_error = true }
+  return git.cli.fetch.args(remote, branch).call { ignore_error = true }
 end
 
 return M
