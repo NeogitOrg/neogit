@@ -55,6 +55,8 @@ GEM
     parser (3.3.4.2)
       ast (~> 2.4.1)
       racc
+    pastel (0.8.0)
+      tty-color (~> 0.5)
     patience_diff (1.2.0)
       optimist (~> 3.0)
     process_executer (1.1.0)
@@ -114,6 +116,7 @@ GEM
       patience_diff
     tmpdir (0.2.0)
       fileutils
+    tty-color (0.6.0)
     tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)
     unicode-display_width (2.5.0)
@@ -132,6 +135,7 @@ DEPENDENCIES
   fuubar
   git
   neovim
+  pastel
   quickfix_formatter
   rspec
   rubocop

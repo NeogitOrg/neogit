@@ -1,13 +1,16 @@
 # frozen_string_literal: true
 
+require "pastel"
+
 class NeovimClient # rubocop:disable Metrics/ClassLength
   def initialize(mode)
-    @mode = mode
-    @pid = nil
+    @mode     = mode
+    @pid      = nil
     @instance = nil
     @cleared  = false
     @lines    = nil
     @columns  = nil
+    @pastel   = Pastel.new
   end
 
   def setup(neogit_config) # rubocop:disable Metrics/MethodLength
@@ -64,14 +67,28 @@ class NeovimClient # rubocop:disable Metrics/ClassLength
     screen
   end
 
-  def print_screen
+  # TODO: When the cursor is in a floating window the screenrow value returned is incorrect
+  def print_screen # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
+    cursor_line = fn("screenrow", []) - 1
+    cursor_col  = fn("screencol", []) - 1
+
     unless @cleared
       puts `clear`
       @cleared = true
     end
 
     puts "\e[H" # Sets cursor back to 0,0
-    puts screen.join("\n")
+    screen.each_with_index do |line, i|
+      puts(
+        if i == cursor_line
+          line[...cursor_col] +
+          @pastel.black.on_yellow(line[cursor_col]) +
+          line[(cursor_col + 1..)]
+        else
+          line
+        end
+      )
+    end
   end
 
   def lua(code)
