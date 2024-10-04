@@ -99,10 +99,20 @@ local function create_branch(popup, prompt, checkout, name)
     return
   end
 
+  -- If the base branch is a remote, prepopulate the branch name
+  local suggested_branch_name
+  for _, remote in ipairs(git.remote.list()) do
+    local pattern = ("^%s/(.*)"):format(remote)
+    if base_branch:match(pattern) then
+      suggested_branch_name = base_branch:match(pattern)
+      break
+    end
+  end
+
   local name = name
     or input.get_user_input("Create branch", {
       strip_spaces = true,
-      default = popup.state.env.suggested_branch_name,
+      default = popup.state.env.suggested_branch_name or suggested_branch_name,
     })
   if not name then
     return
