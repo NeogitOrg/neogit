@@ -209,7 +209,7 @@ function Buffer:close(force)
   if self.kind == "tab" then
     local ok, _ = pcall(vim.cmd, "tabclose")
     if not ok then
-      vim.cmd("tabnew")
+      vim.cmd("tab sb " .. self.handle)
       vim.cmd("tabclose #")
     end
 
@@ -279,8 +279,7 @@ function Buffer:show()
     api.nvim_set_current_buf(self.handle)
     win = api.nvim_get_current_win()
   elseif kind == "tab" then
-    vim.cmd("$tabnew")
-    api.nvim_set_current_buf(self.handle)
+    vim.cmd("tab sb " .. self.handle)
     win = api.nvim_get_current_win()
   elseif kind == "split" or kind == "split_below" then
     win = api.nvim_open_win(self.handle, true, { split = "below" })
