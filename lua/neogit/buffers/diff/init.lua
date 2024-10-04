@@ -113,6 +113,7 @@ function M:open()
     end,
     after = function()
       vim.cmd("normal! zR")
+      vim.wo.colorcolumn = ""
     end,
   }
 
