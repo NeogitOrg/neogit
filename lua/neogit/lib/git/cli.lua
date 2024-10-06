@@ -902,6 +902,7 @@ local function new_builder(subcommand)
     files = {},
     input = nil,
     in_pty = false,
+    suppress_console = false,
     env = {},
   }
 
@@ -951,13 +952,15 @@ local function new_builder(subcommand)
     logger.trace(string.format("[CLI]: Executing '%s': '%s'", subcommand, table.concat(cmd, " ")))
 
     return process.new {
-      input = state.input,
       cmd = cmd,
       cwd = git.repo.git_root,
       env = state.env,
-      pty = state.in_pty,
+      input = state.input,
+      long = opts.long,
       on_error = opts.on_error,
+      pty = state.in_pty,
       git_hook = git.hooks.present(subcommand) and not vim.tbl_contains(cmd, "--no-verify"),
+      suppress_console = not not opts.hidden,
     }
   end
 
