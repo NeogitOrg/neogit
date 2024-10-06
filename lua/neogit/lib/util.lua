@@ -559,7 +559,7 @@ end
 --- @return F throttled function.
 function M.throttle_by_id(fn, schedule)
   local scheduled = {} --- @type table<any,boolean>
-  local running = {} --- @type table<any,boolean>
+  local running = {}   --- @type table<any,boolean>
 
   return function(id, ...)
     if scheduled[id] then
@@ -603,16 +603,12 @@ function M.safe_win_close(winid, force)
   local ok, _ = pcall(vim.api.nvim_win_close, winid, force)
 
   if not ok then
-    vim.cmd("b#")
+    local ok, _ = pcall(vim.cmd, "b#")
   end
 end
 
-function M.weak_table()
-  local a = {}
-  local b = {}
-  setmetatable(a, b)
-  b.__mode = "k"
-  return a
+function M.weak_table(mode)
+  return setmetatable({}, { __mode = mode or "k" })
 end
 
 return M

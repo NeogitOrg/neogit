@@ -18,13 +18,13 @@ local modules = {
   "merge",
   "bisect",
   "tag",
+  "hooks",
 }
 
 ---@class NeogitRepoState
 ---@field git_path       fun(self, ...):Path
 ---@field refresh        fun(self, table)
 ---@field git_root       string
----@field refresh_lock   Semaphore
 ---@field head           NeogitRepoHead
 ---@field upstream       NeogitRepoRemote
 ---@field pushRemote     NeogitRepoRemote
@@ -37,6 +37,7 @@ local modules = {
 ---@field rebase         NeogitRepoRebase
 ---@field merge          NeogitRepoMerge
 ---@field bisect         NeogitRepoBisect
+---@field hooks          string[]
 ---
 ---@class NeogitRepoHead
 ---@field branch         string|nil
@@ -206,10 +207,10 @@ function Repo.new(dir)
     lib = {},
     state = empty_state(),
     git_root = git.cli.git_root(dir),
+    refresh_callbacks = {},
     running = util.weak_table(),
-    refresh_callbacks = util.weak_table(),
     interrupt = util.weak_table(),
-    tmp_state = util.weak_table(),
+    tmp_state = util.weak_table("v"),
   }
 
   instance.state.git_root = instance.git_root
