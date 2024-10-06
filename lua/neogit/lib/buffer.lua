@@ -316,6 +316,22 @@ function Buffer:show()
 
     api.nvim_win_set_cursor(content_window, { 1, 0 })
     win = content_window
+  elseif kind == "floating_console" then
+    local content_window = api.nvim_open_win(self.handle, true, {
+      anchor = "SW",
+      relative = "editor",
+      width = vim.o.columns,
+      height = math.floor(vim.o.lines * 0.3),
+      col = 0,
+      row = vim.o.lines - 2,
+      style = "minimal",
+      focusable = false,
+      border = { "─", "─", "─", "", "", "", "", "" },
+      title = " Git Console "
+    })
+
+    api.nvim_win_set_cursor(content_window, { 1, 0 })
+    win = content_window
   end
 
   api.nvim_win_call(win, function()

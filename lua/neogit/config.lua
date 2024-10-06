@@ -403,7 +403,7 @@ function M.get_default_values()
       kind = "auto",
     },
     preview_buffer = {
-      kind = "floating",
+      kind = "floating_console",
     },
     popup = {
       kind = "split",
@@ -652,6 +652,7 @@ function M.validate_config()
         "vsplit_left",
         "tab",
         "floating",
+        "floating_console",
         "replace",
         "auto",
       }, val)
