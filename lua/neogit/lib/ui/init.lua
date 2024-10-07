@@ -384,6 +384,7 @@ end
 ---@field file {index: number, name: string}|nil
 ---@field hunk {index: number, name: string, index_from: number}|nil
 ---@field section_offset number|nil
+---@field hunk_offset number|nil
 
 ---Encode the cursor location into a table
 ---@param line number?
@@ -413,11 +414,13 @@ function Ui:get_cursor_location(line)
 
             for hi, hunk in ipairs(file.diff.hunks) do
               if line >= hunk.first and line <= hunk.last then
-                hunk_loc = { index = hi, name = hunk.hash }
+                hunk_loc = { index = hi, name = hunk.hash, index_from = hunk.index_from }
                 first, last = hunk.first, hunk.last
 
                 if line > hunk.first then
                   hunk_offset = line - hunk.first
+                end
+
                 break
               end
             end
@@ -497,11 +500,15 @@ function Ui:resolve_cursor_location(cursor)
 
   local hunk = Collection.new(file.diff.hunks):find(function(h)
     return h.hash == cursor.hunk.name
-  end) or file.diff.hunks[cursor.hunk.index] or file.diff.hunks[#file.diff.hunks]
+  end) or file.diff.hunks[math.min(cursor.hunk.index, #file.diff.hunks)]
 
-  logger.debug(("[UI] Using hunk.first %q"):format(cursor.hunk.name))
-
-  return hunk.first
+  if cursor.hunk.index_from == hunk.index_from then
+    logger.debug(("[UI] Using hunk.first with offset %q"):format(cursor.hunk.name))
+    return hunk.first + cursor.hunk_offset - (cursor.last - hunk.last)
+  else
+    logger.debug(("[UI] Using hunk.first %q"):format(cursor.hunk.name))
+    return hunk.first
+  end
 end
 
 ---@return table|nil
