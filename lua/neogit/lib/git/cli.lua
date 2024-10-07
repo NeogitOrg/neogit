@@ -959,8 +959,8 @@ local function new_builder(subcommand)
       long = opts.long,
       on_error = opts.on_error,
       pty = state.in_pty,
-      git_hook = git.hooks.present(subcommand) and not vim.tbl_contains(cmd, "--no-verify"),
       suppress_console = not not opts.hidden,
+      git_hook = git.hooks.exists(subcommand) and not vim.tbl_contains(cmd, "--no-verify"),
     }
   end
 

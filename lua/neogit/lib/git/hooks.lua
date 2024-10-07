@@ -4,11 +4,29 @@ local git = require("neogit.lib.git")
 local M = {} ---@class NeogitGitHooks
 
 local hooks = {
-  commit = { "pre-commit", "pre-merge-commit", "prepare-commit-msg", "commit-msg", "post-commit", "post-rewrite" },
-  merge = { "pre-merge-commit", "commit-msg", "post-merge" },
-  rebase = { "pre-rebase", "post-rewrite" },
-  checkout = { "post-checkout" },
-  push = { "pre-push" }
+  commit = {
+    "pre-commit",
+    "pre-merge-commit",
+    "prepare-commit-msg",
+    "commit-msg",
+    "post-commit",
+    "post-rewrite"
+  },
+  merge = {
+    "pre-merge-commit",
+    "commit-msg",
+    "post-merge"
+  },
+  rebase = {
+    "pre-rebase",
+    "post-rewrite"
+  },
+  checkout = {
+    "post-checkout"
+  },
+  push = {
+    "pre-push"
+  }
 }
 
 local function is_executable(mode)
@@ -46,7 +64,7 @@ function M.register(meta)
   end
 end
 
-function M.present(cmd)
+function M.exists(cmd)
   if hooks[cmd] then
     for _, hook in ipairs(hooks[cmd]) do
       if vim.tbl_contains(git.repo.state.hooks, hook) then
