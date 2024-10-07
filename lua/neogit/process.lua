@@ -25,6 +25,7 @@ end
 ---@field on_error (fun(res: ProcessResult): boolean) Intercept the error externally, returning false prevents the error from being logged
 ---@field pty boolean|nil
 ---@field suppress_console boolean
+---@field git_hook boolean
 
 ---@class Process
 ---@field cmd string[]
@@ -36,7 +37,7 @@ end
 ---@field pty boolean|nil
 ---@field buffer ProcessBuffer
 ---@field input string|nil
----@field git_hook boolean|nil
+---@field git_hook boolean
 ---@field suppress_console boolean
 ---@field on_partial_line fun(process: Process, data: string)|nil callback on complete lines
 ---@field on_error (fun(res: ProcessResult): boolean) Intercept the error externally, returning false prevents the error from being logged
@@ -99,11 +100,6 @@ function Process.hide_preview_buffers()
 end
 
 function Process:start_timer()
-  if self.git_hook then
-    self.buffer:show()
-    return
-  end
-
   if self.suppress_console then
     return
   end
@@ -112,8 +108,9 @@ function Process:start_timer()
     local timer = vim.loop.new_timer()
     self.timer = timer
 
+    local timeout = assert(self.git_hook and 100 or config.values.console_timeout)
     timer:start(
-      config.values.console_timeout,
+      timeout,
       0,
       vim.schedule_wrap(function()
         if not self.timer then
