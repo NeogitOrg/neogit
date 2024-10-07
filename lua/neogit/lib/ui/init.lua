@@ -652,54 +652,56 @@ function Ui:update()
   self.node_index = renderer:node_index()
   self.item_index = renderer:item_index()
 
-  -- Store the cursor and top line positions to be restored later
-  local cursor_line = self.buf:cursor_line()
-  local scrolloff = vim.api.nvim_get_option_value("scrolloff", { win = 0 })
-  local top_line = vim.fn.line("w0")
+  self.buf:win_call(function()
+    -- Store the cursor and top line positions to be restored later
+    local cursor_line = self.buf:cursor_line()
+    local scrolloff = vim.api.nvim_get_option_value("scrolloff", { win = 0 })
+    local top_line = vim.fn.line("w0")
 
-  -- We must traverse `scrolloff` lines from `top_line`, skipping over any closed folds
-  local top_line_nofold = top_line
-  for _ = 1, scrolloff do
-    top_line_nofold = top_line_nofold + 1
-    -- If the line is within a closed fold, skip to the end of the fold
-    if vim.fn.foldclosed(top_line_nofold) ~= -1 then
-      top_line_nofold = vim.fn.foldclosedend(top_line_nofold)
+    -- We must traverse `scrolloff` lines from `top_line`, skipping over any closed folds
+    local top_line_nofold = top_line
+    for _ = 1, scrolloff do
+      top_line_nofold = top_line_nofold + 1
+      -- If the line is within a closed fold, skip to the end of the fold
+      if vim.fn.foldclosed(top_line_nofold) ~= -1 then
+        top_line_nofold = vim.fn.foldclosedend(top_line_nofold)
+      end
     end
-  end
 
-  self.buf:unlock()
-  self.buf:clear()
-  self.buf:clear_namespace("default")
-  self.buf:clear_namespace("ViewContext")
-  self.buf:resize(#renderer.buffer.line)
-  self.buf:set_lines(0, -1, false, renderer.buffer.line)
-  self.buf:set_highlights(renderer.buffer.highlight)
-  self.buf:set_extmarks(renderer.buffer.extmark)
-  self.buf:set_line_highlights(renderer.buffer.line_highlight)
-  self.buf:set_folds(renderer.buffer.fold)
+    self.buf:unlock()
+    self.buf:clear()
+    self.buf:clear_namespace("default")
+    self.buf:clear_namespace("ViewContext")
+    self.buf:resize(#renderer.buffer.line)
+    self.buf:set_lines(0, -1, false, renderer.buffer.line)
+    self.buf:set_highlights(renderer.buffer.highlight)
+    self.buf:set_extmarks(renderer.buffer.extmark)
+    self.buf:set_line_highlights(renderer.buffer.line_highlight)
+    self.buf:set_folds(renderer.buffer.fold)
 
-  self.statuscolumn = {}
-  self.statuscolumn.foldmarkers = {}
+    self.statuscolumn = {}
+    self.statuscolumn.foldmarkers = {}
 
-  for i = 1, #renderer.buffer.line do
-    self.statuscolumn.foldmarkers[i] = false
-  end
+    for i = 1, #renderer.buffer.line do
+      self.statuscolumn.foldmarkers[i] = false
+    end
 
-  for _, fold in ipairs(renderer.buffer.fold) do
-    self.statuscolumn.foldmarkers[fold[1]] = fold[4]
-  end
+    for _, fold in ipairs(renderer.buffer.fold) do
+      self.statuscolumn.foldmarkers[fold[1]] = fold[4]
+    end
 
-  -- Run on_open callbacks for hunks once buffer is rendered
-  if self._node_fold_state then
-    self:_update_on_open(self.layout, self._node_fold_state)
-    self._node_fold_state = nil
-  end
+    -- Run on_open callbacks for hunks once buffer is rendered
+    if self._node_fold_state then
+      self:_update_on_open(self.layout, self._node_fold_state)
+      self._node_fold_state = nil
+    end
 
-  self.buf:lock()
+    self.buf:lock()
 
-  -- First restore the top line, then restore the cursor after
-  self.buf:move_top_line(math.min(top_line_nofold, #renderer.buffer.line))
-  self.buf:move_cursor(math.min(cursor_line, #renderer.buffer.line))
+    -- First restore the top line, then restore the cursor after
+    self.buf:move_top_line(math.min(top_line_nofold, #renderer.buffer.line))
+    self.buf:move_cursor(math.min(cursor_line, #renderer.buffer.line))
+  end)
 end
 
 Ui.col = Component.new(function(children, options)

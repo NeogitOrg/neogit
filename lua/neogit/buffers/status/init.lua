@@ -298,11 +298,6 @@ function M:redraw(cursor, view)
   logger.debug("[STATUS] Rendering UI")
   self.buffer.ui:render(unpack(ui.Status(git.repo.state, self.config)))
 
-  if not self.buffer:is_focused() then
-    logger.debug("[STATUS] Buffer is not focused - not restoring state")
-    return
-  end
-
   if self.fold_state then
     logger.debug("[STATUS] Restoring fold state")
     self.buffer.ui:set_fold_state(self.fold_state)

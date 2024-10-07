@@ -487,6 +487,13 @@ function Buffer:call(f, ...)
   end)
 end
 
+function Buffer:win_call(f, ...)
+  local args = { ... }
+  api.nvim_win_call(self.win_handle, function()
+    f(unpack(args))
+  end)
+end
+
 function Buffer:chan_send(data)
   api.nvim_chan_send(api.nvim_open_term(self.handle, {}), data)
 end
