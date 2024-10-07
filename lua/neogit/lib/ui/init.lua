@@ -382,15 +382,15 @@ end
 ---@field last number
 ---@field section {index: number, name: string}|nil
 ---@field file {index: number, name: string}|nil
----@field hunk {index: number, name: string}|nil
----@field section_offset number
+---@field hunk {index: number, name: string, index_from: number}|nil
+---@field section_offset number|nil
 
 ---Encode the cursor location into a table
 ---@param line number?
 ---@return CursorLocation
 function Ui:get_cursor_location(line)
   line = line or vim.api.nvim_win_get_cursor(0)[1]
-  local section_loc, section_offset, file_loc, hunk_loc, first, last
+  local section_loc, section_offset, file_loc, hunk_loc, first, last, hunk_offset
 
   for li, loc in ipairs(self.item_index) do
     if line == loc.first then
@@ -416,6 +416,8 @@ function Ui:get_cursor_location(line)
                 hunk_loc = { index = hi, name = hunk.hash }
                 first, last = hunk.first, hunk.last
 
+                if line > hunk.first then
+                  hunk_offset = line - hunk.first
                 break
               end
             end
@@ -438,6 +440,7 @@ function Ui:get_cursor_location(line)
     first = first,
     last = last,
     section_offset = section_offset,
+    hunk_offset = hunk_offset,
   }
 end
 
@@ -463,11 +466,12 @@ function Ui:resolve_cursor_location(cursor)
 
     cursor.file = nil
     cursor.hunk = nil
-    section = self.item_index[cursor.section.index] or self.item_index[#self.item_index]
+    section = self.item_index[math.min(cursor.section.index, #self.item_index)]
   end
 
   if not cursor.file or not section.items or #section.items == 0 then
     if cursor.section_offset then
+      logger.debug("[UI] No file - using section.first with offset")
       return section.first + cursor.section_offset
     else
       logger.debug("[UI] No file - using section.first")
@@ -483,7 +487,7 @@ function Ui:resolve_cursor_location(cursor)
     logger.debug(("[UI] No file found %q"):format(cursor.file.name))
 
     cursor.hunk = nil
-    file = section.items[cursor.file.index] or section.items[#section.items]
+    file = section.items[math.min(cursor.file.index, #section.items)]
   end
 
   if not cursor.hunk or not file.diff.hunks or #file.diff.hunks == 0 then

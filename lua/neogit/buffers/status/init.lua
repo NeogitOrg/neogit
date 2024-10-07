@@ -201,11 +201,6 @@ function M:open(kind)
       Watcher.instance(self.root):register(self)
       buffer:move_cursor(buffer.ui:first_section().first)
     end,
-    autocmds = {
-      ["FocusGained"] = function()
-        self:dispatch_refresh(nil, "focus_gained")
-      end,
-    },
     user_autocmds = {
       ["NeogitPushComplete"] = function()
         self:dispatch_refresh(nil, "push_complete")
@@ -268,10 +263,9 @@ end
 function M:refresh(partial, reason)
   logger.debug("[STATUS] Beginning refresh from " .. (reason or "UNKNOWN"))
 
-  local cursor, view
-  -- Dont store cursor for focus_gained, it causes some jank on the position restoration.
   -- Needs to be captured _before_ refresh because the diffs are needed, but will be changed by refreshing.
-  if self.buffer and self.buffer:is_focused() and reason ~= "focus_gained" then
+  local cursor, view
+  if self.buffer and self.buffer:is_focused() then
     cursor = self.buffer.ui:get_cursor_location()
     view = self.buffer:save_view()
   end
