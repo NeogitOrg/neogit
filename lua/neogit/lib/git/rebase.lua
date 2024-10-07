@@ -204,7 +204,7 @@ function M.update_rebase_status(state)
       return
     end
 
-    head = head:read()
+    head = vim.trim(head:read())
     state.rebase.head = head:match("refs/heads/([^\r\n]+)")
     state.rebase.head_oid = git.rev_parse.verify(head)
 
