@@ -10,23 +10,23 @@ local hooks = {
     "prepare-commit-msg",
     "commit-msg",
     "post-commit",
-    "post-rewrite"
+    "post-rewrite",
   },
   merge = {
     "pre-merge-commit",
     "commit-msg",
-    "post-merge"
+    "post-merge",
   },
   rebase = {
     "pre-rebase",
-    "post-rewrite"
+    "post-rewrite",
   },
   checkout = {
-    "post-checkout"
+    "post-checkout",
   },
   push = {
-    "pre-push"
-  }
+    "pre-push",
+  },
 }
 
 local function is_executable(mode)

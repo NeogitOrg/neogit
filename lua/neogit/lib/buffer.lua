@@ -327,7 +327,7 @@ function Buffer:show()
       style = "minimal",
       focusable = false,
       border = { "─", "─", "─", "", "", "", "", "" },
-      title = " Git Console "
+      title = " Git Console ",
     })
 
     api.nvim_win_set_cursor(content_window, { 1, 0 })

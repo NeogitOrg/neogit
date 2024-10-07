@@ -603,7 +603,7 @@ function M.safe_win_close(winid, force)
   local ok, _ = pcall(vim.api.nvim_win_close, winid, force)
 
   if not ok then
-    local ok, _ = pcall(vim.cmd, "b#")
+    pcall(vim.cmd, "b#")
   end
 end
 

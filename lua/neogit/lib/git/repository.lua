@@ -1,7 +1,6 @@
 local a = require("plenary.async")
 local logger = require("neogit.logger")
 local Path = require("plenary.path") ---@class Path
-local Watcher = require("neogit.watcher")
 local git = require("neogit.lib.git")
 local ItemFilter = require("neogit.lib.item_filter")
 local util = require("neogit.lib.util")
@@ -264,13 +263,6 @@ local DEFAULT_FILTER = ItemFilter.create { "*:*" }
 local function timestamp()
   vim.uv.update_time()
   return vim.uv.now()
-end
-
-local function action_in_progress()
-  return git.rebase.in_progress()
-    or git.merge.in_progress()
-    or git.bisect.in_progress()
-    or git.sequencer.pick_or_revert_in_progress()
 end
 
 function Repo:current_state(id)

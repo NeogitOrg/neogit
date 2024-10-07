@@ -108,7 +108,7 @@ function Process:start_timer()
     local timer = vim.loop.new_timer()
     self.timer = timer
 
-    local timeout = assert(self.git_hook and 100 or config.values.console_timeout)
+    local timeout = assert(self.git_hook and 100 or config.values.console_timeout, "no timeout")
     timer:start(
       timeout,
       0,
