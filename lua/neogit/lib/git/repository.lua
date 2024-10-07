@@ -326,12 +326,6 @@ function Repo:refresh(opts)
     logger.debug("[REPO]: (" .. start .. ") Refreshes complete in " .. timestamp() - start .. " ms")
     self:set_state(start)
     self:run_callbacks(start)
-
-    if action_in_progress() then
-      Watcher.instance(self.git_root):start()
-    else
-      Watcher.instance(self.git_root):stop()
-    end
   end)
 
   a.util.run_all(self:tasks(filter, self:current_state(start)), on_complete)
