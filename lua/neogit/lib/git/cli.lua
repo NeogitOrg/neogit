@@ -902,7 +902,6 @@ local function new_builder(subcommand)
     files = {},
     input = nil,
     in_pty = false,
-    suppress_console = false,
     env = {},
   }
 
@@ -956,11 +955,10 @@ local function new_builder(subcommand)
       cwd = git.repo.git_root,
       env = state.env,
       input = state.input,
-      long = opts.long,
       on_error = opts.on_error,
       pty = state.in_pty,
-      suppress_console = not not opts.hidden,
       git_hook = git.hooks.exists(subcommand) and not vim.tbl_contains(cmd, "--no-verify"),
+      suppress_console = not not (opts.hidden or opts.long),
     }
   end
 
@@ -978,6 +976,28 @@ local function new_builder(subcommand)
       opts.await = false
     end
 
+    opts.on_error = function(res)
+      -- When aborting, don't alert the user. exit(1) is expected.
+      for _, line in ipairs(res.stdout) do
+        if
+          line:match("^hint: Waiting for your editor to close the file...")
+          or line:match("error: there was a problem with the editor")
+        then
+          return false
+        end
+      end
+
+      -- When opening in a brand new repo, HEAD will cause an error.
+      if
+        res.stderr[1]
+        == "fatal: ambiguous argument 'HEAD': unknown revision or path not in the working tree."
+      then
+        return false
+      end
+
+      return not opts.ignore_error
+    end
+
     return opts
   end
 
@@ -988,29 +1008,7 @@ local function new_builder(subcommand)
     to_process = to_process,
     call = function(options)
       local opts = make_options(options)
-      local p = to_process {
-        on_error = function(res)
-          -- When aborting, don't alert the user. exit(1) is expected.
-          for _, line in ipairs(res.stdout) do
-            if
-              line:match("^hint: Waiting for your editor to close the file...")
-              or line:match("error: there was a problem with the editor")
-            then
-              return false
-            end
-          end
-
-          -- When opening in a brand new repo, HEAD will cause an error.
-          if
-            res.stderr[1]
-            == "fatal: ambiguous argument 'HEAD': unknown revision or path not in the working tree."
-          then
-            return false
-          end
-
-          return not opts.ignore_error
-        end,
-      }
+      local p = to_process(opts)
 
       if opts.pty then
         p.on_partial_line = function(p, line)
@@ -1056,7 +1054,7 @@ local function new_builder(subcommand)
         result.cmd = result.cmd:gsub(state.hide_text, string.rep("*", #state.hide_text))
       end
 
-      result.hidden = opts.hidden or false
+      result.hidden = opts.hidden
       store_process_result(result)
 
       if opts.trim then

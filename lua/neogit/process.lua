@@ -22,7 +22,6 @@ end
 ---@field cwd string|nil
 ---@field env table<string, string>|nil
 ---@field input string|nil
----@field long boolean|nil is the process long running (rebase, bisect, etc..)
 ---@field on_error (fun(res: ProcessResult): boolean) Intercept the error externally, returning false prevents the error from being logged
 ---@field pty boolean|nil
 ---@field suppress_console boolean
@@ -35,7 +34,6 @@ end
 ---@field job number|nil
 ---@field stdin number|nil
 ---@field pty boolean|nil
----@field long boolean|nil is the process long running (rebase, bisect, etc..)
 ---@field buffer ProcessBuffer
 ---@field input string|nil
 ---@field git_hook boolean|nil
@@ -100,17 +98,13 @@ function Process.hide_preview_buffers()
   end
 end
 
-function Process:no_console()
-  return self.suppress_console or self.long
-end
-
 function Process:start_timer()
   if self.git_hook then
     self.buffer:show()
     return
   end
 
-  if self:no_console() then
+  if self.suppress_console then
     return
   end
 
@@ -272,7 +266,7 @@ function Process:spawn(cb)
 
   local stdout_on_line = function(line)
     insert(res.stdout, line)
-    if not self:no_console() then
+    if not self.suppress_console then
       self.buffer:append(line)
     end
   end
@@ -281,7 +275,7 @@ function Process:spawn(cb)
 
   local stderr_on_line = function(line)
     insert(res.stderr, line)
-    if not self:no_console() then
+    if not self.suppress_console then
       self.buffer:append(line)
     end
   end
@@ -301,7 +295,7 @@ function Process:spawn(cb)
     stdout_cleanup()
     stderr_cleanup()
 
-    if not self:no_console() then
+    if not self.suppress_console then
       self.buffer:append(string.format("Process exited with code: %d", code))
 
       if not self.buffer:is_visible() and code > 0 and self.on_error(res) then
