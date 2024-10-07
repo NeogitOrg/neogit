@@ -106,6 +106,7 @@ function Watcher:stop()
 end
 
 local WATCH_IGNORE = {
+  index = true,
   ORIG_HEAD = true,
   FETCH_HEAD = true,
   COMMIT_EDITMSG = true,
