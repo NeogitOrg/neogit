@@ -178,7 +178,7 @@ end
 -- TODO: Extract to rebase lib?
 function M.abort()
   if input.get_permission("Abort rebase?") then
-    git.cli.rebase.abort.call()
+    git.rebase.abort()
   end
 end
 

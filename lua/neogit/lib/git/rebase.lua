@@ -135,6 +135,10 @@ function M.edit()
   return rebase_command(git.cli.rebase.edit_todo)
 end
 
+function M.abort()
+  return rebase_command(git.cli.rebase.abort)
+end
+
 ---Find the merge base for HEAD and it's upstream
 ---@return string|nil
 function M.merge_base_HEAD()
