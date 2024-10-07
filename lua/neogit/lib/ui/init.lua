@@ -710,7 +710,11 @@ function Ui:update()
     self.buf:lock()
 
     -- First restore the top line, then restore the cursor after
-    self.buf:move_top_line(math.min(top_line_nofold, #renderer.buffer.line))
+    -- Only move the viewport if there are fewer lines available on the screen than are in the buffer
+    if vim.fn.line("$") > vim.fn.line("w$") then
+      self.buf:move_top_line(math.min(top_line_nofold, #renderer.buffer.line))
+    end
+
     self.buf:move_cursor(math.min(cursor_line, #renderer.buffer.line))
   end)
 end
