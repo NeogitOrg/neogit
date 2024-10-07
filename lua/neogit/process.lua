@@ -354,9 +354,11 @@ function Process:spawn(cb)
     logger.debug("Sending input:" .. vim.inspect(self.input))
     self:send(self.input)
 
-    -- NOTE: rebase/reword doesn't want/need this
+    -- NOTE: rebase/reword doesn't want/need this, so don't send EOT if the last character is a dash
     -- Include EOT, otherwise git-apply will not work as expects the stream to end
-    self:send("\04")
+    if not self.cmd[#self.cmd] == "-" then
+      self:send("\04")
+    end
     self:close_stdin()
   end
 
