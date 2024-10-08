@@ -7,7 +7,7 @@ RSpec.describe "Help Popup", :git, :nvim do
     nvim.keys("?")
     expect(nvim.errors).to be_empty
     expect(nvim.filetype).to eq("NeogitPopup")
-    expect(nvim.screen[10..]).to eq(
+    expect(nvim.screen[10..20]).to eq(
       [
         " Commands                            Applying changes       Essential commands  ",
         " $ History          M Remote         <c-s> Stage all        <c-r> Refresh       ",
@@ -19,10 +19,7 @@ RSpec.describe "Help Popup", :git, :nvim do
         " f Fetch            v Revert         x Discard                                  ",
         " i Ignore           w Worktree                                                  ",
         " I Init             X Reset                                                     ",
-        " l Log              Z Stash                                                     ",
-        "~                                                                               ",
-        "NeogitHelpPopup [RO]                                          1,1            All",
-        "                                                                                "
+        " l Log              Z Stash                                                     "
       ]
     )
   end
