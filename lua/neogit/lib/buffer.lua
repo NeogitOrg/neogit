@@ -506,6 +506,20 @@ function Buffer:exists()
   return fn.bufnr(self.handle) ~= -1
 end
 
+local default_gui_cursor = vim.o.guicursor
+
+function Buffer:hide_cursor()
+  if vim.o.termguicolors and vim.o.guicursor ~= "" then
+    vim.o.guicursor = "a:NeogitHiddenCursor/lCursor"
+  end
+end
+
+function Buffer:show_cursor()
+  if default_gui_cursor then
+    vim.o.guicursor = default_gui_cursor
+  end
+end
+
 function Buffer:set_extmark(...)
   return api.nvim_buf_set_extmark(self.handle, ...)
 end

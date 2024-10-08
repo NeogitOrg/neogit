@@ -343,8 +343,16 @@ function M:show()
     kind = config.values.popup.kind,
     mappings = self:mappings(),
     status_column = " ",
+    on_detach = function()
+      self.buffer:show_cursor()
+    end,
     autocmds = {
+      ["WinEnter"] = function()
+        self.buffer:hide_cursor()
+      end,
       ["WinLeave"] = function()
+        self.buffer:show_cursor()
+
         if self.buffer and self.buffer.kind == "floating" then
           -- We pcall this because it's possible the window was closed by a command invocation, e.g. "cc" for commits
           pcall(self.close, self)
@@ -354,6 +362,7 @@ function M:show()
     after = function(buf, _win)
       buf:set_window_option("cursorline", false)
       buf:set_window_option("list", false)
+      buf:hide_cursor()
 
       if self.state.env.highlight then
         for i = 1, #self.state.env.highlight, 1 do
