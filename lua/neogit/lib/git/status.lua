@@ -10,9 +10,10 @@ local logger = require("neogit.logger")
 ---@field absolute_path string
 ---@field escaped_path string
 ---@field original_name string|nil
+---@field file_mode {head: number, index: number, worktree: number}|nil
 
 ---@return StatusItem
-local function update_file(section, cwd, file, mode, name, original_name)
+local function update_file(section, cwd, file, mode, name, original_name, file_mode)
   local absolute_path = Path:new(cwd, name):absolute()
   local escaped_path = vim.fn.fnameescape(vim.fn.fnamemodify(absolute_path, ":~:."))
 
@@ -22,6 +23,7 @@ local function update_file(section, cwd, file, mode, name, original_name)
     original_name = original_name,
     absolute_path = absolute_path,
     escaped_path = escaped_path,
+    file_mode = file_mode,
   }
 
   if file and rawget(file, "diff") then
@@ -96,7 +98,8 @@ local function update_status(state, filter)
         update_file("untracked", state.git_root, old_files.untracked_files[rest], "?", rest)
       )
     elseif kind == "1" then
-      local mode_staged, mode_unstaged, _, _, _, _, hH, _, name = rest:match(match_1)
+      local mode_staged, mode_unstaged, _, mH, mI, mW, hH, _, name = rest:match(match_1)
+      local file_mode = { head = mH, index = mI, worktree = mW }
 
       if mode_staged ~= "." then
         if hH:match("^0+$") then
@@ -105,23 +108,15 @@ local function update_status(state, filter)
 
         table.insert(
           state.staged.items,
-          update_file("staged", state.git_root, old_files.staged_files[name], mode_staged, name)
-        )
-      end
-
-      if mode_unstaged ~= "." then
-        table.insert(
-          state.unstaged.items,
-          update_file("unstaged", state.git_root, old_files.unstaged_files[name], mode_unstaged, name)
-        )
-      end
-    elseif kind == "2" then
-      local mode_staged, mode_unstaged, _, _, _, _, _, _, _, name, orig_name = rest:match(match_2)
-
-      if mode_staged ~= "." then
-        table.insert(
-          state.staged.items,
-          update_file("staged", state.git_root, old_files.staged_files[name], mode_staged, name, orig_name)
+          update_file(
+            "staged",
+            state.git_root,
+            old_files.staged_files[name],
+            mode_staged,
+            name,
+            nil,
+            file_mode
+          )
         )
       end
 
@@ -134,7 +129,41 @@ local function update_status(state, filter)
             old_files.unstaged_files[name],
             mode_unstaged,
             name,
-            orig_name
+            nil,
+            file_mode
+          )
+        )
+      end
+    elseif kind == "2" then
+      local mode_staged, mode_unstaged, _, mH, mI, mW, _, _, _, name, orig_name = rest:match(match_2)
+      local file_mode = { head = mH, index = mI, worktree = mW }
+
+      if mode_staged ~= "." then
+        table.insert(
+          state.staged.items,
+          update_file(
+            "staged",
+            state.git_root,
+            old_files.staged_files[name],
+            mode_staged,
+            name,
+            orig_name,
+            file_mode
+          )
+        )
+      end
+
+      if mode_unstaged ~= "." then
+        table.insert(
+          state.unstaged.items,
+          update_file(
+            "unstaged",
+            state.git_root,
+            old_files.unstaged_files[name],
+            mode_unstaged,
+            name,
+            orig_name,
+            file_mode
           )
         )
       end

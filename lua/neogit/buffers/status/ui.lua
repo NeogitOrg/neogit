@@ -263,11 +263,18 @@ local SectionItemFile = function(section, config)
     local name = item.original_name and ("%s -> %s"):format(item.original_name, item.name) or item.name
     local highlight = ("NeogitChange%s%s"):format(item.mode:gsub("%?", "Untracked"), section)
 
+    local file_mode_change = text("")
+    if item.file_mode and item.file_mode.worktree ~= item.file_mode.head and tonumber(item.file_mode.head) > 0 then
+      file_mode_change =
+        text.highlight("NeogitSubtleText")((" %s -> %s"):format(item.file_mode.head, item.file_mode.worktree))
+    end
+
     return col.tag("Item")({
       row {
         text.highlight(highlight)(mode_text),
         text(name),
         text.highlight("NeogitSubtleText")(unmerged_types[item.mode] or ""),
+        file_mode_change,
       },
     }, {
       foldable = true,

@@ -20,6 +20,22 @@ RSpec.describe "Status Buffer", :git, :nvim do
     end
   end
 
+  context "when a file's mode changes" do
+    before do
+      create_file("test")
+      git.add("test")
+      git.commit("commit")
+      system("chmod +x test")
+      nvim.refresh
+    end
+
+    it "renders, raising no errors" do
+      expect(nvim.errors).to be_empty
+      expect(nvim.filetype).to eq("NeogitStatus")
+      expect(nvim.screen[6]).to eq("> modified   test 100644 -> 100755                                              ")
+    end
+  end
+
   context "with disabled mapping and no replacement" do
     let(:neogit_config) { "{ mappings = { status = { j = false }, popup = { b = false } } }" }
 
