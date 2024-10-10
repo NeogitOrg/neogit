@@ -54,9 +54,9 @@ function M.register(meta)
     for file in vim.fs.dir(vim.fs.joinpath(state.git_root, ".git", "hooks")) do
       if not file:match("%.sample$") then
         local path = vim.fs.joinpath(state.git_root, ".git", "hooks", file)
-        local mode = vim.uv.fs_stat(path).mode
+        local stat = vim.uv.fs_stat(path)
 
-        if is_executable(mode) then
+        if stat and stat.mode and is_executable(stat.mode) then
           table.insert(state.hooks, file)
         end
       end
