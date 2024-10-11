@@ -8,23 +8,16 @@ local CDiffView = require("diffview.api.views.diff.diff_view").CDiffView
 local dv_lib = require("diffview.lib")
 local dv_utils = require("diffview.utils")
 
-local neogit = require("neogit")
+local Watcher = require("neogit.watcher")
 local git = require("neogit.lib.git")
-local status = require("neogit.buffers.status")
 local a = require("plenary.async")
 
 local old_config
 
-M.diffview_mappings = {
-  close = function()
-    vim.cmd("tabclose")
-    neogit.dispatch_refresh()
-    dv.setup(old_config)
-  end,
-}
-
-local function cb(name)
-  return string.format(":lua require('neogit.integrations.diffview').diffview_mappings['%s']()<CR>", name)
+local function close()
+  vim.cmd("tabclose")
+  Watcher.instance():dispatch_refresh()
+  dv.setup(old_config)
 end
 
 local function get_local_diff_view(section_name, item_name, opts)
@@ -101,10 +94,7 @@ local function get_local_diff_view(section_name, item_name, opts)
   }
 
   view:on_files_staged(a.void(function(_)
-    if status.is_open() then
-      status.instance():dispatch_refresh({ update_diffs = { "staged:*" } }, "on_files_staged")
-    end
-
+    Watcher.instance():dispatch_refresh()
     view:update_files()
   end))
 
@@ -121,12 +111,12 @@ function M.open(section_name, item_name, opts)
 
   local keymaps = {
     view = {
-      ["q"] = cb("close"),
-      ["<esc>"] = cb("close"),
+      ["q"] = close,
+      ["<esc>"] = close,
     },
     file_panel = {
-      ["q"] = cb("close"),
-      ["<esc>"] = cb("close"),
+      ["q"] = close,
+      ["<esc>"] = close,
     },
   }
 
