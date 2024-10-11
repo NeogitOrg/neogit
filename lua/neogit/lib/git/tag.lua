@@ -6,7 +6,7 @@ local M = {}
 --- Outputs a list of tags locally
 ---@return table List of tags.
 function M.list()
-  return git.cli.tag.list.call().stdout
+  return git.cli.tag.list.call({ hidden = true }).stdout
 end
 
 --- Deletes a list of tags
@@ -21,7 +21,7 @@ end
 ---@param remote string
 ---@return table
 function M.list_remote(remote)
-  return git.cli["ls-remote"].tags.args(remote).call().stdout
+  return git.cli["ls-remote"].tags.args(remote).call({ hidden = true }).stdout
 end
 
 local tag_pattern = "(.-)%-([0-9]+)%-g%x+$"

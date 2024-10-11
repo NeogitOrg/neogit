@@ -32,7 +32,7 @@ function M.stash_index()
 end
 
 function M.stash_keep_index()
-  local files = git.cli["ls-files"].call().stdout
+  local files = git.cli["ls-files"].call({ hidden = true }).stdout
   -- for some reason complains if not passed files,
   -- but this seems to be a git cli error; running:
   --    git --literal-pathspecs stash --keep-index

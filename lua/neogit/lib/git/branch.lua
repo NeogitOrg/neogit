@@ -63,12 +63,12 @@ function M.track(name, args)
 end
 
 function M.get_local_branches(include_current)
-  local branches = git.cli.branch.list(config.values.sort_branches).call().stdout
+  local branches = git.cli.branch.list(config.values.sort_branches).call({ hidden = true }).stdout
   return parse_branches(branches, include_current)
 end
 
 function M.get_remote_branches(include_current)
-  local branches = git.cli.branch.remotes.list(config.values.sort_branches).call().stdout
+  local branches = git.cli.branch.remotes.list(config.values.sort_branches).call({ hidden = true }).stdout
   return parse_branches(branches, include_current)
 end
 
@@ -77,7 +77,7 @@ function M.get_all_branches(include_current)
 end
 
 function M.is_unmerged(branch, base)
-  return git.cli.cherry.arg_list({ base or M.base_branch(), branch }).call().stdout[1] ~= nil
+  return git.cli.cherry.arg_list({ base or M.base_branch(), branch }).call({ hidden = true }).stdout[1] ~= nil
 end
 
 function M.base_branch()
@@ -146,7 +146,7 @@ function M.current()
   if head and head ~= "(detached)" then
     return head
   else
-    local branch_name = git.cli.branch.current.call().stdout
+    local branch_name = git.cli.branch.current.call({ hidden = true }).stdout
     if #branch_name > 0 then
       return branch_name[1]
     end
@@ -158,7 +158,7 @@ end
 function M.current_full_name()
   local current = M.current()
   if current then
-    return git.cli["rev-parse"].symbolic_full_name.args(current).call().stdout[1]
+    return git.cli["rev-parse"].symbolic_full_name.args(current).call({ hidden = true }).stdout[1]
   end
 end
 

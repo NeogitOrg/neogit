@@ -58,7 +58,7 @@ function M.list(refname, options)
   }, "%x1E")
 
   return parse(
-    git.cli.reflog.show.format(format).date("raw").arg_list(options or {}).args(refname, "--").call().stdout
+    git.cli.reflog.show.format(format).date("raw").arg_list(options or {}).args(refname, "--").call({ hidden = true }).stdout
   )
 end
 

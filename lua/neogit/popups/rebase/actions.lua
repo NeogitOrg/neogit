@@ -67,7 +67,7 @@ function M.interactively(popup)
 
     local args = popup:get_arguments()
 
-    local merges = git.cli["rev-list"].merges.args(commit .. "..HEAD").call().stdout
+    local merges = git.cli["rev-list"].merges.args(commit .. "..HEAD").call({ hidden = true }).stdout
     if merges[1] then
       local choice = input.get_choice("Proceed despite merge in rebase range?", {
         values = { "&continue", "&select other", "&abort" },

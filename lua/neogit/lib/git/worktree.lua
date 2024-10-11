@@ -45,7 +45,7 @@ end
 ---@return Worktree[]
 function M.list(opts)
   opts = opts or { include_main = true }
-  local list = git.cli.worktree.list.args("--porcelain").call().stdout
+  local list = git.cli.worktree.list.args("--porcelain").call({ hidden = true }).stdout
 
   local worktrees = {}
   for i = 1, #list, 3 do

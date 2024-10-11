@@ -53,7 +53,7 @@ function M.new(commit_id, filter)
   commit_info.commit_arg = commit_id
 
   local commit_overview =
-    parser.parse_commit_overview(git.cli.show.stat.oneline.args(commit_id).call().stdout)
+    parser.parse_commit_overview(git.cli.show.stat.oneline.args(commit_id).call({ hidden = true }).stdout)
 
   local instance = {
     item_filter = filter,
@@ -121,7 +121,7 @@ function M:update(commit_id, filter)
   local commit_info =
     git.log.parse(git.cli.show.format("fuller").args(commit_id).call({ trim = false }).stdout)[1]
   local commit_overview =
-    parser.parse_commit_overview(git.cli.show.stat.oneline.args(commit_id).call().stdout)
+    parser.parse_commit_overview(git.cli.show.stat.oneline.args(commit_id).call({ hidden = true }).stdout)
 
   commit_info.commit_arg = commit_id
 
