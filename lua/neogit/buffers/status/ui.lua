@@ -264,7 +264,11 @@ local SectionItemFile = function(section, config)
     local highlight = ("NeogitChange%s%s"):format(item.mode:gsub("%?", "Untracked"), section)
 
     local file_mode_change = text("")
-    if item.file_mode and item.file_mode.worktree ~= item.file_mode.head and tonumber(item.file_mode.head) > 0 then
+    if
+      item.file_mode
+      and item.file_mode.worktree ~= item.file_mode.head
+      and tonumber(item.file_mode.head) > 0
+    then
       file_mode_change =
         text.highlight("NeogitSubtleText")((" %s -> %s"):format(item.file_mode.head, item.file_mode.worktree))
     end
