@@ -718,7 +718,7 @@ function Buffer.create(config)
     api.nvim_buf_attach(buffer.handle, false, {
       on_detach = function()
         logger.debug("[BUFFER:" .. buffer.handle .. "] Clearing autocmd group")
-        api.nvim_del_augroup_by_id(buffer.autocmd_group)
+        pcall(api.nvim_del_augroup_by_id, buffer.autocmd_group)
       end,
     })
   end
