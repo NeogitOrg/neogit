@@ -63,9 +63,20 @@ RSpec.describe "Status Buffer", :git, :nvim do
         )
       end
 
-      # it "can stage one line" do
-      #   nvim.keys("<tab>jVs")
-      # end
+      it "can stage one line" do
+        nvim.keys("<tab>jjjVs")
+        nvim.move_to_line("new file")
+        nvim.keys("<tab>")
+        expect(nvim.screen[8..12]).to eq(
+          [
+            "v Staged changes (1)                                                            ",
+            "v new file   example.txt                                                        ",
+            "  @@ -0,0 +1 @@                                                                 ",
+            "  +2 foo                                                                        ",
+            "                                                                                "
+          ]
+        )
+      end
     end
 
     # context "with tracked file" do
