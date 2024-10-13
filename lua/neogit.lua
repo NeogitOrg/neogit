@@ -145,11 +145,8 @@ end
 
 ---@param opts OpenOpts|nil
 function M.open(opts)
-  local notification = require("neogit.lib.notification")
-
   if not did_setup then
-    notification.error("Neogit has not been setup!")
-    return
+    M.setup({})
   end
 
   opts = construct_opts(opts)
@@ -160,7 +157,7 @@ function M.open(opts)
     if input.get_permission(("Initialize repository in %s?"):format(opts.cwd)) then
       git.init.create(opts.cwd)
     else
-      notification.error("The current working directory is not a git repository")
+      M.notification.error("The current working directory is not a git repository")
       return
     end
   end
