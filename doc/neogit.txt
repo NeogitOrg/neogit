@@ -369,6 +369,15 @@ The following mappings can all be customized via the setup function.
                                                              *:NeogitResetState*
 :NeogitResetState       Performs a full reset of saved flags for all popups.
 
+                                                                    *:NeogitLog*
+:NeogitLog              Opens log buffer for any changes to the current file,
+                        or a path the user has specified. Optionally, a range
+                        can be specified to further filter the log entries.
+
+                                                                 *:NeogitCommit*
+:NeogitCommit           Opens the commit view for the specified SHA, or `HEAD`
+                        if left blank.
+
 ==============================================================================
 4. Events                                                        *neogit_events*
 (TODO)
