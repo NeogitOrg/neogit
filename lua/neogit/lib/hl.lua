@@ -128,7 +128,7 @@ local function make_palette(config)
     underline  = true,
   }
 
-  return vim.tbl_extend("keep", config.highlight, default)
+  return vim.tbl_extend("keep", config.highlight or {}, default)
 end
 -- stylua: ignore end
 
