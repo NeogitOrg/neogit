@@ -140,7 +140,29 @@ RSpec.describe "Branch Popup", :git, :nvim do
     end
 
     describe "Configure" do
-      it "Launches the configuration popup"
+      it "Launches the configuration popup" do
+        nvim.keys("bC<cr>")
+        expect(nvim.screen[4..19]).to eq(
+          [
+            " Configure branch                                                               ",
+            " d branch.master.description unset                                              ",
+            " u branch.master.merge unset                                                    ",
+            "   branch.master.remote unset                                                   ",
+            " r branch.master.rebase [true|false|pull.rebase:false]                          ",
+            " p branch.master.pushRemote []                                                  ",
+            "                                                                                ",
+            " Configure repository defaults                                                  ",
+            " R pull.rebase [true|false]                                                     ",
+            " P remote.pushDefault []                                                        ",
+            " b neogit.baseBranch unset                                                      ",
+            " A neogit.askSetPushDefault [ask|ask-if-unset|never]                            ",
+            "                                                                                ",
+            " Configure branch creation                                                      ",
+            " a s branch.autoSetupMerge [always|true|false|inherit|simple|default:true]      ",
+            " a r branch.autoSetupRebase [always|local|remote|never|default:never]           "
+          ]
+        )
+      end
     end
 
     describe "Rename" do
