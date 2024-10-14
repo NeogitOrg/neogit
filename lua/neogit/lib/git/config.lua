@@ -146,7 +146,7 @@ function M.unset(key)
   end
 
   cache_key = nil
-  git.cli.config.unset(key).call()
+  git.cli.config.unset(key).call({ ignore_error = true })
 end
 
 return M
