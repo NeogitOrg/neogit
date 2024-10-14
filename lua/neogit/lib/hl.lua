@@ -55,38 +55,9 @@ local function get_bg(name)
   end
 end
 
----@class NeogitColorPalette
----@field bg0        string  Darkest background color
----@field bg1        string  Second darkest background color
----@field bg2        string  Second lightest background color
----@field bg3        string  Lightest background color
----@field grey       string  middle grey shade for foreground
----@field white      string  Foreground white (main text)
----@field red        string  Foreground red
----@field bg_red     string  Background red
----@field line_red   string  Cursor line highlight for red regions, like deleted hunks
----@field orange     string  Foreground orange
----@field bg_orange  string  background orange
----@field yellow     string  Foreground yellow
----@field bg_yellow  string  background yellow
----@field green      string  Foreground green
----@field bg_green   string  Background green
----@field line_green string  Cursor line highlight for green regions, like added hunks
----@field cyan       string  Foreground cyan
----@field bg_cyan    string  Background cyan
----@field blue       string  Foreground blue
----@field bg_blue    string  Background blue
----@field purple     string  Foreground purple
----@field bg_purple  string  Background purple
----@field md_purple  string  Background _medium_ purple. Lighter than bg_purple.
----@field italic     boolean enable italics?
----@field bold       boolean enable bold?
----@field underline  boolean enable underline?
 
 -- stylua: ignore start
----@param config NeogitConfig
----@return NeogitColorPalette
-local function make_palette(config)
+local function make_palette()
   local bg     = Color.from_hex(get_bg("Normal") or (vim.o.bg == "dark" and "#22252A" or "#eeeeee"))
   local fg     = Color.from_hex((vim.o.bg == "dark" and "#fcfcfc" or "#22252A"))
   local red    = Color.from_hex(get_fg("Error") or "#E06C75")
@@ -97,9 +68,11 @@ local function make_palette(config)
   local blue   = Color.from_hex(get_fg("Macro") or "#82AAFF")
   local purple = Color.from_hex(get_fg("Include") or "#C792EA")
 
+  local config = require("neogit.config")
+
   local bg_factor = vim.o.bg == "dark" and 1 or -1
 
-  local default = {
+  return {
     bg0        = bg:to_css(),
     bg1        = bg:shade(bg_factor * 0.019):to_css(),
     bg2        = bg:shade(bg_factor * 0.065):to_css(),
@@ -123,12 +96,10 @@ local function make_palette(config)
     purple     = purple:to_css(),
     bg_purple  = purple:shade(bg_factor * -0.18):to_css(),
     md_purple  = purple:shade(0.18):to_css(),
-    italic     = true,
-    bold       = true,
-    underline  = true,
+    italic     = config.values.highlight.italic,
+    bold       = config.values.highlight.bold,
+    underline  = config.values.highlight.underline
   }
-
-  return vim.tbl_extend("keep", config.highlight, default)
 end
 -- stylua: ignore end
 
@@ -144,9 +115,8 @@ local function is_set(hl_name)
   return not vim.tbl_isempty(hl)
 end
 
----@param config NeogitConfig
-function M.setup(config)
-  local palette = make_palette(config)
+function M.setup()
+  local palette = make_palette()
 
   -- stylua: ignore
   hl_store = {

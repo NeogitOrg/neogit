@@ -2,11 +2,6 @@ local logger = require("neogit.logger")
 local config = require("neogit.config")
 local Path = require("plenary.path")
 
----@class NeogitState
----@field loaded boolean
----@field _enabled boolean
----@field state table
----@field path Path
 local M = {}
 
 M.loaded = false
@@ -16,11 +11,11 @@ local function log(message)
 end
 
 ---@return Path
-function M.filepath(config)
+function M.filepath()
   local state_path = Path.new(vim.fn.stdpath("state")):joinpath("neogit")
   local filename = "state"
 
-  if config.use_per_project_settings then
+  if config.values.use_per_project_settings then
     filename = vim.uv.cwd():gsub("^(%a):", "/%1"):gsub("/", "%%"):gsub(Path.path.sep, "%%")
   end
 
@@ -28,28 +23,26 @@ function M.filepath(config)
 end
 
 ---Initializes state
----@param config NeogitConfig
-function M.setup(config)
+function M.setup()
   if M.loaded then
     return
   end
 
-  M.path = M.filepath(config)
-  M._enabled = config.remember_settings
-  M.state = M.read()
+  M.path = M.filepath()
   M.loaded = true
+  M.state = M.read()
   log("Loaded")
 end
 
 ---@return boolean
 function M.enabled()
-  return M.loaded and M._enabled
+  return M.loaded and config.values.remember_settings
 end
 
 ---Reads state from disk
 ---@return table
 function M.read()
-  if not M.enabled then
+  if not M.enabled() then
     return {}
   end
 
