@@ -28,7 +28,6 @@ function M.create(branch)
     :config_heading("")
     :config_heading("Configure repository defaults")
     :config("R", "pull.rebase", {
-      callback = actions.update_pull_rebase(),
       options = {
         { display = "true", value = "true" },
         { display = "false", value = "false" },
