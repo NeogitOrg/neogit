@@ -283,6 +283,7 @@ end
 ---@field disable_line_numbers? boolean Whether to disable line numbers
 ---@field disable_relative_line_numbers? boolean Whether to disable line numbers
 ---@field console_timeout? integer Time in milliseconds after a console is created for long running commands
+---@field console_truncate? boolean Truncate console output
 ---@field auto_show_console? boolean Automatically show the console if a command takes longer than console_timeout
 ---@field auto_close_console? boolean Automatically hide the console if the process exits with a 0 status
 ---@field status? NeogitConfigStatusOptions Status buffer options
@@ -343,6 +344,7 @@ function M.get_default_values()
     disable_relative_line_numbers = true,
     -- The time after which an output console is shown for slow running commands
     console_timeout = 2000,
+    console_truncate = true,
     -- Automatically show console if a command takes more than console_timeout milliseconds
     auto_show_console = true,
     auto_close_console = true,

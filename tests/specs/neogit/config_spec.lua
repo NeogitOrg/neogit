@@ -76,6 +76,11 @@ describe("Neogit config", function()
         assert.True(vim.tbl_count(require("neogit.config").validate_config()) ~= 0)
       end)
 
+      it("should return invalid when console_truncate isn't a boolean", function()
+        config.values.console_truncate = "not a boolean"
+        assert.True(vim.tbl_count(require("neogit.config").validate_config()) ~= 0)
+      end)
+
       it("should return invalid when auto_show_console isn't a boolean", function()
         config.values.console_timeout = "not a boolean"
         assert.True(vim.tbl_count(require("neogit.config").validate_config()) ~= 0)
