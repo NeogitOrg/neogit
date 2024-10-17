@@ -69,9 +69,9 @@ function M.setup(opts)
   M.notification = require("neogit.lib.notification")
 
   config.setup(opts)
-  hl.setup()
-  signs.setup()
-  state.setup()
+  hl.setup(config.values)
+  signs.setup(config.values)
+  state.setup(config.values)
   autocmds.setup()
 end
 
