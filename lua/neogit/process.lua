@@ -26,6 +26,7 @@ end
 ---@field pty boolean|nil
 ---@field suppress_console boolean
 ---@field git_hook boolean
+---@field user_command boolean
 
 ---@class Process
 ---@field cmd string[]
@@ -39,6 +40,7 @@ end
 ---@field input string|nil
 ---@field git_hook boolean
 ---@field suppress_console boolean
+---@field user_command boolean
 ---@field on_partial_line fun(process: Process, data: string)|nil callback on complete lines
 ---@field on_error (fun(res: ProcessResult): boolean) Intercept the error externally, returning false prevents the error from being logged
 ---@field defer_show_preview_buffers fun(): nil
@@ -100,6 +102,10 @@ function Process.hide_preview_buffers()
   end
 end
 
+function Process:show_console()
+  self.buffer:show()
+end
+
 function Process:start_timer()
   if self.suppress_console then
     return
@@ -125,7 +131,7 @@ function Process:start_timer()
         end
 
         if config.values.auto_show_console then
-          self.buffer:show()
+          self:show_console()
         else
           local message = string.format(
             "Command %q running for more than: %.1f seconds",
@@ -309,7 +315,7 @@ function Process:spawn(cb)
         notification.warn(message)
       end
 
-      if config.values.auto_close_console and self.buffer:is_visible() and code == 0 then
+      if not self.user_command and config.values.auto_close_console and self.buffer:is_visible() and code == 0 then
         self.buffer:close()
       end
     end

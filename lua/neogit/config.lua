@@ -153,6 +153,7 @@ end
 ---| "MoveDown"
 ---| "MoveUp"
 ---| "OpenTree"
+---| "Command"
 ---| "Depth1"
 ---| "Depth2"
 ---| "Depth3"
@@ -566,6 +567,7 @@ function M.get_default_values()
         ["2"] = "Depth2",
         ["3"] = "Depth3",
         ["4"] = "Depth4",
+        ["Q"] = "Command",
         ["<tab>"] = "Toggle",
         ["x"] = "Discard",
         ["s"] = "Stage",

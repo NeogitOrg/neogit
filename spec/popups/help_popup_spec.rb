@@ -12,12 +12,13 @@ RSpec.describe "Help Popup", :git, :nvim, :popup do # rubocop:disable RSpec/Empt
       " A Cherry Pick      m Merge          K Untrack              <cr> Go to file     ",
       " b Branch           P Push           s Stage                <tab> Toggle        ",
       " B Bisect           p Pull           S Stage-Unstaged                           ",
-      " c Commit           r Rebase         u Unstage                                  ",
-      " d Diff             t Tag            U Unstage-Staged                           ",
-      " f Fetch            v Revert         x Discard                                  ",
+      " c Commit           Q Command        u Unstage                                  ",
+      " d Diff             r Rebase         U Unstage-Staged                           ",
+      " f Fetch            t Tag            x Discard                                  ",
+      " I Init             v Revert                                                    ",
       " i Ignore           w Worktree                                                  ",
-      " I Init             X Reset                                                     ",
-      " l Log              Z Stash                                                     "
+      " l Log              X Reset                                                     ",
+      "                    Z Stash                                                     "
     ]
   end
 

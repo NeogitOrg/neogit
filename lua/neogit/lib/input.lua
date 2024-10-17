@@ -58,6 +58,12 @@ function M.get_user_input(prompt, opts)
 
   vim.fn.inputsave()
 
+  if opts.prepend then
+    vim.defer_fn(function()
+      vim.api.nvim_input(opts.prepend)
+    end, 10)
+  end
+
   local status, result = pcall(vim.fn.input, {
     prompt = ("%s%s"):format(prompt, opts.separator),
     default = opts.default,

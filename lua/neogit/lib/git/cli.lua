@@ -852,8 +852,6 @@ local function new_builder(subcommand)
       cmd
     )
 
-    logger.trace(string.format("[CLI]: Executing '%s': '%s'", subcommand, table.concat(cmd, " ")))
-
     return process.new {
       cmd = cmd,
       cwd = git.repo.git_root,
@@ -863,6 +861,7 @@ local function new_builder(subcommand)
       pty = state.in_pty,
       git_hook = git.hooks.exists(subcommand) and not vim.tbl_contains(cmd, "--no-verify"),
       suppress_console = not not (opts.hidden or opts.long),
+      user_command = false,
     }
   end
 

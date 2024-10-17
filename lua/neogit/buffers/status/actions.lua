@@ -1331,4 +1331,35 @@ M.n_open_tree = function(_self)
   end)
 end
 
+---@param self StatusBuffer|nil
+M.n_command = function(self)
+  local process = require("neogit.process")
+  local runner = require("neogit.runner")
+
+  return a.void(function()
+    local cmd = input.get_user_input(("Run command in %s"):format(git.repo.git_root), { prepend = "git " })
+    if not cmd then
+      return
+    end
+
+    local cmd = vim.split(cmd, " ")
+    table.insert(cmd, 2, "--no-pager")
+    table.insert(cmd, 3, "--no-optional-locks")
+
+    local proc = process.new {
+      cmd = cmd,
+      cwd = git.repo.git_root,
+      env = {},
+      on_error = function() return false end,
+      git_hook = true,
+      suppress_console = false,
+      user_command = true,
+    }
+
+    proc:show_console()
+
+    runner.call(proc, { pty = true })
+  end)
+end
+
 return M

@@ -133,6 +133,7 @@ function M:open(kind)
         [popups.mapping_for("WorktreePopup")]   = self:_action("v_worktree_popup"),
       },
       n = {
+        [mappings["Command"]]                   = self:_action("n_command"),
         [mappings["OpenTree"]]                  = self:_action("n_open_tree"),
         [mappings["MoveDown"]]                  = self:_action("n_down"),
         [mappings["MoveUp"]]                    = self:_action("n_up"),
