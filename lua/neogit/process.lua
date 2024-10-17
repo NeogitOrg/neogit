@@ -315,7 +315,12 @@ function Process:spawn(cb)
         notification.warn(message)
       end
 
-      if not self.user_command and config.values.auto_close_console and self.buffer:is_visible() and code == 0 then
+      if
+        not self.user_command
+        and config.values.auto_close_console
+        and self.buffer:is_visible()
+        and code == 0
+      then
         self.buffer:close()
       end
     end

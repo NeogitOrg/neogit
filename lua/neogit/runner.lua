@@ -3,7 +3,7 @@ local input = require("neogit.lib.input")
 local util = require("neogit.lib.util")
 
 local M = {
-  history = {}
+  history = {},
 }
 
 ---@param job ProcessResult
@@ -13,7 +13,12 @@ local function store_process_result(job)
   do
     if job.code > 0 then
       logger.trace(
-        string.format("[RUNNER] Execution of '%s' failed with code %d after %d ms", job.cmd, job.code, job.time)
+        string.format(
+          "[RUNNER] Execution of '%s' failed with code %d after %d ms",
+          job.cmd,
+          job.code,
+          job.time
+        )
       )
 
       for _, line in ipairs(job.stderr) do

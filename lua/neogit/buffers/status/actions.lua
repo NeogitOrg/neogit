@@ -1350,7 +1350,9 @@ M.n_command = function(self)
       cmd = cmd,
       cwd = git.repo.git_root,
       env = {},
-      on_error = function() return false end,
+      on_error = function()
+        return false
+      end,
       git_hook = true,
       suppress_console = false,
       user_command = true,

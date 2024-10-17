@@ -106,7 +106,7 @@ M.popups = function(env)
     { "StashPopup", "Stash", popups.open("stash", function(p)
       p(env.stash)
     end) },
-    { "Command",  "Command", require("neogit.buffers.status.actions").n_command(nil) },
+    { "Command", "Command", require("neogit.buffers.status.actions").n_command(nil) },
   }
 
   return present(items)

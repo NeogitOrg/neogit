@@ -686,7 +686,6 @@ local function is_inside_worktree(dir)
   return result.code == 0
 end
 
-
 local k_state = {}
 local k_config = {}
 local k_command = {}

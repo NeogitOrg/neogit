@@ -146,7 +146,7 @@ end
 ---@param opts OpenOpts|nil
 function M.open(opts)
   if not did_setup then
-    M.setup({})
+    M.setup {}
   end
 
   opts = construct_opts(opts)
