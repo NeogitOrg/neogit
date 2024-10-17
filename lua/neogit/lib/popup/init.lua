@@ -340,15 +340,12 @@ function M:show()
   self.buffer = Buffer.create {
     name = self.state.name,
     filetype = "NeogitPopup",
-    kind = config.values.popup.kind,
+    kind = "popup",
     mappings = self:mappings(),
     status_column = " ",
     autocmds = {
       ["WinLeave"] = function()
-        if self.buffer and self.buffer.kind == "floating" then
-          -- We pcall this because it's possible the window was closed by a command invocation, e.g. "cc" for commits
-          pcall(self.close, self)
-        end
+        pcall(self.close, self)
       end,
     },
     after = function(buf, _win)
