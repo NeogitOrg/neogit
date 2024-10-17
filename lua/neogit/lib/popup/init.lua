@@ -201,7 +201,7 @@ function M:set_config(config)
       return option.value
     end))
 
-    local index = options[config.value or ""]
+    local index = options[config.value or ""] or math.huge
     config.value = options[(index + 1)] or options[1]
     git.config.set(config.name, config.value)
   elseif config.fn then
@@ -320,8 +320,10 @@ function M:mappings()
 end
 
 function M:refresh()
-  self.buffer:focus()
-  self.buffer.ui:render(unpack(ui.Popup(self.state)))
+  if self.buffer then
+    self.buffer:focus()
+    self.buffer.ui:render(unpack(ui.Popup(self.state)))
+  end
 end
 
 ---@return boolean
