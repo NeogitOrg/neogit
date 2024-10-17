@@ -41,6 +41,7 @@ end
 ---@field suppress_console boolean
 ---@field on_partial_line fun(process: Process, data: string)|nil callback on complete lines
 ---@field on_error (fun(res: ProcessResult): boolean) Intercept the error externally, returning false prevents the error from being logged
+---@field defer_show_preview_buffers fun(): nil
 local Process = {}
 Process.__index = Process
 
