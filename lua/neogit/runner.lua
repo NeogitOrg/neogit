@@ -155,6 +155,10 @@ function M.call(process, opts)
     result:remove_ansi()
   end
 
+  if opts.callback then
+    opts.callback()
+  end
+
   return result
 end
 
