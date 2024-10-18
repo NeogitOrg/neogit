@@ -303,6 +303,7 @@ end
 ---@field use_per_project_settings? boolean Scope persisted settings on a per-project basis
 ---@field remember_settings? boolean Whether neogit should persist flags from popups, e.g. git push flags
 ---@field sort_branches? string Value used for `--sort` for the `git branch` command
+---@field initial_branch_name? string Default for new branch name prompts
 ---@field kind? WindowKind The default type of window neogit should open in
 ---@field disable_line_numbers? boolean Whether to disable line numbers
 ---@field disable_relative_line_numbers? boolean Whether to disable line numbers
@@ -359,6 +360,7 @@ function M.get_default_values()
     fetch_after_checkout = false,
     sort_branches = "-committerdate",
     kind = "tab",
+    initial_branch_name = "",
     disable_line_numbers = true,
     disable_relative_line_numbers = true,
     -- The time after which an output console is shown for slow running commands
@@ -1087,6 +1089,7 @@ function M.validate_config()
     validate_type(config.use_per_project_settings, "use_per_project_settings", "boolean")
     validate_type(config.remember_settings, "remember_settings", "boolean")
     validate_type(config.sort_branches, "sort_branches", "string")
+    validate_type(config.initial_branch_name, "initial_branch_name", "string")
     validate_type(config.notification_icon, "notification_icon", "string")
     validate_type(config.console_timeout, "console_timeout", "number")
     validate_kind(config.kind, "kind")
