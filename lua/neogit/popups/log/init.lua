@@ -24,6 +24,7 @@ function M.create()
     :option("u", "until", "", "Limit to commits until", { key_prefix = "-" })
     :switch("m", "no-merges", "Omit merges", { key_prefix = "=" })
     :switch("p", "first-parent", "First parent", { key_prefix = "=" })
+    :switch("i", "invert-grep", "Invert search messages", { key_prefix = "-" })
     :arg_heading("History Simplification")
     :switch("D", "simplify-by-decoration", "Simplify by decoration")
     :option("-", "", "", "Limit to files", {
