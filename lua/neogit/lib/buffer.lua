@@ -695,6 +695,7 @@ function Buffer.create(config)
     buffer:set_window_option("foldlevel", 99)
     buffer:set_window_option("foldminlines", 0)
     buffer:set_window_option("foldtext", "")
+    buffer:set_window_option("foldcolumn", "0")
     buffer:set_window_option("listchars", "")
     buffer:set_window_option("list", false)
     buffer:call(function()
@@ -801,7 +802,6 @@ function Buffer.create(config)
   end
 
   if config.foldmarkers then
-    vim.opt_local.foldcolumn = "0"
     vim.opt_local.signcolumn = "auto"
 
     logger.debug("[BUFFER:" .. buffer.handle .. "] Setting up foldmarkers")
