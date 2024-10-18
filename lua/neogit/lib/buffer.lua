@@ -15,6 +15,7 @@ local Path = require("plenary.path")
 ---@field autocmd_group number
 ---@field ui Ui
 ---@field kind string
+---@field name string
 ---@field disable_line_numbers boolean
 ---@field disable_relative_line_numbers boolean
 local Buffer = {
@@ -34,6 +35,7 @@ function Buffer:new(handle, win_handle)
     win_handle = win_handle,
     border = nil,
     kind = nil, -- how the buffer was opened. For more information look at the create function
+    name = nil,
     namespaces = {
       default = api.nvim_create_namespace("neogit-buffer-" .. handle),
     },
@@ -332,6 +334,24 @@ function Buffer:show()
 
     api.nvim_win_set_cursor(content_window, { 1, 0 })
     win = content_window
+  elseif kind == "popup" then
+    -- local title, _ = self.name:gsub("^Neogit", ""):gsub("Popup$", "")
+
+    local content_window = api.nvim_open_win(self.handle, true, {
+      anchor = "SW",
+      relative = "editor",
+      width = vim.o.columns,
+      height = math.floor(vim.o.lines * 0.3),
+      col = 0,
+      row = vim.o.lines - 2,
+      style = "minimal",
+      border = { "─", "─", "─", "", "", "", "", "" },
+      -- title = (" %s Actions "):format(title),
+      -- title_pos = "center",
+    })
+
+    api.nvim_win_set_cursor(content_window, { 1, 0 })
+    win = content_window
   end
 
   api.nvim_win_call(win, function()
@@ -600,6 +620,7 @@ function Buffer.create(config)
 
   local buffer = Buffer.from_name(config.name)
 
+  buffer.name = config.name
   buffer.kind = config.kind or "split"
   buffer.disable_line_numbers = (config.disable_line_numbers == nil) or config.disable_line_numbers
   buffer.disable_relative_line_numbers = (config.disable_relative_line_numbers == nil)
@@ -780,6 +801,7 @@ function Buffer.create(config)
   end
 
   if config.foldmarkers then
+    vim.opt_local.foldcolumn = "0"
     vim.opt_local.signcolumn = "auto"
 
     logger.debug("[BUFFER:" .. buffer.handle .. "] Setting up foldmarkers")

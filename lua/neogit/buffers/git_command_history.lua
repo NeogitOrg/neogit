@@ -50,7 +50,7 @@ function M:show()
   M.instance = self
 
   self.buffer = Buffer.create {
-    kind = "split",
+    kind = "popup",
     name = "NeogitGitCommandHistory",
     filetype = "NeogitGitCommandHistory",
     mappings = {

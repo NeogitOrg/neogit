@@ -14,7 +14,7 @@ function M.create(branch)
     .builder()
     :name("NeogitBranchConfigPopup")
     :config_heading("Configure branch")
-    :config("d", "branch." .. branch .. ".description")
+    :config("d", "branch." .. branch .. ".description", { fn = actions.description_config(branch) })
     :config("u", "branch." .. branch .. ".merge", { fn = actions.merge_config(branch) })
     :config("m", "branch." .. branch .. ".remote", { passive = true })
     :config("r", "branch." .. branch .. ".rebase", {
@@ -28,7 +28,6 @@ function M.create(branch)
     :config_heading("")
     :config_heading("Configure repository defaults")
     :config("R", "pull.rebase", {
-      callback = actions.update_pull_rebase(),
       options = {
         { display = "true", value = "true" },
         { display = "false", value = "false" },

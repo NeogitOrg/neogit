@@ -2,11 +2,36 @@
 
 require "spec_helper"
 
-RSpec.describe "Branch Popup", :git, :nvim do
+RSpec.describe "Branch Popup", :git, :nvim, :popup do
+  before { nvim.keys("b") }
+
+  let(:view) do
+    [
+      " Variables                                                                      ",
+      " d branch.master.description unset                                              ",
+      " u branch.master.merge unset                                                    ",
+      "   branch.master.remote unset                                                   ",
+      " R branch.master.rebase [true|false|pull.rebase:false]                          ",
+      " p branch.master.pushRemote []                                                  ",
+      "                                                                                ",
+      " Arguments                                                                      ",
+      " -r Recurse submodules when checking out an existing branch (--recurse-submodule",
+      "                                                                                ",
+      " Checkout                                Create           Do                    ",
+      " b branch/revision      c new branch     n new branch     C Configure...        ",
+      " l local branch         s new spin-off   S new spin-out   m rename              ",
+      " r recent branch        w new worktree   W new worktree   X reset               ",
+      "                                                          D delete              "
+    ]
+  end
+
+  %w[d u R p b l r c s w n S W C m X D].each { include_examples "interaction", _1 }
+  %w[-r].each { include_examples "argument", _1 }
+
   describe "Variables" do
     describe "branch.<current>.description" do
       it "can edit branch description" do
-        nvim.keys("bd")
+        nvim.keys("d")
         nvim.keys("describe the branch<esc>")
         nvim.keys(":wq<cr>")
 
@@ -19,7 +44,7 @@ RSpec.describe "Branch Popup", :git, :nvim do
         expect_git_failure { git.config("branch.#{git.branch.name}.remote") }
         expect_git_failure { git.config("branch.#{git.branch.name}.merge") }
 
-        nvim.keys("bumaster<cr>")
+        nvim.keys("umaster<cr>")
         expect(git.config("branch.#{git.branch.name}.remote")).to eq(".")
         expect(git.config("branch.#{git.branch.name}.merge")).to eq("refs/heads/master")
       end
@@ -31,7 +56,7 @@ RSpec.describe "Branch Popup", :git, :nvim do
       it "can change rebase setting" do
         expect_git_failure { git.config("branch.#{git.branch.name}.rebase") }
         expect(git.config("pull.rebase")).to eq("false")
-        nvim.keys("bR")
+        nvim.keys("R")
         expect(git.config("branch.#{git.branch.name}.rebase")).to eq("true")
         nvim.keys("R")
         expect(git.config("branch.#{git.branch.name}.rebase")).to eq("false")
@@ -43,7 +68,7 @@ RSpec.describe "Branch Popup", :git, :nvim do
     describe "branch.<current>.pushRemote", :with_remote_origin do
       it "can change pushRemote for current branch" do
         expect_git_failure { git.config("branch.master.pushRemote") }
-        nvim.keys("bp")
+        nvim.keys("p")
         expect(git.config("branch.master.pushRemote")).to eq("origin")
       end
     end
@@ -62,7 +87,7 @@ RSpec.describe "Branch Popup", :git, :nvim do
       before { git.branch("new-local-branch").checkout }
 
       it "can checkout a local branch" do
-        nvim.keys("bl")
+        nvim.keys("l")
         nvim.keys("master<cr>")
 
         expect(git.current_branch).to eq "master"
@@ -71,7 +96,7 @@ RSpec.describe "Branch Popup", :git, :nvim do
       it "creates and checks out a new local branch when choosing a remote"
 
       it "creates and checks out a new local branch when name doesn't match existing local branch" do
-        nvim.keys("bl")
+        nvim.keys("l")
         nvim.keys("tmp<cr>") # Enter branch that doesn't exist
         nvim.keys("mas<cr>") # Set base branch
 
@@ -86,7 +111,7 @@ RSpec.describe "Branch Popup", :git, :nvim do
     describe "Checkout new branch" do
       it "can create and checkout a branch" do
         nvim.input("new-branch")
-        nvim.keys("bc")
+        nvim.keys("c")
         nvim.keys("master<cr>")
 
         expect(git.current_branch).to eq "new-branch"
@@ -94,7 +119,7 @@ RSpec.describe "Branch Popup", :git, :nvim do
 
       it "replaces spaces with dashes in user input" do
         nvim.input("new branch with spaces")
-        nvim.keys("bc")
+        nvim.keys("c")
         nvim.keys("master<cr>")
 
         expect(git.current_branch).to eq "new-branch-with-spaces"
@@ -104,7 +129,7 @@ RSpec.describe "Branch Popup", :git, :nvim do
         git.branch("new-base-branch").checkout
 
         nvim.input("feature-branch")
-        nvim.keys("bc")
+        nvim.keys("c")
         nvim.keys("master<cr>")
 
         expect(git.current_branch).to eq "feature-branch"
@@ -140,7 +165,29 @@ RSpec.describe "Branch Popup", :git, :nvim do
     end
 
     describe "Configure" do
-      it "Launches the configuration popup"
+      it "Launches the configuration popup" do
+        nvim.keys("C<cr>")
+        expect(nvim.screen[4..19]).to eq(
+          [
+            " Configure branch                                                               ",
+            " d branch.master.description unset                                              ",
+            " u branch.master.merge unset                                                    ",
+            "   branch.master.remote unset                                                   ",
+            " r branch.master.rebase [true|false|pull.rebase:false]                          ",
+            " p branch.master.pushRemote []                                                  ",
+            "                                                                                ",
+            " Configure repository defaults                                                  ",
+            " R pull.rebase [true|false]                                                     ",
+            " P remote.pushDefault []                                                        ",
+            " b neogit.baseBranch unset                                                      ",
+            " A neogit.askSetPushDefault [ask|ask-if-unset|never]                            ",
+            "                                                                                ",
+            " Configure branch creation                                                      ",
+            " a s branch.autoSetupMerge [always|true|false|inherit|simple|default:true]      ",
+            " a r branch.autoSetupRebase [always|local|remote|never|default:never]           "
+          ]
+        )
+      end
     end
 
     describe "Rename" do

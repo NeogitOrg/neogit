@@ -2,7 +2,18 @@
 
 require "spec_helper"
 
-RSpec.describe "Worktree Popup", :git, :nvim do
+RSpec.describe "Worktree Popup", :git, :nvim, :popup do
+  before { nvim.keys("w") }
+
+  let(:view) do
+    [
+      " Worktree        Do                                                             ",
+      " w Checkout      g Goto                                                         ",
+      " W Create        m Move                                                         ",
+      "                 D Delete                                                       "
+    ]
+  end
+
   let(:dir) { "worktree_test_#{SecureRandom.hex(4)}" }
 
   after do # Cleanup worktree dirs
@@ -10,6 +21,8 @@ RSpec.describe "Worktree Popup", :git, :nvim do
       FileUtils.rm_rf(tmpdir)
     end
   end
+
+  %w[w W g m D].each { include_examples "interaction", _1 }
 
   describe "Actions" do
     describe "Checkout" do
@@ -19,7 +32,7 @@ RSpec.describe "Worktree Popup", :git, :nvim do
       end
 
       it "creates a worktree for an existing branch and checks it out", :aggregate_failures do
-        nvim.keys("ww")             # Open popup/action
+        nvim.keys("w")              # Action
         nvim.keys("wor<cr>")        # Select "worktree-test" branch
         nvim.keys("<cr>#{dir}<cr>") # go up level, new folder name
 
@@ -37,7 +50,7 @@ RSpec.describe "Worktree Popup", :git, :nvim do
       it "creates a worktree for a new branch and checks it out", :aggregate_failures do
         nvim.input("create-worktree-test") # Branch name
 
-        nvim.keys("wW")             # Open popup/action
+        nvim.keys("W")              # Action
         nvim.keys("<cr>#{dir}<cr>") # go up level, new folder name
         nvim.keys("mas<cr>")        # Set base branch to 'master'
 

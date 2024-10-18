@@ -103,9 +103,9 @@ function M.editor(target, client, show_diff)
   elseif target:find("MERGE_MSG$") then
     kind = config.values.merge_editor.kind
   elseif target:find("TAG_EDITMSG$") then
-    kind = config.values.tag_editor.kind
+    kind = "popup"
   elseif target:find("EDIT_DESCRIPTION$") then
-    kind = config.values.description_editor.kind
+    kind = "popup"
   elseif target:find("git%-rebase%-todo$") then
     kind = config.values.rebase_editor.kind
   else

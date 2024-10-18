@@ -2,14 +2,19 @@ local M = {}
 
 local api = vim.api
 
-local a = require("plenary.async")
-local status_buffer = require("neogit.buffers.status")
-local git = require("neogit.lib.git")
-local group = require("neogit").autocmd_group
-
 function M.setup()
+  local a = require("plenary.async")
+  local status_buffer = require("neogit.buffers.status")
+  local git = require("neogit.lib.git")
+  local group = require("neogit").autocmd_group
+
   api.nvim_create_autocmd({ "ColorScheme" }, {
-    callback = require("neogit.lib.hl").setup,
+    callback = function()
+      local config = require("neogit.config")
+      local highlight = require("neogit.lib.hl")
+
+      highlight.setup(config.values)
+    end,
     group = group,
   })
 

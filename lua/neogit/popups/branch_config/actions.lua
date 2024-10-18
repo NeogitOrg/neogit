@@ -22,23 +22,6 @@ function M.remotes_for_config()
   return remotes
 end
 
--- Update the text in config to reflect correct value
-function M.update_pull_rebase()
-  return a.void(function(popup, c)
-    local component = popup.buffer.ui:find_component(function(c)
-      return c.tag == "text" and c.value:match("^pull%.rebase:") and c.index == 6
-    end)
-
-    -- stylua: ignore
-    component.value = string.format(
-      "pull.rebase:%s",
-      c.value == "" and c.options[3].display:match("global:(.*)$") or c.value
-    )
-
-    popup.buffer.ui:update()
-  end)
-end
-
 function M.merge_config(branch)
   local fn = function()
     local target = FuzzyFinderBuffer.new(git.refs.list_branches()):open_async { prompt_prefix = "upstream" }
@@ -67,12 +50,14 @@ end
 
 function M.description_config(branch)
   local fn = function()
+    vim.o.eventignore = "WinLeave"
     client.wrap(git.cli.branch.edit_description, {
       autocmd = "NeogitDescriptionComplete",
       msg = {
         success = "Description Updated",
       },
     })
+    vim.o.eventignore = ""
 
     return git.config.get("branch." .. branch .. ".description"):read()
   end

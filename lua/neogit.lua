@@ -69,9 +69,9 @@ function M.setup(opts)
   M.notification = require("neogit.lib.notification")
 
   config.setup(opts)
-  hl.setup()
-  signs.setup()
-  state.setup()
+  hl.setup(config.values)
+  signs.setup(config.values)
+  state.setup(config.values)
   autocmds.setup()
 end
 
@@ -146,7 +146,7 @@ end
 ---@param opts OpenOpts|nil
 function M.open(opts)
   if not did_setup then
-    M.setup({})
+    M.setup {}
   end
 
   opts = construct_opts(opts)

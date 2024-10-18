@@ -330,6 +330,7 @@ The following mappings can all be customized via the setup function.
 
       status = {
         ["q"]     = "Close",
+        ["Q"]     = "Command",
         ["I"]     = "InitRepo",
         ["1"]     = "Depth1",
         ["2"]     = "Depth2",
