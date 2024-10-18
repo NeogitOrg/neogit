@@ -1360,17 +1360,14 @@ M.n_command = function(self)
 
     proc:show_console()
 
-    runner.call(
-      proc,
-      {
-        pty = true,
-        callback = function()
-          if self then
-            self:dispatch_refresh()
-          end
+    runner.call(proc, {
+      pty = true,
+      callback = function()
+        if self then
+          self:dispatch_refresh()
         end
-      }
-    )
+      end,
+    })
   end)
 end
 
