@@ -11,10 +11,9 @@ else
   util.ensure_installed("nvim-lua/plenary.nvim", util.neogit_test_base_dir)
 end
 
-require("plenary.test_harness").test_directory(
-  os.getenv("TEST_FILES") == "" and "tests/specs" or os.getenv("TEST_FILES"),
-  {
-    minimal_init = "tests/minimal_init.lua",
-    sequential = true,
-  }
-)
+local directory = os.getenv("TEST_FILES") == "" and "tests/specs" or os.getenv("TEST_FILES") or "tests/specs"
+
+require("plenary.test_harness").test_directory(directory, {
+  minimal_init = "tests/minimal_init.lua",
+  sequential = true,
+})
