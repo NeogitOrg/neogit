@@ -1051,7 +1051,44 @@ Actions:                                           *neogit_commit_popup_actions*
 ==============================================================================
 Diff Popup                                                   *neogit_diff_popup*
 
-(TODO)
+The diff popup actions allow inspection of changes in the index (staged
+changes), the working tree (unstaged changes and untracked files), any
+ref range.
+
+For these actions to become available, Neogit needs to be configured to enable
+`diffview.nvim` integration. See |neogit_setup_plugin| and
+https://github.com/sindrets/diffview.nvim.
+
+  • Diff this                                                 *neogit_diff_this*
+    Show the diff for the file referred to by a hunk under the cursor.
+
+  • Diff range                                               *neogit_diff_range*
+    View a diff between a specified range of commits. Neogit presents a select
+    for an `A` and a `B` ref and allows specifying the type of range.
+
+    A two-dot range `A..B` shows all of the commits that `B` has that `A`
+    doesn't have. A three-dot range `A...B` shows all of the commits that `A`
+    and `B` have independently, excluding the commits shared by both refs.
+
+
+  • Diff paths                                               *neogit_diff_paths*
+    (Not yet implemented)
+
+  • Diff unstaged                                         *neogit_diff_unstaged*
+    Show the diff for the working tree, without untracked files.
+
+  • Diff staged                                             *neogit_diff_staged*
+    Show the diff for the index.
+
+  • Diff worktree                                         *neogit_diff_worktree*
+    Show the full diff of the working tree, including untracked files.
+
+  • Show commit                                             *neogit_show_commit*
+    Display the diff of the commits within a branch.
+
+  • Show stash                                               *neogit_show_stash*
+    Display the diff of a specific stash.
+
 
 ==============================================================================
 Fetch Popup                                                 *neogit_fetch_popup*
