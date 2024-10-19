@@ -1,0 +1,19 @@
+skip_output:
+  - meta
+pre-push:
+  parallel: true
+  commands:
+    # lua-test:
+    #   run: TEMP_DIR=$TEMP_DIR TEST_FILES=$TEST_FILES GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null NVIM_APPNAME=neogit-test nvim --headless -S "./tests/init.lua"
+    # e2e-test:
+    #   run: CI=1 bundle exec rspec
+    ruby-lint:
+      files: "rg --files"
+      glob: "*.rb"
+      run: bundle exec rubocop {files}
+    lua-lint:
+      run: selene --config selene/config.toml lua
+    lua-format:
+      run: stylua --check ./lua/**/*.lua
+    spelling-lint:
+      run: typos
