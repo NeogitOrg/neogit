@@ -13,9 +13,13 @@ function M.push_interactive(remote, branch, args)
   return git.cli.push.args(remote or "", branch or "").arg_list(args).call { pty = true }
 end
 
----@param branch string
+---@param branch string|nil
 ---@return boolean
 function M.auto_setup_remote(branch)
+  if not branch then
+    return false
+  end
+
   local push_autoSetupRemote = git.config.get("push.autoSetupRemote"):read()
     or git.config.get_global("push.autoSetupRemote"):read()
 
