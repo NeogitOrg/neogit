@@ -4,20 +4,20 @@ pre-push:
   only:
     - ref: master
   files: "rg --files"
-  follow: true
+  parallel: true
   commands:
-    1-rubocop:
+    rubocop:
       glob: "*.rb"
       run: bundle exec rubocop {files}
-    2-selene:
+    selene:
       glob: "{lua,plugin}/**/*.lua"
       run: selene --config selene/config.toml {files}
-    3-stylua:
+    stylua:
       glob: "*.lua"
       run: stylua --check {files}
-    4-typos:
+    typos:
       run: typos {files}
-    5-lua-test:
+    lua-test:
       glob: "tests/specs/**/*_spec.lua"
       run: nvim --headless -S "./tests/init.lua" || echo {files}
       env:
@@ -25,5 +25,5 @@ pre-push:
         - GIT_CONFIG_GLOBAL: /dev/null
         - GIT_CONFIG_SYSTEM: /dev/null
         - NVIM_APPNAME: neogit-test
-    6-rspec:
+    rspec:
       run: bin/specs {files}
