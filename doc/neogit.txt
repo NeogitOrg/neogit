@@ -1552,7 +1552,68 @@ Actions:                                            *neogit_reset_popup_actions*
 ==============================================================================
 Stash Popup                                                 *neogit_stash_popup*
 
-(TODO)
+The stash popup actions will affect the current index (staged changes) and the
+working tree (unstaged changes and untracked files). When the cursor is on a
+stash in the stash list, actions under the "Use" column (pop, apply and drop)
+will affect the stash under the cursor.
+
+Actions:                                            *neogit_stash_popup_actions*
+  • Stash both                                               *neogit_stash_both*
+    Stash both the index and the working tree.
+
+  • Stash index                                             *neogit_stash_index*
+    Stash the index only, excluding unstaged changes and untracked files.
+
+  • Stash worktree                                       *neogit_stash_worktree*
+    (Not yet implemented)
+
+  • Stash keeping index                             *neogit_stash_keeping_index*
+    Stash both the index and the working tree, but still leave behind the
+    index.
+
+  • Stash push                                               *neogit_stash_push*
+    Select a changed file to push it to the stash.
+
+  • Snapshot both                                         *neogit_snapshot_both*
+    (Not yet implemented)
+
+  • Snapshot index                                       *neogit_snapshot_index*
+    (Not yet implemented)
+
+  • Snapshot worktree                                 *neogit_snapshot_worktree*
+    (Not yet implemented)
+
+  • Snapshot to wip ref                             *neogit_snapshot_to_wip_ref*
+    (Not yet implemented)
+
+  • Pop                                                       *neogit_stash_pop*
+    Apply a stash to the working tree. If there are conflicts, leave the stash
+    intact. If there aren't any conflicts, remove the stash from the list.
+
+  • Apply                                                   *neogit_stash_apply*
+    Apply a stash to the working tree without removing it from the stash list.
+
+  • Drop                                                     *neogit_stash_drop*
+    Remove a stash from the stash list.
+
+  • List                                                     *neogit_stash_list*
+    Display the list of all stashes, and show a diff if a stash is selected.
+
+  • Show                                                     *neogit_stash_show*
+    (Not yet implemented)
+
+  • Branch                                                 *neogit_stash_branch*
+    (Not yet implemented)
+
+  • Branch here                                       *neogit_stash_branch_here*
+    (Not yet implemented)
+
+  • Rename                                                 *neogit_stash_rename*
+    Rename an existing stash.
+
+  • Format patch                                     *neogit_stash_format_patch*
+    (Not yet implemented)
+
 
 ==============================================================================
 Ignore Popup                                               *neogit_ignore_popup*
