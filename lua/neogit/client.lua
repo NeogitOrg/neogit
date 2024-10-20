@@ -102,9 +102,7 @@ function M.editor(target, client, show_diff)
     kind = config.values.commit_editor.kind
   elseif target:find("MERGE_MSG$") then
     kind = config.values.merge_editor.kind
-  elseif target:find("TAG_EDITMSG$") then
-    kind = "popup"
-  elseif target:find("EDIT_DESCRIPTION$") then
+  elseif target:find("TAG_EDITMSG$") or target:find("EDIT_DESCRIPTION$") then
     kind = "popup"
   elseif target:find("git%-rebase%-todo$") then
     kind = config.values.rebase_editor.kind

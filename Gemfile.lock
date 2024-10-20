@@ -43,6 +43,7 @@ GEM
       reline (>= 0.4.2)
     json (2.7.2)
     language_server-protocol (3.17.0.3)
+    lefthook (1.7.22)
     logger (1.6.0)
     minitest (5.25.1)
     msgpack (1.7.2)
@@ -134,6 +135,7 @@ DEPENDENCIES
   debug
   fuubar
   git
+  lefthook (~> 1.7)
   neovim
   pastel
   quickfix_formatter

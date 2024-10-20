@@ -18,3 +18,5 @@ gem "rubocop-performance"
 gem "rubocop-rspec"
 gem "super_diff"
 gem "tmpdir"
+
+gem "lefthook", "~> 1.7"

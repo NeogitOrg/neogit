@@ -16,12 +16,8 @@ local Path = require("plenary.path")
 ---@field ui Ui
 ---@field kind string
 ---@field name string
----@field disable_line_numbers boolean
----@field disable_relative_line_numbers boolean
 local Buffer = {
   kind = "split",
-  disable_line_numbers = true,
-  disable_relative_line_numbers = true,
 }
 Buffer.__index = Buffer
 
@@ -354,20 +350,11 @@ function Buffer:show()
     win = content_window
   end
 
-  api.nvim_win_call(win, function()
-    if self.disable_line_numbers then
-      vim.cmd("setlocal nonu")
-    end
-
-    if self.disable_relative_line_numbers then
-      vim.cmd("setlocal nornu")
-    end
-  end)
-
   -- Workaround UFO getting folds wrong.
-  local ufo, _ = pcall(require, "ufo")
-  if ufo then
-    require("ufo").detach(self.handle)
+  local ok, ufo = pcall(require, "ufo")
+  if ok and type(ufo.detach) == "function" then
+    logger.debug("[BUFFER:" .. self.handle .. "] Disabling UFO for buffer")
+    ufo.detach(self.handle)
   end
 
   self.win_handle = win
@@ -622,9 +609,6 @@ function Buffer.create(config)
 
   buffer.name = config.name
   buffer.kind = config.kind or "split"
-  buffer.disable_line_numbers = (config.disable_line_numbers == nil) or config.disable_line_numbers
-  buffer.disable_relative_line_numbers = (config.disable_relative_line_numbers == nil)
-    or config.disable_relative_line_numbers
 
   if config.load then
     logger.debug("[BUFFER:" .. buffer.handle .. "] Loading content from file: " .. config.name)
@@ -705,6 +689,14 @@ function Buffer.create(config)
       vim.opt_local.winhl:append("CursorLineNr:NeogitCursorLineNr")
       vim.opt_local.fillchars:append("fold: ")
     end)
+
+    if (config.disable_line_numbers == nil) or config.disable_line_numbers then
+      buffer:set_window_option("number", false)
+    end
+
+    if (config.disable_relative_line_numbers == nil) or config.disable_relative_line_numbers then
+      buffer:set_window_option("relativenumber", false)
+    end
 
     buffer:set_window_option("spell", config.spell_check or false)
     buffer:set_window_option("wrap", false)
