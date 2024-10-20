@@ -46,11 +46,11 @@ RSpec.describe "Branch Config Popup", :git, :nvim, :popup do
       end
     end
 
-    describe "rebase" do
-    end
+    # describe "rebase" do
+    # end
 
-    describe "pullRemote" do
-    end
+    # describe "pullRemote" do
+    # end
   end
 
   describe "Actions" do
@@ -67,21 +67,21 @@ RSpec.describe "Branch Config Popup", :git, :nvim, :popup do
       end
     end
 
-    describe "remote.pushDefault" do
-    end
+    # describe "remote.pushDefault" do
+    # end
 
-    describe "neogit.baseBranch" do
-    end
+    # describe "neogit.baseBranch" do
+    # end
 
-    describe "neogit.askSetPushDefault" do
-    end
+    # describe "neogit.askSetPushDefault" do
+    # end
   end
 
-  describe "Branch creation" do
-    describe "autoSetupMerge" do
-    end
-
-    describe "autoSetupRebase" do
-    end
-  end
+  # describe "Branch creation" do
+  #   describe "autoSetupMerge" do
+  #   end
+  #
+  #   describe "autoSetupRebase" do
+  #   end
+  # end
 end

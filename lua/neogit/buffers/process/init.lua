@@ -72,7 +72,7 @@ end
 
 function M:append(data)
   self.lines = self.lines + 1
-  if self.lines > 300 then
+  if self.lines > 1000 then
     if not self.truncated then
       self.content = table.concat({ self.content, "\r\n[Output too long - Truncated]" }, "\r\n")
       self.truncated = true

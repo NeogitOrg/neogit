@@ -13,6 +13,27 @@ function M.push_interactive(remote, branch, args)
   return git.cli.push.args(remote or "", branch or "").arg_list(args).call { pty = true }
 end
 
+---@param branch string|nil
+---@return boolean
+function M.auto_setup_remote(branch)
+  if not branch then
+    return false
+  end
+
+  local push_autoSetupRemote = git.config.get("push.autoSetupRemote"):read()
+    or git.config.get_global("push.autoSetupRemote"):read()
+
+  local push_default = git.config.get("push.default"):read() or git.config.get_global("push.default"):read()
+
+  local branch_remote = git.config.get("branch." .. branch .. ".remote"):read()
+
+  return (
+    push_autoSetupRemote
+    and (push_default == "current" or push_default == "simple" or push_default == "upstream")
+    and not branch_remote
+  ) == true
+end
+
 local function update_unmerged(state)
   local status = git.branch.status()
 

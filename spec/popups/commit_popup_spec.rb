@@ -149,19 +149,19 @@ RSpec.describe "Commit Popup", :git, :nvim, :popup do
       end
     end
 
-    describe "Fixup" do
-    end
+    # describe "Fixup" do
+    # end
 
-    describe "Squash" do
-    end
+    # describe "Squash" do
+    # end
 
-    describe "Augment" do
-    end
+    # describe "Augment" do
+    # end
 
-    describe "Instant Fixup" do
-    end
+    # describe "Instant Fixup" do
+    # end
 
-    describe "Instant Squash" do
-    end
+    # describe "Instant Squash" do
+    # end
   end
 end

@@ -19,6 +19,7 @@ RSpec.describe "Log Popup", :git, :nvim, :popup do # rubocop:disable RSpec/Empty
       " -u Limit to commits until (--until=)                                           ",
       " =m Omit merges (--no-merges)                                                   ",
       " =p First parent (--first-parent)                                               ",
+      " -i Invert search messages (--invert-grep)                                      ",
       "                                                                                ",
       " History Simplification                                                         ",
       " -D Simplify by decoration (--simplify-by-decoration)                           ",

@@ -11,7 +11,7 @@ local M = {}
 local function push_to(args, remote, branch, opts)
   opts = opts or {}
 
-  if opts.set_upstream then
+  if opts.set_upstream or git.push.auto_setup_remote(branch) then
     table.insert(args, "--set-upstream")
   end
 
