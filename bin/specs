@@ -11,11 +11,72 @@ gemfile do
   gem "debug"
 end
 
+require "async"
+require "async/barrier"
+require "async/semaphore"
+
 COLOR = Pastel.new
 def now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 
-tests = Dir["spec/**/*_spec.rb"]
-length = tests.max_by(&:size).size
+class Runner # rubocop:disable Style/Documentation
+  def initialize(test, spinner, length)
+    @test    = test
+    @spinner = spinner
+    @length  = length
+    @title   = test.gsub("spec/", "")
+  end
+
+  def register
+    spinner.update(test: title, padding: " " * (length - test.length))
+    spinner.auto_spin
+    self
+  end
+
+  def call(results, failures)
+    start!
+    output, wait = run
+    results[test] = JSON.parse(output)
+
+    time = results[test].dig("summary", "duration").round(3)
+
+    if wait.value.success?
+      register_success!(time)
+    else
+      failures << test
+      register_failure!(time)
+    end
+  end
+
+  private
+
+  attr_reader :title, :spinner, :test, :length
+
+  def start!
+    spinner.update(test: COLOR.blue(title))
+  end
+
+  def run
+    stdin, stdout, wait = Open3.popen2({ "CI" => "1" }, "bundle exec rspec #{test} --format json --order random")
+    stdin.close
+    output = stdout.read.lines.last
+    stdout.close
+
+    [output, wait]
+  end
+
+  def register_success!(time)
+    spinner.update(test: COLOR.green(title))
+    spinner.success(COLOR.green(time))
+  end
+
+  def register_failure!(time)
+    spinner.update(test: COLOR.red(title))
+    spinner.error(COLOR.red(time))
+  end
+end
+
+tests    = Dir["spec/**/*_spec.rb"]
+length   = tests.max_by(&:size).size
 spinners = TTY::Spinner::Multi.new(
   COLOR.blue(":spinner Running #{tests.size} specs"),
   format: :bouncing_ball,
@@ -27,37 +88,22 @@ failures = []
 
 start = now
 
-Sync do |parent| # rubocop:disable Metrics/BlockLength
-  tests.map do |test|
-    parent.async do
-      spinner = spinners.register(
-        ":test:padding\t",
-        success_mark: COLOR.green.bold("+"),
-        error_mark: COLOR.red.bold("x")
-      )
+barrier = Async::Barrier.new
+Sync do
+  semaphore = Async::Semaphore.new(Etc.nprocessors - 2, parent: barrier)
 
-      title = test.gsub("spec/", "")
-      spinner.update(test: title, padding: " " * (length - test.length))
-      spinner.auto_spin
+  runners = tests.map do |test|
+    spinner = spinners.register(
+      ":test:padding\t",
+      success_mark: COLOR.green.bold("+"),
+      error_mark: COLOR.red.bold("x")
+    )
 
-      stdin, stdout, wait = Open3.popen2({ "CI" => "1" }, "bundle exec rspec #{test} --format json --order random")
-      stdin.close
+    Runner.new(test, spinner, length).register
+  end
 
-      output = stdout.read.lines.last
-      results[test] = JSON.parse(output)
-      stdout.close
-
-      time = results[test].dig("summary", "duration").round(3)
-
-      if wait.value.success?
-        spinner.update(test: COLOR.green(title))
-        spinner.success(COLOR.green(time))
-      else
-        failures << test
-        spinner.update(test: COLOR.red(title))
-        spinner.error(COLOR.red(time))
-      end
-    end
+  runners.map do |runner|
+    semaphore.async { runner.call(results, failures) }
   end.map(&:wait)
 end
 
