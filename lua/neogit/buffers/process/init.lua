@@ -3,13 +3,14 @@ local config = require("neogit.config")
 local status_maps = require("neogit.config").get_reversed_status_maps()
 
 ---@class ProcessBuffer
----@field lines integer
+---@field content string[]
 ---@field truncated boolean
 ---@field buffer Buffer
 ---@field open fun(self)
 ---@field hide fun(self)
 ---@field close fun(self)
 ---@field focus fun(self)
+---@field flush_content fun(self)
 ---@field show fun(self)
 ---@field is_visible fun(self): boolean
 ---@field append fun(self, data: string)
@@ -23,10 +24,9 @@ M.__index = M
 ---@param process ProcessOpts
 function M:new(process)
   local instance = {
-    content = string.format("> %s\r\n", table.concat(process.cmd, " ")),
+    content = { string.format("> %s\r\n", table.concat(process.cmd, " ")) },
     process = process,
     buffer = nil,
-    lines = 0,
     truncated = false,
   }
 
@@ -58,37 +58,28 @@ function M:show()
   end
 
   self.buffer:show()
-  self:refresh()
+  self:flush_content()
 end
 
 function M:is_visible()
   return self.buffer and self.buffer:is_valid() and self.buffer:is_visible()
 end
 
-function M:refresh()
-  self.buffer:chan_send(self.content)
-  self.buffer:move_cursor(self.buffer:line_count())
-end
-
 function M:append(data)
-  self.lines = self.lines + 1
-  if self.lines > 1000 then
-    if not self.truncated then
-      self.content = table.concat({ self.content, "\r\n[Output too long - Truncated]" }, "\r\n")
-      self.truncated = true
-
-      if self:is_visible() then
-        self:refresh()
-      end
-    end
-
-    return
-  end
-
-  self.content = table.concat({ self.content, data }, "\r\n")
+  assert(data, "no data to append")
 
   if self:is_visible() then
-    self:refresh()
+    self:flush_content()
+    self.buffer:chan_send(data)
+  else
+    table.insert(self.content, data)
+  end
+end
+
+function M:flush_content()
+  if #self.content > 0 then
+    self.buffer:chan_send(table.concat(self.content, "\r\n"))
+    self.content = {}
   end
 end
 
@@ -112,6 +103,7 @@ function M:open()
     buftype = false,
     kind = config.values.preview_buffer.kind,
     on_detach = function()
+      self.buffer:close_terminal_channel()
       self.buffer = nil
     end,
     autocmds = {
@@ -130,6 +122,8 @@ function M:open()
       },
     },
   }
+
+  self.buffer:open_terminal_channel()
 
   return self
 end

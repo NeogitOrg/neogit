@@ -502,7 +502,27 @@ function Buffer:win_call(f, ...)
 end
 
 function Buffer:chan_send(data)
-  api.nvim_chan_send(api.nvim_open_term(self.handle, {}), data)
+  assert(self.chan, "Terminal channel not open")
+  assert(data, "data cannot be nil")
+  api.nvim_chan_send(self.chan, data .. "\r\n")
+end
+
+function Buffer:open_terminal_channel()
+  assert(self.chan == nil, "Terminal channel already open")
+
+  self.chan = api.nvim_open_term(self.handle, {})
+  assert(self.chan > 0, "Failed to open terminal channel")
+
+  self:unlock()
+  self:set_lines(0, -1, false, {})
+  self:lock()
+end
+
+function Buffer:close_terminal_channel()
+  assert(self.chan, "No terminal channel to close")
+
+  fn.chanclose(self.chan)
+  self.chan = nil
 end
 
 function Buffer:win_exec(cmd)
