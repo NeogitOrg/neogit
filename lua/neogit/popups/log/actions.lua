@@ -142,7 +142,7 @@ function M.limit_to_files()
     end
 
     vim.o.eventignore = "WinLeave"
-    local files = FuzzyFinderBuffer.new(git.files.all_tree({ with_dir = true })):open_async {
+    local files = FuzzyFinderBuffer.new(git.files.all_tree { with_dir = true }):open_async {
       allow_multi = true,
       refocus_status = false,
     }

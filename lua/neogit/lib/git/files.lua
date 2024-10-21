@@ -1,4 +1,6 @@
 local git = require("neogit.lib.git")
+local util = require("neogit.lib.util")
+local Path = require("plenary.path")
 
 ---@class NeogitGitFiles
 local M = {}
@@ -15,8 +17,25 @@ function M.untracked()
   return git.cli["ls-files"].others.exclude_standard.call({ hidden = true }).stdout
 end
 
-function M.all_tree()
-  return git.cli["ls-tree"].full_tree.name_only.recursive.args("HEAD").call({ hidden = true }).stdout
+---@param opts { with_dir: boolean }
+---@return string[]
+function M.all_tree(opts)
+  opts = opts or {}
+  local files = git.cli["ls-tree"].full_tree.name_only.recursive.args("HEAD").call({ hidden = true }).stdout
+
+  if opts.with_dir then
+    local dirs = {}
+
+    for _, path in ipairs(files) do
+      local dir = vim.fs.dirname(path) .. Path.path.sep
+      dirs[dir] = true
+    end
+
+    files = util.merge(files, vim.tbl_keys(dirs))
+    table.sort(files)
+  end
+
+  return files
 end
 
 ---@return string[]
