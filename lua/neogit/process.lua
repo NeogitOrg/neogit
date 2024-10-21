@@ -266,6 +266,8 @@ function Process:spawn(cb)
     if self.on_partial_line then
       self:on_partial_line(line)
     end
+
+    self.buffer:append_partial(line)
   end
 
   local stdout_on_line = function(line)

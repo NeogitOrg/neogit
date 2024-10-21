@@ -13,7 +13,8 @@ local status_maps = require("neogit.config").get_reversed_status_maps()
 ---@field flush_content fun(self)
 ---@field show fun(self)
 ---@field is_visible fun(self): boolean
----@field append fun(self, data: string)
+---@field append fun(self, data: string) Appends a complete line to the buffer
+---@field append_partial fun(self, data: string) Appends a partial line - for things like spinners.
 ---@field new fun(self, table): ProcessBuffer
 ---@see Buffer
 ---@see Ui
@@ -70,15 +71,23 @@ function M:append(data)
 
   if self:is_visible() then
     self:flush_content()
-    self.buffer:chan_send(data)
+    self.buffer:chan_send(data .. "\r\n")
   else
     table.insert(self.content, data)
   end
 end
 
+function M:append_partial(data)
+  assert(data, "no data to append")
+
+  if self:is_visible() then
+    self.buffer:chan_send(data)
+  end
+end
+
 function M:flush_content()
   if #self.content > 0 then
-    self.buffer:chan_send(table.concat(self.content, "\r\n"))
+    self.buffer:chan_send(table.concat(self.content, "\r\n") .. "\r\n")
     self.content = {}
   end
 end

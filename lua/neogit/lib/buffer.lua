@@ -504,7 +504,7 @@ end
 function Buffer:chan_send(data)
   assert(self.chan, "Terminal channel not open")
   assert(data, "data cannot be nil")
-  api.nvim_chan_send(self.chan, data .. "\r\n")
+  api.nvim_chan_send(self.chan, data)
 end
 
 function Buffer:open_terminal_channel()
