@@ -269,85 +269,95 @@ function Buffer:show()
     end
   end
 
-  local win
-  local kind = self.kind
+  ---@return integer window handle
+  local function open()
+    local win
+    if self.kind == "replace" then
+      self.old_buf = api.nvim_get_current_buf()
+      api.nvim_set_current_buf(self.handle)
+      win = api.nvim_get_current_win()
+    elseif self.kind == "tab" then
+      vim.cmd("tab sb " .. self.handle)
+      win = api.nvim_get_current_win()
+    elseif self.kind == "split" or self.kind == "split_below" then
+      win = api.nvim_open_win(self.handle, true, { split = "below" })
+    elseif self.kind == "split_above" then
+      win = api.nvim_open_win(self.handle, true, { split = "above" })
+    elseif self.kind == "split_above_all" then
+      win = api.nvim_open_win(self.handle, true, { split = "above", win = -1 })
+    elseif self.kind == "split_below_all" then
+      win = api.nvim_open_win(self.handle, true, { split = "below", win = -1 })
+    elseif self.kind == "vsplit" then
+      win = api.nvim_open_win(self.handle, true, { split = "right", vertical = true })
+    elseif self.kind == "vsplit_left" then
+      win = api.nvim_open_win(self.handle, true, { split = "left", vertical = true })
+    elseif self.kind == "floating" then
+      -- Creates the border window
+      local vim_height = vim.o.lines
+      local vim_width = vim.o.columns
 
-  if kind == "replace" then
-    self.old_buf = api.nvim_get_current_buf()
-    api.nvim_set_current_buf(self.handle)
-    win = api.nvim_get_current_win()
-  elseif kind == "tab" then
-    vim.cmd("tab sb " .. self.handle)
-    win = api.nvim_get_current_win()
-  elseif kind == "split" or kind == "split_below" then
-    win = api.nvim_open_win(self.handle, true, { split = "below" })
-  elseif kind == "split_above" then
-    win = api.nvim_open_win(self.handle, true, { split = "above" })
-  elseif kind == "split_above_all" then
-    win = api.nvim_open_win(self.handle, true, { split = "above", win = -1 })
-  elseif kind == "split_below_all" then
-    win = api.nvim_open_win(self.handle, true, { split = "below", win = -1 })
-  elseif kind == "vsplit" then
-    win = api.nvim_open_win(self.handle, true, { split = "right", vertical = true })
-  elseif kind == "vsplit_left" then
-    win = api.nvim_open_win(self.handle, true, { split = "left", vertical = true })
-  elseif kind == "floating" then
-    -- Creates the border window
-    local vim_height = vim.o.lines
-    local vim_width = vim.o.columns
+      local width = math.floor(vim_width * 0.8) + 3
+      local height = math.floor(vim_height * 0.7)
+      local col = vim_width * 0.1 - 1
+      local row = vim_height * 0.15
 
-    local width = math.floor(vim_width * 0.8) + 3
-    local height = math.floor(vim_height * 0.7)
-    local col = vim_width * 0.1 - 1
-    local row = vim_height * 0.15
+      local content_window = api.nvim_open_win(self.handle, true, {
+        relative = "editor",
+        width = width,
+        height = height,
+        col = col,
+        row = row,
+        style = "minimal",
+        focusable = false,
+        border = "rounded",
+      })
 
-    local content_window = api.nvim_open_win(self.handle, true, {
-      relative = "editor",
-      width = width,
-      height = height,
-      col = col,
-      row = row,
-      style = "minimal",
-      focusable = false,
-      border = "rounded",
-    })
+      api.nvim_win_set_cursor(content_window, { 1, 0 })
+      win = content_window
+    elseif self.kind == "floating_console" then
+      local content_window = api.nvim_open_win(self.handle, true, {
+        anchor = "SW",
+        relative = "editor",
+        width = vim.o.columns,
+        height = math.floor(vim.o.lines * 0.3),
+        col = 0,
+        row = vim.o.lines - 2,
+        style = "minimal",
+        focusable = false,
+        border = { "─", "─", "─", "", "", "", "", "" },
+        title = " Git Console ",
+      })
 
-    api.nvim_win_set_cursor(content_window, { 1, 0 })
-    win = content_window
-  elseif kind == "floating_console" then
-    local content_window = api.nvim_open_win(self.handle, true, {
-      anchor = "SW",
-      relative = "editor",
-      width = vim.o.columns,
-      height = math.floor(vim.o.lines * 0.3),
-      col = 0,
-      row = vim.o.lines - 2,
-      style = "minimal",
-      focusable = false,
-      border = { "─", "─", "─", "", "", "", "", "" },
-      title = " Git Console ",
-    })
+      api.nvim_win_set_cursor(content_window, { 1, 0 })
+      win = content_window
+    elseif self.kind == "popup" then
+      -- local title, _ = self.name:gsub("^Neogit", ""):gsub("Popup$", "")
 
-    api.nvim_win_set_cursor(content_window, { 1, 0 })
-    win = content_window
-  elseif kind == "popup" then
-    -- local title, _ = self.name:gsub("^Neogit", ""):gsub("Popup$", "")
+      local content_window = api.nvim_open_win(self.handle, true, {
+        anchor = "SW",
+        relative = "editor",
+        width = vim.o.columns,
+        height = math.floor(vim.o.lines * 0.3),
+        col = 0,
+        row = vim.o.lines - 2,
+        style = "minimal",
+        border = { "─", "─", "─", "", "", "", "", "" },
+        -- title = (" %s Actions "):format(title),
+        -- title_pos = "center",
+      })
 
-    local content_window = api.nvim_open_win(self.handle, true, {
-      anchor = "SW",
-      relative = "editor",
-      width = vim.o.columns,
-      height = math.floor(vim.o.lines * 0.3),
-      col = 0,
-      row = vim.o.lines - 2,
-      style = "minimal",
-      border = { "─", "─", "─", "", "", "", "", "" },
-      -- title = (" %s Actions "):format(title),
-      -- title_pos = "center",
-    })
+      api.nvim_win_set_cursor(content_window, { 1, 0 })
+      win = content_window
+    end
 
-    api.nvim_win_set_cursor(content_window, { 1, 0 })
-    win = content_window
+    return win
+  end
+
+  -- With focus on a popup window, any kind of "split" buffer will crash. Floating windows cannot be split.
+  local ok, win = pcall(open)
+  if not ok then
+    self.kind = "floating"
+    win = open()
   end
 
   -- Workaround UFO getting folds wrong.
@@ -638,7 +648,7 @@ function Buffer.create(config)
   local win
   if config.open ~= false then
     win = buffer:show()
-    logger.debug("[BUFFER:" .. buffer.handle .. "] Showing buffer in window " .. win)
+    logger.debug("[BUFFER:" .. buffer.handle .. "] Showing buffer in window " .. win .. " as " .. buffer.kind)
   end
 
   logger.debug("[BUFFER:" .. buffer.handle .. "] Setting buffer options")
