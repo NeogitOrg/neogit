@@ -97,6 +97,7 @@ function M:open(kind)
     context_highlight = not config.values.disable_context_highlighting,
     kind = kind or config.values.kind or "tab",
     disable_line_numbers = config.values.disable_line_numbers,
+    disable_relative_line_numbers = config.values.disable_relative_line_numbers,
     foldmarkers = not config.values.disable_signs,
     on_detach = function()
       Watcher.instance(self.root):unregister(self)
