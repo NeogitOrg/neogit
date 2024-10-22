@@ -87,11 +87,13 @@ end
 ---@param view table output of Buffer:save_view()
 ---@param cursor? number
 function Buffer:restore_view(view, cursor)
-  if cursor then
-    view.lnum = math.min(fn.line("$"), cursor)
-  end
+  self:win_call(function()
+    if cursor then
+      view.lnum = math.min(fn.line("$"), cursor)
+    end
 
-  fn.winrestview(view)
+    fn.winrestview(view)
+  end)
 end
 
 function Buffer:write()
