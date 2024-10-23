@@ -13,7 +13,8 @@ def ensure_installed(name, build: nil)
   return if Dir.exist?(dir) && !Dir.empty?(dir)
 
   puts "Downloading dependency #{name} to #{dir}"
-  `git -c core.compression=0 clone ssh://git@github.com:#{name}.git #{dir}`
+  Dir.mkdir(dir)
+  Git.clone("git@github.com:#{name}.git", dir, filter: "tree:0")
   return unless build.present?
 
   puts "Building #{name} via #{build}"
