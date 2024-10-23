@@ -8,7 +8,7 @@ require "active_support/all"
 
 ENV["GIT_CONFIG_GLOBAL"] = ""
 
-PROJECT_DIR = File.expand_path(File.join(__dir__, ".."))
+PROJECT_DIR = File.expand_path(File.join(__dir__, "..")) unless defined?(PROJECT_DIR)
 
 Dir[File.join(File.expand_path("."), "spec", "support", "**", "*.rb")].each { |f| require f }
 
