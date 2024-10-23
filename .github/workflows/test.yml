@@ -28,13 +28,6 @@ jobs:
           neovim: true
           version: ${{ matrix.release }}
 
-      - name: Install Dependencies
-        run: |
-          git config --global core.compression 0
-          git clone https://github.com/nvim-lua/plenary.nvim tmp/plenary
-          git clone https://github.com/nvim-telescope/telescope.nvim tmp/telescope
-          git clone https://github.com/sindrets/diffview.nvim tmp/diffview
-
       - name: E2E Test
         run: |
           bundle exec rspec
