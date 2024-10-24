@@ -4,20 +4,6 @@ local git = require("neogit.lib.git")
 ---@class NeogitGitReset
 local M = {}
 
-local function timestamp()
-  local now = os.date("!*t")
-  return string.format("%s-%s-%sT%s.%s.%s", now.year, now.month, now.day, now.hour, now.min, now.sec)
-end
-
--- https://gist.github.com/chx/3a694c2a077451e3d446f85546bb9278
--- Capture state of index prior to reset
-local function backup_index()
-  git.cli.add.update.call { hidden = true, await = true }
-  git.cli.commit.message("Hard reset backup").call { hidden = true, await = true, pty = true }
-  git.cli["update-ref"].args("refs/reset-backups/" .. timestamp(), "HEAD").call { hidden = true, await = true }
-  git.cli.reset.hard.args("HEAD~1").call { hidden = true, await = true }
-end
-
 local function fire_reset_event(data)
   vim.api.nvim_exec_autocmds("User", { pattern = "NeogitReset", modeline = false, data = data })
 end
@@ -43,7 +29,7 @@ function M.soft(commit)
 end
 
 function M.hard(commit)
-  backup_index()
+  git.index.create_backup()
 
   local result = git.cli.reset.hard.args(commit).call { await = true }
   if result.code ~= 0 then
