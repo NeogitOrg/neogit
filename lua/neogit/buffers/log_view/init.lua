@@ -252,7 +252,7 @@ function M:open()
           local permit = self.refresh_lock:acquire()
 
           self.commits = util.merge(self.commits, self.fetch_func(self:commit_count()))
-          self.buffer.ui:render(unpack(ui.View(self.commits, self.internal_args)))
+          self.buffer.ui:render(unpack(ui.View(self.commits, self.remotes, self.internal_args)))
 
           permit:forget()
         end),
