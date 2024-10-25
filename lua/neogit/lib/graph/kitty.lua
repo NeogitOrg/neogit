@@ -255,9 +255,9 @@ local function resolve_bi_crossing(prev_commit_row, prev_connector_row, commit_r
   --   B         A              ⓚ         │
   --   a         A              ⓶─────────╯
   --   A                        ⓚ
-  local prev_prev_row = prev_connector_row   -- graph[#graph - 2]
+  local prev_prev_row = prev_connector_row -- graph[#graph - 2]
   local prev_prev_prev_row = prev_commit_row -- graph[#graph - 3]
-  assert(prev_prev_row and prev_prev_prev_row)
+  assert(prev_prev_row and prev_prev_prev_row, "assertion failed")
   do
     local start_voiding = false
     local ctr = 0
@@ -335,46 +335,46 @@ end
 ---@field start integer
 ---@field stop integer
 
-local sym               = {
-  merge_commit     = "",
-  commit           = "",
+local sym = {
+  merge_commit = "",
+  commit = "",
   merge_commit_end = "",
-  commit_end       = "",
-  GVER             = "",
-  GHOR             = "",
-  GCLD             = "",
-  GCRD             = "╭",
-  GCLU             = "",
-  GCRU             = "",
-  GLRU             = "",
-  GLRD             = "",
-  GLUD             = "",
-  GRUD             = "",
-  GFORKU           = "",
-  GFORKD           = "",
-  GRUDCD           = "",
-  GRUDCU           = "",
-  GLUDCD           = "",
-  GLUDCU           = "",
-  GLRDCL           = "",
-  GLRDCR           = "",
-  GLRUCL           = "",
-  GLRUCR           = "",
+  commit_end = "",
+  GVER = "",
+  GHOR = "",
+  GCLD = "",
+  GCRD = "╭",
+  GCLU = "",
+  GCRU = "",
+  GLRU = "",
+  GLRD = "",
+  GLUD = "",
+  GRUD = "",
+  GFORKU = "",
+  GFORKD = "",
+  GRUDCD = "",
+  GRUDCU = "",
+  GLUDCD = "",
+  GLUDCU = "",
+  GLRDCL = "",
+  GLRDCR = "",
+  GLRUCL = "",
+  GLRUCR = "",
 }
 
-local BRANCH_COLORS     = {
+local BRANCH_COLORS = {
   "Red",
   "Yellow",
   "Green",
   "Cyan",
   "Blue",
   "Purple",
-  "Orange"
+  "Orange",
 }
 
 local NUM_BRANCH_COLORS = #BRANCH_COLORS
 
-local util              = require("neogit.lib.util")
+local util = require("neogit.lib.util")
 
 ---@param commits CommitLogEntry[]
 ---@param color boolean?
@@ -401,7 +401,7 @@ function M.build(commits, color)
   local GLRDCL = sym.GLRDCL
   local GLRDCR = sym.GLRDCR
   local GLRUCL = sym.GLRUCL
-  local GLRUCR = sym.GLRUCR
+  -- local GLRUCR = sym.GLRUCR
 
   local GRCM = sym.commit
   local GMCM = sym.merge_commit
@@ -416,7 +416,7 @@ function M.build(commits, color)
         tags = {},
         author_date = item.author_date,
         hash = item.oid,
-        parents = vim.split(item.parent, " ")
+        parents = vim.split(item.parent, " "),
       }
     end
   end)
@@ -475,9 +475,10 @@ function M.build(commits, color)
     local new_cells = {}
     for _, cell in ipairs(cells) do
       if cell.connector then
-        new_cells[#new_cells + 1] = { connector = " " }
+        -- new_cells[#new_cells + 1] = { connector = " " }
+        new_cells[#new_cells + 1] = { connector = cell.connector }
       elseif cell.commit then
-        assert(cell.commit)
+        assert(cell.commit, "assertion failed")
         new_cells[#new_cells + 1] = { commit = cell.commit }
       else
         new_cells[#new_cells + 1] = { connector = " " }
@@ -622,7 +623,7 @@ function M.build(commits, color)
 
       -- add parents
       if next_p_idx then
-        assert(tracker)
+        assert(tracker, "assertion failed")
         -- if next commit is our parent then we do some complex logic
         if #curr_commit.parents == 1 then
           -- simply place parent at our location
@@ -671,20 +672,11 @@ function M.build(commits, color)
       local connector_row = { cells = connector_cells } ---@type I.Row
 
       -- handle bi-connector rows
-      local is_bi_crossing, bi_crossing_safely_resolveable = get_is_bi_crossing(
-        commit_row,
-        connector_row,
-        next_commit
-      )
+      local is_bi_crossing, bi_crossing_safely_resolveable =
+        get_is_bi_crossing(commit_row, connector_row, next_commit)
 
       if is_bi_crossing and bi_crossing_safely_resolveable and next_commit then
-        resolve_bi_crossing(
-          prev_commit_row,
-          prev_connector_row,
-          commit_row,
-          connector_row,
-          next_commit
-        )
+        resolve_bi_crossing(prev_commit_row, prev_connector_row, commit_row, connector_row, next_commit)
       end
 
       return connector_row
@@ -758,7 +750,7 @@ function M.build(commits, color)
     ---@param cell I.Cell
     ---@return string
     local function commit_cell_symb(cell)
-      assert(cell.is_commit)
+      assert(cell.is_commit, "assertion failed")
 
       if #cell.commit.parents > 1 then
         -- merge commit
@@ -778,7 +770,7 @@ function M.build(commits, color)
         if cell.connector then
           cell.symbol = cell.connector -- TODO: connector and symbol should not be duplicating data?
         else
-          assert(cell.commit)
+          assert(cell.commit, "assertion failed")
           cell.symbol = commit_cell_symb(cell)
         end
         row_strs[#row_strs + 1] = cell.symbol
@@ -809,7 +801,7 @@ function M.build(commits, color)
             hg = hg,
             row = row_idx,
             start = start,
-            stop = stop
+            stop = stop,
           }
         elseif cell.symbol == GHOR then
           -- take color from first right cell that attaches to this connector
@@ -833,12 +825,13 @@ function M.build(commits, color)
             }
 
             if rcell.commit and vim.tbl_contains(continuations, rcell.symbol) then
-              local hg = (cell.emphasis and "Bold" or "") .. BRANCH_COLORS[(rcell.commit.j % NUM_BRANCH_COLORS + 1)]
+              local hg = (cell.emphasis and "Bold" or "")
+                .. BRANCH_COLORS[(rcell.commit.j % NUM_BRANCH_COLORS + 1)]
               row_hls[#row_hls + 1] = {
                 hg = hg,
                 row = row_idx,
                 start = start,
-                stop = stop
+                stop = stop,
               }
 
               break
@@ -873,7 +866,7 @@ function M.build(commits, color)
         add_to_row(row_to_str(proper_row))
       else
         local c = graph[idx - 1].commit
-        assert(c)
+        assert(c, "assertion failed")
 
         local row = row_to_str(proper_row)
         local valid = false
@@ -885,7 +878,7 @@ function M.build(commits, color)
         end
 
         if valid then
-          add_to_row("")      -- Connection Row
+          add_to_row("") -- Connection Row
         else
           add_to_row("strip") -- Useless Connection Row
         end
@@ -983,7 +976,7 @@ function M.build(commits, color)
     do
       -- we expect number of rows to be odd always !! since the last
       -- row is a commit row without a connector row following it
-      assert(#graph % 2 == 1)
+      assert(#graph % 2 == 1, "assertion failed")
       local last_row = graph[#graph]
       for j = 1, #last_row.cells, 2 do
         local cell = last_row.cells[j]
@@ -1002,7 +995,7 @@ function M.build(commits, color)
       local this = graph[i].cells[j]
       local below = graph[i + 1].cells[j]
       if not this.connector and (not below or below.connector == " ") then
-        assert(this.commit)
+        assert(this.commit, "assertion failed")
         stopped[#stopped + 1] = j
       end
     end
@@ -1082,14 +1075,14 @@ function M.build(commits, color)
     -- two neighbors (no straights)
     -- - 8421
     [10] = GCLU, -- '1010'
-    [9] = GCLD,  -- '1001'
-    [6] = GCRU,  -- '0110'
-    [5] = GCRD,  -- '0101'
+    [9] = GCLD, -- '1001'
+    [6] = GCRU, -- '0110'
+    [5] = GCRD, -- '0101'
     -- three neighbors
     [14] = GLRU, -- '1110'
     [13] = GLRD, -- '1101'
     [11] = GLUD, -- '1011'
-    [7] = GRUD,  -- '0111'
+    [7] = GRUD, -- '0111'
   }
 
   for i = 2, #graph, 2 do
@@ -1100,79 +1093,73 @@ function M.build(commits, color)
     for j = 1, #row.cells, 2 do
       local this = row.cells[j]
 
-      if this.connector == GVER then
-        -- because they are already taken care of
-        goto continue
-      end
+      if this.connector ~= GVER then
+        local lc = row.cells[j - 1]
+        local rc = row.cells[j + 1]
+        local uc = above and above.cells[j]
+        local dc = below and below.cells[j]
 
-      local lc = row.cells[j - 1]
-      local rc = row.cells[j + 1]
-      local uc = above and above.cells[j]
-      local dc = below and below.cells[j]
+        local l = lc and (lc.connector ~= " " or lc.commit) or false
+        local r = rc and (rc.connector ~= " " or rc.commit) or false
+        local u = uc and (uc.connector ~= " " or uc.commit) or false
+        local d = dc and (dc.connector ~= " " or dc.commit) or false
 
-      local l = lc and (lc.connector ~= " " or lc.commit) or false
-      local r = rc and (rc.connector ~= " " or rc.commit) or false
-      local u = uc and (uc.connector ~= " " or uc.commit) or false
-      local d = dc and (dc.connector ~= " " or dc.commit) or false
+        -- number of neighbors
+        local nn = 0
 
-      -- number of neighbors
-      local nn = 0
+        local symb_n = 0
+        for i, b in ipairs { l, r, u, d } do
+          if b then
+            nn = nn + 1
+            symb_n = symb_n + bit.lshift(1, 4 - i)
+          end
+        end
 
-      local symb_n = 0
-      for i, b in ipairs { l, r, u, d } do
-        if b then
-          nn = nn + 1
-          symb_n = symb_n + bit.lshift(1, 4 - i)
+        local symbol = symb_map[symb_n] or "?"
+
+        if (i == #graph or i == #graph - 1) and symbol == "?" then
+          symbol = GVER
+        end
+
+        local commit_dir_above = above.commit and above.commit.j == j
+
+        ---@type 'l' | 'r' | nil -- placement of commit horizontally, only relevant if this is a connector row and if the cell is not immediately above or below the commit
+        local clh_above = nil
+        local commit_above = above.commit and above.commit.j ~= j
+        if commit_above then
+          clh_above = above.commit.j < j and "l" or "r"
+        end
+
+        if clh_above and symbol == GLRD then
+          if clh_above == "l" then
+            symbol = GLRDCL -- '<'
+          elseif clh_above == "r" then
+            symbol = GLRDCR -- '>'
+          end
+        elseif symbol == GLRU then
+          -- because nothing else is possible with our
+          -- current implicit graph building rules?
+          symbol = GLRUCL -- '<'
+        end
+
+        local merge_dir_above = commit_dir_above and #above.commit.parents > 1
+
+        if symbol == GLUD then
+          symbol = merge_dir_above and GLUDCU or GLUDCD
+        end
+
+        if symbol == GRUD then
+          symbol = merge_dir_above and GRUDCU or GRUDCD
+        end
+
+        if nn == 4 then
+          symbol = merge_dir_above and GFORKD or GFORKU
+        end
+
+        if row.cells[j].commit then
+          row.cells[j].connector = symbol
         end
       end
-
-      local symbol = symb_map[symb_n] or "?"
-
-      if (i == #graph or i == #graph - 1) and symbol == "?" then
-        symbol = GVER
-      end
-
-      local commit_dir_above = above.commit and above.commit.j == j
-
-      ---@type 'l' | 'r' | nil -- placement of commit horizontally, only relevant if this is a connector row and if the cell is not immediately above or below the commit
-      local clh_above = nil
-      local commit_above = above.commit and above.commit.j ~= j
-      if commit_above then
-        clh_above = above.commit.j < j and "l" or "r"
-      end
-
-      if clh_above and symbol == GLRD then
-        if clh_above == "l" then
-          symbol = GLRDCL -- '<'
-        elseif clh_above == "r" then
-          symbol = GLRDCR -- '>'
-        end
-      elseif symbol == GLRU then
-        -- because nothing else is possible with our
-        -- current implicit graph building rules?
-        symbol = GLRUCL -- '<'
-      end
-
-      local merge_dir_above = commit_dir_above and #above.commit.parents > 1
-
-      if symbol == GLUD then
-        symbol = merge_dir_above and GLUDCU or GLUDCD
-      end
-
-      if symbol == GRUD then
-        symbol = merge_dir_above and GRUDCU or GRUDCD
-      end
-
-      if nn == 4 then
-        symbol = merge_dir_above and GFORKD or GFORKU
-      end
-
-      if row.cells[j].commit then
-        row.cells[j].connector = symbol
-      end
-
-      ::continue::
-      --
     end
   end
 
@@ -1195,7 +1182,6 @@ function M.build(commits, color)
     end
   end
 
-
   for row, line in ipairs(lines) do
     local graph_row = {}
     local oid = line[1]
@@ -1204,14 +1190,11 @@ function M.build(commits, color)
     for i, part in ipairs(parts) do
       local current_highlight = hl[row][i] or {}
 
-      table.insert(
-        graph_row,
-        {
-          oid = oid ~= "" and oid,
-          text = part,
-          color = not color and "Purple" or current_highlight.hg,
-        }
-      )
+      table.insert(graph_row, {
+        oid = oid ~= "" and oid,
+        text = part,
+        color = not color and "Purple" or current_highlight.hg,
+      })
     end
 
     if oid ~= "strip" then
