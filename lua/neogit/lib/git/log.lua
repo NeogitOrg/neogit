@@ -353,7 +353,7 @@ M.list = util.memoize(function(options, graph, files, hidden, graph_color)
     .files(unpack(files))
     .call({ hidden = hidden, ignore_error = hidden }).stdout
 
-  local commits = record.decode(output)
+  local commits = record.decode(output) ---@type CommitLogEntry[]
   if vim.tbl_isempty(commits) then
     return {}
   end
@@ -361,7 +361,7 @@ M.list = util.memoize(function(options, graph, files, hidden, graph_color)
   local graph_output
   if graph then
     if config.values.graph_style == "unicode" then
-      graph_output = require("neogit.lib.graph").build(commits)
+      graph_output = require("neogit.lib.graph").build(commits, graph_color)
     elseif config.values.graph_style == "ascii" then
       util.remove_item_from_table(options, "--show-signature")
       graph_output = M.graph(options, files, graph_color)

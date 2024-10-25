@@ -64,8 +64,7 @@ function M.create()
       incompatible = { "reverse" },
       dependant = { "color" },
     })
-    :switch_if(
-      config.values.graph_style == "ascii",
+    :switch(
       "c",
       "color",
       "Show graph in color",
