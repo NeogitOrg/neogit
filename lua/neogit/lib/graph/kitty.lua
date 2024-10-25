@@ -156,7 +156,7 @@ local function get_is_bi_crossing(commit_row, connector_row, next_commit)
   -- unsafe if starts of intervals overlap and are equal to direct parent location
   local safe = not (emi.start == coi.start and prev.j == emi.start)
 
-  -- return earily when connector interval is trivial
+  -- return early when connector interval is trivial
   if coi.start == coi.stop then
     return false, safe
   end
@@ -307,7 +307,7 @@ end
 
 ---@class I.Row
 ---@field cells I.Cell[]
----@field commit I.Commit? -- there's a single comit for every even row
+---@field commit I.Commit? -- there's a single commit for every even row
 
 ---@class I.Cell
 ---@field is_commit boolean? -- when true this cell is a real commit
