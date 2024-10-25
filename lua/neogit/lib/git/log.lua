@@ -21,6 +21,8 @@ local commit_header_pat = "([| ]*)(%*?)([| ]*)commit (%w+)"
 ---@field committer_date string when the committer committed
 ---@field description string a list of lines
 ---@field commit_arg string the passed argument of the git command
+---@field subject string
+---@field parent string
 ---@field diffs any[]
 
 ---Parses the provided list of lines into a CommitLogEntry
@@ -353,7 +355,7 @@ M.list = util.memoize(function(options, graph, files, hidden, graph_color)
     .files(unpack(files))
     .call({ hidden = hidden, ignore_error = hidden }).stdout
 
-  local commits = record.decode(output)
+  local commits = record.decode(output) ---@type CommitLogEntry[]
   if vim.tbl_isempty(commits) then
     return {}
   end
@@ -361,7 +363,9 @@ M.list = util.memoize(function(options, graph, files, hidden, graph_color)
   local graph_output
   if graph then
     if config.values.graph_style == "unicode" then
-      graph_output = require("neogit.lib.graph").build(commits)
+      graph_output = require("neogit.lib.graph.unicode").build(commits)
+    elseif config.values.graph_style == "kitty" then
+      graph_output = require("neogit.lib.graph.kitty").build(commits, graph_color)
     elseif config.values.graph_style == "ascii" then
       util.remove_item_from_table(options, "--show-signature")
       graph_output = M.graph(options, files, graph_color)
@@ -520,7 +524,7 @@ function M.reflog_message(skip)
 end
 
 M.abbreviated_size = util.memoize(function()
-  local commits = M.list({ "HEAD", "--max-count=1" }, {}, {}, true)
+  local commits = M.list({ "HEAD", "--max-count=1" }, nil, {}, true)
   if vim.tbl_isempty(commits) then
     return 7
   else

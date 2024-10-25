@@ -14,6 +14,7 @@ local function get_commits(popup)
   else
     commits = CommitSelectViewBuffer.new(
       git.log.list { "--max-count=256" },
+      git.remote.list(),
       "Select one or more commits to revert with <cr>, or <esc> to abort"
     ):open_async()
   end

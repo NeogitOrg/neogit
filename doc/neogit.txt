@@ -1570,8 +1570,10 @@ Actions:                                            *neogit_reset_popup_actions*
 
   • Hard                                                     *neogit_reset_hard*
     Resets the index and working tree. Any changes to tracked files in the
-    working tree since <commit> are discarded. Any untracked files or
-    directories in the way of writing any tracked files are simply deleted.
+    working tree since <commit> are discarded, however a reflog entry will be
+    created with their current state, so changes can be restored if needed.
+    Any untracked files or directories in the way of writing any tracked files
+    are simply deleted.
 
   • Keep                                                     *neogit_reset_keep*
     Resets index entries and updates files in the working tree that are

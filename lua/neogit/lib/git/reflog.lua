@@ -57,6 +57,9 @@ function M.list(refname, options)
     "%cr", -- Commit Date (Relative)
   }, "%x1E")
 
+  util.remove_item_from_table(options, "--simplify-by-decoration")
+  util.remove_item_from_table(options, "--follow")
+
   return parse(
     git.cli.reflog.show
       .format(format)

@@ -29,6 +29,8 @@ function M.soft(commit)
 end
 
 function M.hard(commit)
+  git.index.create_backup()
+
   local result = git.cli.reset.hard.args(commit).call { await = true }
   if result.code ~= 0 then
     notification.error("Reset Failed")

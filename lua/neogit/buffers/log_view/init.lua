@@ -9,6 +9,7 @@ local a = require("plenary.async")
 
 ---@class LogViewBuffer
 ---@field commits CommitLogEntry[]
+---@field remotes string[]
 ---@field internal_args table
 ---@field files string[]
 ---@field buffer Buffer
@@ -24,11 +25,13 @@ M.__index = M
 ---@param files string[]|nil list of files to filter by
 ---@param fetch_func fun(offset: number): CommitLogEntry[]
 ---@param header string
+---@param remotes string[]
 ---@return LogViewBuffer
-function M.new(commits, internal_args, files, fetch_func, header)
+function M.new(commits, internal_args, files, fetch_func, header, remotes)
   local instance = {
     files = files,
     commits = commits,
+    remotes = remotes,
     internal_args = internal_args,
     fetch_func = fetch_func,
     buffer = nil,
@@ -289,7 +292,7 @@ function M:open()
       },
     },
     render = function()
-      return ui.View(self.commits, self.internal_args)
+      return ui.View(self.commits, self.remotes, self.internal_args)
     end,
     after = function(buffer)
       -- First line is empty, so move cursor to second line.

@@ -157,4 +157,18 @@ function M.update()
     :spawn_async()
 end
 
+local function timestamp()
+  local now = os.date("!*t")
+  return string.format("%s-%s-%sT%s.%s.%s", now.year, now.month, now.day, now.hour, now.min, now.sec)
+end
+
+-- https://gist.github.com/chx/3a694c2a077451e3d446f85546bb9278
+-- Capture state of index as reflog entry
+function M.create_backup()
+  git.cli.add.update.call { hidden = true, await = true }
+  git.cli.commit.message("Hard reset backup").call { hidden = true, await = true, pty = true }
+  git.cli["update-ref"].args("refs/backups/" .. timestamp(), "HEAD").call { hidden = true, await = true }
+  git.cli.reset.hard.args("HEAD~1").call { hidden = true, await = true }
+end
+
 return M

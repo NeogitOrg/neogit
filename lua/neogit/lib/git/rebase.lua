@@ -224,7 +224,7 @@ function M.update_rebase_status(state)
     if done:exists() then
       for line in done:iter() do
         if line:match("^[^#]") and line ~= "" then
-          local oid = line:match("^%w+ (%x+)")
+          local oid = line:match("^%w+ (%x+)") or line:match("^fixup %-C (%x+)")
           table.insert(state.rebase.items, {
             action = line:match("^(%w+) "),
             oid = oid,

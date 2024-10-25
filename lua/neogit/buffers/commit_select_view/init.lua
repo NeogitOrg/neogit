@@ -7,17 +7,20 @@ local status_maps = require("neogit.config").get_reversed_status_maps()
 
 ---@class CommitSelectViewBuffer
 ---@field commits CommitLogEntry[]
+---@field remotes string[]
 ---@field header string|nil
 local M = {}
 M.__index = M
 
 ---Opens a popup for selecting a commit
 ---@param commits CommitLogEntry[]|nil
+---@param remotes string[]
 ---@param header? string
 ---@return CommitSelectViewBuffer
-function M.new(commits, header)
+function M.new(commits, remotes, header)
   local instance = {
     commits = commits,
+    remotes = remotes,
     header = header,
     buffer = nil,
   }
@@ -114,7 +117,7 @@ function M:open(action)
       end
     end,
     render = function()
-      return ui.View(self.commits)
+      return ui.View(self.commits, self.remotes)
     end,
   }
 end

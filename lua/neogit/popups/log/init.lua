@@ -65,7 +65,7 @@ function M.create()
       dependant = { "color" },
     })
     :switch_if(
-      config.values.graph_style == "ascii",
+      config.values.graph_style == "ascii" or config.values.graph_style == "kitty",
       "c",
       "color",
       "Show graph in color",

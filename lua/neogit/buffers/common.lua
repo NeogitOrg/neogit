@@ -137,14 +137,18 @@ local highlight_for_signature = {
   N = "NeogitSignatureNone",
 }
 
-M.CommitEntry = Component.new(function(commit, args)
+---@param commit CommitLogEntry
+---@param remotes string[]
+---@param args table
+M.CommitEntry = Component.new(function(commit, remotes, args)
   local ref = {}
   local ref_last = {}
-
-  local info = git.log.branch_info(commit.ref_name, git.remote.list())
+  local info = { head = nil, locals = {}, remotes = {}, tags = {} }
 
   -- Parse out ref names
   if args.decorate and commit.ref_name ~= "" then
+    info = git.log.branch_info(commit.ref_name, remotes)
+
     -- Render local only branches first
     for name, _ in pairs(info.locals) do
       if name:match("^refs/") then
@@ -189,7 +193,7 @@ M.CommitEntry = Component.new(function(commit, args)
 
   local details
   if args.details then
-    details = col.padding_left(git.log.abbreviated_size() + 1) {
+    details = col.padding_left(#commit.abbreviated_commit + 1) {
       row(util.merge(graph, {
         text(" "),
         text("Author:     ", { highlight = "NeogitSubtleText" }),
@@ -267,8 +271,8 @@ M.CommitEntry = Component.new(function(commit, args)
   }, { oid = commit.oid, foldable = args.details == true, folded = true, remote = info.remotes[1] })
 end)
 
-M.CommitGraph = Component.new(function(commit, _)
-  return col.tag("graph").padding_left(git.log.abbreviated_size() + 1) { row(build_graph(commit.graph)) }
+M.CommitGraph = Component.new(function(commit, padding)
+  return col.tag("graph").padding_left(padding) { row(build_graph(commit.graph)) }
 end)
 
 M.Grid = Component.new(function(props)
