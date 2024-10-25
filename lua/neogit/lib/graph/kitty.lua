@@ -804,7 +804,7 @@ function M.build(commits, color)
         offset = offset + width
 
         if cell.commit then
-          local hg = BRANCH_COLORS[(j % NUM_BRANCH_COLORS + 1)]
+          local hg = (cell.emphasis and "Bold" or "") .. BRANCH_COLORS[(j % NUM_BRANCH_COLORS + 1)]
           row_hls[#row_hls + 1] = {
             hg = hg,
             row = row_idx,
@@ -833,7 +833,7 @@ function M.build(commits, color)
             }
 
             if rcell.commit and vim.tbl_contains(continuations, rcell.symbol) then
-              local hg = BRANCH_COLORS[(rcell.commit.j % NUM_BRANCH_COLORS + 1)]
+              local hg = (cell.emphasis and "Bold" or "") .. BRANCH_COLORS[(rcell.commit.j % NUM_BRANCH_COLORS + 1)]
               row_hls[#row_hls + 1] = {
                 hg = hg,
                 row = row_idx,
@@ -885,7 +885,7 @@ function M.build(commits, color)
         end
 
         if valid then
-          add_to_row("")   -- Connection Row
+          add_to_row("")      -- Connection Row
         else
           add_to_row("strip") -- Useless Connection Row
         end
@@ -1097,8 +1097,6 @@ function M.build(commits, color)
     local above = graph[i - 1]
     local below = graph[i + 1]
 
-    -- local is_bi_crossing = get_is_bi_crossing(graph, i)
-
     for j = 1, #row.cells, 2 do
       local this = row.cells[j]
 
@@ -1130,7 +1128,7 @@ function M.build(commits, color)
 
       local symbol = symb_map[symb_n] or "?"
 
-      if i == #graph and symbol == "?" then
+      if (i == #graph or i == #graph - 1) and symbol == "?" then
         symbol = GVER
       end
 
@@ -1180,6 +1178,8 @@ function M.build(commits, color)
 
   local lines, highlights = graph_to_lines(graph)
 
+  --
+  -- BEGIN NEOGIT COMPATIBILITY CODE
   -- Transform graph into what neogit needs to render
   --
   local result = {}

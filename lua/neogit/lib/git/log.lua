@@ -361,7 +361,9 @@ M.list = util.memoize(function(options, graph, files, hidden, graph_color)
   local graph_output
   if graph then
     if config.values.graph_style == "unicode" then
-      graph_output = require("neogit.lib.graph").build(commits, graph_color)
+      graph_output = require("neogit.lib.graph.unicode").build(commits)
+    elseif config.values.graph_style == "kitty" then
+      graph_output = require("neogit.lib.graph.kitty").build(commits, graph_color)
     elseif config.values.graph_style == "ascii" then
       util.remove_item_from_table(options, "--show-signature")
       graph_output = M.graph(options, files, graph_color)
