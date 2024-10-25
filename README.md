@@ -483,7 +483,7 @@ See [CONTRIBUTING.md](https://github.com/NeogitOrg/neogit/blob/master/CONTRIBUTI
 
 ## Special Thanks
 
-[kolja](https://github.com/kolja) for the Neogit Logo
-[gitgraph.nvim](https://github.com/isakbm/gitgraph.nvim) for the "kitty" git graph renderer
-[vim-flog](https://github.com/rbong/vim-flog) for the "unicode" git graph renderer
+- [kolja](https://github.com/kolja) for the Neogit Logo
+- [gitgraph.nvim](https://github.com/isakbm/gitgraph.nvim) for the "kitty" git graph renderer
+- [vim-flog](https://github.com/rbong/vim-flog) for the "unicode" git graph renderer
 
