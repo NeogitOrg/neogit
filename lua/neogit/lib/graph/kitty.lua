@@ -255,7 +255,7 @@ local function resolve_bi_crossing(prev_commit_row, prev_connector_row, commit_r
   --   B         A              ⓚ         │
   --   a         A              ⓶─────────╯
   --   A                        ⓚ
-  local prev_prev_row = prev_connector_row   -- graph[#graph - 2]
+  local prev_prev_row = prev_connector_row -- graph[#graph - 2]
   local prev_prev_prev_row = prev_commit_row -- graph[#graph - 3]
   assert(prev_prev_row and prev_prev_prev_row, "assertion failed")
   do
@@ -876,7 +876,7 @@ function M.build(commits, color)
         end
 
         if valid then
-          add_to_row("")      -- Connection Row
+          add_to_row("") -- Connection Row
         else
           add_to_row("strip") -- Useless Connection Row
         end
@@ -1073,14 +1073,14 @@ function M.build(commits, color)
     -- two neighbors (no straights)
     -- - 8421
     [10] = GCLU, -- '1010'
-    [9] = GCLD,  -- '1001'
-    [6] = GCRU,  -- '0110'
-    [5] = GCRD,  -- '0101'
+    [9] = GCLD, -- '1001'
+    [6] = GCRU, -- '0110'
+    [5] = GCRD, -- '0101'
     -- three neighbors
     [14] = GLRU, -- '1110'
     [13] = GLRD, -- '1101'
     [11] = GLUD, -- '1011'
-    [7] = GRUD,  -- '0111'
+    [7] = GRUD, -- '0111'
   }
 
   for i = 2, #graph, 2 do

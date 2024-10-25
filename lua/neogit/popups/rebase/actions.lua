@@ -9,7 +9,7 @@ local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 local M = {}
 
 local function base_commit(popup, list, header)
-  return popup.state.env.commit or CommitSelectViewBuffer.new(list, header):open_async()[1]
+  return popup.state.env.commit or CommitSelectViewBuffer.new(list, git.remote.list(), header):open_async()[1]
 end
 
 function M.onto_base(popup)
@@ -136,6 +136,7 @@ function M.subset(popup)
   else
     start = CommitSelectViewBuffer.new(
       git.log.list { "HEAD" },
+      git.remote.list(),
       "Select a commit with <cr> to rebase it and commits above it onto " .. newbase .. ", or <esc> to abort"
     )
       :open_async()[1]

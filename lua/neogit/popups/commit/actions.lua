@@ -50,7 +50,8 @@ local function commit_special(popup, method, opts)
     end
   end
 
-  local commit = popup.state.env.commit or CommitSelectViewBuffer.new(git.log.list()):open_async()[1]
+  local commit = popup.state.env.commit
+    or CommitSelectViewBuffer.new(git.log.list(), git.remote.list()):open_async()[1]
   if not commit then
     return
   end
@@ -69,7 +70,7 @@ local function commit_special(popup, method, opts)
     if choice == "c" then
       opts.rebase = false
     elseif choice == "s" then
-      commit = CommitSelectViewBuffer.new(git.log.list()):open_async()[1]
+      commit = CommitSelectViewBuffer.new(git.log.list(), git.remote.list()):open_async()[1]
     else
       return
     end
@@ -173,6 +174,7 @@ function M.absorb(popup)
   local commit = popup.state.env.commit
     or CommitSelectViewBuffer.new(
       git.log.list { "HEAD" },
+      git.remote.list(),
       "Select a base commit for the absorb stack with <cr>, or <esc> to abort"
     )
       :open_async()[1]

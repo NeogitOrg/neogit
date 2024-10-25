@@ -11,16 +11,17 @@ local row = Ui.row
 local M = {}
 
 ---@param commits CommitLogEntry[]
+---@param remotes string[]
 ---@param args table
 ---@return table
-function M.View(commits, args)
+function M.View(commits, remotes, args)
   args.details = true
 
   local graph = util.filter_map(commits, function(commit)
     if commit.oid then
-      return Commit(commit, args)
+      return Commit(commit, remotes, args)
     elseif args.graph then
-      return Graph(commit)
+      return Graph(commit, #commits[1].abbreviated_commit + 1)
     end
   end)
 
