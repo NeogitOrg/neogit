@@ -273,12 +273,27 @@ local SectionItemFile = function(section, config)
         text.highlight("NeogitSubtleText")((" %s -> %s"):format(item.file_mode.head, item.file_mode.worktree))
     end
 
+    local submodule = text("")
+    if item.submodule then
+      local submodule_text
+      if item.submodule.commit_changed then
+        submodule_text = " (new commits)"
+      elseif item.submodule.has_tracked_changes then
+        submodule_text = " (modified content)"
+      elseif item.submodule.has_untracked_changes then
+        submodule_text = " (untracked content)"
+      end
+
+      submodule = text.highlight("NeogitTagName")(submodule_text)
+    end
+
     return col.tag("Item")({
       row {
         text.highlight(highlight)(mode_text),
         text(name),
         text.highlight("NeogitSubtleText")(unmerged_types[item.mode] or ""),
         file_mode_change,
+        submodule,
       },
     }, {
       foldable = true,
@@ -687,6 +702,7 @@ function M.Status(state, config)
     },
   }
 end
+
 -- stylua: ignore end
 
 return M

@@ -11,9 +11,35 @@ local logger = require("neogit.logger")
 ---@field escaped_path string
 ---@field original_name string|nil
 ---@field file_mode {head: number, index: number, worktree: number}|nil
+---@field submodule SubmoduleStatus|nil
+
+---@class SubmoduleStatus
+---@field commit_changed boolean C
+---@field has_tracked_changes boolean M
+---@field has_untracked_changes boolean U
+
+---@param status string
+-- <sub>       A 4 character field describing the submodule state.
+--             "N..." when the entry is not a submodule.
+--             "S<c><m><u>" when the entry is a submodule.
+--             <c> is "C" if the commit changed; otherwise ".".
+--             <m> is "M" if it has tracked changes; otherwise ".".
+--             <u> is "U" if there are untracked changes; otherwise ".".
+local function parse_submodule_status(status)
+  local a, b, c, d = status:match("(.)(.)(.)(.)")
+  if a == "N" then
+    return nil
+  else
+    return {
+      commit_changed = b == "C",
+      has_tracked_changes = c == "M",
+      has_untracked_changes = d == "U",
+    }
+  end
+end
 
 ---@return StatusItem
-local function update_file(section, cwd, file, mode, name, original_name, file_mode)
+local function update_file(section, cwd, file, mode, name, original_name, file_mode, submodule)
   local absolute_path = Path:new(cwd, name):absolute()
   local escaped_path = vim.fn.fnameescape(vim.fn.fnamemodify(absolute_path, ":~:."))
 
@@ -24,6 +50,7 @@ local function update_file(section, cwd, file, mode, name, original_name, file_m
     absolute_path = absolute_path,
     escaped_path = escaped_path,
     file_mode = file_mode,
+    submodule = submodule,
   }
 
   if file and rawget(file, "diff") then
@@ -98,8 +125,9 @@ local function update_status(state, filter)
         update_file("untracked", state.git_root, old_files.untracked_files[rest], "?", rest)
       )
     elseif kind == "1" then
-      local mode_staged, mode_unstaged, _, mH, mI, mW, hH, _, name = rest:match(match_1)
+      local mode_staged, mode_unstaged, submodule, mH, mI, mW, hH, _, name = rest:match(match_1)
       local file_mode = { head = mH, index = mI, worktree = mW }
+      local submodule = parse_submodule_status(submodule)
 
       if mode_staged ~= "." then
         if hH:match("^0+$") then
@@ -115,7 +143,8 @@ local function update_status(state, filter)
             mode_staged,
             name,
             nil,
-            file_mode
+            file_mode,
+            submodule
           )
         )
       end
@@ -130,13 +159,15 @@ local function update_status(state, filter)
             mode_unstaged,
             name,
             nil,
-            file_mode
+            file_mode,
+            submodule
           )
         )
       end
     elseif kind == "2" then
-      local mode_staged, mode_unstaged, _, mH, mI, mW, _, _, _, name, orig_name = rest:match(match_2)
+      local mode_staged, mode_unstaged, submodule, mH, mI, mW, _, _, _, name, orig_name = rest:match(match_2)
       local file_mode = { head = mH, index = mI, worktree = mW }
+      local submodule = parse_submodule_status(submodule)
 
       if mode_staged ~= "." then
         table.insert(
@@ -148,7 +179,8 @@ local function update_status(state, filter)
             mode_staged,
             name,
             orig_name,
-            file_mode
+            file_mode,
+            submodule
           )
         )
       end
@@ -163,7 +195,8 @@ local function update_status(state, filter)
             mode_unstaged,
             name,
             orig_name,
-            file_mode
+            file_mode,
+            submodule
           )
         )
       end
