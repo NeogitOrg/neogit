@@ -35,7 +35,7 @@ function Spinner:start()
   if not self.timer then
     self.timer = vim.uv.new_timer()
     self.timer:start(
-      0,
+      250,
       self.interval,
       vim.schedule_wrap(function()
         self.count = self.count + 1
