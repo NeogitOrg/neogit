@@ -6,6 +6,43 @@ local logger = require("neogit.logger")
 local insert = table.insert
 local sha256 = vim.fn.sha256
 
+---@class NeogitGitDiff
+---@field parse fun(raw_diff: string[], raw_stats: string[]): Diff
+---@field build fun(section: string, file: StatusItem)
+---@field staged_stats fun(): DiffStagedStats
+---
+---@class Diff
+---@field kind string
+---@field lines string[]
+---@field file string
+---@field info table
+---@field stats table
+---@field hunks Hunk
+---
+---@class DiffStats
+---@field additions number
+---@field deletions number
+---
+---@class Hunk
+---@field index_from number
+---@field index_len number
+---@field diff_from number
+---@field diff_to number
+---@field first number First line number in buffer
+---@field last number Last line number in buffer
+---
+---@class DiffStagedStats
+---@field summary string
+---@field files DiffStagedStatsFile
+---
+---@class DiffStagedStatsFile
+---@field path string|nil
+---@field changes string|nil
+---@field insertions string|nil
+---@field deletions string|nil
+
+---@param raw string|string[]
+---@return DiffStats
 local function parse_diff_stats(raw)
   if type(raw) == "string" then
     raw = vim.split(raw, ", ")
@@ -33,6 +70,8 @@ local function parse_diff_stats(raw)
   return stats
 end
 
+---@param output string[]
+---@return string[], number
 local function build_diff_header(output)
   local header = {}
   local start_idx = 1
@@ -50,6 +89,9 @@ local function build_diff_header(output)
   return header, start_idx
 end
 
+---@param header string[]
+---@param kind string
+---@return string
 local function build_file(header, kind)
   if kind == "modified" then
     return header[3]:match("%-%-%- a/(.*)")
@@ -64,6 +106,8 @@ local function build_file(header, kind)
   end
 end
 
+---@param header string[]
+---@return string, string[]
 local function build_kind(header)
   local kind = ""
   local info = {}
@@ -83,6 +127,9 @@ local function build_kind(header)
   return kind, info
 end
 
+---@param output string[]
+---@param start_idx number
+---@return string[]
 local function build_lines(output, start_idx)
   local lines = {}
 
@@ -97,18 +144,13 @@ local function build_lines(output, start_idx)
   return lines
 end
 
+---@param content string[]
+---@return string
 local function hunk_hash(content)
   return sha256(table.concat(content, "\n"))
 end
 
----@class Hunk
----@field index_from number
----@field index_len number
----@field diff_from number
----@field diff_to number
----@field first number First line number in buffer
----@field last number Last line number in buffer
-
+---@param lines string[]
 ---@return Hunk
 local function build_hunks(lines)
   local hunks = {}
@@ -171,6 +213,9 @@ local function build_hunks(lines)
   return hunks
 end
 
+---@param raw_diff string[]
+---@param raw_stats string[]
+---@return Diff
 local function parse_diff(raw_diff, raw_stats)
   local header, start_idx = build_diff_header(raw_diff)
   local lines = build_lines(raw_diff, start_idx)
@@ -179,7 +224,7 @@ local function parse_diff(raw_diff, raw_stats)
   local file = build_file(header, kind)
   local stats = parse_diff_stats(raw_stats or {})
 
-  return {
+  return { ---@type Diff
     kind = kind,
     lines = lines,
     file = file,
@@ -205,6 +250,8 @@ local function build_metatable(f, raw_output_fn)
 end
 
 -- Doing a git-diff with untracked files will exit(1) if a difference is observed, which we can ignore.
+---@param name string
+---@return fun(): table
 local function raw_untracked(name)
   return function()
     local diff = git.cli.diff.no_ext_diff.no_index
@@ -216,6 +263,8 @@ local function raw_untracked(name)
   end
 end
 
+---@param name string
+---@return fun(): table
 local function raw_unstaged(name)
   return function()
     local diff = git.cli.diff.no_ext_diff.files(name).call({ hidden = true }).stdout
@@ -225,6 +274,8 @@ local function raw_unstaged(name)
   end
 end
 
+---@param name string
+---@return fun(): table
 local function raw_staged_unmerged(name)
   return function()
     local diff = git.cli.diff.no_ext_diff.files(name).call({ hidden = true }).stdout
@@ -234,6 +285,8 @@ local function raw_staged_unmerged(name)
   end
 end
 
+---@param name string
+---@return fun(): table
 local function raw_staged(name)
   return function()
     local diff = git.cli.diff.no_ext_diff.cached.files(name).call({ hidden = true }).stdout
@@ -243,6 +296,8 @@ local function raw_staged(name)
   end
 end
 
+---@param name string
+---@return fun(): table
 local function raw_staged_renamed(name, original)
   return function()
     local diff = git.cli.diff.no_ext_diff.cached.files(name, original).call({ hidden = true }).stdout
@@ -253,6 +308,8 @@ local function raw_staged_renamed(name, original)
   end
 end
 
+---@param section string
+---@param file StatusItem
 local function build(section, file)
   if section == "untracked" then
     build_metatable(file, raw_untracked(file.name))
@@ -269,48 +326,51 @@ local function build(section, file)
   end
 end
 
----@class NeogitGitDiff
-return {
+---@return DiffStagedStats
+local function staged_stats()
+  local raw = git.cli.diff.no_ext_diff.cached.stat.call({ hidden = true }).stdout
+  local files = {}
+  local summary
+
+  local idx = 1
+  local function advance()
+    idx = idx + 1
+  end
+
+  local function peek()
+    return raw[idx]
+  end
+
+  while true do
+    local line = peek()
+    if not line then
+      break
+    end
+
+    if line:match("^ %d+ file[s ]+changed,") then
+      summary = vim.trim(line)
+      break
+    else
+      local file = { ---@type DiffStagedStatsFile
+        path = vim.trim(line:match("^ ([^ ]+)")),
+        changes = line:match("|%s+(%d+)"),
+        insertions = line:match("|%s+%d+ (%+*)"),
+        deletions = line:match("|%s+%d+ %+*(%-*)$"),
+      }
+
+      insert(files, file)
+      advance()
+    end
+  end
+
+  return {
+    summary = summary,
+    files = files,
+  }
+end
+
+return { ---@type NeogitGitDiff
   parse = parse_diff,
-  staged_stats = function()
-    local raw = git.cli.diff.no_ext_diff.cached.stat.call({ hidden = true }).stdout
-    local files = {}
-    local summary
-
-    local idx = 1
-    local function advance()
-      idx = idx + 1
-    end
-
-    local function peek()
-      return raw[idx]
-    end
-
-    while true do
-      local line = peek()
-      if not line then
-        break
-      end
-
-      if line:match("^ %d+ file[s ]+changed,") then
-        summary = vim.trim(line)
-        break
-      else
-        table.insert(files, {
-          path = vim.trim(line:match("^ ([^ ]+)")),
-          changes = line:match("|%s+(%d+)"),
-          insertions = line:match("|%s+%d+ (%+*)"),
-          deletions = line:match("|%s+%d+ %+*(%-*)$"),
-        })
-
-        advance()
-      end
-    end
-
-    return {
-      summary = summary,
-      files = files,
-    }
-  end,
+  staged_stats = staged_stats,
   build = build,
 }
