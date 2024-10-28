@@ -310,7 +310,7 @@ function Buffer:show()
         col = col,
         row = row,
         style = "minimal",
-        focusable = false,
+        focusable = true,
         border = "rounded",
       })
 
@@ -325,7 +325,7 @@ function Buffer:show()
         col = 0,
         row = vim.o.lines - 2,
         style = "minimal",
-        focusable = false,
+        focusable = true,
         border = { "─", "─", "─", "", "", "", "", "" },
         title = " Git Console ",
       })
