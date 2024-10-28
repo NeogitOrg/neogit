@@ -39,7 +39,6 @@ local runner = require("neogit.runner")
 ---@field on_error fun(res: ProcessResult): boolean function to call if the process exits with status > 0. Used to
 ---                                                 determine how to handle the error, if user should be alerted or not
 
-
 ---@class GitCommandShow: GitCommandBuilder
 ---@field stat self
 ---@field oneline self
@@ -313,7 +312,6 @@ local runner = require("neogit.runner")
 ---@class GitCommandVerifyCommit: GitCommandBuilder
 
 ---@class GitCommandBisect: GitCommandBuilder
-
 
 ---@class NeogitGitCLI
 ---@field absorb         GitCommandAbsorb
@@ -759,7 +757,7 @@ local configurations = {
       move = "-m",
     },
     options = {
-      sort = "--sort"
+      sort = "--sort",
     },
     aliases = {
       name = function(tbl)
@@ -776,7 +774,7 @@ local configurations = {
       verbose = "--verbose",
     },
     options = {
-      jobs = "--jobs"
+      jobs = "--jobs",
     },
   },
 
