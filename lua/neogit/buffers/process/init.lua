@@ -22,7 +22,7 @@ local M = {}
 M.__index = M
 
 ---@return ProcessBuffer
----@param process ProcessOpts
+---@param process Process
 function M:new(process)
   local instance = {
     content = { string.format("> %s\r\n", table.concat(process.cmd, " ")) },

@@ -63,7 +63,7 @@ function M.track(name, args)
 end
 
 function M.get_local_branches(include_current)
-  local branches = git.cli.branch.list(config.values.sort_branches).call({ hidden = true }).stdout
+  local branches = git.cli.branch.sort(config.values.sort_branches).call({ hidden = true }).stdout
   return parse_branches(branches, include_current)
 end
 

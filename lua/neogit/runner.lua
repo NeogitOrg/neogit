@@ -100,6 +100,7 @@ end
 
 ---@param process Process
 ---@param opts table
+---@return ProcessResult
 function M.call(process, opts)
   logger.trace(string.format("[RUNNER]: Executing %q", table.concat(process.cmd, " ")))
 

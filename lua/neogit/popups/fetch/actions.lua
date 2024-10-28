@@ -121,7 +121,7 @@ end
 
 function M.fetch_submodules(_)
   notification.info("Fetching submodules")
-  git.cli.fetch.recurse_submodules().verbose().jobs(4).call()
+  git.cli.fetch.recurse_submodules.verbose.jobs(4).call()
 end
 
 function M.set_variables()
