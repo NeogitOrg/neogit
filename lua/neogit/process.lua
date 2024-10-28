@@ -185,7 +185,7 @@ end
 
 function Process:stop()
   if self.job then
-    fn.jobstop(self.job)
+    assert(fn.jobstop(self.job) == 1, "invalid job id")
   end
 end
 
@@ -373,6 +373,7 @@ function Process:spawn(cb)
     if not self.cmd[#self.cmd] == "-" then
       self:send("\04")
     end
+
     self:close_stdin()
   end
 
