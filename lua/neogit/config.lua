@@ -79,10 +79,16 @@ function M.get_user_mappings(set)
 end
 
 ---@alias WindowKind
+---| "replace" Like :enew
+---| "tab" Open in a new tab
 ---| "split" Open in a split
+---| "split_above" Like :top split
+---| "split_above_all" Like :top split
+---| "split_below" Like :below split
+---| "split_below_all" Like :below split
 ---| "vsplit" Open in a vertical split
 ---| "floating" Open in a floating window
----| "tab" Open in a new tab
+---| "auto" vsplit if window would have 80 cols, otherwise split
 
 ---@class NeogitCommitBufferConfig Commit buffer options
 ---@field kind WindowKind The type of window that should be opened
