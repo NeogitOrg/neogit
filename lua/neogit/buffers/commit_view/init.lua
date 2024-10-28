@@ -155,8 +155,8 @@ function M:open(kind)
     context_highlight = not config.values.disable_context_highlighting,
     autocmds = {
       ["WinLeave"] = function()
-        if self.buffer.kind == "floating" then
-          pcall(self.close, self)
+        if self.buffer and self.buffer.kind == "floating" then
+          self:close()
         end
       end,
     },
