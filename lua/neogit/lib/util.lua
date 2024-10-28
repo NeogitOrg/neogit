@@ -559,7 +559,7 @@ end
 --- @return F throttled function.
 function M.throttle_by_id(fn, schedule)
   local scheduled = {} --- @type table<any,boolean>
-  local running = {} --- @type table<any,boolean>
+  local running = {}   --- @type table<any,boolean>
 
   return function(id, ...)
     if scheduled[id] then
@@ -600,9 +600,9 @@ end
 ---@param winid integer
 ---@param force boolean
 function M.safe_win_close(winid, force)
-  local ok, _ = pcall(vim.api.nvim_win_close, winid, force)
-
+  local ok, err = pcall(vim.api.nvim_win_close, winid, force)
   if not ok then
+    require("neogit.logger").error(err)
     pcall(vim.cmd, "b#")
   end
 end
