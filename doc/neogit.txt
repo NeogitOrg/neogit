@@ -387,7 +387,7 @@ The following mappings can all be customized via the setup function.
 ==============================================================================
 5. Highlights                                                *neogit_highlights*
 
-To provide a custom color pallette directly to the plugin, you can use the
+To provide a custom color palette directly to the plugin, you can use the
 `config.highlight` table with the following signature:
 
 ---@class HighlightOptions
@@ -418,7 +418,7 @@ To provide a custom color pallette directly to the plugin, you can use the
 ---@field bg_purple?  string  Background purple
 ---@field md_purple?  string  Background medium purple
 
-The following highlight groups will all be derrived from this pallette.
+The following highlight groups will all be derived from this palette.
 
 The following highlight groups are defined by this plugin. If you set any of
 these yourself before the plugin loads, that will be respected. If they do not
