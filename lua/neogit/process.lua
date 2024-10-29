@@ -115,7 +115,7 @@ function Process:show_spinner()
     return
   end
 
-  self.spinner = Spinner.new("Running: " .. mask_command(table.concat(self.cmd, " ")))
+  self.spinner = Spinner.new(mask_command(table.concat(self.cmd, " ")))
   self.spinner:start()
 end
 
