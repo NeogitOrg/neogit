@@ -504,7 +504,7 @@ function Ui:resolve_cursor_location(cursor)
 
   if cursor.hunk.index_from == hunk.index_from then
     logger.debug(("[UI] Using hunk.first with offset %q"):format(cursor.hunk.name))
-    return hunk.first + cursor.hunk_offset - (cursor.last - hunk.last)
+    return hunk.first + (cursor.hunk_offset or 0) - (cursor.last - hunk.last)
   else
     logger.debug(("[UI] Using hunk.first %q"):format(cursor.hunk.name))
     return hunk.first
