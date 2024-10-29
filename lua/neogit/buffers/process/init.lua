@@ -43,6 +43,7 @@ end
 
 function M:close()
   if self.buffer then
+    self.buffer:close_terminal_channel()
     self.buffer:close()
     self.buffer = nil
   end
@@ -92,8 +93,9 @@ function M:flush_content()
   end
 end
 
-local function hide(self)
+local function close(self)
   return function()
+    self.process:stop()
     self:close()
   end
 end
@@ -111,28 +113,19 @@ function M:open()
     open = false,
     buftype = false,
     kind = config.values.preview_buffer.kind,
-    on_detach = function()
-      self.buffer:close_terminal_channel()
-      self.buffer = nil
+    after = function(buffer)
+      buffer:open_terminal_channel()
     end,
-    autocmds = {
-      ["WinLeave"] = function()
-        pcall(self.close, self)
-      end,
-    },
     mappings = {
-      t = {
-        [status_maps["Close"]] = hide(self),
-        ["<esc>"] = hide(self),
-      },
       n = {
-        [status_maps["Close"]] = hide(self),
-        ["<esc>"] = hide(self),
+        ["<c-c>"] = function()
+          pcall(self.process.stop, self.process)
+        end,
+        [status_maps["Close"]] = close(self),
+        ["<esc>"] = close(self),
       },
     },
   }
-
-  self.buffer:open_terminal_channel()
 
   return self
 end
