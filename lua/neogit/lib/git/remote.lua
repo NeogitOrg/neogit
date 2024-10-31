@@ -6,7 +6,7 @@ local M = {}
 
 -- https://github.com/magit/magit/blob/main/lisp/magit-remote.el#LL141C32-L141C32
 local function cleanup_push_variables(remote, new_name)
-  if remote == git.config.get("remote.pushDefault").value then
+  if remote == git.config.get("remote.pushDefault"):read() then
     git.config.set("remote.pushDefault", new_name)
   end
 

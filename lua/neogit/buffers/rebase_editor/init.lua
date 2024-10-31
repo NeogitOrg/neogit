@@ -61,10 +61,7 @@ function M.new(filename, on_unload)
 end
 
 function M:open(kind)
-  local comment_char = git.config.get("core.commentChar"):read()
-    or git.config.get_global("core.commentChar"):read()
-    or "#"
-
+  local comment_char = git.config.get("core.commentChar"):read() or "#"
   local mapping = config.get_reversed_rebase_editor_maps()
   local mapping_I = config.get_reversed_rebase_editor_maps_I()
   local aborted = false

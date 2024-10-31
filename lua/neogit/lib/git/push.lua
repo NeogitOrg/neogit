@@ -21,11 +21,8 @@ function M.auto_setup_remote(branch)
   end
 
   local push_autoSetupRemote = git.config.get("push.autoSetupRemote"):read()
-    or git.config.get_global("push.autoSetupRemote"):read()
-
-  local push_default = git.config.get("push.default"):read() or git.config.get_global("push.default"):read()
-
-  local branch_remote = git.config.get("branch." .. branch .. ".remote"):read()
+  local push_default = git.config.get("push.default"):read()
+  local branch_remote = git.config.get_local("branch." .. branch .. ".remote"):read()
 
   return (
     push_autoSetupRemote

@@ -59,7 +59,7 @@ function M.description_config(branch)
     })
     vim.o.eventignore = ""
 
-    return git.config.get("branch." .. branch .. ".description"):read()
+    return git.config.get_local("branch." .. branch .. ".description"):read()
   end
 
   return a.wrap(fn, 2)

@@ -109,13 +109,24 @@ end
 
 ---@return ConfigEntry
 function M.get(key)
-  return config()[key:lower()] or ConfigEntry.new(key, "", "local")
+  if M.get_local(key):is_set() then
+    return M.get_local(key)
+  elseif M.get_global(key):is_set() then
+    return M.get_global(key)
+  else
+    return ConfigEntry.new(key, "", "local")
+  end
 end
 
 ---@return ConfigEntry
 function M.get_global(key)
   local result = git.cli.config.get(key).call({ ignore_error = true }).stdout[1]
   return ConfigEntry.new(key, result, "global")
+end
+
+---@return ConfigEntry
+function M.get_local(key)
+  return config()[key:lower()] or ConfigEntry.new(key, "", "local")
 end
 
 function M.get_matching(pattern)

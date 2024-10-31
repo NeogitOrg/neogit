@@ -166,7 +166,7 @@ function M.pushRemote(branch)
   branch = branch or M.current()
 
   if branch then
-    local remote = git.config.get("branch." .. branch .. ".pushRemote")
+    local remote = git.config.get_local("branch." .. branch .. ".pushRemote")
     if remote:is_set() then
       return remote.value
     end

@@ -57,7 +57,7 @@ local M = {}
 ---@field key string
 ---@field name string
 ---@field entry ConfigEntry
----@field value string?
+---@field value string
 ---@field type string
 ---@field passive boolean?
 ---@field options PopupConfigOption[]?

@@ -110,10 +110,7 @@ function M:open(kind)
         return pad(mapping[name] and mapping[name][1] or "<NOP>", padding)
       end
 
-      local comment_char = git.config.get("core.commentChar"):read()
-        or git.config.get_global("core.commentChar"):read()
-        or "#"
-
+      local comment_char = git.config.get("core.commentChar"):read() or "#"
       logger.debug("[EDITOR] Using comment character '" .. comment_char .. "'")
 
       -- stylua: ignore

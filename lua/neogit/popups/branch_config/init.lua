@@ -7,7 +7,7 @@ local actions = require("neogit.popups.branch_config.actions")
 function M.create(branch)
   branch = branch or git.branch.current()
   local g_pull_rebase = git.config.get_global("pull.rebase")
-  local pull_rebase_entry = git.config.get("pull.rebase")
+  local pull_rebase_entry = git.config.get_local("pull.rebase")
   local pull_rebase = pull_rebase_entry:is_set() and pull_rebase_entry.value or "false"
 
   local p = popup

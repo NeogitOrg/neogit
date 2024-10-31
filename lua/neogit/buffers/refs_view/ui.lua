@@ -133,7 +133,7 @@ function M.Remotes(remotes, head)
         text.highlight("NeogitBranch")("Remote "),
         text.highlight("NeogitRemote")(name, { align_right = max_len }),
         text.highlight("NeogitBranch")(
-          string.format(" (%s)", git.config.get(string.format("remote.%s.url", name)):read())
+          string.format(" (%s)", git.config.get_local(string.format("remote.%s.url", name)):read())
         ),
       }, head)
     )
