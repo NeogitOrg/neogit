@@ -111,7 +111,7 @@ function Process:show_console()
 end
 
 function Process:show_spinner()
-  if self.suppress_console or self.spinner then
+  if not config.values.process_spinner or self.suppress_console or self.spinner then
     return
   end
 

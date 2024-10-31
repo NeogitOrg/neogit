@@ -306,6 +306,7 @@ end
 ---@field git_services? table Templartes to use when opening a pull request for a branch
 ---@field fetch_after_checkout? boolean Perform a fetch if the newly checked out branch has an upstream or pushRemote set
 ---@field telescope_sorter? function The sorter telescope will use
+---@field process_spinner? boolean Hide/Show the process spinner
 ---@field disable_insert_on_commit? boolean|"auto" Disable automatically entering insert mode in commit dialogues
 ---@field use_per_project_settings? boolean Scope persisted settings on a per-project basis
 ---@field remember_settings? boolean Whether neogit should persist flags from popups, e.g. git push flags
@@ -349,6 +350,7 @@ function M.get_default_values()
     disable_context_highlighting = false,
     disable_signs = false,
     graph_style = "ascii",
+    process_spinner = true,
     filewatcher = {
       enabled = true,
     },
