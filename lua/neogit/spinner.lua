@@ -4,6 +4,8 @@
 ---@field interval number
 ---@field pattern string[]
 ---@field timer uv_timer_t
+---@field start fun(self)
+---@field stop fun(self)
 local Spinner = {}
 Spinner.__index = Spinner
 
