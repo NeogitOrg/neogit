@@ -417,6 +417,7 @@ The `kind` option can be one of the following values:
 - `split_below`
 - `split_below_all`
 - `vsplit`
+- `floating`
 - `auto` (`vsplit` if window would have 80 cols, otherwise `split`)
 
 ## Popups
