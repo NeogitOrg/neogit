@@ -26,6 +26,7 @@ local ui = require("neogit.lib.popup.ui")
 ---@field buffer Buffer
 local M = {}
 
+-- Create a new popup builder
 function M.builder()
   return PopupBuilder.new(M.new)
 end
