@@ -5,9 +5,6 @@ local notification = require("neogit.lib.notification")
 
 local M = {}
 
----@class PopupData
----@field state PopupState
-
 ---@class PopupState
 ---@field name string
 ---@field args PopupOption[]|PopupSwitch[]|PopupHeading[]
