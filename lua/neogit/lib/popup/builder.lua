@@ -25,9 +25,11 @@ local M = {}
 ---@field cli string
 ---@field cli_prefix string
 ---@field default string|integer|boolean
+---@field dependant table
 ---@field description string
 ---@field fn function
 ---@field id string
+---@field incompatible table
 ---@field key string
 ---@field key_prefix string
 ---@field separator string
@@ -68,20 +70,22 @@ local M = {}
 ---@class PopupSwitchOpts
 ---@field enabled boolean Controls if the switch should default to 'on' state
 ---@field internal boolean Whether the switch is internal to neogit or should be included in the cli command. If `true` we don't include it in the cli command.
----@field incompatible table A table of strings that represent other cli flags that this one cannot be used with
+---@field incompatible table A table of strings that represent other cli switches/options that this one cannot be used with
 ---@field key_prefix string Allows overwriting the default '-' to toggle switch
 ---@field cli_prefix string Allows overwriting the default '--' thats used to create the cli flag. Sometimes you may want to use '++' or '-'.
 ---@field cli_suffix string
 ---@field options table
 ---@field value string Allows for pre-building cli flags that can be customised by user input
 ---@field user_input boolean If true, allows user to customise the value of the cli flag
----@field dependant string[] other switches with a state dependency on this one
+---@field dependant string[] other switches/options with a state dependency on this one
 
 ---@class PopupOptionsOpts
 ---@field key_prefix string Allows overwriting the default '=' to set option
 ---@field cli_prefix string Allows overwriting the default '--' cli prefix
 ---@field choices table Table of predefined choices that a user can select for option
 ---@field default string|integer|boolean Default value for option, if the user attempts to unset value
+---@field dependant string[] other switches/options with a state dependency on this one
+---@field incompatible table A table of strings that represent other cli switches/options that this one cannot be used with
 
 ---@class PopupConfigOpts
 ---@field options { display: string, value: string, config: function? }
@@ -266,6 +270,14 @@ function M:option(key, cli, value, description, opts)
     opts.separator = "="
   end
 
+  if opts.dependant == nil then
+    opts.dependant = {}
+  end
+
+  if opts.incompatible == nil then
+    opts.incompatible = {}
+  end
+
   if opts.setup then
     opts.setup(self)
   end
@@ -283,6 +295,8 @@ function M:option(key, cli, value, description, opts)
     choices = opts.choices,
     default = opts.default,
     separator = opts.separator,
+    dependant = util.build_reverse_lookup(opts.dependant),
+    incompatible = util.build_reverse_lookup(opts.incompatible),
     fn = opts.fn,
   })
 

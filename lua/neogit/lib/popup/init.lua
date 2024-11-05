@@ -128,22 +128,28 @@ function M:toggle_switch(switch)
 
   state.set({ self.state.name, switch.cli }, switch.enabled)
 
-  -- Ensure that other switches that are incompatible with this one are disabled
+  -- Ensure that other switches/options that are incompatible with this one are disabled
   if switch.enabled and #switch.incompatible > 0 then
     for _, var in ipairs(self.state.args) do
-      if var.type == "switch" and var.enabled and switch.incompatible[var.cli] then
-        var.enabled = false
-        state.set({ self.state.name, var.cli }, var.enabled)
+      if switch.incompatible[var.cli] then
+        if var.type == "switch" then
+          self:disable_switch(var)
+        elseif var.type == "option" then
+          self:disable_option(var)
+        end
       end
     end
   end
 
-  -- Ensure that switches that depend on this one are also disabled
+  -- Ensure that switches/options that depend on this one are also disabled
   if not switch.enabled and #switch.dependant > 0 then
     for _, var in ipairs(self.state.args) do
-      if var.type == "switch" and var.enabled and switch.dependant[var.cli] then
-        var.enabled = false
-        state.set({ self.state.name, var.cli }, var.enabled)
+      if switch.dependant[var.cli] then
+        if var.type == "switch" then
+          self:disable_switch(var)
+        elseif var.type == "option" then
+          self:disable_option(var)
+        end
       end
     end
   end
@@ -151,10 +157,13 @@ end
 
 -- Toggle an option on/off and set it's value
 ---@param option table
+---@param value? string
 ---@return nil
-function M:set_option(option)
+function M:set_option(option, value)
   -- Prompt user to select from predetermined choices
-  if option.choices then
+  if value then
+    option.value = value
+  elseif option.choices then
     if not option.value or option.value == "" then
       local choice = FuzzyFinderBuffer.new(option.choices):open_async {
         prompt_prefix = option.description,
@@ -186,6 +195,50 @@ function M:set_option(option)
   end
 
   state.set({ self.state.name, option.cli }, option.value)
+
+  -- Ensure that other switches/options that are incompatible with this one are disabled
+  if option.value and option.value ~= "" and #option.incompatible > 0 then
+    for _, var in ipairs(self.state.args) do
+      if option.incompatible[var.cli] then
+        if var.type == "switch" then
+          self:disable_switch(var)
+        elseif var.type == "option" then
+          self:disable_option(var)
+        end
+      end
+    end
+  end
+
+  -- Ensure that switches/options that depend on this one are also disabled
+  if option.value and option.value ~= "" and #option.dependant > 0 then
+    for _, var in ipairs(self.state.args) do
+      if option.dependant[var.cli] then
+        if var.type == "switch" then
+          self:disable_switch(var)
+        elseif var.type == "option" then
+          self:disable_option(var)
+        end
+      end
+    end
+  end
+end
+
+---Disables a switch.
+---@param switch table
+function M:disable_switch(switch)
+  if switch.enabled then
+    self:toggle_switch(switch)
+  end
+end
+
+---Disables an option, setting its value to "". Doesn't use the default, which
+---is important to ensure that we don't use incompatible switches/options
+---together.
+---@param option table
+function M:disable_option(option)
+  if option.value and option.value ~= "" then
+    self:set_option(option, "")
+  end
 end
 
 -- Set a config value
