@@ -156,7 +156,7 @@ function Buffer:set_text(first_line, last_line, first_col, last_col, lines)
   api.nvim_buf_set_text(self.handle, first_line, first_col, last_line, last_col, lines)
 end
 
----@param line nil|number|number[]
+---@param line nil|integer|integer[]
 function Buffer:move_cursor(line)
   if not line or not self:is_focused() then
     return

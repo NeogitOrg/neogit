@@ -37,6 +37,7 @@ local default_component_options = {
 ---@field id string|nil
 local Component = {}
 
+---@return integer, integer
 function Component:row_range_abs()
   return self.position.row_start, self.position.row_end
 end
