@@ -295,7 +295,7 @@ function M:mappings()
       ["<esc>"] = function()
         self:close()
       end,
-      ["<tab>"] = function()
+      ["<tab>"] = a.void(function()
         local component = self.buffer.ui:get_interactive_component_under_cursor()
         if not component then
           return
@@ -310,7 +310,7 @@ function M:mappings()
         end
 
         self:refresh()
-      end,
+      end),
     },
   }
 
