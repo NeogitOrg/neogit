@@ -27,6 +27,7 @@ local ui = require("neogit.lib.popup.ui")
 local M = {}
 
 -- Create a new popup builder
+---@return PopupBuilder
 function M.builder()
   return PopupBuilder.new(M.new)
 end
@@ -92,7 +93,7 @@ function M:close()
 end
 
 -- Toggle a switch on/off
----@param switch table
+---@param switch PopupSwitch
 ---@return nil
 function M:toggle_switch(switch)
   if switch.options then
@@ -134,8 +135,10 @@ function M:toggle_switch(switch)
     for _, var in ipairs(self.state.args) do
       if switch.incompatible[var.cli] then
         if var.type == "switch" then
+          ---@cast var PopupSwitch
           self:disable_switch(var)
         elseif var.type == "option" then
+          ---@cast var PopupOption
           self:disable_option(var)
         end
       end
@@ -147,8 +150,10 @@ function M:toggle_switch(switch)
     for _, var in ipairs(self.state.args) do
       if switch.dependant[var.cli] then
         if var.type == "switch" then
+          ---@cast var PopupSwitch
           self:disable_switch(var)
         elseif var.type == "option" then
+          ---@cast var PopupOption
           self:disable_option(var)
         end
       end
@@ -157,7 +162,7 @@ function M:toggle_switch(switch)
 end
 
 -- Toggle an option on/off and set it's value
----@param option table
+---@param option PopupOption
 ---@param value? string
 ---@return nil
 function M:set_option(option, value)
@@ -225,7 +230,7 @@ function M:set_option(option, value)
 end
 
 ---Disables a switch.
----@param switch table
+---@param switch PopupSwitch
 function M:disable_switch(switch)
   if switch.enabled then
     self:toggle_switch(switch)
@@ -235,7 +240,7 @@ end
 ---Disables an option, setting its value to "". Doesn't use the default, which
 ---is important to ensure that we don't use incompatible switches/options
 ---together.
----@param option table
+---@param option PopupOption
 function M:disable_option(option)
   if option.value and option.value ~= "" then
     self:set_option(option, "")
@@ -243,7 +248,7 @@ function M:disable_option(option)
 end
 
 -- Set a config value
----@param config table
+---@param config PopupConfig
 ---@return nil
 function M:set_config(config)
   if config.options then
@@ -315,8 +320,10 @@ function M:mappings()
       arg_prefixes[arg.key_prefix] = true
       mappings.n[arg.id] = a.void(function()
         if arg.type == "switch" then
+          ---@cast arg PopupSwitch
           self:toggle_switch(arg)
         elseif arg.type == "option" then
+          ---@cast arg PopupOption
           self:set_option(arg)
         end
 

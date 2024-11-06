@@ -3,6 +3,7 @@ local state = require("neogit.lib.state")
 local util = require("neogit.lib.util")
 local notification = require("neogit.lib.notification")
 
+---@class PopupBuilder
 local M = {}
 
 ---@class PopupState
@@ -31,7 +32,7 @@ local M = {}
 ---@field key_prefix string
 ---@field separator string
 ---@field type string
----@field value string
+---@field value string?
 
 ---@class PopupSwitch
 ---@field cli string
@@ -56,8 +57,17 @@ local M = {}
 ---@field key string
 ---@field name string
 ---@field entry ConfigEntry
----@field value string
+---@field value string?
 ---@field type string
+---@field passive boolean?
+---@field options PopupConfigOption[]?
+---@field callback fun(popup: PopupData, config: self)? Called after the config is set
+---@field fn fun(popup: PopupData, config: self)? If set, overrides the actual config setting behavior
+
+---@class PopupConfigOption An option that can be selected as a value for a config
+---@field display string The display name for the option
+---@field value string The value to set in git config
+---@field condition fun()? An option predicate to determine if the option should appear
 
 ---@class PopupAction
 ---@field keys table
@@ -85,8 +95,10 @@ local M = {}
 ---@field incompatible table A table of strings that represent other cli switches/options that this one cannot be used with
 
 ---@class PopupConfigOpts
----@field options { display: string, value: string, config: function? }
----@field passive boolean Controls if this config setting can be manipulated directly, or if it is managed by git, and should just be shown in UI
+---@field options PopupConfigOption[]
+---@field fn fun(popup: PopupData, config: self) If set, overrides the actual config setting behavior
+---@field callback fun(popup: PopupData, config: PopupConfig)? A callback that will be invoked after the config is set
+---@field passive boolean? Controls if this config setting can be manipulated directly, or if it is managed by git, and should just be shown in UI
 ---                       A 'condition' key with function value can also be present in the option, which controls if the option gets shown by returning boolean.
 
 function M.new(builder_fn)
