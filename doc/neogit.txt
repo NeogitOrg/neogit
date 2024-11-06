@@ -1249,7 +1249,7 @@ Arguments:                                              *neogit_pull_popup_args*
     upstream branch and the upstream branch was rebased since last fetched,
     the rebase uses that information to avoid rebasing non-local changes.
 
-    See pull.rebase, branch.<name>.rebase and branch.autoSetupRebase if you 
+    See pull.rebase, branch.<name>.rebase and branch.autoSetupRebase if you
     want to make git pull always use --rebase instead of merging.
 
     Note:
@@ -1850,4 +1850,3 @@ The following keys, in normal mode, will act on the commit under the cursor:
 
 ------------------------------------------------------------------------------
 vim:tw=78:ts=8:ft=help:norl:
-
