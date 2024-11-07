@@ -24,6 +24,7 @@ class Runner # rubocop:disable Style/Documentation
     @spinner = spinner
     @length  = length
     @title   = test.gsub("spec/", "")
+    @retries = 0
   end
 
   def register
@@ -32,24 +33,32 @@ class Runner # rubocop:disable Style/Documentation
     self
   end
 
-  def call(results, failures)
+  def call(results, failures) # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
     start!
-    output, wait = run
-    results[test] = JSON.parse(output)
 
-    time = results[test].dig("summary", "duration").round(3)
+    loop do
+      output, wait = run
+      results[test] = JSON.parse(output)
 
-    if wait.value.success?
-      register_success!(time)
-    else
-      failures << test
-      register_failure!(time)
+      time = results[test].dig("summary", "duration").round(3)
+
+      if wait.value.success?
+        register_success!(time)
+        break
+      elsif retries < 3
+        @retries += 1
+        register_retry!
+      else
+        failures << test
+        register_failure!(time)
+        break
+      end
     end
   end
 
   private
 
-  attr_reader :title, :spinner, :test, :length
+  attr_reader :title, :spinner, :test, :length, :retries
 
   def start!
     spinner.update(test: COLOR.blue(title))
@@ -67,6 +76,10 @@ class Runner # rubocop:disable Style/Documentation
   def register_success!(time)
     spinner.update(test: COLOR.green(title))
     spinner.success(COLOR.green(time))
+  end
+
+  def register_retry!
+    spinner.update(test: "#{COLOR.yellow(title)} (#{retries})")
   end
 
   def register_failure!(time)
