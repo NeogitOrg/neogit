@@ -146,9 +146,9 @@ function M:toggle_switch(switch)
   end
 
   -- Ensure that switches/options that depend on this one are also disabled
-  if not switch.enabled and #switch.dependant > 0 then
+  if not switch.enabled and #switch.dependent > 0 then
     for _, var in ipairs(self.state.args) do
-      if switch.dependant[var.cli] then
+      if switch.dependent[var.cli] then
         if var.type == "switch" then
           ---@cast var PopupSwitch
           self:disable_switch(var)
@@ -216,9 +216,9 @@ function M:set_option(option, value)
   end
 
   -- Ensure that switches/options that depend on this one are also disabled
-  if option.value and option.value ~= "" and #option.dependant > 0 then
+  if option.value and option.value ~= "" and #option.dependent > 0 then
     for _, var in ipairs(self.state.args) do
-      if option.dependant[var.cli] then
+      if option.dependent[var.cli] then
         if var.type == "switch" then
           self:disable_switch(var)
         elseif var.type == "option" then

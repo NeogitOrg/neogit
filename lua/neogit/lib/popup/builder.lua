@@ -4,6 +4,8 @@ local util = require("neogit.lib.util")
 local notification = require("neogit.lib.notification")
 
 ---@class PopupBuilder
+---@field state PopupState
+---@field builder_fn PopupData
 local M = {}
 
 ---@class PopupState
@@ -23,7 +25,7 @@ local M = {}
 ---@field cli string
 ---@field cli_prefix string
 ---@field default string|integer|boolean
----@field dependant table
+---@field dependent table
 ---@field description string
 ---@field fn function
 ---@field id string
@@ -39,12 +41,12 @@ local M = {}
 ---@field cli_base string
 ---@field cli_prefix string
 ---@field cli_suffix string
----@field dependant table
+---@field dependent table
 ---@field description string
 ---@field enabled boolean
 ---@field fn function
 ---@field id string
----@field incompatible table
+---@field incompatible string[]
 ---@field internal boolean
 ---@field key string
 ---@field key_prefix string
@@ -70,29 +72,32 @@ local M = {}
 ---@field condition fun()? An option predicate to determine if the option should appear
 
 ---@class PopupAction
----@field keys table
+---@field keys string|string[]
 ---@field description string
 ---@field callback function
 
 ---@class PopupSwitchOpts
----@field enabled boolean Controls if the switch should default to 'on' state
----@field internal boolean Whether the switch is internal to neogit or should be included in the cli command. If `true` we don't include it in the cli command.
----@field incompatible table A table of strings that represent other cli switches/options that this one cannot be used with
----@field key_prefix string Allows overwriting the default '-' to toggle switch
----@field cli_prefix string Allows overwriting the default '--' thats used to create the cli flag. Sometimes you may want to use '++' or '-'.
----@field cli_suffix string
----@field options table
----@field value string Allows for pre-building cli flags that can be customised by user input
----@field user_input boolean If true, allows user to customise the value of the cli flag
----@field dependant string[] other switches/options with a state dependency on this one
+---@field enabled? boolean Controls if the switch should default to 'on' state
+---@field internal? boolean Whether the switch is internal to neogit or should be included in the cli command. If `true` we don't include it in the cli command.
+---@field incompatible? string[] A table of strings that represent other cli switches/options that this one cannot be used with
+---@field key_prefix? string Allows overwriting the default '-' to toggle switch
+---@field cli_prefix? string Allows overwriting the default '--' that's used to create the cli flag. Sometimes you may want to use '++' or '-'.
+---@field cli_suffix? string
+---@field options? table
+---@field value? string Allows for pre-building cli flags that can be customized by user input
+---@field user_input? boolean If true, allows user to customize the value of the cli flag
+---@field dependent? string[] other switches/options with a state dependency on this one
 
 ---@class PopupOptionOpts
----@field key_prefix string Allows overwriting the default '=' to set option
----@field cli_prefix string Allows overwriting the default '--' cli prefix
----@field choices table Table of predefined choices that a user can select for option
----@field default string|integer|boolean Default value for option, if the user attempts to unset value
----@field dependant string[] other switches/options with a state dependency on this one
----@field incompatible table A table of strings that represent other cli switches/options that this one cannot be used with
+---@field key_prefix? string Allows overwriting the default '=' to set option
+---@field cli_prefix? string Allows overwriting the default '--' cli prefix
+---@field choices? table Table of predefined choices that a user can select for option
+---@field default? string|integer|boolean Default value for option, if the user attempts to unset value
+---@field dependent? string[] other switches/options with a state dependency on this one
+---@field incompatible? string[] A table of strings that represent other cli switches/options that this one cannot be used with
+---@field separator? string Defaults to `=`, separating the key from the value. Some CLI options are weird.
+---@field setup? fun(PopupBuilder) function called before rendering
+---@field fn? fun() function called - like an action. Used to launch a popup from a popup.
 
 ---@class PopupConfigOpts
 ---@field options PopupConfigOption[]
@@ -101,6 +106,8 @@ local M = {}
 ---@field passive boolean? Controls if this config setting can be manipulated directly, or if it is managed by git, and should just be shown in UI
 ---                       A 'condition' key with function value can also be present in the option, which controls if the option gets shown by returning boolean.
 
+---@param builder_fn PopupData
+---@return PopupBuilder
 function M.new(builder_fn)
   local instance = {
     state = {
@@ -196,8 +203,8 @@ function M:switch(key, cli, description, opts)
     opts.incompatible = {}
   end
 
-  if opts.dependant == nil then
-    opts.dependant = {}
+  if opts.dependent == nil then
+    opts.dependent = {}
   end
 
   if opts.key_prefix == nil then
@@ -245,7 +252,7 @@ function M:switch(key, cli, description, opts)
     cli_suffix = opts.cli_suffix,
     options = opts.options,
     incompatible = util.build_reverse_lookup(opts.incompatible),
-    dependant = util.build_reverse_lookup(opts.dependant),
+    dependent = util.build_reverse_lookup(opts.dependent),
   })
 
   return self
@@ -288,8 +295,8 @@ function M:option(key, cli, value, description, opts)
     opts.separator = "="
   end
 
-  if opts.dependant == nil then
-    opts.dependant = {}
+  if opts.dependent == nil then
+    opts.dependent = {}
   end
 
   if opts.incompatible == nil then
@@ -313,7 +320,7 @@ function M:option(key, cli, value, description, opts)
     choices = opts.choices,
     default = opts.default,
     separator = opts.separator,
-    dependant = util.build_reverse_lookup(opts.dependant),
+    dependent = util.build_reverse_lookup(opts.dependent),
     incompatible = util.build_reverse_lookup(opts.incompatible),
     fn = opts.fn,
   })
@@ -398,7 +405,7 @@ end
 -- Adds an action to the popup
 ---@param keys string|string[] Key or list of keys for the user to press that runs the action
 ---@param description string Description of action in UI
----@param callback fun(popup: PopupData) Function that gets run in async context
+---@param callback? fun(popup: PopupData) Function that gets run in async context
 ---@return self
 function M:action(keys, description, callback)
   if type(keys) == "string" then
@@ -428,7 +435,7 @@ end
 ---@param cond boolean The condition under which to add the action
 ---@param keys string|string[] Key or list of keys for the user to press that runs the action
 ---@param description string Description of action in UI
----@param callback fun(popup: PopupData) Function that gets run in async context
+---@param callback? fun(popup: PopupData) Function that gets run in async context
 ---@return self
 function M:action_if(cond, keys, description, callback)
   if cond then

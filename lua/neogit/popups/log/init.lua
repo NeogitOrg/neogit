@@ -62,7 +62,7 @@ function M.create()
       enabled = true,
       internal = true,
       incompatible = { "reverse" },
-      dependant = { "color" },
+      dependent = { "color" },
     })
     :switch_if(
       config.values.graph_style == "ascii" or config.values.graph_style == "kitty",

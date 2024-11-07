@@ -1852,13 +1852,21 @@ The following keys, in normal mode, will act on the commit under the cursor:
 Custom Popups                                             *neogit_custom_popups*
 
 You can leverage Neogit's infrastructure to create your own popups and
-actions. For example: >lua
+actions. For example, you can define actions as a function which will take the
+popup instance as it's argument:
+>lua
     local function my_action(popup)
+      -- You can access the popup state (enabled flags) like so:
+      local cli_args = popup:get_arguments()
+
       -- You can use Neogit's git abstraction for many common operations
       -- local git = require("neogit.lib.git")
+
+      -- The input library provides some helpful interfaces for getting user
+      -- input
       local input = require("neogit.lib.input")
       local user_input = input.get_user_input("User-specified free text for the action")
-      local cli_args = popup:get_arguments()
+
       vim.notify(
         "Hello from my custom action!\n"
         .. "CLI args: `" .. table.concat(cli_args, " ") .. "`\n"
@@ -1870,10 +1878,18 @@ actions. For example: >lua
       local p = popup
         .builder()
         :name("NeogitMyCustomPopup")
+        -- A switch is a boolean CLI flag, like `--no-verify`
         :switch("s", "my-switch", "My switch")
+        -- An "_if" variant exists for builder methods, that takes a boolean
+        -- as it's first argument.
+        :switch_if(true, "S", "conditional-switch", "This switch is conditional")
+        -- Options are CLI flags that have a value, like `--strategy=octopus`
         :option("o", "my-option", "default_value", "My option", { key_prefix = "-" })
         :new_action_group("My actions")
         :action("a", "Some action", my_action)
+        -- Data can be stored on the popup instance via the `env`, accessible
+        -- to the action via `popup.state.env.*`
+        :env({ some_data = { "like this" } })
         :build()
 
       p:show()
@@ -1889,7 +1905,8 @@ popups/actions in `lua/neogit/popups/*`, and the git APIs in
 `lua/neogit/lib/git` for more information (and inspiration!).
 
 To access your custom popup via a keymapping, you can include a mapping when
-calling the setup function: >lua
+calling the setup function:
+>lua
     require("neogit").setup({
       mappings = {
         status = {
