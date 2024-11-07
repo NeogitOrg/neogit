@@ -1249,7 +1249,7 @@ Arguments:                                              *neogit_pull_popup_args*
     upstream branch and the upstream branch was rebased since last fetched,
     the rebase uses that information to avoid rebasing non-local changes.
 
-    See pull.rebase, branch.<name>.rebase and branch.autoSetupRebase if you 
+    See pull.rebase, branch.<name>.rebase and branch.autoSetupRebase if you
     want to make git pull always use --rebase instead of merging.
 
     Note:
@@ -1848,6 +1848,55 @@ The following keys, in normal mode, will act on the commit under the cursor:
 • `b`    Insert breakpoint
 • `<cr>` Open current commit in Commit Buffer
 
+==============================================================================
+Custom Popups                                             *neogit_custom_popups*
+
+You can leverage Neogit's infrastructure to create your own popups and
+actions. For example: >lua
+    local function my_action(popup)
+      -- You can use Neogit's git abstraction for many common operations
+      -- local git = require("neogit.lib.git")
+      local input = require("neogit.lib.input")
+      local user_input = input.get_user_input("User-specified free text for the action")
+      local cli_args = popup:get_arguments()
+      vim.notify(
+        "Hello from my custom action!\n"
+        .. "CLI args: `" .. table.concat(cli_args, " ") .. "`\n"
+        .. "User input: `" .. user_input .. "`")
+    end
+
+    function create_custom_popup()
+      local popup = require("neogit.lib.popup")
+      local p = popup
+        .builder()
+        :name("NeogitMyCustomPopup")
+        :switch("s", "my-switch", "My switch")
+        :option("o", "my-option", "default_value", "My option", { key_prefix = "-" })
+        :new_action_group("My actions")
+        :action("a", "Some action", my_action)
+        :build()
+
+      p:show()
+
+      return p
+    end
+
+  require("neogit")
+<
+
+Look at the builder APIs in `lua/neogit/lib/popup/builder.lua`, the built-in
+popups/actions in `lua/neogit/popups/*`, and the git APIs in
+`lua/neogit/lib/git` for more information (and inspiration!).
+
+To access your custom popup via a keymapping, you can include a mapping when
+calling the setup function: >lua
+    require("neogit").setup({
+      mappings = {
+        status = {
+          ["<leader>A"] = create_custom_popup,
+        },
+      },
+    })
+<
 ------------------------------------------------------------------------------
 vim:tw=78:ts=8:ft=help:norl:
-

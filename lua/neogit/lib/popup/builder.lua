@@ -3,10 +3,8 @@ local state = require("neogit.lib.state")
 local util = require("neogit.lib.util")
 local notification = require("neogit.lib.notification")
 
+---@class PopupBuilder
 local M = {}
-
----@class PopupData
----@field state PopupState
 
 ---@class PopupState
 ---@field name string
@@ -34,7 +32,7 @@ local M = {}
 ---@field key_prefix string
 ---@field separator string
 ---@field type string
----@field value string
+---@field value string?
 
 ---@class PopupSwitch
 ---@field cli string
@@ -58,9 +56,18 @@ local M = {}
 ---@field id string
 ---@field key string
 ---@field name string
----@field entry string
----@field value string
+---@field entry ConfigEntry
+---@field value string?
 ---@field type string
+---@field passive boolean?
+---@field options PopupConfigOption[]?
+---@field callback fun(popup: PopupData, config: self)? Called after the config is set
+---@field fn fun(popup: PopupData, config: self)? If set, overrides the actual config setting behavior
+
+---@class PopupConfigOption An option that can be selected as a value for a config
+---@field display string The display name for the option
+---@field value string The value to set in git config
+---@field condition fun()? An option predicate to determine if the option should appear
 
 ---@class PopupAction
 ---@field keys table
@@ -79,7 +86,7 @@ local M = {}
 ---@field user_input boolean If true, allows user to customise the value of the cli flag
 ---@field dependant string[] other switches/options with a state dependency on this one
 
----@class PopupOptionsOpts
+---@class PopupOptionOpts
 ---@field key_prefix string Allows overwriting the default '=' to set option
 ---@field cli_prefix string Allows overwriting the default '--' cli prefix
 ---@field choices table Table of predefined choices that a user can select for option
@@ -88,9 +95,11 @@ local M = {}
 ---@field incompatible table A table of strings that represent other cli switches/options that this one cannot be used with
 
 ---@class PopupConfigOpts
----@field options { display: string, value: string, config: function? }
----@field passive boolean Controls if this config setting can be manipulated directly, or if it is managed by git, and should just be shown in UI
---                        A 'condition' key with function value can also be present in the option, which controls if the option gets shown by returning boolean.
+---@field options PopupConfigOption[]
+---@field fn fun(popup: PopupData, config: self) If set, overrides the actual config setting behavior
+---@field callback fun(popup: PopupData, config: PopupConfig)? A callback that will be invoked after the config is set
+---@field passive boolean? Controls if this config setting can be manipulated directly, or if it is managed by git, and should just be shown in UI
+---                       A 'condition' key with function value can also be present in the option, which controls if the option gets shown by returning boolean.
 
 function M.new(builder_fn)
   local instance = {
@@ -110,17 +119,23 @@ function M.new(builder_fn)
   return instance
 end
 
-function M:name(x)
-  self.state.name = x
+-- Set the popup's name. This must be set for all popups.
+---@param name string The name
+---@return self
+function M:name(name)
+  self.state.name = name
   return self
 end
 
-function M:env(x)
-  self.state.env = x or {}
+-- Set initial context for the popup
+---@param env table The initial context
+---@return self
+function M:env(env)
+  self.state.env = env or {}
   return self
 end
 
----Adds new column to actions section of popup
+-- adds a new column to the actions section of the popup
 ---@param heading string?
 ---@return self
 function M:new_action_group(heading)
@@ -128,7 +143,7 @@ function M:new_action_group(heading)
   return self
 end
 
----Conditionally adds new column to actions section of popup
+-- Conditionally adds a new column to the actions section of the popup
 ---@param cond boolean
 ---@param heading string?
 ---@return self
@@ -140,7 +155,7 @@ function M:new_action_group_if(cond, heading)
   return self
 end
 
----Adds new heading to current column within actions section of popup
+-- adds a new heading to current column within the actions section of the popup
 ---@param heading string
 ---@return self
 function M:group_heading(heading)
@@ -148,7 +163,7 @@ function M:group_heading(heading)
   return self
 end
 
----Conditionally adds new heading to current column within actions section of popup
+-- Conditionally adds a new heading to current column within the actions section of the popup
 ---@param cond boolean
 ---@param heading string
 ---@return self
@@ -160,10 +175,11 @@ function M:group_heading_if(cond, heading)
   return self
 end
 
+-- Adds a switch to the popup
 ---@param key string Which key triggers switch
 ---@param cli string Git cli flag to use
 ---@param description string Description text to show user
----@param opts PopupSwitchOpts?
+---@param opts PopupSwitchOpts? Additional options
 ---@return self
 function M:switch(key, cli, description, opts)
   opts = opts or {}
@@ -235,13 +251,13 @@ function M:switch(key, cli, description, opts)
   return self
 end
 
--- Conditionally adds a switch.
+-- Conditionally adds a switch to the popup
 ---@see M:switch
----@param cond boolean
+---@param cond boolean The condition under which to add the config
 ---@param key string Which key triggers switch
 ---@param cli string Git cli flag to use
 ---@param description string Description text to show user
----@param opts PopupSwitchOpts?
+---@param opts PopupSwitchOpts? Additional options
 ---@return self
 function M:switch_if(cond, key, cli, description, opts)
   if cond then
@@ -251,10 +267,12 @@ function M:switch_if(cond, key, cli, description, opts)
   return self
 end
 
+-- Adds an option to the popup
 ---@param key string Key for the user to engage option
 ---@param cli string CLI value used
 ---@param value string Current value of option
 ---@param description string Description of option, presented to user
+---@param opts PopupOptionOpts? Additional options
 function M:option(key, cli, value, description, opts)
   opts = opts or {}
 
@@ -303,7 +321,7 @@ function M:option(key, cli, value, description, opts)
   return self
 end
 
--- Adds heading text within Arguments (options/switches) section of popup
+-- adds a heading text within Arguments (options/switches) section of the popup
 ---@param heading string Heading to show
 ---@return self
 function M:arg_heading(heading)
@@ -311,8 +329,13 @@ function M:arg_heading(heading)
   return self
 end
 
+-- Conditionally adds an option to the popup
 ---@see M:option
----@param cond boolean
+---@param cond boolean The condition under which to add the config
+---@param key string Which key triggers switch
+---@param cli string Git cli flag to use
+---@param description string Description text to show user
+---@param opts PopupOptionOpts? Additional options
 ---@return self
 function M:option_if(cond, key, cli, value, description, opts)
   if cond then
@@ -322,16 +345,18 @@ function M:option_if(cond, key, cli, value, description, opts)
   return self
 end
 
----@param heading string Heading to render within config section of popup
+-- adds a heading text with the config section of the popup
+---@param heading string Heading to render
 ---@return self
 function M:config_heading(heading)
   table.insert(self.state.config, { heading = heading })
   return self
 end
 
+-- Adds config to the popup
 ---@param key string Key for user to use that engages config
 ---@param name string Name of config
----@param options PopupConfigOpts?
+---@param options PopupConfigOpts? Additional options
 ---@return self
 function M:config(key, name, options)
   local entry = git.config.get(name)
@@ -355,9 +380,12 @@ function M:config(key, name, options)
   return self
 end
 
--- Conditionally adds config to popup
+-- Conditionally adds config to the popup
 ---@see M:config
----@param cond boolean
+---@param cond boolean The condition under which to add the config
+---@param key string Key for user to use that engages config
+---@param name string Name of config
+---@param options PopupConfigOpts? Additional options
 ---@return self
 function M:config_if(cond, key, name, options)
   if cond then
@@ -367,9 +395,10 @@ function M:config_if(cond, key, name, options)
   return self
 end
 
+-- Adds an action to the popup
 ---@param keys string|string[] Key or list of keys for the user to press that runs the action
 ---@param description string Description of action in UI
----@param callback function Function that gets run in async context
+---@param callback fun(popup: PopupData) Function that gets run in async context
 ---@return self
 function M:action(keys, description, callback)
   if type(keys) == "string" then
@@ -394,18 +423,23 @@ function M:action(keys, description, callback)
   return self
 end
 
--- Conditionally adds action to popup
----@param cond boolean
+-- Conditionally adds an action to the popup
 ---@see M:action
+---@param cond boolean The condition under which to add the action
+---@param keys string|string[] Key or list of keys for the user to press that runs the action
+---@param description string Description of action in UI
+---@param callback fun(popup: PopupData) Function that gets run in async context
 ---@return self
-function M:action_if(cond, key, description, callback)
+function M:action_if(cond, keys, description, callback)
   if cond then
-    return self:action(key, description, callback)
+    return self:action(keys, description, callback)
   end
 
   return self
 end
 
+-- Builds the popup
+---@return PopupData # The popup
 function M:build()
   if self.state.name == nil then
     error("A popup needs to have a name!")
