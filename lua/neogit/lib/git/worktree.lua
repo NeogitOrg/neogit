@@ -48,20 +48,22 @@ function M.list(opts)
   local list = git.cli.worktree.list.args("--porcelain").call({ hidden = true }).stdout
 
   local worktrees = {}
-  for i = 1, #list, 3 do
-    local path = list[i]:match("^worktree (.-)$")
-    local head = list[i]:match("^HEAD (.-)$")
-    local type, ref = list[i + 2]:match("^([^ ]+) (.+)$")
+  for i = 1, #list, 1 do
+    if list[i]:match("^branch.*$") then
+      local path = list[i - 2]:match("^worktree (.-)$")
+      local head = list[i - 1]:match("^HEAD (.-)$")
+      local type, ref = list[i]:match("^([^ ]+) (.+)$")
 
-    if path then
-      local main = Path.new(path, ".git"):is_dir()
-      table.insert(worktrees, {
-        head = head,
-        type = type,
-        ref = ref,
-        main = main,
-        path = path,
-      })
+      if path then
+        local main = Path.new(path, ".git"):is_file()
+        table.insert(worktrees, {
+          head = head,
+          type = type,
+          ref = ref,
+          main = main,
+          path = path,
+        })
+      end
     end
   end
 
