@@ -85,7 +85,7 @@ neogit.setup {
   },
   -- "ascii"   is the graph the git CLI generates
   -- "unicode" is the graph like https://github.com/rbong/vim-flog
-  -- "kitty"   is the graph like https://github.com/isakbm/gitgraph.nvim
+  -- "kitty"   is the graph like https://github.com/isakbm/gitgraph.nvim - use https://github.com/rbong/flog-symbols if you don't use Kitty
   graph_style = "ascii",
   -- Used to generate URL's for branch popup action "pull request".
   git_services = {
