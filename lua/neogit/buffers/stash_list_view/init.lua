@@ -42,6 +42,7 @@ function M:open()
     mappings = {
       v = {
         [popups.mapping_for("CherryPickPopup")] = function()
+          -- TODO: implement
           -- local stash = self.buffer.ui:get_commit_under_cursor()[1]
           -- if stash then
           --   local stash_item = util.find(self.stashes, function(s)

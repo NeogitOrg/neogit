@@ -13,15 +13,32 @@ local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 local fn = vim.fn
 local api = vim.api
 
+local function cleanup_dir(dir)
+  if vim.in_fast_event() then
+    a.util.scheduler()
+  end
+
+  for name, type in vim.fs.dir(dir, { depth = math.huge }) do
+    if type == "file" then
+      local bufnr = fn.bufnr(name)
+      if bufnr > 0 then
+        api.nvim_buf_delete(bufnr, { force = false })
+      end
+    end
+  end
+
+  fn.delete(dir, "rf")
+end
+
 local function cleanup_items(...)
   if vim.in_fast_event() then
     a.util.scheduler()
   end
 
   for _, item in ipairs { ... } do
-    local bufnr = fn.bufexists(item.name)
-    if bufnr and bufnr > 0 and api.nvim_buf_is_valid(bufnr) then
-      api.nvim_buf_delete(bufnr, { force = true })
+    local bufnr = fn.bufnr(item.name)
+    if bufnr > 0 then
+      api.nvim_buf_delete(bufnr, { force = false })
     end
 
     fn.delete(item.name)
@@ -659,11 +676,20 @@ M.n_discard = function(self)
 
     if selection.item and selection.item.first == fn.line(".") then -- Discard File
       if section == "untracked" then
-        message = ("Discard %q?"):format(selection.item.name)
-        action = function()
-          cleanup_items(selection.item)
-        end
+        local mode = git.config.get("status.showUntrackedFiles"):read()
+
         refresh = { update_diffs = { "untracked:" .. selection.item.name } }
+        if mode == "all" then
+          message = ("Discard %q?"):format(selection.item.name)
+          action = function()
+            cleanup_items(selection.item)
+          end
+        else
+          message = ("Recursively discard %q?"):format(selection.item.name)
+          action = function()
+            cleanup_dir(selection.item.name)
+          end
+        end
       elseif section == "unstaged" then
         if selection.item.mode:match("^[UAD][UAD]") then
           choices = { "&ours", "&theirs", "&conflict", "&abort" }
