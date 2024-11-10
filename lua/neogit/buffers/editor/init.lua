@@ -149,10 +149,7 @@ function M:open(kind)
 
       -- Start insert mode if user has configured it
       local enable_insert = config.values.enable_insert_on_commit
-      if
-        (enable_insert == "auto" and vim.fn.prevnonblank(".") ~= vim.fn.line("."))
-        or enable_insert
-      then
+      if (enable_insert == "auto" and vim.fn.prevnonblank(".") ~= vim.fn.line(".")) or enable_insert then
         vim.cmd(":startinsert")
       end
 
