@@ -151,8 +151,8 @@ function M:open(kind)
     name = "NeogitCommitView",
     filetype = "NeogitCommitView",
     kind = kind,
-    status_column = not config.values.disable_signs and "" or nil,
-    context_highlight = not config.values.disable_context_highlighting,
+    status_column = config.values.enable_signs and "" or nil,
+    context_highlight = config.values.enable_context_highlighting,
     autocmds = {
       ["WinLeave"] = function()
         if self.buffer and self.buffer.kind == "floating" then

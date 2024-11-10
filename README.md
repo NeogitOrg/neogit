@@ -67,16 +67,16 @@ You can configure neogit by running the `neogit.setup()` function, passing a tab
 local neogit = require("neogit")
 
 neogit.setup {
-  -- Hides the hints at the top of the status buffer
-  disable_hint = false,
-  -- Disables changing the buffer highlights based on where the cursor is.
-  disable_context_highlighting = false,
-  -- Disables signs for sections/items/hunks
-  disable_signs = false,
-  -- Changes what mode the Commit Editor starts in. `true` will leave nvim in normal mode, `false` will change nvim to
+  -- Shows the hints at the top of the status buffer
+  enable_hint = true,
+  -- Enable changing the buffer highlights based on where the cursor is.
+  enable_context_highlighting = true,
+  -- Shows signs for sections/items/hunks
+  enable_signs = true,
+  -- Changes what mode the Commit Editor starts in. `false` will leave nvim in normal mode, `true` will change nvim to
   -- insert mode, and `"auto"` will change nvim to insert mode IF the commit message is empty, otherwise leaving it in
   -- normal mode.
-  disable_insert_on_commit = "auto",
+  enable_insert_on_commit = "auto",
   -- When enabled, will watch the `.git/` directory for changes and refresh the status buffer in response to filesystem
   -- events.
   filewatcher = {
@@ -131,8 +131,8 @@ neogit.setup {
   initial_branch_name = "",
   -- Change the default way of opening neogit
   kind = "tab",
-  -- Disable line numbers and relative line numbers
-  disable_line_numbers = true,
+  -- Show line numbers and relative line numbers
+  enable_line_numbers = false,
   -- The time after which an output console is shown for slow running commands
   console_timeout = 2000,
   -- Automatically show console if a command takes more than console_timeout milliseconds

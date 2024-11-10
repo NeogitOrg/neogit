@@ -54,7 +54,7 @@ function M:open(_)
     kind = config.values.reflog_view.kind,
     header = self.header,
     scroll_header = true,
-    status_column = not config.values.disable_signs and "" or nil,
+    status_column = config.values.enable_signs and "" or nil,
     context_highlight = true,
     mappings = {
       v = {

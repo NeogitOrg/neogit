@@ -81,7 +81,7 @@ function M:open()
     context_highlight = false,
     header = self.header,
     scroll_header = false,
-    status_column = not config.values.disable_signs and "" or nil,
+    status_column = config.values.enable_signs and "" or nil,
     mappings = {
       v = {
         [popups.mapping_for("CherryPickPopup")] = popups.open("cherry_pick", function(p)

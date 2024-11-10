@@ -94,11 +94,11 @@ function M:open(kind)
     name = "NeogitStatus",
     filetype = "NeogitStatus",
     cwd = self.cwd,
-    context_highlight = not config.values.disable_context_highlighting,
+    context_highlight = config.values.enable_context_highlighting,
     kind = kind or config.values.kind or "tab",
-    disable_line_numbers = config.values.disable_line_numbers,
-    disable_relative_line_numbers = config.values.disable_relative_line_numbers,
-    foldmarkers = not config.values.disable_signs,
+    enable_line_numbers = config.values.enable_line_numbers,
+    enable_relative_line_numbers = config.values.enable_relative_line_numbers,
+    foldmarkers = config.values.enable_signs,
     on_detach = function()
       Watcher.instance(self.root):unregister(self)
 
