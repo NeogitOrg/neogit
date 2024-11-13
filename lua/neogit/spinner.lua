@@ -36,13 +36,15 @@ end
 function Spinner:start()
   if not self.timer then
     self.timer = vim.uv.new_timer()
+    vim.cmd(string.format("redraw | echomsg '[neogit] %s'", self.text))
+
     self.timer:start(
       250,
       self.interval,
       vim.schedule_wrap(function()
         self.count = self.count + 1
         local step = self.pattern[(self.count % #self.pattern) + 1]
-        vim.cmd(string.format("redraw | echomsg '%s %s'", step, self.text))
+        vim.cmd(string.format("redraw | echo '%s %s'", step, self.text))
       end)
     )
   end
