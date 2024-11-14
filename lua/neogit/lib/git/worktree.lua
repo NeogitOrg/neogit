@@ -55,7 +55,7 @@ function M.list(opts)
       local type, ref = list[i]:match("^([^ ]+) (.+)$")
 
       if path then
-        local main = Path.new(path, ".git"):is_file()
+        local main = Path.new(path, ".git"):is_dir()
         table.insert(worktrees, {
           head = head,
           type = type,
