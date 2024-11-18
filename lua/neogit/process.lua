@@ -133,7 +133,7 @@ function Process:start_timer()
   end
 
   if self.timer == nil then
-    local timer = vim.loop.new_timer()
+    local timer = vim.uv.new_timer()
     self.timer = timer
 
     local timeout = assert(self.git_hook and 800 or config.values.console_timeout, "no timeout")
@@ -158,7 +158,7 @@ function Process:start_timer()
           local message = string.format(
             "Command %q running for more than: %.1f seconds",
             mask_command(table.concat(self.cmd, " ")),
-            math.ceil((vim.loop.now() - self.start) / 100) / 10
+            math.ceil((vim.uv.now() - self.start) / 100) / 10
           )
 
           notification.warn(message .. "\n\nOpen the command history for details")
@@ -315,7 +315,7 @@ function Process:spawn(cb)
 
   local function on_exit(_, code)
     res.code = code
-    res.time = (vim.loop.now() - start)
+    res.time = (vim.uv.now() - start)
 
     -- Remove self
     processes[self.job] = nil

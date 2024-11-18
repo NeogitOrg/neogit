@@ -67,7 +67,7 @@ function M.client(opts)
   local lua_cmd =
     fmt('lua require("neogit.client").editor("%s", "%s", %s)', file_target, client, opts.show_diff)
 
-  if vim.loop.os_uname().sysname == "Windows_NT" then
+  if vim.uv.os_uname().sysname == "Windows_NT" then
     lua_cmd = lua_cmd:gsub("\\", "/")
   end
 

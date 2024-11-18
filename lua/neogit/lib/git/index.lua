@@ -1,7 +1,6 @@
 local git = require("neogit.lib.git")
 local Path = require("plenary.path")
 local util = require("neogit.lib.util")
-local uv = vim.uv or vim.loop
 
 ---@class NeogitGitIndex
 local M = {}
@@ -134,7 +133,7 @@ function M.with_temp_index(revision, fn)
   assert(revision, "temp index requires a revision")
   assert(fn, "Pass a function to call with temp index")
 
-  local tmp_index = Path:new(uv.os_tmpdir(), ("index.neogit.%s"):format(revision))
+  local tmp_index = Path:new(vim.uv.os_tmpdir(), ("index.neogit.%s"):format(revision))
   git.cli["read-tree"].args(revision).index_output(tmp_index:absolute()).call { hidden = true }
   assert(tmp_index:exists(), "Failed to create temp index")
 
