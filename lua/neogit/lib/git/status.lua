@@ -6,12 +6,19 @@ local logger = require("neogit.logger")
 
 ---@class StatusItem
 ---@field mode string
----@field diff string[]
+---@field diff Diff
 ---@field absolute_path string
 ---@field escaped_path string
 ---@field original_name string|nil
 ---@field file_mode {head: number, index: number, worktree: number}|nil
 ---@field submodule SubmoduleStatus|nil
+---@field name string
+---@field first number
+---@field last number
+---@field oid string|nil optional object id
+---@field commit CommitLogEntry|nil optional object id
+---@field folded boolean|nil
+---@field hunks Hunk[]|nil
 
 ---@class SubmoduleStatus
 ---@field commit_changed boolean C

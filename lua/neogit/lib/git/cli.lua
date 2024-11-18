@@ -107,7 +107,7 @@ local runner = require("neogit.runner")
 ---@field shortstat self
 ---@field patch self
 ---@field name_only self
----@field ext_diff self
+---@field no_ext_diff self
 ---@field index self
 ---@field check self
 
@@ -172,6 +172,12 @@ local runner = require("neogit.runner")
 ---@field rename self
 ---@field prune self
 ---@field get_url fun(remote: string): self
+
+---@class GitCommandRevert: GitCommandBuilder
+---@field no_commit self
+---@field continue self
+---@field skip self
+---@field abort self
 
 ---@class GitCommandApply: GitCommandBuilder
 ---@field ignore_space_change self
@@ -344,6 +350,7 @@ local runner = require("neogit.runner")
 ---@field rebase         GitCommandRebase
 ---@field reflog         GitCommandReflog
 ---@field remote         GitCommandRemote
+---@field revert         GitCommandRevert
 ---@field reset          GitCommandReset
 ---@field rev-list       GitCommandRevList
 ---@field rev-parse      GitCommandRevParse

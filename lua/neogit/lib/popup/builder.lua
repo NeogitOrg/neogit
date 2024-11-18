@@ -53,13 +53,14 @@ local M = {}
 ---@field options table
 ---@field type string
 ---@field user_input boolean
+---@field value string?
 
 ---@class PopupConfig
 ---@field id string
 ---@field key string
 ---@field name string
 ---@field entry ConfigEntry
----@field value string
+---@field value string?
 ---@field type string
 ---@field passive boolean?
 ---@field options PopupConfigOption[]?
@@ -69,7 +70,7 @@ local M = {}
 ---@class PopupConfigOption An option that can be selected as a value for a config
 ---@field display string The display name for the option
 ---@field value string The value to set in git config
----@field condition fun()? An option predicate to determine if the option should appear
+---@field condition? fun(): boolean An option predicate to determine if the option should appear
 
 ---@class PopupAction
 ---@field keys string|string[]
@@ -100,10 +101,10 @@ local M = {}
 ---@field fn? fun() function called - like an action. Used to launch a popup from a popup.
 
 ---@class PopupConfigOpts
----@field options PopupConfigOption[]
----@field fn fun(popup: PopupData, config: self) If set, overrides the actual config setting behavior
----@field callback fun(popup: PopupData, config: PopupConfig)? A callback that will be invoked after the config is set
----@field passive boolean? Controls if this config setting can be manipulated directly, or if it is managed by git, and should just be shown in UI
+---@field options? PopupConfigOption[]
+---@field fn? fun(popup: PopupData, config: self) If set, overrides the actual config setting behavior
+---@field callback? fun(popup: PopupData, config: PopupConfig)? A callback that will be invoked after the config is set
+---@field passive? boolean? Controls if this config setting can be manipulated directly, or if it is managed by git, and should just be shown in UI
 ---                       A 'condition' key with function value can also be present in the option, which controls if the option gets shown by returning boolean.
 
 ---@param builder_fn PopupData

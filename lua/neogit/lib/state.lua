@@ -17,7 +17,7 @@ end
 
 ---@return Path
 function M.filepath(config)
-  local state_path = Path.new(vim.fn.stdpath("state")):joinpath("neogit")
+  local state_path = Path:new(vim.fn.stdpath("state")):joinpath("neogit")
   local filename = "state"
 
   if config.use_per_project_settings then
@@ -60,7 +60,12 @@ function M.read()
   end
 
   log("Reading file")
-  return vim.mpack.decode(M.path:read())
+  local content = M.path:read()
+  if content then
+    return vim.mpack.decode(content)
+  else
+    return {}
+  end
 end
 
 ---Writes state to disk

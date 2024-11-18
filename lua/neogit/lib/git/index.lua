@@ -153,6 +153,9 @@ function M.update()
       on_error = function(_)
         return false
       end,
+      suppress_console = true,
+      git_hook = false,
+      user_command = false,
     })
     :spawn_async()
 end

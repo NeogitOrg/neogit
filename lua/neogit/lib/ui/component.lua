@@ -25,6 +25,13 @@ local default_component_options = {
 ---@field section string|nil
 ---@field item table|nil
 ---@field id string|nil
+---@field oid string|nil
+---@field ref ParsedRef
+---@field yankable string?
+---@field on_open fun(fold, Ui)
+---@field hunk Hunk
+---@field filename string?
+---@field value any
 
 ---@class Component
 ---@field position ComponentPosition
