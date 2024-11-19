@@ -97,6 +97,8 @@ function Color.from_hex(c)
     end
   end
 
+  assert(type(n) == "number")
+
   return Color(
     bit.rshift(n, 24) / 0xff,
     bit.band(bit.rshift(n, 16), 0xff) / 0xff,

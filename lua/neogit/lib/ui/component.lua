@@ -42,6 +42,10 @@ local default_component_options = {
 ---@field index number|nil
 ---@field value string|nil
 ---@field id string|nil
+---@field highlight fun(hl_group:string): self
+---@field line_hl fun(hl_group:string): self
+---@field padding_left fun(string): self
+---@operator call: Component
 local Component = {}
 
 ---@return integer, integer
@@ -148,6 +152,8 @@ function Component:close_all_folds(ui)
   end
 end
 
+---@param f fun(...): table
+---@return Component
 function Component.new(f)
   local instance = {}
 

@@ -3,7 +3,7 @@ local M = {}
 ---@generic T: any
 ---@generic U: any
 ---@param tbl T[]
----@param f fun(v: T): U
+---@param f Component|fun(v: T): U
 ---@return U[]
 function M.map(tbl, f)
   local t = {}

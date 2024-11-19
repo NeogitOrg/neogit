@@ -108,6 +108,7 @@ local runner = require("neogit.runner")
 ---@field patch self
 ---@field name_only self
 ---@field no_ext_diff self
+---@field no_index self
 ---@field index self
 ---@field check self
 
@@ -129,7 +130,7 @@ local runner = require("neogit.runner")
 ---@class GitCommandRebase: GitCommandBuilder
 ---@field interactive self
 ---@field onto self
----@field todo self
+---@field edit_todo self
 ---@field continue self
 ---@field abort self
 ---@field skip self
@@ -368,6 +369,7 @@ local runner = require("neogit.runner")
 ---@field write-tree     GitCommandWriteTree
 ---@field git_root fun(dir: string):string
 ---@field is_inside_worktree fun(dir: string):boolean
+---@field history ProcessResult[]
 
 ---@param setup GitCommandSetup|nil
 ---@return GitCommand

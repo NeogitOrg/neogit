@@ -63,6 +63,7 @@ local M = {}
 ---@field value string?
 ---@field type string
 ---@field passive boolean?
+---@field heading string?
 ---@field options PopupConfigOption[]?
 ---@field callback fun(popup: PopupData, config: self)? Called after the config is set
 ---@field fn fun(popup: PopupData, config: self)? If set, overrides the actual config setting behavior
@@ -73,9 +74,10 @@ local M = {}
 ---@field condition? fun(): boolean An option predicate to determine if the option should appear
 
 ---@class PopupAction
----@field keys string|string[]
+---@field keys string[]
 ---@field description string
 ---@field callback function
+---@field heading string?
 
 ---@class PopupSwitchOpts
 ---@field enabled? boolean Controls if the switch should default to 'on' state
@@ -107,7 +109,7 @@ local M = {}
 ---@field passive? boolean? Controls if this config setting can be manipulated directly, or if it is managed by git, and should just be shown in UI
 ---                       A 'condition' key with function value can also be present in the option, which controls if the option gets shown by returning boolean.
 
----@param builder_fn PopupData
+---@param builder_fn fun(): PopupData
 ---@return PopupBuilder
 function M.new(builder_fn)
   local instance = {

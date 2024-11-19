@@ -20,9 +20,10 @@ end
 ---@return ProcessResult
 function M.instantly(commit, args)
   local result = git.cli.rebase
-    .env({ GIT_SEQUENCE_EDITOR = ":" }).interactive.autostash.autosquash
-    .arg_list(args or {})
+    .interactive.autostash.autosquash
     .commit(commit)
+    .env({ GIT_SEQUENCE_EDITOR = ":" })
+    .arg_list(args or {})
     .call { long = true, pty = true }
 
   if result.code ~= 0 then
@@ -99,9 +100,10 @@ function M.modify(commit)
   local short_commit = git.rev_parse.abbreviate_commit(commit)
   local editor = "nvim -c '%s/^pick \\(" .. short_commit .. ".*\\)/edit \\1/' -c 'wq'"
   local result = git.cli.rebase
-    .env({ GIT_SEQUENCE_EDITOR = editor }).interactive.autosquash.autostash
-    .in_pty(true)
+    .interactive.autosquash.autostash
     .commit(commit)
+    .in_pty(true)
+    .env({ GIT_SEQUENCE_EDITOR = editor })
     .call()
   if result.code ~= 0 then
     return
@@ -113,9 +115,10 @@ function M.drop(commit)
   local short_commit = git.rev_parse.abbreviate_commit(commit)
   local editor = "nvim -c '%s/^pick \\(" .. short_commit .. ".*\\)/drop \\1/' -c 'wq'"
   local result = git.cli.rebase
-    .env({ GIT_SEQUENCE_EDITOR = editor }).interactive.autosquash.autostash
-    .in_pty(true)
+    .interactive.autosquash.autostash
     .commit(commit)
+    .in_pty(true)
+    .env({ GIT_SEQUENCE_EDITOR = editor })
     .call()
   if result.code ~= 0 then
     return

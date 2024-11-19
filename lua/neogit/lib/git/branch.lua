@@ -80,10 +80,11 @@ function M.is_unmerged(branch, base)
   return git.cli.cherry.arg_list({ base or M.base_branch(), branch }).call({ hidden = true }).stdout[1] ~= nil
 end
 
+---@return string|nil
 function M.base_branch()
   local value = git.config.get("neogit.baseBranch")
   if value:is_set() then
-    return value:read()
+    return value:read() ---@type string
   else
     if M.exists("master") then
       return "master"

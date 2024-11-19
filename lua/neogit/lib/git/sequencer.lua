@@ -8,6 +8,7 @@ local M = {}
 -- And CHERRY_PICK_HEAD does not exist when a conflict happens while picking a series of commits with --no-commit.
 -- And REVERT_HEAD does not exist when a conflict happens while reverting a series of commits with --no-commit.
 --
+---@return boolean
 function M.pick_or_revert_in_progress()
   local pick_or_revert_todo = false
 
@@ -18,7 +19,7 @@ function M.pick_or_revert_in_progress()
     end
   end
 
-  return git.repo.state.sequencer.head or pick_or_revert_todo
+  return git.repo.state.sequencer.head ~= nil or pick_or_revert_todo
 end
 
 ---@class SequencerItem

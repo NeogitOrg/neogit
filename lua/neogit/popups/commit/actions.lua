@@ -76,7 +76,7 @@ local function commit_special(popup, method, opts)
     end
   end
 
-  local cmd = git.cli.commit.args(string.format("--%s=%s", method, commit))
+  local cmd = git.cli.commit
   if opts.edit then
     cmd = cmd.edit
   else
@@ -88,7 +88,7 @@ local function commit_special(popup, method, opts)
   end
 
   a.util.scheduler()
-  do_commit(popup, cmd)
+  do_commit(popup, cmd.args(string.format("--%s=%s", method, commit)))
 
   if opts.rebase then
     a.util.scheduler()

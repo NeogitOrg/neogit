@@ -309,6 +309,7 @@ function M.delete_branch(popup)
     if choice == "d" then
       git.cli.checkout.detach.call()
     elseif choice == "c" then
+      assert(upstream)
       git.cli.checkout.branch(upstream).call()
     else
       return
