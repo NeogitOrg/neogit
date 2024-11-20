@@ -404,13 +404,13 @@ end
 
 function Buffer:set_buffer_option(name, value)
   if self.handle ~= nil then
-    api.nvim_set_option_value(name, value, { buf = self.handle })
+    api.nvim_set_option_value(name, value, { scope = "local" })
   end
 end
 
 function Buffer:set_window_option(name, value)
   if self.win_handle ~= nil then
-    api.nvim_set_option_value(name, value, { win = self.win_handle })
+    api.nvim_set_option_value(name, value, { scope = "local", win = self.win_handle })
   end
 end
 
