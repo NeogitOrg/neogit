@@ -40,9 +40,9 @@ function M.shared_toplevel(popup)
 end
 
 function M.shared_subdirectory(popup)
-  local subdirectory = input.get_user_input("Ignore sub-directory", { completion = "dir" })
-  if subdirectory then
-    subdirectory = Path:new(vim.uv.cwd(), subdirectory)
+  local choice = input.get_user_input("Ignore sub-directory", { completion = "dir" })
+  if choice then
+    local subdirectory = Path:new(vim.uv.cwd(), choice)
 
     local ignore_file = subdirectory:joinpath(".gitignore")
     local rules = make_rules(popup, tostring(subdirectory))

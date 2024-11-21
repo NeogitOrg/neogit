@@ -24,6 +24,11 @@ local commit_header_pat = "([| ]*)(%*?)([| ]*)commit (%w+)"
 ---@field subject string
 ---@field parent string
 ---@field diffs any[]
+---@field ref_name string
+---@field abbreviated_commit string
+---@field body string
+---@field verification_flag string?
+---@field rel_date string
 
 ---Parses the provided list of lines into a CommitLogEntry
 ---@param raw string[]
@@ -136,7 +141,7 @@ function M.parse(raw)
       if not line or vim.startswith(line, "diff") then
         -- There was a previous diff, parse it
         if in_diff then
-          table.insert(commit.diffs, git.diff.parse(current_diff))
+          table.insert(commit.diffs, git.diff.parse(current_diff, {}))
           current_diff = {}
         end
 
@@ -144,7 +149,7 @@ function M.parse(raw)
       elseif line == "" then -- A blank line signifies end of diffs
         -- Parse the last diff, consume the blankline, and exit
         if in_diff then
-          table.insert(commit.diffs, git.diff.parse(current_diff))
+          table.insert(commit.diffs, git.diff.parse(current_diff, {}))
           current_diff = {}
         end
 
@@ -443,7 +448,7 @@ end
 
 --- Runs `git verify-commit`
 ---@param commit string Hash of commit
----@return string The stderr output of the command
+---@return string[] The stderr output of the command
 function M.verify_commit(commit)
   return git.cli["verify-commit"].args(commit).call({ ignore_error = true }).stderr
 end

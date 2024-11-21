@@ -2,7 +2,7 @@ local Path = require("plenary.path")
 
 describe("docs", function()
   it("doesn't repeat any tags", function()
-    local docs = Path.new(vim.loop.cwd(), "doc", "neogit.txt")
+    local docs = Path.new(vim.uv.cwd(), "doc", "neogit.txt")
     local tags = {}
 
     for line in docs:iter() do
@@ -14,7 +14,7 @@ describe("docs", function()
   end)
 
   it("doesn't reference any undefined tags", function()
-    local docs = Path.new(vim.loop.cwd(), "doc", "neogit.txt")
+    local docs = Path.new(vim.uv.cwd(), "doc", "neogit.txt")
     local tags = {}
     local refs = {}
 

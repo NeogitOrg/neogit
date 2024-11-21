@@ -22,7 +22,7 @@ function M.create(env)
       "g",
       string.format(
         "privately for all repositories (%s)",
-        "~/" .. Path:new(excludesFile:read()):make_relative(vim.loop.os_homedir())
+        "~/" .. Path:new(excludesFile:read()):make_relative(vim.uv.os_homedir())
       ),
       actions.private_global
     )

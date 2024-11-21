@@ -28,7 +28,8 @@ M.init_repo = function()
     status.instance():chdir(directory)
   end
 
-  if git.cli.is_inside_worktree() then
+  if git.cli.is_inside_worktree(directory) then
+    vim.cmd.redraw()
     if not input.get_permission(("Reinitialize existing repository %s?"):format(directory)) then
       return
     end

@@ -198,7 +198,7 @@ function M:set_option(option, value)
     -- If the option specifies a default value, and the user set the value to be empty, defer to default value.
     -- This is handy to prevent the user from accidentally loading thousands of log entries by accident.
     if option.default and input == "" then
-      option.value = option.default
+      option.value = tostring(option.default)
     else
       option.value = input
     end
@@ -211,9 +211,9 @@ function M:set_option(option, value)
     for _, var in ipairs(self.state.args) do
       if option.incompatible[var.cli] then
         if var.type == "switch" then
-          self:disable_switch(var)
+          self:disable_switch(var --[[@as PopupSwitch]])
         elseif var.type == "option" then
-          self:disable_option(var)
+          self:disable_option(var --[[@as PopupOption]])
         end
       end
     end
@@ -224,9 +224,9 @@ function M:set_option(option, value)
     for _, var in ipairs(self.state.args) do
       if option.dependent[var.cli] then
         if var.type == "switch" then
-          self:disable_switch(var)
+          self:disable_switch(var --[[@as PopupSwitch]])
         elseif var.type == "option" then
-          self:disable_option(var)
+          self:disable_option(var --[[@as PopupOption]])
         end
       end
     end
@@ -272,6 +272,7 @@ function M:set_config(config)
   else
     local result = input.get_user_input(config.name, { default = config.value, cancel = config.value })
 
+    assert(result, "no input from user - what happened to the default?")
     config.value = result
     git.config.set(config.name, config.value)
   end
