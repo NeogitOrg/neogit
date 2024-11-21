@@ -69,7 +69,7 @@ function M.update_sequencer_status(state)
     table.insert(state.sequencer.items, {
       action = "join",
       oid = state.sequencer.head_oid,
-      abbreviated_commit = state.sequencer.head_oid:sub(1, git.log.abbreviated_size()),
+      abbreviated_commit = string.sub(state.sequencer.head_oid, 1, git.log.abbreviated_size()),
       subject = git.log.message(state.sequencer.head_oid),
     })
   end

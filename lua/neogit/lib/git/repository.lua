@@ -1,6 +1,6 @@
 local a = require("plenary.async")
 local logger = require("neogit.logger")
-local Path = require("plenary.path") ---@class Path
+local Path = require("plenary.path")
 local git = require("neogit.lib.git")
 local ItemFilter = require("neogit.lib.item_filter")
 local util = require("neogit.lib.util")
@@ -21,7 +21,7 @@ local modules = {
 }
 
 ---@class NeogitRepoState
----@field git_path       fun(self, ...):Path
+---@field git_path       fun(self, ...): Path
 ---@field refresh        fun(self, table)
 ---@field git_root       string
 ---@field head           NeogitRepoHead

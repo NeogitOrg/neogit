@@ -1,4 +1,4 @@
-local Path = require("plenary.path") ---@class Path
+local Path = require("plenary.path")
 local git = require("neogit.lib.git")
 
 local M = {} ---@class NeogitGitHooks
