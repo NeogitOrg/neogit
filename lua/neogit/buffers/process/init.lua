@@ -1,6 +1,5 @@
 local Buffer = require("neogit.lib.buffer")
 local config = require("neogit.config")
-local status_maps = require("neogit.config").get_reversed_status_maps()
 
 ---@class ProcessBuffer
 ---@field content string[]
@@ -105,6 +104,8 @@ function M:open()
   if self.buffer then
     return self
   end
+
+  local status_maps = config.get_reversed_status_maps()
 
   self.buffer = Buffer.create {
     name = "NeogitConsole",
