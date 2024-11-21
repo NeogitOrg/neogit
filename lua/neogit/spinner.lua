@@ -36,8 +36,6 @@ end
 function Spinner:start()
   if not self.timer then
     self.timer = vim.uv.new_timer()
-    vim.cmd(string.format("redraw | echomsg '[neogit] %s'", self.text))
-
     self.timer:start(
       250,
       self.interval,
