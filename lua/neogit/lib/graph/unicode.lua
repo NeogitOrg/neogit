@@ -477,7 +477,7 @@ function M.build(commits)
       if is_missing_parent and branch_index ~= moved_parent_branch_index then
         -- Remove branch
         branch_hashes[branch_index] = nil
-        assert(branch_hash)
+        assert(branch_hash, "no branch hash")
         branch_indexes[branch_hash] = nil
 
         -- Trim trailing empty branches

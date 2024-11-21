@@ -19,8 +19,7 @@ end
 ---@param args? string[] list of arguments to pass to git rebase
 ---@return ProcessResult
 function M.instantly(commit, args)
-  local result = git.cli.rebase
-    .interactive.autostash.autosquash
+  local result = git.cli.rebase.interactive.autostash.autosquash
     .commit(commit)
     .env({ GIT_SEQUENCE_EDITOR = ":" })
     .arg_list(args or {})
@@ -99,8 +98,7 @@ end
 function M.modify(commit)
   local short_commit = git.rev_parse.abbreviate_commit(commit)
   local editor = "nvim -c '%s/^pick \\(" .. short_commit .. ".*\\)/edit \\1/' -c 'wq'"
-  local result = git.cli.rebase
-    .interactive.autosquash.autostash
+  local result = git.cli.rebase.interactive.autosquash.autostash
     .commit(commit)
     .in_pty(true)
     .env({ GIT_SEQUENCE_EDITOR = editor })
@@ -114,8 +112,7 @@ end
 function M.drop(commit)
   local short_commit = git.rev_parse.abbreviate_commit(commit)
   local editor = "nvim -c '%s/^pick \\(" .. short_commit .. ".*\\)/drop \\1/' -c 'wq'"
-  local result = git.cli.rebase
-    .interactive.autosquash.autostash
+  local result = git.cli.rebase.interactive.autosquash.autostash
     .commit(commit)
     .in_pty(true)
     .env({ GIT_SEQUENCE_EDITOR = editor })

@@ -211,7 +211,7 @@ function M.set_pushRemote()
     pushRemote = FuzzyFinderBuffer.new(remotes):open_async { prompt_prefix = "set pushRemote" }
   end
 
-  assert(type(pushRemote) == "nil" or type(pushRemote) == "string")
+  assert(type(pushRemote) == "nil" or type(pushRemote) == "string", "pushRemote is not a string or nil?")
 
   if pushRemote then
     git.config.set(string.format("branch.%s.pushRemote", M.current()), pushRemote)
@@ -226,9 +226,8 @@ end
 ---@return string|nil
 function M.upstream(name)
   if name then
-    local result = git.cli["rev-parse"].symbolic_full_name
-      .abbrev_ref(name .. "@{upstream}")
-      .call { ignore_error = true }
+    local result =
+      git.cli["rev-parse"].symbolic_full_name.abbrev_ref(name .. "@{upstream}").call { ignore_error = true }
 
     if result.code == 0 then
       return result.stdout[1]

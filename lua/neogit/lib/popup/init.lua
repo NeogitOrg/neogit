@@ -272,7 +272,7 @@ function M:set_config(config)
   else
     local result = input.get_user_input(config.name, { default = config.value, cancel = config.value })
 
-    assert(result)
+    assert(result, "no input from user - what happened to the default?")
     config.value = result
     git.config.set(config.name, config.value)
   end

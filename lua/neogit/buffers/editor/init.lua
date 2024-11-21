@@ -17,7 +17,6 @@ local pad = util.pad_right
 ---@field buffer Buffer
 local M = {}
 
-
 --- Creates a new EditorBuffer
 ---@param filename string the filename of buffer
 ---@param on_unload function the event dispatched on buffer unload
