@@ -511,6 +511,7 @@ function M.get_default_values()
       "NeogitPushPopup--force-with-lease",
       "NeogitPushPopup--force",
       "NeogitPullPopup--rebase",
+      "NeogitPullPopup--force",
       "NeogitCommitPopup--allow-empty",
     },
     mappings = {
