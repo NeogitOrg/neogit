@@ -229,6 +229,7 @@ local runner = require("neogit.runner")
 ---@field very_verbose self
 ---@field move self
 ---@field sort fun(sort: string): self
+---@field set_upstream_to fun(name: string): self
 ---@field name fun(name: string): self
 
 ---@class GitCommandFetch: GitCommandBuilder
@@ -767,6 +768,7 @@ local configurations = {
     },
     options = {
       sort = "--sort",
+      set_upstream_to = "--set-upstream-to",
     },
     aliases = {
       name = function(tbl)

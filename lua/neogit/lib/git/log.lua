@@ -414,6 +414,8 @@ function M.register(meta)
   end
 end
 
+---@param from string
+---@param to string
 function M.update_ref(from, to)
   git.cli["update-ref"].message(string.format("reset: moving to %s", to)).args(from, to).call()
 end
