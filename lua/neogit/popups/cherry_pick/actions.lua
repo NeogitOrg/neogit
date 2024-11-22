@@ -1,8 +1,9 @@
 local M = {}
-
+local util = require("neogit.lib.util")
 local git = require("neogit.lib.git")
 
 local CommitSelectViewBuffer = require("neogit.buffers.commit_select_view")
+local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
 ---@param popup any
 ---@return table
@@ -37,6 +38,16 @@ function M.apply(popup)
   end
 
   git.cherry_pick.apply(commits, popup:get_arguments())
+end
+
+function M.squash(popup)
+  local refs = util.merge(popup.state.env.commits, git.refs.list_branches(), git.refs.list_tags())
+  local ref = FuzzyFinderBuffer.new(refs):open_async({ prompt_prefix = "Squash" })
+  if ref then
+    local args = popup:get_arguments()
+    table.insert(args, "--squash")
+    git.merge.merge(ref, args)
+  end
 end
 
 function M.continue()
