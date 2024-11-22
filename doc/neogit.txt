@@ -120,6 +120,9 @@ TODO: Detail what these do
     console_timeout = 2000,
     -- Automatically show console if a command takes more than console_timeout milliseconds
     auto_show_console = true,
+    -- If `auto_show_console` is enabled, specify "output" (default) to show
+    -- the console always, or "error" to auto-show the console only on error
+    auto_show_console_on = "output",
     notification_icon = "󰊢",
     status = {
       recent_commit_count = 10,

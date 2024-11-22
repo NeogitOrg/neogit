@@ -152,16 +152,15 @@ function Process:start_timer()
           return
         end
 
-        if config.values.auto_show_console then
-          self:show_console()
-        else
+        if not config.values.auto_show_console then
           local message = string.format(
             "Command %q running for more than: %.1f seconds",
             mask_command(table.concat(self.cmd, " ")),
             math.ceil((vim.uv.now() - self.start) / 100) / 10
           )
-
           notification.warn(message .. "\n\nOpen the command history for details")
+        elseif config.values.auto_show_console_on == "output" then
+          self:show_console()
         end
       end)
     )
@@ -336,10 +335,13 @@ function Process:spawn(cb)
           insert(output, "> " .. util.remove_ansi_escape_codes(res.stderr[i]))
         end
 
-        local message =
-          string.format("%s:\n\n%s", mask_command(table.concat(self.cmd, " ")), table.concat(output, "\n"))
-
-        notification.warn(message)
+        if not config.values.auto_close_console then
+          local message =
+            string.format("%s:\n\n%s", mask_command(table.concat(self.cmd, " ")), table.concat(output, "\n"))
+          notification.warn(message)
+        elseif config.values.auto_show_console_on == "error" then
+          self.buffer:show()
+        end
       end
 
       if
