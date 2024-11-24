@@ -48,7 +48,7 @@ function M.apply(commits, args)
 end
 
 ---@param commits string[]
----@param src string
+---@param src? string
 ---@param dst string
 ---@param start string
 ---@param checkout_dst? boolean
@@ -59,7 +59,7 @@ function M.move(commits, src, dst, args, start, checkout_dst)
     git.cli.branch.args(start or "", dst).call { hidden = true }
     local upstream = git.branch.upstream(start)
     if upstream then
-      git.branch.set_upstream_to(upstream, dst)
+      git.branch.set_upstream(upstream, dst)
     end
   end
 
