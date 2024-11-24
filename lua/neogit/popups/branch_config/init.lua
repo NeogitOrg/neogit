@@ -24,7 +24,6 @@ function M.create(branch)
           end
         end
       end,
-
     })
     :config("m", "branch." .. branch .. ".remote", { passive = true })
     :config("r", "branch." .. branch .. ".rebase", {
