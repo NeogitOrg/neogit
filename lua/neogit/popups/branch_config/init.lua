@@ -15,7 +15,17 @@ function M.create(branch)
     :name("NeogitBranchConfigPopup")
     :config_heading("Configure branch")
     :config("d", "branch." .. branch .. ".description", { fn = actions.description_config(branch) })
-    :config("u", "branch." .. branch .. ".merge", { fn = actions.merge_config(branch) })
+    :config("u", "branch." .. branch .. ".merge", {
+      fn = actions.merge_config(branch),
+      callback = function(popup)
+        for _, config in ipairs(popup.state.config) do
+          if config.name == "branch." .. branch .. ".remote" then
+            config.value = tostring(config.entry:refresh():read() or "")
+          end
+        end
+      end,
+
+    })
     :config("m", "branch." .. branch .. ".remote", { passive = true })
     :config("r", "branch." .. branch .. ".rebase", {
       options = {
