@@ -237,6 +237,12 @@ function M.upstream(name)
   end
 end
 
+---@param name string
+---@param destination string?
+function M.set_upstream(name, destination)
+  git.cli.branch.set_upstream_to(name).args(destination or M.current())
+end
+
 function M.upstream_label()
   return M.upstream() or "@{upstream}, creating it"
 end
