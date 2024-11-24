@@ -24,7 +24,22 @@ end
 
 function M.merge_config(branch)
   local fn = function()
-    local target = FuzzyFinderBuffer.new(git.refs.list_branches()):open_async { prompt_prefix = "upstream" }
+    -- When the values are set, clear them and return
+    if git.config.get_local("branch." .. branch .. ".merge"):is_set() then
+      git.config.set("branch." .. branch .. ".merge", nil)
+      git.config.set("branch." .. branch .. ".remote", nil)
+
+      return
+    end
+
+    local eventignore = vim.o.eventignore
+    vim.o.eventignore = "WinLeave"
+    local target = FuzzyFinderBuffer.new(git.refs.list_branches()):open_async {
+      prompt_prefix = "upstream",
+      refocus_status = false,
+    }
+    vim.o.eventignore = eventignore
+
     if not target then
       return
     end

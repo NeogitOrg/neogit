@@ -21,6 +21,13 @@ function M.create(env)
     })
     :config_if(show_config, "u", "branch." .. current_branch .. ".merge", {
       fn = config_actions.merge_config(current_branch),
+      callback = function(popup)
+        for _, config in ipairs(popup.state.config) do
+          if config.name == "branch." .. current_branch .. ".remote" then
+            config.value = tostring(config.entry:refresh():read() or "")
+          end
+        end
+      end
     })
     :config_if(show_config, "m", "branch." .. current_branch .. ".remote", { passive = true })
     :config_if(show_config, "R", "branch." .. current_branch .. ".rebase", {

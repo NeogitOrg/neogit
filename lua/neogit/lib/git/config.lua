@@ -68,6 +68,17 @@ function ConfigEntry:update(value)
   end
 end
 
+---@return self
+function ConfigEntry:refresh()
+  if self.scope == "local" then
+    self.value = M.get_local(self.name).value
+  elseif self.scope == "global" then
+    self.value = M.get_global(self.name).value
+  end
+
+  return self
+end
+
 ---@type table<string, ConfigEntry>
 local config_cache = {}
 local cache_key = nil
