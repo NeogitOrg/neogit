@@ -2,7 +2,6 @@ local PopupBuilder = require("neogit.lib.popup.builder")
 local Buffer = require("neogit.lib.buffer")
 local logger = require("neogit.logger")
 local util = require("neogit.lib.util")
-local config = require("neogit.config")
 local state = require("neogit.lib.state")
 local input = require("neogit.lib.input")
 local notification = require("neogit.lib.notification")
@@ -416,7 +415,7 @@ function M:show()
         pcall(self.close, self)
       end,
     },
-    after = function(buf, _win)
+    after = function(buf)
       buf:set_window_option("cursorline", false)
       buf:set_window_option("list", false)
 
@@ -434,25 +433,18 @@ function M:show()
         end
       end
 
-      if
-        config.values.popup.kind == "split"
-        or config.values.popup.kind == "split_above"
-        or config.values.popup.kind == "split_above_all"
-        or config.values.popup.kind == "split_below"
-        or config.values.popup.kind == "split_below_all"
-      then
-        vim.cmd.resize(vim.fn.line("$") + 1)
+      local height = vim.fn.line("$") + 1
+      vim.cmd.resize(height)
 
-        -- We do it again because things like the BranchConfigPopup come from an async context,
-        -- but if we only do it schedule wrapped, then you can see it load at one size, and
-        -- resize a few ms later
-        vim.schedule(function()
-          if buf:is_focused() then
-            vim.cmd.resize(vim.fn.line("$") + 1)
-            buf:set_window_option("winfixheight", true)
-          end
-        end)
-      end
+      -- We do it again because things like the BranchConfigPopup come from an async context,
+      -- but if we only do it schedule wrapped, then you can see it load at one size, and
+      -- resize a few ms later
+      vim.schedule(function()
+        if buf:is_focused() then
+          vim.cmd.resize(height)
+          buf:set_window_option("winfixheight", true)
+        end
+      end)
     end,
     render = function()
       return ui.Popup(self.state)

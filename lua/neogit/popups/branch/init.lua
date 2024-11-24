@@ -27,7 +27,7 @@ function M.create(env)
             config.value = tostring(config.entry:refresh():read() or "")
           end
         end
-      end
+      end,
     })
     :config_if(show_config, "m", "branch." .. current_branch .. ".remote", { passive = true })
     :config_if(show_config, "R", "branch." .. current_branch .. ".rebase", {
