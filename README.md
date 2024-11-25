@@ -131,14 +131,17 @@ neogit.setup {
   initial_branch_name = "",
   -- Change the default way of opening neogit
   kind = "tab",
-  -- Disable line numbers and relative line numbers
+  -- Disable line numbers
   disable_line_numbers = true,
+  -- Disable relative line numbers
+  disable_relative_line_numbers = true,
   -- The time after which an output console is shown for slow running commands
   console_timeout = 2000,
   -- Automatically show console if a command takes more than console_timeout milliseconds
   auto_show_console = true,
   -- Automatically close the console if the process exits with a 0 (success) status
   auto_close_console = true,
+  notification_icon = "󰊢",
   status = {
     show_head_commit_hash = true,
     recent_commit_count = 10,
@@ -194,6 +197,9 @@ neogit.setup {
   merge_editor = {
     kind = "auto",
   },
+  description_editor = {
+    kind = "auto",
+  },
   tag_editor = {
     kind = "auto",
   },
@@ -202,6 +208,12 @@ neogit.setup {
   },
   popup = {
     kind = "split",
+  },
+  stash = {
+    kind = "tab",
+  },
+  refs_view = {
+    kind = "tab",
   },
   signs = {
     -- { CLOSED, OPENED }
