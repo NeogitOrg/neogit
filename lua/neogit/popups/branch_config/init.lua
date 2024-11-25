@@ -6,6 +6,7 @@ local actions = require("neogit.popups.branch_config.actions")
 
 function M.create(branch)
   branch = branch or git.branch.current()
+
   local g_pull_rebase = git.config.get_global("pull.rebase")
   local pull_rebase_entry = git.config.get_local("pull.rebase")
   local pull_rebase = pull_rebase_entry:is_set() and pull_rebase_entry.value or "false"
@@ -14,7 +15,9 @@ function M.create(branch)
     .builder()
     :name("NeogitBranchConfigPopup")
     :config_heading("Configure branch")
-    :config("d", "branch." .. branch .. ".description", { fn = actions.description_config(branch) })
+    :config("d", "branch." .. branch .. ".description", {
+      fn = actions.description_config(branch),
+    })
     :config("u", "branch." .. branch .. ".merge", {
       fn = actions.merge_config(branch),
       callback = function(popup)
@@ -25,7 +28,9 @@ function M.create(branch)
         end
       end,
     })
-    :config("m", "branch." .. branch .. ".remote", { passive = true })
+    :config("m", "branch." .. branch .. ".remote", {
+      passive = true,
+    })
     :config("r", "branch." .. branch .. ".rebase", {
       options = {
         { display = "true", value = "true" },
@@ -33,7 +38,9 @@ function M.create(branch)
         { display = "pull.rebase:" .. pull_rebase, value = "" },
       },
     })
-    :config("p", "branch." .. branch .. ".pushRemote", { options = actions.remotes_for_config() })
+    :config("p", "branch." .. branch .. ".pushRemote", {
+      options = actions.remotes_for_config(),
+    })
     :config_heading("")
     :config_heading("Configure repository defaults")
     :config("R", "pull.rebase", {
@@ -49,7 +56,9 @@ function M.create(branch)
         },
       },
     })
-    :config("P", "remote.pushDefault", { options = actions.remotes_for_config() })
+    :config("P", "remote.pushDefault", {
+      options = actions.remotes_for_config(),
+    })
     :config("b", "neogit.baseBranch")
     :config("A", "neogit.askSetPushDefault", {
       options = {
