@@ -204,7 +204,7 @@ neogit.setup {
     kind = "auto",
   },
   preview_buffer = {
-    kind = "floating",
+    kind = "floating_console",
   },
   popup = {
     kind = "split",
