@@ -93,7 +93,9 @@ function M.donate(popup)
 
   local dst = FuzzyFinderBuffer.new(options):open_async { prompt_prefix = prefix }
   if dst then
-    notification.info(("Moved %d cherr%s from %q to %q"):format(#commits, #commits > 1 and "ies" or "y", src, dst))
+    notification.info(
+      ("Moved %d cherr%s from %q to %q"):format(#commits, #commits > 1 and "ies" or "y", src, dst)
+    )
     git.cherry_pick.move(commits, src, dst, popup:get_arguments())
   end
 end

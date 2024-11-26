@@ -22,7 +22,7 @@ function M.create(env)
       incompatible = { "edit" },
     })
     :switch_if(not in_progress, "x", "x", "Reference cherry in commit message", {
-      cli_prefix = " - ",
+      cli_prefix = "-",
     })
     :switch_if(not in_progress, "e", "edit", "Edit commit messages", {
       incompatible = { "ff" },

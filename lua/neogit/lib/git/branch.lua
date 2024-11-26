@@ -56,15 +56,12 @@ end
 ---@param relation? string
 ---@param commit? string
 function M.list_related_branches(relation, commit, ...)
-  local result = git.cli.branch.args(relation or "", commit or "", ...).call({ hidden = true })
+  local result = git.cli.branch.args(relation or "", commit or "", ...).call { hidden = true }
 
   local branches = {}
   for _, branch in ipairs(result.stdout) do
     branch = branch:match("^%s*(.-)%s*$")
-    if branch and
-      not branch:match("^%(HEAD") and
-      not branch:match("^HEAD ->") and
-      branch ~= "" then
+    if branch and not branch:match("^%(HEAD") and not branch:match("^HEAD ->") and branch ~= "" then
       table.insert(branches, branch)
     end
   end
