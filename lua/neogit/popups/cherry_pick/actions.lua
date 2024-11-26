@@ -51,35 +51,78 @@ function M.squash(popup)
   end
 end
 
-function M.donate(popup)
-  local head = git.rev_parse.oid("HEAD")
-
+---@param popup PopupData
+---@param verb string
+---@return string[]
+local function get_cherries(popup, verb)
   local commits
   if #popup.state.env.commits > 1 then
     commits = popup.state.env.commits
   else
-    local ref = FuzzyFinderBuffer.new(util.merge(popup.state.env.commits, git.refs.list_branches()))
-      :open_async { prompt_prefix = "Donate" }
-    if not git.log.is_ancestor(head, git.rev_parse.oid(ref)) then
-      return notification.error("Cannot donate cherries that are not reachable from HEAD")
-    end
+    local refs = util.merge(popup.state.env.commits, git.refs.list_branches())
+    local ref = FuzzyFinderBuffer.new(refs):open_async { prompt_prefix = verb .. " cherry" }
 
     if ref == popup.state.env.commits[1] then
       commits = popup.state.env.commits
     else
-      commits = util.map(git.cherry.list(head, ref), function(cherry)
+      commits = util.map(git.cherry.list(git.rev_parse.oid("HEAD"), ref), function(cherry)
         return cherry.oid or cherry
       end)
     end
+
+    if not commits[1] then
+      commits = { git.rev_parse.oid(ref) }
+    end
   end
 
-  local src = git.branch.is_detached() and head or git.branch.current()
+  return commits
+end
+
+---@param popup PopupData
+function M.donate(popup)
+  local commits = get_cherries(popup, "Donate")
+  local src = git.branch.current() or git.rev_parse.oid("HEAD")
+
+  if not git.log.is_ancestor(commits[1], git.rev_parse.oid(src)) then
+    return notification.error("Cannot donate cherries that are not reachable from HEAD")
+  end
 
   local prefix = string.format("Move %d cherr%s to branch", #commits, #commits > 1 and "ies" or "y")
-  local dst = FuzzyFinderBuffer.new(git.refs.list_branches()):open_async { prompt_prefix = prefix }
+  local options = git.refs.list_branches()
+  util.remove_item_from_table(options, src)
 
+  local dst = FuzzyFinderBuffer.new(options):open_async { prompt_prefix = prefix }
   if dst then
+    notification.info(("Moved %d cherr%s from %q to %q"):format(#commits, #commits > 1 and "ies" or "y", src, dst))
     git.cherry_pick.move(commits, src, dst, popup:get_arguments())
+  end
+end
+
+---@param popup PopupData
+function M.harvest(popup)
+  local current = git.branch.current()
+  if not current then
+    return
+  end
+
+  local commits = get_cherries(popup, "Harvest")
+
+  if git.log.is_ancestor(commits[1], git.rev_parse.oid("HEAD")) then
+    return notification.error("Cannot harvest cherries that are reachable from HEAD")
+  end
+
+  local branch
+  local containing_branches = git.branch.list_containing_branches(commits[1])
+  if #containing_branches > 1 then
+    local prefix = string.format("Remove %d cherr%s from branch", #commits, #commits > 1 and "ies" or "y")
+    branch = FuzzyFinderBuffer.new(containing_branches):open_async { prompt_prefix = prefix }
+  else
+    branch = containing_branches[1]
+  end
+
+  if branch then
+    notification.info(("Harvested %d cherr%s"):format(#commits, #commits > 1 and "ies" or "y"))
+    git.cherry_pick.move(commits, branch, current, popup:get_arguments(), nil, true)
   end
 end
 

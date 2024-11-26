@@ -53,6 +53,30 @@ function M.get_recent_local_branches()
   return util.deduplicate(branches)
 end
 
+---@param relation? string
+---@param commit? string
+function M.list_related_branches(relation, commit, ...)
+  local result = git.cli.branch.args(relation or "", commit or "", ...).call({ hidden = true })
+
+  local branches = {}
+  for _, branch in ipairs(result.stdout) do
+    branch = branch:match("^%s*(.-)%s*$")
+    if branch and
+      not branch:match("^%(HEAD") and
+      not branch:match("^HEAD ->") and
+      branch ~= "" then
+      table.insert(branches, branch)
+    end
+  end
+
+  return branches
+end
+
+---@param commit string
+function M.list_containing_branches(commit, ...)
+  return M.list_related_branches("--contains", commit, ...)
+end
+
 ---@return ProcessResult
 function M.checkout(name, args)
   return git.cli.checkout.branch(name).arg_list(args or {}).call { await = true }
@@ -391,5 +415,4 @@ end
 M.register = function(meta)
   meta.update_branch_information = update_branch_information
 end
-
 return M

@@ -50,7 +50,7 @@ end
 ---@param commits string[]
 ---@param src? string
 ---@param dst string
----@param start string
+---@param start? string
 ---@param checkout_dst? boolean
 function M.move(commits, src, dst, args, start, checkout_dst)
   local current = git.branch.current()
