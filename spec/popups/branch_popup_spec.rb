@@ -48,6 +48,25 @@ RSpec.describe "Branch Popup", :git, :nvim, :popup do
         expect(git.config("branch.#{git.branch.name}.remote")).to eq(".")
         expect(git.config("branch.#{git.branch.name}.merge")).to eq("refs/heads/master")
       end
+
+      it "unsets both values if already set" do
+        nvim.keys("umaster<cr>")
+
+        expect(nvim.screen[8..9]).to eq(
+          [" u branch.master.merge refs/heads/master                                        ",
+           "   branch.master.remote .                                                       "]
+        )
+
+        nvim.keys("u")
+
+        expect_git_failure { git.config("branch.#{git.branch.name}.remote") }
+        expect_git_failure { git.config("branch.#{git.branch.name}.merge") }
+
+        expect(nvim.screen[8..9]).to eq(
+          [" u branch.master.merge unset                                                    ",
+           "   branch.master.remote unset                                                   "]
+        )
+      end
     end
 
     describe "branch.<current>.rebase" do
