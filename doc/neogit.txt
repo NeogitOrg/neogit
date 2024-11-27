@@ -1419,7 +1419,7 @@ Actions:                                             *neogit_push_popup_actions*
     Push a refspec to a remote.
 
   • Push matching branches                       *neogit_push_matching_branches*
-    (Not yet implemented)
+    Push all matching branches to another repository.
 
   • Push a tag                                                 *neogit_push_tag*
     Pushes a single tag to a remote.

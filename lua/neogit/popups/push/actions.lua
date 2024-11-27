@@ -172,6 +172,14 @@ function M.push_all_tags(popup)
 end
 
 ---@param popup PopupData
+function M.matching_branches(popup)
+  local remote = choose_remote("Push matching branches to")
+  if remote then
+    push_to({ "-v", unpack(popup:get_arguments()) }, remote, ":")
+  end
+end
+
+---@param popup PopupData
 function M.explicit_refspec(popup)
   local remote = choose_remote("Push to remote")
   if not remote then
