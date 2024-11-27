@@ -380,7 +380,6 @@ neogit.setup {
       ["x"] = "Discard",
       ["s"] = "Stage",
       ["S"] = "StageUnstaged",
-      ["L"] = "StageLine",
       ["<c-s>"] = "StageAll",
       ["u"] = "Unstage",
       ["K"] = "Untrack",
