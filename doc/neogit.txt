@@ -704,13 +704,27 @@ Actions:                                      *neogit_cherry_pick_popup_actions*
     Otherwise the user is prompted to select one or more commits.
 
   • Harvest                                         *neogit_cherry_pick_harvest*
-    (Not yet implemented)
+    This command moves the selected COMMITS that must be located on another
+    BRANCH onto the current branch instead, removing them from the former.
+    When this command succeeds, then the same branch is current as before.
+
+    Applying the commits on the current branch or removing them from the other
+    branch can lead to conflicts. When that happens, then this command stops
+    and you have to resolve the conflicts and then finish the process manually.
 
   • Squash                                           *neogit_cherry_pick_squash*
-    (Not yet implemented)
+    See: |neogit_merge_squash|
 
   • Donate                                           *neogit_cherry_pick_donate*
-    (Not yet implemented)
+    This command moves the selected COMMITS from the current branch onto
+    another existing BRANCH, removing them from the former. When this command
+    succeeds, then the same branch is current as before.
+
+    HEAD is allowed to be detached initially.
+
+    Applying the commits on the other branch or removing them from the current
+    branch can lead to conflicts. When that happens, then this command stops
+    and you have to resolve the conflicts and then finish the process manually.
 
   • Spinout                                         *neogit_cherry_pick_spinout*
     (Not yet implemented)
@@ -1209,7 +1223,37 @@ Log Popup                                                     *neogit_log_popup*
 ==============================================================================
 Merge Popup                                                 *neogit_merge_popup*
 
-(TODO)
+Arguments:                                             *neogit_merge_popup_args*
+  (TODO)
+
+Actions:                                            *neogit_merge_popup_actions*
+  • Merge                                                   *neogit_merge_merge*
+    This command merges another branch or revision into the current branch.
+
+  • Merge and edit message                                *neogit_merge_editmsg*
+    Like `Merge` above, but opens editor to modify commit message.
+
+  • Merge but don't commit                               *neogit_merge_nocommit*
+    This command merges another branch or revision into the current branch,
+    but does not actually create the merge commit, allowing the user to make
+    modifications before committing themselves.
+
+  • Absorb                                                 *neogit_merge_absorb*
+    (Not yet implemented)
+
+  • Preview Merge                                         *neogit_merge_preview*
+    (Not yet implemented)
+
+  • Squash Merge                                           *neogit_merge_squash*
+    This command squashes the changes introduced by another branch or revision
+    into the current branch. This only applies the changes made by the
+    squashed commits. No information is preserved that would allow creating an
+    actual merge commit.
+
+    Instead of this command you should probably use a cherry-pick command.
+
+  • Dissolve                                             *neogit_merge_dissolve*
+    (Not yet implemented)
 
 ==============================================================================
 Remote Popup                                               *neogit_remote_popup*
