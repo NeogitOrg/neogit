@@ -133,14 +133,35 @@ function M.push_other(popup)
   push_to(popup:get_arguments(), remote, source .. ":" .. destination)
 end
 
-function M.push_tags(popup)
+function M.push_a_tag(popup)
+  local tags = git.tag.list()
+
+  local tag = FuzzyFinderBuffer.new(tags):open_async { prompt_prefix = "Push tag" }
+  if not tag then
+    return
+  end
+
+  local remotes = git.remote.list()
+  local remote
+  if #remotes == 1 then
+    remote = remotes[1]
+  else
+    remote = FuzzyFinderBuffer.new(remotes):open_async { prompt_prefix = ("Push %s to remote"):format(tag) }
+  end
+
+  if tag and remote then
+    push_to({ tag, unpack(popup:get_arguments()) }, remote)
+  end
+end
+
+function M.push_all_tags(popup)
   local remotes = git.remote.list()
 
   local remote
   if #remotes == 1 then
     remote = remotes[1]
   else
-    remote = FuzzyFinderBuffer.new(remotes):open_async { prompt_prefix = "push tags to" }
+    remote = FuzzyFinderBuffer.new(remotes):open_async { prompt_prefix = "Push tags to remote" }
   end
 
   if remote then

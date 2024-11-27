@@ -1422,7 +1422,7 @@ Actions:                                             *neogit_push_popup_actions*
     (Not yet implemented)
 
   • Push a tag                                                 *neogit_push_tag*
-    (Not yet implemented)
+    Pushes a single tag to a remote.
 
   • Push all tags                                         *neogit_push_all_tags*
     Pushes all tags to selected remote. If only one remote exists, that will
