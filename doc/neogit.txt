@@ -1416,7 +1416,7 @@ Actions:                                             *neogit_push_popup_actions*
     the user.
 
   • Push explicit refspecs                       *neogit_push_explicit_refspecs*
-    (Not yet implemented)
+    Push a refspec to a remote.
 
   • Push matching branches                       *neogit_push_matching_branches*
     (Not yet implemented)
