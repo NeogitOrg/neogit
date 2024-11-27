@@ -16,7 +16,7 @@ RSpec.describe "Push Popup", :git, :nvim, :popup, :with_remote_origin do
       "                                                                                ",
       " Push master to                  Push                  Configure                ",
       " p pushRemote, setting that      o another branch      C Set variables...       ",
-      " u @{upstream}, creating it      r explicit refspecs                            ",
+      " u @{upstream}, creating it      r explicit refspec                             ",
       " e elsewhere                     m matching branches                            ",
       "                                 T a tag                                        ",
       "                                 t all tags                                     "
