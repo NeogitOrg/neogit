@@ -96,8 +96,6 @@ function M.create()
     :action("r", "current", actions.reflog_current)
     :action("H", "HEAD", actions.reflog_head)
     :action("O", "other", actions.reflog_other)
-    :new_action_group("Other")
-    :action("s", "shortlog")
     :build()
 
   p:show()
