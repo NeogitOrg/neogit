@@ -53,6 +53,27 @@ function M.get_recent_local_branches()
   return util.deduplicate(branches)
 end
 
+---@param relation? string
+---@param commit? string
+function M.list_related_branches(relation, commit, ...)
+  local result = git.cli.branch.args(relation or "", commit or "", ...).call { hidden = true }
+
+  local branches = {}
+  for _, branch in ipairs(result.stdout) do
+    branch = branch:match("^%s*(.-)%s*$")
+    if branch and not branch:match("^%(HEAD") and not branch:match("^HEAD ->") and branch ~= "" then
+      table.insert(branches, branch)
+    end
+  end
+
+  return branches
+end
+
+---@param commit string
+function M.list_containing_branches(commit, ...)
+  return M.list_related_branches("--contains", commit, ...)
+end
+
 ---@return ProcessResult
 function M.checkout(name, args)
   return git.cli.checkout.branch(name).arg_list(args or {}).call { await = true }
@@ -80,10 +101,11 @@ function M.is_unmerged(branch, base)
   return git.cli.cherry.arg_list({ base or M.base_branch(), branch }).call({ hidden = true }).stdout[1] ~= nil
 end
 
+---@return string|nil
 function M.base_branch()
   local value = git.config.get("neogit.baseBranch")
   if value:is_set() then
-    return value:read()
+    return value:read() ---@type string
   else
     if M.exists("master") then
       return "master"
@@ -162,6 +184,8 @@ function M.current_full_name()
   end
 end
 
+---@param branch? string
+---@return string|nil
 function M.pushRemote(branch)
   branch = branch or M.current()
 
@@ -208,6 +232,8 @@ function M.set_pushRemote()
     pushRemote = FuzzyFinderBuffer.new(remotes):open_async { prompt_prefix = "set pushRemote" }
   end
 
+  assert(type(pushRemote) == "nil" or type(pushRemote) == "string", "pushRemote is not a string or nil?")
+
   if pushRemote then
     git.config.set(string.format("branch.%s.pushRemote", M.current()), pushRemote)
   end
@@ -221,10 +247,8 @@ end
 ---@return string|nil
 function M.upstream(name)
   if name then
-    local result = git.cli["rev-parse"].symbolic_full_name
-      .abbrev_ref()
-      .args(name .. "@{upstream}")
-      .call { ignore_error = true }
+    local result =
+      git.cli["rev-parse"].symbolic_full_name.abbrev_ref(name .. "@{upstream}").call { ignore_error = true }
 
     if result.code == 0 then
       return result.stdout[1]
@@ -232,6 +256,12 @@ function M.upstream(name)
   else
     return git.repo.state.upstream.ref
   end
+end
+
+---@param name string
+---@param destination string?
+function M.set_upstream(name, destination)
+  git.cli.branch.set_upstream_to(name).args(destination or M.current())
 end
 
 function M.upstream_label()
@@ -382,5 +412,4 @@ end
 M.register = function(meta)
   meta.update_branch_information = update_branch_information
 end
-
 return M

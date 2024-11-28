@@ -10,14 +10,12 @@ local DiffViewBuffer = require("neogit.buffers.diff")
 
 local pad = util.pad_right
 
-local M = {}
-
 ---@class EditorBuffer
 ---@field filename string filename of buffer
 ---@field on_unload function callback invoked when buffer is unloaded
 ---@field show_diff boolean show the diff view or not
 ---@field buffer Buffer
----@see Buffer
+local M = {}
 
 --- Creates a new EditorBuffer
 ---@param filename string the filename of buffer

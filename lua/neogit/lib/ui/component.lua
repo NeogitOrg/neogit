@@ -25,6 +25,13 @@ local default_component_options = {
 ---@field section string|nil
 ---@field item table|nil
 ---@field id string|nil
+---@field oid string|nil
+---@field ref ParsedRef
+---@field yankable string?
+---@field on_open fun(fold, Ui)
+---@field hunk Hunk
+---@field filename string?
+---@field value any
 
 ---@class Component
 ---@field position ComponentPosition
@@ -35,6 +42,10 @@ local default_component_options = {
 ---@field index number|nil
 ---@field value string|nil
 ---@field id string|nil
+---@field highlight fun(hl_group:string): self
+---@field line_hl fun(hl_group:string): self
+---@field padding_left fun(string): self
+---@operator call: Component
 local Component = {}
 
 ---@return integer, integer
@@ -141,6 +152,8 @@ function Component:close_all_folds(ui)
   end
 end
 
+---@param f fun(...): table
+---@return Component
 function Component.new(f)
   local instance = {}
 

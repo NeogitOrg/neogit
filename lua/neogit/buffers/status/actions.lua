@@ -1280,8 +1280,9 @@ M.n_help_popup = function(self)
     -- Since any other popup can be launched from help, build an ENV for any of them.
     local path = self.buffer.ui:get_hunk_or_filename_under_cursor()
     local section = self.buffer.ui:get_selection().section
+    local section_name
     if section then
-      section = section.name
+      section_name = section.name
     end
 
     local item = self.buffer.ui:get_yankable_under_cursor()
@@ -1303,7 +1304,7 @@ M.n_help_popup = function(self)
       tag = { commit = commit },
       stash = { name = stash and stash:match("^stash@{%d+}") },
       diff = {
-        section = { name = section },
+        section = { name = section_name },
         item = { name = item },
       },
       ignore = {

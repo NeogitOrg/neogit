@@ -1,6 +1,6 @@
 {
     "$schema": "https://raw.githubusercontent.com/sumneko/vscode-lua/master/setting/schema.json",
-    "Lua.diagnostics.disable": [
+    "diagnostics.disable": [
         "redefined-local"
     ],
     "diagnostics.globals": [
@@ -9,5 +9,6 @@
         "describe",
         "before_each"
     ],
-    "workspace.checkThirdParty": "Disable",
+    "workspace.checkThirdParty": false,
+    "runtime.version": "LuaJIT"
 }

@@ -131,14 +131,17 @@ neogit.setup {
   initial_branch_name = "",
   -- Change the default way of opening neogit
   kind = "tab",
-  -- Disable line numbers and relative line numbers
+  -- Disable line numbers
   disable_line_numbers = true,
+  -- Disable relative line numbers
+  disable_relative_line_numbers = true,
   -- The time after which an output console is shown for slow running commands
   console_timeout = 2000,
   -- Automatically show console if a command takes more than console_timeout milliseconds
   auto_show_console = true,
   -- Automatically close the console if the process exits with a 0 (success) status
   auto_close_console = true,
+  notification_icon = "󰊢",
   status = {
     show_head_commit_hash = true,
     recent_commit_count = 10,
@@ -194,14 +197,23 @@ neogit.setup {
   merge_editor = {
     kind = "auto",
   },
+  description_editor = {
+    kind = "auto",
+  },
   tag_editor = {
     kind = "auto",
   },
   preview_buffer = {
-    kind = "floating",
+    kind = "floating_console",
   },
   popup = {
     kind = "split",
+  },
+  stash = {
+    kind = "tab",
+  },
+  refs_view = {
+    kind = "tab",
   },
   signs = {
     -- { CLOSED, OPENED }
@@ -282,6 +294,9 @@ neogit.setup {
       ["q"] = "Close",
       ["<c-c><c-c>"] = "Submit",
       ["<c-c><c-k>"] = "Abort",
+      ["<m-p>"] = "PrevMessage",
+      ["<m-n>"] = "NextMessage",
+      ["<m-r>"] = "ResetMessage",
     },
     commit_editor_I = {
       ["<c-c><c-c>"] = "Submit",
@@ -317,21 +332,31 @@ neogit.setup {
       ["<c-p>"] = "Previous",
       ["<down>"] = "Next",
       ["<up>"] = "Previous",
-      ["<tab>"] = "MultiselectToggleNext",
-      ["<s-tab>"] = "MultiselectTogglePrevious",
+      ["<tab>"] = "InsertCompletion",
+      ["<space>"] = "MultiselectToggleNext",
+      ["<s-space>"] = "MultiselectTogglePrevious",
       ["<c-j>"] = "NOP",
+      ["<ScrollWheelDown>"] = "ScrollWheelDown",
+      ["<ScrollWheelUp>"] = "ScrollWheelUp",
+      ["<ScrollWheelLeft>"] = "NOP",
+      ["<ScrollWheelRight>"] = "NOP",
+      ["<LeftMouse>"] = "MouseClick",
+      ["<2-LeftMouse>"] = "NOP",
     },
     -- Setting any of these to `false` will disable the mapping.
     popup = {
       ["?"] = "HelpPopup",
       ["A"] = "CherryPickPopup",
-      ["D"] = "DiffPopup",
+      ["d"] = "DiffPopup",
       ["M"] = "RemotePopup",
       ["P"] = "PushPopup",
       ["X"] = "ResetPopup",
       ["Z"] = "StashPopup",
+      ["i"] = "IgnorePopup",
+      ["t"] = "TagPopup",
       ["b"] = "BranchPopup",
       ["B"] = "BisectPopup",
+      ["w"] = "WorktreePopup",
       ["c"] = "CommitPopup",
       ["f"] = "FetchPopup",
       ["l"] = "LogPopup",
@@ -339,26 +364,27 @@ neogit.setup {
       ["p"] = "PullPopup",
       ["r"] = "RebasePopup",
       ["v"] = "RevertPopup",
-      ["w"] = "WorktreePopup",
     },
     status = {
-      ["k"] = "MoveUp",
       ["j"] = "MoveDown",
-      ["q"] = "Close",
+      ["k"] = "MoveUp",
       ["o"] = "OpenTree",
+      ["q"] = "Close",
       ["I"] = "InitRepo",
       ["1"] = "Depth1",
       ["2"] = "Depth2",
       ["3"] = "Depth3",
       ["4"] = "Depth4",
+      ["Q"] = "Command",
       ["<tab>"] = "Toggle",
       ["x"] = "Discard",
       ["s"] = "Stage",
       ["S"] = "StageUnstaged",
       ["<c-s>"] = "StageAll",
-      ["K"] = "Untrack",
       ["u"] = "Unstage",
+      ["K"] = "Untrack",
       ["U"] = "UnstageStaged",
+      ["y"] = "ShowRefs",
       ["$"] = "CommandHistory",
       ["Y"] = "YankSelected",
       ["<c-r>"] = "RefreshBuffer",

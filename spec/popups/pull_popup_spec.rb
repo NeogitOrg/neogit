@@ -15,6 +15,7 @@ RSpec.describe "Pull Popup", :git, :nvim, :popup do # rubocop:disable RSpec/Empt
       " -r Rebase local commits (--rebase)                                             ",
       " -a Autostash (--autostash)                                                     ",
       " -t Fetch tags (--tags)                                                         ",
+      " -F Force (--force)                                                             ",
       "                                                                                ",
       " Pull into master from           Configure                                      ",
       " p pushRemote, setting that      C Set variables...                             ",
@@ -23,5 +24,5 @@ RSpec.describe "Pull Popup", :git, :nvim, :popup do # rubocop:disable RSpec/Empt
     ]
   end
 
-  %w[r -f -r -a -t p u e C].each { include_examples "interaction", _1 }
+  %w[r -f -r -a -t -F p u e C].each { include_examples "interaction", _1 }
 end

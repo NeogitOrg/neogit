@@ -4,8 +4,6 @@
 ---@field interval number
 ---@field pattern string[]
 ---@field timer uv_timer_t
----@field start fun(self)
----@field stop fun(self)
 local Spinner = {}
 Spinner.__index = Spinner
 
@@ -36,8 +34,6 @@ end
 function Spinner:start()
   if not self.timer then
     self.timer = vim.uv.new_timer()
-    vim.cmd(string.format("redraw | echomsg '[neogit] %s'", self.text))
-
     self.timer:start(
       250,
       self.interval,

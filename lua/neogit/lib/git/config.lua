@@ -68,12 +68,23 @@ function ConfigEntry:update(value)
   end
 end
 
+---@return self
+function ConfigEntry:refresh()
+  if self.scope == "local" then
+    self.value = M.get_local(self.name).value
+  elseif self.scope == "global" then
+    self.value = M.get_global(self.name).value
+  end
+
+  return self
+end
+
 ---@type table<string, ConfigEntry>
 local config_cache = {}
 local cache_key = nil
 
 local function make_cache_key()
-  local stat = vim.loop.fs_stat(git.repo:git_path("config"):absolute())
+  local stat = vim.uv.fs_stat(git.repo:git_path("config"):absolute())
   if stat then
     return stat.mtime.sec
   end

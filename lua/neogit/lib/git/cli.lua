@@ -107,7 +107,8 @@ local runner = require("neogit.runner")
 ---@field shortstat self
 ---@field patch self
 ---@field name_only self
----@field ext_diff self
+---@field no_ext_diff self
+---@field no_index self
 ---@field index self
 ---@field check self
 
@@ -129,7 +130,7 @@ local runner = require("neogit.runner")
 ---@class GitCommandRebase: GitCommandBuilder
 ---@field interactive self
 ---@field onto self
----@field todo self
+---@field edit_todo self
 ---@field continue self
 ---@field abort self
 ---@field skip self
@@ -172,6 +173,12 @@ local runner = require("neogit.runner")
 ---@field rename self
 ---@field prune self
 ---@field get_url fun(remote: string): self
+
+---@class GitCommandRevert: GitCommandBuilder
+---@field no_commit self
+---@field continue self
+---@field skip self
+---@field abort self
 
 ---@class GitCommandApply: GitCommandBuilder
 ---@field ignore_space_change self
@@ -222,6 +229,7 @@ local runner = require("neogit.runner")
 ---@field very_verbose self
 ---@field move self
 ---@field sort fun(sort: string): self
+---@field set_upstream_to fun(name: string): self
 ---@field name fun(name: string): self
 
 ---@class GitCommandFetch: GitCommandBuilder
@@ -344,6 +352,7 @@ local runner = require("neogit.runner")
 ---@field rebase         GitCommandRebase
 ---@field reflog         GitCommandReflog
 ---@field remote         GitCommandRemote
+---@field revert         GitCommandRevert
 ---@field reset          GitCommandReset
 ---@field rev-list       GitCommandRevList
 ---@field rev-parse      GitCommandRevParse
@@ -361,6 +370,7 @@ local runner = require("neogit.runner")
 ---@field write-tree     GitCommandWriteTree
 ---@field git_root fun(dir: string):string
 ---@field is_inside_worktree fun(dir: string):boolean
+---@field history ProcessResult[]
 
 ---@param setup GitCommandSetup|nil
 ---@return GitCommand
@@ -758,6 +768,7 @@ local configurations = {
     },
     options = {
       sort = "--sort",
+      set_upstream_to = "--set-upstream-to",
     },
     aliases = {
       name = function(tbl)

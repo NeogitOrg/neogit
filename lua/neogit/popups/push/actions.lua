@@ -3,6 +3,7 @@ local git = require("neogit.lib.git")
 local logger = require("neogit.logger")
 local notification = require("neogit.lib.notification")
 local input = require("neogit.lib.input")
+local util = require("neogit.lib.util")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
@@ -133,18 +134,62 @@ function M.push_other(popup)
   push_to(popup:get_arguments(), remote, source .. ":" .. destination)
 end
 
-function M.push_tags(popup)
+---@param prompt string
+---@return string|nil
+local function choose_remote(prompt)
   local remotes = git.remote.list()
-
   local remote
   if #remotes == 1 then
     remote = remotes[1]
   else
-    remote = FuzzyFinderBuffer.new(remotes):open_async { prompt_prefix = "push tags to" }
+    remote = FuzzyFinderBuffer.new(remotes):open_async { prompt_prefix = prompt }
   end
 
+  return remote
+end
+
+---@param popup PopupData
+function M.push_a_tag(popup)
+  local tags = git.tag.list()
+
+  local tag = FuzzyFinderBuffer.new(tags):open_async { prompt_prefix = "Push tag" }
+  if not tag then
+    return
+  end
+
+  local remote = choose_remote(("Push %s to remote"):format(tag))
+  if remote then
+    push_to({ tag, unpack(popup:get_arguments()) }, remote)
+  end
+end
+
+---@param popup PopupData
+function M.push_all_tags(popup)
+  local remote = choose_remote("Push tags to remote")
   if remote then
     push_to({ "--tags", unpack(popup:get_arguments()) }, remote)
+  end
+end
+
+---@param popup PopupData
+function M.matching_branches(popup)
+  local remote = choose_remote("Push matching branches to")
+  if remote then
+    push_to({ "-v", unpack(popup:get_arguments()) }, remote, ":")
+  end
+end
+
+---@param popup PopupData
+function M.explicit_refspec(popup)
+  local remote = choose_remote("Push to remote")
+  if not remote then
+    return
+  end
+
+  local options = util.merge({ "HEAD" }, git.refs.list_local_branches())
+  local refspec = FuzzyFinderBuffer.new(options):open_async { prompt_prefix = "Push refspec" }
+  if refspec then
+    push_to({ "-v", unpack(popup:get_arguments()) }, remote, refspec)
   end
 end
 

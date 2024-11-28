@@ -22,7 +22,7 @@ function Watcher.new(root)
     buffers = {},
     git_root = Path:new(root):joinpath(".git"):absolute(),
     running = false,
-    fs_event_handler = assert(vim.loop.new_fs_event()),
+    fs_event_handler = assert(vim.uv.new_fs_event()),
   }
 
   setmetatable(instance, Watcher)

@@ -39,7 +39,7 @@ end
 M.neogit_test_base_dir = "/tmp/neogit-testing/"
 
 local function is_macos()
-  return vim.loop.os_uname().sysname == "Darwin"
+  return vim.uv.os_uname().sysname == "Darwin"
 end
 
 local function is_gnu_mktemp()
@@ -72,7 +72,7 @@ function M.ensure_installed(repo, path)
 
   vim.opt.runtimepath:prepend(install_path)
 
-  if not vim.loop.fs_stat(install_path) then
+  if not vim.uv.fs_stat(install_path) then
     print("* Downloading " .. name .. " to '" .. install_path .. "/'")
     vim.fn.system { "git", "clone", "--depth=1", "git@github.com:" .. repo .. ".git", install_path }
 

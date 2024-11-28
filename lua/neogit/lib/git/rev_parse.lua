@@ -28,8 +28,13 @@ end
 ---@return string
 ---@async
 function M.verify(rev)
-  return git.cli["rev-parse"].verify
-    .abbrev_ref()
+  return git.cli["rev-parse"].verify.abbrev_ref(rev).call({ hidden = true, ignore_error = true }).stdout[1]
+end
+
+---@param rev string
+---@return string
+function M.full_name(rev)
+  return git.cli["rev-parse"].verify.symbolic_full_name
     .args(rev)
     .call({ hidden = true, ignore_error = true }).stdout[1]
 end

@@ -120,6 +120,9 @@ TODO: Detail what these do
     console_timeout = 2000,
     -- Automatically show console if a command takes more than console_timeout milliseconds
     auto_show_console = true,
+    -- If `auto_show_console` is enabled, specify "output" (default) to show
+    -- the console always, or "error" to auto-show the console only on error
+    auto_show_console_on = "output",
     notification_icon = "󰊢",
     status = {
       recent_commit_count = 10,
@@ -296,70 +299,81 @@ The following mappings can all be customized via the setup function.
       }
 
       finder = {
-        ["<cr>"]    = "Select",
-        ["<c-c>"]   = "Close",
-        ["<esc>"]   = "Close",
-        ["<c-n>"]   = "Next",
-        ["<c-p>"]   = "Previous",
-        ["<down>"]  = "Next",
-        ["<up>"]    = "Previous",
-        ["<tab>"]   = "MultiselectToggleNext",
-        ["<s-tab>"] = "MultiselectTogglePrevious",
+        ["<cr>"]               = "Select",
+        ["<c-c>"]              = "Close",
+        ["<esc>"]              = "Close",
+        ["<c-n>"]              = "Next",
+        ["<c-p>"]              = "Previous",
+        ["<down>"]             = "Next",
+        ["<up>"]               = "Previous",
+        ["<tab>"]              = "InsertCompletion",
+        ["<space>"]            = "MultiselectToggleNext",
+        ["<s-space>"]          = "MultiselectTogglePrevious",
+        ["<c-j>"]              = "NOP",
+        ["<ScrollWheelDown>"]  = "ScrollWheelDown",
+        ["<ScrollWheelUp>"]    = "ScrollWheelUp",
+        ["<ScrollWheelLeft>"]  = "NOP",
+        ["<ScrollWheelRight>"] = "NOP",
+        ["<LeftMouse>"]        = "MouseClick",
+        ["<2-LeftMouse>"]      = "NOP",
       }
 
       popup = {
         ["?"] = "HelpPopup",
         ["A"] = "CherryPickPopup",
-        ["B"] = "BisectPopup",
-        ["b"] = "BranchPopup",
-        ["c"] = "CommitPopup",
         ["d"] = "DiffPopup",
-        ["f"] = "FetchPopup",
-        ["i"] = "IgnorePopup",
-        ["l"] = "LogPopup",
-        ["m"] = "MergePopup",
         ["M"] = "RemotePopup",
-        ["p"] = "PullPopup",
         ["P"] = "PushPopup",
-        ["r"] = "RebasePopup",
-        ["t"] = "TagPopup",
-        ["v"] = "RevertPopup",
-        ["w"] = "WorktreePopup",
         ["X"] = "ResetPopup",
         ["Z"] = "StashPopup",
+        ["i"] = "IgnorePopup",
+        ["t"] = "TagPopup",
+        ["b"] = "BranchPopup",
+        ["B"] = "BisectPopup",
+        ["w"] = "WorktreePopup",
+        ["c"] = "CommitPopup",
+        ["f"] = "FetchPopup",
+        ["l"] = "LogPopup",
+        ["m"] = "MergePopup",
+        ["p"] = "PullPopup",
+        ["r"] = "RebasePopup",
+        ["v"] = "RevertPopup",
       }
 
       status = {
-        ["q"]     = "Close",
-        ["Q"]     = "Command",
-        ["I"]     = "InitRepo",
-        ["1"]     = "Depth1",
-        ["2"]     = "Depth2",
-        ["3"]     = "Depth3",
-        ["4"]     = "Depth4",
-        ["<tab>"] = "Toggle",
-        ["x"]     = "Discard",
-        ["s"]     = "Stage",
-        ["S"]     = "StageUnstaged",
-        ["<c-s>"] = "StageAll",
-        ["u"]     = "Unstage",
-        ["U"]     = "UnstageStaged",
-        ["y"]     = "ShowRefs",
-        ["$"]     = "CommandHistory",
-        ["#"]     = "Console",
-        ["Y"]     = "YankSelected",
-        ["<c-r>"] = "RefreshBuffer",
-        ["<cr>"]  = "GoToFile",
-        ["<s-cr>"]  = "PeekFile",
-        ["<c-v>"] = "VSplitOpen",
-        ["<c-x>"] = "SplitOpen",
-        ["<c-t>"] = "TabOpen",
-        ["{"]     = "GoToPreviousHunkHeader",
-        ["}"]     = "GoToNextHunkHeader",
-        ["[c"]    = "OpenOrScrollUp",
-        ["]c"]    = "OpenOrScrollDown",
-        ["<c-k>"] = "PeekUp",
-        ["<c-j>"] = "PeekDown",
+        ["j"]      = "MoveDown",
+        ["k"]      = "MoveUp",
+        ["o"]      = "OpenTree",
+        ["q"]      = "Close",
+        ["I"]      = "InitRepo",
+        ["1"]      = "Depth1",
+        ["2"]      = "Depth2",
+        ["3"]      = "Depth3",
+        ["4"]      = "Depth4",
+        ["Q"]      = "Command",
+        ["<tab>"]  = "Toggle",
+        ["x"]      = "Discard",
+        ["s"]      = "Stage",
+        ["S"]      = "StageUnstaged",
+        ["<c-s>"]  = "StageAll",
+        ["u"]      = "Unstage",
+        ["K"]      = "Untrack",
+        ["U"]      = "UnstageStaged",
+        ["y"]      = "ShowRefs",
+        ["$"]      = "CommandHistory",
+        ["Y"]      = "YankSelected",
+        ["<c-r>"]  = "RefreshBuffer",
+        ["<cr>"]   = "GoToFile",
+        ["<s-cr>"] = "PeekFile",
+        ["<c-v>"]  = "VSplitOpen",
+        ["<c-x>"]  = "SplitOpen",
+        ["<c-t>"]  = "TabOpen",
+        ["{"]      = "GoToPreviousHunkHeader",
+        ["}"]      = "GoToNextHunkHeader",
+        ["[c"]     = "OpenOrScrollUp",
+        ["]c"]     = "OpenOrScrollDown",
+        ["<c-k>"]  = "PeekUp",
+        ["<c-j>"]  = "PeekDown",
       }
 <
 ==============================================================================
@@ -689,13 +703,27 @@ Actions:                                      *neogit_cherry_pick_popup_actions*
     Otherwise the user is prompted to select one or more commits.
 
   • Harvest                                         *neogit_cherry_pick_harvest*
-    (Not yet implemented)
+    This command moves the selected COMMITS that must be located on another
+    BRANCH onto the current branch instead, removing them from the former.
+    When this command succeeds, then the same branch is current as before.
+
+    Applying the commits on the current branch or removing them from the other
+    branch can lead to conflicts. When that happens, then this command stops
+    and you have to resolve the conflicts and then finish the process manually.
 
   • Squash                                           *neogit_cherry_pick_squash*
-    (Not yet implemented)
+    See: |neogit_merge_squash|
 
   • Donate                                           *neogit_cherry_pick_donate*
-    (Not yet implemented)
+    This command moves the selected COMMITS from the current branch onto
+    another existing BRANCH, removing them from the former. When this command
+    succeeds, then the same branch is current as before.
+
+    HEAD is allowed to be detached initially.
+
+    Applying the commits on the other branch or removing them from the current
+    branch can lead to conflicts. When that happens, then this command stops
+    and you have to resolve the conflicts and then finish the process manually.
 
   • Spinout                                         *neogit_cherry_pick_spinout*
     (Not yet implemented)
@@ -1194,7 +1222,37 @@ Log Popup                                                     *neogit_log_popup*
 ==============================================================================
 Merge Popup                                                 *neogit_merge_popup*
 
-(TODO)
+Arguments:                                             *neogit_merge_popup_args*
+  (TODO)
+
+Actions:                                            *neogit_merge_popup_actions*
+  • Merge                                                   *neogit_merge_merge*
+    This command merges another branch or revision into the current branch.
+
+  • Merge and edit message                                *neogit_merge_editmsg*
+    Like `Merge` above, but opens editor to modify commit message.
+
+  • Merge but don't commit                               *neogit_merge_nocommit*
+    This command merges another branch or revision into the current branch,
+    but does not actually create the merge commit, allowing the user to make
+    modifications before committing themselves.
+
+  • Absorb                                                 *neogit_merge_absorb*
+    (Not yet implemented)
+
+  • Preview Merge                                         *neogit_merge_preview*
+    (Not yet implemented)
+
+  • Squash Merge                                           *neogit_merge_squash*
+    This command squashes the changes introduced by another branch or revision
+    into the current branch. This only applies the changes made by the
+    squashed commits. No information is preserved that would allow creating an
+    actual merge commit.
+
+    Instead of this command you should probably use a cherry-pick command.
+
+  • Dissolve                                             *neogit_merge_dissolve*
+    (Not yet implemented)
 
 ==============================================================================
 Remote Popup                                               *neogit_remote_popup*
@@ -1358,13 +1416,13 @@ Actions:                                             *neogit_push_popup_actions*
     the user.
 
   • Push explicit refspecs                       *neogit_push_explicit_refspecs*
-    (Not yet implemented)
+    Push a refspec to a remote.
 
   • Push matching branches                       *neogit_push_matching_branches*
-    (Not yet implemented)
+    Push all matching branches to another repository.
 
   • Push a tag                                                 *neogit_push_tag*
-    (Not yet implemented)
+    Pushes a single tag to a remote.
 
   • Push all tags                                         *neogit_push_all_tags*
     Pushes all tags to selected remote. If only one remote exists, that will
