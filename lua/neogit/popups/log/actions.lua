@@ -32,14 +32,13 @@ local function fetch_more_commits(popup, flags)
   end
 end
 
--- TODO: Handle when head is detached
 function M.log_current(popup)
   LogViewBuffer.new(
     commits(popup, {}),
     popup:get_internal_arguments(),
     popup.state.env.files,
     fetch_more_commits(popup, {}),
-    "Commits in " .. git.branch.current(),
+    "Commits in " .. git.branch.current() or ("(detached) " .. git.log.message("HEAD")),
     git.remote.list()
   ):open()
 end
