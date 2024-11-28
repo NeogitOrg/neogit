@@ -22,7 +22,7 @@ function M.create()
     :switch("L", "L", "Trace line evolution", {
       user_input = true,
       cli_prefix = "-",
-      validate_help = "Input must match 'start,end:file' or ':funcname:file'",
+      validate_help = "Input must match `start,end:file` or `:funcname:file`",
       validate = function(input)
         return (input:match("^%d+,%d+:.-$") ~= nil) or (input:match("^:.-:.-$") ~= nil)
       end,
