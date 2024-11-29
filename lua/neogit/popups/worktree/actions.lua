@@ -62,14 +62,16 @@ function M.create_worktree()
     return
   end
 
-  local success, err = git.worktree.add(selected, path)
-  if success then
-    notification.info("Added worktree")
-    if status.is_open() then
-      status.instance():chdir(path)
+  if git.branch.create(name, selected) then
+    local success, err = git.worktree.add(name, path)
+    if success then
+      notification.info("Added worktree")
+      if status.is_open() then
+        status.instance():chdir(path)
+      end
+    else
+      notification.error(err)
     end
-  else
-    notification.error(err)
   end
 end
 

@@ -141,8 +141,9 @@ end
 
 ---@param name string
 ---@param base_branch? string
+---@return boolean
 function M.create(name, base_branch)
-  git.cli.branch.args(name, base_branch).call { await = true }
+  return git.cli.branch.args(name, base_branch).call({ await = true }).code == 0
 end
 
 function M.delete(name)
