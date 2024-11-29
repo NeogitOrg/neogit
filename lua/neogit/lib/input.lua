@@ -49,6 +49,7 @@ end
 ---@field completion string?
 ---@field separator string?
 ---@field cancel string?
+---@field prepend string?
 
 ---@param prompt string Prompt to use for user input
 ---@param opts GetUserInputOpts? Options table

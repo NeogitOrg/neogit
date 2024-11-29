@@ -244,15 +244,22 @@ function M:close()
 end
 
 function M:chdir(dir)
-  local destination = require("plenary.path").new(dir)
+  local Path = require("plenary.path")
+
+  local destination = Path:new(dir)
   vim.wait(5000, function()
     return destination:exists()
   end)
 
-  logger.debug("[STATUS] Changing Dir: " .. dir)
-  vim.api.nvim_set_current_dir(dir)
-  self.cwd = dir
-  self:dispatch_reset()
+  local kind = self.buffer.kind
+  self:close()
+
+  vim.schedule(function()
+    logger.debug("[STATUS] Changing Dir: " .. dir)
+    vim.api.nvim_set_current_dir(dir)
+    local repo = require("neogit.lib.git.repository").instance(dir)
+    self.new(config.values, git.repo.git_root, dir):open(kind):dispatch_refresh()
+  end)
 end
 
 function M:focus()
