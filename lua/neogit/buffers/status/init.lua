@@ -79,7 +79,12 @@ function M:_action(name)
   return action(self)
 end
 
----@param kind string<"floating" | "split" | "tab" | "split" | "vsplit">|nil
+---@param kind nil|string
+---| "'floating'"
+---| "'split'"
+---| "'tab'"
+---| "'split'"
+---| "'vsplit'"
 ---@return StatusBuffer
 function M:open(kind)
   if self.buffer and self.buffer:is_visible() then
@@ -257,7 +262,6 @@ function M:chdir(dir)
   vim.schedule(function()
     logger.debug("[STATUS] Changing Dir: " .. dir)
     vim.api.nvim_set_current_dir(dir)
-    local repo = require("neogit.lib.git.repository").instance(dir)
     self.new(config.values, git.repo.git_root, dir):open(kind):dispatch_refresh()
   end)
 end
