@@ -10,10 +10,11 @@ local M = {}
 M.__index = M
 
 ---@param process Process
+---@param mask_fn fun(string):string
 ---@return ProcessBuffer
-function M:new(process)
+function M:new(process, mask_fn)
   local instance = {
-    content = { string.format("> %s\r\n", table.concat(process.cmd, " ")) },
+    content = { string.format("> %s\r\n", mask_fn(table.concat(process.cmd, " "))) },
     process = process,
     buffer = nil,
     truncated = false,

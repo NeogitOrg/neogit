@@ -387,7 +387,7 @@ function Process:spawn(cb)
   self.stdin = job
 
   if not hide_console then
-    self.buffer = ProcessBuffer:new(self)
+    self.buffer = ProcessBuffer:new(self, mask_command)
     self:show_spinner()
     self:start_timer()
   end
