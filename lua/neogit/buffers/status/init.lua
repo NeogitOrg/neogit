@@ -256,13 +256,11 @@ function M:chdir(dir)
     return destination:exists()
   end)
 
-  local kind = self.buffer.kind
-  self:close()
-
   vim.schedule(function()
     logger.debug("[STATUS] Changing Dir: " .. dir)
     vim.api.nvim_set_current_dir(dir)
-    self.new(config.values, git.repo.git_root, dir):open(kind):dispatch_refresh()
+    require("neogit.lib.git.repository").instance(dir)
+    self.new(config.values, git.repo.git_root, dir):open("replace"):dispatch_refresh()
   end)
 end
 
