@@ -89,6 +89,7 @@ function M.open_or_run_in_window(commit_id, filter, cmd)
   if M.is_open() and M.instance.commit_info.commit_arg == commit_id then
     M.instance.buffer:win_exec(cmd)
   else
+    M:close()
     local cw = api.nvim_get_current_win()
     M.new(commit_id, filter):open()
     api.nvim_set_current_win(cw)
