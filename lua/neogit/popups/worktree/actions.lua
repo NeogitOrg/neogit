@@ -129,8 +129,9 @@ function M.delete()
   local success = false
 
   if input.get_permission(("Remove worktree at %q?"):format(selected)) then
-    if change_dir and status.is_open() then
-      status.instance():chdir(git.worktree.main().path)
+    local main = git.worktree.main() -- A bare repo has no main, so check
+    if change_dir and status.is_open() and main then
+      status.instance():chdir(main.path)
     end
 
     -- This might produce some error messages that need to get suppressed
