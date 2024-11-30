@@ -401,6 +401,7 @@ function M.get_default_values()
         C = "copied",
         U = "updated",
         R = "renamed",
+        T = "changed",
         DD = "unmerged",
         AU = "unmerged",
         UD = "unmerged",
