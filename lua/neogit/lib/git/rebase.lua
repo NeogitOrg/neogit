@@ -192,8 +192,8 @@ function M.update_rebase_status(state)
   state.rebase = { items = {}, onto = {}, head_oid = nil, head = nil, current = nil }
 
   local rebase_file
-  local rebase_merge = git.repo:git_path("rebase-merge")
-  local rebase_apply = git.repo:git_path("rebase-apply")
+  local rebase_merge = git.repo:worktree_git_path("rebase-merge")
+  local rebase_apply = git.repo:worktree_git_path("rebase-apply")
 
   if rebase_merge:exists() then
     rebase_file = rebase_merge

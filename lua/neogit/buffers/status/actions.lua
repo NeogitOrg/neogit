@@ -406,7 +406,7 @@ end
 ---@param self StatusBuffer
 M.v_ignore_popup = function(self)
   return popups.open("ignore", function(p)
-    p { paths = self.buffer.ui:get_filepaths_in_selection(), git_root = git.repo.git_root }
+    p { paths = self.buffer.ui:get_filepaths_in_selection(), worktree_root = git.repo.worktree_root }
   end)
 end
 
@@ -638,7 +638,7 @@ end
 ---@param _self StatusBuffer
 M.n_show_refs = function(_self)
   return a.void(function()
-    require("neogit.buffers.refs_view").new(git.refs.list_parsed(), git.repo.git_root):open()
+    require("neogit.buffers.refs_view").new(git.refs.list_parsed(), git.repo.worktree_root):open()
   end)
 end
 
@@ -1269,7 +1269,7 @@ M.n_ignore_popup = function(self)
     local path = self.buffer.ui:get_hunk_or_filename_under_cursor()
     p {
       paths = { path and path.escaped_path },
-      git_root = git.repo.git_root,
+      worktree_root = git.repo.worktree_root,
     }
   end)
 end
@@ -1309,7 +1309,7 @@ M.n_help_popup = function(self)
       },
       ignore = {
         paths = { path and path.escaped_path },
-        git_root = git.repo.git_root,
+        worktree_root = git.repo.worktree_root,
       },
       remote = {},
       fetch = {},
@@ -1364,7 +1364,8 @@ M.n_command = function(self)
   local runner = require("neogit.runner")
 
   return a.void(function()
-    local cmd = input.get_user_input(("Run command in %s"):format(git.repo.git_root), { prepend = "git " })
+    local cmd =
+      input.get_user_input(("Run command in %s"):format(git.repo.worktree_root), { prepend = "git " })
     if not cmd then
       return
     end
@@ -1375,7 +1376,7 @@ M.n_command = function(self)
 
     local proc = process.new {
       cmd = cmd,
-      cwd = git.repo.git_root,
+      cwd = git.repo.worktree_root,
       env = {},
       on_error = function()
         return false

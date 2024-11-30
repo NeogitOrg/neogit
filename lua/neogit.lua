@@ -84,7 +84,7 @@ local function construct_opts(opts)
 
   if not opts.cwd then
     local git = require("neogit.lib.git")
-    opts.cwd = git.cli.git_root(".")
+    opts.cwd = git.cli.worktree_root(".")
 
     if opts.cwd == "" then
       opts.cwd = vim.uv.cwd()
@@ -111,7 +111,7 @@ local function open_status_buffer(opts)
   -- going to open into. We will use vim.fn.lcd() in the status buffer constructor, so this will eventually be
   -- correct.
   local repo = require("neogit.lib.git.repository").instance(opts.cwd)
-  status.new(config.values, repo.git_root, opts.cwd):open(opts.kind):dispatch_refresh()
+  status.new(config.values, repo.worktree_root, opts.cwd):open(opts.kind):dispatch_refresh()
 end
 
 ---@alias Popup

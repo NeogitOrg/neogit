@@ -6,6 +6,7 @@
 ---@field touch fun(self, opts:table)
 ---@field write fun(self, txt:string, flag:string)
 ---@field read fun(self): string|nil
+---@field iter fun(self): self
 
 ---@class uv_timer_t
 ---@field start fun(self, time:number, repeat: number, fn: function)

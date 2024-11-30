@@ -17,7 +17,7 @@ local function bisect(cmd)
 end
 
 function M.in_progress()
-  return git.repo:git_path("BISECT_LOG"):exists()
+  return git.repo:worktree_git_path("BISECT_LOG"):exists()
 end
 
 function M.is_finished()
@@ -74,7 +74,7 @@ M.register = function(meta)
 
     local finished
 
-    for line in git.repo:git_path("BISECT_LOG"):iter() do
+    for line in git.repo:worktree_git_path("BISECT_LOG"):iter() do
       if line:match("^#") and line ~= "" then
         local action, oid, subject = line:match("^# ([^:]+): %[(.+)%] (.+)")
 
@@ -96,7 +96,7 @@ M.register = function(meta)
       end
     end
 
-    local expected = vim.trim(git.repo:git_path("BISECT_EXPECTED_REV"):read())
+    local expected = vim.trim(git.repo:worktree_git_path("BISECT_EXPECTED_REV"):read())
     state.bisect.current =
       git.log.parse(git.cli.show.format("fuller").args(expected).call({ trim = false }).stdout)[1]
 

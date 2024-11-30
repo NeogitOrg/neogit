@@ -8,8 +8,8 @@ describe("lib.git.instance", function()
     it(
       "creates cached git instance and returns it",
       in_prepared_repo(function(root_dir)
-        local dir1 = git_repo.instance(root_dir).git_root
-        local dir2 = git_repo.instance().git_root
+        local dir1 = git_repo.instance(root_dir).worktree_root
+        local dir2 = git_repo.instance().worktree_root
         eq(dir1, dir2)
       end)
     )

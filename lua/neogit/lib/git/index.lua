@@ -67,10 +67,10 @@ function M.generate_patch(item, hunk, from, to, reverse)
     string.format("@@ -%d,%d +%d,%d @@", hunk.index_from, len_start, hunk.index_from, len_start + len_offset)
   )
 
-  local git_root = git.repo.git_root
+  local worktree_root = git.repo.worktree_root
 
   assert(item.absolute_path, "Item is not a path")
-  local path = Path:new(item.absolute_path):make_relative(git_root)
+  local path = Path:new(item.absolute_path):make_relative(worktree_root)
 
   table.insert(diff_content, 1, string.format("+++ b/%s", path))
   table.insert(diff_content, 1, string.format("--- a/%s", path))

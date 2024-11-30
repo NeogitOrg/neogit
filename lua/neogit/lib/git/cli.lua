@@ -368,7 +368,9 @@ local runner = require("neogit.runner")
 ---@field verify-commit  GitCommandVerifyCommit
 ---@field worktree       GitCommandWorktree
 ---@field write-tree     GitCommandWriteTree
----@field git_root fun(dir: string):string
+---@field worktree_root fun(dir: string):string
+---@field git_dir fun(dir: string):string
+---@field worktree_git_dir fun(dir: string):string
 ---@field is_inside_worktree fun(dir: string):boolean
 ---@field history ProcessResult[]
 
@@ -965,15 +967,34 @@ local configurations = {
   ["bisect"] = config {},
 }
 
---- NOTE: Use require("neogit.lib.git").repo.git_root instead of calling this function.
---- repository.git_root is used by all other library functions, so it's most likely the one you want to use.
---- git_root_of_cwd() returns the git repo of the cwd, which can change anytime
---- after git_root_of_cwd() has been called.
+--- NOTE: Use require("neogit.lib.git").repo.worktree_root instead of calling this function.
+--- repository.worktree_root is used by all other library functions, so it's most likely the one you want to use.
+--- worktree_root_of_cwd() returns the git repo of the cwd, which can change anytime
+--- after worktree_root_of_cwd() has been called.
 ---@param dir string
----@return string
-local function git_root(dir)
-  local cmd = { "git", "-C", dir, "rev-parse", "--show-toplevel" }
+---@return string Absolute path of current worktree
+local function worktree_root(dir)
+  local cmd = { "git", "-C", dir, "rev-parse", "--show-toplevel", "--path-format=absolute" }
   local result = vim.system(cmd, { text = true }):wait()
+
+  return Path:new(vim.trim(result.stdout)):absolute()
+end
+
+---@param dir string
+---@return string Absolute path of `.git/` directory
+local function git_dir(dir)
+  local cmd = { "git", "-C", dir, "rev-parse", "--git-common-dir", "--path-format=absolute" }
+  local result = vim.system(cmd, { text = true }):wait()
+
+  return Path:new(vim.trim(result.stdout)):absolute()
+end
+
+---@param dir string
+---@return string Absolute path of `.git/` directory
+local function worktree_git_dir(dir)
+  local cmd = { "git", "-C", dir, "rev-parse", "--git-dir", "--path-format=absolute" }
+  local result = vim.system(cmd, { text = true }):wait()
+
   return Path:new(vim.trim(result.stdout)):absolute()
 end
 
@@ -982,6 +1003,7 @@ end
 local function is_inside_worktree(dir)
   local cmd = { "git", "-C", dir, "rev-parse", "--is-inside-work-tree" }
   local result = vim.system(cmd):wait()
+
   return result.code == 0
 end
 
@@ -1152,7 +1174,7 @@ local function new_builder(subcommand)
 
     return process.new {
       cmd = cmd,
-      cwd = git.repo.git_root,
+      cwd = git.repo.worktree_root,
       env = state.env,
       input = state.input,
       on_error = opts.on_error,
@@ -1229,7 +1251,9 @@ local meta = {
 
 local cli = setmetatable({
   history = runner.history,
-  git_root = git_root,
+  worktree_root = worktree_root,
+  worktree_git_dir = worktree_git_dir,
+  git_dir = git_dir,
   is_inside_worktree = is_inside_worktree,
 }, meta)
 

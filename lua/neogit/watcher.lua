@@ -1,14 +1,13 @@
 -- Adapted from https://github.com/lewis6991/gitsigns.nvim/blob/main/lua/gitsigns/watcher.lua#L103
 
 local logger = require("neogit.logger")
-local Path = require("plenary.path")
 local util = require("neogit.lib.util")
 local git = require("neogit.lib.git")
 local config = require("neogit.config")
 local a = require("plenary.async")
 
 ---@class Watcher
----@field git_root string
+---@field git_dir string
 ---@field buffers table<StatusBuffer|RefsViewBuffer>
 ---@field running boolean
 ---@field fs_event_handler uv_fs_event_t
@@ -20,7 +19,7 @@ Watcher.__index = Watcher
 function Watcher.new(root)
   local instance = {
     buffers = {},
-    git_root = Path:new(root):joinpath(".git"):absolute(),
+    git_dir = git.cli.worktree_git_dir(root),
     running = false,
     fs_event_handler = assert(vim.uv.new_fs_event()),
   }
@@ -83,9 +82,9 @@ function Watcher:start()
     return self
   end
 
-  logger.debug("[WATCHER] Watching git dir: " .. self.git_root)
+  logger.debug("[WATCHER] Watching git dir: " .. self.git_dir)
   self.running = true
-  self.fs_event_handler:start(self.git_root, {}, self:fs_event_callback())
+  self.fs_event_handler:start(self.git_dir, {}, self:fs_event_callback())
   return self
 end
 
@@ -99,7 +98,7 @@ function Watcher:stop()
     return self
   end
 
-  logger.debug("[WATCHER] Stopped watching git dir: " .. self.git_root)
+  logger.debug("[WATCHER] Stopped watching git dir: " .. self.git_dir)
   self.running = false
   self.fs_event_handler:stop()
   return self
