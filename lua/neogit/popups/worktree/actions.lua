@@ -7,51 +7,42 @@ local status = require("neogit.buffers.status")
 local notification = require("neogit.lib.notification")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
-local Path = require("plenary.path")
-local scan_dir = require("plenary.scandir").scan_dir
 
----Poor man's dired
+---@param prompt string
 ---@return string|nil
 local function get_path(prompt)
-  local dir = Path.new(".")
-  repeat
-    local dirs = scan_dir(dir:absolute(), { depth = 1, only_dirs = true })
-    local selected = FuzzyFinderBuffer.new(util.merge({ ".." }, dirs)):open_async {
-      prompt_prefix = prompt,
-    }
+  return input.get_user_input(prompt, {
+    completion = "dir",
+    prepend = vim.fs.normalize(vim.uv.cwd() .. "/..") .. "/",
+  })
+end
 
-    if not selected then
-      return
-    end
-
-    if vim.startswith(selected, "/") then
-      dir = Path.new(selected)
-    else
-      dir = dir:joinpath(selected)
-    end
-  until not dir:exists()
-
-  local path, _ = dir:absolute():gsub("%s", "_")
-  return path
+---@param prompt string
+---@return string|nil
+local function get_ref(prompt)
+  local options = util.merge(git.refs.list_branches(), git.refs.list_tags(), git.refs.heads())
+  return FuzzyFinderBuffer.new(options):open_async { prompt_prefix = prompt }
 end
 
 function M.checkout_worktree()
-  local options = util.merge(git.refs.list_branches(), git.refs.list_tags(), git.refs.heads())
-  local selected = FuzzyFinderBuffer.new(options):open_async { prompt_prefix = "checkout" }
+  local selected = get_ref("checkout")
   if not selected then
     return
   end
 
-  local path = get_path(("Checkout %s in new worktree"):format(selected))
+  local path = get_path(("Checkout '%s' in new worktree"):format(selected))
   if not path then
     return
   end
 
-  if git.worktree.add(selected, path) then
+  local success, err = git.worktree.add(selected, path)
+  if success then
     notification.info("Added worktree")
     if status.is_open() then
       status.instance():chdir(path)
     end
+  else
+    notification.error(err)
   end
 end
 
@@ -61,9 +52,7 @@ function M.create_worktree()
     return
   end
 
-  local options = util.merge(git.refs.list_branches(), git.refs.list_tags(), git.refs.heads())
-  local selected = FuzzyFinderBuffer.new(options)
-    :open_async { prompt_prefix = "Create and checkout branch starting at" }
+  local selected = get_ref("Create and checkout branch starting at")
   if not selected then
     return
   end
@@ -73,10 +62,15 @@ function M.create_worktree()
     return
   end
 
-  if git.worktree.add(selected, path, { "-b", name }) then
-    notification.info("Added worktree")
-    if status.is_open() then
-      status.instance():chdir(path)
+  if git.branch.create(name, selected) then
+    local success, err = git.worktree.add(name, path)
+    if success then
+      notification.info("Added worktree")
+      if status.is_open() then
+        status.instance():chdir(path)
+      end
+    else
+      notification.error(err)
     end
   end
 end
@@ -157,9 +151,15 @@ function M.delete()
 end
 
 function M.visit()
-  local options = vim.tbl_map(function(w)
-    return w.path
-  end, git.worktree.list())
+  local options = vim
+    .iter(git.worktree.list())
+    :map(function(w)
+      return w.path
+    end)
+    :filter(function(path)
+      return path ~= vim.uv.cwd()
+    end)
+    :totable()
 
   if #options == 0 then
     notification.info("No worktrees present")
