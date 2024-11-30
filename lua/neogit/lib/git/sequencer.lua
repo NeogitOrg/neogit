@@ -31,16 +31,16 @@ end
 function M.update_sequencer_status(state)
   state.sequencer = { items = {}, head = nil, head_oid = nil, revert = false, cherry_pick = false }
 
-  local revert_head = git.repo:git_path("REVERT_HEAD")
-  local cherry_head = git.repo:git_path("CHERRY_PICK_HEAD")
+  local revert_head = git.repo:worktree_git_path("REVERT_HEAD")
+  local cherry_head = git.repo:worktree_git_path("CHERRY_PICK_HEAD")
 
   if cherry_head:exists() then
     state.sequencer.head = "CHERRY_PICK_HEAD"
-    state.sequencer.head_oid = vim.trim(git.repo:git_path("CHERRY_PICK_HEAD"):read())
+    state.sequencer.head_oid = vim.trim(git.repo:worktree_git_path("CHERRY_PICK_HEAD"):read())
     state.sequencer.cherry_pick = true
   elseif revert_head:exists() then
     state.sequencer.head = "REVERT_HEAD"
-    state.sequencer.head_oid = vim.trim(git.repo:git_path("REVERT_HEAD"):read())
+    state.sequencer.head_oid = vim.trim(git.repo:worktree_git_path("REVERT_HEAD"):read())
     state.sequencer.revert = true
   end
 
@@ -52,7 +52,7 @@ function M.update_sequencer_status(state)
     subject = git.log.message(HEAD_oid),
   })
 
-  local todo = git.repo:git_path("sequencer/todo")
+  local todo = git.repo:worktree_git_path("sequencer/todo")
   if todo:exists() then
     for line in todo:iter() do
       if line:match("^[^#]") and line ~= "" then

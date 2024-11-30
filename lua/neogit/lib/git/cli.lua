@@ -370,6 +370,7 @@ local runner = require("neogit.runner")
 ---@field write-tree     GitCommandWriteTree
 ---@field worktree_root fun(dir: string):string
 ---@field git_dir fun(dir: string):string
+---@field worktree_git_dir fun(dir: string):string
 ---@field is_inside_worktree fun(dir: string):boolean
 ---@field history ProcessResult[]
 
@@ -989,6 +990,15 @@ local function git_dir(dir)
 end
 
 ---@param dir string
+---@return string Absolute path of `.git/` directory
+local function worktree_git_dir(dir)
+  local cmd = { "git", "-C", dir, "rev-parse", "--git-dir", "--path-format=absolute" }
+  local result = vim.system(cmd, { text = true }):wait()
+
+  return Path:new(vim.trim(result.stdout)):absolute()
+end
+
+---@param dir string
 ---@return boolean
 local function is_inside_worktree(dir)
   local cmd = { "git", "-C", dir, "rev-parse", "--is-inside-work-tree" }
@@ -1242,6 +1252,7 @@ local meta = {
 local cli = setmetatable({
   history = runner.history,
   worktree_root = worktree_root,
+  worktree_git_dir = worktree_git_dir,
   git_dir = git_dir,
   is_inside_worktree = is_inside_worktree,
 }, meta)

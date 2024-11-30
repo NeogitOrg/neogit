@@ -19,7 +19,7 @@ Watcher.__index = Watcher
 function Watcher.new(root)
   local instance = {
     buffers = {},
-    git_dir = git.cli.git_dir(root),
+    git_dir = git.cli.worktree_git_dir(root),
     running = false,
     fs_event_handler = assert(vim.uv.new_fs_event()),
   }

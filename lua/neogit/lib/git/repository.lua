@@ -21,23 +21,25 @@ local modules = {
 }
 
 ---@class NeogitRepoState
----@field git_path       fun(self, ...): Path
----@field refresh        fun(self, table)
----@field worktree_root  string
----@field git_dir        string
----@field head           NeogitRepoHead
----@field upstream       NeogitRepoRemote
----@field pushRemote     NeogitRepoRemote
----@field untracked      NeogitRepoIndex
----@field unstaged       NeogitRepoIndex
----@field staged         NeogitRepoIndex
----@field stashes        NeogitRepoStash
----@field recent         NeogitRepoRecent
----@field sequencer      NeogitRepoSequencer
----@field rebase         NeogitRepoRebase
----@field merge          NeogitRepoMerge
----@field bisect         NeogitRepoBisect
----@field hooks          string[]
+---@field git_path          fun(self, ...): Path
+---@field worktree_git_path fun(self, ...): Path
+---@field refresh           fun(self, table)
+---@field worktree_root     string Absolute path to the root of the current worktree
+---@field worktree_git_dir  string Absolute path to the .git/ dir of the current worktree
+---@field git_dir           string Absolute path of the .git/ dir for the repository
+---@field head              NeogitRepoHead
+---@field upstream          NeogitRepoRemote
+---@field pushRemote        NeogitRepoRemote
+---@field untracked         NeogitRepoIndex
+---@field unstaged          NeogitRepoIndex
+---@field staged            NeogitRepoIndex
+---@field stashes           NeogitRepoStash
+---@field recent            NeogitRepoRecent
+---@field sequencer         NeogitRepoSequencer
+---@field rebase            NeogitRepoRebase
+---@field merge             NeogitRepoMerge
+---@field bisect            NeogitRepoBisect
+---@field hooks             string[]
 ---
 ---@class NeogitRepoHead
 ---@field branch         string|nil
@@ -100,6 +102,7 @@ local modules = {
 local function empty_state()
   return {
     worktree_root = "",
+    worktree_git_dir = "",
     git_dir = "",
     head = {
       branch = nil,
@@ -170,6 +173,7 @@ end
 ---@field lib               table
 ---@field state             NeogitRepoState
 ---@field worktree_root     string Project root, or  worktree
+---@field worktree_git_dir  string Dir to watch for changes in worktree
 ---@field git_dir           string '.git/' directory for repo
 ---@field running           table
 ---@field interrupt         table
@@ -209,6 +213,7 @@ function Repo.new(dir)
     lib = {},
     state = empty_state(),
     worktree_root = git.cli.worktree_root(dir),
+    worktree_git_dir = git.cli.worktree_git_dir(dir),
     git_dir = git.cli.git_dir(dir),
     refresh_callbacks = {},
     running = util.weak_table(),
@@ -217,6 +222,7 @@ function Repo.new(dir)
   }
 
   instance.state.worktree_root = instance.worktree_root
+  instance.state.worktree_git_dir = instance.worktree_git_dir
   instance.state.git_dir = instance.git_dir
 
   setmetatable(instance, Repo)
@@ -232,6 +238,12 @@ function Repo:reset()
   self.state = empty_state()
 end
 
+---@return Path
+function Repo:worktree_git_path(...)
+  return Path:new(self.worktree_git_dir):joinpath(...)
+end
+
+---@return Path
 function Repo:git_path(...)
   return Path:new(self.git_dir):joinpath(...)
 end
