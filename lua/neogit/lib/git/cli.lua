@@ -1,6 +1,7 @@
 local git = require("neogit.lib.git")
 local process = require("neogit.process")
 local util = require("neogit.lib.util")
+local Path = require("plenary.path")
 local runner = require("neogit.runner")
 
 ---@class GitCommandSetup
@@ -975,7 +976,7 @@ local function worktree_root(dir)
   local cmd = { "git", "-C", dir, "rev-parse", "--show-toplevel", "--path-format=absolute" }
   local result = vim.system(cmd, { text = true }):wait()
 
-  return vim.trim(result.stdout)
+  return Path:new(vim.trim(result.stdout)):absolute()
 end
 
 ---@param dir string
@@ -984,7 +985,7 @@ local function git_dir(dir)
   local cmd = { "git", "-C", dir, "rev-parse", "--git-common-dir", "--path-format=absolute" }
   local result = vim.system(cmd, { text = true }):wait()
 
-  return vim.trim(result.stdout)
+  return Path:new(vim.trim(result.stdout)):absolute()
 end
 
 ---@param dir string
