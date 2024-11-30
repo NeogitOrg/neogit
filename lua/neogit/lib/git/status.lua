@@ -124,12 +124,12 @@ local function update_status(state, filter)
       local mode, _, _, _, _, _, _, _, _, name = rest:match(match_u)
       table.insert(
         state.unstaged.items,
-        update_file("unstaged", state.git_root, old_files.unstaged_files[name], mode, name)
+        update_file("unstaged", state.worktree_root, old_files.unstaged_files[name], mode, name)
       )
     elseif kind == "?" then
       table.insert(
         state.untracked.items,
-        update_file("untracked", state.git_root, old_files.untracked_files[rest], "?", rest)
+        update_file("untracked", state.worktree_root, old_files.untracked_files[rest], "?", rest)
       )
     elseif kind == "1" then
       local mode_staged, mode_unstaged, submodule, mH, mI, mW, hH, _, name = rest:match(match_1)
@@ -145,7 +145,7 @@ local function update_status(state, filter)
           state.staged.items,
           update_file(
             "staged",
-            state.git_root,
+            state.worktree_root,
             old_files.staged_files[name],
             mode_staged,
             name,
@@ -161,7 +161,7 @@ local function update_status(state, filter)
           state.unstaged.items,
           update_file(
             "unstaged",
-            state.git_root,
+            state.worktree_root,
             old_files.unstaged_files[name],
             mode_unstaged,
             name,
@@ -181,7 +181,7 @@ local function update_status(state, filter)
           state.staged.items,
           update_file(
             "staged",
-            state.git_root,
+            state.worktree_root,
             old_files.staged_files[name],
             mode_staged,
             name,
@@ -197,7 +197,7 @@ local function update_status(state, filter)
           state.unstaged.items,
           update_file(
             "unstaged",
-            state.git_root,
+            state.worktree_root,
             old_files.unstaged_files[name],
             mode_unstaged,
             name,

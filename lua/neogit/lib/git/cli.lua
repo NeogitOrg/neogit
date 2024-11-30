@@ -1,7 +1,6 @@
 local git = require("neogit.lib.git")
 local process = require("neogit.process")
 local util = require("neogit.lib.util")
-local Path = require("plenary.path")
 local runner = require("neogit.runner")
 
 ---@class GitCommandSetup
@@ -368,7 +367,7 @@ local runner = require("neogit.runner")
 ---@field verify-commit  GitCommandVerifyCommit
 ---@field worktree       GitCommandWorktree
 ---@field write-tree     GitCommandWriteTree
----@field git_root fun(dir: string):string
+---@field worktree_root fun(dir: string):string
 ---@field git_dir fun(dir: string):string
 ---@field is_inside_worktree fun(dir: string):boolean
 ---@field history ProcessResult[]
@@ -966,13 +965,13 @@ local configurations = {
   ["bisect"] = config {},
 }
 
---- NOTE: Use require("neogit.lib.git").repo.git_root instead of calling this function.
---- repository.git_root is used by all other library functions, so it's most likely the one you want to use.
---- git_root_of_cwd() returns the git repo of the cwd, which can change anytime
---- after git_root_of_cwd() has been called.
+--- NOTE: Use require("neogit.lib.git").repo.worktree_root instead of calling this function.
+--- repository.worktree_root is used by all other library functions, so it's most likely the one you want to use.
+--- worktree_root_of_cwd() returns the git repo of the cwd, which can change anytime
+--- after worktree_root_of_cwd() has been called.
 ---@param dir string
 ---@return string Absolute path of current worktree
-local function git_root(dir)
+local function worktree_root(dir)
   local cmd = { "git", "-C", dir, "rev-parse", "--show-toplevel", "--path-format=absolute" }
   local result = vim.system(cmd, { text = true }):wait()
 
@@ -1164,7 +1163,7 @@ local function new_builder(subcommand)
 
     return process.new {
       cmd = cmd,
-      cwd = git.repo.git_root,
+      cwd = git.repo.worktree_root,
       env = state.env,
       input = state.input,
       on_error = opts.on_error,
@@ -1241,7 +1240,7 @@ local meta = {
 
 local cli = setmetatable({
   history = runner.history,
-  git_root = git_root,
+  worktree_root = worktree_root,
   git_dir = git_dir,
   is_inside_worktree = is_inside_worktree,
 }, meta)

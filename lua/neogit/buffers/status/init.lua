@@ -260,7 +260,7 @@ function M:chdir(dir)
     logger.debug("[STATUS] Changing Dir: " .. dir)
     vim.api.nvim_set_current_dir(dir)
     require("neogit.lib.git.repository").instance(dir)
-    self.new(config.values, git.repo.git_root, dir):open("replace"):dispatch_refresh()
+    self.new(config.values, git.repo.worktree_root, dir):open("replace"):dispatch_refresh()
   end)
 end
 

@@ -73,7 +73,7 @@ local function get_local_diff_view(section_name, item_name, opts)
   local files = update_files()
 
   local view = CDiffView {
-    git_root = git.repo.git_root,
+    git_root = git.repo.worktree_root,
     left = left,
     right = right,
     files = files,

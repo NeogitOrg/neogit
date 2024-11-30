@@ -23,7 +23,7 @@ local modules = {
 ---@class NeogitRepoState
 ---@field git_path       fun(self, ...): Path
 ---@field refresh        fun(self, table)
----@field git_root       string
+---@field worktree_root  string
 ---@field git_dir        string
 ---@field head           NeogitRepoHead
 ---@field upstream       NeogitRepoRemote
@@ -99,7 +99,7 @@ local modules = {
 ---@return NeogitRepoState
 local function empty_state()
   return {
-    git_root = "",
+    worktree_root = "",
     git_dir = "",
     head = {
       branch = nil,
@@ -169,7 +169,7 @@ end
 ---@class NeogitRepo
 ---@field lib               table
 ---@field state             NeogitRepoState
----@field git_root          string Project root, or  worktree
+---@field worktree_root     string Project root, or  worktree
 ---@field git_dir           string '.git/' directory for repo
 ---@field running           table
 ---@field interrupt         table
@@ -208,7 +208,7 @@ function Repo.new(dir)
   local instance = {
     lib = {},
     state = empty_state(),
-    git_root = git.cli.git_root(dir),
+    worktree_root = git.cli.worktree_root(dir),
     git_dir = git.cli.git_dir(dir),
     refresh_callbacks = {},
     running = util.weak_table(),
@@ -216,7 +216,7 @@ function Repo.new(dir)
     tmp_state = util.weak_table("v"),
   }
 
-  instance.state.git_root = instance.git_root
+  instance.state.worktree_root = instance.worktree_root
   instance.state.git_dir = instance.git_dir
 
   setmetatable(instance, Repo)
@@ -282,7 +282,7 @@ function Repo:set_state(id)
 end
 
 function Repo:refresh(opts)
-  if self.git_root == "" then
+  if self.worktree_root == "" then
     logger.debug("[REPO] No git root found - skipping refresh")
     return
   end
