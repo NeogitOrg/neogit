@@ -1376,7 +1376,7 @@ M.n_command = function(self)
 
     local proc = process.new {
       cmd = cmd,
-      cwd = git.repo.git_root,
+      cwd = git.repo.worktree_root,
       env = {},
       on_error = function()
         return false
