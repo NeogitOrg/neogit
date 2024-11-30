@@ -51,7 +51,7 @@ function M.shared_subdirectory(popup)
 end
 
 function M.private_local(popup)
-  local ignore_file = Path:new(git.worktree.main().path, ".git", "info", "exclude")
+  local ignore_file = git.repo:git_path("info", "exclude")
   local rules = make_rules(popup, git.repo.git_root)
 
   add_rules(ignore_file, rules)

@@ -47,13 +47,13 @@ function M.register(meta)
   meta.update_hooks = function(state)
     state.hooks = {}
 
-    if not Path:new(state.git_root):joinpath(".git", "hooks"):is_dir() then
+    if not Path:new(state.git_dir):joinpath("hooks"):is_dir() then
       return
     end
 
-    for file in vim.fs.dir(vim.fs.joinpath(state.git_root, ".git", "hooks")) do
+    for file in vim.fs.dir(vim.fs.joinpath(state.git_dir, "hooks")) do
       if not file:match("%.sample$") then
-        local path = vim.fs.joinpath(state.git_root, ".git", "hooks", file)
+        local path = vim.fs.joinpath(state.git_dir, "hooks", file)
         local stat = vim.uv.fs_stat(path)
 
         if stat and stat.mode and is_executable(stat.mode) then

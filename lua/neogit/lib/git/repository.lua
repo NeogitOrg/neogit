@@ -24,6 +24,7 @@ local modules = {
 ---@field git_path       fun(self, ...): Path
 ---@field refresh        fun(self, table)
 ---@field git_root       string
+---@field git_dir        string
 ---@field head           NeogitRepoHead
 ---@field upstream       NeogitRepoRemote
 ---@field pushRemote     NeogitRepoRemote
@@ -99,6 +100,7 @@ local modules = {
 local function empty_state()
   return {
     git_root = "",
+    git_dir = "",
     head = {
       branch = nil,
       detached = false,
@@ -165,12 +167,13 @@ local function empty_state()
 end
 
 ---@class NeogitRepo
----@field lib table
----@field state NeogitRepoState
----@field git_root string
----@field running table
----@field interrupt table
----@field tmp_state table
+---@field lib               table
+---@field state             NeogitRepoState
+---@field git_root          string Project root, or  worktree
+---@field git_dir           string '.git/' directory for repo
+---@field running           table
+---@field interrupt         table
+---@field tmp_state         table
 ---@field refresh_callbacks function[]
 local Repo = {}
 Repo.__index = Repo
@@ -206,6 +209,7 @@ function Repo.new(dir)
     lib = {},
     state = empty_state(),
     git_root = git.cli.git_root(dir),
+    git_dir = git.cli.git_dir(dir),
     refresh_callbacks = {},
     running = util.weak_table(),
     interrupt = util.weak_table(),
@@ -213,6 +217,7 @@ function Repo.new(dir)
   }
 
   instance.state.git_root = instance.git_root
+  instance.state.git_dir = instance.git_dir
 
   setmetatable(instance, Repo)
 
@@ -228,7 +233,7 @@ function Repo:reset()
 end
 
 function Repo:git_path(...)
-  return Path:new(self.git_root):joinpath(".git", ...)
+  return Path:new(self.git_dir):joinpath(...)
 end
 
 function Repo:tasks(filter, state)
