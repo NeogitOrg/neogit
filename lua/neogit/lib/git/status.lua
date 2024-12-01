@@ -212,42 +212,61 @@ local function update_status(state, filter)
 end
 
 ---@class NeogitGitStatus
-local status = {
-  stage = function(files)
-    git.cli.add.files(unpack(files)).call { await = true }
-  end,
-  stage_modified = function()
-    git.cli.add.update.call { await = true }
-  end,
-  stage_untracked = function()
-    local paths = util.map(git.repo.state.untracked.items, function(item)
-      return item.escaped_path
-    end)
+local M = {}
 
-    git.cli.add.files(unpack(paths)).call { await = true }
-  end,
-  stage_all = function()
-    git.cli.add.all.call { await = true }
-  end,
-  unstage = function(files)
-    git.cli.reset.files(unpack(files)).call { await = true }
-  end,
-  unstage_all = function()
-    git.cli.reset.call { await = true }
-  end,
-  is_dirty = function()
-    return #git.repo.state.staged.items > 0 or #git.repo.state.unstaged.items > 0
-  end,
-  anything_staged = function()
-    return #git.repo.state.staged.items > 0
-  end,
-  anything_unstaged = function()
-    return #git.repo.state.unstaged.items > 0
-  end,
-}
+---@param files string[]
+function M.stage(files)
+  git.cli.add.files(unpack(files)).call { await = true }
+end
 
-status.register = function(meta)
+function M.stage_modified()
+  git.cli.add.update.call { await = true }
+end
+
+function M.stage_untracked()
+  local paths = util.map(git.repo.state.untracked.items, function(item)
+    return item.escaped_path
+  end)
+
+  git.cli.add.files(unpack(paths)).call { await = true }
+end
+
+function M.stage_all()
+  git.cli.add.all.call { await = true }
+end
+
+---@param files string[]
+function M.unstage(files)
+  git.cli.reset.files(unpack(files)).call { await = true }
+end
+
+function M.unstage_all()
+  git.cli.reset.call { await = true }
+end
+
+---@return boolean
+function M.is_dirty()
+  return M.anything_unstaged() or M.anything_staged()
+end
+
+---@return boolean
+function M.anything_staged()
+  local output = git.cli.status.porcelain(2).call({ hidden = true }).stdout
+  return vim.iter(output):any(function(line)
+    return line:match("^%d [^%.]")
+  end)
+end
+
+---@return boolean
+function M.anything_unstaged()
+  local output = git.cli.status.porcelain(2).call({ hidden = true }).stdout
+  return vim.iter(output):any(function(line)
+    return line:match("^%d %..")
+  end)
+end
+
+M.register = function(meta)
   meta.update_status = update_status
 end
 
-return status
+return M
