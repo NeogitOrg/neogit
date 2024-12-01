@@ -26,18 +26,16 @@ function M.add(popup)
     return
   end
 
-  local origin = git.config.get("remote.origin.url"):read()
-  if not origin then
-    return
-  end
-
-  assert(type(origin) == "string", "remote.origin.url isn't a string")
-  local host, _, remote = origin:match("([^:/]+)[:/]([^/]+)/(.+)")
-  remote = remote and remote:gsub("%.git$", "")
-
   local msg
-  if host and remote then
-    msg = string.format("%s:%s/%s.git", host, name, remote)
+  local origin = git.config.get("remote.origin.url"):read()
+  if origin then
+    assert(type(origin) == "string", "remote.origin.url isn't a string")
+    local host, _, remote = origin:match("([^:/]+)[:/]([^/]+)/(.+)")
+    remote = remote and remote:gsub("%.git$", "")
+
+    if host and remote then
+      msg = string.format("%s:%s/%s.git", host, name, remote)
+    end
   end
 
   local remote_url = input.get_user_input("URL for " .. name, { default = msg })
