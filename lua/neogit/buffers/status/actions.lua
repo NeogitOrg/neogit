@@ -1350,7 +1350,12 @@ M.n_open_tree = function(_self)
   return a.void(function()
     local template = "https://${host}/${owner}/${repository}/tree/${branch_name}"
 
-    local url = git.remote.get_url(git.branch.upstream_remote())[1]
+    local upstream = git.branch.upstream_remote()
+    if not upstream then
+      return
+    end
+
+    local url = git.remote.get_url(upstream)[1]
     local format_values = git.remote.parse(url)
     format_values["branch_name"] = git.branch.current()
 
