@@ -5,6 +5,7 @@ require "git"
 require "neovim"
 require "debug"
 require "active_support/all"
+require "timeout"
 
 ENV["GIT_CONFIG_GLOBAL"] = ""
 
@@ -48,5 +49,9 @@ RSpec.configure do |config|
         end
       end
     end
+  end
+
+  config.around do |example|
+    Timeout.timeout(10) { example.call }
   end
 end
