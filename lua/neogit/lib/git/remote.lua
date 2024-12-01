@@ -28,14 +28,14 @@ end
 ---@param args string[]
 ---@return boolean
 function M.add(name, url, args)
-  return git.cli.remote.add.arg_list(args).args(name, url).call({ await = true }).code == 0
+  return git.cli.remote.add.arg_list(args).args(name, url).call().code == 0
 end
 
 ---@param from string
 ---@param to string
 ---@return boolean
 function M.rename(from, to)
-  local result = git.cli.remote.rename.arg_list({ from, to }).call { await = true }
+  local result = git.cli.remote.rename.arg_list({ from, to }).call()
   if result.code == 0 then
     cleanup_push_variables(from, to)
   end
@@ -46,7 +46,7 @@ end
 ---@param name string
 ---@return boolean
 function M.remove(name)
-  local result = git.cli.remote.rm.args(name).call { await = true }
+  local result = git.cli.remote.rm.args(name).call()
   if result.code == 0 then
     cleanup_push_variables(name)
   end
