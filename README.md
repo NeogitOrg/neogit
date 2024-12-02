@@ -88,6 +88,7 @@ neogit.setup {
   -- "kitty"   is the graph like https://github.com/isakbm/gitgraph.nvim - use https://github.com/rbong/flog-symbols if you don't use Kitty
   graph_style = "ascii",
   -- Show relative date by default. When set, use `strftime` to display dates
+  commit_date_format = nil,
   log_date_format = nil,
   -- Used to generate URL's for branch popup action "pull request".
   git_services = {
