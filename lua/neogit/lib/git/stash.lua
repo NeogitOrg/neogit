@@ -11,7 +11,7 @@ local function fire_stash_event(success)
   vim.api.nvim_exec_autocmds("User", {
     pattern = "NeogitStash",
     modeline = false,
-    data = { success = success }
+    data = { success = success },
   })
 end
 
@@ -30,15 +30,13 @@ function M.stash_all(args)
   fire_stash_event(result.code == 0)
 end
 
----@param args string[]
-function M.stash_index(args)
-  local result = git.cli.stash.staged.arg_list(args).call()
+function M.stash_index()
+  local result = git.cli.stash.staged.call()
   fire_stash_event(result.code == 0)
 end
 
----@param args string[]
-function M.stash_keep_index(args)
-  local result = git.cli.stash.keep_index.files(".").arg_list(args).call()
+function M.stash_keep_index()
+  local result = git.cli.stash.keep_index.files(".").call()
   fire_stash_event(result.code == 0)
 end
 

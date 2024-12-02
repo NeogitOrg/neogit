@@ -10,12 +10,12 @@ function M.both(popup)
   git.stash.stash_all(popup:get_arguments())
 end
 
-function M.index(popup)
-  git.stash.stash_index(popup:get_arguments())
+function M.index()
+  git.stash.stash_index()
 end
 
-function M.keep_index(popup)
-  git.stash.stash_keep_index(popup:get_arguments())
+function M.keep_index()
+  git.stash.stash_keep_index()
 end
 
 function M.push(popup)
