@@ -478,36 +478,6 @@ local BisectDetailsSection = Component.new(function(props)
   })
 end)
 
-local SectionItemTodo = Component.new(function(item)
-  local function present_item(item)
-    return row({
-      text.highlight(item.highlight)(item.kind),
-      text(" "),
-      text(item.message),
-    }, {
-      yankable = ("%s:%d"):format(item.path, item.line),
-      item = {
-        goto_path = item.path,
-        goto_cursor = { item.line, item.column },
-      },
-    })
-  end
-
-  local grouped_items = map(item, present_item)
-  table.insert(
-    grouped_items,
-    1,
-    row {
-      text(item[1].path),
-      text.highlight("NeogitObjectId")(" ("),
-      text.highlight("NeogitObjectId")(#item),
-      text.highlight("NeogitObjectId")(")")
-    }
-  )
-
-  return col.tag("Section")(grouped_items, { foldable = true, folded = true })
-end)
-
 function M.Status(state, config)
   -- stylua: ignore start
   local show_hint = not config.disable_hint
@@ -566,9 +536,6 @@ function M.Status(state, config)
 
   local show_recent = #state.recent.items > 0
     and not config.sections.recent.hidden
-
-  local show_todos = vim.fn.executable("rg") == 1
-    and not config.sections.todo.hidden
 
   return {
     List {
@@ -767,38 +734,6 @@ function M.Status(state, config)
           folded = config.sections.unpulled_pushRemote.folded,
           name = "pushRemote_unpulled",
         },
-        Section {
-          visible = show_todos,
-          title = SectionTitle { title = "TODOs", highlight = "NeogitRecentcommits" },
-          render = SectionItemTodo,
-          folded = true,
-          name = "todos_plugin",
-          items = function()
-            local Collection = require("neogit.lib.collection")
-
-            local kinds = table.concat(vim.tbl_keys(config.sections.todo.keywords), "|")
-            local items = vim.system(
-              { "rg", " (" .. kinds .. "): ", "--vimgrep", "--sortr=path" },
-              { text = true }
-            ):wait()
-
-            items = filter_map(vim.split(items.stdout, "\n"), function(line)
-              local path, linenr, column, kind, msg = line:match("^([^:]+):(%d+):(%d+):.- (%w+): (.+)$")
-              if path then
-                return {
-                  path = path,
-                  line = linenr,
-                  column = column,
-                  message = msg,
-                  kind = kind,
-                  highlight = config.sections.todo.keywords[kind]
-                }
-              end
-            end)
-
-            return Collection.new(items):group_by("path")
-          end
-        }
       },
     },
   }
