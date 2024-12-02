@@ -138,7 +138,7 @@ if failures.any?
     output = results[test]
 
     puts "\nFail: #{output.dig('examples', 0, 'full_description')}"
-    puts "      #{test}"
+    puts "      #{test}:#{output.dig('examples', 0, 'line_number')}"
     puts "      #{output.dig('examples', 0, 'exception', 'class')}"
     puts "      #{output.dig('examples', 0, 'exception', 'message')}"
   end
