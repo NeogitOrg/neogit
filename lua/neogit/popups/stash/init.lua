@@ -8,10 +8,10 @@ function M.create(stash)
     .builder()
     :name("NeogitStashPopup")
     :switch("u", "include-untracked", "Also save untracked files", {
-      incompatible = { "all" }
+      incompatible = { "all" },
     })
     :switch("a", "all", "Also save untracked and ignored files", {
-      incompatible = { "include-untracked" }
+      incompatible = { "include-untracked" },
     })
     :group_heading("Stash")
     :action("z", "both", actions.both)
