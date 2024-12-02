@@ -107,8 +107,15 @@ end
 
 function M.extend(popup)
   if not git.status.anything_staged() then
-    notification.warn("No changes to commit.")
-    return
+    if git.status.anything_unstaged() then
+      if input.get_permission("Nothing is staged. Commit all uncommitted changes?") then
+        git.status.stage_modified()
+      else
+        return
+      end
+    else
+      return notification.warn("No changes to commit.")
+    end
   end
 
   if not confirm_modifications() then
