@@ -568,7 +568,6 @@ function M.Status(state, config)
     and not config.sections.recent.hidden
 
   local show_todos = vim.fn.executable("rg") == 1
-    and vim.fn.executable("sort") == 1
     and not config.sections.todo.hidden
 
   return {
@@ -778,14 +777,12 @@ function M.Status(state, config)
             local Collection = require("neogit.lib.collection")
 
             local kinds = table.concat(vim.tbl_keys(config.sections.todo.keywords), "|")
-            local items = vim.system({ "rg", " (" .. kinds .. "): ", "--vimgrep" }, { text = true }):wait()
-            local lines = vim.split(items.stdout, "\n")
+            local items = vim.system(
+              { "rg", " (" .. kinds .. "): ", "--vimgrep", "--sortr=path" },
+              { text = true }
+            ):wait()
 
-            local sorted_items = vim.system({ "sort", "-t:", "-k1,1", "-k2,2n" }, { text = true, stdin = lines }):wait()
-            local sorted_lines = vim.split(sorted_items.stdout, "\n")
-
-
-            items = filter_map(sorted_lines, function(line)
+            items = filter_map(vim.split(items.stdout, "\n"), function(line)
               local path, linenr, column, kind, msg = line:match("^([^:]+):(%d+):(%d+):.- (%w+): (.+)$")
               if path then
                 return {
