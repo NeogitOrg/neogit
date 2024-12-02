@@ -1,6 +1,7 @@
 local git = require("neogit.lib.git")
 local input = require("neogit.lib.input")
 local util = require("neogit.lib.util")
+local config = require("neogit.config")
 
 ---@class NeogitGitStash
 local M = {}
@@ -89,6 +90,7 @@ end
 ---@class StashItem
 ---@field idx number string the id of the stash i.e. stash@{7}
 ---@field name string
+---@field date string timestamp
 ---@field rel_date string relative timestamp
 ---@field message string the message associated with each stash.
 
@@ -118,6 +120,15 @@ function M.register(meta)
               .call({ hidden = true }).stdout[1]
 
             return self.rel_date
+          elseif key == "date" then
+            self.date = git.cli.log
+              .max_count(1)
+              .format("%cd")
+              .args("--date=format:" .. config.values.log_date_format)
+              .args(("stash@{%s}"):format(idx))
+              .call({ hidden = true }).stdout[1]
+
+            return self.date
           end
         end,
       })
