@@ -1,6 +1,7 @@
 local Ui = require("neogit.lib.ui")
 local Component = require("neogit.lib.ui.component")
 local util = require("neogit.lib.util")
+local config = require("neogit.config")
 
 local col = Ui.col
 local row = Ui.row
@@ -25,7 +26,13 @@ local function highlight_for_type(type)
 end
 
 M.Entry = Component.new(function(entry, total)
-  local date_number, date_quantifier = unpack(vim.split(entry.rel_date, " "))
+  local date
+  if config.values.log_date_format == nil then
+    local date_number, date_quantifier = unpack(vim.split(entry.rel_date, " "))
+    date = date_number .. date_quantifier:sub(1, 1)
+  else
+    date = entry.commit_date
+  end
 
   return col({
     row({
@@ -38,7 +45,7 @@ M.Entry = Component.new(function(entry, total)
       virtual_text = {
         { " ", "Constant" },
         -- { util.str_clamp(entry.author_name, 20 - #tostring(date_number)), "Constant" },
-        { date_number .. date_quantifier:sub(1, 1), "Special" },
+        { date, "Special" },
       },
     }),
   }, { oid = entry.oid })
