@@ -498,7 +498,7 @@ local SectionItemTodo = Component.new(function(item)
     grouped_items,
     1,
     row {
-      text.highlight("NeogitSubtleText")(item[1].path),
+      text(item[1].path),
       text.highlight("NeogitObjectId")(" ("),
       text.highlight("NeogitObjectId")(#item),
       text.highlight("NeogitObjectId")(")")
