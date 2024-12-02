@@ -4,13 +4,15 @@ local popup = require("neogit.lib.popup")
 local M = {}
 
 function M.create(stash)
-  -- TODO:
-  -- :switch("u", "include-untracked", "Also save untracked files")
-  -- :switch("a", "all", "Also save untracked and ignored files")
-
   local p = popup
     .builder()
     :name("NeogitStashPopup")
+    :switch("u", "include-untracked", "Also save untracked files", {
+      incompatible = { "all" }
+    })
+    :switch("a", "all", "Also save untracked and ignored files", {
+      incompatible = { "include-untracked" }
+    })
     :group_heading("Stash")
     :action("z", "both", actions.both)
     :action("i", "index", actions.index)
