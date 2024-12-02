@@ -72,7 +72,6 @@ function M.rename(popup)
   use("rename", popup.state.env.stash)
 end
 
---- git stash list
 function M.list()
   StashListBuffer.new(git.repo.state.stashes.items):open()
 end
