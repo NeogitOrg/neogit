@@ -89,6 +89,7 @@ TODO: Detail what these do
     disable_context_highlighting = false,
     disable_signs = false,
     graph_style = "ascii",
+    log_date_format = nil,
     filewatcher = {
       enabled = true,
     },

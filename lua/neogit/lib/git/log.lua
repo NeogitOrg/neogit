@@ -29,6 +29,7 @@ local commit_header_pat = "([| ]*)(%*?)([| ]*)commit (%w+)"
 ---@field body string
 ---@field verification_flag string?
 ---@field rel_date string
+---@field log_date string
 
 ---Parses the provided list of lines into a CommitLogEntry
 ---@param raw string[]
@@ -287,6 +288,17 @@ local function determine_order(options, graph)
   return options
 end
 
+--- Specifies date format when not using relative dates
+--- @param options table
+--- @return table, string|nil
+local function set_date_format(options)
+  if config.values.log_date_format ~= nil then
+    table.insert(options, "--date=format:" .. config.values.log_date_format)
+  end
+
+  return options
+end
+
 ---@param options table|nil
 ---@param files? table
 ---@param color? boolean
@@ -327,6 +339,7 @@ local function format(show_signature)
     committer_email = "%cE",
     committer_date = "%cD",
     rel_date = "%cr",
+    log_date = "%cd",
   }
 
   if show_signature then
@@ -352,6 +365,7 @@ M.list = util.memoize(function(options, graph, files, hidden, graph_color)
   options = ensure_max(options or {})
   options = determine_order(options, graph)
   options, signature = show_signature(options)
+  options = set_date_format(options)
 
   local output = git.cli.log
     .format(format(signature))

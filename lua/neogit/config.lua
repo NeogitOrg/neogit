@@ -300,6 +300,7 @@ end
 ---@class NeogitConfig Neogit configuration settings
 ---@field filewatcher? NeogitFilewatcherConfig Values for filewatcher
 ---@field graph_style? NeogitGraphStyle Style for graph
+---@field log_date_format? string Log date format
 ---@field disable_hint? boolean Remove the top hint in the Status buffer
 ---@field disable_context_highlighting? boolean Disable context highlights based on cursor position
 ---@field disable_signs? boolean Special signs to draw for sections etc. in Neogit
@@ -351,6 +352,7 @@ function M.get_default_values()
     disable_context_highlighting = false,
     disable_signs = false,
     graph_style = "ascii",
+    log_date_format = nil,
     process_spinner = true,
     filewatcher = {
       enabled = true,
