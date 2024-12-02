@@ -245,7 +245,7 @@ neogit.setup {
     kind = "floating_console",
   },
   popup = {
-    kind = "split",
+    kind = "popup",
   },
   stash = {
     kind = "tab",
