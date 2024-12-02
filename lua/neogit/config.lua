@@ -1234,7 +1234,7 @@ function M.setup(opts)
     end
   end
 
-  if type(opts.sections.todo.keywords) == "table" then
+  if opts.sections.todo and type(opts.sections.todo.keywords) == "table" then
     M.values.sections.todo.keywords = opts.sections.todo.keywords
   end
 
