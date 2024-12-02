@@ -119,11 +119,6 @@ function M.extend(popup)
 end
 
 function M.reword(popup)
-  if not git.status.anything_staged() then
-    notification.warn("No changes to commit.")
-    return
-  end
-
   if not confirm_modifications() then
     return
   end
@@ -132,11 +127,6 @@ function M.reword(popup)
 end
 
 function M.amend(popup)
-  if not git.status.anything_staged() then
-    notification.warn("No changes to commit.")
-    return
-  end
-
   if not confirm_modifications() then
     return
   end
