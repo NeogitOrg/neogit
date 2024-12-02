@@ -1,6 +1,7 @@
 local Ui = require("neogit.lib.ui")
 local Component = require("neogit.lib.ui.component")
 local util = require("neogit.lib.util")
+local config = require("neogit.config")
 local git = require("neogit.lib.git")
 
 local text = Ui.text
@@ -247,6 +248,8 @@ M.CommitEntry = Component.new(function(commit, remotes, args)
     }
   end
 
+  local date = (config.values.log_date_format == nil and commit.rel_date or commit.log_date)
+
   return col.tag("commit")({
     row(
       util.merge({
@@ -260,10 +263,10 @@ M.CommitEntry = Component.new(function(commit, remotes, args)
         virtual_text = {
           { " ", "Constant" },
           {
-            util.str_clamp(commit.author_name, 30 - (#commit.rel_date > 10 and #commit.rel_date or 10)),
+            util.str_clamp(commit.author_name, 30 - (#date > 10 and #date or 10)),
             "NeogitGraphAuthor",
           },
-          { util.str_min_width(commit.rel_date, 10), "Special" },
+          { util.str_min_width(date, 10), "Special" },
         },
       }
     ),
