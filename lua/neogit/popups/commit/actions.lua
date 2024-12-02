@@ -170,7 +170,7 @@ function M.absorb(popup)
 
   if not git.status.anything_staged() then
     if git.status.anything_unstaged() then
-      if input.get_permission("Nothing is staged. Absorb all unstaged changed?") then
+      if input.get_permission("Nothing is staged. Absorb all unstaged changes?") then
         git.status.stage_modified()
       else
         return
