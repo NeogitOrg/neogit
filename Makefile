@@ -5,10 +5,10 @@ lint:
 	selene --config selene/config.toml lua
 	typos
 
-lint-short:
-	selene --config selene/config.toml --display-style Quiet lua
-
 format:
 	stylua .
 
-.PHONY: format lint test
+typecheck:
+	llscheck lua/
+
+.PHONY: format lint typecheck
