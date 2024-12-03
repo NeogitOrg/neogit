@@ -1,7 +1,5 @@
 local M = {}
 
-local dv = require("diffview")
-local dv_config = require("diffview.config")
 local Rev = require("diffview.vcs.adapters.git.rev").GitRev
 local RevType = require("diffview.vcs.rev").RevType
 local CDiffView = require("diffview.api.views.diff.diff_view").CDiffView
@@ -11,14 +9,6 @@ local dv_utils = require("diffview.utils")
 local Watcher = require("neogit.watcher")
 local git = require("neogit.lib.git")
 local a = require("plenary.async")
-
-local old_config
-
-local function close()
-  vim.cmd("tabclose")
-  Watcher.instance():dispatch_refresh()
-  dv.setup(old_config)
-end
 
 local function get_local_diff_view(section_name, item_name, opts)
   local left = Rev(RevType.STAGE)
@@ -33,8 +23,8 @@ local function get_local_diff_view(section_name, item_name, opts)
 
     local sections = {
       conflicting = {
-        items = vim.tbl_filter(function(o)
-          return o.mode and o.mode:sub(2, 2) == "U"
+        items = vim.tbl_filter(function(item)
+          return item.mode and item.mode:sub(2, 2) == "U"
         end, git.repo.state.untracked.items),
       },
       working = git.repo.state.unstaged,
@@ -103,31 +93,23 @@ local function get_local_diff_view(section_name, item_name, opts)
   return view
 end
 
+---@param section_name string
+---@param item_name    string|nil
+---@param opts         table|nil
 function M.open(section_name, item_name, opts)
   opts = opts or {}
-  old_config = vim.deepcopy(dv_config.get_config())
 
-  local config = dv_config.get_config()
-
-  local keymaps = {
-    view = {
-      ["q"] = close,
-      ["<esc>"] = close,
-    },
-    file_panel = {
-      ["q"] = close,
-      ["<esc>"] = close,
-    },
-  }
-
-  for key, keymap in pairs(keymaps) do
-    config.keymaps[key] = dv_config.extend_keymaps(keymap, config.keymaps[key] or {})
+  -- Hack way to do an on-close callback
+  if opts.on_close then
+    vim.api.nvim_create_autocmd({ "BufEnter" }, {
+      buffer = opts.on_close.handle,
+      once = true,
+      callback = opts.on_close.fn,
+    })
   end
 
-  dv.setup(config)
-
   local view
-
+  -- selene: allow(if_same_then_else)
   if section_name == "recent" or section_name == "unmerged" or section_name == "log" then
     local range
     if type(item_name) == "table" then
@@ -143,20 +125,21 @@ function M.open(section_name, item_name, opts)
     local range = item_name
     view = dv_lib.diffview_open(dv_utils.tbl_pack(range))
   elseif section_name == "stashes" then
-    -- TODO: Fix when no item name
+    assert(item_name, "No item name for stash!")
     local stash_id = item_name:match("stash@{%d+}")
     view = dv_lib.diffview_open(dv_utils.tbl_pack(stash_id .. "^!"))
   elseif section_name == "commit" then
     view = dv_lib.diffview_open(dv_utils.tbl_pack(item_name .. "^!"))
+  elseif section_name == "conflict" and item_name then
+    view = dv_lib.diffview_open(dv_utils.tbl_pack("--selected-file=" .. item_name))
+  elseif section_name == "conflict" and not item_name then
+    view = dv_lib.diffview_open()
   elseif section_name ~= nil then
     view = get_local_diff_view(section_name, item_name, opts)
+  elseif section_name == nil and item_name ~= nil then
+    view = dv_lib.diffview_open(dv_utils.tbl_pack(item_name .. "^!"))
   else
-    -- selene: allow(if_same_then_else)
-    if item_name ~= nil then
-      view = dv_lib.diffview_open(dv_utils.tbl_pack(item_name .. "^!"))
-    else
-      view = dv_lib.diffview_open()
-    end
+    view = dv_lib.diffview_open()
   end
 
   if view then

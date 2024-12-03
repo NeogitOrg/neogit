@@ -56,7 +56,7 @@ end
 
 function M.worktree(popup)
   popup:close()
-  diffview.open()
+  diffview.open("worktree")
 end
 
 function M.staged(popup)

@@ -269,6 +269,13 @@ function M.anything_unstaged()
   return #git.repo.state.unstaged.items > 0
 end
 
+---@return boolean
+function M.any_unmerged()
+  return vim.iter(git.repo.state.unstaged.items):any(function(item)
+    return item.mode == "UU"
+  end)
+end
+
 M.register = function(meta)
   meta.update_status = update_status
 end
