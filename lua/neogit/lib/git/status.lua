@@ -251,22 +251,18 @@ end
 
 ---@return boolean
 function M.anything_staged()
-  -- TODO:
-  -- local output = git.cli.status.porcelain(2).call({ hidden = true }).stdout
-  -- return vim.iter(output):any(function(line)
-  --   return line:match("^%d [^%.]")
-  -- end)
-  return #git.repo.state.staged.items > 0
+  local output = git.cli.status.porcelain(2).call({ hidden = true }).stdout
+  return vim.iter(output):any(function(line)
+    return line:match("^%d [^%.]")
+  end)
 end
 
 ---@return boolean
 function M.anything_unstaged()
-  -- TODO:
-  -- local output = git.cli.status.porcelain(2).call({ hidden = true }).stdout
-  -- return vim.iter(output):any(function(line)
-  --   return line:match("^%d %..")
-  -- end)
-  return #git.repo.state.unstaged.items > 0
+  local output = git.cli.status.porcelain(2).call({ hidden = true }).stdout
+  return vim.iter(output):any(function(line)
+    return line:match("^%d %..")
+  end)
 end
 
 ---@return boolean
