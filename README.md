@@ -503,6 +503,7 @@ Neogit emits the following events:
 | `NeogitTagDelete`     | A tag was removed                        | `{ name: string }`                                |
 | `NeogitCherryPick`    | One or more commits were cherry-picked    | `{ commits: string[] }`                          |
 | `NeogitMerge`         | A merge finished                          | `{ branch: string, args = string[], status: "ok"\|"conflict" }` |
+| `NeogitStash`         | A stash finished                          | `{ success: boolean }` |
 
 ## Versioning
 

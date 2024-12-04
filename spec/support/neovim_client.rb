@@ -25,6 +25,7 @@ class NeovimClient # rubocop:disable Metrics/ClassLength
 
     lua <<~LUA
       require("plenary")
+      require("diffview").setup()
       require('neogit').setup(#{neogit_config})
       require('neogit').open()
     LUA

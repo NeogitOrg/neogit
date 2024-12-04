@@ -37,6 +37,17 @@ function M.in_progress()
   return git.repo.state.merge.head ~= nil
 end
 
+---@param path string filepath to check for conflict markers
+---@return boolean
+function M.is_conflicted(path)
+  return git.cli.diff.check.files(path).call().code ~= 0
+end
+
+---@return boolean
+function M.any_conflicted()
+  return git.cli.diff.check.call().code ~= 0
+end
+
 ---@class MergeItem
 ---Not used, just for a consistent interface
 

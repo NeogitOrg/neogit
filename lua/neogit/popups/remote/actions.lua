@@ -26,18 +26,16 @@ function M.add(popup)
     return
   end
 
-  local origin = git.config.get("remote.origin.url"):read()
-  if not origin then
-    return
-  end
-
-  assert(type(origin) == "string", "remote.origin.url isn't a string")
-  local host, _, remote = origin:match("([^:/]+)[:/]([^/]+)/(.+)")
-  remote = remote and remote:gsub("%.git$", "")
-
   local msg
-  if host and remote then
-    msg = string.format("%s:%s/%s.git", host, name, remote)
+  local origin = git.config.get("remote.origin.url"):read()
+  if origin then
+    assert(type(origin) == "string", "remote.origin.url isn't a string")
+    local host, _, remote = origin:match("([^:/]+)[:/]([^/]+)/(.+)")
+    remote = remote and remote:gsub("%.git$", "")
+
+    if host and remote then
+      msg = string.format("%s:%s/%s.git", host, name, remote)
+    end
   end
 
   local remote_url = input.get_user_input("URL for " .. name, { default = msg })
@@ -60,8 +58,13 @@ function M.add(popup)
 end
 
 function M.rename(_)
-  local selected_remote = FuzzyFinderBuffer.new(git.remote.list())
-    :open_async { prompt_prefix = "Rename remote" }
+  local options = git.remote.list()
+  if #options == 0 then
+    notification.info("No remotes found")
+    return
+  end
+
+  local selected_remote = FuzzyFinderBuffer.new(options):open_async { prompt_prefix = "Rename remote" }
   if not selected_remote then
     return
   end
@@ -78,7 +81,13 @@ function M.rename(_)
 end
 
 function M.remove(_)
-  local selected_remote = FuzzyFinderBuffer.new(git.remote.list()):open_async()
+  local options = git.remote.list()
+  if #options == 0 then
+    notification.info("No remotes found")
+    return
+  end
+
+  local selected_remote = FuzzyFinderBuffer.new(options):open_async { prompt_prefix = "Remove remote" }
   if not selected_remote then
     return
   end
@@ -90,7 +99,13 @@ function M.remove(_)
 end
 
 function M.configure(_)
-  local remote_name = FuzzyFinderBuffer.new(git.remote.list()):open_async()
+  local options = git.remote.list()
+  if #options == 0 then
+    notification.info("No remotes found")
+    return
+  end
+
+  local remote_name = FuzzyFinderBuffer.new(options):open_async()
   if not remote_name then
     return
   end
@@ -99,13 +114,19 @@ function M.configure(_)
 end
 
 function M.prune_branches(_)
-  local selected_remote = FuzzyFinderBuffer.new(git.remote.list()):open_async()
+  local options = git.remote.list()
+  if #options == 0 then
+    notification.info("No remotes found")
+    return
+  end
+
+  local selected_remote = FuzzyFinderBuffer.new(options):open_async()
   if not selected_remote then
     return
   end
 
-  notification.info("Pruning remote " .. selected_remote)
   git.remote.prune(selected_remote)
+  notification.info("Pruned remote " .. selected_remote)
 end
 
 -- https://github.com/magit/magit/blob/main/lisp/magit-remote.el#L159

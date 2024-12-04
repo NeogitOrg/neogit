@@ -45,12 +45,14 @@ function M.update_sequencer_status(state)
   end
 
   local HEAD_oid = git.rev_parse.oid("HEAD")
-  table.insert(state.sequencer.items, {
-    action = "onto",
-    oid = HEAD_oid,
-    abbreviated_commit = HEAD_oid:sub(1, git.log.abbreviated_size()),
-    subject = git.log.message(HEAD_oid),
-  })
+  if HEAD_oid then
+    table.insert(state.sequencer.items, {
+      action = "onto",
+      oid = HEAD_oid,
+      abbreviated_commit = HEAD_oid:sub(1, git.log.abbreviated_size()),
+      subject = git.log.message(HEAD_oid),
+    })
+  end
 
   local todo = git.repo:worktree_git_path("sequencer/todo")
   if todo:exists() then
