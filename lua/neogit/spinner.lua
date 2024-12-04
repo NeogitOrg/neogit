@@ -1,3 +1,4 @@
+local util = require("neogit.lib.util")
 ---@class Spinner
 ---@field text string
 ---@field count number
@@ -10,7 +11,7 @@ Spinner.__index = Spinner
 ---@return Spinner
 function Spinner.new(text)
   local instance = {
-    text = text,
+    text = util.str_truncate(text, vim.v.echospace - 2, "..."),
     interval = 100,
     count = 0,
     timer = nil,
@@ -40,7 +41,7 @@ function Spinner:start()
       vim.schedule_wrap(function()
         self.count = self.count + 1
         local step = self.pattern[(self.count % #self.pattern) + 1]
-        vim.cmd(string.format("redraw | echo '%s %s'", step, self.text))
+        vim.cmd(string.format("echo '%s %s' | redraw", step, self.text))
       end)
     )
   end
