@@ -268,7 +268,7 @@ end
 ---@return boolean
 function M.any_unmerged()
   return vim.iter(git.repo.state.unstaged.items):any(function(item)
-    return item.mode == "UU"
+    return vim.tbl_contains({ "UU", "AA", "DU", "UD", "AU", "UA", "DD" }, item.mode)
   end)
 end
 
