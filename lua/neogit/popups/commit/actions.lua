@@ -199,7 +199,7 @@ function M.absorb(popup)
     return
   end
 
-  git.cli.absorb.verbose.base(commit).env({ GIT_SEQUENCE_EDITOR = ":" }).and_rebase.call()
+  git.cli.absorb.verbose.base(commit).and_rebase.env({ GIT_SEQUENCE_EDITOR = ":" }).call()
 end
 
 return M
