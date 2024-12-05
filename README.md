@@ -150,6 +150,8 @@ neogit.setup {
   -- Show relative date by default. When set, use `strftime` to display dates
   commit_date_format = nil,
   log_date_format = nil,
+  -- When set, used to format the diff.
+  log_pager = nil,
   -- Show message with spinning animation when a git command is running.
   process_spinner = false,
   -- Used to generate URL's for branch popup action "pull request", "open commit" and "open tree"
