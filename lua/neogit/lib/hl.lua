@@ -304,6 +304,7 @@ function M.setup(config)
     NeogitTagDistance              = { fg = palette.cyan },
     NeogitFloatHeader              = { bg = palette.bg0, bold = palette.bold },
     NeogitFloatHeaderHighlight     = { bg = palette.bg2, fg = palette.cyan, bold = palette.bold },
+    NeogitActiveItem               = { bg = palette.bg_orange, fg = palette.bg0, bold = palette.bold },
   }
 
   for group, hl in pairs(hl_store) do

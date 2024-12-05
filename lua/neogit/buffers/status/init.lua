@@ -104,6 +104,7 @@ function M:open(kind)
     disable_line_numbers = config.values.disable_line_numbers,
     disable_relative_line_numbers = config.values.disable_relative_line_numbers,
     foldmarkers = not config.values.disable_signs,
+    active_item_highlight = true,
     on_detach = function()
       Watcher.instance(self.root):unregister(self)
 

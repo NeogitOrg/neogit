@@ -271,7 +271,13 @@ M.CommitEntry = Component.new(function(commit, remotes, args)
       }
     ),
     details,
-  }, { oid = commit.oid, foldable = args.details == true, folded = true, remote = info.remotes[1] })
+  }, {
+    item = commit,
+    oid = commit.oid,
+    foldable = args.details == true,
+    folded = true,
+    remote = info.remotes[1]
+  })
 end)
 
 M.CommitGraph = Component.new(function(commit, padding)

@@ -81,6 +81,15 @@ function M:close()
   M.instance = nil
 end
 
+---@return string
+function M.current_oid()
+  if M.is_open() then
+    return M.instance.commit_info.oid
+  else
+    return "null-oid"
+  end
+end
+
 ---Opens the CommitViewBuffer if it isn't open or performs the given action
 ---which is passed the window id of the commit view buffer
 ---@param commit_id string commit

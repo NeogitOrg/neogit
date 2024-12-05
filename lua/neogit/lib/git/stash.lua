@@ -107,6 +107,7 @@ function M.register(meta)
         idx = idx,
         name = line,
         message = message,
+        oid = git.rev_parse.oid("stash@{" .. idx .. "}"),
       }
 
       -- These calls can be somewhat expensive, so lazy load them

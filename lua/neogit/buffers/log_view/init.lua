@@ -81,6 +81,7 @@ function M:open()
     context_highlight = false,
     header = self.header,
     scroll_header = false,
+    active_item_highlight = true,
     status_column = not config.values.disable_signs and "" or nil,
     mappings = {
       v = {
