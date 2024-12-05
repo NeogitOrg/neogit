@@ -1,3 +1,5 @@
+local Job = require("plenary.job")
+
 local Ui = require("neogit.lib.ui")
 local Component = require("neogit.lib.ui.component")
 local util = require("neogit.lib.util")
@@ -25,21 +27,44 @@ M.Diff = Component.new(function(diff)
   }, { foldable = true, folded = false, context = true })
 end)
 
--- Use vim iter api?
 M.DiffHunks = Component.new(function(diff)
   local hunk_props = vim
     .iter(diff.hunks)
     :map(function(hunk)
-      hunk.content = vim.iter(diff.lines):slice(hunk.diff_from + 1, hunk.diff_to):totable()
+      local header = diff.lines[hunk.diff_from]
+      local content = vim.list_slice(diff.lines, hunk.diff_from + 1, hunk.diff_to)
+      local job = nil
+      if config.values.log_pager ~= nil then
+        job = Job:new {
+          command = config.values.log_pager[1],
+          args = vim.list_slice(config.values.log_pager, 2),
+        }
+        job:start()
+        for _, part in ipairs { diff.header, { header }, content } do
+          for _, line in ipairs(part) do
+            job:send(line .. "\n")
+          end
+        end
+        job.stdin:close()
+      end
 
       return {
-        header = diff.lines[hunk.diff_from],
-        content = hunk.content,
+        header = header,
+        content = content,
+        job = job,
         hunk = hunk,
         folded = hunk._folded,
       }
     end)
     :totable()
+
+  if config.values.log_pager ~= nil then
+    vim.iter(hunk_props):each(function(hunk)
+      hunk.job:wait()
+      hunk.content = hunk.job:result()
+      hunk.job = nil
+    end)
+  end
 
   return col.tag("DiffContent") {
     col.tag("DiffInfo")(map(diff.info, text)),
