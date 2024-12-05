@@ -276,7 +276,7 @@ M.CommitEntry = Component.new(function(commit, remotes, args)
     oid = commit.oid,
     foldable = args.details == true,
     folded = true,
-    remote = info.remotes[1]
+    remote = info.remotes[1],
   })
 end)
 
