@@ -147,8 +147,21 @@ function Buffer:set_extmarks(extmarks)
 end
 
 function Buffer:set_line_highlights(highlights)
+  local line_ansi_colorized = {}
+
   for _, hl in ipairs(highlights) do
-    self:add_line_highlight(unpack(hl))
+    local line_nr, hl_group = unpack(hl)
+    if hl_group == "NeogitDiffContext" then
+      if not line_ansi_colorized[line_nr] then
+        local text = self:get_line(line_nr + 1)
+        vim.g.baleia.buf_set_lines(self.handle, line_nr, line_nr + 1, false, text)
+        line_ansi_colorized[line_nr] = true
+      end
+    end
+
+    if not line_ansi_colorized[line_nr] then
+      self:add_line_highlight(unpack(hl))
+    end
   end
 end
 
