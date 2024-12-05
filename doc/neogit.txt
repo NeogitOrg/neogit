@@ -91,6 +91,7 @@ TODO: Detail what these do
     graph_style = "ascii",
     commit_date_format = nil,
     log_date_format = nil,
+    log_pager = nil,
     filewatcher = {
       enabled = true,
     },
