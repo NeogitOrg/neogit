@@ -827,12 +827,12 @@ function Buffer.create(config)
   end
 
   if config.status_column then
-    vim.opt_local.statuscolumn = config.status_column
-    vim.opt_local.signcolumn = "no"
+    buffer:set_buffer_option("statuscolumn", config.status_column)
+    buffer:set_buffer_option("signcolumn", "no")
   end
 
   if config.foldmarkers then
-    vim.opt_local.signcolumn = "auto"
+    buffer:set_buffer_option("signcolumn", "auto")
 
     logger.debug("[BUFFER:" .. buffer.handle .. "] Setting up foldmarkers")
     buffer:create_namespace("FoldSigns")
