@@ -12,6 +12,7 @@ local sha256 = vim.fn.sha256
 ---@field staged_stats fun(): DiffStagedStats
 ---
 ---@class Diff
+---@field header string[]
 ---@field kind string
 ---@field lines string[]
 ---@field file string
@@ -225,6 +226,7 @@ local function parse_diff(raw_diff, raw_stats)
   local stats = parse_diff_stats(raw_stats or {})
 
   return { ---@type Diff
+    header = header,
     kind = kind,
     lines = lines,
     file = file,
