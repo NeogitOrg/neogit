@@ -145,10 +145,6 @@ end
 function M:open(kind)
   kind = kind or config.values.commit_view.kind
 
-  if M.is_open() then
-    M.instance:close()
-  end
-
   M.instance = self
 
   self.buffer = Buffer.create {
