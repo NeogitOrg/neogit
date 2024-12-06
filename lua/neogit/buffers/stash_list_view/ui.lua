@@ -23,7 +23,7 @@ M.Stash = Component.new(function(stash)
         { config.values.log_date_format ~= nil and stash.date or stash.rel_date, "Special" },
       },
     }),
-  }, { oid = label })
+  }, { oid = label, item = stash })
 end)
 
 ---@param stashes StashItem[]

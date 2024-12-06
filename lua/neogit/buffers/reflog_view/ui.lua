@@ -48,7 +48,10 @@ M.Entry = Component.new(function(entry, total)
         { date, "Special" },
       },
     }),
-  }, { oid = entry.oid })
+  }, {
+    oid = entry.oid,
+    item = entry,
+  })
 end)
 
 ---@param entries ReflogEntry[]

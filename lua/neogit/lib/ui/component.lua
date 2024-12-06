@@ -45,6 +45,8 @@ local default_component_options = {
 ---@field highlight fun(hl_group:string): self
 ---@field line_hl fun(hl_group:string): self
 ---@field padding_left fun(string): self
+---@field first integer|nil first line component appears rendered in buffer
+---@field last integer|nil  last line component appears rendered in buffer
 ---@operator call: Component
 local Component = {}
 

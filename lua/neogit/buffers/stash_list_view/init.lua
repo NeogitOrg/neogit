@@ -39,6 +39,7 @@ function M:open()
     scroll_header = true,
     kind = config.values.stash.kind,
     context_highlight = true,
+    active_item_highlight = true,
     mappings = {
       v = {
         [popups.mapping_for("CherryPickPopup")] = function()

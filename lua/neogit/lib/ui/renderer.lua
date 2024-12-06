@@ -3,6 +3,7 @@
 ---@class RendererIndex
 ---@field index table
 ---@field items table
+---@field oid_index table
 local RendererIndex = {}
 RendererIndex.__index = RendererIndex
 
@@ -10,6 +11,12 @@ RendererIndex.__index = RendererIndex
 ---@return Component[]
 function RendererIndex:find_by_line(line)
   return self.index[line] or {}
+end
+
+---@param oid string
+---@return Component|nil
+function RendererIndex:find_by_oid(oid)
+  return self.oid_index[oid]
 end
 
 ---@param node Component
@@ -38,11 +45,16 @@ function RendererIndex:add_item(item, first, last)
   item.first = first
   item.last = last
   table.insert(self.items[#self.items].items, item)
+
+  if item.oid then
+    self.oid_index[item.oid] = item
+  end
 end
 
 function RendererIndex.new()
   return setmetatable({
     index = {},
+    oid_index = {},
     items = {
       { items = {} }, -- First section
     },

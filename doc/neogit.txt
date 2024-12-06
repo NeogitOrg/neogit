@@ -522,6 +522,7 @@ NeogitDiffContext
 NeogitDiffAdd
 NeogitDiffDelete
 NeogitDiffHeader
+NeogitActiveItem            Highlight of current commit-ish open
 
 SIGNS FOR LINE HIGHLIGHTING CURRENT CONTEXT
 These are essentially an accented version of the above highlight groups. Only

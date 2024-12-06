@@ -52,7 +52,7 @@ end
 
 function M.list(refname, options)
   local format = table.concat({
-    "%h", -- Full Hash
+    "%H", -- Full Hash
     "%aN", -- Author Name
     "%gd", -- Reflog Name
     "%gs", -- Reflog Subject

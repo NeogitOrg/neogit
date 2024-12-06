@@ -620,6 +620,7 @@ end
 ---@field status_column string|nil
 ---@field load boolean|nil
 ---@field context_highlight boolean|nil
+---@field active_item_highlight boolean|nil
 ---@field open boolean|nil
 ---@field disable_line_numbers boolean|nil
 ---@field disable_relative_line_numbers boolean|nil
@@ -673,6 +674,11 @@ function Buffer.create(config)
   if config.filetype then
     logger.debug("[BUFFER:" .. buffer.handle .. "] Setting filetype: " .. config.filetype)
     buffer:set_filetype(config.filetype)
+  end
+
+  if config.status_column then
+    buffer:set_buffer_option("statuscolumn", config.status_column)
+    buffer:set_buffer_option("signcolumn", "no")
   end
 
   if config.user_mappings then
@@ -826,13 +832,41 @@ function Buffer.create(config)
     })
   end
 
-  if config.status_column then
-    vim.opt_local.statuscolumn = config.status_column
-    vim.opt_local.signcolumn = "no"
+  if config.active_item_highlight then
+    logger.debug("[BUFFER:" .. buffer.handle .. "] Setting up active item decorations")
+    buffer:create_namespace("ActiveItem")
+    buffer:set_decorations("ActiveItem", {
+      on_start = function()
+        return buffer:exists() and buffer:is_valid()
+      end,
+      on_win = function()
+        buffer:clear_namespace("ActiveItem")
+
+        local active_oid = require("neogit.buffers.commit_view").current_oid()
+        local item = buffer.ui:find_component_by_oid(active_oid)
+        if item and item.first and item.last then
+          for line = item.first, item.last do
+            buffer:add_line_highlight(line - 1, "NeogitActiveItem", {
+              priority = 200,
+              namespace = "ActiveItem",
+            })
+          end
+        end
+      end,
+    })
+
+    -- The decoration provider will not quite update in time, leaving two lines highlighted unless we use an autocmd too
+    api.nvim_create_autocmd("WinLeave", {
+      buffer = buffer.handle,
+      group = buffer.autocmd_group,
+      callback = function()
+        buffer:clear_namespace("ActiveItem")
+      end,
+    })
   end
 
   if config.foldmarkers then
-    vim.opt_local.signcolumn = "auto"
+    buffer:set_buffer_option("signcolumn", "auto")
 
     logger.debug("[BUFFER:" .. buffer.handle .. "] Setting up foldmarkers")
     buffer:create_namespace("FoldSigns")
