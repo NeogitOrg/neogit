@@ -844,7 +844,7 @@ function Buffer.create(config)
 
         local active_oid = require("neogit.buffers.commit_view").current_oid()
         local item = buffer.ui:find_component_by_oid(active_oid)
-        if item then
+        if item and item.first and item.last then
           for line = item.first, item.last do
             buffer:add_line_highlight(line - 1, "NeogitActiveItem", {
               priority = 200,
