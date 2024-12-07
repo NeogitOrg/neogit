@@ -24,6 +24,12 @@ local commit_header_pat = "([| ]*)(%*?)([| ]*)commit (%w+)"
 ---@field subject string
 ---@field parent string
 ---@field diffs any[]
+---@field ref_name string
+---@field abbreviated_commit string
+---@field body string
+---@field verification_flag string?
+---@field rel_date string
+---@field log_date string
 
 ---Parses the provided list of lines into a CommitLogEntry
 ---@param raw string[]
@@ -136,7 +142,7 @@ function M.parse(raw)
       if not line or vim.startswith(line, "diff") then
         -- There was a previous diff, parse it
         if in_diff then
-          table.insert(commit.diffs, git.diff.parse(current_diff))
+          table.insert(commit.diffs, git.diff.parse(current_diff, {}))
           current_diff = {}
         end
 
@@ -144,7 +150,7 @@ function M.parse(raw)
       elseif line == "" then -- A blank line signifies end of diffs
         -- Parse the last diff, consume the blankline, and exit
         if in_diff then
-          table.insert(commit.diffs, git.diff.parse(current_diff))
+          table.insert(commit.diffs, git.diff.parse(current_diff, {}))
           current_diff = {}
         end
 
@@ -282,6 +288,17 @@ local function determine_order(options, graph)
   return options
 end
 
+--- Specifies date format when not using relative dates
+--- @param options table
+--- @return table, string|nil
+local function set_date_format(options)
+  if config.values.log_date_format ~= nil then
+    table.insert(options, "--date=format:" .. config.values.log_date_format)
+  end
+
+  return options
+end
+
 ---@param options table|nil
 ---@param files? table
 ---@param color? boolean
@@ -322,6 +339,7 @@ local function format(show_signature)
     committer_email = "%cE",
     committer_date = "%cD",
     rel_date = "%cr",
+    log_date = "%cd",
   }
 
   if show_signature then
@@ -347,6 +365,7 @@ M.list = util.memoize(function(options, graph, files, hidden, graph_color)
   options = ensure_max(options or {})
   options = determine_order(options, graph)
   options, signature = show_signature(options)
+  options = set_date_format(options)
 
   local output = git.cli.log
     .format(format(signature))
@@ -409,6 +428,8 @@ function M.register(meta)
   end
 end
 
+---@param from string
+---@param to string
 function M.update_ref(from, to)
   git.cli["update-ref"].message(string.format("reset: moving to %s", to)).args(from, to).call()
 end
@@ -443,7 +464,7 @@ end
 
 --- Runs `git verify-commit`
 ---@param commit string Hash of commit
----@return string The stderr output of the command
+---@return string[] The stderr output of the command
 function M.verify_commit(commit)
   return git.cli["verify-commit"].args(commit).call({ ignore_error = true }).stderr
 end

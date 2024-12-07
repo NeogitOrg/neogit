@@ -89,13 +89,13 @@ end
 local function make_palette(config)
   local bg        = Color.from_hex(get_bg("Normal") or (vim.o.bg == "dark" and "#22252A" or "#eeeeee"))
   local fg        = Color.from_hex((vim.o.bg == "dark" and "#fcfcfc" or "#22252A"))
-  local red       = Color.from_hex(get_fg("Error") or "#E06C75")
-  local orange    = Color.from_hex(get_fg("SpecialChar") or "#ffcb6b")
-  local yellow    = Color.from_hex(get_fg("PreProc") or "#FFE082")
-  local green     = Color.from_hex(get_fg("String") or "#C3E88D")
-  local cyan      = Color.from_hex(get_fg("Operator") or "#89ddff")
-  local blue      = Color.from_hex(get_fg("Macro") or "#82AAFF")
-  local purple    = Color.from_hex(get_fg("Include") or "#C792EA")
+  local red       = Color.from_hex(config.highlight.red    or get_fg("Error")       or "#E06C75")
+  local orange    = Color.from_hex(config.highlight.orange or get_fg("SpecialChar") or "#ffcb6b")
+  local yellow    = Color.from_hex(config.highlight.yellow or get_fg("PreProc")     or "#FFE082")
+  local green     = Color.from_hex(config.highlight.green  or get_fg("String")      or "#C3E88D")
+  local cyan      = Color.from_hex(config.highlight.cyan   or get_fg("Operator")    or "#89ddff")
+  local blue      = Color.from_hex(config.highlight.blue   or get_fg("Macro")       or "#82AAFF")
+  local purple    = Color.from_hex(config.highlight.purple or get_fg("Include")     or "#C792EA")
 
   local bg_factor = vim.o.bg == "dark" and 1 or -1
 
@@ -252,6 +252,7 @@ function M.setup(config)
     NeogitChangeCunstaged          = { link = "NeogitChangeCopied" },
     NeogitChangeUunstaged          = { link = "NeogitChangeUpdated" },
     NeogitChangeRunstaged          = { link = "NeogitChangeRenamed" },
+    NeogitChangeTunstaged          = { link = "NeogitChangeUpdated" },
     NeogitChangeDDunstaged         = { link = "NeogitChangeUnmerged" },
     NeogitChangeUUunstaged         = { link = "NeogitChangeUnmerged" },
     NeogitChangeAAunstaged         = { link = "NeogitChangeUnmerged" },
@@ -267,6 +268,7 @@ function M.setup(config)
     NeogitChangeCstaged            = { link = "NeogitChangeCopied" },
     NeogitChangeUstaged            = { link = "NeogitChangeUpdated" },
     NeogitChangeRstaged            = { link = "NeogitChangeRenamed" },
+    NeogitChangeTstaged            = { link = "NeogitChangeUpdated" },
     NeogitChangeDDstaged           = { link = "NeogitChangeUnmerged" },
     NeogitChangeUUstaged           = { link = "NeogitChangeUnmerged" },
     NeogitChangeAAstaged           = { link = "NeogitChangeUnmerged" },
@@ -302,6 +304,7 @@ function M.setup(config)
     NeogitTagDistance              = { fg = palette.cyan },
     NeogitFloatHeader              = { bg = palette.bg0, bold = palette.bold },
     NeogitFloatHeaderHighlight     = { bg = palette.bg2, fg = palette.cyan, bold = palette.bold },
+    NeogitActiveItem               = { bg = palette.bg_orange, fg = palette.bg0, bold = palette.bold },
   }
 
   for group, hl in pairs(hl_store) do

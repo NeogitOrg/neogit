@@ -132,7 +132,7 @@ M.heads = util.memoize(function()
   local heads = { "HEAD", "ORIG_HEAD", "FETCH_HEAD", "MERGE_HEAD", "CHERRY_PICK_HEAD" }
   local present = {}
   for _, head in ipairs(heads) do
-    if git.repo:git_path(head):exists() then
+    if git.repo:worktree_git_path(head):exists() then
       table.insert(present, head)
     end
   end

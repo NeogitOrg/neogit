@@ -17,7 +17,7 @@ function M.untracked()
   return git.cli["ls-files"].others.exclude_standard.call({ hidden = true }).stdout
 end
 
----@param opts { with_dir: boolean }
+---@param opts? { with_dir: boolean }
 ---@return string[]
 function M.all_tree(opts)
   opts = opts or {}

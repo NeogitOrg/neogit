@@ -79,7 +79,12 @@ function M:_action(name)
   return action(self)
 end
 
----@param kind string<"floating" | "split" | "tab" | "split" | "vsplit">|nil
+---@param kind nil|string
+---| "'floating'"
+---| "'split'"
+---| "'tab'"
+---| "'split'"
+---| "'vsplit'"
 ---@return StatusBuffer
 function M:open(kind)
   if self.buffer and self.buffer:is_visible() then
@@ -99,6 +104,7 @@ function M:open(kind)
     enable_line_numbers = config.values.enable_line_numbers,
     enable_relative_line_numbers = config.values.enable_relative_line_numbers,
     foldmarkers = config.values.enable_signs,
+    active_item_highlight = true,
     on_detach = function()
       Watcher.instance(self.root):unregister(self)
 
@@ -244,15 +250,19 @@ function M:close()
 end
 
 function M:chdir(dir)
-  local destination = require("plenary.path").new(dir)
+  local Path = require("plenary.path")
+
+  local destination = Path:new(dir)
   vim.wait(5000, function()
     return destination:exists()
   end)
 
-  logger.debug("[STATUS] Changing Dir: " .. dir)
-  vim.api.nvim_set_current_dir(dir)
-  self.cwd = dir
-  self:dispatch_reset()
+  vim.schedule(function()
+    logger.debug("[STATUS] Changing Dir: " .. dir)
+    vim.api.nvim_set_current_dir(dir)
+    require("neogit.lib.git.repository").instance(dir)
+    self.new(config.values, git.repo.worktree_root, dir):open("replace"):dispatch_refresh()
+  end)
 end
 
 function M:focus()

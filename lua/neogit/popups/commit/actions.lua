@@ -76,7 +76,7 @@ local function commit_special(popup, method, opts)
     end
   end
 
-  local cmd = git.cli.commit.args(string.format("--%s=%s", method, commit))
+  local cmd = git.cli.commit
   if opts.edit then
     cmd = cmd.edit
   else
@@ -88,7 +88,7 @@ local function commit_special(popup, method, opts)
   end
 
   a.util.scheduler()
-  do_commit(popup, cmd)
+  do_commit(popup, cmd.args(string.format("--%s=%s", method, commit)))
 
   if opts.rebase then
     a.util.scheduler()
@@ -97,10 +97,27 @@ local function commit_special(popup, method, opts)
 end
 
 function M.commit(popup)
+  if not git.status.anything_staged() then
+    notification.warn("No changes to commit.")
+    return
+  end
+
   do_commit(popup, git.cli.commit)
 end
 
 function M.extend(popup)
+  if not git.status.anything_staged() then
+    if git.status.anything_unstaged() then
+      if input.get_permission("Nothing is staged. Commit all uncommitted changes?") then
+        git.status.stage_modified()
+      else
+        return
+      end
+    else
+      return notification.warn("No changes to commit.")
+    end
+  end
+
   if not confirm_modifications() then
     return
   end
@@ -160,7 +177,7 @@ function M.absorb(popup)
 
   if not git.status.anything_staged() then
     if git.status.anything_unstaged() then
-      if input.get_permission("Nothing is staged. Absorb all unstaged changed?") then
+      if input.get_permission("Nothing is staged. Absorb all unstaged changes?") then
         git.status.stage_modified()
       else
         return
@@ -182,7 +199,7 @@ function M.absorb(popup)
     return
   end
 
-  git.cli.absorb.verbose.base(commit).and_rebase.call()
+  git.cli.absorb.verbose.base(commit .. "^").and_rebase.env({ GIT_SEQUENCE_EDITOR = ":" }).call()
 end
 
 return M

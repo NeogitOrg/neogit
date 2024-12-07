@@ -1,6 +1,7 @@
 local Ui = require("neogit.lib.ui")
 local Component = require("neogit.lib.ui.component")
 local util = require("neogit.lib.util")
+local config = require("neogit.config")
 
 local text = Ui.text
 local col = Ui.col
@@ -19,10 +20,10 @@ M.Stash = Component.new(function(stash)
     }, {
       virtual_text = {
         { " ", "Constant" },
-        { stash.rel_date, "Special" },
+        { config.values.log_date_format ~= nil and stash.date or stash.rel_date, "Special" },
       },
     }),
-  }, { oid = label })
+  }, { oid = label, item = stash })
 end)
 
 ---@param stashes StashItem[]

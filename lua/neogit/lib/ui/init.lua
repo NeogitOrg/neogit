@@ -7,6 +7,7 @@ local logger = require("neogit.logger") -- TODO: Add logging
 ---@class Section
 ---@field items  StatusItem[]
 ---@field name string
+---@field first number
 
 ---@class Selection
 ---@field sections Section[]
@@ -113,6 +114,12 @@ function Ui:_find_component_by_index(line, f)
   end
 end
 
+---@param oid string
+---@return Component|nil
+function Ui:find_component_by_oid(oid)
+  return self.node_index:find_by_oid(oid)
+end
+
 ---@return Component|nil
 function Ui:get_cursor_context(line)
   local cursor = line or vim.api.nvim_win_get_cursor(0)[1]
@@ -147,15 +154,6 @@ function Ui:get_fold_under_cursor()
     return node.options.foldable
   end)
 end
-
----@class StatusItem
----@field name string
----@field first number
----@field last number
----@field oid string|nil optional object id
----@field commit CommitLogEntry|nil optional object id
----@field folded boolean|nil
----@field hunks Hunk[]|nil
 
 ---@class SelectedHunk: Hunk
 ---@field from number start offset from the first line of the hunk
@@ -301,7 +299,7 @@ function Ui:get_commits_in_selection()
   local commits = {}
   for i = start, stop do
     local component = self:_find_component_by_index(i, function(node)
-      return node.options.oid
+      return node.options.oid ~= nil
     end)
 
     if component then
@@ -321,7 +319,7 @@ function Ui:get_filepaths_in_selection()
   local paths = {}
   for i = start, stop do
     local component = self:_find_component_by_index(i, function(node)
-      return node.options.item and node.options.item.escaped_path
+      return node.options.item ~= nil and node.options.item.escaped_path
     end)
 
     if component then
@@ -515,7 +513,7 @@ end
 function Ui:get_hunk_or_filename_under_cursor()
   local cursor = vim.api.nvim_win_get_cursor(0)
   local component = self:_find_component_by_index(cursor[1], function(node)
-    return node.options.hunk or node.options.filename
+    return node.options.hunk ~= nil or node.options.filename ~= nil
   end)
 
   return component and {
@@ -528,7 +526,7 @@ end
 function Ui:get_item_under_cursor()
   local cursor = vim.api.nvim_win_get_cursor(0)
   local component = self:_find_component_by_index(cursor[1], function(node)
-    return node.options.item
+    return node.options.item ~= nil
   end)
 
   return component and component.options.item

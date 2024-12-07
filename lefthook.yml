@@ -17,6 +17,9 @@ pre-push:
       run: stylua --check {files}
     typos:
       run: typos {files}
+    lua-types:
+      glob: "*.lua"
+      run: llscheck lua/
     lua-test:
       glob: "tests/specs/**/*_spec.lua"
       run: nvim --headless -S "./tests/init.lua" || echo {files}

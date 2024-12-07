@@ -7,6 +7,9 @@ local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 ---@class NeogitGitBranch
 local M = {}
 
+---@param branches string[]
+---@param include_current? boolean
+---@return string[]
 local function parse_branches(branches, include_current)
   include_current = include_current or false
   local other_branches = {}
@@ -37,6 +40,7 @@ local function parse_branches(branches, include_current)
   return other_branches
 end
 
+---@return string[]
 function M.get_recent_local_branches()
   local valid_branches = M.get_local_branches()
 
@@ -53,37 +57,75 @@ function M.get_recent_local_branches()
   return util.deduplicate(branches)
 end
 
+---@param relation? string
+---@param commit? string
+---@param ... any
+---@return string[]
+function M.list_related_branches(relation, commit, ...)
+  local result = git.cli.branch.args(relation or "", commit or "", ...).call { hidden = true }
+
+  local branches = {}
+  for _, branch in ipairs(result.stdout) do
+    branch = branch:match("^%s*(.-)%s*$")
+    if branch and not branch:match("^%(HEAD") and not branch:match("^HEAD ->") and branch ~= "" then
+      table.insert(branches, branch)
+    end
+  end
+
+  return branches
+end
+
+---@param commit string
+---@return string[]
+function M.list_containing_branches(commit, ...)
+  return M.list_related_branches("--contains", commit, ...)
+end
+
+---@param name string
+---@param args? string[]
 ---@return ProcessResult
 function M.checkout(name, args)
   return git.cli.checkout.branch(name).arg_list(args or {}).call { await = true }
 end
 
+---@param name string
+---@param args? string[]
 function M.track(name, args)
   git.cli.checkout.track(name).arg_list(args or {}).call { await = true }
 end
 
+---@param include_current? boolean
+---@return string[]
 function M.get_local_branches(include_current)
   local branches = git.cli.branch.sort(config.values.sort_branches).call({ hidden = true }).stdout
   return parse_branches(branches, include_current)
 end
 
+---@param include_current? boolean
+---@return string[]
 function M.get_remote_branches(include_current)
   local branches = git.cli.branch.remotes.sort(config.values.sort_branches).call({ hidden = true }).stdout
   return parse_branches(branches, include_current)
 end
 
+---@param include_current? boolean
+---@return string[]
 function M.get_all_branches(include_current)
   return util.merge(M.get_local_branches(include_current), M.get_remote_branches(include_current))
 end
 
+---@param branch string
+---@param base? string
+---@return boolean
 function M.is_unmerged(branch, base)
   return git.cli.cherry.arg_list({ base or M.base_branch(), branch }).call({ hidden = true }).stdout[1] ~= nil
 end
 
+---@return string|nil
 function M.base_branch()
   local value = git.config.get("neogit.baseBranch")
   if value:is_set() then
-    return value:read()
+    return value:read() ---@type string
   else
     if M.exists("master") then
       return "master"
@@ -119,10 +161,13 @@ end
 
 ---@param name string
 ---@param base_branch? string
+---@return boolean
 function M.create(name, base_branch)
-  git.cli.branch.args(name, base_branch).call { await = true }
+  return git.cli.branch.args(name, base_branch).call({ await = true }).code == 0
 end
 
+---@param name string
+---@return boolean
 function M.delete(name)
   local input = require("neogit.lib.input")
 
@@ -155,6 +200,7 @@ function M.current()
   end
 end
 
+---@return string|nil
 function M.current_full_name()
   local current = M.current()
   if current then
@@ -162,6 +208,8 @@ function M.current_full_name()
   end
 end
 
+---@param branch? string
+---@return string|nil
 function M.pushRemote(branch)
   branch = branch or M.current()
 
@@ -173,6 +221,8 @@ function M.pushRemote(branch)
   end
 end
 
+---@param branch? string
+---@return string|nil
 function M.pushRemote_ref(branch)
   branch = branch or M.current()
   local pushRemote = M.pushRemote(branch)
@@ -182,14 +232,17 @@ function M.pushRemote_ref(branch)
   end
 end
 
+---@return string
 function M.pushRemote_label()
   return M.pushRemote_ref() or "pushRemote, setting that"
 end
 
+---@return string
 function M.pushRemote_remote_label()
   return M.pushRemote() or "pushRemote, setting that"
 end
 
+---@return boolean
 function M.is_detached()
   return git.repo.state.head.branch == "(detached)"
 end
@@ -208,6 +261,8 @@ function M.set_pushRemote()
     pushRemote = FuzzyFinderBuffer.new(remotes):open_async { prompt_prefix = "set pushRemote" }
   end
 
+  assert(type(pushRemote) == "nil" or type(pushRemote) == "string", "pushRemote is not a string or nil?")
+
   if pushRemote then
     git.config.set(string.format("branch.%s.pushRemote", M.current()), pushRemote)
   end
@@ -221,10 +276,8 @@ end
 ---@return string|nil
 function M.upstream(name)
   if name then
-    local result = git.cli["rev-parse"].symbolic_full_name
-      .abbrev_ref()
-      .args(name .. "@{upstream}")
-      .call { ignore_error = true }
+    local result =
+      git.cli["rev-parse"].symbolic_full_name.abbrev_ref(name .. "@{upstream}").call { ignore_error = true }
 
     if result.code == 0 then
       return result.stdout[1]
@@ -234,27 +287,34 @@ function M.upstream(name)
   end
 end
 
+---@param name string
+---@param destination string?
+function M.set_upstream(name, destination)
+  git.cli.branch.set_upstream_to(name).args(destination or M.current())
+end
+
+---@return string
 function M.upstream_label()
   return M.upstream() or "@{upstream}, creating it"
 end
 
+---@return string
 function M.upstream_remote_label()
   return M.upstream_remote() or "@{upstream}, setting it"
 end
 
+---@return string|nil
 function M.upstream_remote()
-  local remote = git.repo.state.upstream.remote
-
-  if not remote then
-    local remotes = git.remote.list()
-    if #remotes == 1 then
-      remote = remotes[1]
-    elseif vim.tbl_contains(remotes, "origin") then
-      remote = "origin"
-    end
+  if git.repo.state.upstream.remote then
+    return git.repo.state.upstream.remote
   end
 
-  return remote
+  local remotes = git.remote.list()
+  if #remotes == 1 then
+    return remotes[1]
+  elseif vim.tbl_contains(remotes, "origin") then
+    return "origin"
+  end
 end
 
 ---@return string[]
@@ -344,7 +404,7 @@ local function update_branch_information(state)
   state.head.oid = status.oid
   state.head.detached = status.detached
 
-  if status.oid ~= INITIAL_COMMIT then
+  if status.oid and status.oid ~= INITIAL_COMMIT then
     state.head.abbrev = git.rev_parse.abbreviate_commit(status.oid)
     state.head.commit_message = git.log.message(status.oid)
 

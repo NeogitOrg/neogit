@@ -47,8 +47,11 @@ local M = {
 ---@param filter? string[] Filter diffs to filepaths in table
 ---@return CommitViewBuffer
 function M.new(commit_id, filter)
-  local commit_info =
-    git.log.parse(git.cli.show.format("fuller").args(commit_id).call({ trim = false }).stdout)[1]
+  local cmd = git.cli.show.format("fuller").args(commit_id)
+  if config.values.commit_date_format ~= nil then
+    cmd = cmd.args("--date=format:" .. config.values.commit_date_format)
+  end
+  local commit_info = git.log.parse(cmd.call({ trim = false }).stdout)[1]
 
   commit_info.commit_arg = commit_id
 
@@ -78,6 +81,15 @@ function M:close()
   M.instance = nil
 end
 
+---@return string
+function M.current_oid()
+  if M.is_open() then
+    return M.instance.commit_info.oid
+  else
+    return "null-oid"
+  end
+end
+
 ---Opens the CommitViewBuffer if it isn't open or performs the given action
 ---which is passed the window id of the commit view buffer
 ---@param commit_id string commit
@@ -89,6 +101,7 @@ function M.open_or_run_in_window(commit_id, filter, cmd)
   if M.is_open() and M.instance.commit_info.commit_arg == commit_id then
     M.instance.buffer:win_exec(cmd)
   else
+    M:close()
     local cw = api.nvim_get_current_win()
     M.new(commit_id, filter):open()
     api.nvim_set_current_win(cw)
@@ -140,10 +153,6 @@ end
 ---@param kind? string
 function M:open(kind)
   kind = kind or config.values.commit_view.kind
-
-  if M.is_open() then
-    M.instance:close()
-  end
 
   M.instance = self
 

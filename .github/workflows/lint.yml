@@ -39,3 +39,18 @@ jobs:
         with:
           bundler-cache: true
       - run: bundle exec rubocop
+
+  lua_types:
+    name: lua-typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Homebrew/actions/setup-homebrew@master
+      - uses: luarocks/gh-actions-lua@v10
+        with:
+          luaVersion: luajit
+      - uses: luarocks/gh-actions-luarocks@v5
+      - run: |
+         HOMEBREW_NO_INSTALL_CLEANUP=1 brew install lua-language-server
+         luarocks install llscheck
+         llscheck lua/

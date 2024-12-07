@@ -53,7 +53,7 @@ function M:open(action)
 
   M.instance = self
 
-  ---@type fun(commit: CommitLogEntry[])|nil
+  ---@type fun(commit: string[])|nil
   local action = action
 
   self.buffer = Buffer.create {

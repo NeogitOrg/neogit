@@ -6,12 +6,19 @@ local logger = require("neogit.logger")
 
 ---@class StatusItem
 ---@field mode string
----@field diff string[]
+---@field diff Diff
 ---@field absolute_path string
 ---@field escaped_path string
 ---@field original_name string|nil
 ---@field file_mode {head: number, index: number, worktree: number}|nil
 ---@field submodule SubmoduleStatus|nil
+---@field name string
+---@field first number
+---@field last number
+---@field oid string|nil optional object id
+---@field commit CommitLogEntry|nil optional object id
+---@field folded boolean|nil
+---@field hunks Hunk[]|nil
 
 ---@class SubmoduleStatus
 ---@field commit_changed boolean C
@@ -117,12 +124,12 @@ local function update_status(state, filter)
       local mode, _, _, _, _, _, _, _, _, name = rest:match(match_u)
       table.insert(
         state.unstaged.items,
-        update_file("unstaged", state.git_root, old_files.unstaged_files[name], mode, name)
+        update_file("unstaged", state.worktree_root, old_files.unstaged_files[name], mode, name)
       )
     elseif kind == "?" then
       table.insert(
         state.untracked.items,
-        update_file("untracked", state.git_root, old_files.untracked_files[rest], "?", rest)
+        update_file("untracked", state.worktree_root, old_files.untracked_files[rest], "?", rest)
       )
     elseif kind == "1" then
       local mode_staged, mode_unstaged, submodule, mH, mI, mW, hH, _, name = rest:match(match_1)
@@ -138,7 +145,7 @@ local function update_status(state, filter)
           state.staged.items,
           update_file(
             "staged",
-            state.git_root,
+            state.worktree_root,
             old_files.staged_files[name],
             mode_staged,
             name,
@@ -154,7 +161,7 @@ local function update_status(state, filter)
           state.unstaged.items,
           update_file(
             "unstaged",
-            state.git_root,
+            state.worktree_root,
             old_files.unstaged_files[name],
             mode_unstaged,
             name,
@@ -174,7 +181,7 @@ local function update_status(state, filter)
           state.staged.items,
           update_file(
             "staged",
-            state.git_root,
+            state.worktree_root,
             old_files.staged_files[name],
             mode_staged,
             name,
@@ -190,7 +197,7 @@ local function update_status(state, filter)
           state.unstaged.items,
           update_file(
             "unstaged",
-            state.git_root,
+            state.worktree_root,
             old_files.unstaged_files[name],
             mode_unstaged,
             name,
@@ -205,42 +212,68 @@ local function update_status(state, filter)
 end
 
 ---@class NeogitGitStatus
-local status = {
-  stage = function(files)
-    git.cli.add.files(unpack(files)).call { await = true }
-  end,
-  stage_modified = function()
-    git.cli.add.update.call { await = true }
-  end,
-  stage_untracked = function()
-    local paths = util.map(git.repo.state.untracked.items, function(item)
-      return item.escaped_path
-    end)
+local M = {}
 
-    git.cli.add.files(unpack(paths)).call { await = true }
-  end,
-  stage_all = function()
-    git.cli.add.all.call { await = true }
-  end,
-  unstage = function(files)
-    git.cli.reset.files(unpack(files)).call { await = true }
-  end,
-  unstage_all = function()
-    git.cli.reset.call { await = true }
-  end,
-  is_dirty = function()
-    return #git.repo.state.staged.items > 0 or #git.repo.state.unstaged.items > 0
-  end,
-  anything_staged = function()
-    return #git.repo.state.staged.items > 0
-  end,
-  anything_unstaged = function()
-    return #git.repo.state.unstaged.items > 0
-  end,
-}
+---@param files string[]
+function M.stage(files)
+  git.cli.add.files(unpack(files)).call { await = true }
+end
 
-status.register = function(meta)
+function M.stage_modified()
+  git.cli.add.update.call { await = true }
+end
+
+function M.stage_untracked()
+  local paths = util.map(git.repo.state.untracked.items, function(item)
+    return item.escaped_path
+  end)
+
+  git.cli.add.files(unpack(paths)).call { await = true }
+end
+
+function M.stage_all()
+  git.cli.add.all.call { await = true }
+end
+
+---@param files string[]
+function M.unstage(files)
+  git.cli.reset.files(unpack(files)).call { await = true }
+end
+
+function M.unstage_all()
+  git.cli.reset.call { await = true }
+end
+
+---@return boolean
+function M.is_dirty()
+  return M.anything_unstaged() or M.anything_staged()
+end
+
+---@return boolean
+function M.anything_staged()
+  local output = git.cli.status.porcelain(2).call({ hidden = true }).stdout
+  return vim.iter(output):any(function(line)
+    return line:match("^%d [^%.]")
+  end)
+end
+
+---@return boolean
+function M.anything_unstaged()
+  local output = git.cli.status.porcelain(2).call({ hidden = true }).stdout
+  return vim.iter(output):any(function(line)
+    return line:match("^%d %..")
+  end)
+end
+
+---@return boolean
+function M.any_unmerged()
+  return vim.iter(git.repo.state.unstaged.items):any(function(item)
+    return vim.tbl_contains({ "UU", "AA", "DU", "UD", "AU", "UA", "DD" }, item.mode)
+  end)
+end
+
+M.register = function(meta)
   meta.update_status = update_status
 end
 
-return status
+return M

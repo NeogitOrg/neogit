@@ -1,13 +1,18 @@
 local git = require("neogit.lib.git")
 local input = require("neogit.lib.input")
 local util = require("neogit.lib.util")
+local config = require("neogit.config")
 
 ---@class NeogitGitStash
 local M = {}
 
----@param pattern string
-local function fire_stash_event(pattern)
-  vim.api.nvim_exec_autocmds("User", { pattern = pattern, modeline = false })
+---@param success boolean
+local function fire_stash_event(success)
+  vim.api.nvim_exec_autocmds("User", {
+    pattern = "NeogitStash",
+    modeline = false,
+    data = { success = success },
+  })
 end
 
 function M.list_refs()
@@ -19,58 +24,54 @@ function M.list_refs()
   end
 end
 
+---@param args string[]
 function M.stash_all(args)
-  git.cli.stash.arg_list(args).call { await = true }
-  fire_stash_event("NeogitStash")
-  -- this should work, but for some reason doesn't.
-  --return perform_stash({ worktree = true, index = true })
+  local result = git.cli.stash.push.files(".").arg_list(args).call()
+  fire_stash_event(result.code == 0)
 end
 
 function M.stash_index()
-  git.cli.stash.staged.call { await = true }
-  fire_stash_event("NeogitStash")
+  local result = git.cli.stash.staged.call()
+  fire_stash_event(result.code == 0)
 end
 
 function M.stash_keep_index()
-  local files = git.cli["ls-files"].call({ hidden = true }).stdout
-  -- for some reason complains if not passed files,
-  -- but this seems to be a git cli error; running:
-  --    git --literal-pathspecs stash --keep-index
-  -- fails with a bizarre error:
-  -- error: pathspec ':/' did not match any file(s) known to git
-  git.cli.stash.keep_index.files(unpack(files)).call { await = true }
-  fire_stash_event("NeogitStash")
+  local result = git.cli.stash.keep_index.files(".").call()
+  fire_stash_event(result.code == 0)
 end
 
+---@param args string[]
+---@param files string[]
 function M.push(args, files)
-  git.cli.stash.push.arg_list(args).files(unpack(files)).call { await = true }
+  local result = git.cli.stash.push.arg_list(args).files(unpack(files)).call()
+  fire_stash_event(result.code == 0)
 end
 
 function M.pop(stash)
-  local result = git.cli.stash.apply.index.args(stash).call { await = true }
+  local result = git.cli.stash.apply.index.args(stash).call()
 
   if result.code == 0 then
-    git.cli.stash.drop.args(stash).call { await = true }
+    git.cli.stash.drop.args(stash).call()
   else
-    git.cli.stash.apply.args(stash).call { await = true }
+    git.cli.stash.apply.args(stash).call()
   end
 
-  fire_stash_event("NeogitStash")
+  fire_stash_event(result.code == 0)
 end
 
 function M.apply(stash)
-  local result = git.cli.stash.apply.index.args(stash).call { await = true }
+  local result = git.cli.stash.apply.index.args(stash).call()
 
   if result.code ~= 0 then
-    git.cli.stash.apply.args(stash).call { await = true }
+    git.cli.stash.apply.args(stash).call()
   end
 
-  fire_stash_event("NeogitStash")
+  fire_stash_event(result.code == 0)
 end
 
 function M.drop(stash)
-  git.cli.stash.drop.args(stash).call { await = true }
-  fire_stash_event("NeogitStash")
+  local result = git.cli.stash.drop.args(stash).call()
+  fire_stash_event(result.code == 0)
 end
 
 function M.list()
@@ -81,14 +82,15 @@ function M.rename(stash)
   local message = input.get_user_input("New name")
   if message then
     local oid = git.rev_parse.abbreviate_commit(stash)
-    git.cli.stash.drop.args(stash).call { await = true }
-    git.cli.stash.store.message(message).args(oid).call { await = true }
+    git.cli.stash.drop.args(stash).call()
+    git.cli.stash.store.message(message).args(oid).call()
   end
 end
 
 ---@class StashItem
 ---@field idx number string the id of the stash i.e. stash@{7}
 ---@field name string
+---@field date string timestamp
 ---@field rel_date string relative timestamp
 ---@field message string the message associated with each stash.
 
@@ -105,6 +107,7 @@ function M.register(meta)
         idx = idx,
         name = line,
         message = message,
+        oid = git.rev_parse.oid("stash@{" .. idx .. "}"),
       }
 
       -- These calls can be somewhat expensive, so lazy load them
@@ -118,6 +121,15 @@ function M.register(meta)
               .call({ hidden = true }).stdout[1]
 
             return self.rel_date
+          elseif key == "date" then
+            self.date = git.cli.log
+              .max_count(1)
+              .format("%cd")
+              .args("--date=format:" .. config.values.log_date_format)
+              .args(("stash@{%s}"):format(idx))
+              .call({ hidden = true }).stdout[1]
+
+            return self.date
           end
         end,
       })

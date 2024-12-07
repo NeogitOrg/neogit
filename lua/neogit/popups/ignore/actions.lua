@@ -33,17 +33,16 @@ local function add_rules(path, rules)
 end
 
 function M.shared_toplevel(popup)
-  local ignore_file = Path:new(git.repo.git_root, ".gitignore")
-  local rules = make_rules(popup, git.repo.git_root)
+  local ignore_file = Path:new(git.repo.worktree_root, ".gitignore")
+  local rules = make_rules(popup, git.repo.worktree_root)
 
   add_rules(ignore_file, rules)
 end
 
 function M.shared_subdirectory(popup)
-  local subdirectory = input.get_user_input("Ignore sub-directory", { completion = "dir" })
-  if subdirectory then
-    subdirectory = Path:new(vim.uv.cwd(), subdirectory)
-
+  local choice = input.get_user_input("Ignore sub-directory", { completion = "dir" })
+  if choice then
+    local subdirectory = Path:new(vim.uv.cwd(), choice)
     local ignore_file = subdirectory:joinpath(".gitignore")
     local rules = make_rules(popup, tostring(subdirectory))
 
@@ -53,14 +52,14 @@ end
 
 function M.private_local(popup)
   local ignore_file = git.repo:git_path("info", "exclude")
-  local rules = make_rules(popup, git.repo.git_root)
+  local rules = make_rules(popup, git.repo.worktree_root)
 
   add_rules(ignore_file, rules)
 end
 
 function M.private_global(popup)
   local ignore_file = Path:new(git.config.get_global("core.excludesfile"):read())
-  local rules = make_rules(popup, git.repo.git_root)
+  local rules = make_rules(popup, git.repo.worktree_root)
 
   add_rules(ignore_file, rules)
 end

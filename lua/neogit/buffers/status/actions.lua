@@ -7,6 +7,7 @@ local logger = require("neogit.logger")
 local input = require("neogit.lib.input")
 local notification = require("neogit.lib.notification")
 local util = require("neogit.lib.util")
+local config = require("neogit.config")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
@@ -406,7 +407,7 @@ end
 ---@param self StatusBuffer
 M.v_ignore_popup = function(self)
   return popups.open("ignore", function(p)
-    p { paths = self.buffer.ui:get_filepaths_in_selection(), git_root = git.repo.git_root }
+    p { paths = self.buffer.ui:get_filepaths_in_selection(), worktree_root = git.repo.worktree_root }
   end)
 end
 
@@ -638,7 +639,7 @@ end
 ---@param _self StatusBuffer
 M.n_show_refs = function(_self)
   return a.void(function()
-    require("neogit.buffers.refs_view").new(git.refs.list_parsed(), git.repo.git_root):open()
+    require("neogit.buffers.refs_view").new(git.refs.list_parsed(), git.repo.worktree_root):open()
   end)
 end
 
@@ -773,7 +774,6 @@ M.n_discard = function(self)
       end
     elseif selection.item then -- Discard Hunk
       if selection.item.mode == "UU" then
-        -- TODO: https://github.com/emacs-mirror/emacs/blob/master/lisp/vc/smerge-mode.el
         notification.warn("Resolve conflicts in file before discarding hunks.")
         return
       end
@@ -825,7 +825,7 @@ M.n_discard = function(self)
         end
 
         if conflict then
-          -- TODO: https://github.com/magit/magit/blob/28bcd29db547ab73002fb81b05579e4a2e90f048/lisp/magit-apply.el#Lair
+          -- TODO: https://github.com/magit/magit/blob/28bcd29db547ab73002fb81b05579e4a2e90f048/lisp/magit-apply.el#L515
           notification.warn("Resolve conflicts before discarding section.")
           return
         else
@@ -1025,23 +1025,39 @@ M.n_stage = function(self)
   return a.void(function()
     local stagable = self.buffer.ui:get_hunk_or_filename_under_cursor()
     local section = self.buffer.ui:get_current_section()
+    local selection = self.buffer.ui:get_selection()
 
     if stagable and section then
       if section.options.section == "staged" then
         return
       end
 
-      if stagable.hunk then
+      if selection.item and selection.item.mode == "UU" then
+        if config.check_integration("diffview") then
+          require("neogit.integrations.diffview").open("conflict", selection.item.name, {
+            on_close = {
+              handle = self.buffer.handle,
+              fn = function()
+                if not git.merge.is_conflicted(selection.item.name) then
+                  git.status.stage { selection.item.name }
+                  self:dispatch_refresh({ update_diffs = { "*:" .. selection.item.name } }, "n_stage")
+
+                  if not git.merge.any_conflicted() then
+                    popups.open("merge")()
+                  end
+                end
+              end,
+            },
+          })
+        else
+          notification.info("Conflicts must be resolved before staging")
+          return
+        end
+      elseif stagable.hunk then
         local item = self.buffer.ui:get_item_under_cursor()
         assert(item, "Item cannot be nil")
 
-        if item.mode == "UU" then
-          notification.info("Conflicts must be resolved before staging hunks")
-          return
-        end
-
         local patch = git.index.generate_patch(item, stagable.hunk, stagable.hunk.from, stagable.hunk.to)
-
         git.index.apply(patch, { cached = true })
         self:dispatch_refresh({ update_diffs = { "*:" .. item.escaped_path } }, "n_stage")
       elseif stagable.filename then
@@ -1058,8 +1074,28 @@ M.n_stage = function(self)
         git.status.stage_untracked()
         self:dispatch_refresh({ update_diffs = { "untracked:*" } }, "n_stage")
       elseif section.options.section == "unstaged" then
-        git.status.stage_modified()
-        self:dispatch_refresh({ update_diffs = { "*:*" } }, "n_stage")
+        if git.status.any_unmerged() then
+          if config.check_integration("diffview") then
+            require("neogit.integrations.diffview").open("conflict", nil, {
+              on_close = {
+                handle = self.buffer.handle,
+                fn = function()
+                  if not git.merge.any_conflicted() then
+                    git.status.stage_modified()
+                    self:dispatch_refresh({ update_diffs = { "*:*" } }, "n_stage")
+                    popups.open("merge")()
+                  end
+                end,
+              },
+            })
+          else
+            notification.info("Conflicts must be resolved before staging")
+            return
+          end
+        else
+          git.status.stage_modified()
+          self:dispatch_refresh({ update_diffs = { "*:*" } }, "n_stage")
+        end
       end
     end
   end)
@@ -1269,7 +1305,7 @@ M.n_ignore_popup = function(self)
     local path = self.buffer.ui:get_hunk_or_filename_under_cursor()
     p {
       paths = { path and path.escaped_path },
-      git_root = git.repo.git_root,
+      worktree_root = git.repo.worktree_root,
     }
   end)
 end
@@ -1280,8 +1316,9 @@ M.n_help_popup = function(self)
     -- Since any other popup can be launched from help, build an ENV for any of them.
     local path = self.buffer.ui:get_hunk_or_filename_under_cursor()
     local section = self.buffer.ui:get_selection().section
+    local section_name
     if section then
-      section = section.name
+      section_name = section.name
     end
 
     local item = self.buffer.ui:get_yankable_under_cursor()
@@ -1303,12 +1340,12 @@ M.n_help_popup = function(self)
       tag = { commit = commit },
       stash = { name = stash and stash:match("^stash@{%d+}") },
       diff = {
-        section = { name = section },
+        section = { name = section_name },
         item = { name = item },
       },
       ignore = {
         paths = { path and path.escaped_path },
-        git_root = git.repo.git_root,
+        worktree_root = git.repo.worktree_root,
       },
       remote = {},
       fetch = {},
@@ -1349,7 +1386,12 @@ M.n_open_tree = function(_self)
   return a.void(function()
     local template = "https://${host}/${owner}/${repository}/tree/${branch_name}"
 
-    local url = git.remote.get_url(git.branch.upstream_remote())[1]
+    local upstream = git.branch.upstream_remote()
+    if not upstream then
+      return
+    end
+
+    local url = git.remote.get_url(upstream)[1]
     local format_values = git.remote.parse(url)
     format_values["branch_name"] = git.branch.current()
 
@@ -1363,7 +1405,8 @@ M.n_command = function(self)
   local runner = require("neogit.runner")
 
   return a.void(function()
-    local cmd = input.get_user_input(("Run command in %s"):format(git.repo.git_root), { prepend = "git " })
+    local cmd =
+      input.get_user_input(("Run command in %s"):format(git.repo.worktree_root), { prepend = "git " })
     if not cmd then
       return
     end
@@ -1374,7 +1417,7 @@ M.n_command = function(self)
 
     local proc = process.new {
       cmd = cmd,
-      cwd = git.repo.git_root,
+      cwd = git.repo.worktree_root,
       env = {},
       on_error = function()
         return false
@@ -1396,5 +1439,4 @@ M.n_command = function(self)
     })
   end)
 end
-
 return M

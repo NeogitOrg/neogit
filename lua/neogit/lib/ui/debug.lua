@@ -33,13 +33,13 @@ function Ui._visualize_tree(indent, components, tree)
   end
 end
 
-function Ui.visualize_component(c, options)
-  Ui._print_component(0, c, options or {})
-
-  if c.tag == "col" or c.tag == "row" then
-    Ui._visualize_tree(1, c.children, options or {})
-  end
-end
+-- function Ui.visualize_component(c, options)
+--   Ui._print_component(0, c, options or {})
+--
+--   if c.tag == "col" or c.tag == "row" then
+--     Ui._visualize_tree(1, c.children, options or {})
+--   end
+-- end
 
 function Ui._draw_component(indent, c, _)
   local output = string.rep("  ", indent)

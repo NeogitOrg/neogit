@@ -37,6 +37,17 @@ function M.in_progress()
   return git.repo.state.merge.head ~= nil
 end
 
+---@param path string filepath to check for conflict markers
+---@return boolean
+function M.is_conflicted(path)
+  return git.cli.diff.check.files(path).call().code ~= 0
+end
+
+---@return boolean
+function M.any_conflicted()
+  return git.cli.diff.check.call().code ~= 0
+end
+
 ---@class MergeItem
 ---Not used, just for a consistent interface
 
@@ -44,7 +55,7 @@ M.register = function(meta)
   meta.update_merge_status = function(state)
     state.merge = { head = nil, branch = nil, msg = "", items = {} }
 
-    local merge_head = git.repo:git_path("MERGE_HEAD")
+    local merge_head = git.repo:worktree_git_path("MERGE_HEAD")
     if not merge_head:exists() then
       return
     end
@@ -52,7 +63,7 @@ M.register = function(meta)
     state.merge.head = merge_head:read():match("([^\r\n]+)")
     state.merge.subject = git.log.message(state.merge.head)
 
-    local message = git.repo:git_path("MERGE_MSG")
+    local message = git.repo:worktree_git_path("MERGE_MSG")
     if message:exists() then
       state.merge.msg = message:read():match("([^\r\n]+)") -- we need \r? to support windows
       state.merge.branch = state.merge.msg:match("Merge branch '(.*)'$")

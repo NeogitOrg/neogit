@@ -56,6 +56,7 @@ function M:open(_)
     scroll_header = true,
     status_column = config.values.enable_signs and "" or nil,
     context_highlight = true,
+    active_item_highlight = true,
     mappings = {
       v = {
         [popups.mapping_for("CherryPickPopup")] = popups.open("cherry_pick", function(p)

@@ -21,6 +21,13 @@ function M.create(env)
     })
     :config_if(show_config, "u", "branch." .. current_branch .. ".merge", {
       fn = config_actions.merge_config(current_branch),
+      callback = function(popup)
+        for _, config in ipairs(popup.state.config) do
+          if config.name == "branch." .. current_branch .. ".remote" then
+            config.value = tostring(config.entry:refresh():read() or "")
+          end
+        end
+      end,
     })
     :config_if(show_config, "m", "branch." .. current_branch .. ".remote", { passive = true })
     :config_if(show_config, "R", "branch." .. current_branch .. ".rebase", {
@@ -50,7 +57,7 @@ function M.create(env)
     :action("m", "rename", actions.rename_branch)
     :action("X", "reset", actions.reset_branch)
     :action("D", "delete", actions.delete_branch)
-    :action_if(git.branch.upstream(), "o", "pull request", actions.open_pull_request)
+    :action_if(git.branch.upstream() ~= nil, "o", "pull request", actions.open_pull_request)
     :env(env)
     :build()
 

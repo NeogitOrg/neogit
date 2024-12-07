@@ -25,6 +25,7 @@ class Runner # rubocop:disable Style/Documentation
     @length  = length
     @title   = test.gsub("spec/", "")
     @retries = 0
+    @failed_lines = []
   end
 
   def register
@@ -45,7 +46,12 @@ class Runner # rubocop:disable Style/Documentation
       if wait.value.success?
         register_success!(time)
         break
-      elsif retries < 3
+      elsif retries < 5
+        @failed_lines = JSON.parse(output)["examples"]
+                            .select { _1["status"] == "failed" }
+                            .map { _1["line_number"] }
+                            .uniq
+
         @retries += 1
         register_retry!
       else
@@ -65,7 +71,12 @@ class Runner # rubocop:disable Style/Documentation
   end
 
   def run
-    stdin, stdout, wait = Open3.popen2({ "CI" => "1" }, "bundle exec rspec #{test} --format json --order random")
+    failed = @failed_lines.empty? ? "" : "[#{@failed_lines.join(',')}]"
+    stdin, stdout, wait = Open3.popen2(
+      { "CI" => "1" },
+      "bundle exec rspec #{test}#{failed} --format json --order random"
+    )
+
     stdin.close
     output = stdout.read.lines.last
     stdout.close
@@ -127,7 +138,7 @@ if failures.any?
     output = results[test]
 
     puts "\nFail: #{output.dig('examples', 0, 'full_description')}"
-    puts "      #{test}"
+    puts "      #{test}:#{output.dig('examples', 0, 'line_number')}"
     puts "      #{output.dig('examples', 0, 'exception', 'class')}"
     puts "      #{output.dig('examples', 0, 'exception', 'message')}"
   end

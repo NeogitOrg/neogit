@@ -19,10 +19,10 @@ end
 ---@param args? string[] list of arguments to pass to git rebase
 ---@return ProcessResult
 function M.instantly(commit, args)
-  local result = git.cli.rebase
-    .env({ GIT_SEQUENCE_EDITOR = ":" }).interactive.autostash.autosquash
-    .arg_list(args or {})
+  local result = git.cli.rebase.interactive.autostash.autosquash
     .commit(commit)
+    .env({ GIT_SEQUENCE_EDITOR = ":" })
+    .arg_list(args or {})
     .call { long = true, pty = true }
 
   if result.code ~= 0 then
@@ -98,10 +98,10 @@ end
 function M.modify(commit)
   local short_commit = git.rev_parse.abbreviate_commit(commit)
   local editor = "nvim -c '%s/^pick \\(" .. short_commit .. ".*\\)/edit \\1/' -c 'wq'"
-  local result = git.cli.rebase
-    .env({ GIT_SEQUENCE_EDITOR = editor }).interactive.autosquash.autostash
-    .in_pty(true)
+  local result = git.cli.rebase.interactive.autosquash.autostash
     .commit(commit)
+    .in_pty(true)
+    .env({ GIT_SEQUENCE_EDITOR = editor })
     .call()
   if result.code ~= 0 then
     return
@@ -112,10 +112,10 @@ end
 function M.drop(commit)
   local short_commit = git.rev_parse.abbreviate_commit(commit)
   local editor = "nvim -c '%s/^pick \\(" .. short_commit .. ".*\\)/drop \\1/' -c 'wq'"
-  local result = git.cli.rebase
-    .env({ GIT_SEQUENCE_EDITOR = editor }).interactive.autosquash.autostash
-    .in_pty(true)
+  local result = git.cli.rebase.interactive.autosquash.autostash
     .commit(commit)
+    .in_pty(true)
+    .env({ GIT_SEQUENCE_EDITOR = editor })
     .call()
   if result.code ~= 0 then
     return
@@ -192,8 +192,8 @@ function M.update_rebase_status(state)
   state.rebase = { items = {}, onto = {}, head_oid = nil, head = nil, current = nil }
 
   local rebase_file
-  local rebase_merge = git.repo:git_path("rebase-merge")
-  local rebase_apply = git.repo:git_path("rebase-apply")
+  local rebase_merge = git.repo:worktree_git_path("rebase-merge")
+  local rebase_apply = git.repo:worktree_git_path("rebase-apply")
 
   if rebase_merge:exists() then
     rebase_file = rebase_merge

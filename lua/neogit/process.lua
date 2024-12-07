@@ -133,7 +133,7 @@ function Process:start_timer()
   end
 
   if self.timer == nil then
-    local timer = vim.loop.new_timer()
+    local timer = vim.uv.new_timer()
     self.timer = timer
 
     local timeout = assert(self.git_hook and 800 or config.values.console_timeout, "no timeout")
@@ -152,16 +152,15 @@ function Process:start_timer()
           return
         end
 
-        if config.values.auto_show_console then
-          self:show_console()
-        else
+        if not config.values.auto_show_console then
           local message = string.format(
             "Command %q running for more than: %.1f seconds",
             mask_command(table.concat(self.cmd, " ")),
-            math.ceil((vim.loop.now() - self.start) / 100) / 10
+            math.ceil((vim.uv.now() - self.start) / 100) / 10
           )
-
           notification.warn(message .. "\n\nOpen the command history for details")
+        elseif config.values.auto_show_console_on == "output" then
+          self:show_console()
         end
       end)
     )
@@ -315,7 +314,7 @@ function Process:spawn(cb)
 
   local function on_exit(_, code)
     res.code = code
-    res.time = (vim.loop.now() - start)
+    res.time = (vim.uv.now() - start)
 
     -- Remove self
     processes[self.job] = nil
@@ -336,10 +335,13 @@ function Process:spawn(cb)
           insert(output, "> " .. util.remove_ansi_escape_codes(res.stderr[i]))
         end
 
-        local message =
-          string.format("%s:\n\n%s", mask_command(table.concat(self.cmd, " ")), table.concat(output, "\n"))
-
-        notification.warn(message)
+        if not config.values.auto_close_console then
+          local message =
+            string.format("%s:\n\n%s", mask_command(table.concat(self.cmd, " ")), table.concat(output, "\n"))
+          notification.warn(message)
+        elseif config.values.auto_show_console_on == "error" then
+          self.buffer:show()
+        end
       end
 
       if
@@ -385,7 +387,7 @@ function Process:spawn(cb)
   self.stdin = job
 
   if not hide_console then
-    self.buffer = ProcessBuffer:new(self)
+    self.buffer = ProcessBuffer:new(self, mask_command)
     self:show_spinner()
     self:start_timer()
   end

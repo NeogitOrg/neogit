@@ -7,7 +7,7 @@ local api = vim.api
 
 ---@class DiffBuffer
 ---@field buffer Buffer
----@field open fun(self, kind: string)
+---@field open fun(self): DiffBuffer
 ---@field close fun()
 ---@field stats table
 ---@field diffs table
