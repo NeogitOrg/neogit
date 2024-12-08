@@ -38,6 +38,9 @@ Here's an example spec for [Lazy](https://github.com/folke/lazy.nvim), but you'r
     "sindrets/diffview.nvim",        -- optional
     "esmuellert/codediff.nvim",      -- optional
 
+    -- For a custom log pager
+    "m00qek/baleia.nvim",            -- optional
+
     -- Only one of these is needed.
     "nvim-telescope/telescope.nvim", -- optional
     "ibhagwan/fzf-lua",              -- optional
@@ -150,7 +153,7 @@ neogit.setup {
   -- Show relative date by default. When set, use `strftime` to display dates
   commit_date_format = nil,
   log_date_format = nil,
-  -- When set, used to format the diff.
+  -- When set, used to format the diff. Requires *baleia* to colorize text with ANSI escape sequences. An example for *Delta* is `{ 'delta', '--width', '117' }`. It's recommended to set `disable_context_highlighting = true`, otherwise when the cursor is in the hunk, we lose background highlighting
   log_pager = nil,
   -- Show message with spinning animation when a git command is running.
   process_spinner = false,
