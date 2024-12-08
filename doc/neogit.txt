@@ -162,7 +162,7 @@ TODO: Detail what these do
       kind = "split",
     },
     popup = {
-      kind = "split",
+      kind = "popup",
     },
     refs_view = {
       kind = "tab",
