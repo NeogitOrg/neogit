@@ -8,6 +8,12 @@ local notification = require("neogit.lib.notification")
 local config = require("neogit.config")
 local a = require("plenary.async")
 
+---@param popup PopupData
+---@return boolean
+local function allow_empty(popup)
+  return vim.tbl_contains(popup:get_arguments(), "--allow-empty")
+end
+
 local function confirm_modifications()
   if
     git.branch.upstream()
@@ -37,7 +43,7 @@ local function do_commit(popup, cmd)
 end
 
 local function commit_special(popup, method, opts)
-  if not git.status.anything_staged() then
+  if not git.status.anything_staged() and not allow_empty(popup) then
     if git.status.anything_unstaged() then
       if input.get_permission("Nothing is staged. Commit all uncommitted changed?") then
         opts.all = true
@@ -97,7 +103,7 @@ local function commit_special(popup, method, opts)
 end
 
 function M.commit(popup)
-  if not git.status.anything_staged() then
+  if not git.status.anything_staged() and not allow_empty(popup) then
     notification.warn("No changes to commit.")
     return
   end
@@ -106,7 +112,7 @@ function M.commit(popup)
 end
 
 function M.extend(popup)
-  if not git.status.anything_staged() then
+  if not git.status.anything_staged() and not allow_empty(popup) then
     if git.status.anything_unstaged() then
       if input.get_permission("Nothing is staged. Commit all uncommitted changes?") then
         git.status.stage_modified()
@@ -175,7 +181,7 @@ function M.absorb(popup)
     return
   end
 
-  if not git.status.anything_staged() then
+  if not git.status.anything_staged() and not allow_empty(popup) then
     if git.status.anything_unstaged() then
       if input.get_permission("Nothing is staged. Absorb all unstaged changes?") then
         git.status.stage_modified()
