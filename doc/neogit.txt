@@ -85,9 +85,9 @@ to Neovim users.
 TODO: Detail what these do
 
     use_default_keymaps = true,
-    disable_hint = false,
-    disable_context_highlighting = false,
-    disable_signs = false,
+    enable_hint = true,
+    enable_context_highlighting = true,
+    enable_signs = true,
     graph_style = "ascii",
     commit_date_format = nil,
     log_date_format = nil,
@@ -108,7 +108,7 @@ TODO: Detail what these do
       bold = true,
       underline = true,
     },
-    disable_insert_on_commit = "auto",
+    enable_insert_on_commit = "auto",
     use_per_project_settings = true,
     show_head_commit_hash = true,
     remember_settings = true,
@@ -117,7 +117,7 @@ TODO: Detail what these do
     sort_branches = "-committerdate",
     initial_branch_name = "",
     kind = "tab",
-    disable_line_numbers = true,
+    enable_line_numbers = false,
     -- The time after which an output console is shown for slow running commands
     console_timeout = 2000,
     -- Automatically show console if a command takes more than console_timeout milliseconds
