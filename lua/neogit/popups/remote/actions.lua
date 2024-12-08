@@ -54,6 +54,10 @@ function M.add(popup)
     else
       notification.info("Added remote " .. name)
     end
+
+    if input.get_permission("Fetch refs from " .. name .. "?") then
+      git.fetch.fetch_interactive(name, "", { "--tags" })
+    end
   end
 end
 
