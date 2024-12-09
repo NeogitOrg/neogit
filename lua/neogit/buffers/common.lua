@@ -1,5 +1,3 @@
-local Job = require("plenary.job")
-
 local Ui = require("neogit.lib.ui")
 local Component = require("neogit.lib.ui.component")
 local util = require("neogit.lib.util")
@@ -35,17 +33,13 @@ M.DiffHunks = Component.new(function(diff)
       local content = vim.list_slice(diff.lines, hunk.diff_from + 1, hunk.diff_to)
       local job = nil
       if config.values.log_pager ~= nil then
-        job = Job:new {
-          command = config.values.log_pager[1],
-          args = vim.list_slice(config.values.log_pager, 2),
-        }
-        job:start()
+        job = vim.system(config.values.log_pager, { stdin = true })
         for _, part in ipairs { diff.header, { header }, content } do
           for _, line in ipairs(part) do
-            job:send(line .. "\n")
+            job:write(line .. "\n")
           end
         end
-        job.stdin:close()
+        job:write()
       end
 
       return {
@@ -60,8 +54,7 @@ M.DiffHunks = Component.new(function(diff)
 
   if config.values.log_pager ~= nil then
     vim.iter(hunk_props):each(function(hunk)
-      hunk.job:wait()
-      hunk.content = hunk.job:result()
+      hunk.content = vim.split(hunk.job:wait().stdout, "\n")
       hunk.job = nil
     end)
   end
