@@ -42,7 +42,7 @@ local function cleanup_items(...)
       api.nvim_buf_delete(bufnr, { force = false })
     end
 
-    fn.delete(item.name)
+    fn.delete(fn.fnameescape(item.name))
   end
 end
 
