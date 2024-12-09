@@ -26,37 +26,14 @@ M.Diff = Component.new(function(diff)
 end)
 
 M.DiffHunks = Component.new(function(diff)
-  local hunk_props = vim
-    .iter(diff.hunks)
-    :map(function(hunk)
-      local header = diff.lines[hunk.diff_from]
-      local content = vim.list_slice(diff.lines, hunk.diff_from + 1, hunk.diff_to)
-      local job = nil
-      if config.values.log_pager ~= nil then
-        job = vim.system(config.values.log_pager, { stdin = true })
-        for _, part in ipairs { diff.header, { header }, content } do
-          for _, line in ipairs(part) do
-            job:write(line .. "\n")
-          end
-        end
-        job:write()
-      end
-
-      return {
-        header = header,
-        content = content,
-        job = job,
-        hunk = hunk,
-        folded = hunk._folded,
-      }
-    end)
-    :totable()
-
-  if config.values.log_pager ~= nil then
-    vim.iter(hunk_props):each(function(hunk)
-      hunk.content = vim.split(hunk.job:wait().stdout, "\n")
-      hunk.job = nil
-    end)
+  local hunk_props = {}
+  for i, hunk in ipairs(diff.hunks) do
+    table.insert(hunk_props, {
+      header = diff.lines[hunk.diff_from],
+      content = diff.pager_contents[i],
+      hunk = hunk,
+      folded = hunk._folded,
+    })
   end
 
   return col.tag("DiffContent") {
