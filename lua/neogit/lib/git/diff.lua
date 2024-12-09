@@ -1,6 +1,7 @@
 local a = require("plenary.async")
 local git = require("neogit.lib.git")
 local util = require("neogit.lib.util")
+local config = require("neogit.config")
 local logger = require("neogit.logger")
 
 local insert = table.insert
@@ -12,13 +13,13 @@ local sha256 = vim.fn.sha256
 ---@field staged_stats fun(): DiffStagedStats
 ---
 ---@class Diff
----@field header string[]
 ---@field kind string
 ---@field lines string[]
 ---@field file string
 ---@field info table
 ---@field stats table
 ---@field hunks Hunk
+---@field pager_contents string[]
 ---
 ---@class DiffStats
 ---@field additions number
@@ -216,6 +217,41 @@ local function build_hunks(lines)
   return hunks
 end
 
+---@param diff_header string[]
+---@param lines string[]
+---@param hunks Hunk[]
+---@return string[][]
+local function build_pager_contents(diff_header, lines, hunks)
+  local res = {}
+  local jobs = {}
+  vim.iter(hunks):each(function(hunk)
+    local header = lines[hunk.diff_from]
+    local content = vim.list_slice(lines, hunk.diff_from + 1, hunk.diff_to)
+    if config.values.log_pager == nil then
+      insert(res, content)
+      return
+    end
+
+    local job = vim.system(config.values.log_pager, { stdin = true })
+    for _, part in ipairs { diff_header, { header }, content } do
+      for _, line in ipairs(part) do
+        job:write(line .. "\n")
+      end
+    end
+    job:write()
+    insert(jobs, job)
+  end)
+
+  if config.values.log_pager ~= nil then
+    vim.iter(jobs):each(function(job)
+      local content = vim.split(job:wait().stdout, "\n")
+      insert(res, content)
+    end)
+  end
+
+  return res
+end
+
 ---@param raw_diff string[]
 ---@param raw_stats string[]
 ---@return Diff
@@ -223,6 +259,7 @@ local function parse_diff(raw_diff, raw_stats)
   local header, start_idx = build_diff_header(raw_diff)
   local lines = build_lines(raw_diff, start_idx)
   local hunks = build_hunks(lines)
+  local pager_contents = build_pager_contents(header, lines, hunks)
   local kind, info = build_kind(header)
   local file = build_file(header, kind)
   local stats = parse_diff_stats(raw_stats or {})
@@ -233,13 +270,13 @@ local function parse_diff(raw_diff, raw_stats)
   end)
 
   return { ---@type Diff
-    header = header,
     kind = kind,
     lines = lines,
     file = file,
     info = info,
     stats = stats,
     hunks = hunks,
+    pager_contents = pager_contents,
   }
 end
 
