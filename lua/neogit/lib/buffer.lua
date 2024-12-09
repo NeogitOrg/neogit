@@ -76,6 +76,13 @@ function Buffer:clear()
   api.nvim_buf_set_lines(self.handle, 0, -1, false, {})
 end
 
+---@param fn fun()
+function Buffer:with_locked_viewport(fn)
+  local view = self:save_view()
+  self:call(fn)
+  self:restore_view(view)
+end
+
 ---@return table
 function Buffer:save_view()
   local view = fn.winsaveview()

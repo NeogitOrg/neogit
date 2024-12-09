@@ -235,8 +235,10 @@ local SectionItemFile = function(section, config)
           end
         end
 
-        this:append(DiffHunks(diff))
-        ui:update()
+        ui.buf:with_locked_viewport(function()
+          this:append(DiffHunks(diff))
+          ui:update()
+        end)
       end)
     end
 
