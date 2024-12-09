@@ -69,7 +69,7 @@ function M:open(kind)
     buftype = "",
     kind = kind,
     modifiable = true,
-    status_column = not config.values.disable_signs and "" or nil,
+    status_column = config.values.enable_signs and "" or nil,
     readonly = false,
     autocmds = {
       ["QuitPre"] = function() -- For :wq compatibility
@@ -146,10 +146,9 @@ function M:open(kind)
       footer = buffer:get_lines(1, -1)
 
       -- Start insert mode if user has configured it
-      local disable_insert = config.values.disable_insert_on_commit
+      local enable_insert = config.values.enable_insert_on_commit
       if
-        (disable_insert == "auto" and vim.fn.prevnonblank(".") ~= vim.fn.line("."))
-        or not disable_insert
+        (enable_insert == "auto" and vim.fn.prevnonblank(".") ~= vim.fn.line(".")) or (enable_insert == true)
       then
         vim.cmd(":startinsert")
       end

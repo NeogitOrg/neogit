@@ -71,11 +71,11 @@ function M:open(kind)
     load = true,
     filetype = "gitrebase",
     buftype = "",
-    status_column = not config.values.disable_signs and "" or nil,
+    status_column = config.values.enable_signs and "" or nil,
     kind = kind,
     modifiable = true,
-    disable_line_numbers = config.values.disable_line_numbers,
-    disable_relative_line_numbers = config.values.disable_relative_line_numbers,
+    enable_line_numbers = config.values.enable_line_numbers,
+    enable_relative_line_numbers = config.values.enable_relative_line_numbers,
     readonly = false,
     on_detach = function()
       if self.on_unload then

@@ -461,7 +461,7 @@ end)
 
 function M.Status(state, config)
   -- stylua: ignore start
-  local show_hint = not config.disable_hint
+  local show_hint = config.enable_hint
 
   local show_upstream = state.upstream.ref
     and not state.head.detached
