@@ -214,6 +214,11 @@ function Buffer:close(force)
   end
 
   if self.kind == "replace" then
+    if self.old_cwd then
+      api.nvim_set_current_dir(self.old_cwd)
+      self.old_cwd = nil
+    end
+
     api.nvim_buf_delete(self.handle, { force = force })
     return
   end
@@ -249,6 +254,11 @@ function Buffer:hide()
     vim.cmd("silent! 1only")
     vim.cmd("try | tabn # | catch /.*/ | tabp | endtry")
   elseif self.kind == "replace" then
+    if self.old_cwd then
+      api.nvim_set_current_dir(self.old_cwd)
+      self.old_cwd = nil
+    end
+
     if self.old_buf and api.nvim_buf_is_loaded(self.old_buf) then
       api.nvim_set_current_buf(self.old_buf)
       self.old_buf = nil
@@ -288,6 +298,7 @@ function Buffer:show()
     local win
     if self.kind == "replace" then
       self.old_buf = api.nvim_get_current_buf()
+      self.old_cwd = vim.uv.cwd()
       api.nvim_set_current_buf(self.handle)
       win = api.nvim_get_current_win()
     elseif self.kind == "tab" then
