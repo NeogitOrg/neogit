@@ -208,9 +208,18 @@ function M:open(kind)
 
           -- Search for a match and jump if we find it
           for path, line_nr in pairs(diff_headers) do
+            local path_norm = path
+            for _, kind in ipairs { "modified", "renamed", "new file", "deleted file" } do
+              if vim.startswith(path_norm, kind .. " ") then
+                path_norm = string.sub(path_norm, string.len(kind) + 2)
+                break
+              end
+            end
             -- The gsub is to work around the fact that the OverviewFiles use
             -- => in renames but the diff header uses ->
-            if path:gsub(" %-> ", " => "):match(selected_path) then
+            path_norm = path_norm:gsub(" %-> ", " => ")
+
+            if path_norm == selected_path then
               -- Save position in jumplist
               vim.cmd("normal! m'")
 
