@@ -151,6 +151,14 @@ function Buffer:set_line_highlights(highlights)
   end
 end
 
+function Buffer:set_ansi_highlights(highlights)
+  for _, hl in ipairs(highlights) do
+    local first_line, last_line = unpack(hl)
+    local text = self:get_lines(first_line, last_line, false)
+    vim.g.baleia.buf_set_lines(self.handle, first_line, last_line, false, text)
+  end
+end
+
 function Buffer:set_folds(folds)
   self:set_window_option("foldmethod", "manual")
 
