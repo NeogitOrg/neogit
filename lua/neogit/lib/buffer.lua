@@ -147,38 +147,16 @@ function Buffer:set_extmarks(extmarks)
 end
 
 function Buffer:set_line_highlights(highlights)
-  local line_ansi_colorized_map = {}
-
   for _, hl in ipairs(highlights) do
-    local line_nr, hl_group = unpack(hl)
-    if hl_group == "NeogitDiffContext" then
-      line_ansi_colorized_map[line_nr] = true
-    else
-      self:add_line_highlight(unpack(hl))
-    end
+    self:add_line_highlight(unpack(hl))
   end
+end
 
-  local line_ansi_colorized = {}
-  for k in pairs(line_ansi_colorized_map) do
-    table.insert(line_ansi_colorized, k)
-  end
-  table.sort(line_ansi_colorized)
-
-  local start_line_nr, prev_line_nr
-  for _, line_nr in ipairs(line_ansi_colorized) do
-    if start_line_nr == nil then
-      start_line_nr = line_nr
-    end
-    if prev_line_nr ~= nil and line_nr ~= prev_line_nr + 1 then
-      local text = self:get_lines(start_line_nr, prev_line_nr + 1, false)
-      vim.g.baleia.buf_set_lines(self.handle, start_line_nr, prev_line_nr + 1, false, text)
-      start_line_nr = line_nr
-    end
-    prev_line_nr = line_nr
-  end
-  if start_line_nr ~= nil then
-    local text = self:get_lines(start_line_nr, prev_line_nr + 1, false)
-    vim.g.baleia.buf_set_lines(self.handle, start_line_nr, prev_line_nr + 1, false, text)
+function Buffer:set_ansi_highlights(highlights)
+  for _, hl in ipairs(highlights) do
+    local first_line, last_line = unpack(hl)
+    local text = self:get_lines(first_line, last_line, false)
+    vim.g.baleia.buf_set_lines(self.handle, first_line, last_line, false, text)
   end
 end
 
