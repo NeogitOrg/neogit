@@ -230,6 +230,7 @@ function M.setup(config)
     NeogitStash                    = { link = "NeogitSubtleText" },
     NeogitRebaseDone               = { link = "NeogitSubtleText" },
     NeogitFold                     = { fg = "None", bg = "None" },
+    NeogitWinSeparator             = { link = "WinSeparator" },
     NeogitChangeMuntracked         = { link = "NeogitChangeModified" },
     NeogitChangeAuntracked         = { link = "NeogitChangeAdded" },
     NeogitChangeNuntracked         = { link = "NeogitChangeNewFile" },
