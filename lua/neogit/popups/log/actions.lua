@@ -38,7 +38,7 @@ function M.log_current(popup)
     popup:get_internal_arguments(),
     popup.state.env.files,
     fetch_more_commits(popup, {}),
-    "Commits in " .. git.branch.current() or ("(detached) " .. git.log.message("HEAD")),
+    "Commits in " .. (git.branch.current() or ("(detached) " .. git.log.message("HEAD"))),
     git.remote.list()
   ):open()
 end
