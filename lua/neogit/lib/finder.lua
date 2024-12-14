@@ -117,6 +117,7 @@ end
 --- Utility function to map actions
 ---@param on_select fun(item: any|nil)
 ---@param allow_multi boolean
+---@param refocus_status boolean
 local function fzf_actions(on_select, allow_multi, refocus_status)
   local function refresh()
     if refocus_status then
@@ -150,7 +151,10 @@ end
 local function fzf_opts(opts)
   local fzf_opts = {}
 
-  if not opts.allow_multi then
+  -- Allow multi by default
+  if opts.allow_multi then
+    fzf_opts["--multi"] = ""
+  else
     fzf_opts["--no-multi"] = ""
   end
 
