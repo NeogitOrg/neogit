@@ -16,10 +16,17 @@ function M.abort()
   end
 end
 
-function M.merge(popup)
+---@param popup PopupData
+---@return string[]
+local function get_refs(popup)
   local refs = util.merge({ popup.state.env.commit }, git.refs.list_branches(), git.refs.list_tags())
+  util.remove_item_from_table(refs, git.branch.current())
 
-  local ref = FuzzyFinderBuffer.new(refs):open_async { prompt_prefix = "Merge" }
+  return refs
+end
+
+function M.merge(popup)
+  local ref = FuzzyFinderBuffer.new(get_refs(popup)):open_async { prompt_prefix = "Merge" }
   if ref then
     local args = popup:get_arguments()
     table.insert(args, "--no-edit")
@@ -28,9 +35,7 @@ function M.merge(popup)
 end
 
 function M.squash(popup)
-  local refs = util.merge({ popup.state.env.commit }, git.refs.list_branches(), git.refs.list_tags())
-
-  local ref = FuzzyFinderBuffer.new(refs):open_async { prompt_prefix = "Squash" }
+  local ref = FuzzyFinderBuffer.new(get_refs(popup)):open_async { prompt_prefix = "Squash" }
   if ref then
     local args = popup:get_arguments()
     table.insert(args, "--squash")
@@ -39,9 +44,7 @@ function M.squash(popup)
 end
 
 function M.merge_edit(popup)
-  local refs = util.merge({ popup.state.env.commit }, git.refs.list_branches(), git.refs.list_tags())
-
-  local ref = FuzzyFinderBuffer.new(refs):open_async { prompt_prefix = "Merge" }
+  local ref = FuzzyFinderBuffer.new(get_refs(popup)):open_async { prompt_prefix = "Merge" }
   if ref then
     local args = popup:get_arguments()
     table.insert(args, "--edit")
@@ -55,9 +58,7 @@ function M.merge_edit(popup)
 end
 
 function M.merge_nocommit(popup)
-  local refs = util.merge({ popup.state.env.commit }, git.refs.list_branches(), git.refs.list_tags())
-
-  local ref = FuzzyFinderBuffer.new(refs):open_async { prompt_prefix = "Merge" }
+  local ref = FuzzyFinderBuffer.new(get_refs(popup)):open_async { prompt_prefix = "Merge" }
   if ref then
     local args = popup:get_arguments()
     table.insert(args, "--no-commit")
