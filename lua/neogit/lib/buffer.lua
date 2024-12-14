@@ -186,7 +186,7 @@ function Buffer:move_top_line(line)
     return
   end
 
-  if vim.o.lines < vim.fn.line("$") then
+  if vim.o.lines < fn.line("$") then
     return
   end
 
