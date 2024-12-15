@@ -8,6 +8,11 @@ function M.commits(commits, args)
   return git.cli.revert.no_commit.arg_list(util.merge(args, commits)).call({ pty = true }).code == 0
 end
 
+function M.hunk(hunk, _)
+  local patch = git.index.generate_patch(hunk, { reverse = true })
+  git.index.apply(patch, { reverse = true })
+end
+
 function M.continue()
   git.cli.revert.continue.call()
 end
