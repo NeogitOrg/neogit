@@ -115,10 +115,10 @@ end
 M.actions = function()
   return present {
     { "Stage", "Stage", NONE },
-    { "StageUnstaged", "Stage-Unstaged", NONE },
+    { "StageUnstaged", "Stage unstaged", NONE },
     { "StageAll", "Stage all", NONE },
     { "Unstage", "Unstage", NONE },
-    { "UnstageStaged", "Unstage-Staged", NONE },
+    { "UnstageStaged", "Unstage all", NONE },
     { "Discard", "Discard", NONE },
     { "Untrack", "Untrack", NONE },
   }
