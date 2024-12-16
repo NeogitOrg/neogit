@@ -186,7 +186,7 @@ function Buffer:move_top_line(line)
     return
   end
 
-  if vim.o.lines < vim.fn.line("$") then
+  if vim.o.lines < fn.line("$") then
     return
   end
 
@@ -583,6 +583,14 @@ function Buffer:line_count()
   return api.nvim_buf_line_count(self.handle)
 end
 
+function Buffer:resize_header()
+  if not self.header_win_handle then
+    return
+  end
+
+  api.nvim_win_set_width(self.header_win_handle, fn.winwidth(self.win_handle))
+end
+
 ---@param text string
 ---@param scroll boolean
 function Buffer:set_header(text, scroll)
@@ -603,7 +611,8 @@ function Buffer:set_header(text, scroll)
   -- Display the buffer in a floating window
   local winid = api.nvim_open_win(buf, false, {
     relative = "win",
-    width = vim.o.columns,
+    win = self.win_handle,
+    width = fn.winwidth(self.win_handle),
     height = 1,
     row = 0,
     col = 0,
@@ -624,6 +633,15 @@ function Buffer:set_header(text, scroll)
       vim.api.nvim_feedkeys(keys, "n", false)
     end)
   end
+
+  -- Ensure the header only covers the intended window.
+  api.nvim_create_autocmd("WinResized", {
+    callback = function()
+      self:resize_header()
+    end,
+    buffer = self.handle,
+    group = self.autocmd_group,
+  })
 end
 
 ---@class BufferConfig
@@ -739,7 +757,6 @@ function Buffer.create(config)
 
     buffer:set_window_option("foldenable", true)
     buffer:set_window_option("foldlevel", 99)
-    buffer:set_window_option("foldminlines", 0)
     buffer:set_window_option("foldtext", "")
     buffer:set_window_option("foldcolumn", "0")
     buffer:set_window_option("listchars", "")
