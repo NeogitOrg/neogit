@@ -63,11 +63,7 @@ function M.changes(popup)
 end
 
 function M.hunk(popup)
-  local item = popup.state.env.item
-  if item == nil then
-    return
-  end
-  git.revert.hunk(item.hunk, popup:get_arguments())
+  git.revert.hunk(popup.state.env.item.hunk, popup:get_arguments())
 end
 
 function M.continue()
