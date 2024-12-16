@@ -290,7 +290,7 @@ function M:open(kind)
         end),
         [popups.mapping_for("RemotePopup")] = popups.open("remote"),
         [popups.mapping_for("RevertPopup")] = popups.open("revert", function(p)
-          p { commits = { self.commit_info.oid }, hunk = self.buffer.ui:get_hunk_or_filename_under_cursor() }
+          p { commits = { self.commit_info.oid }, item = self.buffer.ui:get_hunk_or_filename_under_cursor() }
         end),
         [popups.mapping_for("ResetPopup")] = popups.open("reset", function(p)
           p { commit = self.commit_info.oid }
