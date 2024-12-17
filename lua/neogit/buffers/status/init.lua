@@ -231,6 +231,12 @@ function M:open(kind)
       ["NeogitStash"] = function()
         self:dispatch_refresh(nil, "stash")
       end,
+      ["NeogitRevertComplete"] = function()
+        self:dispatch_refresh(nil, "revert")
+      end,
+      ["NeogitCherryPick"] = function()
+        self:dispatch_refresh(nil, "cherry_pick")
+      end,
     },
   }
 
