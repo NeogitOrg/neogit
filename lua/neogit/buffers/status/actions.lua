@@ -120,7 +120,8 @@ M.v_discard = function(self)
             for _, hunk in ipairs(hunks) do
               table.insert(invalidated_diffs, "*:" .. item.name)
               table.insert(patches, function()
-                local patch = git.index.generate_patch(item, hunk, hunk.from, hunk.to, true)
+                local patch =
+                  git.index.generate_patch(hunk, { from = hunk.from, to = hunk.to, reverse = true })
 
                 logger.debug(("Discarding Patch: %s"):format(patch))
 
@@ -231,7 +232,7 @@ M.v_stage = function(self)
 
           if #hunks > 0 then
             for _, hunk in ipairs(hunks) do
-              table.insert(patches, git.index.generate_patch(item, hunk, hunk.from, hunk.to))
+              table.insert(patches, git.index.generate_patch(hunk.hunk, { from = hunk.from, to = hunk.to }))
             end
           else
             if section.name == "unstaged" then
@@ -281,7 +282,10 @@ M.v_unstage = function(self)
 
           if #hunks > 0 then
             for _, hunk in ipairs(hunks) do
-              table.insert(patches, git.index.generate_patch(item, hunk, hunk.from, hunk.to, true))
+              table.insert(
+                patches,
+                git.index.generate_patch(hunk, { from = hunk.from, to = hunk.to, reverse = true })
+              )
             end
           else
             table.insert(files, item.escaped_path)
@@ -781,7 +785,7 @@ M.n_discard = function(self)
       local hunk =
         self.buffer.ui:item_hunks(selection.item, selection.first_line, selection.last_line, false)[1]
 
-      local patch = git.index.generate_patch(selection.item, hunk, hunk.from, hunk.to, true)
+      local patch = git.index.generate_patch(hunk, { from = hunk.from, to = hunk.to, reverse = true })
 
       if section == "untracked" then
         message = "Discard hunk?"
@@ -789,9 +793,8 @@ M.n_discard = function(self)
           local hunks =
             self.buffer.ui:item_hunks(selection.item, selection.first_line, selection.last_line, false)
 
-          local patch = git.index.generate_patch(selection.item, hunks[1], hunks[1].from, hunks[1].to, true)
-
-          git.index.apply(patch, { reverse = true })
+          local patch =
+            git.index.generate_patch(hunks[1], { from = hunks[1].from, to = hunks[1].to, reverse = true })
           git.index.apply(patch, { reverse = true })
         end
         refresh = { update_diffs = { "untracked:" .. selection.item.name } }
@@ -1057,7 +1060,7 @@ M.n_stage = function(self)
         local item = self.buffer.ui:get_item_under_cursor()
         assert(item, "Item cannot be nil")
 
-        local patch = git.index.generate_patch(item, stagable.hunk, stagable.hunk.from, stagable.hunk.to)
+        local patch = git.index.generate_patch(stagable.hunk)
         git.index.apply(patch, { cached = true })
         self:dispatch_refresh({ update_diffs = { "*:" .. item.escaped_path } }, "n_stage")
       elseif stagable.filename then
@@ -1131,8 +1134,10 @@ M.n_unstage = function(self)
       if unstagable.hunk then
         local item = self.buffer.ui:get_item_under_cursor()
         assert(item, "Item cannot be nil")
-        local patch =
-          git.index.generate_patch(item, unstagable.hunk, unstagable.hunk.from, unstagable.hunk.to, true)
+        local patch = git.index.generate_patch(
+          unstagable.hunk,
+          { from = unstagable.hunk.from, to = unstagable.hunk.to, reverse = true }
+        )
 
         git.index.apply(patch, { cached = true, reverse = true })
         self:dispatch_refresh({ update_diffs = { "*:" .. item.escaped_path } }, "n_unstage")

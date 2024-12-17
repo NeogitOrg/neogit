@@ -70,6 +70,10 @@ function M.changes(popup)
   end
 end
 
+function M.hunk(popup)
+  git.revert.hunk(popup.state.env.item.hunk, popup:get_arguments())
+end
+
 function M.continue()
   git.revert.continue()
 end
