@@ -176,6 +176,7 @@ local runner = require("neogit.runner")
 
 ---@class GitCommandRevert: GitCommandBuilder
 ---@field no_commit self
+---@field no_edit self
 ---@field continue self
 ---@field skip self
 ---@field abort self
@@ -600,6 +601,7 @@ local configurations = {
     flags = {
       no_commit = "--no-commit",
       continue = "--continue",
+      no_edit = "--no-edit",
       skip = "--skip",
       abort = "--abort",
     },
