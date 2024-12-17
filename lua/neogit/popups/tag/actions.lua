@@ -11,6 +11,7 @@ local function fire_tag_event(pattern, data)
   vim.api.nvim_exec_autocmds("User", { pattern = pattern, modeline = false, data = data })
 end
 
+---@param popup PopupData
 function M.create_tag(popup)
   local tag_input = input.get_user_input("Create tag", { strip_spaces = true })
   if not tag_input then
@@ -48,7 +49,7 @@ function M.create_release(_) end
 --- If there are multiple tags then offer to delete those.
 --- Otherwise prompt for a single tag to be deleted.
 --- git tag -d TAGS
----@param _ table
+---@param _ PopupData
 function M.delete(_)
   local tags = FuzzyFinderBuffer.new(git.tag.list()):open_async { allow_multi = true }
   if #(tags or {}) == 0 then
@@ -64,19 +65,18 @@ function M.delete(_)
 end
 
 --- Prunes differing tags from local and remote
----@param _ table
+---@param _ PopupData
 function M.prune(_)
-  local selected_remote = FuzzyFinderBuffer.new(git.remote.list()):open_async {
-    prompt_prefix = "Prune tags using remote",
-  }
-
-  if (selected_remote or "") == "" then
-    return
-  end
-
   local tags = git.tag.list()
   if #tags == 0 then
     notification.info("No tags found")
+    return
+  end
+
+  local selected_remote = FuzzyFinderBuffer.new(git.remote.list()):open_async {
+    prompt_prefix = "Prune tags using remote",
+  }
+  if (selected_remote or "") == "" then
     return
   end
 
@@ -96,7 +96,7 @@ function M.prune(_)
 
   notification.delete_all()
   if #l_tags == 0 and #r_tags == 0 then
-    notification.info("Same tags exist locally and remotely")
+    notification.info("Tags are in sync - nothing to do.")
     return
   end
 
