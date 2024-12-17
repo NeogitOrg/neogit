@@ -553,4 +553,19 @@ M.abbreviated_size = util.memoize(function()
   end
 end, { timeout = math.huge })
 
+function M.decorate(oid)
+  local result = git.cli.log.format("%D").max_count(1).args(oid).call().stdout
+
+  if result[1] == nil then
+    return oid
+  else
+    local decorated_ref = vim.split(result[1], ",")[1]
+    if decorated_ref:match("%->") then
+      return oid
+    else
+      return decorated_ref
+    end
+  end
+end
+
 return M

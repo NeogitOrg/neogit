@@ -1,4 +1,5 @@
 local Finder = require("neogit.lib.finder")
+local git = require("neogit.lib.git")
 
 local function buffer_height(count)
   if count < (vim.o.lines / 2) then
@@ -23,6 +24,17 @@ function M.new(list)
   local instance = {
     list = list,
   }
+
+  -- If the first item in the list is an git OID, decorate it
+  if type(list[1]) == "string" and list[1]:match("^%x%x%x%x%x%x%x") then
+    local oid = table.remove(list, 1)
+    local ok, result = pcall(git.log.decorate, oid)
+    if ok then
+      table.insert(list, 1, result)
+    else
+      table.insert(list, 1, oid)
+    end
+  end
 
   setmetatable(instance, { __index = M })
 
