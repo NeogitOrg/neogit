@@ -757,6 +757,7 @@ function Buffer.create(config)
 
     buffer:set_window_option("foldenable", true)
     buffer:set_window_option("foldlevel", 99)
+    buffer:set_window_option("foldminlines", 0)
     buffer:set_window_option("foldtext", "")
     buffer:set_window_option("foldcolumn", "0")
     buffer:set_window_option("listchars", "")
