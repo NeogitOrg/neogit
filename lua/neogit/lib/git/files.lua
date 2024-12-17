@@ -64,4 +64,11 @@ function M.untrack(paths)
   return git.cli.rm.cached.files(unpack(paths)).call({ hidden = true }).code == 0
 end
 
+---@param from string
+---@param to string
+---@return boolean
+function M.move(from, to)
+  return git.cli.mv.args(from, to).call().code == 0
+end
+
 return M

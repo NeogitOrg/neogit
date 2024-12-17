@@ -67,6 +67,8 @@ local runner = require("neogit.runner")
 ---@class GitCommandRm: GitCommandBuilder
 ---@field cached self
 
+---@class GitCommandMove: GitCommandBuilder
+
 ---@class GitCommandStatus: GitCommandBuilder
 ---@field short self
 ---@field branch self
@@ -369,6 +371,7 @@ local runner = require("neogit.runner")
 ---@field verify-commit  GitCommandVerifyCommit
 ---@field worktree       GitCommandWorktree
 ---@field write-tree     GitCommandWriteTree
+---@field mv             GitCommandMove
 ---@field worktree_root fun(dir: string):string
 ---@field git_dir fun(dir: string):string
 ---@field worktree_git_dir fun(dir: string):string
@@ -606,6 +609,8 @@ local configurations = {
       abort = "--abort",
     },
   },
+
+  mv = config {},
 
   checkout = config {
     short_opts = {

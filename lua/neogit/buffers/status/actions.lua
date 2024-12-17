@@ -967,6 +967,41 @@ M.n_init_repo = function(_self)
 end
 
 ---@param self StatusBuffer
+M.n_rename = function(self)
+  return a.void(function()
+    local selection = self.buffer.ui:get_selection()
+    local paths = git.files.all_tree()
+
+    if
+      selection.item
+      and selection.item.escaped_path
+      and git.files.is_tracked(selection.item.escaped_path)
+    then
+      paths = util.deduplicate(util.merge({ selection.item.escaped_path }, paths))
+    end
+
+    local selected = FuzzyFinderBuffer.new(paths):open_async { prompt_prefix = "Rename file" }
+    if (selected or "") == "" then
+      return
+    end
+
+    local destination = input.get_user_input("Move to", { completion = "dir", prepend = selected })
+    if (destination or "") == "" then
+      return
+    end
+
+    assert(destination, "must have a destination")
+    local success = git.files.move(selected, destination)
+
+    if not success then
+      notification.warn("Renaming failed")
+    end
+
+    self:dispatch_refresh({ update_diffs = { "*:*" } }, "n_rename")
+  end)
+end
+
+---@param self StatusBuffer
 M.n_untrack = function(self)
   return a.void(function()
     local selection = self.buffer.ui:get_selection()
