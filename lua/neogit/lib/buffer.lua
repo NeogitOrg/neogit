@@ -156,6 +156,18 @@ function Buffer:set_ansi_highlights(highlights)
   for _, hl in ipairs(highlights) do
     local first_line, last_line = unpack(hl)
     local text = self:get_lines(first_line, last_line, false)
+
+    for i, line in ipairs(text) do
+      if line:match("\27%[0K\27%[0m$") then
+        -- Handle "Erase in Line". We don't support coloring the rest of the line.
+        line = line:gsub("\27%[0K\27%[0m$", "")
+        if i < #text then
+          text[i + 1] = "\27[0m" .. text[i + 1]
+        end
+      end
+      text[i] = line
+    end
+
     vim.g.baleia.buf_set_lines(self.handle, first_line, last_line, false, text)
   end
 end
