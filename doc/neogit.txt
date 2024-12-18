@@ -561,35 +561,36 @@ The following events are emitted by Neogit:
 5. Highlights                                                *neogit_highlights*
 
 To provide a custom color palette directly to the plugin, you can use the
-`config.highlight` table with the following signature:
+`config.highlight` table with the following signature: >lua
 
----@class HighlightOptions
----@field italic?     boolean
----@field bold?       boolean
----@field underline?  boolean
----@field bg0?        string  Darkest background color
----@field bg1?        string  Second darkest background color
----@field bg2?        string  Second lightest background color
----@field bg3?        string  Lightest background color
----@field grey?       string  middle grey shade for foreground
----@field white?      string  Foreground white (main text)
----@field red?        string  Foreground red
----@field bg_red?     string  Background red
----@field line_red?   string  Cursor line highlight for red regions
----@field orange?     string  Foreground orange
----@field bg_orange?  string  background orange
----@field yellow?     string  Foreground yellow
----@field bg_yellow?  string  background yellow
----@field green?      string  Foreground green
----@field bg_green?   string  Background green
----@field line_green? string  Cursor line highlight for green regions
----@field cyan?       string  Foreground cyan
----@field bg_cyan?    string  Background cyan
----@field blue?       string  Foreground blue
----@field bg_blue?    string  Background blue
----@field purple?     string  Foreground purple
----@field bg_purple?  string  Background purple
----@field md_purple?  string  Background medium purple
+    ---@class HighlightOptions
+    ---@field italic?     boolean
+    ---@field bold?       boolean
+    ---@field underline?  boolean
+    ---@field bg0?        string  Darkest background color
+    ---@field bg1?        string  Second darkest background color
+    ---@field bg2?        string  Second lightest background color
+    ---@field bg3?        string  Lightest background color
+    ---@field grey?       string  middle grey shade for foreground
+    ---@field white?      string  Foreground white (main text)
+    ---@field red?        string  Foreground red
+    ---@field bg_red?     string  Background red
+    ---@field line_red?   string  Cursor line highlight for red regions
+    ---@field orange?     string  Foreground orange
+    ---@field bg_orange?  string  background orange
+    ---@field yellow?     string  Foreground yellow
+    ---@field bg_yellow?  string  background yellow
+    ---@field green?      string  Foreground green
+    ---@field bg_green?   string  Background green
+    ---@field line_green? string  Cursor line highlight for green regions
+    ---@field cyan?       string  Foreground cyan
+    ---@field bg_cyan?    string  Background cyan
+    ---@field blue?       string  Foreground blue
+    ---@field bg_blue?    string  Background blue
+    ---@field purple?     string  Foreground purple
+    ---@field bg_purple?  string  Background purple
+    ---@field md_purple?  string  Background medium purple
+<
 
 The following highlight groups will all be derived from this palette.
 
