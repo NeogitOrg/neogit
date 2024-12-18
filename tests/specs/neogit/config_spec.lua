@@ -11,18 +11,18 @@ describe("Neogit config", function()
         assert.True(vim.tbl_count(require("neogit.config").validate_config()) ~= 0)
       end)
 
-      it("should return invalid when disable_hint isn't a boolean", function()
-        config.values.disable_hint = "not a boolean"
+      it("should return invalid when enable_hint isn't a boolean", function()
+        config.values.enable_hint = "not a boolean"
         assert.True(vim.tbl_count(require("neogit.config").validate_config()) ~= 0)
       end)
 
-      it("should return invalid when disable_context_highlighting isn't a boolean", function()
-        config.values.disable_context_highlighting = "not a boolean"
+      it("should return invalid when enable_context_highlighting isn't a boolean", function()
+        config.values.enable_context_highlighting = "not a boolean"
         assert.True(vim.tbl_count(require("neogit.config").validate_config()) ~= 0)
       end)
 
-      it("should return invalid when disable_signs isn't a boolean", function()
-        config.values.disable_signs = "not a boolean"
+      it("should return invalid when enable_signs isn't a boolean", function()
+        config.values.enable_signs = "not a boolean"
         assert.True(vim.tbl_count(require("neogit.config").validate_config()) ~= 0)
       end)
 
@@ -31,7 +31,7 @@ describe("Neogit config", function()
         assert.True(vim.tbl_count(require("neogit.config").validate_config()) ~= 0)
       end)
 
-      it("should return invalid when disable_insert_on_commit isn't a boolean", function()
+      it("should return invalid when enable_insert_on_commit isn't a boolean", function()
         config.values.telescope_sorter = "not a boolean"
         assert.True(vim.tbl_count(require("neogit.config").validate_config()) ~= 0)
       end)
@@ -71,8 +71,8 @@ describe("Neogit config", function()
         assert.True(vim.tbl_count(require("neogit.config").validate_config()) ~= 0)
       end)
 
-      it("should return invalid when disable_line_numbers isn't a boolean", function()
-        config.values.disable_line_numbers = "not a boolean"
+      it("should return invalid when enable_line_numbers isn't a boolean", function()
+        config.values.enable_line_numbers = "not a boolean"
         assert.True(vim.tbl_count(require("neogit.config").validate_config()) ~= 0)
       end)
 
@@ -494,8 +494,8 @@ describe("Neogit config", function()
         assert.True(vim.tbl_count(require("neogit.config").validate_config()) == 0)
       end)
 
-      it("should return valid when disable_line_numbers is a boolean", function()
-        config.values.disable_line_numbers = true
+      it("should return valid when enable_line_numbers is a boolean", function()
+        config.values.enable_line_numbers = true
         assert.True(vim.tbl_count(require("neogit.config").validate_config()) == 0)
       end)
 

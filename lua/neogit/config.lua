@@ -302,21 +302,21 @@ end
 ---@field graph_style? NeogitGraphStyle Style for graph
 ---@field commit_date_format? string Commit date format
 ---@field log_date_format? string Log date format
----@field disable_hint? boolean Remove the top hint in the Status buffer
----@field disable_context_highlighting? boolean Disable context highlights based on cursor position
----@field disable_signs? boolean Special signs to draw for sections etc. in Neogit
+---@field enable_hint? boolean Shows the top hint in the Status buffer
+---@field enable_context_highlighting? boolean Enable context highlights based on cursor position
+---@field enable_signs? boolean Special signs to draw for sections etc. in Neogit
 ---@field git_services? table Templartes to use when opening a pull request for a branch
 ---@field fetch_after_checkout? boolean Perform a fetch if the newly checked out branch has an upstream or pushRemote set
 ---@field telescope_sorter? function The sorter telescope will use
 ---@field process_spinner? boolean Hide/Show the process spinner
----@field disable_insert_on_commit? boolean|"auto" Disable automatically entering insert mode in commit dialogues
+---@field enable_insert_on_commit? boolean|"auto" Enables automatically entering insert mode in commit dialogues
 ---@field use_per_project_settings? boolean Scope persisted settings on a per-project basis
 ---@field remember_settings? boolean Whether neogit should persist flags from popups, e.g. git push flags
 ---@field sort_branches? string Value used for `--sort` for the `git branch` command
 ---@field initial_branch_name? string Default for new branch name prompts
 ---@field kind? WindowKind The default type of window neogit should open in
----@field disable_line_numbers? boolean Whether to disable line numbers
----@field disable_relative_line_numbers? boolean Whether to disable line numbers
+---@field enable_line_numbers? boolean Whether to enable line numbers
+---@field enable_relative_line_numbers? boolean Whether to enable relative line numbers
 ---@field console_timeout? integer Time in milliseconds after a console is created for long running commands
 ---@field auto_show_console? boolean Automatically show the console if a command takes longer than console_timeout
 ---@field auto_show_console_on? string Specify "output" (show always; default) or "error" if `auto_show_console` enabled
@@ -349,9 +349,9 @@ end
 function M.get_default_values()
   return {
     use_default_keymaps = true,
-    disable_hint = false,
-    disable_context_highlighting = false,
-    disable_signs = false,
+    enable_hint = true,
+    enable_context_highlighting = true,
+    enable_signs = true,
     graph_style = "ascii",
     commit_date_format = nil,
     log_date_format = nil,
@@ -369,15 +369,15 @@ function M.get_default_values()
       ["azure.com"] = "https://dev.azure.com/${owner}/_git/${repository}/pullrequestcreate?sourceRef=${branch_name}&targetRef=${target}",
     },
     highlight = {},
-    disable_insert_on_commit = "auto",
+    enable_insert_on_commit = "auto",
     use_per_project_settings = true,
     remember_settings = true,
     fetch_after_checkout = false,
     sort_branches = "-committerdate",
     kind = "tab",
     initial_branch_name = "",
-    disable_line_numbers = true,
-    disable_relative_line_numbers = true,
+    enable_line_numbers = false,
+    enable_relative_line_numbers = false,
     -- The time after which an output console is shown for slow running commands
     console_timeout = 2000,
     -- Automatically show console if a command takes more than console_timeout milliseconds
@@ -1105,9 +1105,9 @@ function M.validate_config()
   end
 
   if validate_type(config, "base config", "table") then
-    validate_type(config.disable_hint, "disable_hint", "boolean")
-    validate_type(config.disable_context_highlighting, "disable_context_highlighting", "boolean")
-    validate_type(config.disable_signs, "disable_signs", "boolean")
+    validate_type(config.enable_hint, "enable_hint", "boolean")
+    validate_type(config.enable_context_highlighting, "enable_context_highlighting", "boolean")
+    validate_type(config.enable_signs, "enable_signs", "boolean")
     validate_type(config.telescope_sorter, "telescope_sorter", "function")
     validate_type(config.use_per_project_settings, "use_per_project_settings", "boolean")
     validate_type(config.remember_settings, "remember_settings", "boolean")
@@ -1116,8 +1116,8 @@ function M.validate_config()
     validate_type(config.notification_icon, "notification_icon", "string")
     validate_type(config.console_timeout, "console_timeout", "number")
     validate_kind(config.kind, "kind")
-    validate_type(config.disable_line_numbers, "disable_line_numbers", "boolean")
-    validate_type(config.disable_relative_line_numbers, "disable_relative_line_numbers", "boolean")
+    validate_type(config.enable_line_numbers, "enable_line_numbers", "boolean")
+    validate_type(config.enable_relative_line_numbers, "enable_relative_line_numbers", "boolean")
     validate_type(config.auto_show_console, "auto_show_console", "boolean")
     validate_type(config.auto_show_console_on, "auto_show_console_on", "string")
     validate_type(config.auto_close_console, "auto_close_console", "boolean")
@@ -1129,7 +1129,7 @@ function M.validate_config()
       validate_type(config.status.mode_text, "status.mode_text", "table")
     end
     validate_signs()
-    validate_trinary_auto(config.disable_insert_on_commit, "disable_insert_on_commit")
+    validate_trinary_auto(config.enable_insert_on_commit, "enable_insert_on_commit")
     -- Commit Editor
     if validate_type(config.commit_editor, "commit_editor", "table") then
       validate_type(config.commit_editor.show_staged_diff, "show_staged_diff", "boolean")

@@ -658,9 +658,9 @@ end
 ---@field context_highlight boolean|nil
 ---@field active_item_highlight boolean|nil
 ---@field open boolean|nil
----@field disable_line_numbers boolean|nil
----@field disable_relative_line_numbers boolean|nil
----@field disable_signs boolean|nil
+---@field enable_line_numbers boolean|nil
+---@field enable_relative_line_numbers boolean|nil
+---@field enable_signs boolean|nil
 ---@field swapfile boolean|nil
 ---@field modifiable boolean|nil
 ---@field readonly boolean|nil
@@ -770,11 +770,11 @@ function Buffer.create(config)
       vim.opt_local.fillchars:append("fold: ")
     end)
 
-    if (config.disable_line_numbers == nil) or config.disable_line_numbers then
+    if not config.enable_line_numbers then
       buffer:set_window_option("number", false)
     end
 
-    if (config.disable_relative_line_numbers == nil) or config.disable_relative_line_numbers then
+    if not config.enable_relative_line_numbers then
       buffer:set_window_option("relativenumber", false)
     end
 
