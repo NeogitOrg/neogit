@@ -477,8 +477,86 @@ The following mappings can all be customized via the setup function.
 
 ==============================================================================
 4. Events                                                        *neogit_events*
-(TODO)
 
+The following events are emitted by Neogit:
+
+  Event                          Description                              ~
+  NeogitStatusRefreshed          Status has been reloaded                ~
+
+                                  Event Data: {}                         ~
+
+  NeogitCommitComplete           Commit has been created                 ~
+
+                                  Event Data: {}                         ~
+
+  NeogitPushComplete             Push has completed                      ~
+
+                                  Event Data: {}                         ~
+
+  NeogitPullComplete             Pull has completed                      ~
+
+                                  Event Data: {}                         ~
+
+  NeogitFetchComplete            Fetch has completed                     ~
+
+                                  Event Data: {}                         ~
+
+  NeogitBranchCreate             Branch was created, starting from       ~
+                                  `base`                                 ~
+
+                                  Event Data:                            ~
+                                    { branch_name: string, base: string? } ~
+
+  NeogitBranchDelete             Branch was deleted                      ~
+
+                                  Event Data: { branch_name: string }    ~
+
+  NeogitBranchCheckout           Branch was checked out                  ~
+
+                                  Event Data: { branch_name: string }    ~
+
+  NeogitBranchReset              Branch was reset to a commit/branch     ~
+
+                                  Event Data:                            ~
+                                    { branch_name: string, resetting_to: string } ~
+
+  NeogitBranchRename             Branch was renamed                      ~
+
+                                  Event Data:                            ~
+                                    { branch_name: string, new_name: string } ~
+
+  NeogitRebase                   A rebase finished                       ~
+
+                                  Event Data:                            ~
+                                    { commit: string, status: "ok" | "conflict" } ~
+
+  NeogitReset                    A branch was reset to a certain commit  ~
+
+                                  Event Data:                            ~
+                                    { commit: string, mode: "soft" |     ~
+                                      "mixed" | "hard" | "keep" | "index" } ~
+
+  NeogitTagCreate                A tag was placed on a certain commit    ~
+
+                                  Event Data: { name: string, ref: string } ~
+
+  NeogitTagDelete                A tag was removed                       ~
+
+                                  Event Data: { name: string }           ~
+
+  NeogitCherryPick               One or more commits were cherry-picked  ~
+
+                                  Event Data: { commits: string[] }      ~
+
+  NeogitMerge                    A merge finished                        ~
+
+                                  Event Data:                            ~
+                                    { branch: string, args: string[],    ~
+                                      status: "ok" | "conflict" }        ~
+
+  NeogitStash                    A stash finished                        ~
+
+                                  Event Data: { success: boolean }       ~
 ==============================================================================
 5. Highlights                                                *neogit_highlights*
 
