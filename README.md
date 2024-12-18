@@ -402,6 +402,8 @@ neogit.setup {
       ["]c"] = "OpenOrScrollDown",
       ["<c-k>"] = "PeekUp",
       ["<c-j>"] = "PeekDown",
+      ["<c-n>"] = "NextSection",
+      ["<c-p>"] = "PreviousSection",
     },
   },
 }

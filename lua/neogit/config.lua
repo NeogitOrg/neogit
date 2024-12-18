@@ -616,6 +616,7 @@ function M.get_default_values()
         ["<c-s>"] = "StageAll",
         ["u"] = "Unstage",
         ["K"] = "Untrack",
+        ["R"] = "Rename",
         ["U"] = "UnstageStaged",
         ["y"] = "ShowRefs",
         ["$"] = "CommandHistory",
@@ -632,6 +633,8 @@ function M.get_default_values()
         ["]c"] = "OpenOrScrollDown",
         ["<c-k>"] = "PeekUp",
         ["<c-j>"] = "PeekDown",
+        ["<c-n>"] = "NextSection",
+        ["<c-p>"] = "PreviousSection",
       },
     },
   }

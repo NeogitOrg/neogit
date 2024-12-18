@@ -60,8 +60,12 @@ local function spin_off_branch(checkout)
     return
   end
 
+  if not git.branch.create(name) then
+    notification.warn("Branch " .. name .. " already exists.")
+    return
+  end
+
   fire_branch_event("NeogitBranchCreate", { branch_name = name })
-  git.branch.create(name)
 
   local current_branch_name = git.branch.current_full_name()
 
@@ -280,7 +284,8 @@ end
 
 function M.delete_branch(popup)
   local options = util.deduplicate(util.merge({ popup.state.env.ref_name }, git.refs.list_branches()))
-  local selected_branch = FuzzyFinderBuffer.new(options):open_async { refocus_status = false }
+  local selected_branch = FuzzyFinderBuffer.new(options)
+    :open_async { prompt_prefix = "Delete branch", refocus_status = false }
   if not selected_branch then
     return
   end

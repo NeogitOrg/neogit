@@ -22,7 +22,7 @@ function M.hunk(hunk, _)
 end
 
 function M.continue()
-  git.cli.revert.continue.call()
+  git.cli.revert.continue.no_edit.call { pty = true }
 end
 
 function M.skip()
