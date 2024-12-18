@@ -1479,4 +1479,29 @@ M.n_command = function(self)
     })
   end)
 end
+
+---@param self StatusBuffer
+M.n_next_section = function(self)
+  return function()
+    local section = self.buffer.ui:get_current_section()
+    if section then
+      local position = section.position.row_end + 2
+      self.buffer:move_cursor(position)
+    end
+  end
+end
+
+---@param self StatusBuffer
+M.n_prev_section = function(self)
+  return function()
+    local section = self.buffer.ui:get_current_section()
+    if section then
+      local prev_section = self.buffer.ui:get_current_section(section.position.row_start - 1)
+      if prev_section then
+        self.buffer:move_cursor(prev_section.position.row_start + 1)
+      end
+    end
+  end
+end
+
 return M

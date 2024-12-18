@@ -171,6 +171,8 @@ function M:open(kind)
         [mappings["TabOpen"]]                   = self:_action("n_tab_open"),
         [mappings["SplitOpen"]]                 = self:_action("n_split_open"),
         [mappings["VSplitOpen"]]                = self:_action("n_vertical_split_open"),
+        [mappings["NextSection"]]               = self:_action("n_next_section"),
+        [mappings["PreviousSection"]]           = self:_action("n_prev_section"),
         [popups.mapping_for("BisectPopup")]     = self:_action("n_bisect_popup"),
         [popups.mapping_for("BranchPopup")]     = self:_action("n_branch_popup"),
         [popups.mapping_for("CherryPickPopup")] = self:_action("n_cherry_pick_popup"),
