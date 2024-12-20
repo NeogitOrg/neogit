@@ -1487,6 +1487,8 @@ M.n_next_section = function(self)
     if section then
       local position = section.position.row_end + 2
       self.buffer:move_cursor(position)
+    else
+      self.buffer:move_cursor(self.buffer.ui:first_section().first + 1)
     end
   end
 end
@@ -1499,8 +1501,11 @@ M.n_prev_section = function(self)
       local prev_section = self.buffer.ui:get_current_section(section.position.row_start - 1)
       if prev_section then
         self.buffer:move_cursor(prev_section.position.row_start + 1)
+        return
       end
     end
+
+    self.buffer:win_exec("norm! gg")
   end
 end
 
