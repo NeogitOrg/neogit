@@ -68,6 +68,17 @@ function M.find(tbl, func)
   return nil
 end
 
+function M.group_by(tbl, key)
+  local result = {}
+  for _, item in ipairs(tbl) do
+    if not result[item[key]] then
+      result[item[key]] = {}
+    end
+    table.insert(result[item[key]], item)
+  end
+  return result
+end
+
 return setmetatable(M, {
   __call = function(_, tbl)
     return M.new(tbl)
