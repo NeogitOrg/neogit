@@ -335,6 +335,7 @@ function Buffer:show()
         style = "minimal",
         focusable = true,
         border = "rounded",
+        zindex = 48,
       })
 
       api.nvim_win_set_cursor(content_window, { 1, 0 })
@@ -367,6 +368,7 @@ function Buffer:show()
         row = vim.o.lines - 2,
         style = "minimal",
         border = { "─", "─", "─", "", "", "", "", "" },
+        zindex = 49,
         -- title = (" %s Actions "):format(title),
         -- title_pos = "center",
       })
