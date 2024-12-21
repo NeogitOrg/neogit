@@ -208,6 +208,10 @@ end
 ---| "YankSelected"
 ---| "OpenOrScrollUp"
 ---| "OpenOrScrollDown"
+---| "PeekUp"
+---| "PeekDown"
+---| "NextSection"
+---| "PreviousSection"
 ---| false
 ---| fun()
 
