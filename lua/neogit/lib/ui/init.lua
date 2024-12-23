@@ -182,17 +182,23 @@ function Ui:item_hunks(item, first_line, last_line, partial)
 
   if not item.folded and item.diff.hunks then
     for _, h in ipairs(item.diff.hunks) do
-      if h.first <= first_line and h.last >= last_line then
+      if h.first <= last_line and h.last >= first_line then
         local from, to
 
         if partial then
+          local cursor_offset = first_line - h.first
           local length = last_line - first_line
 
-          from = first_line - h.first
+          from = h.diff_from + cursor_offset
           to = from + length
         else
           from = h.diff_from + 1
           to = h.diff_to
+        end
+
+        local hunk_lines = {}
+        for i = from, to do
+          table.insert(hunk_lines, item.diff.lines[i])
         end
 
         -- local conflict = false
@@ -208,6 +214,7 @@ function Ui:item_hunks(item, first_line, last_line, partial)
           to = to,
           __index = h,
           hunk = h,
+          lines = hunk_lines,
           -- conflict = conflict,
         }
 
