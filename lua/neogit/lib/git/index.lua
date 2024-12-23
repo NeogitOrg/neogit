@@ -6,15 +6,19 @@ local util = require("neogit.lib.util")
 local M = {}
 
 ---Generates a patch that can be applied to index
+---@param item any
 ---@param hunk Hunk
----@param opts table|nil
+---@param from number
+---@param to number
+---@param reverse boolean|nil
 ---@return string
-function M.generate_patch(hunk, opts)
-  opts = opts or { reverse = false, cached = false, index = false }
-  local reverse = opts.reverse
+function M.generate_patch(item, hunk, from, to, reverse)
+  reverse = reverse or false
 
-  local from = opts.from or 1
-  local to = opts.to or (hunk.diff_to - hunk.diff_from)
+  if not from and not to then
+    from = hunk.diff_from + 1
+    to = hunk.diff_to
+  end
 
   assert(from <= to, string.format("from must be less than or equal to to %d %d", from, to))
   if from > to then
@@ -25,31 +29,35 @@ function M.generate_patch(hunk, opts)
   local len_start = hunk.index_len
   local len_offset = 0
 
-  for k, line in pairs(hunk.lines) do
-    local operand, l = line:match("^([+ -])(.*)")
+  -- + 1 skips the hunk header, since we construct that manually afterwards
+  -- TODO: could use `hunk.lines` instead if this is only called with the `SelectedHunk` type
+  for k = hunk.diff_from + 1, hunk.diff_to do
+    local v = item.diff.lines[k]
+    local operand, line = v:match("^([+ -])(.*)")
+
     if operand == "+" or operand == "-" then
       if from <= k and k <= to then
         len_offset = len_offset + (operand == "+" and 1 or -1)
-        table.insert(diff_content, line)
+        table.insert(diff_content, v)
       else
         -- If we want to apply the patch normally, we need to include every `-` line we skip as a normal line,
         -- since we want to keep that line.
         if not reverse then
           if operand == "-" then
-            table.insert(diff_content, " " .. l)
+            table.insert(diff_content, " " .. line)
           end
           -- If we want to apply the patch in reverse, we need to include every `+` line we skip as a normal line, since
           -- it's unchanged as far as the diff is concerned and should not be reversed.
           -- We also need to adapt the original line offset based on if we skip or not
         elseif reverse then
           if operand == "+" then
-            table.insert(diff_content, " " .. l)
+            table.insert(diff_content, " " .. line)
           end
           len_start = len_start + (operand == "-" and -1 or 1)
         end
       end
     else
-      table.insert(diff_content, line)
+      table.insert(diff_content, v)
     end
   end
 
@@ -60,7 +68,9 @@ function M.generate_patch(hunk, opts)
   )
 
   local worktree_root = git.repo.worktree_root
-  local path = Path:new(hunk.file):make_relative(worktree_root)
+
+  assert(item.absolute_path, "Item is not a path")
+  local path = Path:new(item.absolute_path):make_relative(worktree_root)
 
   table.insert(diff_content, 1, string.format("+++ b/%s", path))
   table.insert(diff_content, 1, string.format("--- a/%s", path))
