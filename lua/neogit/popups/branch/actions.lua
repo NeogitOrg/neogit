@@ -24,7 +24,12 @@ local function fetch_remote_branch(target)
 end
 
 local function checkout_branch(target, args)
-  git.branch.checkout(target, args)
+  local result = git.branch.checkout(target, args)
+  if result.code > 0 then
+    notification.error(table.concat(result.stderr, "\n"))
+    return
+  end
+
   fire_branch_event("NeogitBranchCheckout", { branch_name = target })
 
   if config.values.fetch_after_checkout then
