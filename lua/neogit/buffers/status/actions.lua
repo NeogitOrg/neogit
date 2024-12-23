@@ -786,12 +786,6 @@ M.n_discard = function(self)
       if section == "untracked" then
         message = "Discard hunk?"
         action = function()
-          local hunks =
-            self.buffer.ui:item_hunks(selection.item, selection.first_line, selection.last_line, false)
-
-          local patch = git.index.generate_patch(selection.item, hunks[1], hunks[1].from, hunks[1].to, true)
-
-          git.index.apply(patch, { reverse = true })
           git.index.apply(patch, { reverse = true })
         end
         refresh = { update_diffs = { "untracked:" .. selection.item.name } }
