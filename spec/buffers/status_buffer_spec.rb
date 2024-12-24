@@ -82,4 +82,146 @@ RSpec.describe "Status Buffer", :git, :nvim do
     # context "with tracked file" do
     # end
   end
+
+  describe "discarding section" do
+    context "with 'untracked'" do
+      before do
+        create_file "file_1", "hello world, 1"
+        create_file "file_2", "hello world, 2"
+        create_file "file_3", "hello world, 3"
+        nvim.refresh
+      end
+
+      it "can discard all untracked files" do
+        expect(git.status.untracked).not_to be_empty
+
+        nvim.move_to_line("Untracked files")
+        nvim.confirm(true)
+        nvim.keys("x")
+
+        expect(git.status.untracked).to be_empty
+      end
+    end
+
+    context "with 'unstaged'" do
+      before do
+        create_file "file_1", "hello world, 1"
+        create_file "file_2", "hello world, 2"
+        create_file "file_3", "hello world, 3"
+        git.add("file_1")
+        git.add("file_2")
+        git.add("file_3")
+        git.commit("added files")
+        create_file "file_1", "world, 1"
+        create_file "file_2", "world, 2"
+        create_file "file_3", "world, 3"
+
+        nvim.refresh
+      end
+
+      it "can discard all unstaged changes" do
+        expect(git.status.changed).not_to be_empty
+
+        nvim.move_to_line("Unstaged changes")
+        nvim.confirm(true)
+        nvim.keys("x")
+
+        expect(git.status.changed).to be_empty
+      end
+    end
+
+    context "with 'staged'" do
+      before do
+        create_file "file_1", "hello world, 1"
+        create_file "file_2", "hello world, 2"
+        create_file "file_3", "hello world, 3"
+        git.add("file_1")
+        git.add("file_2")
+        git.add("file_3")
+
+        nvim.refresh
+      end
+
+      it "can discard all staged changes" do
+        expect(git.status.added).not_to be_empty
+
+        nvim.move_to_line("Staged changes")
+        nvim.confirm(true)
+        nvim.keys("x")
+
+        expect(git.status.added).to be_empty
+      end
+    end
+  end
+
+  describe "discarding file" do
+    context "with 'untracked'" do
+      before do
+        create_file "file_1", "hello world, 1"
+        create_file "file_2", "hello world, 2"
+        nvim.refresh
+      end
+
+      it "can discard individual untracked files" do
+        nvim.move_to_line("file_1")
+        nvim.confirm(true)
+        nvim.keys("x")
+
+        expect(git.status.untracked.keys).to contain_exactly("file_2")
+
+        nvim.keys("x")
+        expect(git.status.untracked).to be_empty
+      end
+    end
+
+    context "with 'unstaged'" do
+      before do
+        create_file "file_1", "hello world, 1"
+        create_file "file_2", "hello world, 2"
+        git.add("file_1")
+        git.add("file_2")
+        git.commit("added files")
+        create_file "file_1", "world, 1"
+        create_file "file_2", "world, 2"
+
+        nvim.refresh
+      end
+
+      it "can discard individual unstaged changes" do
+        nvim.move_to_line("file_1")
+        nvim.confirm(true)
+        nvim.keys("x")
+
+        expect(git.status.changed.keys).to contain_exactly("file_2")
+
+        nvim.keys("x")
+        expect(git.status.changed).to be_empty
+      end
+    end
+
+    context "with 'staged'" do
+      before do
+        create_file "file_1", "hello world, 1"
+        create_file "file_2", "hello world, 2"
+        git.add("file_1")
+        git.add("file_2")
+
+        nvim.refresh
+      end
+
+      it "can discard all staged changes" do
+        nvim.move_to_line("file_1")
+        nvim.confirm(true)
+        nvim.keys("x")
+
+        expect(git.status.added.keys).to contain_exactly("file_2")
+
+        nvim.keys("x")
+        expect(git.status.changed).to be_empty
+      end
+    end
+  end
+
+  describe "discarding hunk" do
+  end
 end
