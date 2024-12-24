@@ -787,16 +787,11 @@ M.n_discard = function(self)
       local hunk =
         self.buffer.ui:item_hunks(selection.item, selection.first_line, selection.last_line, false)[1]
 
-      local patch = git.index.generate_patch(hunk, { from = hunk.from, to = hunk.to, reverse = true })
+      local patch = git.index.generate_patch(hunk, { reverse = true })
 
       if section == "untracked" then
         message = "Discard hunk?"
         action = function()
-          local hunks =
-            self.buffer.ui:item_hunks(selection.item, selection.first_line, selection.last_line, false)
-
-          local patch =
-            git.index.generate_patch(hunks[1], { from = hunks[1].from, to = hunks[1].to, reverse = true })
           git.index.apply(patch, { reverse = true })
         end
         refresh = { update_diffs = { "untracked:" .. selection.item.name } }
