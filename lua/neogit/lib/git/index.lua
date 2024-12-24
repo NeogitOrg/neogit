@@ -10,16 +10,14 @@ local M = {}
 ---@param opts table|nil
 ---@return string
 function M.generate_patch(hunk, opts)
-  opts = opts or { reverse = false, cached = false, index = false }
+  opts = opts or { reverse = false }
+
   local reverse = opts.reverse
 
   local from = opts.from or 1
   local to = opts.to or (hunk.diff_to - hunk.diff_from)
 
   assert(from <= to, string.format("from must be less than or equal to to %d %d", from, to))
-  if from > to then
-    from, to = to, from
-  end
 
   local diff_content = {}
   local len_start = hunk.index_len
