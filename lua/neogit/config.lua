@@ -321,6 +321,7 @@ end
 ---@field kind? WindowKind The default type of window neogit should open in
 ---@field disable_line_numbers? boolean Whether to disable line numbers
 ---@field disable_relative_line_numbers? boolean Whether to disable line numbers
+---@field enable_text_wrap? boolean Whether to soft wrap text
 ---@field console_timeout? integer Time in milliseconds after a console is created for long running commands
 ---@field auto_show_console? boolean Automatically show the console if a command takes longer than console_timeout
 ---@field auto_show_console_on? string Specify "output" (show always; default) or "error" if `auto_show_console` enabled
@@ -382,6 +383,7 @@ function M.get_default_values()
     initial_branch_name = "",
     disable_line_numbers = true,
     disable_relative_line_numbers = true,
+    enable_text_wrap = false,
     -- The time after which an output console is shown for slow running commands
     console_timeout = 2000,
     -- Automatically show console if a command takes more than console_timeout milliseconds
@@ -1122,6 +1124,7 @@ function M.validate_config()
     validate_kind(config.kind, "kind")
     validate_type(config.disable_line_numbers, "disable_line_numbers", "boolean")
     validate_type(config.disable_relative_line_numbers, "disable_relative_line_numbers", "boolean")
+    validate_type(config.enable_text_wrap, "enable_text_wrap", "boolean")
     validate_type(config.auto_show_console, "auto_show_console", "boolean")
     validate_type(config.auto_show_console_on, "auto_show_console_on", "string")
     validate_type(config.auto_close_console, "auto_close_console", "boolean")
