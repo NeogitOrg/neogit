@@ -20,3 +20,7 @@ gem "super_diff"
 gem "tmpdir"
 
 gem "lefthook", "~> 1.7"
+
+gem "async", "~> 2.21"
+
+gem "tty-spinner", "~> 0.9.3"
