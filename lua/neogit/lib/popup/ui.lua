@@ -76,11 +76,11 @@ end
 -- Determines the correct highlight group for an option based on it's state.
 ---@return string
 local function get_highlight_for_option(option)
-  if option.value ~= nil and option.value ~= "" then
+  if option.is_set then
     return "NeogitPopupOptionEnabled"
+  else
+    return "NeogitPopupOptionDisabled"
   end
-
-  return "NeogitPopupOptionDisabled"
 end
 
 -- Determines the correct highlight group for a config based on it's type and state.

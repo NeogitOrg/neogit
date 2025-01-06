@@ -106,19 +106,20 @@ function M.set(key, value)
 end
 
 ---Get option. If value isn't set, return provided default.
+---The returned boolean indicates if the default value was used or not
 ---@param key table
 ---@param default any
----@return any
+---@return any, boolean
 function M.get(key, default)
   if not M.enabled() then
-    return default
+    return default, false
   end
 
   local value = M.state[gen_key(key)]
   if value ~= nil then
-    return value
+    return value, true
   else
-    return default
+    return default, false
   end
 end
 

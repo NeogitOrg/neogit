@@ -698,13 +698,13 @@ M.n_discard = function(self)
             local choice =
               input.get_choice("Discard conflict by taking...", { values = choices, default = #choices })
 
-            if choice == "o" then
+            if choice == "ours" then
               git.cli.checkout.ours.files(selection.item.absolute_path).call { await = true }
               git.status.stage { selection.item.name }
-            elseif choice == "t" then
+            elseif choice == "theirs" then
               git.cli.checkout.theirs.files(selection.item.absolute_path).call { await = true }
               git.status.stage { selection.item.name }
-            elseif choice == "c" then
+            elseif choice == "conflict" then
               git.cli.checkout.merge.files(selection.item.absolute_path).call { await = true }
               git.status.stage { selection.item.name }
             end
@@ -729,13 +729,13 @@ M.n_discard = function(self)
             local choice =
               input.get_choice("Discard conflict by taking...", { values = choices, default = #choices })
 
-            if choice == "o" then
+            if choice == "ours" then
               git.cli.checkout.ours.files(selection.item.absolute_path).call { await = true }
               git.status.stage { selection.item.name }
-            elseif choice == "t" then
+            elseif choice == "theirs" then
               git.cli.checkout.theirs.files(selection.item.absolute_path).call { await = true }
               git.status.stage { selection.item.name }
-            elseif choice == "c" then
+            elseif choice == "conflict" then
               git.cli.checkout.merge.files(selection.item.absolute_path).call { await = true }
               git.status.stage { selection.item.name }
             end

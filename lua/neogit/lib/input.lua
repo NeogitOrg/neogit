@@ -26,21 +26,30 @@ end
 
 ---@class UserChoiceOptions
 ---@field values table List of choices prefixed with '&'
----@field default integer Default choice to select
+---@field default? integer Default choice to select
 
 --- Provides the user with choices
 ---@param msg string Prompt to use for the choices
 ---@param options UserChoiceOptions
 ---@return string First letter of the selected choice
 function M.get_choice(msg, options)
-  local choice = vim.fn.confirm(msg, table.concat(options.values, "\n"), options.default)
-  vim.cmd("redraw")
+  -- vim.cmd("echo ''")
+  local choice = vim.fn.confirm(
+    msg,
+    table.concat(options.values, "\n"),
+    options.default
+  )
 
   if choice == 0 then -- User cancelled
     choice = options.default
   end
 
-  return options.values[choice]:match("&(.)")
+  local value = options.values[choice]
+  if value then
+    return value:gsub("&", "")
+  else
+    return ""
+  end
 end
 
 ---@class GetUserInputOpts

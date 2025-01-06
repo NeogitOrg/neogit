@@ -73,9 +73,9 @@ local function commit_special(popup, method, opts)
       default = 3,
     })
 
-    if choice == "c" then
+    if vim.startswith(choice, "create") then
       opts.rebase = false
-    elseif choice == "s" then
+    elseif vim.startswith(choice, "select") then
       commit = CommitSelectViewBuffer.new(git.log.list(), git.remote.list()):open_async()[1]
     else
       return
@@ -200,7 +200,7 @@ function M.absorb(popup)
       git.remote.list(),
       "Select a base commit for the absorb stack with <cr>, or <esc> to abort"
     )
-      :open_async()[1]
+    :open_async()[1]
   if not commit then
     return
   end

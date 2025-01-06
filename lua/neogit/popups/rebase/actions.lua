@@ -75,11 +75,12 @@ function M.interactively(popup)
       })
 
       -- selene: allow(empty_if)
-      if choice == "c" then
+      if choice == "continue" then
         -- no-op
-      elseif choice == "s" then
+      elseif choice == "select other" then
         popup.state.env.commit = nil
         M.interactively(popup)
+        -- return?
       else
         return
       end
@@ -135,10 +136,10 @@ function M.subset(popup)
     start = popup.state.env.commit
   else
     start = CommitSelectViewBuffer.new(
-      git.log.list { "HEAD" },
-      git.remote.list(),
-      "Select a commit with <cr> to rebase it and commits above it onto " .. newbase .. ", or <esc> to abort"
-    )
+        git.log.list { "HEAD" },
+        git.remote.list(),
+        "Select a commit with <cr> to rebase it and commits above it onto " .. newbase .. ", or <esc> to abort"
+      )
       :open_async()[1]
   end
 

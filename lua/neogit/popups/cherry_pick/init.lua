@@ -15,7 +15,7 @@ function M.create(env)
     })
     :option_if(not in_progress, "s", "strategy", "", "Strategy", {
       key_prefix = "=",
-      choices = { "octopus", "ours", "resolve", "subtree", "recursive" },
+      choices = { "o&ctopus", "&ours", "&resolve", "&subtree", "r&ecursive" },
     })
     :switch_if(not in_progress, "F", "ff", "Attempt fast-forward", {
       enabled = true,
@@ -30,6 +30,7 @@ function M.create(env)
     :switch_if(not in_progress, "s", "signoff", "Add Signed-off-by lines")
     :option_if(not in_progress, "S", "gpg-sign", "", "Sign using gpg", {
       key_prefix = "-",
+      allow_blank = true
     })
     :group_heading_if(not in_progress, "Apply here")
     :action_if(not in_progress, "A", "Pick", actions.pick)

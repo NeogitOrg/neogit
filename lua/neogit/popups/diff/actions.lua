@@ -47,9 +47,9 @@ function M.range(popup)
   local choice = input.get_choice("Select range", { values = choices, default = #choices })
 
   popup:close()
-  if choice == "1" then
+  if vim.startswith(choice, "1") then
     diffview.open("range", range_from .. ".." .. range_to)
-  elseif choice == "2" then
+  elseif vim.startswith(choice, "2") then
     diffview.open("range", range_from .. "..." .. range_to)
   end
 end

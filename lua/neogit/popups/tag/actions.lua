@@ -107,9 +107,9 @@ function M.prune(_)
       input.get_choice(#l_tags .. " tags can be removed locally", { values = choices, default = #choices })
 
     -- selene: allow(empty_if)
-    if choice == "d" then
+    if choice == "delete all" then
       -- No-op
-    elseif choice == "r" then
+    elseif choice == "review each" then
       l_tags = utils.filter(l_tags, function(tag)
         vim.cmd.redraw()
         return input.get_permission("Delete local tag: " .. tag)
@@ -126,9 +126,9 @@ function M.prune(_)
     )
 
     -- selene: allow(empty_if)
-    if choice == "d" then
+    if choice == "delete all" then
       -- no-op
-    elseif choice == "r" then
+    elseif choice == "review each" then
       r_tags = utils.filter(r_tags, function(tag)
         vim.cmd.redraw()
         return input.get_permission("Delete remote tag: " .. tag)

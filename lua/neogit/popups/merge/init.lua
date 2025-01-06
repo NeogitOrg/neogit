@@ -12,10 +12,14 @@ function M.create(env)
     :group_heading_if(in_merge, "Actions")
     :action_if(in_merge, "m", "Commit merge", actions.commit)
     :action_if(in_merge, "a", "Abort merge", actions.abort)
-    :switch_if(not in_merge, "f", "ff-only", "Fast-forward only", { incompatible = { "no-ff" } })
-    :switch_if(not in_merge, "n", "no-ff", "No fast-forward", { incompatible = { "ff-only" } })
+    :switch_if(not in_merge, "f", "ff-only", "Fast-forward only", {
+      incompatible = { "no-ff" }
+    })
+    :switch_if(not in_merge, "n", "no-ff", "No fast-forward", {
+      incompatible = { "ff-only" }
+    })
     :option_if(not in_merge, "s", "strategy", "", "Strategy", {
-      choices = { "octopus", "ours", "resolve", "subtree", "recursive" },
+      choices = { "o&ctopus", "&ours", "&resolve", "&subtree", "r&ecursive" },
       key_prefix = "-",
     })
     :option_if(not in_merge, "X", "strategy-option", "", "Strategy Option", {
@@ -41,7 +45,10 @@ function M.create(env)
       cli_prefix = "-",
       key_prefix = "-",
     })
-    :option_if(not in_merge, "S", "gpg-sign", "", "Sign using gpg", { key_prefix = "-" })
+    :option_if(not in_merge, "S", "gpg-sign", "", "Sign using gpg", {
+      key_prefix = "-",
+      allow_blank = true
+    })
     :group_heading_if(not in_merge, "Actions")
     :action_if(not in_merge, "m", "Merge", actions.merge)
     :action_if(not in_merge, "e", "Merge and edit message", actions.merge_edit)

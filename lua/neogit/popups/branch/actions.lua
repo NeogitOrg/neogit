@@ -320,9 +320,9 @@ function M.delete_branch(popup)
       { values = choices, default = #choices }
     )
 
-    if choice == "d" then
+    if vim.startswith(choice, "detach") then
       git.cli.checkout.detach.call()
-    elseif choice == "c" then
+    elseif vim.startswith(choice, "checkout") then
       assert(upstream, "there should be an upstream by this point")
       git.cli.checkout.branch(upstream).call()
     else

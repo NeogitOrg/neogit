@@ -35,6 +35,8 @@ local M = {}
 ---@field separator string
 ---@field type string
 ---@field value string?
+---@field allow_blank boolean
+---@field is_set boolean
 
 ---@class PopupSwitch
 ---@field cli string
@@ -101,6 +103,7 @@ local M = {}
 ---@field separator? string Defaults to `=`, separating the key from the value. Some CLI options are weird.
 ---@field setup? fun(PopupBuilder) function called before rendering
 ---@field fn? fun() function called - like an action. Used to launch a popup from a popup.
+---@field allow_blank? boolean allow the user to enable the flag without any value
 
 ---@class PopupConfigOpts
 ---@field options? PopupConfigOption[]
@@ -306,9 +309,19 @@ function M:option(key, cli, value, description, opts)
     opts.incompatible = {}
   end
 
+  if opts.allow_blank == nil then
+    opts.allow_blank = false
+  end
+
   if opts.setup then
     opts.setup(self)
   end
+
+  if opts.allow_blank == true and type(opts.default) == "string" then
+    error("Cannot set both #default and #allow_blank")
+  end
+
+  local value, is_set = state.get({ self.state.name, cli }, value)
 
   ---@type PopupOption
   table.insert(self.state.args, {
@@ -317,7 +330,8 @@ function M:option(key, cli, value, description, opts)
     key = key,
     key_prefix = opts.key_prefix,
     cli = cli,
-    value = state.get({ self.state.name, cli }, value),
+    value = value,
+    is_set = is_set,
     description = description,
     cli_prefix = opts.cli_prefix,
     choices = opts.choices,
@@ -326,6 +340,7 @@ function M:option(key, cli, value, description, opts)
     dependent = util.build_reverse_lookup(opts.dependent),
     incompatible = util.build_reverse_lookup(opts.incompatible),
     fn = opts.fn,
+    allow_blank = opts.allow_blank,
   })
 
   return self

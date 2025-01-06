@@ -165,26 +165,21 @@ end
 ---@param value? string
 ---@return nil
 function M:set_option(option, value)
-  -- Prompt user to select from predetermined choices
+  if option.is_set then
+    option.is_set = false
+    option.value = ""
+    state.set({ self.state.name, option.cli }, option.value)
+    return
+  end
+
   if value then
     option.value = value
   elseif option.choices then
-    if not option.value or option.value == "" then
-      local eventignore = vim.o.eventignore
-      vim.o.eventignore = "WinLeave"
-      local choice = FuzzyFinderBuffer.new(option.choices):open_async {
-        prompt_prefix = option.description,
-      }
-      vim.o.eventignore = eventignore
-
-      if choice then
-        option.value = choice
-      else
-        option.value = ""
-      end
-    else
-      option.value = ""
-    end
+    option.value = input.get_choice(
+      -- option.cli_prefix .. option.cli .. "=",
+      "",
+      { values = option.choices }
+    )
   elseif option.fn then
     option.value = option.fn(self, option)
   else
@@ -192,15 +187,25 @@ function M:set_option(option, value)
       separator = "=",
       default = option.value,
       cancel = option.value,
-    })
+    }) or ""
 
-    -- If the option specifies a default value, and the user set the value to be empty, defer to default value.
-    -- This is handy to prevent the user from accidentally loading thousands of log entries by accident.
-    if option.default and input == "" then
+    if option.allow_blank and input == "" then
+      option.value = ""
+    elseif option.default and input == "" then
+      -- If the option specifies a default value, and the user set the value to be empty, defer to default value.
+      -- This is handy to prevent the user from accidentally loading thousands of log entries by accident.
       option.value = tostring(option.default)
     else
       option.value = input
     end
+  end
+
+  if option.value ~= "" then
+    option.is_set = true
+  end
+
+  if option.value == "" and option.allow_blank then
+    option.is_set = true
   end
 
   state.set({ self.state.name, option.cli }, option.value)
@@ -445,6 +450,8 @@ function M:show()
           buf:set_window_option("winfixheight", true)
         end
       end)
+
+      vim.cmd("echo '' | redraw") -- Clear any messages
     end,
     render = function()
       return ui.Popup(self.state)

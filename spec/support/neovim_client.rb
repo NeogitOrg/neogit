@@ -30,7 +30,6 @@ class NeovimClient # rubocop:disable Metrics/ClassLength
       require('neogit').open()
     LUA
 
-    sleep(0.1) # Seems to be about right
     assert_alive!
 
     @lines = evaluate "&lines"
