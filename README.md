@@ -90,6 +90,8 @@ neogit.setup {
   -- Show relative date by default. When set, use `strftime` to display dates
   commit_date_format = nil,
   log_date_format = nil,
+  -- Show message with spinning animation when a git command is running.
+  process_spinner = false,
   -- Used to generate URL's for branch popup action "pull request".
   git_services = {
     ["github.com"] = "https://github.com/${owner}/${repository}/compare/${branch_name}?expand=1",

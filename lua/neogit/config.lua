@@ -359,7 +359,7 @@ function M.get_default_values()
     graph_style = "ascii",
     commit_date_format = nil,
     log_date_format = nil,
-    process_spinner = vim.opt.cmdheight:get() > 0,
+    process_spinner = false,
     filewatcher = {
       enabled = true,
     },
