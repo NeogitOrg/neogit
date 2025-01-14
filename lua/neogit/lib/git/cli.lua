@@ -981,7 +981,7 @@ local configurations = {
 ---@param dir string
 ---@return string Absolute path of current worktree
 local function worktree_root(dir)
-  local cmd = { "git", "-C", dir, "rev-parse", "--show-toplevel", "--path-format=absolute" }
+  local cmd = { "git", "-C", dir, "rev-parse", "--show-toplevel" }
   local result = vim.system(cmd, { text = true }):wait()
 
   return Path:new(vim.trim(result.stdout)):absolute()
@@ -990,7 +990,7 @@ end
 ---@param dir string
 ---@return string Absolute path of `.git/` directory
 local function git_dir(dir)
-  local cmd = { "git", "-C", dir, "rev-parse", "--git-common-dir", "--path-format=absolute" }
+  local cmd = { "git", "-C", dir, "rev-parse", "--git-common-dir" }
   local result = vim.system(cmd, { text = true }):wait()
 
   return Path:new(vim.trim(result.stdout)):absolute()
@@ -999,7 +999,7 @@ end
 ---@param dir string
 ---@return string Absolute path of `.git/` directory
 local function worktree_git_dir(dir)
-  local cmd = { "git", "-C", dir, "rev-parse", "--git-dir", "--path-format=absolute" }
+  local cmd = { "git", "-C", dir, "rev-parse", "--git-dir" }
   local result = vim.system(cmd, { text = true }):wait()
 
   return Path:new(vim.trim(result.stdout)):absolute()
