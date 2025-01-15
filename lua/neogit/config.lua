@@ -102,6 +102,16 @@ end
 ---@class NeogitConfigPopup Popup window options
 ---@field kind WindowKind The type of window that should be opened
 
+---@class NeogitConfigFloating
+---@field relative? string
+---@field width? number
+---@field height? number
+---@field col? number
+---@field row? number
+---@field style? string
+---@field focusable? boolean
+---@field border? string
+
 ---@alias StagedDiffSplitKind
 ---| "split" Open in a split
 ---| "vsplit" Open in a vertical split
@@ -331,6 +341,7 @@ end
 ---@field sort_branches? string Value used for `--sort` for the `git branch` command
 ---@field initial_branch_name? string Default for new branch name prompts
 ---@field kind? WindowKind The default type of window neogit should open in
+---@field floating? NeogitConfigFloating The floating window style
 ---@field disable_line_numbers? boolean Whether to disable line numbers
 ---@field disable_relative_line_numbers? boolean Whether to disable line numbers
 ---@field console_timeout? integer Time in milliseconds after a console is created for long running commands
@@ -392,6 +403,13 @@ function M.get_default_values()
     fetch_after_checkout = false,
     sort_branches = "-committerdate",
     kind = "tab",
+    floating = {
+      relative = "editor",
+      width = 0.5,
+      height = 0.5,
+      style = "minimal",
+      border = "rounded",
+    },
     initial_branch_name = "",
     disable_line_numbers = true,
     disable_relative_line_numbers = true,

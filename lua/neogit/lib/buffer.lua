@@ -317,25 +317,20 @@ function Buffer:show()
     elseif self.kind == "vsplit_left" then
       win = api.nvim_open_win(self.handle, true, { split = "left", vertical = true })
     elseif self.kind == "floating" then
+      local floating = require("neogit.config").values.floating
+
       -- Creates the border window
       local vim_height = vim.o.lines
       local vim_width = vim.o.columns
 
-      local width = math.floor(vim_width * 0.8) + 3
-      local height = math.floor(vim_height * 0.7)
-      local col = vim_width * 0.1 - 1
-      local row = vim_height * 0.15
+      floating.width = floating.width > 1 and floating.width or math.floor(vim_width * floating.width)
+      floating.height = floating.height > 1 and floating.height or math.floor(vim_height * floating.height)
+      floating.col = (vim_width - floating.width) / 2
+      -- floating.row = (vim_height - floating.height) / 2
+      floating.row = vim_height * 0.15
+      floating.focusable = true
 
-      local content_window = api.nvim_open_win(self.handle, true, {
-        relative = "editor",
-        width = width,
-        height = height,
-        col = col,
-        row = row,
-        style = "minimal",
-        focusable = true,
-        border = "rounded",
-      })
+      local content_window = api.nvim_open_win(self.handle, true, floating)
 
       api.nvim_win_set_cursor(content_window, { 1, 0 })
       win = content_window
