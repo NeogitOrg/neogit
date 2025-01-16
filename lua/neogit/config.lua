@@ -109,7 +109,6 @@ end
 ---@field col? number
 ---@field row? number
 ---@field style? string
----@field focusable? boolean
 ---@field border? string
 
 ---@alias StagedDiffSplitKind
@@ -1154,6 +1153,13 @@ function M.validate_config()
     validate_type(config.notification_icon, "notification_icon", "string")
     validate_type(config.console_timeout, "console_timeout", "number")
     validate_kind(config.kind, "kind")
+    if validate_type(config.floating, "floating", "table") then
+      validate_type(config.floating.relative, "relative", "string")
+      validate_type(config.floating.width, "width", "number")
+      validate_type(config.floating.height, "height", "number")
+      validate_type(config.floating.style, "style", "string")
+      validate_type(config.floating.border, "border", "string")
+    end
     validate_type(config.disable_line_numbers, "disable_line_numbers", "boolean")
     validate_type(config.disable_relative_line_numbers, "disable_relative_line_numbers", "boolean")
     validate_type(config.auto_show_console, "auto_show_console", "boolean")
