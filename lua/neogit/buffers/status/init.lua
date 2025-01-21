@@ -103,6 +103,7 @@ function M:open(kind)
     kind = kind or config.values.kind or "tab",
     disable_line_numbers = config.values.disable_line_numbers,
     disable_relative_line_numbers = config.values.disable_relative_line_numbers,
+    enable_text_wrap = config.values.enable_text_wrap,
     foldmarkers = not config.values.disable_signs,
     active_item_highlight = true,
     on_detach = function()
