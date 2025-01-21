@@ -346,7 +346,8 @@ function Buffer:show()
         width = vim.o.columns,
         height = math.floor(vim.o.lines * 0.3),
         col = 0,
-        row = vim.o.lines - 2,
+        -- buffer_height - cmdline - statusline
+        row = vim.o.lines - vim.o.cmdheight - (vim.o.laststatus > 0 and 1 or 0),
         style = "minimal",
         focusable = true,
         border = { "─", "─", "─", "", "", "", "", "" },
@@ -364,7 +365,8 @@ function Buffer:show()
         width = vim.o.columns,
         height = math.floor(vim.o.lines * 0.3),
         col = 0,
-        row = vim.o.lines - 2,
+        -- buffer_height - cmdline - statusline
+        row = vim.o.lines - vim.o.cmdheight - (vim.o.laststatus > 0 and 1 or 0),
         style = "minimal",
         border = { "─", "─", "─", "", "", "", "", "" },
         -- title = (" %s Actions "):format(title),
