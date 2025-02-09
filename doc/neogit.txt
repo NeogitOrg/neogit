@@ -263,6 +263,11 @@ to Neovim users.
         -- is also selected then telescope is used instead
         -- Requires you to have `echasnovski/mini.pick` installed.
         mini_pick = nil,
+
+        -- If enabled, uses snacks.picker for menu selection. If the telescope integration
+        -- is also selected then telescope is used instead
+        -- Requires you to have `folke/snacks.nvim` installed.
+        snacks = nil,
     },
     sections = {
         -- Reverting/Cherry Picking
