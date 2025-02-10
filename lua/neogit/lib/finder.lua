@@ -328,7 +328,8 @@ function Finder:find(on_select)
     local mini_pick = require("mini.pick")
     mini_pick.start { source = { items = self.entries, choose = on_select } }
   elseif config.check_integration("snacks") then
-    Snacks.picker.pick(nil, {
+    local snacks_picker = require("snacks.picker")
+    snacks_picker.pick(nil, {
       title = "Neogit",
       prompt = string.format("%s > ", self.opts.prompt_prefix),
       items = entries_to_snack_items(self.entries),
