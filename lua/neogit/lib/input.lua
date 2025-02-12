@@ -1,5 +1,14 @@
 local M = {}
 
+local async = require("plenary.async")
+local input = async.wrap(function(prompt, default, completion, callback)
+  vim.ui.input({
+    prompt = prompt,
+    default = default,
+    completion = completion,
+  }, callback)
+end, 4)
+
 --- Provides the user with a confirmation
 ---@param msg string Prompt to use for confirmation
 ---@param options table|nil
@@ -57,32 +66,20 @@ end
 function M.get_user_input(prompt, opts)
   opts = vim.tbl_extend("keep", opts or {}, { strip_spaces = false, separator = ": " })
 
-  vim.fn.inputsave()
-
   if opts.prepend then
     vim.defer_fn(function()
       vim.api.nvim_input(opts.prepend)
     end, 10)
   end
 
-  local status, result = pcall(vim.fn.input, {
-    prompt = ("%s%s"):format(prompt, opts.separator),
-    default = opts.default,
-    completion = opts.completion,
-    cancelreturn = opts.cancel,
-  })
+  local result = input(("%s%s"):format(prompt, opts.separator), opts.default, opts.completion)
 
-  vim.fn.inputrestore()
-  if not status then
+  if result == "" or result == nil then
     return nil
   end
 
   if opts.strip_spaces then
     result, _ = result:gsub("%s", "-")
-  end
-
-  if result == "" then
-    return nil
   end
 
   return result
