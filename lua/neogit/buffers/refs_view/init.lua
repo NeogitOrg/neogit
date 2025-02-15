@@ -50,13 +50,20 @@ function M.is_open()
   return (M.instance and M.instance.buffer and M.instance.buffer:is_visible()) == true
 end
 
+function M._do_delete(ref)
+  if not ref.remote then
+    git.branch.delete(ref.unambiguous_name)
+  else
+    git.cli.push.remote(ref.remote).delete.to(ref.name).call()
+  end
+end
+
 function M.delete_branch(ref)
-  local name = ref and ref.unambiguous_name
-  if name then
+  if ref then
     local input = require("neogit.lib.input")
-    local message = ("Delete branch: '%s'?"):format(name)
+    local message = ("Delete branch: '%s'?"):format(ref.unambiguous_name)
     if input.get_permission(message) then
-      git.branch.delete(name)
+      M._do_delete(ref)
     end
   end
 end
@@ -64,15 +71,11 @@ end
 function M.delete_branches(refs)
   if #refs > 0 then
     local input = require("neogit.lib.input")
-    local names = {}
-    for _, ref in ipairs(refs) do
-      if ref.unambiguous_name then
-        table.insert(names, ref.unambiguous_name)
-      end
-    end
-    local message = ("Delete %s branch(es)?"):format(#names)
+    local message = ("Delete %s branch(es)?"):format(#refs)
     if input.get_permission(message) then
-      git.branch.delete_many(names)
+      for _, ref in ipairs(refs) do
+        M._do_delete(ref)
+      end
     end
   end
 end
