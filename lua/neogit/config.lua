@@ -61,6 +61,11 @@ end
 function M.get_reversed_commit_editor_maps_I()
   return get_reversed_maps("commit_editor_I")
 end
+---
+---@return table<string, string[]>
+function M.get_reversed_refs_view_maps()
+  return get_reversed_maps("refs_view")
+end
 
 ---@param set string
 ---@return table<string, string[]>
@@ -278,6 +283,11 @@ end
 ---| "Abort"
 ---| false
 ---| fun()
+---
+---@alias NeogitConfigMappingsRefsView
+---| "DeleteBranch"
+---| false
+---| fun()
 
 ---@alias NeogitGraphStyle
 ---| "ascii"
@@ -300,6 +310,7 @@ end
 ---@field rebase_editor_I? { [string]: NeogitConfigMappingsRebaseEditor_I } A dictionary that uses Rebase editor commands to set a single keybind
 ---@field commit_editor? { [string]: NeogitConfigMappingsCommitEditor } A dictionary that uses Commit editor commands to set a single keybind
 ---@field commit_editor_I? { [string]: NeogitConfigMappingsCommitEditor_I } A dictionary that uses Commit editor commands to set a single keybind
+---@field refs_view? { [string]: NeogitConfigMappingsRefsView } A dictionary that uses Refs view editor commands to set a single keybind
 
 ---@class NeogitConfig Neogit configuration settings
 ---@field filewatcher? NeogitFilewatcherConfig Values for filewatcher
@@ -582,6 +593,9 @@ function M.get_default_values()
         ["<ScrollWheelRight>"] = "NOP",
         ["<LeftMouse>"] = "MouseClick",
         ["<2-LeftMouse>"] = "NOP",
+      },
+      refs_view = {
+        ["x"] = "DeleteBranch",
       },
       popup = {
         ["?"] = "HelpPopup",
@@ -1211,7 +1225,8 @@ function M.setup(opts)
   end
 
   if opts.use_default_keymaps == false then
-    M.values.mappings = { status = {}, popup = {}, finder = {}, commit_editor = {}, rebase_editor = {} }
+    M.values.mappings =
+      { status = {}, popup = {}, finder = {}, commit_editor = {}, rebase_editor = {}, refs_view = {} }
   else
     -- Clear our any "false" user mappings from defaults
     for section, maps in pairs(opts.mappings or {}) do
