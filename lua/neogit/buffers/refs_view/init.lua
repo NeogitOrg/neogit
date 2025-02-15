@@ -141,6 +141,7 @@ function M:open()
         end),
         [mapping["DeleteBranch"]] = function()
           M.delete_branches(self.buffer.ui:get_refs_under_cursor())
+          self:redraw()
         end,
       },
       n = {
@@ -157,6 +158,7 @@ function M:open()
         end),
         [mapping["DeleteBranch"]] = function()
           M.delete_branch(self.buffer.ui:get_ref_under_cursor())
+          self:redraw()
         end,
         [popups.mapping_for("CommitPopup")] = popups.open("commit", function(p)
           p { commit = self.buffer.ui:get_commits_in_selection()[1] }
