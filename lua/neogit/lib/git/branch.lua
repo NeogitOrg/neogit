@@ -183,38 +183,6 @@ function M.delete(name)
 
   return result and result.code == 0 or false
 end
----
----@param names string[]
----@return boolean
-function M.delete_many(names)
-  local input = require("neogit.lib.input")
-
-  local unmerged = 0
-  for _, name in ipairs(names) do
-    if M.is_unmerged(name) then
-      unmerged = unmerged + 1
-    end
-  end
-
-  if unmerged > 0 then
-    local message = ("%d branch(es) contain unmerged commits! Are you sure you want to delete them?"):format(
-      unmerged
-    )
-    if not input.get_permission(message) then
-      return false
-    end
-  end
-
-  local result
-  for _, name in ipairs(names) do
-    local result_single = git.cli.branch.delete.force.name(name).call { await = true }
-    if result_single.code ~= 0 then
-      return result and result.code == 0 or false
-    end
-  end
-
-  return true
-end
 
 ---Returns current branch name, or nil if detached HEAD
 ---@return string|nil
