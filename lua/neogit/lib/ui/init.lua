@@ -349,6 +349,26 @@ function Ui:get_ref_under_cursor()
 
   return component and component.options.ref
 end
+---
+---@return ParsedRef[]
+function Ui:get_refs_under_cursor()
+  local range = { vim.fn.getpos("v")[2], vim.fn.getpos(".")[2] }
+  table.sort(range)
+  local start, stop = unpack(range)
+
+  local refs = {}
+  for i = start, stop do
+    local component = self:_find_component_by_index(i, function(node)
+      return node.options.ref ~= nil
+    end)
+
+    if component then
+      table.insert(refs, 1, component.options.ref)
+    end
+  end
+
+  return util.deduplicate(refs)
+end
 
 ---@return string|nil
 function Ui:get_yankable_under_cursor()

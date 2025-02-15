@@ -61,6 +61,22 @@ function M.delete_branch(ref)
   end
 end
 
+function M.delete_branches(refs)
+  if #refs > 0 then
+    local input = require("neogit.lib.input")
+    local names = {}
+    for _, ref in ipairs(refs) do
+      if ref.unambiguous_name then
+        table.insert(names, ref.unambiguous_name)
+      end
+    end
+    local message = ("Delete %s branch(es)?"):format(#names)
+    if input.get_permission(message) then
+      git.branch.delete_many(names)
+    end
+  end
+end
+
 --- Opens the RefsViewBuffer
 function M:open()
   if M.is_open() then
@@ -120,6 +136,9 @@ function M:open()
             item = { name = items },
           }
         end),
+        [mapping["DeleteBranch"]] = function()
+          M.delete_branches(self.buffer.ui:get_refs_under_cursor())
+        end,
       },
       n = {
         [popups.mapping_for("CherryPickPopup")] = popups.open("cherry_pick", function(p)
