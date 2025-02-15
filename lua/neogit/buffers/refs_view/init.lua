@@ -3,6 +3,7 @@ local config = require("neogit.config")
 local ui = require("neogit.buffers.refs_view.ui")
 local popups = require("neogit.popups")
 local status_maps = require("neogit.config").get_reversed_status_maps()
+local mapping = config.get_reversed_refs_view_maps()
 local CommitViewBuffer = require("neogit.buffers.commit_view")
 local Watcher = require("neogit.watcher")
 local logger = require("neogit.logger")
@@ -47,6 +48,17 @@ end
 ---@return boolean
 function M.is_open()
   return (M.instance and M.instance.buffer and M.instance.buffer:is_visible()) == true
+end
+
+function M.delete_branch(ref)
+  local name = ref and ref.unambiguous_name
+  if name then
+    local input = require("neogit.lib.input")
+    local message = ("Delete branch: '%s'?"):format(name)
+    if input.get_permission(message) then
+      git.branch.delete(name)
+    end
+  end
 end
 
 --- Opens the RefsViewBuffer
@@ -121,6 +133,9 @@ function M:open()
             suggested_branch_name = ref and ref.name,
           }
         end),
+        [mapping["DeleteBranch"]] = function()
+          M.delete_branch(self.buffer.ui:get_ref_under_cursor())
+        end,
         [popups.mapping_for("CommitPopup")] = popups.open("commit", function(p)
           p { commit = self.buffer.ui:get_commits_in_selection()[1] }
         end),
