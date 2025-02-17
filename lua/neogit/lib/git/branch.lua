@@ -424,7 +424,7 @@ local function update_branch_information(state)
 
     local pushRemote = git.branch.pushRemote_ref()
     if pushRemote and not status.detached then
-      local remote, branch = unpack(vim.split(pushRemote, "/"))
+      local remote, branch = pushRemote:match("([^/]+)/(.+)")
       state.pushRemote.ref = pushRemote
       state.pushRemote.remote = remote
       state.pushRemote.branch = branch
