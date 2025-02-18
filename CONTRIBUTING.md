@@ -101,7 +101,9 @@ See [the test documentation for more details](./tests/README.md).
 Additionally, linting is enforced using `selene` to catch common errors, most of which are also caught by
 `lua-language-server`.
 
-```sh make lint ```
+```sh
+make lint
+```
 
 ### Formatting
 
