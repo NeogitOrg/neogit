@@ -363,6 +363,18 @@ function M:config_heading(heading)
   return self
 end
 
+-- adds a heading text with the config section of the popup
+---@param cond boolean
+---@param heading string Heading to render
+---@return self
+function M:config_heading_if(cond, heading)
+  if cond then
+    table.insert(self.state.config, { heading = heading })
+  end
+
+  return self
+end
+
 -- Adds config to the popup
 ---@param key string Key for user to use that engages config
 ---@param name string Name of config

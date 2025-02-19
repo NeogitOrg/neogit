@@ -11,10 +11,12 @@ function M.create(env)
   local show_config = current_branch ~= ""
   local pull_rebase_entry = git.config.get("pull.rebase")
   local pull_rebase = pull_rebase_entry:is_set() and pull_rebase_entry.value or "false"
+  local has_upstream = git.branch.upstream() ~= nil
 
   local p = popup
     .builder()
     :name("NeogitBranchPopup")
+    :config_heading_if(show_config, "Configure branch")
     :config_if(show_config, "d", "branch." .. current_branch .. ".description", {
       fn = config_actions.description_config(current_branch),
     })
@@ -57,7 +59,7 @@ function M.create(env)
     :action("m", "rename", actions.rename_branch)
     :action("X", "reset", actions.reset_branch)
     :action("D", "delete", actions.delete_branch)
-    :action_if(git.branch.upstream() ~= nil, "o", "pull request", actions.open_pull_request)
+    :action_if(has_upstream, "o", "pull request", actions.open_pull_request)
     :env(env)
     :build()
 
