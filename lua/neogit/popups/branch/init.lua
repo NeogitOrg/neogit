@@ -15,7 +15,6 @@ function M.create(env)
   local p = popup
     .builder()
     :name("NeogitBranchPopup")
-    :switch("r", "recurse-submodules", "Recurse submodules when checking out an existing branch")
     :config_if(show_config, "d", "branch." .. current_branch .. ".description", {
       fn = config_actions.description_config(current_branch),
     })
@@ -40,6 +39,7 @@ function M.create(env)
     :config_if(show_config, "p", "branch." .. current_branch .. ".pushRemote", {
       options = config_actions.remotes_for_config(),
     })
+    :switch("r", "recurse-submodules", "Recurse submodules when checking out an existing branch")
     :group_heading("Checkout")
     :action("b", "branch/revision", actions.checkout_branch_revision)
     :action("l", "local branch", actions.checkout_local_branch)
