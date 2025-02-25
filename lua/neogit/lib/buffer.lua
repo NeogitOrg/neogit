@@ -671,6 +671,7 @@ end
 ---@field autocmds table|nil
 ---@field user_autocmds table|nil
 ---@field spell_check boolean|nil
+---@field enable_text_wrap boolean|nil
 ---@field initialize function|nil
 ---@field after function|nil
 ---@field on_detach function|nil
@@ -781,7 +782,7 @@ function Buffer.create(config)
     end
 
     buffer:set_window_option("spell", config.spell_check or false)
-    buffer:set_window_option("wrap", false)
+    buffer:set_window_option("wrap", config.enable_text_wrap or false)
     buffer:set_window_option("foldmethod", "manual")
     -- TODO: Need to find a way to turn this off properly when unloading plugin
     -- buffer:set_window_option("winfixbuf", true)
