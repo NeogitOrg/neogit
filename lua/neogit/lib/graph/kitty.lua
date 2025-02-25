@@ -670,10 +670,10 @@ function M.build(commits, color)
       local connector_row = { cells = connector_cells } ---@type I.Row
 
       -- handle bi-connector rows
-      local is_bi_crossing, bi_crossing_safely_resolveable =
+      local is_bi_crossing, bi_crossing_safely_resolvable =
         get_is_bi_crossing(commit_row, connector_row, next_commit)
 
-      if is_bi_crossing and bi_crossing_safely_resolveable and next_commit then
+      if is_bi_crossing and bi_crossing_safely_resolvable and next_commit then
         resolve_bi_crossing(prev_commit_row, prev_connector_row, commit_row, connector_row, next_commit)
       end
 
