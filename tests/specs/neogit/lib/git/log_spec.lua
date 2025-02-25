@@ -96,6 +96,7 @@ describe("lib.git.log.parse", function()
               index_from = 692,
               index_len = 33,
               length = 40,
+              file = "lua/neogit/status.lua",
               line = "@@ -692,33 +692,28 @@ end",
               lines = {
                 " ---@param first_line number",
@@ -149,6 +150,7 @@ describe("lib.git.log.parse", function()
               index_from = 734,
               index_len = 14,
               length = 15,
+              file = "lua/neogit/status.lua",
               line = "@@ -734,14 +729,10 @@ function M.get_item_hunks(item, first_line, last_line, partial)",
               lines = {
                 "       setmetatable(o, o)",
@@ -290,6 +292,7 @@ describe("lib.git.log.parse", function()
               index_len = 7,
               length = 9,
               line = "@@ -1,7 +1,9 @@",
+              file = "LICENSE",
               lines = {
                 " MIT License",
                 " ",
