@@ -388,10 +388,12 @@ function Buffer:show()
   end
 
   -- Workaround UFO getting folds wrong.
-  local ok, ufo = pcall(require, "ufo")
-  if ok and type(ufo.detach) == "function" then
-    logger.debug("[BUFFER:" .. self.handle .. "] Disabling UFO for buffer")
-    ufo.detach(self.handle)
+  if package.loaded["ufo"] then
+    local ok, ufo = pcall(require, "ufo")
+    if ok and type(ufo.detach) == "function" then
+      logger.debug("[BUFFER:" .. self.handle .. "] Disabling UFO for buffer")
+      ufo.detach(self.handle)
+    end
   end
 
   self.win_handle = win
