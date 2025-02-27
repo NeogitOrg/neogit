@@ -38,6 +38,7 @@ Here's an example spec for [Lazy](https://github.com/folke/lazy.nvim), but you'r
     "nvim-telescope/telescope.nvim", -- optional
     "ibhagwan/fzf-lua",              -- optional
     "echasnovski/mini.pick",         -- optional
+    "folke/snacks.nvim",             -- optional
   },
   config = true
 }
@@ -246,6 +247,11 @@ neogit.setup {
     -- is also selected then telescope is used instead
     -- Requires you to have `echasnovski/mini.pick` installed.
     mini_pick = nil,
+
+    -- If enabled, uses snacks.picker for menu selection. If the telescope integration
+    -- is also selected then telescope is used instead
+    -- Requires you to have `folke/snacks.nvim` installed.
+    snacks = nil,
   },
   sections = {
     -- Reverting/Cherry Picking
