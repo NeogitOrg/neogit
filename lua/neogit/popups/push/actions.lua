@@ -4,6 +4,7 @@ local logger = require("neogit.logger")
 local notification = require("neogit.lib.notification")
 local input = require("neogit.lib.input")
 local util = require("neogit.lib.util")
+local config = require("neogit.config")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
@@ -41,8 +42,8 @@ local function push_to(args, remote, branch, opts)
   local using_force = vim.tbl_contains(args, "--force") or vim.tbl_contains(args, "--force-with-lease")
   local updates_rejected = string.find(table.concat(res.stdout), "Updates were rejected") ~= nil
 
-  -- Only ask the user whether to force push if not already specified
-  if res and res.code ~= 0 and not using_force and updates_rejected then
+  -- Only ask the user whether to force push if not already specified and feature enabled
+  if res and res.code ~= 0 and not using_force and updates_rejected and config.values.prompt_force_push then
     logger.error("Attempting force push to " .. name)
 
     local message = "Your branch has diverged from the remote branch. Do you want to force push?"
