@@ -7,7 +7,7 @@ RSpec.describe "Branch Popup", :git, :nvim, :popup do
 
   let(:view) do
     [
-      " Variables                                                                      ",
+      " Configure branch                                                               ",
       " d branch.master.description unset                                              ",
       " u branch.master.merge unset                                                    ",
       "   branch.master.remote unset                                                   ",
