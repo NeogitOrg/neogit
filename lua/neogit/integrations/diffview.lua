@@ -132,7 +132,7 @@ function M.open(section_name, item_name, opts)
     view = dv_lib.diffview_open(dv_utils.tbl_pack(item_name .. "^!"))
   elseif section_name == "conflict" and item_name then
     view = dv_lib.diffview_open(dv_utils.tbl_pack("--selected-file=" .. item_name))
-  elseif section_name == "conflict" and not item_name then
+  elseif (section_name == "conflict" or section_name == "worktree") and not item_name then
     view = dv_lib.diffview_open()
   elseif section_name ~= nil then
     view = get_local_diff_view(section_name, item_name, opts)
