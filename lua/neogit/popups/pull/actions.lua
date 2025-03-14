@@ -32,6 +32,11 @@ local function pull_from(args, remote, branch, opts)
     vim.api.nvim_exec_autocmds("User", { pattern = "NeogitPullComplete", modeline = false })
   else
     logger.error("Failed to pull from " .. name)
+    notification.error("Failed to pull from " .. name, { dismiss = true })
+    if res.code == 128 then
+      notification.info(table.concat(res.stdout, "\n"))
+      return
+    end
   end
 end
 
