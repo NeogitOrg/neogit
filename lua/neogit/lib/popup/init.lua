@@ -1,3 +1,4 @@
+local config = require("neogit.config")
 local PopupBuilder = require("neogit.lib.popup.builder")
 local Buffer = require("neogit.lib.buffer")
 local logger = require("neogit.logger")
@@ -407,7 +408,7 @@ function M:show()
   self.buffer = Buffer.create {
     name = self.state.name,
     filetype = "NeogitPopup",
-    kind = "popup",
+    kind = config.values.popup.kind,
     mappings = self:mappings(),
     status_column = " ",
     autocmds = {
