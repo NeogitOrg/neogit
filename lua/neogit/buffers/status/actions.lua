@@ -1062,7 +1062,7 @@ M.n_stage = function(self)
       end
 
       if selection.item and selection.item.mode == "UU" then
-        if config.check_integration("diffview") then
+        if config.check_integration("diffview") and git.merge.is_conflicted(selection.item.name) then
           require("neogit.integrations.diffview").open("conflict", selection.item.name, {
             on_close = {
               handle = self.buffer.handle,
