@@ -1079,7 +1079,12 @@ M.n_stage = function(self)
             },
           })
         else
-          notification.info("Conflicts must be resolved before staging")
+          if not git.merge.is_conflicted(selection.item.name) then
+            git.status.stage { selection.item.name }
+            self:dispatch_refresh({ update_diffs = { "*:" .. selection.item.name } }, "n_stage")
+          else
+            notification.info("Conflicts must be resolved before staging")
+          end
           return
         end
       elseif stagable.hunk then
