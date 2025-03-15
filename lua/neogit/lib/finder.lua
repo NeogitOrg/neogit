@@ -180,13 +180,28 @@ local function snacks_actions(on_select, allow_multi, refocus_status)
   end
 
   local function confirm(picker, item)
-    if allow_multi then
-      -- Try fetch all selected items
-      on_select(snack_items_to_entries(picker:selected { fallback = true }))
+    local selection
+    local picker_selected = picker:selected { fallback = true }
+
+    if #picker_selected > 1 then
+      selection = snack_items_to_entries(picker_selected)
     else
-      -- Use current item
-      on_select(snack_items_to_entries({ item })[1])
+      local entry = item.text
+      local prompt = picker:filter().pattern
+
+      local navigate_up_level = entry == ".." and #prompt > 0
+      local input_git_refspec = prompt:match("%^")
+        or prompt:match("~")
+        or prompt:match("@")
+        or prompt:match(":")
+
+      selection = { (navigate_up_level or input_git_refspec) and prompt or entry }
     end
+
+    if selection and selection[1] and selection[1] ~= "" then
+      on_select(allow_multi and selection or selection[1])
+    end
+
     refresh(picker)
   end
 
