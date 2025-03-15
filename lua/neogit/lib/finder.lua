@@ -156,17 +156,6 @@ local function entries_to_snack_items(entries)
   return items
 end
 
----Convert snack picker items to entries
----@param items any[]
----@return any[]
-local function snack_items_to_entries(items)
-  local entries = {}
-  for _, item in ipairs(items) do
-    table.insert(entries, item.text)
-  end
-  return entries
-end
-
 --- Utility function to map actions
 ---@param on_select fun(item: any|nil)
 ---@param allow_multi boolean
@@ -180,11 +169,13 @@ local function snacks_actions(on_select, allow_multi, refocus_status)
   end
 
   local function confirm(picker, item)
-    local selection
+    local selection = {}
     local picker_selected = picker:selected { fallback = true }
 
     if #picker_selected > 1 then
-      selection = snack_items_to_entries(picker_selected)
+      for _, item in ipairs(picker_selected) do
+        table.insert(selection, item.text)
+      end
     else
       local entry = item.text
       local prompt = picker:filter().pattern
@@ -195,7 +186,7 @@ local function snacks_actions(on_select, allow_multi, refocus_status)
         or prompt:match("@")
         or prompt:match(":")
 
-      selection = { (navigate_up_level or input_git_refspec) and prompt or entry }
+      table.insert(selection, (navigate_up_level or input_git_refspec) and prompt or entry)
     end
 
     if selection and selection[1] and selection[1] ~= "" then
