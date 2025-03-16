@@ -119,8 +119,17 @@ function M:toggle_switch(switch)
   if switch.user_input then
     if switch.enabled then
       local value = input.get_user_input(switch.cli_prefix .. switch.cli_base, { separator = "" })
-      if value then
-        switch.cli = switch.cli_base .. value
+      if value and value ~= "" then
+        if switch.validate(value) then
+          switch.cli = switch.cli_base .. value
+        else
+          switch.enabled = false
+          switch.cli = switch.cli_base
+          notification.warn(switch.validate_help)
+        end
+      else
+        switch.enabled = false
+        switch.cli = switch.cli_base
       end
     else
       switch.cli = switch.cli_base
