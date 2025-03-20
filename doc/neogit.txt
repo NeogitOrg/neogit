@@ -155,6 +155,14 @@ to Neovim users.
     initial_branch_name = "",
     -- Change the default way of opening neogit
     kind = "tab",
+    -- Floating window style 
+    floating = {
+      relative = "editor",
+      width = 0.5,
+      height = 0.5,
+      style = "minimal",
+      border = "rounded",
+    },
     -- Disable line numbers
     disable_line_numbers = true,
     -- Disable relative line numbers
