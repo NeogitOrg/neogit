@@ -650,7 +650,7 @@ whats recommended. However, if you want to control the style on a per-section
 basis, the _actual_ highlight groups on the labels follow this pattern:
     `NeogitChange<mode><section>`
 
-Where `<mode>` is one of: (corrospinding to the git mode)
+Where `<mode>` is one of: (corresponding to the git mode)
   M
   A
   N
