@@ -39,17 +39,7 @@ Here's an example spec for [Lazy](https://github.com/folke/lazy.nvim), but you'r
     "ibhagwan/fzf-lua",              -- optional
     "echasnovski/mini.pick",         -- optional
   },
-  config = true
 }
-
-```
-
-If you're not using lazy, you'll need to require and setup the plugin like so:
-
-```lua
--- init.lua
-local neogit = require('neogit')
-neogit.setup {}
 ```
 
 ## Compatibility
@@ -58,7 +48,7 @@ The `master` branch will always be compatible with the latest **stable** release
 
 ## Configuration
 
-You can configure neogit by running the `neogit.setup()` function, passing a table as the argument.
+You can configure neogit by running the `require('neogit').setup {}` function, passing a table as the argument.
 
 <details>
 <summary>Default Config</summary>
