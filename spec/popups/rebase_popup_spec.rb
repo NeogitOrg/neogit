@@ -18,6 +18,7 @@ RSpec.describe "Rebase Popup", :git, :nvim, :popup do # rubocop:disable RSpec/Em
       " -i Interactive (--interactive)                                                 ",
       " -h Disable hooks (--no-verify)                                                 ",
       " -S Sign using gpg (--gpg-sign=)                                                ",
+      " -n Disable GPG signing (--no-gpg-sign)                                         ",
       "                                                                                ",
       " Rebase master onto              Rebase                                         ",
       " p pushRemote, setting that      i interactively   m to modify a commit         ",

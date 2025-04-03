@@ -30,7 +30,15 @@ function M.create(env)
     :switch_if(not in_rebase, "A", "autostash", "Autostash", { enabled = true })
     :switch_if(not in_rebase, "i", "interactive", "Interactive")
     :switch_if(not in_rebase, "h", "no-verify", "Disable hooks")
-    :option_if(not in_rebase, "S", "gpg-sign", "", "Sign using gpg", { key_prefix = "-" })
+    :option_if(
+      not in_rebase,
+      "S",
+      "gpg-sign",
+      "",
+      "Sign using gpg",
+      { key_prefix = "-", incompatible = { "no-gpg-sign" } }
+    )
+    :switch_if(not in_rebase, "n", "no-gpg-sign", "Disable GPG signing", { incompatible = { "gpg-sign" } })
     :group_heading_if(not in_rebase, "Rebase " .. (branch and (branch .. " ") or "") .. "onto")
     :action_if(not in_rebase, "p", git.branch.pushRemote_label(), actions.onto_pushRemote)
     :action_if(not in_rebase, "u", git.branch.upstream_label(), actions.onto_upstream)
