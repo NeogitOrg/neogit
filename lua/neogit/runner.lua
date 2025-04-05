@@ -62,6 +62,15 @@ local function handle_interactive_password(line)
   return input.get_secret_user_input(prompt, { cancel = "__CANCEL__" }) or "__CANCEL__"
 end
 
+---@param line string
+---@return string
+local function handle_fatal_error(line)
+  logger.debug("[RUNNER]: Fatal error encountered")
+  local notification = require("neogit.lib.notification")
+
+  notification.error(line)
+  return "__CANCEL__"
+end
 ---@param process Process
 ---@param line string
 ---@return boolean
@@ -76,6 +85,8 @@ local function handle_line_interactive(process, line)
     handler = handle_interactive_username
   elseif line:match("^Enter passphrase") or line:match("^Password for") or line:match("^Enter PIN for") then
     handler = handle_interactive_password
+  elseif line:match("^fatal") then
+    handler = handle_fatal_error
   end
 
   if handler then
