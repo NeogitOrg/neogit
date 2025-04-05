@@ -12,6 +12,7 @@ local a = require("plenary.async")
 ---@return boolean
 local function allow_empty(popup)
   return vim.tbl_contains(popup:get_arguments(), "--allow-empty")
+    or vim.tbl_contains(popup:get_arguments(), "--all")
 end
 
 local function confirm_modifications()
