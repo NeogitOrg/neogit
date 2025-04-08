@@ -72,11 +72,13 @@ local function translate_cursor_location(self, item)
 end
 
 local function open(type, path, cursor)
-  local command = ("silent! %s %s | %s | redraw! | norm! zz"):format(
-    type,
-    fn.fnameescape(path),
-    cursor and cursor[1] or "1"
-  )
+  local command = ("silent! %s %s | %s"):format(type, fn.fnameescape(path), cursor and cursor[1] or "1")
+
+  logger.debug("[Status - Open] '" .. command .. "'")
+
+  vim.cmd(command)
+
+  command = "redraw! | norm! zz"
 
   logger.debug("[Status - Open] '" .. command .. "'")
 
