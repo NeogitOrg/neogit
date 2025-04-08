@@ -527,6 +527,7 @@ function M.get_default_values()
       recent = {
         folded = true,
         hidden = false,
+        always = false,
       },
       rebase = {
         folded = true,
