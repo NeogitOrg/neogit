@@ -65,11 +65,7 @@ function M.client(opts)
   logger.debug(("[CLIENT] Client address: %s"):format(client))
 
   local lua_cmd =
-    fmt('lua require("neogit.client").editor("%s", "%s", %s)', file_target, client, opts.show_diff)
-
-  if vim.uv.os_uname().sysname == "Windows_NT" then
-    lua_cmd = lua_cmd:gsub("\\", "/")
-  end
+    fmt('lua require("neogit.client").editor(%q, %q, %s)', file_target, client, opts.show_diff)
 
   local rpc_server = RPC.create_connection(nvim_server)
   rpc_server:send_cmd(lua_cmd)
