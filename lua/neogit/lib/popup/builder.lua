@@ -2,6 +2,7 @@ local git = require("neogit.lib.git")
 local state = require("neogit.lib.state")
 local util = require("neogit.lib.util")
 local notification = require("neogit.lib.notification")
+local config = require("neogit.config")
 
 ---@class PopupBuilder
 ---@field state PopupState
@@ -54,6 +55,7 @@ local M = {}
 ---@field type string
 ---@field user_input boolean
 ---@field value string?
+---@field persisted? boolean
 
 ---@class PopupConfig
 ---@field id string
@@ -90,6 +92,7 @@ local M = {}
 ---@field value? string Allows for pre-building cli flags that can be customized by user input
 ---@field user_input? boolean If true, allows user to customize the value of the cli flag
 ---@field dependent? string[] other switches/options with a state dependency on this one
+---@field persisted? boolean Allows overwriting the default 'true' to decide if this switch should be persisted
 
 ---@class PopupOptionOpts
 ---@field key_prefix? string Allows overwriting the default '=' to set option
@@ -222,6 +225,10 @@ function M:switch(key, cli, description, opts)
     opts.cli_suffix = ""
   end
 
+  if opts.persisted == nil then
+    opts.persisted = true
+  end
+
   local value
   if opts.enabled and opts.value then
     value = cli .. opts.value
@@ -253,6 +260,7 @@ function M:switch(key, cli, description, opts)
     cli_prefix = opts.cli_prefix,
     user_input = opts.user_input,
     cli_suffix = opts.cli_suffix,
+    persisted = opts.persisted,
     options = opts.options,
     incompatible = util.build_reverse_lookup(opts.incompatible),
     dependent = util.build_reverse_lookup(opts.dependent),
@@ -465,6 +473,10 @@ end
 function M:build()
   if self.state.name == nil then
     error("A popup needs to have a name!")
+  end
+
+  if config.values.builders ~= nil and type(config.values.builders[self.state.name]) == "function" then
+    config.values.builders[self.state.name](self)
   end
 
   return self.builder_fn(self.state)
