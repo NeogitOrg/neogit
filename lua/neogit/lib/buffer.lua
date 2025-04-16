@@ -623,6 +623,7 @@ function Buffer:set_header(text, scroll)
     focusable = false,
     style = "minimal",
     noautocmd = true,
+    border = "none",
   })
   vim.wo[winid].wrap = false
   vim.wo[winid].winhl = "NormalFloat:NeogitFloatHeader"
