@@ -221,7 +221,7 @@ function M.setup(config)
     NeogitCommandCodeError         = { link = "Error" },
     NeogitBranch                   = { fg = palette.blue, bold = palette.bold, ctermfg = 4 },
     NeogitBranchHead               = { fg = palette.blue, bold = palette.bold, underline = palette.underline, ctermfg = 4 },
-    NeogitRemote                   = { fg = palette.green, bold = palette.bold, ctermfg =2 },
+    NeogitRemote                   = { fg = palette.green, bold = palette.bold, ctermfg = 2 },
     NeogitUnmergedInto             = { fg = palette.bg_purple, bold = palette.bold, ctermfg = 5 },
     NeogitUnpushedTo               = { fg = palette.bg_purple, bold = palette.bold, ctermfg = 5 },
     NeogitUnpulledFrom             = { fg = palette.bg_purple, bold = palette.bold, ctermfg = 5 },
