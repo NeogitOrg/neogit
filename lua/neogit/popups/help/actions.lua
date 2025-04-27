@@ -75,6 +75,9 @@ M.popups = function(env)
     { "LogPopup", "Log", popups.open("log", function(p)
       p(env.log)
     end) },
+    { "MarginPopup", "Margin", popups.open("margin", function(p)
+      p(env.log)
+    end) },
     {
       "CherryPickPopup",
       "Cherry Pick",
