@@ -64,9 +64,7 @@ function M.client(opts)
   local client = fn.serverstart()
   logger.debug(("[CLIENT] Client address: %s"):format(client))
 
-  local lua_cmd =
-    fmt('lua require("neogit.client").editor(%q, %q, %s)', file_target, client, opts.show_diff)
-
+  local lua_cmd = fmt('lua require("neogit.client").editor(%q, %q, %s)', file_target, client, opts.show_diff)
   local rpc_server = RPC.create_connection(nvim_server)
   rpc_server:send_cmd(lua_cmd)
 end
