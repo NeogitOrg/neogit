@@ -718,8 +718,8 @@ function Buffer.create(config)
   end
 
   if config.status_column then
-    buffer:set_buffer_option("statuscolumn", config.status_column)
-    buffer:set_buffer_option("signcolumn", "no")
+    buffer:set_window_option("statuscolumn", config.status_column)
+    buffer:set_window_option("signcolumn", "no")
   end
 
   if config.user_mappings then
@@ -907,7 +907,7 @@ function Buffer.create(config)
   end
 
   if config.foldmarkers then
-    buffer:set_buffer_option("signcolumn", "auto")
+    buffer:set_window_option("signcolumn", "auto")
 
     logger.debug("[BUFFER:" .. buffer.handle .. "] Setting up foldmarkers")
     buffer:create_namespace("FoldSigns")
