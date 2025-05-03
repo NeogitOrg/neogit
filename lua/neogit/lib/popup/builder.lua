@@ -54,6 +54,8 @@ local M = {}
 ---@field type string
 ---@field user_input boolean
 ---@field value string?
+---@field validate fun(string): boolean
+---@field validate_help string|nil
 
 ---@class PopupConfig
 ---@field id string
@@ -90,6 +92,8 @@ local M = {}
 ---@field value? string Allows for pre-building cli flags that can be customized by user input
 ---@field user_input? boolean If true, allows user to customize the value of the cli flag
 ---@field dependent? string[] other switches/options with a state dependency on this one
+---@field validate? fun(string): boolean
+---@field validate_help? string
 
 ---@class PopupOptionOpts
 ---@field key_prefix? string Allows overwriting the default '=' to set option
@@ -252,6 +256,10 @@ function M:switch(key, cli, description, opts)
     internal = opts.internal,
     cli_prefix = opts.cli_prefix,
     user_input = opts.user_input,
+    validate = opts.validate or function()
+      return true
+    end,
+    validate_help = opts.validate_help,
     cli_suffix = opts.cli_suffix,
     options = opts.options,
     incompatible = util.build_reverse_lookup(opts.incompatible),
