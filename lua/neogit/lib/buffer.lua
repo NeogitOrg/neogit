@@ -431,7 +431,7 @@ end
 
 function Buffer:set_buffer_option(name, value)
   if self.handle ~= nil then
-    api.nvim_set_option_value(name, value, { scope = "local" })
+    api.nvim_set_option_value(name, value, { scope = "local", buf = self.handle })
   end
 end
 
