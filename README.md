@@ -101,13 +101,7 @@ neogit.setup {
   -- Scope persisted settings on a per-project basis
   use_per_project_settings = true,
   -- Table of settings to never persist. Uses format "Filetype--cli-value"
-  ignored_settings = {
-    "NeogitPushPopup--force-with-lease",
-    "NeogitPushPopup--force",
-    "NeogitPullPopup--rebase",
-    "NeogitCommitPopup--allow-empty",
-    "NeogitRevertPopup--no-edit",
-  },
+  ignored_settings = {},
   -- Configure highlight group features
   highlight = {
     italic = true,

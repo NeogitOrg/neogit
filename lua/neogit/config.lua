@@ -369,6 +369,7 @@ end
 ---@field notification_icon? string
 ---@field use_default_keymaps? boolean
 ---@field highlight? HighlightOptions
+---@field builders? { [string]: fun(builder: PopupBuilder) }
 
 ---Returns the default Neogit configuration
 ---@return NeogitConfig
@@ -550,13 +551,7 @@ function M.get_default_values()
         hidden = false,
       },
     },
-    ignored_settings = {
-      "NeogitPushPopup--force-with-lease",
-      "NeogitPushPopup--force",
-      "NeogitPullPopup--rebase",
-      "NeogitPullPopup--force",
-      "NeogitCommitPopup--allow-empty",
-    },
+    ignored_settings = {},
     mappings = {
       commit_editor = {
         ["q"] = "Close",
