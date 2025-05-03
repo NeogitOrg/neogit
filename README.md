@@ -128,6 +128,14 @@ neogit.setup {
   initial_branch_name = "",
   -- Change the default way of opening neogit
   kind = "tab",
+  -- Floating window style 
+  floating = {
+    relative = "editor",
+    width = 0.8,
+    height = 0.7,
+    style = "minimal",
+    border = "rounded",
+  },
   -- Disable line numbers
   disable_line_numbers = true,
   -- Disable relative line numbers
