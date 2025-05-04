@@ -145,6 +145,65 @@ local function fzf_actions(on_select, allow_multi, refocus_status)
   }
 end
 
+---Convert entries to snack picker items
+---@param entries any[]
+---@return any[]
+local function entries_to_snack_items(entries)
+  local items = {}
+  for idx, entry in ipairs(entries) do
+    table.insert(items, { idx = idx, score = 0, text = entry })
+  end
+  return items
+end
+
+--- Utility function to map actions
+---@param on_select fun(item: any|nil)
+---@param allow_multi boolean
+---@param refocus_status boolean
+local function snacks_actions(on_select, allow_multi, refocus_status)
+  local function refresh(picker)
+    picker:close()
+    if refocus_status then
+      refocus_status_buffer()
+    end
+  end
+
+  local function confirm(picker, item)
+    local selection = {}
+    local picker_selected = picker:selected { fallback = true }
+
+    if #picker_selected > 1 then
+      for _, item in ipairs(picker_selected) do
+        table.insert(selection, item.text)
+      end
+    else
+      local entry = item.text
+      local prompt = picker:filter().pattern
+
+      local navigate_up_level = entry == ".." and #prompt > 0
+      local input_git_refspec = prompt:match("%^")
+        or prompt:match("~")
+        or prompt:match("@")
+        or prompt:match(":")
+
+      table.insert(selection, (navigate_up_level or input_git_refspec) and prompt or entry)
+    end
+
+    if selection and selection[1] and selection[1] ~= "" then
+      on_select(allow_multi and selection or selection[1])
+    end
+
+    refresh(picker)
+  end
+
+  local function close(picker)
+    on_select(nil)
+    refresh(picker)
+  end
+
+  return { confirm = confirm, close = close }
+end
+
 --- Utility function to map finder opts to fzf
 ---@param opts FinderOpts
 ---@return table
@@ -274,6 +333,21 @@ function Finder:find(on_select)
   elseif config.check_integration("mini_pick") then
     local mini_pick = require("mini.pick")
     mini_pick.start { source = { items = self.entries, choose = on_select } }
+  elseif config.check_integration("snacks") then
+    local snacks_picker = require("snacks.picker")
+    snacks_picker.pick(nil, {
+      title = "Neogit",
+      prompt = string.format("%s > ", self.opts.prompt_prefix),
+      items = entries_to_snack_items(self.entries),
+      format = "text",
+      layout = {
+        preset = self.opts.theme,
+        preview = self.opts.previewer,
+        height = self.opts.layout_config.height,
+        border = self.opts.border and "rounded" or "none",
+      },
+      actions = snacks_actions(on_select, self.opts.allow_multi, self.opts.refocus_status),
+    })
   else
     vim.ui.select(self.entries, {
       prompt = string.format("%s: ", self.opts.prompt_prefix),
