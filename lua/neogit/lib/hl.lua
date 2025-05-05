@@ -207,6 +207,7 @@ function M.setup(config)
     NeogitPopupOptionDisabled      = { link = "NeogitSubtleText" },
     NeogitPopupConfigKey           = { fg = palette.purple },
     NeogitPopupConfigEnabled       = { link = "SpecialChar" },
+    NeogitFolderPath               = { bold = palette.bold },
     NeogitPopupConfigDisabled      = { link = "NeogitSubtleText" },
     NeogitPopupActionKey           = { fg = palette.purple },
     NeogitPopupActionDisabled      = { link = "NeogitSubtleText" },
