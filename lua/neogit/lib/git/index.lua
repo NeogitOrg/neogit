@@ -58,6 +58,8 @@ function M.generate_patch(hunk, opts)
   )
 
   local worktree_root = git.repo.worktree_root
+  assert(hunk.file, "hunk has no filepath")
+
   local path = Path:new(hunk.file):make_relative(worktree_root)
 
   table.insert(diff_content, 1, string.format("+++ b/%s", path))
