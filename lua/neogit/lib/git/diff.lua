@@ -96,7 +96,7 @@ end
 ---@return string
 local function build_file(header, kind)
   if kind == "modified" then
-    return header[3]:match("%-%-%- a/(.*)")
+    return header[3]:match("%-%-%- ./(.*)")
   elseif kind == "renamed" then
     return ("%s -> %s"):format(header[3]:match("rename from (.*)"), header[4]:match("rename to (.*)"))
   elseif kind == "new file" then
