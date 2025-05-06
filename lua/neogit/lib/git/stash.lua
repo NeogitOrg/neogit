@@ -107,7 +107,6 @@ function M.register(meta)
         idx = idx,
         name = line,
         message = message,
-        oid = git.rev_parse.oid("stash@{" .. idx .. "}"),
       }
 
       -- These calls can be somewhat expensive, so lazy load them
@@ -130,6 +129,9 @@ function M.register(meta)
               .call({ hidden = true }).stdout[1]
 
             return self.date
+          elseif key == "oid" then
+            self.oid = git.rev_parse.oid("stash@{" .. idx .. "}")
+            return self.oid
           end
         end,
       })
