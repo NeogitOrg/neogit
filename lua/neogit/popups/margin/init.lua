@@ -4,7 +4,7 @@ local actions = require("neogit.popups.margin.actions")
 
 local M = {}
 
-function M.create(env)
+function M.create()
   local p = popup
     .builder()
     :name("NeogitMarginPopup")

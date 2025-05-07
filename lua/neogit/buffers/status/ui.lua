@@ -422,14 +422,15 @@ local SectionItemCommit = Component.new(function(item)
     }
   end
 
+  local virt
   if visibility then
-    Virt = {
+    virt = {
       { " ", "Constant" },
       author_table,
       date_table,
     }
   else
-    Virt = {}
+    virt = {}
   end
 
   return row(
@@ -441,7 +442,7 @@ local SectionItemCommit = Component.new(function(item)
       { text(item.commit.subject) }
     ),
     {
-      virtual_text = Virt,
+      virtual_text = virt,
       oid = item.commit.oid,
       yankable = item.commit.oid,
       item = item,
