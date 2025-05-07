@@ -430,7 +430,12 @@ end
 
 function Buffer:set_buffer_option(name, value)
   if self.handle ~= nil then
-    api.nvim_set_option_value(name, value, { scope = "local", buf = self.handle })
+    -- TODO: Remove this at some point. Nvim 0.10 throws an error if using both buf and scope
+    if vim.fn.has("nvim-0.11") == 1 then
+      api.nvim_set_option_value(name, value, { scope = "local", buf = self.handle })
+    else
+      api.nvim_set_option_value(name, value, { buf = self.handle })
+    end
   end
 end
 
