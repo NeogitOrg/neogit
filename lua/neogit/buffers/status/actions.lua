@@ -446,6 +446,11 @@ M.v_log_popup = function(_self)
 end
 
 ---@param _self StatusBuffer
+M.v_margin_popup = function(_self)
+  return popups.open("margin")
+end
+
+---@param _self StatusBuffer
 M.v_worktree_popup = function(_self)
   return popups.open("worktree")
 end
@@ -1406,6 +1411,11 @@ end
 ---@param _self StatusBuffer
 M.n_log_popup = function(_self)
   return popups.open("log")
+end
+
+---@param _self StatusBuffer
+M.n_margin_popup = function(_self)
+  return popups.open("margin")
 end
 
 ---@param _self StatusBuffer
