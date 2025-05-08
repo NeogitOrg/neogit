@@ -93,6 +93,7 @@ end
 ---| "split_below_all" Like :below split
 ---| "vsplit" Open in a vertical split
 ---| "floating" Open in a floating window
+---| "popup" Open in a popup
 ---| "auto" vsplit if window would have 80 cols, otherwise split
 
 ---@class NeogitCommitBufferConfig Commit buffer options
@@ -482,7 +483,7 @@ function M.get_default_values()
       kind = "floating_console",
     },
     popup = {
-      kind = "split",
+      kind = "popup",
     },
     stash = {
       kind = "tab",
@@ -733,13 +734,14 @@ function M.validate_config()
         "floating",
         "floating_console",
         "replace",
+        "popup",
         "auto",
       }, val)
     then
       err(
         name,
         string.format(
-          "Expected `%s` to be one of 'split', 'vsplit', 'split_above', 'vsplit_left', tab', 'floating', 'replace' or 'auto', got '%s'",
+          "Expected `%s` to be one of 'split', 'vsplit', 'split_above', 'split_above_all', 'split_below', 'split_below_all', 'vsplit_left', tab', 'floating', 'floating_console', 'replace', 'popup' or 'auto', got '%s'",
           name,
           val
         )
