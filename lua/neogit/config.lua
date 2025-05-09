@@ -102,6 +102,15 @@ end
 ---@class NeogitConfigPopup Popup window options
 ---@field kind WindowKind The type of window that should be opened
 
+---@class NeogitConfigFloating
+---@field relative? string
+---@field width? number
+---@field height? number
+---@field col? number
+---@field row? number
+---@field style? string
+---@field border? string
+
 ---@alias StagedDiffSplitKind
 ---| "split" Open in a split
 ---| "vsplit" Open in a vertical split
@@ -331,6 +340,7 @@ end
 ---@field sort_branches? string Value used for `--sort` for the `git branch` command
 ---@field initial_branch_name? string Default for new branch name prompts
 ---@field kind? WindowKind The default type of window neogit should open in
+---@field floating? NeogitConfigFloating The floating window style
 ---@field disable_line_numbers? boolean Whether to disable line numbers
 ---@field disable_relative_line_numbers? boolean Whether to disable line numbers
 ---@field console_timeout? integer Time in milliseconds after a console is created for long running commands
@@ -352,13 +362,14 @@ end
 ---@field preview_buffer? NeogitConfigPopup Preview options
 ---@field popup? NeogitConfigPopup Set the default way of opening popups
 ---@field signs? NeogitConfigSigns Signs used for toggled regions
----@field integrations? { diffview: boolean, telescope: boolean, fzf_lua: boolean, mini_pick: boolean } Which integrations to enable
+---@field integrations? { diffview: boolean, telescope: boolean, fzf_lua: boolean, mini_pick: boolean, snacks: boolean } Which integrations to enable
 ---@field sections? NeogitConfigSections
 ---@field ignored_settings? string[] Settings to never persist, format: "Filetype--cli-value", i.e. "NeogitCommitPopup--author"
 ---@field mappings? NeogitConfigMappings
 ---@field notification_icon? string
 ---@field use_default_keymaps? boolean
 ---@field highlight? HighlightOptions
+---@field builders? { [string]: fun(builder: PopupBuilder) }
 
 ---Returns the default Neogit configuration
 ---@return NeogitConfig
@@ -392,6 +403,13 @@ function M.get_default_values()
     fetch_after_checkout = false,
     sort_branches = "-committerdate",
     kind = "tab",
+    floating = {
+      relative = "editor",
+      width = 0.8,
+      height = 0.7,
+      style = "minimal",
+      border = "rounded",
+    },
     initial_branch_name = "",
     disable_line_numbers = true,
     disable_relative_line_numbers = true,
@@ -482,6 +500,7 @@ function M.get_default_values()
       diffview = nil,
       fzf_lua = nil,
       mini_pick = nil,
+      snacks = nil,
     },
     sections = {
       sequencer = {
@@ -533,13 +552,7 @@ function M.get_default_values()
         hidden = false,
       },
     },
-    ignored_settings = {
-      "NeogitPushPopup--force-with-lease",
-      "NeogitPushPopup--force",
-      "NeogitPullPopup--rebase",
-      "NeogitPullPopup--force",
-      "NeogitCommitPopup--allow-empty",
-    },
+    ignored_settings = {},
     mappings = {
       commit_editor = {
         ["q"] = "Close",
@@ -791,7 +804,7 @@ function M.validate_config()
   end
 
   local function validate_integrations()
-    local valid_integrations = { "diffview", "telescope", "fzf_lua", "mini_pick" }
+    local valid_integrations = { "diffview", "telescope", "fzf_lua", "mini_pick", "snacks" }
     if not validate_type(config.integrations, "integrations", "table") or #config.integrations == 0 then
       return
     end
@@ -1136,6 +1149,13 @@ function M.validate_config()
     validate_type(config.notification_icon, "notification_icon", "string")
     validate_type(config.console_timeout, "console_timeout", "number")
     validate_kind(config.kind, "kind")
+    if validate_type(config.floating, "floating", "table") then
+      validate_type(config.floating.relative, "relative", "string")
+      validate_type(config.floating.width, "width", "number")
+      validate_type(config.floating.height, "height", "number")
+      validate_type(config.floating.style, "style", "string")
+      validate_type(config.floating.border, "border", "string")
+    end
     validate_type(config.disable_line_numbers, "disable_line_numbers", "boolean")
     validate_type(config.disable_relative_line_numbers, "disable_relative_line_numbers", "boolean")
     validate_type(config.auto_show_console, "auto_show_console", "boolean")

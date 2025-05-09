@@ -128,13 +128,7 @@ to Neovim users.
     -- Scope persisted settings on a per-project basis
     use_per_project_settings = true,
     -- Table of settings to never persist. Uses format "Filetype--cli-value"
-    ignored_settings = {
-        "NeogitPushPopup--force-with-lease",
-        "NeogitPushPopup--force",
-        "NeogitPullPopup--rebase",
-        "NeogitCommitPopup--allow-empty",
-        "NeogitRevertPopup--no-edit",
-    },
+    ignored_settings = {},
     -- Configure highlight group features
     highlight = {
         italic = true,
@@ -155,6 +149,14 @@ to Neovim users.
     initial_branch_name = "",
     -- Change the default way of opening neogit
     kind = "tab",
+    -- Floating window style 
+    floating = {
+      relative = "editor",
+      width = 0.8,
+      height = 0.7,
+      style = "minimal",
+      border = "rounded",
+    },
     -- Disable line numbers
     disable_line_numbers = true,
     -- Disable relative line numbers
@@ -265,6 +267,11 @@ to Neovim users.
         -- is also selected then telescope is used instead
         -- Requires you to have `echasnovski/mini.pick` installed.
         mini_pick = nil,
+
+        -- If enabled, uses snacks.picker for menu selection. If the telescope integration
+        -- is also selected then telescope is used instead
+        -- Requires you to have `folke/snacks.nvim` installed.
+        snacks = nil,
     },
     sections = {
         -- Reverting/Cherry Picking
@@ -2136,5 +2143,21 @@ calling the setup function:
       },
     })
 <
+
+You can also customize existing popups via the Neogit config.
+Below is an example of adding a custom switch, but you can use any function 
+from the builder API. 
+>lua
+    require("neogit").setup({
+      builders = {
+        NeogitPushPopup = function(builder)
+          builder:switch('m', 'merge_request.create', 'Create merge request', { cli_prefix = '-o ', persisted = false })
+        end,
+      },
+    })
+
+Keep in mind that builder hooks are executed at the end of the popup 
+builder, so any switches or options added will be placed at the end.
+
 ------------------------------------------------------------------------------
 vim:tw=78:ts=8:ft=help:norl:
