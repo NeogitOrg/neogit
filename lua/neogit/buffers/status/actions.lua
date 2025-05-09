@@ -1072,10 +1072,6 @@ M.n_stage = function(self)
                 if not git.merge.is_conflicted(selection.item.name) then
                   git.status.stage { selection.item.name }
                   self:dispatch_refresh({ update_diffs = { "*:" .. selection.item.name } }, "n_stage")
-
-                  if not git.merge.any_conflicted() then
-                    popups.open("merge")()
-                  end
                 end
               end,
             },
