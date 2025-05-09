@@ -332,6 +332,7 @@ neogit.setup {
       ["<down>"] = "Next",
       ["<up>"] = "Previous",
       ["<tab>"] = "InsertCompletion",
+      ["<c-y>"] = "CopySelection",
       ["<space>"] = "MultiselectToggleNext",
       ["<s-space>"] = "MultiselectTogglePrevious",
       ["<c-j>"] = "NOP",
