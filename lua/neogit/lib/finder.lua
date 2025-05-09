@@ -9,6 +9,13 @@ local function refocus_status_buffer()
   end
 end
 
+local copy_selection = function()
+  local selection = require("telescope.actions.state").get_selected_entry()
+  if selection ~= nil then
+    vim.cmd.let(("@+='%s'"):format(selection[1]))
+  end
+end
+
 local function telescope_mappings(on_select, allow_multi, refocus_status)
   local action_state = require("telescope.actions.state")
   local actions = require("telescope.actions")
@@ -85,6 +92,7 @@ local function telescope_mappings(on_select, allow_multi, refocus_status)
       ["InsertCompletion"] = completion_action,
       ["Next"] = actions.move_selection_next,
       ["Previous"] = actions.move_selection_previous,
+      ["CopySelection"] = copy_selection,
       ["NOP"] = actions.nop,
       ["MultiselectToggleNext"] = actions.toggle_selection + actions.move_selection_worse,
       ["MultiselectTogglePrevious"] = actions.toggle_selection + actions.move_selection_better,

@@ -185,6 +185,7 @@ end
 ---| "Close"
 ---| "Next"
 ---| "Previous"
+---| "CopySelection"
 ---| "MultiselectToggleNext"
 ---| "MultiselectTogglePrevious"
 ---| "InsertCompletion"
@@ -597,6 +598,7 @@ function M.get_default_values()
         ["<down>"] = "Next",
         ["<up>"] = "Previous",
         ["<tab>"] = "InsertCompletion",
+        ["<c-y>"] = "CopySelection",
         ["<space>"] = "MultiselectToggleNext",
         ["<s-space>"] = "MultiselectTogglePrevious",
         ["<c-j>"] = "NOP",
