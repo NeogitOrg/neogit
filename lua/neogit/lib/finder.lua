@@ -12,7 +12,7 @@ end
 local copy_selection = function()
   local selection = require("telescope.actions.state").get_selected_entry()
   if selection ~= nil then
-    vim.cmd.let(("@+='%s'"):format(selection[1]))
+    vim.cmd.let(("@+=%q"):format(selection[1]))
   end
 end
 
