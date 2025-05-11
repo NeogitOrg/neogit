@@ -197,12 +197,6 @@ neogit.setup {
   merge_editor = {
     kind = "auto",
   },
-  description_editor = {
-    kind = "auto",
-  },
-  tag_editor = {
-    kind = "auto",
-  },
   preview_buffer = {
     kind = "floating_console",
   },
