@@ -160,19 +160,26 @@ end
 ---@param on_select fun(item: any|nil)
 ---@param allow_multi boolean
 ---@param refocus_status boolean
-local function snacks_actions(on_select, allow_multi, refocus_status)
-  local function refresh(picker)
-    picker:close()
+local function snacks_confirm(on_select, allow_multi, refocus_status)
+  local completed = false
+  local function complete(selection)
+    if completed then
+      return
+    end
+    on_select(selection)
+    completed = true
     if refocus_status then
       refocus_status_buffer()
     end
   end
-
   local function confirm(picker, item)
     local selection = {}
     local picker_selected = picker:selected { fallback = true }
 
-    if #picker_selected > 1 then
+    if #picker_selected == 0 then
+      complete(nil)
+      picker:close()
+    elseif #picker_selected > 1 then
       for _, item in ipairs(picker_selected) do
         table.insert(selection, item.text)
       end
@@ -190,18 +197,16 @@ local function snacks_actions(on_select, allow_multi, refocus_status)
     end
 
     if selection and selection[1] and selection[1] ~= "" then
-      on_select(allow_multi and selection or selection[1])
+      complete(allow_multi and selection or selection[1])
+      picker:close()
     end
-
-    refresh(picker)
   end
 
-  local function close(picker)
-    on_select(nil)
-    refresh(picker)
+  local function on_close()
+    complete(nil)
   end
 
-  return { confirm = confirm, close = close }
+  return confirm, on_close
 end
 
 --- Utility function to map finder opts to fzf
@@ -335,6 +340,7 @@ function Finder:find(on_select)
     mini_pick.start { source = { items = self.entries, choose = on_select } }
   elseif config.check_integration("snacks") then
     local snacks_picker = require("snacks.picker")
+    local confirm, on_close = snacks_confirm(on_select, self.opts.allow_multi, self.opts.refocus_status)
     snacks_picker.pick(nil, {
       title = "Neogit",
       prompt = string.format("%s > ", self.opts.prompt_prefix),
@@ -346,7 +352,8 @@ function Finder:find(on_select)
         height = self.opts.layout_config.height,
         border = self.opts.border and "rounded" or "none",
       },
-      actions = snacks_actions(on_select, self.opts.allow_multi, self.opts.refocus_status),
+      confirm = confirm,
+      on_close = on_close,
     })
   else
     vim.ui.select(self.entries, {
