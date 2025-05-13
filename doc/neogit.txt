@@ -1055,7 +1055,7 @@ Actions:                                           *neogit_branch_popup_actions*
     the old branch.
 
   • Checkout new worktree                      *neogit_branch_checkout_worktree*
-    see: *neogit_worktree_checkout*
+    see: |neogit_worktree_checkout|
 
   • Create new branch                              *neogit_branch_create_branch*
     Functionally the same as |neogit_branch_checkout_new|, but does not update
@@ -1066,7 +1066,7 @@ Actions:                                           *neogit_branch_popup_actions*
     index has uncommitted changes, will behave exactly the same as spin_off.
 
   • Create new worktree                          *neogit_branch_create_worktree*
-    see: *neogit_worktree_create_branch*
+    see: |neogit_worktree_create_branch|
 
   • Configure                                          *neogit_branch_configure*
     Opens selector to choose a branch, then offering some configuration
