@@ -13,7 +13,13 @@ function M.create(env)
     .builder()
     :name("NeogitRevertPopup")
     :option_if(not in_progress, "m", "mainline", "", "Replay merge relative to parent")
-    :switch_if(not in_progress, "e", "edit", "Edit commit messages", { enabled = true, incompatible = { "no-edit" } })
+    :switch_if(
+      not in_progress,
+      "e",
+      "edit",
+      "Edit commit messages",
+      { enabled = true, incompatible = { "no-edit" } }
+    )
     :switch_if(not in_progress, "E", "no-edit", "Don't edit commit messages", { incompatible = { "edit" } })
     :switch_if(not in_progress, "s", "signoff", "Add Signed-off-by lines")
     :option_if(not in_progress, "s", "strategy", "", "Strategy", {

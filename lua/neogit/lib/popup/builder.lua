@@ -431,7 +431,7 @@ function M:spacer()
   table.insert(self.state.actions[#self.state.actions], {
     keys = "",
     description = "",
-    heading = ""
+    heading = "",
   })
   return self
 end

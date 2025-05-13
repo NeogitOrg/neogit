@@ -49,7 +49,7 @@ local function autocmd_helpers(old_cwd, new_cwd)
           callback()
         end
       end
-    end
+    end,
   }
 end
 
