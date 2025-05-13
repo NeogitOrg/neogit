@@ -9,12 +9,24 @@ local notification = require("neogit.lib.notification")
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
 ---@param prompt string
+---@param branch string?
 ---@return string|nil
-local function get_path(prompt)
-  return input.get_user_input(prompt, {
+local function get_path(prompt, branch)
+  local path = input.get_user_input(prompt, {
     completion = "dir",
     prepend = vim.fs.normalize(vim.uv.cwd() .. "/..") .. "/",
   })
+
+  if path then
+    if branch and vim.uv.fs_stat(path) then
+      return vim.fs.joinpath(path, branch)
+    else
+      return path
+    end
+  else
+    return nil
+  end
+end
 
 ---@param old_cwd string?
 ---@param new_cwd string
@@ -60,7 +72,7 @@ function M.checkout_worktree()
     return
   end
 
-  local path = get_path(("Checkout '%s' in new worktree"):format(selected))
+  local path = get_path(("Checkout '%s' in new worktree"):format(selected), selected)
   if not path then
     return
   end
