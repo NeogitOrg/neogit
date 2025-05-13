@@ -16,6 +16,11 @@ function M.commits(commits, args)
   end
 end
 
+function M.hunk(hunk, _)
+  local patch = git.index.generate_patch(hunk, { reverse = true })
+  git.index.apply(patch, { reverse = true })
+end
+
 function M.continue()
   git.cli.revert.continue.no_edit.call { pty = true }
 end

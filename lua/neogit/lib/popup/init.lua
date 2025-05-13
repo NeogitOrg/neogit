@@ -64,6 +64,16 @@ function M:get_arguments()
   return flags
 end
 
+---@param key string
+---@return any|nil
+function M:get_env(key)
+  if not self.state.env then
+    return nil
+  end
+
+  return self.state.env[key]
+end
+
 -- Returns a table of key/value pairs, where the key is the name of the switch, and value is `true`, for all
 -- enabled arguments that are NOT for cli consumption (internal use only).
 ---@return table
