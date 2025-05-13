@@ -212,35 +212,6 @@ function M:open(kind)
       Watcher.instance(self.root):register(self)
       buffer:move_cursor(buffer.ui:first_section().first)
     end,
-    user_autocmds = {
-      ["NeogitPushComplete"] = function()
-        self:dispatch_refresh(nil, "push_complete")
-      end,
-      ["NeogitPullComplete"] = function()
-        self:dispatch_refresh(nil, "pull_complete")
-      end,
-      ["NeogitFetchComplete"] = function()
-        self:dispatch_refresh(nil, "fetch_complete")
-      end,
-      ["NeogitRebase"] = function()
-        self:dispatch_refresh(nil, "rebase")
-      end,
-      ["NeogitMerge"] = function()
-        self:dispatch_refresh(nil, "merge")
-      end,
-      ["NeogitReset"] = function()
-        self:dispatch_refresh(nil, "reset_complete")
-      end,
-      ["NeogitStash"] = function()
-        self:dispatch_refresh(nil, "stash")
-      end,
-      ["NeogitRevertComplete"] = function()
-        self:dispatch_refresh(nil, "revert")
-      end,
-      ["NeogitCherryPick"] = function()
-        self:dispatch_refresh(nil, "cherry_pick")
-      end,
-    },
   }
 
   return self
