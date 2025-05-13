@@ -18,15 +18,17 @@ RSpec.describe "Commit Popup", :git, :nvim, :popup do
       " -S Sign using gpg (--gpg-sign=)                                                ",
       " -C Reuse commit message (--reuse-message=)                                     ",
       "                                                                                ",
-      " Create        Edit HEAD   Edit                                                 ",
+      " Create        Edit HEAD   Edit        Edit and rebase                          ",
       " c Commit      e Extend    f Fixup     F Instant Fixup                          ",
-      " x Absorb      w Reword    s Squash    S Instant Squash                         ",
-      "               a Amend     A Augment                                            "
+      " x Absorb                  s Squash    S Instant Squash                         ",
+      "               a Amend     A Alter                                              ",
+      "                           n Augment                                            ",
+      "               w Reword    W Revise                                             "
     ]
   end
 
   %w[-a -e -v -h -R -A -s -S -C].each { include_examples "argument", _1 }
-  %w[c x e w a f s A F S].each { include_examples "interaction", _1 }
+  %w[c x e w a f s A F S n W].each { include_examples "interaction", _1 }
 
   describe "Actions" do
     describe "Create Commit" do
