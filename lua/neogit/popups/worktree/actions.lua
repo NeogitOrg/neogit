@@ -15,6 +15,36 @@ local function get_path(prompt)
     completion = "dir",
     prepend = vim.fs.normalize(vim.uv.cwd() .. "/..") .. "/",
   })
+
+---@param old_cwd string?
+---@param new_cwd string
+---@return table
+local function autocmd_helpers(old_cwd, new_cwd)
+  return {
+    old_cwd = old_cwd,
+    new_cwd = new_cwd,
+    ---@param filename string the file you want to copy
+    ---@param callback function? callback to run if copy was successful
+    copy_if_present = function(filename, callback)
+      assert(old_cwd, "couldn't resolve old cwd")
+
+      local source = vim.fs.joinpath(old_cwd, filename)
+      local destination = vim.fs.joinpath(new_cwd, filename)
+
+      if vim.uv.fs_stat(source) and not vim.uv.fs_stat(destination) then
+        local ok = vim.uv.fs_copyfile(source, destination)
+        if ok and type(callback) == "function" then
+          callback()
+        end
+      end
+    end
+  }
+end
+
+---@param pattern string
+---@param data table
+local function fire_worktree_event(pattern, data)
+  vim.api.nvim_exec_autocmds("User", { pattern = pattern, modeline = false, data = data })
 end
 
 ---@param prompt string
@@ -37,10 +67,14 @@ function M.checkout_worktree()
 
   local success, err = git.worktree.add(selected, path)
   if success then
+    local cwd = vim.uv.cwd()
     notification.info("Added worktree")
+
     if status.is_open() then
       status.instance():chdir(path)
     end
+
+    fire_worktree_event("NeogitWorktreeCreate", autocmd_helpers(cwd, path))
   else
     notification.error(err)
   end
@@ -65,10 +99,14 @@ function M.create_worktree()
   if git.branch.create(name, selected) then
     local success, err = git.worktree.add(name, path)
     if success then
+      local cwd = vim.uv.cwd()
       notification.info("Added worktree")
+
       if status.is_open() then
         status.instance():chdir(path)
       end
+
+      fire_worktree_event("NeogitWorktreeCreate", autocmd_helpers(cwd, path))
     else
       notification.error(err)
     end

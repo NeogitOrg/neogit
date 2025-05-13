@@ -485,83 +485,135 @@ The following mappings can all be customized via the setup function.
 
 The following events are emitted by Neogit:
 
-  Event                          Description                              ~
-  NeogitStatusRefreshed          Status has been reloaded                ~
+• `NeogitStatusRefreshed`
+  When: Status has been reloaded
+  Data: `{}`
 
-                                  Event Data: {}                         ~
+• `NeogitCommitComplete`
+  When: Commit has been created
+  Data: `{}`
 
-  NeogitCommitComplete           Commit has been created                 ~
+• `NeogitPushComplete`
+  When: Push has finished
+  Data: `{}`
 
-                                  Event Data: {}                         ~
+• `NeogitPullComplete`
+  When: Push has finished
+  Data: `{}`
 
-  NeogitPushComplete             Push has completed                      ~
+• `NeogitFetchComplete`
+  When: Fetch has finished
+  Data: `{}`
 
-                                  Event Data: {}                         ~
-
-  NeogitPullComplete             Pull has completed                      ~
-
-                                  Event Data: {}                         ~
-
-  NeogitFetchComplete            Fetch has completed                     ~
-
-                                  Event Data: {}                         ~
-
-  NeogitBranchCreate             Branch was created, starting from       ~
-                                  `base`                                 ~
-
-                                  Event Data:                            ~
-                                    { branch_name: string, base: string? } ~
-
-  NeogitBranchDelete             Branch was deleted                      ~
-
-                                  Event Data: { branch_name: string }    ~
-
-  NeogitBranchCheckout           Branch was checked out                  ~
-
-                                  Event Data: { branch_name: string }    ~
-
-  NeogitBranchReset              Branch was reset to a commit/branch     ~
-
-                                  Event Data:                            ~
-                                    { branch_name: string, resetting_to: string } ~
-
-  NeogitBranchRename             Branch was renamed                      ~
-
-                                  Event Data:                            ~
-                                    { branch_name: string, new_name: string } ~
-
-  NeogitRebase                   A rebase finished                       ~
-
-                                  Event Data:                            ~
-                                    { commit: string, status: "ok" | "conflict" } ~
-
-  NeogitReset                    A branch was reset to a certain commit  ~
-
-                                  Event Data:                            ~
-                                    { commit: string, mode: "soft" |     ~
-                                      "mixed" | "hard" | "keep" | "index" } ~
-
-  NeogitTagCreate                A tag was placed on a certain commit    ~
-
-                                  Event Data: { name: string, ref: string } ~
-
-  NeogitTagDelete                A tag was removed                       ~
-
-                                  Event Data: { name: string }           ~
-
-  NeogitCherryPick               One or more commits were cherry-picked  ~
-
-                                  Event Data: { commits: string[] }      ~
-
-  NeogitMerge                    A merge finished                        ~
-
-                                  Event Data:                            ~
-                                    { branch: string, args: string[],    ~
-                                      status: "ok" | "conflict" }        ~
-
-  NeogitStash                    A stash finished                        ~
-
-                                  Event Data: { success: boolean }       ~
+• `NeogitBranchCreate`
+  When: Branch was created, starting from `<base>`
+  Data: >
+    {
+      branch_name: string,
+      base: string?
+    }
+<
+• `NeogitBranchDelete`
+  When: Branch was deleted
+  Data: >
+    {
+      branch_name: string,
+    }
+<
+• `NeogitBranchCheckout`
+  When: Branch was checked out
+  Data: >
+    {
+      branch_name: string,
+    }
+<
+• `NeogitBranchReset`
+  When: Branch was reset to commit/branch
+  Data: >
+    {
+      branch_name: string,
+      resetting_to: string
+    }
+<
+• `NeogitBranchRename`
+  When: Branch was renamed
+  Data: >
+    {
+      branch_name: string,
+      new_name: string
+    }
+<
+• `NeogitRebase`
+  When: A rebase has finished
+  Data: >
+    {
+      commit: string,
+      status: "ok" | "conflict"
+    }
+<
+• `NeogitReset`
+  When: A reset has been performed
+  Data: >
+    {
+      commit: string,
+      mode: "soft" | "mixed" | "hard" | "keep" | "index"
+    }
+<
+• `NeogitTagCreate`
+  When: A tag is placed on a commit
+  Data: >
+    {
+      ref: string,
+      name: string
+    }
+<
+• `NeogitTagCreate`
+  When: A tag is placed on a commit
+  Data: >
+    {
+      ref: string,
+      name: string
+    }
+<
+• `NeogitTagDelete`
+  When: A tag is removed
+  Data: >
+    {
+      name: string
+    }
+<
+• `NeogitCherryPick`
+  When: One or more commits were cherry picked
+  Data: >
+    {
+      commits: string[]
+    }
+<
+• `NeogitMerge`
+  When: A merge has finished
+  Data: >
+    {
+      branch: string,
+      args: string[],
+      status: "ok" | "conflict"
+    }
+<
+• `NeogitStash`
+  When: A stash was performed
+  Data: >
+    {
+      success: boolean
+    }
+<
+• `NeogitWorktreeCreate`
+  When: A worktree was created
+  Data: >
+    {
+      old_cwd: string,
+      new_cwd: string,
+      copy_if_present: function(filename: string, callback: function|nil)
+    }
+<
 ==============================================================================
 5. Highlights                                                *neogit_highlights*
 
