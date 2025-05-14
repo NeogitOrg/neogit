@@ -1314,13 +1314,37 @@ Actions:                                           *neogit_commit_popup_actions*
     Creates a fixup commit. If a commit is selected it will be used, otherwise
     the user is prompted to pick a commit.
 
+    `git commit --fixup=COMMIT --no-edit`
+
   • Squash                                                *neogit_commit_squash*
     Creates a squash commit. If a commit is selected it will be used,
     otherwise the user is prompted to pick a commit.
 
+    `git commit --squash=COMMIT --no-edit`
+
   • Augment                                              *neogit_commit_augment*
     Creates a squash commit, editing the squash message. If a commit is
     selected it will be used, otherwise the user is prompted to pick a commit.
+
+    `git commit --squash=COMMIT --edit`
+
+  • Alter                                                  *neogit_commit_alter*
+    Create a squash commit, authoring the final message now.
+
+    During a later rebase, when this commit gets squashed into it's targeted
+    commit, the original message of the targeted commit is replaced with the
+    message of this commit, without the user automatically being given a
+    chance to edit it again.
+
+    `git commit --fixup=amend:COMMIT --edit`
+
+  • Revise                                                *neogit_commit_revise*
+    Reword the message of an existing commit, without editing it's tree.
+    Later, when the commit is squashed into it's targeted commit, a combined
+    commit is created which uses the message of the fixup commit and the tree
+    of the targeted commit.
+
+    `git commit --fixup=reword:COMMIT --edit`
 
   • Instant Fixup                                  *neogit_commit_instant_fixup*
     Similar to |neogit_commit_fixup|, but instantly rebases after.
