@@ -18,9 +18,9 @@ RSpec.describe "Commit Popup", :git, :nvim, :popup do
       " -S Sign using gpg (--gpg-sign=)                                                ",
       " -C Reuse commit message (--reuse-message=)                                     ",
       "                                                                                ",
-      " Create        Edit HEAD   Edit        Edit and rebase                          ",
-      " c Commit      e Extend    f Fixup     F Instant Fixup                          ",
-      " x Absorb                  s Squash    S Instant Squash                         ",
+      " Create        Edit HEAD   Edit        Edit and rebase    Spread across commits ",
+      " c Commit      e Extend    f Fixup     F Instant Fixup    x Absorb              ",
+      "                           s Squash    S Instant Squash                         ",
       "               a Amend     A Alter                                              ",
       "                           n Augment                                            ",
       "               w Reword    W Revise                                             "
