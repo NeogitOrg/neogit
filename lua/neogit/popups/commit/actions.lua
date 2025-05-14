@@ -209,7 +209,7 @@ function M.absorb(popup)
       git.remote.list(),
       "Select a base commit for the absorb stack with <cr>, or <esc> to abort"
     )
-    :open_async()[1]
+      :open_async()[1]
   if not commit then
     return
   end
