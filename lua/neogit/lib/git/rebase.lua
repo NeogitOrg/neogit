@@ -21,7 +21,7 @@ end
 function M.instantly(commit, args)
   local result = git.cli.rebase.interactive.autostash.autosquash
     .commit(commit)
-    .env({ GIT_SEQUENCE_EDITOR = ":" })
+    .env({ GIT_SEQUENCE_EDITOR = ":", GIT_EDITOR = ":" })
     .arg_list(args or {})
     .call { long = true, pty = true }
 
