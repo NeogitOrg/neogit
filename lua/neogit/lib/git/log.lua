@@ -560,7 +560,7 @@ function M.decorate(oid)
     return oid
   else
     local decorated_ref = vim.split(result[1], ",")[1]
-    if decorated_ref:match("%->") then
+    if decorated_ref:match("%->") or decorated_ref:match("tag: ") then
       return oid
     else
       return decorated_ref
