@@ -72,11 +72,13 @@ local function translate_cursor_location(self, item)
 end
 
 local function open(type, path, cursor)
-  local command = ("silent! %s %s | %s | redraw! | norm! zz"):format(
-    type,
-    fn.fnameescape(path),
-    cursor and cursor[1] or "1"
-  )
+  local command = ("silent! %s %s | %s"):format(type, fn.fnameescape(path), cursor and cursor[1] or "1")
+
+  logger.debug("[Status - Open] '" .. command .. "'")
+
+  vim.cmd(command)
+
+  command = "redraw! | norm! zz"
 
   logger.debug("[Status - Open] '" .. command .. "'")
 
@@ -120,7 +122,8 @@ M.v_discard = function(self)
             for _, hunk in ipairs(hunks) do
               table.insert(invalidated_diffs, "*:" .. item.name)
               table.insert(patches, function()
-                local patch = git.index.generate_patch(item, hunk, hunk.from, hunk.to, true)
+                local patch =
+                  git.index.generate_patch(hunk, { from = hunk.from, to = hunk.to, reverse = true })
 
                 logger.debug(("Discarding Patch: %s"):format(patch))
 
@@ -231,7 +234,7 @@ M.v_stage = function(self)
 
           if #hunks > 0 then
             for _, hunk in ipairs(hunks) do
-              table.insert(patches, git.index.generate_patch(item, hunk, hunk.from, hunk.to))
+              table.insert(patches, git.index.generate_patch(hunk.hunk, { from = hunk.from, to = hunk.to }))
             end
           else
             if section.name == "unstaged" then
@@ -281,7 +284,10 @@ M.v_unstage = function(self)
 
           if #hunks > 0 then
             for _, hunk in ipairs(hunks) do
-              table.insert(patches, git.index.generate_patch(item, hunk, hunk.from, hunk.to, true))
+              table.insert(
+                patches,
+                git.index.generate_patch(hunk, { from = hunk.from, to = hunk.to, reverse = true })
+              )
             end
           else
             table.insert(files, item.escaped_path)
@@ -781,7 +787,7 @@ M.n_discard = function(self)
       local hunk =
         self.buffer.ui:item_hunks(selection.item, selection.first_line, selection.last_line, false)[1]
 
-      local patch = git.index.generate_patch(selection.item, hunk, hunk.from, hunk.to, true)
+      local patch = git.index.generate_patch(hunk, { reverse = true })
 
       if section == "untracked" then
         message = "Discard hunk?"
@@ -1070,10 +1076,6 @@ M.n_stage = function(self)
                 if not git.merge.is_conflicted(selection.item.name) then
                   git.status.stage { selection.item.name }
                   self:dispatch_refresh({ update_diffs = { "*:" .. selection.item.name } }, "n_stage")
-
-                  if not git.merge.any_conflicted() then
-                    popups.open("merge")()
-                  end
                 end
               end,
             },
@@ -1091,9 +1093,9 @@ M.n_stage = function(self)
         local item = self.buffer.ui:get_item_under_cursor()
         assert(item, "Item cannot be nil")
 
-        local patch = git.index.generate_patch(item, stagable.hunk, stagable.hunk.from, stagable.hunk.to)
+        local patch = git.index.generate_patch(stagable.hunk)
         git.index.apply(patch, { cached = true })
-        self:dispatch_refresh({ update_diffs = { "*:" .. item.escaped_path } }, "n_stage")
+        self:dispatch_refresh({ update_diffs = { "*:" .. item.name } }, "n_stage")
       elseif stagable.filename then
         if section.options.section == "unstaged" then
           git.status.stage { stagable.filename }
@@ -1165,11 +1167,13 @@ M.n_unstage = function(self)
       if unstagable.hunk then
         local item = self.buffer.ui:get_item_under_cursor()
         assert(item, "Item cannot be nil")
-        local patch =
-          git.index.generate_patch(item, unstagable.hunk, unstagable.hunk.from, unstagable.hunk.to, true)
+        local patch = git.index.generate_patch(
+          unstagable.hunk,
+          { from = unstagable.hunk.from, to = unstagable.hunk.to, reverse = true }
+        )
 
         git.index.apply(patch, { cached = true, reverse = true })
-        self:dispatch_refresh({ update_diffs = { "*:" .. item.escaped_path } }, "n_unstage")
+        self:dispatch_refresh({ update_diffs = { "*:" .. item.name } }, "n_unstage")
       elseif unstagable.filename then
         git.status.unstage { unstagable.filename }
         self:dispatch_refresh({ update_diffs = { "*:" .. unstagable.filename } }, "n_unstage")

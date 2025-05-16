@@ -38,18 +38,9 @@ Here's an example spec for [Lazy](https://github.com/folke/lazy.nvim), but you'r
     "nvim-telescope/telescope.nvim", -- optional
     "ibhagwan/fzf-lua",              -- optional
     "echasnovski/mini.pick",         -- optional
+    "folke/snacks.nvim",             -- optional
   },
-  config = true
 }
-
-```
-
-If you're not using lazy, you'll need to require and setup the plugin like so:
-
-```lua
--- init.lua
-local neogit = require('neogit')
-neogit.setup {}
 ```
 
 ## Compatibility
@@ -58,7 +49,7 @@ The `master` branch will always be compatible with the latest **stable** release
 
 ## Configuration
 
-You can configure neogit by running the `neogit.setup()` function, passing a table as the argument.
+You can configure neogit by running the `require('neogit').setup {}` function, passing a table as the argument.
 
 <details>
 <summary>Default Config</summary>
@@ -111,13 +102,7 @@ neogit.setup {
   -- Scope persisted settings on a per-project basis
   use_per_project_settings = true,
   -- Table of settings to never persist. Uses format "Filetype--cli-value"
-  ignored_settings = {
-    "NeogitPushPopup--force-with-lease",
-    "NeogitPushPopup--force",
-    "NeogitPullPopup--rebase",
-    "NeogitCommitPopup--allow-empty",
-    "NeogitRevertPopup--no-edit",
-  },
+  ignored_settings = {},
   -- Configure highlight group features
   highlight = {
     italic = true,
@@ -138,6 +123,14 @@ neogit.setup {
   initial_branch_name = "",
   -- Change the default way of opening neogit
   kind = "tab",
+  -- Floating window style 
+  floating = {
+    relative = "editor",
+    width = 0.8,
+    height = 0.7,
+    style = "minimal",
+    border = "rounded",
+  },
   -- Disable line numbers
   disable_line_numbers = true,
   -- Disable relative line numbers
@@ -204,12 +197,6 @@ neogit.setup {
   merge_editor = {
     kind = "auto",
   },
-  description_editor = {
-    kind = "auto",
-  },
-  tag_editor = {
-    kind = "auto",
-  },
   preview_buffer = {
     kind = "floating_console",
   },
@@ -248,6 +235,11 @@ neogit.setup {
     -- is also selected then telescope is used instead
     -- Requires you to have `echasnovski/mini.pick` installed.
     mini_pick = nil,
+
+    -- If enabled, uses snacks.picker for menu selection. If the telescope integration
+    -- is also selected then telescope is used instead
+    -- Requires you to have `folke/snacks.nvim` installed.
+    snacks = nil,
   },
   sections = {
     -- Reverting/Cherry Picking
@@ -341,6 +333,7 @@ neogit.setup {
       ["<down>"] = "Next",
       ["<up>"] = "Previous",
       ["<tab>"] = "InsertCompletion",
+      ["<c-y>"] = "CopySelection",
       ["<space>"] = "MultiselectToggleNext",
       ["<s-space>"] = "MultiselectTogglePrevious",
       ["<c-j>"] = "NOP",

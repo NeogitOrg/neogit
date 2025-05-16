@@ -12,6 +12,7 @@ local a = require("plenary.async")
 ---@return boolean
 local function allow_empty(popup)
   return vim.tbl_contains(popup:get_arguments(), "--allow-empty")
+    or vim.tbl_contains(popup:get_arguments(), "--all")
 end
 
 local function confirm_modifications()
@@ -94,7 +95,7 @@ local function commit_special(popup, method, opts)
   end
 
   a.util.scheduler()
-  do_commit(popup, cmd.args(string.format("--%s=%s", method, commit)))
+  do_commit(popup, cmd.args(method:format(commit)))
 
   if opts.rebase then
     a.util.scheduler()
@@ -148,15 +149,23 @@ function M.amend(popup)
 end
 
 function M.fixup(popup)
-  commit_special(popup, "fixup", { edit = false })
+  commit_special(popup, "--fixup=%s", { edit = false })
 end
 
 function M.squash(popup)
-  commit_special(popup, "squash", { edit = false })
+  commit_special(popup, "--squash=%s", { edit = false })
 end
 
 function M.augment(popup)
-  commit_special(popup, "squash", { edit = true })
+  commit_special(popup, "--squash=%s", { edit = true })
+end
+
+function M.alter(popup)
+  commit_special(popup, "--fixup=amend:%s", { edit = true })
+end
+
+function M.revise(popup)
+  commit_special(popup, "--fixup=reword:%s", { edit = true })
 end
 
 function M.instant_fixup(popup)
@@ -164,7 +173,7 @@ function M.instant_fixup(popup)
     return
   end
 
-  commit_special(popup, "fixup", { rebase = true, edit = false })
+  commit_special(popup, "--fixup=%s", { rebase = true, edit = false })
 end
 
 function M.instant_squash(popup)
@@ -172,7 +181,7 @@ function M.instant_squash(popup)
     return
   end
 
-  commit_special(popup, "squash", { rebase = true, edit = false })
+  commit_special(popup, "--squash=%s", { rebase = true, edit = false })
 end
 
 function M.absorb(popup)

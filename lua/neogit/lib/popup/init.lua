@@ -64,6 +64,16 @@ function M:get_arguments()
   return flags
 end
 
+---@param key string
+---@return any|nil
+function M:get_env(key)
+  if not self.state.env then
+    return nil
+  end
+
+  return self.state.env[key]
+end
+
 -- Returns a table of key/value pairs, where the key is the name of the switch, and value is `true`, for all
 -- enabled arguments that are NOT for cli consumption (internal use only).
 ---@return table
@@ -108,7 +118,10 @@ function M:toggle_switch(switch)
     switch.cli = options[(index + 1)] or options[1]
     switch.value = switch.cli
     switch.enabled = switch.cli ~= ""
-    state.set({ self.state.name, switch.cli_suffix }, switch.cli)
+
+    if switch.persisted ~= false then
+      state.set({ self.state.name, switch.cli_suffix }, switch.cli)
+    end
 
     return
   end
@@ -127,7 +140,9 @@ function M:toggle_switch(switch)
     end
   end
 
-  state.set({ self.state.name, switch.cli }, switch.enabled)
+  if switch.persisted ~= false then
+    state.set({ self.state.name, switch.cli }, switch.enabled)
+  end
 
   -- Ensure that other switches/options that are incompatible with this one are disabled
   if switch.enabled and #switch.incompatible > 0 then
@@ -353,6 +368,7 @@ function M:mappings()
       mappings.n[config.id] = a.void(function()
         self:set_config(config)
         self:refresh()
+        Watcher.instance():dispatch_refresh()
       end)
     end
   end

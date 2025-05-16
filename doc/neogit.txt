@@ -18,6 +18,8 @@ CONTENTS                                                       *neogit_contents*
     4. Events                                                    |neogit_events|
     5. Highlights                                            |neogit_highlights|
     6. API                                                          |neogit_api|
+       • Popup Builder                                    |neogit_popup_builder|
+       • Customizing Popups                               |neogit_custom_popups|
     7. Usage                                                      |neogit_usage|
     8. Popups                                                    *neogit_popups*
        • Bisect                                            |neogit_bisect_popup|
@@ -128,13 +130,7 @@ to Neovim users.
     -- Scope persisted settings on a per-project basis
     use_per_project_settings = true,
     -- Table of settings to never persist. Uses format "Filetype--cli-value"
-    ignored_settings = {
-        "NeogitPushPopup--force-with-lease",
-        "NeogitPushPopup--force",
-        "NeogitPullPopup--rebase",
-        "NeogitCommitPopup--allow-empty",
-        "NeogitRevertPopup--no-edit",
-    },
+    ignored_settings = {},
     -- Configure highlight group features
     highlight = {
         italic = true,
@@ -155,6 +151,14 @@ to Neovim users.
     initial_branch_name = "",
     -- Change the default way of opening neogit
     kind = "tab",
+    -- Floating window style 
+    floating = {
+      relative = "editor",
+      width = 0.8,
+      height = 0.7,
+      style = "minimal",
+      border = "rounded",
+    },
     -- Disable line numbers
     disable_line_numbers = true,
     -- Disable relative line numbers
@@ -221,12 +225,6 @@ to Neovim users.
     merge_editor = {
         kind = "auto",
     },
-    description_editor = {
-        kind = "auto",
-    },
-    tag_editor = {
-        kind = "auto",
-    },
     preview_buffer = {
         kind = "floating_console",
     },
@@ -265,6 +263,11 @@ to Neovim users.
         -- is also selected then telescope is used instead
         -- Requires you to have `echasnovski/mini.pick` installed.
         mini_pick = nil,
+
+        -- If enabled, uses snacks.picker for menu selection. If the telescope integration
+        -- is also selected then telescope is used instead
+        -- Requires you to have `folke/snacks.nvim` installed.
+        snacks = nil,
     },
     sections = {
         -- Reverting/Cherry Picking
@@ -391,6 +394,7 @@ The following mappings can all be customized via the setup function.
         ["<down>"]             = "Next",
         ["<up>"]               = "Previous",
         ["<tab>"]              = "InsertCompletion",
+        ["<c-y>"]              = "CopySelection",
         ["<space>"]            = "MultiselectToggleNext",
         ["<s-space>"]          = "MultiselectTogglePrevious",
         ["<c-j>"]              = "NOP",
@@ -483,83 +487,135 @@ The following mappings can all be customized via the setup function.
 
 The following events are emitted by Neogit:
 
-  Event                          Description                              ~
-  NeogitStatusRefreshed          Status has been reloaded                ~
+• `NeogitStatusRefreshed`
+  When: Status has been reloaded
+  Data: `{}`
 
-                                  Event Data: {}                         ~
+• `NeogitCommitComplete`
+  When: Commit has been created
+  Data: `{}`
 
-  NeogitCommitComplete           Commit has been created                 ~
+• `NeogitPushComplete`
+  When: Push has finished
+  Data: `{}`
 
-                                  Event Data: {}                         ~
+• `NeogitPullComplete`
+  When: Push has finished
+  Data: `{}`
 
-  NeogitPushComplete             Push has completed                      ~
+• `NeogitFetchComplete`
+  When: Fetch has finished
+  Data: `{}`
 
-                                  Event Data: {}                         ~
-
-  NeogitPullComplete             Pull has completed                      ~
-
-                                  Event Data: {}                         ~
-
-  NeogitFetchComplete            Fetch has completed                     ~
-
-                                  Event Data: {}                         ~
-
-  NeogitBranchCreate             Branch was created, starting from       ~
-                                  `base`                                 ~
-
-                                  Event Data:                            ~
-                                    { branch_name: string, base: string? } ~
-
-  NeogitBranchDelete             Branch was deleted                      ~
-
-                                  Event Data: { branch_name: string }    ~
-
-  NeogitBranchCheckout           Branch was checked out                  ~
-
-                                  Event Data: { branch_name: string }    ~
-
-  NeogitBranchReset              Branch was reset to a commit/branch     ~
-
-                                  Event Data:                            ~
-                                    { branch_name: string, resetting_to: string } ~
-
-  NeogitBranchRename             Branch was renamed                      ~
-
-                                  Event Data:                            ~
-                                    { branch_name: string, new_name: string } ~
-
-  NeogitRebase                   A rebase finished                       ~
-
-                                  Event Data:                            ~
-                                    { commit: string, status: "ok" | "conflict" } ~
-
-  NeogitReset                    A branch was reset to a certain commit  ~
-
-                                  Event Data:                            ~
-                                    { commit: string, mode: "soft" |     ~
-                                      "mixed" | "hard" | "keep" | "index" } ~
-
-  NeogitTagCreate                A tag was placed on a certain commit    ~
-
-                                  Event Data: { name: string, ref: string } ~
-
-  NeogitTagDelete                A tag was removed                       ~
-
-                                  Event Data: { name: string }           ~
-
-  NeogitCherryPick               One or more commits were cherry-picked  ~
-
-                                  Event Data: { commits: string[] }      ~
-
-  NeogitMerge                    A merge finished                        ~
-
-                                  Event Data:                            ~
-                                    { branch: string, args: string[],    ~
-                                      status: "ok" | "conflict" }        ~
-
-  NeogitStash                    A stash finished                        ~
-
-                                  Event Data: { success: boolean }       ~
+• `NeogitBranchCreate`
+  When: Branch was created, starting from `<base>`
+  Data: >
+    {
+      branch_name: string,
+      base: string?
+    }
+<
+• `NeogitBranchDelete`
+  When: Branch was deleted
+  Data: >
+    {
+      branch_name: string,
+    }
+<
+• `NeogitBranchCheckout`
+  When: Branch was checked out
+  Data: >
+    {
+      branch_name: string,
+    }
+<
+• `NeogitBranchReset`
+  When: Branch was reset to commit/branch
+  Data: >
+    {
+      branch_name: string,
+      resetting_to: string
+    }
+<
+• `NeogitBranchRename`
+  When: Branch was renamed
+  Data: >
+    {
+      branch_name: string,
+      new_name: string
+    }
+<
+• `NeogitRebase`
+  When: A rebase has finished
+  Data: >
+    {
+      commit: string,
+      status: "ok" | "conflict"
+    }
+<
+• `NeogitReset`
+  When: A reset has been performed
+  Data: >
+    {
+      commit: string,
+      mode: "soft" | "mixed" | "hard" | "keep" | "index"
+    }
+<
+• `NeogitTagCreate`
+  When: A tag is placed on a commit
+  Data: >
+    {
+      ref: string,
+      name: string
+    }
+<
+• `NeogitTagCreate`
+  When: A tag is placed on a commit
+  Data: >
+    {
+      ref: string,
+      name: string
+    }
+<
+• `NeogitTagDelete`
+  When: A tag is removed
+  Data: >
+    {
+      name: string
+    }
+<
+• `NeogitCherryPick`
+  When: One or more commits were cherry picked
+  Data: >
+    {
+      commits: string[]
+    }
+<
+• `NeogitMerge`
+  When: A merge has finished
+  Data: >
+    {
+      branch: string,
+      args: string[],
+      status: "ok" | "conflict"
+    }
+<
+• `NeogitStash`
+  When: A stash was performed
+  Data: >
+    {
+      success: boolean
+    }
+<
+• `NeogitWorktreeCreate`
+  When: A worktree was created
+  Data: >
+    {
+      old_cwd: string,
+      new_cwd: string,
+      copy_if_present: function(filename: string, callback: function|nil)
+    }
+<
 ==============================================================================
 5. Highlights                                                *neogit_highlights*
 
@@ -651,7 +707,7 @@ whats recommended. However, if you want to control the style on a per-section
 basis, the _actual_ highlight groups on the labels follow this pattern:
     `NeogitChange<mode><section>`
 
-Where `<mode>` is one of: (corrospinding to the git mode)
+Where `<mode>` is one of: (corresponding to the git mode)
   M
   A
   N
@@ -1001,7 +1057,7 @@ Actions:                                           *neogit_branch_popup_actions*
     the old branch.
 
   • Checkout new worktree                      *neogit_branch_checkout_worktree*
-    (Not yet implemented)
+    see: |neogit_worktree_checkout|
 
   • Create new branch                              *neogit_branch_create_branch*
     Functionally the same as |neogit_branch_checkout_new|, but does not update
@@ -1012,7 +1068,7 @@ Actions:                                           *neogit_branch_popup_actions*
     index has uncommitted changes, will behave exactly the same as spin_off.
 
   • Create new worktree                          *neogit_branch_create_worktree*
-    (Not yet implemented)
+    see: |neogit_worktree_create_branch|
 
   • Configure                                          *neogit_branch_configure*
     Opens selector to choose a branch, then offering some configuration
@@ -1260,13 +1316,37 @@ Actions:                                           *neogit_commit_popup_actions*
     Creates a fixup commit. If a commit is selected it will be used, otherwise
     the user is prompted to pick a commit.
 
+    `git commit --fixup=COMMIT --no-edit`
+
   • Squash                                                *neogit_commit_squash*
     Creates a squash commit. If a commit is selected it will be used,
     otherwise the user is prompted to pick a commit.
 
+    `git commit --squash=COMMIT --no-edit`
+
   • Augment                                              *neogit_commit_augment*
     Creates a squash commit, editing the squash message. If a commit is
     selected it will be used, otherwise the user is prompted to pick a commit.
+
+    `git commit --squash=COMMIT --edit`
+
+  • Alter                                                  *neogit_commit_alter*
+    Create a squash commit, authoring the final message now.
+
+    During a later rebase, when this commit gets squashed into it's targeted
+    commit, the original message of the targeted commit is replaced with the
+    message of this commit, without the user automatically being given a
+    chance to edit it again.
+
+    `git commit --fixup=amend:COMMIT --edit`
+
+  • Revise                                                *neogit_commit_revise*
+    Reword the message of an existing commit, without editing it's tree.
+    Later, when the commit is squashed into it's targeted commit, a combined
+    commit is created which uses the message of the fixup commit and the tree
+    of the targeted commit.
+
+    `git commit --fixup=reword:COMMIT --edit`
 
   • Instant Fixup                                  *neogit_commit_instant_fixup*
     Similar to |neogit_commit_fixup|, but instantly rebases after.
@@ -1842,7 +1922,7 @@ Actions:                                            *neogit_reset_popup_actions*
     changes.
 
   • Worktree                                             *neogit_reset_worktree*
-    (Not yet implemented)
+    Resets current worktree to specified commit.
 
 ==============================================================================
 Stash Popup                                                 *neogit_stash_popup*
@@ -2071,7 +2151,7 @@ The following keys, in normal mode, will act on the commit under the cursor:
 • `<cr>` Open current commit in Commit Buffer
 
 ==============================================================================
-Custom Popups                                             *neogit_custom_popups*
+Popup Builder                                             *neogit_popup_builder*
 
 You can leverage Neogit's infrastructure to create your own popups and
 actions. For example, you can define actions as a function which will take the
@@ -2137,5 +2217,25 @@ calling the setup function:
       },
     })
 <
+
+==============================================================================
+Customizing Popups                                        *neogit_custom_popups*
+
+You can customize existing popups via the Neogit config.
+
+Below is an example of adding a custom switch, but you can use any function 
+from the builder API.
+>lua
+    require("neogit").setup({
+      builders = {
+        NeogitPushPopup = function(builder)
+          builder:switch('m', 'merge_request.create', 'Create merge request', { cli_prefix = '-o ', persisted = false })
+        end,
+      },
+    })
+
+Keep in mind that builder hooks are executed at the end of the popup
+builder, so any switches or options added will be placed at the end.
+
 ------------------------------------------------------------------------------
 vim:tw=78:ts=8:ft=help:norl:

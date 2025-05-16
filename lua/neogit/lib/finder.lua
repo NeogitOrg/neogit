@@ -9,6 +9,13 @@ local function refocus_status_buffer()
   end
 end
 
+local copy_selection = function()
+  local selection = require("telescope.actions.state").get_selected_entry()
+  if selection ~= nil then
+    vim.cmd.let(("@+=%q"):format(selection[1]))
+  end
+end
+
 local function telescope_mappings(on_select, allow_multi, refocus_status)
   local action_state = require("telescope.actions.state")
   local actions = require("telescope.actions")
@@ -85,6 +92,7 @@ local function telescope_mappings(on_select, allow_multi, refocus_status)
       ["InsertCompletion"] = completion_action,
       ["Next"] = actions.move_selection_next,
       ["Previous"] = actions.move_selection_previous,
+      ["CopySelection"] = copy_selection,
       ["NOP"] = actions.nop,
       ["MultiselectToggleNext"] = actions.toggle_selection + actions.move_selection_worse,
       ["MultiselectTogglePrevious"] = actions.toggle_selection + actions.move_selection_better,
@@ -143,6 +151,70 @@ local function fzf_actions(on_select, allow_multi, refocus_status)
     ["ctrl-c"] = close_action,
     ["ctrl-q"] = close_action,
   }
+end
+
+---Convert entries to snack picker items
+---@param entries any[]
+---@return any[]
+local function entries_to_snack_items(entries)
+  local items = {}
+  for idx, entry in ipairs(entries) do
+    table.insert(items, { idx = idx, score = 0, text = entry })
+  end
+  return items
+end
+
+--- Utility function to map actions
+---@param on_select fun(item: any|nil)
+---@param allow_multi boolean
+---@param refocus_status boolean
+local function snacks_confirm(on_select, allow_multi, refocus_status)
+  local completed = false
+  local function complete(selection)
+    if completed then
+      return
+    end
+    on_select(selection)
+    completed = true
+    if refocus_status then
+      refocus_status_buffer()
+    end
+  end
+  local function confirm(picker, item)
+    local selection = {}
+    local picker_selected = picker:selected { fallback = true }
+
+    if #picker_selected == 0 then
+      complete(nil)
+      picker:close()
+    elseif #picker_selected > 1 then
+      for _, item in ipairs(picker_selected) do
+        table.insert(selection, item.text)
+      end
+    else
+      local entry = item.text
+      local prompt = picker:filter().pattern
+
+      local navigate_up_level = entry == ".." and #prompt > 0
+      local input_git_refspec = prompt:match("%^")
+        or prompt:match("~")
+        or prompt:match("@")
+        or prompt:match(":")
+
+      table.insert(selection, (navigate_up_level or input_git_refspec) and prompt or entry)
+    end
+
+    if selection and selection[1] and selection[1] ~= "" then
+      complete(allow_multi and selection or selection[1])
+      picker:close()
+    end
+  end
+
+  local function on_close()
+    complete(nil)
+  end
+
+  return confirm, on_close
 end
 
 --- Utility function to map finder opts to fzf
@@ -274,6 +346,23 @@ function Finder:find(on_select)
   elseif config.check_integration("mini_pick") then
     local mini_pick = require("mini.pick")
     mini_pick.start { source = { items = self.entries, choose = on_select } }
+  elseif config.check_integration("snacks") then
+    local snacks_picker = require("snacks.picker")
+    local confirm, on_close = snacks_confirm(on_select, self.opts.allow_multi, self.opts.refocus_status)
+    snacks_picker.pick(nil, {
+      title = "Neogit",
+      prompt = string.format("%s > ", self.opts.prompt_prefix),
+      items = entries_to_snack_items(self.entries),
+      format = "text",
+      layout = {
+        preset = self.opts.theme,
+        preview = self.opts.previewer,
+        height = self.opts.layout_config.height,
+        border = self.opts.border and "rounded" or "none",
+      },
+      confirm = confirm,
+      on_close = on_close,
+    })
   else
     vim.ui.select(self.entries, {
       prompt = string.format("%s: ", self.opts.prompt_prefix),

@@ -213,33 +213,10 @@ function M:open(kind)
       buffer:move_cursor(buffer.ui:first_section().first)
     end,
     user_autocmds = {
-      ["NeogitPushComplete"] = function()
-        self:dispatch_refresh(nil, "push_complete")
-      end,
-      ["NeogitPullComplete"] = function()
-        self:dispatch_refresh(nil, "pull_complete")
-      end,
-      ["NeogitFetchComplete"] = function()
-        self:dispatch_refresh(nil, "fetch_complete")
-      end,
-      ["NeogitRebase"] = function()
-        self:dispatch_refresh(nil, "rebase")
-      end,
-      ["NeogitMerge"] = function()
-        self:dispatch_refresh(nil, "merge")
-      end,
-      ["NeogitReset"] = function()
-        self:dispatch_refresh(nil, "reset_complete")
-      end,
-      ["NeogitStash"] = function()
-        self:dispatch_refresh(nil, "stash")
-      end,
-      ["NeogitRevertComplete"] = function()
-        self:dispatch_refresh(nil, "revert")
-      end,
-      ["NeogitCherryPick"] = function()
-        self:dispatch_refresh(nil, "cherry_pick")
-      end,
+      -- Resetting doesn't yield the correct repo state instantly, so we need to re-refresh after a few seconds
+      -- in order to show the user the correct state.
+      ["NeogitReset"] = self:deferred_refresh("reset"),
+      ["NeogitBranchReset"] = self:deferred_refresh("reset_branch"),
     },
   }
 
@@ -332,6 +309,17 @@ end
 M.dispatch_refresh = a.void(function(self, partial, reason)
   self:refresh(partial, reason)
 end)
+
+---@param reason string
+---@param wait number? timeout in ms, or 2 seconds
+---@return fun()
+function M:deferred_refresh(reason, wait)
+  return function()
+    vim.defer_fn(function()
+      self:dispatch_refresh(nil, reason)
+    end, wait or 2000)
+  end
+end
 
 function M:reset()
   logger.debug("[STATUS] Resetting repo and refreshing - CWD: " .. vim.uv.cwd())
