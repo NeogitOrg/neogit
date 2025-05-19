@@ -512,6 +512,12 @@ Neogit follows semantic versioning.
 
 See [CONTRIBUTING.md](https://github.com/NeogitOrg/neogit/blob/master/CONTRIBUTING.md) for more details.
 
+## Contributors
+
+<a href="https://github.com/NeogitOrg/Neogit/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=NeogitOrg/Neogit" />
+</a>
+
 ## Special Thanks
 
 - [kolja](https://github.com/kolja) for the Neogit Logo
