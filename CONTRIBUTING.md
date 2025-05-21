@@ -50,9 +50,23 @@ Simply clone *Neogit* to your project directory of choice to be able to use your
 Logging is a useful tool for inspecting what happens in the code and in what order. Neogit uses
 [`Plenary`](https://github.com/nvim-lua/plenary.nvim) for logging.
 
-Export the environment variables `NEOGIT_LOG_CONSOLE="sync"` to enable logging, and `NEOGIT_LOG_LEVEL="debug"` for more
-verbose logging.
+#### Enabling logging via environment variables
 
+- To enable logging to console, export `NEOGIT_LOG_CONSOLE="sync"`
+- To enable logging to a file, export `NEOGIT_LOG_FILE="true"`
+- For more verbose logging, set the log level to `debug` via `NEOGIT_LOG_LEVEL="debug"` 
+
+#### Enabling logging via lua api
+
+To turn on logging while neovim is already running, you can use:
+
+```lua
+:lua require("neogit.logger").config.use_file = true -- for logs to ~/.cache/nvim/neogit.log.
+:lua require("neogit.logger").config.use_console = true -- for logs to console.
+:lua require("neogit.logger").config.level = 'debug' -- to set the log level
+```
+
+#### Using the logger from the neogit codebase
 
 ```lua
 local logger = require("neogit.logger")
