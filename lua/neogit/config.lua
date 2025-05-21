@@ -331,6 +331,7 @@ end
 ---@field disable_context_highlighting? boolean Disable context highlights based on cursor position
 ---@field disable_signs? boolean Special signs to draw for sections etc. in Neogit
 ---@field simple_headers? boolean Use text headers instead of windows
+---@field force_if_includes? boolean Add --force-if-includes if --force-with-lease is set
 ---@field prompt_force_push? boolean Offer to force push when branches diverge
 ---@field git_services? table Templartes to use when opening a pull request for a branch
 ---@field fetch_after_checkout? boolean Perform a fetch if the newly checked out branch has an upstream or pushRemote set
@@ -380,6 +381,7 @@ function M.get_default_values()
     disable_context_highlighting = false,
     disable_signs = false,
     simple_headers = false,
+    force_if_includes = true,
     prompt_force_push = true,
     graph_style = "ascii",
     commit_date_format = nil,
@@ -1138,6 +1140,7 @@ function M.validate_config()
     validate_type(config.disable_context_highlighting, "disable_context_highlighting", "boolean")
     validate_type(config.disable_signs, "disable_signs", "boolean")
     validate_type(config.simple_headers, "simple_headers", "boolean")
+    validate_type(config.force_if_includes, "force_if_includes", "boolean")
     validate_type(config.telescope_sorter, "telescope_sorter", "function")
     validate_type(config.use_per_project_settings, "use_per_project_settings", "boolean")
     validate_type(config.remember_settings, "remember_settings", "boolean")
