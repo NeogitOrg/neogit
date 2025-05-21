@@ -85,7 +85,7 @@ function M.a_file(popup)
   end
 
   local success = git.reset.file(target, files)
-  if success then
+  if not success then
     notification.error("Reset Failed")
   else
     if #files > 1 then
