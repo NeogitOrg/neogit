@@ -75,7 +75,7 @@ function M:open()
     filetype = "NeogitLogView",
     kind = config.values.log_view.kind,
     context_highlight = false,
-    header = self.header,
+    header = not config.values.simple_headers and self.header or nil,
     scroll_header = false,
     active_item_highlight = true,
     status_column = not config.values.disable_signs and "" or nil,
@@ -310,7 +310,8 @@ function M:open()
       },
     },
     render = function()
-      return ui.View(self.commits, self.remotes, self.internal_args)
+      local header = config.values.simple_headers and self.header or nil
+      return ui.View(self.commits, self.remotes, self.internal_args, header)
     end,
     after = function(buffer)
       self.repo:add_refresh_handler(buffer.name, function() self:redraw() end)
