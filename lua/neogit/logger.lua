@@ -41,6 +41,8 @@ log.new = function(config, standalone)
     obj = {}
   end
 
+  obj.config = config
+
   local levels = {}
   for i, v in ipairs(config.modes) do
     levels[v.name] = i
