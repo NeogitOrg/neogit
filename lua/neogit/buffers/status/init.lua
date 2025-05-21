@@ -218,6 +218,9 @@ function M:open(kind)
       ["NeogitReset"] = self:deferred_refresh("reset"),
       ["NeogitBranchReset"] = self:deferred_refresh("reset_branch"),
     },
+    autocmds = {
+      ["FocusGained"] = self:deferred_refresh("focused", 10),
+    },
   }
 
   return self
