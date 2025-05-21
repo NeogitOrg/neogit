@@ -57,6 +57,10 @@ end
 ---@return boolean
 function M.file(target, files)
   local result = git.cli.checkout.rev(target).files(unpack(files)).call()
+  if result.code > 0 then
+    result = git.cli.reset.args(target).files(unpack(files)).call()
+  end
+
   return result.code == 0
 end
 

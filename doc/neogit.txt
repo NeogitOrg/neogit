@@ -1923,6 +1923,13 @@ Actions:                                            *neogit_reset_popup_actions*
   • Worktree                                             *neogit_reset_worktree*
     Resets current worktree to specified commit.
 
+  • Branch                                                 *neogit_reset_branch*
+    see: |neogit_branch_reset|
+
+  • File                                                     *neogit_reset_file*
+    Attempts to perform a `git checkout` from the specified revision, and if
+    that fails, tries `git reset` instead.
+
 ==============================================================================
 Stash Popup                                                 *neogit_stash_popup*
 
