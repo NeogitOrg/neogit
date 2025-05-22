@@ -31,12 +31,16 @@ local function cleanup_dir(dir)
   fn.delete(dir, "rf")
 end
 
-local function cleanup_items(...)
+---@param items StatusItem[]
+local function cleanup_items(items)
   if vim.in_fast_event() then
     a.util.scheduler()
   end
 
-  for _, item in ipairs { ... } do
+  for _, item in ipairs(items) do
+    logger.trace("[cleanup_items()] Cleaning " .. vim.inspect(item.name))
+    assert(item.name, "cleanup_items() - item must have a name")
+
     local bufnr = fn.bufnr(item.name)
     if bufnr > 0 then
       api.nvim_buf_delete(bufnr, { force = false })
@@ -175,7 +179,7 @@ M.v_discard = function(self)
       end
 
       if #untracked_files > 0 then
-        cleanup_items(unpack(untracked_files))
+        cleanup_items(untracked_files)
       end
 
       if #unstaged_files > 0 then
@@ -188,7 +192,7 @@ M.v_discard = function(self)
         git.index.reset(util.map(new_files, function(item)
           return item.escaped_path
         end))
-        cleanup_items(unpack(new_files))
+        cleanup_items(new_files)
       end
 
       if #staged_files_modified > 0 then
@@ -689,7 +693,7 @@ M.n_discard = function(self)
         if mode == "all" then
           message = ("Discard %q?"):format(selection.item.name)
           action = function()
-            cleanup_items(selection.item)
+            cleanup_items { selection.item }
           end
         else
           message = ("Recursively discard %q?"):format(selection.item.name)
@@ -721,7 +725,7 @@ M.n_discard = function(self)
           action = function()
             if selection.item.mode == "A" then
               git.index.reset { selection.item.escaped_path }
-              cleanup_items(selection.item)
+              cleanup_items { selection.item }
             else
               git.index.checkout { selection.item.name }
             end
@@ -752,14 +756,14 @@ M.n_discard = function(self)
           action = function()
             if selection.item.mode == "N" then
               git.index.reset { selection.item.escaped_path }
-              cleanup_items(selection.item)
+              cleanup_items { selection.item }
             elseif selection.item.mode == "M" then
               git.index.reset { selection.item.escaped_path }
               git.index.checkout { selection.item.escaped_path }
             elseif selection.item.mode == "R" then
               git.index.reset_HEAD(selection.item.name, selection.item.original_name)
               git.index.checkout { selection.item.original_name }
-              cleanup_items(selection.item)
+              cleanup_items { selection.item }
             elseif selection.item.mode == "D" then
               git.index.reset_HEAD(selection.item.escaped_path)
               git.index.checkout { selection.item.escaped_path }
@@ -812,7 +816,7 @@ M.n_discard = function(self)
       if section == "untracked" then
         message = ("Discard %s files?"):format(#selection.section.items)
         action = function()
-          cleanup_items(unpack(selection.section.items))
+          cleanup_items(selection.section.items)
         end
         refresh = { update_diffs = { "untracked:*" } }
       elseif section == "unstaged" then
@@ -845,7 +849,7 @@ M.n_discard = function(self)
 
           for _, item in ipairs(selection.section.items) do
             if item.mode == "N" or item.mode == "A" then
-              table.insert(new_files, item.escaped_path)
+              table.insert(new_files, item)
             elseif item.mode == "M" then
               table.insert(staged_files_modified, item.escaped_path)
             elseif item.mode == "R" then
@@ -858,9 +862,10 @@ M.n_discard = function(self)
           end
 
           if #new_files > 0 then
-            -- ensure the file is deleted
-            git.index.reset(new_files)
-            cleanup_items(unpack(new_files))
+            git.index.reset(util.map(new_files, function(item)
+              return item.escaped_path
+            end))
+            cleanup_items(new_files)
           end
 
           if #staged_files_modified > 0 then

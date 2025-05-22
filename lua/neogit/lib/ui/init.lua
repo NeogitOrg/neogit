@@ -5,7 +5,7 @@ local Collection = require("neogit.lib.collection")
 local logger = require("neogit.logger") -- TODO: Add logging
 
 ---@class Section
----@field items  StatusItem[]
+---@field items StatusItem[]
 ---@field name string
 ---@field first number
 
@@ -16,8 +16,8 @@ local logger = require("neogit.logger") -- TODO: Add logging
 ---@field section Section|nil
 ---@field item StatusItem|nil
 ---@field commit CommitLogEntry|nil
----@field commits  CommitLogEntry[]
----@field items  StatusItem[]
+---@field commits CommitLogEntry[]
+---@field items StatusItem[]
 local Selection = {}
 Selection.__index = Selection
 
@@ -221,6 +221,7 @@ function Ui:item_hunks(item, first_line, last_line, partial)
   return hunks
 end
 
+---@return Selection
 function Ui:get_selection()
   local visual_pos = vim.fn.line("v")
   local cursor_pos = vim.fn.line(".")
