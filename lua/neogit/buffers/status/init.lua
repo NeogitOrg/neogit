@@ -293,18 +293,18 @@ function M:redraw(cursor, view)
   logger.debug("[STATUS] Rendering UI")
   self.buffer.ui:render(unpack(ui.Status(git.repo.state, self.config)))
 
-  if self.fold_state then
+  if self.fold_state and self.buffer then
     logger.debug("[STATUS] Restoring fold state")
     self.buffer.ui:set_fold_state(self.fold_state)
     self.fold_state = nil
   end
 
-  if self.cursor_state and self.view_state then
+  if self.cursor_state and self.view_state and self.buffer then
     logger.debug("[STATUS] Restoring cursor and view state")
     self.buffer:restore_view(self.view_state, self.cursor_state)
     self.view_state = nil
     self.cursor_state = nil
-  elseif cursor and view then
+  elseif cursor and view and self.buffer then
     self.buffer:restore_view(view, self.buffer.ui:resolve_cursor_location(cursor))
   end
 end
