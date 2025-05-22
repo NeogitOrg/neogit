@@ -185,7 +185,7 @@ M.v_discard = function(self)
       end
 
       if #new_files > 0 then
-        git.index.reset(util.map(unstaged_files, function(item)
+        git.index.reset(util.map(new_files, function(item)
           return item.escaped_path
         end))
         cleanup_items(unpack(new_files))
