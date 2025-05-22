@@ -168,10 +168,10 @@ local function build_hunks(lines)
 
       if line:match("^@@@") then
         -- Combined diff header
-        index_from, index_len, disk_from, disk_len = line:match("@@@* %-(%d+),?(%d*) .* %+(%d+),?(%d*) @@@*")
+        index_from, index_len, disk_from, disk_len = line:match("^@@@* %-(%d+),?(%d*) .* %+(%d+),?(%d*) @@@*")
       else
         -- Normal diff header
-        index_from, index_len, disk_from, disk_len = line:match("@@ %-(%d+),?(%d*) %+(%d+),?(%d*) @@")
+        index_from, index_len, disk_from, disk_len = line:match("^@@ %-(%d+),?(%d*) %+(%d+),?(%d*) @@")
       end
 
       if index_from then
