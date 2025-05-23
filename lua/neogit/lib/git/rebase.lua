@@ -2,13 +2,10 @@ local logger = require("neogit.logger")
 local git = require("neogit.lib.git")
 local client = require("neogit.client")
 local notification = require("neogit.lib.notification")
+local event = require("neogit.lib.event")
 
 ---@class NeogitGitRebase
 local M = {}
-
-local function fire_rebase_event(data)
-  vim.api.nvim_exec_autocmds("User", { pattern = "NeogitRebase", modeline = false, data = data })
-end
 
 local function rebase_command(cmd)
   return cmd.env(client.get_envs_git_editor()).call { long = true, pty = true }
@@ -26,9 +23,9 @@ function M.instantly(commit, args)
     .call { long = true, pty = true }
 
   if result.code ~= 0 then
-    fire_rebase_event { commit = commit, status = "failed" }
+    event.send("Rebase", { commit = commit, status = "failed" })
   else
-    fire_rebase_event { commit = commit, status = "ok" }
+    event.send("Rebase", { commit = commit, status = "ok" })
   end
 
   return result
@@ -43,14 +40,14 @@ function M.rebase_interactive(commit, args)
   if result.code ~= 0 then
     if result.stdout[1]:match("^hint: Waiting for your editor to close the file%.%.%. error") then
       notification.info("Rebase aborted")
-      fire_rebase_event { commit = commit, status = "aborted" }
+      event.send("Rebase", { commit = commit, status = "aborted" })
     else
       notification.error("Rebasing failed. Resolve conflicts before continuing")
-      fire_rebase_event { commit = commit, status = "conflict" }
+      event.send("Rebase", { commit = commit, status = "conflict" })
     end
   else
     notification.info("Rebased successfully")
-    fire_rebase_event { commit = commit, status = "ok" }
+    event.send("Rebase", { commit = commit, status = "ok" })
   end
 end
 
@@ -58,10 +55,10 @@ function M.onto_branch(branch, args)
   local result = rebase_command(git.cli.rebase.args(branch).arg_list(args))
   if result.code ~= 0 then
     notification.error("Rebasing failed. Resolve conflicts before continuing")
-    fire_rebase_event("conflict")
+    event.send("Rebase", { commit = branch, status = "conflict" })
   else
     notification.info("Rebased onto '" .. branch .. "'")
-    fire_rebase_event("ok")
+    event.send("Rebase", { commit = branch, status = "ok" })
   end
 end
 
@@ -69,10 +66,10 @@ function M.onto(start, newbase, args)
   local result = rebase_command(git.cli.rebase.onto.args(newbase, start).arg_list(args))
   if result.code ~= 0 then
     notification.error("Rebasing failed. Resolve conflicts before continuing")
-    fire_rebase_event("conflict")
+    event.send("Rebase", { status = "conflict" })
   else
     notification.info("Rebased onto '" .. newbase .. "'")
-    fire_rebase_event("ok")
+    event.send("Rebase", { commit = newbase, status = "ok" })
   end
 end
 
@@ -103,10 +100,10 @@ function M.modify(commit)
     .in_pty(true)
     .env({ GIT_SEQUENCE_EDITOR = editor })
     .call()
-  if result.code ~= 0 then
-    return
+
+  if result.code == 0 then
+    event.send("Rebase", { commit = commit, status = "ok" })
   end
-  fire_rebase_event { commit = commit, status = "ok" }
 end
 
 function M.drop(commit)
@@ -117,10 +114,10 @@ function M.drop(commit)
     .in_pty(true)
     .env({ GIT_SEQUENCE_EDITOR = editor })
     .call()
-  if result.code ~= 0 then
-    return
+
+  if result.code == 0 then
+    event.send("Rebase", { commit = commit, status = "ok" })
   end
-  fire_rebase_event { commit = commit, status = "ok" }
 end
 
 function M.continue()

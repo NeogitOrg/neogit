@@ -2,18 +2,10 @@ local git = require("neogit.lib.git")
 local input = require("neogit.lib.input")
 local util = require("neogit.lib.util")
 local config = require("neogit.config")
+local event = require("neogit.lib.event")
 
 ---@class NeogitGitStash
 local M = {}
-
----@param success boolean
-local function fire_stash_event(success)
-  vim.api.nvim_exec_autocmds("User", {
-    pattern = "NeogitStash",
-    modeline = false,
-    data = { success = success },
-  })
-end
 
 function M.list_refs()
   local result = git.cli.reflog.show.format("%h").args("stash").call { ignore_error = true }
@@ -27,24 +19,24 @@ end
 ---@param args string[]
 function M.stash_all(args)
   local result = git.cli.stash.push.files(".").arg_list(args).call()
-  fire_stash_event(result.code == 0)
+  event.send("Stash", { success = result.code == 0 })
 end
 
 function M.stash_index()
   local result = git.cli.stash.staged.call()
-  fire_stash_event(result.code == 0)
+  event.send("Stash", { success = result.code == 0 })
 end
 
 function M.stash_keep_index()
   local result = git.cli.stash.keep_index.files(".").call()
-  fire_stash_event(result.code == 0)
+  event.send("Stash", { success = result.code == 0 })
 end
 
 ---@param args string[]
 ---@param files string[]
 function M.push(args, files)
   local result = git.cli.stash.push.arg_list(args).files(unpack(files)).call()
-  fire_stash_event(result.code == 0)
+  event.send("Stash", { success = result.code == 0 })
 end
 
 function M.pop(stash)
@@ -56,7 +48,7 @@ function M.pop(stash)
     git.cli.stash.apply.args(stash).call()
   end
 
-  fire_stash_event(result.code == 0)
+  event.send("Stash", { success = result.code == 0 })
 end
 
 function M.apply(stash)
@@ -66,12 +58,12 @@ function M.apply(stash)
     git.cli.stash.apply.args(stash).call()
   end
 
-  fire_stash_event(result.code == 0)
+  event.send("Stash", { success = result.code == 0 })
 end
 
 function M.drop(stash)
   local result = git.cli.stash.drop.args(stash).call()
-  fire_stash_event(result.code == 0)
+  event.send("Stash", { success = result.code == 0 })
 end
 
 function M.list()

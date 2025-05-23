@@ -1,7 +1,5 @@
 local M = {}
 
--- TODO: All callers of nvim_exec_autocmd should route through here
-
 ---@param name string
 ---@param data table?
 function M.send(name, data)
