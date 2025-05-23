@@ -222,13 +222,17 @@ function M.update_rebase_status(state)
       for line in done:iter() do
         if line:match("^[^#]") and line ~= "" then
           local oid = line:match("^%w+ (%x+)") or line:match("^fixup %-C (%x+)")
-          table.insert(state.rebase.items, {
-            action = line:match("^(%w+) "),
-            oid = oid,
-            abbreviated_commit = oid:sub(1, git.log.abbreviated_size()),
-            subject = line:match("^%w+ %x+ (.+)$"),
-            done = true,
-          })
+          if oid then
+            table.insert(state.rebase.items, {
+              action = line:match("^(%w+) "),
+              oid = oid,
+              abbreviated_commit = oid:sub(1, git.log.abbreviated_size()),
+              subject = line:match("^%w+ %x+ (.+)$"),
+              done = true,
+            })
+          else
+            logger.debug("[rebase status] No OID found on line '" .. line .. "'")
+          end
         end
       end
     end
