@@ -10,6 +10,8 @@
 
 </div>
 
+<hr>
+
 <div align="center">
     <div>
         <div><img src="https://github.com/NeogitOrg/neogit/assets/7228095/7684545f-47b5-40e2-aedd-ccf56e0553f4" width="400px"/></div>
