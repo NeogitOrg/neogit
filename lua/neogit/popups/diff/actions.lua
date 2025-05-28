@@ -28,13 +28,15 @@ function M.range(popup)
     )
   )
 
-  local range_from = FuzzyFinderBuffer.new(options):open_async { prompt_prefix = "Diff for range from" }
+  local range_from = FuzzyFinderBuffer.new(options):open_async {
+    prompt_prefix = "Diff for range from", refocus_status = false
+  }
   if not range_from then
     return
   end
 
   local range_to = FuzzyFinderBuffer.new(options)
-    :open_async { prompt_prefix = "Diff from " .. range_from .. " to" }
+    :open_async { prompt_prefix = "Diff from " .. range_from .. " to", refocus_status = false }
   if not range_to then
     return
   end
