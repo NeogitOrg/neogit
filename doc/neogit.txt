@@ -764,21 +764,21 @@ NeogitCommitViewHeader      Applied to header of Commit View
 LOG VIEW BUFFER
 NeogitGraphAuthor           Applied to the commit's author in graph view
 NeogitGraphBlack            Used when --colors is enabled for graph
-NeogitGraphBlackBold
+NeogitGraphBoldBlack
 NeogitGraphRed
-NeogitGraphRedBold
+NeogitGraphBoldRed
 NeogitGraphGreen
-NeogitGraphGreenBold
+NeogitGraphBoldGreen
 NeogitGraphYellow
-NeogitGraphYellowBold
+NeogitGraphBoldYellow
 NeogitGraphBlue
-NeogitGraphBlueBold
+NeogitGraphBoldBlue
 NeogitGraphPurple
-NeogitGraphPurpleBold
+NeogitGraphBoldPurple
 NeogitGraphCyan
-NeogitGraphCyanBold
+NeogitGraphBoldCyan
 NeogitGraphWhite
-NeogitGraphWhiteBold
+NeogitGraphBoldWhite
 NeogitGraphGray
 NeogitGraphBoldGray
 NeogitGraphOrange
