@@ -205,6 +205,7 @@ function M.action(popup, action, args)
         if fn then
           local action = function()
             fn {
+              close = function() end,
               state = { env = {} },
               get_arguments = function()
                 return args
