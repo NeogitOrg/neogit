@@ -232,6 +232,40 @@ function M.pushRemote_ref(branch)
   end
 end
 
+---@return string|nil
+function M.pushDefault()
+  local pushDefault = git.config.get("remote.pushDefault")
+  if pushDefault:is_set() then
+    return pushDefault:read() ---@type string
+  end
+end
+
+---@param branch? string
+---@return string|nil
+function M.pushDefault_ref(branch)
+  branch = branch or M.current()
+  local pushDefault = M.pushDefault()
+
+  if branch and pushDefault then
+    return string.format("%s/%s", pushDefault, branch)
+  end
+end
+
+---@return string
+function M.pushRemote_or_pushDefault_label()
+  local ref = M.pushRemote_ref()
+  if ref then
+    return ref
+  end
+
+  local pushDefault = M.pushDefault()
+  if pushDefault then
+    return ("%s, creating it"):format(M.pushDefault_ref())
+  end
+
+  return "pushRemote, setting that"
+end
+
 ---@return string
 function M.pushRemote_label()
   return M.pushRemote_ref() or "pushRemote, setting that"

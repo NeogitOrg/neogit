@@ -16,7 +16,7 @@ function M.create(env)
     :switch("d", "dry-run", "Dry run")
     :switch("u", "set-upstream", "Set the upstream before pushing")
     :group_heading("Push " .. ((current and (current .. " ")) or "") .. "to")
-    :action("p", git.branch.pushRemote_label(), actions.to_pushremote)
+    :action("p", git.branch.pushRemote_or_pushDefault_label(), actions.to_pushremote)
     :action("u", git.branch.upstream_label(), actions.to_upstream)
     :action("e", "elsewhere", actions.to_elsewhere)
     :new_action_group("Push")
@@ -28,7 +28,12 @@ function M.create(env)
     :new_action_group("Configure")
     :action("C", "Set variables...", actions.configure)
     :env({
-      highlight = { current, git.branch.upstream(), git.branch.pushRemote_ref() },
+      highlight = {
+        current,
+        git.branch.upstream(),
+        git.branch.pushRemote_ref(),
+        git.branch.pushDefault_ref(),
+      },
       bold = { "pushRemote", "@{upstream}" },
       commit = env.commit,
     })
