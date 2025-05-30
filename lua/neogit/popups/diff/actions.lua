@@ -154,7 +154,7 @@ end
 --- @param cfg1 table Picker configuration for the first item.
 --- @param cfg2 table Picker configuration for the second item.
 --- @param on_both_selected_fn function(item1, item2): Callback when both (non-nil processed) items are selected.
---- @param on_cancel_fn_outer (function, optional): Callback if any selection is cancelled or results in nil.
+--- @param on_cancel_fn_outer? function Callback if any selection is cancelled or results in nil.
 local function prompt_for_item_pair_async(popup, fzf_lua, cfg1, cfg2, on_both_selected_fn, on_cancel_fn_outer)
   local overall_cancel_handler = on_cancel_fn_outer or function()
     close_popup_if_open(popup)
