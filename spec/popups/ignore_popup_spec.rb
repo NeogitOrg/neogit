@@ -3,8 +3,7 @@
 require "spec_helper"
 
 RSpec.describe "Ignore Popup", :git, :nvim, :popup do # rubocop:disable RSpec/EmptyExampleGroup
-  before { nvim.keys("i") }
-
+  let(:keymap) { "i" }
   let(:view) do
     [
       " Gitignore                                                                      ",

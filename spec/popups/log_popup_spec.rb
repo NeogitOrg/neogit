@@ -3,7 +3,7 @@
 require "spec_helper"
 
 RSpec.describe "Log Popup", :git, :nvim, :popup do # rubocop:disable RSpec/EmptyExampleGroup
-  before { nvim.keys("l") }
+  let(:keymap) { "l" }
 
   # TODO: PTY needs to be bigger to show the entire popup
   let(:view) do

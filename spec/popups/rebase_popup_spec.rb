@@ -3,7 +3,7 @@
 require "spec_helper"
 
 RSpec.describe "Rebase Popup", :git, :nvim, :popup do # rubocop:disable RSpec/EmptyExampleGroup
-  before { nvim.keys("r") }
+  let(:keymap) { "r" }
 
   let(:view) do
     [

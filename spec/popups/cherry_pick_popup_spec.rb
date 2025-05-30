@@ -3,8 +3,7 @@
 require "spec_helper"
 
 RSpec.describe "Cherry Pick Popup", :git, :nvim, :popup do # rubocop:disable RSpec/EmptyExampleGroup
-  before { nvim.keys("A") }
-
+  let(:keymap) { "A" }
   let(:view) do
     [
       " Arguments                                                                      ",

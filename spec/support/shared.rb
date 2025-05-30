@@ -15,7 +15,23 @@ RSpec.shared_examples "argument" do |keys|
 end
 
 RSpec.shared_examples "popup", :popup do
+  before do
+    nvim.keys(keymap)
+  end
+
   it "raises no errors" do
+    expect(nvim.errors).to be_empty
+  end
+
+  it "raises no errors with detached HEAD" do
+    nvim.keys("<esc>") # close popup
+
+    # Detach HEAD
+    git.commit("dummy commit", allow_empty: true)
+    git.checkout("HEAD^")
+
+    sleep(1) # Allow state to propagate
+    nvim.keys(keymap) # open popup
     expect(nvim.errors).to be_empty
   end
 

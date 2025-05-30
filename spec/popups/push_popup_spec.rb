@@ -3,7 +3,7 @@
 require "spec_helper"
 
 RSpec.describe "Push Popup", :git, :nvim, :popup, :with_remote_origin do
-  before { nvim.keys("P") }
+  let(:keymap) { "P" }
 
   let(:view) do
     [
