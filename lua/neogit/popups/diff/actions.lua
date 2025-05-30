@@ -28,13 +28,16 @@ function M.range(popup)
     )
   )
 
-  local range_from = FuzzyFinderBuffer.new(options):open_async { prompt_prefix = "Diff for range from" }
+  local range_from = FuzzyFinderBuffer.new(options):open_async {
+    prompt_prefix = "Diff for range from",
+    refocus_status = false,
+  }
   if not range_from then
     return
   end
 
   local range_to = FuzzyFinderBuffer.new(options)
-    :open_async { prompt_prefix = "Diff from " .. range_from .. " to" }
+    :open_async { prompt_prefix = "Diff from " .. range_from .. " to", refocus_status = false }
   if not range_to then
     return
   end
@@ -72,7 +75,7 @@ end
 function M.stash(popup)
   popup:close()
 
-  local selected = FuzzyFinderBuffer.new(git.stash.list()):open_async()
+  local selected = FuzzyFinderBuffer.new(git.stash.list()):open_async { refocus_status = false }
   if selected then
     diffview.open("stashes", selected)
   end
@@ -83,7 +86,7 @@ function M.commit(popup)
 
   local options = util.merge(git.refs.list_branches(), git.refs.list_tags(), git.refs.heads())
 
-  local selected = FuzzyFinderBuffer.new(options):open_async()
+  local selected = FuzzyFinderBuffer.new(options):open_async { refocus_status = false }
   if selected then
     diffview.open("commit", selected)
   end
