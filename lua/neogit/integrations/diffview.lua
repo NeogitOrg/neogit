@@ -130,7 +130,8 @@ function M.open(section_name, item_name, opts)
     local range = item_name
     view = dv_lib.diffview_open(dv_utils.tbl_pack(range))
   elseif section_name == "stashes" then
-    assert(item_name, "No item name for stash!")
+    assert(item_name and type(item_name) == "string", "No item name for stash!")
+
     local stash_id = item_name:match("stash@{%d+}")
     view = dv_lib.diffview_open(dv_utils.tbl_pack(stash_id .. "^!"))
   elseif section_name == "commit" then
