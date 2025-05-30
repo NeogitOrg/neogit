@@ -136,7 +136,7 @@ function M:open()
           local items = self.buffer.ui:get_ordered_commits_in_selection()
           p {
             section = { name = "log" },
-            items = items,
+            item = { name = items },
           }
         end),
         [mapping["DeleteBranch"]] = function()

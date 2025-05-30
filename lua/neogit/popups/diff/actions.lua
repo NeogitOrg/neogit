@@ -10,16 +10,25 @@ function M.this(popup)
   popup:close()
 
   local item = popup:get_env("item")
-  local items = popup:get_env("items")
   local section = popup:get_env("section")
 
-  if items[1] then
-    local range = items[1] .. ".." .. items[#items]
-    diffview.open("range", range)
-  elseif section and item then
-    diffview.open(section, item, { only = true })
-  elseif section then
-    diffview.open(section, nil, { only = true })
+  if section and section.name and item and item.name then
+    diffview.open(section.name, item.name, { only = true })
+  elseif section.name then
+    diffview.open(section.name, nil, { only = true })
+  elseif item.name then
+    diffview.open("range", item.name .. "..HEAD")
+  end
+end
+
+function M.this_to_HEAD(popup)
+  popup:close()
+
+  local item = popup:get_env("item")
+  if item then
+    if item.name then
+      diffview.open("range", item.name .. "..HEAD")
+    end
   end
 end
 
@@ -27,7 +36,7 @@ function M.range(popup)
   local commit
   local item = popup:get_env("item")
   local section = popup:get_env("section")
-  if section and section.name == "log" then
+  if section and (section.name == "log" or section.name == "recent") then
     commit = item and item.name
   end
 
@@ -40,23 +49,27 @@ function M.range(popup)
     )
   )
 
-  local range_from = FuzzyFinderBuffer.new(options):open_async { prompt_prefix = "Diff for range from" }
+  local range_from = FuzzyFinderBuffer.new(options):open_async {
+    prompt_prefix = "Diff for range from",
+    refocus_status = false,
+  }
+
   if not range_from then
     return
   end
 
   local range_to = FuzzyFinderBuffer.new(options)
-    :open_async { prompt_prefix = "Diff from " .. range_from .. " to" }
+    :open_async { prompt_prefix = "Diff from " .. range_from .. " to", refocus_status = false }
   if not range_to then
     return
   end
 
   local choices = {
-    "&1. " .. range_from .. ".." .. range_to,
-    "&2. " .. range_from .. "..." .. range_to,
+    "&1. Range (a..b)",
+    "&2. Symmetric Difference (a...b)",
     "&3. Cancel",
   }
-  local choice = input.get_choice("Select range", { values = choices, default = #choices })
+  local choice = input.get_choice("Select type", { values = choices, default = #choices })
 
   popup:close()
   if choice == "1" then
@@ -84,7 +97,7 @@ end
 function M.stash(popup)
   popup:close()
 
-  local selected = FuzzyFinderBuffer.new(git.stash.list()):open_async()
+  local selected = FuzzyFinderBuffer.new(git.stash.list()):open_async { refocus_status = false }
   if selected then
     diffview.open("stashes", selected)
   end
@@ -95,7 +108,7 @@ function M.commit(popup)
 
   local options = util.merge(git.refs.list_branches(), git.refs.list_tags(), git.refs.heads())
 
-  local selected = FuzzyFinderBuffer.new(options):open_async()
+  local selected = FuzzyFinderBuffer.new(options):open_async { refocus_status = false }
   if selected then
     diffview.open("commit", selected)
   end

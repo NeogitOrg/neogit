@@ -92,7 +92,7 @@ function M:open(_)
           local items = self.buffer.ui:get_ordered_commits_in_selection()
           p {
             section = { name = "log" },
-            items = items,
+            item = { name = items },
           }
         end),
         [popups.mapping_for("BisectPopup")] = popups.open("bisect", function(p)

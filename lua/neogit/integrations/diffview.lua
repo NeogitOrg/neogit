@@ -95,7 +95,7 @@ local function get_local_diff_view(section_name, item_name, opts)
 end
 
 ---@param section_name string
----@param item_name    string|nil
+---@param item_name    string|string[]|nil
 ---@param opts         table|nil
 function M.open(section_name, item_name, opts)
   opts = opts or {}
@@ -111,7 +111,11 @@ function M.open(section_name, item_name, opts)
 
   local view
   -- selene: allow(if_same_then_else)
-  if section_name == "recent" or section_name:match("unmerged$") or section_name == "log" then
+  if
+    section_name == "recent"
+    or section_name == "log"
+    or (section_name and section_name:match("unmerged$"))
+  then
     local range
     if type(item_name) == "table" then
       range = string.format("%s..%s", item_name[1], item_name[#item_name])
