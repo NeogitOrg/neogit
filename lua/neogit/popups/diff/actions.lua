@@ -24,9 +24,16 @@ function M.this(popup)
 end
 
 function M.range(popup)
+  local commit
+  local item = popup:get_env("item")
+  local section = popup:get_env("section")
+  if section and section.name == "log" then
+    commit = item and item.name
+  end
+
   local options = util.deduplicate(
     util.merge(
-      { git.branch.current() or "HEAD" },
+      { commit, git.branch.current() or "HEAD" },
       git.branch.get_all_branches(false),
       git.tag.list(),
       git.refs.heads()
