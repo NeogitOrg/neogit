@@ -133,10 +133,10 @@ function M:open()
           p { commits = self.buffer.ui:get_commits_in_selection() }
         end),
         [popups.mapping_for("DiffPopup")] = popups.open("diff", function(p)
-          local items = self.buffer.ui:get_commits_in_selection()
+          local items = self.buffer.ui:get_ordered_commits_in_selection()
           p {
             section = { name = "log" },
-            item = { name = items },
+            items = items,
           }
         end),
         [mapping["DeleteBranch"]] = function()

@@ -89,10 +89,10 @@ function M:open(_)
         end),
         [popups.mapping_for("PullPopup")] = popups.open("pull"),
         [popups.mapping_for("DiffPopup")] = popups.open("diff", function(p)
-          local items = self.buffer.ui:get_commits_in_selection()
+          local items = self.buffer.ui:get_ordered_commits_in_selection()
           p {
             section = { name = "log" },
-            item = { name = items },
+            items = items,
           }
         end),
         [popups.mapping_for("BisectPopup")] = popups.open("bisect", function(p)

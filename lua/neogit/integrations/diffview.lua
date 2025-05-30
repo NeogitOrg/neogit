@@ -47,6 +47,7 @@ local function get_local_diff_view(section_name, item_name, opts)
           selected = (item_name and item.name == item_name) or (not item_name and idx == 1),
         }
 
+        -- restrict diff to only a particular section
         if opts.only then
           if (item_name and file.selected) or (not item_name and section_name == kind) then
             table.insert(files[kind], file)

@@ -9,12 +9,17 @@ local input = require("neogit.lib.input")
 function M.this(popup)
   popup:close()
 
-  if popup.state.env.section and popup.state.env.item then
-    diffview.open(popup.state.env.section.name, popup.state.env.item.name, {
-      only = true,
-    })
-  elseif popup.state.env.section then
-    diffview.open(popup.state.env.section.name, nil, { only = true })
+  local item = popup:get_env("item")
+  local items = popup:get_env("items")
+  local section = popup:get_env("section")
+
+  if items[1] then
+    local range = items[1] .. ".." .. items[#items]
+    diffview.open("range", range)
+  elseif section and item then
+    diffview.open(section, item, { only = true })
+  elseif section then
+    diffview.open(section, nil, { only = true })
   end
 end
 
