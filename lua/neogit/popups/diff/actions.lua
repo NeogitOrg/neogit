@@ -6,6 +6,8 @@ local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 local git = require("neogit.lib.git")
 local a = require("plenary.async")
 local input = require("neogit.lib.input")
+local notification = require("neogit.lib.notification")
+local util = require("neogit.lib.util")
 
 local function get_fzf_lua()
   if config.check_integration("fzf_lua") then
