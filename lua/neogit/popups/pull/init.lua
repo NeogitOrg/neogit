@@ -5,42 +5,52 @@ local popup = require("neogit.lib.popup")
 local M = {}
 
 function M.create()
-  local current = git.branch.current()
-  local show_config = current ~= "" and current ~= "(detached)"
-  local pull_rebase_entry = git.config.get("pull.rebase")
-  local pull_rebase = pull_rebase_entry:is_set() and pull_rebase_entry.value or "false"
+  local current_branch_name = git.branch.current()
+  local is_on_a_branch = current_branch_name ~= nil
 
-  local p = popup
-    .builder()
-    :name("NeogitPullPopup")
-    :config_if(show_config, "r", "branch." .. (current or "") .. ".rebase", {
+  local pull_rebase_entry = git.config.get("pull.rebase")
+  local pull_rebase_value = pull_rebase_entry:is_set() and pull_rebase_entry.value or "false"
+
+  local p_builder = popup.builder():name("NeogitPullPopup")
+
+  if is_on_a_branch then
+    p_builder:config("r", "branch." .. current_branch_name .. ".rebase", {
       options = {
         { display = "true", value = "true" },
         { display = "false", value = "false" },
-        { display = "pull.rebase:" .. pull_rebase, value = "" },
+        { display = "pull.rebase:" .. pull_rebase_value, value = "" },
       },
     })
-    :switch("f", "ff-only", "Fast-forward only")
-    :switch("r", "rebase", "Rebase local commits", { persisted = false })
-    :switch("a", "autostash", "Autostash")
-    :switch("t", "tags", "Fetch tags")
-    :switch("F", "force", "Force", { persisted = false })
-    :group_heading_if(current ~= nil, "Pull into " .. current .. " from")
-    :group_heading_if(not current, "Pull from")
-    :action_if(current ~= nil, "p", git.branch.pushRemote_label(), actions.from_pushremote)
-    :action_if(current ~= nil, "u", git.branch.upstream_label(), actions.from_upstream)
-    :action("e", "elsewhere", actions.from_elsewhere)
-    :new_action_group("Configure")
-    :action("C", "Set variables...", actions.configure)
-    :env({
-      highlight = { current, git.branch.upstream(), git.branch.pushRemote_ref() },
-      bold = { "pushRemote", "@{upstream}" },
-    })
-    :build()
+  end
 
-  p:show()
+  p_builder:switch("f", "ff-only", "Fast-forward only")
+     :switch("r", "rebase", "Rebase local commits", { persisted = false })
+     :switch("a", "autostash", "Autostash")
+     :switch("t", "tags", "Fetch tags")
+     :switch("F", "force", "Force", { persisted = false })
 
-  return p
+  if is_on_a_branch then
+    p_builder:group_heading("Pull into " .. current_branch_name .. " from")
+             :action("p", git.branch.pushRemote_label(), actions.from_pushremote)
+             :action("u", git.branch.upstream_label(), actions.from_upstream)
+             :action("e", "elsewhere", actions.from_elsewhere)
+  else
+    p_builder:group_heading("Pull from (Detached HEAD)")
+             :action("p", "elsewhere (select remote/branch)", actions.from_elsewhere)
+             :action("e", "elsewhere (select remote/branch)", actions.from_elsewhere)
+  end
+
+  p_builder:new_action_group("Configure")
+           :action("C", "Set variables...", actions.configure)
+
+  p_builder:env({
+    highlight = { current_branch_name, git.branch.upstream(), git.branch.pushRemote_ref() },
+    bold = { "pushRemote", "@{upstream}" },
+  })
+
+  local final_popup_obj = p_builder:build()
+  final_popup_obj:show()
+  return final_popup_obj
 end
 
 return M
