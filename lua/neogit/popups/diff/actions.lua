@@ -30,8 +30,11 @@ local function clean_branch_name(name)
   if not name then
     return nil
   end
-  name = name:match("%s*->%s*(.+)$") or name
-  name = name:gsub("^%s*%*%s*", ""):gsub("^%s+", ""):gsub("%s+$", "")
+  if name:match("^%s*%*%s*%(HEAD detached .*%)") then
+    return "HEAD"
+  end
+  name = name:gsub("^%s*%*%s*", "")
+  name = (name:match("%s*->%s*(.+)$") or name):gsub("^%s+", ""):gsub("%s+$", "")
   return name
 end
 
