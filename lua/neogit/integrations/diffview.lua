@@ -93,7 +93,7 @@ local function get_local_diff_view(section_name, item_name, opts)
   return view
 end
 
----@param section_name string
+---@param section_name string | string[]
 ---@param item_name    string|nil
 ---@param opts         table|nil
 function M.open(section_name, item_name, opts)
@@ -109,8 +109,10 @@ function M.open(section_name, item_name, opts)
   end
 
   local view
-  -- selene: allow(if_same_then_else)
-  if section_name == "recent" or section_name:match("unmerged$") or section_name == "log" then
+
+  if type(section_name) == "table" then
+    view = dv_lib.diffview_open(dv_utils.tbl_pack(unpack(section_name)))
+  elseif section_name == "recent" or section_name:match("unmerged$") or section_name == "log" then
     local range
     if type(item_name) == "table" then
       range = string.format("%s..%s", item_name[1], item_name[#item_name])
@@ -122,24 +124,23 @@ function M.open(section_name, item_name, opts)
 
     view = dv_lib.diffview_open(dv_utils.tbl_pack(range))
   elseif section_name == "range" then
-    local range = item_name
-    view = dv_lib.diffview_open(dv_utils.tbl_pack(range))
+    local range_str = item_name
+    view = dv_lib.diffview_open(dv_utils.tbl_pack(range_str))
   elseif section_name == "stashes" then
     assert(item_name, "No item name for stash!")
     local stash_id = item_name:match("stash@{%d+}")
     view = dv_lib.diffview_open(dv_utils.tbl_pack(stash_id .. "^!"))
-  elseif section_name == "commit" then
-    view = dv_lib.diffview_open(dv_utils.tbl_pack(item_name .. "^!"))
   elseif section_name == "conflict" and item_name then
     view = dv_lib.diffview_open(dv_utils.tbl_pack("--selected-file=" .. item_name))
-  elseif (section_name == "conflict" or section_name == "worktree") and not item_name then
-    view = dv_lib.diffview_open()
-  elseif section_name ~= nil then
-    view = get_local_diff_view(section_name, item_name, opts)
-  elseif section_name == nil and item_name ~= nil then
+  elseif section_name == "commit" or (section_name == nil and item_name ~= nil) then
     view = dv_lib.diffview_open(dv_utils.tbl_pack(item_name .. "^!"))
-  else
+  elseif
+    ((section_name == "conflict" or section_name == "worktree") and not item_name)
+    or (section_name == nil and item_name == nil)
+  then
     view = dv_lib.diffview_open()
+  else
+    view = get_local_diff_view(section_name, item_name, opts)
   end
 
   if view then

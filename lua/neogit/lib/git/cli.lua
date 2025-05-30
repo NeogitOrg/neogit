@@ -1170,7 +1170,6 @@ local function new_builder(subcommand)
       {
         "git",
         "--no-pager",
-        "--literal-pathspecs",
         "--no-optional-locks",
         "-c", "core.preloadindex=true",
         "-c", "color.ui=always",
