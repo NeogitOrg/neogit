@@ -23,30 +23,32 @@ function M.create()
     })
   end
 
-  p_builder:switch("f", "ff-only", "Fast-forward only")
-     :switch("r", "rebase", "Rebase local commits", { persisted = false })
-     :switch("a", "autostash", "Autostash")
-     :switch("t", "tags", "Fetch tags")
-     :switch("F", "force", "Force", { persisted = false })
+  p_builder
+    :switch("f", "ff-only", "Fast-forward only")
+    :switch("r", "rebase", "Rebase local commits", { persisted = false })
+    :switch("a", "autostash", "Autostash")
+    :switch("t", "tags", "Fetch tags")
+    :switch("F", "force", "Force", { persisted = false })
 
   if is_on_a_branch then
-    p_builder:group_heading("Pull into " .. current_branch_name .. " from")
-             :action("p", git.branch.pushRemote_label(), actions.from_pushremote)
-             :action("u", git.branch.upstream_label(), actions.from_upstream)
-             :action("e", "elsewhere", actions.from_elsewhere)
+    p_builder
+      :group_heading("Pull into " .. current_branch_name .. " from")
+      :action("p", git.branch.pushRemote_label(), actions.from_pushremote)
+      :action("u", git.branch.upstream_label(), actions.from_upstream)
+      :action("e", "elsewhere", actions.from_elsewhere)
   else
-    p_builder:group_heading("Pull from (Detached HEAD)")
-             :action("p", "elsewhere (select remote/branch)", actions.from_elsewhere)
-             :action("e", "elsewhere (select remote/branch)", actions.from_elsewhere)
+    p_builder
+      :group_heading("Pull from (Detached HEAD)")
+      :action("p", "elsewhere (select remote/branch)", actions.from_elsewhere)
+      :action("e", "elsewhere (select remote/branch)", actions.from_elsewhere)
   end
 
-  p_builder:new_action_group("Configure")
-           :action("C", "Set variables...", actions.configure)
+  p_builder:new_action_group("Configure"):action("C", "Set variables...", actions.configure)
 
-  p_builder:env({
+  p_builder:env {
     highlight = { current_branch_name, git.branch.upstream(), git.branch.pushRemote_ref() },
     bold = { "pushRemote", "@{upstream}" },
-  })
+  }
 
   local final_popup_obj = p_builder:build()
   final_popup_obj:show()
