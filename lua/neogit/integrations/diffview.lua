@@ -47,11 +47,7 @@ local function get_local_diff_view(section_name, item_name, opts)
           selected = (item_name and item.name == item_name) or (not item_name and idx == 1),
         }
 
-        if opts and opts.files_filter then
-          if vim.tbl_contains(opts.files_filter, item.name) then
-            table.insert(files[kind], file)
-          end
-        elseif opts.only then
+        if opts.only then
           if (item_name and file.selected) or (not item_name and section_name == kind) then
             table.insert(files[kind], file)
           end

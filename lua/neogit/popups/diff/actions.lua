@@ -268,22 +268,6 @@ M.head_to_commit_ref = a.void(function(popup)
   })
 end)
 
-M.branch_commits = a.void(function(popup)
-  local fzf = get_fzf_lua()
-  prompt_for_items_async(popup, fzf, {
-    fzf_method_name = "git_branches",
-    fzf_prompt = "Diff commits for branch> ",
-    fallback_data_fn = function()
-      return git.refs.list_branches()
-    end,
-    fallback_prompt_prefix = "Diff commits for branch",
-    item_processor_fn = clean_branch_name,
-    on_select = function(branch_name)
-      do_close_popup_and_open_diffview(popup, { branch_name })
-    end,
-  })
-end)
-
 M.stash = a.void(function(popup)
   local fzf = get_fzf_lua()
 
@@ -343,7 +327,7 @@ M.tag_range = a.void(function(popup)
   end)
 end)
 
-M.paths = a.void(function(popup)
+M.files = a.void(function(popup)
   prompt_for_items_async(popup, nil, {
     fallback_data_fn = function()
       return git.files.all()
@@ -351,11 +335,64 @@ M.paths = a.void(function(popup)
     fallback_prompt_prefix = "Select files to diff against HEAD",
     allow_multi = true,
     on_select = function(files_to_diff)
+      if not files_to_diff or #files_to_diff == 0 then
+        close_popup_if_open(popup)
+        return
+      end
       local diff_args = { "HEAD", "--" }
       vim.list_extend(diff_args, files_to_diff)
       do_close_popup_and_open_diffview(popup, diff_args)
     end,
+    on_cancel = function()
+      close_popup_if_open(popup)
+    end,
   })
+end)
+
+M.paths = a.void(function(popup)
+  local path_input_str = input.get_user_input("Enter path(s) to diff (space-separated, globs supported)", {
+    completion = "dir",
+    default = "./",
+  })
+
+  if not path_input_str or path_input_str == "" then
+    close_popup_if_open(popup)
+    return
+  end
+
+  local path_patterns = vim.split(path_input_str, "%s+")
+  local all_files_to_diff = {}
+  local found_any_files = false
+
+  for _, pattern in ipairs(path_patterns) do
+    if pattern ~= "" then
+      local files_under_path_result =
+        git.cli["ls-files"].args(pattern).call { hidden = true, ignore_error = true }
+
+      if files_under_path_result.code == 0 and #files_under_path_result.stdout > 0 then
+        found_any_files = true
+        vim.list_extend(all_files_to_diff, files_under_path_result.stdout)
+      end
+    end
+  end
+
+  if not found_any_files then
+    notification.warn("No tracked files found matching: " .. path_input_str)
+    close_popup_if_open(popup)
+    return
+  end
+
+  all_files_to_diff = util.deduplicate(all_files_to_diff)
+
+  if #all_files_to_diff == 0 then
+    notification.warn("No tracked files found matching: " .. path_input_str)
+    close_popup_if_open(popup)
+    return
+  end
+
+  local diff_args = { "HEAD", "--" }
+  vim.list_extend(diff_args, all_files_to_diff)
+  do_close_popup_and_open_diffview(popup, diff_args)
 end)
 
 return M
