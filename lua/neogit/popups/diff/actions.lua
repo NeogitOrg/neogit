@@ -9,19 +9,40 @@ local input = require("neogit.lib.input")
 function M.this(popup)
   popup:close()
 
-  if popup.state.env.section and popup.state.env.item then
-    diffview.open(popup.state.env.section.name, popup.state.env.item.name, {
-      only = true,
-    })
-  elseif popup.state.env.section then
-    diffview.open(popup.state.env.section.name, nil, { only = true })
+  local item = popup:get_env("item")
+  local section = popup:get_env("section")
+
+  if section and section.name and item and item.name then
+    diffview.open(section.name, item.name, { only = true })
+  elseif section.name then
+    diffview.open(section.name, nil, { only = true })
+  elseif item.name then
+    diffview.open("range", item.name .. "..HEAD")
+  end
+end
+
+function M.this_to_HEAD(popup)
+  popup:close()
+
+  local item = popup:get_env("item")
+  if item then
+    if item.name then
+      diffview.open("range", item.name .. "..HEAD")
+    end
   end
 end
 
 function M.range(popup)
+  local commit
+  local item = popup:get_env("item")
+  local section = popup:get_env("section")
+  if section and (section.name == "log" or section.name == "recent") then
+    commit = item and item.name
+  end
+
   local options = util.deduplicate(
     util.merge(
-      { git.branch.current() or "HEAD" },
+      { commit, git.branch.current() or "HEAD" },
       git.branch.get_all_branches(false),
       git.tag.list(),
       git.refs.heads()
@@ -32,6 +53,7 @@ function M.range(popup)
     prompt_prefix = "Diff for range from",
     refocus_status = false,
   }
+
   if not range_from then
     return
   end
@@ -43,11 +65,11 @@ function M.range(popup)
   end
 
   local choices = {
-    "&1. " .. range_from .. ".." .. range_to,
-    "&2. " .. range_from .. "..." .. range_to,
+    "&1. Range (a..b)",
+    "&2. Symmetric Difference (a...b)",
     "&3. Cancel",
   }
-  local choice = input.get_choice("Select range", { values = choices, default = #choices })
+  local choice = input.get_choice("Select type", { values = choices, default = #choices })
 
   popup:close()
   if choice == "1" then

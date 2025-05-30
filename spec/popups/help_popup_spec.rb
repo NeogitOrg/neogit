@@ -3,8 +3,7 @@
 require "spec_helper"
 
 RSpec.describe "Help Popup", :git, :nvim, :popup do # rubocop:disable RSpec/EmptyExampleGroup
-  before { nvim.keys("?") }
-
+  let(:keymap) { "?" }
   let(:view) do
     [
       " Commands                            Applying changes       Essential commands  ",

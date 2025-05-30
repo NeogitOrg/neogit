@@ -284,6 +284,7 @@ function Ui:get_selection()
   return setmetatable(res, Selection)
 end
 
+--- returns commits in selection in a constant order
 ---@return string[]
 function Ui:get_commits_in_selection()
   local range = { vim.fn.getpos("v")[2], vim.fn.getpos(".")[2] }
@@ -298,6 +299,33 @@ function Ui:get_commits_in_selection()
 
     if component then
       table.insert(commits, 1, component.options.oid)
+    end
+  end
+
+  return util.deduplicate(commits)
+end
+
+--- returns commits in selection ordered according to the direction of the selection the user has made
+---@return string[]
+function Ui:get_ordered_commits_in_selection()
+  local start = vim.fn.getpos("v")[2]
+  local stop = vim.fn.getpos(".")[2]
+
+  local increment
+  if start <= stop then
+    increment = 1
+  else
+    increment = -1
+  end
+
+  local commits = {}
+  for i = start, stop, increment do
+    local component = self:_find_component_by_index(i, function(node)
+      return node.options.oid ~= nil
+    end)
+
+    if component then
+      table.insert(commits, component.options.oid)
     end
   end
 
@@ -343,6 +371,7 @@ function Ui:get_ref_under_cursor()
 
   return component and component.options.ref
 end
+
 ---
 ---@return ParsedRef[]
 function Ui:get_refs_under_cursor()

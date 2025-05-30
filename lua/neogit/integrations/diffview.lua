@@ -47,6 +47,7 @@ local function get_local_diff_view(section_name, item_name, opts)
           selected = (item_name and item.name == item_name) or (not item_name and idx == 1),
         }
 
+        -- restrict diff to only a particular section
         if opts.only then
           if (item_name and file.selected) or (not item_name and section_name == kind) then
             table.insert(files[kind], file)
@@ -94,7 +95,7 @@ local function get_local_diff_view(section_name, item_name, opts)
 end
 
 ---@param section_name string
----@param item_name    string|nil
+---@param item_name    string|string[]|nil
 ---@param opts         table|nil
 function M.open(section_name, item_name, opts)
   opts = opts or {}
@@ -110,7 +111,11 @@ function M.open(section_name, item_name, opts)
 
   local view
   -- selene: allow(if_same_then_else)
-  if section_name == "recent" or section_name:match("unmerged$") or section_name == "log" then
+  if
+    section_name == "recent"
+    or section_name == "log"
+    or (section_name and section_name:match("unmerged$"))
+  then
     local range
     if type(item_name) == "table" then
       range = string.format("%s..%s", item_name[1], item_name[#item_name])
@@ -125,7 +130,8 @@ function M.open(section_name, item_name, opts)
     local range = item_name
     view = dv_lib.diffview_open(dv_utils.tbl_pack(range))
   elseif section_name == "stashes" then
-    assert(item_name, "No item name for stash!")
+    assert(item_name and type(item_name) == "string", "No item name for stash!")
+
     local stash_id = item_name:match("stash@{%d+}")
     view = dv_lib.diffview_open(dv_utils.tbl_pack(stash_id .. "^!"))
   elseif section_name == "commit" then

@@ -5,15 +5,15 @@ local popup = require("neogit.lib.popup")
 local M = {}
 
 function M.create()
-  local current = git.branch.current()
-  local show_config = current ~= "" and current ~= "(detached)"
+  local current = git.branch.current() or ""
   local pull_rebase_entry = git.config.get("pull.rebase")
   local pull_rebase = pull_rebase_entry:is_set() and pull_rebase_entry.value or "false"
+  local is_detached = git.branch.is_detached()
 
   local p = popup
     .builder()
     :name("NeogitPullPopup")
-    :config_if(show_config, "r", "branch." .. (current or "") .. ".rebase", {
+    :config_if(not is_detached, "r", "branch." .. current .. ".rebase", {
       options = {
         { display = "true", value = "true" },
         { display = "false", value = "false" },
@@ -25,10 +25,10 @@ function M.create()
     :switch("a", "autostash", "Autostash")
     :switch("t", "tags", "Fetch tags")
     :switch("F", "force", "Force", { persisted = false })
-    :group_heading_if(current ~= nil, "Pull into " .. current .. " from")
-    :group_heading_if(not current, "Pull from")
-    :action_if(current ~= nil, "p", git.branch.pushRemote_label(), actions.from_pushremote)
-    :action_if(current ~= nil, "u", git.branch.upstream_label(), actions.from_upstream)
+    :group_heading_if(not is_detached, "Pull into " .. current .. " from")
+    :group_heading_if(is_detached, "Pull from")
+    :action_if(not is_detached, "p", git.branch.pushRemote_label(), actions.from_pushremote)
+    :action_if(not is_detached, "u", git.branch.upstream_label(), actions.from_upstream)
     :action("e", "elsewhere", actions.from_elsewhere)
     :new_action_group("Configure")
     :action("C", "Set variables...", actions.configure)
