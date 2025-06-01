@@ -195,7 +195,7 @@ function M.explicit_refspec(popup)
 end
 
 function M.configure()
-  require("neogit.popups.branch_config").create()
+  require("neogit.popups.branch_config").create {}
 end
 
 return M

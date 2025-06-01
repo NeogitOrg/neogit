@@ -1,8 +1,6 @@
 skip_output:
   - meta
 pre-push:
-  only:
-    - ref: master
   files: "rg --files"
   parallel: true
   commands:
@@ -19,7 +17,7 @@ pre-push:
       run: typos {files}
     lua-types:
       glob: "*.lua"
-      run: llscheck lua/
+      run: llscheck lua/ || echo {files}
     lua-test:
       glob: "tests/specs/**/*_spec.lua"
       run: nvim --headless -S "./tests/init.lua" || echo {files}
@@ -29,4 +27,23 @@ pre-push:
         - GIT_CONFIG_SYSTEM: /dev/null
         - NVIM_APPNAME: neogit-test
     rspec:
+      only:
+      - ref: master
       run: bin/specs {files}
+pre-commit:
+  parallel: true
+  commands:
+    rubocop:
+      glob: "*.rb"
+      run: bundle exec rubocop {staged_files}
+    selene:
+      glob: "{lua,plugin}/**/*.lua"
+      run: selene --config selene/config.toml {staged_files}
+    stylua:
+      glob: "*.lua"
+      run: stylua --check {staged_files}
+    typos:
+      run: typos {staged_files}
+    lua-types:
+      glob: "*.lua"
+      run: llscheck lua/

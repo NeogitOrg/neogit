@@ -114,7 +114,7 @@ function M.configure(_)
     return
   end
 
-  RemoteConfigPopup.create(remote_name)
+  RemoteConfigPopup.create { remote = remote_name }
 end
 
 function M.prune_branches(_)
