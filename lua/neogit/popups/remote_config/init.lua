@@ -1,7 +1,13 @@
 local M = {}
 local popup = require("neogit.lib.popup")
+local notification = require("neogit.lib.notification")
 
 function M.create(remote)
+  if not remote then
+    notification.error("No remote selected.")
+    return
+  end
+
   local p = popup
     .builder()
     :name("NeogitRemoteConfigPopup")
