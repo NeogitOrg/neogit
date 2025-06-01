@@ -86,7 +86,7 @@ function M.from_elsewhere(popup)
 end
 
 function M.configure()
-  require("neogit.popups.branch_config").create()
+  require("neogit.popups.branch_config").create {}
 end
 
 return M

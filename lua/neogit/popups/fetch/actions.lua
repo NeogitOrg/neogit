@@ -125,7 +125,7 @@ function M.fetch_submodules(_)
 end
 
 function M.set_variables()
-  require("neogit.popups.branch_config").create()
+  require("neogit.popups.branch_config").create {}
 end
 
 return M

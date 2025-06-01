@@ -225,7 +225,7 @@ function M.configure_branch()
     return
   end
 
-  BranchConfigPopup.create(branch_name)
+  BranchConfigPopup.create { branch = branch_name }
 end
 
 function M.rename_branch()

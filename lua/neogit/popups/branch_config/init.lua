@@ -5,11 +5,12 @@ local git = require("neogit.lib.git")
 local actions = require("neogit.popups.branch_config.actions")
 local notification = require("neogit.lib.notification")
 
-function M.create(branch)
-  branch = branch or git.branch.current()
+---@param env table
+function M.create(env)
+  local branch = env.branch or git.branch.current()
 
   if not branch then
-    notification.error("No branch selected.")
+    notification.error("Cannot infer branch.")
     return
   end
 
