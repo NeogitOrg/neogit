@@ -272,6 +272,15 @@ end
 ---@field layout_strategy string
 ---@field sorting_strategy string
 ---@field theme string
+---@field item_type string|nil
+
+---@alias ItemType
+---| "branch"
+---| "commit"
+---| "tag"
+---| "any_ref"
+---| "stash"
+---| "file"
 
 ---@class Finder
 ---@field opts table
@@ -304,9 +313,100 @@ function Finder:add_entries(entries)
   return self
 end
 
+---Generate entries for any_ref item type (includes symbolic refs like HEAD)
+---@return table
+local function get_any_ref_entries()
+  local git = require("neogit.lib.git")
+  local entries = {}
+
+  -- Add symbolic refs like HEAD, ORIG_HEAD, etc.
+  local heads = git.refs.heads()
+  vim.list_extend(entries, heads)
+
+  -- Add branches
+  local branches = git.refs.list_branches()
+  vim.list_extend(entries, branches)
+
+  -- Add tags
+  local tags = git.refs.list_tags()
+  vim.list_extend(entries, tags)
+
+  -- Add commits with proper formatting (sha + title) for better searchability
+  local commits = git.log.list()
+  for _, commit in ipairs(commits) do
+    table.insert(entries, string.format("%s %s", commit.oid:sub(1, 7), commit.subject or ""))
+  end
+
+  return entries
+end
+
+---Auto-populate entries based on item_type if no entries are provided
+---@param item_type string|nil
+---@return table
+local function get_entries_for_item_type(item_type)
+  if not item_type then
+    return {}
+  end
+
+  local git = require("neogit.lib.git")
+
+  if item_type == "branch" then
+    return git.refs.list_branches()
+  elseif item_type == "commit" then
+    local commits = git.log.list()
+    local formatted_commits = {}
+    for _, commit in ipairs(commits) do
+      table.insert(formatted_commits, string.format("%s %s", commit.oid:sub(1, 7), commit.subject or ""))
+    end
+    return formatted_commits
+  elseif item_type == "tag" then
+    return git.refs.list_tags()
+  elseif item_type == "any_ref" then
+    return get_any_ref_entries()
+  elseif item_type == "stash" then
+    return git.stash.list()
+  elseif item_type == "file" then
+    return git.files.all()
+  end
+
+  return {}
+end
+
+---Try to use specialized picker provider
+---@param on_select fun(item: any|nil)
+---@return boolean true if specialized picker was used
+function Finder:try_specialized_picker(on_select)
+  if not self.opts.item_type then
+    return false
+  end
+
+  -- Try fzf-lua specialized picker
+  local fzf_provider = require("neogit.lib.finder.providers.fzf_lua")
+  if fzf_provider.is_available() then
+    if fzf_provider.try_specialized_picker(self.opts.item_type, self.opts, on_select) then
+      return true
+    end
+  end
+
+  -- TODO: Add other providers (telescope, snacks, etc.)
+
+  return false
+end
+
 ---Engages finder and invokes `on_select` with the item or items, or nil if aborted
 ---@param on_select fun(item: any|nil)
 function Finder:find(on_select)
+  -- Auto-populate entries if none provided and item_type is specified
+  if #self.entries == 0 and self.opts.item_type then
+    self:add_entries(get_entries_for_item_type(self.opts.item_type))
+  end
+
+  -- Try specialized picker first
+  if self:try_specialized_picker(on_select) then
+    return
+  end
+
+  -- Fall back to generic picker
   if config.check_integration("telescope") then
     local pickers = require("telescope.pickers")
     local finders = require("telescope.finders")
