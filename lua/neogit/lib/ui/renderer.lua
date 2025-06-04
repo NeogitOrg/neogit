@@ -193,11 +193,11 @@ function Renderer:_render_child(child)
 
   child.position.row_end = #self.buffer.line
 
-  if child.options.section then
+  if child.options and child.options.section then
     self.index:add_section(child.options.section, child.position.row_start, child.position.row_end)
   end
 
-  if child.options.item then
+  if child.options and child.options.item then
     child.options.item.folded = child.options.folded
     self.index:add_item(child.options.item, child.position.row_start, child.position.row_end)
   end
@@ -207,7 +207,7 @@ function Renderer:_render_child(child)
     table.insert(self.buffer.line_highlight, { #self.buffer.line - 1, line_hl })
   end
 
-  if child.options.virtual_text then
+  if child.options and child.options.virtual_text then
     table.insert(self.buffer.extmark, {
       self.namespace,
       #self.buffer.line - 1,
