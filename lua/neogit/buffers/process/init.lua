@@ -52,6 +52,7 @@ function M:show()
   self:flush_content()
 end
 
+---@return boolean
 function M:is_visible()
   return self.buffer and self.buffer:is_valid() and self.buffer:is_visible()
 end
