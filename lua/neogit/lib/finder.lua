@@ -27,7 +27,7 @@ local function process_selection(selection, allow_multi)
   if not selection then
     return nil
   end
-  
+
   if allow_multi then
     if type(selection) == "table" then
       local processed = {}
@@ -498,13 +498,13 @@ function Finder:find(on_select)
     })
   elseif config.check_integration("mini_pick") then
     local mini_pick = require("mini.pick")
-    mini_pick.start { 
-      source = { 
-        items = self.entries, 
+    mini_pick.start {
+      source = {
+        items = self.entries,
         choose = function(item)
           on_select(extract_commit_hash(item))
-        end
-      } 
+        end,
+      },
     }
   elseif config.check_integration("snacks") then
     local snacks_picker = require("snacks.picker")
