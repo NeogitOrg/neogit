@@ -9,6 +9,41 @@ local function refocus_status_buffer()
   end
 end
 
+--- Extract commit hash from formatted commit entry if applicable
+---@param item string The selected item
+---@return string The processed item (commit hash if it was a formatted commit, otherwise unchanged)
+local function extract_commit_hash(item)
+  if item and item:match("^%x%x%x%x%x%x%x ") then
+    return item:match("^(%x+)")
+  end
+  return item
+end
+
+--- Process selection items to extract commit hashes where applicable
+---@param selection any The selection (string or table)
+---@param allow_multi boolean Whether multi-selection is allowed
+---@return any The processed selection
+local function process_selection(selection, allow_multi)
+  if not selection then
+    return nil
+  end
+  
+  if allow_multi then
+    if type(selection) == "table" then
+      local processed = {}
+      for _, item in ipairs(selection) do
+        table.insert(processed, extract_commit_hash(item))
+      end
+      return processed
+    else
+      return { extract_commit_hash(selection) }
+    end
+  else
+    local single_item = type(selection) == "table" and selection[1] or selection
+    return extract_commit_hash(single_item)
+  end
+end
+
 local copy_selection = function()
   local selection = require("telescope.actions.state").get_selected_entry()
   if selection ~= nil then
@@ -35,7 +70,7 @@ local function telescope_mappings(on_select, allow_multi, refocus_status)
     local picker = action_state.get_current_picker(prompt_bufnr)
     if #picker:get_multi_selection() > 0 then
       for _, item in ipairs(picker:get_multi_selection()) do
-        table.insert(selection, item[1])
+        table.insert(selection, extract_commit_hash(item[1]))
       end
     elseif action_state.get_selected_entry() ~= nil then
       local entry = action_state.get_selected_entry()[1]
@@ -50,7 +85,7 @@ local function telescope_mappings(on_select, allow_multi, refocus_status)
       if navigate_up_level or input_git_refspec then
         table.insert(selection, prompt)
       else
-        table.insert(selection, entry)
+        table.insert(selection, extract_commit_hash(entry))
       end
     else
       table.insert(selection, picker:_get_prompt())
@@ -146,15 +181,11 @@ local function fzf_actions(on_select, allow_multi, refocus_status)
         return
       end
 
-      if allow_multi then
-        on_select(selected)
+      local processed = process_selection(selected, allow_multi)
+      if processed and (type(processed) ~= "table" or #processed > 0) and processed ~= "" then
+        on_select(processed)
       else
-        local single_item = type(selected) == "table" and selected[1] or selected
-        if single_item and single_item ~= "" then
-          on_select(single_item)
-        else
-          on_select(nil)
-        end
+        on_select(nil)
       end
       refresh()
     end,
@@ -207,7 +238,7 @@ local function snacks_confirm(on_select, allow_multi, refocus_status)
       picker:close()
     elseif #picker_selected > 1 then
       for _, item in ipairs(picker_selected) do
-        table.insert(selection, item.text)
+        table.insert(selection, extract_commit_hash(item.text))
       end
     else
       local entry = item.text
@@ -219,7 +250,11 @@ local function snacks_confirm(on_select, allow_multi, refocus_status)
         or prompt:match("@")
         or prompt:match(":")
 
-      table.insert(selection, (navigate_up_level or input_git_refspec) and prompt or entry)
+      if navigate_up_level or input_git_refspec then
+        table.insert(selection, prompt)
+      else
+        table.insert(selection, extract_commit_hash(entry))
+      end
     end
 
     if selection and selection[1] and selection[1] ~= "" then
@@ -463,7 +498,14 @@ function Finder:find(on_select)
     })
   elseif config.check_integration("mini_pick") then
     local mini_pick = require("mini.pick")
-    mini_pick.start { source = { items = self.entries, choose = on_select } }
+    mini_pick.start { 
+      source = { 
+        items = self.entries, 
+        choose = function(item)
+          on_select(extract_commit_hash(item))
+        end
+      } 
+    }
   elseif config.check_integration("snacks") then
     local snacks_picker = require("snacks.picker")
     local confirm, on_close = snacks_confirm(on_select, self.opts.allow_multi, self.opts.refocus_status)
@@ -489,7 +531,8 @@ function Finder:find(on_select)
       end,
     }, function(item)
       vim.schedule(function()
-        on_select(self.opts.allow_multi and { item } or item)
+        local processed = process_selection(item, self.opts.allow_multi)
+        on_select(processed)
 
         if self.opts.refocus_status then
           refocus_status_buffer()
