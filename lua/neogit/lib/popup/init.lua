@@ -386,7 +386,6 @@ end
 
 function M:refresh()
   if self.buffer then
-    self.buffer:focus()
     self.buffer.ui:render(unpack(ui.Popup(self.state)))
   end
 end
