@@ -718,6 +718,8 @@ function Buffer.create(config)
     buffer:set_buffer_option("buftype", config.buftype or "nofile")
   end
 
+  buffer:set_window_option("wrap", false)
+
   if config.filetype then
     logger.debug("[BUFFER:" .. buffer.handle .. "] Setting filetype: " .. config.filetype)
     buffer:set_filetype(config.filetype)
@@ -790,7 +792,6 @@ function Buffer.create(config)
     end
 
     buffer:set_window_option("spell", config.spell_check or false)
-    buffer:set_window_option("wrap", false)
     buffer:set_window_option("foldmethod", "manual")
     -- TODO: Need to find a way to turn this off properly when unloading plugin
     -- buffer:set_window_option("winfixbuf", true)
