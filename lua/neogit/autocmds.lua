@@ -46,6 +46,14 @@ function M.setup()
       autocmd_disabled = args.event == "QuickFixCmdPre"
     end,
   })
+
+  -- Ensure vim buffers are updated
+  api.nvim_create_autocmd("User", {
+    pattern = "NeogitStatusRefreshed",
+    callback = function()
+      vim.cmd("set autoread | checktime")
+    end,
+  })
 end
 
 return M
