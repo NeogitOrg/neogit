@@ -10,6 +10,15 @@ local Watcher = require("neogit.watcher")
 local git = require("neogit.lib.git")
 local a = require("plenary.async")
 
+vim.api.nvim_create_autocmd({ "FileType" }, {
+  pattern = { "DiffviewFiles", "DiffviewFileHistory" },
+  callback = function(event)
+    vim.keymap.set("n", "q", function()
+      vim.cmd("DiffviewClose")
+    end, { buffer = event.buf, desc = "Close diffview" })
+  end,
+})
+
 local function get_local_diff_view(section_name, item_name, opts)
   local left = Rev(RevType.STAGE)
   local right = Rev(RevType.LOCAL)
