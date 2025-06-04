@@ -140,10 +140,21 @@ local function fzf_actions(on_select, allow_multi, refocus_status)
 
   return {
     ["default"] = function(selected)
+      if not selected then
+        on_select(nil)
+        refresh()
+        return
+      end
+
       if allow_multi then
         on_select(selected)
       else
-        on_select(selected[1])
+        local single_item = type(selected) == "table" and selected[1] or selected
+        if single_item and single_item ~= "" then
+          on_select(single_item)
+        else
+          on_select(nil)
+        end
       end
       refresh()
     end,

@@ -45,14 +45,14 @@ local function prompt_for_item_pair_async(popup, item_type1, prompt1, item_type2
   local finder1 = create_finder(item_type1, prompt1)
 
   local item1 = finder1:find_async()
-  if not item1 then
+  if not item1 or item1 == "" then
     close_popup_if_open(popup)
     return
   end
 
   local finder2 = create_finder(item_type2, prompt2)
   local item2 = finder2:find_async()
-  if not item2 then
+  if not item2 or item2 == "" then
     close_popup_if_open(popup)
     return
   end

@@ -25,7 +25,7 @@ end
 ---@param name string
 ---@return string|nil
 local function clean_branch_name(name)
-  if not name then
+  if not name or name == "" then
     return nil
   end
   if name:match("^%s*%*%s*%(HEAD detached .*%)") then
@@ -33,14 +33,14 @@ local function clean_branch_name(name)
   end
   name = name:gsub("^%s*%*%s*", "")
   name = (name:match("%s*->%s*(.+)$") or name):gsub("^%s+", ""):gsub("%s+$", "")
-  return name
+  return name ~= "" and name or nil
 end
 
 ---Extract commit SHA from fzf-lua git_commits output
 ---@param entry_string string
 ---@return string|nil
 local function extract_commit_sha_from_picker_entry(entry_string)
-  if not entry_string then
+  if not entry_string or entry_string == "" then
     return nil
   end
   -- Extract the commit hash from the beginning of the line
@@ -48,28 +48,41 @@ local function extract_commit_sha_from_picker_entry(entry_string)
   if hash and #hash >= 7 then
     return hash
   end
-  -- Fallback to the original string if no hash found
-  return entry_string
+  -- Fallback to the original string if no hash found, but ensure it's not empty
+  local trimmed = entry_string:gsub("^%s+", ""):gsub("%s+$", "")
+  return trimmed ~= "" and trimmed or nil
 end
 
 ---Process stash entry from fzf-lua git_stash output
 ---@param selected_entry_text string
 ---@return string|nil
 local function process_stash_entry(selected_entry_text)
-  if selected_entry_text then
-    return selected_entry_text:match("^(stash@{%d+})")
+  if not selected_entry_text or selected_entry_text == "" then
+    return nil
   end
-  return nil
+  local stash_ref = selected_entry_text:match("^(stash@{%d+})")
+  if stash_ref then
+    return stash_ref
+  end
+  -- Fallback to the original string if it doesn't match the pattern, but ensure it's not empty
+  local trimmed = selected_entry_text:gsub("^%s+", ""):gsub("%s+$", "")
+  return trimmed ~= "" and trimmed or nil
 end
 
 ---Sanitize tag name from fzf-lua git_tags output
 ---@param name string
 ---@return string|nil
 local function sanitize_tag_name_for_picker(name)
-  if not name then
+  if not name or name == "" then
     return nil
   end
-  return name:match("^%s*([^%s]+)") or name
+  local tag_name = name:match("^%s*([^%s]+)")
+  if tag_name and tag_name ~= "" then
+    return tag_name
+  end
+  -- Fallback to the original string if no match, but ensure it's not empty
+  local trimmed = name:gsub("^%s+", ""):gsub("%s+$", "")
+  return trimmed ~= "" and trimmed or nil
 end
 
 ---Use specialized fzf-lua picker for branches
@@ -111,15 +124,25 @@ function M.pick_branch(opts, on_select)
   fzf_lua.git_branches {
     prompt = string.format("%s> ", opts.prompt_prefix or "Select branch"),
     actions = {
-      ["default"] = handle_selection,
+      ["default"] = function(selected)
+        vim.schedule(function()
+          handle_selection(selected)
+        end)
+      end,
       ["esc"] = function()
-        on_select(nil)
+        vim.schedule(function()
+          on_select(nil)
+        end)
       end,
       ["ctrl-c"] = function()
-        on_select(nil)
+        vim.schedule(function()
+          on_select(nil)
+        end)
       end,
       ["ctrl-q"] = function()
-        on_select(nil)
+        vim.schedule(function()
+          on_select(nil)
+        end)
       end,
     },
   }
@@ -166,15 +189,25 @@ function M.pick_commit(opts, on_select)
   fzf_lua.git_commits {
     prompt = string.format("%s> ", opts.prompt_prefix or "Select commit"),
     actions = {
-      ["default"] = handle_selection,
+      ["default"] = function(selected)
+        vim.schedule(function()
+          handle_selection(selected)
+        end)
+      end,
       ["esc"] = function()
-        on_select(nil)
+        vim.schedule(function()
+          on_select(nil)
+        end)
       end,
       ["ctrl-c"] = function()
-        on_select(nil)
+        vim.schedule(function()
+          on_select(nil)
+        end)
       end,
       ["ctrl-q"] = function()
-        on_select(nil)
+        vim.schedule(function()
+          on_select(nil)
+        end)
       end,
     },
   }
@@ -221,15 +254,25 @@ function M.pick_tag(opts, on_select)
   fzf_lua.git_tags {
     prompt = string.format("%s> ", opts.prompt_prefix or "Select tag"),
     actions = {
-      ["default"] = handle_selection,
+      ["default"] = function(selected)
+        vim.schedule(function()
+          handle_selection(selected)
+        end)
+      end,
       ["esc"] = function()
-        on_select(nil)
+        vim.schedule(function()
+          on_select(nil)
+        end)
       end,
       ["ctrl-c"] = function()
-        on_select(nil)
+        vim.schedule(function()
+          on_select(nil)
+        end)
       end,
       ["ctrl-q"] = function()
-        on_select(nil)
+        vim.schedule(function()
+          on_select(nil)
+        end)
       end,
     },
   }
@@ -276,15 +319,25 @@ function M.pick_stash(opts, on_select)
   fzf_lua.git_stash {
     prompt = string.format("%s> ", opts.prompt_prefix or "Select stash"),
     actions = {
-      ["default"] = handle_selection,
+      ["default"] = function(selected)
+        vim.schedule(function()
+          handle_selection(selected)
+        end)
+      end,
       ["esc"] = function()
-        on_select(nil)
+        vim.schedule(function()
+          on_select(nil)
+        end)
       end,
       ["ctrl-c"] = function()
-        on_select(nil)
+        vim.schedule(function()
+          on_select(nil)
+        end)
       end,
       ["ctrl-q"] = function()
-        on_select(nil)
+        vim.schedule(function()
+          on_select(nil)
+        end)
       end,
     },
   }
@@ -338,15 +391,25 @@ function M.pick_file(opts, on_select)
   fzf_lua.git_status {
     prompt = string.format("%s> ", opts.prompt_prefix or "Select changed file"),
     actions = {
-      ["default"] = handle_selection,
+      ["default"] = function(selected)
+        vim.schedule(function()
+          handle_selection(selected)
+        end)
+      end,
       ["esc"] = function()
-        on_select(nil)
+        vim.schedule(function()
+          on_select(nil)
+        end)
       end,
       ["ctrl-c"] = function()
-        on_select(nil)
+        vim.schedule(function()
+          on_select(nil)
+        end)
       end,
       ["ctrl-q"] = function()
-        on_select(nil)
+        vim.schedule(function()
+          on_select(nil)
+        end)
       end,
     },
   }
@@ -396,13 +459,19 @@ function M.pick_any_ref(opts, on_select)
     end
 
     local function process_any_ref_item(item)
+      if not item or item == "" then
+        return nil
+      end
+
       -- Check if it looks like a commit entry (starts with hex chars followed by space)
       local commit_hash = item:match("^%s*([a-f0-9]+)%s+")
       if commit_hash and #commit_hash >= 7 then
         return commit_hash
       end
-      -- Otherwise, it's a branch/tag/symbolic ref, use as-is
-      return item
+
+      -- Otherwise, it's a branch/tag/symbolic ref, clean it up and use as-is
+      local trimmed = item:gsub("^%s+", ""):gsub("%s+$", "")
+      return trimmed ~= "" and trimmed or nil
     end
 
     if opts.allow_multi then
@@ -428,15 +497,25 @@ function M.pick_any_ref(opts, on_select)
   fzf_lua.fzf_exec(get_any_ref_data(), {
     prompt = string.format("%s> ", opts.prompt_prefix or "Select any ref"),
     actions = {
-      ["default"] = handle_selection,
+      ["default"] = function(selected)
+        vim.schedule(function()
+          handle_selection(selected)
+        end)
+      end,
       ["esc"] = function()
-        on_select(nil)
+        vim.schedule(function()
+          on_select(nil)
+        end)
       end,
       ["ctrl-c"] = function()
-        on_select(nil)
+        vim.schedule(function()
+          on_select(nil)
+        end)
       end,
       ["ctrl-q"] = function()
-        on_select(nil)
+        vim.schedule(function()
+          on_select(nil)
+        end)
       end,
     },
   })
