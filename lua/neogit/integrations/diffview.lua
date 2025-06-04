@@ -9,6 +9,21 @@ local dv_utils = require("diffview.utils")
 local Watcher = require("neogit.watcher")
 local git = require("neogit.lib.git")
 local a = require("plenary.async")
+local notification = require("neogit.lib.notification")
+
+local function check_valid_item(item_name, section_type)
+  if
+    not item_name
+    or (type(item_name) == "string" and item_name == "")
+    or (type(item_name) == "table" and (#item_name == 0 or not item_name[1] or item_name[1] == ""))
+  then
+    notification.warn(
+      "Cannot diff the " .. section_type .. " heading. Please select a specific " .. section_type .. " item."
+    )
+    return false
+  end
+  return true
+end
 
 local function get_local_diff_view(section_name, item_name, opts)
   local left = Rev(RevType.STAGE)
@@ -116,13 +131,20 @@ function M.open(section_name, item_name, opts)
     or section_name == "log"
     or (section_name and section_name:match("unmerged$"))
   then
+    if not check_valid_item(item_name, "commit") then
+      return
+    end
+
     local range
     if type(item_name) == "table" then
       range = string.format("%s..%s", item_name[1], item_name[#item_name])
-    elseif item_name ~= nil then
-      range = string.format("%s^!", item_name:match("[a-f0-9]+"))
     else
-      return
+      local commit_hash = item_name:match("[a-f0-9]+")
+      if not commit_hash then
+        notification.warn("Invalid commit hash format")
+        return
+      end
+      range = string.format("%s^!", commit_hash)
     end
 
     view = dv_lib.diffview_open(dv_utils.tbl_pack(range))
@@ -130,11 +152,16 @@ function M.open(section_name, item_name, opts)
     local range = item_name
     view = dv_lib.diffview_open(dv_utils.tbl_pack(range))
   elseif section_name == "stashes" then
-    assert(item_name and type(item_name) == "string", "No item name for stash!")
+    if not check_valid_item(item_name, "stash") then
+      return
+    end
 
-    local stash_id = item_name:match("stash@{%d+}")
+    local stash_id = item_name:match("stash@{%d+}") or item_name
     view = dv_lib.diffview_open(dv_utils.tbl_pack(stash_id .. "^!"))
   elseif section_name == "commit" then
+    if not check_valid_item(item_name, "commit") then
+      return
+    end
     view = dv_lib.diffview_open(dv_utils.tbl_pack(item_name .. "^!"))
   elseif section_name == "conflict" and item_name then
     view = dv_lib.diffview_open(dv_utils.tbl_pack("--selected-file=" .. item_name))
