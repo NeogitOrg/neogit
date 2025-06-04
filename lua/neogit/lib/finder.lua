@@ -158,9 +158,16 @@ local function fzf_actions(on_select, allow_multi, refocus_status)
       end
       refresh()
     end,
-    ["esc"] = close_action,
-    ["ctrl-c"] = close_action,
-    ["ctrl-q"] = close_action,
+    ["ctrl-c"] = function()
+      vim.schedule(function()
+        close_action()
+      end)
+    end,
+    ["ctrl-q"] = function()
+      vim.schedule(function()
+        close_action()
+      end)
+    end,
   }
 end
 
