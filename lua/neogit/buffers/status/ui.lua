@@ -175,6 +175,84 @@ local Section = Component.new(function(props)
   })
 end)
 
+local TreeSection = Component.new(function(props)
+  local count
+  if props.count then
+    count = { text(" ("), text.highlight("NeogitSectionHeaderCount")(#props.items), text(")") }
+  end
+
+  local function appendRows(items)
+    return a.void(function(this, ui)
+      this.options.on_open = nil
+      this.options.folded = false
+
+      ui.buf:with_locked_viewport(function()
+        for _, item in ipairs(items) do
+          if item.type == "group" then
+            local groupPath = item.name
+            local indent = string.rep("│ ", item.indent_level - 1)
+            item.name = vim.fn.fnamemodify(item.name, ":t")
+            this:append(col.tag("Item")({
+              row {
+                text.highlight("NeogitSubtleText")(indent),
+                text.highlight("NeogitFolderPath")(groupPath),
+              },
+            }, {
+              foldable = true,
+              folded = true,
+              on_open = appendRows(item.children),
+              context = true,
+              id = groupPath,
+              yankable = groupPath,
+              filename = groupPath,
+              item = nil,
+            }))
+          else
+            this:append(props.render(item.content))
+          end
+        end
+        ui:update()
+      end)
+    end)
+  end
+
+  local sections = {}
+  local groups = util.groupByFilePath(props.items)
+  for _, item in ipairs(groups) do
+    local groupPath = item.name
+    local section
+    if item.type == "group" then
+      section = col.tag("Item")({
+        row {
+          text.highlight("NeogitFolderPath")(groupPath),
+        },
+      }, {
+        foldable = true,
+        folded = true,
+        on_open = appendRows(item.children),
+        context = true,
+        id = groupPath,
+        yankable = groupPath,
+        filename = groupPath,
+        item = nil,
+      })
+    else
+      section = props.render(item.content)
+    end
+    table.insert(sections, section)
+  end
+  return col.tag("Section")({
+    row(util.merge(props.title, count or {})),
+    col(sections),
+    EmptyLine(),
+  }, {
+    foldable = true,
+    folded = props.folded,
+    section = props.name,
+    id = props.name,
+  })
+end)
+
 local SequencerSection = Component.new(function(props)
   return col.tag("Section")({
     row(util.merge(props.title)),
@@ -242,6 +320,13 @@ local SectionItemFile = function(section, config)
       end)
     end
 
+    local indent = ""
+    if config.status.tree_view then
+      local indent_level = #vim.split(item.name, "/", { plain = true }) - 1
+      indent = string.rep("│ ", indent_level)
+      item.name = vim.fn.fnamemodify(item.name, ":t")
+    end
+
     local mode = config.status.mode_text[item.mode]
     local mode_text
     if mode == "" then
@@ -291,6 +376,7 @@ local SectionItemFile = function(section, config)
 
     return col.tag("Item")({
       row {
+        text.highlight("NeogitSubtleText")(indent),
         text.highlight(highlight)(mode_text),
         text(name),
         text.highlight("NeogitSubtleText")(unmerged_types[item.mode] or ""),
@@ -518,6 +604,10 @@ function M.Status(state, config)
   local show_recent = #state.recent.items > 0
     and not config.sections.recent.hidden
 
+  local ChangesSection = config.status.tree_view 
+    and TreeSection 
+    or Section
+
   return {
     List {
       items = {
@@ -612,7 +702,7 @@ function M.Status(state, config)
           folded = config.sections.bisect.folded,
           name = "bisect",
         },
-        show_untracked and Section {
+        show_untracked and ChangesSection {
           title = SectionTitle { title = "Untracked files", highlight = "NeogitUntrackedfiles" },
           count = true,
           render = SectionItemFile("untracked", config),
@@ -620,7 +710,7 @@ function M.Status(state, config)
           folded = config.sections.untracked.folded,
           name = "untracked",
         },
-        show_unstaged and Section {
+        show_unstaged and ChangesSection {
           title = SectionTitle { title = "Unstaged changes", highlight = "NeogitUnstagedchanges" },
           count = true,
           render = SectionItemFile("unstaged", config),
@@ -628,7 +718,7 @@ function M.Status(state, config)
           folded = config.sections.unstaged.folded,
           name = "unstaged",
         },
-        show_staged and Section {
+        show_staged and ChangesSection {
           title = SectionTitle { title = "Staged changes", highlight = "NeogitStagedchanges" },
           count = true,
           render = SectionItemFile("staged", config),
