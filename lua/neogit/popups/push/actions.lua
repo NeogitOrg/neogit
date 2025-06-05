@@ -31,6 +31,10 @@ local function push_to(args, remote, branch, opts)
   logger.debug("Pushing to " .. name)
   notification.info("Pushing to " .. name)
 
+  local current_branch = git.branch.current()
+  if branch and current_branch ~= branch then
+    branch = current_branch .. ":" .. branch
+  end
   local res = git.push.push_interactive(remote, branch, args)
 
   -- Inform the user about missing permissions
@@ -83,9 +87,12 @@ function M.to_upstream(popup)
     remote, branch = git.branch.parse_remote_branch(upstream)
   else
     set_upstream = true
-    branch = git.branch.current()
-    remote = git.branch.upstream_remote()
-      or FuzzyFinderBuffer.new(git.remote.list()):open_async { prompt_prefix = "remote" }
+    local target = FuzzyFinderBuffer.new(git.refs.list_remote_branches()):open_async {
+      prompt_prefix = "push",
+    }
+    if target then
+      remote, branch = git.branch.parse_remote_branch(target)
+    end
   end
 
   if remote then
