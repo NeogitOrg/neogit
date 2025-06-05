@@ -332,6 +332,7 @@ end
 ---@field disable_signs? boolean Special signs to draw for sections etc. in Neogit
 ---@field simple_headers? boolean Use text headers instead of windows
 ---@field force_if_includes? boolean Add --force-if-includes if --force-with-lease is set
+---@field hard_reset_backup? boolean Do a backup commit before a hard reset
 ---@field log_view_esc_close? boolean If this is set to false ESC doesn't close log view
 ---@field prompt_force_push? boolean Offer to force push when branches diverge
 ---@field git_services? table Templartes to use when opening a pull request for a branch
@@ -383,6 +384,7 @@ function M.get_default_values()
     disable_signs = false,
     simple_headers = false,
     force_if_includes = true,
+    hard_reset_backup = true,
     log_view_esc_close = true,
     prompt_force_push = true,
     graph_style = "ascii",
@@ -1143,6 +1145,7 @@ function M.validate_config()
     validate_type(config.disable_signs, "disable_signs", "boolean")
     validate_type(config.simple_headers, "simple_headers", "boolean")
     validate_type(config.force_if_includes, "force_if_includes", "boolean")
+    validate_type(config.hard_reset_backup, "hard_reset_backup", "boolean")
     validate_type(config.log_view_esc_close, "log_view_esc_close", "boolean")
     validate_type(config.telescope_sorter, "telescope_sorter", "function")
     validate_type(config.use_per_project_settings, "use_per_project_settings", "boolean")
