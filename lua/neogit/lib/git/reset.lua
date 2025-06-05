@@ -1,4 +1,5 @@
 local git = require("neogit.lib.git")
+local config = require("neogit.config")
 
 ---@class NeogitGitReset
 local M = {}
@@ -20,7 +21,9 @@ end
 ---@param target string
 ---@return boolean
 function M.hard(target)
-  git.index.create_backup()
+  if config.values.hard_reset_backup then
+    git.index.create_backup()
+  end
 
   local result = git.cli.reset.hard.args(target).call()
   return result:success()
