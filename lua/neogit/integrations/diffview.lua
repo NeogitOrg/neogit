@@ -18,7 +18,7 @@ local function get_local_diff_view(section_name, item_name, opts)
     section_name = "working"
   end
 
-  local function update_files()
+  local function update_files(current_file_path)
     local files = {}
 
     local sections = {
@@ -44,7 +44,9 @@ local function get_local_diff_view(section_name, item_name, opts)
           } or nil,
           left_null = vim.tbl_contains({ "A", "?" }, item.mode),
           right_null = false,
-          selected = (item_name and item.name == item_name) or (not item_name and idx == 1),
+          selected = (current_file_path and item.name == current_file_path)
+            or (item_name and item.name == item_name)
+            or (not item_name and not current_file_path and idx == 1),
         }
 
         -- restrict diff to only a particular section
@@ -84,9 +86,15 @@ local function get_local_diff_view(section_name, item_name, opts)
     end,
   }
 
-  view:on_files_staged(a.void(function(_)
+  view:on_files_staged(a.void(function()
+    local current_file_path
+    local current_buf_name = vim.api.nvim_buf_get_name(0)
+    if current_buf_name and current_buf_name ~= "" then
+      current_file_path = current_buf_name:gsub(view.git_root .. "/", "")
+    end
+
     Watcher.instance():dispatch_refresh()
-    view:update_files()
+    view:update_files(current_file_path)
   end))
 
   dv_lib.add_view(view)
