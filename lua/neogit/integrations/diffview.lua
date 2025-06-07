@@ -90,7 +90,7 @@ local function get_local_diff_view(section_name, item_name, opts)
     local current_file_path
     local current_buf_name = vim.api.nvim_buf_get_name(0)
     if current_buf_name and current_buf_name ~= "" then
-      current_file_path = current_buf_name:gsub(view.git_root .. "/", "")
+      current_file_path = current_buf_name:gsub(git.repo.worktree_root .. "/", "")
     end
 
     Watcher.instance():dispatch_refresh()
