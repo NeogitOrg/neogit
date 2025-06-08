@@ -73,6 +73,35 @@ function M.setup(opts)
   signs.setup(config.values)
   state.setup(config.values)
   autocmds.setup()
+
+  if config.values.auto_fetch_enabled then
+    local fetch = require("neogit.lib.git.fetch")
+    local git = require("neogit.lib.git")
+
+    if M.auto_fetch_timer then
+      M.auto_fetch_timer:close()
+    end
+
+    M.auto_fetch_timer = vim.uv.new_timer()
+    M.auto_fetch_timer:start(
+      config.values.auto_fetch_interval,
+      config.values.auto_fetch_interval,
+      vim.schedule_wrap(function()
+        if git.cli.is_inside_worktree(vim.uv.cwd()) then
+          fetch.fetch("--all")
+        end
+      end)
+    )
+
+    if config.values.auto_fetch_on_startup then
+      if git.cli.is_inside_worktree(vim.uv.cwd()) then
+        fetch.fetch("--all")
+      end
+    end
+  elseif M.auto_fetch_timer then
+    M.auto_fetch_timer:close()
+    M.auto_fetch_timer = nil
+  end
 end
 
 local function construct_opts(opts)
