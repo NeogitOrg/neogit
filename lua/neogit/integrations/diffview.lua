@@ -21,20 +21,30 @@ local function get_local_diff_view(section_name, item_name, opts)
   local function update_files(current_file_path)
     local files = {}
 
+    git.repo:dispatch_refresh({
+      source = "diffview_update",
+      callback = function() end,
+    })
+
+    local repo_state = git.repo.state
+    if not repo_state then
+      return files
+    end
+
     local sections = {
       conflicting = {
         items = vim.tbl_filter(function(item)
           return item.mode and item.mode:sub(2, 2) == "U"
-        end, git.repo.state.untracked.items),
+        end, repo_state.untracked and repo_state.untracked.items or {}),
       },
-      working = git.repo.state.unstaged,
-      staged = git.repo.state.staged,
+      working = repo_state.unstaged or { items = {} },
+      staged = repo_state.staged or { items = {} },
     }
 
     for kind, section in pairs(sections) do
       files[kind] = {}
 
-      for idx, item in ipairs(section.items) do
+      for idx, item in ipairs(section.items or {}) do
         local file = {
           path = item.name,
           status = item.mode and item.mode:sub(1, 1),
@@ -86,17 +96,11 @@ local function get_local_diff_view(section_name, item_name, opts)
     end,
   }
 
-  view:on_files_staged(a.void(function()
-    local current_file_path
-    local current_buf_name = vim.api.nvim_buf_get_name(0)
-    if current_buf_name and current_buf_name ~= "" then
-      current_file_path = current_buf_name:gsub(git.repo.worktree_root .. "/", "")
-    end
-
-    Watcher.instance():dispatch_refresh()
-    view:update_files(current_file_path)
-  end))
-
+  view:on_files_staged(function()
+    vim.schedule(function()
+      Watcher.instance():dispatch_refresh()
+    end)
+  end)
   dv_lib.add_view(view)
 
   return view
