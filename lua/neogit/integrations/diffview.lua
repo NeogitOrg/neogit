@@ -8,7 +8,6 @@ local dv_utils = require("diffview.utils")
 
 local Watcher = require("neogit.watcher")
 local git = require("neogit.lib.git")
-local a = require("plenary.async")
 
 local function get_local_diff_view(section_name, item_name, opts)
   local left = Rev(RevType.STAGE)
@@ -21,10 +20,10 @@ local function get_local_diff_view(section_name, item_name, opts)
   local function update_files(current_file_path)
     local files = {}
 
-    git.repo:dispatch_refresh({
+    git.repo:dispatch_refresh {
       source = "diffview_update",
       callback = function() end,
-    })
+    }
 
     local repo_state = git.repo.state
     if not repo_state then
