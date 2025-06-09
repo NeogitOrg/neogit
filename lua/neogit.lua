@@ -75,7 +75,6 @@ function M.setup(opts)
   autocmds.setup()
 
   if config.values.auto_fetch_enabled then
-    local fetch = require("neogit.lib.git.fetch")
     local git = require("neogit.lib.git")
 
     if M.auto_fetch_timer then
@@ -88,14 +87,14 @@ function M.setup(opts)
       config.values.auto_fetch_interval,
       vim.schedule_wrap(function()
         if git.cli.is_inside_worktree(vim.uv.cwd()) then
-          fetch.fetch("--all")
+          git.fetch.fetch("--all")
         end
       end)
     )
 
     if config.values.auto_fetch_on_startup then
       if git.cli.is_inside_worktree(vim.uv.cwd()) then
-        fetch.fetch("--all")
+        git.fetch.fetch("--all")
       end
     end
   elseif M.auto_fetch_timer then
