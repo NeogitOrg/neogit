@@ -112,29 +112,20 @@ function M.open(section_name, item_name, opts)
   local view
   -- selene: allow(if_same_then_else)
   if
-    section_name == "recent"
-    or section_name == "log"
-    or (section_name and section_name:match("unmerged$"))
+    (section_name == "recent" or section_name == "log" or (section_name and section_name:match("unmerged$")))
+    and item_name
   then
     local range
     if type(item_name) == "table" then
       range = string.format("%s..%s", item_name[1], item_name[#item_name])
-    elseif item_name ~= nil then
-      range = string.format("%s^!", item_name:match("[a-f0-9]+"))
     else
-      return
+      range = string.format("%s^!", item_name:match("[a-f0-9]+"))
     end
 
     view = dv_lib.diffview_open(dv_utils.tbl_pack(range))
-  elseif section_name == "range" then
-    local range = item_name
-    view = dv_lib.diffview_open(dv_utils.tbl_pack(range))
-  elseif section_name == "stashes" then
-    assert(item_name and type(item_name) == "string", "No item name for stash!")
-
-    local stash_id = item_name:match("stash@{%d+}")
-    view = dv_lib.diffview_open(dv_utils.tbl_pack(stash_id .. "^!"))
-  elseif section_name == "commit" then
+  elseif section_name == "range" and item_name then
+    view = dv_lib.diffview_open(dv_utils.tbl_pack(item_name))
+  elseif (section_name == "stashes" or section_name == "commit") and item_name then
     view = dv_lib.diffview_open(dv_utils.tbl_pack(item_name .. "^!"))
   elseif section_name == "conflict" and item_name then
     view = dv_lib.diffview_open(dv_utils.tbl_pack("--selected-file=" .. item_name))
