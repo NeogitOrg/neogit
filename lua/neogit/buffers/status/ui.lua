@@ -4,6 +4,7 @@ local util = require("neogit.lib.util")
 local common = require("neogit.buffers.common")
 local config = require("neogit.config")
 local a = require("plenary.async")
+local state = require("neogit.lib.state")
 
 local col = Ui.col
 local row = Ui.row
@@ -368,69 +369,66 @@ local SectionItemCommit = Component.new(function(item)
     item.commit.rel_date = " " .. item.commit.rel_date
   end
 
-  -- Render author and date in margin
-  local state = require("neogit.lib.state")
-  local visibility = state.get({ "margin", "visibility" }, false)
-  local margin_date_style = state.get({ "margin", "date_style" }, 1)
-  local details = state.get({ "margin", "details" }, false)
-  local date
-  local author_table = { "" }
-  local date_table
-  local date_width = 10
-  local clamp_width = 30 -- to avoid having too much space when relative date is short
+  local virtual_text
 
-  if margin_date_style == 1 then -- relative date (short)
-    local unpacked = vim.split(item.commit.rel_date, " ")
-    -- above, we added a space if the rel_date started with a single number
-    -- we get the last two elements to deal with that
-    local date_number = unpacked[#unpacked - 1]
-    local date_quantifier = unpacked[#unpacked]
-    if date_quantifier:match("months?") then
-      date_quantifier = date_quantifier:gsub("m", "M") -- to distinguish from minutes
+  -- Render author and date in margin, if visible
+  if state.get({ "margin", "visibility" }, false) then
+    local margin_date_style = state.get({ "margin", "date_style" }, 1)
+    local details = state.get({ "margin", "details" }, false)
+
+    local date
+    local date_width = 10
+    local clamp_width = 30         -- to avoid having too much space when relative date is short
+
+    if margin_date_style == 1 then -- relative date (short)
+      local unpacked = vim.split(item.commit.rel_date, " ")
+
+      -- above, we added a space if the rel_date started with a single number
+      -- we get the last two elements to deal with that
+      local date_number = unpacked[#unpacked - 1]
+      local date_quantifier = unpacked[#unpacked]
+      if date_quantifier:match("months?") then
+        date_quantifier = date_quantifier:gsub("m", "M") -- to distinguish from minutes
+      end
+
+      -- add back the space if we have a single number
+      local left_pad
+      if #unpacked > 2 then
+        left_pad = " "
+      else
+        left_pad = ""
+      end
+
+      date = left_pad .. date_number .. date_quantifier:sub(1, 1)
+      date_width = 3
+      clamp_width = 23
+    elseif margin_date_style == 2 then -- relative date (long)
+      date = item.commit.rel_date
+      date_width = 10
+    else -- local iso date
+      if config.values.log_date_format == nil then
+        -- we get the unix date to be able to convert the date to the local timezone
+        date = os.date("%Y-%m-%d %H:%M", item.commit.unix_date)
+        date_width = 16 -- TODO: what should the width be here?
+      else
+        date = item.commit.log_date
+        date_width = 16
+      end
     end
-    -- add back the space if we have a single number
-    local left_pad
-    if #unpacked > 2 then
-      left_pad = " "
-    else
-      left_pad = ""
+
+    local author_table = { "" }
+    if details then
+      author_table = {
+        util.str_clamp(item.commit.author_name, clamp_width - (#date > date_width and #date or date_width)),
+        "NeogitGraphAuthor",
+      }
     end
-    date = left_pad .. date_number .. date_quantifier:sub(1, 1)
-    date_width = 3
-    clamp_width = 23
-  elseif margin_date_style == 2 then -- relative date (long)
-    date = item.commit.rel_date
-    date_width = 10
-  else -- local iso date
-    if config.values.log_date_format == nil then
-      -- we get the unix date to be able to convert the date to
-      -- the local timezone
-      date = os.date("%Y-%m-%d %H:%M", item.commit.unix_date)
-      date_width = 16 -- TODO: what should the width be here?
-    else
-      date = item.commit.log_date
-      date_width = 16
-    end
-  end
 
-  date_table = { util.str_min_width(date, date_width), "Special" }
-
-  if details then
-    author_table = {
-      util.str_clamp(item.commit.author_name, clamp_width - (#date > date_width and #date or date_width)),
-      "NeogitGraphAuthor",
-    }
-  end
-
-  local virt
-  if visibility then
-    virt = {
-      { " ", "Constant" },
+    virtual_text = {
+      { " ",                                  "Constant" },
       author_table,
-      date_table,
+      { util.str_min_width(date, date_width), "Special" }
     }
-  else
-    virt = {}
   end
 
   return row(
@@ -442,7 +440,7 @@ local SectionItemCommit = Component.new(function(item)
       { text(item.commit.subject) }
     ),
     {
-      virtual_text = virt,
+      virtual_text = virtual_text,
       oid = item.commit.oid,
       yankable = item.commit.oid,
       item = item,
