@@ -150,11 +150,11 @@ end
 ---Determine if a branch name ("origin/master", "fix/bug-1000", etc)
 ---is a remote branch or a local branch
 ---@param ref string
----@return nil|string remote
+---@return string remote
 ---@return string branch
 function M.parse_remote_branch(ref)
   if M.exists(ref) then
-    return nil, ref
+    return ".", ref
   end
 
   return ref:match("^([^/]*)/(.*)$")

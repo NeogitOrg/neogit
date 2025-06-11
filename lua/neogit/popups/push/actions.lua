@@ -11,6 +11,10 @@ local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
 local M = {}
 
+---@param args string[]
+---@param remote string
+---@param branch string|nil
+---@param opts table|nil
 local function push_to(args, remote, branch, opts)
   opts = opts or {}
 
