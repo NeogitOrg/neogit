@@ -71,7 +71,8 @@ function M.list()
 end
 
 function M.rename(stash)
-  local message = input.get_user_input("New name")
+  local current = git.log.message(stash)
+  local message = input.get_user_input("rename", { prepend = current })
   if message then
     local oid = git.rev_parse.abbreviate_commit(stash)
     git.cli.stash.drop.args(stash).call()
