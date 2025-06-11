@@ -189,7 +189,12 @@ function M.checkout_local_branch(popup)
 
   if target then
     if vim.tbl_contains(remote_branches, target) then
-      git.branch.track(target, popup:get_arguments())
+      local result = git.branch.track(target, popup:get_arguments())
+      if result.code > 0 then
+        notification.error(table.concat(result.stderr, "\n"))
+        return
+      end
+
       notification.info("Created local branch " .. target .. " tracking remote")
       event.send("BranchCheckout", { branch_name = target })
     elseif not vim.tbl_contains(options, target) then
