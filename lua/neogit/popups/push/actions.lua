@@ -112,14 +112,7 @@ function M.to_elsewhere(popup)
 end
 
 function M.push_other(popup)
-  local sources = git.branch.get_local_branches()
-  table.insert(sources, "HEAD")
-  table.insert(sources, "ORIG_HEAD")
-  table.insert(sources, "FETCH_HEAD")
-  if popup.state.env.commit then
-    table.insert(sources, 1, popup.state.env.commit)
-  end
-
+  local sources = util.merge({ popup.state.env.commit }, git.refs.list_local_branches(), git.refs.heads())
   local source = FuzzyFinderBuffer.new(sources):open_async { prompt_prefix = "push" }
   if not source then
     return
