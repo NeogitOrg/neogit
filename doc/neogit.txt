@@ -2086,6 +2086,8 @@ Untracked Files                                 *neogit_status_buffer_untracked*
 ==============================================================================
 Editor Buffer                                             *neogit_editor_buffer*
 
+User customizations can be made via `gitcommit` ftplugin.
+
 Commands:                                               *neogit_editor_commands*
   • Submit                                                *neogit_editor_submit*
     Default key: `<c-c><c-c>`
@@ -2142,6 +2144,8 @@ Refs Buffer                                                 *neogit_refs_buffer*
 
 ==============================================================================
 Rebase Todo Buffer                                   *neogit_rebase_todo_buffer*
+
+User customizations can be made via `gitrebase` ftplugin.
 
 The Rebase editor has some extra commands, beyond being a normal vim buffer.
 
