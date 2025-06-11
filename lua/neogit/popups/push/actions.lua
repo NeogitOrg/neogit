@@ -5,6 +5,7 @@ local notification = require("neogit.lib.notification")
 local input = require("neogit.lib.input")
 local util = require("neogit.lib.util")
 local config = require("neogit.config")
+local event = require("neogit.lib.event")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
@@ -57,7 +58,7 @@ local function push_to(args, remote, branch, opts)
     a.util.scheduler()
     logger.debug("Pushed to " .. name)
     notification.info("Pushed to " .. name, { dismiss = true })
-    vim.api.nvim_exec_autocmds("User", { pattern = "NeogitPushComplete", modeline = false })
+    event.send("PushComplete")
   else
     logger.debug("Failed to push to " .. name)
     notification.error("Failed to push to " .. name, { dismiss = true })

@@ -9,6 +9,7 @@ local Watcher = require("neogit.watcher")
 local logger = require("neogit.logger")
 local a = require("plenary.async")
 local git = require("neogit.lib.git")
+local event = require("neogit.lib.event")
 
 ---@class RefsViewBuffer
 ---@field buffer Buffer
@@ -329,7 +330,7 @@ function M:redraw()
   logger.debug("[REFS] Beginning redraw")
   self.buffer.ui:render(unpack(ui.RefsView(git.refs.list_parsed(), self.head)))
 
-  vim.api.nvim_exec_autocmds("User", { pattern = "NeogitRefsRefreshed", modeline = false })
+  event.send("RefsRefreshed")
   logger.info("[REFS] Redraw complete")
 end
 

@@ -6,8 +6,7 @@ local git = require("neogit.lib.git")
 local Watcher = require("neogit.watcher")
 local a = require("plenary.async")
 local logger = require("neogit.logger") -- TODO: Add logging
-
-local api = vim.api
+local event = require("neogit.lib.event")
 
 ---@class Semaphore
 ---@field permits number
@@ -276,7 +275,7 @@ function M:refresh(partial, reason)
     partial = partial,
     callback = function()
       self:redraw(cursor, view)
-      api.nvim_exec_autocmds("User", { pattern = "NeogitStatusRefreshed", modeline = false })
+      event.send("StatusRefreshed")
       logger.info("[STATUS] Refresh complete")
     end,
   }
