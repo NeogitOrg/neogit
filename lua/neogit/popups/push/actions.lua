@@ -123,7 +123,7 @@ function M.push_other(popup)
     table.insert(destinations, 1, remote .. "/" .. source)
   end
 
-  local destination = FuzzyFinderBuffer.new(destinations)
+  local destination = FuzzyFinderBuffer.new(util.deduplicate(destinations))
     :open_async { prompt_prefix = "push " .. source .. " to" }
   if not destination then
     return
