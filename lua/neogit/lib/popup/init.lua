@@ -371,11 +371,12 @@ function M:mappings()
         for _, key in ipairs(action.keys) do
           mappings.n[key] = a.void(function()
             logger.debug(string.format("[POPUP]: Invoking action %q of %s", key, self.state.name))
-            local persist = action.callback(self)
-            if not persist then
+            if not action.persist_popup then
+              logger.debug("[POPUP]: Closing popup")
               self:close()
             end
 
+            action.callback(self)
             Watcher.instance():dispatch_refresh()
           end)
         end

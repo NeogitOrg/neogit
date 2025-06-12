@@ -80,6 +80,10 @@ local M = {}
 ---@field description string
 ---@field callback function
 ---@field heading string?
+---@field persist_popup boolean? set to true to prevent closing the popup when invoking
+
+---@class PopupActionOptions
+---@field persist_popup boolean Controls if the action should close the popup (false/nil) or keep it open (true)
 
 ---@class PopupSwitchOpts
 ---@field enabled? boolean Controls if the switch should default to 'on' state
@@ -429,8 +433,11 @@ end
 ---@param keys string|string[] Key or list of keys for the user to press that runs the action
 ---@param description string Description of action in UI
 ---@param callback? fun(popup: PopupData) Function that gets run in async context
+---@param opts? PopupActionOptions
 ---@return self
-function M:action(keys, description, callback)
+function M:action(keys, description, callback, opts)
+  opts = opts or {}
+
   if type(keys) == "string" then
     keys = { keys }
   end
@@ -448,6 +455,7 @@ function M:action(keys, description, callback)
     keys = keys,
     description = description,
     callback = callback,
+    persist_popup = opts.persist_popup or false
   })
 
   return self
@@ -459,10 +467,11 @@ end
 ---@param keys string|string[] Key or list of keys for the user to press that runs the action
 ---@param description string Description of action in UI
 ---@param callback? fun(popup: PopupData) Function that gets run in async context
+---@param opts? PopupActionOptions
 ---@return self
-function M:action_if(cond, keys, description, callback)
+function M:action_if(cond, keys, description, callback, opts)
   if cond then
-    return self:action(keys, description, callback)
+    return self:action(keys, description, callback, opts)
   end
 
   return self
