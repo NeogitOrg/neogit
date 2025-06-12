@@ -1,6 +1,13 @@
 local M = {}
 
 local state = require("neogit.lib.state")
+local a = require("plenary.async")
+
+function M.refresh_buffer(buffer)
+  return a.void(function()
+    buffer:dispatch_refresh({ update_diffs = { "*:*" } }, "margin_refresh_buffer")
+  end)
+end
 
 function M.toggle_visibility()
   local visibility = state.get({ "margin", "visibility" }, false)

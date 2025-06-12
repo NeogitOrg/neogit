@@ -4,7 +4,7 @@ local actions = require("neogit.popups.margin.actions")
 
 local M = {}
 
-function M.create()
+function M.create(env)
   local p = popup
     .builder()
     :name("NeogitMarginPopup")
@@ -33,7 +33,13 @@ function M.create()
     )
     :switch("d", "decorate", "Show refnames", { enabled = true, internal = true })
     :group_heading("Refresh")
-    :action("g", "buffer", actions.log_current)
+    :action_if(
+      env.buffer,
+      "g",
+      "buffer",
+      actions.refresh_buffer(env.buffer),
+      { persist_popup = true }
+    )
     :new_action_group("Margin")
     :action("L", "toggle visibility", actions.toggle_visibility, { persist_popup = true })
     :action("l", "cycle style", actions.cycle_date_style, { persist_popup = true })
