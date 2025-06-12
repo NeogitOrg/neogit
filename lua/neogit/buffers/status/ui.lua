@@ -378,7 +378,7 @@ local SectionItemCommit = Component.new(function(item)
 
     local date
     local date_width = 10
-    local clamp_width = 30         -- to avoid having too much space when relative date is short
+    local clamp_width = 30 -- to avoid having too much space when relative date is short
 
     if margin_date_style == 1 then -- relative date (short)
       local unpacked = vim.split(item.commit.rel_date, " ")
@@ -425,9 +425,9 @@ local SectionItemCommit = Component.new(function(item)
     end
 
     virtual_text = {
-      { " ",                                  "Constant" },
+      { " ", "Constant" },
       author_table,
-      { util.str_min_width(date, date_width), "Special" }
+      { util.str_min_width(date, date_width), "Special" },
     }
   end
 
