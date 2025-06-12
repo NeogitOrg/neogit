@@ -361,14 +361,6 @@ local SectionItemCommit = Component.new(function(item)
     end
   end
 
-  -- Render date
-  if item.commit.rel_date:match(" years?,") then
-    item.commit.rel_date, _ = item.commit.rel_date:gsub(" years?,", "y")
-    item.commit.rel_date = item.commit.rel_date .. " "
-  elseif item.commit.rel_date:match("^%d ") then
-    item.commit.rel_date = " " .. item.commit.rel_date
-  end
-
   local virtual_text
 
   -- Render author and date in margin, if visible
@@ -377,11 +369,22 @@ local SectionItemCommit = Component.new(function(item)
     local details = state.get({ "margin", "details" }, false)
 
     local date
+    local rel_date
     local date_width = 10
     local clamp_width = 30 -- to avoid having too much space when relative date is short
 
+    -- Render date
+    if item.commit.rel_date:match(" years?,") then
+      rel_date, _ = item.commit.rel_date:gsub(" years?,", "y")
+      rel_date = rel_date .. " "
+    elseif item.commit.rel_date:match("^%d ") then
+      rel_date = " " .. item.commit.rel_date
+    else
+      rel_date = item.commit.rel_date
+    end
+
     if margin_date_style == 1 then -- relative date (short)
-      local unpacked = vim.split(item.commit.rel_date, " ")
+      local unpacked = vim.split(rel_date, " ")
 
       -- above, we added a space if the rel_date started with a single number
       -- we get the last two elements to deal with that
@@ -403,7 +406,7 @@ local SectionItemCommit = Component.new(function(item)
       date_width = 3
       clamp_width = 23
     elseif margin_date_style == 2 then -- relative date (long)
-      date = item.commit.rel_date
+      date = rel_date
       date_width = 10
     else -- local iso date
       if config.values.log_date_format == nil then
