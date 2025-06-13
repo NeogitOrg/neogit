@@ -86,6 +86,16 @@ function ProcessResult:remove_ansi()
   return self
 end
 
+---@return boolean
+function ProcessResult:success()
+  return self.code == 0
+end
+
+---@return boolean
+function ProcessResult:failure()
+  return self.code ~= 0
+end
+
 ProcessResult.__index = ProcessResult
 
 ---@param process ProcessOpts

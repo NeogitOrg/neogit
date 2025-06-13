@@ -160,7 +160,7 @@ function M.create_backup()
   git.cli.add.update.call { hidden = true, await = true }
   local result =
     git.cli.commit.allow_empty.message("Hard reset backup").call { hidden = true, await = true, pty = true }
-  if result.code == 0 then
+  if result:success() then
     git.cli["update-ref"].args("refs/backups/" .. timestamp(), "HEAD").call { hidden = true, await = true }
     git.cli.reset.hard.args("HEAD~1").call { hidden = true, await = true }
   end

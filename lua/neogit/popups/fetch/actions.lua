@@ -17,7 +17,7 @@ local function fetch_from(name, remote, branch, args)
   notification.info("Fetching from " .. name)
   local res = git.fetch.fetch_interactive(remote, branch, args)
 
-  if res and res.code == 0 then
+  if res and res:success() then
     a.util.scheduler()
     notification.info("Fetched from " .. name, { dismiss = true })
     logger.debug("Fetched from " .. name)

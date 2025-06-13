@@ -8,7 +8,7 @@ local M = {}
 local function bisect(cmd)
   local result = git.cli.bisect.args(cmd).call { long = true }
 
-  if result.code == 0 then
+  if result:success() then
     event.send("Bisect", { type = cmd })
   end
 end
@@ -28,7 +28,7 @@ function M.start(bad_revision, good_revision, args)
   local result =
     git.cli.bisect.args("start").arg_list(args).args(bad_revision, good_revision).call { long = true }
 
-  if result.code == 0 then
+  if result:success() then
     event.send("Bisect", { type = "start" })
   end
 end

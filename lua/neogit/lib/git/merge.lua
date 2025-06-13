@@ -12,7 +12,7 @@ end
 
 function M.merge(branch, args)
   local result = merge_command(git.cli.merge.args(branch).arg_list(args))
-  if result.code ~= 0 then
+  if result:failure() then
     notification.error("Merging failed. Resolve conflicts before continuing")
     event.send("Merge", { branch = branch, args = args, status = "conflict" })
   else
@@ -37,12 +37,12 @@ end
 ---@param path string filepath to check for conflict markers
 ---@return boolean
 function M.is_conflicted(path)
-  return git.cli.diff.check.files(path).call().code ~= 0
+  return git.cli.diff.check.files(path).call():failure()
 end
 
 ---@return boolean
 function M.any_conflicted()
-  return git.cli.diff.check.call().code ~= 0
+  return git.cli.diff.check.call():failure()
 end
 
 ---@class MergeItem

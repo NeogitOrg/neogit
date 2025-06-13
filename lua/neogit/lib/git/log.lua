@@ -403,7 +403,8 @@ end)
 function M.is_ancestor(ancestor, descendant)
   return git.cli["merge-base"].is_ancestor
     .args(ancestor, descendant)
-    .call({ ignore_error = true, hidden = true }).code == 0
+    .call({ ignore_error = true, hidden = true })
+    :success()
 end
 
 ---Finds parent commit of a commit. If no parent exists, will return nil

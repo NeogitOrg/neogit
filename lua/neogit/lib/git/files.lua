@@ -55,20 +55,20 @@ end
 ---@param path string
 ---@return boolean
 function M.is_tracked(path)
-  return git.cli["ls-files"].error_unmatch.files(path).call({ hidden = true, ignore_error = true }).code == 0
+  return git.cli["ls-files"].error_unmatch.files(path).call({ hidden = true, ignore_error = true }):success()
 end
 
 ---@param paths string[]
 ---@return boolean
 function M.untrack(paths)
-  return git.cli.rm.cached.files(unpack(paths)).call({ hidden = true }).code == 0
+  return git.cli.rm.cached.files(unpack(paths)).call({ hidden = true }):success()
 end
 
 ---@param from string
 ---@param to string
 ---@return boolean
 function M.move(from, to)
-  return git.cli.mv.args(from, to).call().code == 0
+  return git.cli.mv.args(from, to).call():success()
 end
 
 return M

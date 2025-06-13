@@ -26,7 +26,7 @@ local function pull_from(args, remote, branch, opts)
 
   local res = git.pull.pull_interactive(remote, branch, args)
 
-  if res and res.code == 0 then
+  if res and res:success() then
     a.util.scheduler()
     notification.info("Pulled from " .. name, { dismiss = true })
     logger.debug("Pulled from " .. name)

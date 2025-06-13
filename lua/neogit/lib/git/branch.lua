@@ -144,7 +144,7 @@ function M.exists(branch)
     .args(string.format("refs/heads/%s", branch))
     .call { hidden = true, ignore_error = true }
 
-  return result.code == 0
+  return result:success()
 end
 
 ---Determine if a branch name ("origin/master", "fix/bug-1000", etc)
@@ -164,7 +164,7 @@ end
 ---@param base_branch? string
 ---@return boolean
 function M.create(name, base_branch)
-  return git.cli.branch.args(name, base_branch).call({ await = true }).code == 0
+  return git.cli.branch.args(name, base_branch).call({ await = true }):success()
 end
 
 ---@param name string
@@ -182,7 +182,7 @@ function M.delete(name)
     result = git.cli.branch.delete.name(name).call { await = true }
   end
 
-  return result and result.code == 0 or false
+  return result and result:success() or false
 end
 
 ---Returns current branch name, or nil if detached HEAD
@@ -314,7 +314,7 @@ function M.upstream(name)
     local result =
       git.cli["rev-parse"].symbolic_full_name.abbrev_ref(name .. "@{upstream}").call { ignore_error = true }
 
-    if result.code == 0 then
+    if result:success() then
       return result.stdout[1]
     end
   else

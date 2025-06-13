@@ -48,7 +48,7 @@ local function push_to(args, remote, branch, opts)
   local updates_rejected = string.find(table.concat(res.stdout), "Updates were rejected") ~= nil
 
   -- Only ask the user whether to force push if not already specified and feature enabled
-  if res and res.code ~= 0 and not using_force and updates_rejected and config.values.prompt_force_push then
+  if res and res:failure() and not using_force and updates_rejected and config.values.prompt_force_push then
     logger.error("Attempting force push to " .. name)
 
     local message = "Your branch has diverged from the remote branch. Do you want to force push?"
@@ -58,7 +58,7 @@ local function push_to(args, remote, branch, opts)
     end
   end
 
-  if res and res.code == 0 then
+  if res and res:success() then
     a.util.scheduler()
     logger.debug("Pushed to " .. name)
     notification.info("Pushed to " .. name, { dismiss = true })

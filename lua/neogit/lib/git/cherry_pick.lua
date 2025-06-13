@@ -20,7 +20,7 @@ function M.pick(commits, args)
     result = cmd.call { await = true }
   end
 
-  if result.code ~= 0 then
+  if result:failure() then
     notification.error("Cherry Pick failed. Resolve conflicts before continuing")
     return false
   else
@@ -37,7 +37,7 @@ function M.apply(commits, args)
   end)
 
   local result = git.cli["cherry-pick"].no_commit.arg_list(util.merge(args, commits)).call { await = true }
-  if result.code ~= 0 then
+  if result:failure() then
     notification.error("Cherry Pick failed. Resolve conflicts before continuing")
   else
     event.send("CherryPick", { commits = commits })
@@ -91,7 +91,7 @@ function M.move(commits, src, dst, args, start, checkout_dst)
     local result =
       git.cli.rebase.interactive.args(keep).in_pty(true).env({ GIT_SEQUENCE_EDITOR = editor }).call()
 
-    if result.code ~= 0 then
+    if result:failure() then
       return notification.error("Picking failed - Fix things manually before continuing.")
     end
 

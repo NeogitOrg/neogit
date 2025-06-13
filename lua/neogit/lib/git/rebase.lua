@@ -22,7 +22,7 @@ function M.instantly(commit, args)
     .arg_list(args or {})
     .call { long = true, pty = true }
 
-  if result.code ~= 0 then
+  if result:failure() then
     event.send("Rebase", { commit = commit, status = "failed" })
   else
     event.send("Rebase", { commit = commit, status = "ok" })
@@ -37,7 +37,7 @@ function M.rebase_interactive(commit, args)
   end
 
   local result = rebase_command(git.cli.rebase.interactive.arg_list(args).args(commit))
-  if result.code ~= 0 then
+  if result:failure() then
     if result.stdout[1]:match("^hint: Waiting for your editor to close the file%.%.%. error") then
       notification.info("Rebase aborted")
       event.send("Rebase", { commit = commit, status = "aborted" })
@@ -53,7 +53,7 @@ end
 
 function M.onto_branch(branch, args)
   local result = rebase_command(git.cli.rebase.args(branch).arg_list(args))
-  if result.code ~= 0 then
+  if result:failure() then
     notification.error("Rebasing failed. Resolve conflicts before continuing")
     event.send("Rebase", { commit = branch, status = "conflict" })
   else
@@ -64,7 +64,7 @@ end
 
 function M.onto(start, newbase, args)
   local result = rebase_command(git.cli.rebase.onto.args(newbase, start).arg_list(args))
-  if result.code ~= 0 then
+  if result:failure() then
     notification.error("Rebasing failed. Resolve conflicts before continuing")
     event.send("Rebase", { status = "conflict" })
   else
@@ -101,7 +101,7 @@ function M.modify(commit)
     .env({ GIT_SEQUENCE_EDITOR = editor })
     .call()
 
-  if result.code == 0 then
+  if result:success() then
     event.send("Rebase", { commit = commit, status = "ok" })
   end
 end
@@ -115,7 +115,7 @@ function M.drop(commit)
     .env({ GIT_SEQUENCE_EDITOR = editor })
     .call()
 
-  if result.code == 0 then
+  if result:success() then
     event.send("Rebase", { commit = commit, status = "ok" })
   end
 end
@@ -141,7 +141,7 @@ end
 function M.merge_base_HEAD()
   local result =
     git.cli["merge-base"].args("HEAD", "HEAD@{upstream}").call { ignore_error = true, hidden = true }
-  if result.code == 0 then
+  if result:success() then
     return result.stdout[1]
   end
 end
@@ -168,7 +168,7 @@ local function rev_name(oid)
     .args(oid)
     .call { hidden = true, ignore_error = true }
 
-  if result.code == 0 then
+  if result:success() then
     return result.stdout[1]
   else
     return oid
