@@ -1,5 +1,6 @@
 local git = require("neogit.lib.git")
 local input = require("neogit.lib.input")
+local notification = require("neogit.lib.notification")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 local StashListBuffer = require("neogit.buffers.stash_list_view")
@@ -69,6 +70,16 @@ end
 
 function M.drop(popup)
   use("drop", popup.state.env.stash, { confirm = true })
+end
+
+function M.recover()
+  notification.info("Finding recoverable stashes...")
+
+  local target = FuzzyFinderBuffer.new(git.stash.recoverable()):open_async()
+  if target then
+    local oid, message = target:match("(%x*) (.*)")
+    git.cli.stash.store.message(message).args(oid).call()
+  end
 end
 
 function M.rename(popup)

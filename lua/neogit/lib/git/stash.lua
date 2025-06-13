@@ -70,6 +70,7 @@ function M.list()
   return git.cli.stash.args("list").call({ hidden = true }).stdout
 end
 
+---@return StashItem[]
 function M.rename(stash)
   local current = git.log.message(stash)
   local message = input.get_user_input("rename", { prepend = current })
@@ -86,6 +87,25 @@ end
 ---@field date string timestamp
 ---@field rel_date string relative timestamp
 ---@field message string the message associated with each stash.
+function M.recoverable()
+  local unreachable = git.cli.fsck.unreachable.no_verbose.no_progress.call({ hidden = true }).stdout
+  local unreachable_oids = vim
+    .iter(unreachable)
+    :filter(function(item)
+      return item:match("commit")
+    end)
+    :map(function(item)
+      return item:match("unreachable commit (.*)$")
+    end)
+    :totable()
+
+  local results = git.cli.log.merges.no_walk
+    .grep("WIP")
+    .format("%h %s")
+    .arg_list(unreachable_oids)
+    .call({ hidden = true }).stdout
+  return util.deduplicate(results)
+end
 
 function M.register(meta)
   meta.update_stashes = function(state)

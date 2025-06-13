@@ -58,6 +58,11 @@ local runner = require("neogit.runner")
 ---@field all self
 ---@field force self
 
+---@class GitCommandFSCK: GitCommandBuilder
+---@field no_verbose self
+---@field no_progress self
+---@field unreachable self
+
 ---@class GitCommandWorktree: GitCommandBuilder
 ---@field add self
 ---@field list self
@@ -78,12 +83,15 @@ local runner = require("neogit.runner")
 
 ---@class GitCommandLog: GitCommandBuilder
 ---@field oneline self
+---@field merges self
+---@field no_walk self
 ---@field branches self
 ---@field remotes self
 ---@field all self
 ---@field graph self
 ---@field color self
 ---@field pretty fun(string): self
+---@field grep fun(string): self
 ---@field max_count fun(string): self
 ---@field format fun(string): self
 
@@ -372,6 +380,7 @@ local runner = require("neogit.runner")
 ---@field worktree       GitCommandWorktree
 ---@field write-tree     GitCommandWriteTree
 ---@field mv             GitCommandMove
+---@field fsck           GitCommandFSCK
 ---@field worktree_root fun(dir: string):string
 ---@field git_dir fun(dir: string):string
 ---@field worktree_git_dir fun(dir: string):string
@@ -460,6 +469,8 @@ local configurations = {
 
   log = config {
     flags = {
+      merges = "--merges",
+      no_walk = "--no-walk",
       oneline = "--oneline",
       branches = "--branches",
       remotes = "--remotes",
@@ -468,6 +479,7 @@ local configurations = {
       color = "--color",
     },
     options = {
+      grep = "--grep",
       pretty = "--pretty",
       max_count = "--max-count",
       format = "--format",
@@ -547,6 +559,14 @@ local configurations = {
       n = "-n",
       list = "--list",
       delete = "--delete",
+    },
+  },
+
+  fsck = config {
+    flags = {
+      no_verbose = "--no-verbose",
+      no_progress = "--no-progress",
+      unreachable = "--unreachable",
     },
   },
 

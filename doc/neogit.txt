@@ -1935,8 +1935,8 @@ Stash Popup                                                 *neogit_stash_popup*
 
 The stash popup actions will affect the current index (staged changes) and the
 working tree (unstaged changes and untracked files). When the cursor is on a
-stash in the stash list, actions under the "Use" column (pop, apply and drop)
-will affect the stash under the cursor.
+stash in the stash list, actions under the "Use" and "Transform" columns
+will affect the stash under the cursor, if present.
 
 Actions:                                            *neogit_stash_popup_actions*
   • Stash both                                               *neogit_stash_both*
@@ -1994,6 +1994,9 @@ Actions:                                            *neogit_stash_popup_actions*
 
   • Format patch                                     *neogit_stash_format_patch*
     (Not yet implemented)
+
+  • Recover                                               *neogit_stash_recover*
+    Uses `git fsck` to find and recover dropped stashes that are not yet GC'd.
 
 
 ==============================================================================

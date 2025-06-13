@@ -36,6 +36,7 @@ function M.create(stash)
     :action("B", "Branch here")
     :action("m", "Rename", actions.rename)
     :action("f", "Format patch")
+    :action("R", "Recover", actions.recover)
     :env({ stash = stash })
     :build()
 
