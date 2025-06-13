@@ -147,6 +147,7 @@ function M:open(kind)
         [mappings["Rename"]]                    = self:_action("n_rename"),
         [mappings["Toggle"]]                    = self:_action("n_toggle"),
         [mappings["OpenFold"]]                  = self:_action("n_open_fold"),
+        [mappings["CloseFold"]]                 = self:_action("n_close_fold"),
         [mappings["Close"]]                     = self:_action("n_close"),
         [mappings["OpenOrScrollDown"]]          = self:_action("n_open_or_scroll_down"),
         [mappings["OpenOrScrollUp"]]            = self:_action("n_open_or_scroll_up"),

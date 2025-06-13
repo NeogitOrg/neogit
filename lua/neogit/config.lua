@@ -639,6 +639,8 @@ function M.get_default_values()
         ["<tab>"] = "Toggle",
         ["za"] = "Toggle",
         ["zo"] = "OpenFold",
+        ["zC"] = "Depth1",
+        ["zO"] = "Depth4",
         ["x"] = "Discard",
         ["s"] = "Stage",
         ["S"] = "StageUnstaged",
