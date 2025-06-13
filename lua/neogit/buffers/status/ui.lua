@@ -316,7 +316,7 @@ local SectionItemStash = Component.new(function(item)
     text.highlight("NeogitSubtleText")(name),
     text.highlight("NeogitSubtleText")(": "),
     text(item.message),
-  }, { yankable = item.oid, item = item })
+  }, { yankable = name, item = item })
 end)
 
 local SectionItemCommit = Component.new(function(item)
