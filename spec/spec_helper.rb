@@ -6,6 +6,8 @@ require "neovim"
 require "debug"
 require "active_support/all"
 require "timeout"
+require "super_diff/rspec"
+require "super_diff/active_support"
 
 ENV["GIT_CONFIG_GLOBAL"] = ""
 
