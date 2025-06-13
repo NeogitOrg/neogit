@@ -548,7 +548,7 @@ local configurations = {
     aliases = {
       message = function(tbl)
         return function(text)
-          return tbl.args("-m", text)
+          return tbl.args("--message", text)
         end
       end,
     },
