@@ -8,7 +8,6 @@ local dv_utils = require("diffview.utils")
 
 local Watcher = require("neogit.watcher")
 local git = require("neogit.lib.git")
-local a = require("plenary.async")
 
 local function get_local_diff_view(section_name, item_name, opts)
   local left = Rev(RevType.STAGE)
@@ -18,23 +17,33 @@ local function get_local_diff_view(section_name, item_name, opts)
     section_name = "working"
   end
 
-  local function update_files()
+  local function update_files(current_file_path)
     local files = {}
+
+    git.repo:dispatch_refresh {
+      source = "diffview_update",
+      callback = function() end,
+    }
+
+    local repo_state = git.repo.state
+    if not repo_state then
+      return files
+    end
 
     local sections = {
       conflicting = {
         items = vim.tbl_filter(function(item)
           return item.mode and item.mode:sub(2, 2) == "U"
-        end, git.repo.state.untracked.items),
+        end, repo_state.untracked and repo_state.untracked.items or {}),
       },
-      working = git.repo.state.unstaged,
-      staged = git.repo.state.staged,
+      working = repo_state.unstaged or { items = {} },
+      staged = repo_state.staged or { items = {} },
     }
 
     for kind, section in pairs(sections) do
       files[kind] = {}
 
-      for idx, item in ipairs(section.items) do
+      for idx, item in ipairs(section.items or {}) do
         local file = {
           path = item.name,
           status = item.mode and item.mode:sub(1, 1),
@@ -44,7 +53,9 @@ local function get_local_diff_view(section_name, item_name, opts)
           } or nil,
           left_null = vim.tbl_contains({ "A", "?" }, item.mode),
           right_null = false,
-          selected = (item_name and item.name == item_name) or (not item_name and idx == 1),
+          selected = (current_file_path and item.name == current_file_path)
+            or (item_name and item.name == item_name)
+            or (not item_name and not current_file_path and idx == 1),
         }
 
         -- restrict diff to only a particular section
@@ -84,11 +95,11 @@ local function get_local_diff_view(section_name, item_name, opts)
     end,
   }
 
-  view:on_files_staged(a.void(function(_)
-    Watcher.instance():dispatch_refresh()
-    view:update_files()
-  end))
-
+  view:on_files_staged(function()
+    vim.schedule(function()
+      Watcher.instance():dispatch_refresh()
+    end)
+  end)
   dv_lib.add_view(view)
 
   return view
