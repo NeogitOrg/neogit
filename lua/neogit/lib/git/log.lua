@@ -30,6 +30,7 @@ local commit_header_pat = "([| ]*)(%*?)([| ]*)commit (%w+)"
 ---@field verification_flag string?
 ---@field rel_date string
 ---@field log_date string
+---@field unix_date string
 
 ---Parses the provided list of lines into a CommitLogEntry
 ---@param raw string[]
@@ -340,6 +341,7 @@ local function format(show_signature)
     committer_date = "%cD",
     rel_date = "%cr",
     log_date = "%cd",
+    unix_date = "%ct",
   }
 
   if show_signature then
