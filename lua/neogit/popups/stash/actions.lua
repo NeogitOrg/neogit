@@ -87,7 +87,7 @@ function M.rename(popup)
 end
 
 function M.list()
-  StashListBuffer.new(git.repo.state.stashes.items):open()
+  StashListBuffer.new(git.stash.list_items()):open()
 end
 
 return M

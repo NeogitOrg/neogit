@@ -4,6 +4,13 @@ local util = require("neogit.lib.util")
 local config = require("neogit.config")
 local event = require("neogit.lib.event")
 
+---@class StashItem
+---@field idx number string the id of the stash i.e. stash@{7}
+---@field name string
+---@field date string timestamp
+---@field rel_date string relative timestamp
+---@field message string the message associated with each stash.
+
 ---@class NeogitGitStash
 local M = {}
 
@@ -71,6 +78,50 @@ function M.list()
 end
 
 ---@return StashItem[]
+function M.list_items()
+  return util.map(M.list(), function(line)
+    local idx, message = line:match("stash@{(%d*)}: (.*)")
+
+    idx = tonumber(idx)
+    assert(idx, "stash index cannot be nil")
+
+    local item = {
+      idx = idx,
+      name = line,
+      message = message,
+    }
+
+    -- These calls can be somewhat expensive, so lazy load them
+    setmetatable(item, {
+      __index = function(self, key)
+        if key == "rel_date" then
+          self.rel_date = git.cli.log
+            .max_count(1)
+            .format("%cr")
+            .args(("stash@{%s}"):format(idx))
+            .call({ hidden = true }).stdout[1]
+
+          return self.rel_date
+        elseif key == "date" then
+          self.date = git.cli.log
+            .max_count(1)
+            .format("%cd")
+            .args("--date=format:" .. config.values.log_date_format)
+            .args(("stash@{%s}"):format(idx))
+            .call({ hidden = true }).stdout[1]
+
+          return self.date
+        elseif key == "oid" then
+          self.oid = git.rev_parse.oid("stash@{" .. idx .. "}")
+          return self.oid
+        end
+      end,
+    })
+
+    return item
+  end)
+end
+
 function M.rename(stash)
   local current = git.log.message(stash)
   local message = input.get_user_input("rename", { prepend = current })
@@ -81,12 +132,7 @@ function M.rename(stash)
   end
 end
 
----@class StashItem
----@field idx number string the id of the stash i.e. stash@{7}
----@field name string
----@field date string timestamp
----@field rel_date string relative timestamp
----@field message string the message associated with each stash.
+---@return string[]
 function M.recoverable()
   local unreachable = git.cli.fsck.unreachable.no_verbose.no_progress.call({ hidden = true }).stdout
   local unreachable_oids = vim
@@ -109,48 +155,7 @@ end
 
 function M.register(meta)
   meta.update_stashes = function(state)
-    state.stashes.items = util.map(M.list(), function(line)
-      local idx, message = line:match("stash@{(%d*)}: (.*)")
-
-      idx = tonumber(idx)
-      assert(idx, "indx cannot be nil")
-
-      ---@class StashItem
-      local item = {
-        idx = idx,
-        name = line,
-        message = message,
-      }
-
-      -- These calls can be somewhat expensive, so lazy load them
-      setmetatable(item, {
-        __index = function(self, key)
-          if key == "rel_date" then
-            self.rel_date = git.cli.log
-              .max_count(1)
-              .format("%cr")
-              .args(("stash@{%s}"):format(idx))
-              .call({ hidden = true }).stdout[1]
-
-            return self.rel_date
-          elseif key == "date" then
-            self.date = git.cli.log
-              .max_count(1)
-              .format("%cd")
-              .args("--date=format:" .. config.values.log_date_format)
-              .args(("stash@{%s}"):format(idx))
-              .call({ hidden = true }).stdout[1]
-
-            return self.date
-          elseif key == "oid" then
-            self.oid = git.rev_parse.oid("stash@{" .. idx .. "}")
-            return self.oid
-          end
-        end,
-      })
-
-      return item
-    end)
+    state.stashes.items = M.list_items()
   end
 end
 
