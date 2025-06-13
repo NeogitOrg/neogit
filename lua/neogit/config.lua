@@ -61,7 +61,7 @@ end
 function M.get_reversed_commit_editor_maps_I()
   return get_reversed_maps("commit_editor_I")
 end
----
+
 ---@return table<string, string[]>
 function M.get_reversed_refs_view_maps()
   return get_reversed_maps("refs_view")
@@ -637,6 +637,8 @@ function M.get_default_values()
         ["4"] = "Depth4",
         ["Q"] = "Command",
         ["<tab>"] = "Toggle",
+        ["za"] = "Toggle",
+        ["zo"] = "OpenFold",
         ["x"] = "Discard",
         ["s"] = "Stage",
         ["S"] = "StageUnstaged",

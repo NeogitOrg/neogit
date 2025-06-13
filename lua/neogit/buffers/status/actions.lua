@@ -508,6 +508,25 @@ M.n_toggle = function(self)
 end
 
 ---@param self StatusBuffer
+M.n_open_fold = function(self)
+  return function()
+    local fold = self.buffer.ui:get_fold_under_cursor()
+    if fold then
+      if fold.options.on_open then
+        fold.options.on_open(fold, self.buffer.ui)
+      else
+        local start, _ = fold:row_range_abs()
+        local ok, _ = pcall(vim.cmd, "normal! zo")
+        if ok then
+          self.buffer:move_cursor(start)
+          fold.options.folded = false
+        end
+      end
+    end
+  end
+end
+
+---@param self StatusBuffer
 M.n_close = function(self)
   return require("neogit.lib.ui.helpers").close_topmost(self)
 end

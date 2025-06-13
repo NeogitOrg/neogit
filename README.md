@@ -391,6 +391,8 @@ neogit.setup {
       ["4"] = "Depth4",
       ["Q"] = "Command",
       ["<tab>"] = "Toggle",
+      ["za"] = "Toggle",
+      ["zo"] = "OpenFold",
       ["x"] = "Discard",
       ["s"] = "Stage",
       ["S"] = "StageUnstaged",
