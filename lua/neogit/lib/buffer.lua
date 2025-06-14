@@ -226,6 +226,9 @@ function Buffer:close(force)
 
   if self.kind == "tab" then
     local ok, _ = pcall(vim.cmd, "tabclose")
+    if not ok and #api.nvim_list_tabpages() == 1 then
+      ok, _ = pcall(vim.cmd, "bd! " .. self.handle)
+    end
     if not ok then
       vim.cmd("tab sb " .. self.handle)
       vim.cmd("tabclose #")
