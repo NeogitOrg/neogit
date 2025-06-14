@@ -4,6 +4,8 @@ local Path = require("plenary.path")
 local git = require("neogit.lib.git")
 local ItemFilter = require("neogit.lib.item_filter")
 local util = require("neogit.lib.util")
+local notification = require("neogit.lib.notification")
+local event = require("neogit.lib.event")
 
 local modules = {
   "status",
@@ -169,6 +171,10 @@ local function empty_state()
   }
 end
 
+---@class NeogitRepoAutoFetch
+---@field timer uv_timer_t
+---@field interval integer
+
 ---@class NeogitRepo
 ---@field lib               table
 ---@field state             NeogitRepoState
@@ -179,6 +185,7 @@ end
 ---@field interrupt         table
 ---@field tmp_state         table
 ---@field refresh_callbacks function[]
+---@field auto_fetch        NeogitRepoAutoFetch|nil
 local Repo = {}
 Repo.__index = Repo
 
@@ -219,6 +226,7 @@ function Repo.new(dir)
     running = util.weak_table(),
     interrupt = util.weak_table(),
     tmp_state = util.weak_table("v"),
+    auto_fetch = nil,
   }
 
   instance.state.worktree_root = instance.worktree_root
@@ -229,6 +237,10 @@ function Repo.new(dir)
 
   for _, m in ipairs(modules) do
     require("neogit.lib.git." .. m).register(instance.lib)
+  end
+
+  if instance.worktree_root ~= "" then
+    instance:_setup_auto_fetch()
   end
 
   return instance
@@ -343,5 +355,75 @@ end
 Repo.dispatch_refresh = a.void(function(self, opts)
   self:refresh(opts)
 end)
+
+function Repo:_setup_auto_fetch()
+  local config = require("neogit.config")
+
+  if config.values.auto_fetch_enabled then
+    logger.debug("[REPO]: Setting up auto-fetch for " .. self.worktree_root)
+
+    self.auto_fetch = {
+      timer = vim.uv.new_timer(),
+      interval = config.values.auto_fetch_interval,
+    }
+
+    self:_start_auto_fetch()
+  end
+end
+
+function Repo:_start_auto_fetch()
+  if not self.auto_fetch then
+    return
+  end
+
+  logger.debug("[REPO]: Starting auto-fetch timer")
+
+  self.auto_fetch.timer:start(
+    self.auto_fetch.interval,
+    self.auto_fetch.interval,
+    vim.schedule_wrap(function()
+      self:_fetch()
+    end)
+  )
+end
+
+function Repo:_fetch()
+  notification.info("Auto-fetching...")
+  a.void(function()
+    local success, result = git.fetch.fetch("--all")
+
+    if success then
+      notification.info("Auto-fetch complete.")
+    else
+      local error_message = "Auto-fetch failed: "
+      if result then
+        if result.stderr and #result.stderr > 0 then
+          if type(result.stderr) == "table" then
+            error_message = error_message .. table.concat(result.stderr, "\n")
+          elseif type(result.stderr) == "string" then
+            error_message = error_message .. result.stderr
+          else
+            error_message = error_message .. "Unknown stderr format."
+          end
+        elseif result.stdout and #result.stdout > 0 then
+          if type(result.stdout) == "table" then
+            error_message = error_message .. table.concat(result.stdout, "\n")
+          elseif type(result.stdout) == "string" then
+            error_message = error_message .. result.stdout
+          else
+            error_message = error_message .. "Unknown stdout format."
+          end
+        else
+          error_message = error_message
+            .. string.format("Command failed with exit code %d", result.code or -1)
+        end
+      else
+        error_message = error_message .. "No result returned from git command."
+      end
+      notification.error(error_message)
+    end
+    event.send("FetchComplete")
+  end)()
+end
 
 return Repo
