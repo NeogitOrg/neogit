@@ -14,7 +14,7 @@ local M = {}
 ---@param remotes string[]
 ---@param args table
 ---@return table
-function M.View(commits, remotes, args)
+function M.View(commits, remotes, args, header)
   args.details = true
 
   local graph = util.filter_map(commits, function(commit)
@@ -25,7 +25,7 @@ function M.View(commits, remotes, args)
     end
   end)
 
-  table.insert(graph, 1, col { row { text("") } })
+  table.insert(graph, 1, col { row { text(header or "") } })
 
   table.insert(
     graph,
