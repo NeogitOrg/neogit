@@ -188,7 +188,9 @@ function M:open()
         [status_maps["PeekFile"]] = function()
           local commit = self.buffer.ui:get_commit_under_cursor()
           if commit then
-            CommitViewBuffer.new(commit, self.files):open()
+            local buffer = CommitViewBuffer.new(commit, self.files):open()
+            buffer.buffer:win_call(vim.cmd, "normal! gg")
+
             self.buffer:focus()
           end
         end,
