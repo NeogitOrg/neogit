@@ -51,6 +51,8 @@ jobs:
         with:
           luaVersion: luajit
       - uses: luarocks/gh-actions-luarocks@v5
+        with:
+          luaRocksVersion: "3.12.1"
       - run: |
          luarocks install llscheck
          llscheck lua/
