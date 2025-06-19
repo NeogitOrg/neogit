@@ -74,7 +74,7 @@ function M.ensure_installed(repo, path)
 
   if not vim.uv.fs_stat(install_path) then
     print("* Downloading " .. name .. " to '" .. install_path .. "/'")
-    vim.fn.system { "git", "clone", "--depth=1", "git@github.com:" .. repo .. ".git", install_path }
+    vim.fn.system { "git", "clone", "--depth=1", "https://github.com/" .. repo .. ".git", install_path }
 
     if vim.v.shell_error > 0 then
       error(
