@@ -5,6 +5,7 @@ local git = require("neogit.lib.git")
 local logger = require("neogit.logger")
 local notification = require("neogit.lib.notification")
 local util = require("neogit.lib.util")
+local event = require("neogit.lib.event")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
@@ -16,15 +17,11 @@ local function fetch_from(name, remote, branch, args)
   notification.info("Fetching from " .. name)
   local res = git.fetch.fetch_interactive(remote, branch, args)
 
-  if res and res.code == 0 then
+  if res and res:success() then
     a.util.scheduler()
     notification.info("Fetched from " .. name, { dismiss = true })
     logger.debug("Fetched from " .. name)
-    vim.api.nvim_exec_autocmds("User", {
-      pattern = "NeogitFetchComplete",
-      modeline = false,
-      data = { remote = remote, branch = branch },
-    })
+    event.send("FetchComplete", { remote = remote, branch = branch })
   else
     logger.error("Failed to fetch from " .. name)
   end
@@ -125,7 +122,7 @@ function M.fetch_submodules(_)
 end
 
 function M.set_variables()
-  require("neogit.popups.branch_config").create()
+  require("neogit.popups.branch_config").create {}
 end
 
 return M

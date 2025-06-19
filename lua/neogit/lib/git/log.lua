@@ -403,7 +403,8 @@ end)
 function M.is_ancestor(ancestor, descendant)
   return git.cli["merge-base"].is_ancestor
     .args(ancestor, descendant)
-    .call({ ignore_error = true, hidden = true }).code == 0
+    .call({ ignore_error = true, hidden = true })
+    :success()
 end
 
 ---Finds parent commit of a commit. If no parent exists, will return nil
@@ -560,7 +561,7 @@ function M.decorate(oid)
     return oid
   else
     local decorated_ref = vim.split(result[1], ",")[1]
-    if decorated_ref:match("%->") then
+    if decorated_ref:match("%->") or decorated_ref:match("tag: ") then
       return oid
     else
       return decorated_ref

@@ -430,7 +430,12 @@ end
 
 function Buffer:set_buffer_option(name, value)
   if self.handle ~= nil then
-    api.nvim_set_option_value(name, value, { scope = "local", buf = self.handle })
+    -- TODO: Remove this at some point. Nvim 0.10 throws an error if using both buf and scope
+    if vim.fn.has("nvim-0.11") == 1 then
+      api.nvim_set_option_value(name, value, { scope = "local", buf = self.handle })
+    else
+      api.nvim_set_option_value(name, value, { buf = self.handle })
+    end
   end
 end
 
@@ -452,7 +457,7 @@ end
 function Buffer:add_highlight(line, col_start, col_end, name, namespace)
   local ns_id = self:get_namespace_id(namespace)
   if ns_id then
-    api.nvim_buf_add_highlight(self.handle, ns_id, name, line, col_start, col_end)
+    vim.hl.range(self.handle, ns_id, name, { line, col_start }, { line, col_end })
   end
 end
 
@@ -533,10 +538,12 @@ function Buffer:call(f, ...)
 end
 
 function Buffer:win_call(f, ...)
-  local args = { ... }
-  api.nvim_win_call(self.win_handle, function()
-    f(unpack(args))
-  end)
+  if self.win_handle and api.nvim_win_is_valid(self.win_handle) then
+    local args = { ... }
+    api.nvim_win_call(self.win_handle, function()
+      f(unpack(args))
+    end)
+  end
 end
 
 function Buffer:chan_send(data)

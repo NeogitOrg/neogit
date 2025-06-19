@@ -3,7 +3,7 @@
 require "spec_helper"
 
 RSpec.describe "Stash Popup", :git, :nvim, :popup do
-  before { nvim.keys("Z") }
+  let(:keymap) { "Z" }
 
   let(:view) do
     [

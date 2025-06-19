@@ -3,8 +3,7 @@
 require "spec_helper"
 
 RSpec.describe "Pull Popup", :git, :nvim, :popup do # rubocop:disable RSpec/EmptyExampleGroup
-  before { nvim.keys("p") }
-
+  let(:keymap) { "p" }
   let(:view) do
     [
       " Variables                                                                      ",

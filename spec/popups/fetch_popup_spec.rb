@@ -3,8 +3,7 @@
 require "spec_helper"
 
 RSpec.describe "Fetch Popup", :git, :nvim, :popup do # rubocop:disable RSpec/EmptyExampleGroup
-  before { nvim.keys("f") }
-
+  let(:keymap) { "f" }
   let(:view) do
     [
       " Arguments                                                                      ",

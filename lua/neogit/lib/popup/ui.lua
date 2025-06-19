@@ -196,6 +196,8 @@ local function render_action(action)
   -- selene: allow(empty_if)
   if action.keys == nil then
     -- Action group heading
+  elseif action.keys == "" then
+    table.insert(items, text("")) -- spacer
   elseif #action.keys == 0 then
     table.insert(items, text.highlight("NeogitPopupActionDisabled")("_"))
   else

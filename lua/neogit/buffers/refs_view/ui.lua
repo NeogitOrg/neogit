@@ -41,13 +41,18 @@ local function Cherries(ref, head)
 end
 
 local function Ref(ref)
-  return row {
+  local ref_content = {
     text.highlight("NeogitGraphBoldPurple")(ref.head and "@ " or "  "),
     text.highlight(highlights[ref.type])(util.str_truncate(ref.name, 34), { align_right = 35 }),
-    text.highlight(highlights[ref.upstream_status])(ref.upstream_name),
-    text(ref.upstream_name ~= "" and " " or ""),
     text(ref.subject),
   }
+
+  if ref.upstream_name ~= "" then
+    table.insert(ref_content, 3, text.highlight(highlights[ref.upstream_status])(ref.upstream_name))
+    table.insert(ref_content, 4, text(" "))
+  end
+
+  return row(ref_content)
 end
 
 local function section(refs, heading, head)

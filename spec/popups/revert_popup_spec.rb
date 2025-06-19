@@ -3,7 +3,7 @@
 require "spec_helper"
 
 RSpec.describe "Revert Popup", :git, :nvim, :popup do # rubocop:disable RSpec/EmptyExampleGroup
-  before { nvim.keys("v") }
+  let(:keymap) { "v" }
 
   let(:view) do
     [
@@ -11,6 +11,9 @@ RSpec.describe "Revert Popup", :git, :nvim, :popup do # rubocop:disable RSpec/Em
       " =m Replay merge relative to parent (--mainline=)                               ",
       " -e Edit commit messages (--edit)                                               ",
       " -E Don't edit commit messages (--no-edit)                                      ",
+      " -s Add Signed-off-by lines (--signoff)                                         ",
+      " =s Strategy (--strategy=)                                                      ",
+      " -S Sign using gpg (--gpg-sign=)                                                ",
       "                                                                                ",
       " Revert                                                                         ",
       " v Commit(s)                                                                    ",
@@ -19,5 +22,5 @@ RSpec.describe "Revert Popup", :git, :nvim, :popup do # rubocop:disable RSpec/Em
   end
 
   %w[v V].each { include_examples "interaction", _1 }
-  %w[=m -e -E].each { include_examples "argument", _1 }
+  %w[=m -e -E -s =s -S].each { include_examples "argument", _1 }
 end

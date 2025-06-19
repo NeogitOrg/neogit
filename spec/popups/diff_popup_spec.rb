@@ -3,8 +3,7 @@
 require "spec_helper"
 
 RSpec.describe "Diff Popup", :git, :nvim, :popup do # rubocop:disable RSpec/EmptyExampleGroup
-  before { nvim.keys("d") }
-
+  let(:keymap) { "d" }
   let(:view) do
     [
       " Diff                      Show                                                 ",

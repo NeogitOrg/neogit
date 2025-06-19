@@ -71,6 +71,7 @@ local function handle_fatal_error(line)
   notification.error(line)
   return "__CANCEL__"
 end
+
 ---@param process Process
 ---@param line string
 ---@return boolean

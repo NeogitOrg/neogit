@@ -9,6 +9,7 @@ local Watcher = require("neogit.watcher")
 local logger = require("neogit.logger")
 local a = require("plenary.async")
 local git = require("neogit.lib.git")
+local event = require("neogit.lib.event")
 
 ---@class RefsViewBuffer
 ---@field buffer Buffer
@@ -133,7 +134,7 @@ function M:open()
           p { commits = self.buffer.ui:get_commits_in_selection() }
         end),
         [popups.mapping_for("DiffPopup")] = popups.open("diff", function(p)
-          local items = self.buffer.ui:get_commits_in_selection()
+          local items = self.buffer.ui:get_ordered_commits_in_selection()
           p {
             section = { name = "log" },
             item = { name = items },
@@ -329,7 +330,7 @@ function M:redraw()
   logger.debug("[REFS] Beginning redraw")
   self.buffer.ui:render(unpack(ui.RefsView(git.refs.list_parsed(), self.head)))
 
-  vim.api.nvim_exec_autocmds("User", { pattern = "NeogitRefsRefreshed", modeline = false })
+  event.send("RefsRefreshed")
   logger.info("[REFS] Redraw complete")
 end
 

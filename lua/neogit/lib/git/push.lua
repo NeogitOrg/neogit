@@ -5,8 +5,8 @@ local util = require("neogit.lib.util")
 local M = {}
 
 ---Pushes to the remote and handles password questions
----@param remote string
----@param branch string
+---@param remote string?
+---@param branch string?
 ---@param args string[]
 ---@return ProcessResult
 function M.push_interactive(remote, branch, args)
