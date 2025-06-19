@@ -3,8 +3,7 @@
 require "spec_helper"
 
 RSpec.describe "Branch Config Popup", :git, :nvim, :popup do
-  before { nvim.keys("bC<cr>") }
-
+  let(:keymap) { "bC<cr>" }
   let(:view) do
     [
       " Configure branch                                                               ",

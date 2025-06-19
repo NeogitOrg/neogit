@@ -11,7 +11,7 @@ local M = {}
 ---@return boolean, string
 function M.add(ref, path, params)
   local result = git.cli.worktree.add.arg_list(params or {}).args(path, ref).call()
-  if result.code == 0 then
+  if result:success() then
     return true, ""
   else
     return false, result.stderr[#result.stderr]
@@ -24,7 +24,7 @@ end
 ---@return boolean
 function M.move(worktree, destination)
   local result = git.cli.worktree.move.args(worktree, destination).call()
-  return result.code == 0
+  return result:success()
 end
 
 ---Removes a worktree
@@ -33,7 +33,7 @@ end
 ---@return boolean
 function M.remove(worktree, args)
   local result = git.cli.worktree.remove.args(worktree).arg_list(args or {}).call { ignore_error = true }
-  return result.code == 0
+  return result:success()
 end
 
 ---@class Worktree

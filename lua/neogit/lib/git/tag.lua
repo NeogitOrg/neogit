@@ -14,7 +14,7 @@ end
 ---@return boolean Successfully deleted
 function M.delete(tags)
   local result = git.cli.tag.delete.arg_list(tags).call { await = true }
-  return result.code == 0
+  return result:success()
 end
 
 --- Show a list of tags under a selected ref

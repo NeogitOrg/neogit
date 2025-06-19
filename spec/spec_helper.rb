@@ -6,6 +6,8 @@ require "neovim"
 require "debug"
 require "active_support/all"
 require "timeout"
+require "super_diff/rspec"
+require "super_diff/active_support"
 
 ENV["GIT_CONFIG_GLOBAL"] = ""
 
@@ -51,7 +53,11 @@ RSpec.configure do |config|
     end
   end
 
-  # config.around do |example|
-  #   Timeout.timeout(10) { example.call }
-  # end
+  if ENV["CI"].present?
+    config.around do |example|
+      Timeout.timeout(10) do
+        example.run
+      end
+    end
+  end
 end

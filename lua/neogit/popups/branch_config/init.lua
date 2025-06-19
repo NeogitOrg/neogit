@@ -3,9 +3,16 @@ local M = {}
 local popup = require("neogit.lib.popup")
 local git = require("neogit.lib.git")
 local actions = require("neogit.popups.branch_config.actions")
+local notification = require("neogit.lib.notification")
 
-function M.create(branch)
-  branch = branch or git.branch.current()
+---@param env table
+function M.create(env)
+  local branch = env.branch or git.branch.current()
+
+  if not branch then
+    notification.error("Cannot infer branch.")
+    return
+  end
 
   local g_pull_rebase = git.config.get_global("pull.rebase")
   local pull_rebase_entry = git.config.get_local("pull.rebase")

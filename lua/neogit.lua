@@ -186,6 +186,7 @@ end
 ---@return function
 function M.action(popup, action, args)
   local util = require("neogit.lib.util")
+  local git = require("neogit.lib.git")
   local a = require("plenary.async")
 
   args = args or {}
@@ -202,15 +203,20 @@ function M.action(popup, action, args)
       if ok then
         local fn = actions[action]
         if fn then
-          fn {
-            state = { env = {} },
-            get_arguments = function()
-              return args
-            end,
-            get_internal_arguments = function()
-              return internal_args
-            end,
-          }
+          local action = function()
+            fn {
+              close = function() end,
+              state = { env = {} },
+              get_arguments = function()
+                return args
+              end,
+              get_internal_arguments = function()
+                return internal_args
+              end,
+            }
+          end
+
+          git.repo:dispatch_refresh { source = "action", callback = action }
         else
           M.notification.error(
             string.format(
