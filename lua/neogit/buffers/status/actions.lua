@@ -38,15 +38,16 @@ local function cleanup_items(items)
   end
 
   for _, item in ipairs(items) do
-    logger.trace("[cleanup_items()] Cleaning " .. vim.inspect(item.name))
-    assert(item.name, "cleanup_items() - item must have a name")
+    local path = item.absolute_path or item.name
+    logger.debug("[cleanup_items()] Cleaning " .. vim.inspect(path))
+    assert(path, "cleanup_items() - item must have a name")
 
-    local bufnr = fn.bufnr(item.name)
+    local bufnr = fn.bufnr(path)
     if bufnr > 0 then
       api.nvim_buf_delete(bufnr, { force = false })
     end
 
-    fn.delete(fn.fnameescape(item.name))
+    fn.delete(fn.fnameescape(path))
   end
 end
 
