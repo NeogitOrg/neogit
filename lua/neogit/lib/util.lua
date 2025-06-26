@@ -596,6 +596,77 @@ function M.remove_ansi_escape_codes(s)
   return s
 end
 
+--- Organizes a list of items by their file path, compressing elements with single children into groups.
+---@param items table[] A list of items, each having a 'name' field which is a string representing the file path.
+---@return table[] A hierarchical table structure representing the compressed file path groups and files.
+function M.groupByFilePath(items)
+  local root = {}
+  for _, item in ipairs(items) do
+    local parts = {}
+    for part in string.gmatch(item.name, "[^/]+") do
+      table.insert(parts, part)
+    end
+
+    local node = root
+    for i = 1, #parts do
+      local part = parts[i]
+      node.children = node.children or {}
+      node.children[part] = node.children[part] or { name = part, indent_level = i }
+
+      node = node.children[part]
+    end
+    node.is_file = true
+    node.content = item
+  end
+  local function compress(node, path_prefix)
+    local children = node.children
+    if not children then
+      return {
+        name = node.name,
+        type = "file",
+        content = node.content,
+        indent_level = node.indent_level,
+      }
+    end
+
+    local keys = {}
+    for k in pairs(children) do
+      table.insert(keys, k)
+    end
+    table.sort(keys)
+    while #keys == 1 and not children[keys[1]].is_file do
+      local only = keys[1]
+      path_prefix = path_prefix .. "/" .. only
+      node = children[only]
+      children = node.children
+      keys = {}
+      for k in pairs(children or {}) do
+        table.insert(keys, k)
+      end
+      table.sort(keys)
+    end
+
+    local result = {
+      name = path_prefix,
+      type = "group",
+      children = {},
+      indent_level = node.indent_level or 0,
+    }
+
+    for _, key in ipairs(keys) do
+      table.insert(result.children, compress(children[key], key))
+    end
+
+    return result
+  end
+  local result = {}
+  for name, child in pairs(root.children or {}) do
+    table.insert(result, compress(child, name))
+  end
+
+  return result
+end
+
 --- Safely close a window
 ---@param winid integer
 ---@param force boolean

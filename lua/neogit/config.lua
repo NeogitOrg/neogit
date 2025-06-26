@@ -311,6 +311,7 @@ end
 ---@field HEAD_folded? boolean Whether or not this section should be open or closed by default
 ---@field mode_text? { [string]: string } The text to display for each mode
 ---@field show_head_commit_hash? boolean Show the commit hash for HEADs in the status buffer
+---@field tree_view? boolean use a nested directory representation for changes (untracked, unstaged, staged)
 
 ---@class NeogitConfigMappings Consult the config file or documentation for values
 ---@field finder? { [string]: NeogitConfigMappingsFinder } A dictionary that uses finder commands to set multiple keybinds
@@ -427,6 +428,7 @@ function M.get_default_values()
       HEAD_padding = 10,
       HEAD_folded = false,
       mode_padding = 3,
+      tree_view = false,
       mode_text = {
         M = "modified",
         N = "new file",

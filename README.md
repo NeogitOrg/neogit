@@ -162,6 +162,8 @@ neogit.setup {
     HEAD_padding = 10,
     HEAD_folded = false,
     mode_padding = 3,
+    -- group changes by folder
+    tree_view = false,
     mode_text = {
       M = "modified",
       N = "new file",
