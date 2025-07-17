@@ -781,10 +781,6 @@ Ui.text = Component.new(function(value, options, ...)
     error("Too many arguments")
   end
 
-  vim.validate {
-    options = { options, "table", true },
-  }
-
   return {
     tag = "text",
     value = value or "",
