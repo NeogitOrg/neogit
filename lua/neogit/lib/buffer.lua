@@ -457,12 +457,7 @@ end
 function Buffer:add_highlight(line, col_start, col_end, name, namespace)
   local ns_id = self:get_namespace_id(namespace)
   if ns_id then
-    local version = vim.version()
-    if version.major == 0 and version.minor <= 10 then
-      api.nvim_buf_add_highlight(self.handle, ns_id, name, line, col_start, col_end)
-    else
-      vim.hl.range(self.handle, ns_id, name, { line, col_start }, { line, col_end })
-    end
+    api.nvim_buf_add_highlight(self.handle, ns_id, name, line, col_start, col_end)
   end
 end
 
