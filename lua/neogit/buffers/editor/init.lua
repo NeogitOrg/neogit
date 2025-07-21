@@ -69,6 +69,8 @@ function M:open(kind)
     buftype = "",
     kind = kind,
     modifiable = true,
+    disable_line_numbers = config.values.disable_line_numbers,
+    disable_relative_line_numbers = config.values.disable_relative_line_numbers,
     status_column = not config.values.disable_signs and "" or nil,
     readonly = false,
     autocmds = {
