@@ -410,7 +410,8 @@ end
 M.v_diff_popup = function(self)
   return popups.open("diff", function(p)
     local section = self.buffer.ui:get_selection().section
-    local item = self.buffer.ui:get_yankable_under_cursor()
+    local item = self.buffer.ui:get_commits_in_selection()
+    table.insert(item, 1, item[1] .. "~1")
     p { section = { name = section and section.name }, item = { name = item } }
   end)
 end
