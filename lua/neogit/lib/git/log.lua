@@ -440,7 +440,7 @@ function M.message(commit)
 end
 
 function M.full_message(commit)
-  return git.cli.log.max_count(1).format("%B").args(commit).call({ hidden = true }).stdout
+  return git.cli.log.max_count(1).format("%B").args(commit).call({ hidden = true, trim = false }).stdout
 end
 
 ---@class CommitItem
