@@ -5,16 +5,53 @@ local input = require("neogit.lib.input")
 local util = require("neogit.lib.util")
 local status = require("neogit.buffers.status")
 local notification = require("neogit.lib.notification")
+local event = require("neogit.lib.event")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
 ---@param prompt string
+---@param branch string?
 ---@return string|nil
-local function get_path(prompt)
-  return input.get_user_input(prompt, {
+local function get_path(prompt, branch)
+  local path = input.get_user_input(prompt, {
     completion = "dir",
     prepend = vim.fs.normalize(vim.uv.cwd() .. "/..") .. "/",
   })
+
+  if path then
+    if branch and vim.uv.fs_stat(path) then
+      return vim.fs.joinpath(path, branch)
+    else
+      return path
+    end
+  else
+    return nil
+  end
+end
+
+---@param old_cwd string?
+---@param new_cwd string
+---@return table
+local function autocmd_helpers(old_cwd, new_cwd)
+  return {
+    old_cwd = old_cwd,
+    new_cwd = new_cwd,
+    ---@param filename string the file you want to copy
+    ---@param callback function? callback to run if copy was successful
+    copy_if_present = function(filename, callback)
+      assert(old_cwd, "couldn't resolve old cwd")
+
+      local source = vim.fs.joinpath(old_cwd, filename)
+      local destination = vim.fs.joinpath(new_cwd, filename)
+
+      if vim.uv.fs_stat(source) and not vim.uv.fs_stat(destination) then
+        local ok = vim.uv.fs_copyfile(source, destination)
+        if ok and type(callback) == "function" then
+          callback()
+        end
+      end
+    end,
+  }
 end
 
 ---@param prompt string
@@ -30,17 +67,21 @@ function M.checkout_worktree()
     return
   end
 
-  local path = get_path(("Checkout '%s' in new worktree"):format(selected))
+  local path = get_path(("Checkout '%s' in new worktree"):format(selected), selected)
   if not path then
     return
   end
 
   local success, err = git.worktree.add(selected, path)
   if success then
+    local cwd = vim.uv.cwd()
     notification.info("Added worktree")
+
     if status.is_open() then
       status.instance():chdir(path)
     end
+
+    event.send("WorktreeCreate", autocmd_helpers(cwd, path))
   else
     notification.error(err)
   end
@@ -65,10 +106,14 @@ function M.create_worktree()
   if git.branch.create(name, selected) then
     local success, err = git.worktree.add(name, path)
     if success then
+      local cwd = vim.uv.cwd()
       notification.info("Added worktree")
+
       if status.is_open() then
         status.instance():chdir(path)
       end
+
+      event.send("WorktreeCreate", autocmd_helpers(cwd, path))
     else
       notification.error(err)
     end

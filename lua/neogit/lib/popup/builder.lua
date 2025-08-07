@@ -429,6 +429,17 @@ function M:config_if(cond, key, name, options)
   return self
 end
 
+---Inserts a blank slot
+---@return self
+function M:spacer()
+  table.insert(self.state.actions[#self.state.actions], {
+    keys = "",
+    description = "",
+    heading = "",
+  })
+  return self
+end
+
 -- Adds an action to the popup
 ---@param keys string|string[] Key or list of keys for the user to press that runs the action
 ---@param description string Description of action in UI

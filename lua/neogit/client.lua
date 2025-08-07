@@ -144,7 +144,7 @@ function M.wrap(cmd, opts)
   a.util.scheduler()
   logger.debug("[CLIENT] DONE editor command")
 
-  if result.code == 0 then
+  if result:success() then
     if opts.msg.success then
       notification.info(opts.msg.success, { dismiss = true })
     end

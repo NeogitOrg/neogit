@@ -27,6 +27,9 @@ function M.push(popup)
   git.stash.push(popup:get_arguments(), files)
 end
 
+---@param action string
+---@param stash { name: string }
+---@param opts { confirm: boolean }|nil
 local function use(action, stash, opts)
   opts = opts or {}
   local name, get_permission

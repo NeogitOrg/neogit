@@ -1,18 +1,15 @@
 local git = require("neogit.lib.git")
+local event = require("neogit.lib.event")
 
 ---@class NeogitGitBisect
 local M = {}
-
-local function fire_bisect_event(data)
-  vim.api.nvim_exec_autocmds("User", { pattern = "NeogitBisect", modeline = false, data = data })
-end
 
 ---@param cmd string
 local function bisect(cmd)
   local result = git.cli.bisect.args(cmd).call { long = true }
 
-  if result.code == 0 then
-    fire_bisect_event { type = cmd }
+  if result:success() then
+    event.send("Bisect", { type = cmd })
   end
 end
 
@@ -31,8 +28,8 @@ function M.start(bad_revision, good_revision, args)
   local result =
     git.cli.bisect.args("start").arg_list(args).args(bad_revision, good_revision).call { long = true }
 
-  if result.code == 0 then
-    fire_bisect_event { type = "start" }
+  if result:success() then
+    event.send("Bisect", { type = "start" })
   end
 end
 
@@ -80,7 +77,7 @@ M.register = function(meta)
 
         finished = action == "first bad commit"
         if finished then
-          fire_bisect_event { type = "finished", oid = oid }
+          event.send("Bisect", { type = "finished", oid = oid })
         end
 
         ---@type BisectItem

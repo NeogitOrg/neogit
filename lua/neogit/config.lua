@@ -61,7 +61,7 @@ end
 function M.get_reversed_commit_editor_maps_I()
   return get_reversed_maps("commit_editor_I")
 end
----
+
 ---@return table<string, string[]>
 function M.get_reversed_refs_view_maps()
   return get_reversed_maps("refs_view")
@@ -93,6 +93,7 @@ end
 ---| "split_below_all" Like :below split
 ---| "vsplit" Open in a vertical split
 ---| "floating" Open in a floating window
+---| "floating_console" Open in a floating window across the bottom of the screen
 ---| "auto" vsplit if window would have 80 cols, otherwise split
 
 ---@class NeogitCommitBufferConfig Commit buffer options
@@ -185,10 +186,14 @@ end
 ---| "Close"
 ---| "Next"
 ---| "Previous"
+---| "CopySelection"
 ---| "MultiselectToggleNext"
 ---| "MultiselectTogglePrevious"
 ---| "InsertCompletion"
 ---| "NOP"
+---| "ScrollWheelDown"
+---| "ScrollWheelUp"
+---| "MouseClick"
 ---| false
 
 ---@alias NeogitConfigMappingsStatus
@@ -196,6 +201,7 @@ end
 ---| "MoveDown"
 ---| "MoveUp"
 ---| "OpenTree"
+---| "OpenFold"
 ---| "Command"
 ---| "Depth1"
 ---| "Depth2"
@@ -211,6 +217,7 @@ end
 ---| "Untrack"
 ---| "RefreshBuffer"
 ---| "GoToFile"
+---| "PeekFile"
 ---| "VSplitOpen"
 ---| "SplitOpen"
 ---| "TabOpen"
@@ -358,8 +365,6 @@ end
 ---@field reflog_view? NeogitConfigPopup Reflog view options
 ---@field refs_view? NeogitConfigPopup Refs view options
 ---@field merge_editor? NeogitConfigPopup Merge editor options
----@field description_editor? NeogitConfigPopup Merge editor options
----@field tag_editor? NeogitConfigPopup Tag editor options
 ---@field preview_buffer? NeogitConfigPopup Preview options
 ---@field popup? NeogitConfigPopup Set the default way of opening popups
 ---@field signs? NeogitConfigSigns Signs used for toggled regions
@@ -471,12 +476,6 @@ function M.get_default_values()
       kind = "tab",
     },
     merge_editor = {
-      kind = "auto",
-    },
-    description_editor = {
-      kind = "auto",
-    },
-    tag_editor = {
       kind = "auto",
     },
     preview_buffer = {
@@ -598,6 +597,7 @@ function M.get_default_values()
         ["<down>"] = "Next",
         ["<up>"] = "Previous",
         ["<tab>"] = "InsertCompletion",
+        ["<c-y>"] = "CopySelection",
         ["<space>"] = "MultiselectToggleNext",
         ["<s-space>"] = "MultiselectTogglePrevious",
         ["<c-j>"] = "NOP",
@@ -645,6 +645,11 @@ function M.get_default_values()
         ["4"] = "Depth4",
         ["Q"] = "Command",
         ["<tab>"] = "Toggle",
+        ["za"] = "Toggle",
+        ["zo"] = "OpenFold",
+        ["zc"] = "CloseFold",
+        ["zC"] = "Depth1",
+        ["zO"] = "Depth4",
         ["x"] = "Discard",
         ["s"] = "Stage",
         ["S"] = "StageUnstaged",

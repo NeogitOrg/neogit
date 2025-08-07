@@ -1,6 +1,7 @@
 local client = require("neogit.client")
 local git = require("neogit.lib.git")
 local notification = require("neogit.lib.notification")
+local event = require("neogit.lib.event")
 
 ---@class NeogitGitMerge
 local M = {}
@@ -9,18 +10,14 @@ local function merge_command(cmd)
   return cmd.env(client.get_envs_git_editor()).call { pty = true }
 end
 
-local function fire_merge_event(data)
-  vim.api.nvim_exec_autocmds("User", { pattern = "NeogitMerge", modeline = false, data = data })
-end
-
 function M.merge(branch, args)
   local result = merge_command(git.cli.merge.args(branch).arg_list(args))
-  if result.code ~= 0 then
+  if result:failure() then
     notification.error("Merging failed. Resolve conflicts before continuing")
-    fire_merge_event { branch = branch, args = args, status = "conflict" }
+    event.send("Merge", { branch = branch, args = args, status = "conflict" })
   else
     notification.info("Merged '" .. branch .. "' into '" .. git.branch.current() .. "'")
-    fire_merge_event { branch = branch, args = args, status = "ok" }
+    event.send("Merge", { branch = branch, args = args, status = "ok" })
   end
 end
 
@@ -40,12 +37,12 @@ end
 ---@param path string filepath to check for conflict markers
 ---@return boolean
 function M.is_conflicted(path)
-  return git.cli.diff.check.files(path).call().code ~= 0
+  return git.cli.diff.check.files(path).call():failure()
 end
 
 ---@return boolean
 function M.any_conflicted()
-  return git.cli.diff.check.call().code ~= 0
+  return git.cli.diff.check.call():failure()
 end
 
 ---@class MergeItem

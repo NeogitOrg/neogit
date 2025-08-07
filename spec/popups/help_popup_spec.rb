@@ -3,15 +3,19 @@
 require "spec_helper"
 
 RSpec.describe "Help Popup", :git, :nvim, :popup do # rubocop:disable RSpec/EmptyExampleGroup
-  before { nvim.keys("?") }
-
+  let(:keymap) { "?" }
   let(:view) do
     [
       " Commands                            Applying changes       Essential commands  ",
       " $ History          M Remote         <c-s> Stage all        <c-r> Refresh       ",
       " A Cherry Pick      m Merge          K Untrack              <cr> Go to file     ",
+<<<<<<< HEAD
       " b Branch           p Pull           s Stage                <tab> Toggle        ",
       " B Bisect           P Push           S Stage unstaged                           ",
+=======
+      " b Branch           P Push           s Stage                za,<tab> Toggle     ",
+      " B Bisect           p Pull           S Stage unstaged                           ",
+>>>>>>> upstream
       " c Commit           Q Command        u Unstage                                  ",
       " d Diff             r Rebase         U Unstage all                              ",
       " f Fetch            t Tag            x Discard                                  ",

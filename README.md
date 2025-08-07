@@ -1,3 +1,17 @@
+<div align="center" markdown="1">
+   <br>
+   <br>
+   <a href="https://www.warp.dev/neogit">
+      <img alt="Warp sponsorship" width="600" src="https://github.com/user-attachments/assets/c58acc85-7438-46a7-a89a-0f404c269256">
+   </a>
+
+### [Warp, the intelligent terminal for developers](https://www.warp.dev/neogit)
+#### [Try running neogit in Warp](https://www.warp.dev/neogit)<br>
+
+</div>
+
+<hr>
+
 <div align="center">
     <div>
         <div><img src="https://github.com/NeogitOrg/neogit/assets/7228095/7684545f-47b5-40e2-aedd-ccf56e0553f4" width="400px"/></div>
@@ -197,12 +211,6 @@ neogit.setup {
   merge_editor = {
     kind = "auto",
   },
-  description_editor = {
-    kind = "auto",
-  },
-  tag_editor = {
-    kind = "auto",
-  },
   preview_buffer = {
     kind = "floating_console",
   },
@@ -338,6 +346,7 @@ neogit.setup {
       ["<down>"] = "Next",
       ["<up>"] = "Previous",
       ["<tab>"] = "InsertCompletion",
+      ["<c-y>"] = "CopySelection",
       ["<space>"] = "MultiselectToggleNext",
       ["<s-space>"] = "MultiselectTogglePrevious",
       ["<c-j>"] = "NOP",
@@ -382,6 +391,8 @@ neogit.setup {
       ["4"] = "Depth4",
       ["Q"] = "Command",
       ["<tab>"] = "Toggle",
+      ["za"] = "Toggle",
+      ["zo"] = "OpenFold",
       ["x"] = "Discard",
       ["s"] = "Stage",
       ["S"] = "StageUnstaged",
@@ -516,6 +527,12 @@ Neogit follows semantic versioning.
 ## Contributing
 
 See [CONTRIBUTING.md](https://github.com/NeogitOrg/neogit/blob/master/CONTRIBUTING.md) for more details.
+
+## Contributors
+
+<a href="https://github.com/NeogitOrg/Neogit/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=NeogitOrg/Neogit" />
+</a>
 
 ## Special Thanks
 

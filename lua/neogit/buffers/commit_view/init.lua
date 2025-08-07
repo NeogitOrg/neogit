@@ -146,11 +146,14 @@ function M:update(commit_id, filter)
   self.buffer.ui:render(
     unpack(ui.CommitView(self.commit_info, self.commit_overview, self.commit_signature, self.item_filter))
   )
+
+  self.buffer:win_call(vim.cmd, "normal! gg")
 end
 
 ---Opens the CommitViewBuffer
 ---If already open will close the buffer
 ---@param kind? string
+---@return CommitViewBuffer
 function M:open(kind)
   kind = kind or config.values.commit_view.kind
 
@@ -290,7 +293,8 @@ function M:open(kind)
         end),
         [popups.mapping_for("RemotePopup")] = popups.open("remote"),
         [popups.mapping_for("RevertPopup")] = popups.open("revert", function(p)
-          p { commits = { self.commit_info.oid } }
+          local item = self.buffer.ui:get_hunk_or_filename_under_cursor() or {}
+          p { commits = { self.commit_info.oid }, hunk = item.hunk }
         end),
         [popups.mapping_for("ResetPopup")] = popups.open("reset", function(p)
           p { commit = self.commit_info.oid }
@@ -331,6 +335,8 @@ function M:open(kind)
       vim.cmd("normal! zR")
     end,
   }
+
+  return self
 end
 
 return M
