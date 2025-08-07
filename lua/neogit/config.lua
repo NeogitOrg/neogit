@@ -245,6 +245,7 @@ end
 ---| "PushPopup"
 ---| "CommitPopup"
 ---| "LogPopup"
+---| "MarginPopup"
 ---| "RevertPopup"
 ---| "StashPopup"
 ---| "IgnorePopup"
@@ -626,6 +627,7 @@ function M.get_default_values()
         ["c"] = "CommitPopup",
         ["f"] = "FetchPopup",
         ["l"] = "LogPopup",
+        ["L"] = "MarginPopup",
         ["m"] = "MergePopup",
         ["p"] = "PullPopup",
         ["r"] = "RebasePopup",
