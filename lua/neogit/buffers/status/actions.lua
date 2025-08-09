@@ -31,18 +31,23 @@ local function cleanup_dir(dir)
   fn.delete(dir, "rf")
 end
 
-local function cleanup_items(...)
+---@param items StatusItem[]
+local function cleanup_items(items)
   if vim.in_fast_event() then
     a.util.scheduler()
   end
 
-  for _, item in ipairs { ... } do
-    local bufnr = fn.bufnr(item.name)
+  for _, item in ipairs(items) do
+    local path = item.absolute_path or item.name
+    logger.debug("[cleanup_items()] Cleaning " .. vim.inspect(path))
+    assert(path, "cleanup_items() - item must have a name")
+
+    local bufnr = fn.bufnr(path)
     if bufnr > 0 then
       api.nvim_buf_delete(bufnr, { force = false })
     end
 
-    fn.delete(fn.fnameescape(item.name))
+    fn.delete(fn.fnameescape(path))
   end
 end
 
@@ -175,7 +180,7 @@ M.v_discard = function(self)
       end
 
       if #untracked_files > 0 then
-        cleanup_items(unpack(untracked_files))
+        cleanup_items(untracked_files)
       end
 
       if #unstaged_files > 0 then
@@ -185,10 +190,10 @@ M.v_discard = function(self)
       end
 
       if #new_files > 0 then
-        git.index.reset(util.map(unstaged_files, function(item)
+        git.index.reset(util.map(new_files, function(item)
           return item.escaped_path
         end))
-        cleanup_items(unpack(new_files))
+        cleanup_items(new_files)
       end
 
       if #staged_files_modified > 0 then
@@ -504,6 +509,40 @@ M.n_toggle = function(self)
 end
 
 ---@param self StatusBuffer
+M.n_open_fold = function(self)
+  return function()
+    local fold = self.buffer.ui:get_fold_under_cursor()
+    if fold then
+      if fold.options.on_open then
+        fold.options.on_open(fold, self.buffer.ui)
+      else
+        local start, _ = fold:row_range_abs()
+        local ok, _ = pcall(vim.cmd, "normal! zo")
+        if ok then
+          self.buffer:move_cursor(start)
+          fold.options.folded = false
+        end
+      end
+    end
+  end
+end
+
+---@param self StatusBuffer
+M.n_close_fold = function(self)
+  return function()
+    local fold = self.buffer.ui:get_fold_under_cursor()
+    if fold then
+      local start, _ = fold:row_range_abs()
+      local ok, _ = pcall(vim.cmd, "normal! zc")
+      if ok then
+        self.buffer:move_cursor(start)
+        fold.options.folded = true
+      end
+    end
+  end
+end
+
+---@param self StatusBuffer
 M.n_close = function(self)
   return require("neogit.lib.ui.helpers").close_topmost(self)
 end
@@ -689,7 +728,7 @@ M.n_discard = function(self)
         if mode == "all" then
           message = ("Discard %q?"):format(selection.item.name)
           action = function()
-            cleanup_items(selection.item)
+            cleanup_items { selection.item }
           end
         else
           message = ("Recursively discard %q?"):format(selection.item.name)
@@ -721,7 +760,7 @@ M.n_discard = function(self)
           action = function()
             if selection.item.mode == "A" then
               git.index.reset { selection.item.escaped_path }
-              cleanup_items(selection.item)
+              cleanup_items { selection.item }
             else
               git.index.checkout { selection.item.name }
             end
@@ -752,14 +791,14 @@ M.n_discard = function(self)
           action = function()
             if selection.item.mode == "N" then
               git.index.reset { selection.item.escaped_path }
-              cleanup_items(selection.item)
+              cleanup_items { selection.item }
             elseif selection.item.mode == "M" then
               git.index.reset { selection.item.escaped_path }
               git.index.checkout { selection.item.escaped_path }
             elseif selection.item.mode == "R" then
               git.index.reset_HEAD(selection.item.name, selection.item.original_name)
               git.index.checkout { selection.item.original_name }
-              cleanup_items(selection.item)
+              cleanup_items { selection.item }
             elseif selection.item.mode == "D" then
               git.index.reset_HEAD(selection.item.escaped_path)
               git.index.checkout { selection.item.escaped_path }
@@ -812,7 +851,7 @@ M.n_discard = function(self)
       if section == "untracked" then
         message = ("Discard %s files?"):format(#selection.section.items)
         action = function()
-          cleanup_items(unpack(selection.section.items))
+          cleanup_items(selection.section.items)
         end
         refresh = { update_diffs = { "untracked:*" } }
       elseif section == "unstaged" then
@@ -845,7 +884,7 @@ M.n_discard = function(self)
 
           for _, item in ipairs(selection.section.items) do
             if item.mode == "N" or item.mode == "A" then
-              table.insert(new_files, item.escaped_path)
+              table.insert(new_files, item)
             elseif item.mode == "M" then
               table.insert(staged_files_modified, item.escaped_path)
             elseif item.mode == "R" then
@@ -858,9 +897,10 @@ M.n_discard = function(self)
           end
 
           if #new_files > 0 then
-            -- ensure the file is deleted
-            git.index.reset(new_files)
-            cleanup_items(unpack(new_files))
+            git.index.reset(util.map(new_files, function(item)
+              return item.escaped_path
+            end))
+            cleanup_items(new_files)
           end
 
           if #staged_files_modified > 0 then
@@ -1089,6 +1129,9 @@ M.n_stage = function(self)
           end
           return
         end
+      elseif selection.item and section.options.section == "untracked" then
+        git.index.add { selection.item.name }
+        self:dispatch_refresh({ update_diffs = { "*:" .. selection.item.name } }, "n_stage")
       elseif stagable.hunk then
         local item = self.buffer.ui:get_item_under_cursor()
         assert(item, "Item cannot be nil")
@@ -1096,14 +1139,9 @@ M.n_stage = function(self)
         local patch = git.index.generate_patch(stagable.hunk)
         git.index.apply(patch, { cached = true })
         self:dispatch_refresh({ update_diffs = { "*:" .. item.name } }, "n_stage")
-      elseif stagable.filename then
-        if section.options.section == "unstaged" then
-          git.status.stage { stagable.filename }
-          self:dispatch_refresh({ update_diffs = { "*:" .. stagable.filename } }, "n_stage")
-        elseif section.options.section == "untracked" then
-          git.index.add { stagable.filename }
-          self:dispatch_refresh({ update_diffs = { "*:" .. stagable.filename } }, "n_stage")
-        end
+      elseif stagable.filename and section.options.section == "unstaged" then
+        git.status.stage { stagable.filename }
+        self:dispatch_refresh({ update_diffs = { "*:" .. stagable.filename } }, "n_stage")
       end
     elseif section then
       if section.options.section == "untracked" then
@@ -1157,6 +1195,7 @@ end
 M.n_unstage = function(self)
   return a.void(function()
     local unstagable = self.buffer.ui:get_hunk_or_filename_under_cursor()
+    local selection = self.buffer.ui:get_selection()
 
     local section = self.buffer.ui:get_current_section()
     if section and section.options.section ~= "staged" then
@@ -1164,7 +1203,10 @@ M.n_unstage = function(self)
     end
 
     if unstagable then
-      if unstagable.hunk then
+      if selection.item and selection.item.mode == "N" then
+        git.status.unstage { selection.item.name }
+        self:dispatch_refresh({ update_diffs = { "*:" .. selection.item.name } }, "n_unstage")
+      elseif unstagable.hunk then
         local item = self.buffer.ui:get_item_under_cursor()
         assert(item, "Item cannot be nil")
         local patch = git.index.generate_patch(

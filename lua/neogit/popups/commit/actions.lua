@@ -37,6 +37,7 @@ local function do_commit(popup, cmd)
     autocmd = "NeogitCommitComplete",
     msg = {
       success = "Committed",
+      fail = "Commit failed",
     },
     interactive = true,
     show_diff = config.values.commit_editor.show_staged_diff,

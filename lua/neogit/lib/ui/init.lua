@@ -5,7 +5,7 @@ local Collection = require("neogit.lib.collection")
 local logger = require("neogit.logger") -- TODO: Add logging
 
 ---@class Section
----@field items  StatusItem[]
+---@field items StatusItem[]
 ---@field name string
 ---@field first number
 
@@ -16,8 +16,8 @@ local logger = require("neogit.logger") -- TODO: Add logging
 ---@field section Section|nil
 ---@field item StatusItem|nil
 ---@field commit CommitLogEntry|nil
----@field commits  CommitLogEntry[]
----@field items  StatusItem[]
+---@field commits CommitLogEntry[]
+---@field items StatusItem[]
 local Selection = {}
 Selection.__index = Selection
 
@@ -221,6 +221,7 @@ function Ui:item_hunks(item, first_line, last_line, partial)
   return hunks
 end
 
+---@return Selection
 function Ui:get_selection()
   local visual_pos = vim.fn.line("v")
   local cursor_pos = vim.fn.line(".")
@@ -283,6 +284,7 @@ function Ui:get_selection()
   return setmetatable(res, Selection)
 end
 
+--- returns commits in selection in a constant order
 ---@return string[]
 function Ui:get_commits_in_selection()
   local range = { vim.fn.getpos("v")[2], vim.fn.getpos(".")[2] }
@@ -297,6 +299,33 @@ function Ui:get_commits_in_selection()
 
     if component then
       table.insert(commits, 1, component.options.oid)
+    end
+  end
+
+  return util.deduplicate(commits)
+end
+
+--- returns commits in selection ordered according to the direction of the selection the user has made
+---@return string[]
+function Ui:get_ordered_commits_in_selection()
+  local start = vim.fn.getpos("v")[2]
+  local stop = vim.fn.getpos(".")[2]
+
+  local increment
+  if start <= stop then
+    increment = 1
+  else
+    increment = -1
+  end
+
+  local commits = {}
+  for i = start, stop, increment do
+    local component = self:_find_component_by_index(i, function(node)
+      return node.options.oid ~= nil
+    end)
+
+    if component then
+      table.insert(commits, component.options.oid)
     end
   end
 
@@ -342,6 +371,7 @@ function Ui:get_ref_under_cursor()
 
   return component and component.options.ref
 end
+
 ---
 ---@return ParsedRef[]
 function Ui:get_refs_under_cursor()
@@ -750,10 +780,6 @@ Ui.text = Component.new(function(value, options, ...)
   if ... then
     error("Too many arguments")
   end
-
-  vim.validate {
-    options = { options, "table", true },
-  }
 
   return {
     tag = "text",

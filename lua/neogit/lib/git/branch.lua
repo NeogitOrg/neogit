@@ -90,8 +90,9 @@ end
 
 ---@param name string
 ---@param args? string[]
+---@return ProcessResult
 function M.track(name, args)
-  git.cli.checkout.track(name).arg_list(args or {}).call { await = true }
+  return git.cli.checkout.track(name).arg_list(args or {}).call { await = true }
 end
 
 ---@param include_current? boolean
@@ -143,17 +144,17 @@ function M.exists(branch)
     .args(string.format("refs/heads/%s", branch))
     .call { hidden = true, ignore_error = true }
 
-  return result.code == 0
+  return result:success()
 end
 
 ---Determine if a branch name ("origin/master", "fix/bug-1000", etc)
 ---is a remote branch or a local branch
 ---@param ref string
----@return nil|string remote
+---@return string remote
 ---@return string branch
 function M.parse_remote_branch(ref)
   if M.exists(ref) then
-    return nil, ref
+    return ".", ref
   end
 
   return ref:match("^([^/]*)/(.*)$")
@@ -163,7 +164,7 @@ end
 ---@param base_branch? string
 ---@return boolean
 function M.create(name, base_branch)
-  return git.cli.branch.args(name, base_branch).call({ await = true }).code == 0
+  return git.cli.branch.args(name, base_branch).call({ await = true }):success()
 end
 
 ---@param name string
@@ -181,7 +182,7 @@ function M.delete(name)
     result = git.cli.branch.delete.name(name).call { await = true }
   end
 
-  return result and result.code == 0 or false
+  return result and result:success() or false
 end
 
 ---Returns current branch name, or nil if detached HEAD
@@ -232,6 +233,40 @@ function M.pushRemote_ref(branch)
   end
 end
 
+---@return string|nil
+function M.pushDefault()
+  local pushDefault = git.config.get("remote.pushDefault")
+  if pushDefault:is_set() then
+    return pushDefault:read() ---@type string
+  end
+end
+
+---@param branch? string
+---@return string|nil
+function M.pushDefault_ref(branch)
+  branch = branch or M.current()
+  local pushDefault = M.pushDefault()
+
+  if branch and pushDefault then
+    return string.format("%s/%s", pushDefault, branch)
+  end
+end
+
+---@return string
+function M.pushRemote_or_pushDefault_label()
+  local ref = M.pushRemote_ref()
+  if ref then
+    return ref
+  end
+
+  local pushDefault = M.pushDefault()
+  if pushDefault then
+    return ("%s, creating it"):format(M.pushDefault_ref())
+  end
+
+  return "pushRemote, setting that"
+end
+
 ---@return string
 function M.pushRemote_label()
   return M.pushRemote_ref() or "pushRemote, setting that"
@@ -279,7 +314,7 @@ function M.upstream(name)
     local result =
       git.cli["rev-parse"].symbolic_full_name.abbrev_ref(name .. "@{upstream}").call { ignore_error = true }
 
-    if result.code == 0 then
+    if result:success() then
       return result.stdout[1]
     end
   else

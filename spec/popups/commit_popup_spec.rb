@@ -3,8 +3,7 @@
 require "spec_helper"
 
 RSpec.describe "Commit Popup", :git, :nvim, :popup do
-  before { nvim.keys("c") }
-
+  let(:keymap) { "c" }
   let(:view) do
     [
       " Arguments                                                                      ",

@@ -7,14 +7,14 @@ local M = {}
 ---@return boolean
 function M.mixed(target)
   local result = git.cli.reset.mixed.args(target).call()
-  return result.code == 0
+  return result:success()
 end
 
 ---@param target string
 ---@return boolean
 function M.soft(target)
   local result = git.cli.reset.soft.args(target).call()
-  return result.code == 0
+  return result:success()
 end
 
 ---@param target string
@@ -23,21 +23,21 @@ function M.hard(target)
   git.index.create_backup()
 
   local result = git.cli.reset.hard.args(target).call()
-  return result.code == 0
+  return result:success()
 end
 
 ---@param target string
 ---@return boolean
 function M.keep(target)
   local result = git.cli.reset.keep.args(target).call()
-  return result.code == 0
+  return result:success()
 end
 
 ---@param target string
 ---@return boolean
 function M.index(target)
   local result = git.cli.reset.args(target).files(".").call()
-  return result.code == 0
+  return result:success()
 end
 
 ---@param target string revision to reset to
@@ -46,7 +46,7 @@ function M.worktree(target)
   local success = false
   git.index.with_temp_index(target, function(index)
     local result = git.cli["checkout-index"].all.force.env({ GIT_INDEX_FILE = index }).call()
-    success = result.code == 0
+    success = result:success()
   end)
 
   return success
@@ -57,7 +57,11 @@ end
 ---@return boolean
 function M.file(target, files)
   local result = git.cli.checkout.rev(target).files(unpack(files)).call()
-  return result.code == 0
+  if result:failure() then
+    result = git.cli.reset.args(target).files(unpack(files)).call()
+  end
+
+  return result:success()
 end
 
 return M

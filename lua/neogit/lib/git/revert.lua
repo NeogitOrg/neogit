@@ -9,7 +9,7 @@ local M = {}
 ---@return boolean, string|nil
 function M.commits(commits, args)
   local result = git.cli.revert.no_commit.arg_list(util.merge(args, commits)).call { pty = true }
-  if result.code == 0 then
+  if result:success() then
     return true, ""
   else
     return false, result.stdout[1]

@@ -158,9 +158,12 @@ end
 -- Capture state of index as reflog entry
 function M.create_backup()
   git.cli.add.update.call { hidden = true, await = true }
-  git.cli.commit.message("Hard reset backup").call { hidden = true, await = true, pty = true }
-  git.cli["update-ref"].args("refs/backups/" .. timestamp(), "HEAD").call { hidden = true, await = true }
-  git.cli.reset.hard.args("HEAD~1").call { hidden = true, await = true }
+  local result =
+    git.cli.commit.allow_empty.message("Hard reset backup").call { hidden = true, await = true, pty = true }
+  if result:success() then
+    git.cli["update-ref"].args("refs/backups/" .. timestamp(), "HEAD").call { hidden = true, await = true }
+    git.cli.reset.hard.args("HEAD~1").call { hidden = true, await = true }
+  end
 end
 
 return M

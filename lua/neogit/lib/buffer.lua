@@ -226,6 +226,9 @@ function Buffer:close(force)
 
   if self.kind == "tab" then
     local ok, _ = pcall(vim.cmd, "tabclose")
+    if not ok and #api.nvim_list_tabpages() == 1 then
+      ok, _ = pcall(vim.cmd, "bd! " .. self.handle)
+    end
     if not ok then
       vim.cmd("tab sb " .. self.handle)
       vim.cmd("tabclose #")
@@ -538,10 +541,12 @@ function Buffer:call(f, ...)
 end
 
 function Buffer:win_call(f, ...)
-  local args = { ... }
-  api.nvim_win_call(self.win_handle, function()
-    f(unpack(args))
-  end)
+  if self.win_handle and api.nvim_win_is_valid(self.win_handle) then
+    local args = { ... }
+    api.nvim_win_call(self.win_handle, function()
+      f(unpack(args))
+    end)
+  end
 end
 
 function Buffer:chan_send(data)

@@ -61,7 +61,7 @@ end
 function M.get_reversed_commit_editor_maps_I()
   return get_reversed_maps("commit_editor_I")
 end
----
+
 ---@return table<string, string[]>
 function M.get_reversed_refs_view_maps()
   return get_reversed_maps("refs_view")
@@ -93,6 +93,7 @@ end
 ---| "split_below_all" Like :below split
 ---| "vsplit" Open in a vertical split
 ---| "floating" Open in a floating window
+---| "floating_console" Open in a floating window across the bottom of the screen
 ---| "auto" vsplit if window would have 80 cols, otherwise split
 
 ---@class NeogitCommitBufferConfig Commit buffer options
@@ -190,6 +191,9 @@ end
 ---| "MultiselectTogglePrevious"
 ---| "InsertCompletion"
 ---| "NOP"
+---| "ScrollWheelDown"
+---| "ScrollWheelUp"
+---| "MouseClick"
 ---| false
 
 ---@alias NeogitConfigMappingsStatus
@@ -197,6 +201,7 @@ end
 ---| "MoveDown"
 ---| "MoveUp"
 ---| "OpenTree"
+---| "OpenFold"
 ---| "Command"
 ---| "Depth1"
 ---| "Depth2"
@@ -212,6 +217,7 @@ end
 ---| "Untrack"
 ---| "RefreshBuffer"
 ---| "GoToFile"
+---| "PeekFile"
 ---| "VSplitOpen"
 ---| "SplitOpen"
 ---| "TabOpen"
@@ -638,6 +644,11 @@ function M.get_default_values()
         ["4"] = "Depth4",
         ["Q"] = "Command",
         ["<tab>"] = "Toggle",
+        ["za"] = "Toggle",
+        ["zo"] = "OpenFold",
+        ["zc"] = "CloseFold",
+        ["zC"] = "Depth1",
+        ["zO"] = "Depth4",
         ["x"] = "Discard",
         ["s"] = "Stage",
         ["S"] = "StageUnstaged",

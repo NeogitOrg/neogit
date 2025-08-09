@@ -146,11 +146,14 @@ function M:update(commit_id, filter)
   self.buffer.ui:render(
     unpack(ui.CommitView(self.commit_info, self.commit_overview, self.commit_signature, self.item_filter))
   )
+
+  self.buffer:win_call(vim.cmd, "normal! gg")
 end
 
 ---Opens the CommitViewBuffer
 ---If already open will close the buffer
 ---@param kind? string
+---@return CommitViewBuffer
 function M:open(kind)
   kind = kind or config.values.commit_view.kind
 
@@ -332,6 +335,8 @@ function M:open(kind)
       vim.cmd("normal! zR")
     end,
   }
+
+  return self
 end
 
 return M

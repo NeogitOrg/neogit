@@ -765,21 +765,21 @@ NeogitCommitViewHeader      Applied to header of Commit View
 LOG VIEW BUFFER
 NeogitGraphAuthor           Applied to the commit's author in graph view
 NeogitGraphBlack            Used when --colors is enabled for graph
-NeogitGraphBlackBold
+NeogitGraphBoldBlack
 NeogitGraphRed
-NeogitGraphRedBold
+NeogitGraphBoldRed
 NeogitGraphGreen
-NeogitGraphGreenBold
+NeogitGraphBoldGreen
 NeogitGraphYellow
-NeogitGraphYellowBold
+NeogitGraphBoldYellow
 NeogitGraphBlue
-NeogitGraphBlueBold
+NeogitGraphBoldBlue
 NeogitGraphPurple
-NeogitGraphPurpleBold
+NeogitGraphBoldPurple
 NeogitGraphCyan
-NeogitGraphCyanBold
+NeogitGraphBoldCyan
 NeogitGraphWhite
-NeogitGraphWhiteBold
+NeogitGraphBoldWhite
 NeogitGraphGray
 NeogitGraphBoldGray
 NeogitGraphOrange
@@ -1924,6 +1924,13 @@ Actions:                                            *neogit_reset_popup_actions*
   • Worktree                                             *neogit_reset_worktree*
     Resets current worktree to specified commit.
 
+  • Branch                                                 *neogit_reset_branch*
+    see: |neogit_branch_reset|
+
+  • File                                                     *neogit_reset_file*
+    Attempts to perform a `git checkout` from the specified revision, and if
+    that fails, tries `git reset` instead.
+
 ==============================================================================
 Stash Popup                                                 *neogit_stash_popup*
 
@@ -2080,6 +2087,8 @@ Untracked Files                                 *neogit_status_buffer_untracked*
 ==============================================================================
 Editor Buffer                                             *neogit_editor_buffer*
 
+User customizations can be made via `gitcommit` ftplugin.
+
 Commands:                                               *neogit_editor_commands*
   • Submit                                                *neogit_editor_submit*
     Default key: `<c-c><c-c>`
@@ -2136,6 +2145,8 @@ Refs Buffer                                                 *neogit_refs_buffer*
 
 ==============================================================================
 Rebase Todo Buffer                                   *neogit_rebase_todo_buffer*
+
+User customizations can be made via `gitrebase` ftplugin.
 
 The Rebase editor has some extra commands, beyond being a normal vim buffer.
 

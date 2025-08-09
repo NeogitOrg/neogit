@@ -180,42 +180,26 @@ end
 ---@param value? string
 ---@return nil
 function M:set_option(option, value)
-  -- Prompt user to select from predetermined choices
-  if value then
+  if option.value and option.value ~= "" then -- Toggle option off when it's currently set
+    option.value = ""
+  elseif value then
     option.value = value
   elseif option.choices then
-    if not option.value or option.value == "" then
-      local eventignore = vim.o.eventignore
-      vim.o.eventignore = "WinLeave"
-      local choice = FuzzyFinderBuffer.new(option.choices):open_async {
-        prompt_prefix = option.description,
-      }
-      vim.o.eventignore = eventignore
-
-      if choice then
-        option.value = choice
-      else
-        option.value = ""
-      end
-    else
-      option.value = ""
-    end
+    local eventignore = vim.o.eventignore
+    vim.o.eventignore = "WinLeave"
+    option.value = FuzzyFinderBuffer.new(option.choices):open_async {
+      prompt_prefix = option.description,
+      refocus_status = false,
+    }
+    vim.o.eventignore = eventignore
   elseif option.fn then
     option.value = option.fn(self, option)
   else
-    local input = input.get_user_input(option.cli, {
+    option.value = input.get_user_input(option.cli, {
       separator = "=",
       default = option.value,
       cancel = option.value,
     })
-
-    -- If the option specifies a default value, and the user set the value to be empty, defer to default value.
-    -- This is handy to prevent the user from accidentally loading thousands of log entries by accident.
-    if option.default and input == "" then
-      option.value = tostring(option.default)
-    else
-      option.value = input
-    end
   end
 
   state.set({ self.state.name, option.cli }, option.value)
@@ -402,7 +386,6 @@ end
 
 function M:refresh()
   if self.buffer then
-    self.buffer:focus()
     self.buffer.ui:render(unpack(ui.Popup(self.state)))
   end
 end

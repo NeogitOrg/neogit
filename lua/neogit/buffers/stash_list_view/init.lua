@@ -97,7 +97,7 @@ function M:open()
         [popups.mapping_for("DiffPopup")] = popups.open("diff", function(p)
           local items = self.buffer.ui:get_commits_in_selection()
           p {
-            section = { name = "log" },
+            section = { name = "stashes" },
             item = { name = items },
           }
         end),
@@ -166,7 +166,7 @@ function M:open()
         [popups.mapping_for("DiffPopup")] = popups.open("diff", function(p)
           local item = self.buffer.ui:get_commit_under_cursor()
           p {
-            section = { name = "log" },
+            section = { name = "stashes" },
             item = { name = item },
           }
         end),

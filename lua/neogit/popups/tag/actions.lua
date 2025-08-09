@@ -6,10 +6,7 @@ local utils = require("neogit.lib.util")
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 local input = require("neogit.lib.input")
 local notification = require("neogit.lib.notification")
-
-local function fire_tag_event(pattern, data)
-  vim.api.nvim_exec_autocmds("User", { pattern = pattern, modeline = false, data = data })
-end
+local event = require("neogit.lib.event")
 
 ---@param popup PopupData
 function M.create_tag(popup)
@@ -40,10 +37,11 @@ function M.create_tag(popup)
       },
     })
   if code == 0 then
-    fire_tag_event("NeogitTagCreate", { name = tag_input, ref = selected })
+    event.send("TagCreate", { name = tag_input, ref = selected })
   end
 end
 
+--TODO:
 --- Create a release tag for `HEAD'.
 ---@param _ table
 function M.create_release(_) end
@@ -62,7 +60,7 @@ function M.delete(_)
   if git.tag.delete(tags) then
     notification.info("Deleted tags: " .. table.concat(tags, ","))
     for _, tag in pairs(tags) do
-      fire_tag_event("NeogitTagDelete", { name = tag })
+      event.send("TagDelete", { name = tag })
     end
   end
 end

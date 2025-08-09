@@ -6,8 +6,7 @@ local git = require("neogit.lib.git")
 local Watcher = require("neogit.watcher")
 local a = require("plenary.async")
 local logger = require("neogit.logger") -- TODO: Add logging
-
-local api = vim.api
+local event = require("neogit.lib.event")
 
 ---@class Semaphore
 ---@field permits number
@@ -147,6 +146,8 @@ function M:open(kind)
         [mappings["Untrack"]]                   = self:_action("n_untrack"),
         [mappings["Rename"]]                    = self:_action("n_rename"),
         [mappings["Toggle"]]                    = self:_action("n_toggle"),
+        [mappings["OpenFold"]]                  = self:_action("n_open_fold"),
+        [mappings["CloseFold"]]                 = self:_action("n_close_fold"),
         [mappings["Close"]]                     = self:_action("n_close"),
         [mappings["OpenOrScrollDown"]]          = self:_action("n_open_or_scroll_down"),
         [mappings["OpenOrScrollUp"]]            = self:_action("n_open_or_scroll_up"),
@@ -218,6 +219,9 @@ function M:open(kind)
       ["NeogitReset"] = self:deferred_refresh("reset"),
       ["NeogitBranchReset"] = self:deferred_refresh("reset_branch"),
     },
+    autocmds = {
+      ["FocusGained"] = self:deferred_refresh("focused", 10),
+    },
   }
 
   return self
@@ -273,7 +277,7 @@ function M:refresh(partial, reason)
     partial = partial,
     callback = function()
       self:redraw(cursor, view)
-      api.nvim_exec_autocmds("User", { pattern = "NeogitStatusRefreshed", modeline = false })
+      event.send("StatusRefreshed")
       logger.info("[STATUS] Refresh complete")
     end,
   }
@@ -290,18 +294,18 @@ function M:redraw(cursor, view)
   logger.debug("[STATUS] Rendering UI")
   self.buffer.ui:render(unpack(ui.Status(git.repo.state, self.config)))
 
-  if self.fold_state then
+  if self.fold_state and self.buffer then
     logger.debug("[STATUS] Restoring fold state")
     self.buffer.ui:set_fold_state(self.fold_state)
     self.fold_state = nil
   end
 
-  if self.cursor_state and self.view_state then
+  if self.cursor_state and self.view_state and self.buffer then
     logger.debug("[STATUS] Restoring cursor and view state")
     self.buffer:restore_view(self.view_state, self.cursor_state)
     self.view_state = nil
     self.cursor_state = nil
-  elseif cursor and view then
+  elseif cursor and view and self.buffer then
     self.buffer:restore_view(view, self.buffer.ui:resolve_cursor_location(cursor))
   end
 end

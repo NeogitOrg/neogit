@@ -5,6 +5,7 @@ local input = require("neogit.lib.input")
 local util = require("neogit.lib.util")
 local status = require("neogit.buffers.status")
 local notification = require("neogit.lib.notification")
+local event = require("neogit.lib.event")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
@@ -53,12 +54,6 @@ local function autocmd_helpers(old_cwd, new_cwd)
   }
 end
 
----@param pattern string
----@param data table
-local function fire_worktree_event(pattern, data)
-  vim.api.nvim_exec_autocmds("User", { pattern = pattern, modeline = false, data = data })
-end
-
 ---@param prompt string
 ---@return string|nil
 local function get_ref(prompt)
@@ -86,7 +81,7 @@ function M.checkout_worktree()
       status.instance():chdir(path)
     end
 
-    fire_worktree_event("NeogitWorktreeCreate", autocmd_helpers(cwd, path))
+    event.send("WorktreeCreate", autocmd_helpers(cwd, path))
   else
     notification.error(err)
   end
@@ -118,7 +113,7 @@ function M.create_worktree()
         status.instance():chdir(path)
       end
 
-      fire_worktree_event("NeogitWorktreeCreate", autocmd_helpers(cwd, path))
+      event.send("WorktreeCreate", autocmd_helpers(cwd, path))
     else
       notification.error(err)
     end
