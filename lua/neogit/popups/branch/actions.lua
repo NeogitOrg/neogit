@@ -313,15 +313,16 @@ function M.delete_branch(popup)
   end
 
   local remote, branch_name = git.branch.parse_remote_branch(selected_branch)
+  local is_remote = remote and remote ~= "."
   local success = false
 
   if
-    remote
+    is_remote
     and branch_name
     and input.get_permission(("Delete remote branch '%s/%s'?"):format(remote, branch_name))
   then
     success = git.cli.push.remote(remote).delete.to(branch_name).call():success()
-  elseif not remote and branch_name == git.branch.current() then
+  elseif not is_remote and branch_name == git.branch.current() then
     local choices = {
       "&detach HEAD and delete",
       "&abort",
@@ -350,12 +351,12 @@ function M.delete_branch(popup)
     if not success then -- Reset HEAD if unsuccessful
       git.cli.checkout.branch(branch_name).call()
     end
-  elseif not remote and branch_name then
+  elseif not is_remote and branch_name then
     success = git.branch.delete(branch_name)
   end
 
   if success then
-    if remote then
+    if is_remote then
       notification.info(string.format("Deleted remote branch '%s/%s'", remote, branch_name))
     else
       notification.info(string.format("Deleted branch '%s'", branch_name))
