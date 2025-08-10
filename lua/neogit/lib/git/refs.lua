@@ -75,7 +75,7 @@ local RECORD_TEMPLATE = record.encode({
 local insert = table.insert
 local format = string.format
 local match = string.match
-local substring = string.sub
+local split = vim.split
 
 local LOCAL_BRANCH = "local_branch"
 local REMOTE_BRANCH = "remote_branch"
@@ -84,9 +84,9 @@ local TAG_TEMPLATE = "tags/%s"
 local BRANCH_TEMPLATE = "%s/%s"
 local REMOTE_BRANCH_PATTERN = "^refs/remotes/([^/]*)/(.*)$"
 local HEAD = "*"
-local head = "h"
-local remote = "r"
-local tag = "t"
+local head = "heads"
+local remote = "remotes"
+local tag = "tags"
 
 function M.list_parsed()
   local result = record.decode(refs(RECORD_TEMPLATE))
@@ -100,7 +100,7 @@ function M.list_parsed()
   for _, ref in ipairs(result) do
     ref.head = ref.head == HEAD
 
-    local ref_type = substring(ref.ref, 6, 6)
+    local ref_type = split(ref.ref, "/")[2]
     if ref_type == head then
       ref.type = LOCAL_BRANCH
       ref.unambiguous_name = ref.name
