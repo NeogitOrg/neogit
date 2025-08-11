@@ -21,6 +21,12 @@ local function present(commands)
     end
 
     if type(keymap) == "table" and next(keymap) then
+      -- HACK: Remove "za" as listed keymap for toggle action.
+      table.sort(keymap)
+      if name == "Toggle" and keymap[2] == "za" then
+        table.remove(keymap, 2)
+      end
+
       return { { name = name, keys = keymap, cmp = table.concat(keymap):lower(), fn = fn } }
     else
       return { { name = name, keys = {}, cmp = "", fn = fn } }
