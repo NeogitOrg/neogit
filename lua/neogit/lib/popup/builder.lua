@@ -466,7 +466,7 @@ function M:action(keys, description, callback, opts)
     keys = keys,
     description = description,
     callback = callback,
-    persist_popup = opts.persist_popup or false
+    persist_popup = opts.persist_popup or false,
   })
 
   return self
