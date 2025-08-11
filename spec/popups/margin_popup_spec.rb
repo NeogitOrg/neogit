@@ -3,8 +3,7 @@
 require "spec_helper"
 
 RSpec.describe "Margin Popup", :git, :nvim, :popup do # rubocop:disable RSpec/EmptyExampleGroup
-  before { nvim.keys("L") }
-
+  let(:keymap) { "L" }
   let(:view) do
     [
       " Arguments                                                                      ",
