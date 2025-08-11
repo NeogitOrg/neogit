@@ -1425,6 +1425,7 @@ M.n_help_popup = function(self)
       bisect = { commits = commits },
       reset = { commit = commit },
       tag = { commit = commit },
+      margin = { buffer = self },
       stash = { name = stash and stash:match("^stash@{%d+}") },
       diff = {
         section = { name = section_name },
