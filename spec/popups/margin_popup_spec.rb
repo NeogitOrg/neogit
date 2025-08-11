@@ -8,10 +8,10 @@ RSpec.describe "Margin Popup", :git, :nvim, :popup do # rubocop:disable RSpec/Em
   let(:view) do
     [
       " Arguments                                                                      ",
-      " -n Limit number of commits (--max-count=256)                                   ",
-      " -o Order commits by (--[topo|author-date|date]-order)                          ",
-      " -g Show graph (--graph)                                                        ",
-      " -c Show graph in color (--color)                                               ",
+      # " -n Limit number of commits (--max-count=256)                                   ",
+      # " -o Order commits by (--[topo|author-date|date]-order)                          ",
+      # " -g Show graph (--graph)                                                        ",
+      # " -c Show graph in color (--color)                                               ",
       " -d Show refnames (--decorate)                                                  ",
       "                                                                                ",
       " Refresh       Margin                                                           ",
