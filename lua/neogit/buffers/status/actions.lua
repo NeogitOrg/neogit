@@ -454,6 +454,13 @@ M.v_log_popup = function(_self)
   return popups.open("log")
 end
 
+---@param self StatusBuffer
+M.v_margin_popup = function(self)
+  return popups.open("margin", function(p)
+    p { buffer = self }
+  end)
+end
+
 ---@param _self StatusBuffer
 M.v_worktree_popup = function(_self)
   return popups.open("worktree")
@@ -1418,6 +1425,7 @@ M.n_help_popup = function(self)
       bisect = { commits = commits },
       reset = { commit = commit },
       tag = { commit = commit },
+      margin = { buffer = self },
       stash = { name = stash and stash:match("^stash@{%d+}") },
       diff = {
         section = { name = section_name },
@@ -1454,6 +1462,13 @@ end
 ---@param _self StatusBuffer
 M.n_log_popup = function(_self)
   return popups.open("log")
+end
+
+---@param self StatusBuffer
+M.n_margin_popup = function(self)
+  return popups.open("margin", function(p)
+    p { buffer = self }
+  end)
 end
 
 ---@param _self StatusBuffer
