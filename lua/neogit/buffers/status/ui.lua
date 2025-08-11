@@ -325,7 +325,7 @@ local SectionItemCommit = Component.new(function(item)
   local ref = {}
   local ref_last = {}
 
-  if item.commit.ref_name ~= "" then
+  if item.commit.ref_name ~= "" and state.get({ "NeogitMarginPopup", "decorate" }, true) then
     -- Render local only branches first
     for name, _ in pairs(item.decoration.locals) do
       if name:match("^refs/") then

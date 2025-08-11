@@ -33,7 +33,12 @@ function M.create(env)
     --   "Show graph in color",
     --   { internal = true, incompatible = { "reverse" } }
     -- )
-    :switch("d", "decorate", "Show refnames", { enabled = true, internal = true })
+    :switch(
+      "d",
+      "decorate",
+      "Show refnames",
+      { enabled = true, internal = true }
+    )
     :group_heading("Refresh")
     :action_if(env.buffer, "g", "buffer", actions.refresh_buffer(env.buffer), { persist_popup = true })
     :new_action_group("Margin")
