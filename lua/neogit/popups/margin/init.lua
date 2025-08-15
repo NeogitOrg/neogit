@@ -11,15 +11,20 @@ function M.create(env)
     .builder()
     :name("NeogitMarginPopup")
     -- :option("n", "max-count", "256", "Limit number of commits", { default = "256", key_prefix = "-" })
-    -- :switch("o", "topo", "Order commits by", {
-    --   cli_suffix = "-order",
-    --   options = {
-    --     { display = "", value = "" },
-    --     { display = "topo", value = "topo" },
-    --     { display = "author-date", value = "author-date" },
-    --     { display = "date", value = "date" },
-    --   },
-    -- })
+    :switch(
+      "o",
+      "topo",
+      "Order commits by",
+      {
+        cli_suffix = "-order",
+        options = {
+          { display = "", value = "" },
+          { display = "topo", value = "topo" },
+          { display = "author-date", value = "author-date" },
+          { display = "date", value = "date" },
+        },
+      }
+    )
     -- :switch("g", "graph", "Show graph", {
     --   enabled = true,
     --   internal = true,

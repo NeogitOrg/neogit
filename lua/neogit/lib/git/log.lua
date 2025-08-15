@@ -2,6 +2,7 @@ local git = require("neogit.lib.git")
 local util = require("neogit.lib.util")
 local config = require("neogit.config")
 local record = require("neogit.lib.record")
+local state = require("neogit.lib.state")
 
 ---@class NeogitGitLog
 local M = {}
@@ -420,13 +421,17 @@ function M.parent(commit)
 end
 
 function M.register(meta)
-  meta.update_recent = function(state)
-    state.recent = { items = {} }
+  meta.update_recent = function(repo_state)
+    repo_state.recent = { items = {} }
 
     local count = config.values.status.recent_commit_count
+    local order = state.get({ "NeogitMarginPopup", "-order" }, "topo")
+
     if count > 0 then
-      state.recent.items =
-        util.filter_map(M.list({ "--max-count=" .. tostring(count) }, nil, {}, true), M.present_commit)
+      repo_state.recent.items = util.filter_map(
+        M.list({ "--max-count=" .. tostring(count), "--" .. order .. "-order" }, {}, {}, true),
+        M.present_commit
+      )
     end
   end
 end
