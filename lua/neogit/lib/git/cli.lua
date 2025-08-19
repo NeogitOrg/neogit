@@ -41,6 +41,7 @@ local runner = require("neogit.runner")
 
 ---@class GitCommandShow: GitCommandBuilder
 ---@field stat self
+---@field shortstat self
 ---@field oneline self
 ---@field no_patch self
 ---@field format fun(string): self
@@ -396,6 +397,7 @@ local configurations = {
   show = config {
     flags = {
       stat = "--stat",
+      shortstat = "--shortstat",
       oneline = "--oneline",
       no_patch = "--no-patch",
     },

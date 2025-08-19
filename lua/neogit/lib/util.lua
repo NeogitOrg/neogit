@@ -197,13 +197,21 @@ end
 --   return res
 -- end
 
-function M.str_min_width(str, len, sep)
+---@param append boolean? If true or nil, adds spaces to the end of `str`. If false, adds spaces to the beginning
+function M.str_min_width(str, len, sep, append)
+  append = append == nil and true or append
   local length = vim.fn.strdisplaywidth(str)
   if length > len then
     return str
   end
 
-  return str .. string.rep(sep or " ", len - length)
+  if append then
+    -- Add spaces to the right of str
+    return str .. string.rep(sep or " ", len - length)
+  else
+    -- Add spaces to the left of str
+    return string.rep(sep or " ", len - length) .. str
+  end
 end
 
 function M.slice(tbl, s, e)
@@ -255,8 +263,10 @@ function M.str_truncate(str, max_length, trailing)
   return str
 end
 
-function M.str_clamp(str, len, sep)
-  return M.str_min_width(M.str_truncate(str, len - 1, ""), len, sep or " ")
+---@param append boolean? If true or nil, adds spaces to the end of `str`. If false, adds spaces to the beginning
+function M.str_clamp(str, len, sep, append)
+  append = append == nil and true or append
+  return M.str_min_width(M.str_truncate(str, len - 1, ""), len, sep or " ", append)
 end
 
 --- Splits a string every n characters, respecting word boundaries
