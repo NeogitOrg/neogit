@@ -197,15 +197,15 @@ end
 --   return res
 -- end
 
----@param append boolean? If true or nil, adds spaces to the end of `str`. If false, adds spaces to the beginning
-function M.str_min_width(str, len, sep, append)
-  append = append == nil and true or append
+---@param opts table? If { mode = 'append' }, adds spaces to the end of `str`. If { mode = 'insert' }, adds spaces to the beginning.
+function M.str_min_width(str, len, sep, opts)
+  local mode = (type(opts) == "table" and opts.mode) or "append"
   local length = vim.fn.strdisplaywidth(str)
   if length > len then
     return str
   end
 
-  if append then
+  if mode == "append" then
     -- Add spaces to the right of str
     return str .. string.rep(sep or " ", len - length)
   else
@@ -263,10 +263,10 @@ function M.str_truncate(str, max_length, trailing)
   return str
 end
 
----@param append boolean? If true or nil, adds spaces to the end of `str`. If false, adds spaces to the beginning
-function M.str_clamp(str, len, sep, append)
-  append = append == nil and true or append
-  return M.str_min_width(M.str_truncate(str, len - 1, ""), len, sep or " ", append)
+---@param opts table? If { mode = 'append' }, adds spaces to the end of `str`. If { mode = 'insert' }, adds spaces to the beginning.
+function M.str_clamp(str, len, sep, opts)
+  local opts = (type(opts) == "table" and opts.mode) or { mode = "append" }
+  return M.str_min_width(M.str_truncate(str, len - 1, ""), len, sep or " ", opts)
 end
 
 --- Splits a string every n characters, respecting word boundaries

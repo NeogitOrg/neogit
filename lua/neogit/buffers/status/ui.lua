@@ -375,11 +375,11 @@ local SectionItemCommit = Component.new(function(item)
       local deletions
 
       files_changed = cli_shortstat:match("^ (%d+) files?")
-      files_changed = util.str_min_width(files_changed, 3, nil, false)
+      files_changed = util.str_min_width(files_changed, 3, nil, { mode = "insert" })
       insertions = cli_shortstat:match("(%d+) insertions?")
-      insertions = util.str_min_width(insertions and insertions .. "+" or " ", 5, nil, false)
+      insertions = util.str_min_width(insertions and insertions .. "+" or " ", 5, nil, { mode = "insert" })
       deletions = cli_shortstat:match("(%d+) deletions?")
-      deletions = util.str_min_width(deletions and deletions .. "-" or " ", 5, nil, false)
+      deletions = util.str_min_width(deletions and deletions .. "-" or " ", 5, nil, { mode = "insert" })
 
       virtual_text = {
         { " ", "Constant" },
