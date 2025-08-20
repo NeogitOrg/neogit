@@ -364,7 +364,7 @@ local SectionItemCommit = Component.new(function(item)
 
   local virtual_text
 
-  -- Render author and date in margin, if visible
+  -- Render margin, if visible
   if state.get({ "margin", "visibility" }, false) then
     local is_shortstat = state.get({ "margin", "shortstat" }, false)
 
