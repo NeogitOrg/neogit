@@ -466,11 +466,18 @@ function M.present_commit(commit)
     return
   end
 
+  local is_shortstat = state.get({ "margin", "shortstat" }, false)
+  local shortstat
+  if is_shortstat then
+    shortstat = git.cli.show.format("").shortstat.args(commit.oid).call().stdout[1]
+  end
+
   return {
     name = string.format("%s %s", commit.abbreviated_commit, commit.subject or "<empty>"),
     decoration = M.branch_info(commit.ref_name, git.remote.list()),
     oid = commit.oid,
     commit = commit,
+    shortstat = shortstat,
   }
 end
 
