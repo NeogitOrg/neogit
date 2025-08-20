@@ -5,7 +5,6 @@ local common = require("neogit.buffers.common")
 local config = require("neogit.config")
 local a = require("plenary.async")
 local state = require("neogit.lib.state")
-local git = require("neogit.lib.git")
 
 local col = Ui.col
 local row = Ui.row
@@ -369,7 +368,7 @@ local SectionItemCommit = Component.new(function(item)
     local is_shortstat = state.get({ "margin", "shortstat" }, false)
 
     if is_shortstat then
-      local cli_shortstat = git.cli.show.format("").shortstat.args(item.commit.oid).call().stdout[1]
+      local cli_shortstat = item.shortstat
       local files_changed
       local insertions
       local deletions
