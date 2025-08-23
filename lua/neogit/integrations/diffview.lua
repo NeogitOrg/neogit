@@ -14,22 +14,31 @@ local function get_local_diff_view(section_name, item_name, opts)
   local left = Rev(RevType.STAGE)
   local right = Rev(RevType.LOCAL)
 
-  if section_name == "unstaged" then
-    section_name = "working"
-  end
-
   local function update_files()
     local files = {}
 
-    local sections = {
-      conflicting = {
+    local sections = {}
+
+    -- all conflict modes (but I don't know how to generate UA/AU)
+    local conflict_modes = { "UU", "UD", "DU", "AA", "UA", "AU" }
+
+    -- merge section gets both
+    if section_name == "unstaged" or section_name == "merge" then
+      sections.conflicting = {
         items = vim.tbl_filter(function(item)
-          return item.mode and item.mode:sub(2, 2) == "U"
-        end, git.repo.state.untracked.items),
-      },
-      working = git.repo.state.unstaged,
-      staged = git.repo.state.staged,
-    }
+          return vim.tbl_contains(conflict_modes, item.mode) and item
+        end, git.repo.state.unstaged.items),
+      }
+      sections.working = {
+        items = vim.tbl_filter(function(item)
+          return not vim.tbl_contains(conflict_modes, item.mode) and item
+        end, git.repo.state.unstaged.items),
+      }
+    end
+
+    if section_name == "staged" or section_name == "merge" then
+      sections.staged = git.repo.state.staged
+    end
 
     for kind, section in pairs(sections) do
       files[kind] = {}
@@ -47,9 +56,8 @@ local function get_local_diff_view(section_name, item_name, opts)
           selected = (item_name and item.name == item_name) or (not item_name and idx == 1),
         }
 
-        -- restrict diff to only a particular section
         if opts.only then
-          if (item_name and file.selected) or (not item_name and section_name == kind) then
+          if not item_name or (item_name and file.selected) then
             table.insert(files[kind], file)
           end
         else
@@ -132,6 +140,7 @@ function M.open(section_name, item_name, opts)
   elseif (section_name == "conflict" or section_name == "worktree") and not item_name then
     view = dv_lib.diffview_open()
   elseif section_name ~= nil then
+    -- for staged, unstaged, merge
     view = get_local_diff_view(section_name, item_name, opts)
   elseif section_name == nil and item_name ~= nil then
     view = dv_lib.diffview_open(dv_utils.tbl_pack(item_name .. "^!"))
