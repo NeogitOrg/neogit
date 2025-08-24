@@ -197,13 +197,21 @@ end
 --   return res
 -- end
 
-function M.str_min_width(str, len, sep)
+---@param opts table? If { mode = 'append' }, adds spaces to the end of `str`. If { mode = 'insert' }, adds spaces to the beginning.
+function M.str_min_width(str, len, sep, opts)
+  local mode = (type(opts) == "table" and opts.mode) or "append"
   local length = vim.fn.strdisplaywidth(str)
   if length > len then
     return str
   end
 
-  return str .. string.rep(sep or " ", len - length)
+  if mode == "append" then
+    -- Add spaces to the right of str
+    return str .. string.rep(sep or " ", len - length)
+  else
+    -- Add spaces to the left of str
+    return string.rep(sep or " ", len - length) .. str
+  end
 end
 
 function M.slice(tbl, s, e)
@@ -255,8 +263,10 @@ function M.str_truncate(str, max_length, trailing)
   return str
 end
 
-function M.str_clamp(str, len, sep)
-  return M.str_min_width(M.str_truncate(str, len - 1, ""), len, sep or " ")
+---@param opts table? If { mode = 'append' }, adds spaces to the end of `str`. If { mode = 'insert' }, adds spaces to the beginning.
+function M.str_clamp(str, len, sep, opts)
+  local opts = (type(opts) == "table" and opts.mode) or { mode = "append" }
+  return M.str_min_width(M.str_truncate(str, len - 1, ""), len, sep or " ", opts)
 end
 
 --- Splits a string every n characters, respecting word boundaries

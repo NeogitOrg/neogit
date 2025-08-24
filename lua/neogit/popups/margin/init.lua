@@ -50,7 +50,7 @@ function M.create(env)
     :action("L", "toggle visibility", actions.toggle_visibility, { persist_popup = true })
     :action("l", "cycle style", actions.cycle_date_style, { persist_popup = true })
     :action("d", "toggle details", actions.toggle_details, { persist_popup = true })
-    :action("x", "toggle shortstat", actions.log_current, { persist_popup = true })
+    :action("x", "toggle shortstat", actions.toggle_shortstat, { persist_popup = true })
     :build()
 
   p:show()
