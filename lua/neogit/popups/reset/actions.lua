@@ -98,4 +98,16 @@ function M.a_file(popup)
   end
 end
 
+---@param popup PopupData
+function M.a_branch(popup)
+  -- branch reset expects commits to be set, not commit
+  if popup.state.env.commit then
+    popup.state.env.commits = { popup.state.env.commit }
+    popup.state.env.commit = nil
+  end
+
+  local branch_actions = require("neogit.popups.branch.actions")
+  branch_actions.reset_branch(popup)
+end
+
 return M
