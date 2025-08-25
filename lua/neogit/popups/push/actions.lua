@@ -111,14 +111,6 @@ function M.to_elsewhere(popup)
   end
 end
 
-local function remove_prefix(str, prefix)
-  if str:sub(1, #prefix) == prefix then
-    return str:sub(#prefix + 1)
-  else
-    return str
-  end
-end
-
 function M.push_other(popup)
   local sources = util.merge({ popup.state.env.commit }, git.refs.list_local_branches(), git.refs.heads())
   local source = FuzzyFinderBuffer.new(sources):open_async { prompt_prefix = "push" }
@@ -136,9 +128,9 @@ function M.push_other(popup)
   end
 
   local remote, _ = git.branch.parse_remote_branch(destination)
-  --
+
   -- destination is <remote>/branch-name, need to remove the remote prefix
-  destination = remove_prefix(destination, remote .. "/")
+  destination = util.remove_prefix(destination, remote .. "/")
 
   push_to(popup:get_arguments(), remote, source .. ":" .. destination)
 end
