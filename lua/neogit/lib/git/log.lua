@@ -2,6 +2,7 @@ local git = require("neogit.lib.git")
 local util = require("neogit.lib.util")
 local config = require("neogit.config")
 local record = require("neogit.lib.record")
+local state = require("neogit.lib.state")
 
 ---@class NeogitGitLog
 local M = {}
@@ -30,6 +31,7 @@ local commit_header_pat = "([| ]*)(%*?)([| ]*)commit (%w+)"
 ---@field verification_flag string?
 ---@field rel_date string
 ---@field log_date string
+---@field unix_date string
 
 ---Parses the provided list of lines into a CommitLogEntry
 ---@param raw string[]
@@ -340,6 +342,7 @@ local function format(show_signature)
     committer_date = "%cD",
     rel_date = "%cr",
     log_date = "%cd",
+    unix_date = "%ct",
   }
 
   if show_signature then
@@ -418,13 +421,17 @@ function M.parent(commit)
 end
 
 function M.register(meta)
-  meta.update_recent = function(state)
-    state.recent = { items = {} }
+  meta.update_recent = function(repo_state)
+    repo_state.recent = { items = {} }
 
     local count = config.values.status.recent_commit_count
+    local order = state.get({ "NeogitMarginPopup", "-order" }, "topo")
+
     if count > 0 then
-      state.recent.items =
-        util.filter_map(M.list({ "--max-count=" .. tostring(count) }, nil, {}, true), M.present_commit)
+      repo_state.recent.items = util.filter_map(
+        M.list({ "--max-count=" .. tostring(count), "--" .. order .. "-order" }, {}, {}, true),
+        M.present_commit
+      )
     end
   end
 end
