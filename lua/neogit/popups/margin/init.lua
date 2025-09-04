@@ -1,5 +1,5 @@
 local popup = require("neogit.lib.popup")
--- local config = require("neogit.config")
+local config = require("neogit.config")
 local actions = require("neogit.popups.margin.actions")
 
 local M = {}
@@ -13,7 +13,7 @@ function M.create(env)
     -- :option("n", "max-count", "256", "Limit number of commits", { default = "256", key_prefix = "-" })
     :switch(
       "o",
-      "topo",
+      config.values.commit_order,
       "Order commits by",
       {
         cli_suffix = "-order",
