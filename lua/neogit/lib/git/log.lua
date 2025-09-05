@@ -429,16 +429,13 @@ function M.register(meta)
 
     if count > 0 then
       local args = { "--max-count=" .. tostring(count) }
-      local graph = nil;
+      local graph = nil
       if order and order ~= "" then
         table.insert(args, "--" .. order .. "-order")
         graph = {}
       end
 
-      repo_state.recent.items = util.filter_map(
-        M.list(args, graph, {}, false),
-        M.present_commit
-      )
+      repo_state.recent.items = util.filter_map(M.list(args, graph, {}, false), M.present_commit)
     end
   end
 end
