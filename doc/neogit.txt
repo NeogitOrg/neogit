@@ -147,6 +147,13 @@ to Neovim users.
     -- Flag description: https://git-scm.com/docs/git-branch#Documentation/git-branch.txt---sortltkeygt
     -- Sorting keys: https://git-scm.com/docs/git-for-each-ref#_options
     sort_branches = "-committerdate",
+    -- Value passed to the `--<commit_order>-order` flag of the `git log` command
+    -- Determines how commits are traversed and displayed in the log / graph:
+    --   "topo"         topological order (parents always before children, good for graphs, slower on large repos)
+    --   "date"         chronological order by commit date
+    --   "author-date"  chronological order by author date
+    --   ""             disable explicit ordering (fastest, recommended for very large repos)
+    commit_order = "topo"
     -- Default for new branch name prompts
     initial_branch_name = "",
     -- Change the default way of opening neogit

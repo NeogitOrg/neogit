@@ -310,6 +310,12 @@ end
 ---| "ascii"
 ---| "unicode"
 ---| "kitty"
+---
+---@alias NeogitCommitOrder
+---| ""
+---| "topo"
+---| "author-date"
+---| "date"
 
 ---@class NeogitConfigStatusOptions
 ---@field recent_commit_count? integer The number of recent commits to display
@@ -346,6 +352,7 @@ end
 ---@field use_per_project_settings? boolean Scope persisted settings on a per-project basis
 ---@field remember_settings? boolean Whether neogit should persist flags from popups, e.g. git push flags
 ---@field sort_branches? string Value used for `--sort` for the `git branch` command
+---@field commit_order? NeogitCommitOrder Value used for `--<commit_order>-order` for the `git log` command
 ---@field initial_branch_name? string Default for new branch name prompts
 ---@field kind? WindowKind The default type of window neogit should open in
 ---@field floating? NeogitConfigFloating The floating window style
@@ -408,6 +415,7 @@ function M.get_default_values()
     remember_settings = true,
     fetch_after_checkout = false,
     sort_branches = "-committerdate",
+    commit_order = "topo",
     kind = "tab",
     floating = {
       relative = "editor",

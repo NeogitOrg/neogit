@@ -425,13 +425,17 @@ function M.register(meta)
     repo_state.recent = { items = {} }
 
     local count = config.values.status.recent_commit_count
-    local order = state.get({ "NeogitMarginPopup", "-order" }, "topo")
+    local order = state.get({ "NeogitMarginPopup", "-order" }, config.values.commit_order)
 
     if count > 0 then
-      repo_state.recent.items = util.filter_map(
-        M.list({ "--max-count=" .. tostring(count), "--" .. order .. "-order" }, {}, {}, true),
-        M.present_commit
-      )
+      local args = { "--max-count=" .. tostring(count) }
+      local graph = nil
+      if order and order ~= "" then
+        table.insert(args, "--" .. order .. "-order")
+        graph = {}
+      end
+
+      repo_state.recent.items = util.filter_map(M.list(args, graph, {}, false), M.present_commit)
     end
   end
 end
