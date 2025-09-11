@@ -1174,6 +1174,7 @@ local function new_builder(subcommand)
         "--no-optional-locks",
         "-c", "core.preloadindex=true",
         "-c", "color.ui=always",
+        "-c", "diff.noprefix=false",
         subcommand
       },
       cmd
