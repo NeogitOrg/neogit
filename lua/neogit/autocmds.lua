@@ -7,6 +7,21 @@ function M.setup()
   local status_buffer = require("neogit.buffers.status")
   local git = require("neogit.lib.git")
   local group = require("neogit").autocmd_group
+  local config = require("neogit.config")
+
+  if config.values.auto_fetch_enabled and config.values.auto_fetch_on_startup then
+    api.nvim_create_autocmd("VimEnter", {
+      callback = function()
+        if git.cli.is_inside_worktree(".") then
+          local repo = require("neogit.lib.git.repository").instance(".")
+          vim.schedule(function()
+            repo:_fetch()
+          end)
+        end
+      end,
+      group = group,
+    })
+  end
 
   api.nvim_create_autocmd({ "ColorScheme" }, {
     callback = function()

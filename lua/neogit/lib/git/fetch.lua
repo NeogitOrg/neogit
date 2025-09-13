@@ -12,11 +12,16 @@ function M.fetch_interactive(remote, branch, args)
   return git.cli.fetch.args(remote or "", branch or "").arg_list(args).call { pty = true }
 end
 
----@param remote string
----@param branch string
----@return ProcessResult
+---@param remote string | nil
+---@param branch string | nil
 function M.fetch(remote, branch)
-  return git.cli.fetch.args(remote, branch).call { ignore_error = true }
+  local result = git.cli.fetch.args(remote, branch).call { ignore_error = true }
+
+  if result and result.code == 0 then
+    return true, result
+  else
+    return false, result
+  end
 end
 
 return M

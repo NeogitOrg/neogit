@@ -345,6 +345,9 @@ end
 ---@field disable_signs? boolean Special signs to draw for sections etc. in Neogit
 ---@field prompt_force_push? boolean Offer to force push when branches diverge
 ---@field git_services? table Templartes to use when opening a pull request for a branch
+---@field auto_fetch_enabled? boolean Enable/disable automatic fetching
+---@field auto_fetch_interval? integer The interval (in milliseconds) for automatic fetching
+---@field auto_fetch_on_startup? boolean Perform an initial fetch when Neogit starts
 ---@field fetch_after_checkout? boolean Perform a fetch if the newly checked out branch has an upstream or pushRemote set
 ---@field telescope_sorter? function The sorter telescope will use
 ---@field process_spinner? boolean Hide/Show the process spinner
@@ -413,6 +416,9 @@ function M.get_default_values()
     disable_insert_on_commit = "auto",
     use_per_project_settings = true,
     remember_settings = true,
+    auto_fetch_enabled = false,
+    auto_fetch_interval = 300000, -- 5 minutes in milliseconds
+    auto_fetch_on_startup = false,
     fetch_after_checkout = false,
     sort_branches = "-committerdate",
     commit_order = "topo",
@@ -1153,6 +1159,9 @@ function M.validate_config()
   end
 
   if validate_type(config, "base config", "table") then
+    validate_type(config.auto_fetch_enabled, "auto_fetch_enabled", "boolean")
+    validate_type(config.auto_fetch_interval, "auto_fetch_interval", "number")
+    validate_type(config.auto_fetch_on_startup, "auto_fetch_on_startup", "boolean")
     validate_type(config.disable_hint, "disable_hint", "boolean")
     validate_type(config.disable_context_highlighting, "disable_context_highlighting", "boolean")
     validate_type(config.disable_signs, "disable_signs", "boolean")
