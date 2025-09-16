@@ -1551,21 +1551,23 @@ M.n_worktree_popup = function(_self)
   return popups.open("worktree")
 end
 
----@param _self StatusBuffer
-M.n_open_tree = function(_self)
+---@param self StatusBuffer
+---@return fun(): nil
+M.n_open_tree = function(self)
   return a.void(function()
-    local template = "https://${host}/${owner}/${repository}/tree/${branch_name}"
+    local commit = self.buffer.ui:get_commit_under_cursor()
+    local branch = git.branch.current()
+    local url
 
-    local upstream = git.branch.upstream_remote()
-    if not upstream then
-      return
+    if commit then
+      url = git.remote.commit_url(commit)
+    elseif branch then
+      url = git.remote.tree_url(branch)
     end
 
-    local url = git.remote.get_url(upstream)[1]
-    local format_values = git.remote.parse(url)
-    format_values["branch_name"] = git.branch.current()
-
-    vim.ui.open(util.format(template, format_values))
+    if url then
+      vim.ui.open(url)
+    end
   end)
 end
 
