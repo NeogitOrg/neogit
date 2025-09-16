@@ -182,26 +182,8 @@ function M:open(kind)
             return
           end
 
-          local upstream = git.branch.upstream_remote()
-          if not upstream then
-            return
-          end
-
-          local template
-          local url = git.remote.get_url(upstream)[1]
-
-          for s, v in pairs(config.values.git_services) do
-            if url:match(util.pattern_escape(s)) then
-              template = v.commit
-              break
-            end
-          end
-
-          if template and template ~= "" then
-            local format_values = git.remote.parse(url)
-            format_values["oid"] = self.commit_info.oid
-            local uri = util.format(template, format_values)
-
+          local uri = git.remote.commit_url(self.commit_info.oid)
+          if uri then
             notification.info(("Opening %q in your browser."):format(uri))
             vim.ui.open(uri)
           else
