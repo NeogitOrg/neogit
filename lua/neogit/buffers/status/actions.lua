@@ -1555,6 +1555,11 @@ end
 ---@return fun(): nil
 M.n_open_tree = function(self)
   return a.void(function()
+    if not vim.ui.open then
+      notification.warn("Requires Neovim >= 0.10")
+      return
+    end
+
     local commit = self.buffer.ui:get_commit_under_cursor()
     local branch = git.branch.current()
     local url
@@ -1566,7 +1571,10 @@ M.n_open_tree = function(self)
     end
 
     if url then
+      notification.info(("Opening %q in your browser."):format(url))
       vim.ui.open(url)
+    else
+      notification.warn("Couldn't determine commit URL to open")
     end
   end)
 end
