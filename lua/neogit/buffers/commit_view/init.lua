@@ -5,7 +5,6 @@ local git = require("neogit.lib.git")
 local config = require("neogit.config")
 local popups = require("neogit.popups")
 local status_maps = require("neogit.config").get_reversed_status_maps()
-local util = require("neogit.lib.util")
 local notification = require("neogit.lib.notification")
 
 local api = vim.api
@@ -187,7 +186,7 @@ function M:open(kind)
             notification.info(("Opening %q in your browser."):format(uri))
             vim.ui.open(uri)
           else
-            notification.warn("Commit URL template not found for this branch's upstream")
+            notification.warn("Couldn't determine commit URL to open")
           end
         end,
         ["<cr>"] = function()
