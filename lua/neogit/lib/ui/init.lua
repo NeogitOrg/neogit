@@ -40,6 +40,7 @@ function Ui.new(buf)
   return setmetatable({ buf = buf, layout = {} }, Ui)
 end
 
+---@return Component|nil
 function Ui._find_component(components, f, options)
   for _, c in ipairs(components) do
     if c.tag == "col" or c.tag == "row" then
@@ -62,24 +63,6 @@ end
 ---@param options FindOptions|nil
 function Ui:find_component(f, options)
   return Ui._find_component(self.layout, f, options or {})
-end
-
-function Ui._find_components(components, f, result, options)
-  for _, c in ipairs(components) do
-    if c.tag == "col" or c.tag == "row" then
-      Ui._find_components(c.children, f, result, options)
-    end
-
-    if f(c) then
-      table.insert(result, c)
-    end
-  end
-end
-
-function Ui:find_components(f, options)
-  local result = {}
-  Ui._find_components(self.layout, f, result, options or {})
-  return result
 end
 
 ---@param fn? fun(c: Component): boolean

@@ -1288,7 +1288,7 @@ function M.setup(opts)
       finder = {},
       commit_editor = {},
       rebase_editor = {},
-      refs_view = {}
+      refs_view = {},
     }
   else
     -- Clear our any "false" user mappings from defaults
