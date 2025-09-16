@@ -93,6 +93,7 @@ end
 local M = {}
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.v_discard = function(self)
   return a.void(function()
     local selection = self.buffer.ui:get_selection()
@@ -217,6 +218,7 @@ M.v_discard = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.v_stage = function(self)
   return a.void(function()
     local selection = self.buffer.ui:get_selection()
@@ -273,6 +275,7 @@ M.v_stage = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.v_unstage = function(self)
   return a.void(function()
     local selection = self.buffer.ui:get_selection()
@@ -318,6 +321,7 @@ M.v_unstage = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.v_branch_popup = function(self)
   return popups.open("branch", function(p)
     p { commits = self.buffer.ui:get_commits_in_selection() }
@@ -325,6 +329,7 @@ M.v_branch_popup = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.v_cherry_pick_popup = function(self)
   return popups.open("cherry_pick", function(p)
     p { commits = self.buffer.ui:get_commits_in_selection() }
@@ -332,6 +337,7 @@ M.v_cherry_pick_popup = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.v_commit_popup = function(self)
   return popups.open("commit", function(p)
     local commits = self.buffer.ui:get_commits_in_selection()
@@ -342,6 +348,7 @@ M.v_commit_popup = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.v_merge_popup = function(self)
   return popups.open("merge", function(p)
     local commits = self.buffer.ui:get_commits_in_selection()
@@ -352,6 +359,7 @@ M.v_merge_popup = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.v_push_popup = function(self)
   return popups.open("push", function(p)
     local commits = self.buffer.ui:get_commits_in_selection()
@@ -362,6 +370,7 @@ M.v_push_popup = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.v_rebase_popup = function(self)
   return popups.open("rebase", function(p)
     local commits = self.buffer.ui:get_commits_in_selection()
@@ -372,6 +381,7 @@ M.v_rebase_popup = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.v_revert_popup = function(self)
   return popups.open("revert", function(p)
     p { commits = self.buffer.ui:get_commits_in_selection() }
@@ -379,6 +389,7 @@ M.v_revert_popup = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.v_reset_popup = function(self)
   return popups.open("reset", function(p)
     local commits = self.buffer.ui:get_commits_in_selection()
@@ -389,6 +400,7 @@ M.v_reset_popup = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.v_tag_popup = function(self)
   return popups.open("tag", function(p)
     local commits = self.buffer.ui:get_commits_in_selection()
@@ -399,6 +411,7 @@ M.v_tag_popup = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.v_stash_popup = function(self)
   return popups.open("stash", function(p)
     local stash = self.buffer.ui:get_yankable_under_cursor()
@@ -407,6 +420,7 @@ M.v_stash_popup = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.v_diff_popup = function(self)
   return popups.open("diff", function(p)
     local section = self.buffer.ui:get_selection().section
@@ -416,6 +430,7 @@ M.v_diff_popup = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.v_ignore_popup = function(self)
   return popups.open("ignore", function(p)
     p { paths = self.buffer.ui:get_filepaths_in_selection(), worktree_root = git.repo.worktree_root }
@@ -423,6 +438,7 @@ M.v_ignore_popup = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.v_bisect_popup = function(self)
   return popups.open("bisect", function(p)
     p { commits = self.buffer.ui:get_commits_in_selection() }
@@ -430,31 +446,37 @@ M.v_bisect_popup = function(self)
 end
 
 ---@param _self StatusBuffer
+---@return fun(): nil
 M.v_remote_popup = function(_self)
   return popups.open("remote")
 end
 
 ---@param _self StatusBuffer
+---@return fun(): nil
 M.v_fetch_popup = function(_self)
   return popups.open("fetch")
 end
 
 ---@param _self StatusBuffer
+---@return fun(): nil
 M.v_pull_popup = function(_self)
   return popups.open("pull")
 end
 
 ---@param _self StatusBuffer
+---@return fun(): nil
 M.v_help_popup = function(_self)
   return popups.open("help")
 end
 
 ---@param _self StatusBuffer
+---@return fun(): nil
 M.v_log_popup = function(_self)
   return popups.open("log")
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.v_margin_popup = function(self)
   return popups.open("margin", function(p)
     p { buffer = self }
@@ -462,11 +484,13 @@ M.v_margin_popup = function(self)
 end
 
 ---@param _self StatusBuffer
+---@return fun(): nil
 M.v_worktree_popup = function(_self)
   return popups.open("worktree")
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.n_down = function(self)
   return function()
     if vim.v.count > 0 then
@@ -482,6 +506,7 @@ M.n_down = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.n_up = function(self)
   return function()
     if vim.v.count > 0 then
@@ -497,6 +522,7 @@ M.n_up = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.n_toggle = function(self)
   return function()
     local fold = self.buffer.ui:get_fold_under_cursor()
@@ -516,6 +542,7 @@ M.n_toggle = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.n_open_fold = function(self)
   return function()
     local fold = self.buffer.ui:get_fold_under_cursor()
@@ -535,6 +562,7 @@ M.n_open_fold = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.n_close_fold = function(self)
   return function()
     local fold = self.buffer.ui:get_fold_under_cursor()
@@ -550,11 +578,13 @@ M.n_close_fold = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.n_close = function(self)
   return require("neogit.lib.ui.helpers").close_topmost(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.n_open_or_scroll_down = function(self)
   return function()
     local commit = self.buffer.ui:get_commit_under_cursor()
@@ -565,6 +595,7 @@ M.n_open_or_scroll_down = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.n_open_or_scroll_up = function(self)
   return function()
     local commit = self.buffer.ui:get_commit_under_cursor()
@@ -575,6 +606,7 @@ M.n_open_or_scroll_up = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.n_refresh_buffer = function(self)
   return a.void(function()
     self:dispatch_refresh({ update_diffs = { "*:*" } }, "n_refresh_buffer")
@@ -582,6 +614,7 @@ M.n_refresh_buffer = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.n_depth1 = function(self)
   return function()
     local section = self.buffer.ui:get_current_section()
@@ -600,6 +633,7 @@ M.n_depth1 = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.n_depth2 = function(self)
   return function()
     local section = self.buffer.ui:get_current_section()
@@ -627,6 +661,7 @@ M.n_depth2 = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.n_depth3 = function(self)
   return function()
     local section = self.buffer.ui:get_current_section()
@@ -656,6 +691,7 @@ M.n_depth3 = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.n_depth4 = function(self)
   return function()
     local section = self.buffer.ui:get_current_section()
@@ -682,6 +718,7 @@ M.n_depth4 = function(self)
 end
 
 ---@param _self StatusBuffer
+---@return fun(): nil
 M.n_command_history = function(_self)
   return a.void(function()
     require("neogit.buffers.git_command_history"):new():show()
@@ -689,6 +726,7 @@ M.n_command_history = function(_self)
 end
 
 ---@param _self StatusBuffer
+---@return fun(): nil
 M.n_show_refs = function(_self)
   return a.void(function()
     require("neogit.buffers.refs_view").new(git.refs.list_parsed(), git.repo.worktree_root):open()
@@ -696,6 +734,7 @@ M.n_show_refs = function(_self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.n_yank_selected = function(self)
   return function()
     local yank = self.buffer.ui:get_yankable_under_cursor()
@@ -714,6 +753,7 @@ M.n_yank_selected = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.n_discard = function(self)
   return a.void(function()
     git.index.update()
@@ -947,6 +987,7 @@ M.n_discard = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.n_go_to_next_hunk_header = function(self)
   return function()
     local c = self.buffer.ui:get_component_under_cursor(function(c)
@@ -978,6 +1019,7 @@ M.n_go_to_next_hunk_header = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.n_go_to_previous_hunk_header = function(self)
   return function()
     local function previous_hunk_header(self, line)
@@ -1004,6 +1046,7 @@ M.n_go_to_previous_hunk_header = function(self)
 end
 
 ---@param _self StatusBuffer
+---@return fun(): nil
 M.n_init_repo = function(_self)
   return function()
     git.init.init_repo()
@@ -1011,6 +1054,7 @@ M.n_init_repo = function(_self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.n_rename = function(self)
   return a.void(function()
     local selection = self.buffer.ui:get_selection()
@@ -1046,6 +1090,7 @@ M.n_rename = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.n_untrack = function(self)
   return a.void(function()
     local selection = self.buffer.ui:get_selection()
@@ -1076,6 +1121,7 @@ M.n_untrack = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.v_untrack = function(self)
   return a.void(function()
     local selection = self.buffer.ui:get_selection()
@@ -1103,6 +1149,7 @@ M.v_untrack = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.n_stage = function(self)
   return a.void(function()
     local stagable = self.buffer.ui:get_hunk_or_filename_under_cursor()
@@ -1183,6 +1230,7 @@ M.n_stage = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.n_stage_all = function(self)
   return a.void(function()
     git.status.stage_all()
@@ -1191,6 +1239,7 @@ M.n_stage_all = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.n_stage_unstaged = function(self)
   return a.void(function()
     git.status.stage_modified()
@@ -1199,6 +1248,7 @@ M.n_stage_unstaged = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.n_unstage = function(self)
   return a.void(function()
     local unstagable = self.buffer.ui:get_hunk_or_filename_under_cursor()
@@ -1235,6 +1285,7 @@ M.n_unstage = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.n_unstage_staged = function(self)
   return a.void(function()
     git.status.unstage_all()
@@ -1243,6 +1294,7 @@ M.n_unstage_staged = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.n_goto_file = function(self)
   return function()
     local item = self.buffer.ui:get_item_under_cursor()
@@ -1264,6 +1316,7 @@ M.n_goto_file = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.n_tab_open = function(self)
   return function()
     local item = self.buffer.ui:get_item_under_cursor()
@@ -1275,6 +1328,7 @@ M.n_tab_open = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.n_split_open = function(self)
   return function()
     local item = self.buffer.ui:get_item_under_cursor()
@@ -1286,6 +1340,7 @@ M.n_split_open = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.n_vertical_split_open = function(self)
   return function()
     local item = self.buffer.ui:get_item_under_cursor()
@@ -1297,6 +1352,7 @@ M.n_vertical_split_open = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.n_branch_popup = function(self)
   return popups.open("branch", function(p)
     p { commits = { self.buffer.ui:get_commit_under_cursor() } }
@@ -1304,6 +1360,7 @@ M.n_branch_popup = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.n_bisect_popup = function(self)
   return popups.open("bisect", function(p)
     p { commits = { self.buffer.ui:get_commit_under_cursor() } }
@@ -1311,6 +1368,7 @@ M.n_bisect_popup = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.n_cherry_pick_popup = function(self)
   return popups.open("cherry_pick", function(p)
     p { commits = { self.buffer.ui:get_commit_under_cursor() } }
@@ -1318,6 +1376,7 @@ M.n_cherry_pick_popup = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.n_commit_popup = function(self)
   return popups.open("commit", function(p)
     p { commit = self.buffer.ui:get_commit_under_cursor() }
@@ -1325,6 +1384,7 @@ M.n_commit_popup = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.n_merge_popup = function(self)
   return popups.open("merge", function(p)
     p { commit = self.buffer.ui:get_commit_under_cursor() }
@@ -1332,6 +1392,7 @@ M.n_merge_popup = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.n_push_popup = function(self)
   return popups.open("push", function(p)
     p { commit = self.buffer.ui:get_commit_under_cursor() }
@@ -1339,6 +1400,7 @@ M.n_push_popup = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.n_rebase_popup = function(self)
   return popups.open("rebase", function(p)
     p { commit = self.buffer.ui:get_commit_under_cursor() }
@@ -1346,6 +1408,7 @@ M.n_rebase_popup = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.n_revert_popup = function(self)
   return popups.open("revert", function(p)
     p { commits = { self.buffer.ui:get_commit_under_cursor() } }
@@ -1353,6 +1416,7 @@ M.n_revert_popup = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.n_reset_popup = function(self)
   return popups.open("reset", function(p)
     p { commit = self.buffer.ui:get_commit_under_cursor() }
@@ -1360,6 +1424,7 @@ M.n_reset_popup = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.n_tag_popup = function(self)
   return popups.open("tag", function(p)
     p { commit = self.buffer.ui:get_commit_under_cursor() }
@@ -1367,6 +1432,7 @@ M.n_tag_popup = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.n_stash_popup = function(self)
   return popups.open("stash", function(p)
     local stash = self.buffer.ui:get_yankable_under_cursor()
@@ -1375,6 +1441,7 @@ M.n_stash_popup = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.n_diff_popup = function(self)
   return popups.open("diff", function(p)
     local section = self.buffer.ui:get_selection().section
@@ -1387,6 +1454,7 @@ M.n_diff_popup = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.n_ignore_popup = function(self)
   return popups.open("ignore", function(p)
     local path = self.buffer.ui:get_hunk_or_filename_under_cursor()
@@ -1398,6 +1466,7 @@ M.n_ignore_popup = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.n_help_popup = function(self)
   return popups.open("help", function(p)
     -- Since any other popup can be launched from help, build an ENV for any of them.
@@ -1445,26 +1514,31 @@ M.n_help_popup = function(self)
 end
 
 ---@param _self StatusBuffer
+---@return fun(): nil
 M.n_remote_popup = function(_self)
   return popups.open("remote")
 end
 
 ---@param _self StatusBuffer
+---@return fun(): nil
 M.n_fetch_popup = function(_self)
   return popups.open("fetch")
 end
 
 ---@param _self StatusBuffer
+---@return fun(): nil
 M.n_pull_popup = function(_self)
   return popups.open("pull")
 end
 
 ---@param _self StatusBuffer
+---@return fun(): nil
 M.n_log_popup = function(_self)
   return popups.open("log")
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.n_margin_popup = function(self)
   return popups.open("margin", function(p)
     p { buffer = self }
@@ -1472,6 +1546,7 @@ M.n_margin_popup = function(self)
 end
 
 ---@param _self StatusBuffer
+---@return fun(): nil
 M.n_worktree_popup = function(_self)
   return popups.open("worktree")
 end
@@ -1495,6 +1570,7 @@ M.n_open_tree = function(_self)
 end
 
 ---@param self StatusBuffer|nil
+---@return fun(): nil
 M.n_command = function(self)
   local process = require("neogit.process")
   local runner = require("neogit.runner")
@@ -1536,6 +1612,7 @@ M.n_command = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.n_next_section = function(self)
   return function()
     local section = self.buffer.ui:get_current_section()
@@ -1549,6 +1626,7 @@ M.n_next_section = function(self)
 end
 
 ---@param self StatusBuffer
+---@return fun(): nil
 M.n_prev_section = function(self)
   return function()
     local section = self.buffer.ui:get_current_section()
