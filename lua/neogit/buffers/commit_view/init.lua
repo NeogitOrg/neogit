@@ -5,6 +5,7 @@ local git = require("neogit.lib.git")
 local config = require("neogit.config")
 local popups = require("neogit.popups")
 local status_maps = require("neogit.config").get_reversed_status_maps()
+local notification = require("neogit.lib.notification")
 
 local api = vim.api
 
@@ -174,6 +175,20 @@ function M:open(kind)
     },
     mappings = {
       n = {
+        ["o"] = function()
+          if not vim.ui.open then
+            notification.warn("Requires Neovim >= 0.10")
+            return
+          end
+
+          local uri = git.remote.commit_url(self.commit_info.oid)
+          if uri then
+            notification.info(("Opening %q in your browser."):format(uri))
+            vim.ui.open(uri)
+          else
+            notification.warn("Couldn't determine commit URL to open")
+          end
+        end,
         ["<cr>"] = function()
           local c = self.buffer.ui:get_component_under_cursor(function(c)
             return c.options.highlight == "NeogitFilePath"
@@ -272,19 +287,38 @@ function M:open(kind)
             vim.cmd("normal! zt")
           end
         end,
-        [popups.mapping_for("CherryPickPopup")] = popups.open("cherry_pick", function(p)
+        [popups.mapping_for("BisectPopup")] = popups.open("bisect", function(p)
           p { commits = { self.commit_info.oid } }
         end),
         [popups.mapping_for("BranchPopup")] = popups.open("branch", function(p)
           p { commits = { self.commit_info.oid } }
         end),
+        [popups.mapping_for("CherryPickPopup")] = popups.open("cherry_pick", function(p)
+          p { commits = { self.commit_info.oid } }
+        end),
         [popups.mapping_for("CommitPopup")] = popups.open("commit", function(p)
           p { commit = self.commit_info.oid }
         end),
+        [popups.mapping_for("DiffPopup")] = popups.open("diff", function(p)
+          p {
+            section = { name = "log" },
+            item = { name = self.commit_info.oid },
+          }
+        end),
         [popups.mapping_for("FetchPopup")] = popups.open("fetch"),
+        -- help
+        [popups.mapping_for("IgnorePopup")] = popups.open("ignore", function(p)
+          local path = self.buffer.ui:get_hunk_or_filename_under_cursor()
+          p {
+            paths = { path and path.escaped_path },
+            worktree_root = git.repo.worktree_root,
+          }
+        end),
+        [popups.mapping_for("LogPopup")] = popups.open("log"),
         [popups.mapping_for("MergePopup")] = popups.open("merge", function(p)
           p { commit = self.buffer.ui:get_commit_under_cursor() }
         end),
+        [popups.mapping_for("PullPopup")] = popups.open("pull"),
         [popups.mapping_for("PushPopup")] = popups.open("push", function(p)
           p { commit = self.commit_info.oid }
         end),
@@ -292,26 +326,18 @@ function M:open(kind)
           p { commit = self.commit_info.oid }
         end),
         [popups.mapping_for("RemotePopup")] = popups.open("remote"),
+        [popups.mapping_for("ResetPopup")] = popups.open("reset", function(p)
+          p { commit = self.commit_info.oid }
+        end),
         [popups.mapping_for("RevertPopup")] = popups.open("revert", function(p)
           local item = self.buffer.ui:get_hunk_or_filename_under_cursor() or {}
           p { commits = { self.commit_info.oid }, hunk = item.hunk }
         end),
-        [popups.mapping_for("ResetPopup")] = popups.open("reset", function(p)
-          p { commit = self.commit_info.oid }
-        end),
+        [popups.mapping_for("StashPopup")] = popups.open("stash"),
         [popups.mapping_for("TagPopup")] = popups.open("tag", function(p)
           p { commit = self.commit_info.oid }
         end),
-        [popups.mapping_for("PullPopup")] = popups.open("pull"),
-        [popups.mapping_for("DiffPopup")] = popups.open("diff", function(p)
-          p {
-            section = { name = "log" },
-            item = { name = self.commit_info.oid },
-          }
-        end),
-        [popups.mapping_for("BisectPopup")] = popups.open("bisect", function(p)
-          p { commits = { self.commit_info.oid } }
-        end),
+        [popups.mapping_for("WorktreePopup")] = popups.open("worktree"),
         [status_maps["Close"]] = function()
           self:close()
         end,
