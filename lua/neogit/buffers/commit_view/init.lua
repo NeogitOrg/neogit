@@ -5,6 +5,8 @@ local git = require("neogit.lib.git")
 local config = require("neogit.config")
 local popups = require("neogit.popups")
 local status_maps = require("neogit.config").get_reversed_status_maps()
+local util = require("neogit.lib.util")
+local notification = require("neogit.lib.notification")
 
 local api = vim.api
 
@@ -174,6 +176,38 @@ function M:open(kind)
     },
     mappings = {
       n = {
+        ["o"] = function()
+          if not vim.ui.open then
+            notification.warn("Requires Neovim >= 0.10")
+            return
+          end
+
+          local upstream = git.branch.upstream_remote()
+          if not upstream then
+            return
+          end
+
+          local template
+          local url = git.remote.get_url(upstream)[1]
+
+          for s, v in pairs(config.values.git_services) do
+            if url:match(util.pattern_escape(s)) then
+              template = v.commit
+              break
+            end
+          end
+
+          if template and template ~= "" then
+            local format_values = git.remote.parse(url)
+            format_values["oid"] = self.commit_info.oid
+            local uri = util.format(template, format_values)
+
+            notification.info(("Opening %q in your browser."):format(uri))
+            vim.ui.open(uri)
+          else
+            notification.warn("Commit URL template not found for this branch's upstream")
+          end
+        end,
         ["<cr>"] = function()
           local c = self.buffer.ui:get_component_under_cursor(function(c)
             return c.options.highlight == "NeogitFilePath"

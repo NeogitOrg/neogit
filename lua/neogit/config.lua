@@ -329,6 +329,10 @@ end
 ---@field commit_editor_I? { [string]: NeogitConfigMappingsCommitEditor_I } A dictionary that uses Commit editor commands to set a single keybind
 ---@field refs_view? { [string]: NeogitConfigMappingsRefsView } A dictionary that uses Refs view editor commands to set a single keybind
 
+---@class NeogitConfigGitService
+---@field pull_request string
+---@field commit string
+
 ---@class NeogitConfig Neogit configuration settings
 ---@field filewatcher? NeogitFilewatcherConfig Values for filewatcher
 ---@field graph_style? NeogitGraphStyle Style for graph
@@ -338,7 +342,7 @@ end
 ---@field disable_context_highlighting? boolean Disable context highlights based on cursor position
 ---@field disable_signs? boolean Special signs to draw for sections etc. in Neogit
 ---@field prompt_force_push? boolean Offer to force push when branches diverge
----@field git_services? table Templartes to use when opening a pull request for a branch
+---@field git_services? NeogitConfigGitService[] Templartes to use when opening a pull request for a branch, or commit
 ---@field fetch_after_checkout? boolean Perform a fetch if the newly checked out branch has an upstream or pushRemote set
 ---@field telescope_sorter? function The sorter telescope will use
 ---@field process_spinner? boolean Hide/Show the process spinner
@@ -397,10 +401,22 @@ function M.get_default_values()
       return nil
     end,
     git_services = {
-      ["github.com"] = "https://github.com/${owner}/${repository}/compare/${branch_name}?expand=1",
-      ["bitbucket.org"] = "https://bitbucket.org/${owner}/${repository}/pull-requests/new?source=${branch_name}&t=1",
-      ["gitlab.com"] = "https://gitlab.com/${owner}/${repository}/merge_requests/new?merge_request[source_branch]=${branch_name}",
-      ["azure.com"] = "https://dev.azure.com/${owner}/_git/${repository}/pullrequestcreate?sourceRef=${branch_name}&targetRef=${target}",
+      ["github.com"] = {
+        pull_request = "https://github.com/${owner}/${repository}/compare/${branch_name}?expand=1",
+        commit = "https://github.com/${owner}/${repository}/commit/${oid}",
+      },
+      ["bitbucket.org"] = {
+        pull_request = "https://bitbucket.org/${owner}/${repository}/pull-requests/new?source=${branch_name}&t=1",
+        commit = "https://bitbucket.org/${owner}/${repository}/commits/${oid}",
+      },
+      ["gitlab.com"] = {
+        pull_request = "https://gitlab.com/${owner}/${repository}/merge_requests/new?merge_request[source_branch]=${branch_name}",
+        commit = "https://gitlab.com/${owner}/${repository}/-/commit/${oid}",
+      },
+      ["azure.com"] = {
+        pull_request = "https://dev.azure.com/${owner}/_git/${repository}/pullrequestcreate?sourceRef=${branch_name}&targetRef=${target}",
+        commit = "",
+      },
     },
     highlight = {},
     disable_insert_on_commit = "auto",
@@ -1218,6 +1234,14 @@ function M.validate_config()
     -- Popup
     if validate_type(config.popup, "popup", "table") then
       validate_kind(config.popup.kind, "popup.kind")
+    end
+
+    if validate_type(config.git_services, "git_services", "table") then
+      for k, v in pairs(config.git_services) do
+        validate_type(v, "git_services." .. k, "table")
+        validate_type(v.pull_request, "git_services." .. k .. ".pull_request", "string")
+        validate_type(v.commit, "git_services." .. k .. ".commit", "string")
+      end
     end
 
     validate_integrations()

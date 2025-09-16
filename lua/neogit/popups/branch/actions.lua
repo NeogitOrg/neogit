@@ -378,7 +378,7 @@ function M.open_pull_request()
   for s, v in pairs(config.values.git_services) do
     if url:match(util.pattern_escape(s)) then
       service = s
-      template = v
+      template = v.pull_request
       break
     end
   end
@@ -409,7 +409,7 @@ function M.open_pull_request()
       notification.info(("Opening %q in your browser."):format(uri))
       vim.ui.open(uri)
     else
-      notification.warn("Requires Neovim 0.10")
+      notification.warn("Requires Neovim >= 0.10")
     end
   else
     notification.warn("Pull request URL template not found for this branch's upstream")
