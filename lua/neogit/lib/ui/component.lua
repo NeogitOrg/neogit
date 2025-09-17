@@ -13,6 +13,7 @@ local default_component_options = {
 
 ---@class ComponentOptions
 ---@field line_hl string
+---@field ansi_hl boolean
 ---@field highlight string
 ---@field align_right integer|nil
 ---@field padding_left integer
