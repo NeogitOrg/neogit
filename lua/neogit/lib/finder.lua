@@ -340,6 +340,8 @@ function Finder:find(on_select)
       fzf_opts = fzf_opts(self.opts),
       winopts = {
         height = self.opts.layout_config.height,
+        border = self.opts.border,
+        preview = { border = self.opts.border },
       },
       actions = fzf_actions(on_select, self.opts.allow_multi, self.opts.refocus_status),
     })
