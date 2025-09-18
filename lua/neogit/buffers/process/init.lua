@@ -105,7 +105,7 @@ function M:open()
     filetype = "NeogitConsole",
     bufhidden = "hide",
     open = false,
-    buftype = false,
+    buftype = "nofile", -- Use nofile to avoid swap file conflicts
     kind = config.values.preview_buffer.kind,
     after = function(buffer)
       buffer:open_terminal_channel()
