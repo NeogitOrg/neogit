@@ -136,10 +136,18 @@ function M.subset(popup)
     )
       :open_async()[1]
   end
-
-  if start then
-    git.rebase.onto(start, newbase, popup:get_arguments())
+  if not start then
+    return
   end
+
+  local args = popup:get_arguments()
+  local parent = git.log.parent(start)
+  if parent then
+    start = start .. "^"
+  else
+    table.insert(args, "--root")
+  end
+  git.rebase.onto(start, newbase, args)
 end
 
 function M.continue()
