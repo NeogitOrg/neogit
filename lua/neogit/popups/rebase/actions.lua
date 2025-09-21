@@ -75,6 +75,7 @@ function M.interactively(popup)
       elseif choice == "s" then
         popup.state.env.commit = nil
         M.interactively(popup)
+        return
       else
         return
       end
