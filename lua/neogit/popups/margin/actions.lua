@@ -29,4 +29,10 @@ function M.toggle_details()
   state.set({ "margin", "details" }, new_details)
 end
 
+function M.toggle_shortstat()
+  local shortstat = state.get({ "margin", "shortstat" }, false)
+  local new_shortstat = not shortstat
+  state.set({ "margin", "shortstat" }, new_shortstat)
+end
+
 return M
