@@ -2,6 +2,7 @@ local neogit = require("neogit")
 local a = require("plenary.async")
 local M = {}
 local util = require("tests.util.util")
+local config = require("neogit.config")
 
 local project_dir = util.project_dir
 local bare_repo_path = nil
@@ -23,12 +24,12 @@ function M.setup_bare_repo()
 
   util.system { "git", "config", "user.email", "test@neogit-test.test" }
   util.system { "git", "config", "user.name", "Neogit Test" }
-  util.system { "git", "add", "." }
-  util.system { "git", "commit", "-m", "temp commit to be soft unstaged later" }
+  util.system { config.values.git_binary, "add", "." }
+  util.system { config.values.git_binary, "commit", "-m", "temp commit to be soft unstaged later" }
 
   bare_repo_path = util.create_temp_dir("bare-dir")
 
-  util.system { "git", "clone", "--bare", workspace_dir, bare_repo_path }
+  util.system { config.values.git_binary, "clone", "--bare", workspace_dir, bare_repo_path }
 
   return bare_repo_path
 end
@@ -38,15 +39,15 @@ function M.prepare_repository()
 
   local working_dir = util.create_temp_dir("working-dir")
   vim.api.nvim_set_current_dir(working_dir)
-  util.system { "git", "clone", bare_repo_path, working_dir }
-  util.system { "git", "reset", "--soft", "HEAD~1" }
-  util.system { "git", "rm", "--cached", "untracked.txt" }
-  util.system { "git", "restore", "--staged", "a.txt" }
-  util.system { "git", "checkout", "second-branch" }
-  util.system { "git", "switch", "master" }
-  util.system { "git", "config", "remote.origin.url", "git@github.com:example/example.git" }
-  util.system { "git", "config", "user.email", "test@neogit-test.test" }
-  util.system { "git", "config", "user.name", "Neogit Test" }
+  util.system { config.values.git_binary, "clone", bare_repo_path, working_dir }
+  util.system { config.values.git_binary, "reset", "--soft", "HEAD~1" }
+  util.system { config.values.git_binary, "rm", "--cached", "untracked.txt" }
+  util.system { config.values.git_binary, "restore", "--staged", "a.txt" }
+  util.system { config.values.git_binary, "checkout", "second-branch" }
+  util.system { config.values.git_binary, "switch", "master" }
+  util.system { config.values.git_binary, "config", "remote.origin.url", "git@github.com:example/example.git" }
+  util.system { config.values.git_binary, "config", "user.email", "test@neogit-test.test" }
+  util.system { config.values.git_binary, "config", "user.name", "Neogit Test" }
 
   return working_dir
 end
@@ -113,12 +114,12 @@ function M.get_current_branch()
 end
 
 function M.get_remotes()
-  local lines = exec { "git", "remote" }
+  local lines = exec { config.values.git_binary, "remote" }
   return lines
 end
 
 function M.get_remotes_url(remote)
-  local lines = exec { "git", "remote", "--get-url", remote }
+  local lines = exec { config.values.git_binary, "remote", "--get-url", remote }
   return lines[1]
 end
 
