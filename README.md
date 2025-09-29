@@ -51,7 +51,7 @@ Here's an example spec for [Lazy](https://github.com/folke/lazy.nvim), but you'r
     -- Only one of these is needed.
     "nvim-telescope/telescope.nvim", -- optional
     "ibhagwan/fzf-lua",              -- optional
-    "echasnovski/mini.pick",         -- optional
+    "nvim-mini/mini.pick",           -- optional
     "folke/snacks.nvim",             -- optional
   },
 }
