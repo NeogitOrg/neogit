@@ -179,6 +179,8 @@ function M.setup(config)
     NeogitSignatureGoodExpiredKey  = { link = "NeogitGraphYellow" },
     NeogitSignatureGoodRevokedKey  = { link = "NeogitGraphRed" },
     NeogitNormal                   = { link = "Normal" },
+    NeogitNormalFloat              = { link = "NeogitNormal" },
+    NeogitFloatBorder              = { link = "NeogitNormalFloat" },
     NeogitCursorLine               = { link = "CursorLine" },
     NeogitCursorLineNr             = { link = "CursorLineNr" },
     NeogitHunkMergeHeader          = { fg = palette.bg2, bg = palette.grey, bold = palette.bold },
