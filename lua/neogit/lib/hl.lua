@@ -181,6 +181,7 @@ function M.setup(config)
     NeogitNormal                   = { link = "Normal" },
     NeogitNormalFloat              = { link = "NeogitNormal" },
     NeogitFloatBorder              = { link = "NeogitNormalFloat" },
+    NeogitSignColumn               = { link = "NeogitNormal" },
     NeogitCursorLine               = { link = "CursorLine" },
     NeogitCursorLineNr             = { link = "CursorLineNr" },
     NeogitHunkMergeHeader          = { fg = palette.bg2, bg = palette.grey, bold = palette.bold },
