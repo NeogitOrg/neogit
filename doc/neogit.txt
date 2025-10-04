@@ -174,7 +174,7 @@ to Neovim users.
     initial_branch_name = "",
     -- Change the default way of opening neogit
     kind = "tab",
-    -- Floating window style 
+    -- Floating window style
     floating = {
       relative = "editor",
       width = 0.8,
@@ -680,12 +680,17 @@ these yourself before the plugin loads, that will be respected. If they do not
 exist, they will be created with sensible defaults based on your colorscheme.
 
 STATUS BUFFER
+NeogitNormal                Normal text
+NeogitFloat                 Normal text when using a floating window
+NeogitFloatBorder           Border wen using a floating window
 NeogitBranch                Local branches
 NeogitBranchHead            Accent highlight for current HEAD in LogBuffer
 NeogitRemote                Remote branches
 NeogitObjectId              Object's SHA hash
 NeogitStash                 Stash name
 NeogitFold                  Folded text highlight
+NeogitFoldColumn            Column where folds are displayed
+NeogitSignColumn            Column where signs are displayed
 NeogitRebaseDone            Current position within rebase
 NeogitTagName               Closest Tag name
 NeogitTagDistance           Number of commits between the tag and HEAD
@@ -2256,7 +2261,7 @@ Customizing Popups                                        *neogit_custom_popups*
 
 You can customize existing popups via the Neogit config.
 
-Below is an example of adding a custom switch, but you can use any function 
+Below is an example of adding a custom switch, but you can use any function
 from the builder API.
 >lua
     require("neogit").setup({
