@@ -121,6 +121,11 @@ neogit.setup {
       commit = "",
       tree = "",
     },
+    ["codeberg.org"] = {
+      pull_request = "https://codeberg.org/${owner}/${repository}/compare/${branch_name}",
+      commit = "https://github.com/${owner}/${repository}/commit/${oid}",
+      tree = "https://${host}/${owner}/${repository}/src/branch/${branch_name}",
+    },
   },
   -- Allows a different telescope sorter. Defaults to 'fuzzy_with_index_bias'. The example below will use the native fzf
   -- sorter instead. By default, this function returns `nil`.
