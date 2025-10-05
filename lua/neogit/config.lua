@@ -430,8 +430,8 @@ function M.get_default_values()
         tree = "",
       },
       ["codeberg.org"] = {
-        pull_request = "https://codeberg.org/${owner}/${repository}/compare/${branch_name}",
-        commit = "https://github.com/${owner}/${repository}/commit/${oid}",
+        pull_request = "https://${host}/${owner}/${repository}/compare/${branch_name}",
+        commit = "https://${host}/${owner}/${repository}/commit/${oid}",
         tree = "https://${host}/${owner}/${repository}/src/branch/${branch_name}",
       },
     },
