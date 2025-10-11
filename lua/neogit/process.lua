@@ -115,6 +115,20 @@ function Process.hide_preview_buffers()
   end
 end
 
+function Process.close_git_hook_buffers()
+  for _, v in pairs(processes) do
+    if v.git_hook then
+      v:close()
+    end
+  end
+end
+
+function Process:close()
+  if self.buffer then
+    self.buffer:close()
+  end
+end
+
 function Process:show_console()
   if self.buffer then
     self.buffer:show()

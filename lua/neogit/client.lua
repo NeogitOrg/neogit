@@ -77,6 +77,10 @@ function M.editor(target, client, show_diff)
   logger.debug(("[CLIENT] Invoked editor with target: %s, from: %s"):format(target, client))
   require("neogit.process").hide_preview_buffers()
 
+  if config.values.auto_close_console then
+    require("neogit.process").close_git_hook_buffers()
+  end
+
   local rpc_client = RPC.create_connection(client)
 
   ---on_unload callback when closing editor
