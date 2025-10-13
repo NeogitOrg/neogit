@@ -712,6 +712,7 @@ function Buffer.create(config)
 
   logger.debug("[BUFFER:" .. buffer.handle .. "] Setting buffer options")
   buffer:set_buffer_option("swapfile", false)
+  buffer:set_buffer_option("modeline", false)
   buffer:set_buffer_option("bufhidden", config.bufhidden or "wipe")
   buffer:set_buffer_option("modifiable", config.modifiable or false)
   buffer:set_buffer_option("modified", config.modifiable or false)
