@@ -1365,7 +1365,7 @@ Actions:                                           *neogit_commit_popup_actions*
   • Alter                                                  *neogit_commit_alter*
     Create a squash commit, authoring the final message now.
 
-    During a later rebase, when this commit gets squashed into it's targeted
+    During a later rebase, when this commit gets squashed into its targeted
     commit, the original message of the targeted commit is replaced with the
     message of this commit, without the user automatically being given a
     chance to edit it again.
@@ -1373,8 +1373,8 @@ Actions:                                           *neogit_commit_popup_actions*
     `git commit --fixup=amend:COMMIT --edit`
 
   • Revise                                                *neogit_commit_revise*
-    Reword the message of an existing commit, without editing it's tree.
-    Later, when the commit is squashed into it's targeted commit, a combined
+    Reword the message of an existing commit, without editing its tree.
+    Later, when the commit is squashed into its targeted commit, a combined
     commit is created which uses the message of the fixup commit and the tree
     of the targeted commit.
 
@@ -1610,7 +1610,7 @@ Actions:                                             *neogit_pull_popup_actions*
     pulled from and used to set `branch.<name>.pushRemote`.
 
   • Pull into <current> from @{upstream}                  *neogit_pull_upstream*
-    Pulls into the current branch from it's upstream counterpart. If that is
+    Pulls into the current branch from its upstream counterpart. If that is
     unset, the user will be prompted to select a remote branch, which will
     pulled from and set as the upstream.
 
@@ -1680,7 +1680,7 @@ Actions:                                             *neogit_push_popup_actions*
     and pushed to.
 
   • Push <current> to @{upstream}                         *neogit_push_upstream*
-    Pushes the current branch to it's upstream branch. If not set, then the
+    Pushes the current branch to its upstream branch. If not set, then the
     user will be prompted to select a remote, which will be set as the
     current branch's upstream and pushed to.
 
@@ -1802,13 +1802,13 @@ Arguments:                                            *neogit_rebase_popup_args*
 
 Actions:                                           *neogit_rebase_popup_actions*
   • Rebase onto pushRemote                            *neogit_rebase_pushRemote*
-    This action rebases the current branch onto it's pushRemote.
+    This action rebases the current branch onto its pushRemote.
 
     When the pushRemote is not configured, then the user can first set it
     before rebasing.
 
   • Rebase onto upstream                                *neogit_rebase_upstream*
-    This action rebases the current branch onto it's upstream branch.
+    This action rebases the current branch onto its upstream branch.
 
     When the upstream is not configured, then the user can first set it
     before rebasing.
@@ -2198,7 +2198,7 @@ Popup Builder                                             *neogit_popup_builder*
 
 You can leverage Neogit's infrastructure to create your own popups and
 actions. For example, you can define actions as a function which will take the
-popup instance as it's argument:
+popup instance as its argument:
 >lua
     local function my_action(popup)
       -- You can access the popup state (enabled flags) like so:
@@ -2226,7 +2226,7 @@ popup instance as it's argument:
         -- A switch is a boolean CLI flag, like `--no-verify`
         :switch("s", "my-switch", "My switch")
         -- An "_if" variant exists for builder methods, that takes a boolean
-        -- as it's first argument.
+        -- as its first argument.
         :switch_if(true, "S", "conditional-switch", "This switch is conditional")
         -- Options are CLI flags that have a value, like `--strategy=octopus`
         :option("o", "my-option", "default_value", "My option", { key_prefix = "-" })
