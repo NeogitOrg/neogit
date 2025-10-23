@@ -345,6 +345,7 @@ end
 ---@field graph_style? NeogitGraphStyle Style for graph
 ---@field commit_date_format? string Commit date format
 ---@field log_date_format? string Log date format
+---@field log_pager? [string] Log pager
 ---@field disable_hint? boolean Remove the top hint in the Status buffer
 ---@field disable_context_highlighting? boolean Disable context highlights based on cursor position
 ---@field disable_signs? boolean Special signs to draw for sections etc. in Neogit
@@ -401,6 +402,7 @@ function M.get_default_values()
     graph_style = "ascii",
     commit_date_format = nil,
     log_date_format = nil,
+    log_pager = nil,
     process_spinner = false,
     filewatcher = {
       enabled = true,
