@@ -21,5 +21,5 @@ RSpec.describe "Margin Popup", :git, :nvim, :popup do # rubocop:disable RSpec/Em
     ]
   end
 
-  %w[L l d].each { include_examples "interaction", _1 }
+  %w[L l d g x].each { include_examples "interaction", _1 }
 end
