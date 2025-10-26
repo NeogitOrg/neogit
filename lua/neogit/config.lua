@@ -135,6 +135,11 @@ end
 ---@field folded boolean Whether or not this section should be open or closed by default
 ---@field hidden boolean Whether or not this section should be shown
 
+---@class NeogitTodoConfigSection A section to show in the Neogit Status buffer, e.g. Staged/Unstaged/Untracked
+---@field folded boolean Whether or not this section should be open or closed by default
+---@field hidden boolean Whether or not this section should be shown
+---@field keywords { [string]: string } Dictionary of keywords to search for (key) and the highlight to apply (value)
+
 ---@class NeogitConfigSections
 ---@field untracked NeogitConfigSection|nil
 ---@field unstaged NeogitConfigSection|nil
@@ -148,6 +153,7 @@ end
 ---@field rebase NeogitConfigSection|nil
 ---@field sequencer NeogitConfigSection|nil
 ---@field bisect NeogitConfigSection|nil
+---@field todo NeogitTodoConfigSection|nil
 
 ---@class HighlightOptions
 ---@field italic?     boolean
@@ -585,6 +591,16 @@ function M.get_default_values()
         folded = true,
         hidden = false,
       },
+      todo = {
+        folded = true,
+        hidden = false,
+        keywords = {
+          ["TODO"] = "NeogitGraphBoldBlue",
+          ["NOTE"] = "NeogitGraphBoldGreen",
+          ["FIXME"] = "NeogitGraphBoldRed",
+          ["HACK"] = "NeogitGraphBoldOrange",
+        },
+      },
     },
     ignored_settings = {},
     mappings = {
@@ -872,6 +888,10 @@ function M.validate_config()
       validate_type(section, "section." .. section_name, "table")
       validate_type(section.folded, string.format("section.%s.folded", section_name), "boolean")
       validate_type(section.hidden, string.format("section.%s.hidden", section_name), "boolean")
+
+      if section_name == "todo" then
+        validate_type(section.keywords, "section.todo.keywords", "table")
+      end
     end
   end
 
@@ -1313,6 +1333,10 @@ function M.setup(opts)
         end
       end
     end
+  end
+
+  if opts.sections.todo and type(opts.sections.todo.keywords) == "table" then
+    M.values.sections.todo.keywords = opts.sections.todo.keywords
   end
 
   M.values = vim.tbl_deep_extend("force", M.values, opts)
