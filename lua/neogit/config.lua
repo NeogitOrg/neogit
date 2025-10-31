@@ -341,6 +341,7 @@ end
 ---@field tree? string
 
 ---@class NeogitConfig Neogit configuration settings
+---@field git_binary? string The main binary to use git command with
 ---@field filewatcher? NeogitFilewatcherConfig Values for filewatcher
 ---@field graph_style? NeogitGraphStyle Style for graph
 ---@field commit_date_format? string Commit date format
@@ -393,6 +394,7 @@ end
 ---@return NeogitConfig
 function M.get_default_values()
   return {
+    git_binary = "git",
     use_default_keymaps = true,
     disable_hint = false,
     disable_context_highlighting = false,

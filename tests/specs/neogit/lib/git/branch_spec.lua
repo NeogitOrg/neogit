@@ -4,6 +4,7 @@ local git_harness = require("tests.util.git_harness")
 local neogit_util = require("neogit.lib.util")
 local util = require("tests.util.util")
 local input = require("tests.mocks.input")
+local config = require("neogit.config")
 
 neogit.setup {}
 
@@ -30,35 +31,35 @@ pending("lib.git.branch", function()
     end)
 
     it("returns true when feature branch has commits base branch doesn't", function()
-      util.system { "git", "checkout", "-b", "a-new-branch" }
-      util.system { "git", "reset", "--hard", "origin/master" }
+      util.system { config.values.git_binary, "checkout", "-b", "a-new-branch" }
+      util.system { config.values.git_binary, "reset", "--hard", "origin/master" }
       util.system { "touch", "feature.js" }
-      util.system { "git", "add", "." }
-      util.system { "git", "commit", "-m", "some feature" }
+      util.system { config.values.git_binary, "add", "." }
+      util.system { config.values.git_binary, "commit", "-m", "some feature" }
 
       assert.True(gb.is_unmerged("a-new-branch"))
     end)
 
     it("returns false when feature branch is fully merged into base", function()
-      util.system { "git", "checkout", "-b", "a-new-branch" }
-      util.system { "git", "reset", "--hard", "origin/master" }
+      util.system { config.values.git_binary, "checkout", "-b", "a-new-branch" }
+      util.system { config.values.git_binary, "reset", "--hard", "origin/master" }
       util.system { "touch", "feature.js" }
-      util.system { "git", "add", "." }
-      util.system { "git", "commit", "-m", "some feature" }
-      util.system { "git", "switch", "master" }
-      util.system { "git", "merge", "a-new-branch" }
+      util.system { config.values.git_binary, "add", "." }
+      util.system { config.values.git_binary, "commit", "-m", "some feature" }
+      util.system { config.values.git_binary, "switch", "master" }
+      util.system { config.values.git_binary, "merge", "a-new-branch" }
 
       assert.False(gb.is_unmerged("a-new-branch"))
     end)
 
     it("allows specifying alternate base branch", function()
-      util.system { "git", "checkout", "-b", "main" }
-      util.system { "git", "checkout", "-b", "a-new-branch" }
+      util.system { config.values.git_binary, "checkout", "-b", "main" }
+      util.system { config.values.git_binary, "checkout", "-b", "a-new-branch" }
       util.system { "touch", "feature.js" }
-      util.system { "git", "add", "." }
-      util.system { "git", "commit", "-m", "some feature" }
-      util.system { "git", "switch", "master" }
-      util.system { "git", "merge", "a-new-branch" }
+      util.system { config.values.git_binary, "add", "." }
+      util.system { config.values.git_binary, "commit", "-m", "some feature" }
+      util.system { config.values.git_binary, "switch", "master" }
+      util.system { config.values.git_binary, "merge", "a-new-branch" }
 
       assert.True(gb.is_unmerged("a-new-branch", "main"))
       assert.False(gb.is_unmerged("a-new-branch", "master"))
@@ -73,12 +74,12 @@ pending("lib.git.branch", function()
 
     describe("when branch is unmerged", function()
       before_each(function()
-        util.system { "git", "checkout", "-b", "a-new-branch" }
-        util.system { "git", "reset", "--hard", "origin/master" }
+        util.system { config.values.git_binary, "checkout", "-b", "a-new-branch" }
+        util.system { config.values.git_binary, "reset", "--hard", "origin/master" }
         util.system { "touch", "feature.js" }
-        util.system { "git", "add", "." }
-        util.system { "git", "commit", "-m", "some feature" }
-        util.system { "git", "switch", "master" }
+        util.system { config.values.git_binary, "add", "." }
+        util.system { config.values.git_binary, "commit", "-m", "some feature" }
+        util.system { config.values.git_binary, "switch", "master" }
       end)
 
       -- These two tests seem to have a race condition where `input.confirmed` isn't set properly
@@ -99,7 +100,7 @@ pending("lib.git.branch", function()
 
     describe("when branch is merged", function()
       it("deletes branch", function()
-        util.system { "git", "branch", "a-new-branch" }
+        util.system { config.values.git_binary, "branch", "a-new-branch" }
 
         assert.True(gb.delete("a-new-branch"))
         assert.False(vim.tbl_contains(gb.get_local_branches(true), "a-new-branch"))
@@ -116,14 +117,14 @@ pending("lib.git.branch", function()
     it(
       "lists branches based on how recently they were checked out, excluding current & deduplicated",
       function()
-        util.system { "git", "checkout", "-b", "first" }
-        util.system { "git", "branch", "never-checked-out" }
-        util.system { "git", "checkout", "-b", "second" }
-        util.system { "git", "checkout", "-b", "third" }
-        util.system { "git", "switch", "master" }
-        util.system { "git", "switch", "second-branch" }
-        util.system { "git", "switch", "master" }
-        util.system { "git", "switch", "second-branch" }
+        util.system { config.values.git_binary, "checkout", "-b", "first" }
+        util.system { config.values.git_binary, "branch", "never-checked-out" }
+        util.system { config.values.git_binary, "checkout", "-b", "second" }
+        util.system { config.values.git_binary, "checkout", "-b", "third" }
+        util.system { config.values.git_binary, "switch", "master" }
+        util.system { config.values.git_binary, "switch", "second-branch" }
+        util.system { config.values.git_binary, "switch", "master" }
+        util.system { config.values.git_binary, "switch", "second-branch" }
 
         local branches_detected = gb.get_recent_local_branches()
         local branches = {
@@ -151,7 +152,7 @@ pending("lib.git.branch", function()
       }
 
       for _, branch in ipairs(branches) do
-        vim.system({ "git", "branch", branch }):wait()
+        vim.system({ config.values.git_binary, "branch", branch }):wait()
       end
 
       table.insert(branches, "master")
@@ -170,7 +171,7 @@ pending("lib.git.branch", function()
     end)
 
     it("properly detects all branches but the current branch", function()
-      vim.fn.system("git checkout master")
+      vim.fn.system(config.values.git_binary, " checkout master")
       if vim.v.shell_error ~= 0 then
         error("Failed to checkout master branch!")
       end

@@ -1,11 +1,27 @@
 local api = vim.api
 
 api.nvim_create_user_command("Neogit", function(o)
+  local config = require("neogit.config")
+  config.values.git_binary = "git"
   local neogit = require("neogit")
   neogit.open(require("neogit.lib.util").parse_command_args(o.fargs))
 end, {
   nargs = "*",
   desc = "Open Neogit",
+  complete = function(arglead)
+    local neogit = require("neogit")
+    return neogit.complete(arglead)
+  end,
+})
+
+api.nvim_create_user_command("NeogitYadm", function(o)
+  local config = require("neogit.config")
+  config.values.git_binary = "yadm"
+  local neogit = require("neogit")
+  neogit.open(require("neogit.lib.util").parse_command_args(o.fargs))
+end, {
+  nargs = "*",
+  desc = "Open Neogit with yadm",
   complete = function(arglead)
     local neogit = require("neogit")
     return neogit.complete(arglead)

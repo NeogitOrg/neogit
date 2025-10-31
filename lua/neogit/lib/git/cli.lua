@@ -3,6 +3,7 @@ local process = require("neogit.process")
 local util = require("neogit.lib.util")
 local Path = require("plenary.path")
 local runner = require("neogit.runner")
+local neogit = require("neogit")
 
 ---@class GitCommandSetup
 ---@field flags table|nil
@@ -983,7 +984,7 @@ local configurations = {
 ---@param dir string
 ---@return string Absolute path of current worktree
 local function worktree_root(dir)
-  local cmd = { "git", "-C", dir, "rev-parse", "--show-toplevel" }
+  local cmd = { neogit.config.values.git_binary, "-C", dir, "rev-parse", "--show-toplevel" }
   local result = vim.system(cmd, { text = true }):wait()
 
   return Path:new(vim.trim(result.stdout)):absolute()
@@ -992,7 +993,7 @@ end
 ---@param dir string
 ---@return string Absolute path of `.git/` directory
 local function git_dir(dir)
-  local cmd = { "git", "-C", dir, "rev-parse", "--git-common-dir" }
+  local cmd = { neogit.config.values.git_binary, "-C", dir, "rev-parse", "--git-common-dir" }
   local result = vim.system(cmd, { text = true }):wait()
 
   return Path:new(vim.trim(result.stdout)):absolute()
@@ -1001,7 +1002,7 @@ end
 ---@param dir string
 ---@return string Absolute path of `.git/` directory
 local function worktree_git_dir(dir)
-  local cmd = { "git", "-C", dir, "rev-parse", "--git-dir" }
+  local cmd = { neogit.config.values.git_binary, "-C", dir, "rev-parse", "--git-dir" }
   local result = vim.system(cmd, { text = true }):wait()
 
   return Path:new(vim.trim(result.stdout)):absolute()
@@ -1010,7 +1011,7 @@ end
 ---@param dir string
 ---@return boolean
 local function is_inside_worktree(dir)
-  local cmd = { "git", "-C", dir, "rev-parse", "--is-inside-work-tree" }
+  local cmd = { neogit.config.values.git_binary, "-C", dir, "rev-parse", "--is-inside-work-tree" }
   local result = vim.system(cmd):wait()
 
   return result.code == 0
@@ -1111,7 +1112,8 @@ local mt_builder = {
   end,
   __tostring = function(tbl)
     return string.format(
-      "git %s %s %s -- %s",
+      "%s %s %s %s -- %s",
+      neogit.config.values.git_binary,
       tbl[k_command],
       table.concat(tbl[k_state].options, " "),
       table.concat(tbl[k_state].arguments, " "),
@@ -1170,7 +1172,7 @@ local function new_builder(subcommand)
     -- stylua: ignore
     cmd = util.merge(
       {
-        "git",
+        neogit.config.values.git_binary,
         "--no-pager",
         "--literal-pathspecs",
         "--no-optional-locks",

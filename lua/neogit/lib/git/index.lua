@@ -1,6 +1,7 @@
 local git = require("neogit.lib.git")
 local Path = require("plenary.path")
 local util = require("neogit.lib.util")
+local config = require("neogit.config")
 
 ---@class NeogitGitIndex
 local M = {}
@@ -138,7 +139,7 @@ end
 function M.update()
   require("neogit.process")
     .new({
-      cmd = { "git", "update-index", "-q", "--refresh" },
+      cmd = { config.values.git_binary, "update-index", "-q", "--refresh" },
       on_error = function(_)
         return false
       end,
