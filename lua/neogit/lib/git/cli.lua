@@ -4,6 +4,13 @@ local util = require("neogit.lib.util")
 local Path = require("plenary.path")
 local runner = require("neogit.runner")
 
+---Get the configured git executable path
+---@return string
+local function get_git_executable()
+  local config = require("neogit.config")
+  return config.get_git_executable()
+end
+
 ---@class GitCommandSetup
 ---@field flags table|nil
 ---@field options table|nil
@@ -983,7 +990,7 @@ local configurations = {
 ---@param dir string
 ---@return string Absolute path of current worktree
 local function worktree_root(dir)
-  local cmd = { "git", "-C", dir, "rev-parse", "--show-toplevel" }
+  local cmd = { get_git_executable(), "-C", dir, "rev-parse", "--show-toplevel" }
   local result = vim.system(cmd, { text = true }):wait()
 
   return Path:new(vim.trim(result.stdout)):absolute()
@@ -992,7 +999,7 @@ end
 ---@param dir string
 ---@return string Absolute path of `.git/` directory
 local function git_dir(dir)
-  local cmd = { "git", "-C", dir, "rev-parse", "--git-common-dir" }
+  local cmd = { get_git_executable(), "-C", dir, "rev-parse", "--git-common-dir" }
   local result = vim.system(cmd, { text = true }):wait()
 
   return Path:new(vim.trim(result.stdout)):absolute()
@@ -1001,7 +1008,7 @@ end
 ---@param dir string
 ---@return string Absolute path of `.git/` directory
 local function worktree_git_dir(dir)
-  local cmd = { "git", "-C", dir, "rev-parse", "--git-dir" }
+  local cmd = { get_git_executable(), "-C", dir, "rev-parse", "--git-dir" }
   local result = vim.system(cmd, { text = true }):wait()
 
   return Path:new(vim.trim(result.stdout)):absolute()
@@ -1010,7 +1017,7 @@ end
 ---@param dir string
 ---@return boolean
 local function is_inside_worktree(dir)
-  local cmd = { "git", "-C", dir, "rev-parse", "--is-inside-work-tree" }
+  local cmd = { get_git_executable(), "-C", dir, "rev-parse", "--is-inside-work-tree" }
   local result = vim.system(cmd):wait()
 
   return result.code == 0
@@ -1170,7 +1177,7 @@ local function new_builder(subcommand)
     -- stylua: ignore
     cmd = util.merge(
       {
-        "git",
+        get_git_executable(),
         "--no-pager",
         "--literal-pathspecs",
         "--no-optional-locks",
