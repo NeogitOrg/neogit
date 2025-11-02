@@ -13,12 +13,12 @@ describe("git_executable configuration", function()
 
   describe("custom git_executable", function()
     it("should accept a custom git executable path", function()
-      config.setup({ git_executable = "/usr/local/bin/git" })
+      config.setup { git_executable = "/usr/local/bin/git" }
       assert.are.equal("/usr/local/bin/git", config.get_git_executable())
     end)
 
     it("should accept a git wrapper script", function()
-      config.setup({ git_executable = "/path/to/custom-git" })
+      config.setup { git_executable = "/path/to/custom-git" }
       assert.are.equal("/path/to/custom-git", config.get_git_executable())
     end)
   end)
