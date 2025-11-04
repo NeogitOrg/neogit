@@ -847,7 +847,7 @@ function Buffer.create(config)
       if buffer.header_win_handle ~= nil then
         vim.schedule(function()
           logger.debug("[BUFFER:" .. buffer.handle .. "] Closing header window")
-          api.nvim_win_close(buffer.header_win_handle, true)
+          pcall(api.nvim_win_close, buffer.header_win_handle, true)
         end)
       end
     end,
