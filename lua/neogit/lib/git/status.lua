@@ -94,11 +94,35 @@ local function update_status(state, filter)
     untracked_files = item_collection(state, "untracked", filter),
   }
 
-  state.staged.items = {}
-  state.untracked.items = {}
-  state.unstaged.items = {}
+  ---@param items StatusItem[]
+  ---@param predicate fun(item: StatusItem):boolean
+  local function remove_first_matching(items, predicate)
+    for i, v in ipairs(items) do
+      if predicate(v) then
+        table.remove(items, i)
+        return
+      end
+    end
+  end
 
-  local result = git.cli.status.null_separated.porcelain(2).call { hidden = true, remove_ansi = false }
+  local status_cmd = git.cli.status.null_separated.porcelain(2)
+  local file = filter[1].file
+  if file ~= "*" then
+    status_cmd.args(file)
+    ---@param item StatusItem
+    ---@return boolean
+    local function is_changed_file(item)
+      return item.name == file or item.original_name == file
+    end
+    remove_first_matching(state.staged.items, is_changed_file)
+    remove_first_matching(state.unstaged.items, is_changed_file)
+    remove_first_matching(state.untracked.items, is_changed_file)
+  else
+    state.staged.items = {}
+    state.untracked.items = {}
+    state.unstaged.items = {}
+  end
+  local result = status_cmd.call { hidden = true, remove_ansi = false }
   result = vim.split(result.stdout[1] or "", "\n")
   result = util.collect(result, function(line, collection)
     if line == "" then
