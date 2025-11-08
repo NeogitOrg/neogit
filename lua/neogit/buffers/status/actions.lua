@@ -212,7 +212,7 @@ M.v_discard = function(self)
         end
       end
 
-      self:dispatch_refresh({ update_diff = invalidated_diffs }, "v_discard")
+      self:dispatch_refresh({ update_diffs = invalidated_diffs }, "v_discard")
     end
   end)
 end
