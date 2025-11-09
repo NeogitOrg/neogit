@@ -3,6 +3,7 @@ local git = require("neogit.lib.git")
 local util = require("neogit.lib.util")
 local Collection = require("neogit.lib.collection")
 local logger = require("neogit.logger")
+local config = require("neogit.config")
 
 ---@class StatusItem
 ---@field mode string
@@ -107,7 +108,7 @@ local function update_status(state, filter)
 
   local status_cmd = git.cli.status.null_separated.porcelain(2)
   local file = filter[1].file
-  if file ~= "*" then
+  if config.values.status.fast and file ~= "*" then
     status_cmd.args(file)
     ---@param item StatusItem
     ---@return boolean
