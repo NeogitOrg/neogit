@@ -33,13 +33,18 @@ local function confirm_modifications()
 end
 
 local function do_commit(popup, cmd)
-  client.wrap(cmd.arg_list(popup:get_arguments()), {
+  cmd.arg_list(popup:get_arguments())
+  if config.values.commit_editor.fast then
+    local message = vim.fn.input("Commit message: ")
+    cmd.message(message)
+  end
+  client.wrap(cmd, {
     autocmd = "NeogitCommitComplete",
     msg = {
       success = "Committed",
       fail = "Commit failed",
     },
-    interactive = true,
+    interactive = not config.values.commit_editor.fast,
     show_diff = config.values.commit_editor.show_staged_diff,
   })
 end
@@ -105,9 +110,11 @@ local function commit_special(popup, method, opts)
 end
 
 function M.commit(popup)
-  if not git.status.anything_staged() and not allow_empty(popup) then
-    notification.warn("No changes to commit.")
-    return
+  if not config.values.commit_editor.fast then
+    if not git.status.anything_staged() and not allow_empty(popup) then
+      notification.warn("No changes to commit.")
+      return
+    end
   end
 
   do_commit(popup, git.cli.commit)
