@@ -185,8 +185,8 @@ local function snacks_confirm(on_select, allow_multi, refocus_status)
     local picker_selected = picker:selected { fallback = true }
 
     if #picker_selected == 0 then
-      complete(nil)
-      picker:close()
+      local prompt = picker:filter().pattern
+      table.insert(selection, prompt)
     elseif #picker_selected > 1 then
       for _, item in ipairs(picker_selected) do
         table.insert(selection, item.text)
@@ -340,6 +340,8 @@ function Finder:find(on_select)
       fzf_opts = fzf_opts(self.opts),
       winopts = {
         height = self.opts.layout_config.height,
+        border = self.opts.border,
+        preview = { border = self.opts.border },
       },
       actions = fzf_actions(on_select, self.opts.allow_multi, self.opts.refocus_status),
     })

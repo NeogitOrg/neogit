@@ -425,13 +425,17 @@ function M.register(meta)
     repo_state.recent = { items = {} }
 
     local count = config.values.status.recent_commit_count
-    local order = state.get({ "NeogitMarginPopup", "-order" }, "topo")
+    local order = state.get({ "NeogitMarginPopup", "-order" }, config.values.commit_order)
 
     if count > 0 then
-      repo_state.recent.items = util.filter_map(
-        M.list({ "--max-count=" .. tostring(count), "--" .. order .. "-order" }, {}, {}, true),
-        M.present_commit
-      )
+      local args = { "--max-count=" .. tostring(count) }
+      local graph = nil
+      if order and order ~= "" then
+        table.insert(args, "--" .. order .. "-order")
+        graph = {}
+      end
+
+      repo_state.recent.items = util.filter_map(M.list(args, graph, {}, false), M.present_commit)
     end
   end
 end
@@ -462,11 +466,18 @@ function M.present_commit(commit)
     return
   end
 
+  local is_shortstat = state.get({ "margin", "shortstat" }, false)
+  local shortstat
+  if is_shortstat then
+    shortstat = git.cli.show.format("").shortstat.args(commit.oid).call().stdout[1]
+  end
+
   return {
     name = string.format("%s %s", commit.abbreviated_commit, commit.subject or "<empty>"),
     decoration = M.branch_info(commit.ref_name, git.remote.list()),
     oid = commit.oid,
     commit = commit,
+    shortstat = shortstat,
   }
 end
 

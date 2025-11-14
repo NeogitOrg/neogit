@@ -363,75 +363,100 @@ local SectionItemCommit = Component.new(function(item)
 
   local virtual_text
 
-  -- Render author and date in margin, if visible
+  -- Render margin, if visible
   if state.get({ "margin", "visibility" }, false) then
-    local margin_date_style = state.get({ "margin", "date_style" }, 1)
-    local details = state.get({ "margin", "details" }, false)
+    local is_shortstat = state.get({ "margin", "shortstat" }, false)
 
-    local date
-    local rel_date
-    local date_width = 10
-    local clamp_width = 30 -- to avoid having too much space when relative date is short
+    if is_shortstat then
+      local cli_shortstat = item.shortstat
+      local files_changed
+      local insertions
+      local deletions
 
-    -- Render date
-    if item.commit.rel_date:match(" years?,") then
-      rel_date, _ = item.commit.rel_date:gsub(" years?,", "y")
-      rel_date = rel_date .. " "
-    elseif item.commit.rel_date:match("^%d ") then
-      rel_date = " " .. item.commit.rel_date
-    else
-      rel_date = item.commit.rel_date
-    end
+      files_changed = cli_shortstat:match("^ (%d+) files?")
+      files_changed = util.str_min_width(files_changed, 3, nil, { mode = "insert" })
+      insertions = cli_shortstat:match("(%d+) insertions?")
+      insertions = util.str_min_width(insertions and insertions .. "+" or " ", 5, nil, { mode = "insert" })
+      deletions = cli_shortstat:match("(%d+) deletions?")
+      deletions = util.str_min_width(deletions and deletions .. "-" or " ", 5, nil, { mode = "insert" })
 
-    if margin_date_style == 1 then -- relative date (short)
-      local unpacked = vim.split(rel_date, " ")
+      virtual_text = {
+        { " ", "Constant" },
+        { insertions, "NeogitDiffAdditions" },
+        { " ", "Constant" },
+        { deletions, "NeogitDiffDeletions" },
+        { " ", "Constant" },
+        { files_changed, "NeogitSubtleText" },
+      }
+    else -- Author & date margin
+      local margin_date_style = state.get({ "margin", "date_style" }, 1)
+      local details = state.get({ "margin", "details" }, false)
 
-      -- above, we added a space if the rel_date started with a single number
-      -- we get the last two elements to deal with that
-      local date_number = unpacked[#unpacked - 1]
-      local date_quantifier = unpacked[#unpacked]
-      if date_quantifier:match("months?") then
-        date_quantifier = date_quantifier:gsub("m", "M") -- to distinguish from minutes
-      end
+      local date
+      local rel_date
+      local date_width = 10
+      local clamp_width = 30 -- to avoid having too much space when relative date is short
 
-      -- add back the space if we have a single number
-      local left_pad
-      if #unpacked > 2 then
-        left_pad = " "
+      -- Render date
+      if item.commit.rel_date:match(" years?,") then
+        rel_date, _ = item.commit.rel_date:gsub(" years?,", "y")
+        rel_date = rel_date .. " "
+      elseif item.commit.rel_date:match("^%d ") then
+        rel_date = " " .. item.commit.rel_date
       else
-        left_pad = ""
+        rel_date = item.commit.rel_date
       end
 
-      date = left_pad .. date_number .. date_quantifier:sub(1, 1)
-      date_width = 3
-      clamp_width = 23
-    elseif margin_date_style == 2 then -- relative date (long)
-      date = rel_date
-      date_width = 10
-    else -- local iso date
-      if config.values.log_date_format == nil then
-        -- we get the unix date to be able to convert the date to the local timezone
-        date = os.date("%Y-%m-%d %H:%M", item.commit.unix_date)
-        date_width = 16 -- TODO: what should the width be here?
-      else
-        date = item.commit.log_date
-        date_width = 16
-      end
-    end
+      if margin_date_style == 1 then -- relative date (short)
+        local unpacked = vim.split(rel_date, " ")
 
-    local author_table = { "" }
-    if details then
-      author_table = {
-        util.str_clamp(item.commit.author_name, clamp_width - (#date > date_width and #date or date_width)),
-        "NeogitGraphAuthor",
+        -- above, we added a space if the rel_date started with a single number
+        -- we get the last two elements to deal with that
+        local date_number = unpacked[#unpacked - 1]
+        local date_quantifier = unpacked[#unpacked]
+        if date_quantifier:match("months?") then
+          date_quantifier = date_quantifier:gsub("m", "M") -- to distinguish from minutes
+        end
+
+        -- add back the space if we have a single number
+        local left_pad
+        if #unpacked > 2 then
+          left_pad = " "
+        else
+          left_pad = ""
+        end
+
+        date = left_pad .. date_number .. date_quantifier:sub(1, 1)
+        date_width = 3
+        clamp_width = 23
+      elseif margin_date_style == 2 then -- relative date (long)
+        date = rel_date
+        date_width = 10
+      else -- local iso date
+        if config.values.log_date_format == nil then
+          -- we get the unix date to be able to convert the date to the local timezone
+          date = os.date("%Y-%m-%d %H:%M", item.commit.unix_date)
+          date_width = 16 -- TODO: what should the width be here?
+        else
+          date = item.commit.log_date
+          date_width = 16
+        end
+      end
+
+      local author_table = { "" }
+      if details then
+        author_table = {
+          util.str_clamp(item.commit.author_name, clamp_width - (#date > date_width and #date or date_width)),
+          "NeogitGraphAuthor",
+        }
+      end
+
+      virtual_text = {
+        { " ", "Constant" },
+        author_table,
+        { util.str_min_width(date, date_width), "Special" },
       }
     end
-
-    virtual_text = {
-      { " ", "Constant" },
-      author_table,
-      { util.str_min_width(date, date_width), "Special" },
-    }
   end
 
   return row(

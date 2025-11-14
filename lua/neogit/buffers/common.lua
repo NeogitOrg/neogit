@@ -109,10 +109,18 @@ M.List = Component.new(function(props)
   return container.tag("List")(children)
 end)
 
-local function build_graph(graph)
+---@return Component[]
+local function build_graph(graph, opts)
+  opts = opts or { remove_dots = false }
+
   if type(graph) == "table" then
     return util.map(graph, function(g)
-      return text(g.text, { highlight = string.format("NeogitGraph%s", g.color) })
+      local char = g.text
+      if opts.remove_dots and vim.tbl_contains({ "", "", "", "", "•" }, char) then
+        char = ""
+      end
+
+      return text(char, { highlight = string.format("NeogitGraph%s", g.color) })
     end)
   else
     return { text(graph, { highlight = "Include" }) }
@@ -190,10 +198,9 @@ M.CommitEntry = Component.new(function(commit, remotes, args)
     commit.rel_date = " " .. commit.rel_date
   end
 
-  local graph = args.graph and build_graph(commit.graph) or { text("") }
-
   local details
   if args.details then
+    local graph = args.graph and build_graph(commit.graph, { remove_dots = true }) or { text("") }
     details = col.padding_left(#commit.abbreviated_commit + 1) {
       row(util.merge(graph, {
         text(" "),
@@ -249,6 +256,7 @@ M.CommitEntry = Component.new(function(commit, remotes, args)
   end
 
   local date = (config.values.log_date_format == nil and commit.rel_date or commit.log_date)
+  local graph = args.graph and build_graph(commit.graph) or { text("") }
 
   return col.tag("commit")({
     row(

@@ -94,6 +94,8 @@ to Neovim users.
     disable_context_highlighting = false,
     -- Disables signs for sections/items/hunks
     disable_signs = false,
+    -- Path to git executable. Defaults to "git". Can be used to specify a custom git binary or wrapper script.
+    git_executable = "git",
     -- Offer to force push when branches diverge
     prompt_force_push = true,
     -- Changes what mode the Commit Editor starts in. `true` will leave nvim in normal mode, `false` will change nvim to
@@ -113,12 +115,33 @@ to Neovim users.
     -- Show relative date by default. When set, use `strftime` to display dates
     commit_date_format = nil,
     log_date_format = nil,
-    -- Used to generate URL's for branch popup action "pull request".
+    -- Used to generate URL's for branch popup action "pull request" or opening a commit.
     git_services = {
-        ["github.com"] = "https://github.com/${owner}/${repository}/compare/${branch_name}?expand=1",
-        ["bitbucket.org"] = "https://bitbucket.org/${owner}/${repository}/pull-requests/new?source=${branch_name}&t=1",
-        ["gitlab.com"] = "https://gitlab.com/${owner}/${repository}/merge_requests/new?merge_request[source_branch]=${branch_name}",
-        ["azure.com"] = "https://dev.azure.com/${owner}/_git/${repository}/pullrequestcreate?sourceRef=${branch_name}&targetRef=${target}",
+        ["github.com"] = {
+            pull_request = "https://github.com/${owner}/${repository}/compare/${branch_name}?expand=1",
+            commit = "https://github.com/${owner}/${repository}/commit/${oid}",
+            tree = "https://${host}/${owner}/${repository}/tree/${branch_name}",
+        },
+        ["bitbucket.org"] = {
+            pull_request = "https://bitbucket.org/${owner}/${repository}/pull-requests/new?source=${branch_name}&t=1",
+            commit = "https://bitbucket.org/${owner}/${repository}/commits/${oid}",
+            tree = "https://bitbucket.org/${owner}/${repository}/branch/${branch_name}",
+        },
+        ["gitlab.com"] = {
+            pull_request = "https://gitlab.com/${owner}/${repository}/merge_requests/new?merge_request[source_branch]=${branch_name}",
+            commit = "https://gitlab.com/${owner}/${repository}/-/commit/${oid}",
+            tree = "https://gitlab.com/${owner}/${repository}/-/tree/${branch_name}?ref_type=heads",
+        },
+        ["azure.com"] = {
+            pull_request = "https://dev.azure.com/${owner}/_git/${repository}/pullrequestcreate?sourceRef=${branch_name}&targetRef=${target}",
+            commit = "",
+            tree = "",
+        },
+        ["codeberg.org"] = {
+          pull_request = "https://${host}/${owner}/${repository}/compare/${branch_name}",
+          commit = "https://${host}/${owner}/${repository}/commit/${oid}",
+          tree = "https://${host}/${owner}/${repository}/src/branch/${branch_name}",
+        },
     },
     -- Allows a different telescope sorter. Defaults to 'fuzzy_with_index_bias'. The example below will use the native fzf
     -- sorter instead. By default, this function returns `nil`.
@@ -147,11 +170,18 @@ to Neovim users.
     -- Flag description: https://git-scm.com/docs/git-branch#Documentation/git-branch.txt---sortltkeygt
     -- Sorting keys: https://git-scm.com/docs/git-for-each-ref#_options
     sort_branches = "-committerdate",
+    -- Value passed to the `--<commit_order>-order` flag of the `git log` command
+    -- Determines how commits are traversed and displayed in the log / graph:
+    --   "topo"         topological order (parents always before children, good for graphs, slower on large repos)
+    --   "date"         chronological order by commit date
+    --   "author-date"  chronological order by author date
+    --   ""             disable explicit ordering (fastest, recommended for very large repos)
+    commit_order = "topo"
     -- Default for new branch name prompts
     initial_branch_name = "",
     -- Change the default way of opening neogit
     kind = "tab",
-    -- Floating window style 
+    -- Floating window style
     floating = {
       relative = "editor",
       width = 0.8,
@@ -658,12 +688,17 @@ these yourself before the plugin loads, that will be respected. If they do not
 exist, they will be created with sensible defaults based on your colorscheme.
 
 STATUS BUFFER
+NeogitNormal                Normal text
+NeogitFloat                 Normal text when using a floating window
+NeogitFloatBorder           Border wen using a floating window
 NeogitBranch                Local branches
 NeogitBranchHead            Accent highlight for current HEAD in LogBuffer
 NeogitRemote                Remote branches
 NeogitObjectId              Object's SHA hash
 NeogitStash                 Stash name
 NeogitFold                  Folded text highlight
+NeogitFoldColumn            Column where folds are displayed
+NeogitSignColumn            Column where signs are displayed
 NeogitRebaseDone            Current position within rebase
 NeogitTagName               Closest Tag name
 NeogitTagDistance           Number of commits between the tag and HEAD
@@ -1333,7 +1368,7 @@ Actions:                                           *neogit_commit_popup_actions*
   • Alter                                                  *neogit_commit_alter*
     Create a squash commit, authoring the final message now.
 
-    During a later rebase, when this commit gets squashed into it's targeted
+    During a later rebase, when this commit gets squashed into its targeted
     commit, the original message of the targeted commit is replaced with the
     message of this commit, without the user automatically being given a
     chance to edit it again.
@@ -1341,8 +1376,8 @@ Actions:                                           *neogit_commit_popup_actions*
     `git commit --fixup=amend:COMMIT --edit`
 
   • Revise                                                *neogit_commit_revise*
-    Reword the message of an existing commit, without editing it's tree.
-    Later, when the commit is squashed into it's targeted commit, a combined
+    Reword the message of an existing commit, without editing its tree.
+    Later, when the commit is squashed into its targeted commit, a combined
     commit is created which uses the message of the fixup commit and the tree
     of the targeted commit.
 
@@ -1578,7 +1613,7 @@ Actions:                                             *neogit_pull_popup_actions*
     pulled from and used to set `branch.<name>.pushRemote`.
 
   • Pull into <current> from @{upstream}                  *neogit_pull_upstream*
-    Pulls into the current branch from it's upstream counterpart. If that is
+    Pulls into the current branch from its upstream counterpart. If that is
     unset, the user will be prompted to select a remote branch, which will
     pulled from and set as the upstream.
 
@@ -1648,7 +1683,7 @@ Actions:                                             *neogit_push_popup_actions*
     and pushed to.
 
   • Push <current> to @{upstream}                         *neogit_push_upstream*
-    Pushes the current branch to it's upstream branch. If not set, then the
+    Pushes the current branch to its upstream branch. If not set, then the
     user will be prompted to select a remote, which will be set as the
     current branch's upstream and pushed to.
 
@@ -1770,13 +1805,13 @@ Arguments:                                            *neogit_rebase_popup_args*
 
 Actions:                                           *neogit_rebase_popup_actions*
   • Rebase onto pushRemote                            *neogit_rebase_pushRemote*
-    This action rebases the current branch onto it's pushRemote.
+    This action rebases the current branch onto its pushRemote.
 
     When the pushRemote is not configured, then the user can first set it
     before rebasing.
 
   • Rebase onto upstream                                *neogit_rebase_upstream*
-    This action rebases the current branch onto it's upstream branch.
+    This action rebases the current branch onto its upstream branch.
 
     When the upstream is not configured, then the user can first set it
     before rebasing.
@@ -2166,7 +2201,7 @@ Popup Builder                                             *neogit_popup_builder*
 
 You can leverage Neogit's infrastructure to create your own popups and
 actions. For example, you can define actions as a function which will take the
-popup instance as it's argument:
+popup instance as its argument:
 >lua
     local function my_action(popup)
       -- You can access the popup state (enabled flags) like so:
@@ -2194,7 +2229,7 @@ popup instance as it's argument:
         -- A switch is a boolean CLI flag, like `--no-verify`
         :switch("s", "my-switch", "My switch")
         -- An "_if" variant exists for builder methods, that takes a boolean
-        -- as it's first argument.
+        -- as its first argument.
         :switch_if(true, "S", "conditional-switch", "This switch is conditional")
         -- Options are CLI flags that have a value, like `--strategy=octopus`
         :option("o", "my-option", "default_value", "My option", { key_prefix = "-" })
@@ -2234,7 +2269,7 @@ Customizing Popups                                        *neogit_custom_popups*
 
 You can customize existing popups via the Neogit config.
 
-Below is an example of adding a custom switch, but you can use any function 
+Below is an example of adding a custom switch, but you can use any function
 from the builder API.
 >lua
     require("neogit").setup({

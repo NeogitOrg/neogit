@@ -63,6 +63,10 @@ function M.onto_branch(branch, args)
 end
 
 function M.onto(start, newbase, args)
+  if vim.tbl_contains(args, "--root") then
+    start = ""
+  end
+
   local result = rebase_command(git.cli.rebase.onto.args(newbase, start).arg_list(args))
   if result:failure() then
     notification.error("Rebasing failed. Resolve conflicts before continuing")

@@ -44,6 +44,7 @@ Here's an example spec for [Lazy](https://github.com/folke/lazy.nvim), but you'r
 ```lua
 {
   "NeogitOrg/neogit",
+  lazy = true,
   dependencies = {
     "nvim-lua/plenary.nvim",         -- required
     "sindrets/diffview.nvim",        -- optional - Diff integration
@@ -51,15 +52,76 @@ Here's an example spec for [Lazy](https://github.com/folke/lazy.nvim), but you'r
     -- Only one of these is needed.
     "nvim-telescope/telescope.nvim", -- optional
     "ibhagwan/fzf-lua",              -- optional
-    "echasnovski/mini.pick",         -- optional
+    "nvim-mini/mini.pick",           -- optional
     "folke/snacks.nvim",             -- optional
   },
+  cmd = "Neogit",
+  keys = {
+    { "<leader>gg", "<cmd>Neogit<cr>", desc = "Show Neogit UI" }
+  }
 }
 ```
 
-## Compatibility
+## Usage
 
-The `master` branch will always be compatible with the latest **stable** release of Neovim, and usually with the latest **nightly** build as well.
+You can either open Neogit by using the `Neogit` command:
+
+```vim
+:Neogit             " Open the status buffer in a new tab
+:Neogit cwd=<cwd>   " Use a different repository path
+:Neogit cwd=%:p:h   " Uses the repository of the current file
+:Neogit kind=<kind> " Open specified popup directly
+:Neogit commit      " Open commit popup
+
+" Map it to a key
+nnoremap <leader>gg <cmd>Neogit<cr>
+```
+
+```lua
+-- Or via lua api
+vim.keymap.set("n", "<leader>gg", "<cmd>Neogit<cr>", { desc = "Open Neogit UI" })
+```
+
+Or using the lua api:
+
+```lua
+local neogit = require('neogit')
+
+-- open using defaults
+neogit.open()
+
+-- open a specific popup
+neogit.open({ "commit" })
+
+-- open as a split
+neogit.open({ kind = "split" })
+
+-- open with different project
+neogit.open({ cwd = "~" })
+
+-- You can map this to a key
+vim.keymap.set("n", "<leader>gg", neogit.open, { desc = "Open Neogit UI" })
+
+-- Wrap in a function to pass additional arguments
+vim.keymap.set(
+    "n",
+    "<leader>gg",
+    function() neogit.open({ kind = "split" }) end,
+    { desc = "Open Neogit UI" }
+)
+```
+
+The `kind` option can be one of the following values:
+- `tab`      (default)
+- `replace`
+- `split`
+- `split_above`
+- `split_above_all`
+- `split_below`
+- `split_below_all`
+- `vsplit`
+- `floating`
+- `auto` (`vsplit` if window would have 80 cols, otherwise `split`)
 
 ## Configuration
 
@@ -78,6 +140,8 @@ neogit.setup {
   disable_context_highlighting = false,
   -- Disables signs for sections/items/hunks
   disable_signs = false,
+  -- Path to git executable. Defaults to "git". Can be used to specify a custom git binary or wrapper script.
+  git_executable = "git",
   -- Offer to force push when branches diverge
   prompt_force_push = true,
   -- Changes what mode the Commit Editor starts in. `true` will leave nvim in normal mode, `false` will change nvim to
@@ -99,12 +163,33 @@ neogit.setup {
   log_date_format = nil,
   -- Show message with spinning animation when a git command is running.
   process_spinner = false,
-  -- Used to generate URL's for branch popup action "pull request".
+  -- Used to generate URL's for branch popup action "pull request", "open commit" and "open tree"
   git_services = {
-    ["github.com"] = "https://github.com/${owner}/${repository}/compare/${branch_name}?expand=1",
-    ["bitbucket.org"] = "https://bitbucket.org/${owner}/${repository}/pull-requests/new?source=${branch_name}&t=1",
-    ["gitlab.com"] = "https://gitlab.com/${owner}/${repository}/merge_requests/new?merge_request[source_branch]=${branch_name}",
-    ["azure.com"] = "https://dev.azure.com/${owner}/_git/${repository}/pullrequestcreate?sourceRef=${branch_name}&targetRef=${target}",
+    ["github.com"] = {
+      pull_request = "https://github.com/${owner}/${repository}/compare/${branch_name}?expand=1",
+      commit = "https://github.com/${owner}/${repository}/commit/${oid}",
+      tree = "https://${host}/${owner}/${repository}/tree/${branch_name}",
+    },
+    ["bitbucket.org"] = {
+      pull_request = "https://bitbucket.org/${owner}/${repository}/pull-requests/new?source=${branch_name}&t=1",
+      commit = "https://bitbucket.org/${owner}/${repository}/commits/${oid}",
+      tree = "https://bitbucket.org/${owner}/${repository}/branch/${branch_name}",
+    },
+    ["gitlab.com"] = {
+      pull_request = "https://gitlab.com/${owner}/${repository}/merge_requests/new?merge_request[source_branch]=${branch_name}",
+      commit = "https://gitlab.com/${owner}/${repository}/-/commit/${oid}",
+      tree = "https://gitlab.com/${owner}/${repository}/-/tree/${branch_name}?ref_type=heads",
+    },
+    ["azure.com"] = {
+      pull_request = "https://dev.azure.com/${owner}/_git/${repository}/pullrequestcreate?sourceRef=${branch_name}&targetRef=${target}",
+      commit = "",
+      tree = "",
+    },
+    ["codeberg.org"] = {
+      pull_request = "https://${host}/${owner}/${repository}/compare/${branch_name}",
+      commit = "https://${host}/${owner}/${repository}/commit/${oid}",
+      tree = "https://${host}/${owner}/${repository}/src/branch/${branch_name}",
+    },
   },
   -- Allows a different telescope sorter. Defaults to 'fuzzy_with_index_bias'. The example below will use the native fzf
   -- sorter instead. By default, this function returns `nil`.
@@ -133,6 +218,13 @@ neogit.setup {
   -- Flag description: https://git-scm.com/docs/git-branch#Documentation/git-branch.txt---sortltkeygt
   -- Sorting keys: https://git-scm.com/docs/git-for-each-ref#_options
   sort_branches = "-committerdate",
+  -- Value passed to the `--<commit_order>-order` flag of the `git log` command
+  -- Determines how commits are traversed and displayed in the log / graph:
+  --   "topo"         topological order (parents always before children, good for graphs, slower on large repos)
+  --   "date"         chronological order by commit date
+  --   "author-date"  chronological order by author date
+  --   ""             disable explicit ordering (fastest, recommended for very large repos)
+  commit_order = "topo"
   -- Default for new branch name prompts
   initial_branch_name = "",
   -- Change the default way of opening neogit
@@ -424,47 +516,6 @@ neogit.setup {
 ```
 </details>
 
-## Usage
-
-You can either open Neogit by using the `Neogit` command:
-
-```vim
-:Neogit             " Open the status buffer in a new tab
-:Neogit cwd=<cwd>   " Use a different repository path
-:Neogit cwd=%:p:h   " Uses the repository of the current file
-:Neogit kind=<kind> " Open specified popup directly
-:Neogit commit      " Open commit popup
-```
-
-Or using the lua api:
-
-```lua
-local neogit = require('neogit')
-
--- open using defaults
-neogit.open()
-
--- open a specific popup
-neogit.open({ "commit" })
-
--- open as a split
-neogit.open({ kind = "split" })
-
--- open with different project
-neogit.open({ cwd = "~" })
-```
-
-The `kind` option can be one of the following values:
-- `tab`      (default)
-- `replace`
-- `split`
-- `split_above`
-- `split_above_all`
-- `split_below`
-- `split_below_all`
-- `vsplit`
-- `floating`
-- `auto` (`vsplit` if window would have 80 cols, otherwise `split`)
 
 ## Popups
 
@@ -524,6 +575,10 @@ Neogit emits the following events:
 ## Versioning
 
 Neogit follows semantic versioning.
+
+## Compatibility
+
+The `master` branch will always be compatible with the latest **stable** release of Neovim, and usually with the latest **nightly** build as well.
 
 ## Contributing
 

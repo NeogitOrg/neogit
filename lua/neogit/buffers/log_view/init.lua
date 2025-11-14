@@ -6,6 +6,8 @@ local status_maps = require("neogit.config").get_reversed_status_maps()
 local CommitViewBuffer = require("neogit.buffers.commit_view")
 local util = require("neogit.lib.util")
 local a = require("plenary.async")
+local notification = require("neogit.lib.notification")
+local git = require("neogit.lib.git")
 
 ---@class LogViewBuffer
 ---@field commits CommitLogEntry[]
@@ -127,6 +129,25 @@ function M:open()
         end),
       },
       n = {
+        ["o"] = function()
+          if not vim.ui.open then
+            notification.warn("Requires Neovim >= 0.10")
+            return
+          end
+
+          local oid = self.buffer.ui:get_commit_under_cursor()
+          if not oid then
+            return
+          end
+
+          local uri = git.remote.commit_url(oid)
+          if uri then
+            notification.info(("Opening %q in your browser."):format(uri))
+            vim.ui.open(uri)
+          else
+            notification.warn("Couldn't determine commit URL to open")
+          end
+        end,
         [popups.mapping_for("BisectPopup")] = popups.open("bisect", function(p)
           p { commits = { self.buffer.ui:get_commit_under_cursor() } }
         end),

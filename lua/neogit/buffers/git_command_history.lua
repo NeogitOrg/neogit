@@ -11,8 +11,9 @@ local text = Ui.text
 local col = Ui.col
 local row = Ui.row
 
-local command_mask =
-  vim.pesc(" --no-pager --literal-pathspecs --no-optional-locks -c core.preloadindex=true -c color.ui=always")
+local command_mask = vim.pesc(
+  " --no-pager --literal-pathspecs --no-optional-locks -c core.preloadindex=true -c color.ui=always -c diff.noprefix=false"
+)
 
 local M = {}
 

@@ -310,6 +310,12 @@ end
 ---| "ascii"
 ---| "unicode"
 ---| "kitty"
+---
+---@alias NeogitCommitOrder
+---| ""
+---| "topo"
+---| "author-date"
+---| "date"
 
 ---@class NeogitConfigStatusOptions
 ---@field recent_commit_count? integer The number of recent commits to display
@@ -329,16 +335,22 @@ end
 ---@field commit_editor_I? { [string]: NeogitConfigMappingsCommitEditor_I } A dictionary that uses Commit editor commands to set a single keybind
 ---@field refs_view? { [string]: NeogitConfigMappingsRefsView } A dictionary that uses Refs view editor commands to set a single keybind
 
+---@class NeogitConfigGitService
+---@field pull_request? string
+---@field commit? string
+---@field tree? string
+
 ---@class NeogitConfig Neogit configuration settings
 ---@field filewatcher? NeogitFilewatcherConfig Values for filewatcher
 ---@field graph_style? NeogitGraphStyle Style for graph
+---@field git_executable? string Path to git executable (defaults to "git")
 ---@field commit_date_format? string Commit date format
 ---@field log_date_format? string Log date format
 ---@field disable_hint? boolean Remove the top hint in the Status buffer
 ---@field disable_context_highlighting? boolean Disable context highlights based on cursor position
 ---@field disable_signs? boolean Special signs to draw for sections etc. in Neogit
 ---@field prompt_force_push? boolean Offer to force push when branches diverge
----@field git_services? table Templartes to use when opening a pull request for a branch
+---@field git_services? NeogitConfigGitService[] Templates to use when opening a pull request for a branch, or commit
 ---@field fetch_after_checkout? boolean Perform a fetch if the newly checked out branch has an upstream or pushRemote set
 ---@field telescope_sorter? function The sorter telescope will use
 ---@field process_spinner? boolean Hide/Show the process spinner
@@ -346,6 +358,7 @@ end
 ---@field use_per_project_settings? boolean Scope persisted settings on a per-project basis
 ---@field remember_settings? boolean Whether neogit should persist flags from popups, e.g. git push flags
 ---@field sort_branches? string Value used for `--sort` for the `git branch` command
+---@field commit_order? NeogitCommitOrder Value used for `--<commit_order>-order` for the `git log` command
 ---@field initial_branch_name? string Default for new branch name prompts
 ---@field kind? WindowKind The default type of window neogit should open in
 ---@field floating? NeogitConfigFloating The floating window style
@@ -397,17 +410,40 @@ function M.get_default_values()
       return nil
     end,
     git_services = {
-      ["github.com"] = "https://github.com/${owner}/${repository}/compare/${branch_name}?expand=1",
-      ["bitbucket.org"] = "https://bitbucket.org/${owner}/${repository}/pull-requests/new?source=${branch_name}&t=1",
-      ["gitlab.com"] = "https://gitlab.com/${owner}/${repository}/merge_requests/new?merge_request[source_branch]=${branch_name}",
-      ["azure.com"] = "https://dev.azure.com/${owner}/_git/${repository}/pullrequestcreate?sourceRef=${branch_name}&targetRef=${target}",
+      ["github.com"] = {
+        pull_request = "https://github.com/${owner}/${repository}/compare/${branch_name}?expand=1",
+        commit = "https://github.com/${owner}/${repository}/commit/${oid}",
+        tree = "https://${host}/${owner}/${repository}/tree/${branch_name}",
+      },
+      ["bitbucket.org"] = {
+        pull_request = "https://bitbucket.org/${owner}/${repository}/pull-requests/new?source=${branch_name}&t=1",
+        commit = "https://bitbucket.org/${owner}/${repository}/commits/${oid}",
+        tree = "https://bitbucket.org/${owner}/${repository}/branch/${branch_name}",
+      },
+      ["gitlab.com"] = {
+        pull_request = "https://gitlab.com/${owner}/${repository}/merge_requests/new?merge_request[source_branch]=${branch_name}",
+        commit = "https://gitlab.com/${owner}/${repository}/-/commit/${oid}",
+        tree = "https://gitlab.com/${owner}/${repository}/-/tree/${branch_name}?ref_type=heads",
+      },
+      ["azure.com"] = {
+        pull_request = "https://dev.azure.com/${owner}/_git/${repository}/pullrequestcreate?sourceRef=${branch_name}&targetRef=${target}",
+        commit = "",
+        tree = "",
+      },
+      ["codeberg.org"] = {
+        pull_request = "https://${host}/${owner}/${repository}/compare/${branch_name}",
+        commit = "https://${host}/${owner}/${repository}/commit/${oid}",
+        tree = "https://${host}/${owner}/${repository}/src/branch/${branch_name}",
+      },
     },
     highlight = {},
+    git_executable = "git",
     disable_insert_on_commit = "auto",
     use_per_project_settings = true,
     remember_settings = true,
     fetch_after_checkout = false,
     sort_branches = "-committerdate",
+    commit_order = "topo",
     kind = "tab",
     floating = {
       relative = "editor",
@@ -1149,6 +1185,7 @@ function M.validate_config()
     validate_type(config.disable_hint, "disable_hint", "boolean")
     validate_type(config.disable_context_highlighting, "disable_context_highlighting", "boolean")
     validate_type(config.disable_signs, "disable_signs", "boolean")
+    validate_type(config.git_executable, "git_executable", "string")
     validate_type(config.telescope_sorter, "telescope_sorter", "function")
     validate_type(config.use_per_project_settings, "use_per_project_settings", "boolean")
     validate_type(config.remember_settings, "remember_settings", "boolean")
@@ -1221,6 +1258,15 @@ function M.validate_config()
       validate_kind(config.popup.kind, "popup.kind")
     end
 
+    if validate_type(config.git_services, "git_services", "table") then
+      for k, v in pairs(config.git_services) do
+        validate_type(v, "git_services." .. k, "table")
+        validate_type(v.pull_request, "git_services." .. k .. ".pull_request", "string")
+        validate_type(v.commit, "git_services." .. k .. ".commit", "string")
+        validate_type(v.tree, "git_services." .. k .. ".tree", "string")
+      end
+    end
+
     validate_integrations()
     validate_sections()
     validate_ignored_settings()
@@ -1229,6 +1275,12 @@ function M.validate_config()
   end
 
   return errors
+end
+
+---Get the configured git executable path
+---@return string The git executable path
+function M.get_git_executable()
+  return M.values.git_executable
 end
 
 ---@param name string
@@ -1253,8 +1305,14 @@ function M.setup(opts)
   end
 
   if opts.use_default_keymaps == false then
-    M.values.mappings =
-      { status = {}, popup = {}, finder = {}, commit_editor = {}, rebase_editor = {}, refs_view = {} }
+    M.values.mappings = {
+      status = {},
+      popup = {},
+      finder = {},
+      commit_editor = {},
+      rebase_editor = {},
+      refs_view = {},
+    }
   else
     -- Clear our any "false" user mappings from defaults
     for section, maps in pairs(opts.mappings or {}) do
