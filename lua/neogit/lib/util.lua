@@ -633,4 +633,15 @@ function M.try(fn, ...)
   end
 end
 
+---@param str string
+---@param prefix string
+---@return string
+function M.remove_prefix(str, prefix)
+  if str:sub(1, #prefix) == prefix then
+    return str:sub(#prefix + 1)
+  else
+    return str
+  end
+end
+
 return M
