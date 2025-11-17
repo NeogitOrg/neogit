@@ -33,12 +33,7 @@ local function confirm_modifications()
 end
 
 local function do_commit(popup, cmd)
-  cmd.arg_list(popup:get_arguments())
-  if config.values.commit_editor.fast then
-    local message = vim.fn.input("Commit message: ")
-    cmd.message(message)
-  end
-  client.wrap(cmd, {
+  client.wrap(cmd.arg_list(popup:get_arguments()), {
     autocmd = "NeogitCommitComplete",
     msg = {
       success = "Committed",
