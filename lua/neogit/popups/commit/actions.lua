@@ -39,7 +39,7 @@ local function do_commit(popup, cmd)
       success = "Committed",
       fail = "Commit failed",
     },
-    interactive = not config.values.commit_editor.fast,
+    interactive = true,
     show_diff = config.values.commit_editor.show_staged_diff,
   })
 end
