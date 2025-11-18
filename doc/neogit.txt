@@ -391,6 +391,10 @@ The following mappings can all be customized via the setup function.
         ["<c-c><c-k>"] = "Abort",
       }
 
+      commit_view = {
+        ["a"]          = "OpenFileInWorktree",
+      }
+
       rebase_editor = {
         ["p"]          = "Pick",
         ["r"]          = "Reword",
@@ -2171,7 +2175,32 @@ Reflog Buffer                                             *neogit_reflog_buffer*
 
 ==============================================================================
 Commit Buffer                                             *neogit_commit_buffer*
-(TODO)
+The commit buffer shows a single commit, including metadata, summary, and an
+inline diff. It opens via |:NeogitCommit|, from log/graph views, or when
+pressing `<cr>` on a commit hash elsewhere in Neogit.
+
+Mappings (normal mode):
+  • `a`          (|neogit_setup_mappings|: "OpenFileInWorktree" in commit_view)
+                 On a diff hunk, try to jump to that location in the worktree
+                 (i.e. current version of the file).
+                 Note: it can fail if the file no longer exists or it can take
+                 you to a wrong location in the file if the lines have been
+                 moved around.
+  • `<cr>`       On a diff hunk, open the file contents from the commit in a
+                 temporary read-only tab, or the parent revision for deleted
+                 lines; on a filepath line, jump to that file's diff section
+                 within the buffer.
+  • `o`          Open the commit in the configured git service (requires
+                 Neovim >= 0.10 for |vim.ui.open|).
+  • `{` / `}`    Jump to previous/next hunk or diff header.
+  • `q` / `<esc>` Close the commit buffer (keys are configurable via
+                 |neogit_setup_mappings| for the commit view).
+  • `Y`          Yank the current commit hash to the clipboard.
+  • `za` / `<tab>` Toggle folding for the current section.
+  • Popup shortcuts honour |neogit_setup_mappings|, default keys:
+      - `A` Cherry-pick, `b` Branch, `B` Bisect, `c` Commit, `d` Diff,
+        `f` Fetch, `i` Ignore, `l` Log, `m` Merge, `p` Pull, `P` Push,
+        `r` Rebase, `t` Tag, `v` Revert, `w` Worktree, `X` Reset, `Z` Stash.
 
 ==============================================================================
 Refs Buffer                                                 *neogit_refs_buffer*
