@@ -388,6 +388,7 @@ neogit.setup {
     recent = {
       folded = true,
       hidden = false,
+      always = false,
     },
     rebase = {
       folded = true,
