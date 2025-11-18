@@ -8,6 +8,7 @@ local input = require("neogit.lib.input")
 local notification = require("neogit.lib.notification")
 local util = require("neogit.lib.util")
 local config = require("neogit.config")
+local jump = require("neogit.lib.jump")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
@@ -53,7 +54,7 @@ end
 
 ---@param self StatusBuffer
 ---@param item StatusItem
----@return table|nil
+---@return integer[]|nil
 local function translate_cursor_location(self, item)
   if rawget(item, "diff") then
     local line = self.buffer:cursor_line()
@@ -61,33 +62,17 @@ local function translate_cursor_location(self, item)
     for _, hunk in ipairs(item.diff.hunks) do
       if line >= hunk.first and line <= hunk.last then
         local offset = line - hunk.first
-        local row = hunk.disk_from + offset - 1
-
-        for i = 1, offset do
-          -- If the line is a deletion, we need to adjust the row
-          if string.sub(hunk.lines[i], 1, 1) == "-" then
-            row = row - 1
-          end
+        local location = jump.translate_hunk_location(hunk, offset)
+        if location then
+          return { location.new, 0 }
         end
-
-        return { row, 0 }
       end
     end
   end
 end
 
 local function open(type, path, cursor)
-  local command = ("silent! %s %s | %s"):format(type, fn.fnameescape(path), cursor and cursor[1] or "1")
-
-  logger.debug("[Status - Open] '" .. command .. "'")
-
-  vim.cmd(command)
-
-  command = "redraw! | norm! zz"
-
-  logger.debug("[Status - Open] '" .. command .. "'")
-
-  vim.cmd(command)
+  jump.open(type, path, cursor, "[Status - Open]")
 end
 
 local M = {}
