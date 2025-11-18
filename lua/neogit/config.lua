@@ -63,6 +63,11 @@ function M.get_reversed_commit_editor_maps_I()
 end
 
 ---@return table<string, string[]>
+function M.get_reversed_commit_view_maps()
+  return get_reversed_maps("commit_view")
+end
+
+---@return table<string, string[]>
 function M.get_reversed_refs_view_maps()
   return get_reversed_maps("refs_view")
 end
@@ -590,6 +595,9 @@ function M.get_default_values()
     },
     ignored_settings = {},
     mappings = {
+      commit_view = {
+        ["a"] = "OpenFileInWorktree",
+      },
       commit_editor = {
         ["q"] = "Close",
         ["<c-c><c-c>"] = "Submit",
