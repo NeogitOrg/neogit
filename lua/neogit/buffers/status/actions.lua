@@ -62,10 +62,8 @@ local function translate_cursor_location(self, item)
     for _, hunk in ipairs(item.diff.hunks) do
       if line >= hunk.first and line <= hunk.last then
         local offset = line - hunk.first
-        local location = jump.translate_hunk_location(hunk, offset)
-        if location then
-          return { location.new, 0 }
-        end
+        local row = jump.adjust_row(hunk.disk_from, offset, hunk.lines, "-")
+        return { row, 0 }
       end
     end
   end
