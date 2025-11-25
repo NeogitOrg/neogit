@@ -2,6 +2,8 @@ local git = require("neogit.lib.git")
 local Path = require("plenary.path")
 local util = require("neogit.lib.util")
 
+local LINE_ENDING = (vim.fn.has("win32") == 1 or vim.fn.has("win64") == 1) and "\r\n" or "\n"
+
 ---@class NeogitGitIndex
 local M = {}
 
@@ -64,9 +66,9 @@ function M.generate_patch(hunk, opts)
 
   table.insert(diff_content, 1, string.format("+++ b/%s", path))
   table.insert(diff_content, 1, string.format("--- a/%s", path))
-  table.insert(diff_content, "\n")
+  table.insert(diff_content, LINE_ENDING)
 
-  return table.concat(diff_content, "\n")
+  return table.concat(diff_content, LINE_ENDING)
 end
 
 ---@param patch string diff generated with M.generate_patch
