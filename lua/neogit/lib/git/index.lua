@@ -2,7 +2,16 @@ local git = require("neogit.lib.git")
 local Path = require("plenary.path")
 local util = require("neogit.lib.util")
 
-local LINE_ENDING = (vim.fn.has("win32") == 1 or vim.fn.has("win64") == 1) and "\r\n" or "\n"
+---@param path string
+---@return string
+local function eol_character(path)
+  local lines = vim.fn.readfile(path, "b", 1)
+  if (lines[1] and lines[1]:find("\r")) then
+    return "\r\n"
+  else
+    return "\n"
+  end
+end
 
 ---@class NeogitGitIndex
 local M = {}
@@ -63,12 +72,13 @@ function M.generate_patch(hunk, opts)
   assert(hunk.file, "hunk has no filepath")
 
   local path = Path:new(hunk.file):make_relative(worktree_root)
+  local eol = eol_character(path)
 
   table.insert(diff_content, 1, string.format("+++ b/%s", path))
   table.insert(diff_content, 1, string.format("--- a/%s", path))
-  table.insert(diff_content, LINE_ENDING)
+  table.insert(diff_content, eol)
 
-  return table.concat(diff_content, LINE_ENDING)
+  return table.concat(diff_content, eol)
 end
 
 ---@param patch string diff generated with M.generate_patch
