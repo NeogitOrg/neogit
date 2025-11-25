@@ -14,7 +14,7 @@ local M = {}
 ---@param lines string[]
 ---@param adjust_on string
 ---@return integer
-local function adjust_row(start_line, offset, lines, adjust_on)
+function M.adjust_row(start_line, offset, lines, adjust_on)
   local row = start_line + offset - 1
 
   for i = 1, offset do
@@ -39,8 +39,8 @@ function M.translate_hunk_location(hunk, offset)
   end
 
   return {
-    old = adjust_row(hunk.disk_from, offset, hunk.lines, "+"),
-    new = adjust_row(hunk.index_from, offset, hunk.lines, "-"),
+    old = M.adjust_row(hunk.disk_from, offset, hunk.lines, "+"),
+    new = M.adjust_row(hunk.index_from, offset, hunk.lines, "-"),
     line = hunk.lines[offset] or "",
   }
 end
