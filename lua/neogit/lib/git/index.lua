@@ -6,7 +6,7 @@ local util = require("neogit.lib.util")
 ---@return string
 local function eol_character(path)
   local lines = vim.fn.readfile(path, "b", 1)
-  if (lines[1] and lines[1]:find("\r")) then
+  if lines[1] and lines[1]:find("\r") then
     return "\r\n"
   else
     return "\n"
