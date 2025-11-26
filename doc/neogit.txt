@@ -392,6 +392,7 @@ The following mappings can all be customized via the setup function.
       }
 
       commit_view = {
+        ["<cr>"]       = "OpenFileInCommit",
         ["a"]          = "OpenFileInWorktree",
       }
 
@@ -2187,10 +2188,13 @@ Mappings (normal mode):
                  you to a wrong location in the file if the lines have been
                  moved around.
 
-  • `<cr>`       On a diff hunk, open the file contents from the commit in a
-                 temporary read-only tab, or the parent revision for deleted
-                 lines; on a filepath line, jump to that file's diff section
-                 within the buffer.
+  • `<cr>`       (|neogit_setup_mappings|: "OpenFileInCommit" in commit_view)
+                 When the cursor is on a diff hunk, opens the version of the
+                 file as it exists in the commit in a temporary read-only
+                 buffer (or the parent revision if the lines were deleted).
+
+  • `<cr>`       On a filepath line, jump to that file's diff section within
+                 the buffer.
 
   • `o`          Open the commit in the configured git service (requires
                  Neovim >= 0.10 for |vim.ui.open|).
