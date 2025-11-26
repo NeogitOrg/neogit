@@ -5,6 +5,9 @@ local util = require("neogit.lib.util")
 ---@param path string
 ---@return string
 local function eol_character(path)
+  if not Path:new(path):exists() then
+    return (vim.fn.has("win32") == 1 or vim.fn.has("win64") == 1) and "\r\n" or "\n"
+  end
   local lines = vim.fn.readfile(path, "b", 1)
   if lines[1] and lines[1]:find("\r") then
     return "\r\n"
