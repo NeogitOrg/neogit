@@ -2186,17 +2186,28 @@ Mappings (normal mode):
                  Note: it can fail if the file no longer exists or it can take
                  you to a wrong location in the file if the lines have been
                  moved around.
+
   • `<cr>`       On a diff hunk, open the file contents from the commit in a
                  temporary read-only tab, or the parent revision for deleted
                  lines; on a filepath line, jump to that file's diff section
                  within the buffer.
+
   • `o`          Open the commit in the configured git service (requires
                  Neovim >= 0.10 for |vim.ui.open|).
-  • `{` / `}`    Jump to previous/next hunk or diff header.
-  • `q` / `<esc>` Close the commit buffer (keys are configurable via
-                 |neogit_setup_mappings| for the commit view).
-  • `Y`          Yank the current commit hash to the clipboard.
+
+  • `{` / `}`      Jump to previous/next hunk or diff header.
+
+  • `q` / `<esc>`  Close the commit buffer (keys are configurable via
+               |neogit_setup_mappings| for the commit view).
+
+  • `Y`          Opens the Yank popup, allowing copying of different details
+               from the commit.
+
+               note: To copy only a specific hunk's diff, place the
+               cursor within that hunk.
+
   • `za` / `<tab>` Toggle folding for the current section.
+
   • Popup shortcuts honour |neogit_setup_mappings|, default keys:
       - `A` Cherry-pick, `b` Branch, `B` Bisect, `c` Commit, `d` Diff,
         `f` Fetch, `i` Ignore, `l` Log, `m` Merge, `p` Pull, `P` Push,
