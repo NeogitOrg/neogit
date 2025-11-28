@@ -24,6 +24,7 @@ RSpec.describe "Commit Buffer", :git, :nvim do
 
   it "can yank oid" do
     nvim.keys("YY")
+    sleep(1) if ENV["CI"].present?
     yank = nvim.cmd("echo @*").first
     expect(yank).to match(/[0-9a-f]{40}/)
   end
