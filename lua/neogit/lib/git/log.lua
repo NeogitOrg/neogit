@@ -20,7 +20,7 @@ local commit_header_pat = "([| ]*)(%*?)([| ]*)commit (%w+)"
 ---@field committer_name string the name of the committer
 ---@field committer_email string the email of the committer
 ---@field committer_date string when the committer committed
----@field description string a list of lines
+---@field description string[] a list of lines
 ---@field commit_arg string the passed argument of the git command
 ---@field subject string
 ---@field parent string

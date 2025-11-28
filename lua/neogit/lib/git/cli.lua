@@ -136,6 +136,7 @@ end
 ---@field n self
 ---@field list self
 ---@field delete self
+---@field points_at fun(oid: string): self
 
 ---@class GitCommandRebase: GitCommandBuilder
 ---@field interactive self
@@ -556,6 +557,13 @@ local configurations = {
       n = "-n",
       list = "--list",
       delete = "--delete",
+    },
+    aliases = {
+      points_at = function(tbl)
+        return function(oid)
+          return tbl.args("--points-at", oid)
+        end
+      end,
     },
   },
 

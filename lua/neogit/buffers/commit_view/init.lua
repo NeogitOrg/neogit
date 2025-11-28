@@ -8,6 +8,7 @@ local commit_view_maps = require("neogit.config").get_reversed_commit_view_maps(
 local status_maps = require("neogit.config").get_reversed_status_maps()
 local notification = require("neogit.lib.notification")
 local jump = require("neogit.lib.jump")
+local util = require("neogit.lib.util")
 
 local api = vim.api
 
@@ -425,11 +426,50 @@ function M:open(kind)
         ["<esc>"] = function()
           self:close()
         end,
-        [status_maps["YankSelected"]] = function()
-          local yank = string.format("'%s'", self.commit_info.oid)
-          vim.cmd.let("@+=" .. yank)
-          vim.cmd.echo(yank)
-        end,
+        [status_maps["YankSelected"]] = popups.open("yank", function(p)
+          -- If the cursor is over a specific hunk, just copy that diff.
+          local diff
+          local c = self.buffer.ui:get_component_under_cursor(function(c)
+            return c.options.hunk ~= nil
+          end)
+
+          if c then
+            local hunks = util.flat_map(self.commit_info.diffs, function(diff)
+              return diff.hunks
+            end)
+
+            for _, hunk in ipairs(hunks) do
+              if hunk.hash == c.options.hunk.hash then
+                diff = table.concat(util.merge({ hunk.line }, hunk.lines), "\n")
+                break
+              end
+            end
+          end
+
+          -- If for some reason we don't find the specific hunk, or there isn't one, fall-back to the entire patch.
+          if not diff then
+            diff = table.concat(
+              vim.tbl_map(function(diff)
+                return table.concat(diff.lines, "\n")
+              end, self.commit_info.diffs),
+              "\n"
+            )
+          end
+
+          p {
+            hash = self.commit_info.oid,
+            subject = self.commit_info.description[1],
+            message = table.concat(self.commit_info.description, "\n"),
+            body = table.concat(
+              util.slice(self.commit_info.description, 2, #self.commit_info.description),
+              "\n"
+            ),
+            url = git.remote.commit_url(self.commit_info.oid),
+            diff = diff,
+            author = ("%s <%s>"):format(self.commit_info.author_name, self.commit_info.author_email),
+            tags = table.concat(git.tag.for_commit(self.commit_info.oid), ", "),
+          }
+        end),
         [status_maps["Toggle"]] = function()
           pcall(vim.cmd, "normal! za")
         end,
