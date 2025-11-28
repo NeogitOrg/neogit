@@ -17,9 +17,60 @@ RSpec.describe "Commit Buffer", :git, :nvim do
     expect(nvim.filetype).to eq("NeogitLogView")
   end
 
-  it "can yank OID" do
+  it "can open Yank popup" do
     nvim.keys("Y")
-    expect(nvim.screen.last.strip).to match(/\A[a-f0-9]{40}\z/)
+    expect(nvim.filetype).to eq("NeogitPopup")
+  end
+
+  it "can yank oid" do
+    nvim.keys("YY")
+    yank = nvim.cmd("echo @*").first
+    expect(yank).to match(/[0-9a-f]{40}/)
+  end
+
+  it "can yank author" do
+    nvim.keys("Ya")
+    yank = nvim.cmd("echo @*").first
+    expect(yank).to eq("tester <test@example.com>")
+  end
+
+  it "can yank subject" do
+    nvim.keys("Ys")
+    yank = nvim.cmd("echo @*").first
+    expect(yank).to eq("Initial commit")
+  end
+
+  it "can yank message" do
+    nvim.keys("Ym")
+    yank = nvim.cmd("echo @*")
+    expect(yank).to contain_exactly("Initial commit\n", "commit message")
+  end
+
+  it "can yank body" do
+    nvim.keys("Yb")
+    yank = nvim.cmd("echo @*").first
+    expect(yank).to eq("commit message")
+  end
+
+  it "can yank diff" do
+    nvim.keys("Yd")
+    yank = nvim.cmd("echo @*")
+    expect(yank).to contain_exactly("@@ -0,0 +1 @@\n", "+hello, world")
+  end
+
+  it "can yank tag" do
+    git.add_tag("test-tag", "HEAD")
+    nvim.keys("Yt")
+    yank = nvim.cmd("echo @*").first
+    expect(yank).to eq("test-tag")
+  end
+
+  it "can yank tags" do
+    git.add_tag("test-tag-a", "HEAD")
+    git.add_tag("test-tag-b", "HEAD")
+    nvim.keys("Yt")
+    yank = nvim.cmd("echo @*").first
+    expect(yank).to eq("test-tag-a, test-tag-b")
   end
 
   it "can open the bisect popup" do
