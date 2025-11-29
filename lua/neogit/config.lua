@@ -104,6 +104,7 @@ end
 ---@class NeogitCommitBufferConfig Commit buffer options
 ---@field kind WindowKind The type of window that should be opened
 ---@field verify_commit boolean Show commit signature information in the buffer
+---@field cr_on_hunk_jumps_to_current boolean If true, interchanges the behaviour of <cr> on a hunk with the OpenFileInWorktree map
 
 ---@class NeogitConfigPopup Popup window options
 ---@field kind WindowKind The type of window that should be opened
@@ -506,6 +507,7 @@ function M.get_default_values()
     commit_view = {
       kind = "vsplit",
       verify_commit = vim.fn.executable("gpg") == 1,
+      cr_on_hunk_jumps_to_current = false,
     },
     log_view = {
       kind = "tab",

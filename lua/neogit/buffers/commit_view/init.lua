@@ -219,6 +219,8 @@ local function is_jumpable_hunk_line_component(c)
     or c.options.line_hl == "NeogitDiffDelete"
 end
 
+local CR_jumps_to_worktree_file = config.values.commit_view.cr_on_hunk_jumps_to_current == true
+
 ---Opens the CommitViewBuffer
 ---If already open will close the buffer
 ---@param kind? string
@@ -263,7 +265,7 @@ function M:open(kind)
             return is_jumpable_hunk_line_component(c)
           end)
           if c then
-            diff_visit_file(self, c, true)
+            diff_visit_file(self, c, not CR_jumps_to_worktree_file)
           end
         end,
         ["<cr>"] = function()
@@ -276,7 +278,7 @@ function M:open(kind)
           end
 
           if is_jumpable_hunk_line_component(c) then
-            diff_visit_file(self, c, false)
+            diff_visit_file(self, c, CR_jumps_to_worktree_file)
             return
           end
 

@@ -242,6 +242,7 @@ to Neovim users.
     commit_view = {
         kind = "vsplit",
         verify_commit = vim.fn.executable("gpg") == 1, -- Can be set to true or false, otherwise we try to find the binary
+        cr_on_hunk_jumps_to_current = false,
     },
     log_view = {
         kind = "tab",
@@ -2191,6 +2192,9 @@ Mappings (normal mode):
                  temporary read-only tab, or the parent revision for deleted
                  lines; on a filepath line, jump to that file's diff section
                  within the buffer.
+                 Note: if the option `commit_view.cr_on_hunk_jumps_to_current`
+                 is set to true, `<cr>` will behave as `a` (i.e. jump to the
+                 file in the current worktree) and vice versa.
 
   • `o`          Open the commit in the configured git service (requires
                  Neovim >= 0.10 for |vim.ui.open|).

@@ -276,6 +276,7 @@ neogit.setup {
   commit_view = {
     kind = "vsplit",
     verify_commit = vim.fn.executable("gpg") == 1, -- Can be set to true or false, otherwise we try to find the binary
+    cr_on_hunk_jumps_to_current = false,
   },
   log_view = {
     kind = "tab",
