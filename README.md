@@ -1,17 +1,3 @@
-<div align="center" markdown="1">
-   <br>
-   <br>
-   <a href="https://www.warp.dev/neogit">
-      <img alt="Warp sponsorship" width="600" src="https://github.com/user-attachments/assets/c58acc85-7438-46a7-a89a-0f404c269256">
-   </a>
-
-### [Warp, the intelligent terminal for developers](https://www.warp.dev/neogit)
-#### [Try running neogit in Warp](https://www.warp.dev/neogit)<br>
-
-</div>
-
-<hr>
-
 <div align="center">
     <div>
         <div><img src="https://github.com/NeogitOrg/neogit/assets/7228095/7684545f-47b5-40e2-aedd-ccf56e0553f4" width="400px"/></div>
