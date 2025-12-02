@@ -22,6 +22,21 @@ M.__index = M
 
 local instances = {}
 
+vim.api.nvim_create_autocmd("BufWritePost", {
+  pattern = "*",
+  callback = function(args)
+    if not config.values.status.fast then
+      return
+    end
+
+    for _, buf in pairs(instances) do
+      buf:refresh {
+        update_diffs = { "*:" .. args.file },
+      }
+    end
+  end,
+})
+
 ---@param instance StatusBuffer
 ---@param dir string
 function M.register(instance, dir)
