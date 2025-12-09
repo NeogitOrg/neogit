@@ -210,7 +210,7 @@ neogit.setup {
   --   "date"         chronological order by commit date
   --   "author-date"  chronological order by author date
   --   ""             disable explicit ordering (fastest, recommended for very large repos)
-  commit_order = "topo"
+  commit_order = "topo",
   -- Default for new branch name prompts
   initial_branch_name = "",
   -- Change the default way of opening neogit
