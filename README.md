@@ -482,6 +482,7 @@ neogit.setup {
       ["y"] = "ShowRefs",
       ["$"] = "CommandHistory",
       ["Y"] = "YankSelected",
+      ["gp"] = "GoToParentRepo",
       ["<c-r>"] = "RefreshBuffer",
       ["<cr>"] = "GoToFile",
       ["<s-cr>"] = "PeekFile",

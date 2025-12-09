@@ -84,6 +84,8 @@ end
 ---@field null_separated self
 ---@field porcelain fun(string): self
 
+---@class GitCommandSubmodule: GitCommandBuilder
+
 ---@class GitCommandLog: GitCommandBuilder
 ---@field oneline self
 ---@field branches self
@@ -321,6 +323,7 @@ end
 ---@field no_flags self
 ---@field symbolic self
 ---@field symbolic_full_name self
+---@field show_superproject_working_tree self
 ---@field abbrev_ref fun(ref: string): self
 
 ---@class GitCommandCherryPick: GitCommandBuilder
@@ -374,6 +377,7 @@ end
 ---@field show-ref       GitCommandShowRef
 ---@field stash          GitCommandStash
 ---@field status         GitCommandStatus
+---@field submodule      GitCommandSubmodule
 ---@field tag            GitCommandTag
 ---@field update-index   GitCommandUpdateIndex
 ---@field update-ref     GitCommandUpdateRef
@@ -467,6 +471,8 @@ local configurations = {
       porcelain = "--porcelain",
     },
   },
+
+  submodule = config {},
 
   log = config {
     flags = {
@@ -971,6 +977,7 @@ local configurations = {
       no_flags = "--no-flags",
       symbolic = "--symbolic",
       symbolic_full_name = "--symbolic-full-name",
+      show_superproject_working_tree = "--show-superproject-working-tree",
     },
     options = {
       abbrev_ref = "--abbrev-ref",
