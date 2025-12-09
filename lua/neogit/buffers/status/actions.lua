@@ -1276,6 +1276,18 @@ M.n_unstage_staged = function(self)
   end)
 end
 
+---Opens neogit on the parent repo if if we are in a submodule
+---@param self StatusBuffer
+M.n_goto_parent_repo = function(self)
+  return function()
+    local parent = self:parent_repo()
+    if parent then
+      self:close()
+      require("neogit").open { cwd = parent }
+    end
+  end
+end
+
 ---@param self StatusBuffer
 ---@return fun(): nil
 M.n_goto_file = function(self)
@@ -1284,6 +1296,12 @@ M.n_goto_file = function(self)
 
     -- Goto FILE
     if item and item.absolute_path then
+      if self:has_submodule(item.absolute_path) then
+        self:close()
+        require("neogit").open { cwd = item.absolute_path }
+        return
+      end
+
       local cursor = translate_cursor_location(self, item)
       self:close()
       vim.schedule_wrap(open)("edit", item.absolute_path, cursor)

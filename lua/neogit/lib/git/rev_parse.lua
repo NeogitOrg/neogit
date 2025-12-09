@@ -39,4 +39,9 @@ function M.full_name(rev)
     .call({ hidden = true, ignore_error = true }).stdout[1]
 end
 
+---@return string?
+function M.parent_repo()
+  return git.cli["rev-parse"].show_superproject_working_tree.call({ hidden = true, ignore_error = true }).stdout[1]
+end
+
 return M

@@ -222,6 +222,7 @@ end
 ---| "Untrack"
 ---| "RefreshBuffer"
 ---| "GoToFile"
+---| "GoToParentRepo",
 ---| "PeekFile"
 ---| "VSplitOpen"
 ---| "SplitOpen"
@@ -705,6 +706,7 @@ function M.get_default_values()
         ["y"] = "ShowRefs",
         ["$"] = "CommandHistory",
         ["Y"] = "YankSelected",
+        ["gp"] = "GoToParentRepo",
         ["<c-r>"] = "RefreshBuffer",
         ["<cr>"] = "GoToFile",
         ["<s-cr>"] = "PeekFile",
