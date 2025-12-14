@@ -555,11 +555,11 @@ M.branch_info = util.memoize(function(ref, remotes)
   return result
 end)
 
-function M.reflog_message(skip)
+function M.log_message(skip)
   return git.cli.log
     .format("%B")
     .max_count(1)
-    .args("--reflog", "--no-merges", "--skip=" .. tostring(skip))
+    .args("--no-merges", "--skip=" .. tostring(skip))
     .call({ ignore_error = true }).stdout
 end
 

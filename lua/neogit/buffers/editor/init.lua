@@ -46,12 +46,12 @@ function M:open(kind)
   local message_buffer = { { "" } }
   local amend_header, footer
 
-  local function reflog_message(index)
-    return git.log.reflog_message(index - 2)
+  local function log_message(index)
+    return git.log.log_message(index - 2)
   end
 
   local function commit_message()
-    return message_buffer[message_index] or reflog_message(message_index)
+    return message_buffer[message_index] or log_message(message_index)
   end
 
   local function current_message(buffer)
@@ -262,7 +262,7 @@ function M:open(kind)
         [mapping["ResetMessage"]] = function(buffer)
           logger.debug("[EDITOR] Action N: ResetMessage")
           local message = current_message(buffer)
-          buffer:set_lines(0, #message, false, reflog_message(message_index))
+          buffer:set_lines(0, #message, false, log_message(message_index))
           buffer:move_cursor(1)
         end,
       },
