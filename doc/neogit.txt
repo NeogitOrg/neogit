@@ -206,6 +206,8 @@ to Neovim users.
         HEAD_padding = 10,
         HEAD_folded = false,
         mode_padding = 3,
+        -- Configure the order of the file sections (untracked/unstaged/staged)
+        section_order = { "untracked", "unstaged", "staged" },
         mode_text = {
         M = "modified",
         N = "new file",
