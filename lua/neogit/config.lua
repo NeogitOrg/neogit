@@ -330,6 +330,8 @@ end
 ---@field HEAD_folded? boolean Whether or not this section should be open or closed by default
 ---@field mode_text? { [string]: string } The text to display for each mode
 ---@field show_head_commit_hash? boolean Show the commit hash for HEADs in the status buffer
+---@field section_order? string[] Order of file sections (staged/unstaged/untracked) in the status buffer
+
 
 ---@class NeogitConfigMappings Consult the config file or documentation for values
 ---@field finder? { [string]: NeogitConfigMappingsFinder } A dictionary that uses finder commands to set multiple keybinds
@@ -494,6 +496,7 @@ function M.get_default_values()
         UU = "unmerged",
         ["?"] = "",
       },
+      section_order = { "untracked", "unstaged", "staged" },
     },
     commit_editor = {
       kind = "tab",
