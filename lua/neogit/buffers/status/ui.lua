@@ -623,6 +623,41 @@ function M.Status(state, config)
   local show_recent = #state.recent.items > 0
     and not config.sections.recent.hidden
 
+  -- Build file sections in configured order
+  local file_sections_map = {
+    untracked = show_untracked and Section {
+      title = SectionTitle { title = "Untracked files", highlight = "NeogitUntrackedfiles" },
+      count = true,
+      render = SectionItemFile("untracked", config),
+      items = state.untracked.items,
+      folded = config.sections.untracked.folded,
+      name = "untracked",
+    },
+    unstaged = show_unstaged and Section {
+      title = SectionTitle { title = "Unstaged changes", highlight = "NeogitUnstagedchanges" },
+      count = true,
+      render = SectionItemFile("unstaged", config),
+      items = state.unstaged.items,
+      folded = config.sections.unstaged.folded,
+      name = "unstaged",
+    },
+    staged = show_staged and Section {
+      title = SectionTitle { title = "Staged changes", highlight = "NeogitStagedchanges" },
+      count = true,
+      render = SectionItemFile("staged", config),
+      items = state.staged.items,
+      folded = config.sections.staged.folded,
+      name = "staged",
+    },
+  }
+
+  local file_sections = {}
+  for _, name in ipairs(config.status.section_order) do
+    if file_sections_map[name] then
+      table.insert(file_sections, file_sections_map[name])
+    end
+  end
+
   return {
     List {
       items = {
@@ -718,36 +753,9 @@ function M.Status(state, config)
           name = "bisect",
         },
         -- File sections rendered in configured order (status.section_order)
-        unpack(util.filter_map(config.status.section_order, function(name)
-          if name == "untracked" and show_untracked then
-            return Section {
-              title = SectionTitle { title = "Untracked files", highlight = "NeogitUntrackedfiles" },
-              count = true,
-              render = SectionItemFile("untracked", config),
-              items = state.untracked.items,
-              folded = config.sections.untracked.folded,
-              name = "untracked",
-            }
-          elseif name == "unstaged" and show_unstaged then
-            return Section {
-              title = SectionTitle { title = "Unstaged changes", highlight = "NeogitUnstagedchanges" },
-              count = true,
-              render = SectionItemFile("unstaged", config),
-              items = state.unstaged.items,
-              folded = config.sections.unstaged.folded,
-              name = "unstaged",
-            }
-          elseif name == "staged" and show_staged then
-            return Section {
-              title = SectionTitle { title = "Staged changes", highlight = "NeogitStagedchanges" },
-              count = true,
-              render = SectionItemFile("staged", config),
-              items = state.staged.items,
-              folded = config.sections.staged.folded,
-              name = "staged",
-            }
-          end
-        end)),
+        file_sections[1],
+        file_sections[2],
+        file_sections[3],
         show_stashes and Section {
           title = SectionTitle { title = "Stashes", highlight = "NeogitStashes" },
           count = true,
