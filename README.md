@@ -33,7 +33,10 @@ Here's an example spec for [Lazy](https://github.com/folke/lazy.nvim), but you'r
   lazy = true,
   dependencies = {
     "nvim-lua/plenary.nvim",         -- required
-    "sindrets/diffview.nvim",        -- optional - Diff integration
+
+    -- Only one of these is needed.
+    "sindrets/diffview.nvim",        -- optional
+    "esmuellert/codediff.nvim",      -- optional
 
     -- Only one of these is needed.
     "nvim-telescope/telescope.nvim", -- optional
@@ -321,6 +324,10 @@ neogit.setup {
     -- Requires you to have `sindrets/diffview.nvim` installed.
     diffview = nil,
 
+    -- Alternative diff viewer integration.
+    -- Requires you to have `esmuellert/codediff.nvim` installed.
+    codediff = nil,
+
     -- If enabled, uses fzf-lua for menu selection. If the telescope integration
     -- is also selected then telescope is used instead
     -- Requires you to have `ibhagwan/fzf-lua` installed.
@@ -336,6 +343,9 @@ neogit.setup {
     -- Requires you to have `folke/snacks.nvim` installed.
     snacks = nil,
   },
+  -- Which diff viewer to use. nil = auto-detect (tries diffview first, then codediff).
+  -- Can be "diffview" or "codediff".
+  diff_viewer = nil,
   sections = {
     -- Reverting/Cherry Picking
     sequencer = {
