@@ -388,7 +388,8 @@ end
 ---@field preview_buffer? NeogitConfigPopup Preview options
 ---@field popup? NeogitConfigPopup Set the default way of opening popups
 ---@field signs? NeogitConfigSigns Signs used for toggled regions
----@field integrations? { diffview: boolean, telescope: boolean, fzf_lua: boolean, mini_pick: boolean, snacks: boolean } Which integrations to enable
+---@field integrations? { diffview: boolean, codediff: boolean, telescope: boolean, fzf_lua: boolean, mini_pick: boolean, snacks: boolean } Which integrations to enable
+---@field diff_viewer? "diffview"|"codediff"|nil Which diff viewer to use (nil = auto-detect)
 ---@field sections? NeogitConfigSections
 ---@field ignored_settings? string[] Settings to never persist, format: "Filetype--cli-value", i.e. "NeogitCommitPopup--author"
 ---@field mappings? NeogitConfigMappings
@@ -541,10 +542,12 @@ function M.get_default_values()
     integrations = {
       telescope = nil,
       diffview = nil,
+      codediff = nil,
       fzf_lua = nil,
       mini_pick = nil,
       snacks = nil,
     },
+    diff_viewer = nil,
     sections = {
       sequencer = {
         folded = false,
@@ -857,8 +860,26 @@ function M.validate_config()
     end
   end
 
+  local function validate_diff_viewer()
+    if config.diff_viewer == nil then
+      return
+    end
+
+    local valid_viewers = { "diffview", "codediff" }
+    if not vim.tbl_contains(valid_viewers, config.diff_viewer) then
+      err(
+        "diff_viewer",
+        string.format(
+          "Expected diff_viewer to be one of %s or nil, got '%s'",
+          table.concat(valid_viewers, ", "),
+          tostring(config.diff_viewer)
+        )
+      )
+    end
+  end
+
   local function validate_integrations()
-    local valid_integrations = { "diffview", "telescope", "fzf_lua", "mini_pick", "snacks" }
+    local valid_integrations = { "diffview", "codediff", "telescope", "fzf_lua", "mini_pick", "snacks" }
     if not validate_type(config.integrations, "integrations", "table") or #config.integrations == 0 then
       return
     end
@@ -1279,6 +1300,7 @@ function M.validate_config()
     end
 
     validate_integrations()
+    validate_diff_viewer()
     validate_sections()
     validate_ignored_settings()
     validate_mappings()
@@ -1308,6 +1330,32 @@ function M.check_integration(name)
 
   logger.info(("[CONFIG] Found explicit integration '%s' = %s"):format(name, enabled))
   return enabled
+end
+
+---Returns the configured diff viewer, or auto-detects if not set
+---@return string|nil The diff viewer to use ("diffview", "codediff"), or nil if none available
+function M.get_diff_viewer()
+  local logger = require("neogit.logger")
+  local viewer = M.values.diff_viewer
+
+  if viewer then
+    -- Explicit choice - verify it's available
+    if M.check_integration(viewer) then
+      return viewer
+    else
+      logger.warn(("[CONFIG] Configured diff_viewer '%s' is not available"):format(viewer))
+      return nil
+    end
+  end
+
+  -- Auto-detect: try diffview first (backwards compatible), then codediff
+  if M.check_integration("diffview") then
+    return "diffview"
+  elseif M.check_integration("codediff") then
+    return "codediff"
+  end
+
+  return nil
 end
 
 function M.setup(opts)
