@@ -1,6 +1,15 @@
 local M = {}
-local diffview = require("neogit.integrations.diffview")
+local config = require("neogit.config")
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
+
+local function get_diff_integration()
+  local viewer = config.get_diff_viewer()
+  if viewer == "codediff" then
+    return require("neogit.integrations.codediff")
+  else
+    return require("neogit.integrations.diffview")
+  end
+end
 local util = require("neogit.lib.util")
 local git = require("neogit.lib.git")
 local input = require("neogit.lib.input")
@@ -13,11 +22,11 @@ function M.this(popup)
   local section = popup:get_env("section")
 
   if section and section.name and item and item.name then
-    diffview.open(section.name, item.name, { only = true })
+    get_diff_integration().open(section.name, item.name, { only = true })
   elseif section.name then
-    diffview.open(section.name, nil, { only = true })
+    get_diff_integration().open(section.name, nil, { only = true })
   elseif item.name then
-    diffview.open("range", item.name .. "..HEAD")
+    get_diff_integration().open("range", item.name .. "..HEAD")
   end
 end
 
@@ -27,7 +36,7 @@ function M.this_to_HEAD(popup)
   local item = popup:get_env("item")
   if item then
     if item.name then
-      diffview.open("range", item.name .. "..HEAD")
+      get_diff_integration().open("range", item.name .. "..HEAD")
     end
   end
 end
@@ -73,25 +82,25 @@ function M.range(popup)
 
   popup:close()
   if choice == "1" then
-    diffview.open("range", range_from .. ".." .. range_to)
+    get_diff_integration().open("range", range_from .. ".." .. range_to)
   elseif choice == "2" then
-    diffview.open("range", range_from .. "..." .. range_to)
+    get_diff_integration().open("range", range_from .. "..." .. range_to)
   end
 end
 
 function M.worktree(popup)
   popup:close()
-  diffview.open("worktree")
+  get_diff_integration().open("worktree")
 end
 
 function M.staged(popup)
   popup:close()
-  diffview.open("staged", nil, { only = true })
+  get_diff_integration().open("staged", nil, { only = true })
 end
 
 function M.unstaged(popup)
   popup:close()
-  diffview.open("unstaged", nil, { only = true })
+  get_diff_integration().open("unstaged", nil, { only = true })
 end
 
 function M.stash(popup)
@@ -99,7 +108,7 @@ function M.stash(popup)
 
   local selected = FuzzyFinderBuffer.new(git.stash.list()):open_async { refocus_status = false }
   if selected then
-    diffview.open("stashes", selected)
+    get_diff_integration().open("stashes", selected)
   end
 end
 
@@ -110,7 +119,7 @@ function M.commit(popup)
 
   local selected = FuzzyFinderBuffer.new(options):open_async { refocus_status = false }
   if selected then
-    diffview.open("commit", selected)
+    get_diff_integration().open("commit", selected)
   end
 end
 
