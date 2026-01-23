@@ -240,7 +240,8 @@ function M.rename_branch()
     return
   end
 
-  local new_name = get_branch_name_user_input(("Rename '%s' to"):format(selected_branch))
+  local default_branch_name = config.values.initial_branch_rename or selected_branch
+  local new_name = get_branch_name_user_input(("Rename '%s' to"):format(selected_branch), default_branch_name)
   if not new_name then
     return
   end
