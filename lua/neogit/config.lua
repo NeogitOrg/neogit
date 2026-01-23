@@ -366,6 +366,7 @@ end
 ---@field sort_branches? string Value used for `--sort` for the `git branch` command
 ---@field commit_order? NeogitCommitOrder Value used for `--<commit_order>-order` for the `git log` command
 ---@field initial_branch_name? string Default for new branch name prompts
+---@field initial_branch_rename? string Default for rename branch prompt. If not set, the current branch name is used
 ---@field kind? WindowKind The default type of window neogit should open in
 ---@field floating? NeogitConfigFloating The floating window style
 ---@field disable_line_numbers? boolean Whether to disable line numbers
@@ -1200,6 +1201,7 @@ function M.validate_config()
     validate_type(config.remember_settings, "remember_settings", "boolean")
     validate_type(config.sort_branches, "sort_branches", "string")
     validate_type(config.initial_branch_name, "initial_branch_name", "string")
+    validate_type(config.initial_branch_rename, "initial_branch_name", { "string", "nil" })
     validate_type(config.notification_icon, "notification_icon", "string")
     validate_type(config.console_timeout, "console_timeout", "number")
     validate_kind(config.kind, "kind")

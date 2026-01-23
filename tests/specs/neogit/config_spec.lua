@@ -61,6 +61,11 @@ describe("Neogit config", function()
         assert.True(vim.tbl_count(require("neogit.config").validate_config()) ~= 0)
       end)
 
+      it("should return invalid when initial_branch_rename isn't an optional string", function()
+        config.values.initial_branch_rename = false
+        assert.True(vim.tbl_count(require("neogit.config").validate_config()) ~= 0)
+      end)
+
       it("should return invalid when kind isn't a string", function()
         config.values.kind = true
         assert.True(vim.tbl_count(require("neogit.config").validate_config()) ~= 0)
@@ -563,6 +568,16 @@ describe("Neogit config", function()
 
       it("should return valid when a command mappings.finder is a boolean", function()
         config.values.mappings.finder["c"] = false
+        assert.True(vim.tbl_count(require("neogit.config").validate_config()) == 0)
+      end)
+
+      it("should return valid when initial_branch_rename is string", function()
+        config.values.initial_branch_rename = "default-name"
+        assert.True(vim.tbl_count(require("neogit.config").validate_config()) == 0)
+      end)
+
+      it("should return valid when initial_branch_rename is nil", function()
+        config.values.initial_branch_rename = nil
         assert.True(vim.tbl_count(require("neogit.config").validate_config()) == 0)
       end)
     end)
