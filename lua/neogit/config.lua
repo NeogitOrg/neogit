@@ -356,6 +356,7 @@ end
 ---@field disable_context_highlighting? boolean Disable context highlights based on cursor position
 ---@field disable_signs? boolean Special signs to draw for sections etc. in Neogit
 ---@field prompt_force_push? boolean Offer to force push when branches diverge
+---@field prompt_amend_commit? boolean Request confirmation when amending already published commits
 ---@field git_services? NeogitConfigGitService[] Templates to use when opening a pull request for a branch, or commit
 ---@field fetch_after_checkout? boolean Perform a fetch if the newly checked out branch has an upstream or pushRemote set
 ---@field telescope_sorter? function The sorter telescope will use
@@ -406,6 +407,7 @@ function M.get_default_values()
     disable_context_highlighting = false,
     disable_signs = false,
     prompt_force_push = true,
+    prompt_amend_commit = true,
     graph_style = "ascii",
     commit_date_format = nil,
     log_date_format = nil,
