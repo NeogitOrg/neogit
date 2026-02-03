@@ -2,6 +2,7 @@ local M = {}
 local git = require("neogit.lib.git")
 local notification = require("neogit.lib.notification")
 local input = require("neogit.lib.input")
+local operation = require("neogit.lib.operation")
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 local util = require("neogit.lib.util")
 
@@ -97,11 +98,16 @@ function M.scripted(popup)
   if revisions then
     local command = input.get_user_input("Bisect shell command")
     if command then
-      notification.info("Bisecting...")
-
       local bad_revision, good_revision = unpack(revisions)
       git.bisect.start(bad_revision, good_revision, popup:get_arguments())
-      git.bisect.run(command)
+
+      local op = operation.start("Bisecting with script")
+      local result = git.bisect.run(command)
+      if result and result:success() then
+        operation.finish(op)
+      else
+        operation.fail(op, "Bisect script failed")
+      end
     end
   end
 end
@@ -131,7 +137,13 @@ end
 function M.run()
   local command = input.get_user_input("Bisect shell command")
   if command then
-    git.bisect.run(command)
+    local op = operation.start("Bisecting with script")
+    local result = git.bisect.run(command)
+    if result and result:success() then
+      operation.finish(op)
+    else
+      operation.fail(op, "Bisect script failed")
+    end
   end
 end
 

@@ -6,6 +6,7 @@ local input = require("neogit.lib.input")
 local util = require("neogit.lib.util")
 local notification = require("neogit.lib.notification")
 local event = require("neogit.lib.event")
+local operation = require("neogit.lib.operation")
 local a = require("plenary.async")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
@@ -321,7 +322,15 @@ function M.delete_branch(popup)
     and branch_name
     and input.get_permission(("Delete remote branch '%s/%s'?"):format(remote, branch_name))
   then
-    success = git.cli.push.remote(remote).delete.to(branch_name).call():success()
+    local op = operation.start("Deleting " .. remote .. "/" .. branch_name)
+    local result = git.cli.push.remote(remote).delete.to(branch_name).call()
+    if result:success() then
+      success = true
+      operation.finish(op)
+    else
+      success = false
+      operation.fail(op, "Failed to delete remote branch")
+    end
   elseif not is_remote and branch_name == git.branch.current() then
     local choices = {
       "&detach HEAD and delete",

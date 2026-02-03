@@ -50,8 +50,9 @@ function M.reset()
 end
 
 ---@param command string
+---@return ProcessResult
 function M.run(command)
-  git.cli.bisect.args("run", command).call { long = true }
+  return git.cli.bisect.args("run", command).call { long = true }
 end
 
 ---@class BisectItem

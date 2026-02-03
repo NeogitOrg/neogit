@@ -2,6 +2,7 @@ local a = require("plenary.async")
 local git = require("neogit.lib.git")
 local logger = require("neogit.logger")
 local notification = require("neogit.lib.notification")
+local operation = require("neogit.lib.operation")
 local input = require("neogit.lib.input")
 local util = require("neogit.lib.util")
 local config = require("neogit.config")
@@ -34,13 +35,13 @@ local function push_to(args, remote, branch, opts)
   end
 
   logger.debug("Pushing to " .. name)
-  notification.info("Pushing to " .. name)
+  local op = operation.start("Pushing to " .. name)
 
   local res = git.push.push_interactive(remote, branch, args)
 
   -- Inform the user about missing permissions
   if res.code == 128 then
-    notification.info(table.concat(res.stdout, "\n"))
+    operation.fail(op, table.concat(res.stdout, "\n"))
     return
   end
 
@@ -61,11 +62,11 @@ local function push_to(args, remote, branch, opts)
   if res and res:success() then
     a.util.scheduler()
     logger.debug("Pushed to " .. name)
-    notification.info("Pushed to " .. name, { dismiss = true })
+    operation.finish(op)
     event.send("PushComplete")
   else
     logger.debug("Failed to push to " .. name)
-    notification.error("Failed to push to " .. name, { dismiss = true })
+    operation.fail(op, "Failed to push to " .. name)
   end
 end
 

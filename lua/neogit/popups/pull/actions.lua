@@ -2,6 +2,7 @@ local a = require("plenary.async")
 local git = require("neogit.lib.git")
 local logger = require("neogit.logger")
 local notification = require("neogit.lib.notification")
+local operation = require("neogit.lib.operation")
 local event = require("neogit.lib.event")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
@@ -21,19 +22,19 @@ local function pull_from(args, remote, branch, opts)
 
   local name = remote .. "/" .. branch
 
-  notification.info("Pulling from " .. name)
+  local op = operation.start("Pulling from " .. name)
   logger.debug("Pulling from " .. name)
 
   local res = git.pull.pull_interactive(remote, branch, args)
 
   if res and res:success() then
     a.util.scheduler()
-    notification.info("Pulled from " .. name, { dismiss = true })
+    operation.finish(op)
     logger.debug("Pulled from " .. name)
     event.send("PullComplete")
   else
     logger.error("Failed to pull from " .. name)
-    notification.error("Failed to pull from " .. name, { dismiss = true })
+    operation.fail(op, "Failed to pull from " .. name)
     if res.code == 128 then
       notification.info(table.concat(res.stdout, "\n"))
       return

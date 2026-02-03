@@ -263,6 +263,11 @@ function M:open(kind)
     },
     autocmds = {
       ["FocusGained"] = self:deferred_refresh("focused", 10),
+      ["TabEnter"] = function()
+        if self.buffer and self.buffer:is_visible() then
+          self:deferred_refresh("tab_enter", 50)()
+        end
+      end,
     },
   }
 
@@ -317,10 +322,13 @@ function M:refresh(partial, reason)
   git.repo:dispatch_refresh {
     source = "status",
     partial = partial,
+    modules = partial and partial.modules, -- Pass through modules filter
     callback = function()
-      self:redraw(cursor, view)
-      event.send("StatusRefreshed")
-      logger.info("[STATUS] Refresh complete")
+      vim.schedule(function()
+        self:redraw(cursor, view)
+        event.send("StatusRefreshed")
+        logger.info("[STATUS] Refresh complete")
+      end)
     end,
   }
 end
@@ -342,14 +350,18 @@ function M:redraw(cursor, view)
     self.fold_state = nil
   end
 
+  -- Only restore cursor/view if buffer is NOT focused (e.g., reopening buffer)
+  -- When user is actively in the buffer, let them stay where they are
   if self.cursor_state and self.view_state and self.buffer then
-    logger.debug("[STATUS] Restoring cursor and view state")
+    logger.debug("[STATUS] Restoring cursor and view state (buffer was closed)")
     self.buffer:restore_view(self.view_state, self.cursor_state)
     self.view_state = nil
     self.cursor_state = nil
-  elseif cursor and view and self.buffer then
+  elseif cursor and view and self.buffer and not self.buffer:is_focused() then
+    logger.debug("[STATUS] Restoring cursor and view state (buffer not focused)")
     self.buffer:restore_view(view, self.buffer.ui:resolve_cursor_location(cursor))
   end
+  -- If buffer IS focused, cursor stays where it is naturally
 end
 
 M.dispatch_refresh = a.void(function(self, partial, reason)

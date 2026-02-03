@@ -113,7 +113,7 @@ local WATCH_IGNORE = {
 
 function Watcher:fs_event_callback()
   local refresh_debounced = util.debounce_trailing(
-    200,
+    500, -- Increased from 200ms for less refresh churn
     a.void(util.throttle_by_id(function(info)
       logger.debug(info)
       self:dispatch_refresh()
@@ -150,9 +150,24 @@ end
 function Watcher:dispatch_refresh()
   git.repo:dispatch_refresh {
     source = "watcher",
+    modules = { "status" }, -- File changes only need status refresh
     callback = function()
       for name, buffer in pairs(self.buffers) do
         logger.debug("[WATCHER] Dispatching redraw to " .. name)
+        buffer:redraw()
+      end
+    end,
+  }
+end
+
+-- Full refresh - all modules (for user actions like checkout)
+function Watcher:dispatch_full_refresh()
+  git.repo:dispatch_refresh {
+    source = "watcher",
+    -- No modules filter = refresh all modules
+    callback = function()
+      for name, buffer in pairs(self.buffers) do
+        logger.debug("[WATCHER] Dispatching full redraw to " .. name)
         buffer:redraw()
       end
     end,

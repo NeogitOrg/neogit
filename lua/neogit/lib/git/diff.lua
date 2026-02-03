@@ -6,10 +6,96 @@ local logger = require("neogit.logger")
 local insert = table.insert
 local sha256 = vim.fn.sha256
 
+-- Module-level diff cache, persists across buffer close/reopen
+-- Key: "section:filename", Value: { diff = <Diff>, file_mode = { head, index, worktree } }
+local diff_cache = {}
+
+local MAX_CACHE_SIZE = 50  -- Maximum number of cached diffs
+
+local function maybe_evict_cache()
+  local keys = vim.tbl_keys(diff_cache)
+  if #keys > MAX_CACHE_SIZE then
+    -- Simple eviction: remove oldest entries (first half)
+    -- Note: Lua tables don't preserve order, so this is approximate
+    local to_remove = math.floor(#keys / 2)
+    for i = 1, to_remove do
+      diff_cache[keys[i]] = nil
+    end
+    logger.debug("[DIFF] Cache evicted " .. to_remove .. " entries")
+  end
+end
+
+--- Clear cache for a specific file, section, or all files
+---@param section string|nil Section name to clear, or nil to clear all
+---@param filename string|nil Filename to clear within section
+local function clear_cache(section, filename)
+  if section and filename then
+    diff_cache[section .. ":" .. filename] = nil
+  elseif section then
+    -- Clear all entries for a section
+    for key in pairs(diff_cache) do
+      if key:match("^" .. section .. ":") then
+        diff_cache[key] = nil
+      end
+    end
+  else
+    -- Clear entire cache
+    diff_cache = {}
+  end
+end
+
+--- Get cached diff if valid (hashes match)
+---@param section string
+---@param file StatusItem
+---@return Diff|nil
+local function get_cached_diff(section, file)
+  local key = section .. ":" .. file.name
+  local cached = diff_cache[key]
+
+  if not cached then
+    return nil
+  end
+
+  -- Validate cache by comparing file_mode hashes
+  -- If file content changed, the hashes will differ
+  if file.file_mode then
+    if cached.file_mode then
+      if cached.file_mode.index ~= file.file_mode.index or
+         cached.file_mode.worktree ~= file.file_mode.worktree then
+        logger.debug("[DIFF] Cache invalidated for: " .. file.name)
+        diff_cache[key] = nil
+        return nil
+      end
+    end
+  end
+
+  logger.debug("[DIFF] Cache hit for: " .. file.name)
+  return cached.diff
+end
+
+--- Store diff in cache with file_mode for invalidation
+---@param section string
+---@param file StatusItem
+---@param diff Diff
+local function set_cached_diff(section, file, diff)
+  maybe_evict_cache()
+  local key = section .. ":" .. file.name
+  diff_cache[key] = {
+    diff = diff,
+    file_mode = file.file_mode and {
+      head = file.file_mode.head,
+      index = file.file_mode.index,
+      worktree = file.file_mode.worktree,
+    } or nil,
+  }
+  logger.debug("[DIFF] Cached diff for: " .. file.name)
+end
+
 ---@class NeogitGitDiff
 ---@field parse fun(raw_diff: string[], raw_stats: string[]): Diff
 ---@field build fun(section: string, file: StatusItem)
 ---@field staged_stats fun(): DiffStagedStats
+---@field clear_cache fun(section: string|nil, filename: string|nil)
 ---
 ---@class Diff
 ---@field kind string
@@ -245,7 +331,7 @@ local function parse_diff(raw_diff, raw_stats)
   }
 end
 
-local function build_metatable(f, raw_output_fn)
+local function build_metatable(f, raw_output_fn, section)
   setmetatable(f, {
     __index = function(self, method)
       if method == "diff" then
@@ -253,6 +339,11 @@ local function build_metatable(f, raw_output_fn)
           logger.debug("[DIFF] Loading diff for: " .. f.name)
           return parse_diff(unpack(raw_output_fn()))
         end)
+
+        -- Cache the loaded diff for future use
+        if section then
+          set_cached_diff(section, f, self.diff)
+        end
 
         return self.diff
       end
@@ -322,16 +413,26 @@ end
 ---@param section string
 ---@param file StatusItem
 local function build(section, file)
+  -- Check cache first (skip for unmerged files - they change frequently during conflict resolution)
+  local is_unmerged = section == "staged" and file.mode and file.mode:match("^[UAD][UAD]")
+  if not is_unmerged then
+    local cached = get_cached_diff(section, file)
+    if cached then
+      file.diff = cached
+      return -- No metatable needed, diff already loaded from cache
+    end
+  end
+
   if section == "untracked" then
-    build_metatable(file, raw_untracked(file.name))
+    build_metatable(file, raw_untracked(file.name), section)
   elseif section == "unstaged" then
-    build_metatable(file, raw_unstaged(file.name))
+    build_metatable(file, raw_unstaged(file.name), section)
   elseif section == "staged" and file.mode == "R" then
-    build_metatable(file, raw_staged_renamed(file.name, file.original_name))
+    build_metatable(file, raw_staged_renamed(file.name, file.original_name), section)
   elseif section == "staged" and file.mode:match("^[UAD][UAD]") then
-    build_metatable(file, raw_staged_unmerged(file.name))
+    build_metatable(file, raw_staged_unmerged(file.name), section)
   elseif section == "staged" then
-    build_metatable(file, raw_staged(file.name))
+    build_metatable(file, raw_staged(file.name), section)
   else
     error("Unknown section: " .. vim.inspect(section))
   end
@@ -384,4 +485,5 @@ return { ---@type NeogitGitDiff
   parse = parse_diff,
   staged_stats = staged_stats,
   build = build,
+  clear_cache = clear_cache,
 }

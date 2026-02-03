@@ -13,7 +13,8 @@ local function base_commit(popup, list, header)
 end
 
 function M.onto_base(popup)
-  git.rebase.onto_branch(git.branch.base_branch(), popup:get_arguments())
+  local base = git.branch.base_branch()
+  git.rebase.onto_branch(base, popup:get_arguments())
 end
 
 function M.onto_pushRemote(popup)
@@ -23,10 +24,8 @@ function M.onto_pushRemote(popup)
   end
 
   if pushRemote then
-    git.rebase.onto_branch(
-      string.format("refs/remotes/%s/%s", pushRemote, git.branch.current()),
-      popup:get_arguments()
-    )
+    local target = string.format("refs/remotes/%s/%s", pushRemote, git.branch.current())
+    git.rebase.onto_branch(target, popup:get_arguments())
   end
 end
 
@@ -148,6 +147,7 @@ function M.subset(popup)
   else
     table.insert(args, "--root")
   end
+
   git.rebase.onto(start, newbase, args)
 end
 

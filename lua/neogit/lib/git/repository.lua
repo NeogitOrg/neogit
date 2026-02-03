@@ -4,6 +4,7 @@ local Path = require("plenary.path")
 local git = require("neogit.lib.git")
 local ItemFilter = require("neogit.lib.item_filter")
 local util = require("neogit.lib.util")
+local fidget = require("neogit.integrations.fidget")
 
 local modules = {
   "status",
@@ -209,6 +210,9 @@ end
 function Repo.new(dir)
   logger.debug("[REPO]: Initializing Repository")
 
+  -- Clear diff cache when switching to a new repository
+  git.diff.clear_cache()
+
   local instance = {
     lib = {},
     state = empty_state(),
@@ -248,14 +252,38 @@ function Repo:git_path(...)
   return Path:new(self.git_dir):joinpath(...)
 end
 
-function Repo:tasks(filter, state)
+function Repo:tasks(filter, state, only_modules, on_module_complete)
   local tasks = {}
   for name, fn in pairs(self.lib) do
-    table.insert(tasks, function()
-      local start = vim.uv.now()
-      fn(state, filter)
-      logger.debug(("[REPO]: Refreshed %s in %d ms"):format(name, vim.uv.now() - start))
-    end)
+    -- Check if this function should run based on modules filter
+    -- Function names are like "update_status", "update_branch_information"
+    -- Filter names are like "status", "branch"
+    local should_run = true
+    if only_modules then
+      should_run = false
+      for _, mod in ipairs(only_modules) do
+        if name:find(mod, 1, true) then
+          should_run = true
+          break
+        end
+      end
+    end
+
+    if not should_run then
+      -- Skipped modules keep existing state (state is already a deepcopy)
+    else
+      table.insert(tasks, function()
+        local start = vim.uv.now()
+        fn(state, filter)
+        local duration = vim.uv.now() - start
+        logger.debug(("[REPO]: Refreshed %s in %d ms"):format(name, duration))
+
+        -- Report to fidget if callback provided
+        if on_module_complete then
+          on_module_complete(name, duration)
+        end
+      end)
+    end
   end
 
   return tasks
@@ -325,19 +353,36 @@ function Repo:refresh(opts)
     filter = DEFAULT_FILTER
   end
 
-  local on_complete = a.void(function()
-    self.running[start] = false
-    if self.interrupt[start] then
-      logger.debug("[REPO]: (" .. start .. ") Interrupting on_complete callback")
-      return
-    end
+  -- Create fidget progress handle
+  local progress = fidget.create(opts.source or "unknown", opts.modules)
 
-    logger.debug("[REPO]: (" .. start .. ") Refreshes complete in " .. timestamp() - start .. " ms")
-    self:set_state(start)
-    self:run_callbacks(start)
-  end)
+  -- Callback for when each module completes
+  local on_module_complete = function(name, duration)
+    fidget.report_module(progress, name, duration)
+  end
 
-  a.util.run_all(self:tasks(filter, self:current_state(start)), on_complete)
+  local tasks = self:tasks(filter, self:current_state(start), opts.modules, on_module_complete)
+
+  -- IMPORTANT: a.util.join blocks forever on empty list
+  if #tasks > 0 then
+    a.util.join(tasks)
+  end
+
+  self.running[start] = false
+  if self.interrupt[start] then
+    logger.debug("[REPO]: (" .. start .. ") Interrupting after tasks")
+    fidget.cancel(progress)
+    return
+  end
+
+  local total_duration = timestamp() - start
+  logger.debug("[REPO]: (" .. start .. ") Refreshes complete in " .. total_duration .. " ms")
+
+  -- Finish fidget progress
+  fidget.finish(progress, total_duration)
+
+  self:set_state(start)
+  self:run_callbacks(start)
 end
 
 Repo.dispatch_refresh = a.void(function(self, opts)

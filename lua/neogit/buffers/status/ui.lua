@@ -214,33 +214,23 @@ local SectionItemFile = function(section, config)
     local load_diff = function(item)
       ---@param this Component
       ---@param ui Ui
-      ---@param prefix string|nil
-      return a.void(function(this, ui, prefix)
+      return a.void(function(this, ui)
         this.options.on_open = nil
         this.options.folded = false
+
+        local diff = item.diff -- Triggers lazy load via metatable
 
         local row, _ = this:row_range_abs()
         row = row + 1 -- Filename row
 
-        local diff = item.diff
         for _, hunk in ipairs(diff.hunks) do
           hunk.first = row
           hunk.last = row + hunk.length
           row = hunk.last + 1
-
-          -- Set fold state when called from ui:update()
-          if prefix then
-            local key = ("%s--%s"):format(prefix, hunk.hash)
-            if ui._node_fold_state and ui._node_fold_state[key] then
-              hunk._folded = ui._node_fold_state[key].folded
-            end
-          end
         end
 
-        ui.buf:with_locked_viewport(function()
-          this:append(DiffHunks(diff))
-          ui:update()
-        end)
+        this:append(DiffHunks(diff))
+        ui:update()
       end)
     end
 

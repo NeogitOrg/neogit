@@ -80,6 +80,7 @@ local function item_collection(state, section, filter)
     if filter:accepts(section, item.name) then
       logger.debug(("[STATUS] Invalidating cached diff for: %s"):format(item.name))
       item.diff = nil
+      git.diff.clear_cache(section, item.name)
       git.diff.build(section, item)
     end
   end

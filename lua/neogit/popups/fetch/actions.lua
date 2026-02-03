@@ -4,6 +4,7 @@ local a = require("plenary.async")
 local git = require("neogit.lib.git")
 local logger = require("neogit.logger")
 local notification = require("neogit.lib.notification")
+local operation = require("neogit.lib.operation")
 local util = require("neogit.lib.util")
 local event = require("neogit.lib.event")
 
@@ -14,15 +15,16 @@ local function select_remote()
 end
 
 local function fetch_from(name, remote, branch, args)
-  notification.info("Fetching from " .. name)
+  local op = operation.start("Fetching from " .. name)
   local res = git.fetch.fetch_interactive(remote, branch, args)
 
   if res and res:success() then
     a.util.scheduler()
-    notification.info("Fetched from " .. name, { dismiss = true })
+    operation.finish(op)
     logger.debug("Fetched from " .. name)
     event.send("FetchComplete", { remote = remote, branch = branch })
   else
+    operation.fail(op, "Failed to fetch from " .. name)
     logger.error("Failed to fetch from " .. name)
   end
 end
@@ -117,8 +119,13 @@ function M.fetch_refspec(popup)
 end
 
 function M.fetch_submodules(_)
-  notification.info("Fetching submodules")
-  git.cli.fetch.recurse_submodules.verbose.jobs(4).call()
+  local op = operation.start("Fetching submodules")
+  local res = git.cli.fetch.recurse_submodules.verbose.jobs(4).call()
+  if res and res:success() then
+    operation.finish(op)
+  else
+    operation.fail(op, "Failed to fetch submodules")
+  end
 end
 
 function M.set_variables()

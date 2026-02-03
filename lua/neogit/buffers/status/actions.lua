@@ -252,7 +252,7 @@ M.v_stage = function(self)
     end
 
     if #untracked_files > 0 or #unstaged_files > 0 or #patches > 0 then
-      self:dispatch_refresh({ update_diffs = invalidated_diffs }, "n_stage")
+      self:dispatch_refresh({ update_diffs = invalidated_diffs, modules = { "status" } }, "v_stage")
     end
   end)
 end
@@ -298,7 +298,7 @@ M.v_unstage = function(self)
     end
 
     if #files > 0 or #patches > 0 then
-      self:dispatch_refresh({ update_diffs = invalidated_diffs }, "v_unstage")
+      self:dispatch_refresh({ update_diffs = invalidated_diffs, modules = { "status" } }, "v_unstage")
     end
   end)
 end
@@ -1152,7 +1152,7 @@ M.n_stage = function(self)
               fn = function()
                 if not git.merge.is_conflicted(selection.item.name) then
                   git.status.stage { selection.item.name }
-                  self:dispatch_refresh({ update_diffs = { "*:" .. selection.item.name } }, "n_stage")
+                  self:dispatch_refresh({ update_diffs = { "*:" .. selection.item.name }, modules = { "status" } }, "n_stage")
                 end
               end,
             },
@@ -1160,7 +1160,7 @@ M.n_stage = function(self)
         else
           if not git.merge.is_conflicted(selection.item.name) then
             git.status.stage { selection.item.name }
-            self:dispatch_refresh({ update_diffs = { "*:" .. selection.item.name } }, "n_stage")
+            self:dispatch_refresh({ update_diffs = { "*:" .. selection.item.name }, modules = { "status" } }, "n_stage")
           else
             notification.info("Conflicts must be resolved before staging")
           end
@@ -1168,22 +1168,22 @@ M.n_stage = function(self)
         end
       elseif selection.item and section.options.section == "untracked" then
         git.index.add { selection.item.name }
-        self:dispatch_refresh({ update_diffs = { "*:" .. selection.item.name } }, "n_stage")
+        self:dispatch_refresh({ update_diffs = { "*:" .. selection.item.name }, modules = { "status" } }, "n_stage")
       elseif stagable.hunk then
         local item = self.buffer.ui:get_item_under_cursor()
         assert(item, "Item cannot be nil")
 
         local patch = git.index.generate_patch(stagable.hunk)
         git.index.apply(patch, { cached = true })
-        self:dispatch_refresh({ update_diffs = { "*:" .. item.name } }, "n_stage")
+        self:dispatch_refresh({ update_diffs = { "*:" .. item.name }, modules = { "status" } }, "n_stage")
       elseif stagable.filename and section.options.section == "unstaged" then
         git.status.stage { stagable.filename }
-        self:dispatch_refresh({ update_diffs = { "*:" .. stagable.filename } }, "n_stage")
+        self:dispatch_refresh({ update_diffs = { "*:" .. stagable.filename }, modules = { "status" } }, "n_stage")
       end
     elseif section then
       if section.options.section == "untracked" then
         git.status.stage_untracked()
-        self:dispatch_refresh({ update_diffs = { "untracked:*" } }, "n_stage")
+        self:dispatch_refresh({ update_diffs = { "untracked:*" }, modules = { "status" } }, "n_stage")
       elseif section.options.section == "unstaged" then
         if git.status.any_unmerged() then
           if config.check_integration("diffview") then
@@ -1193,7 +1193,7 @@ M.n_stage = function(self)
                 fn = function()
                   if not git.merge.any_conflicted() then
                     git.status.stage_modified()
-                    self:dispatch_refresh({ update_diffs = { "*:*" } }, "n_stage")
+                    self:dispatch_refresh({ update_diffs = { "*:*" }, modules = { "status" } }, "n_stage")
                     popups.open("merge")()
                   end
                 end,
@@ -1205,7 +1205,7 @@ M.n_stage = function(self)
           end
         else
           git.status.stage_modified()
-          self:dispatch_refresh({ update_diffs = { "*:*" } }, "n_stage")
+          self:dispatch_refresh({ update_diffs = { "*:*" }, modules = { "status" } }, "n_stage")
         end
       end
     end
@@ -1217,7 +1217,7 @@ end
 M.n_stage_all = function(self)
   return a.void(function()
     git.status.stage_all()
-    self:dispatch_refresh({ update_diffs = { "*:*" } }, "n_stage_all")
+    self:dispatch_refresh({ update_diffs = { "*:*" }, modules = { "status" } }, "n_stage_all")
   end)
 end
 
@@ -1226,7 +1226,7 @@ end
 M.n_stage_unstaged = function(self)
   return a.void(function()
     git.status.stage_modified()
-    self:dispatch_refresh({ update_diffs = { "*:*" } }, "n_stage_unstaged")
+    self:dispatch_refresh({ update_diffs = { "*:*" }, modules = { "status" } }, "n_stage_unstaged")
   end)
 end
 
@@ -1245,7 +1245,7 @@ M.n_unstage = function(self)
     if unstagable then
       if selection.item and selection.item.mode == "N" then
         git.status.unstage { selection.item.name }
-        self:dispatch_refresh({ update_diffs = { "*:" .. selection.item.name } }, "n_unstage")
+        self:dispatch_refresh({ update_diffs = { "*:" .. selection.item.name }, modules = { "status" } }, "n_unstage")
       elseif unstagable.hunk then
         local item = self.buffer.ui:get_item_under_cursor()
         assert(item, "Item cannot be nil")
@@ -1255,14 +1255,14 @@ M.n_unstage = function(self)
         )
 
         git.index.apply(patch, { cached = true, reverse = true })
-        self:dispatch_refresh({ update_diffs = { "*:" .. item.name } }, "n_unstage")
+        self:dispatch_refresh({ update_diffs = { "*:" .. item.name }, modules = { "status" } }, "n_unstage")
       elseif unstagable.filename then
         git.status.unstage { unstagable.filename }
-        self:dispatch_refresh({ update_diffs = { "*:" .. unstagable.filename } }, "n_unstage")
+        self:dispatch_refresh({ update_diffs = { "*:" .. unstagable.filename }, modules = { "status" } }, "n_unstage")
       end
     elseif section then
       git.status.unstage_all()
-      self:dispatch_refresh({ update_diffs = { "*:*" } }, "n_unstage")
+      self:dispatch_refresh({ update_diffs = { "*:*" }, modules = { "status" } }, "n_unstage")
     end
   end)
 end
@@ -1272,7 +1272,7 @@ end
 M.n_unstage_staged = function(self)
   return a.void(function()
     git.status.unstage_all()
-    self:dispatch_refresh({ update_diffs = { "*:*" } }, "n_unstage_all")
+    self:dispatch_refresh({ update_diffs = { "*:*" }, modules = { "status" } }, "n_unstage_all")
   end)
 end
 

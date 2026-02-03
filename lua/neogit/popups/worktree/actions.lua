@@ -6,6 +6,7 @@ local util = require("neogit.lib.util")
 local status = require("neogit.buffers.status")
 local notification = require("neogit.lib.notification")
 local event = require("neogit.lib.event")
+local operation = require("neogit.lib.operation")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
@@ -72,10 +73,11 @@ function M.checkout_worktree()
     return
   end
 
+  local op = operation.start("Creating worktree")
   local success, err = git.worktree.add(selected, path)
   if success then
     local cwd = vim.uv.cwd()
-    notification.info("Added worktree")
+    operation.finish(op)
 
     if status.is_open() then
       status.instance():chdir(path)
@@ -83,7 +85,7 @@ function M.checkout_worktree()
 
     event.send("WorktreeCreate", autocmd_helpers(cwd, path))
   else
-    notification.error(err)
+    operation.fail(op, err)
   end
 end
 
@@ -104,10 +106,11 @@ function M.create_worktree()
   end
 
   if git.branch.create(name, selected) then
+    local op = operation.start("Creating worktree")
     local success, err = git.worktree.add(name, path)
     if success then
       local cwd = vim.uv.cwd()
-      notification.info("Added worktree")
+      operation.finish(op)
 
       if status.is_open() then
         status.instance():chdir(path)
@@ -115,7 +118,7 @@ function M.create_worktree()
 
       event.send("WorktreeCreate", autocmd_helpers(cwd, path))
     else
-      notification.error(err)
+      operation.fail(op, err)
     end
   end
 end

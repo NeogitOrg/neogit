@@ -488,14 +488,47 @@ function Ui:resolve_cursor_location(cursor)
     return s.name == cursor.section.name
   end)
 
+  local file = nil
+
+  -- If we have a file to find, search for it (even if section wasn't found)
+  -- This handles staging/unstaging where file moves between sections,
+  -- or when a section disappears (e.g., staging the last unstaged file)
+  if cursor.file then
+    -- First try the expected section if it exists
+    if section and section.items then
+      file = Collection.new(section.items):find(function(f)
+        return f.name == cursor.file.name
+      end)
+    end
+
+    -- If not found, search all sections
+    if not file then
+      logger.debug(("[UI] File %q not in section %q, searching other sections"):format(
+        cursor.file.name, cursor.section.name))
+      for _, other_section in ipairs(self.item_index) do
+        if other_section.items then
+          local found = Collection.new(other_section.items):find(function(f)
+            return f.name == cursor.file.name
+          end)
+          if found then
+            logger.debug(("[UI] Found file %q in section %q"):format(cursor.file.name, other_section.name))
+            section = other_section
+            file = found
+            break
+          end
+        end
+      end
+    end
+  end
+
+  -- If section still not found, fall back to index-based selection
   if not section then
     logger.debug("[UI] No Section Found '" .. cursor.section.name .. "'")
-
-    cursor.file = nil
     cursor.hunk = nil
     section = self.item_index[math.min(cursor.section.index, #self.item_index)]
   end
 
+  -- If no file context or section has no items, use section position
   if not cursor.file or not section.items or #section.items == 0 then
     if cursor.section_offset then
       logger.debug("[UI] No file - using section.first with offset")
@@ -506,13 +539,9 @@ function Ui:resolve_cursor_location(cursor)
     end
   end
 
-  local file = Collection.new(section.items):find(function(f)
-    return f.name == cursor.file.name
-  end)
-
+  -- If file still not found, fall back to index-based selection within section
   if not file then
     logger.debug(("[UI] No file found %q"):format(cursor.file.name))
-
     cursor.hunk = nil
     file = section.items[math.min(cursor.file.index, #section.items)]
   end
@@ -725,11 +754,9 @@ function Ui:update()
       self.statuscolumn.foldmarkers[fold[1]] = fold[4]
     end
 
-    -- Run on_open callbacks for hunks once buffer is rendered
-    if self._node_fold_state then
-      self:_update_on_open(self.layout, self._node_fold_state)
-      self._node_fold_state = nil
-    end
+    -- Don't auto-reopen folds - let user explicitly open what they want
+    -- This prevents cascading async ui:update() calls that cause cursor instability
+    self._node_fold_state = nil
 
     self.buf:lock()
 

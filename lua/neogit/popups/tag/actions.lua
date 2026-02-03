@@ -7,6 +7,7 @@ local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 local input = require("neogit.lib.input")
 local notification = require("neogit.lib.notification")
 local event = require("neogit.lib.event")
+local operation = require("neogit.lib.operation")
 
 ---@param popup PopupData
 function M.create_tag(popup)
@@ -81,7 +82,7 @@ function M.prune(_)
     return
   end
 
-  notification.info("Fetching remote tags...")
+  local op = operation.start("Fetching remote tags")
   local r_out = git.tag.list_remote(selected_remote)
   local remote_tags = {}
 
@@ -95,7 +96,7 @@ function M.prune(_)
   local l_tags = utils.set_difference(tags, remote_tags)
   local r_tags = utils.set_difference(remote_tags, tags)
 
-  notification.delete_all()
+  operation.finish(op)
   if #l_tags == 0 and #r_tags == 0 then
     notification.info("Tags are in sync - nothing to do.")
     return
@@ -150,8 +151,14 @@ function M.prune(_)
       table.insert(prune_tags, ":" .. tag)
     end
 
-    git.cli.push.arg_list({ selected_remote, unpack(prune_tags) }).call()
-    notification.info("Pruned remote tags: \n" .. table.concat(r_tags, "\n"))
+    local push_op = operation.start("Deleting remote tags")
+    local result = git.cli.push.arg_list({ selected_remote, unpack(prune_tags) }).call()
+    if result and result:success() then
+      operation.finish(push_op)
+      notification.info("Pruned remote tags: \n" .. table.concat(r_tags, "\n"))
+    else
+      operation.fail(push_op, "Failed to delete remote tags")
+    end
   end
 end
 

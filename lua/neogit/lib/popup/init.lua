@@ -352,7 +352,7 @@ function M:mappings()
       mappings.n[config.id] = a.void(function()
         self:set_config(config)
         self:refresh()
-        Watcher.instance():dispatch_refresh()
+        Watcher.instance():dispatch_full_refresh()
       end)
     end
   end
@@ -372,7 +372,7 @@ function M:mappings()
             end
 
             action.callback(self)
-            Watcher.instance():dispatch_refresh()
+            Watcher.instance():dispatch_full_refresh()
           end)
         end
       else
