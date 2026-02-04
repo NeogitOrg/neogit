@@ -9,7 +9,7 @@ local M = {}
 ---@param range string Git revision range (e.g., "@{upstream}.." or "..@{upstream}")
 ---@return boolean
 local function has_commits_in_range(range)
-  local result = git.cli["rev-list"].count.args(range).call({ hidden = true, ignore_error = true })
+  local result = git.cli["rev-list"].args("--count", range).call({ hidden = true, ignore_error = true })
   if result:success() then
     local count = tonumber(result.stdout[1])
     return count and count > 0
