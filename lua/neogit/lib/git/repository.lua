@@ -5,6 +5,7 @@ local git = require("neogit.lib.git")
 local ItemFilter = require("neogit.lib.item_filter")
 local util = require("neogit.lib.util")
 local fidget = require("neogit.integrations.fidget")
+local log_cache = require("neogit.lib.git.log_cache")
 
 local modules = {
   "status",
@@ -382,6 +383,13 @@ function Repo:refresh(opts)
   fidget.finish(progress, total_duration)
 
   self:set_state(start)
+
+  -- Clear log cache when branch info might have changed (commit, checkout, fetch, pull, push)
+  -- If modules filter is not set, or if "branch" module ran, invalidate the cache
+  if not opts.modules or vim.tbl_contains(opts.modules, "branch") then
+    log_cache.clear()
+  end
+
   self:run_callbacks(start)
 end
 
