@@ -48,13 +48,13 @@ local function update_unpulled(state)
   end
 
   if status.upstream and has_commits_in_range("..@{upstream}") then
-    state.upstream.unpulled.items = util.filter_map(get_log_cached("..@{upstream}"), git.log.present_commit)
+    state.upstream.unpulled.items = util.filter_map(get_log_cached("..@{upstream}"), git.log.present_commit_fast)
   end
 
   local pushRemote = git.branch.pushRemote_ref()
   local pushRemoteRange = pushRemote and string.format("..%s", pushRemote)
   if pushRemote and pushRemote ~= status.upstream and has_commits_in_range(pushRemoteRange) then
-    state.pushRemote.unpulled.items = util.filter_map(get_log_cached(pushRemoteRange), git.log.present_commit)
+    state.pushRemote.unpulled.items = util.filter_map(get_log_cached(pushRemoteRange), git.log.present_commit_fast)
   elseif pushRemote and pushRemote == status.upstream then
     -- Reuse upstream results when pushRemote is the same ref
     state.pushRemote.unpulled.items = state.upstream.unpulled.items

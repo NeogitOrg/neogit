@@ -481,6 +481,24 @@ function M.present_commit(commit)
   }
 end
 
+--- Fast version of present_commit without expensive branch_info processing
+--- Use for push/pull sections where full branch decoration isn't critical
+---@param commit CommitLogEntry
+---@return nil|CommitItem
+function M.present_commit_fast(commit)
+  if not commit.oid then
+    return
+  end
+
+  return {
+    name = string.format("%s %s", commit.abbreviated_commit, commit.subject or "<empty>"),
+    decoration = {}, -- Empty decoration - skip expensive branch_info
+    oid = commit.oid,
+    commit = commit,
+    shortstat = nil, -- Skip shortstat for speed
+  }
+end
+
 --- Runs `git verify-commit`
 ---@param commit string Hash of commit
 ---@return string[] The stderr output of the command

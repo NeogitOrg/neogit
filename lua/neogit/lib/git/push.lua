@@ -69,12 +69,12 @@ local function update_unmerged(state)
   end
 
   if status.upstream and has_commits_in_range("@{upstream}..") then
-    state.upstream.unmerged.items = util.filter_map(get_log_cached("@{upstream}.."), git.log.present_commit)
+    state.upstream.unmerged.items = util.filter_map(get_log_cached("@{upstream}.."), git.log.present_commit_fast)
   end
 
   local pushRemote = require("neogit.lib.git").branch.pushRemote_ref()
   if pushRemote and pushRemote ~= status.upstream and has_commits_in_range(pushRemote .. "..") then
-    state.pushRemote.unmerged.items = util.filter_map(get_log_cached(pushRemote .. ".."), git.log.present_commit)
+    state.pushRemote.unmerged.items = util.filter_map(get_log_cached(pushRemote .. ".."), git.log.present_commit_fast)
   elseif pushRemote and pushRemote == status.upstream then
     -- Reuse upstream results when pushRemote is the same ref
     state.pushRemote.unmerged.items = state.upstream.unmerged.items

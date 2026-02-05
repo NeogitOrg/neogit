@@ -111,3 +111,12 @@ Work:
 **Task 1 was cancelled** - commits already only refresh status module via watcher, no need to add explicit filtering.
 
 **Task 5 skipped** - Not needed, manual refresh with `<C-r>` already exists and should run all modules.
+
+### Bug Fix Applied
+
+**Issue:** `git.cli["rev-list"].count` threw error "unknown field: count"
+**Root cause:** The CLI builder doesn't have `count` defined as a flag for `rev-list`
+**Fix:** Changed from `.count.args(range)` to `.args("--count", range)`
+**Commit:** 4ec8e127
+
+All tests now pass and the optimizations work correctly!
