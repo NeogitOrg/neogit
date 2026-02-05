@@ -492,7 +492,12 @@ function M.present_commit_fast(commit)
 
   return {
     name = string.format("%s %s", commit.abbreviated_commit, commit.subject or "<empty>"),
-    decoration = {}, -- Empty decoration - skip expensive branch_info
+    decoration = {
+      head = nil,
+      locals = {},
+      remotes = {},
+      tags = {},
+    },
     oid = commit.oid,
     commit = commit,
     shortstat = nil, -- Skip shortstat for speed
