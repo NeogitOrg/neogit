@@ -72,7 +72,7 @@ local function make_explorer_data(status_result, focus_file)
 end
 
 local function open_explorer(view, git_root, status_result, original_revision, modified_revision, focus_file)
-  ---@type SessionConfig
+  ---@type table
   local session_config = {
     mode = "explorer",
     git_root = git_root,
@@ -341,7 +341,7 @@ function M.open(section_name, item_name, opts)
       local filetype = vim.filetype.match { filename = file_path } or ""
       local original_revision, modified_revision = get_conflict_revisions()
 
-      ---@type SessionConfig
+      ---@type table
       local session_config = {
         mode = "standalone",
         git_root = git_root,
