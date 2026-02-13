@@ -9,6 +9,41 @@ local function refocus_status_buffer()
   end
 end
 
+--- Extract commit hash from formatted commit entry if applicable
+---@param item string The selected item
+---@return string The processed item (commit hash if it was a formatted commit, otherwise unchanged)
+local function extract_commit_hash(item)
+  if item and item:match("^%x%x%x%x%x%x%x ") then
+    return item:match("^(%x+)")
+  end
+  return item
+end
+
+--- Process selection items to extract commit hashes where applicable
+---@param selection any The selection (string or table)
+---@param allow_multi boolean Whether multi-selection is allowed
+---@return any The processed selection
+local function process_selection(selection, allow_multi)
+  if not selection then
+    return nil
+  end
+
+  if allow_multi then
+    if type(selection) == "table" then
+      local processed = {}
+      for _, item in ipairs(selection) do
+        table.insert(processed, extract_commit_hash(item))
+      end
+      return processed
+    else
+      return { extract_commit_hash(selection) }
+    end
+  else
+    local single_item = type(selection) == "table" and selection[1] or selection
+    return extract_commit_hash(single_item)
+  end
+end
+
 local copy_selection = function()
   local selection = require("telescope.actions.state").get_selected_entry()
   if selection ~= nil then
@@ -35,7 +70,7 @@ local function telescope_mappings(on_select, allow_multi, refocus_status)
     local picker = action_state.get_current_picker(prompt_bufnr)
     if #picker:get_multi_selection() > 0 then
       for _, item in ipairs(picker:get_multi_selection()) do
-        table.insert(selection, item[1])
+        table.insert(selection, extract_commit_hash(item[1]))
       end
     elseif action_state.get_selected_entry() ~= nil then
       local entry = action_state.get_selected_entry()[1]
@@ -50,7 +85,7 @@ local function telescope_mappings(on_select, allow_multi, refocus_status)
       if navigate_up_level or input_git_refspec then
         table.insert(selection, prompt)
       else
-        table.insert(selection, entry)
+        table.insert(selection, extract_commit_hash(entry))
       end
     else
       table.insert(selection, picker:_get_prompt())
@@ -140,16 +175,30 @@ local function fzf_actions(on_select, allow_multi, refocus_status)
 
   return {
     ["default"] = function(selected)
-      if allow_multi then
-        on_select(selected)
+      if not selected then
+        on_select(nil)
+        refresh()
+        return
+      end
+
+      local processed = process_selection(selected, allow_multi)
+      if processed and (type(processed) ~= "table" or #processed > 0) and processed ~= "" then
+        on_select(processed)
       else
-        on_select(selected[1])
+        on_select(nil)
       end
       refresh()
     end,
-    ["esc"] = close_action,
-    ["ctrl-c"] = close_action,
-    ["ctrl-q"] = close_action,
+    ["ctrl-c"] = function()
+      vim.schedule(function()
+        close_action()
+      end)
+    end,
+    ["ctrl-q"] = function()
+      vim.schedule(function()
+        close_action()
+      end)
+    end,
   }
 end
 
@@ -189,7 +238,7 @@ local function snacks_confirm(on_select, allow_multi, refocus_status)
       table.insert(selection, prompt)
     elseif #picker_selected > 1 then
       for _, item in ipairs(picker_selected) do
-        table.insert(selection, item.text)
+        table.insert(selection, extract_commit_hash(item.text))
       end
     else
       local entry = item.text
@@ -201,7 +250,11 @@ local function snacks_confirm(on_select, allow_multi, refocus_status)
         or prompt:match("@")
         or prompt:match(":")
 
-      table.insert(selection, (navigate_up_level or input_git_refspec) and prompt or entry)
+      if navigate_up_level or input_git_refspec then
+        table.insert(selection, prompt)
+      else
+        table.insert(selection, extract_commit_hash(entry))
+      end
     end
 
     if selection and selection[1] and selection[1] ~= "" then
@@ -272,6 +325,15 @@ end
 ---@field layout_strategy string
 ---@field sorting_strategy string
 ---@field theme string
+---@field item_type string|nil
+
+---@alias ItemType
+---| "branch"
+---| "commit"
+---| "tag"
+---| "any_ref"
+---| "stash"
+---| "file"
 
 ---@class Finder
 ---@field opts table
@@ -304,9 +366,100 @@ function Finder:add_entries(entries)
   return self
 end
 
+---Generate entries for any_ref item type (includes symbolic refs like HEAD)
+---@return table
+local function get_any_ref_entries()
+  local git = require("neogit.lib.git")
+  local entries = {}
+
+  -- Add symbolic refs like HEAD, ORIG_HEAD, etc.
+  local heads = git.refs.heads()
+  vim.list_extend(entries, heads)
+
+  -- Add branches
+  local branches = git.refs.list_branches()
+  vim.list_extend(entries, branches)
+
+  -- Add tags
+  local tags = git.refs.list_tags()
+  vim.list_extend(entries, tags)
+
+  -- Add commits with proper formatting (sha + title) for better searchability
+  local commits = git.log.list()
+  for _, commit in ipairs(commits) do
+    table.insert(entries, string.format("%s %s", commit.oid:sub(1, 7), commit.subject or ""))
+  end
+
+  return entries
+end
+
+---Auto-populate entries based on item_type if no entries are provided
+---@param item_type string|nil
+---@return table
+local function get_entries_for_item_type(item_type)
+  if not item_type then
+    return {}
+  end
+
+  local git = require("neogit.lib.git")
+
+  if item_type == "branch" then
+    return git.refs.list_branches()
+  elseif item_type == "commit" then
+    local commits = git.log.list()
+    local formatted_commits = {}
+    for _, commit in ipairs(commits) do
+      table.insert(formatted_commits, string.format("%s %s", commit.oid:sub(1, 7), commit.subject or ""))
+    end
+    return formatted_commits
+  elseif item_type == "tag" then
+    return git.refs.list_tags()
+  elseif item_type == "any_ref" then
+    return get_any_ref_entries()
+  elseif item_type == "stash" then
+    return git.stash.list()
+  elseif item_type == "file" then
+    return git.files.all()
+  end
+
+  return {}
+end
+
+---Try to use specialized picker provider
+---@param on_select fun(item: any|nil)
+---@return boolean true if specialized picker was used
+function Finder:try_specialized_picker(on_select)
+  if not self.opts.item_type then
+    return false
+  end
+
+  -- Try fzf-lua specialized picker
+  local fzf_provider = require("neogit.lib.finder.providers.fzf_lua")
+  if fzf_provider.is_available() then
+    if fzf_provider.try_specialized_picker(self.opts.item_type, self.opts, on_select) then
+      return true
+    end
+  end
+
+  -- TODO: Add other providers (telescope, snacks, etc.)
+
+  return false
+end
+
 ---Engages finder and invokes `on_select` with the item or items, or nil if aborted
 ---@param on_select fun(item: any|nil)
 function Finder:find(on_select)
+  -- Auto-populate entries if none provided and item_type is specified
+  if #self.entries == 0 and self.opts.item_type then
+    self:add_entries(get_entries_for_item_type(self.opts.item_type))
+  end
+
+  -- Try specialized picker first
+  if self:try_specialized_picker(on_select) then
+    return
+  end
+
+  -- Fall back to generic picker
   if config.check_integration("telescope") then
     local pickers = require("telescope.pickers")
     local finders = require("telescope.finders")
@@ -347,7 +500,14 @@ function Finder:find(on_select)
     })
   elseif config.check_integration("mini_pick") then
     local mini_pick = require("mini.pick")
-    mini_pick.start { source = { items = self.entries, choose = on_select } }
+    mini_pick.start {
+      source = {
+        items = self.entries,
+        choose = function(item)
+          on_select(extract_commit_hash(item))
+        end,
+      },
+    }
   elseif config.check_integration("snacks") then
     local snacks_picker = require("snacks.picker")
     local confirm, on_close = snacks_confirm(on_select, self.opts.allow_multi, self.opts.refocus_status)
@@ -373,7 +533,8 @@ function Finder:find(on_select)
       end,
     }, function(item)
       vim.schedule(function()
-        on_select(self.opts.allow_multi and { item } or item)
+        local processed = process_selection(item, self.opts.allow_multi)
+        on_select(processed)
 
         if self.opts.refocus_status then
           refocus_status_buffer()
