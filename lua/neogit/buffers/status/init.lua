@@ -254,6 +254,7 @@ function M:open(kind)
     after = function(buffer, _win)
       Watcher.instance(self.root):register(self)
       buffer:move_cursor(buffer.ui:first_section().first)
+      vim.b.neogit_git_dir = git.repo.git_dir
     end,
     user_autocmds = {
       -- Resetting doesn't yield the correct repo state instantly, so we need to re-refresh after a few seconds
