@@ -5,6 +5,7 @@ local common = require("neogit.buffers.common")
 local config = require("neogit.config")
 local a = require("plenary.async")
 local state = require("neogit.lib.state")
+local event = require("neogit.lib.event")
 
 local col = Ui.col
 local row = Ui.row
@@ -241,6 +242,40 @@ local SectionItemFile = function(section, config)
           this:append(DiffHunks(diff))
           ui:update()
         end)
+
+        event.send("DiffLoaded", {
+          item = {
+            absolute_path = item.absolute_path,
+            relative_path = item.escaped_path,
+            row_start = item.first,
+            row_end = item.last,
+            mode = item.mode,
+          },
+          diff = {
+            kind = diff.kind,
+            lines = diff.lines,
+            hunks = util.map(diff.hunks, function(hunk)
+              local original_lines = util.filter_map(hunk.lines, function(line)
+                if not (vim.startswith(line, "+") or vim.startswith(line, "-")) then
+                  return line
+                end
+              end)
+
+              local modified_lines = util.map(hunk.lines, function(line)
+                return line:gsub("^[+-]", " ")
+              end)
+
+              return {
+                lines = hunk.lines,
+                original_lines = original_lines,
+                modified_lines = modified_lines,
+                row_start = hunk.first,
+                row_end = hunk.last,
+                header = hunk.line,
+              }
+            end)
+          }
+        })
       end)
     end
 
