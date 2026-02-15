@@ -1205,6 +1205,7 @@ local function new_builder(subcommand)
       table.insert(cmd, "-")
     end
 
+    -- stylua: ignore
     local base = {
       get_git_executable(),
       "--no-pager",
