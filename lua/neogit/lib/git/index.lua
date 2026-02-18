@@ -1,18 +1,36 @@
 local git = require("neogit.lib.git")
 local Path = require("neogit.lib.path")
 local util = require("neogit.lib.util")
+local crlf = "\r\n"
+local lf = "\n"
 
 ---@param path string
 ---@return string
 local function eol_character(path)
+  local _, output = next(git.cli["ls-files"].eol.files(path).call { await = true }.stdout)
+
+  if output ~= nil then
+    local _, _, match = output:find("i/(%w+)")
+
+    if match ~= nil then
+      if match == crlf then
+        return crlf
+      elseif match == lf then
+        return lf
+      end
+    end
+  end
+
+  -- Handle the `mixed` line ending case OR lack of a file in the index by deferring to platform defaults for EOL
+  -- or by reading the current working file and determining its line ending that way
   if not Path:new(path):exists() then
-    return (vim.fn.has("win32") == 1 or vim.fn.has("win64") == 1) and "\r\n" or "\n"
+    return (vim.fn.has("win32") == 1 or vim.fn.has("win64") == 1) and crlf or lf
   end
   local lines = vim.fn.readfile(path, "b", 1)
   if lines[1] and lines[1]:find("\r") then
-    return "\r\n"
+    return crlf
   else
-    return "\n"
+    return lf
   end
 end
 
