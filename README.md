@@ -133,6 +133,8 @@ neogit.setup {
   git_executable = "git",
   -- Offer to force push when branches diverge
   prompt_force_push = true,
+  -- Request confirmation when amending already published commits
+  prompt_amend_commit = true,
   -- Changes what mode the Commit Editor starts in. `true` will leave nvim in normal mode, `false` will change nvim to
   -- insert mode, and `"auto"` will change nvim to insert mode IF the commit message is empty, otherwise leaving it in
   -- normal mode.
