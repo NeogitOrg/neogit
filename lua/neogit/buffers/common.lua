@@ -55,6 +55,10 @@ local diff_delete_start_2 = " -"
 local HunkLine = Component.new(function(line)
   local line_hl
 
+  if vim.b.neogit_disable_hunk_highlight == true then
+    return text(line)
+  end
+
   -- TODO: Should use file mode, not merge head
   if git.repo.state.merge.head then
     if
