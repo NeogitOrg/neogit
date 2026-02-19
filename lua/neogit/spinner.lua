@@ -41,7 +41,8 @@ function Spinner:start()
       vim.schedule_wrap(function()
         self.count = self.count + 1
         local step = self.pattern[(self.count % #self.pattern) + 1]
-        vim.cmd(string.format("echo '%s %s' | redraw", step, self.text))
+        vim.api.nvim_echo({ { step .. " " .. self.text, "" } }, false, {})
+        vim.cmd("redraw")
       end)
     )
   end
@@ -59,7 +60,8 @@ function Spinner:stop()
   end
 
   vim.schedule(function()
-    vim.cmd("redraw | echomsg ''")
+    vim.api.nvim_echo({ { "", "" } }, false, {})
+    vim.cmd("redraw")
   end)
 end
 
