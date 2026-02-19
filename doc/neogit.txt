@@ -179,6 +179,8 @@ to Neovim users.
     commit_order = "topo"
     -- Default for new branch name prompts
     initial_branch_name = "",
+    -- Default for rename branch prompt. If not set, the current branch name is used
+    initial_branch_rename = nil,
     -- Change the default way of opening neogit
     kind = "tab",
     -- Floating window style
@@ -214,6 +216,7 @@ to Neovim users.
         C = "copied",
         U = "updated",
         R = "renamed",
+        T = "changed",
         DD = "unmerged",
         AU = "unmerged",
         UD = "unmerged",
@@ -284,6 +287,10 @@ to Neovim users.
         -- Requires you to have `sindrets/diffview.nvim` installed.
         diffview = nil,
 
+        -- Alternative diff viewer integration.
+        -- Requires you to have `esmuellert/codediff.nvim` installed.
+        codediff = nil,
+
         -- If enabled, uses fzf-lua for menu selection. If the telescope integration
         -- is also selected then telescope is used instead
         -- Requires you to have `ibhagwan/fzf-lua` installed.
@@ -299,6 +306,9 @@ to Neovim users.
         -- Requires you to have `folke/snacks.nvim` installed.
         snacks = nil,
     },
+    -- Which diff viewer to use. nil = auto-detect (tries diffview first, then codediff).
+    -- Can be "diffview" or "codediff".
+    diff_viewer = nil,
     sections = {
         -- Reverting/Cherry Picking
         sequencer = {
@@ -483,6 +493,7 @@ The following mappings can all be customized via the setup function.
         ["y"]      = "ShowRefs",
         ["$"]      = "CommandHistory",
         ["Y"]      = "YankSelected",
+        ["gp"]      = "GoToParentRepo",
         ["<c-r>"]  = "RefreshBuffer",
         ["<cr>"]   = "GoToFile",
         ["<s-cr>"] = "PeekFile",
@@ -1399,9 +1410,13 @@ The diff popup actions allow inspection of changes in the index (staged
 changes), the working tree (unstaged changes and untracked files), any
 ref range.
 
-For these actions to become available, Neogit needs to be configured to enable
-`diffview.nvim` integration. See |neogit_setup_plugin| and
-https://github.com/sindrets/diffview.nvim.
+For these actions to become available, Neogit needs to have a diff viewer
+integration enabled. Supported viewers are:
+- `diffview.nvim`: https://github.com/sindrets/diffview.nvim
+- `codediff.nvim`: https://github.com/esmuellert/codediff.nvim
+
+By default, Neogit will auto-detect which viewer is available. You can
+explicitly set the viewer with the `diff_viewer` option. See |neogit_setup_plugin|.
 
   • Diff this                                                 *neogit_diff_this*
     Show the diff for the file referred to by a hunk under the cursor.

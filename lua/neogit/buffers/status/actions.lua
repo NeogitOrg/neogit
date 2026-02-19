@@ -1145,8 +1145,11 @@ M.n_stage = function(self)
       end
 
       if selection.item and selection.item.mode == "UU" then
-        if config.check_integration("diffview") and git.merge.is_conflicted(selection.item.escaped_path) then
-          require("neogit.integrations.diffview").open("conflict", selection.item.name, {
+        local diff_viewer = config.get_diff_viewer()
+        if diff_viewer and git.merge.is_conflicted(selection.item.escaped_path) then
+          local integration = diff_viewer == "codediff" and require("neogit.integrations.codediff")
+            or require("neogit.integrations.diffview")
+          integration.open("conflict", selection.item.name, {
             on_close = {
               handle = self.buffer.handle,
               fn = function()
@@ -1186,8 +1189,11 @@ M.n_stage = function(self)
         self:dispatch_refresh({ update_diffs = { "untracked:*" } }, "n_stage")
       elseif section.options.section == "unstaged" then
         if git.status.any_unmerged() then
-          if config.check_integration("diffview") then
-            require("neogit.integrations.diffview").open("conflict", nil, {
+          local diff_viewer = config.get_diff_viewer()
+          if diff_viewer then
+            local integration = diff_viewer == "codediff" and require("neogit.integrations.codediff")
+              or require("neogit.integrations.diffview")
+            integration.open("conflict", nil, {
               on_close = {
                 handle = self.buffer.handle,
                 fn = function()
@@ -1276,6 +1282,18 @@ M.n_unstage_staged = function(self)
   end)
 end
 
+---Opens neogit on the parent repo if if we are in a submodule
+---@param self StatusBuffer
+M.n_goto_parent_repo = function(self)
+  return function()
+    local parent = self:parent_repo()
+    if parent then
+      self:close()
+      require("neogit").open { cwd = parent }
+    end
+  end
+end
+
 ---@param self StatusBuffer
 ---@return fun(): nil
 M.n_goto_file = function(self)
@@ -1284,6 +1302,12 @@ M.n_goto_file = function(self)
 
     -- Goto FILE
     if item and item.absolute_path then
+      if self:has_submodule(item.absolute_path) then
+        self:close()
+        require("neogit").open { cwd = item.absolute_path }
+        return
+      end
+
       local cursor = translate_cursor_location(self, item)
       self:close()
       vim.schedule_wrap(open)("edit", item.absolute_path, cursor)
