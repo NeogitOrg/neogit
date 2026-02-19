@@ -435,7 +435,7 @@ function M.register(meta)
         graph = {}
       end
 
-      repo_state.recent.items = util.filter_map(M.list(args, graph, {}, false), M.present_commit)
+      repo_state.recent.items = util.filter_map(M.list(args, graph, {}, true), M.present_commit)
     end
   end
 end
