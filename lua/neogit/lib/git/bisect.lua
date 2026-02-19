@@ -95,7 +95,7 @@ M.register = function(meta)
 
     local expected = vim.trim(git.repo:worktree_git_path("BISECT_EXPECTED_REV"):read())
     state.bisect.current =
-      git.log.parse(git.cli.show.format("fuller").args(expected).call({ trim = false }).stdout)[1]
+      git.log.parse(git.cli.show.format("fuller").args(expected).call({ trim = false, hidden = true }).stdout)[1]
 
     state.bisect.finished = finished
   end
