@@ -660,6 +660,32 @@ The following events are emitted by Neogit:
       copy_if_present: function(filename: string, callback: function|nil)
     }
 <
+• `NeogitDiffLoaded`
+  When: A hunk is lazy loaded in the status buffer
+  Data: >
+    {
+        item = {
+            absolute_path: string,
+            relative_path: string,
+            row_start: int (First row in buffer the hunk occupies),
+            row_end: int (last row in buffer the hunk occupies),
+            mode: string (file mode)
+        },
+        diff = {
+            kind: str,
+            lines: string[],
+            hunks: Hunk[]
+        }
+    }
+
+    Hunk:
+        lines: str[]
+        original_lines: str[] (lines from diff not prefixed with +/-)
+        modified_lines: str[] (lines from diff, but with +/- prefix removed)
+        row_start: int (first line of hunk in the buffer)
+        row_end: int (last line of hunk in the buffer)
+        header: string (diff header)
+<
 ==============================================================================
 5. Highlights                                                *neogit_highlights*
 
