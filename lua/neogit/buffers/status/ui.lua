@@ -273,8 +273,8 @@ local SectionItemFile = function(section, config)
                 row_end = hunk.last,
                 header = hunk.line,
               }
-            end)
-          }
+            end),
+          },
         })
       end)
     end
