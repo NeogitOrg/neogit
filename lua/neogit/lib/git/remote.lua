@@ -134,4 +134,58 @@ function M.parse(url)
   }
 end
 
+---@param oid string object-id for commit
+---@return string|nil
+function M.commit_url(oid)
+  local upstream = git.branch.upstream_remote()
+  if not upstream then
+    return
+  end
+
+  local template
+  local url = M.get_url(upstream)[1]
+
+  for s, v in pairs(require("neogit.config").values.git_services) do
+    if url:match(util.pattern_escape(s)) then
+      template = v.commit
+      break
+    end
+  end
+
+  if template and template ~= "" then
+    local format_values = M.parse(url)
+    format_values["oid"] = oid
+    local uri = util.format(template, format_values)
+
+    return uri
+  end
+end
+
+---@param branch string
+---@return string|nil
+function M.tree_url(branch)
+  local upstream = git.branch.upstream_remote()
+  if not upstream then
+    return
+  end
+
+  local template
+  local url = M.get_url(upstream)[1]
+
+  for s, v in pairs(require("neogit.config").values.git_services) do
+    if url:match(util.pattern_escape(s)) then
+      template = v.tree
+      break
+    end
+  end
+
+  if template and template ~= "" then
+    local format_values = M.parse(url)
+    format_values["branch_name"] = branch
+    local uri = util.format(template, format_values)
+
+    return uri
+  end
+end
+
 return M

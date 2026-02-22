@@ -998,7 +998,7 @@ function M.build(commits, color)
       end
     end
 
-    -- now lets get the intervals between the stopped connetors
+    -- now lets get the intervals between the stopped connectors
     -- and other connectors of the same commit hash
     local intervals = {}
     for _, j in ipairs(stopped) do

@@ -51,9 +51,9 @@ local function push_to(args, remote, branch, opts)
   if res and res:failure() and not using_force and updates_rejected and config.values.prompt_force_push then
     logger.error("Attempting force push to " .. name)
 
-    local message = "Your branch has diverged from the remote branch. Do you want to force push?"
+    local message = "Your branch has diverged from the remote branch. Do you want to force push with lease?"
     if input.get_permission(message) then
-      table.insert(args, "--force")
+      table.insert(args, "--force-with-lease")
       res = git.push.push_interactive(remote, branch, args)
     end
   end
@@ -129,8 +129,8 @@ function M.push_other(popup)
     return
   end
 
-  local remote, _ = git.branch.parse_remote_branch(destination)
-  push_to(popup:get_arguments(), remote, source .. ":" .. destination)
+  local remote, dest_branch = git.branch.parse_remote_branch(destination)
+  push_to(popup:get_arguments(), remote, source .. ":" .. dest_branch)
 end
 
 ---@param prompt string

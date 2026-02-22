@@ -80,22 +80,31 @@ function M.a_file(popup)
   end
 
   local files = FuzzyFinderBuffer.new(files):open_async { allow_multi = true }
-  if not files[1] then
-    return
-  end
+  if files and files[1] then
+    if git.reset.file(target, files) then
+      if #files > 1 then
+        notification.info("Reset " .. #files .. " files")
+      else
+        notification.info("Reset " .. files[1])
+      end
 
-  local success = git.reset.file(target, files)
-  if not success then
-    notification.error("Reset Failed")
-  else
-    if #files > 1 then
-      notification.info("Reset " .. #files .. " files")
+      event.send("Reset", { commit = target, mode = "files", files = files })
     else
-      notification.info("Reset " .. files[1])
+      notification.error("Reset Failed")
     end
-
-    event.send("Reset", { commit = target, mode = "files", files = files })
   end
+end
+
+---@param popup PopupData
+function M.a_branch(popup)
+  -- branch reset expects commits to be set, not commit
+  if popup.state.env.commit then
+    popup.state.env.commits = { popup.state.env.commit }
+    popup.state.env.commit = nil
+  end
+
+  local branch_actions = require("neogit.popups.branch.actions")
+  branch_actions.reset_branch(popup)
 end
 
 return M

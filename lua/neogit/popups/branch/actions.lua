@@ -240,7 +240,8 @@ function M.rename_branch()
     return
   end
 
-  local new_name = get_branch_name_user_input(("Rename '%s' to"):format(selected_branch))
+  local default_branch_name = config.values.initial_branch_rename or selected_branch
+  local new_name = get_branch_name_user_input(("Rename '%s' to"):format(selected_branch), default_branch_name)
   if not new_name then
     return
   end
@@ -313,15 +314,16 @@ function M.delete_branch(popup)
   end
 
   local remote, branch_name = git.branch.parse_remote_branch(selected_branch)
+  local is_remote = remote and remote ~= "."
   local success = false
 
   if
-    remote
+    is_remote
     and branch_name
     and input.get_permission(("Delete remote branch '%s/%s'?"):format(remote, branch_name))
   then
     success = git.cli.push.remote(remote).delete.to(branch_name).call():success()
-  elseif not remote and branch_name == git.branch.current() then
+  elseif not is_remote and branch_name == git.branch.current() then
     local choices = {
       "&detach HEAD and delete",
       "&abort",
@@ -350,12 +352,12 @@ function M.delete_branch(popup)
     if not success then -- Reset HEAD if unsuccessful
       git.cli.checkout.branch(branch_name).call()
     end
-  elseif not remote and branch_name then
+  elseif not is_remote and branch_name then
     success = git.branch.delete(branch_name)
   end
 
   if success then
-    if remote then
+    if is_remote then
       notification.info(string.format("Deleted remote branch '%s/%s'", remote, branch_name))
     else
       notification.info(string.format("Deleted branch '%s'", branch_name))
@@ -377,7 +379,7 @@ function M.open_pull_request()
   for s, v in pairs(config.values.git_services) do
     if url:match(util.pattern_escape(s)) then
       service = s
-      template = v
+      template = v.pull_request
       break
     end
   end
@@ -408,7 +410,7 @@ function M.open_pull_request()
       notification.info(("Opening %q in your browser."):format(uri))
       vim.ui.open(uri)
     else
-      notification.warn("Requires Neovim 0.10")
+      notification.warn("Requires Neovim >= 0.10")
     end
   else
     notification.warn("Pull request URL template not found for this branch's upstream")

@@ -63,6 +63,11 @@ function M.get_reversed_commit_editor_maps_I()
 end
 
 ---@return table<string, string[]>
+function M.get_reversed_commit_view_maps()
+  return get_reversed_maps("commit_view")
+end
+
+---@return table<string, string[]>
 function M.get_reversed_refs_view_maps()
   return get_reversed_maps("refs_view")
 end
@@ -93,6 +98,7 @@ end
 ---| "split_below_all" Like :below split
 ---| "vsplit" Open in a vertical split
 ---| "floating" Open in a floating window
+---| "floating_console" Open in a floating window across the bottom of the screen
 ---| "auto" vsplit if window would have 80 cols, otherwise split
 
 ---@class NeogitCommitBufferConfig Commit buffer options
@@ -190,6 +196,9 @@ end
 ---| "MultiselectTogglePrevious"
 ---| "InsertCompletion"
 ---| "NOP"
+---| "ScrollWheelDown"
+---| "ScrollWheelUp"
+---| "MouseClick"
 ---| false
 
 ---@alias NeogitConfigMappingsStatus
@@ -197,6 +206,7 @@ end
 ---| "MoveDown"
 ---| "MoveUp"
 ---| "OpenTree"
+---| "OpenFold"
 ---| "Command"
 ---| "Depth1"
 ---| "Depth2"
@@ -212,6 +222,8 @@ end
 ---| "Untrack"
 ---| "RefreshBuffer"
 ---| "GoToFile"
+---| "GoToParentRepo",
+---| "PeekFile"
 ---| "VSplitOpen"
 ---| "SplitOpen"
 ---| "TabOpen"
@@ -239,6 +251,7 @@ end
 ---| "PushPopup"
 ---| "CommitPopup"
 ---| "LogPopup"
+---| "MarginPopup"
 ---| "RevertPopup"
 ---| "StashPopup"
 ---| "IgnorePopup"
@@ -303,6 +316,12 @@ end
 ---| "ascii"
 ---| "unicode"
 ---| "kitty"
+---
+---@alias NeogitCommitOrder
+---| ""
+---| "topo"
+---| "author-date"
+---| "date"
 
 ---@class NeogitConfigStatusOptions
 ---@field recent_commit_count? integer The number of recent commits to display
@@ -322,16 +341,22 @@ end
 ---@field commit_editor_I? { [string]: NeogitConfigMappingsCommitEditor_I } A dictionary that uses Commit editor commands to set a single keybind
 ---@field refs_view? { [string]: NeogitConfigMappingsRefsView } A dictionary that uses Refs view editor commands to set a single keybind
 
+---@class NeogitConfigGitService
+---@field pull_request? string
+---@field commit? string
+---@field tree? string
+
 ---@class NeogitConfig Neogit configuration settings
 ---@field filewatcher? NeogitFilewatcherConfig Values for filewatcher
 ---@field graph_style? NeogitGraphStyle Style for graph
+---@field git_executable? string Path to git executable (defaults to "git")
 ---@field commit_date_format? string Commit date format
 ---@field log_date_format? string Log date format
 ---@field disable_hint? boolean Remove the top hint in the Status buffer
 ---@field disable_context_highlighting? boolean Disable context highlights based on cursor position
 ---@field disable_signs? boolean Special signs to draw for sections etc. in Neogit
 ---@field prompt_force_push? boolean Offer to force push when branches diverge
----@field git_services? table Templartes to use when opening a pull request for a branch
+---@field git_services? NeogitConfigGitService[] Templates to use when opening a pull request for a branch, or commit
 ---@field fetch_after_checkout? boolean Perform a fetch if the newly checked out branch has an upstream or pushRemote set
 ---@field telescope_sorter? function The sorter telescope will use
 ---@field process_spinner? boolean Hide/Show the process spinner
@@ -339,7 +364,9 @@ end
 ---@field use_per_project_settings? boolean Scope persisted settings on a per-project basis
 ---@field remember_settings? boolean Whether neogit should persist flags from popups, e.g. git push flags
 ---@field sort_branches? string Value used for `--sort` for the `git branch` command
+---@field commit_order? NeogitCommitOrder Value used for `--<commit_order>-order` for the `git log` command
 ---@field initial_branch_name? string Default for new branch name prompts
+---@field initial_branch_rename? string Default for rename branch prompt. If not set, the current branch name is used
 ---@field kind? WindowKind The default type of window neogit should open in
 ---@field floating? NeogitConfigFloating The floating window style
 ---@field disable_line_numbers? boolean Whether to disable line numbers
@@ -361,7 +388,8 @@ end
 ---@field preview_buffer? NeogitConfigPopup Preview options
 ---@field popup? NeogitConfigPopup Set the default way of opening popups
 ---@field signs? NeogitConfigSigns Signs used for toggled regions
----@field integrations? { diffview: boolean, telescope: boolean, fzf_lua: boolean, mini_pick: boolean, snacks: boolean } Which integrations to enable
+---@field integrations? { diffview: boolean, codediff: boolean, telescope: boolean, fzf_lua: boolean, mini_pick: boolean, snacks: boolean } Which integrations to enable
+---@field diff_viewer? "diffview"|"codediff"|nil Which diff viewer to use (nil = auto-detect)
 ---@field sections? NeogitConfigSections
 ---@field ignored_settings? string[] Settings to never persist, format: "Filetype--cli-value", i.e. "NeogitCommitPopup--author"
 ---@field mappings? NeogitConfigMappings
@@ -390,17 +418,40 @@ function M.get_default_values()
       return nil
     end,
     git_services = {
-      ["github.com"] = "https://github.com/${owner}/${repository}/compare/${branch_name}?expand=1",
-      ["bitbucket.org"] = "https://bitbucket.org/${owner}/${repository}/pull-requests/new?source=${branch_name}&t=1",
-      ["gitlab.com"] = "https://gitlab.com/${owner}/${repository}/merge_requests/new?merge_request[source_branch]=${branch_name}",
-      ["azure.com"] = "https://dev.azure.com/${owner}/_git/${repository}/pullrequestcreate?sourceRef=${branch_name}&targetRef=${target}",
+      ["github.com"] = {
+        pull_request = "https://github.com/${owner}/${repository}/compare/${branch_name}?expand=1",
+        commit = "https://github.com/${owner}/${repository}/commit/${oid}",
+        tree = "https://${host}/${owner}/${repository}/tree/${branch_name}",
+      },
+      ["bitbucket.org"] = {
+        pull_request = "https://bitbucket.org/${owner}/${repository}/pull-requests/new?source=${branch_name}&t=1",
+        commit = "https://bitbucket.org/${owner}/${repository}/commits/${oid}",
+        tree = "https://bitbucket.org/${owner}/${repository}/branch/${branch_name}",
+      },
+      ["gitlab.com"] = {
+        pull_request = "https://gitlab.com/${owner}/${repository}/merge_requests/new?merge_request[source_branch]=${branch_name}",
+        commit = "https://gitlab.com/${owner}/${repository}/-/commit/${oid}",
+        tree = "https://gitlab.com/${owner}/${repository}/-/tree/${branch_name}?ref_type=heads",
+      },
+      ["azure.com"] = {
+        pull_request = "https://dev.azure.com/${owner}/_git/${repository}/pullrequestcreate?sourceRef=${branch_name}&targetRef=${target}",
+        commit = "",
+        tree = "",
+      },
+      ["codeberg.org"] = {
+        pull_request = "https://${host}/${owner}/${repository}/compare/${branch_name}",
+        commit = "https://${host}/${owner}/${repository}/commit/${oid}",
+        tree = "https://${host}/${owner}/${repository}/src/branch/${branch_name}",
+      },
     },
     highlight = {},
+    git_executable = "git",
     disable_insert_on_commit = "auto",
     use_per_project_settings = true,
     remember_settings = true,
     fetch_after_checkout = false,
     sort_branches = "-committerdate",
+    commit_order = "topo",
     kind = "tab",
     floating = {
       relative = "editor",
@@ -491,10 +542,12 @@ function M.get_default_values()
     integrations = {
       telescope = nil,
       diffview = nil,
+      codediff = nil,
       fzf_lua = nil,
       mini_pick = nil,
       snacks = nil,
     },
+    diff_viewer = nil,
     sections = {
       sequencer = {
         folded = false,
@@ -547,6 +600,9 @@ function M.get_default_values()
     },
     ignored_settings = {},
     mappings = {
+      commit_view = {
+        ["a"] = "OpenFileInWorktree",
+      },
       commit_editor = {
         ["q"] = "Close",
         ["<c-c><c-c>"] = "Submit",
@@ -620,6 +676,7 @@ function M.get_default_values()
         ["c"] = "CommitPopup",
         ["f"] = "FetchPopup",
         ["l"] = "LogPopup",
+        ["L"] = "MarginPopup",
         ["m"] = "MergePopup",
         ["p"] = "PullPopup",
         ["r"] = "RebasePopup",
@@ -653,6 +710,7 @@ function M.get_default_values()
         ["y"] = "ShowRefs",
         ["$"] = "CommandHistory",
         ["Y"] = "YankSelected",
+        ["gp"] = "GoToParentRepo",
         ["<c-r>"] = "RefreshBuffer",
         ["<cr>"] = "GoToFile",
         ["<s-cr>"] = "PeekFile",
@@ -802,8 +860,26 @@ function M.validate_config()
     end
   end
 
+  local function validate_diff_viewer()
+    if config.diff_viewer == nil then
+      return
+    end
+
+    local valid_viewers = { "diffview", "codediff" }
+    if not vim.tbl_contains(valid_viewers, config.diff_viewer) then
+      err(
+        "diff_viewer",
+        string.format(
+          "Expected diff_viewer to be one of %s or nil, got '%s'",
+          table.concat(valid_viewers, ", "),
+          tostring(config.diff_viewer)
+        )
+      )
+    end
+  end
+
   local function validate_integrations()
-    local valid_integrations = { "diffview", "telescope", "fzf_lua", "mini_pick", "snacks" }
+    local valid_integrations = { "diffview", "codediff", "telescope", "fzf_lua", "mini_pick", "snacks" }
     if not validate_type(config.integrations, "integrations", "table") or #config.integrations == 0 then
       return
     end
@@ -1140,11 +1216,13 @@ function M.validate_config()
     validate_type(config.disable_hint, "disable_hint", "boolean")
     validate_type(config.disable_context_highlighting, "disable_context_highlighting", "boolean")
     validate_type(config.disable_signs, "disable_signs", "boolean")
+    validate_type(config.git_executable, "git_executable", "string")
     validate_type(config.telescope_sorter, "telescope_sorter", "function")
     validate_type(config.use_per_project_settings, "use_per_project_settings", "boolean")
     validate_type(config.remember_settings, "remember_settings", "boolean")
     validate_type(config.sort_branches, "sort_branches", "string")
     validate_type(config.initial_branch_name, "initial_branch_name", "string")
+    validate_type(config.initial_branch_rename, "initial_branch_name", { "string", "nil" })
     validate_type(config.notification_icon, "notification_icon", "string")
     validate_type(config.console_timeout, "console_timeout", "number")
     validate_kind(config.kind, "kind")
@@ -1212,7 +1290,17 @@ function M.validate_config()
       validate_kind(config.popup.kind, "popup.kind")
     end
 
+    if validate_type(config.git_services, "git_services", "table") then
+      for k, v in pairs(config.git_services) do
+        validate_type(v, "git_services." .. k, "table")
+        validate_type(v.pull_request, "git_services." .. k .. ".pull_request", "string")
+        validate_type(v.commit, "git_services." .. k .. ".commit", "string")
+        validate_type(v.tree, "git_services." .. k .. ".tree", "string")
+      end
+    end
+
     validate_integrations()
+    validate_diff_viewer()
     validate_sections()
     validate_ignored_settings()
     validate_mappings()
@@ -1220,6 +1308,12 @@ function M.validate_config()
   end
 
   return errors
+end
+
+---Get the configured git executable path
+---@return string The git executable path
+function M.get_git_executable()
+  return M.values.git_executable
 end
 
 ---@param name string
@@ -1238,14 +1332,46 @@ function M.check_integration(name)
   return enabled
 end
 
+---Returns the configured diff viewer, or auto-detects if not set
+---@return string|nil The diff viewer to use ("diffview", "codediff"), or nil if none available
+function M.get_diff_viewer()
+  local logger = require("neogit.logger")
+  local viewer = M.values.diff_viewer
+
+  if viewer then
+    -- Explicit choice - verify it's available
+    if M.check_integration(viewer) then
+      return viewer
+    else
+      logger.warn(("[CONFIG] Configured diff_viewer '%s' is not available"):format(viewer))
+      return nil
+    end
+  end
+
+  -- Auto-detect: try diffview first (backwards compatible), then codediff
+  if M.check_integration("diffview") then
+    return "diffview"
+  elseif M.check_integration("codediff") then
+    return "codediff"
+  end
+
+  return nil
+end
+
 function M.setup(opts)
   if opts == nil then
     return
   end
 
   if opts.use_default_keymaps == false then
-    M.values.mappings =
-      { status = {}, popup = {}, finder = {}, commit_editor = {}, rebase_editor = {}, refs_view = {} }
+    M.values.mappings = {
+      status = {},
+      popup = {},
+      finder = {},
+      commit_editor = {},
+      rebase_editor = {},
+      refs_view = {},
+    }
   else
     -- Clear our any "false" user mappings from defaults
     for section, maps in pairs(opts.mappings or {}) do

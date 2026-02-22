@@ -27,8 +27,12 @@ local sha256 = vim.fn.sha256
 ---@field file string
 ---@field index_from number
 ---@field index_len number
+---@field disk_from number
+---@field disk_len number
 ---@field diff_from number
 ---@field diff_to number
+---@field length number
+---@field hash string
 ---@field first number First line number in buffer
 ---@field last number Last line number in buffer
 ---@field lines string[]
