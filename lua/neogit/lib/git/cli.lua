@@ -11,6 +11,22 @@ local function get_git_executable()
   return config.get_git_executable()
 end
 
+local hook_commands = {
+  commit = true,
+  merge = true,
+  rebase = true,
+  checkout = true,
+  push = true,
+}
+
+local function hooks_enabled(subcommand, cmd)
+  if not hook_commands[subcommand] then
+    return false
+  end
+
+  return not vim.tbl_contains(cmd, "--no-verify")
+end
+
 ---@class GitCommandSetup
 ---@field flags table|nil
 ---@field options table|nil
@@ -84,6 +100,8 @@ end
 ---@field null_separated self
 ---@field porcelain fun(string): self
 
+---@class GitCommandSubmodule: GitCommandBuilder
+
 ---@class GitCommandLog: GitCommandBuilder
 ---@field oneline self
 ---@field branches self
@@ -136,6 +154,7 @@ end
 ---@field n self
 ---@field list self
 ---@field delete self
+---@field points_at fun(oid: string): self
 
 ---@class GitCommandRebase: GitCommandBuilder
 ---@field interactive self
@@ -320,6 +339,7 @@ end
 ---@field no_flags self
 ---@field symbolic self
 ---@field symbolic_full_name self
+---@field show_superproject_working_tree self
 ---@field abbrev_ref fun(ref: string): self
 
 ---@class GitCommandCherryPick: GitCommandBuilder
@@ -373,6 +393,7 @@ end
 ---@field show-ref       GitCommandShowRef
 ---@field stash          GitCommandStash
 ---@field status         GitCommandStatus
+---@field submodule      GitCommandSubmodule
 ---@field tag            GitCommandTag
 ---@field update-index   GitCommandUpdateIndex
 ---@field update-ref     GitCommandUpdateRef
@@ -467,6 +488,8 @@ local configurations = {
     },
   },
 
+  submodule = config {},
+
   log = config {
     flags = {
       oneline = "--oneline",
@@ -556,6 +579,13 @@ local configurations = {
       n = "-n",
       list = "--list",
       delete = "--delete",
+    },
+    aliases = {
+      points_at = function(tbl)
+        return function(oid)
+          return tbl.args("--points-at", oid)
+        end
+      end,
     },
   },
 
@@ -963,6 +993,7 @@ local configurations = {
       no_flags = "--no-flags",
       symbolic = "--symbolic",
       symbolic_full_name = "--symbolic-full-name",
+      show_superproject_working_tree = "--show-superproject-working-tree",
     },
     options = {
       abbrev_ref = "--abbrev-ref",
@@ -1175,19 +1206,21 @@ local function new_builder(subcommand)
     end
 
     -- stylua: ignore
-    cmd = util.merge(
-      {
-        get_git_executable(),
-        "--no-pager",
-        "--literal-pathspecs",
-        "--no-optional-locks",
-        "-c", "core.preloadindex=true",
-        "-c", "color.ui=always",
-        "-c", "diff.noprefix=false",
-        subcommand
-      },
-      cmd
-    )
+    local base = {
+      get_git_executable(),
+      "--no-pager",
+      "--no-optional-locks",
+      "-c", "core.preloadindex=true",
+      "-c", "color.ui=always",
+      "-c", "diff.noprefix=false",
+      subcommand,
+    }
+
+    if not hooks_enabled(subcommand, cmd) then
+      table.insert(base, 3, "--literal-pathspecs")
+    end
+
+    cmd = util.merge(base, cmd)
 
     return process.new {
       cmd = cmd,

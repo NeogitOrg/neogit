@@ -41,6 +41,7 @@ local function pull_from(args, remote, branch, opts)
   end
 end
 
+---@param popup PopupData
 function M.from_pushremote(popup)
   local pushRemote = git.branch.pushRemote()
   if not pushRemote then
@@ -53,6 +54,7 @@ function M.from_pushremote(popup)
   end
 end
 
+---@param popup PopupData
 function M.from_upstream(popup)
   local upstream = git.repo.state.upstream.ref
   local set_upstream
@@ -74,6 +76,7 @@ function M.from_upstream(popup)
   end
 end
 
+---@param popup PopupData
 function M.from_elsewhere(popup)
   local target = FuzzyFinderBuffer.new(git.refs.list_remote_branches()):open_async { prompt_prefix = "pull" }
   if not target then

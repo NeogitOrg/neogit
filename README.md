@@ -1,17 +1,3 @@
-<div align="center" markdown="1">
-   <br>
-   <br>
-   <a href="https://www.warp.dev/neogit">
-      <img alt="Warp sponsorship" width="600" src="https://github.com/user-attachments/assets/c58acc85-7438-46a7-a89a-0f404c269256">
-   </a>
-
-### [Warp, the intelligent terminal for developers](https://www.warp.dev/neogit)
-#### [Try running neogit in Warp](https://www.warp.dev/neogit)<br>
-
-</div>
-
-<hr>
-
 <div align="center">
     <div>
         <div><img src="https://github.com/NeogitOrg/neogit/assets/7228095/7684545f-47b5-40e2-aedd-ccf56e0553f4" width="400px"/></div>
@@ -47,7 +33,10 @@ Here's an example spec for [Lazy](https://github.com/folke/lazy.nvim), but you'r
   lazy = true,
   dependencies = {
     "nvim-lua/plenary.nvim",         -- required
-    "sindrets/diffview.nvim",        -- optional - Diff integration
+
+    -- Only one of these is needed.
+    "sindrets/diffview.nvim",        -- optional
+    "esmuellert/codediff.nvim",      -- optional
 
     -- Only one of these is needed.
     "nvim-telescope/telescope.nvim", -- optional
@@ -224,9 +213,11 @@ neogit.setup {
   --   "date"         chronological order by commit date
   --   "author-date"  chronological order by author date
   --   ""             disable explicit ordering (fastest, recommended for very large repos)
-  commit_order = "topo"
+  commit_order = "topo",
   -- Default for new branch name prompts
   initial_branch_name = "",
+  -- Default for rename branch prompt. If not set, the current branch name is used
+  initial_branch_rename = nil,
   -- Change the default way of opening neogit
   kind = "tab",
   -- Floating window style 
@@ -262,6 +253,7 @@ neogit.setup {
       C = "copied",
       U = "updated",
       R = "renamed",
+      T = "changed",
       DD = "unmerged",
       AU = "unmerged",
       UD = "unmerged",
@@ -332,6 +324,10 @@ neogit.setup {
     -- Requires you to have `sindrets/diffview.nvim` installed.
     diffview = nil,
 
+    -- Alternative diff viewer integration.
+    -- Requires you to have `esmuellert/codediff.nvim` installed.
+    codediff = nil,
+
     -- If enabled, uses fzf-lua for menu selection. If the telescope integration
     -- is also selected then telescope is used instead
     -- Requires you to have `ibhagwan/fzf-lua` installed.
@@ -347,6 +343,9 @@ neogit.setup {
     -- Requires you to have `folke/snacks.nvim` installed.
     snacks = nil,
   },
+  -- Which diff viewer to use. nil = auto-detect (tries diffview first, then codediff).
+  -- Can be "diffview" or "codediff".
+  diff_viewer = nil,
   sections = {
     -- Reverting/Cherry Picking
     sequencer = {
@@ -495,6 +494,7 @@ neogit.setup {
       ["y"] = "ShowRefs",
       ["$"] = "CommandHistory",
       ["Y"] = "YankSelected",
+      ["gp"] = "GoToParentRepo",
       ["<c-r>"] = "RefreshBuffer",
       ["<cr>"] = "GoToFile",
       ["<s-cr>"] = "PeekFile",
