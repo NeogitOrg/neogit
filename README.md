@@ -1,17 +1,3 @@
-<div align="center" markdown="1">
-   <br>
-   <br>
-   <a href="https://www.warp.dev/neogit">
-      <img alt="Warp sponsorship" width="600" src="https://github.com/user-attachments/assets/c58acc85-7438-46a7-a89a-0f404c269256">
-   </a>
-
-### [Warp, the intelligent terminal for developers](https://www.warp.dev/neogit)
-#### [Try running neogit in Warp](https://www.warp.dev/neogit)<br>
-
-</div>
-
-<hr>
-
 <div align="center">
     <div>
         <div><img src="https://github.com/NeogitOrg/neogit/assets/7228095/7684545f-47b5-40e2-aedd-ccf56e0553f4" width="400px"/></div>
@@ -44,9 +30,13 @@ Here's an example spec for [Lazy](https://github.com/folke/lazy.nvim), but you'r
 ```lua
 {
   "NeogitOrg/neogit",
+  lazy = true,
   dependencies = {
     "nvim-lua/plenary.nvim",         -- required
-    "sindrets/diffview.nvim",        -- optional - Diff integration
+
+    -- Only one of these is needed.
+    "sindrets/diffview.nvim",        -- optional
+    "esmuellert/codediff.nvim",      -- optional
 
     -- Only one of these is needed.
     "nvim-telescope/telescope.nvim", -- optional
@@ -54,12 +44,73 @@ Here's an example spec for [Lazy](https://github.com/folke/lazy.nvim), but you'r
     "nvim-mini/mini.pick",           -- optional
     "folke/snacks.nvim",             -- optional
   },
+  cmd = "Neogit",
+  keys = {
+    { "<leader>gg", "<cmd>Neogit<cr>", desc = "Show Neogit UI" }
+  }
 }
 ```
 
-## Compatibility
+## Usage
 
-The `master` branch will always be compatible with the latest **stable** release of Neovim, and usually with the latest **nightly** build as well.
+You can either open Neogit by using the `Neogit` command:
+
+```vim
+:Neogit             " Open the status buffer in a new tab
+:Neogit cwd=<cwd>   " Use a different repository path
+:Neogit cwd=%:p:h   " Uses the repository of the current file
+:Neogit kind=<kind> " Open specified popup directly
+:Neogit commit      " Open commit popup
+
+" Map it to a key
+nnoremap <leader>gg <cmd>Neogit<cr>
+```
+
+```lua
+-- Or via lua api
+vim.keymap.set("n", "<leader>gg", "<cmd>Neogit<cr>", { desc = "Open Neogit UI" })
+```
+
+Or using the lua api:
+
+```lua
+local neogit = require('neogit')
+
+-- open using defaults
+neogit.open()
+
+-- open a specific popup
+neogit.open({ "commit" })
+
+-- open as a split
+neogit.open({ kind = "split" })
+
+-- open with different project
+neogit.open({ cwd = "~" })
+
+-- You can map this to a key
+vim.keymap.set("n", "<leader>gg", neogit.open, { desc = "Open Neogit UI" })
+
+-- Wrap in a function to pass additional arguments
+vim.keymap.set(
+    "n",
+    "<leader>gg",
+    function() neogit.open({ kind = "split" }) end,
+    { desc = "Open Neogit UI" }
+)
+```
+
+The `kind` option can be one of the following values:
+- `tab`      (default)
+- `replace`
+- `split`
+- `split_above`
+- `split_above_all`
+- `split_below`
+- `split_below_all`
+- `vsplit`
+- `floating`
+- `auto` (`vsplit` if window would have 80 cols, otherwise `split`)
 
 ## Configuration
 
@@ -162,9 +213,11 @@ neogit.setup {
   --   "date"         chronological order by commit date
   --   "author-date"  chronological order by author date
   --   ""             disable explicit ordering (fastest, recommended for very large repos)
-  commit_order = "topo"
+  commit_order = "topo",
   -- Default for new branch name prompts
   initial_branch_name = "",
+  -- Default for rename branch prompt. If not set, the current branch name is used
+  initial_branch_rename = nil,
   -- Change the default way of opening neogit
   kind = "tab",
   -- Floating window style 
@@ -200,6 +253,7 @@ neogit.setup {
       C = "copied",
       U = "updated",
       R = "renamed",
+      T = "changed",
       DD = "unmerged",
       AU = "unmerged",
       UD = "unmerged",
@@ -270,6 +324,10 @@ neogit.setup {
     -- Requires you to have `sindrets/diffview.nvim` installed.
     diffview = nil,
 
+    -- Alternative diff viewer integration.
+    -- Requires you to have `esmuellert/codediff.nvim` installed.
+    codediff = nil,
+
     -- If enabled, uses fzf-lua for menu selection. If the telescope integration
     -- is also selected then telescope is used instead
     -- Requires you to have `ibhagwan/fzf-lua` installed.
@@ -285,6 +343,9 @@ neogit.setup {
     -- Requires you to have `folke/snacks.nvim` installed.
     snacks = nil,
   },
+  -- Which diff viewer to use. nil = auto-detect (tries diffview first, then codediff).
+  -- Can be "diffview" or "codediff".
+  diff_viewer = nil,
   sections = {
     -- Reverting/Cherry Picking
     sequencer = {
@@ -433,6 +494,7 @@ neogit.setup {
       ["y"] = "ShowRefs",
       ["$"] = "CommandHistory",
       ["Y"] = "YankSelected",
+      ["gp"] = "GoToParentRepo",
       ["<c-r>"] = "RefreshBuffer",
       ["<cr>"] = "GoToFile",
       ["<s-cr>"] = "PeekFile",
@@ -453,47 +515,6 @@ neogit.setup {
 ```
 </details>
 
-## Usage
-
-You can either open Neogit by using the `Neogit` command:
-
-```vim
-:Neogit             " Open the status buffer in a new tab
-:Neogit cwd=<cwd>   " Use a different repository path
-:Neogit cwd=%:p:h   " Uses the repository of the current file
-:Neogit kind=<kind> " Open specified popup directly
-:Neogit commit      " Open commit popup
-```
-
-Or using the lua api:
-
-```lua
-local neogit = require('neogit')
-
--- open using defaults
-neogit.open()
-
--- open a specific popup
-neogit.open({ "commit" })
-
--- open as a split
-neogit.open({ kind = "split" })
-
--- open with different project
-neogit.open({ cwd = "~" })
-```
-
-The `kind` option can be one of the following values:
-- `tab`      (default)
-- `replace`
-- `split`
-- `split_above`
-- `split_above_all`
-- `split_below`
-- `split_below_all`
-- `vsplit`
-- `floating`
-- `auto` (`vsplit` if window would have 80 cols, otherwise `split`)
 
 ## Popups
 
@@ -553,6 +574,10 @@ Neogit emits the following events:
 ## Versioning
 
 Neogit follows semantic versioning.
+
+## Compatibility
+
+The `master` branch will always be compatible with the latest **stable** release of Neovim, and usually with the latest **nightly** build as well.
 
 ## Contributing
 

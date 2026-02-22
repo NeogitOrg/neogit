@@ -214,6 +214,10 @@ function M.str_min_width(str, len, sep, opts)
   end
 end
 
+---Extract slice from a table
+---@param tbl table
+---@param s integer start index
+---@param e integer ending index
 function M.slice(tbl, s, e)
   local pos, new = 1, {}
 

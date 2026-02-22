@@ -179,6 +179,8 @@ to Neovim users.
     commit_order = "topo"
     -- Default for new branch name prompts
     initial_branch_name = "",
+    -- Default for rename branch prompt. If not set, the current branch name is used
+    initial_branch_rename = nil,
     -- Change the default way of opening neogit
     kind = "tab",
     -- Floating window style
@@ -214,6 +216,7 @@ to Neovim users.
         C = "copied",
         U = "updated",
         R = "renamed",
+        T = "changed",
         DD = "unmerged",
         AU = "unmerged",
         UD = "unmerged",
@@ -284,6 +287,10 @@ to Neovim users.
         -- Requires you to have `sindrets/diffview.nvim` installed.
         diffview = nil,
 
+        -- Alternative diff viewer integration.
+        -- Requires you to have `esmuellert/codediff.nvim` installed.
+        codediff = nil,
+
         -- If enabled, uses fzf-lua for menu selection. If the telescope integration
         -- is also selected then telescope is used instead
         -- Requires you to have `ibhagwan/fzf-lua` installed.
@@ -299,6 +306,9 @@ to Neovim users.
         -- Requires you to have `folke/snacks.nvim` installed.
         snacks = nil,
     },
+    -- Which diff viewer to use. nil = auto-detect (tries diffview first, then codediff).
+    -- Can be "diffview" or "codediff".
+    diff_viewer = nil,
     sections = {
         -- Reverting/Cherry Picking
         sequencer = {
@@ -391,6 +401,10 @@ The following mappings can all be customized via the setup function.
         ["<c-c><c-k>"] = "Abort",
       }
 
+      commit_view = {
+        ["a"]          = "OpenFileInWorktree",
+      }
+
       rebase_editor = {
         ["p"]          = "Pick",
         ["r"]          = "Reword",
@@ -479,6 +493,7 @@ The following mappings can all be customized via the setup function.
         ["y"]      = "ShowRefs",
         ["$"]      = "CommandHistory",
         ["Y"]      = "YankSelected",
+        ["gp"]      = "GoToParentRepo",
         ["<c-r>"]  = "RefreshBuffer",
         ["<cr>"]   = "GoToFile",
         ["<s-cr>"] = "PeekFile",
@@ -644,6 +659,32 @@ The following events are emitted by Neogit:
       new_cwd: string,
       copy_if_present: function(filename: string, callback: function|nil)
     }
+<
+• `NeogitDiffLoaded`
+  When: A hunk is lazy loaded in the status buffer
+  Data: >
+    {
+        item = {
+            absolute_path: string,
+            relative_path: string,
+            row_start: int (First row in buffer the hunk occupies),
+            row_end: int (last row in buffer the hunk occupies),
+            mode: string (file mode)
+        },
+        diff = {
+            kind: str,
+            lines: string[],
+            hunks: Hunk[]
+        }
+    }
+
+    Hunk:
+        lines: str[]
+        original_lines: str[] (lines from diff not prefixed with +/-)
+        modified_lines: str[] (lines from diff, but with +/- prefix removed)
+        row_start: int (first line of hunk in the buffer)
+        row_end: int (last line of hunk in the buffer)
+        header: string (diff header)
 <
 ==============================================================================
 5. Highlights                                                *neogit_highlights*
@@ -1395,9 +1436,13 @@ The diff popup actions allow inspection of changes in the index (staged
 changes), the working tree (unstaged changes and untracked files), any
 ref range.
 
-For these actions to become available, Neogit needs to be configured to enable
-`diffview.nvim` integration. See |neogit_setup_plugin| and
-https://github.com/sindrets/diffview.nvim.
+For these actions to become available, Neogit needs to have a diff viewer
+integration enabled. Supported viewers are:
+- `diffview.nvim`: https://github.com/sindrets/diffview.nvim
+- `codediff.nvim`: https://github.com/esmuellert/codediff.nvim
+
+By default, Neogit will auto-detect which viewer is available. You can
+explicitly set the viewer with the `diff_viewer` option. See |neogit_setup_plugin|.
 
   • Diff this                                                 *neogit_diff_this*
     Show the diff for the file referred to by a hunk under the cursor.
@@ -2171,7 +2216,43 @@ Reflog Buffer                                             *neogit_reflog_buffer*
 
 ==============================================================================
 Commit Buffer                                             *neogit_commit_buffer*
-(TODO)
+The commit buffer shows a single commit, including metadata, summary, and an
+inline diff. It opens via |:NeogitCommit|, from log/graph views, or when
+pressing `<cr>` on a commit hash elsewhere in Neogit.
+
+Mappings (normal mode):
+  • `a`          (|neogit_setup_mappings|: "OpenFileInWorktree" in commit_view)
+                 On a diff hunk, try to jump to that location in the worktree
+                 (i.e. current version of the file).
+                 Note: it can fail if the file no longer exists or it can take
+                 you to a wrong location in the file if the lines have been
+                 moved around.
+
+  • `<cr>`       On a diff hunk, open the file contents from the commit in a
+                 temporary read-only tab, or the parent revision for deleted
+                 lines; on a filepath line, jump to that file's diff section
+                 within the buffer.
+
+  • `o`          Open the commit in the configured git service (requires
+                 Neovim >= 0.10 for |vim.ui.open|).
+
+  • `{` / `}`      Jump to previous/next hunk or diff header.
+
+  • `q` / `<esc>`  Close the commit buffer (keys are configurable via
+               |neogit_setup_mappings| for the commit view).
+
+  • `Y`          Opens the Yank popup, allowing copying of different details
+               from the commit.
+
+               note: To copy only a specific hunk's diff, place the
+               cursor within that hunk.
+
+  • `za` / `<tab>` Toggle folding for the current section.
+
+  • Popup shortcuts honour |neogit_setup_mappings|, default keys:
+      - `A` Cherry-pick, `b` Branch, `B` Bisect, `c` Commit, `d` Diff,
+        `f` Fetch, `i` Ignore, `l` Log, `m` Merge, `p` Pull, `P` Push,
+        `r` Rebase, `t` Tag, `v` Revert, `w` Worktree, `X` Reset, `Z` Stash.
 
 ==============================================================================
 Refs Buffer                                                 *neogit_refs_buffer*

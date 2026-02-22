@@ -129,8 +129,8 @@ function M.push_other(popup)
     return
   end
 
-  local remote, _ = git.branch.parse_remote_branch(destination)
-  push_to(popup:get_arguments(), remote, source .. ":" .. destination)
+  local remote, dest_branch = git.branch.parse_remote_branch(destination)
+  push_to(popup:get_arguments(), remote, source .. ":" .. dest_branch)
 end
 
 ---@param prompt string

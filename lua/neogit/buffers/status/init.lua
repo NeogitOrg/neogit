@@ -37,6 +37,41 @@ vim.api.nvim_create_autocmd("BufWritePost", {
   end,
 })
 
+---@class SubmoduleInfo
+---@field submodules string[] A list with the relative paths to the project's submodules
+---@field parent_repo string? If we are in a submodule, cache the abs path to the parent repo
+
+---@type table<string, SubmoduleInfo>
+local submodule_info_per_root = {}
+
+---@return string?
+function M:parent_repo()
+  local info = submodule_info_per_root[self.root]
+  return info and info.parent_repo
+end
+
+---@return string[]
+function M:submodules()
+  local info = submodule_info_per_root[self.root]
+  return info and info.submodules or {}
+end
+
+---@param abs_path string
+---@return boolean
+function M:has_submodule(abs_path)
+  local dir = require("plenary.path"):new(abs_path)
+  if not dir:exists() or not dir:is_dir() then
+    return false
+  end
+  local rel_path = dir:make_relative(self.cwd)
+  for _, submodule in ipairs(self:submodules()) do
+    if submodule == rel_path then
+      return true
+    end
+  end
+  return false
+end
+
 ---@param instance StatusBuffer
 ---@param dir string
 function M.register(instance, dir)
@@ -44,6 +79,10 @@ function M.register(instance, dir)
   logger.debug("[STATUS] Registering instance for: " .. dir)
 
   instances[dir] = instance
+  submodule_info_per_root[instance.root] = {
+    submodules = git.submodule.list(),
+    parent_repo = git.rev_parse.parent_repo(),
+  }
 end
 
 ---@param dir? string
@@ -185,6 +224,7 @@ function M:open(kind)
         [mappings["Unstage"]]                   = self:_action("n_unstage"),
         [mappings["UnstageStaged"]]             = self:_action("n_unstage_staged"),
         [mappings["GoToFile"]]                  = self:_action("n_goto_file"),
+        [mappings["GoToParentRepo"]]            = self:_action("n_goto_parent_repo"),
         [mappings["TabOpen"]]                   = self:_action("n_tab_open"),
         [mappings["SplitOpen"]]                 = self:_action("n_split_open"),
         [mappings["VSplitOpen"]]                = self:_action("n_vertical_split_open"),
@@ -229,6 +269,7 @@ function M:open(kind)
     after = function(buffer, _win)
       Watcher.instance(self.root):register(self)
       buffer:move_cursor(buffer.ui:first_section().first)
+      vim.b.neogit_git_dir = git.repo.git_dir
     end,
     user_autocmds = {
       -- Resetting doesn't yield the correct repo state instantly, so we need to re-refresh after a few seconds

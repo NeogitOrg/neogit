@@ -4,8 +4,11 @@ local ui = require("neogit.buffers.commit_view.ui")
 local git = require("neogit.lib.git")
 local config = require("neogit.config")
 local popups = require("neogit.popups")
+local commit_view_maps = require("neogit.config").get_reversed_commit_view_maps()
 local status_maps = require("neogit.config").get_reversed_status_maps()
 local notification = require("neogit.lib.notification")
+local jump = require("neogit.lib.jump")
+local util = require("neogit.lib.util")
 
 local api = vim.api
 
@@ -151,6 +154,71 @@ function M:update(commit_id, filter)
   self.buffer:win_call(vim.cmd, "normal! gg")
 end
 
+---Generate a callback to re-open CommitViewBuffer in the current commit
+---@param self CommitViewBuffer
+---@return fun()
+local function get_reopen_cb(self)
+  local original_cursor = api.nvim_win_get_cursor(0)
+  local back_commit = self.commit_info.oid
+  return function()
+    M.new(back_commit):open()
+    api.nvim_win_set_cursor(0, original_cursor)
+  end
+end
+
+---@param self CommitViewBuffer
+---@param location LocationInHunk
+---@return string|nil, integer[]
+local function location_to_commit_cursor(self, location)
+  if string.sub(location.line, 1, 1) == "-" then
+    return git.log.parent(self.commit_info.oid), { location.old, 0 }
+  else
+    return self.commit_info.oid, { location.new, 0 }
+  end
+end
+
+---Visit the file at the location specified by the provided hunk component
+---@param self CommitViewBuffer
+---@param component Component A component that evaluates is_jumpable_hunk_line_component() to true
+---@param worktree boolean if true, try to jump to the file in the current worktree. Otherwise jump to the file in the referenced commit
+local function diff_visit_file(self, component, worktree)
+  local hunk_component = component.parent.parent
+  local hunk = hunk_component.options.hunk
+  local path = vim.trim(hunk.file)
+  if path == "" then
+    notification.warn("Unable to determine file path for diff line")
+    return
+  end
+
+  local line = self.buffer:cursor_line()
+  local offset = line - hunk_component.position.row_start
+  local location = jump.translate_hunk_location(hunk, offset)
+  if not location then
+    -- Cursor outside the hunk, shouldn't happen. Don't warn in that case
+    return
+  end
+
+  if worktree then
+    local cursor = { location.new, 0 }
+    jump.goto_file_at(path, cursor)
+  else
+    local target_commit, cursor = location_to_commit_cursor(self, location)
+    if not target_commit then
+      notification.warn("Unable to retrieve parent commit")
+      return nil, cursor
+    end
+    jump.goto_file_in_commit_at(target_commit, path, cursor, get_reopen_cb(self))
+  end
+end
+
+---@param c Component
+---@return boolean
+local function is_jumpable_hunk_line_component(c)
+  return c.options.line_hl == "NeogitDiffContext"
+    or c.options.line_hl == "NeogitDiffAdd"
+    or c.options.line_hl == "NeogitDiffDelete"
+end
+
 ---Opens the CommitViewBuffer
 ---If already open will close the buffer
 ---@param kind? string
@@ -189,12 +257,26 @@ function M:open(kind)
             notification.warn("Couldn't determine commit URL to open")
           end
         end,
+        [commit_view_maps["OpenFileInWorktree"]] = function()
+          -- Abort if rebase_editor
+          local c = self.buffer.ui:get_component_under_cursor(function(c)
+            return is_jumpable_hunk_line_component(c)
+          end)
+          if c then
+            diff_visit_file(self, c, true)
+          end
+        end,
         ["<cr>"] = function()
           local c = self.buffer.ui:get_component_under_cursor(function(c)
-            return c.options.highlight == "NeogitFilePath"
+            return c.options.highlight == "NeogitFilePath" or is_jumpable_hunk_line_component(c)
           end)
 
           if not c then
+            return
+          end
+
+          if is_jumpable_hunk_line_component(c) then
+            diff_visit_file(self, c, false)
             return
           end
 
@@ -344,11 +426,50 @@ function M:open(kind)
         ["<esc>"] = function()
           self:close()
         end,
-        [status_maps["YankSelected"]] = function()
-          local yank = string.format("'%s'", self.commit_info.oid)
-          vim.cmd.let("@+=" .. yank)
-          vim.cmd.echo(yank)
-        end,
+        [status_maps["YankSelected"]] = popups.open("yank", function(p)
+          -- If the cursor is over a specific hunk, just copy that diff.
+          local diff
+          local c = self.buffer.ui:get_component_under_cursor(function(c)
+            return c.options.hunk ~= nil
+          end)
+
+          if c then
+            local hunks = util.flat_map(self.commit_info.diffs, function(diff)
+              return diff.hunks
+            end)
+
+            for _, hunk in ipairs(hunks) do
+              if hunk.hash == c.options.hunk.hash then
+                diff = table.concat(util.merge({ hunk.line }, hunk.lines), "\n")
+                break
+              end
+            end
+          end
+
+          -- If for some reason we don't find the specific hunk, or there isn't one, fall-back to the entire patch.
+          if not diff then
+            diff = table.concat(
+              vim.tbl_map(function(diff)
+                return table.concat(diff.lines, "\n")
+              end, self.commit_info.diffs),
+              "\n"
+            )
+          end
+
+          p {
+            hash = self.commit_info.oid,
+            subject = self.commit_info.description[1],
+            message = table.concat(self.commit_info.description, "\n"),
+            body = table.concat(
+              util.slice(self.commit_info.description, 2, #self.commit_info.description),
+              "\n"
+            ),
+            url = git.remote.commit_url(self.commit_info.oid),
+            diff = diff,
+            author = ("%s <%s>"):format(self.commit_info.author_name, self.commit_info.author_email),
+            tags = table.concat(git.tag.for_commit(self.commit_info.oid), ", "),
+          }
+        end),
         [status_maps["Toggle"]] = function()
           pcall(vim.cmd, "normal! za")
         end,
