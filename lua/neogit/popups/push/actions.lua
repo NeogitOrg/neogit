@@ -5,11 +5,16 @@ local notification = require("neogit.lib.notification")
 local input = require("neogit.lib.input")
 local util = require("neogit.lib.util")
 local config = require("neogit.config")
+local event = require("neogit.lib.event")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
 local M = {}
 
+---@param args string[]
+---@param remote string
+---@param branch string|nil
+---@param opts table|nil
 local function push_to(args, remote, branch, opts)
   opts = opts or {}
 
@@ -43,21 +48,21 @@ local function push_to(args, remote, branch, opts)
   local updates_rejected = string.find(table.concat(res.stdout), "Updates were rejected") ~= nil
 
   -- Only ask the user whether to force push if not already specified and feature enabled
-  if res and res.code ~= 0 and not using_force and updates_rejected and config.values.prompt_force_push then
+  if res and res:failure() and not using_force and updates_rejected and config.values.prompt_force_push then
     logger.error("Attempting force push to " .. name)
 
-    local message = "Your branch has diverged from the remote branch. Do you want to force push?"
+    local message = "Your branch has diverged from the remote branch. Do you want to force push with lease?"
     if input.get_permission(message) then
-      table.insert(args, "--force")
+      table.insert(args, "--force-with-lease")
       res = git.push.push_interactive(remote, branch, args)
     end
   end
 
-  if res and res.code == 0 then
+  if res and res:success() then
     a.util.scheduler()
     logger.debug("Pushed to " .. name)
     notification.info("Pushed to " .. name, { dismiss = true })
-    vim.api.nvim_exec_autocmds("User", { pattern = "NeogitPushComplete", modeline = false })
+    event.send("PushComplete")
   else
     logger.debug("Failed to push to " .. name)
     notification.error("Failed to push to " .. name, { dismiss = true })
@@ -107,14 +112,7 @@ function M.to_elsewhere(popup)
 end
 
 function M.push_other(popup)
-  local sources = git.branch.get_local_branches()
-  table.insert(sources, "HEAD")
-  table.insert(sources, "ORIG_HEAD")
-  table.insert(sources, "FETCH_HEAD")
-  if popup.state.env.commit then
-    table.insert(sources, 1, popup.state.env.commit)
-  end
-
+  local sources = util.merge({ popup.state.env.commit }, git.refs.list_local_branches(), git.refs.heads())
   local source = FuzzyFinderBuffer.new(sources):open_async { prompt_prefix = "push" }
   if not source then
     return
@@ -125,14 +123,14 @@ function M.push_other(popup)
     table.insert(destinations, 1, remote .. "/" .. source)
   end
 
-  local destination = FuzzyFinderBuffer.new(destinations)
+  local destination = FuzzyFinderBuffer.new(util.deduplicate(destinations))
     :open_async { prompt_prefix = "push " .. source .. " to" }
   if not destination then
     return
   end
 
-  local remote, _ = git.branch.parse_remote_branch(destination)
-  push_to(popup:get_arguments(), remote, source .. ":" .. destination)
+  local remote, dest_branch = git.branch.parse_remote_branch(destination)
+  push_to(popup:get_arguments(), remote, source .. ":" .. dest_branch)
 end
 
 ---@param prompt string
@@ -195,7 +193,7 @@ function M.explicit_refspec(popup)
 end
 
 function M.configure()
-  require("neogit.popups.branch_config").create()
+  require("neogit.popups.branch_config").create {}
 end
 
 return M

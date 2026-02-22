@@ -3,8 +3,7 @@
 require "spec_helper"
 
 RSpec.describe "Remote Popup", :git, :nvim, :popup do
-  before { nvim.keys("M") }
-
+  let(:keymap) { "M" }
   let(:view) do
     [
       " Variables                                                                      ",

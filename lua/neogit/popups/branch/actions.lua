@@ -5,32 +5,30 @@ local config = require("neogit.config")
 local input = require("neogit.lib.input")
 local util = require("neogit.lib.util")
 local notification = require("neogit.lib.notification")
+local event = require("neogit.lib.event")
 local a = require("plenary.async")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 local BranchConfigPopup = require("neogit.popups.branch_config")
-
-local function fire_branch_event(pattern, data)
-  vim.api.nvim_exec_autocmds("User", { pattern = pattern, modeline = false, data = data })
-end
 
 local function fetch_remote_branch(target)
   local remote, branch = git.branch.parse_remote_branch(target)
   if remote then
     notification.info("Fetching from " .. remote .. "/" .. branch)
     git.fetch.fetch(remote, branch)
-    fire_branch_event("NeogitFetchComplete", { branch = branch, remote = remote })
+    event.send("FetchComplete", { branch = branch, remote = remote })
   end
 end
 
 local function checkout_branch(target, args)
   local result = git.branch.checkout(target, args)
-  if result.code > 0 then
+  if result:failure() then
     notification.error(table.concat(result.stderr, "\n"))
     return
   end
 
-  fire_branch_event("NeogitBranchCheckout", { branch_name = target })
+  event.send("BranchCheckout", { branch_name = target })
+  notification.info("Checked out branch " .. target)
 
   if config.values.fetch_after_checkout then
     a.void(function()
@@ -70,13 +68,13 @@ local function spin_off_branch(checkout)
     return
   end
 
-  fire_branch_event("NeogitBranchCreate", { branch_name = name })
+  event.send("BranchCreate", { branch_name = name })
 
   local current_branch_name = git.branch.current_full_name()
 
   if checkout then
     git.cli.checkout.branch(name).call()
-    fire_branch_event("NeogitBranchCheckout", { branch_name = name })
+    event.send("BranchCheckout", { branch_name = name })
   end
 
   local upstream = git.branch.upstream()
@@ -86,7 +84,7 @@ local function spin_off_branch(checkout)
       git.log.update_ref(current_branch_name, upstream)
     else
       git.cli.reset.hard.args(upstream).call()
-      fire_branch_event("NeogitReset", { commit = name, mode = "hard" })
+      event.send("Reset", { commit = name, mode = "hard" })
     end
   end
 end
@@ -133,11 +131,17 @@ local function create_branch(popup, prompt, checkout, name)
     return
   end
 
-  git.branch.create(name, base_branch)
-  fire_branch_event("NeogitBranchCreate", { branch_name = name, base = base_branch })
+  local success = git.branch.create(name, base_branch)
+  if success then
+    event.send("BranchCreate", { branch_name = name, base = base_branch })
 
-  if checkout then
-    checkout_branch(name, popup:get_arguments())
+    if checkout then
+      checkout_branch(name, popup:get_arguments())
+    else
+      notification.info("Created branch " .. name)
+    end
+  else
+    notification.warn("Branch " .. name .. " already exists.")
   end
 end
 
@@ -185,8 +189,14 @@ function M.checkout_local_branch(popup)
 
   if target then
     if vim.tbl_contains(remote_branches, target) then
-      git.branch.track(target, popup:get_arguments())
-      fire_branch_event("NeogitBranchCheckout", { branch_name = target })
+      local result = git.branch.track(target, popup:get_arguments())
+      if result:failure() then
+        notification.error(table.concat(result.stderr, "\n"))
+        return
+      end
+
+      notification.info("Created local branch " .. target .. " tracking remote")
+      event.send("BranchCheckout", { branch_name = target })
     elseif not vim.tbl_contains(options, target) then
       target, _ = target:gsub("%s", "-")
       create_branch(popup, "Create " .. target .. " starting at", true, target)
@@ -220,7 +230,7 @@ function M.configure_branch()
     return
   end
 
-  BranchConfigPopup.create(branch_name)
+  BranchConfigPopup.create { branch = branch_name }
 end
 
 function M.rename_branch()
@@ -230,15 +240,19 @@ function M.rename_branch()
     return
   end
 
-  local new_name = get_branch_name_user_input(("Rename '%s' to"):format(selected_branch))
+  local default_branch_name = config.values.initial_branch_rename or selected_branch
+  local new_name = get_branch_name_user_input(("Rename '%s' to"):format(selected_branch), default_branch_name)
   if not new_name then
     return
   end
 
-  git.cli.branch.move.args(selected_branch, new_name).call { await = true }
-
-  notification.info(string.format("Renamed '%s' to '%s'", selected_branch, new_name))
-  fire_branch_event("NeogitBranchRename", { branch_name = selected_branch, new_name = new_name })
+  local result = git.cli.branch.move.args(selected_branch, new_name).call { await = true }
+  if result:success() then
+    notification.info(string.format("Renamed '%s' to '%s'", selected_branch, new_name))
+    event.send("BranchRename", { branch_name = selected_branch, new_name = new_name })
+  else
+    notification.warn(string.format("Couldn't rename '%s' to '%s'", selected_branch, new_name))
+  end
 end
 
 function M.reset_branch(popup)
@@ -278,13 +292,17 @@ function M.reset_branch(popup)
   end
 
   -- Reset the current branch to the desired state & update reflog
-  git.cli.reset.hard.args(to).call()
-  local current = git.branch.current_full_name()
-  assert(current, "no current branch")
-  git.log.update_ref(current, to)
+  local result = git.cli.reset.hard.args(to).call()
+  if result:success() then
+    local current = git.branch.current_full_name()
+    assert(current, "no current branch")
+    git.log.update_ref(current, to)
 
-  notification.info(string.format("Reset '%s' to '%s'", current, to))
-  fire_branch_event("NeogitBranchReset", { branch_name = current, resetting_to = to })
+    notification.info(string.format("Reset '%s' to '%s'", current, to))
+    event.send("BranchReset", { branch_name = current, resetting_to = to })
+  else
+    notification.error("Couldn't reset branch.")
+  end
 end
 
 function M.delete_branch(popup)
@@ -296,15 +314,16 @@ function M.delete_branch(popup)
   end
 
   local remote, branch_name = git.branch.parse_remote_branch(selected_branch)
+  local is_remote = remote and remote ~= "."
   local success = false
 
   if
-    remote
+    is_remote
     and branch_name
     and input.get_permission(("Delete remote branch '%s/%s'?"):format(remote, branch_name))
   then
-    success = git.cli.push.remote(remote).delete.to(branch_name).call().code == 0
-  elseif not remote and branch_name == git.branch.current() then
+    success = git.cli.push.remote(remote).delete.to(branch_name).call():success()
+  elseif not is_remote and branch_name == git.branch.current() then
     local choices = {
       "&detach HEAD and delete",
       "&abort",
@@ -333,17 +352,17 @@ function M.delete_branch(popup)
     if not success then -- Reset HEAD if unsuccessful
       git.cli.checkout.branch(branch_name).call()
     end
-  elseif not remote and branch_name then
+  elseif not is_remote and branch_name then
     success = git.branch.delete(branch_name)
   end
 
   if success then
-    if remote then
+    if is_remote then
       notification.info(string.format("Deleted remote branch '%s/%s'", remote, branch_name))
     else
       notification.info(string.format("Deleted branch '%s'", branch_name))
     end
-    fire_branch_event("NeogitBranchDelete", { branch_name = branch_name })
+    event.send("BranchDelete", { branch_name = branch_name })
   end
 end
 
@@ -360,7 +379,7 @@ function M.open_pull_request()
   for s, v in pairs(config.values.git_services) do
     if url:match(util.pattern_escape(s)) then
       service = s
-      template = v
+      template = v.pull_request
       break
     end
   end
@@ -387,9 +406,11 @@ function M.open_pull_request()
         format_values["target"] = target
       end
 
-      vim.ui.open(util.format(template, format_values))
+      local uri = util.format(template, format_values)
+      notification.info(("Opening %q in your browser."):format(uri))
+      vim.ui.open(uri)
     else
-      notification.warn("Requires Neovim 0.10")
+      notification.warn("Requires Neovim >= 0.10")
     end
   else
     notification.warn("Pull request URL template not found for this branch's upstream")

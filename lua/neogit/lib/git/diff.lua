@@ -24,12 +24,18 @@ local sha256 = vim.fn.sha256
 ---@field deletions number
 ---
 ---@class Hunk
+---@field file string
 ---@field index_from number
 ---@field index_len number
+---@field disk_from number
+---@field disk_len number
 ---@field diff_from number
 ---@field diff_to number
+---@field length number
+---@field hash string
 ---@field first number First line number in buffer
 ---@field last number Last line number in buffer
+---@field lines string[]
 ---
 ---@class DiffStagedStats
 ---@field summary string
@@ -94,7 +100,7 @@ end
 ---@return string
 local function build_file(header, kind)
   if kind == "modified" then
-    return header[3]:match("%-%-%- a/(.*)")
+    return header[3]:match("%-%-%- ./(.*)")
   elseif kind == "renamed" then
     return ("%s -> %s"):format(header[3]:match("rename from (.*)"), header[4]:match("rename to (.*)"))
   elseif kind == "new file" then
@@ -223,6 +229,11 @@ local function parse_diff(raw_diff, raw_stats)
   local kind, info = build_kind(header)
   local file = build_file(header, kind)
   local stats = parse_diff_stats(raw_stats or {})
+
+  util.map(hunks, function(hunk)
+    hunk.file = file
+    return hunk
+  end)
 
   return { ---@type Diff
     kind = kind,

@@ -2,6 +2,7 @@ local git = require("neogit.lib.git")
 local util = require("neogit.lib.util")
 local notification = require("neogit.lib.notification")
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
+local event = require("neogit.lib.event")
 
 local M = {}
 
@@ -18,50 +19,51 @@ local function target(popup, prompt)
   return FuzzyFinderBuffer.new(refs):open_async { prompt_prefix = prompt }
 end
 
----@param type string
+---@param fn fun(target: string): boolean
 ---@param popup PopupData
 ---@param prompt string
-local function reset(type, popup, prompt)
+---@param mode string
+local function reset(fn, popup, prompt, mode)
   local target = target(popup, prompt)
   if target then
-    git.reset[type](target)
+    local success = fn(target)
+    if success then
+      notification.info("Reset to " .. target)
+      event.send("Reset", { commit = target, mode = mode })
+    else
+      notification.error("Reset Failed")
+    end
   end
 end
 
 ---@param popup PopupData
 function M.mixed(popup)
-  reset("mixed", popup, ("Reset %s to"):format(git.branch.current()))
+  reset(git.reset.mixed, popup, ("Reset %s to"):format(git.branch.current()), "mixed")
 end
 
 ---@param popup PopupData
 function M.soft(popup)
-  reset("soft", popup, ("Soft reset %s to"):format(git.branch.current()))
+  reset(git.reset.soft, popup, ("Soft reset %s to"):format(git.branch.current()), "soft")
 end
 
 ---@param popup PopupData
 function M.hard(popup)
-  reset("hard", popup, ("Hard reset %s to"):format(git.branch.current()))
+  reset(git.reset.hard, popup, ("Hard reset %s to"):format(git.branch.current()), "hard")
 end
 
 ---@param popup PopupData
 function M.keep(popup)
-  reset("keep", popup, ("Reset %s to"):format(git.branch.current()))
+  reset(git.reset.keep, popup, ("Reset %s to"):format(git.branch.current()), "keep")
 end
 
 ---@param popup PopupData
 function M.index(popup)
-  reset("index", popup, "Reset index to")
+  reset(git.reset.index, popup, "Reset index to", "index")
 end
 
 ---@param popup PopupData
 function M.worktree(popup)
-  local target = target(popup, "Reset worktree to")
-  if target then
-    git.index.with_temp_index(target, function(index)
-      git.cli["checkout-index"].all.force.env({ GIT_INDEX_FILE = index }).call()
-      notification.info(("Reset worktree to %s"):format(target))
-    end)
-  end
+  reset(git.reset.worktree, popup, "Reset worktree to", "worktree")
 end
 
 ---@param popup PopupData
@@ -78,11 +80,31 @@ function M.a_file(popup)
   end
 
   local files = FuzzyFinderBuffer.new(files):open_async { allow_multi = true }
-  if not files[1] then
-    return
+  if files and files[1] then
+    if git.reset.file(target, files) then
+      if #files > 1 then
+        notification.info("Reset " .. #files .. " files")
+      else
+        notification.info("Reset " .. files[1])
+      end
+
+      event.send("Reset", { commit = target, mode = "files", files = files })
+    else
+      notification.error("Reset Failed")
+    end
+  end
+end
+
+---@param popup PopupData
+function M.a_branch(popup)
+  -- branch reset expects commits to be set, not commit
+  if popup.state.env.commit then
+    popup.state.env.commits = { popup.state.env.commit }
+    popup.state.env.commit = nil
   end
 
-  git.reset.file(target, files)
+  local branch_actions = require("neogit.popups.branch.actions")
+  branch_actions.reset_branch(popup)
 end
 
 return M

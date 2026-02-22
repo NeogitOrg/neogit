@@ -31,19 +31,14 @@ function M.onto_pushRemote(popup)
 end
 
 function M.onto_upstream(popup)
-  local upstream
-  if git.repo.state.upstream.ref then
-    upstream = string.format("refs/remotes/%s", git.repo.state.upstream.ref)
-  else
-    local target = FuzzyFinderBuffer.new(git.refs.list_remote_branches()):open_async()
-    if not target then
-      return
-    end
-
-    upstream = string.format("refs/remotes/%s", target)
+  local upstream = git.branch.upstream(git.branch.current())
+  if not upstream then
+    upstream = FuzzyFinderBuffer.new(git.refs.list_branches()):open_async()
   end
 
-  git.rebase.onto_branch(upstream, popup:get_arguments())
+  if upstream then
+    git.rebase.onto_branch(upstream, popup:get_arguments())
+  end
 end
 
 function M.onto_elsewhere(popup)
@@ -80,6 +75,7 @@ function M.interactively(popup)
       elseif choice == "s" then
         popup.state.env.commit = nil
         M.interactively(popup)
+        return
       else
         return
       end
@@ -141,10 +137,18 @@ function M.subset(popup)
     )
       :open_async()[1]
   end
-
-  if start then
-    git.rebase.onto(start, newbase, popup:get_arguments())
+  if not start then
+    return
   end
+
+  local args = popup:get_arguments()
+  local parent = git.log.parent(start)
+  if parent then
+    start = start .. "^"
+  else
+    table.insert(args, "--root")
+  end
+  git.rebase.onto(start, newbase, args)
 end
 
 function M.continue()

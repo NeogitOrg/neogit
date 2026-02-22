@@ -28,7 +28,7 @@ end
 ---@param args string[]
 ---@return boolean
 function M.add(name, url, args)
-  return git.cli.remote.add.arg_list(args).args(name, url).call().code == 0
+  return git.cli.remote.add.arg_list(args).args(name, url).call():success()
 end
 
 ---@param from string
@@ -36,28 +36,28 @@ end
 ---@return boolean
 function M.rename(from, to)
   local result = git.cli.remote.rename.arg_list({ from, to }).call()
-  if result.code == 0 then
+  if result:success() then
     cleanup_push_variables(from, to)
   end
 
-  return result.code == 0
+  return result:success()
 end
 
 ---@param name string
 ---@return boolean
 function M.remove(name)
   local result = git.cli.remote.rm.args(name).call()
-  if result.code == 0 then
+  if result:success() then
     cleanup_push_variables(name)
   end
 
-  return result.code == 0
+  return result:success()
 end
 
 ---@param name string
 ---@return boolean
 function M.prune(name)
-  return git.cli.remote.prune.args(name).call().code == 0
+  return git.cli.remote.prune.args(name).call():success()
 end
 
 ---@return string[]
@@ -132,6 +132,60 @@ function M.parse(url)
     owner = owner,
     repository = repository,
   }
+end
+
+---@param oid string object-id for commit
+---@return string|nil
+function M.commit_url(oid)
+  local upstream = git.branch.upstream_remote()
+  if not upstream then
+    return
+  end
+
+  local template
+  local url = M.get_url(upstream)[1]
+
+  for s, v in pairs(require("neogit.config").values.git_services) do
+    if url:match(util.pattern_escape(s)) then
+      template = v.commit
+      break
+    end
+  end
+
+  if template and template ~= "" then
+    local format_values = M.parse(url)
+    format_values["oid"] = oid
+    local uri = util.format(template, format_values)
+
+    return uri
+  end
+end
+
+---@param branch string
+---@return string|nil
+function M.tree_url(branch)
+  local upstream = git.branch.upstream_remote()
+  if not upstream then
+    return
+  end
+
+  local template
+  local url = M.get_url(upstream)[1]
+
+  for s, v in pairs(require("neogit.config").values.git_services) do
+    if url:match(util.pattern_escape(s)) then
+      template = v.tree
+      break
+    end
+  end
+
+  if template and template ~= "" then
+    local format_values = M.parse(url)
+    format_values["branch_name"] = branch
+    local uri = util.format(template, format_values)
+
+    return uri
+  end
 end
 
 return M

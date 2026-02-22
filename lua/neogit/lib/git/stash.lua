@@ -2,22 +2,14 @@ local git = require("neogit.lib.git")
 local input = require("neogit.lib.input")
 local util = require("neogit.lib.util")
 local config = require("neogit.config")
+local event = require("neogit.lib.event")
 
 ---@class NeogitGitStash
 local M = {}
 
----@param success boolean
-local function fire_stash_event(success)
-  vim.api.nvim_exec_autocmds("User", {
-    pattern = "NeogitStash",
-    modeline = false,
-    data = { success = success },
-  })
-end
-
 function M.list_refs()
   local result = git.cli.reflog.show.format("%h").args("stash").call { ignore_error = true }
-  if result.code > 0 then
+  if result:failure() then
     return {}
   else
     return result.stdout
@@ -27,51 +19,51 @@ end
 ---@param args string[]
 function M.stash_all(args)
   local result = git.cli.stash.push.files(".").arg_list(args).call()
-  fire_stash_event(result.code == 0)
+  event.send("Stash", { success = result:success() })
 end
 
 function M.stash_index()
   local result = git.cli.stash.staged.call()
-  fire_stash_event(result.code == 0)
+  event.send("Stash", { success = result:success() })
 end
 
 function M.stash_keep_index()
   local result = git.cli.stash.keep_index.files(".").call()
-  fire_stash_event(result.code == 0)
+  event.send("Stash", { success = result:success() })
 end
 
 ---@param args string[]
 ---@param files string[]
 function M.push(args, files)
   local result = git.cli.stash.push.arg_list(args).files(unpack(files)).call()
-  fire_stash_event(result.code == 0)
+  event.send("Stash", { success = result:success() })
 end
 
 function M.pop(stash)
   local result = git.cli.stash.apply.index.args(stash).call()
 
-  if result.code == 0 then
+  if result:success() then
     git.cli.stash.drop.args(stash).call()
   else
     git.cli.stash.apply.args(stash).call()
   end
 
-  fire_stash_event(result.code == 0)
+  event.send("Stash", { success = result:success() })
 end
 
 function M.apply(stash)
   local result = git.cli.stash.apply.index.args(stash).call()
 
-  if result.code ~= 0 then
+  if result:failure() then
     git.cli.stash.apply.args(stash).call()
   end
 
-  fire_stash_event(result.code == 0)
+  event.send("Stash", { success = result:success() })
 end
 
 function M.drop(stash)
   local result = git.cli.stash.drop.args(stash).call()
-  fire_stash_event(result.code == 0)
+  event.send("Stash", { success = result:success() })
 end
 
 function M.list()
@@ -79,7 +71,8 @@ function M.list()
 end
 
 function M.rename(stash)
-  local message = input.get_user_input("New name")
+  local current = git.log.message(stash)
+  local message = input.get_user_input("rename", { prepend = current })
   if message then
     local oid = git.rev_parse.abbreviate_commit(stash)
     git.cli.stash.drop.args(stash).call()
@@ -100,7 +93,7 @@ function M.register(meta)
       local idx, message = line:match("stash@{(%d*)}: (.*)")
 
       idx = tonumber(idx)
-      assert(idx, "indx cannot be nil")
+      assert(idx, "index cannot be nil")
 
       ---@class StashItem
       local item = {

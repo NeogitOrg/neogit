@@ -210,10 +210,6 @@ function Buffer:close(force)
     force = false
   end
 
-  if self.header_win_handle ~= nil then
-    api.nvim_win_close(self.header_win_handle, true)
-  end
-
   if self.kind == "replace" then
     if self.old_cwd then
       api.nvim_set_current_dir(self.old_cwd)
@@ -226,6 +222,9 @@ function Buffer:close(force)
 
   if self.kind == "tab" then
     local ok, _ = pcall(vim.cmd, "tabclose")
+    if not ok and #api.nvim_list_tabpages() == 1 then
+      ok, _ = pcall(vim.cmd, "bd! " .. self.handle)
+    end
     if not ok then
       vim.cmd("tab sb " .. self.handle)
       vim.cmd("tabclose #")
@@ -538,10 +537,12 @@ function Buffer:call(f, ...)
 end
 
 function Buffer:win_call(f, ...)
-  local args = { ... }
-  api.nvim_win_call(self.win_handle, function()
-    f(unpack(args))
-  end)
+  if self.win_handle and api.nvim_win_is_valid(self.win_handle) then
+    local args = { ... }
+    api.nvim_win_call(self.win_handle, function()
+      f(unpack(args))
+    end)
+  end
 end
 
 function Buffer:chan_send(data)
@@ -707,6 +708,7 @@ function Buffer.create(config)
 
   logger.debug("[BUFFER:" .. buffer.handle .. "] Setting buffer options")
   buffer:set_buffer_option("swapfile", false)
+  buffer:set_buffer_option("modeline", false)
   buffer:set_buffer_option("bufhidden", config.bufhidden or "wipe")
   buffer:set_buffer_option("modifiable", config.modifiable or false)
   buffer:set_buffer_option("modified", config.modifiable or false)
@@ -773,7 +775,11 @@ function Buffer.create(config)
     buffer:set_window_option("list", false)
     buffer:call(function()
       vim.opt_local.winhl:append("Folded:NeogitFold")
+      vim.opt_local.winhl:append("FoldColumn:NeogitFoldColumn")
+      vim.opt_local.winhl:append("SignColumn:NeogitSignColumn")
       vim.opt_local.winhl:append("Normal:NeogitNormal")
+      vim.opt_local.winhl:append("NormalFloat:NeogitNormalFloat")
+      vim.opt_local.winhl:append("FloatBorder:NeogitFloatBorder")
       vim.opt_local.winhl:append("WinSeparator:NeogitWinSeparator")
       vim.opt_local.winhl:append("CursorLineNr:NeogitCursorLineNr")
       vim.opt_local.fillchars:append("fold: ")
@@ -817,15 +823,6 @@ function Buffer.create(config)
     })
   end
 
-  if config.autocmds or config.user_autocmds then
-    api.nvim_buf_attach(buffer.handle, false, {
-      on_detach = function()
-        logger.debug("[BUFFER:" .. buffer.handle .. "] Clearing autocmd group")
-        pcall(api.nvim_del_augroup_by_id, buffer.autocmd_group)
-      end,
-    })
-  end
-
   if config.after then
     logger.debug("[BUFFER:" .. buffer.handle .. "] Running config.after callback")
     buffer:call(function()
@@ -833,15 +830,28 @@ function Buffer.create(config)
     end)
   end
 
-  if config.on_detach then
-    logger.debug("[BUFFER:" .. buffer.handle .. "] Setting up on_detach callback")
-    api.nvim_buf_attach(buffer.handle, false, {
-      on_detach = function()
+  api.nvim_buf_attach(buffer.handle, false, {
+    on_detach = function()
+      logger.debug("[BUFFER:" .. buffer.handle .. "] Setting up on_detach callback")
+
+      if config.on_detach then
         logger.debug("[BUFFER:" .. buffer.handle .. "] Running on_detach")
         config.on_detach(buffer)
-      end,
-    })
-  end
+      end
+
+      if config.autocmds or config.user_autocmds then
+        logger.debug("[BUFFER:" .. buffer.handle .. "] Clearing autocmd group")
+        pcall(api.nvim_del_augroup_by_id, buffer.autocmd_group)
+      end
+
+      if buffer.header_win_handle ~= nil then
+        vim.schedule(function()
+          logger.debug("[BUFFER:" .. buffer.handle .. "] Closing header window")
+          pcall(api.nvim_win_close, buffer.header_win_handle, true)
+        end)
+      end
+    end,
+  })
 
   if config.context_highlight then
     logger.debug("[BUFFER:" .. buffer.handle .. "] Setting up context highlighting")

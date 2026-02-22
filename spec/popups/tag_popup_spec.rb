@@ -3,7 +3,7 @@
 require "spec_helper"
 
 RSpec.describe "Tag Popup", :git, :nvim, :popup do # rubocop:disable RSpec/EmptyExampleGroup
-  before { nvim.keys("t") }
+  let(:keymap) { "t" }
 
   let(:view) do
     [

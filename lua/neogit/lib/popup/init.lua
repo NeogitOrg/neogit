@@ -64,6 +64,16 @@ function M:get_arguments()
   return flags
 end
 
+---@param key string
+---@return any|nil
+function M:get_env(key)
+  if not self.state.env then
+    return nil
+  end
+
+  return self.state.env[key]
+end
+
 -- Returns a table of key/value pairs, where the key is the name of the switch, and value is `true`, for all
 -- enabled arguments that are NOT for cli consumption (internal use only).
 ---@return table
@@ -170,42 +180,26 @@ end
 ---@param value? string
 ---@return nil
 function M:set_option(option, value)
-  -- Prompt user to select from predetermined choices
-  if value then
+  if option.value and option.value ~= "" then -- Toggle option off when it's currently set
+    option.value = ""
+  elseif value then
     option.value = value
   elseif option.choices then
-    if not option.value or option.value == "" then
-      local eventignore = vim.o.eventignore
-      vim.o.eventignore = "WinLeave"
-      local choice = FuzzyFinderBuffer.new(option.choices):open_async {
-        prompt_prefix = option.description,
-      }
-      vim.o.eventignore = eventignore
-
-      if choice then
-        option.value = choice
-      else
-        option.value = ""
-      end
-    else
-      option.value = ""
-    end
+    local eventignore = vim.o.eventignore
+    vim.o.eventignore = "WinLeave"
+    option.value = FuzzyFinderBuffer.new(option.choices):open_async {
+      prompt_prefix = option.description,
+      refocus_status = false,
+    }
+    vim.o.eventignore = eventignore
   elseif option.fn then
     option.value = option.fn(self, option)
   else
-    local input = input.get_user_input(option.cli, {
+    option.value = input.get_user_input(option.cli, {
       separator = "=",
       default = option.value,
       cancel = option.value,
     })
-
-    -- If the option specifies a default value, and the user set the value to be empty, defer to default value.
-    -- This is handy to prevent the user from accidentally loading thousands of log entries by accident.
-    if option.default and input == "" then
-      option.value = tostring(option.default)
-    else
-      option.value = input
-    end
   end
 
   state.set({ self.state.name, option.cli }, option.value)
@@ -358,6 +352,7 @@ function M:mappings()
       mappings.n[config.id] = a.void(function()
         self:set_config(config)
         self:refresh()
+        Watcher.instance():dispatch_refresh()
       end)
     end
   end
@@ -371,7 +366,11 @@ function M:mappings()
         for _, key in ipairs(action.keys) do
           mappings.n[key] = a.void(function()
             logger.debug(string.format("[POPUP]: Invoking action %q of %s", key, self.state.name))
-            self:close()
+            if not action.persist_popup then
+              logger.debug("[POPUP]: Closing popup")
+              self:close()
+            end
+
             action.callback(self)
             Watcher.instance():dispatch_refresh()
           end)
@@ -391,7 +390,6 @@ end
 
 function M:refresh()
   if self.buffer then
-    self.buffer:focus()
     self.buffer.ui:render(unpack(ui.Popup(self.state)))
   end
 end

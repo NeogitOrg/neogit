@@ -52,15 +52,21 @@ end
 
 function M.private_local(popup)
   local ignore_file = git.repo:git_path("info", "exclude")
-  local rules = make_rules(popup, git.repo.worktree_root)
+  if not ignore_file:exists() then
+    ignore_file:touch { parents = true }
+  end
 
+  local rules = make_rules(popup, git.repo.worktree_root)
   add_rules(ignore_file, rules)
 end
 
 function M.private_global(popup)
   local ignore_file = Path:new(git.config.get_global("core.excludesfile"):read())
-  local rules = make_rules(popup, git.repo.worktree_root)
+  if not ignore_file:exists() then
+    ignore_file:touch { parents = true }
+  end
 
+  local rules = make_rules(popup, git.repo.worktree_root)
   add_rules(ignore_file, rules)
 end
 

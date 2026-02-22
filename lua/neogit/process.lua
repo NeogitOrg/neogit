@@ -11,8 +11,9 @@ local Spinner = require("neogit.spinner")
 local api = vim.api
 local fn = vim.fn
 
-local command_mask =
-  vim.pesc(" --no-pager --literal-pathspecs --no-optional-locks -c core.preloadindex=true -c color.ui=always")
+local command_mask = vim.pesc(
+  " --no-pager --literal-pathspecs --no-optional-locks -c core.preloadindex=true -c color.ui=always -c diff.noprefix=false"
+)
 
 local function mask_command(cmd)
   local command, _ = cmd:gsub(command_mask, "")
@@ -84,6 +85,16 @@ function ProcessResult:remove_ansi()
   self.stderr = vim.tbl_map(remove_ansi_escape_codes, self.stderr)
 
   return self
+end
+
+---@return boolean
+function ProcessResult:success()
+  return self.code == 0
+end
+
+---@return boolean
+function ProcessResult:failure()
+  return self.code ~= 0
 end
 
 ProcessResult.__index = ProcessResult

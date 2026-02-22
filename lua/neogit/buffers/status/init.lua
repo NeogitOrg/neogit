@@ -6,8 +6,7 @@ local git = require("neogit.lib.git")
 local Watcher = require("neogit.watcher")
 local a = require("plenary.async")
 local logger = require("neogit.logger") -- TODO: Add logging
-
-local api = vim.api
+local event = require("neogit.lib.event")
 
 ---@class Semaphore
 ---@field permits number
@@ -23,6 +22,41 @@ M.__index = M
 
 local instances = {}
 
+---@class SubmoduleInfo
+---@field submodules string[] A list with the relative paths to the project's submodules
+---@field parent_repo string? If we are in a submodule, cache the abs path to the parent repo
+
+---@type table<string, SubmoduleInfo>
+local submodule_info_per_root = {}
+
+---@return string?
+function M:parent_repo()
+  local info = submodule_info_per_root[self.root]
+  return info and info.parent_repo
+end
+
+---@return string[]
+function M:submodules()
+  local info = submodule_info_per_root[self.root]
+  return info and info.submodules or {}
+end
+
+---@param abs_path string
+---@return boolean
+function M:has_submodule(abs_path)
+  local dir = require("plenary.path"):new(abs_path)
+  if not dir:exists() or not dir:is_dir() then
+    return false
+  end
+  local rel_path = dir:make_relative(self.cwd)
+  for _, submodule in ipairs(self:submodules()) do
+    if submodule == rel_path then
+      return true
+    end
+  end
+  return false
+end
+
 ---@param instance StatusBuffer
 ---@param dir string
 function M.register(instance, dir)
@@ -30,6 +64,10 @@ function M.register(instance, dir)
   logger.debug("[STATUS] Registering instance for: " .. dir)
 
   instances[dir] = instance
+  submodule_info_per_root[instance.root] = {
+    submodules = git.submodule.list(),
+    parent_repo = git.rev_parse.parent_repo(),
+  }
 end
 
 ---@param dir? string
@@ -128,6 +166,7 @@ function M:open(kind)
         [popups.mapping_for("HelpPopup")]       = self:_action("v_help_popup"),
         [popups.mapping_for("IgnorePopup")]     = self:_action("v_ignore_popup"),
         [popups.mapping_for("LogPopup")]        = self:_action("v_log_popup"),
+        [popups.mapping_for("MarginPopup")]     = self:_action("v_margin_popup"),
         [popups.mapping_for("MergePopup")]      = self:_action("v_merge_popup"),
         [popups.mapping_for("PullPopup")]       = self:_action("v_pull_popup"),
         [popups.mapping_for("PushPopup")]       = self:_action("v_push_popup"),
@@ -147,6 +186,8 @@ function M:open(kind)
         [mappings["Untrack"]]                   = self:_action("n_untrack"),
         [mappings["Rename"]]                    = self:_action("n_rename"),
         [mappings["Toggle"]]                    = self:_action("n_toggle"),
+        [mappings["OpenFold"]]                  = self:_action("n_open_fold"),
+        [mappings["CloseFold"]]                 = self:_action("n_close_fold"),
         [mappings["Close"]]                     = self:_action("n_close"),
         [mappings["OpenOrScrollDown"]]          = self:_action("n_open_or_scroll_down"),
         [mappings["OpenOrScrollUp"]]            = self:_action("n_open_or_scroll_up"),
@@ -168,6 +209,7 @@ function M:open(kind)
         [mappings["Unstage"]]                   = self:_action("n_unstage"),
         [mappings["UnstageStaged"]]             = self:_action("n_unstage_staged"),
         [mappings["GoToFile"]]                  = self:_action("n_goto_file"),
+        [mappings["GoToParentRepo"]]            = self:_action("n_goto_parent_repo"),
         [mappings["TabOpen"]]                   = self:_action("n_tab_open"),
         [mappings["SplitOpen"]]                 = self:_action("n_split_open"),
         [mappings["VSplitOpen"]]                = self:_action("n_vertical_split_open"),
@@ -182,6 +224,7 @@ function M:open(kind)
         [popups.mapping_for("HelpPopup")]       = self:_action("n_help_popup"),
         [popups.mapping_for("IgnorePopup")]     = self:_action("n_ignore_popup"),
         [popups.mapping_for("LogPopup")]        = self:_action("n_log_popup"),
+        [popups.mapping_for("MarginPopup")]     = self:_action("n_margin_popup"),
         [popups.mapping_for("MergePopup")]      = self:_action("n_merge_popup"),
         [popups.mapping_for("PullPopup")]       = self:_action("n_pull_popup"),
         [popups.mapping_for("PushPopup")]       = self:_action("n_push_popup"),
@@ -211,35 +254,16 @@ function M:open(kind)
     after = function(buffer, _win)
       Watcher.instance(self.root):register(self)
       buffer:move_cursor(buffer.ui:first_section().first)
+      vim.b.neogit_git_dir = git.repo.git_dir
     end,
     user_autocmds = {
-      ["NeogitPushComplete"] = function()
-        self:dispatch_refresh(nil, "push_complete")
-      end,
-      ["NeogitPullComplete"] = function()
-        self:dispatch_refresh(nil, "pull_complete")
-      end,
-      ["NeogitFetchComplete"] = function()
-        self:dispatch_refresh(nil, "fetch_complete")
-      end,
-      ["NeogitRebase"] = function()
-        self:dispatch_refresh(nil, "rebase")
-      end,
-      ["NeogitMerge"] = function()
-        self:dispatch_refresh(nil, "merge")
-      end,
-      ["NeogitReset"] = function()
-        self:dispatch_refresh(nil, "reset_complete")
-      end,
-      ["NeogitStash"] = function()
-        self:dispatch_refresh(nil, "stash")
-      end,
-      ["NeogitRevertComplete"] = function()
-        self:dispatch_refresh(nil, "revert")
-      end,
-      ["NeogitCherryPick"] = function()
-        self:dispatch_refresh(nil, "cherry_pick")
-      end,
+      -- Resetting doesn't yield the correct repo state instantly, so we need to re-refresh after a few seconds
+      -- in order to show the user the correct state.
+      ["NeogitReset"] = self:deferred_refresh("reset"),
+      ["NeogitBranchReset"] = self:deferred_refresh("reset_branch"),
+    },
+    autocmds = {
+      ["FocusGained"] = self:deferred_refresh("focused", 10),
     },
   }
 
@@ -296,7 +320,7 @@ function M:refresh(partial, reason)
     partial = partial,
     callback = function()
       self:redraw(cursor, view)
-      api.nvim_exec_autocmds("User", { pattern = "NeogitStatusRefreshed", modeline = false })
+      event.send("StatusRefreshed")
       logger.info("[STATUS] Refresh complete")
     end,
   }
@@ -313,18 +337,18 @@ function M:redraw(cursor, view)
   logger.debug("[STATUS] Rendering UI")
   self.buffer.ui:render(unpack(ui.Status(git.repo.state, self.config)))
 
-  if self.fold_state then
+  if self.fold_state and self.buffer then
     logger.debug("[STATUS] Restoring fold state")
     self.buffer.ui:set_fold_state(self.fold_state)
     self.fold_state = nil
   end
 
-  if self.cursor_state and self.view_state then
+  if self.cursor_state and self.view_state and self.buffer then
     logger.debug("[STATUS] Restoring cursor and view state")
     self.buffer:restore_view(self.view_state, self.cursor_state)
     self.view_state = nil
     self.cursor_state = nil
-  elseif cursor and view then
+  elseif cursor and view and self.buffer then
     self.buffer:restore_view(view, self.buffer.ui:resolve_cursor_location(cursor))
   end
 end
@@ -332,6 +356,17 @@ end
 M.dispatch_refresh = a.void(function(self, partial, reason)
   self:refresh(partial, reason)
 end)
+
+---@param reason string
+---@param wait number? timeout in ms, or 2 seconds
+---@return fun()
+function M:deferred_refresh(reason, wait)
+  return function()
+    vim.defer_fn(function()
+      self:dispatch_refresh(nil, reason)
+    end, wait or 2000)
+  end
+end
 
 function M:reset()
   logger.debug("[STATUS] Resetting repo and refreshing - CWD: " .. vim.uv.cwd())

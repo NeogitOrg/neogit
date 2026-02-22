@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "spec_helper"
+require "fileutils"
 
 RSpec.describe "Status Buffer", :git, :nvim do
   it "renders, raising no errors" do
@@ -81,5 +82,83 @@ RSpec.describe "Status Buffer", :git, :nvim do
 
     # context "with tracked file" do
     # end
+  end
+
+  describe "submodule navigation" do
+    let(:submodule_path) { File.join("deps", "nested-submodule") }
+    let(:submodule_repo_root) { File.expand_path(submodule_path) }
+    let!(:submodule_source_dir) { Dir.mktmpdir("neogit-submodule-source") }
+
+    before do
+      initialize_submodule_source
+
+      git.config("protocol.file.allow", "always")
+      unless system("git", "-c", "protocol.file.allow=always", "submodule", "add", submodule_source_dir, submodule_path)
+        raise "Failed to add submodule"
+      end
+
+      git.commit("Add submodule")
+
+      File.open(File.join(submodule_path, "file.txt"), "a") { _1.puts("local change") }
+      nvim.lua(<<~LUA)
+        local status = require("neogit.buffers.status")
+        local instance = status.instance()
+        if instance then
+          status.register(instance, vim.uv.cwd())
+        end
+      LUA
+      nvim.refresh
+    end
+
+    after do
+      FileUtils.remove_entry(submodule_source_dir) if File.directory?(submodule_source_dir)
+    end
+
+    it "opens submodule status and returns to the parent repo twice" do
+      # First jump and back
+      await do
+        expect(nvim.screen.join("\n")).to include("#{submodule_path} (modified content)")
+      end
+
+      nvim.move_to_line(submodule_path)
+      nvim.keys("<cr>")
+
+      await do
+        expect(nvim.fn("getcwd", [])).to eq(submodule_repo_root)
+        expect(nvim.screen.join("\n")).to include("modified   file.txt")
+      end
+
+      nvim.keys("gp")
+
+      await do
+        expect(nvim.fn("getcwd", [])).to eq(Dir.pwd)
+        expect(nvim.screen.join("\n")).to include("#{submodule_path} (modified content)")
+      end
+
+      # Second jump and back
+      nvim.move_to_line(submodule_path)
+      nvim.keys("<cr>")
+
+      await do
+        expect(nvim.fn("getcwd", [])).to eq(submodule_repo_root)
+        expect(nvim.screen.join("\n")).to include("modified   file.txt")
+      end
+
+      nvim.keys("gp")
+
+      await do
+        expect(nvim.fn("getcwd", [])).to eq(Dir.pwd)
+        expect(nvim.screen.join("\n")).to include("#{submodule_path} (modified content)")
+      end
+    end
+
+    def initialize_submodule_source
+      repo = Git.init(submodule_source_dir)
+      repo.config("user.email", "test@example.com")
+      repo.config("user.name", "tester")
+      File.write(File.join(submodule_source_dir, "file.txt"), "submodule file\n")
+      repo.add("file.txt")
+      repo.commit("Initial submodule commit")
+    end
   end
 end

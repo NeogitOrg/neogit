@@ -18,6 +18,8 @@ CONTENTS                                                       *neogit_contents*
     4. Events                                                    |neogit_events|
     5. Highlights                                            |neogit_highlights|
     6. API                                                          |neogit_api|
+       • Popup Builder                                    |neogit_popup_builder|
+       • Customizing Popups                               |neogit_custom_popups|
     7. Usage                                                      |neogit_usage|
     8. Popups                                                    *neogit_popups*
        • Bisect                                            |neogit_bisect_popup|
@@ -92,6 +94,8 @@ to Neovim users.
     disable_context_highlighting = false,
     -- Disables signs for sections/items/hunks
     disable_signs = false,
+    -- Path to git executable. Defaults to "git". Can be used to specify a custom git binary or wrapper script.
+    git_executable = "git",
     -- Offer to force push when branches diverge
     prompt_force_push = true,
     -- Changes what mode the Commit Editor starts in. `true` will leave nvim in normal mode, `false` will change nvim to
@@ -111,12 +115,33 @@ to Neovim users.
     -- Show relative date by default. When set, use `strftime` to display dates
     commit_date_format = nil,
     log_date_format = nil,
-    -- Used to generate URL's for branch popup action "pull request".
+    -- Used to generate URL's for branch popup action "pull request" or opening a commit.
     git_services = {
-        ["github.com"] = "https://github.com/${owner}/${repository}/compare/${branch_name}?expand=1",
-        ["bitbucket.org"] = "https://bitbucket.org/${owner}/${repository}/pull-requests/new?source=${branch_name}&t=1",
-        ["gitlab.com"] = "https://gitlab.com/${owner}/${repository}/merge_requests/new?merge_request[source_branch]=${branch_name}",
-        ["azure.com"] = "https://dev.azure.com/${owner}/_git/${repository}/pullrequestcreate?sourceRef=${branch_name}&targetRef=${target}",
+        ["github.com"] = {
+            pull_request = "https://github.com/${owner}/${repository}/compare/${branch_name}?expand=1",
+            commit = "https://github.com/${owner}/${repository}/commit/${oid}",
+            tree = "https://${host}/${owner}/${repository}/tree/${branch_name}",
+        },
+        ["bitbucket.org"] = {
+            pull_request = "https://bitbucket.org/${owner}/${repository}/pull-requests/new?source=${branch_name}&t=1",
+            commit = "https://bitbucket.org/${owner}/${repository}/commits/${oid}",
+            tree = "https://bitbucket.org/${owner}/${repository}/branch/${branch_name}",
+        },
+        ["gitlab.com"] = {
+            pull_request = "https://gitlab.com/${owner}/${repository}/merge_requests/new?merge_request[source_branch]=${branch_name}",
+            commit = "https://gitlab.com/${owner}/${repository}/-/commit/${oid}",
+            tree = "https://gitlab.com/${owner}/${repository}/-/tree/${branch_name}?ref_type=heads",
+        },
+        ["azure.com"] = {
+            pull_request = "https://dev.azure.com/${owner}/_git/${repository}/pullrequestcreate?sourceRef=${branch_name}&targetRef=${target}",
+            commit = "",
+            tree = "",
+        },
+        ["codeberg.org"] = {
+          pull_request = "https://${host}/${owner}/${repository}/compare/${branch_name}",
+          commit = "https://${host}/${owner}/${repository}/commit/${oid}",
+          tree = "https://${host}/${owner}/${repository}/src/branch/${branch_name}",
+        },
     },
     -- Allows a different telescope sorter. Defaults to 'fuzzy_with_index_bias'. The example below will use the native fzf
     -- sorter instead. By default, this function returns `nil`.
@@ -145,11 +170,20 @@ to Neovim users.
     -- Flag description: https://git-scm.com/docs/git-branch#Documentation/git-branch.txt---sortltkeygt
     -- Sorting keys: https://git-scm.com/docs/git-for-each-ref#_options
     sort_branches = "-committerdate",
+    -- Value passed to the `--<commit_order>-order` flag of the `git log` command
+    -- Determines how commits are traversed and displayed in the log / graph:
+    --   "topo"         topological order (parents always before children, good for graphs, slower on large repos)
+    --   "date"         chronological order by commit date
+    --   "author-date"  chronological order by author date
+    --   ""             disable explicit ordering (fastest, recommended for very large repos)
+    commit_order = "topo"
     -- Default for new branch name prompts
     initial_branch_name = "",
+    -- Default for rename branch prompt. If not set, the current branch name is used
+    initial_branch_rename = nil,
     -- Change the default way of opening neogit
     kind = "tab",
-    -- Floating window style 
+    -- Floating window style
     floating = {
       relative = "editor",
       width = 0.8,
@@ -182,6 +216,7 @@ to Neovim users.
         C = "copied",
         U = "updated",
         R = "renamed",
+        T = "changed",
         DD = "unmerged",
         AU = "unmerged",
         UD = "unmerged",
@@ -223,12 +258,6 @@ to Neovim users.
     merge_editor = {
         kind = "auto",
     },
-    description_editor = {
-        kind = "auto",
-    },
-    tag_editor = {
-        kind = "auto",
-    },
     preview_buffer = {
         kind = "floating_console",
     },
@@ -258,6 +287,10 @@ to Neovim users.
         -- Requires you to have `sindrets/diffview.nvim` installed.
         diffview = nil,
 
+        -- Alternative diff viewer integration.
+        -- Requires you to have `esmuellert/codediff.nvim` installed.
+        codediff = nil,
+
         -- If enabled, uses fzf-lua for menu selection. If the telescope integration
         -- is also selected then telescope is used instead
         -- Requires you to have `ibhagwan/fzf-lua` installed.
@@ -273,6 +306,9 @@ to Neovim users.
         -- Requires you to have `folke/snacks.nvim` installed.
         snacks = nil,
     },
+    -- Which diff viewer to use. nil = auto-detect (tries diffview first, then codediff).
+    -- Can be "diffview" or "codediff".
+    diff_viewer = nil,
     sections = {
         -- Reverting/Cherry Picking
         sequencer = {
@@ -365,6 +401,10 @@ The following mappings can all be customized via the setup function.
         ["<c-c><c-k>"] = "Abort",
       }
 
+      commit_view = {
+        ["a"]          = "OpenFileInWorktree",
+      }
+
       rebase_editor = {
         ["p"]          = "Pick",
         ["r"]          = "Reword",
@@ -397,6 +437,7 @@ The following mappings can all be customized via the setup function.
         ["<down>"]             = "Next",
         ["<up>"]               = "Previous",
         ["<tab>"]              = "InsertCompletion",
+        ["<c-y>"]              = "CopySelection",
         ["<space>"]            = "MultiselectToggleNext",
         ["<s-space>"]          = "MultiselectTogglePrevious",
         ["<c-j>"]              = "NOP",
@@ -452,6 +493,7 @@ The following mappings can all be customized via the setup function.
         ["y"]      = "ShowRefs",
         ["$"]      = "CommandHistory",
         ["Y"]      = "YankSelected",
+        ["gp"]      = "GoToParentRepo",
         ["<c-r>"]  = "RefreshBuffer",
         ["<cr>"]   = "GoToFile",
         ["<s-cr>"] = "PeekFile",
@@ -489,83 +531,161 @@ The following mappings can all be customized via the setup function.
 
 The following events are emitted by Neogit:
 
-  Event                          Description                              ~
-  NeogitStatusRefreshed          Status has been reloaded                ~
+• `NeogitStatusRefreshed`
+  When: Status has been reloaded
+  Data: `{}`
 
-                                  Event Data: {}                         ~
+• `NeogitCommitComplete`
+  When: Commit has been created
+  Data: `{}`
 
-  NeogitCommitComplete           Commit has been created                 ~
+• `NeogitPushComplete`
+  When: Push has finished
+  Data: `{}`
 
-                                  Event Data: {}                         ~
+• `NeogitPullComplete`
+  When: Push has finished
+  Data: `{}`
 
-  NeogitPushComplete             Push has completed                      ~
+• `NeogitFetchComplete`
+  When: Fetch has finished
+  Data: `{}`
 
-                                  Event Data: {}                         ~
+• `NeogitBranchCreate`
+  When: Branch was created, starting from `<base>`
+  Data: >
+    {
+      branch_name: string,
+      base: string?
+    }
+<
+• `NeogitBranchDelete`
+  When: Branch was deleted
+  Data: >
+    {
+      branch_name: string,
+    }
+<
+• `NeogitBranchCheckout`
+  When: Branch was checked out
+  Data: >
+    {
+      branch_name: string,
+    }
+<
+• `NeogitBranchReset`
+  When: Branch was reset to commit/branch
+  Data: >
+    {
+      branch_name: string,
+      resetting_to: string
+    }
+<
+• `NeogitBranchRename`
+  When: Branch was renamed
+  Data: >
+    {
+      branch_name: string,
+      new_name: string
+    }
+<
+• `NeogitRebase`
+  When: A rebase has finished
+  Data: >
+    {
+      commit: string,
+      status: "ok" | "conflict"
+    }
+<
+• `NeogitReset`
+  When: A reset has been performed
+  Data: >
+    {
+      commit: string,
+      mode: "soft" | "mixed" | "hard" | "keep" | "index"
+    }
+<
+• `NeogitTagCreate`
+  When: A tag is placed on a commit
+  Data: >
+    {
+      ref: string,
+      name: string
+    }
+<
+• `NeogitTagCreate`
+  When: A tag is placed on a commit
+  Data: >
+    {
+      ref: string,
+      name: string
+    }
+<
+• `NeogitTagDelete`
+  When: A tag is removed
+  Data: >
+    {
+      name: string
+    }
+<
+• `NeogitCherryPick`
+  When: One or more commits were cherry picked
+  Data: >
+    {
+      commits: string[]
+    }
+<
+• `NeogitMerge`
+  When: A merge has finished
+  Data: >
+    {
+      branch: string,
+      args: string[],
+      status: "ok" | "conflict"
+    }
+<
+• `NeogitStash`
+  When: A stash was performed
+  Data: >
+    {
+      success: boolean
+    }
+<
+• `NeogitWorktreeCreate`
+  When: A worktree was created
+  Data: >
+    {
+      old_cwd: string,
+      new_cwd: string,
+      copy_if_present: function(filename: string, callback: function|nil)
+    }
+<
+• `NeogitDiffLoaded`
+  When: A hunk is lazy loaded in the status buffer
+  Data: >
+    {
+        item = {
+            absolute_path: string,
+            relative_path: string,
+            row_start: int (First row in buffer the hunk occupies),
+            row_end: int (last row in buffer the hunk occupies),
+            mode: string (file mode)
+        },
+        diff = {
+            kind: str,
+            lines: string[],
+            hunks: Hunk[]
+        }
+    }
 
-  NeogitPullComplete             Pull has completed                      ~
-
-                                  Event Data: {}                         ~
-
-  NeogitFetchComplete            Fetch has completed                     ~
-
-                                  Event Data: {}                         ~
-
-  NeogitBranchCreate             Branch was created, starting from       ~
-                                  `base`                                 ~
-
-                                  Event Data:                            ~
-                                    { branch_name: string, base: string? } ~
-
-  NeogitBranchDelete             Branch was deleted                      ~
-
-                                  Event Data: { branch_name: string }    ~
-
-  NeogitBranchCheckout           Branch was checked out                  ~
-
-                                  Event Data: { branch_name: string }    ~
-
-  NeogitBranchReset              Branch was reset to a commit/branch     ~
-
-                                  Event Data:                            ~
-                                    { branch_name: string, resetting_to: string } ~
-
-  NeogitBranchRename             Branch was renamed                      ~
-
-                                  Event Data:                            ~
-                                    { branch_name: string, new_name: string } ~
-
-  NeogitRebase                   A rebase finished                       ~
-
-                                  Event Data:                            ~
-                                    { commit: string, status: "ok" | "conflict" } ~
-
-  NeogitReset                    A branch was reset to a certain commit  ~
-
-                                  Event Data:                            ~
-                                    { commit: string, mode: "soft" |     ~
-                                      "mixed" | "hard" | "keep" | "index" } ~
-
-  NeogitTagCreate                A tag was placed on a certain commit    ~
-
-                                  Event Data: { name: string, ref: string } ~
-
-  NeogitTagDelete                A tag was removed                       ~
-
-                                  Event Data: { name: string }           ~
-
-  NeogitCherryPick               One or more commits were cherry-picked  ~
-
-                                  Event Data: { commits: string[] }      ~
-
-  NeogitMerge                    A merge finished                        ~
-
-                                  Event Data:                            ~
-                                    { branch: string, args: string[],    ~
-                                      status: "ok" | "conflict" }        ~
-
-  NeogitStash                    A stash finished                        ~
-
-                                  Event Data: { success: boolean }       ~
+    Hunk:
+        lines: str[]
+        original_lines: str[] (lines from diff not prefixed with +/-)
+        modified_lines: str[] (lines from diff, but with +/- prefix removed)
+        row_start: int (first line of hunk in the buffer)
+        row_end: int (last line of hunk in the buffer)
+        header: string (diff header)
+<
 ==============================================================================
 5. Highlights                                                *neogit_highlights*
 
@@ -608,12 +728,17 @@ these yourself before the plugin loads, that will be respected. If they do not
 exist, they will be created with sensible defaults based on your colorscheme.
 
 STATUS BUFFER
+NeogitNormal                Normal text
+NeogitFloat                 Normal text when using a floating window
+NeogitFloatBorder           Border wen using a floating window
 NeogitBranch                Local branches
 NeogitBranchHead            Accent highlight for current HEAD in LogBuffer
 NeogitRemote                Remote branches
 NeogitObjectId              Object's SHA hash
 NeogitStash                 Stash name
 NeogitFold                  Folded text highlight
+NeogitFoldColumn            Column where folds are displayed
+NeogitSignColumn            Column where signs are displayed
 NeogitRebaseDone            Current position within rebase
 NeogitTagName               Closest Tag name
 NeogitTagDistance           Number of commits between the tag and HEAD
@@ -715,21 +840,21 @@ NeogitCommitViewHeader      Applied to header of Commit View
 LOG VIEW BUFFER
 NeogitGraphAuthor           Applied to the commit's author in graph view
 NeogitGraphBlack            Used when --colors is enabled for graph
-NeogitGraphBlackBold
+NeogitGraphBoldBlack
 NeogitGraphRed
-NeogitGraphRedBold
+NeogitGraphBoldRed
 NeogitGraphGreen
-NeogitGraphGreenBold
+NeogitGraphBoldGreen
 NeogitGraphYellow
-NeogitGraphYellowBold
+NeogitGraphBoldYellow
 NeogitGraphBlue
-NeogitGraphBlueBold
+NeogitGraphBoldBlue
 NeogitGraphPurple
-NeogitGraphPurpleBold
+NeogitGraphBoldPurple
 NeogitGraphCyan
-NeogitGraphCyanBold
+NeogitGraphBoldCyan
 NeogitGraphWhite
-NeogitGraphWhiteBold
+NeogitGraphBoldWhite
 NeogitGraphGray
 NeogitGraphBoldGray
 NeogitGraphOrange
@@ -1007,7 +1132,7 @@ Actions:                                           *neogit_branch_popup_actions*
     the old branch.
 
   • Checkout new worktree                      *neogit_branch_checkout_worktree*
-    (Not yet implemented)
+    see: |neogit_worktree_checkout|
 
   • Create new branch                              *neogit_branch_create_branch*
     Functionally the same as |neogit_branch_checkout_new|, but does not update
@@ -1018,7 +1143,7 @@ Actions:                                           *neogit_branch_popup_actions*
     index has uncommitted changes, will behave exactly the same as spin_off.
 
   • Create new worktree                          *neogit_branch_create_worktree*
-    (Not yet implemented)
+    see: |neogit_worktree_create_branch|
 
   • Configure                                          *neogit_branch_configure*
     Opens selector to choose a branch, then offering some configuration
@@ -1266,13 +1391,37 @@ Actions:                                           *neogit_commit_popup_actions*
     Creates a fixup commit. If a commit is selected it will be used, otherwise
     the user is prompted to pick a commit.
 
+    `git commit --fixup=COMMIT --no-edit`
+
   • Squash                                                *neogit_commit_squash*
     Creates a squash commit. If a commit is selected it will be used,
     otherwise the user is prompted to pick a commit.
 
+    `git commit --squash=COMMIT --no-edit`
+
   • Augment                                              *neogit_commit_augment*
     Creates a squash commit, editing the squash message. If a commit is
     selected it will be used, otherwise the user is prompted to pick a commit.
+
+    `git commit --squash=COMMIT --edit`
+
+  • Alter                                                  *neogit_commit_alter*
+    Create a squash commit, authoring the final message now.
+
+    During a later rebase, when this commit gets squashed into its targeted
+    commit, the original message of the targeted commit is replaced with the
+    message of this commit, without the user automatically being given a
+    chance to edit it again.
+
+    `git commit --fixup=amend:COMMIT --edit`
+
+  • Revise                                                *neogit_commit_revise*
+    Reword the message of an existing commit, without editing its tree.
+    Later, when the commit is squashed into its targeted commit, a combined
+    commit is created which uses the message of the fixup commit and the tree
+    of the targeted commit.
+
+    `git commit --fixup=reword:COMMIT --edit`
 
   • Instant Fixup                                  *neogit_commit_instant_fixup*
     Similar to |neogit_commit_fixup|, but instantly rebases after.
@@ -1287,9 +1436,13 @@ The diff popup actions allow inspection of changes in the index (staged
 changes), the working tree (unstaged changes and untracked files), any
 ref range.
 
-For these actions to become available, Neogit needs to be configured to enable
-`diffview.nvim` integration. See |neogit_setup_plugin| and
-https://github.com/sindrets/diffview.nvim.
+For these actions to become available, Neogit needs to have a diff viewer
+integration enabled. Supported viewers are:
+- `diffview.nvim`: https://github.com/sindrets/diffview.nvim
+- `codediff.nvim`: https://github.com/esmuellert/codediff.nvim
+
+By default, Neogit will auto-detect which viewer is available. You can
+explicitly set the viewer with the `diff_viewer` option. See |neogit_setup_plugin|.
 
   • Diff this                                                 *neogit_diff_this*
     Show the diff for the file referred to by a hunk under the cursor.
@@ -1504,7 +1657,7 @@ Actions:                                             *neogit_pull_popup_actions*
     pulled from and used to set `branch.<name>.pushRemote`.
 
   • Pull into <current> from @{upstream}                  *neogit_pull_upstream*
-    Pulls into the current branch from it's upstream counterpart. If that is
+    Pulls into the current branch from its upstream counterpart. If that is
     unset, the user will be prompted to select a remote branch, which will
     pulled from and set as the upstream.
 
@@ -1574,7 +1727,7 @@ Actions:                                             *neogit_push_popup_actions*
     and pushed to.
 
   • Push <current> to @{upstream}                         *neogit_push_upstream*
-    Pushes the current branch to it's upstream branch. If not set, then the
+    Pushes the current branch to its upstream branch. If not set, then the
     user will be prompted to select a remote, which will be set as the
     current branch's upstream and pushed to.
 
@@ -1696,13 +1849,13 @@ Arguments:                                            *neogit_rebase_popup_args*
 
 Actions:                                           *neogit_rebase_popup_actions*
   • Rebase onto pushRemote                            *neogit_rebase_pushRemote*
-    This action rebases the current branch onto it's pushRemote.
+    This action rebases the current branch onto its pushRemote.
 
     When the pushRemote is not configured, then the user can first set it
     before rebasing.
 
   • Rebase onto upstream                                *neogit_rebase_upstream*
-    This action rebases the current branch onto it's upstream branch.
+    This action rebases the current branch onto its upstream branch.
 
     When the upstream is not configured, then the user can first set it
     before rebasing.
@@ -1848,7 +2001,14 @@ Actions:                                            *neogit_reset_popup_actions*
     changes.
 
   • Worktree                                             *neogit_reset_worktree*
-    (Not yet implemented)
+    Resets current worktree to specified commit.
+
+  • Branch                                                 *neogit_reset_branch*
+    see: |neogit_branch_reset|
+
+  • File                                                     *neogit_reset_file*
+    Attempts to perform a `git checkout` from the specified revision, and if
+    that fails, tries `git reset` instead.
 
 ==============================================================================
 Stash Popup                                                 *neogit_stash_popup*
@@ -2006,6 +2166,8 @@ Untracked Files                                 *neogit_status_buffer_untracked*
 ==============================================================================
 Editor Buffer                                             *neogit_editor_buffer*
 
+User customizations can be made via `gitcommit` ftplugin.
+
 Commands:                                               *neogit_editor_commands*
   • Submit                                                *neogit_editor_submit*
     Default key: `<c-c><c-c>`
@@ -2054,7 +2216,43 @@ Reflog Buffer                                             *neogit_reflog_buffer*
 
 ==============================================================================
 Commit Buffer                                             *neogit_commit_buffer*
-(TODO)
+The commit buffer shows a single commit, including metadata, summary, and an
+inline diff. It opens via |:NeogitCommit|, from log/graph views, or when
+pressing `<cr>` on a commit hash elsewhere in Neogit.
+
+Mappings (normal mode):
+  • `a`          (|neogit_setup_mappings|: "OpenFileInWorktree" in commit_view)
+                 On a diff hunk, try to jump to that location in the worktree
+                 (i.e. current version of the file).
+                 Note: it can fail if the file no longer exists or it can take
+                 you to a wrong location in the file if the lines have been
+                 moved around.
+
+  • `<cr>`       On a diff hunk, open the file contents from the commit in a
+                 temporary read-only tab, or the parent revision for deleted
+                 lines; on a filepath line, jump to that file's diff section
+                 within the buffer.
+
+  • `o`          Open the commit in the configured git service (requires
+                 Neovim >= 0.10 for |vim.ui.open|).
+
+  • `{` / `}`      Jump to previous/next hunk or diff header.
+
+  • `q` / `<esc>`  Close the commit buffer (keys are configurable via
+               |neogit_setup_mappings| for the commit view).
+
+  • `Y`          Opens the Yank popup, allowing copying of different details
+               from the commit.
+
+               note: To copy only a specific hunk's diff, place the
+               cursor within that hunk.
+
+  • `za` / `<tab>` Toggle folding for the current section.
+
+  • Popup shortcuts honour |neogit_setup_mappings|, default keys:
+      - `A` Cherry-pick, `b` Branch, `B` Bisect, `c` Commit, `d` Diff,
+        `f` Fetch, `i` Ignore, `l` Log, `m` Merge, `p` Pull, `P` Push,
+        `r` Rebase, `t` Tag, `v` Revert, `w` Worktree, `X` Reset, `Z` Stash.
 
 ==============================================================================
 Refs Buffer                                                 *neogit_refs_buffer*
@@ -2062,6 +2260,8 @@ Refs Buffer                                                 *neogit_refs_buffer*
 
 ==============================================================================
 Rebase Todo Buffer                                   *neogit_rebase_todo_buffer*
+
+User customizations can be made via `gitrebase` ftplugin.
 
 The Rebase editor has some extra commands, beyond being a normal vim buffer.
 
@@ -2077,11 +2277,11 @@ The following keys, in normal mode, will act on the commit under the cursor:
 • `<cr>` Open current commit in Commit Buffer
 
 ==============================================================================
-Custom Popups                                             *neogit_custom_popups*
+Popup Builder                                             *neogit_popup_builder*
 
 You can leverage Neogit's infrastructure to create your own popups and
 actions. For example, you can define actions as a function which will take the
-popup instance as it's argument:
+popup instance as its argument:
 >lua
     local function my_action(popup)
       -- You can access the popup state (enabled flags) like so:
@@ -2109,7 +2309,7 @@ popup instance as it's argument:
         -- A switch is a boolean CLI flag, like `--no-verify`
         :switch("s", "my-switch", "My switch")
         -- An "_if" variant exists for builder methods, that takes a boolean
-        -- as it's first argument.
+        -- as its first argument.
         :switch_if(true, "S", "conditional-switch", "This switch is conditional")
         -- Options are CLI flags that have a value, like `--strategy=octopus`
         :option("o", "my-option", "default_value", "My option", { key_prefix = "-" })
@@ -2144,9 +2344,13 @@ calling the setup function:
     })
 <
 
-You can also customize existing popups via the Neogit config.
-Below is an example of adding a custom switch, but you can use any function 
-from the builder API. 
+==============================================================================
+Customizing Popups                                        *neogit_custom_popups*
+
+You can customize existing popups via the Neogit config.
+
+Below is an example of adding a custom switch, but you can use any function
+from the builder API.
 >lua
     require("neogit").setup({
       builders = {
@@ -2156,7 +2360,7 @@ from the builder API.
       },
     })
 
-Keep in mind that builder hooks are executed at the end of the popup 
+Keep in mind that builder hooks are executed at the end of the popup
 builder, so any switches or options added will be placed at the end.
 
 ------------------------------------------------------------------------------

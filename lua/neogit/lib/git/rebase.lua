@@ -2,13 +2,10 @@ local logger = require("neogit.logger")
 local git = require("neogit.lib.git")
 local client = require("neogit.client")
 local notification = require("neogit.lib.notification")
+local event = require("neogit.lib.event")
 
 ---@class NeogitGitRebase
 local M = {}
-
-local function fire_rebase_event(data)
-  vim.api.nvim_exec_autocmds("User", { pattern = "NeogitRebase", modeline = false, data = data })
-end
 
 local function rebase_command(cmd)
   return cmd.env(client.get_envs_git_editor()).call { long = true, pty = true }
@@ -21,14 +18,14 @@ end
 function M.instantly(commit, args)
   local result = git.cli.rebase.interactive.autostash.autosquash
     .commit(commit)
-    .env({ GIT_SEQUENCE_EDITOR = ":" })
+    .env({ GIT_SEQUENCE_EDITOR = ":", GIT_EDITOR = ":" })
     .arg_list(args or {})
     .call { long = true, pty = true }
 
-  if result.code ~= 0 then
-    fire_rebase_event { commit = commit, status = "failed" }
+  if result:failure() then
+    event.send("Rebase", { commit = commit, status = "failed" })
   else
-    fire_rebase_event { commit = commit, status = "ok" }
+    event.send("Rebase", { commit = commit, status = "ok" })
   end
 
   return result
@@ -40,39 +37,43 @@ function M.rebase_interactive(commit, args)
   end
 
   local result = rebase_command(git.cli.rebase.interactive.arg_list(args).args(commit))
-  if result.code ~= 0 then
+  if result:failure() then
     if result.stdout[1]:match("^hint: Waiting for your editor to close the file%.%.%. error") then
       notification.info("Rebase aborted")
-      fire_rebase_event { commit = commit, status = "aborted" }
+      event.send("Rebase", { commit = commit, status = "aborted" })
     else
       notification.error("Rebasing failed. Resolve conflicts before continuing")
-      fire_rebase_event { commit = commit, status = "conflict" }
+      event.send("Rebase", { commit = commit, status = "conflict" })
     end
   else
     notification.info("Rebased successfully")
-    fire_rebase_event { commit = commit, status = "ok" }
+    event.send("Rebase", { commit = commit, status = "ok" })
   end
 end
 
 function M.onto_branch(branch, args)
   local result = rebase_command(git.cli.rebase.args(branch).arg_list(args))
-  if result.code ~= 0 then
+  if result:failure() then
     notification.error("Rebasing failed. Resolve conflicts before continuing")
-    fire_rebase_event("conflict")
+    event.send("Rebase", { commit = branch, status = "conflict" })
   else
     notification.info("Rebased onto '" .. branch .. "'")
-    fire_rebase_event("ok")
+    event.send("Rebase", { commit = branch, status = "ok" })
   end
 end
 
 function M.onto(start, newbase, args)
+  if vim.tbl_contains(args, "--root") then
+    start = ""
+  end
+
   local result = rebase_command(git.cli.rebase.onto.args(newbase, start).arg_list(args))
-  if result.code ~= 0 then
+  if result:failure() then
     notification.error("Rebasing failed. Resolve conflicts before continuing")
-    fire_rebase_event("conflict")
+    event.send("Rebase", { status = "conflict" })
   else
     notification.info("Rebased onto '" .. newbase .. "'")
-    fire_rebase_event("ok")
+    event.send("Rebase", { commit = newbase, status = "ok" })
   end
 end
 
@@ -103,10 +104,10 @@ function M.modify(commit)
     .in_pty(true)
     .env({ GIT_SEQUENCE_EDITOR = editor })
     .call()
-  if result.code ~= 0 then
-    return
+
+  if result:success() then
+    event.send("Rebase", { commit = commit, status = "ok" })
   end
-  fire_rebase_event { commit = commit, status = "ok" }
 end
 
 function M.drop(commit)
@@ -117,10 +118,10 @@ function M.drop(commit)
     .in_pty(true)
     .env({ GIT_SEQUENCE_EDITOR = editor })
     .call()
-  if result.code ~= 0 then
-    return
+
+  if result:success() then
+    event.send("Rebase", { commit = commit, status = "ok" })
   end
-  fire_rebase_event { commit = commit, status = "ok" }
 end
 
 function M.continue()
@@ -144,7 +145,7 @@ end
 function M.merge_base_HEAD()
   local result =
     git.cli["merge-base"].args("HEAD", "HEAD@{upstream}").call { ignore_error = true, hidden = true }
-  if result.code == 0 then
+  if result:success() then
     return result.stdout[1]
   end
 end
@@ -171,7 +172,7 @@ local function rev_name(oid)
     .args(oid)
     .call { hidden = true, ignore_error = true }
 
-  if result.code == 0 then
+  if result:success() then
     return result.stdout[1]
   else
     return oid
@@ -225,13 +226,17 @@ function M.update_rebase_status(state)
       for line in done:iter() do
         if line:match("^[^#]") and line ~= "" then
           local oid = line:match("^%w+ (%x+)") or line:match("^fixup %-C (%x+)")
-          table.insert(state.rebase.items, {
-            action = line:match("^(%w+) "),
-            oid = oid,
-            abbreviated_commit = oid:sub(1, git.log.abbreviated_size()),
-            subject = line:match("^%w+ %x+ (.+)$"),
-            done = true,
-          })
+          if oid then
+            table.insert(state.rebase.items, {
+              action = line:match("^(%w+) "),
+              oid = oid,
+              abbreviated_commit = oid:sub(1, git.log.abbreviated_size()),
+              subject = line:match("^%w+ %x+ (.+)$"),
+              done = true,
+            })
+          else
+            logger.debug("[rebase status] No OID found on line '" .. line .. "'")
+          end
         end
       end
     end
@@ -248,13 +253,15 @@ function M.update_rebase_status(state)
       for line in todo:iter() do
         if line:match("^[^#]") and line ~= "" then
           local oid = line:match("^%w+ (%x+)")
-          table.insert(state.rebase.items, {
-            done = false,
-            action = line:match("^(%w+) "),
-            oid = oid,
-            abbreviated_commit = oid:sub(1, git.log.abbreviated_size()),
-            subject = line:match("^%w+ %x+ (.+)$"),
-          })
+          if oid then
+            table.insert(state.rebase.items, {
+              done = false,
+              action = line:match("^(%w+) "),
+              oid = oid,
+              abbreviated_commit = oid:sub(1, git.log.abbreviated_size()),
+              subject = line:match("^%w+ %x+ (.+)$"),
+            })
+          end
         end
       end
     end

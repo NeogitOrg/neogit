@@ -1,5 +1,7 @@
 ---@source component.lua
 
+local strdisplaywidth = vim.fn.strdisplaywidth
+
 ---@class RendererIndex
 ---@field index table
 ---@field items table
@@ -39,6 +41,9 @@ function RendererIndex:add_section(name, first, last)
   table.insert(self.items, { items = {} })
 end
 
+---@param item table
+---@param first number
+---@param last number
 function RendererIndex:add_item(item, first, last)
   self.items[#self.items].last = last
 
@@ -71,6 +76,11 @@ end
 ---@class RendererFlags
 ---@field in_row boolean
 ---@field in_nested_row boolean
+
+---@class RendererHighlight
+---@field from integer
+---@field to integer
+---@field name string
 
 ---@class Renderer
 ---@field buffer RendererBuffer
@@ -125,6 +135,9 @@ function Renderer:item_index()
   return self.index.items
 end
 
+---@param child Component
+---@param parent Component
+---@param index integer
 function Renderer:_build_child(child, parent, index)
   child.parent = parent
   child.index = index
@@ -252,6 +265,10 @@ end
 
 ---@param child Component
 ---@param i integer index of child in parent.children
+---@param col_start integer
+---@param col_end integer|nil
+---@param highlights RendererHighlight[]
+---@param text string[]
 function Renderer:_render_child_in_row(child, i, col_start, col_end, highlights, text)
   if child.tag == "text" then
     return self:_render_in_row_text(child, i, col_start, highlights, text)
@@ -264,6 +281,9 @@ end
 
 ---@param child Component
 ---@param index integer index of child in parent.children
+---@param col_start integer
+---@param highlights RendererHighlight[]
+---@param text string[]
 function Renderer:_render_in_row_text(child, index, col_start, highlights, text)
   local padding_left = self.flags.in_nested_row and "" or child:get_padding_left(index == 1)
   table.insert(text, 1, padding_left)
@@ -291,6 +311,10 @@ function Renderer:_render_in_row_text(child, index, col_start, highlights, text)
 end
 
 ---@param child Component
+---@param highlights RendererHighlight[]
+---@param text string[]
+---@param col_start integer
+---@param col_end integer|nil
 function Renderer:_render_in_row_row(child, highlights, text, col_start, col_end)
   self.flags.in_nested_row = true
   local res = self:_render(child, child.children, col_start)
@@ -302,7 +326,7 @@ function Renderer:_render_in_row_row(child, highlights, text, col_start, col_end
     table.insert(highlights, h)
   end
 
-  col_end = col_start + vim.fn.strdisplaywidth(res.text)
+  col_end = col_start + strdisplaywidth(res.text)
   child.position.col_start = col_start
   child.position.col_end = col_end
 

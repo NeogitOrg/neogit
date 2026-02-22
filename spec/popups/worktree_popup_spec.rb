@@ -3,7 +3,7 @@
 require "spec_helper"
 
 RSpec.describe "Worktree Popup", :git, :nvim, :popup do
-  before { nvim.keys("w") }
+  let(:keymap) { "w" }
 
   let(:view) do
     [

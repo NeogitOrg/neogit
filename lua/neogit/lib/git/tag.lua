@@ -14,7 +14,7 @@ end
 ---@return boolean Successfully deleted
 function M.delete(tags)
   local result = git.cli.tag.delete.arg_list(tags).call { await = true }
-  return result.code == 0
+  return result:success()
 end
 
 --- Show a list of tags under a selected ref
@@ -22,6 +22,13 @@ end
 ---@return table
 function M.list_remote(remote)
   return git.cli["ls-remote"].tags.args(remote).call({ hidden = true }).stdout
+end
+
+---Find tags that point at an object ID
+---@param oid string
+---@return string[]
+function M.for_commit(oid)
+  return git.cli.tag.points_at(oid).call({ hidden = true }).stdout
 end
 
 local tag_pattern = "(.-)%-([0-9]+)%-g%x+$"
