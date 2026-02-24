@@ -98,6 +98,8 @@ to Neovim users.
     git_executable = "git",
     -- Offer to force push when branches diverge
     prompt_force_push = true,
+    -- Request confirmation when amending already published commits
+    prompt_amend_commit = true,
     -- Changes what mode the Commit Editor starts in. `true` will leave nvim in normal mode, `false` will change nvim to
     -- insert mode, and `"auto"` will change nvim to insert mode IF the commit message is empty, otherwise leaving it in
     -- normal mode.
@@ -179,6 +181,8 @@ to Neovim users.
     commit_order = "topo"
     -- Default for new branch name prompts
     initial_branch_name = "",
+    -- Default for rename branch prompt. If not set, the current branch name is used
+    initial_branch_rename = nil,
     -- Change the default way of opening neogit
     kind = "tab",
     -- Floating window style
@@ -285,6 +289,10 @@ to Neovim users.
         -- Requires you to have `sindrets/diffview.nvim` installed.
         diffview = nil,
 
+        -- Alternative diff viewer integration.
+        -- Requires you to have `esmuellert/codediff.nvim` installed.
+        codediff = nil,
+
         -- If enabled, uses fzf-lua for menu selection. If the telescope integration
         -- is also selected then telescope is used instead
         -- Requires you to have `ibhagwan/fzf-lua` installed.
@@ -300,6 +308,9 @@ to Neovim users.
         -- Requires you to have `folke/snacks.nvim` installed.
         snacks = nil,
     },
+    -- Which diff viewer to use. nil = auto-detect (tries diffview first, then codediff).
+    -- Can be "diffview" or "codediff".
+    diff_viewer = nil,
     sections = {
         -- Reverting/Cherry Picking
         sequencer = {
@@ -650,6 +661,32 @@ The following events are emitted by Neogit:
       new_cwd: string,
       copy_if_present: function(filename: string, callback: function|nil)
     }
+<
+• `NeogitDiffLoaded`
+  When: A hunk is lazy loaded in the status buffer
+  Data: >
+    {
+        item = {
+            absolute_path: string,
+            relative_path: string,
+            row_start: int (First row in buffer the hunk occupies),
+            row_end: int (last row in buffer the hunk occupies),
+            mode: string (file mode)
+        },
+        diff = {
+            kind: str,
+            lines: string[],
+            hunks: Hunk[]
+        }
+    }
+
+    Hunk:
+        lines: str[]
+        original_lines: str[] (lines from diff not prefixed with +/-)
+        modified_lines: str[] (lines from diff, but with +/- prefix removed)
+        row_start: int (first line of hunk in the buffer)
+        row_end: int (last line of hunk in the buffer)
+        header: string (diff header)
 <
 ==============================================================================
 5. Highlights                                                *neogit_highlights*
@@ -1401,9 +1438,13 @@ The diff popup actions allow inspection of changes in the index (staged
 changes), the working tree (unstaged changes and untracked files), any
 ref range.
 
-For these actions to become available, Neogit needs to be configured to enable
-`diffview.nvim` integration. See |neogit_setup_plugin| and
-https://github.com/sindrets/diffview.nvim.
+For these actions to become available, Neogit needs to have a diff viewer
+integration enabled. Supported viewers are:
+- `diffview.nvim`: https://github.com/sindrets/diffview.nvim
+- `codediff.nvim`: https://github.com/esmuellert/codediff.nvim
+
+By default, Neogit will auto-detect which viewer is available. You can
+explicitly set the viewer with the `diff_viewer` option. See |neogit_setup_plugin|.
 
   • Diff this                                                 *neogit_diff_this*
     Show the diff for the file referred to by a hunk under the cursor.

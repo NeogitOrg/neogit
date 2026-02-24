@@ -11,6 +11,22 @@ local function get_git_executable()
   return config.get_git_executable()
 end
 
+local hook_commands = {
+  commit = true,
+  merge = true,
+  rebase = true,
+  checkout = true,
+  push = true,
+}
+
+local function hooks_enabled(subcommand, cmd)
+  if not hook_commands[subcommand] then
+    return false
+  end
+
+  return not vim.tbl_contains(cmd, "--no-verify")
+end
+
 ---@class GitCommandSetup
 ---@field flags table|nil
 ---@field options table|nil
@@ -1190,19 +1206,21 @@ local function new_builder(subcommand)
     end
 
     -- stylua: ignore
-    cmd = util.merge(
-      {
-        get_git_executable(),
-        "--no-pager",
-        "--literal-pathspecs",
-        "--no-optional-locks",
-        "-c", "core.preloadindex=true",
-        "-c", "color.ui=always",
-        "-c", "diff.noprefix=false",
-        subcommand
-      },
-      cmd
-    )
+    local base = {
+      get_git_executable(),
+      "--no-pager",
+      "--no-optional-locks",
+      "-c", "core.preloadindex=true",
+      "-c", "color.ui=always",
+      "-c", "diff.noprefix=false",
+      subcommand,
+    }
+
+    if not hooks_enabled(subcommand, cmd) then
+      table.insert(base, 3, "--literal-pathspecs")
+    end
+
+    cmd = util.merge(base, cmd)
 
     return process.new {
       cmd = cmd,

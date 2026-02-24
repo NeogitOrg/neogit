@@ -356,6 +356,7 @@ end
 ---@field disable_context_highlighting? boolean Disable context highlights based on cursor position
 ---@field disable_signs? boolean Special signs to draw for sections etc. in Neogit
 ---@field prompt_force_push? boolean Offer to force push when branches diverge
+---@field prompt_amend_commit? boolean Request confirmation when amending already published commits
 ---@field git_services? NeogitConfigGitService[] Templates to use when opening a pull request for a branch, or commit
 ---@field fetch_after_checkout? boolean Perform a fetch if the newly checked out branch has an upstream or pushRemote set
 ---@field telescope_sorter? function The sorter telescope will use
@@ -366,6 +367,7 @@ end
 ---@field sort_branches? string Value used for `--sort` for the `git branch` command
 ---@field commit_order? NeogitCommitOrder Value used for `--<commit_order>-order` for the `git log` command
 ---@field initial_branch_name? string Default for new branch name prompts
+---@field initial_branch_rename? string Default for rename branch prompt. If not set, the current branch name is used
 ---@field kind? WindowKind The default type of window neogit should open in
 ---@field floating? NeogitConfigFloating The floating window style
 ---@field disable_line_numbers? boolean Whether to disable line numbers
@@ -387,7 +389,8 @@ end
 ---@field preview_buffer? NeogitConfigPopup Preview options
 ---@field popup? NeogitConfigPopup Set the default way of opening popups
 ---@field signs? NeogitConfigSigns Signs used for toggled regions
----@field integrations? { diffview: boolean, telescope: boolean, fzf_lua: boolean, mini_pick: boolean, snacks: boolean } Which integrations to enable
+---@field integrations? { diffview: boolean, codediff: boolean, telescope: boolean, fzf_lua: boolean, mini_pick: boolean, snacks: boolean } Which integrations to enable
+---@field diff_viewer? "diffview"|"codediff"|nil Which diff viewer to use (nil = auto-detect)
 ---@field sections? NeogitConfigSections
 ---@field ignored_settings? string[] Settings to never persist, format: "Filetype--cli-value", i.e. "NeogitCommitPopup--author"
 ---@field mappings? NeogitConfigMappings
@@ -405,6 +408,7 @@ function M.get_default_values()
     disable_context_highlighting = false,
     disable_signs = false,
     prompt_force_push = true,
+    prompt_amend_commit = true,
     graph_style = "ascii",
     commit_date_format = nil,
     log_date_format = nil,
@@ -540,10 +544,12 @@ function M.get_default_values()
     integrations = {
       telescope = nil,
       diffview = nil,
+      codediff = nil,
       fzf_lua = nil,
       mini_pick = nil,
       snacks = nil,
     },
+    diff_viewer = nil,
     sections = {
       sequencer = {
         folded = false,
@@ -856,8 +862,26 @@ function M.validate_config()
     end
   end
 
+  local function validate_diff_viewer()
+    if config.diff_viewer == nil then
+      return
+    end
+
+    local valid_viewers = { "diffview", "codediff" }
+    if not vim.tbl_contains(valid_viewers, config.diff_viewer) then
+      err(
+        "diff_viewer",
+        string.format(
+          "Expected diff_viewer to be one of %s or nil, got '%s'",
+          table.concat(valid_viewers, ", "),
+          tostring(config.diff_viewer)
+        )
+      )
+    end
+  end
+
   local function validate_integrations()
-    local valid_integrations = { "diffview", "telescope", "fzf_lua", "mini_pick", "snacks" }
+    local valid_integrations = { "diffview", "codediff", "telescope", "fzf_lua", "mini_pick", "snacks" }
     if not validate_type(config.integrations, "integrations", "table") or #config.integrations == 0 then
       return
     end
@@ -1200,6 +1224,7 @@ function M.validate_config()
     validate_type(config.remember_settings, "remember_settings", "boolean")
     validate_type(config.sort_branches, "sort_branches", "string")
     validate_type(config.initial_branch_name, "initial_branch_name", "string")
+    validate_type(config.initial_branch_rename, "initial_branch_name", { "string", "nil" })
     validate_type(config.notification_icon, "notification_icon", "string")
     validate_type(config.console_timeout, "console_timeout", "number")
     validate_kind(config.kind, "kind")
@@ -1277,6 +1302,7 @@ function M.validate_config()
     end
 
     validate_integrations()
+    validate_diff_viewer()
     validate_sections()
     validate_ignored_settings()
     validate_mappings()
@@ -1306,6 +1332,32 @@ function M.check_integration(name)
 
   logger.info(("[CONFIG] Found explicit integration '%s' = %s"):format(name, enabled))
   return enabled
+end
+
+---Returns the configured diff viewer, or auto-detects if not set
+---@return string|nil The diff viewer to use ("diffview", "codediff"), or nil if none available
+function M.get_diff_viewer()
+  local logger = require("neogit.logger")
+  local viewer = M.values.diff_viewer
+
+  if viewer then
+    -- Explicit choice - verify it's available
+    if M.check_integration(viewer) then
+      return viewer
+    else
+      logger.warn(("[CONFIG] Configured diff_viewer '%s' is not available"):format(viewer))
+      return nil
+    end
+  end
+
+  -- Auto-detect: try diffview first (backwards compatible), then codediff
+  if M.check_integration("diffview") then
+    return "diffview"
+  elseif M.check_integration("codediff") then
+    return "codediff"
+  end
+
+  return nil
 end
 
 function M.setup(opts)

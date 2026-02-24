@@ -33,7 +33,10 @@ Here's an example spec for [Lazy](https://github.com/folke/lazy.nvim), but you'r
   lazy = true,
   dependencies = {
     "nvim-lua/plenary.nvim",         -- required
-    "sindrets/diffview.nvim",        -- optional - Diff integration
+
+    -- Only one of these is needed.
+    "sindrets/diffview.nvim",        -- optional
+    "esmuellert/codediff.nvim",      -- optional
 
     -- Only one of these is needed.
     "nvim-telescope/telescope.nvim", -- optional
@@ -130,6 +133,8 @@ neogit.setup {
   git_executable = "git",
   -- Offer to force push when branches diverge
   prompt_force_push = true,
+  -- Request confirmation when amending already published commits
+  prompt_amend_commit = true,
   -- Changes what mode the Commit Editor starts in. `true` will leave nvim in normal mode, `false` will change nvim to
   -- insert mode, and `"auto"` will change nvim to insert mode IF the commit message is empty, otherwise leaving it in
   -- normal mode.
@@ -213,6 +218,8 @@ neogit.setup {
   commit_order = "topo",
   -- Default for new branch name prompts
   initial_branch_name = "",
+  -- Default for rename branch prompt. If not set, the current branch name is used
+  initial_branch_rename = nil,
   -- Change the default way of opening neogit
   kind = "tab",
   -- Floating window style 
@@ -319,6 +326,10 @@ neogit.setup {
     -- Requires you to have `sindrets/diffview.nvim` installed.
     diffview = nil,
 
+    -- Alternative diff viewer integration.
+    -- Requires you to have `esmuellert/codediff.nvim` installed.
+    codediff = nil,
+
     -- If enabled, uses fzf-lua for menu selection. If the telescope integration
     -- is also selected then telescope is used instead
     -- Requires you to have `ibhagwan/fzf-lua` installed.
@@ -334,6 +345,9 @@ neogit.setup {
     -- Requires you to have `folke/snacks.nvim` installed.
     snacks = nil,
   },
+  -- Which diff viewer to use. nil = auto-detect (tries diffview first, then codediff).
+  -- Can be "diffview" or "codediff".
+  diff_viewer = nil,
   sections = {
     -- Reverting/Cherry Picking
     sequencer = {
