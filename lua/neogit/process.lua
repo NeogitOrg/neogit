@@ -11,13 +11,23 @@ local Spinner = require("neogit.spinner")
 local api = vim.api
 local fn = vim.fn
 
-local command_mask = vim.pesc(
-  " --no-pager --literal-pathspecs --no-optional-locks -c core.preloadindex=true -c color.ui=always -c diff.noprefix=false"
-)
+local command_masks = {
+  vim.pesc(
+    " --no-pager --literal-pathspecs --no-optional-locks -c core.preloadindex=true -c color.ui=always -c diff.noprefix=false"
+  ),
+  vim.pesc(
+    " --no-pager --no-optional-locks -c core.preloadindex=true -c color.ui=always -c diff.noprefix=false"
+  ),
+}
 
 local function mask_command(cmd)
-  local command, _ = cmd:gsub(command_mask, "")
-  return command
+  for _, mask in ipairs(command_masks) do
+    local command, count = cmd:gsub(mask, "")
+    if count > 0 then
+      return command
+    end
+  end
+  return cmd
 end
 
 ---@class ProcessOpts
