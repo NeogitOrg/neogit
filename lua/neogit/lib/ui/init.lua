@@ -712,6 +712,7 @@ function Ui:update()
     self.buf:set_highlights(renderer.buffer.highlight)
     self.buf:set_extmarks(renderer.buffer.extmark)
     self.buf:set_line_highlights(renderer.buffer.line_highlight)
+    self.buf:set_ansi_highlights(renderer.buffer.ansi_highlight)
     self.buf:set_folds(renderer.buffer.fold)
 
     self.statuscolumn = {}
