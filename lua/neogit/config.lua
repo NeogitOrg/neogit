@@ -603,6 +603,7 @@ function M.get_default_values()
     ignored_settings = {},
     mappings = {
       commit_view = {
+        ["<cr>"] = "OpenFileInCommit",
         ["a"] = "OpenFileInWorktree",
       },
       commit_editor = {
