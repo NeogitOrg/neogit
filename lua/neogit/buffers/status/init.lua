@@ -22,6 +22,21 @@ M.__index = M
 
 local instances = {}
 
+vim.api.nvim_create_autocmd("BufWritePost", {
+  pattern = "*",
+  callback = function(args)
+    if not config.values.status.fast then
+      return
+    end
+
+    for _, buf in pairs(instances) do
+      buf:refresh {
+        update_diffs = { "*:" .. args.file },
+      }
+    end
+  end,
+})
+
 ---@class SubmoduleInfo
 ---@field submodules string[] A list with the relative paths to the project's submodules
 ---@field parent_repo string? If we are in a submodule, cache the abs path to the parent repo
