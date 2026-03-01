@@ -126,6 +126,7 @@ end
 ---@class NeogitCommitEditorConfigPopup Popup window options
 ---@field kind WindowKind The type of window that should be opened
 ---@field show_staged_diff? boolean Display staged changes in a buffer when committing
+---@field fast? boolean Enter commit message in a non-interactive way (much faster in large repositories)
 ---@field staged_diff_split_kind? StagedDiffSplitKind Whether to show staged changes in a vertical or horizontal split
 ---@field spell_check? boolean Enable/Disable spell checking
 
