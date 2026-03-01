@@ -657,6 +657,8 @@ function M.Status(state, config)
 
   local show_recent = #state.recent.items > 0
     and not config.sections.recent.hidden
+    and (config.sections.recent.always or not show_upstream_unmerged)
+
 
   return {
     List {
@@ -808,7 +810,7 @@ function M.Status(state, config)
           folded = config.sections.unmerged_pushRemote.folded,
           name = "pushRemote_unmerged",
         },
-        not show_upstream_unmerged and show_recent and Section {
+        show_recent and Section {
           title = SectionTitle { title = "Recent Commits", highlight = "NeogitRecentcommits" },
           count = false,
           render = SectionItemCommit,
