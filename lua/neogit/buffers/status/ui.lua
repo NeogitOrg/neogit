@@ -12,6 +12,7 @@ local row = Ui.row
 local text = Ui.text
 
 local map = util.map
+local filter_map = util.filter_map
 
 local EmptyLine = common.EmptyLine
 local List = common.List
@@ -161,6 +162,14 @@ local SectionTitleMerge = Component.new(function(props)
 end)
 
 local Section = Component.new(function(props)
+  if not props.visible then
+    return col {}
+  end
+
+  if type(props.items) == "function" then
+    props.items = props.items()
+  end
+
   local count
   if props.count then
     count = { text(" ("), text.highlight("NeogitSectionHeaderCount")(#props.items), text(")") }
@@ -179,6 +188,10 @@ local Section = Component.new(function(props)
 end)
 
 local SequencerSection = Component.new(function(props)
+  if not props.visible then
+    return col {}
+  end
+
   return col.tag("Section")({
     row(util.merge(props.title)),
     col(map(props.items, props.render)),
@@ -192,6 +205,10 @@ local SequencerSection = Component.new(function(props)
 end)
 
 local RebaseSection = Component.new(function(props)
+  if not props.visible then
+    return col {}
+  end
+
   return col.tag("Section")({
     row(util.merge(props.title, {
       text(" ("),
@@ -572,6 +589,10 @@ local SectionItemBisect = Component.new(function(item)
 end)
 
 local BisectDetailsSection = Component.new(function(props)
+  if not props.visible then
+    return col {}
+  end
+
   return col.tag("Section")({
     row(util.merge(props.title, { text(" "), text.highlight("NeogitObjectId")(props.commit.oid) })),
     row {
@@ -597,6 +618,36 @@ local BisectDetailsSection = Component.new(function(props)
     yankable = props.commit.oid,
     id = props.name,
   })
+end)
+
+local SectionItemTodo = Component.new(function(item)
+  local function present_item(item)
+    return row({
+      text.highlight(item.highlight)(item.kind),
+      text(" "),
+      text(item.message),
+    }, {
+      yankable = ("%s:%d"):format(item.path, item.line),
+      item = {
+        goto_path = item.path,
+        goto_cursor = { item.line, item.column },
+      },
+    })
+  end
+
+  local grouped_items = map(item, present_item)
+  table.insert(
+    grouped_items,
+    1,
+    row {
+      text(item[1].path),
+      text.highlight("NeogitObjectId")(" ("),
+      text.highlight("NeogitObjectId")(#item),
+      text.highlight("NeogitObjectId")(")")
+    }
+  )
+
+  return col.tag("Section")(grouped_items, { foldable = true, folded = true })
 end)
 
 function M.Status(state, config)
@@ -658,6 +709,9 @@ function M.Status(state, config)
   local show_recent = #state.recent.items > 0
     and not config.sections.recent.hidden
 
+  local show_todos = vim.fn.executable("rg") == 1
+    and not config.sections.todo.hidden
+
   return {
     List {
       items = {
@@ -699,7 +753,8 @@ function M.Status(state, config)
           },
         }, { foldable = true, folded = config.status.HEAD_folded }),
         EmptyLine(),
-        show_merge and SequencerSection {
+        SequencerSection {
+          visible = show_merge,
           title = SectionTitleMerge {
             title = "Merging",
             branch = state.merge.branch,
@@ -710,7 +765,8 @@ function M.Status(state, config)
           folded = config.sections.sequencer.folded,
           name = "merge",
         },
-        show_rebase and RebaseSection {
+        RebaseSection {
+          visible = show_rebase,
           title = SectionTitleRebase {
             title = "Rebasing",
             head = state.rebase.head,
@@ -725,34 +781,39 @@ function M.Status(state, config)
           folded = config.sections.rebase.folded,
           name = "rebase",
         },
-        show_cherry_pick and SequencerSection {
+        SequencerSection {
+          visible = show_cherry_pick,
           title = SectionTitle { title = "Cherry Picking", highlight = "NeogitPicking" },
           render = SectionItemSequencer,
           items = util.reverse(state.sequencer.items),
           folded = config.sections.sequencer.folded,
           name = "cherry_pick",
         },
-        show_revert and SequencerSection {
+        SequencerSection {
+          visible = show_revert,
           title = SectionTitle { title = "Reverting", highlight = "NeogitReverting" },
           render = SectionItemSequencer,
           items = util.reverse(state.sequencer.items),
           folded = config.sections.sequencer.folded,
           name = "revert",
         },
-        show_bisect and BisectDetailsSection {
+        BisectDetailsSection {
+          visible = show_bisect,
           title = SectionTitle { title = "Bisecting at", highlight = "NeogitBisecting" },
           commit = state.bisect.current,
           folded = config.sections.bisect.folded,
           name = "bisect_details",
         },
-        show_bisect and SequencerSection {
+        SequencerSection {
+          visible = show_bisect,
           title = SectionTitle { title = "Bisecting Log", highlight = "NeogitBisecting" },
           render = SectionItemBisect,
           items = state.bisect.items,
           folded = config.sections.bisect.folded,
           name = "bisect",
         },
-        show_untracked and Section {
+        Section {
+          visible = show_untracked,
           title = SectionTitle { title = "Untracked files", highlight = "NeogitUntrackedfiles" },
           count = true,
           render = SectionItemFile("untracked", config),
@@ -760,7 +821,8 @@ function M.Status(state, config)
           folded = config.sections.untracked.folded,
           name = "untracked",
         },
-        show_unstaged and Section {
+        Section {
+          visible = show_unstaged,
           title = SectionTitle { title = "Unstaged changes", highlight = "NeogitUnstagedchanges" },
           count = true,
           render = SectionItemFile("unstaged", config),
@@ -768,7 +830,8 @@ function M.Status(state, config)
           folded = config.sections.unstaged.folded,
           name = "unstaged",
         },
-        show_staged and Section {
+        Section {
+          visible = show_staged,
           title = SectionTitle { title = "Staged changes", highlight = "NeogitStagedchanges" },
           count = true,
           render = SectionItemFile("staged", config),
@@ -776,7 +839,8 @@ function M.Status(state, config)
           folded = config.sections.staged.folded,
           name = "staged",
         },
-        show_stashes and Section {
+        Section {
+          visible = show_stashes,
           title = SectionTitle { title = "Stashes", highlight = "NeogitStashes" },
           count = true,
           render = SectionItemStash,
@@ -784,7 +848,8 @@ function M.Status(state, config)
           folded = config.sections.stashes.folded,
           name = "stashes",
         },
-        show_upstream_unmerged and Section {
+        Section {
+          visible = show_upstream_unmerged,
           title = SectionTitleRemote {
             title = "Unmerged into",
             ref = state.upstream.ref,
@@ -796,7 +861,8 @@ function M.Status(state, config)
           folded = config.sections.unmerged_upstream.folded,
           name = "upstream_unmerged",
         },
-        show_pushRemote_unmerged and Section {
+        Section {
+          visible = show_pushRemote_unmerged,
           title = SectionTitleRemote {
             title = "Unpushed to",
             ref = state.pushRemote.ref,
@@ -808,7 +874,8 @@ function M.Status(state, config)
           folded = config.sections.unmerged_pushRemote.folded,
           name = "pushRemote_unmerged",
         },
-        not show_upstream_unmerged and show_recent and Section {
+        Section {
+          visible = not show_upstream_unmerged and show_recent,
           title = SectionTitle { title = "Recent Commits", highlight = "NeogitRecentcommits" },
           count = false,
           render = SectionItemCommit,
@@ -816,7 +883,8 @@ function M.Status(state, config)
           folded = config.sections.recent.folded,
           name = "recent",
         },
-        show_upstream_unpulled and Section {
+        Section {
+          visible = show_upstream_unpulled,
           title = SectionTitleRemote {
             title = "Unpulled from",
             ref = state.upstream.ref,
@@ -828,7 +896,8 @@ function M.Status(state, config)
           folded = config.sections.unpulled_upstream.folded,
           name = "upstream_unpulled",
         },
-        show_pushRemote_unpulled and Section {
+        Section {
+          visible = show_pushRemote_unpulled,
           title = SectionTitleRemote {
             title = "Unpulled from",
             ref = state.pushRemote.ref,
@@ -840,6 +909,38 @@ function M.Status(state, config)
           folded = config.sections.unpulled_pushRemote.folded,
           name = "pushRemote_unpulled",
         },
+        Section {
+          visible = show_todos,
+          title = SectionTitle { title = "TODOs", highlight = "NeogitRecentcommits" },
+          render = SectionItemTodo,
+          folded = true,
+          name = "todos_plugin",
+          items = function()
+            local Collection = require("neogit.lib.collection")
+
+            local kinds = table.concat(vim.tbl_keys(config.sections.todo.keywords), "|")
+            local items = vim.system(
+              { "rg", " (" .. kinds .. "): ", "--vimgrep", "--sortr=path" },
+              { text = true }
+            ):wait()
+
+            items = filter_map(vim.split(items.stdout, "\n"), function(line)
+              local path, linenr, column, kind, msg = line:match("^([^:]+):(%d+):(%d+):.- (%w+): (.+)$")
+              if path then
+                return {
+                  path = path,
+                  line = linenr,
+                  column = column,
+                  message = msg,
+                  kind = kind,
+                  highlight = config.sections.todo.keywords[kind]
+                }
+              end
+            end)
+
+            return Collection.new(items):group_by("path")
+          end
+        }
       },
     },
   }

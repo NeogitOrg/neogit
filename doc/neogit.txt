@@ -2165,6 +2165,15 @@ Untracked Files                                 *neogit_status_buffer_untracked*
   untracked files entirely, "normal" to show files and directories (default),
   or "all" to show all files in all directories.
 
+TODOs                                               *neogit_status_buffer_todos*
+  Requires `ripgrep` and `sort` to be available on your system. By default,
+  finds all TODO notes in the codebase matching:
+  - " TODO: "
+  - " NOTE: "
+  - " FIXME: "
+  - " HACK: "
+
+  Can be configured to find other/different keywords.
 ==============================================================================
 Editor Buffer                                             *neogit_editor_buffer*
 
