@@ -59,6 +59,9 @@ local HunkLine = Component.new(function(line)
     return text(line)
   end
 
+  local first_char = string.sub(line, 1, 1)
+  local first_chars = string.sub(line, 1, 2)
+
   -- TODO: Should use file mode, not merge head
   if git.repo.state.merge.head then
     if
@@ -68,17 +71,17 @@ local HunkLine = Component.new(function(line)
       or line:match("..>>>>>>>")
     then
       line_hl = "NeogitHunkMergeHeader"
-    elseif string.sub(line, 1, 1) == diff_add_start or string.sub(line, 1, 2) == diff_add_start_2 then
+    elseif first_char == diff_add_start or first_chars == diff_add_start_2 then
       line_hl = "NeogitDiffAdd"
-    elseif string.sub(line, 1, 1) == diff_delete_start or string.sub(line, 1, 2) == diff_delete_start_2 then
+    elseif first_char == diff_delete_start or first_chars == diff_delete_start_2 then
       line_hl = "NeogitDiffDelete"
     else
       line_hl = "NeogitDiffContext"
     end
   else
-    if string.sub(line, 1, 1) == diff_add_start then
+    if first_char == diff_add_start then
       line_hl = "NeogitDiffAdd"
-    elseif string.sub(line, 1, 1) == diff_delete_start then
+    elseif first_char == diff_delete_start then
       line_hl = "NeogitDiffDelete"
     else
       line_hl = "NeogitDiffContext"
