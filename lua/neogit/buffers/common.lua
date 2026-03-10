@@ -62,13 +62,18 @@ local HunkLine = Component.new(function(line)
   local first_char = string.sub(line, 1, 1)
   local first_chars = string.sub(line, 1, 2)
 
-  if
-    line:match("^..<<<<<<<")
-    or line:match("^..|||||||")
-    or line:match("^..=======")
-    or line:match("^..>>>>>>>")
-  then
-    line_hl = "NeogitHunkMergeHeader"
+  if line:match("^..<<<<<<<") then
+    line_hl = "NeogitHunkMergeHEAD"
+  elseif first_chars == diff_add_start_2 then
+    line_hl = "NeogitHunkMergeHEADadd"
+  elseif line:match("^..|||||||") then
+    line_hl = "NeogitHunkMergeBASE"
+  elseif first_chars == "++" then
+    line_hl = "NeogitHunkMergeBASEadd"
+  elseif line:match("^..=======") then
+    line_hl = ""
+  elseif line:match("^..>>>>>>>") then
+    line_hl = "NeogitHunkMergeINCOMING"
   elseif first_char == diff_add_start or first_chars == diff_add_start_2 then
     line_hl = "NeogitDiffAdd"
   elseif first_char == diff_delete_start or first_chars == diff_delete_start_2 then
