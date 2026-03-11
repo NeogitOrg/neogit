@@ -55,10 +55,6 @@ local diff_delete_start_2 = " -"
 local HunkLine = Component.new(function(line)
   local line_hl
 
-  if vim.b.neogit_disable_hunk_highlight == true then
-    return text(line)
-  end
-
   local first_char = string.sub(line, 1, 1)
   local first_chars = string.sub(line, 1, 2)
 

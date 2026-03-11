@@ -147,6 +147,10 @@ function Buffer:set_extmarks(extmarks)
 end
 
 function Buffer:set_line_highlights(highlights)
+  if vim.b[self.handle] and vim.b[self.handle].neogit_disable_hunk_highlight == true then
+    return
+  end
+
   for _, hl in ipairs(highlights) do
     self:add_line_highlight(unpack(hl))
   end
