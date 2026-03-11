@@ -821,8 +821,8 @@ function Buffer.create(config)
   end
 
   if config.render then
-    logger.debug("[BUFFER:" .. buffer.handle .. "] Rendering buffer")
-    buffer.ui:render(unpack(config.render(buffer)))
+    buffer.render_fn = config.render
+    buffer:draw()
   end
 
   for event, callback in pairs(config.autocmds or {}) do
@@ -993,6 +993,31 @@ function Buffer.create(config)
   end
 
   return buffer
+end
+
+function Buffer:draw()
+  if self.render_fn then
+    logger.debug("[BUFFER:" .. self.handle .. "] Rendering buffer")
+    self.ui:render(unpack(self.render_fn(self)))
+  end
+end
+
+function Buffer:redraw()
+  if not self.handle then
+    logger.debug("[BUFFER:" .. self.handle .. "] Buffer no longer exists - bail")
+    return
+  end
+
+  if not self:is_focused() then
+    logger.debug("[BUFFER:" .. self.handle .. "] Buffer is no longer focused - bail")
+    return
+  end
+
+  local cursor = self.ui:get_cursor_location()
+  local view = self:save_view()
+
+  self:draw()
+  self:restore_view(view, self.ui:resolve_cursor_location(cursor))
 end
 
 ---@param name string
