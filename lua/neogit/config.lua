@@ -90,6 +90,7 @@ end
 
 ---@alias WindowKind
 ---| "replace" Like :enew
+---| "stack" Like "replace" but keeping the buffers and returning back to them on close
 ---| "tab" Open in a new tab
 ---| "split" Open in a split
 ---| "split_above" Like :top split
@@ -782,27 +783,26 @@ function M.validate_config()
 
   -- More complex validation functions go below
   local function validate_kind(val, name)
-    if
-      validate_type(val, name, "string")
-      and not vim.tbl_contains({
-        "split",
-        "vsplit",
-        "split_above",
-        "split_above_all",
-        "split_below",
-        "split_below_all",
-        "vsplit_left",
-        "tab",
-        "floating",
-        "floating_console",
-        "replace",
-        "auto",
-      }, val)
-    then
+    local valid_types = {
+      "split",
+      "vsplit",
+      "split_above",
+      "split_above_all",
+      "split_below",
+      "split_below_all",
+      "vsplit_left",
+      "tab",
+      "floating",
+      "floating_console",
+      "replace",
+      "stack",
+      "auto",
+    }
+    if validate_type(val, name, "string") and not vim.tbl_contains(valid_types, val) then
       err(
         name,
         string.format(
-          "Expected `%s` to be one of 'split', 'vsplit', 'split_above', 'vsplit_left', tab', 'floating', 'replace' or 'auto', got '%s'",
+          "Expected `%s` to be one of " .. table.concat(valid_types, ", ") .. " got '%s'",
           name,
           val
         )

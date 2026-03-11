@@ -214,6 +214,16 @@ function Buffer:close(force)
     force = false
   end
 
+  if self.kind == "stack" then
+    if self.old_buf and api.nvim_buf_is_loaded(self.old_buf) then
+      api.nvim_set_current_buf(self.old_buf)
+      self.old_buf = nil
+    end
+
+    api.nvim_buf_delete(self.handle, { force = force })
+    return
+  end
+
   if self.kind == "replace" then
     if self.old_cwd then
       api.nvim_set_current_dir(self.old_cwd)
@@ -257,7 +267,7 @@ function Buffer:hide()
     -- `silent!` as this might throw errors if 'hidden' is disabled.
     vim.cmd("silent! 1only")
     vim.cmd("try | tabn # | catch /.*/ | tabp | endtry")
-  elseif self.kind == "replace" then
+  elseif self.kind == "replace" or self.kind == "stack" then
     if self.old_cwd then
       api.nvim_set_current_dir(self.old_cwd)
       self.old_cwd = nil
@@ -300,9 +310,14 @@ function Buffer:show()
   ---@return integer window handle
   local function open()
     local win
-    if self.kind == "replace" then
-      self.old_buf = api.nvim_get_current_buf()
-      self.old_cwd = vim.uv.cwd()
+    if self.kind == "replace" or self.kind == "stack" then
+      if self.kind == "stack" then
+        self.old_buf = self.old_buf or api.nvim_get_current_buf()
+      else
+        self.old_buf = api.nvim_get_current_buf()
+        self.old_cwd = vim.uv.cwd()
+      end
+
       api.nvim_set_current_buf(self.handle)
       win = api.nvim_get_current_win()
     elseif self.kind == "tab" then
@@ -710,10 +725,11 @@ function Buffer.create(config)
     logger.debug("[BUFFER:" .. buffer.handle .. "] Showing buffer in window " .. win .. " as " .. buffer.kind)
   end
 
+  local default_bufhidden = config.kind == "stack" and "hide" or "wipe"
   logger.debug("[BUFFER:" .. buffer.handle .. "] Setting buffer options")
   buffer:set_buffer_option("swapfile", false)
   buffer:set_buffer_option("modeline", false)
-  buffer:set_buffer_option("bufhidden", config.bufhidden or "wipe")
+  buffer:set_buffer_option("bufhidden", config.bufhidden or default_bufhidden)
   buffer:set_buffer_option("modifiable", config.modifiable or false)
   buffer:set_buffer_option("modified", config.modifiable or false)
   buffer:set_buffer_option("readonly", config.readonly or false)
