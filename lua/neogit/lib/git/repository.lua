@@ -4,6 +4,7 @@ local Path = require("plenary.path")
 local git = require("neogit.lib.git")
 local ItemFilter = require("neogit.lib.item_filter")
 local util = require("neogit.lib.util")
+local Watcher = require("neogit.watcher")
 
 local modules = {
   "status",
@@ -185,22 +186,26 @@ Repo.__index = Repo
 local instances = {}
 local lastDir = vim.uv.cwd()
 
+function Repo.instance_for(dir, refresh)
+  local cwd = vim.fs.normalize(dir)
+  if not instances[cwd] then
+    logger.debug("[REPO]: Registered Repository for: " .. cwd)
+    instances[cwd] = Repo.new(cwd)
+    if refresh then instances[cwd]:dispatch_refresh() end
+  end
+
+  return instances[cwd]
+end
+
 ---@param dir? string
 ---@return NeogitRepo
-function Repo.instance(dir)
+function Repo.instance(dir, refresh)
   if dir and dir ~= lastDir then
     lastDir = dir
   end
 
   assert(lastDir, "No last dir")
-  local cwd = vim.fs.normalize(lastDir)
-  if not instances[cwd] then
-    logger.debug("[REPO]: Registered Repository for: " .. cwd)
-    instances[cwd] = Repo.new(cwd)
-    instances[cwd]:dispatch_refresh()
-  end
-
-  return instances[cwd]
+  return Repo.instance_for(lastDir, refresh)
 end
 
 -- Use Repo.instance when calling directly to ensure it's registered
@@ -337,11 +342,25 @@ function Repo:refresh(opts)
     self:run_callbacks(start)
   end)
 
+  lastDir = self.worktree_root
   a.util.run_all(self:tasks(filter, self:current_state(start)), on_complete)
 end
 
 Repo.dispatch_refresh = a.void(function(self, opts)
   self:refresh(opts)
 end)
+
+function Repo.make_current(repo)
+  -- TODO: use repo object instead of git.repo (which is Repo.instance() for last used dir)
+  lastDir = repo.worktree_root
+end
+
+function Repo:register_watch_buffer(buf)
+  Watcher.instance(self.worktree_root):register(buf)
+end
+
+function Repo:unregister_watch_buffer(buf)
+  Watcher.instance(self.worktree_root):unregister(buf)
+end
 
 return Repo

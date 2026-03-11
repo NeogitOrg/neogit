@@ -3,7 +3,6 @@ local Buffer = require("neogit.lib.buffer")
 local ui = require("neogit.buffers.status.ui")
 local popups = require("neogit.popups")
 local git = require("neogit.lib.git")
-local Watcher = require("neogit.watcher")
 local a = require("plenary.async")
 local logger = require("neogit.logger") -- TODO: Add logging
 local event = require("neogit.lib.event")
@@ -16,7 +15,6 @@ local event = require("neogit.lib.event")
 ---@field buffer Buffer instance
 ---@field config NeogitConfig
 ---@field root string
----@field cwd string
 local M = {}
 M.__index = M
 
@@ -74,33 +72,33 @@ end
 ---@return StatusBuffer
 function M.instance(dir)
   local dir = dir or vim.uv.cwd()
-  assert(dir, "cannot locate a status buffer with no cwd")
+  assert(dir, "cannot locate a status buffer with no dir")
 
   return instances[vim.fs.normalize(dir)]
 end
 
 ---@param config NeogitConfig
 ---@param root string
----@param cwd string
 ---@return StatusBuffer
-function M.new(config, root, cwd)
-  if M.instance(cwd) then
-    logger.debug("Found instance for cwd " .. cwd)
-    return M.instance(cwd)
+function M.new(config, root)
+  if M.instance(root) then
+    logger.debug("Found instance for root " .. root)
+    return M.instance(root)
   end
 
   local instance = {
     config = config,
     root = root,
-    cwd = vim.fs.normalize(cwd),
     buffer = nil,
     fold_state = nil,
     cursor_state = nil,
     view_state = nil,
+    name = string.match(root, "([^/\\]+)$"),
+    repo = git.repository.instance(root),
   }
 
   setmetatable(instance, M)
-  M.register(instance, cwd)
+  M.register(instance, root)
 
   return instance
 end
@@ -134,9 +132,8 @@ function M:open(kind)
   local mappings = config.get_reversed_status_maps()
 
   self.buffer = Buffer.create {
-    name = "NeogitStatus",
+    name = "NeogitStatus [" .. self.name .. "]",
     filetype = "NeogitStatus",
-    cwd = self.cwd,
     context_highlight = not config.values.disable_context_highlighting,
     kind = kind or config.values.kind or "tab",
     disable_line_numbers = config.values.disable_line_numbers,
@@ -144,7 +141,7 @@ function M:open(kind)
     foldmarkers = not config.values.disable_signs,
     active_item_highlight = true,
     on_detach = function()
-      Watcher.instance(self.root):unregister(self)
+      self.repo:unregister_watch_buffer(self)
 
       if self.prev_autochdir then
         vim.o.autochdir = self.prev_autochdir
@@ -247,12 +244,12 @@ function M:open(kind)
       vim.o.autochdir = false
     end,
     render = function()
-      return ui.Status(git.repo.state, self.config)
+      return ui.Status(self.repo.state, self.config)
     end,
     ---@param buffer Buffer
     ---@param _win any
     after = function(buffer, _win)
-      Watcher.instance(self.root):register(self)
+      self.repo:register_watch_buffer(self)
       buffer:move_cursor(buffer.ui:first_section().first)
       vim.b.neogit_git_dir = git.repo.git_dir
     end,
@@ -293,8 +290,7 @@ function M:chdir(dir)
   vim.schedule(function()
     logger.debug("[STATUS] Changing Dir: " .. dir)
     vim.api.nvim_set_current_dir(dir)
-    require("neogit.lib.git.repository").instance(dir)
-    self.new(config.values, git.repo.worktree_root, dir):open("replace"):dispatch_refresh()
+    self.new(config.values, dir):open("replace"):dispatch_refresh()
   end)
 end
 
@@ -315,7 +311,7 @@ function M:refresh(partial, reason)
     view = self.buffer:save_view()
   end
 
-  git.repo:dispatch_refresh {
+  self.repo:dispatch_refresh {
     source = "status",
     partial = partial,
     callback = function()
@@ -335,7 +331,7 @@ function M:redraw(cursor, view)
   end
 
   logger.debug("[STATUS] Rendering UI")
-  self.buffer.ui:render(unpack(ui.Status(git.repo.state, self.config)))
+  self.buffer.ui:render(unpack(ui.Status(self.repo.state, self.config)))
 
   if self.fold_state and self.buffer then
     logger.debug("[STATUS] Restoring fold state")
@@ -369,8 +365,8 @@ function M:deferred_refresh(reason, wait)
 end
 
 function M:reset()
-  logger.debug("[STATUS] Resetting repo and refreshing - CWD: " .. vim.uv.cwd())
-  git.repo:reset()
+  logger.debug("[STATUS] Resetting repo and refreshing - root: " .. self.repo.worktree_root)
+  self.repo:reset()
   self:refresh(nil, "reset")
 end
 

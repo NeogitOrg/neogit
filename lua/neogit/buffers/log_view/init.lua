@@ -6,7 +6,6 @@ local status_maps = require("neogit.config").get_reversed_status_maps()
 local CommitViewBuffer = require("neogit.buffers.commit_view")
 local util = require("neogit.lib.util")
 local git = require("neogit.lib.git")
-local Watcher = require("neogit.watcher")
 local a = require("plenary.async")
 local notification = require("neogit.lib.notification")
 local git = require("neogit.lib.git")
@@ -20,7 +19,6 @@ local git = require("neogit.lib.git")
 ---@field header string
 ---@field fetch_func fun(offset: number): CommitLogEntry[]
 ---@field refresh_lock Semaphore
----@field root string
 local M = {}
 M.__index = M
 
@@ -42,7 +40,7 @@ function M.new(commits, internal_args, files, fetch_func, header, remotes)
     buffer = nil,
     refresh_lock = a.control.Semaphore.new(1),
     header = header,
-    root = git.cli.worktree_root("."),
+    repo = git.repo, -- TODO: pass one in args
   }
 
   setmetatable(instance, M)
@@ -63,25 +61,16 @@ function M:close()
     self.buffer:close()
     self.buffer = nil
   end
-
-  M.instance = nil
-end
-
----@return boolean
-function M.is_open()
-  return (M.instance and M.instance.buffer and M.instance.buffer:is_visible()) == true
 end
 
 function M:open()
-  if M.is_open() then
-    M.instance.buffer:focus()
+  if self.buffer and self.buffer:is_visible() then
+    self.buffer:focus()
     return
   end
 
-  M.instance = self
-
   self.buffer = Buffer.create {
-    name = "NeogitLogView",
+    name = "NeogitLogView [" .. string.match(self.repo.worktree_root, "([^/\\]+)$") .. "]",
     filetype = "NeogitLogView",
     kind = config.values.log_view.kind,
     context_highlight = false,
@@ -323,12 +312,12 @@ function M:open()
       return ui.View(self.commits, self.remotes, self.internal_args)
     end,
     after = function(buffer)
-      Watcher.instance(self.root):register(self)
+      self.repo:register_watch_buffer(self)
       -- First line is empty, so move cursor to second line.
       buffer:move_cursor(2)
     end,
     on_detach = function()
-      Watcher.instance(self.root):unregister(self)
+      self.repo:unregister_watch_buffer(self)
     end,
   }
 end
@@ -339,6 +328,7 @@ function M:id()
 end
 
 function M:redraw()
+  git.repository.make_current(self.repo)
   self.commits = self.fetch_func(0)
   self.buffer:redraw()
 end
