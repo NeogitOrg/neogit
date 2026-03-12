@@ -359,6 +359,7 @@ end
 ---@field simple_headers? boolean Use text headers instead of windows
 ---@field force_if_includes? boolean Add --force-if-includes if --force-with-lease is set
 ---@field hard_reset_backup? boolean Do a backup commit before a hard reset
+---@field rebase_check_ancestor? boolean Check that rebase target is ancestor of HEAD
 ---@field prompt_force_push? boolean Offer to force push when branches diverge
 ---@field prompt_amend_commit? boolean Request confirmation when amending already published commits
 ---@field git_services? NeogitConfigGitService[] Templates to use when opening a pull request for a branch, or commit
@@ -414,6 +415,7 @@ function M.get_default_values()
     simple_headers = false,
     force_if_includes = true,
     hard_reset_backup = true,
+    rebase_check_ancestor = true,
     prompt_force_push = true,
     prompt_amend_commit = true,
     graph_style = "ascii",
@@ -1228,6 +1230,7 @@ function M.validate_config()
     validate_type(config.simple_headers, "simple_headers", "boolean")
     validate_type(config.force_if_includes, "force_if_includes", "boolean")
     validate_type(config.hard_reset_backup, "hard_reset_backup", "boolean")
+    validate_type(config.rebase_check_ancestor, "rebase_check_ancestor", "boolean")
     validate_type(config.telescope_sorter, "telescope_sorter", "function")
     validate_type(config.use_per_project_settings, "use_per_project_settings", "boolean")
     validate_type(config.remember_settings, "remember_settings", "boolean")

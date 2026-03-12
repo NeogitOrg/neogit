@@ -2,6 +2,7 @@ local git = require("neogit.lib.git")
 local input = require("neogit.lib.input")
 local notification = require("neogit.lib.notification")
 local util = require("neogit.lib.util")
+local config = require("neogit.config")
 
 local CommitSelectViewBuffer = require("neogit.buffers.commit_select_view")
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
@@ -55,7 +56,7 @@ function M.interactively(popup)
     "Select a commit with <cr> to rebase it and all commits above it, or <esc> to abort"
   )
   if commit then
-    if not git.log.is_ancestor(commit, "HEAD") then
+    if config.values.rebase_check_ancestor and not git.log.is_ancestor(commit, "HEAD") then
       notification.warn("Commit isn't an ancestor of HEAD")
       return
     end
