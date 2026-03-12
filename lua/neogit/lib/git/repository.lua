@@ -221,6 +221,7 @@ function Repo.new(dir)
     worktree_git_dir = git.cli.worktree_git_dir(dir),
     git_dir = git.cli.git_dir(dir),
     refresh_callbacks = {},
+    refresh_handlers = {},
     running = util.weak_table(),
     interrupt = util.weak_table(),
     tmp_state = util.weak_table("v"),
@@ -340,6 +341,11 @@ function Repo:refresh(opts)
     logger.debug("[REPO]: (" .. start .. ") Refreshes complete in " .. timestamp() - start .. " ms")
     self:set_state(start)
     self:run_callbacks(start)
+
+    for name, fn in pairs(self.refresh_handlers) do
+      logger.debug("[REPO]: Running handler for " .. name)
+      fn()
+    end
   end)
 
   lastDir = self.worktree_root
@@ -355,12 +361,17 @@ function Repo.make_current(repo)
   lastDir = repo.worktree_root
 end
 
-function Repo:register_watch_buffer(buf)
-  Watcher.instance(self.worktree_root):register(buf)
+function Repo:add_refresh_handler(source, fn)
+  self.refresh_handlers[source] = fn
+  Watcher.instance(self.worktree_root):start()
 end
 
-function Repo:unregister_watch_buffer(buf)
-  Watcher.instance(self.worktree_root):unregister(buf)
+function Repo:remove_refresh_handler(source)
+  self.refresh_handlers[source] = nil
+
+  if next(self.refresh_handlers) == nil then
+    Watcher.instance(self.worktree_root):stop()
+  end
 end
 
 return Repo

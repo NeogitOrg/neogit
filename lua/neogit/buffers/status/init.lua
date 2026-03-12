@@ -141,7 +141,7 @@ function M:open(kind)
     foldmarkers = not config.values.disable_signs,
     active_item_highlight = true,
     on_detach = function()
-      self.repo:unregister_watch_buffer(self)
+      self.repo:remove_refresh_handler(self.buffer.name)
 
       if self.prev_autochdir then
         vim.o.autochdir = self.prev_autochdir
@@ -249,7 +249,11 @@ function M:open(kind)
     ---@param buffer Buffer
     ---@param _win any
     after = function(buffer, _win)
-      self.repo:register_watch_buffer(self)
+      self.repo:add_refresh_handler(buffer.name, function()
+        self:redraw() -- cursor, view)
+        event.send("StatusRefreshed")
+        logger.info("[STATUS] Refresh complete")
+      end)
       buffer:move_cursor(buffer.ui:first_section().first)
       vim.b.neogit_git_dir = git.repo.git_dir
     end,
@@ -309,16 +313,14 @@ function M:refresh(partial, reason)
   if self.buffer and self.buffer:is_focused() then
     cursor = self.buffer.ui:get_cursor_location()
     view = self.buffer:save_view()
+
+    self.cursor_location = self.buffer.ui:get_cursor_location()
+    self.view_state = self.buffer:save_view()
   end
 
   self.repo:dispatch_refresh {
     source = "status",
     partial = partial,
-    callback = function()
-      self:redraw(cursor, view)
-      event.send("StatusRefreshed")
-      logger.info("[STATUS] Refresh complete")
-    end,
   }
 end
 
@@ -327,6 +329,11 @@ end
 function M:redraw(cursor, view)
   if not self.buffer then
     logger.debug("[STATUS] Buffer no longer exists - bail")
+    return
+  end
+
+  if not self.buffer:is_focused() then
+    logger.debug("[STATUS] Buffer is not focused - bail")
     return
   end
 
@@ -344,6 +351,12 @@ function M:redraw(cursor, view)
     self.buffer:restore_view(self.view_state, self.cursor_state)
     self.view_state = nil
     self.cursor_state = nil
+  elseif self.cursor_location and self.view_state and self.buffer then
+    logger.debug("[STATUS] Restoring cursor location and view state")
+    local cursor_state = self.buffer.ui:resolve_cursor_location(self.cursor_location)
+    self.buffer:restore_view(self.view_state, cursor_state)
+    self.view_state = nil
+    self.cursor_location = nil
   elseif cursor and view and self.buffer then
     self.buffer:restore_view(view, self.buffer.ui:resolve_cursor_location(cursor))
   end

@@ -9,6 +9,7 @@ local git = require("neogit.lib.git")
 local a = require("plenary.async")
 local notification = require("neogit.lib.notification")
 local git = require("neogit.lib.git")
+local logger = require("neogit.logger") -- TODO: Add logging
 
 ---@class LogViewBuffer
 ---@field commits CommitLogEntry[]
@@ -312,25 +313,29 @@ function M:open()
       return ui.View(self.commits, self.remotes, self.internal_args)
     end,
     after = function(buffer)
-      self.repo:register_watch_buffer(self)
+      self.repo:add_refresh_handler(buffer.name, function() self:redraw() end)
       -- First line is empty, so move cursor to second line.
       buffer:move_cursor(2)
     end,
     on_detach = function()
-      self.repo:unregister_watch_buffer(self)
+      self.repo:remove_refresh_handler(self.buffer.name)
     end,
   }
 end
 
--- watcher interface
-function M:id()
-  return "LogViewBuffer"
-end
-
 function M:redraw()
+  local fold_state = self.buffer.ui:get_fold_state()
+  local cursor_state = self.buffer:cursor_line()
+  local view_state = self.buffer:save_view()
+
   git.repository.make_current(self.repo)
   self.commits = self.fetch_func(0)
   self.buffer:redraw()
+  logger.info("[LogView] Refresh complete")
+
+  logger.debug("[LogView] Restoring view state")
+  self.buffer.ui:set_fold_state(fold_state)
+  self.buffer:restore_view(view_state, cursor_state)
 end
 
 return M
