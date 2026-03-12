@@ -82,11 +82,13 @@ function M.interactively(popup)
       end
     end
 
-    local parent = git.log.parent(commit)
-    if parent then
-      commit = commit .. "^"
-    else
-      table.insert(args, "--root")
+    if config.values.rebase_use_parent_commit then
+      local parent = git.log.parent(commit)
+      if parent then
+        commit = commit .. "^"
+      else
+        table.insert(args, "--root")
+      end
     end
 
     git.rebase.rebase_interactive(commit, args)
