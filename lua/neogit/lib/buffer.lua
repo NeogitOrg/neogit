@@ -182,7 +182,9 @@ function Buffer:move_cursor(line)
   end
 
   -- pcall used in case the line is out of bounds
-  pcall(api.nvim_win_set_cursor, self.win_handle, position)
+  for i, w in ipairs(fn.win_findbuf(self.handle)) do
+    pcall(api.nvim_win_set_cursor, w, position)
+  end
 end
 
 ---@param line nil|number|number[]
@@ -441,8 +443,9 @@ function Buffer:get_option(name)
 end
 
 function Buffer:get_window_option(name)
-  if self.win_handle ~= nil then
-    return api.nvim_get_option_value(name, { win = self.win_handle })
+  local win = fn.win_findbuf(self.handle)[1]
+  if win ~= nil then
+    return api.nvim_get_option_value(name, { win = win })
   end
 end
 
@@ -458,8 +461,8 @@ function Buffer:set_buffer_option(name, value)
 end
 
 function Buffer:set_window_option(name, value)
-  if self.win_handle ~= nil then
-    api.nvim_set_option_value(name, value, { scope = "local", win = self.win_handle })
+  for i, w in ipairs(fn.win_findbuf(self.handle)) do
+    api.nvim_set_option_value(name, value, { scope = "local", win = w })
   end
 end
 
@@ -556,10 +559,29 @@ function Buffer:call(f, ...)
 end
 
 function Buffer:win_call(f, ...)
-  if self.win_handle and api.nvim_win_is_valid(self.win_handle) then
+  for i, w in ipairs(fn.win_findbuf(self.handle)) do
     local args = { ... }
-    api.nvim_win_call(self.win_handle, function()
+    api.nvim_win_call(w, function()
       f(unpack(args))
+    end)
+  end
+end
+
+function Buffer:with_windows(before, after, render)
+  local windows = fn.win_findbuf(self.handle)
+  local data = {}
+
+  for i, w in ipairs(windows) do
+    api.nvim_win_call(w, function()
+      data[w] = before()
+    end)
+  end
+
+  render()
+
+  for i, w in ipairs(windows) do
+    api.nvim_win_call(w, function()
+      after(data[w])
     end)
   end
 end
@@ -589,7 +611,9 @@ function Buffer:close_terminal_channel()
 end
 
 function Buffer:win_exec(cmd)
-  fn.win_execute(self.win_handle, cmd)
+  for i, w in ipairs(fn.win_findbuf(self.handle)) do
+    fn.win_execute(w, cmd)
+  end
 end
 
 function Buffer:exists()
