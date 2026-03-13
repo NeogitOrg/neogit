@@ -729,9 +729,6 @@ function M.get_default_values()
         ["<c-n>"] = "NextSection",
         ["<c-p>"] = "PreviousSection",
       },
-      log_view = {
-        ["o"] = "OpenCommitLinkInBrowser",
-      },
     },
   }
 end
