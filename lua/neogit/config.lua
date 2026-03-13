@@ -604,6 +604,7 @@ function M.get_default_values()
     mappings = {
       commit_view = {
         ["a"] = "OpenFileInWorktree",
+        ["o"] = "OpenCommitLinkInBrowser",
       },
       commit_editor = {
         ["q"] = "Close",
@@ -727,6 +728,9 @@ function M.get_default_values()
         ["<c-j>"] = "PeekDown",
         ["<c-n>"] = "NextSection",
         ["<c-p>"] = "PreviousSection",
+      },
+      log_view = {
+        ["o"] = "OpenCommitLinkInBrowser",
       },
     },
   }

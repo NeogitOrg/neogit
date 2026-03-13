@@ -243,7 +243,7 @@ function M:open(kind)
     },
     mappings = {
       n = {
-        ["o"] = function()
+        [commit_view_maps["OpenCommitLinkInBrowser"]] = function()
           if not vim.ui.open then
             notification.warn("Requires Neovim >= 0.10")
             return
