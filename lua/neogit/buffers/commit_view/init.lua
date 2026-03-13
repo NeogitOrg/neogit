@@ -219,67 +219,45 @@ local function is_jumpable_hunk_line_component(c)
     or c.options.line_hl == "NeogitDiffDelete"
 end
 
----Opens the CommitViewBuffer
----If already open will close the buffer
----@param kind? string
----@return CommitViewBuffer
-function M:open(kind)
-  kind = kind or config.values.commit_view.kind
+---@class ComponentAction Encapsulates an action to apply on a component only if the filter condition is met
+---@field filter fun(c: Component) :boolean
+---@field action fun(c: Component)
 
-  M.instance = self
-
-  self.buffer = Buffer.create {
-    name = "NeogitCommitView",
-    filetype = "NeogitCommitView",
-    kind = kind,
-    status_column = not config.values.disable_signs and "" or nil,
-    context_highlight = not config.values.disable_context_highlighting,
-    autocmds = {
-      ["WinLeave"] = function()
-        if self.buffer and self.buffer.kind == "floating" then
-          self:close()
+---Build a function to assign to a mapping given an array of ComponentAction
+---@param actions_on_components ComponentAction[]
+---@param component_getter fun(filter: fun(c: Component):boolean) : Component?
+---@return fun()
+local function filter_and_apply(actions_on_components, component_getter)
+  return function()
+    local applied_filter_index = nil
+    local filter = function(c)
+      for i, component_action in ipairs(actions_on_components) do
+        if component_action.filter(c) then
+          applied_filter_index = i
+          return true
         end
-      end,
-    },
-    mappings = {
-      n = {
-        ["o"] = function()
-          if not vim.ui.open then
-            notification.warn("Requires Neovim >= 0.10")
-            return
-          end
+      end
+      return false
+    end
 
-          local uri = git.remote.commit_url(self.commit_info.oid)
-          if uri then
-            notification.info(("Opening %q in your browser."):format(uri))
-            vim.ui.open(uri)
-          else
-            notification.warn("Couldn't determine commit URL to open")
-          end
+    local c = component_getter(filter)
+    if c and applied_filter_index ~= nil then
+      actions_on_components[applied_filter_index].action(c)
+    end
+  end
+end
+
+---@param self CommitViewBuffer
+---@param mappings table
+---@return table
+local function attach_jump_mappings(self, mappings)
+  local special_mappings = {
+    ["<cr>"] = {
+      {
+        filter = function(c)
+          return c.options.highlight == "NeogitFilePath"
         end,
-        [commit_view_maps["OpenFileInWorktree"]] = function()
-          -- Abort if rebase_editor
-          local c = self.buffer.ui:get_component_under_cursor(function(c)
-            return is_jumpable_hunk_line_component(c)
-          end)
-          if c then
-            diff_visit_file(self, c, true)
-          end
-        end,
-        ["<cr>"] = function()
-          local c = self.buffer.ui:get_component_under_cursor(function(c)
-            return c.options.highlight == "NeogitFilePath" or is_jumpable_hunk_line_component(c)
-          end)
-
-          if not c then
-            return
-          end
-
-          if is_jumpable_hunk_line_component(c) then
-            diff_visit_file(self, c, false)
-            return
-          end
-
+        action = function(c)
           -- Some paths are padded for formatting purposes. We need to trim them
           -- in order to use them as match patterns.
           local selected_path = vim.fn.trim(c.value)
@@ -328,153 +306,225 @@ function M:open(kind)
             end
           end
         end,
-        ["{"] = function() -- Goto Previous
-          local function previous_hunk_header(self, line)
-            local c = self.buffer.ui:get_component_on_line(line, function(c)
-              return c.options.tag == "Diff" or c.options.tag == "Hunk"
-            end)
+      },
+    },
+  }
+  local open_file_maps = {
+    [commit_view_maps["OpenFileInWorktree"][1]] = {
+      filter = is_jumpable_hunk_line_component,
+      action = function(c)
+        diff_visit_file(self, c, true)
+      end,
+    },
+    [commit_view_maps["OpenFileInCommit"][1]] = {
+      filter = is_jumpable_hunk_line_component,
+      action = function(c)
+        diff_visit_file(self, c, false)
+      end,
+    },
+  }
+  for map, val in pairs(open_file_maps) do
+    if special_mappings[map] == nil then
+      special_mappings[map] = {}
+    end
+    table.insert(special_mappings[map], val)
+  end
+  for map, actions in pairs(special_mappings) do
+    mappings.n[map] = filter_and_apply(actions, function(filter)
+      return self.buffer.ui:get_component_under_cursor(filter)
+    end)
+  end
+  return mappings
+end
 
-            if c then
-              local first, _ = c:row_range_abs()
-              if vim.fn.line(".") == first then
-                first = previous_hunk_header(self, line - 1)
-              end
+---Opens the CommitViewBuffer
+---If already open will close the buffer
+---@param kind? string
+---@return CommitViewBuffer
+function M:open(kind)
+  kind = kind or config.values.commit_view.kind
 
-              return first
-            end
-          end
+  M.instance = self
 
-          local previous_header = previous_hunk_header(self, vim.fn.line("."))
-          if previous_header then
-            api.nvim_win_set_cursor(0, { previous_header, 0 })
-            vim.cmd("normal! zt")
-          end
-        end,
-        ["}"] = function() -- Goto next
-          local c = self.buffer.ui:get_component_under_cursor(function(c)
+  local mappings = {
+    n = {
+      ["o"] = function()
+        if not vim.ui.open then
+          notification.warn("Requires Neovim >= 0.10")
+          return
+        end
+
+        local uri = git.remote.commit_url(self.commit_info.oid)
+        if uri then
+          notification.info(("Opening %q in your browser."):format(uri))
+          vim.ui.open(uri)
+        else
+          notification.warn("Couldn't determine commit URL to open")
+        end
+      end,
+      ["{"] = function() -- Goto Previous
+        local function previous_hunk_header(self, line)
+          local c = self.buffer.ui:get_component_on_line(line, function(c)
             return c.options.tag == "Diff" or c.options.tag == "Hunk"
           end)
 
           if c then
-            if c.options.tag == "Diff" then
-              self.buffer:move_cursor(vim.fn.line(".") + 1)
-            else
-              local _, last = c:row_range_abs()
-              if last == vim.fn.line("$") then
-                self.buffer:move_cursor(last)
-              else
-                self.buffer:move_cursor(last + 1)
-              end
+            local first, _ = c:row_range_abs()
+            if vim.fn.line(".") == first then
+              first = previous_hunk_header(self, line - 1)
             end
-            vim.cmd("normal! zt")
+
+            return first
           end
-        end,
-        [popups.mapping_for("BisectPopup")] = popups.open("bisect", function(p)
-          p { commits = { self.commit_info.oid } }
-        end),
-        [popups.mapping_for("BranchPopup")] = popups.open("branch", function(p)
-          p { commits = { self.commit_info.oid } }
-        end),
-        [popups.mapping_for("CherryPickPopup")] = popups.open("cherry_pick", function(p)
-          p { commits = { self.commit_info.oid } }
-        end),
-        [popups.mapping_for("CommitPopup")] = popups.open("commit", function(p)
-          p { commit = self.commit_info.oid }
-        end),
-        [popups.mapping_for("DiffPopup")] = popups.open("diff", function(p)
-          p {
-            section = { name = "log" },
-            item = { name = self.commit_info.oid },
-          }
-        end),
-        [popups.mapping_for("FetchPopup")] = popups.open("fetch"),
-        -- help
-        [popups.mapping_for("IgnorePopup")] = popups.open("ignore", function(p)
-          local path = self.buffer.ui:get_hunk_or_filename_under_cursor()
-          p {
-            paths = { path and path.escaped_path },
-            worktree_root = git.repo.worktree_root,
-          }
-        end),
-        [popups.mapping_for("LogPopup")] = popups.open("log"),
-        [popups.mapping_for("MergePopup")] = popups.open("merge", function(p)
-          p { commit = self.buffer.ui:get_commit_under_cursor() }
-        end),
-        [popups.mapping_for("PullPopup")] = popups.open("pull"),
-        [popups.mapping_for("PushPopup")] = popups.open("push", function(p)
-          p { commit = self.commit_info.oid }
-        end),
-        [popups.mapping_for("RebasePopup")] = popups.open("rebase", function(p)
-          p { commit = self.commit_info.oid }
-        end),
-        [popups.mapping_for("RemotePopup")] = popups.open("remote"),
-        [popups.mapping_for("ResetPopup")] = popups.open("reset", function(p)
-          p { commit = self.commit_info.oid }
-        end),
-        [popups.mapping_for("RevertPopup")] = popups.open("revert", function(p)
-          local item = self.buffer.ui:get_hunk_or_filename_under_cursor() or {}
-          p { commits = { self.commit_info.oid }, hunk = item.hunk }
-        end),
-        [popups.mapping_for("StashPopup")] = popups.open("stash"),
-        [popups.mapping_for("TagPopup")] = popups.open("tag", function(p)
-          p { commit = self.commit_info.oid }
-        end),
-        [popups.mapping_for("WorktreePopup")] = popups.open("worktree"),
-        [status_maps["Close"]] = function()
-          self:close()
-        end,
-        ["<esc>"] = function()
-          self:close()
-        end,
-        [status_maps["YankSelected"]] = popups.open("yank", function(p)
-          -- If the cursor is over a specific hunk, just copy that diff.
-          local diff
-          local c = self.buffer.ui:get_component_under_cursor(function(c)
-            return c.options.hunk ~= nil
+        end
+
+        local previous_header = previous_hunk_header(self, vim.fn.line("."))
+        if previous_header then
+          api.nvim_win_set_cursor(0, { previous_header, 0 })
+          vim.cmd("normal! zt")
+        end
+      end,
+      ["}"] = function() -- Goto next
+        local c = self.buffer.ui:get_component_under_cursor(function(c)
+          return c.options.tag == "Diff" or c.options.tag == "Hunk"
+        end)
+
+        if c then
+          if c.options.tag == "Diff" then
+            self.buffer:move_cursor(vim.fn.line(".") + 1)
+          else
+            local _, last = c:row_range_abs()
+            if last == vim.fn.line("$") then
+              self.buffer:move_cursor(last)
+            else
+              self.buffer:move_cursor(last + 1)
+            end
+          end
+          vim.cmd("normal! zt")
+        end
+      end,
+      [popups.mapping_for("BisectPopup")] = popups.open("bisect", function(p)
+        p { commits = { self.commit_info.oid } }
+      end),
+      [popups.mapping_for("BranchPopup")] = popups.open("branch", function(p)
+        p { commits = { self.commit_info.oid } }
+      end),
+      [popups.mapping_for("CherryPickPopup")] = popups.open("cherry_pick", function(p)
+        p { commits = { self.commit_info.oid } }
+      end),
+      [popups.mapping_for("CommitPopup")] = popups.open("commit", function(p)
+        p { commit = self.commit_info.oid }
+      end),
+      [popups.mapping_for("DiffPopup")] = popups.open("diff", function(p)
+        p {
+          section = { name = "log" },
+          item = { name = self.commit_info.oid },
+        }
+      end),
+      [popups.mapping_for("FetchPopup")] = popups.open("fetch"),
+      -- help
+      [popups.mapping_for("IgnorePopup")] = popups.open("ignore", function(p)
+        local path = self.buffer.ui:get_hunk_or_filename_under_cursor()
+        p {
+          paths = { path and path.escaped_path },
+          worktree_root = git.repo.worktree_root,
+        }
+      end),
+      [popups.mapping_for("LogPopup")] = popups.open("log"),
+      [popups.mapping_for("MergePopup")] = popups.open("merge", function(p)
+        p { commit = self.buffer.ui:get_commit_under_cursor() }
+      end),
+      [popups.mapping_for("PullPopup")] = popups.open("pull"),
+      [popups.mapping_for("PushPopup")] = popups.open("push", function(p)
+        p { commit = self.commit_info.oid }
+      end),
+      [popups.mapping_for("RebasePopup")] = popups.open("rebase", function(p)
+        p { commit = self.commit_info.oid }
+      end),
+      [popups.mapping_for("RemotePopup")] = popups.open("remote"),
+      [popups.mapping_for("ResetPopup")] = popups.open("reset", function(p)
+        p { commit = self.commit_info.oid }
+      end),
+      [popups.mapping_for("RevertPopup")] = popups.open("revert", function(p)
+        local item = self.buffer.ui:get_hunk_or_filename_under_cursor() or {}
+        p { commits = { self.commit_info.oid }, hunk = item.hunk }
+      end),
+      [popups.mapping_for("StashPopup")] = popups.open("stash"),
+      [popups.mapping_for("TagPopup")] = popups.open("tag", function(p)
+        p { commit = self.commit_info.oid }
+      end),
+      [popups.mapping_for("WorktreePopup")] = popups.open("worktree"),
+      [status_maps["Close"]] = function()
+        self:close()
+      end,
+      ["<esc>"] = function()
+        self:close()
+      end,
+      [status_maps["YankSelected"]] = popups.open("yank", function(p)
+        -- If the cursor is over a specific hunk, just copy that diff.
+        local diff
+        local c = self.buffer.ui:get_component_under_cursor(function(c)
+          return c.options.hunk ~= nil
+        end)
+
+        if c then
+          local hunks = util.flat_map(self.commit_info.diffs, function(diff)
+            return diff.hunks
           end)
 
-          if c then
-            local hunks = util.flat_map(self.commit_info.diffs, function(diff)
-              return diff.hunks
-            end)
-
-            for _, hunk in ipairs(hunks) do
-              if hunk.hash == c.options.hunk.hash then
-                diff = table.concat(util.merge({ hunk.line }, hunk.lines), "\n")
-                break
-              end
+          for _, hunk in ipairs(hunks) do
+            if hunk.hash == c.options.hunk.hash then
+              diff = table.concat(util.merge({ hunk.line }, hunk.lines), "\n")
+              break
             end
           end
+        end
 
-          -- If for some reason we don't find the specific hunk, or there isn't one, fall-back to the entire patch.
-          if not diff then
-            diff = table.concat(
-              vim.tbl_map(function(diff)
-                return table.concat(diff.lines, "\n")
-              end, self.commit_info.diffs),
-              "\n"
-            )
-          end
+        -- If for some reason we don't find the specific hunk, or there isn't one, fall-back to the entire patch.
+        if not diff then
+          diff = table.concat(
+            vim.tbl_map(function(diff)
+              return table.concat(diff.lines, "\n")
+            end, self.commit_info.diffs),
+            "\n"
+          )
+        end
 
-          p {
-            hash = self.commit_info.oid,
-            subject = self.commit_info.description[1],
-            message = table.concat(self.commit_info.description, "\n"),
-            body = table.concat(
-              util.slice(self.commit_info.description, 2, #self.commit_info.description),
-              "\n"
-            ),
-            url = git.remote.commit_url(self.commit_info.oid),
-            diff = diff,
-            author = ("%s <%s>"):format(self.commit_info.author_name, self.commit_info.author_email),
-            tags = table.concat(git.tag.for_commit(self.commit_info.oid), ", "),
-          }
-        end),
-        [status_maps["Toggle"]] = function()
-          pcall(vim.cmd, "normal! za")
-        end,
-      },
+        p {
+          hash = self.commit_info.oid,
+          subject = self.commit_info.description[1],
+          message = table.concat(self.commit_info.description, "\n"),
+          body = table.concat(
+            util.slice(self.commit_info.description, 2, #self.commit_info.description),
+            "\n"
+          ),
+          url = git.remote.commit_url(self.commit_info.oid),
+          diff = diff,
+          author = ("%s <%s>"):format(self.commit_info.author_name, self.commit_info.author_email),
+          tags = table.concat(git.tag.for_commit(self.commit_info.oid), ", "),
+        }
+      end),
+      [status_maps["Toggle"]] = function()
+        pcall(vim.cmd, "normal! za")
+      end,
     },
+  }
+  mappings = attach_jump_mappings(self, mappings)
+
+  self.buffer = Buffer.create {
+    name = "NeogitCommitView",
+    filetype = "NeogitCommitView",
+    kind = kind,
+    status_column = not config.values.disable_signs and "" or nil,
+    context_highlight = not config.values.disable_context_highlighting,
+    autocmds = {
+      ["WinLeave"] = function()
+        if self.buffer and self.buffer.kind == "floating" then
+          self:close()
+        end
+      end,
+    },
+    mappings = mappings,
     render = function()
       return ui.CommitView(self.commit_info, self.commit_overview, self.commit_signature, self.item_filter)
     end,
