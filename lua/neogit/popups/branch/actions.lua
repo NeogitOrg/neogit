@@ -88,6 +88,7 @@ local function spin_off_branch(checkout)
       assert(current_branch_name, "No current branch")
       git.log.update_ref(current_branch_name, upstream)
     else
+      hook.run("PreReset", { commit = name, mode = "hard" })
       git.cli.reset.hard.args(upstream).call()
       event.send("Reset", { commit = name, mode = "hard" })
     end
