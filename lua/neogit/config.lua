@@ -326,6 +326,7 @@ end
 ---@alias NeogitHook
 ---| "PreStatusRefreshed"
 ---| "PreCommit"
+---| "PrePush"
 ---| "PreBranchCheckout"
 
 ---@class NeogitConfigStatusOptions
