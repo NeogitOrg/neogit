@@ -581,6 +581,7 @@ Neogit supports hooks for the following actions:
 | `PreMerge`           | Before a merge is started                        | `{ branch: string, args = string[] }`                                |
 | `PreStash`           | Before a stash is made                           | `{}`                                                                 |
 | `PreRefsRefreshed`   | Before refs are refreshed                        | `{}`                                                                 |
+| `PreDiffLoaded`      | Before a diff is loaded                          | `{?}`                                                                |
 
 ## Events
 
