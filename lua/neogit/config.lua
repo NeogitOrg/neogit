@@ -323,6 +323,9 @@ end
 ---| "author-date"
 ---| "date"
 
+---@alias NeogitHook
+---| "PreBranchCheckout"
+
 ---@class NeogitConfigStatusOptions
 ---@field recent_commit_count? integer The number of recent commits to display
 ---@field mode_padding? integer The amount of padding to add to the right of the mode column
@@ -401,6 +404,7 @@ end
 ---@field treesitter_diff_highlight? boolean Apply syntax highlighting to diff hunks via treesitter
 ---@field word_diff_highlight? boolean Apply word-diff highlighting to diff hunks
 ---@field builders? { [string]: fun(builder: PopupBuilder) }
+---@field hooks? { [NeogitHook]: fun(data: table?) }
 
 ---Returns the default Neogit configuration
 ---@return NeogitConfig
@@ -419,6 +423,7 @@ function M.get_default_values()
     log_date_format = nil,
     log_pager = nil,
     process_spinner = false,
+    hooks = {},
     filewatcher = {
       enabled = true,
     },
