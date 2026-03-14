@@ -330,6 +330,7 @@ end
 ---@field HEAD_folded? boolean Whether or not this section should be open or closed by default
 ---@field mode_text? { [string]: string } The text to display for each mode
 ---@field show_head_commit_hash? boolean Show the commit hash for HEADs in the status buffer
+---@field fast? boolean Performs in large repositories, but only identifies file renames after manual refresh
 
 ---@class NeogitConfigMappings Consult the config file or documentation for values
 ---@field finder? { [string]: NeogitConfigMappingsFinder } A dictionary that uses finder commands to set multiple keybinds
