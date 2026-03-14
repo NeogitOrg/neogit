@@ -300,6 +300,7 @@ function M.reset_branch(popup)
   end
 
   -- Reset the current branch to the desired state & update reflog
+  hook.run("PreBranchReset", { branch_name = current, resetting_to = to })
   local result = git.cli.reset.hard.args(to).call()
   if result:success() then
     local current = git.branch.current_full_name()
