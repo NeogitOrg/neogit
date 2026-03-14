@@ -394,6 +394,10 @@ neogit.setup {
       folded = true,
       hidden = false,
     },
+    todo = {
+      folded = true,
+      hidden = false,
+    },
   },
   mappings = {
     commit_editor = {
