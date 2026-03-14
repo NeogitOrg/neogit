@@ -59,6 +59,7 @@ function M.delete(_)
     return
   end
 
+  hook.run("PreTagDelete", { names = tags })
   if git.tag.delete(tags) then
     notification.info("Deleted tags: " .. table.concat(tags, ","))
     for _, tag in pairs(tags) do
