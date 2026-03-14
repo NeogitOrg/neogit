@@ -573,6 +573,7 @@ Neogit supports hooks for the following actions:
 | `PreBranchCheckout`  | Before a branch is checked out                   | `{ branch_name: string }`                       |
 | `PreBranchReset`     | Before a branch is reset to a commit/branch      | `{ branch_name: string, resetting_to: string }` |
 | `PreBranchRename`    | Before a branch is renamed                       | `{ branch_name: string, new_name: string }`     |
+| `PreRebase`          | Before a rebase is started                       | `{ commit: string }`                            |
 
 ## Events
 
