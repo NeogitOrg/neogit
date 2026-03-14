@@ -17,6 +17,7 @@ end
 ---@param args? string[] list of arguments to pass to git rebase
 ---@return ProcessResult
 function M.instantly(commit, args)
+  hook.run("PreRebase", { commit = commit })
   local result = git.cli.rebase.interactive.autostash.autosquash
     .commit(commit)
     .env({ GIT_SEQUENCE_EDITOR = ":", GIT_EDITOR = ":" })
@@ -37,6 +38,7 @@ function M.rebase_interactive(commit, args)
     commit = ""
   end
 
+  hook.run("PreRebase", { commit = commit })
   local result = rebase_command(git.cli.rebase.interactive.arg_list(args).args(commit))
   if result:failure() then
     if result.stdout[1]:match("^hint: Waiting for your editor to close the file%.%.%. error") then
@@ -53,6 +55,7 @@ function M.rebase_interactive(commit, args)
 end
 
 function M.onto_branch(branch, args)
+  hook.run("PreRebase", { commit = branch })
   local result = rebase_command(git.cli.rebase.args(branch).arg_list(args))
   if result:failure() then
     notification.error("Rebasing failed. Resolve conflicts before continuing")
@@ -68,6 +71,7 @@ function M.onto(start, newbase, args)
     start = ""
   end
 
+  hook.run("PreRebase", { commit = newbase })
   local result = rebase_command(git.cli.rebase.onto.args(newbase, start).arg_list(args))
   if result:failure() then
     notification.error("Rebasing failed. Resolve conflicts before continuing")
@@ -101,6 +105,7 @@ end
 function M.modify(commit)
   local short_commit = git.rev_parse.abbreviate_commit(commit)
   local editor = "nvim -c '%s/^pick \\(" .. short_commit .. ".*\\)/edit \\1/' -c 'wq'"
+  hook.run("PreRebase", { commit = commit })
   local result = git.cli.rebase.interactive.autosquash.autostash
     .commit(commit)
     .in_pty(true)
@@ -115,6 +120,7 @@ end
 function M.drop(commit)
   local short_commit = git.rev_parse.abbreviate_commit(commit)
   local editor = "nvim -c '%s/^pick \\(" .. short_commit .. ".*\\)/drop \\1/' -c 'wq'"
+  hook.run("PreRebase", { commit = commit })
   local result = git.cli.rebase.interactive.autosquash.autostash
     .commit(commit)
     .in_pty(true)
