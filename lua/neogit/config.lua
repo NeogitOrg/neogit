@@ -604,6 +604,7 @@ function M.get_default_values()
     mappings = {
       commit_view = {
         ["a"] = "OpenFileInWorktree",
+        ["o"] = "OpenCommitLinkInBrowser",
       },
       commit_editor = {
         ["q"] = "Close",
