@@ -580,6 +580,7 @@ Neogit supports hooks for the following actions:
 | `PreCherryPick`      | Before one or more commits are cherry-picked     | `{ commits: string[] }`                                              |
 | `PreMerge`           | Before a merge is started                        | `{ branch: string, args = string[] }`                                |
 | `PreStash`           | Before a stash is made                           | `{}`                                                                 |
+| `PreRefsRefreshed`   | Before refs are refreshed                        | `{}`                                                                 |
 
 ## Events
 
