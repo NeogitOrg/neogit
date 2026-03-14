@@ -583,6 +583,7 @@ Neogit supports hooks for the following actions:
 | `PreRefsRefreshed`   | Before refs are refreshed                        | `{}`                                                                 |
 | `PreDiffLoaded`      | Before a diff is loaded                          | `{?}`                                                                |
 | `PreBisect`          | Before a bisect is started                       | `{ type: string }`                                                   |
+| `PreWorktreeCreate`  | Before a worktree is created                     | `{ ref: string, path: string }`                                      |
 
 ## Events
 
