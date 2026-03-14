@@ -561,16 +561,17 @@ See the built-in documentation for a comprehensive list of highlight groups. If 
 
 Neogit supports hooks for the following actions:
 
-| Hook                 | Description                                      | Hook Data                                |
-| -------------------- | ------------------------------------------------ | ---------------------------------------- |
-| `PreStatusRefreshed` | Before a status is reloaded                      | `{}`                                     |
-| `PreCommit`          | Before a commit has been created                 | `{}`                                     |
-| `PrePush`            | Before a push is made                            | `{}`                                     |
-| `PrePull`            | Before a pull is made                            | `{}`                                     |
-| `PreFetch`           | Before a fetch is made                           | `{}`                                     |
-| `PreBranchCreate`    | Before a branch is created, starting from `base` | `{ branch_name: string, base: string? }` |
-| `PreBranchDelete`    | Before a branch is deleted                       | `{ branch_name: string }`                |
-| `PreBranchCheckout`  | Before a branch is checked out                   | `{ branch_name: string }`                |
+| Hook                 | Description                                      | Hook Data                                       |
+| -------------------- | ------------------------------------------------ | ----------------------------------------------- |
+| `PreStatusRefreshed` | Before a status is reloaded                      | `{}`                                            |
+| `PreCommit`          | Before a commit has been created                 | `{}`                                            |
+| `PrePush`            | Before a push is made                            | `{}`                                            |
+| `PrePull`            | Before a pull is made                            | `{}`                                            |
+| `PreFetch`           | Before a fetch is made                           | `{}`                                            |
+| `PreBranchCreate`    | Before a branch is created, starting from `base` | `{ branch_name: string, base: string? }`        |
+| `PreBranchDelete`    | Before a branch is deleted                       | `{ branch_name: string }`                       |
+| `PreBranchCheckout`  | Before a branch is checked out                   | `{ branch_name: string }`                       |
+| `PreBranchReset`     | Before a branch is reset to a commit/branch      | `{ branch_name: string, resetting_to: string }` |
 
 ## Events
 
