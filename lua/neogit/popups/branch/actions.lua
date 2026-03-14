@@ -66,6 +66,7 @@ local function spin_off_branch(checkout)
     return
   end
 
+  hook.run("PreBranchCreate", { branch_name = name })
   if not git.branch.create(name) then
     notification.warn("Branch " .. name .. " already exists.")
     return
@@ -135,6 +136,7 @@ local function create_branch(popup, prompt, checkout, name)
     return
   end
 
+  hook.run("PreBranchCreate", { branch_name = name, base = base_branch })
   local success = git.branch.create(name, base_branch)
   if success then
     event.send("BranchCreate", { branch_name = name, base = base_branch })
