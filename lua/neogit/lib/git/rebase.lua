@@ -3,6 +3,7 @@ local git = require("neogit.lib.git")
 local client = require("neogit.client")
 local notification = require("neogit.lib.notification")
 local event = require("neogit.lib.event")
+local hook = require("neogit.lib.hook")
 
 ---@class NeogitGitRebase
 local M = {}
@@ -80,6 +81,7 @@ end
 ---@param commit string rev name of the commit to reword
 ---@return ProcessResult|nil
 function M.reword(commit)
+  hook.run("PreCommit")
   local message = table.concat(git.log.full_message(commit), "\n")
   local status = client.wrap(
     git.cli.commit.only.allow_empty.edit.with_message(("amend! %s\n\n%s"):format(commit, message)),
