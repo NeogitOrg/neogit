@@ -557,6 +557,13 @@ This works for just about everything that has an object-ID in git, and if you fi
 
 See the built-in documentation for a comprehensive list of highlight groups. If your theme doesn't style a particular group, we'll try our best to do a nice job.
 
+## Hooks
+
+Neogit supports hooks for the following actions:
+
+| Hook                | Description                    | Hook Data                 |
+| ------------------- | ------------------------------ | ------------------------- |
+| `PreBranchCheckout` | Before a branch is checked out | `{ branch_name: string }` |
 
 ## Events
 
