@@ -2,6 +2,7 @@ local git = require("neogit.lib.git")
 local input = require("neogit.lib.input")
 local notification = require("neogit.lib.notification")
 local util = require("neogit.lib.util")
+local config = require("neogit.config")
 
 local CommitSelectViewBuffer = require("neogit.buffers.commit_select_view")
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
@@ -31,7 +32,7 @@ function M.onto_pushRemote(popup)
 end
 
 function M.onto_upstream(popup)
-  local upstream = git.branch.upstream(git.branch.current())
+  local upstream = git.branch.upstream()
   if not upstream then
     upstream = FuzzyFinderBuffer.new(git.refs.list_branches()):open_async()
   end
@@ -55,7 +56,7 @@ function M.interactively(popup)
     "Select a commit with <cr> to rebase it and all commits above it, or <esc> to abort"
   )
   if commit then
-    if not git.log.is_ancestor(commit, "HEAD") then
+    if config.values.rebase_check_ancestor and not git.log.is_ancestor(commit, "HEAD") then
       notification.warn("Commit isn't an ancestor of HEAD")
       return
     end
@@ -81,11 +82,13 @@ function M.interactively(popup)
       end
     end
 
-    local parent = git.log.parent(commit)
-    if parent then
-      commit = commit .. "^"
-    else
-      table.insert(args, "--root")
+    if config.values.rebase_use_parent_commit then
+      local parent = git.log.parent(commit)
+      if parent then
+        commit = commit .. "^"
+      else
+        table.insert(args, "--root")
+      end
     end
 
     git.rebase.rebase_interactive(commit, args)

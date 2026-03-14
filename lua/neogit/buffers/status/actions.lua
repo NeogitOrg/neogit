@@ -73,6 +73,17 @@ local function open(type, path, cursor)
   jump.open(type, path, cursor, "[Status - Open]")
 end
 
+local function open_popup(status, name, f)
+  f = f or function(c)
+    c()
+  end
+
+  return popups.open(name, function(c)
+    git.repository.make_current(status.repo)
+    f(c)
+  end)
+end
+
 local M = {}
 
 ---@param self StatusBuffer
@@ -306,7 +317,7 @@ end
 ---@param self StatusBuffer
 ---@return fun(): nil
 M.v_branch_popup = function(self)
-  return popups.open("branch", function(p)
+  return open_popup(self, "branch", function(p)
     p { commits = self.buffer.ui:get_commits_in_selection() }
   end)
 end
@@ -314,7 +325,7 @@ end
 ---@param self StatusBuffer
 ---@return fun(): nil
 M.v_cherry_pick_popup = function(self)
-  return popups.open("cherry_pick", function(p)
+  return open_popup(self, "cherry_pick", function(p)
     p { commits = self.buffer.ui:get_commits_in_selection() }
   end)
 end
@@ -322,7 +333,7 @@ end
 ---@param self StatusBuffer
 ---@return fun(): nil
 M.v_commit_popup = function(self)
-  return popups.open("commit", function(p)
+  return open_popup(self, "commit", function(p)
     local commits = self.buffer.ui:get_commits_in_selection()
     if #commits == 1 then
       p { commit = commits[1] }
@@ -333,7 +344,7 @@ end
 ---@param self StatusBuffer
 ---@return fun(): nil
 M.v_merge_popup = function(self)
-  return popups.open("merge", function(p)
+  return open_popup(self, "merge", function(p)
     local commits = self.buffer.ui:get_commits_in_selection()
     if #commits == 1 then
       p { commit = commits[1] }
@@ -344,7 +355,7 @@ end
 ---@param self StatusBuffer
 ---@return fun(): nil
 M.v_push_popup = function(self)
-  return popups.open("push", function(p)
+  return open_popup(self, "push", function(p)
     local commits = self.buffer.ui:get_commits_in_selection()
     if #commits == 1 then
       p { commit = commits[1] }
@@ -355,7 +366,7 @@ end
 ---@param self StatusBuffer
 ---@return fun(): nil
 M.v_rebase_popup = function(self)
-  return popups.open("rebase", function(p)
+  return open_popup(self, "rebase", function(p)
     local commits = self.buffer.ui:get_commits_in_selection()
     if #commits == 1 then
       p { commit = commits[1] }
@@ -366,7 +377,7 @@ end
 ---@param self StatusBuffer
 ---@return fun(): nil
 M.v_revert_popup = function(self)
-  return popups.open("revert", function(p)
+  return open_popup(self, "revert", function(p)
     p { commits = self.buffer.ui:get_commits_in_selection() }
   end)
 end
@@ -374,7 +385,7 @@ end
 ---@param self StatusBuffer
 ---@return fun(): nil
 M.v_reset_popup = function(self)
-  return popups.open("reset", function(p)
+  return open_popup(self, "reset", function(p)
     local commits = self.buffer.ui:get_commits_in_selection()
     if #commits == 1 then
       p { commit = commits[1] }
@@ -385,7 +396,7 @@ end
 ---@param self StatusBuffer
 ---@return fun(): nil
 M.v_tag_popup = function(self)
-  return popups.open("tag", function(p)
+  return open_popup(self, "tag", function(p)
     local commits = self.buffer.ui:get_commits_in_selection()
     if #commits == 1 then
       p { commit = commits[1] }
@@ -396,7 +407,7 @@ end
 ---@param self StatusBuffer
 ---@return fun(): nil
 M.v_stash_popup = function(self)
-  return popups.open("stash", function(p)
+  return open_popup(self, "stash", function(p)
     local stash = self.buffer.ui:get_yankable_under_cursor()
     p { name = stash and stash:match("^stash@{%d+}") }
   end)
@@ -405,7 +416,7 @@ end
 ---@param self StatusBuffer
 ---@return fun(): nil
 M.v_diff_popup = function(self)
-  return popups.open("diff", function(p)
+  return open_popup(self, "diff", function(p)
     local section = self.buffer.ui:get_selection().section
     local item = self.buffer.ui:get_yankable_under_cursor()
     p { section = { name = section and section.name }, item = { name = item } }
@@ -415,7 +426,7 @@ end
 ---@param self StatusBuffer
 ---@return fun(): nil
 M.v_ignore_popup = function(self)
-  return popups.open("ignore", function(p)
+  return open_popup(self, "ignore", function(p)
     p { paths = self.buffer.ui:get_filepaths_in_selection(), worktree_root = git.repo.worktree_root }
   end)
 end
@@ -423,39 +434,39 @@ end
 ---@param self StatusBuffer
 ---@return fun(): nil
 M.v_bisect_popup = function(self)
-  return popups.open("bisect", function(p)
+  return open_popup(self, "bisect", function(p)
     p { commits = self.buffer.ui:get_commits_in_selection() }
   end)
 end
 
 ---@param _self StatusBuffer
 ---@return fun(): nil
-M.v_remote_popup = function(_self)
-  return popups.open("remote")
+M.v_remote_popup = function(self)
+  return open_popup(self, "remote")
 end
 
 ---@param _self StatusBuffer
 ---@return fun(): nil
-M.v_fetch_popup = function(_self)
-  return popups.open("fetch")
+M.v_fetch_popup = function(self)
+  return open_popup(self, "fetch")
 end
 
 ---@param _self StatusBuffer
 ---@return fun(): nil
-M.v_pull_popup = function(_self)
-  return popups.open("pull")
+M.v_pull_popup = function(self)
+  return open_popup(self, "pull")
 end
 
 ---@param _self StatusBuffer
 ---@return fun(): nil
-M.v_help_popup = function(_self)
-  return popups.open("help")
+M.v_help_popup = function(self)
+  return open_popup(self, "help")
 end
 
 ---@param _self StatusBuffer
 ---@return fun(): nil
-M.v_log_popup = function(_self)
-  return popups.open("log")
+M.v_log_popup = function(self)
+  return open_popup(self, "log")
 end
 
 ---@param self StatusBuffer
@@ -468,8 +479,8 @@ end
 
 ---@param _self StatusBuffer
 ---@return fun(): nil
-M.v_worktree_popup = function(_self)
-  return popups.open("worktree")
+M.v_worktree_popup = function(self)
+  return open_popup(self, "worktree")
 end
 
 ---@param self StatusBuffer
@@ -1135,6 +1146,8 @@ end
 ---@return fun(): nil
 M.n_stage = function(self)
   return a.void(function()
+    git.repository.instance(self.root)
+
     local stagable = self.buffer.ui:get_hunk_or_filename_under_cursor()
     local section = self.buffer.ui:get_current_section()
     local selection = self.buffer.ui:get_selection()
@@ -1361,7 +1374,7 @@ end
 ---@param self StatusBuffer
 ---@return fun(): nil
 M.n_branch_popup = function(self)
-  return popups.open("branch", function(p)
+  return open_popup(self, "branch", function(p)
     p { commits = { self.buffer.ui:get_commit_under_cursor() } }
   end)
 end
@@ -1369,7 +1382,7 @@ end
 ---@param self StatusBuffer
 ---@return fun(): nil
 M.n_bisect_popup = function(self)
-  return popups.open("bisect", function(p)
+  return open_popup(self, "bisect", function(p)
     p { commits = { self.buffer.ui:get_commit_under_cursor() } }
   end)
 end
@@ -1377,7 +1390,7 @@ end
 ---@param self StatusBuffer
 ---@return fun(): nil
 M.n_cherry_pick_popup = function(self)
-  return popups.open("cherry_pick", function(p)
+  return open_popup(self, "cherry_pick", function(p)
     p { commits = { self.buffer.ui:get_commit_under_cursor() } }
   end)
 end
@@ -1385,7 +1398,7 @@ end
 ---@param self StatusBuffer
 ---@return fun(): nil
 M.n_commit_popup = function(self)
-  return popups.open("commit", function(p)
+  return open_popup(self, "commit", function(p)
     p { commit = self.buffer.ui:get_commit_under_cursor() }
   end)
 end
@@ -1393,7 +1406,7 @@ end
 ---@param self StatusBuffer
 ---@return fun(): nil
 M.n_merge_popup = function(self)
-  return popups.open("merge", function(p)
+  return open_popup(self, "merge", function(p)
     p { commit = self.buffer.ui:get_commit_under_cursor() }
   end)
 end
@@ -1401,7 +1414,7 @@ end
 ---@param self StatusBuffer
 ---@return fun(): nil
 M.n_push_popup = function(self)
-  return popups.open("push", function(p)
+  return open_popup(self, "push", function(p)
     p { commit = self.buffer.ui:get_commit_under_cursor() }
   end)
 end
@@ -1409,7 +1422,7 @@ end
 ---@param self StatusBuffer
 ---@return fun(): nil
 M.n_rebase_popup = function(self)
-  return popups.open("rebase", function(p)
+  return open_popup(self, "rebase", function(p)
     p { commit = self.buffer.ui:get_commit_under_cursor() }
   end)
 end
@@ -1417,7 +1430,7 @@ end
 ---@param self StatusBuffer
 ---@return fun(): nil
 M.n_revert_popup = function(self)
-  return popups.open("revert", function(p)
+  return open_popup(self, "revert", function(p)
     p { commits = { self.buffer.ui:get_commit_under_cursor() } }
   end)
 end
@@ -1425,7 +1438,7 @@ end
 ---@param self StatusBuffer
 ---@return fun(): nil
 M.n_reset_popup = function(self)
-  return popups.open("reset", function(p)
+  return open_popup(self, "reset", function(p)
     p { commit = self.buffer.ui:get_commit_under_cursor() }
   end)
 end
@@ -1433,7 +1446,7 @@ end
 ---@param self StatusBuffer
 ---@return fun(): nil
 M.n_tag_popup = function(self)
-  return popups.open("tag", function(p)
+  return open_popup(self, "tag", function(p)
     p { commit = self.buffer.ui:get_commit_under_cursor() }
   end)
 end
@@ -1441,7 +1454,7 @@ end
 ---@param self StatusBuffer
 ---@return fun(): nil
 M.n_stash_popup = function(self)
-  return popups.open("stash", function(p)
+  return open_popup(self, "stash", function(p)
     local stash = self.buffer.ui:get_yankable_under_cursor()
     p { name = stash and stash:match("^stash@{%d+}") }
   end)
@@ -1450,7 +1463,7 @@ end
 ---@param self StatusBuffer
 ---@return fun(): nil
 M.n_diff_popup = function(self)
-  return popups.open("diff", function(p)
+  return open_popup(self, "diff", function(p)
     local section = self.buffer.ui:get_selection().section
     local item = self.buffer.ui:get_yankable_under_cursor()
     p {
@@ -1463,7 +1476,7 @@ end
 ---@param self StatusBuffer
 ---@return fun(): nil
 M.n_ignore_popup = function(self)
-  return popups.open("ignore", function(p)
+  return open_popup(self, "ignore", function(p)
     local path = self.buffer.ui:get_hunk_or_filename_under_cursor()
     p {
       paths = { path and path.escaped_path },
@@ -1475,7 +1488,7 @@ end
 ---@param self StatusBuffer
 ---@return fun(): nil
 M.n_help_popup = function(self)
-  return popups.open("help", function(p)
+  return open_popup(self, "help", function(p)
     -- Since any other popup can be launched from help, build an ENV for any of them.
     local path = self.buffer.ui:get_hunk_or_filename_under_cursor()
     local section = self.buffer.ui:get_selection().section
@@ -1522,26 +1535,26 @@ end
 
 ---@param _self StatusBuffer
 ---@return fun(): nil
-M.n_remote_popup = function(_self)
-  return popups.open("remote")
+M.n_remote_popup = function(self)
+  return open_popup(self, "remote")
 end
 
 ---@param _self StatusBuffer
 ---@return fun(): nil
-M.n_fetch_popup = function(_self)
-  return popups.open("fetch")
+M.n_fetch_popup = function(self)
+  return open_popup(self, "fetch")
 end
 
 ---@param _self StatusBuffer
 ---@return fun(): nil
-M.n_pull_popup = function(_self)
-  return popups.open("pull")
+M.n_pull_popup = function(self)
+  return open_popup(self, "pull")
 end
 
 ---@param _self StatusBuffer
 ---@return fun(): nil
-M.n_log_popup = function(_self)
-  return popups.open("log")
+M.n_log_popup = function(self)
+  return open_popup(self, "log")
 end
 
 ---@param self StatusBuffer
@@ -1554,8 +1567,8 @@ end
 
 ---@param _self StatusBuffer
 ---@return fun(): nil
-M.n_worktree_popup = function(_self)
-  return popups.open("worktree")
+M.n_worktree_popup = function(self)
+  return open_popup(self, "worktree")
 end
 
 ---@param self StatusBuffer

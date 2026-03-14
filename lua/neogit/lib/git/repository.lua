@@ -4,6 +4,7 @@ local Path = require("plenary.path")
 local git = require("neogit.lib.git")
 local ItemFilter = require("neogit.lib.item_filter")
 local util = require("neogit.lib.util")
+local Watcher = require("neogit.watcher")
 
 local modules = {
   "status",
@@ -185,22 +186,26 @@ Repo.__index = Repo
 local instances = {}
 local lastDir = vim.uv.cwd()
 
+function Repo.instance_for(dir, refresh)
+  local cwd = vim.fs.normalize(dir)
+  if not instances[cwd] then
+    logger.debug("[REPO]: Registered Repository for: " .. cwd)
+    instances[cwd] = Repo.new(cwd)
+    if refresh then instances[cwd]:dispatch_refresh() end
+  end
+
+  return instances[cwd]
+end
+
 ---@param dir? string
 ---@return NeogitRepo
-function Repo.instance(dir)
+function Repo.instance(dir, refresh)
   if dir and dir ~= lastDir then
     lastDir = dir
   end
 
   assert(lastDir, "No last dir")
-  local cwd = vim.fs.normalize(lastDir)
-  if not instances[cwd] then
-    logger.debug("[REPO]: Registered Repository for: " .. cwd)
-    instances[cwd] = Repo.new(cwd)
-    instances[cwd]:dispatch_refresh()
-  end
-
-  return instances[cwd]
+  return Repo.instance_for(lastDir, refresh)
 end
 
 -- Use Repo.instance when calling directly to ensure it's registered
@@ -216,6 +221,7 @@ function Repo.new(dir)
     worktree_git_dir = git.cli.worktree_git_dir(dir),
     git_dir = git.cli.git_dir(dir),
     refresh_callbacks = {},
+    refresh_handlers = {},
     running = util.weak_table(),
     interrupt = util.weak_table(),
     tmp_state = util.weak_table("v"),
@@ -335,13 +341,37 @@ function Repo:refresh(opts)
     logger.debug("[REPO]: (" .. start .. ") Refreshes complete in " .. timestamp() - start .. " ms")
     self:set_state(start)
     self:run_callbacks(start)
+
+    for name, fn in pairs(self.refresh_handlers) do
+      logger.debug("[REPO]: Running handler for " .. name)
+      fn()
+    end
   end)
 
+  lastDir = self.worktree_root
   a.util.run_all(self:tasks(filter, self:current_state(start)), on_complete)
 end
 
 Repo.dispatch_refresh = a.void(function(self, opts)
   self:refresh(opts)
 end)
+
+function Repo.make_current(repo)
+  -- TODO: use repo object instead of git.repo (which is Repo.instance() for last used dir)
+  lastDir = repo.worktree_root
+end
+
+function Repo:add_refresh_handler(source, fn)
+  self.refresh_handlers[source] = fn
+  Watcher.instance(self.worktree_root):start()
+end
+
+function Repo:remove_refresh_handler(source)
+  self.refresh_handlers[source] = nil
+
+  if next(self.refresh_handlers) == nil then
+    Watcher.instance(self.worktree_root):stop()
+  end
+end
 
 return Repo
