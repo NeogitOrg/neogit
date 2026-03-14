@@ -7,6 +7,7 @@ local Watcher = require("neogit.watcher")
 local a = require("plenary.async")
 local logger = require("neogit.logger") -- TODO: Add logging
 local event = require("neogit.lib.event")
+local hook = require("neogit.lib.hook")
 
 ---@class Semaphore
 ---@field permits number
@@ -319,6 +320,7 @@ function M:refresh(partial, reason)
     source = "status",
     partial = partial,
     callback = function()
+      hook.run("PreStatusRefreshed")
       self:redraw(cursor, view)
       event.send("StatusRefreshed")
       logger.info("[STATUS] Refresh complete")
