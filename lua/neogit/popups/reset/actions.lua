@@ -3,6 +3,7 @@ local util = require("neogit.lib.util")
 local notification = require("neogit.lib.notification")
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 local event = require("neogit.lib.event")
+local hook = require("neogit.lib.hook")
 
 local M = {}
 
@@ -26,6 +27,7 @@ end
 local function reset(fn, popup, prompt, mode)
   local target = target(popup, prompt)
   if target then
+    hook.run("PreReset", { commit = target, mode = mode })
     local success = fn(target)
     if success then
       notification.info("Reset to " .. target)
@@ -81,6 +83,7 @@ function M.a_file(popup)
 
   local files = FuzzyFinderBuffer.new(files):open_async { allow_multi = true }
   if files and files[1] then
+    hook.run("PreReset", { commit = target, mode = "files", files = files })
     if git.reset.file(target, files) then
       if #files > 1 then
         notification.info("Reset " .. #files .. " files")
