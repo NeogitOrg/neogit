@@ -561,9 +561,10 @@ See the built-in documentation for a comprehensive list of highlight groups. If 
 
 Neogit supports hooks for the following actions:
 
-| Hook                | Description                    | Hook Data                 |
-| ------------------- | ------------------------------ | ------------------------- |
-| `PreBranchCheckout` | Before a branch is checked out | `{ branch_name: string }` |
+| Hook                 | Description                    | Hook Data                 |
+| -------------------- | ------------------------------ | ------------------------- |
+| `PreStatusRefreshed` | Before a status is reloaded    | `{}`                      |
+| `PreBranchCheckout`  | Before a branch is checked out | `{ branch_name: string }` |
 
 ## Events
 
