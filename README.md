@@ -577,6 +577,7 @@ Neogit supports hooks for the following actions:
 | `PreReset`           | Before a branch is reset to a certain commit     | `{ commit: string, mode: "soft"\|"mixed"\|"hard"\|"keep"\|"index" }` |
 | `PreTagCreate`       | Before a tag is placed on a certain commit       | `{ name: string, ref: string }`                                      |
 | `PreTagDelete`       | Before one or more tags are removed              | `{ names: string[] }`                                                |
+| `PreCherryPick`      | Before one or more commits are cherry-picked     | `{ commits: string[] }`                                              |
 
 ## Events
 

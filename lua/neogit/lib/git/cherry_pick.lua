@@ -3,6 +3,7 @@ local notification = require("neogit.lib.notification")
 local util = require("neogit.lib.util")
 local client = require("neogit.client")
 local event = require("neogit.lib.event")
+local hook = require("neogit.lib.hook")
 
 ---@class NeogitGitCherryPick
 local M = {}
@@ -13,6 +14,7 @@ local M = {}
 function M.pick(commits, args)
   local cmd = git.cli["cherry-pick"].arg_list(util.merge(args, commits))
 
+  hook.run("PreCherryPick", { commits = commits })
   local result
   if vim.tbl_contains(args, "--edit") then
     result = cmd.env(client.get_envs_git_editor()).call { pty = true }
@@ -36,6 +38,7 @@ function M.apply(commits, args)
     end
   end)
 
+  hook.run("PreCherryPick", { commits = commits })
   local result = git.cli["cherry-pick"].no_commit.arg_list(util.merge(args, commits)).call { await = true }
   if result:failure() then
     notification.error("Cherry Pick failed. Resolve conflicts before continuing")
