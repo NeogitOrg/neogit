@@ -566,6 +566,7 @@ Neogit supports hooks for the following actions:
 | `PreStatusRefreshed` | Before a status is reloaded      | `{}`                      |
 | `PreCommit`          | Before a commit has been created | `{}`                      |
 | `PrePush`            | Before a push is made            | `{}`                      |
+| `PrePull`            | Before a pull is made            | `{}`                      |
 | `PreBranchCheckout`  | Before a branch is checked out   | `{ branch_name: string }` |
 
 ## Events
