@@ -582,6 +582,7 @@ Neogit supports hooks for the following actions:
 | `PreStash`           | Before a stash is made                           | `{}`                                                                 |
 | `PreRefsRefreshed`   | Before refs are refreshed                        | `{}`                                                                 |
 | `PreDiffLoaded`      | Before a diff is loaded                          | `{?}`                                                                |
+| `PreBisect`          | Before a bisect is started                       | `{ type: string }`                                                   |
 
 ## Events
 
