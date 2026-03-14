@@ -356,6 +356,7 @@ function M.delete_branch(popup)
       return
     end
 
+    hook.run("PreBranchDelete", { branch_name = branch_name })
     success = git.branch.delete(branch_name)
     if not success then -- Reset HEAD if unsuccessful
       git.cli.checkout.branch(branch_name).call()

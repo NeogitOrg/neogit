@@ -569,6 +569,7 @@ Neogit supports hooks for the following actions:
 | `PrePull`            | Before a pull is made                            | `{}`                                     |
 | `PreFetch`           | Before a fetch is made                           | `{}`                                     |
 | `PreBranchCreate`    | Before a branch is created, starting from `base` | `{ branch_name: string, base: string? }` |
+| `PreBranchDelete`    | Before a branch is deleted                       | `{ branch_name: string }`                |
 | `PreBranchCheckout`  | Before a branch is checked out                   | `{ branch_name: string }`                |
 
 ## Events
