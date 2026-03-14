@@ -254,6 +254,7 @@ function M.rename_branch()
     return
   end
 
+  hook.run("PreBranchRename", { branch_name = selected_branch, new_name = new_name })
   local result = git.cli.branch.move.args(selected_branch, new_name).call { await = true }
   if result:success() then
     notification.info(string.format("Renamed '%s' to '%s'", selected_branch, new_name))
