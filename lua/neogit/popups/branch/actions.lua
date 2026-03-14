@@ -21,6 +21,10 @@ local function fetch_remote_branch(target)
 end
 
 local function checkout_branch(target, args)
+  if config.values.hooks["PreBranchCheckout"] then
+    config.values.hooks["PreBranchCheckout"]()
+  end
+
   local result = git.branch.checkout(target, args)
   if result:failure() then
     notification.error(table.concat(result.stderr, "\n"))
@@ -73,6 +77,10 @@ local function spin_off_branch(checkout)
   local current_branch_name = git.branch.current_full_name()
 
   if checkout then
+    if config.values.hooks["PreBranchCheckout"] then
+      config.values.hooks["PreBranchCheckout"]()
+    end
+
     git.cli.checkout.branch(name).call()
     event.send("BranchCheckout", { branch_name = name })
   end
@@ -188,6 +196,10 @@ function M.checkout_local_branch(popup)
   }
 
   if target then
+    if config.values.hooks["PreBranchCheckout"] then
+      config.values.hooks["PreBranchCheckout"]()
+    end
+
     if vim.tbl_contains(remote_branches, target) then
       local result = git.branch.track(target, popup:get_arguments())
       if result:failure() then
