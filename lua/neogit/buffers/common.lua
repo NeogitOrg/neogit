@@ -47,17 +47,22 @@ M.DiffHunks = Component.new(function(diff)
   }
 end)
 
-local diff_add_start = "+"
-local diff_add_start_2 = " +"
-local diff_delete_start = "-"
-local diff_delete_start_2 = " -"
-
-local HunkLine = Component.new(function(line)
+local HunkLine = Component.new(function(line, hunk)
   local line_hl
 
-  local first_char = string.sub(line, 1, 1)
-  local first_chars = string.sub(line, 1, 2)
+  -- Dynamically compute prefix length from the hunk header (defaulting to 1)
+  local prefix_length = 1
+  if hunk and hunk.line then
+    local at_signs = string.match(hunk.line, "^(@+)")
+    if at_signs then
+      prefix_length = #at_signs - 1
+    end
+  end
 
+  -- Isolate the exact status prefix for this specific line
+  local prefix = string.sub(line, 1, prefix_length)
+
+  -- Evaluate Highlighting
   if
     line:match("^..<<<<<<<")
     or line:match("^..|||||||")
@@ -65,10 +70,16 @@ local HunkLine = Component.new(function(line)
     or line:match("^..>>>>>>>")
   then
     line_hl = "NeogitHunkMergeHeader"
-  elseif first_char == diff_add_start or first_chars == diff_add_start_2 then
+
+  -- If the prefix contains a '+', it's an addition (e.g., "+", " +", "+ ")
+  elseif string.match(prefix, "%+") then
     line_hl = "NeogitDiffAdd"
-  elseif first_char == diff_delete_start or first_chars == diff_delete_start_2 then
+
+  -- If the prefix contains a '-', it's a deletion (e.g., "-", " -", "- ")
+  elseif string.match(prefix, "%-") then
     line_hl = "NeogitDiffDelete"
+
+  -- If it contains neither (just spaces), it is unchanged context
   else
     line_hl = "NeogitDiffContext"
   end
@@ -79,7 +90,9 @@ end)
 M.Hunk = Component.new(function(props)
   return col.tag("Hunk")({
     text.line_hl("NeogitHunkHeader")(props.header),
-    col.tag("HunkContent")(map(props.content, HunkLine)),
+    col.tag("HunkContent")(map(props.content, function(line)
+      return HunkLine(line, props.hunk)
+    end)),
   }, { foldable = true, folded = props.folded or false, context = true, hunk = props.hunk })
 end)
 
