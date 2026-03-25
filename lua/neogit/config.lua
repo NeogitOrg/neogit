@@ -397,6 +397,7 @@ end
 ---@field notification_icon? string
 ---@field use_default_keymaps? boolean
 ---@field highlight? HighlightOptions
+---@field treesitter_diff_highlight? boolean Highlight diff hunks via treesitter (syntax + word-level)
 ---@field builders? { [string]: fun(builder: PopupBuilder) }
 
 ---Returns the default Neogit configuration
@@ -407,6 +408,7 @@ function M.get_default_values()
     disable_hint = false,
     disable_context_highlighting = false,
     disable_signs = false,
+    treesitter_diff_highlight = true,
     prompt_force_push = true,
     prompt_amend_commit = true,
     graph_style = "ascii",

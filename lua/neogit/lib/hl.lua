@@ -79,6 +79,8 @@ end
 ---@field purple     string  Foreground purple
 ---@field bg_purple  string  Background purple
 ---@field md_purple  string  Background _medium_ purple. Lighter than bg_purple.
+---@field inline_green string  Background for inline add word-diff highlights
+---@field inline_red   string  Background for inline delete word-diff highlights
 ---@field italic     boolean enable italics?
 ---@field bold       boolean enable bold?
 ---@field underline  boolean enable underline?
@@ -123,6 +125,8 @@ local function make_palette(config)
     purple     = purple:to_css(),
     bg_purple  = purple:shade(bg_factor * -0.18):to_css(),
     md_purple  = purple:shade(0.18):to_css(),
+    inline_green = green:shade(bg_factor * -0.45):set_saturation(0.65):to_css(),
+    inline_red   = red:shade(bg_factor * -0.45):set_saturation(0.65):to_css(),
     italic     = true,
     bold       = true,
     underline  = true,
@@ -201,6 +205,8 @@ function M.setup(config)
     NeogitDiffDelete               = { bg = palette.line_red, fg = palette.bg_red, ctermfg = 1 },
     NeogitDiffDeleteHighlight      = { bg = palette.line_red, fg = palette.red, ctermfg = 1 },
     NeogitDiffDeleteCursor         = { bg = palette.bg1, fg = palette.red, ctermfg = 1 },
+    NeogitDiffAddInline            = { bg = palette.inline_green },
+    NeogitDiffDeleteInline         = { bg = palette.inline_red },
     NeogitPopupSectionTitle        = { link = "Function" },
     NeogitPopupBranchName          = { link = "String" },
     NeogitPopupBold                = { bold = palette.bold },

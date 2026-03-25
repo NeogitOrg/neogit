@@ -2,6 +2,7 @@ local Component = require("neogit.lib.ui.component")
 local util = require("neogit.lib.util")
 local Renderer = require("neogit.lib.ui.renderer")
 local Collection = require("neogit.lib.collection")
+local config = require("neogit.config")
 local logger = require("neogit.logger") -- TODO: Add logging
 
 ---@class Section
@@ -707,11 +708,15 @@ function Ui:update()
     self.buf:clear()
     self.buf:clear_namespace("default")
     self.buf:clear_namespace("ViewContext")
+    self.buf:clear_namespace("NeogitDiffHighlight")
     self.buf:resize(#renderer.buffer.line)
     self.buf:set_lines(0, -1, false, renderer.buffer.line)
     self.buf:set_highlights(renderer.buffer.highlight)
     self.buf:set_extmarks(renderer.buffer.extmark)
     self.buf:set_line_highlights(renderer.buffer.line_highlight)
+    if config.values.treesitter_diff_highlight then
+      self.buf:set_diff_highlights(renderer.buffer.ts_highlight)
+    end
     self.buf:set_folds(renderer.buffer.fold)
 
     self.statuscolumn = {}
