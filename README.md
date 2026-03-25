@@ -159,7 +159,7 @@ neogit.setup {
   -- Show relative date by default. When set, use `strftime` to display dates
   commit_date_format = nil,
   log_date_format = nil,
-  -- When set, used to format the diff. Requires *baleia* to colorize text with ANSI escape sequences. An example for `Delta` is `{ 'delta', '--width', '117' }`. For `Delta`, hyperlinks must be disabled in its git config section, for text to be colorized properly.
+  -- When set, used to format the diff. Requires *baleia* to colorize text with ANSI escape sequences. An example for `Delta` is `{ 'delta', '--width', '117' }`. For `Delta`, hyperlinks must be disabled when called by `neogit`, for text to be colorized properly.
   log_pager = nil,
   -- Show message with spinning animation when a git command is running.
   process_spinner = false,
