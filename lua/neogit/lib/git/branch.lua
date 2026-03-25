@@ -311,8 +311,9 @@ end
 ---@return string|nil
 function M.upstream(name)
   if name then
-    local result =
-      git.cli["rev-parse"].symbolic_full_name.abbrev_ref(name .. "@{upstream}").call { ignore_error = true }
+    local result = git.cli["rev-parse"].symbolic_full_name.abbrev_ref
+      .args(name .. "@{upstream}")
+      .call { ignore_error = true }
 
     if result:success() then
       return result.stdout[1]

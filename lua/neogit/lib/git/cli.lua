@@ -340,7 +340,7 @@ end
 ---@field symbolic self
 ---@field symbolic_full_name self
 ---@field show_superproject_working_tree self
----@field abbrev_ref fun(ref: string): self
+---@field abbrev_ref self
 
 ---@class GitCommandCherryPick: GitCommandBuilder
 ---@field no_commit self
@@ -994,10 +994,9 @@ local configurations = {
       symbolic = "--symbolic",
       symbolic_full_name = "--symbolic-full-name",
       show_superproject_working_tree = "--show-superproject-working-tree",
-    },
-    options = {
       abbrev_ref = "--abbrev-ref",
     },
+    options = {},
   },
 
   ["cherry-pick"] = config {
