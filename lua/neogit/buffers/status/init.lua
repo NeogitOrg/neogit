@@ -137,7 +137,7 @@ function M:open(kind)
     name = "NeogitStatus",
     filetype = "NeogitStatus",
     cwd = self.cwd,
-    context_highlight = not config.values.disable_context_highlighting,
+    context_highlight = not config.values.disable_context_highlighting and config.values.log_pager == nil,
     kind = kind or config.values.kind or "tab",
     disable_line_numbers = config.values.disable_line_numbers,
     disable_relative_line_numbers = config.values.disable_relative_line_numbers,
