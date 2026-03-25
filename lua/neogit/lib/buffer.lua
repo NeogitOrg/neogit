@@ -182,7 +182,9 @@ function Buffer:move_cursor(line)
   end
 
   -- pcall used in case the line is out of bounds
-  pcall(api.nvim_win_set_cursor, self.win_handle, position)
+  for i, w in ipairs(fn.win_findbuf(self.handle)) do
+    pcall(api.nvim_win_set_cursor, w, position)
+  end
 end
 
 ---@param line nil|number|number[]
@@ -212,6 +214,16 @@ end
 function Buffer:close(force)
   if force == nil then
     force = false
+  end
+
+  if self.kind == "stack" then
+    if self.old_buf and api.nvim_buf_is_loaded(self.old_buf) then
+      api.nvim_set_current_buf(self.old_buf)
+      self.old_buf = nil
+    end
+
+    api.nvim_buf_delete(self.handle, { force = force })
+    return
   end
 
   if self.kind == "replace" then
@@ -257,7 +269,7 @@ function Buffer:hide()
     -- `silent!` as this might throw errors if 'hidden' is disabled.
     vim.cmd("silent! 1only")
     vim.cmd("try | tabn # | catch /.*/ | tabp | endtry")
-  elseif self.kind == "replace" then
+  elseif self.kind == "replace" or self.kind == "stack" then
     if self.old_cwd then
       api.nvim_set_current_dir(self.old_cwd)
       self.old_cwd = nil
@@ -300,9 +312,14 @@ function Buffer:show()
   ---@return integer window handle
   local function open()
     local win
-    if self.kind == "replace" then
-      self.old_buf = api.nvim_get_current_buf()
-      self.old_cwd = vim.uv.cwd()
+    if self.kind == "replace" or self.kind == "stack" then
+      if self.kind == "stack" then
+        self.old_buf = self.old_buf or api.nvim_get_current_buf()
+      else
+        self.old_buf = api.nvim_get_current_buf()
+        self.old_cwd = vim.uv.cwd()
+      end
+
       api.nvim_set_current_buf(self.handle)
       win = api.nvim_get_current_win()
     elseif self.kind == "tab" then
@@ -426,8 +443,9 @@ function Buffer:get_option(name)
 end
 
 function Buffer:get_window_option(name)
-  if self.win_handle ~= nil then
-    return api.nvim_get_option_value(name, { win = self.win_handle })
+  local win = fn.win_findbuf(self.handle)[1]
+  if win ~= nil then
+    return api.nvim_get_option_value(name, { win = win })
   end
 end
 
@@ -443,8 +461,8 @@ function Buffer:set_buffer_option(name, value)
 end
 
 function Buffer:set_window_option(name, value)
-  if self.win_handle ~= nil then
-    api.nvim_set_option_value(name, value, { scope = "local", win = self.win_handle })
+  for i, w in ipairs(fn.win_findbuf(self.handle)) do
+    api.nvim_set_option_value(name, value, { scope = "local", win = w })
   end
 end
 
@@ -541,10 +559,29 @@ function Buffer:call(f, ...)
 end
 
 function Buffer:win_call(f, ...)
-  if self.win_handle and api.nvim_win_is_valid(self.win_handle) then
+  for i, w in ipairs(fn.win_findbuf(self.handle)) do
     local args = { ... }
-    api.nvim_win_call(self.win_handle, function()
+    api.nvim_win_call(w, function()
       f(unpack(args))
+    end)
+  end
+end
+
+function Buffer:with_windows(before, after, render)
+  local windows = fn.win_findbuf(self.handle)
+  local data = {}
+
+  for i, w in ipairs(windows) do
+    api.nvim_win_call(w, function()
+      data[w] = before()
+    end)
+  end
+
+  render()
+
+  for i, w in ipairs(windows) do
+    api.nvim_win_call(w, function()
+      after(data[w])
     end)
   end
 end
@@ -574,7 +611,9 @@ function Buffer:close_terminal_channel()
 end
 
 function Buffer:win_exec(cmd)
-  fn.win_execute(self.win_handle, cmd)
+  for i, w in ipairs(fn.win_findbuf(self.handle)) do
+    fn.win_execute(w, cmd)
+  end
 end
 
 function Buffer:exists()
@@ -710,10 +749,11 @@ function Buffer.create(config)
     logger.debug("[BUFFER:" .. buffer.handle .. "] Showing buffer in window " .. win .. " as " .. buffer.kind)
   end
 
+  local default_bufhidden = config.kind == "stack" and "hide" or "wipe"
   logger.debug("[BUFFER:" .. buffer.handle .. "] Setting buffer options")
   buffer:set_buffer_option("swapfile", false)
   buffer:set_buffer_option("modeline", false)
-  buffer:set_buffer_option("bufhidden", config.bufhidden or "wipe")
+  buffer:set_buffer_option("bufhidden", config.bufhidden or default_bufhidden)
   buffer:set_buffer_option("modifiable", config.modifiable or false)
   buffer:set_buffer_option("modified", config.modifiable or false)
   buffer:set_buffer_option("readonly", config.readonly or false)
@@ -805,8 +845,8 @@ function Buffer.create(config)
   end
 
   if config.render then
-    logger.debug("[BUFFER:" .. buffer.handle .. "] Rendering buffer")
-    buffer.ui:render(unpack(config.render(buffer)))
+    buffer.render_fn = config.render
+    buffer:draw()
   end
 
   for event, callback in pairs(config.autocmds or {}) do
@@ -977,6 +1017,31 @@ function Buffer.create(config)
   end
 
   return buffer
+end
+
+function Buffer:draw()
+  if self.render_fn then
+    logger.debug("[BUFFER:" .. self.handle .. "] Rendering buffer")
+    self.ui:render(unpack(self.render_fn(self)))
+  end
+end
+
+function Buffer:redraw()
+  if not self.handle then
+    logger.debug("[BUFFER:" .. self.handle .. "] Buffer no longer exists - bail")
+    return
+  end
+
+  if not self:is_focused() then
+    logger.debug("[BUFFER:" .. self.handle .. "] Buffer is no longer focused - bail")
+    return
+  end
+
+  local cursor = self.ui:get_cursor_location()
+  local view = self:save_view()
+
+  self:draw()
+  self:restore_view(view, self.ui:resolve_cursor_location(cursor))
 end
 
 ---@param name string

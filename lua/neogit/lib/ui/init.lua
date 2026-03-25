@@ -687,7 +687,7 @@ function Ui:update()
   self.node_index = renderer:node_index()
   self.item_index = renderer:item_index()
 
-  self.buf:win_call(function()
+  self.buf:with_windows(function()
     -- Store the cursor and top line positions to be restored later
     local cursor_line = self.buf:cursor_line()
     local scrolloff = vim.api.nvim_get_option_value("scrolloff", { win = 0 })
@@ -703,6 +703,17 @@ function Ui:update()
       end
     end
 
+    return { cursor_line = cursor_line, top_line_nofold = top_line_nofold }
+  end, function(args)
+    -- First restore the top line, then restore the cursor after
+    -- Only move the viewport if there are fewer lines available on the screen than are in the buffer
+    if vim.fn.line("$") > vim.fn.line("w$") then
+      self.buf:move_top_line(math.min(args.top_line_nofold, #renderer.buffer.line))
+    end
+
+    self.buf:move_cursor(math.min(args.cursor_line, #renderer.buffer.line))
+  end,
+  function()
     self.buf:unlock()
     self.buf:clear()
     self.buf:clear_namespace("default")
@@ -732,14 +743,6 @@ function Ui:update()
     end
 
     self.buf:lock()
-
-    -- First restore the top line, then restore the cursor after
-    -- Only move the viewport if there are fewer lines available on the screen than are in the buffer
-    if vim.fn.line("$") > vim.fn.line("w$") then
-      self.buf:move_top_line(math.min(top_line_nofold, #renderer.buffer.line))
-    end
-
-    self.buf:move_cursor(math.min(cursor_line, #renderer.buffer.line))
   end)
 end
 

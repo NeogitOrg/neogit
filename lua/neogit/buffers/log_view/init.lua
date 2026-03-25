@@ -6,9 +6,11 @@ local status_maps = require("neogit.config").get_reversed_status_maps()
 local commit_view_maps = require("neogit.config").get_reversed_commit_view_maps()
 local CommitViewBuffer = require("neogit.buffers.commit_view")
 local util = require("neogit.lib.util")
+local git = require("neogit.lib.git")
 local a = require("plenary.async")
 local notification = require("neogit.lib.notification")
 local git = require("neogit.lib.git")
+local logger = require("neogit.logger") -- TODO: Add logging
 
 ---@class LogViewBuffer
 ---@field commits CommitLogEntry[]
@@ -40,6 +42,7 @@ function M.new(commits, internal_args, files, fetch_func, header, remotes)
     buffer = nil,
     refresh_lock = a.control.Semaphore.new(1),
     header = header,
+    repo = git.repo, -- TODO: pass one in args
   }
 
   setmetatable(instance, M)
@@ -60,29 +63,20 @@ function M:close()
     self.buffer:close()
     self.buffer = nil
   end
-
-  M.instance = nil
-end
-
----@return boolean
-function M.is_open()
-  return (M.instance and M.instance.buffer and M.instance.buffer:is_visible()) == true
 end
 
 function M:open()
-  if M.is_open() then
-    M.instance.buffer:focus()
+  if self.buffer and self.buffer:is_visible() then
+    self.buffer:focus()
     return
   end
 
-  M.instance = self
-
   self.buffer = Buffer.create {
-    name = "NeogitLogView",
+    name = "NeogitLogView [" .. string.match(self.repo.worktree_root, "([^/\\]+)$") .. "]",
     filetype = "NeogitLogView",
     kind = config.values.log_view.kind,
     context_highlight = false,
-    header = self.header,
+    header = not config.values.simple_headers and self.header or nil,
     scroll_header = false,
     active_item_highlight = true,
     status_column = not config.values.disable_signs and "" or nil,
@@ -199,7 +193,6 @@ function M:open()
             vim.cmd("echo ''")
           end
         end,
-        ["<esc>"] = require("neogit.lib.ui.helpers").close_topmost(self),
         [status_maps["Close"]] = require("neogit.lib.ui.helpers").close_topmost(self),
         [status_maps["GoToFile"]] = function()
           local commit = self.buffer.ui:get_commit_under_cursor()
@@ -314,16 +307,37 @@ function M:open()
             vim.cmd("norm! k")
           end
         end,
+        [status_maps["RefreshBuffer"]] = function() self:redraw() end,
       },
     },
     render = function()
-      return ui.View(self.commits, self.remotes, self.internal_args)
+      local header = config.values.simple_headers and self.header or nil
+      return ui.View(self.commits, self.remotes, self.internal_args, header)
     end,
     after = function(buffer)
+      self.repo:add_refresh_handler(buffer.name, function() self:redraw() end)
       -- First line is empty, so move cursor to second line.
       buffer:move_cursor(2)
     end,
+    on_detach = function()
+      self.repo:remove_refresh_handler(self.buffer.name)
+    end,
   }
+end
+
+function M:redraw()
+  local fold_state = self.buffer.ui:get_fold_state()
+  local cursor_state = self.buffer:cursor_line()
+  local view_state = self.buffer:save_view()
+
+  git.repository.make_current(self.repo)
+  self.commits = self.fetch_func(0)
+  self.buffer:redraw()
+  logger.info("[LogView] Refresh complete")
+
+  logger.debug("[LogView] Restoring view state")
+  self.buffer.ui:set_fold_state(fold_state)
+  self.buffer:restore_view(view_state, cursor_state)
 end
 
 return M
