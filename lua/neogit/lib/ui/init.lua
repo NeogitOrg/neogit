@@ -712,11 +712,9 @@ function Ui:update()
     self.buf:resize(#renderer.buffer.line)
     self.buf:set_lines(0, -1, false, renderer.buffer.line)
     self.buf:set_highlights(renderer.buffer.highlight)
+    self.buf:set_diff_highlights(renderer.buffer.diff_highlight)
     self.buf:set_extmarks(renderer.buffer.extmark)
     self.buf:set_line_highlights(renderer.buffer.line_highlight)
-    if config.values.treesitter_diff_highlight then
-      self.buf:set_diff_highlights(renderer.buffer.ts_highlight)
-    end
     self.buf:set_folds(renderer.buffer.fold)
 
     self.statuscolumn = {}

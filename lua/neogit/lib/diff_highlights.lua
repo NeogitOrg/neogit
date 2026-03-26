@@ -1,3 +1,5 @@
+local config = require("neogit.config")
+
 local M = {}
 
 local byte = string.byte
@@ -33,7 +35,11 @@ function M.char_diff_spans(old, new)
   --   - hunk[2] = how many chars deleted (del)
   --   - hunk[3] = where the change starts in the new string
   --   - hunk[4] = how many chars inserted (ins)
-  local result = diff(gsub(old, ".", "%0\n"), gsub(new, ".", "%0\n"), diff_opts)
+  local result = diff(
+    gsub(old, ".", "%0\n"),
+    gsub(new, ".", "%0\n"),
+    diff_opts
+  )
 
   if not result then
     return {}, {}, 0
@@ -100,66 +106,70 @@ function M.apply(buf, regions)
     end
 
     -- Treesitter syntax highlights
-    do
-      local lang = vim.filetype.match { filename = region.filepath:match("-> (.+)$") or region.filepath }
+    if config.values.treesitter_diff_highlight then
+      do
+        local lang = vim.filetype.match { filename = region.filepath:match("-> (.+)$") or region.filepath }
 
-      if lang and vim.treesitter.language.inspect(lang) then
-        local source = table.concat(stripped, "\n")
-        local ts_parser = vim.treesitter.get_string_parser(source, lang)
-        ts_parser:parse()
-        ts_parser:for_each_tree(function(tree, ltree)
-          local query = vim.treesitter.query.get(ltree:lang(), "highlights")
-          if not query then
-            return
-          end
+        if lang and vim.treesitter.language.inspect(lang) then
+          local source = table.concat(stripped, "\n")
+          local ts_parser = vim.treesitter.get_string_parser(source, lang)
+          ts_parser:parse()
+          ts_parser:for_each_tree(function(tree, ltree)
+            local query = vim.treesitter.query.get(ltree:lang(), "highlights")
+            if not query then
+              return
+            end
 
-          local captures = query.captures
-          for id, node in query:iter_captures(tree:root(), source) do
-            local sr, sc, er, ec = node:range()
-            for row = sr, er do
-              local bl = buf_lines[row + 1]
-              if bl then
-                set_extmark(buf, ns, bl, (row == sr and sc or 0) + 1, {
-                  end_col = (row == er and ec or #stripped[row + 1]) + 1,
-                  hl_group = "@" .. captures[id],
-                  priority = 210,
-                })
+            local captures = query.captures
+            for id, node in query:iter_captures(tree:root(), source) do
+              local sr, sc, er, ec = node:range()
+              for row = sr, er do
+                local bl = buf_lines[row + 1]
+                if bl then
+                  set_extmark(buf, ns, bl, (row == sr and sc or 0) + 1, {
+                    end_col = (row == er and ec or #stripped[row + 1]) + 1,
+                    hl_group = "@" .. captures[id],
+                    priority = 210,
+                  })
+                end
               end
             end
-          end
-        end)
+          end)
+        end
       end
     end
 
     -- Word-level inline diff highlights
-    do
-      local i = 1
-      while i <= n do
-        local del_start = i
-        while i <= n and prefixes[i] == MINUS do
-          i = i + 1
-        end
+    if config.values.word_diff_highlight then
+      do
+        local i = 1
+        while i <= n do
+          local del_start = i
+          while i <= n and prefixes[i] == MINUS do
+            i = i + 1
+          end
 
-        local add_start = i
-        while i <= n and prefixes[i] == PLUS do
-          i = i + 1
-        end
+          local add_start = i
+          while i <= n and prefixes[i] == PLUS do
+            i = i + 1
+          end
 
-        local del_count = add_start - del_start
-        local add_count = i - add_start
+          local del_count = add_start - del_start
+          local add_count = i - add_start
 
-        for j = 0, math.min(del_count, add_count) - 1 do
-          local old_spans, new_spans, distance =
+          for j = 0, math.min(del_count, add_count) - 1 do
+            local old_spans, new_spans, distance =
             M.char_diff_spans(stripped[del_start + j], stripped[add_start + j])
 
-          if distance <= MAX_DISTANCE then
-            apply_spans(buf_lines[del_start + j], old_spans, "NeogitDiffDeleteInline")
-            apply_spans(buf_lines[add_start + j], new_spans, "NeogitDiffAddInline")
+            if distance <= MAX_DISTANCE then
+              apply_spans(buf_lines[del_start + j], old_spans, "NeogitDiffDeleteInline")
+              apply_spans(buf_lines[add_start + j], new_spans, "NeogitDiffAddInline")
+            end
           end
-        end
 
-        if del_count == 0 and add_count == 0 then
-          i = i + 1
+          if del_count == 0 and add_count == 0 then
+            i = i + 1
+          end
         end
       end
     end
