@@ -158,6 +158,10 @@ function Buffer:set_line_highlights(highlights)
 end
 
 function Buffer:set_diff_highlights(regions)
+  if vim.b[self.handle] and vim.b[self.handle].neogit_disable_hunk_highlight == true then
+    return
+  end
+
   diff_highlights.apply(self, regions)
 end
 
