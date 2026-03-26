@@ -835,6 +835,12 @@ NeogitDiffAddCursor
 NeogitDiffDeleteCursor
 NeogitDiffHeaderCursor
 
+INLINE DIFF
+Groups for showing word-level diff in a hunk
+
+NeogitDiffAddInline
+NeogitDiffDeleteInline
+
 COMMIT BUFFER
 NeogitFilePath              Applied to filepath
 NeogitCommitViewHeader      Applied to header of Commit View
