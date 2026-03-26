@@ -132,7 +132,7 @@ neogit.setup {
   -- Path to git executable. Defaults to "git". Can be used to specify a custom git binary or wrapper script.
   git_executable = "git",
   -- Offer to force push when branches diverge
-  prompt_force_push = true,
+  prompt_force_push = false,
   -- Request confirmation when amending already published commits
   prompt_amend_commit = true,
   -- Changes what mode the Commit Editor starts in. `true` will leave nvim in normal mode, `false` will change nvim to

@@ -407,7 +407,7 @@ function M.get_default_values()
     disable_hint = false,
     disable_context_highlighting = false,
     disable_signs = false,
-    prompt_force_push = true,
+    prompt_force_push = false,
     prompt_amend_commit = true,
     graph_style = "ascii",
     commit_date_format = nil,
