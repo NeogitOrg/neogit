@@ -2,7 +2,6 @@ local Component = require("neogit.lib.ui.component")
 local util = require("neogit.lib.util")
 local Renderer = require("neogit.lib.ui.renderer")
 local Collection = require("neogit.lib.collection")
-local config = require("neogit.config")
 local logger = require("neogit.logger") -- TODO: Add logging
 
 ---@class Section
