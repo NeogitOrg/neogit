@@ -99,7 +99,7 @@ M.Hunk = Component.new(function(props)
     folded = props.folded or false,
     context = true,
     hunk = props.hunk,
-    ts_hl = config.values.treesitter_diff_highlight and props.filepath or nil,
+    filepath = props.filepath,
   })
 end)
 

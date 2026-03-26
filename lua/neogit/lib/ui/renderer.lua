@@ -70,7 +70,7 @@ end
 ---@field line string[]
 ---@field highlight table[]
 ---@field line_highlight table[]
----@field ts_highlight table[]
+---@field diff_highlight table[]
 ---@field extmark table[]
 ---@field fold table[]
 
@@ -104,7 +104,7 @@ function Renderer:new(layout, buffer)
       line = {},
       highlight = {},
       line_highlight = {},
-      ts_highlight = {},
+      diff_highlight = {},
       extmark = {},
       fold = {},
     },
@@ -222,11 +222,11 @@ function Renderer:_render_child(child)
     })
   end
 
-  if child.options.ts_hl then
-    table.insert(self.buffer.ts_highlight, {
+  if child.options.filepath then
+    table.insert(self.buffer.diff_highlight, {
       first_line = #self.buffer.line - (child.position.row_end - child.position.row_start),
       last_line = #self.buffer.line,
-      filepath = child.options.ts_hl,
+      filepath = child.options.filepath,
     })
   end
 
