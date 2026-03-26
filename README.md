@@ -123,6 +123,10 @@ You can configure neogit by running the `require('neogit').setup {}` function, p
 local neogit = require("neogit")
 
 neogit.setup {
+  -- Use Treesitter to apply syntax highlighting to diff hunks
+  treesitter_diff_highlight = true,
+  -- Apply word-diff highlights to diff hunks
+  word_diff_highlight = true,
   -- Hides the hints at the top of the status buffer
   disable_hint = false,
   -- Disables changing the buffer highlights based on where the cursor is.
