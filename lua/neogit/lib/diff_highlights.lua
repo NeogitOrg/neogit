@@ -11,7 +11,8 @@ local PLUS = byte("+")
 local MINUS = byte("-")
 local SPACE = byte(" ")
 
-local MAX_DISTANCE = 0.6 -- same as delta's default: https://github.com/dandavison/delta/blob/12ef3ef0be4aebe0d2d2c810a426dbf314efa495/src/cli.rs#L594
+-- same as delta's default: https://github.com/dandavison/delta/blob/12ef3ef0be4aebe0d2d2c810a426dbf314efa495/src/cli.rs#L594
+local MAX_DISTANCE = 0.6
 
 local diff_opts = { result_type = "indices", algorithm = "histogram" }
 
@@ -35,6 +36,8 @@ function M.char_diff_spans(old, new)
   --   - hunk[2] = how many chars deleted (del)
   --   - hunk[3] = where the change starts in the new string
   --   - hunk[4] = how many chars inserted (ins)
+  --
+  -- stylua: ignore
   local result = diff(
     gsub(old, ".", "%0\n"),
     gsub(new, ".", "%0\n"),
@@ -158,8 +161,11 @@ function M.apply(buf, regions)
           local add_count = i - add_start
 
           for j = 0, math.min(del_count, add_count) - 1 do
-            local old_spans, new_spans, distance =
-            M.char_diff_spans(stripped[del_start + j], stripped[add_start + j])
+            -- stylua: ignore
+            local old_spans, new_spans, distance = M.char_diff_spans(
+              stripped[del_start + j],
+              stripped[add_start + j]
+            )
 
             if distance <= MAX_DISTANCE then
               apply_spans(buf_lines[del_start + j], old_spans, "NeogitDiffDeleteInline")
