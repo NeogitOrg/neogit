@@ -57,12 +57,20 @@ function M.char_diff_spans(old, new)
     local del, ins = hunk[2], hunk[4]
     changed = changed + del + ins
     if del > 0 then
-      idx_old = idx_old + 1
-      old_spans[idx_old] = { hunk[1] - 1, hunk[1] - 1 + del }
+      if old_spans[idx_old] and old_spans[idx_old][2] == hunk[1] - 2 then
+        old_spans[idx_old][2] = hunk[1] - 1 + del
+      else
+        idx_old = idx_old + 1
+        old_spans[idx_old] = { hunk[1] - 1, hunk[1] - 1 + del }
+      end
     end
     if ins > 0 then
-      idx_new = idx_new + 1
-      new_spans[idx_new] = { hunk[3] - 1, hunk[3] - 1 + ins }
+      if new_spans[idx_new] and new_spans[idx_new][2] == hunk[3] - 2 then
+        new_spans[idx_new][2] = hunk[3] - 1 + ins
+      else
+        idx_new = idx_new + 1
+        new_spans[idx_new] = { hunk[3] - 1, hunk[3] - 1 + ins }
+      end
     end
   end
   return old_spans, new_spans, changed / total
