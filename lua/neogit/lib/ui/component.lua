@@ -30,6 +30,7 @@ local default_component_options = {
 ---@field yankable string?
 ---@field on_open fun(fold, Ui)
 ---@field hunk Hunk
+---@field filepath string
 ---@field filename string?
 ---@field value any
 

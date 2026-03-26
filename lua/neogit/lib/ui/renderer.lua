@@ -70,6 +70,7 @@ end
 ---@field line string[]
 ---@field highlight table[]
 ---@field line_highlight table[]
+---@field diff_highlight table[]
 ---@field extmark table[]
 ---@field fold table[]
 
@@ -103,6 +104,7 @@ function Renderer:new(layout, buffer)
       line = {},
       highlight = {},
       line_highlight = {},
+      diff_highlight = {},
       extmark = {},
       fold = {},
     },
@@ -217,6 +219,14 @@ function Renderer:_render_child(child)
         virt_text = child.options.virtual_text,
         virt_text_pos = "right_align",
       },
+    })
+  end
+
+  if child.options.filepath then
+    table.insert(self.buffer.diff_highlight, {
+      first_line = #self.buffer.line - (child.position.row_end - child.position.row_start),
+      last_line = #self.buffer.line,
+      filepath = child.options.filepath,
     })
   end
 

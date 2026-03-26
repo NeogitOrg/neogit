@@ -79,6 +79,8 @@ end
 ---@field purple     string  Foreground purple
 ---@field bg_purple  string  Background purple
 ---@field md_purple  string  Background _medium_ purple. Lighter than bg_purple.
+---@field inline_green string  Background for inline add word-diff highlights
+---@field inline_red   string  Background for inline delete word-diff highlights
 ---@field italic     boolean enable italics?
 ---@field bold       boolean enable bold?
 ---@field underline  boolean enable underline?
@@ -89,43 +91,45 @@ end
 local function make_palette(config)
   local bg        = Color.from_hex(get_bg("Normal") or (vim.o.bg == "dark" and "#22252A" or "#eeeeee"))
   local fg        = Color.from_hex((vim.o.bg == "dark" and "#fcfcfc" or "#22252A"))
-  local red       = Color.from_hex(config.highlight.red    or get_fg("Error")       or "#E06C75")
+  local red       = Color.from_hex(config.highlight.red or get_fg("Error") or "#E06C75")
   local orange    = Color.from_hex(config.highlight.orange or get_fg("SpecialChar") or "#ffcb6b")
-  local yellow    = Color.from_hex(config.highlight.yellow or get_fg("PreProc")     or "#FFE082")
-  local green     = Color.from_hex(config.highlight.green  or get_fg("String")      or "#C3E88D")
-  local cyan      = Color.from_hex(config.highlight.cyan   or get_fg("Operator")    or "#89ddff")
-  local blue      = Color.from_hex(config.highlight.blue   or get_fg("Macro")       or "#82AAFF")
-  local purple    = Color.from_hex(config.highlight.purple or get_fg("Include")     or "#C792EA")
+  local yellow    = Color.from_hex(config.highlight.yellow or get_fg("PreProc") or "#FFE082")
+  local green     = Color.from_hex(config.highlight.green or get_fg("String") or "#C3E88D")
+  local cyan      = Color.from_hex(config.highlight.cyan or get_fg("Operator") or "#89ddff")
+  local blue      = Color.from_hex(config.highlight.blue or get_fg("Macro") or "#82AAFF")
+  local purple    = Color.from_hex(config.highlight.purple or get_fg("Include") or "#C792EA")
 
   local bg_factor = vim.o.bg == "dark" and 1 or -1
 
   local default   = {
-    bg0        = bg:to_css(),
-    bg1        = bg:shade(bg_factor * 0.019):to_css(),
-    bg2        = bg:shade(bg_factor * 0.065):to_css(),
-    bg3        = bg:shade(bg_factor * 0.11):to_css(),
-    grey       = bg:shade(bg_factor * 0.4):to_css(),
-    white      = fg:to_css(),
-    red        = red:to_css(),
-    bg_red     = red:shade(bg_factor * -0.18):to_css(),
-    line_red   = get_bg("DiffDelete") or red:shade(bg_factor * -0.6):set_saturation(0.4):to_css(),
-    orange     = orange:to_css(),
-    bg_orange  = orange:shade(bg_factor * -0.17):to_css(),
-    yellow     = yellow:to_css(),
-    bg_yellow  = yellow:shade(bg_factor * -0.17):to_css(),
-    green      = green:to_css(),
-    bg_green   = green:shade(bg_factor * -0.18):to_css(),
-    line_green = get_bg("DiffAdd") or green:shade(bg_factor * -0.72):set_saturation(0.2):to_css(),
-    cyan       = cyan:to_css(),
-    bg_cyan    = cyan:shade(bg_factor * -0.18):to_css(),
-    blue       = blue:to_css(),
-    bg_blue    = blue:shade(bg_factor * -0.18):to_css(),
-    purple     = purple:to_css(),
-    bg_purple  = purple:shade(bg_factor * -0.18):to_css(),
-    md_purple  = purple:shade(0.18):to_css(),
-    italic     = true,
-    bold       = true,
-    underline  = true,
+    bg0          = bg:to_css(),
+    bg1          = bg:shade(bg_factor * 0.019):to_css(),
+    bg2          = bg:shade(bg_factor * 0.065):to_css(),
+    bg3          = bg:shade(bg_factor * 0.11):to_css(),
+    grey         = bg:shade(bg_factor * 0.4):to_css(),
+    white        = fg:to_css(),
+    red          = red:to_css(),
+    bg_red       = red:shade(bg_factor * -0.18):to_css(),
+    line_red     = get_bg("DiffDelete") or red:shade(bg_factor * -0.6):set_saturation(0.4):to_css(),
+    orange       = orange:to_css(),
+    bg_orange    = orange:shade(bg_factor * -0.17):to_css(),
+    yellow       = yellow:to_css(),
+    bg_yellow    = yellow:shade(bg_factor * -0.17):to_css(),
+    green        = green:to_css(),
+    bg_green     = green:shade(bg_factor * -0.18):to_css(),
+    line_green   = get_bg("DiffAdd") or green:shade(bg_factor * -0.72):set_saturation(0.2):to_css(),
+    cyan         = cyan:to_css(),
+    bg_cyan      = cyan:shade(bg_factor * -0.18):to_css(),
+    blue         = blue:to_css(),
+    bg_blue      = blue:shade(bg_factor * -0.18):to_css(),
+    purple       = purple:to_css(),
+    bg_purple    = purple:shade(bg_factor * -0.18):to_css(),
+    md_purple    = purple:shade(0.18):to_css(),
+    inline_green = green:shade(bg_factor * -0.2):set_saturation(0.65):to_css(),
+    inline_red   = red:shade(bg_factor * 0.3):set_saturation(0.65):to_css(),
+    italic       = true,
+    bold         = true,
+    underline    = true,
   }
 
   return vim.tbl_extend("keep", config.highlight or {}, default)
@@ -150,9 +154,9 @@ function M.setup(config)
 
   -- stylua: ignore
   hl_store = {
-    NeogitGraphAuthor              = { fg = palette.orange , ctermfg = 3 },
+    NeogitGraphAuthor              = { fg = palette.orange, ctermfg = 3 },
     NeogitGraphRed                 = { fg = palette.red, ctermfg = 1 },
-    NeogitGraphWhite               = { fg = palette.white, ctermfg =  7 },
+    NeogitGraphWhite               = { fg = palette.white, ctermfg = 7 },
     NeogitGraphYellow              = { fg = palette.yellow, ctermfg = 3 },
     NeogitGraphGreen               = { fg = palette.green, ctermfg = 2 },
     NeogitGraphCyan                = { fg = palette.cyan, ctermfg = 6 },
@@ -193,7 +197,7 @@ function M.setup(config)
     NeogitDiffContext              = { bg = palette.bg1 },
     NeogitDiffContextHighlight     = { bg = palette.bg2 },
     NeogitDiffContextCursor        = { bg = palette.bg1 },
-    NeogitDiffAdditions            = { fg = palette.bg_green , ctermfg = 2 },
+    NeogitDiffAdditions            = { fg = palette.bg_green, ctermfg = 2 },
     NeogitDiffAdd                  = { bg = palette.line_green, fg = palette.bg_green, ctermfg = 2 },
     NeogitDiffAddHighlight         = { bg = palette.line_green, fg = palette.green, ctermfg = 2 },
     NeogitDiffAddCursor            = { bg = palette.bg1, fg = palette.green, ctermfg = 2 },
@@ -201,6 +205,8 @@ function M.setup(config)
     NeogitDiffDelete               = { bg = palette.line_red, fg = palette.bg_red, ctermfg = 1 },
     NeogitDiffDeleteHighlight      = { bg = palette.line_red, fg = palette.red, ctermfg = 1 },
     NeogitDiffDeleteCursor         = { bg = palette.bg1, fg = palette.red, ctermfg = 1 },
+    NeogitDiffAddInline            = { bg = palette.inline_green, fg = palette.line_green, bold = palette.bold },
+    NeogitDiffDeleteInline         = { bg = palette.inline_red, fg = palette.bg0, bold = palette.bold },
     NeogitPopupSectionTitle        = { link = "Function" },
     NeogitPopupBranchName          = { link = "String" },
     NeogitPopupBold                = { bold = palette.bold },
