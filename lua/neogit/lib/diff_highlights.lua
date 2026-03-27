@@ -119,7 +119,7 @@ function M.apply(buf, regions)
           local ft = vim.filetype.match { filename = region.filepath:match("-> (.+)$") or region.filepath }
           local lang = ft and vim.treesitter.language.get_lang(ft)
 
-          if lang then
+          if lang and pcall(vim.treesitter.language.inspect, lang) then
             local source = table.concat(stripped, "\n")
             local ts_parser = vim.treesitter.get_string_parser(source, lang)
             ts_parser:parse()
