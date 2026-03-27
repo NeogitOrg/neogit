@@ -116,9 +116,10 @@ function M.apply(buf, regions)
       -- Treesitter syntax highlights
       if config.values.treesitter_diff_highlight then
         do
-          local lang = vim.filetype.match { filename = region.filepath:match("-> (.+)$") or region.filepath }
+          local ft = vim.filetype.match { filename = region.filepath:match("-> (.+)$") or region.filepath }
+          local lang = ft and vim.treesitter.language.get_lang(ft)
 
-          if lang and vim.treesitter.language.inspect(lang) then
+          if lang then
             local source = table.concat(stripped, "\n")
             local ts_parser = vim.treesitter.get_string_parser(source, lang)
             ts_parser:parse()
