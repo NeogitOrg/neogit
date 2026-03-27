@@ -95,6 +95,7 @@ M.Hunk = Component.new(function(props)
     folded = props.folded or false,
     context = true,
     hunk = props.hunk,
+    filepath = props.filepath,
   })
 end)
 
