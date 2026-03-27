@@ -16,10 +16,10 @@ RSpec.describe "Branch Popup", :git, :nvim, :popup do
       " Arguments                                                                      ",
       " -r Recurse submodules when checking out an existing branch (--recurse-submodule",
       "                                                                                ",
-      " Checkout                                Create           Do                    ",
-      " b branch/revision      c new branch     n new branch     C Configure...        ",
-      " l local branch         s new spin-off   S new spin-out   m rename              ",
-      " r recent branch        w new worktree   W new worktree   X reset               ",
+      " Checkout                                    Create           Do                ",
+      " b branch/revision    c checkout new branch  n new branch     C Configure...    ",
+      " l local branch       s new spin-off         S new spin-out   m rename          ",
+      " r recent branch      w new worktree         W new worktree   X reset           ",
       "                                                          D delete              "
     ]
   end
