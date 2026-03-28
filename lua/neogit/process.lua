@@ -348,8 +348,23 @@ function Process:spawn(cb)
 
     if self.buffer and not self.suppress_console then
       self.buffer:append(string.format("Process exited with code: %d", code))
+    end
 
-      if not self.buffer:is_visible() and code > 0 and self.on_error(res) then
+    -- Handle git hook failures and other errors
+    if code > 0 then
+      local should_show_error = self.on_error(res)
+      local is_hook_failure = self.git_hook and code > 0
+
+      -- For git hook failures, always show the Git Console
+      if is_hook_failure then
+        -- Simply show the existing buffer with the git hook output
+        if self.buffer then
+          self.buffer:show()
+        end
+      end
+
+      -- Handle normal error display logic
+      if should_show_error and not is_hook_failure then
         local output = {}
         local start = math.max(#res.stderr - 16, 1)
         for i = start, math.min(#res.stderr, start + 16) do
@@ -360,19 +375,21 @@ function Process:spawn(cb)
           local message =
             string.format("%s:\n\n%s", mask_command(table.concat(self.cmd, " ")), table.concat(output, "\n"))
           notification.warn(message)
-        elseif config.values.auto_show_console_on == "error" then
+        elseif config.values.auto_show_console_on == "error" and self.buffer then
           self.buffer:show()
         end
       end
+    end
 
-      if
-        not self.user_command
-        and config.values.auto_close_console
-        and self.buffer:is_visible()
-        and code == 0
-      then
-        self.buffer:close()
-      end
+    -- Close console on success if configured
+    if
+      self.buffer
+      and not self.user_command
+      and config.values.auto_close_console
+      and self.buffer:is_visible()
+      and code == 0
+    then
+      self.buffer:close()
     end
 
     self.stdin = nil
