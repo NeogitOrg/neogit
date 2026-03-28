@@ -409,6 +409,16 @@ describe("Neogit config", function()
         assert.True(vim.tbl_count(require("neogit.config").validate_config()) ~= 0)
       end)
 
+      it("should return invalid when sections.recent.hidden isn't a boolean", function()
+        config.values.sections.recent.hidden = "not a boolean"
+        assert.True(vim.tbl_count(require("neogit.config").validate_config()) ~= 0)
+      end)
+
+      it("should return invalid when sections.recent.always isn't a boolean", function()
+        config.values.sections.recent.always = "not a boolean"
+        assert.False(vim.tbl_count(require("neogit.config").validate_config()) ~= 0)
+      end)
+
       it("should return invalid when sections.recent.folded isn't a boolean", function()
         config.values.sections.recent.folded = "not a boolean"
         assert.True(vim.tbl_count(require("neogit.config").validate_config()) ~= 0)
