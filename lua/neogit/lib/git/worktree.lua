@@ -1,6 +1,7 @@
 local git = require("neogit.lib.git")
 local util = require("neogit.lib.util")
 local Path = require("plenary.path")
+local hook = require("neogit.lib.hook")
 
 ---@class NeogitGitWorktree
 local M = {}
@@ -10,6 +11,7 @@ local M = {}
 ---@param path string absolute path
 ---@return boolean, string
 function M.add(ref, path, params)
+  hook.run("PreWorktreeCreate", { ref = ref, path = path })
   local result = git.cli.worktree.add.arg_list(params or {}).args(path, ref).call()
   if result:success() then
     return true, ""
