@@ -6,6 +6,7 @@ local input = require("neogit.lib.input")
 local util = require("neogit.lib.util")
 local notification = require("neogit.lib.notification")
 local event = require("neogit.lib.event")
+local hook = require("neogit.lib.hook")
 local a = require("plenary.async")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
@@ -21,6 +22,8 @@ local function fetch_remote_branch(target)
 end
 
 local function checkout_branch(target, args)
+  hook.run("PreBranchCheckout", { branch_name = target })
+
   local result = git.branch.checkout(target, args)
   if result:failure() then
     notification.error(table.concat(result.stderr, "\n"))
@@ -63,6 +66,7 @@ local function spin_off_branch(checkout)
     return
   end
 
+  hook.run("PreBranchCreate", { branch_name = name })
   if not git.branch.create(name) then
     notification.warn("Branch " .. name .. " already exists.")
     return
@@ -73,6 +77,7 @@ local function spin_off_branch(checkout)
   local current_branch_name = git.branch.current_full_name()
 
   if checkout then
+    hook.run("PreBranchCheckout", { branch_name = name })
     git.cli.checkout.branch(name).call()
     event.send("BranchCheckout", { branch_name = name })
   end
@@ -83,6 +88,7 @@ local function spin_off_branch(checkout)
       assert(current_branch_name, "No current branch")
       git.log.update_ref(current_branch_name, upstream)
     else
+      hook.run("PreReset", { commit = name, mode = "hard" })
       git.cli.reset.hard.args(upstream).call()
       event.send("Reset", { commit = name, mode = "hard" })
     end
@@ -131,6 +137,7 @@ local function create_branch(popup, prompt, checkout, name)
     return
   end
 
+  hook.run("PreBranchCreate", { branch_name = name, base = base_branch })
   local success = git.branch.create(name, base_branch)
   if success then
     event.send("BranchCreate", { branch_name = name, base = base_branch })
@@ -188,6 +195,8 @@ function M.checkout_local_branch(popup)
   }
 
   if target then
+    hook.run("PreBranchCheckout", { branch_name = target })
+
     if vim.tbl_contains(remote_branches, target) then
       local result = git.branch.track(target, popup:get_arguments())
       if result:failure() then
@@ -246,6 +255,7 @@ function M.rename_branch()
     return
   end
 
+  hook.run("PreBranchRename", { branch_name = selected_branch, new_name = new_name })
   local result = git.cli.branch.move.args(selected_branch, new_name).call { await = true }
   if result:success() then
     notification.info(string.format("Renamed '%s' to '%s'", selected_branch, new_name))
@@ -292,6 +302,7 @@ function M.reset_branch(popup)
   end
 
   -- Reset the current branch to the desired state & update reflog
+  hook.run("PreBranchReset", { branch_name = current, resetting_to = to })
   local result = git.cli.reset.hard.args(to).call()
   if result:success() then
     local current = git.branch.current_full_name()
@@ -348,6 +359,7 @@ function M.delete_branch(popup)
       return
     end
 
+    hook.run("PreBranchDelete", { branch_name = branch_name })
     success = git.branch.delete(branch_name)
     if not success then -- Reset HEAD if unsuccessful
       git.cli.checkout.branch(branch_name).call()

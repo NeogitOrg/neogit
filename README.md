@@ -557,6 +557,33 @@ This works for just about everything that has an object-ID in git, and if you fi
 
 See the built-in documentation for a comprehensive list of highlight groups. If your theme doesn't style a particular group, we'll try our best to do a nice job.
 
+## Hooks
+
+Neogit supports hooks for the following actions:
+
+| Hook                 | Description                                      | Hook Data                                                            |
+| -------------------- | ------------------------------------------------ | -------------------------------------------------------------------- |
+| `PreStatusRefreshed` | Before a status is reloaded                      | `{}`                                                                 |
+| `PreCommit`          | Before a commit has been created                 | `{}`                                                                 |
+| `PrePush`            | Before a push is made                            | `{}`                                                                 |
+| `PrePull`            | Before a pull is made                            | `{}`                                                                 |
+| `PreFetch`           | Before a fetch is made                           | `{}`                                                                 |
+| `PreBranchCreate`    | Before a branch is created, starting from `base` | `{ branch_name: string, base: string? }`                             |
+| `PreBranchDelete`    | Before a branch is deleted                       | `{ branch_name: string }`                                            |
+| `PreBranchCheckout`  | Before a branch is checked out                   | `{ branch_name: string }`                                            |
+| `PreBranchReset`     | Before a branch is reset to a commit/branch      | `{ branch_name: string, resetting_to: string }`                      |
+| `PreBranchRename`    | Before a branch is renamed                       | `{ branch_name: string, new_name: string }`                          |
+| `PreRebase`          | Before a rebase is started                       | `{ commit: string }`                                                 |
+| `PreReset`           | Before a branch is reset to a certain commit     | `{ commit: string, mode: "soft"\|"mixed"\|"hard"\|"keep"\|"index" }` |
+| `PreTagCreate`       | Before a tag is placed on a certain commit       | `{ name: string, ref: string }`                                      |
+| `PreTagDelete`       | Before one or more tags are removed              | `{ names: string[] }`                                                |
+| `PreCherryPick`      | Before one or more commits are cherry-picked     | `{ commits: string[] }`                                              |
+| `PreMerge`           | Before a merge is started                        | `{ branch: string, args = string[] }`                                |
+| `PreStash`           | Before a stash is made                           | `{}`                                                                 |
+| `PreRefsRefreshed`   | Before refs are refreshed                        | `{}`                                                                 |
+| `PreDiffLoaded`      | Before a diff is loaded                          | `{?}`                                                                |
+| `PreBisect`          | Before a bisect is started                       | `{ type: string }`                                                   |
+| `PreWorktreeCreate`  | Before a worktree is created                     | `{ ref: string, path: string }`                                      |
 
 ## Events
 
