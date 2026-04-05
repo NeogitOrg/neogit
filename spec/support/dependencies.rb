@@ -24,4 +24,4 @@ end
 ensure_installed "nvim-lua/plenary.nvim"
 ensure_installed "nvim-telescope/telescope.nvim"
 ensure_installed "nvim-telescope/telescope-fzf-native.nvim", build: "make"
-ensure_installed "sindrets/diffview.nvim"
+ensure_installed "dlyongemallo/diffview.nvim"

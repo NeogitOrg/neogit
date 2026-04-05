@@ -289,7 +289,7 @@ to Neovim users.
         -- Neogit only provides inline diffs. If you want a more traditional way to look at diffs, you can use `diffview`.
         -- The diffview integration enables the diff popup.
         --
-        -- Requires you to have `sindrets/diffview.nvim` installed.
+        -- Requires you to have `dlyongemallo/diffview.nvim` installed.
         diffview = nil,
 
         -- Alternative diff viewer integration.
@@ -1462,7 +1462,7 @@ ref range.
 
 For these actions to become available, Neogit needs to have a diff viewer
 integration enabled. Supported viewers are:
-- `diffview.nvim`: https://github.com/sindrets/diffview.nvim
+- `diffview.nvim`: https://github.com/dlyongemallo/diffview.nvim
 - `codediff.nvim`: https://github.com/esmuellert/codediff.nvim
 
 By default, Neogit will auto-detect which viewer is available. You can
