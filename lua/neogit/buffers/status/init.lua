@@ -154,6 +154,7 @@ function M:open(kind)
     mappings = {
       v = {
         [mappings["Discard"]]                   = self:_action("v_discard"),
+        [mappings["Reverse"]]                   = self:_action("v_reverse"),
         [mappings["Stage"]]                     = self:_action("v_stage"),
         [mappings["Unstage"]]                   = self:_action("v_unstage"),
         [mappings["Untrack"]]                   = self:_action("v_untrack"),
@@ -200,6 +201,7 @@ function M:open(kind)
         [mappings["ShowRefs"]]                  = self:_action("n_show_refs"),
         [mappings["YankSelected"]]              = self:_action("n_yank_selected"),
         [mappings["Discard"]]                   = self:_action("n_discard"),
+        [mappings["Reverse"]]                   = self:_action("n_reverse"),
         [mappings["GoToNextHunkHeader"]]        = self:_action("n_go_to_next_hunk_header"),
         [mappings["GoToPreviousHunkHeader"]]    = self:_action("n_go_to_previous_hunk_header"),
         [mappings["InitRepo"]]                  = self:_action("n_init_repo"),

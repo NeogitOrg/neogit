@@ -709,6 +709,7 @@ function M.get_default_values()
         ["zC"] = "Depth1",
         ["zO"] = "Depth4",
         ["x"] = "Discard",
+        ["-"] = "Reverse",
         ["s"] = "Stage",
         ["S"] = "StageUnstaged",
         ["<c-s>"] = "StageAll",

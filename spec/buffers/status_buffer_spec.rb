@@ -84,6 +84,61 @@ RSpec.describe "Status Buffer", :git, :nvim do
     # end
   end
 
+  describe "reversing" do
+    before do
+      File.write("foo", "original content\n")
+      git.add("foo")
+      git.commit("initial commit")
+      File.write("foo", "modified content\n")
+      git.add("foo")
+      nvim.refresh
+    end
+
+    it "reverses a staged file back into the working tree" do
+      nvim.move_to_line("modified   foo", after: "Staged changes")
+      nvim.confirm(true)
+      nvim.keys("-")
+      await do
+        expect(File.read("foo")).to eq("original content\n")
+        expect(`git diff --cached --name-only`.strip).to eq("foo")
+      end
+    end
+
+    it "reverses all staged files when cursor is on the section header" do
+      nvim.move_to_line("Staged changes")
+      nvim.confirm(true)
+      nvim.keys("-")
+      await do
+        expect(File.read("foo")).to eq("original content\n")
+        expect(`git diff --cached --name-only`.strip).to eq("foo")
+      end
+    end
+
+    it "reverses a staged hunk back into the working tree" do
+      nvim.move_to_line("modified   foo", after: "Staged changes")
+      nvim.keys("<tab>") # expand hunk
+      nvim.move_to_line("+modified content")
+      nvim.confirm(true)
+      nvim.keys("-")
+      await do
+        expect(File.read("foo")).to eq("original content\n")
+        expect(`git diff --cached --name-only`.strip).to eq("foo")
+      end
+    end
+
+    it "warns and does nothing when trying to reverse unstaged changes" do
+      File.write("bar", "original bar\n")
+      git.add("bar")
+      git.commit("add bar")
+      File.write("bar", "modified bar\n")
+      nvim.refresh
+      nvim.move_to_line("modified   bar", after: "Unstaged changes")
+      nvim.keys("-")
+      expect(nvim.errors).to be_empty
+      expect(File.read("bar")).to eq("modified bar\n")
+    end
+  end
+
   describe "submodule navigation" do
     let(:submodule_path) { File.join("deps", "nested-submodule") }
     let(:submodule_repo_root) { File.expand_path(submodule_path) }

@@ -489,6 +489,7 @@ The following mappings can all be customized via the setup function.
         ["Q"]      = "Command",
         ["<tab>"]  = "Toggle",
         ["x"]      = "Discard",
+        ["-"]      = "Reverse",
         ["s"]      = "Stage",
         ["S"]      = "StageUnstaged",
         ["<c-s>"]  = "StageAll",
@@ -2201,7 +2202,41 @@ Actions:                                         *neogit_worktree_popup_actions*
 
 ==============================================================================
 Status Buffer                                             *neogit_status_buffer*
-(TODO)
+
+The status buffer is the main Neogit interface, showing the state of the
+working tree and index. It is opened via |:Neogit| or
+`require('neogit').open()`.
+
+  Actions (normal mode, default keys):
+
+  • `s` / `S` / `<c-s>`  Stage change at point / all unstaged / everything.
+  • `u` / `U`            Unstage change at point / everything staged.
+  • `x`                  Discard change at point (with confirmation).
+  • `-`                  Reverse the staged change at point back into the    *neogit_status_reverse*
+                         working tree, keeping it staged in the index.
+
+                         Works at hunk, file, and section granularity.
+                         Cursor position determines scope:
+                           - On the "Staged changes" section header → all staged files
+                           - On a filename → all hunks of that file
+                           - Inside an expanded hunk → that hunk only
+
+                         Only staged changes can be reversed; attempting to
+                         reverse untracked or unstaged changes shows a warning.
+
+                         Visual-mode `V` reverses only the selected lines
+                         within the hunk.
+
+  • `<tab>`              Toggle folding for the item at point.
+  • `<cr>`               Open the file at point in the editor.
+  • `{` / `}`            Jump to previous / next hunk header.
+  • `[c` / `]c`          Scroll the file preview up / down.
+
+  Popup shortcuts (default keys):
+      `A` Cherry-pick, `b` Branch, `B` Bisect, `c` Commit, `d` Diff,
+      `f` Fetch, `i` Ignore, `l` Log, `L` Margin, `m` Merge, `p` Pull,
+      `P` Push, `r` Rebase, `M` Remote, `X` Reset, `v` Revert, `t` Tag,
+      `w` Worktree, `Z` Stash.
 
 Untracked Files                                 *neogit_status_buffer_untracked*
   Neogit respects status.showUntrackedFiles. It can be set to "no" to hide
