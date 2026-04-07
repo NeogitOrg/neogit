@@ -822,6 +822,7 @@ function Buffer.create(config)
     vim.api.nvim_set_hl(hl_ns, "FloatBorder", { link = "NeogitFloatBorder" })
     vim.api.nvim_set_hl(hl_ns, "WinSeparator", { link = "NeogitWinSeparator" })
     vim.api.nvim_set_hl(hl_ns, "CursorLineNr", { link = "NeogitCursorLineNr" })
+    vim.api.nvim_set_hl(hl_ns, "CursorLine", { link = "NeogitCursorLine" })
 
     if (config.disable_line_numbers == nil) or config.disable_line_numbers then
       buffer:set_window_option("number", false)
@@ -987,12 +988,10 @@ function Buffer.create(config)
             buffer:place_sign(line, fold .. string.lower(foldmarkers[line]), {
               namespace = "FoldSigns",
               highlight = "NeogitSubtleText",
-              cursor_hl = "NeogitCursorLine",
             })
           else
             buffer:place_sign(line, "NeogitBlank", {
               namespace = "FoldSigns",
-              cursor_hl = "NeogitCursorLine",
             })
           end
         end
