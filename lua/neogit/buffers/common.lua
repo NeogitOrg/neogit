@@ -22,7 +22,7 @@ M.Diff = Component.new(function(diff)
   return col.tag("Diff")({
     text(string.format("%s %s", diff.kind, diff.file), { line_hl = "NeogitDiffHeader" }),
     M.DiffHunks(diff),
-  }, { foldable = true, folded = false, context = true })
+  }, { foldable = true, folded = false, context = true, diff = diff })
 end)
 
 M.DiffHunks = Component.new(function(diff)

@@ -4,6 +4,8 @@ local ui = require("neogit.buffers.commit_view.ui")
 local git = require("neogit.lib.git")
 local config = require("neogit.config")
 local popups = require("neogit.popups")
+local a = require("plenary.async")
+local input = require("neogit.lib.input")
 local commit_view_maps = require("neogit.config").get_reversed_commit_view_maps()
 local status_maps = require("neogit.config").get_reversed_status_maps()
 local notification = require("neogit.lib.notification")
@@ -473,6 +475,40 @@ function M:open(kind)
         [status_maps["Toggle"]] = function()
           pcall(vim.cmd, "normal! za")
         end,
+        [status_maps["Reverse"]] = a.void(function()
+          local item = self.buffer.ui:get_hunk_or_filename_under_cursor()
+          local message, hunks
+
+          if item and item.hunk then
+            -- Hunk level: reverse the single hunk under cursor
+            message = "Reverse hunk?"
+            hunks = { item.hunk }
+          else
+            -- Check if cursor is on a diff header — file level
+            local diff_component = self.buffer.ui:get_component_under_cursor(function(c)
+              return c.options.diff ~= nil
+            end)
+
+            if diff_component then
+              local diff = diff_component.options.diff
+              message = ("Reverse %q?"):format(diff.file)
+              hunks = diff.hunks
+            else
+              -- All diffs in the commit
+              message = ("Reverse all changes from %s?"):format(self.commit_info.oid:sub(1, 8))
+              hunks = util.flat_map(self.commit_info.diffs, function(diff)
+                return diff.hunks
+              end)
+            end
+          end
+
+          if #(hunks or {}) > 0 and input.get_permission(message) then
+            for _, hunk in ipairs(hunks) do
+              local patch = git.index.generate_patch(hunk, { reverse = true })
+              git.index.apply(patch, { reverse = true })
+            end
+          end
+        end),
       },
     },
     render = function()

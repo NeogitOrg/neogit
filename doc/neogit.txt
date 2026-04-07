@@ -2329,6 +2329,17 @@ Mappings (normal mode):
 
   • `za` / `<tab>` Toggle folding for the current section.
 
+  • `-`            Reverse the change at point back into the working tree.
+                   (|neogit_setup_mappings|: "Reverse" in status)
+                   Works at three granularities:
+                   - Cursor on a hunk line → reverses that hunk only.
+                   - Cursor on a diff header (e.g. "new file foo.lua") → reverses
+                     all hunks for that file.
+                   - Cursor on commit metadata or anywhere outside a diff →
+                     reverses every change introduced by the commit.
+                   In all cases the change is applied to the working tree only;
+                   nothing is staged.
+
   • Popup shortcuts honour |neogit_setup_mappings|, default keys:
       - `A` Cherry-pick, `b` Branch, `B` Bisect, `c` Commit, `d` Diff,
         `f` Fetch, `i` Ignore, `l` Log, `m` Merge, `p` Pull, `P` Push,
