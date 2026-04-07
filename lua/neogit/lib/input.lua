@@ -1,3 +1,6 @@
+local a = require("plenary.async")
+local input = a.wrap(vim.ui.input, 2)
+
 local M = {}
 
 --- Provides the user with a confirmation
@@ -57,23 +60,20 @@ end
 function M.get_user_input(prompt, opts)
   opts = vim.tbl_extend("keep", opts or {}, { strip_spaces = false, separator = ": " })
 
-  vim.fn.inputsave()
-
   if opts.prepend then
     vim.defer_fn(function()
       vim.api.nvim_input(opts.prepend)
     end, 10)
   end
 
-  local status, result = pcall(vim.fn.input, {
+  local status, result = pcall(input, {
     prompt = ("%s%s"):format(prompt, opts.separator),
     default = opts.default,
     completion = opts.completion,
     cancelreturn = opts.cancel,
   })
 
-  vim.fn.inputrestore()
-  if not status then
+  if not status or not result then
     return nil
   end
 
