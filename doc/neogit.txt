@@ -1032,10 +1032,22 @@ Actions:                                      *neogit_cherry_pick_popup_actions*
     and you have to resolve the conflicts and then finish the process manually.
 
   • Spinout                                         *neogit_cherry_pick_spinout*
-    (Not yet implemented)
+    This command moves the selected COMMITS from the current branch onto a new
+    branch BRANCH, removing them from the former. When this command succeeds,
+    then the same branch is current as before.
+
+    Applying the commits on the other branch or removing them from the current
+    branch can lead to conflicts. When that happens, then this command stops
+    and you have to resolve the conflicts and then finish the process manually.
 
   • Spinoff                                         *neogit_cherry_pick_spinoff*
-    (Not yet implemented)
+    This command moves the selected COMMITS from the current branch onto a new
+    branch BRANCH, removing them from the former. When this command succeeds,
+    then the new branch is checked out.
+
+    Applying the commits on the other branch or removing them from the current
+    branch can lead to conflicts. When that happens, then this command stops
+    and you have to resolve the conflicts and then finish the process manually.
 
 
   When a Cherry-Pick is in progress, the following actions are available:
