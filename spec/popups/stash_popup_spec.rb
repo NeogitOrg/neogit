@@ -133,4 +133,48 @@ RSpec.describe "Stash Popup", :git, :nvim, :popup do
       expect(git.status.changed.keys).to be_empty
     end
   end
+
+  describe "Pop stash" do
+    before do
+      File.write("testfile", "modified by stash")
+      `git stash`
+      nvim.refresh
+    end
+
+    it "restores stashed changes and removes the stash entry" do
+      nvim.keys("p")
+      nvim.keys("<cr>") # select first stash
+      expect(File.read("testfile")).to eq("modified by stash")
+      expect(`git stash list`).to be_empty
+    end
+  end
+
+  describe "Apply stash" do
+    before do
+      File.write("testfile", "applied content")
+      `git stash`
+      nvim.refresh
+    end
+
+    it "restores stashed changes without removing the stash entry" do
+      nvim.keys("a")
+      nvim.keys("<cr>") # select first stash
+      expect(File.read("testfile")).to eq("applied content")
+      expect(`git stash list`).not_to be_empty
+    end
+  end
+
+  describe "Drop stash" do
+    before do
+      File.write("testfile", "to be dropped")
+      `git stash`
+      nvim.refresh
+    end
+
+    it "removes the stash entry" do
+      nvim.keys("d")
+      nvim.keys("<cr>") # select first stash
+      expect(`git stash list`).to be_empty
+    end
+  end
 end
