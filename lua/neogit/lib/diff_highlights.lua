@@ -38,6 +38,29 @@ local function tokenize(s)
   return tokens
 end
 
+--- Merge adjacent spans that are separated by a single underscore character.
+--- This handles identifiers like `foo_bar` where the diff splits on the `_`.
+---@param spans table  List of {start_byte, end_byte} pairs (0-indexed, end exclusive)
+---@param s string     The original string the spans index into
+---@return table
+local function merge_underscore_spans(spans, s)
+  if #spans < 2 then
+    return spans
+  end
+  local merged = { spans[1] }
+  for i = 2, #spans do
+    local prev = merged[#merged]
+    local curr = spans[i]
+    -- gap == 1 means exactly one byte separates the two spans
+    if curr[1] - prev[2] == 1 and sub(s, prev[2] + 1, prev[2] + 1) == "_" then
+      merged[#merged] = { prev[1], curr[2] }
+    else
+      merged[#merged + 1] = curr
+    end
+  end
+  return merged
+end
+
 --- Diff two strings at word granularity via vim.text.diff
 --- Tokens are \w+ (word) and \W+ (non-word) runs. Each token becomes one diff line.
 --- Returns the changed spans and a distance ratio (0.0 = identical, 1.0 = nothing in common).
@@ -101,6 +124,9 @@ function M.word_diff_spans(old, new)
       new_spans[#new_spans + 1] = { new_tokens[hunk[3]][1], new_tokens[hunk[3] + ins - 1][2] }
     end
   end
+
+  old_spans = merge_underscore_spans(old_spans, old)
+  new_spans = merge_underscore_spans(new_spans, new)
 
   return old_spans, new_spans, changed / total_tokens
 end
