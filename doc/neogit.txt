@@ -1603,7 +1603,29 @@ Actions:                                            *neogit_merge_popup_actions*
 ==============================================================================
 Remote Popup                                               *neogit_remote_popup*
 
-(TODO)
+Actions:                                            *neogit_remote_popup_actions*
+
+  • Add                                                    *neogit_remote_add*
+    Add a new remote. Prompts for a name and URL. Optionally sets
+    remote.pushDefault and fetches refs after adding.
+
+  • Rename                                             *neogit_remote_rename*
+    Rename an existing remote.
+
+  • Remove                                             *neogit_remote_remove*
+    Remove an existing remote.
+
+  • Configure...                                    *neogit_remote_configure*
+    Open the Remote Config popup for the selected remote.
+
+  • Prune stale branches                       *neogit_remote_prune_branches*
+    Prune stale tracking branches for the selected remote.
+
+  • Unshallow remote                              *neogit_remote_unshallow*
+    Convert a shallow remote into a full one by fetching with --unshallow.
+    If the remote has exactly one fetch refspec and it does not contain a
+    wildcard, you are offered the option to replace it with the standard
+    refspec (+refs/heads/*:refs/remotes/<remote>/*) first.
 
 ==============================================================================
 Remote Config Popup                                 *neogit_remote_config_popup*

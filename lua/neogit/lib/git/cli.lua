@@ -512,6 +512,7 @@ local configurations = {
       global = "--global",
       list = "--list",
       _get = "--get",
+      _get_all = "--get-all",
       _add = "--add",
       _unset = "--unset",
       null = "--null",
@@ -530,6 +531,11 @@ local configurations = {
       get = function(tbl)
         return function(path)
           return tbl._get.args(path)
+        end
+      end,
+      get_all = function(tbl)
+        return function(path)
+          return tbl._get_all.args(path)
         end
       end,
     },

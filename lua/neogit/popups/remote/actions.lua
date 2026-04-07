@@ -142,8 +142,30 @@ end
 -- function M.update_default_branch()
 -- end
 
--- https://github.com/magit/magit/blob/430a52c4b3f403ba8b0f97b4b67b868298dd60f3/lisp/magit-remote.el#L291
--- function M.unshallow_remote()
--- end
+function M.unshallow(popup)
+  local remotes = git.remote.list()
+  if #remotes == 0 then
+    notification.info("No remotes found")
+    return
+  end
+
+  local remote = git.branch.upstream_remote()
+    or FuzzyFinderBuffer.new(remotes):open_async { prompt_prefix = "Unshallow remote" }
+  if not remote then
+    return
+  end
+
+  local refspec_key = string.format("remote.%s.fetch", remote)
+  local refspecs = git.config.get_all_values(refspec_key)
+
+  if #refspecs == 1 and not refspecs[1]:find("*", 1, true) then
+    local standard = string.format("+refs/heads/*:refs/remotes/%s/*", remote)
+    if input.get_permission(string.format("Replace refspec %s with %s?", refspecs[1], standard)) then
+      git.config.set(refspec_key, standard)
+    end
+  end
+
+  git.fetch.fetch_interactive(remote, "", { "--unshallow" })
+end
 
 return M
