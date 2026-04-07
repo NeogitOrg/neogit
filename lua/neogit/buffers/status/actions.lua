@@ -181,9 +181,9 @@ M.v_discard = function(self)
       end
 
       if #staged_files_modified > 0 then
-        local paths = git.index.reset(util.map(staged_files_modified, function(item)
+        local paths = util.map(staged_files_modified, function(item)
           return item.escaped_path
-        end))
+        end)
         git.index.reset(paths)
         git.index.checkout(paths)
       end
