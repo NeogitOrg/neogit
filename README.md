@@ -332,7 +332,7 @@ neogit.setup {
     -- Neogit only provides inline diffs. If you want a more traditional way to look at diffs, you can use `diffview`.
     -- The diffview integration enables the diff popup.
     --
-    -- Requires you to have `dlyongemallo/diffview.nvim` installed.
+    -- Requires you to have `dlyongemallo/diffview.nvim` v0.30+ installed.
     diffview = nil,
 
     -- Alternative diff viewer integration.
