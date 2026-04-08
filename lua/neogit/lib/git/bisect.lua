@@ -1,5 +1,6 @@
 local git = require("neogit.lib.git")
 local event = require("neogit.lib.event")
+local hook = require("neogit.lib.hook")
 
 ---@class NeogitGitBisect
 local M = {}
@@ -25,6 +26,7 @@ end
 ---@param good_revision string
 ---@param args? table
 function M.start(bad_revision, good_revision, args)
+  hook.run("PreBisect", { type = "start" })
   local result =
     git.cli.bisect.args("start").arg_list(args).args(bad_revision, good_revision).call { long = true }
 

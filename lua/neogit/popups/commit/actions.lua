@@ -7,6 +7,7 @@ local input = require("neogit.lib.input")
 local notification = require("neogit.lib.notification")
 local config = require("neogit.config")
 local a = require("plenary.async")
+local hook = require("neogit.lib.hook")
 
 ---@param popup PopupData
 ---@return boolean
@@ -34,6 +35,7 @@ local function confirm_modifications()
 end
 
 local function do_commit(popup, cmd)
+  hook.run("PreCommit")
   client.wrap(cmd.arg_list(popup:get_arguments()), {
     autocmd = "NeogitCommitComplete",
     msg = {
