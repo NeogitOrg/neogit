@@ -5,6 +5,7 @@ local util = require("neogit.lib.util")
 local git = require("neogit.lib.git")
 local logger = require("neogit.logger")
 local process = require("neogit.process")
+local event = require("neogit.lib.event")
 
 local DiffViewBuffer = require("neogit.buffers.diff")
 
@@ -101,6 +102,7 @@ function M:open(kind)
         self.diff_view = nil
       end
 
+      event.send("EditorClosed")
       logger.debug("[EDITOR] Done cleaning up")
     end,
     after = function(buffer)

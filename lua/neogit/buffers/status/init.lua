@@ -263,6 +263,7 @@ function M:open(kind)
       -- in order to show the user the correct state.
       ["NeogitReset"] = self:deferred_refresh("reset"),
       ["NeogitBranchReset"] = self:deferred_refresh("reset_branch"),
+      ["NeogitEditorClosed"] = self:deferred_refresh("editor_closed"),
     },
     autocmds = {
       ["FocusGained"] = self:deferred_refresh("focused", 10),
