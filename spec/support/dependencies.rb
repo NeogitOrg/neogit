@@ -4,7 +4,7 @@ def dir_name(name)
   name.match(%r{[^/]+/(?<dir_name>[^\.]+)})[:dir_name]
 end
 
-def ensure_installed(name, build: nil)
+def ensure_installed(name, build: nil, branch: nil)
   tmp = File.join(PROJECT_DIR, "tmp")
   FileUtils.mkdir_p(tmp)
 
@@ -14,7 +14,9 @@ def ensure_installed(name, build: nil)
 
   puts "Downloading dependency #{name} to #{dir}"
   Dir.mkdir(dir)
-  Git.clone("git@github.com:#{name}.git", dir, filter: "tree:0")
+  opts = { filter: "tree:0" }
+  opts[:branch] = branch if branch
+  Git.clone("git@github.com:#{name}.git", dir, **opts)
   return unless build.present?
 
   puts "Building #{name} via #{build}"
@@ -24,4 +26,4 @@ end
 ensure_installed "nvim-lua/plenary.nvim"
 ensure_installed "nvim-telescope/telescope.nvim"
 ensure_installed "nvim-telescope/telescope-fzf-native.nvim", build: "make"
-ensure_installed "sindrets/diffview.nvim"
+ensure_installed "dlyongemallo/diffview.nvim", branch: "v0.30"
