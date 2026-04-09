@@ -35,7 +35,7 @@ Here's an example spec for [Lazy](https://github.com/folke/lazy.nvim), but you'r
     "nvim-lua/plenary.nvim",         -- required
 
     -- Only one of these is needed.
-    "sindrets/diffview.nvim",        -- optional
+    "dlyongemallo/diffview.nvim",        -- optional
     "esmuellert/codediff.nvim",      -- optional
 
     -- For a custom log pager
@@ -332,7 +332,7 @@ neogit.setup {
     -- Neogit only provides inline diffs. If you want a more traditional way to look at diffs, you can use `diffview`.
     -- The diffview integration enables the diff popup.
     --
-    -- Requires you to have `sindrets/diffview.nvim` installed.
+    -- Requires you to have `dlyongemallo/diffview.nvim` installed.
     diffview = nil,
 
     -- Alternative diff viewer integration.
