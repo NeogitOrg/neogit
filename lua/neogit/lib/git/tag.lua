@@ -45,10 +45,8 @@ end
 ---@param tagname string
 ---@return string|nil
 function M.message(tagname)
-  local result = git.cli["for-each-ref"]
-    .format("%(contents)")
-    .args("refs/tags/" .. tagname)
-    .call({ hidden = true })
+  local result =
+    git.cli["for-each-ref"].format("%(contents)").args("refs/tags/" .. tagname).call { hidden = true }
   local msg = table.concat(result.stdout, "\n"):gsub("%s+$", "")
   return msg ~= "" and msg or nil
 end

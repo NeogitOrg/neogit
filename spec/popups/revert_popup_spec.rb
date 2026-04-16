@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe "Revert Popup", :git, :nvim, :popup do # rubocop:disable RSpec/EmptyExampleGroup
+RSpec.describe "Revert Popup", :git, :nvim, :popup do
   let(:keymap) { "v" }
 
   let(:view) do

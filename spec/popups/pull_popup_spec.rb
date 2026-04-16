@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe "Pull Popup", :git, :nvim, :popup do # rubocop:disable RSpec/EmptyExampleGroup
+RSpec.describe "Pull Popup", :git, :nvim, :popup do
   let(:keymap) { "p" }
   let(:view) do
     [

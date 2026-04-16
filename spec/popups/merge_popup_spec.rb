@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe "Merge Popup", :git, :nvim, :popup do # rubocop:disable RSpec/EmptyExampleGroup
+RSpec.describe "Merge Popup", :git, :nvim, :popup do
   let(:keymap) { "m" }
   let(:view) do
     [

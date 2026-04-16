@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe "Bisect Popup", :git, :nvim, :popup do # rubocop:disable RSpec/EmptyExampleGroup
+RSpec.describe "Bisect Popup", :git, :nvim, :popup do
   let(:keymap) { "B" }
   let(:view) do
     [
