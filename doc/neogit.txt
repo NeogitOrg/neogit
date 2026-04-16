@@ -2165,7 +2165,13 @@ Actions:                                              *neogit_tag_popup_actions*
     Creates a new TAG at specified REV.
 
   • Release                                                 *neogit_tag_release*
-    (Not yet implemented)
+    Creates a release tag on HEAD. Prompts for a tag name, using the highest
+    existing tag as the default so the user can increment the version.
+
+    When --annotate is enabled, also prompts for a tag message. The proposed
+    message is derived from the previous tag's message (with the old version
+    string replaced by the new one), or falls back to "Project-Name X.Y.Z"
+    based on the repository directory name and the new version.
 
   • Delete                                                   *neogit_tag_delete*
     Deletes one or more tags.
