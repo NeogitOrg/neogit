@@ -142,7 +142,7 @@ end
 -- function M.update_default_branch()
 -- end
 
-function M.unshallow(popup)
+function M.unshallow(_)
   local remotes = git.remote.list()
   if #remotes == 0 then
     notification.info("No remotes found")
