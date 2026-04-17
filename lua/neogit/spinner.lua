@@ -22,6 +22,7 @@ vim.api.nvim_create_autocmd("CmdlineLeave", {
 ---@field timer uv_timer_t
 local Spinner = {}
 Spinner.__index = Spinner
+Spinner.__current = nil
 
 ---@return Spinner
 function Spinner.new(text)
@@ -48,6 +49,11 @@ function Spinner.new(text)
 end
 
 function Spinner:start()
+  if Spinner.__current then
+    Spinner.__current:stop()
+  end
+  Spinner.__current = self
+
   if not self.timer then
     self.timer = assert(vim.uv.new_timer())
     self.timer:start(
@@ -83,6 +89,8 @@ function Spinner:stop()
       status = "success",
       source = "neogit",
     })
+
+    Spinner.__current = nil
 
     if not timer:is_closing() then
       timer:close()
