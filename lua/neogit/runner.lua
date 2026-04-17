@@ -38,7 +38,7 @@ local function handle_interactive_authenticity(line)
   logger.debug("[RUNNER]: Confirming whether to continue with unauthenticated host")
 
   local prompt = line
-  return input.get_user_input(
+  return input.get_user_input_blocking(
     "The authenticity of the host can't be established." .. prompt .. "",
     { cancel = "__CANCEL__" }
   ) or "__CANCEL__"
@@ -50,7 +50,7 @@ local function handle_interactive_username(line)
   logger.debug("[RUNNER]: Asking for username")
 
   local prompt = line:match("(.*:?):.*")
-  return input.get_user_input(prompt, { cancel = "__CANCEL__" }) or "__CANCEL__"
+  return input.get_user_input_blocking(prompt, { cancel = "__CANCEL__" }) or "__CANCEL__"
 end
 
 ---@param line string
