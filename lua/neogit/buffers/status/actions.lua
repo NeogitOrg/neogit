@@ -181,9 +181,9 @@ M.v_discard = function(self)
       end
 
       if #staged_files_modified > 0 then
-        local paths = git.index.reset(util.map(staged_files_modified, function(item)
+        local paths = util.map(staged_files_modified, function(item)
           return item.escaped_path
-        end))
+        end)
         git.index.reset(paths)
         git.index.checkout(paths)
       end
@@ -1657,6 +1657,113 @@ M.n_prev_section = function(self)
 
     self.buffer:win_exec("norm! gg")
   end
+end
+
+---@param self StatusBuffer
+---@return fun(): nil
+M.n_reverse = function(self)
+  return a.void(function()
+    git.index.update()
+
+    local selection = self.buffer.ui:get_selection()
+    if not selection.section then
+      return
+    end
+
+    local section = selection.section.name
+
+    if section == "untracked" then
+      notification.warn("Cannot reverse untracked changes")
+      return
+    end
+
+    if section == "unstaged" then
+      notification.warn("Cannot reverse unstaged changes")
+      return
+    end
+
+    if section ~= "staged" then
+      return
+    end
+
+    local message, action
+    local refresh = {}
+
+    if selection.item and selection.item.first == fn.line(".") then -- Reverse File
+      message = ("Reverse %q?"):format(selection.item.name)
+      action = function()
+        for _, hunk in ipairs(selection.item.diff and selection.item.diff.hunks or {}) do
+          local patch = git.index.generate_patch(hunk, { reverse = true })
+          git.index.apply(patch, { reverse = true })
+        end
+      end
+      refresh = { update_diffs = { "staged:" .. selection.item.name } }
+    elseif selection.item then -- Reverse Hunk
+      local hunk =
+        self.buffer.ui:item_hunks(selection.item, selection.first_line, selection.last_line, false)[1]
+      message = "Reverse hunk?"
+      action = function()
+        local patch = git.index.generate_patch(hunk, { reverse = true })
+        git.index.apply(patch, { reverse = true })
+      end
+      refresh = { update_diffs = { "staged:" .. selection.item.name } }
+    else -- Reverse Section
+      message = ("Reverse %s files?"):format(#selection.section.items)
+      action = function()
+        for _, item in ipairs(selection.section.items) do
+          for _, hunk in ipairs(item.diff and item.diff.hunks or {}) do
+            local patch = git.index.generate_patch(hunk, { reverse = true })
+            git.index.apply(patch, { reverse = true })
+          end
+        end
+      end
+      refresh = { update_diffs = { "staged:*" } }
+    end
+
+    if action and input.get_permission(message) then
+      action()
+      self:dispatch_refresh(refresh, "n_reverse")
+    end
+  end)
+end
+
+---@param self StatusBuffer
+---@return fun(): nil
+M.v_reverse = function(self)
+  return a.void(function()
+    local selection = self.buffer.ui:get_selection()
+
+    local patches = {}
+    local invalidated_diffs = {}
+
+    for _, section in ipairs(selection.sections) do
+      if section.name == "untracked" or section.name == "unstaged" then
+        notification.warn("Cannot reverse untracked or unstaged changes")
+        return
+      end
+
+      if section.name == "staged" then
+        for _, item in ipairs(section.items) do
+          local hunks = self.buffer.ui:item_hunks(item, selection.first_line, selection.last_line, true)
+          table.insert(invalidated_diffs, "*:" .. item.name)
+
+          for _, hunk in ipairs(hunks) do
+            table.insert(
+              patches,
+              git.index.generate_patch(hunk, { from = hunk.from, to = hunk.to, reverse = true })
+            )
+          end
+        end
+      end
+    end
+
+    if #patches > 0 and input.get_permission("Reverse selection?") then
+      for _, patch in ipairs(patches) do
+        git.index.apply(patch, { reverse = true })
+      end
+      self:dispatch_refresh({ update_diffs = invalidated_diffs }, "v_reverse")
+    end
+  end)
 end
 
 return M

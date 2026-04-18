@@ -5,13 +5,13 @@ local _paused = false
 vim.api.nvim_create_autocmd("CmdlineEnter", {
   callback = function()
     _paused = true
-  end
+  end,
 })
 
 vim.api.nvim_create_autocmd("CmdlineLeave", {
   callback = function()
     _paused = false
-  end
+  end,
 })
 
 ---@class Spinner
@@ -22,6 +22,7 @@ vim.api.nvim_create_autocmd("CmdlineLeave", {
 ---@field timer uv_timer_t
 local Spinner = {}
 Spinner.__index = Spinner
+Spinner.__current = nil
 
 ---@return Spinner
 function Spinner.new(text)
@@ -48,6 +49,11 @@ function Spinner.new(text)
 end
 
 function Spinner:start()
+  if Spinner.__current then
+    Spinner.__current:stop()
+  end
+  Spinner.__current = self
+
   if not self.timer then
     self.timer = assert(vim.uv.new_timer())
     self.timer:start(
@@ -60,16 +66,12 @@ function Spinner:start()
 
         self.count = self.count + 1
         local step = self.pattern[(self.count % #self.pattern) + 1]
-        vim.api.nvim_echo(
-          { { step .. " " .. self.text, "" } },
-          false,
-          {
-            id = "neogit-spinner",
-            kind = "progress",
-            status = "running",
-            source = "neogit",
-          }
-        )
+        vim.api.nvim_echo({ { step .. " " .. self.text, "" } }, false, {
+          id = "neogit-spinner",
+          kind = "progress",
+          status = "running",
+          source = "neogit",
+        })
       end)
     )
   end
@@ -81,16 +83,14 @@ function Spinner:stop()
     self.timer = nil
     timer:stop()
 
-    vim.api.nvim_echo(
-      { { "", "" } },
-      false,
-      {
-        id = "neogit-spinner",
-        kind = "progress",
-        status = "success",
-        source = "neogit",
-      }
-    )
+    vim.api.nvim_echo({ { "", "" } }, false, {
+      id = "neogit-spinner",
+      kind = "progress",
+      status = "success",
+      source = "neogit",
+    })
+
+    Spinner.__current = nil
 
     if not timer:is_closing() then
       timer:close()
