@@ -41,10 +41,86 @@ function M.create_tag(popup)
   end
 end
 
---TODO:
---- Create a release tag for `HEAD'.
----@param _ table
-function M.create_release(_) end
+--- Extracts the version string from a tag name (e.g. "v1.2.3" → "1.2.3").
+---@param tag string
+---@return string|nil
+local function extract_version(tag)
+  return tag:match("%d[%d%.]*")
+end
+
+--- Derives a project name from the current working directory for use in tag messages.
+--- e.g. "/path/to/foo-bar" → "Foo-Bar"
+---@return string
+local function project_name()
+  local basename = vim.fn.fnamemodify(git.repo.worktree_root, ":t")
+  local parts = {}
+  for part in basename:gmatch("[^%-_]+") do
+    table.insert(parts, part:sub(1, 1):upper() .. part:sub(2))
+  end
+  return table.concat(parts, "-")
+end
+
+--- Create a release tag for HEAD.
+--- Prompts for a tag name using the highest existing tag as the default so the
+--- user can simply increment the version. When --annotate is enabled, also
+--- prompts for a message, proposing one derived from the previous tag's message
+--- (with the old version replaced by the new one) or "Project-Name X.Y.Z".
+---@param popup PopupData
+function M.create_release(popup)
+  local highest = git.tag.highest()
+
+  local tag_name = input.get_user_input("Create release tag", {
+    default = highest,
+    strip_spaces = true,
+    completion = "customlist,v:lua.require'neogit.lib.git'.refs.list_tags",
+  })
+  if not tag_name then
+    return
+  end
+
+  local args = popup:get_arguments()
+  local message
+
+  if vim.tbl_contains(args, "--annotate") then
+    local proposed
+
+    if highest then
+      local old_msg = git.tag.message(highest)
+      local old_ver = extract_version(highest)
+      local new_ver = extract_version(tag_name)
+
+      if old_msg and old_ver and new_ver then
+        proposed = old_msg:gsub(vim.pesc(old_ver), new_ver, 1)
+      end
+    end
+
+    if not proposed then
+      local ver = extract_version(tag_name)
+      proposed = project_name() .. " " .. (ver or tag_name)
+    end
+
+    message = input.get_user_input("Tag message", { default = proposed })
+    if not message then
+      return
+    end
+  end
+
+  local tag_args = utils.merge(args, { tag_name })
+  if message then
+    tag_args = utils.merge(tag_args, { "-m", message })
+  end
+
+  local code = client.wrap(git.cli.tag.arg_list(tag_args), {
+    autocmd = "NeogitTagComplete",
+    msg = {
+      success = "Created release tag " .. tag_name,
+      fail = "Failed to create release tag " .. tag_name,
+    },
+  })
+  if code == 0 then
+    event.send("TagCreate", { name = tag_name, ref = "HEAD" })
+  end
+end
 
 --- Delete one or more tags.
 --- If there are multiple tags then offer to delete those.

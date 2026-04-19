@@ -24,5 +24,5 @@ RSpec.describe "Cherry Pick Popup", :git, :nvim, :popup do # rubocop:disable RSp
   end
 
   %w[-m =s -F -x -e -s -S].each { include_examples "argument", _1 }
-  %w[A a m d h].each { include_examples "interaction", _1 }
+  %w[A a m d h n s].each { include_examples "interaction", _1 }
 end

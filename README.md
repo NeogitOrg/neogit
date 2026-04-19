@@ -38,6 +38,9 @@ Here's an example spec for [Lazy](https://github.com/folke/lazy.nvim), but you'r
     "sindrets/diffview.nvim",        -- optional
     "esmuellert/codediff.nvim",      -- optional
 
+    -- For a custom log pager
+    "m00qek/baleia.nvim",            -- optional
+
     -- Only one of these is needed.
     "nvim-telescope/telescope.nvim", -- optional
     "ibhagwan/fzf-lua",              -- optional
@@ -123,6 +126,10 @@ You can configure neogit by running the `require('neogit').setup {}` function, p
 local neogit = require("neogit")
 
 neogit.setup {
+  -- Use Treesitter to apply syntax highlighting to diff hunks
+  treesitter_diff_highlight = true,
+  -- Apply word-diff highlights to diff hunks
+  word_diff_highlight = true,
   -- Hides the hints at the top of the status buffer
   disable_hint = false,
   -- Disables changing the buffer highlights based on where the cursor is.
@@ -152,6 +159,8 @@ neogit.setup {
   -- Show relative date by default. When set, use `strftime` to display dates
   commit_date_format = nil,
   log_date_format = nil,
+  -- When set, used to format the diff. Requires *baleia* to colorize text with ANSI escape sequences. An example for `Delta` is `{ 'delta', '--width', '117' }`. For `Delta`, hyperlinks must be disabled when called by `neogit`, for text to be colorized properly.
+  log_pager = nil,
   -- Show message with spinning animation when a git command is running.
   process_spinner = false,
   -- Used to generate URL's for branch popup action "pull request", "open commit" and "open tree"

@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe "Pull Popup", :git, :nvim, :popup do # rubocop:disable RSpec/EmptyExampleGroup
+RSpec.describe "Pull Popup", :git, :nvim, :popup do
   let(:keymap) { "p" }
   let(:view) do
     [
@@ -24,4 +24,26 @@ RSpec.describe "Pull Popup", :git, :nvim, :popup do # rubocop:disable RSpec/Empt
   end
 
   %w[r -f -r -a -t -F p u e C].each { include_examples "interaction", _1 }
+
+  describe "Actions" do
+    describe "Pull from elsewhere", :with_remote_origin do
+      before do
+        git.push("origin", "master")
+        File.write("remote_file.txt", "from remote")
+        git.add("remote_file.txt")
+        git.commit("remote commit")
+        git.push("origin", "master")
+        `git reset --hard HEAD^`
+        nvim.refresh
+      end
+
+      it "pulls commits from a remote branch" do
+        nvim.keys("e")
+        nvim.keys("origin/master<cr>")
+        await do
+          expect(git.log(3).entries.map(&:message)).to include("remote commit")
+        end
+      end
+    end
+  end
 end

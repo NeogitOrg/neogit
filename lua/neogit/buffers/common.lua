@@ -22,24 +22,20 @@ M.Diff = Component.new(function(diff)
   return col.tag("Diff")({
     text(string.format("%s %s", diff.kind, diff.file), { line_hl = "NeogitDiffHeader" }),
     M.DiffHunks(diff),
-  }, { foldable = true, folded = false, context = true })
+  }, { foldable = true, folded = false, context = true, diff = diff })
 end)
 
--- Use vim iter api?
 M.DiffHunks = Component.new(function(diff)
-  local hunk_props = vim
-    .iter(diff.hunks)
-    :map(function(hunk)
-      hunk.content = vim.iter(diff.lines):slice(hunk.diff_from + 1, hunk.diff_to):totable()
-
-      return {
-        header = diff.lines[hunk.diff_from],
-        content = hunk.content,
-        hunk = hunk,
-        folded = hunk._folded,
-      }
-    end)
-    :totable()
+  local hunk_props = {}
+  for i, hunk in ipairs(diff.hunks) do
+    table.insert(hunk_props, {
+      header = diff.lines[hunk.diff_from],
+      content = diff.pager_contents[i],
+      hunk = hunk,
+      folded = hunk._folded,
+      filepath = diff.file,
+    })
+  end
 
   return col.tag("DiffContent") {
     col.tag("DiffInfo")(map(diff.info, text)),
@@ -93,7 +89,14 @@ M.Hunk = Component.new(function(props)
     col.tag("HunkContent")(map(props.content, function(line)
       return HunkLine(line, props.hunk)
     end)),
-  }, { foldable = true, folded = props.folded or false, context = true, hunk = props.hunk })
+  }, {
+    ansi_hl = config.values.log_pager ~= nil,
+    foldable = true,
+    folded = props.folded or false,
+    context = true,
+    hunk = props.hunk,
+    filepath = props.filepath,
+  })
 end)
 
 M.List = Component.new(function(props)

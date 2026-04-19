@@ -6,6 +6,7 @@ local util = require("neogit.lib.util")
 local signs = require("neogit.lib.signs")
 local Ui = require("neogit.lib.ui")
 local config = require("neogit.config")
+local diff_highlights = require("neogit.lib.diff_highlights")
 
 local Path = require("plenary.path")
 
@@ -154,6 +155,34 @@ function Buffer:set_line_highlights(highlights)
   for _, hl in ipairs(highlights) do
     self:add_line_highlight(unpack(hl))
   end
+end
+
+function Buffer:set_ansi_highlights(highlights)
+  for _, hl in ipairs(highlights) do
+    local first_line, last_line = unpack(hl)
+    local text = self:get_lines(first_line, last_line, false)
+
+    for i, line in ipairs(text) do
+      if line:match("\27%[0K\27%[0m$") then
+        -- Handle "Erase in Line". We don't support coloring the rest of the line.
+        line = line:gsub("\27%[0K\27%[0m$", "")
+        if i < #text then
+          text[i + 1] = "\27[0m" .. text[i + 1]
+        end
+      end
+      text[i] = line
+    end
+
+    vim.g.baleia.buf_set_lines(self.handle, first_line, last_line, false, text)
+  end
+end
+
+function Buffer:set_diff_highlights(regions)
+  if vim.b[self.handle] and vim.b[self.handle].neogit_disable_hunk_highlight == true then
+    return
+  end
+
+  diff_highlights.apply(self, regions)
 end
 
 function Buffer:set_folds(folds)
@@ -482,13 +511,13 @@ function Buffer:add_line_highlight(line, hl_group, opts)
 
   local ns_id = self:get_namespace_id(opts.namespace)
   if ns_id then
-    api.nvim_buf_set_extmark(
-      self.handle,
-      ns_id,
-      line,
-      0,
-      { line_hl_group = hl_group, priority = opts.priority or 190 }
-    )
+    api.nvim_buf_set_extmark(self.handle, ns_id, line, 0, {
+      hl_group = hl_group,
+      end_row = line + 1,
+      end_col = 0,
+      hl_eol = true,
+      priority = opts.priority or 190,
+    })
   end
 end
 
@@ -777,17 +806,23 @@ function Buffer.create(config)
     buffer:set_window_option("foldcolumn", "0")
     buffer:set_window_option("listchars", "")
     buffer:set_window_option("list", false)
+
     buffer:call(function()
-      vim.opt_local.winhl:append("Folded:NeogitFold")
-      vim.opt_local.winhl:append("FoldColumn:NeogitFoldColumn")
-      vim.opt_local.winhl:append("SignColumn:NeogitSignColumn")
-      vim.opt_local.winhl:append("Normal:NeogitNormal")
-      vim.opt_local.winhl:append("NormalFloat:NeogitNormalFloat")
-      vim.opt_local.winhl:append("FloatBorder:NeogitFloatBorder")
-      vim.opt_local.winhl:append("WinSeparator:NeogitWinSeparator")
-      vim.opt_local.winhl:append("CursorLineNr:NeogitCursorLineNr")
       vim.opt_local.fillchars:append("fold: ")
     end)
+
+    local hl_ns = buffer:create_namespace("Highlights")
+    vim.api.nvim_win_set_hl_ns(buffer.win_handle, hl_ns)
+    vim.api.nvim_set_hl(hl_ns, "Folded", { bg = "NONE", fg = "NONE" })
+    vim.api.nvim_set_hl(hl_ns, "FoldedNC", { bg = "NONE", fg = "NONE" })
+    vim.api.nvim_set_hl(hl_ns, "FoldColumn", { link = "NeogitFoldColumn" })
+    vim.api.nvim_set_hl(hl_ns, "SignColumn", { link = "NeogitSignColumn" })
+    vim.api.nvim_set_hl(hl_ns, "Normal", { link = "NeogitNormal" })
+    vim.api.nvim_set_hl(hl_ns, "NormalFloat", { link = "NeogitNormalFloat" })
+    vim.api.nvim_set_hl(hl_ns, "FloatBorder", { link = "NeogitFloatBorder" })
+    vim.api.nvim_set_hl(hl_ns, "WinSeparator", { link = "NeogitWinSeparator" })
+    vim.api.nvim_set_hl(hl_ns, "CursorLineNr", { link = "NeogitCursorLineNr" })
+    vim.api.nvim_set_hl(hl_ns, "CursorLine", { link = "NeogitCursorLine" })
 
     if (config.disable_line_numbers == nil) or config.disable_line_numbers then
       buffer:set_window_option("number", false)
@@ -953,12 +988,10 @@ function Buffer.create(config)
             buffer:place_sign(line, fold .. string.lower(foldmarkers[line]), {
               namespace = "FoldSigns",
               highlight = "NeogitSubtleText",
-              cursor_hl = "NeogitCursorLine",
             })
           else
             buffer:place_sign(line, "NeogitBlank", {
               namespace = "FoldSigns",
-              cursor_hl = "NeogitCursorLine",
             })
           end
         end

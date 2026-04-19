@@ -137,7 +137,7 @@ function M:open(kind)
     name = "NeogitStatus",
     filetype = "NeogitStatus",
     cwd = self.cwd,
-    context_highlight = not config.values.disable_context_highlighting,
+    context_highlight = not config.values.disable_context_highlighting and config.values.log_pager == nil,
     kind = kind or config.values.kind or "tab",
     disable_line_numbers = config.values.disable_line_numbers,
     disable_relative_line_numbers = config.values.disable_relative_line_numbers,
@@ -154,6 +154,7 @@ function M:open(kind)
     mappings = {
       v = {
         [mappings["Discard"]]                   = self:_action("v_discard"),
+        [mappings["Reverse"]]                   = self:_action("v_reverse"),
         [mappings["Stage"]]                     = self:_action("v_stage"),
         [mappings["Unstage"]]                   = self:_action("v_unstage"),
         [mappings["Untrack"]]                   = self:_action("v_untrack"),
@@ -200,6 +201,7 @@ function M:open(kind)
         [mappings["ShowRefs"]]                  = self:_action("n_show_refs"),
         [mappings["YankSelected"]]              = self:_action("n_yank_selected"),
         [mappings["Discard"]]                   = self:_action("n_discard"),
+        [mappings["Reverse"]]                   = self:_action("n_reverse"),
         [mappings["GoToNextHunkHeader"]]        = self:_action("n_go_to_next_hunk_header"),
         [mappings["GoToPreviousHunkHeader"]]    = self:_action("n_go_to_previous_hunk_header"),
         [mappings["InitRepo"]]                  = self:_action("n_init_repo"),
@@ -261,6 +263,7 @@ function M:open(kind)
       -- in order to show the user the correct state.
       ["NeogitReset"] = self:deferred_refresh("reset"),
       ["NeogitBranchReset"] = self:deferred_refresh("reset_branch"),
+      ["NeogitEditorClosed"] = self:deferred_refresh("editor_closed"),
     },
     autocmds = {
       ["FocusGained"] = self:deferred_refresh("focused", 10),

@@ -13,6 +13,7 @@ local default_component_options = {
 
 ---@class ComponentOptions
 ---@field line_hl string
+---@field ansi_hl boolean
 ---@field highlight string
 ---@field align_right integer|nil
 ---@field padding_left integer
@@ -30,6 +31,7 @@ local default_component_options = {
 ---@field yankable string?
 ---@field on_open fun(fold, Ui)
 ---@field hunk Hunk
+---@field filepath string
 ---@field filename string?
 ---@field value any
 

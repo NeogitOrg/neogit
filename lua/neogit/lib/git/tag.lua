@@ -31,6 +31,26 @@ function M.for_commit(oid)
   return git.cli.tag.points_at(oid).call({ hidden = true }).stdout
 end
 
+--- Returns the highest tag by version sort, or nil if no tags exist.
+---@return string|nil
+function M.highest()
+  local tags = git.cli.tag.list.args("--sort=version:refname").call({ hidden = true }).stdout
+  if #tags == 0 then
+    return nil
+  end
+  return tags[#tags]
+end
+
+--- Returns the annotation message of a tag, or nil if lightweight or empty.
+---@param tagname string
+---@return string|nil
+function M.message(tagname)
+  local result =
+    git.cli["for-each-ref"].format("%(contents)").args("refs/tags/" .. tagname).call { hidden = true }
+  local msg = table.concat(result.stdout, "\n"):gsub("%s+$", "")
+  return msg ~= "" and msg or nil
+end
+
 local tag_pattern = "(.-)%-([0-9]+)%-g%x+$"
 
 function M.register(meta)

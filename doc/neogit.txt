@@ -117,6 +117,9 @@ to Neovim users.
     -- Show relative date by default. When set, use `strftime` to display dates
     commit_date_format = nil,
     log_date_format = nil,
+    -- When set, used to format the diff. Requires `baleia` to colorize text with ANSI escape sequences. An example for
+    -- `Delta` is `{ 'delta', '--width', '117' }`. For `Delta`, hyperlinks must be disabled when called by `neogit`, for text to be colorized properly.
+    log_pager = nil,
     -- Used to generate URL's for branch popup action "pull request" or opening a commit.
     git_services = {
         ["github.com"] = {
@@ -486,6 +489,7 @@ The following mappings can all be customized via the setup function.
         ["Q"]      = "Command",
         ["<tab>"]  = "Toggle",
         ["x"]      = "Discard",
+        ["-"]      = "Reverse",
         ["s"]      = "Stage",
         ["S"]      = "StageUnstaged",
         ["<c-s>"]  = "StageAll",
@@ -835,6 +839,12 @@ NeogitDiffAddCursor
 NeogitDiffDeleteCursor
 NeogitDiffHeaderCursor
 
+INLINE DIFF
+Groups for showing word-level diff in a hunk
+
+NeogitDiffAddInline
+NeogitDiffDeleteInline
+
 COMMIT BUFFER
 NeogitFilePath              Applied to filepath
 NeogitCommitViewHeader      Applied to header of Commit View
@@ -1023,10 +1033,22 @@ Actions:                                      *neogit_cherry_pick_popup_actions*
     and you have to resolve the conflicts and then finish the process manually.
 
   • Spinout                                         *neogit_cherry_pick_spinout*
-    (Not yet implemented)
+    This command moves the selected COMMITS from the current branch onto a new
+    branch BRANCH, removing them from the former. When this command succeeds,
+    then the same branch is current as before.
+
+    Applying the commits on the other branch or removing them from the current
+    branch can lead to conflicts. When that happens, then this command stops
+    and you have to resolve the conflicts and then finish the process manually.
 
   • Spinoff                                         *neogit_cherry_pick_spinoff*
-    (Not yet implemented)
+    This command moves the selected COMMITS from the current branch onto a new
+    branch BRANCH, removing them from the former. When this command succeeds,
+    then the new branch is checked out.
+
+    Applying the commits on the other branch or removing them from the current
+    branch can lead to conflicts. When that happens, then this command stops
+    and you have to resolve the conflicts and then finish the process manually.
 
 
   When a Cherry-Pick is in progress, the following actions are available:
@@ -1582,7 +1604,29 @@ Actions:                                            *neogit_merge_popup_actions*
 ==============================================================================
 Remote Popup                                               *neogit_remote_popup*
 
-(TODO)
+Actions:                                            *neogit_remote_popup_actions*
+
+  • Add                                                    *neogit_remote_add*
+    Add a new remote. Prompts for a name and URL. Optionally sets
+    remote.pushDefault and fetches refs after adding.
+
+  • Rename                                             *neogit_remote_rename*
+    Rename an existing remote.
+
+  • Remove                                             *neogit_remote_remove*
+    Remove an existing remote.
+
+  • Configure...                                    *neogit_remote_configure*
+    Open the Remote Config popup for the selected remote.
+
+  • Prune stale branches                       *neogit_remote_prune_branches*
+    Prune stale tracking branches for the selected remote.
+
+  • Unshallow remote                              *neogit_remote_unshallow*
+    Convert a shallow remote into a full one by fetching with --unshallow.
+    If the remote has exactly one fetch refspec and it does not contain a
+    wildcard, you are offered the option to replace it with the standard
+    refspec (+refs/heads/*:refs/remotes/<remote>/*) first.
 
 ==============================================================================
 Remote Config Popup                                 *neogit_remote_config_popup*
@@ -2121,7 +2165,13 @@ Actions:                                              *neogit_tag_popup_actions*
     Creates a new TAG at specified REV.
 
   • Release                                                 *neogit_tag_release*
-    (Not yet implemented)
+    Creates a release tag on HEAD. Prompts for a tag name, using the highest
+    existing tag as the default so the user can increment the version.
+
+    When --annotate is enabled, also prompts for a tag message. The proposed
+    message is derived from the previous tag's message (with the old version
+    string replaced by the new one), or falls back to "Project-Name X.Y.Z"
+    based on the repository directory name and the new version.
 
   • Delete                                                   *neogit_tag_delete*
     Deletes one or more tags.
@@ -2158,7 +2208,41 @@ Actions:                                         *neogit_worktree_popup_actions*
 
 ==============================================================================
 Status Buffer                                             *neogit_status_buffer*
-(TODO)
+
+The status buffer is the main Neogit interface, showing the state of the
+working tree and index. It is opened via |:Neogit| or
+`require('neogit').open()`.
+
+  Actions (normal mode, default keys):
+
+  • `s` / `S` / `<c-s>`  Stage change at point / all unstaged / everything.
+  • `u` / `U`            Unstage change at point / everything staged.
+  • `x`                  Discard change at point (with confirmation).
+  • `-`                  Reverse the staged change at point back into the    *neogit_status_reverse*
+                         working tree, keeping it staged in the index.
+
+                         Works at hunk, file, and section granularity.
+                         Cursor position determines scope:
+                           - On the "Staged changes" section header → all staged files
+                           - On a filename → all hunks of that file
+                           - Inside an expanded hunk → that hunk only
+
+                         Only staged changes can be reversed; attempting to
+                         reverse untracked or unstaged changes shows a warning.
+
+                         Visual-mode `V` reverses only the selected lines
+                         within the hunk.
+
+  • `<tab>`              Toggle folding for the item at point.
+  • `<cr>`               Open the file at point in the editor.
+  • `{` / `}`            Jump to previous / next hunk header.
+  • `[c` / `]c`          Scroll the file preview up / down.
+
+  Popup shortcuts (default keys):
+      `A` Cherry-pick, `b` Branch, `B` Bisect, `c` Commit, `d` Diff,
+      `f` Fetch, `i` Ignore, `l` Log, `L` Margin, `m` Merge, `p` Pull,
+      `P` Push, `r` Rebase, `M` Remote, `X` Reset, `v` Revert, `t` Tag,
+      `w` Worktree, `Z` Stash.
 
 Untracked Files                                 *neogit_status_buffer_untracked*
   Neogit respects status.showUntrackedFiles. It can be set to "no" to hide
@@ -2250,6 +2334,17 @@ Mappings (normal mode):
                cursor within that hunk.
 
   • `za` / `<tab>` Toggle folding for the current section.
+
+  • `-`            Reverse the change at point back into the working tree.
+                   (|neogit_setup_mappings|: "Reverse" in status)
+                   Works at three granularities:
+                   - Cursor on a hunk line → reverses that hunk only.
+                   - Cursor on a diff header (e.g. "new file foo.lua") → reverses
+                     all hunks for that file.
+                   - Cursor on commit metadata or anywhere outside a diff →
+                     reverses every change introduced by the commit.
+                   In all cases the change is applied to the working tree only;
+                   nothing is staged.
 
   • Popup shortcuts honour |neogit_setup_mappings|, default keys:
       - `A` Cherry-pick, `b` Branch, `B` Bisect, `c` Commit, `d` Diff,

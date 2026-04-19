@@ -164,4 +164,27 @@ RSpec.describe "Commit Buffer", :git, :nvim do
     nvim.keys("Z")
     expect(nvim.filetype).to eq("NeogitPopup")
   end
+
+  describe "reversing" do
+    it "reverses a hunk into the working tree" do
+      nvim.move_to_line("+hello, world")
+      nvim.confirm(true)
+      nvim.keys("-")
+      await { expect(File.read("testfile")).to eq("") }
+    end
+
+    it "reverses all changes in a file into the working tree" do
+      nvim.move_to_line("new file testfile")
+      nvim.confirm(true)
+      nvim.keys("-")
+      await { expect(File.read("testfile")).to eq("") }
+    end
+
+    it "reverses all diffs in the commit when cursor is on metadata" do
+      # Cursor starts at the top of the commit view (on metadata, outside any diff)
+      nvim.confirm(true)
+      nvim.keys("-")
+      await { expect(File.read("testfile")).to eq("") }
+    end
+  end
 end
