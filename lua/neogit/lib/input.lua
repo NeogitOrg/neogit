@@ -103,7 +103,7 @@ function M.get_user_input_blocking(prompt, opts)
     end, 10)
   end
 
-  local status, result = pcall(input, {
+  local status, result = pcall(vim.fn.input, {
     prompt = ("%s%s"):format(prompt, opts.separator),
     default = opts.default,
     completion = opts.completion,
