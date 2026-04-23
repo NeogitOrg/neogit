@@ -9,6 +9,10 @@ local config = require("neogit.config")
 local M = {}
 M.__index = M
 
+-- Tracks the terminal channel of the current NeogitConsole buffer so it can be
+-- closed before the buffer is reused for a new process.
+local current_chan = nil
+
 ---@param process Process
 ---@param mask_fn fun(string):string
 ---@return ProcessBuffer
@@ -100,15 +104,29 @@ function M:open()
 
   local status_maps = config.get_reversed_status_maps()
 
+  local existing = vim.fn.bufnr("NeogitConsole")
+  local is_terminal = existing ~= -1
+    and vim.api.nvim_get_option_value("buftype", { buf = existing }) == "terminal"
+
+  -- nvim_open_term errors if the buffer already has a terminal connected, so close
+  -- the previous channel before reusing the buffer.
+  if is_terminal and current_chan then
+    pcall(vim.fn.chanclose, current_chan)
+    current_chan = nil
+  end
+
   self.buffer = Buffer.create {
     name = "NeogitConsole",
     filetype = "NeogitConsole",
     bufhidden = "hide",
     open = false,
-    buftype = "nofile", -- Use nofile to avoid swap file conflicts
+    -- nofile avoids swap file conflicts; skip setting buftype when reusing an existing
+    -- terminal buffer since Neovim does not allow changing buftype on terminal buffers.
+    buftype = not is_terminal and "nofile" or false,
     kind = config.values.preview_buffer.kind,
     after = function(buffer)
       buffer:open_terminal_channel()
+      current_chan = buffer.chan
     end,
     mappings = {
       n = {
