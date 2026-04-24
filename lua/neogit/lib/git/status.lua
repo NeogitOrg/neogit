@@ -1,4 +1,4 @@
-local Path = require("plenary.path")
+local Path = require("neogit.lib.path")
 local git = require("neogit.lib.git")
 local util = require("neogit.lib.util")
 local Collection = require("neogit.lib.collection")

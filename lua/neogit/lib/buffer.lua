@@ -8,7 +8,7 @@ local Ui = require("neogit.lib.ui")
 local config = require("neogit.config")
 local diff_highlights = require("neogit.lib.diff_highlights")
 
-local Path = require("plenary.path")
+local Path = require("neogit.lib.path")
 
 ---@class Buffer
 ---@field handle number

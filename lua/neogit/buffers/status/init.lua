@@ -44,7 +44,7 @@ end
 ---@param abs_path string
 ---@return boolean
 function M:has_submodule(abs_path)
-  local dir = require("plenary.path"):new(abs_path)
+  local dir = require("neogit.lib.path"):new(abs_path)
   if not dir:exists() or not dir:is_dir() then
     return false
   end
@@ -286,7 +286,7 @@ function M:close()
 end
 
 function M:chdir(dir)
-  local Path = require("plenary.path")
+  local Path = require("neogit.lib.path")
 
   local destination = Path:new(dir)
   vim.wait(5000, function()

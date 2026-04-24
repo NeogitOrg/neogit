@@ -1,6 +1,6 @@
 local logger = require("neogit.logger")
 local config = require("neogit.config")
-local Path = require("plenary.path")
+local Path = require("neogit.lib.path")
 
 ---@class NeogitState
 ---@field loaded boolean

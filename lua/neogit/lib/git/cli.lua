@@ -1,7 +1,7 @@
 local git = require("neogit.lib.git")
 local process = require("neogit.process")
 local util = require("neogit.lib.util")
-local Path = require("plenary.path")
+local Path = require("neogit.lib.path")
 local runner = require("neogit.runner")
 
 ---Get the configured git executable path

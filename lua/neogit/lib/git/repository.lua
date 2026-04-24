@@ -1,6 +1,6 @@
 local a = require("plenary.async")
 local logger = require("neogit.logger")
-local Path = require("plenary.path")
+local Path = require("neogit.lib.path")
 local git = require("neogit.lib.git")
 local ItemFilter = require("neogit.lib.item_filter")
 local util = require("neogit.lib.util")

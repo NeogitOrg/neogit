@@ -1,5 +1,5 @@
 local actions = require("neogit.popups.ignore.actions")
-local Path = require("plenary.path")
+local Path = require("neogit.lib.path")
 local git = require("neogit.lib.git")
 local popup = require("neogit.lib.popup")
 
