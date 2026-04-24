@@ -249,4 +249,149 @@ describe("lib.async", function()
       assert.are.same({ "hello", "world" }, got)
     end)
   end)
+
+  describe("Task / cancellation", function()
+    it("returns a Task from run()", function()
+      local task = async.run(function()
+        sleep(5)
+      end)
+
+      assert.is_table(task)
+      assert.is_function(task.cancel)
+      assert.is_function(task.cancelled)
+      assert.is_function(task.done)
+      assert.is_false(task:done())
+
+      task:wait(1000)
+      assert.is_true(task:done())
+      assert.is_false(task:cancelled())
+    end)
+
+    it("cancel() invokes the wrapped fn's cancel handle and stops the coroutine", function()
+      local cancel_called = false
+      local after_yield_ran = false
+
+      local cancellable_op = async.wrap(function(_cb)
+        return function()
+          cancel_called = true
+        end
+      end, 1)
+
+      local task = async.run(function()
+        cancellable_op()
+        after_yield_ran = true
+      end)
+
+      -- Op suspended; nothing has resumed yet.
+      task:cancel()
+
+      wait_for(function()
+        return task:done()
+      end)
+
+      assert.is_true(cancel_called)
+      assert.is_false(after_yield_ran)
+      assert.is_true(task:cancelled())
+    end)
+
+    it("cancel() is idempotent and the cancel handle fires exactly once", function()
+      local cancel_calls = 0
+      local op = async.wrap(function(_cb)
+        return function()
+          cancel_calls = cancel_calls + 1
+        end
+      end, 1)
+
+      local task = async.run(function()
+        op()
+      end)
+
+      task:cancel()
+      task:cancel()
+      task:cancel()
+
+      assert.are.equal(1, cancel_calls)
+    end)
+
+    it("cancel() after the task is done is a no-op", function()
+      local cancel_called = false
+      local task = async.run(function()
+        sleep(5)
+      end)
+
+      task:wait(1000)
+      assert.is_true(task:done())
+      assert.is_false(task:cancelled())
+
+      task:cancel()
+      assert.is_false(task:cancelled())
+      assert.is_false(cancel_called)
+    end)
+
+    it("propagates cancellation to run_all children", function()
+      local cancels = { 0, 0, 0 }
+      local completed = { false, false, false }
+
+      local function make_op(i)
+        local op = async.wrap(function(_cb)
+          return function()
+            cancels[i] = cancels[i] + 1
+          end
+        end, 1)
+        return function()
+          op()
+          completed[i] = true
+        end
+      end
+
+      local task = async.util.run_all({ make_op(1), make_op(2), make_op(3) })
+
+      task:cancel()
+
+      wait_for(function()
+        return task:done()
+      end)
+
+      assert.are.same({ 1, 1, 1 }, cancels)
+      assert.are.same({ false, false, false }, completed)
+      assert.is_true(task:cancelled())
+    end)
+
+    it("on_complete fires with cancelled=true when cancelled", function()
+      local op = async.wrap(function(_cb)
+        return function() end
+      end, 1)
+
+      local task = async.run(function()
+        op()
+      end)
+
+      local got
+      task:on_complete(function(cancelled, ok)
+        got = { cancelled = cancelled, ok = ok }
+      end)
+
+      task:cancel()
+
+      wait_for(function()
+        return got ~= nil
+      end)
+
+      assert.is_true(got.cancelled)
+      assert.is_false(got.ok)
+    end)
+
+    it("does not invoke the cancel handle if the op completes normally first", function()
+      local cancel_called = false
+
+      local task = async.run(function()
+        sleep(5)
+      end)
+
+      task:wait(1000)
+      task:cancel() -- after done; no-op
+
+      assert.is_false(cancel_called)
+    end)
+  end)
 end)

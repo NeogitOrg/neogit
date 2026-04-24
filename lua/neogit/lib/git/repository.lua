@@ -175,8 +175,7 @@ end
 ---@field worktree_root     string Project root, or  worktree
 ---@field worktree_git_dir  string Dir to watch for changes in worktree
 ---@field git_dir           string '.git/' directory for repo
----@field running           table
----@field interrupt         table
+---@field _refresh_task     NeogitTask|nil  Active refresh task (cancellable).
 ---@field tmp_state         table
 ---@field refresh_callbacks function[]
 local Repo = {}
@@ -216,8 +215,7 @@ function Repo.new(dir)
     worktree_git_dir = git.cli.worktree_git_dir(dir),
     git_dir = git.cli.git_dir(dir),
     refresh_callbacks = {},
-    running = util.weak_table(),
-    interrupt = util.weak_table(),
+    _refresh_task = nil,
     tmp_state = util.weak_table("v"),
   }
 
@@ -307,16 +305,12 @@ function Repo:refresh(opts)
     self:register_callback(opts.source, opts.callback)
   end
 
-  if vim.tbl_keys(self.running)[1] then
-    for k, v in pairs(self.running) do
-      if v then
-        logger.debug("[REPO] (" .. start .. ") Already running - setting interrupt for " .. k)
-        self.interrupt[k] = true
-      end
-    end
+  -- Cancel any in-flight refresh.  This propagates to per-module sub-tasks
+  -- which in turn kill the underlying git subprocesses (see Process:stop).
+  if self._refresh_task and not self._refresh_task:done() then
+    logger.debug("[REPO] (" .. start .. ") Cancelling in-flight refresh")
+    self._refresh_task:cancel()
   end
-
-  self.running[start] = true
 
   local filter
   if opts.partial and opts.partial.update_diffs then
@@ -325,10 +319,9 @@ function Repo:refresh(opts)
     filter = DEFAULT_FILTER
   end
 
-  local on_complete = a.void(function()
-    self.running[start] = false
-    if self.interrupt[start] then
-      logger.debug("[REPO]: (" .. start .. ") Interrupting on_complete callback")
+  self._refresh_task = a.util.run_all(self:tasks(filter, self:current_state(start)), function()
+    if self._refresh_task and self._refresh_task:cancelled() then
+      logger.debug("[REPO]: (" .. start .. ") Refresh cancelled before completion")
       return
     end
 
@@ -336,12 +329,12 @@ function Repo:refresh(opts)
     self:set_state(start)
     self:run_callbacks(start)
   end)
-
-  a.util.run_all(self:tasks(filter, self:current_state(start)), on_complete)
 end
 
-Repo.dispatch_refresh = a.void(function(self, opts)
+---@return NeogitTask
+function Repo:dispatch_refresh(opts)
   self:refresh(opts)
-end)
+  return self._refresh_task
+end
 
 return Repo
