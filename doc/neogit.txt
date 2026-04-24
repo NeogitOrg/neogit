@@ -1380,6 +1380,10 @@ Arguments:                                            *neogit_commit_popup_args*
     Take an existing commit object, and reuse the log message and the
     authorship information (including the timestamp) when creating the commit.
 
+  • --message=
+    Use argument as the commit message. Mutually exclusive with --reuse-message
+    and fixup.
+
 Actions:                                           *neogit_commit_popup_actions*
   Actions in the commit popup are in three groups: "Create", "Edit HEAD", and
   "Edit". The first should be somewhat self explanatory - you can create a new
