@@ -177,4 +177,75 @@ RSpec.describe "Stash Popup", :git, :nvim, :popup do
       expect(`git stash list`).to be_empty
     end
   end
+
+  describe "Rename stash" do
+    before do
+      File.write("testfile", "original stash content")
+      `git stash`
+      nvim.refresh
+    end
+
+    it "updates the stash message" do
+      nvim.input("my-renamed-stash")
+      nvim.keys("m")
+      nvim.keys("<cr>") # select first stash
+
+      expect(`git stash list`).to include("my-renamed-stash")
+    end
+
+    it "does not drop the stash when renaming" do
+      nvim.input("renamed-stash")
+      nvim.keys("m")
+      nvim.keys("<cr>") # select first stash
+
+      expect(`git stash list`).not_to be_empty
+    end
+
+    it "preserves the stash content after renaming" do
+      nvim.input("content-check")
+      nvim.keys("m")
+      nvim.keys("<cr>") # select first stash
+
+      `git stash pop`
+      expect(File.read("testfile")).to eq("original stash content")
+    end
+
+    it "renames stash@{0} correctly when the abbreviate_commit cache is stale" do
+      # Seed the memoize cache: abbreviate_commit("stash@{0}") now permanently
+      # returns the OID of the original stash (OID_A), even after the stash
+      # list changes.  This mimics the state left behind by a previous rename
+      # (or any earlier call) with timeout = math.huge.
+      nvim.lua("require('neogit.lib.git').rev_parse.abbreviate_commit('stash@{0}')")
+
+      # Push a second stash on top: stash@{0} = OID_B ("second-stash-content"),
+      # stash@{1} = OID_A ("original stash content").
+      File.write("testfile", "second-stash-content")
+      `git stash`
+      nvim.refresh
+
+      expect(`git stash list`.lines.count).to eq(2)
+
+      # Rename stash@{0}.  Because abbreviate_commit is memoized forever, it
+      # still returns OID_A instead of OID_B.  The rename therefore drops
+      # stash@{0} (OID_B / "second-stash-content") and re-stores OID_A under
+      # the new name — silently losing "second-stash-content".
+      nvim.input("second-stash-renamed")
+      nvim.keys("m")
+      nvim.keys("<cr>") # select stash@{0}
+
+      stash_list = `git stash list`
+
+      # Both stashes must still exist.
+      expect(stash_list.lines.count).to eq(2)
+
+      # stash@{0} must carry the new name.
+      expect(stash_list.lines.first).to include("second-stash-renamed")
+
+      # Applying stash@{0} must restore the content of the second stash (OID_B).
+      # With the bug, OID_B is silently dropped and OID_A (original content)
+      # ends up at stash@{0} instead.
+      `git stash pop`
+      expect(File.read("testfile")).to eq("second-stash-content")
+    end
+  end
 end
