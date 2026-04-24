@@ -3,7 +3,7 @@ local Component = require("neogit.lib.ui.component")
 local util = require("neogit.lib.util")
 local common = require("neogit.buffers.common")
 local config = require("neogit.config")
-local a = require("plenary.async")
+local a = require("neogit.lib.async")
 local state = require("neogit.lib.state")
 local event = require("neogit.lib.event")
 

@@ -6,7 +6,7 @@ local client = require("neogit.client")
 local input = require("neogit.lib.input")
 local notification = require("neogit.lib.notification")
 local config = require("neogit.config")
-local a = require("plenary.async")
+local a = require("neogit.lib.async")
 
 ---@param popup PopupData
 ---@return boolean

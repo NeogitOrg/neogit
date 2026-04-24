@@ -130,7 +130,7 @@ end
 ---@return integer code of `cmd`
 function M.wrap(cmd, opts)
   local notification = require("neogit.lib.notification")
-  local a = require("plenary.async")
+  local a = require("neogit.lib.async")
 
   a.util.scheduler()
 

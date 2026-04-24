@@ -32,8 +32,6 @@ Here's an example spec for [Lazy](https://github.com/folke/lazy.nvim), but you'r
   "NeogitOrg/neogit",
   lazy = true,
   dependencies = {
-    "nvim-lua/plenary.nvim",         -- required
-
     -- Only one of these is needed.
     "sindrets/diffview.nvim",        -- optional
     "esmuellert/codediff.nvim",      -- optional

@@ -7,7 +7,7 @@ local mapping = config.get_reversed_refs_view_maps()
 local CommitViewBuffer = require("neogit.buffers.commit_view")
 local Watcher = require("neogit.watcher")
 local logger = require("neogit.logger")
-local a = require("plenary.async")
+local a = require("neogit.lib.async")
 local git = require("neogit.lib.git")
 local event = require("neogit.lib.event")
 

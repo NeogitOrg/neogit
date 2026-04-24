@@ -6,7 +6,7 @@ local input = require("neogit.lib.input")
 local util = require("neogit.lib.util")
 local notification = require("neogit.lib.notification")
 local event = require("neogit.lib.event")
-local a = require("plenary.async")
+local a = require("neogit.lib.async")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 local BranchConfigPopup = require("neogit.popups.branch_config")

@@ -1,4 +1,4 @@
-local a = require("plenary.async")
+local a = require("neogit.lib.async")
 local input = a.wrap(vim.ui.input, 2)
 
 local M = {}

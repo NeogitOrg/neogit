@@ -1,5 +1,4 @@
 local neogit = require("neogit")
-local a = require("plenary.async")
 local M = {}
 local util = require("tests.util.util")
 

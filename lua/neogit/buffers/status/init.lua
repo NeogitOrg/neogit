@@ -4,7 +4,7 @@ local ui = require("neogit.buffers.status.ui")
 local popups = require("neogit.popups")
 local git = require("neogit.lib.git")
 local Watcher = require("neogit.watcher")
-local a = require("plenary.async")
+local a = require("neogit.lib.async")
 local logger = require("neogit.logger") -- TODO: Add logging
 local event = require("neogit.lib.event")
 

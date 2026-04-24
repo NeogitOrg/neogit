@@ -1,4 +1,4 @@
-local a = require("plenary.async")
+local a = require("neogit.lib.async")
 local Buffer = require("neogit.lib.buffer")
 local ui = require("neogit.buffers.commit_select_view.ui")
 local config = require("neogit.config")

@@ -1,7 +1,7 @@
 local M = {}
 
 local state = require("neogit.lib.state")
-local a = require("plenary.async")
+local a = require("neogit.lib.async")
 
 function M.refresh_buffer(buffer)
   return a.void(function()

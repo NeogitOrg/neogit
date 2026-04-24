@@ -8,7 +8,7 @@ local dv_utils = require("diffview.utils")
 
 local Watcher = require("neogit.watcher")
 local git = require("neogit.lib.git")
-local a = require("plenary.async")
+local a = require("neogit.lib.async")
 
 local function get_local_diff_view(section_name, item_name, opts)
   local left = Rev(RevType.STAGE)

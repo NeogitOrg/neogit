@@ -1,4 +1,4 @@
-local a = require("plenary.async")
+local a = require("neogit.lib.async")
 local notification = require("neogit.lib.notification")
 
 local config = require("neogit.config")

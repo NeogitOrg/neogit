@@ -1,6 +1,6 @@
 -- NOTE: `v_` prefix stands for visual mode actions, `n_` for normal mode.
 --
-local a = require("plenary.async")
+local a = require("neogit.lib.async")
 local git = require("neogit.lib.git")
 local popups = require("neogit.popups")
 local logger = require("neogit.logger")

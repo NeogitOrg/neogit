@@ -1,5 +1,5 @@
 local config = require("neogit.config")
-local a = require("plenary.async")
+local a = require("neogit.lib.async")
 
 local function refocus_status_buffer()
   local status = require("neogit.buffers.status")

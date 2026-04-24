@@ -4,7 +4,7 @@ local logger = require("neogit.logger")
 local util = require("neogit.lib.util")
 local git = require("neogit.lib.git")
 local config = require("neogit.config")
-local a = require("plenary.async")
+local a = require("neogit.lib.async")
 
 ---@class Watcher
 ---@field git_dir string

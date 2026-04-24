@@ -11,7 +11,7 @@ local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
 local git = require("neogit.lib.git")
 
-local a = require("plenary.async")
+local a = require("neogit.lib.async")
 
 local filter_map = util.filter_map
 local build_reverse_lookup = util.build_reverse_lookup

@@ -1,6 +1,6 @@
 local M = {}
 
-local a = require("plenary.async")
+local a = require("neogit.lib.async")
 local Ui = require("neogit.lib.ui")
 local util = require("neogit.lib.util")
 local git = require("neogit.lib.git")

@@ -61,7 +61,7 @@ function M:open_async(opts)
 end
 
 function M.test()
-  local async = require("plenary.async")
+  local async = require("neogit.lib.async")
   async.run(function()
     local buffer = M.new { "a", "b", "c" }
     local item = buffer:open_async {}

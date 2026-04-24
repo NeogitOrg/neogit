@@ -3,7 +3,7 @@ local M = {}
 local api = vim.api
 
 function M.setup()
-  local a = require("plenary.async")
+  local a = require("neogit.lib.async")
   local status_buffer = require("neogit.buffers.status")
   local git = require("neogit.lib.git")
   local group = require("neogit").autocmd_group
