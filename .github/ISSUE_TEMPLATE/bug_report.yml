@@ -128,7 +128,7 @@ body:
         M.setup({
           plenary = "https://github.com/nvim-lua/plenary.nvim.git",
           telescope = "https://github.com/nvim-telescope/telescope.nvim",
-          diffview = "https://github.com/sindrets/diffview.nvim",
+          diffview = "https://github.com/dlyongemallo/diffview.nvim",
           neogit = "https://github.com/NeogitOrg/neogit"
         })
         -- WARN: Do all plugin setup, test runs, reproductions, etc. AFTER calling setup with a list of plugins!
