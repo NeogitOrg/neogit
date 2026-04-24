@@ -1,5 +1,6 @@
 local git = require("neogit.lib.git")
 local util = require("neogit.lib.util")
+local hook = require("neogit.lib.hook")
 
 ---@class NeogitGitPull
 local M = {}
@@ -7,6 +8,7 @@ local M = {}
 function M.pull_interactive(remote, branch, args)
   local client = require("neogit.client")
   local envs = client.get_envs_git_editor()
+  hook.run("PrePull")
   return git.cli.pull.env(envs).args(remote or "", branch or "").arg_list(args).call { pty = true }
 end
 

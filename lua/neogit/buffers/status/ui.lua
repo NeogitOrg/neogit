@@ -6,6 +6,7 @@ local config = require("neogit.config")
 local a = require("plenary.async")
 local state = require("neogit.lib.state")
 local event = require("neogit.lib.event")
+local hook = require("neogit.lib.hook")
 
 local col = Ui.col
 local row = Ui.row
@@ -238,6 +239,7 @@ local SectionItemFile = function(section, config)
           end
         end
 
+        hook.run("PreDiffLoaded", { diff = diff }) -- TODO: what should the data be?
         ui.buf:with_locked_viewport(function()
           this:append(DiffHunks(diff))
           ui:update()

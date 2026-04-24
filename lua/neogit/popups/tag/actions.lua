@@ -7,6 +7,7 @@ local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 local input = require("neogit.lib.input")
 local notification = require("neogit.lib.notification")
 local event = require("neogit.lib.event")
+local hook = require("neogit.lib.hook")
 
 ---@param popup PopupData
 function M.create_tag(popup)
@@ -28,6 +29,7 @@ function M.create_tag(popup)
     end
   end
 
+  hook.run("PreTagCreate", { name = tag_input, ref = selected })
   local code =
     client.wrap(git.cli.tag.arg_list(utils.merge(popup:get_arguments(), { tag_input, selected })), {
       autocmd = "NeogitTagComplete",
@@ -133,6 +135,7 @@ function M.delete(_)
     return
   end
 
+  hook.run("PreTagDelete", { names = tags })
   if git.tag.delete(tags) then
     notification.info("Deleted tags: " .. table.concat(tags, ","))
     for _, tag in pairs(tags) do

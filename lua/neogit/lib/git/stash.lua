@@ -3,6 +3,7 @@ local input = require("neogit.lib.input")
 local util = require("neogit.lib.util")
 local config = require("neogit.config")
 local event = require("neogit.lib.event")
+local hook = require("neogit.lib.hook")
 
 ---@class NeogitGitStash
 local M = {}
@@ -18,16 +19,19 @@ end
 
 ---@param args string[]
 function M.stash_all(args)
+  hook.run("PreStash")
   local result = git.cli.stash.push.files(".").arg_list(args).call()
   event.send("Stash", { success = result:success() })
 end
 
 function M.stash_index()
+  hook.run("PreStash")
   local result = git.cli.stash.staged.call()
   event.send("Stash", { success = result:success() })
 end
 
 function M.stash_keep_index()
+  hook.run("PreStash")
   local result = git.cli.stash.keep_index.files(".").call()
   event.send("Stash", { success = result:success() })
 end
@@ -35,11 +39,13 @@ end
 ---@param args string[]
 ---@param files string[]
 function M.push(args, files)
+  hook.run("PreStash")
   local result = git.cli.stash.push.arg_list(args).files(unpack(files)).call()
   event.send("Stash", { success = result:success() })
 end
 
 function M.pop(stash)
+  hook.run("PreStash")
   local result = git.cli.stash.apply.index.args(stash).call()
 
   if result:success() then
@@ -52,6 +58,7 @@ function M.pop(stash)
 end
 
 function M.apply(stash)
+  hook.run("PreStash")
   local result = git.cli.stash.apply.index.args(stash).call()
 
   if result:failure() then
@@ -62,6 +69,7 @@ function M.apply(stash)
 end
 
 function M.drop(stash)
+  hook.run("PreStash")
   local result = git.cli.stash.drop.args(stash).call()
   event.send("Stash", { success = result:success() })
 end

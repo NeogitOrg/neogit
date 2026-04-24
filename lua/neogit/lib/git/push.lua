@@ -1,5 +1,6 @@
 local git = require("neogit.lib.git")
 local util = require("neogit.lib.util")
+local hook = require("neogit.lib.hook")
 
 ---@class NeogitGitPush
 local M = {}
@@ -10,6 +11,7 @@ local M = {}
 ---@param args string[]
 ---@return ProcessResult
 function M.push_interactive(remote, branch, args)
+  hook.run("PrePush")
   return git.cli.push.args(remote or "", branch or "").arg_list(args).call { pty = true }
 end
 
