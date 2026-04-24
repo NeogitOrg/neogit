@@ -1,16 +1,32 @@
 local M = {}
 
-local Rev = require("diffview.vcs.adapters.git.rev").GitRev
-local RevType = require("diffview.vcs.rev").RevType
-local CDiffView = require("diffview.api.views.diff.diff_view").CDiffView
-local dv_lib = require("diffview.lib")
-local dv_utils = require("diffview.utils")
+local dv_ok, dv_api = pcall(require, "diffview.api.views.diff.diff_view")
+local CDiffView = dv_ok and dv_api.CDiffView or nil
+local Rev = dv_ok and dv_api.Rev or nil
+local RevType = dv_ok and dv_api.RevType or nil
 
 local Watcher = require("neogit.watcher")
 local git = require("neogit.lib.git")
-local a = require("plenary.async")
+
+if dv_ok then
+  vim.api.nvim_create_autocmd("User", {
+    group = vim.api.nvim_create_augroup("NeogitDiffviewIntegration", { clear = true }),
+    pattern = "DiffviewFilesStaged",
+    callback = function()
+      local watcher = Watcher.instance()
+      if not vim.tbl_isempty(watcher.buffers) then
+        watcher:dispatch_refresh()
+      end
+    end,
+  })
+end
 
 local function get_local_diff_view(section_name, item_name, opts)
+  if not CDiffView then
+    vim.notify("Neogit: diffview.nvim v0.30+ is required for this feature.", vim.log.levels.WARN)
+    return nil
+  end
+
   local left = Rev(RevType.STAGE)
   local right = Rev(RevType.LOCAL)
 
@@ -92,13 +108,6 @@ local function get_local_diff_view(section_name, item_name, opts)
     end,
   }
 
-  view:on_files_staged(a.void(function(_)
-    Watcher.instance():dispatch_refresh()
-    view:update_files()
-  end))
-
-  dv_lib.add_view(view)
-
   return view
 end
 
@@ -117,7 +126,16 @@ function M.open(section_name, item_name, opts)
     })
   end
 
-  local view
+  local dv_open = function(args)
+    local ok, diffview = pcall(require, "diffview")
+    if not ok or type(diffview.open) ~= "function" or not dv_ok then
+      vim.notify("Neogit: diffview.nvim v0.30+ is required for this feature.", vim.log.levels.WARN)
+      return
+    end
+
+    diffview.open(args or {})
+  end
+
   -- selene: allow(if_same_then_else)
   if
     (section_name == "recent" or section_name == "log" or (section_name and section_name:match("unmerged$")))
@@ -130,26 +148,25 @@ function M.open(section_name, item_name, opts)
       range = string.format("%s^!", item_name:match("[a-f0-9]+"))
     end
 
-    view = dv_lib.diffview_open(dv_utils.tbl_pack(range))
+    dv_open({ range })
   elseif section_name == "range" and item_name then
-    view = dv_lib.diffview_open(dv_utils.tbl_pack(item_name))
+    dv_open({ item_name })
   elseif (section_name == "stashes" or section_name == "commit") and item_name then
-    view = dv_lib.diffview_open(dv_utils.tbl_pack(item_name .. "^!"))
+    dv_open({ item_name .. "^!" })
   elseif section_name == "conflict" and item_name then
-    view = dv_lib.diffview_open(dv_utils.tbl_pack("--selected-file=" .. item_name))
+    dv_open({ "--selected-file=" .. item_name })
   elseif (section_name == "conflict" or section_name == "worktree") and not item_name then
-    view = dv_lib.diffview_open()
+    dv_open()
   elseif section_name ~= nil then
-    -- for staged, unstaged, merge
-    view = get_local_diff_view(section_name, item_name, opts)
+    -- For staged, unstaged, merge: use CDiffView directly.
+    local view = get_local_diff_view(section_name, item_name, opts)
+    if view then
+      view:open()
+    end
   elseif section_name == nil and item_name ~= nil then
-    view = dv_lib.diffview_open(dv_utils.tbl_pack(item_name .. "^!"))
+    dv_open({ item_name .. "^!" })
   else
-    view = dv_lib.diffview_open()
-  end
-
-  if view then
-    view:open()
+    dv_open()
   end
 end
 
