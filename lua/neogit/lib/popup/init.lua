@@ -289,6 +289,8 @@ function M:set_config(config)
   end
 end
 
+M.__lock = a.control.Semaphore.new(1)
+
 function M:mappings()
   local mappings = {
     n = {
@@ -371,7 +373,14 @@ function M:mappings()
               self:close()
             end
 
-            action.callback(self)
+            local permit = M.__lock:acquire()
+            local ok, err = pcall(action.callback, self)
+            permit:forget()
+
+            if not ok then
+              logger.error(("[POPUP] %s failed: %s"):format(key, err))
+            end
+
             Watcher.instance():dispatch_refresh()
           end)
         end
