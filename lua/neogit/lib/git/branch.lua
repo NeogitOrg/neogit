@@ -260,8 +260,9 @@ function M.pushRemote_or_pushDefault_label()
   end
 
   local pushDefault = M.pushDefault()
-  if pushDefault then
-    return ("%s, creating it"):format(M.pushDefault_ref())
+  local pushDefault_ref = M.pushDefault_ref()
+  if pushDefault and pushDefault_ref then
+    return ("%s, creating it"):format(pushDefault_ref)
   end
 
   return "pushRemote, setting that"
