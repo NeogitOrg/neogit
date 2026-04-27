@@ -397,6 +397,7 @@ end
 ---@field mappings? NeogitConfigMappings
 ---@field notification_icon? string
 ---@field use_default_keymaps? boolean
+---@field commit_template? string
 ---@field highlight? HighlightOptions
 ---@field treesitter_diff_highlight? boolean Apply syntax highlighting to diff hunks via treesitter
 ---@field word_diff_highlight? boolean Apply word-diff highlighting to diff hunks
@@ -505,6 +506,7 @@ function M.get_default_values()
         ["?"] = "",
       },
     },
+    commit_template = "",
     commit_editor = {
       kind = "tab",
       show_staged_diff = true,

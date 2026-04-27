@@ -7,6 +7,7 @@ local input = require("neogit.lib.input")
 local notification = require("neogit.lib.notification")
 local config = require("neogit.config")
 local a = require("plenary.async")
+local path = require("plenary.path")
 
 ---@param popup PopupData
 ---@return boolean
@@ -34,6 +35,16 @@ local function confirm_modifications()
 end
 
 local function do_commit(popup, cmd)
+  local template_path = config.values.commit_template
+  if template_path ~= "" then
+    local template_file = path:new(template_path)
+    if template_file:exists() then
+      cmd = cmd.args("--template=" .. template_file:absolute())
+    else
+      notification.warn("Commit template file does not exist: \n" .. template_path)
+    end
+  end
+
   client.wrap(cmd.arg_list(popup:get_arguments()), {
     autocmd = "NeogitCommitComplete",
     msg = {
