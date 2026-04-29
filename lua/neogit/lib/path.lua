@@ -1,3 +1,4 @@
+  -- selene: allow(incorrect_standard_library_use)
 local sep = package.config:sub(1, 1)
 
 ---@class NeogitPath

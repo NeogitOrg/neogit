@@ -165,7 +165,7 @@ RSpec.describe "Status Buffer", :git, :nvim do
   end
 
   describe "discarding" do
-    context "unstaged tracked file" do
+    context "with unstaged tracked file" do
       before do
         File.write("foo", "original\n")
         git.add("foo")
@@ -185,7 +185,7 @@ RSpec.describe "Status Buffer", :git, :nvim do
       end
     end
 
-    context "untracked file" do
+    context "with untracked file" do
       before do
         File.write("new_file.txt", "brand new\n")
         nvim.refresh
@@ -199,7 +199,7 @@ RSpec.describe "Status Buffer", :git, :nvim do
       end
     end
 
-    context "staged new file" do
+    context "when staged new file" do
       before do
         File.write("new_file.txt", "brand new\n")
         git.add("new_file.txt")
@@ -217,7 +217,7 @@ RSpec.describe "Status Buffer", :git, :nvim do
       end
     end
 
-    context "staged modification" do
+    context "with staged modification" do
       before do
         File.write("foo", "original\n")
         git.add("foo")
