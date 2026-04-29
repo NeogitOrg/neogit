@@ -1,4 +1,4 @@
-  -- selene: allow(incorrect_standard_library_use)
+-- selene: allow(incorrect_standard_library_use)
 local sep = package.config:sub(1, 1)
 
 ---@class NeogitPath
@@ -64,7 +64,7 @@ end
 ---@return NeogitPath
 function Path:joinpath(...)
   local result = self._path
-  for _, segment in ipairs({ ... }) do
+  for _, segment in ipairs { ... } do
     result = vim.fs.joinpath(result, tostring(segment))
   end
   return new(result)

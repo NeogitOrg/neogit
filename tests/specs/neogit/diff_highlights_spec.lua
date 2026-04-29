@@ -39,7 +39,7 @@ describe("word_diff_spans", function()
       diff.word_diff_spans("range(0, options):", "range(0, int(options)):")
     -- "int(" inserted and ")" inserted
     assert.is_true(#new_spans > 0)
-    eq({ { 16, 18 } } , old_spans)
+    eq({ { 16, 18 } }, old_spans)
     assert.is_true(distance < 0.5)
   end)
 

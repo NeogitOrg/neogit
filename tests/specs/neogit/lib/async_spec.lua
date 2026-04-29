@@ -344,7 +344,7 @@ describe("lib.async", function()
         end
       end
 
-      local task = async.util.run_all({ make_op(1), make_op(2), make_op(3) })
+      local task = async.util.run_all { make_op(1), make_op(2), make_op(3) }
 
       task:cancel()
 
