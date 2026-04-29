@@ -45,7 +45,7 @@ local function cleanup_items(items)
 
     local bufnr = fn.bufnr(path)
     if bufnr > 0 then
-      api.nvim_buf_delete(bufnr, { force = false })
+      pcall(api.nvim_buf_delete, bufnr, { force = false })
     end
 
     fn.delete(fn.fnameescape(path))

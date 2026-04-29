@@ -36,6 +36,7 @@ end
 ---@class NeogitTask
 ---@field _done boolean
 ---@field _cancelled boolean
+---@field _finish function|nil
 ---@field _ok boolean|nil
 ---@field _values table|nil   { ... } returned by the async fn (or err info on failure)
 ---@field _nvalues number     count of _values (for nil-safe unpack)
@@ -240,11 +241,11 @@ function M.wrap(fn, argc)
     if not in_async_context() then
       error(
         "[neogit async] wrapped function called outside an async context "
-          .. "without supplying a callback (expected "
-          .. argc
-          .. " args, got "
-          .. nargs
-          .. "). Wrap the call in async.run/async.void or pass a callback explicitly.",
+        .. "without supplying a callback (expected "
+        .. argc
+        .. " args, got "
+        .. nargs
+        .. "). Wrap the call in async.run/async.void or pass a callback explicitly.",
         2
       )
     end
