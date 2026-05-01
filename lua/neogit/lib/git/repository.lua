@@ -21,8 +21,8 @@ local modules = {
 }
 
 ---@class NeogitRepoState
----@field git_path          fun(self, ...): Path
----@field worktree_git_path fun(self, ...): Path
+---@field git_path          fun(self, ...): NeogitPath
+---@field worktree_git_path fun(self, ...): NeogitPath
 ---@field refresh           fun(self, table)
 ---@field worktree_root     string Absolute path to the root of the current worktree
 ---@field worktree_git_dir  string Absolute path to the .git/ dir of the current worktree
@@ -236,12 +236,12 @@ function Repo:reset()
   self.state = empty_state()
 end
 
----@return Path
+---@return NeogitPath
 function Repo:worktree_git_path(...)
   return Path:new(self.worktree_git_dir):joinpath(...)
 end
 
----@return Path
+---@return NeogitPath
 function Repo:git_path(...)
   return Path:new(self.git_dir):joinpath(...)
 end

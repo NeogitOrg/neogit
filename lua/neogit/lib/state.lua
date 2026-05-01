@@ -6,7 +6,7 @@ local Path = require("neogit.lib.path")
 ---@field loaded boolean
 ---@field _enabled boolean
 ---@field state table
----@field path Path
+---@field path NeogitPath
 local M = {}
 
 M.loaded = false
@@ -15,7 +15,7 @@ local function log(message)
   logger.debug(string.format("[STATE]: %s: '%s'", message, M.path:absolute()))
 end
 
----@return Path
+---@return NeogitPath
 function M.filepath(config)
   local state_path = Path:new(vim.fn.stdpath("state")):joinpath("neogit")
   local filename = "state"
