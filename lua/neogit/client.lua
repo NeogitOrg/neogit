@@ -1,6 +1,8 @@
 local RPC = require("neogit.lib.rpc")
 local logger = require("neogit.logger")
 local config = require("neogit.config")
+local git = require("neogit.lib.git")
+local Path = require("neogit.lib.path")
 
 local fn = vim.fn
 local fmt = string.format
@@ -138,8 +140,46 @@ function M.wrap(cmd, opts)
     notification.info(opts.msg.setup)
   end
 
+  -- When retrying after a failed passphrase, preserve the commit message the
+  -- user already wrote.  git overwrites COMMIT_EDITMSG with a fresh template
+  -- before calling GIT_EDITOR on every invocation, so we save the file to a
+  -- temp path on the first retry and replace GIT_EDITOR with a plain `cp`
+  -- that restores it — skipping the editor UI entirely.
+  local on_retry
+  if opts.interactive then
+    local tmp_message_file = nil
+    on_retry = function(proc)
+      if not (proc.env and proc.env.GIT_EDITOR) then
+        return
+      end
+
+      if not tmp_message_file then
+        local editmsg_path = Path.new(git.repo.worktree_git_dir .. "/COMMIT_EDITMSG")
+        if editmsg_path:exists() then
+          local content = editmsg_path:read()
+          if content then
+            local tmpfile = Path.new(vim.fn.tempname())
+            if tmpfile:write(content, "w") then
+              tmp_message_file = tmpfile:absolute()
+            end
+          end
+        end
+      end
+
+      if tmp_message_file then
+        local escaped = vim.fn.shellescape(tmp_message_file)
+        local copy_cmd = vim.fn.has("win32") == 1 and ("copy /y " .. escaped) or ("cp " .. escaped)
+        proc.env.GIT_EDITOR = copy_cmd
+        proc.env.GIT_SEQUENCE_EDITOR = copy_cmd
+      end
+    end
+  end
+
   logger.debug("[CLIENT] Calling editor command")
-  local result = cmd.env(M.get_envs_git_editor(opts.show_diff)).call { pty = opts.interactive }
+  local result = cmd.env(M.get_envs_git_editor(opts.show_diff)).call {
+    pty = opts.interactive,
+    on_retry = on_retry,
+  }
 
   a.util.scheduler()
   logger.debug("[CLIENT] DONE editor command")

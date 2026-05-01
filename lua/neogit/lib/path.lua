@@ -103,13 +103,16 @@ end
 
 ---@param content string
 ---@param mode string "w" to overwrite, "a" or "a+" to append
+---@return boolean
 function Path:write(content, mode)
   local io_mode = (mode == "a" or mode == "a+") and "a" or "w"
   local f = io.open(self._path, io_mode)
   if f then
     f:write(content)
     f:close()
+    return true
   end
+  return false
 end
 
 ---@return string[] Lines of the file without trailing newlines

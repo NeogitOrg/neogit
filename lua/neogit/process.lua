@@ -115,6 +115,21 @@ function Process.new(process)
   return setmetatable(process, Process) ---@class Process
 end
 
+---@return Process
+function Process:clone()
+  return Process.new {
+    cmd = self.cmd,
+    cwd = self.cwd,
+    env = self.env and vim.tbl_extend("force", {}, self.env) or nil,
+    input = self.input,
+    on_error = self.on_error,
+    pty = self.pty,
+    git_hook = self.git_hook,
+    suppress_console = self.suppress_console,
+    user_command = self.user_command,
+  }
+end
+
 local hide_console = false
 function Process.hide_preview_buffers()
   hide_console = true
