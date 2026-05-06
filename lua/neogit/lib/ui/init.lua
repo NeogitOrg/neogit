@@ -37,7 +37,11 @@ Ui.__index = Ui
 ---@param buf Buffer
 ---@return Ui
 function Ui.new(buf)
-  return setmetatable({ buf = buf, layout = {} }, Ui)
+  return setmetatable({
+    buf = buf,
+    layout = {},
+    statuscolumn = { foldmarkers = {} },
+  }, Ui)
 end
 
 ---@return Component|nil

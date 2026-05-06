@@ -736,12 +736,6 @@ function Buffer.create(config)
     buffer:replace_content_with(Path:new(config.name):readlines())
   end
 
-  local win
-  if config.open ~= false then
-    win = buffer:show()
-    logger.debug("[BUFFER:" .. buffer.handle .. "] Showing buffer in window " .. win .. " as " .. buffer.kind)
-  end
-
   logger.debug("[BUFFER:" .. buffer.handle .. "] Setting buffer options")
   buffer:set_buffer_option("swapfile", false)
   buffer:set_buffer_option("modeline", false)
@@ -792,6 +786,14 @@ function Buffer.create(config)
         end
       end
     end
+  end
+
+  local win
+  if config.open ~= false then
+    logger.debug("KIND " .. buffer.kind)
+    win = buffer:show()
+    logger.debug("KIND " .. buffer.kind)
+    logger.debug("[BUFFER:" .. buffer.handle .. "] Showing buffer in window " .. win .. " as " .. buffer.kind)
   end
 
   if config.initialize then
