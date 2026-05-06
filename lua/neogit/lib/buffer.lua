@@ -314,6 +314,7 @@ function Buffer:show()
 
   -- Already visible
   if #windows > 0 then
+    logger.debug("Buffer already visible: using that.")
     vim.api.nvim_set_current_win(windows[1])
     return windows[1]
   end
@@ -414,6 +415,8 @@ function Buffer:show()
   -- With focus on a popup window, any kind of "split" buffer will crash. Floating windows cannot be split.
   local ok, win = pcall(open)
   if not ok then
+    logger.debug("There was an issue opening the buffer. Creating floating window.")
+    logger.debug(win)
     self.kind = "floating"
     win = open()
   end
