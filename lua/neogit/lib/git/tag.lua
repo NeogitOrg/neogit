@@ -4,9 +4,14 @@ local git = require("neogit.lib.git")
 local M = {}
 
 --- Outputs a list of tags locally
+---@param filter string?
 ---@return table List of tags.
-function M.list()
-  return git.cli.tag.list.call({ hidden = true }).stdout
+function M.list(filter)
+  if filter then
+    return git.cli.tag.list.args(filter).call({ hidden = true }).stdout
+  else
+    return git.cli.tag.list.call({ hidden = true }).stdout
+  end
 end
 
 --- Deletes a list of tags
