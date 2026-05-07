@@ -2452,6 +2452,7 @@ from the builder API.
 >lua
     require("neogit").setup({
       builders = {
+        ---@param builder PopupBuilder
         NeogitPushPopup = function(builder)
           builder:switch('m', 'merge_request.create', 'Create merge request', { cli_prefix = '-o ', persisted = false })
         end,
