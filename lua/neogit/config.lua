@@ -107,6 +107,7 @@ end
 
 ---@class NeogitConfigPopup Popup window options
 ---@field kind WindowKind The type of window that should be opened
+---@field show_title boolean Show a title for the popup
 
 ---@class NeogitConfigFloating
 ---@field relative? string
@@ -535,6 +536,7 @@ function M.get_default_values()
     },
     popup = {
       kind = "split",
+      show_title = false,
     },
     stash = {
       kind = "tab",

@@ -309,6 +309,7 @@ neogit.setup {
   },
   popup = {
     kind = "split",
+    show_title = false,
   },
   stash = {
     kind = "tab",
