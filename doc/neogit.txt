@@ -268,6 +268,7 @@ to Neovim users.
     },
     popup = {
         kind = "split",
+        show_title = false,
     },
     stash = {
         kind = "tab",

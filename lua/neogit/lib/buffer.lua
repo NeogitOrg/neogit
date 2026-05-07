@@ -389,7 +389,7 @@ function Buffer:show()
       api.nvim_win_set_cursor(content_window, { 1, 0 })
       win = content_window
     elseif self.kind == "popup" then
-      -- local title, _ = self.name:gsub("^Neogit", ""):gsub("Popup$", "")
+      local title, _ = self.name:gsub("^Neogit", ""):gsub("Popup$", "")
 
       local content_window = api.nvim_open_win(self.handle, true, {
         anchor = "SW",
@@ -401,8 +401,8 @@ function Buffer:show()
         row = vim.o.lines - vim.o.cmdheight - (vim.o.laststatus > 0 and 1 or 0),
         style = "minimal",
         border = { "─", "─", "─", "", "", "", "", "" },
-        -- title = (" %s Actions "):format(title),
-        -- title_pos = "center",
+        title = config.values.popup.show_title and (" %s Actions "):format(title) or nil,
+        title_pos = config.values.popup.show_title and "center" or nil,
       })
 
       api.nvim_win_set_cursor(content_window, { 1, 0 })
