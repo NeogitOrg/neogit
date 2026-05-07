@@ -1300,6 +1300,7 @@ function M.validate_config()
     -- Popup
     if validate_type(config.popup, "popup", "table") then
       validate_kind(config.popup.kind, "popup.kind")
+      validate_type(config.popup.show_title, "popup.show_title", "boolean")
     end
 
     if validate_type(config.git_services, "git_services", "table") then
