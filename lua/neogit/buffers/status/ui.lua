@@ -399,7 +399,7 @@ local SectionItemCommit = Component.new(function(item)
   local virtual_text
 
   -- Render margin, if visible
-  if state.get({ "margin", "visibility" }, false) then
+  if state.get({ "margin", "visibility" }, true) then
     local is_shortstat = state.get({ "margin", "shortstat" }, false)
 
     if is_shortstat then
@@ -425,7 +425,7 @@ local SectionItemCommit = Component.new(function(item)
       }
     else -- Author & date margin
       local margin_date_style = state.get({ "margin", "date_style" }, 1)
-      local details = state.get({ "margin", "details" }, false)
+      local details = state.get({ "margin", "details" }, true)
 
       local date
       local rel_date
