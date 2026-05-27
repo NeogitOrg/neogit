@@ -188,7 +188,9 @@ function Process:start_timer()
           return
         end
 
-        if not config.values.auto_show_console then
+        if self.git_hook and config.values.stream_hook_output then
+          self:show_console()
+        elseif not config.values.auto_show_console then
           local message = string.format(
             "Command %q running for more than: %.1f seconds",
             mask_command(table.concat(self.cmd, " ")),
