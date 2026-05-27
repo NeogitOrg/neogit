@@ -378,6 +378,7 @@ end
 ---@field auto_show_console? boolean Automatically show the console if a command takes longer than console_timeout
 ---@field auto_show_console_on? string Specify "output" (show always; default) or "error" if `auto_show_console` enabled
 ---@field auto_close_console? boolean Automatically hide the console if the process exits with a 0 status
+---@field stream_hook_output? boolean Stream git-hook output (e.g. post-checkout) to the console live while it runs
 ---@field status? NeogitConfigStatusOptions Status buffer options
 ---@field commit_editor? NeogitCommitEditorConfigPopup Commit editor options
 ---@field commit_select_view? NeogitConfigPopup Commit select view options
@@ -480,6 +481,10 @@ function M.get_default_values()
     -- the console always, or "error" to auto-show the console only on error
     auto_show_console_on = "output",
     auto_close_console = true,
+    -- Stream git-hook output (e.g. post-checkout) to the console live while it runs.
+    -- Closes on success, stays open on failure. Off by default. Excludes rebase/bisect
+    -- (their console is suppressed).
+    stream_hook_output = false,
     notification_icon = "󰊢",
     status = {
       show_head_commit_hash = true,
@@ -1250,6 +1255,7 @@ function M.validate_config()
     validate_type(config.auto_show_console, "auto_show_console", "boolean")
     validate_type(config.auto_show_console_on, "auto_show_console_on", "string")
     validate_type(config.auto_close_console, "auto_close_console", "boolean")
+    validate_type(config.stream_hook_output, "stream_hook_output", "boolean")
     if validate_type(config.status, "status", "table") then
       validate_type(config.status.show_head_commit_hash, "status.show_head_commit_hash", "boolean")
       validate_type(config.status.recent_commit_count, "status.recent_commit_count", "number")

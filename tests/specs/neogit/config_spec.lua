@@ -96,6 +96,11 @@ describe("Neogit config", function()
         assert.True(vim.tbl_count(require("neogit.config").validate_config()) ~= 0)
       end)
 
+      it("should return invalid when stream_hook_output isn't a boolean", function()
+        config.values.stream_hook_output = "not a boolean"
+        assert.True(vim.tbl_count(require("neogit.config").validate_config()) ~= 0)
+      end)
+
       it("should return invalid when status isn't a table", function()
         config.values.status = "not a table"
         assert.True(vim.tbl_count(require("neogit.config").validate_config()) ~= 0)
