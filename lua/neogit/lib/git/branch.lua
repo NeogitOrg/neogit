@@ -81,18 +81,26 @@ function M.list_containing_branches(commit, ...)
   return M.list_related_branches("--contains", commit, ...)
 end
 
+--- Whether a checkout must block. When `stream_hook_output` is enabled and a
+--- `post-checkout` hook exists, run async (non-blocking) so the hook console can
+--- stream live; otherwise keep the original blocking behavior.
+---@return boolean
+local function checkout_await()
+  return not (config.values.stream_hook_output and git.hooks.exists("checkout"))
+end
+
 ---@param name string
 ---@param args? string[]
 ---@return ProcessResult
 function M.checkout(name, args)
-  return git.cli.checkout.branch(name).arg_list(args or {}).call { await = true }
+  return git.cli.checkout.branch(name).arg_list(args or {}).call { await = checkout_await() }
 end
 
 ---@param name string
 ---@param args? string[]
 ---@return ProcessResult
 function M.track(name, args)
-  return git.cli.checkout.track(name).arg_list(args or {}).call { await = true }
+  return git.cli.checkout.track(name).arg_list(args or {}).call { await = checkout_await() }
 end
 
 ---@param include_current? boolean
