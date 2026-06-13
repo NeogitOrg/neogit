@@ -496,7 +496,10 @@ The following mappings can all be customized via the setup function.
         ["<c-s>"]  = "StageAll",
         ["u"]      = "Unstage",
         ["K"]      = "Untrack",
+        ["R"]      = "Rename",
         ["U"]      = "UnstageStaged",
+        ["<m-u>"]  = "Undo",
+        ["<m-r>"]  = "Redo",
         ["y"]      = "ShowRefs",
         ["$"]      = "CommandHistory",
         ["Y"]      = "YankSelected",
@@ -2233,6 +2236,17 @@ working tree and index. It is opened via |:Neogit| or
 
                          Visual-mode `V` reverses only the selected lines
                          within the hunk.
+
+  • `<m-u>` / `<m-r>`    Undo / redo the last action by stepping HEAD       *neogit_status_undo*
+                         back and forth through the reflog.
+
+                         Covers anything that moves HEAD, such as commits,
+                         amends, merges, rebases and resets. Each step is
+                         tagged in the reflog, so the history isn't lost
+                         when you close and reopen neogit.
+
+                         Undo and redo are disabled while a rebase or merge
+                         is in progress.
 
   • `<tab>`              Toggle folding for the item at point.
   • `<cr>`               Open the file at point in the editor.
