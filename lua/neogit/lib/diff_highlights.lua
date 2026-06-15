@@ -51,8 +51,10 @@ local function merge_underscore_spans(spans, s)
   for i = 2, #spans do
     local prev = merged[#merged]
     local curr = spans[i]
+
     -- gap == 1 means exactly one byte separates the two spans
-    if curr[1] - prev[2] == 1 and sub(s, prev[2] + 1, prev[2] + 1) == "_" then
+    local next_token = sub(s, prev[2] + 1, prev[2] + 1)
+    if curr[1] - prev[2] == 1 and (next_token == "_" or next_token == ".") then
       merged[#merged] = { prev[1], curr[2] }
     else
       merged[#merged + 1] = curr
