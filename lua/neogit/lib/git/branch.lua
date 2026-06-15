@@ -85,14 +85,14 @@ end
 ---@param args? string[]
 ---@return ProcessResult
 function M.checkout(name, args)
-  return git.cli.checkout.branch(name).arg_list(args or {}).call { await = true }
+  return git.cli.checkout.branch(name).arg_list(args or {}).call()
 end
 
 ---@param name string
 ---@param args? string[]
 ---@return ProcessResult
 function M.track(name, args)
-  return git.cli.checkout.track(name).arg_list(args or {}).call { await = true }
+  return git.cli.checkout.track(name).arg_list(args or {}).call()
 end
 
 ---@param include_current? boolean
