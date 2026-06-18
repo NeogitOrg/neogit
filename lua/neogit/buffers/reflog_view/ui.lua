@@ -29,7 +29,7 @@ M.Entry = Component.new(function(entry, total)
   local date
   if config.values.log_date_format == nil then
     local date_number, date_quantifier = unpack(vim.split(entry.rel_date, " "))
-    date = date_number .. date_quantifier:sub(1, 1)
+    date = date_number .. util.str_first_char(date_quantifier)
   else
     date = entry.commit_date
   end
