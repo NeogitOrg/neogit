@@ -461,7 +461,7 @@ local SectionItemCommit = Component.new(function(item)
           left_pad = ""
         end
 
-        date = left_pad .. date_number .. date_quantifier:sub(1, 1)
+        date = left_pad .. date_number .. util.str_first_char(date_quantifier)
         date_width = 3
         clamp_width = 23
       elseif margin_date_style == 2 then -- relative date (long)

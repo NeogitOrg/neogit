@@ -259,6 +259,10 @@ end
 --   return vim.split(str, "\r?\n")
 -- end
 
+function M.str_first_char(str)
+  return vim.fn.strcharpart(str, 0, 1)
+end
+
 function M.str_truncate(str, max_length, trailing)
   trailing = trailing or "..."
   if vim.fn.strdisplaywidth(str) > max_length then
