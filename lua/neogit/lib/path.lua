@@ -75,15 +75,16 @@ end
 ---@param base string|NeogitPath
 ---@return string
 function Path:make_relative(base)
-  local abs_self = self:absolute()
-  local abs_base = vim.fn.fnamemodify(tostring(base), ":p")
-  if abs_base ~= sep and abs_base:sub(-1) == sep then
+  local function fwd(p) return (p:gsub("\\", "/")) end
+  local abs_self = fwd(self:absolute())
+  local abs_base = fwd(vim.fn.fnamemodify(tostring(base), ":p"))
+  if abs_base ~= "/" and abs_base:sub(-1) == "/" then
     abs_base = abs_base:sub(1, -2)
   end
 
   if abs_self == abs_base then
     return "."
-  elseif vim.startswith(abs_self, abs_base .. sep) then
+  elseif vim.startswith(abs_self, abs_base .. "/") then
     return abs_self:sub(#abs_base + 2)
   end
 
