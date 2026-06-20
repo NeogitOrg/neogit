@@ -199,6 +199,21 @@ RSpec.describe "Status Buffer", :git, :nvim do
       end
     end
 
+    context "with untracked directory" do
+      before do
+        FileUtils.mkdir_p("new_dir")
+        File.write("new_dir/new_file.txt", "brand new\n")
+        nvim.refresh
+      end
+
+      it "deletes the directory when discarding the section" do
+        nvim.move_to_line("Untracked files")
+        nvim.confirm(true)
+        nvim.keys("x")
+        await { expect(Dir.exist?("new_dir")).to be false }
+      end
+    end
+
     context "when staged new file" do
       before do
         File.write("new_file.txt", "brand new\n")
@@ -213,6 +228,26 @@ RSpec.describe "Status Buffer", :git, :nvim do
         await do
           expect(`git diff --cached --name-only`.strip).to be_empty
           expect(File.exist?("new_file.txt")).to be false
+        end
+      end
+    end
+
+    context "when staged new file in a new directory" do
+      before do
+        FileUtils.mkdir_p("new_dir")
+        File.write("new_dir/new_file.txt", "brand new\n")
+        git.add("new_dir/new_file.txt")
+        nvim.refresh
+      end
+
+      it "removes it from the index and deletes the empty directory" do
+        nvim.move_to_line("new file   new_dir/new_file.txt", after: "Staged changes")
+        nvim.confirm(true)
+        nvim.keys("x")
+        await do
+          expect(`git diff --cached --name-only`.strip).to be_empty
+          expect(File.exist?("new_dir/new_file.txt")).to be false
+          expect(Dir.exist?("new_dir")).to be false
         end
       end
     end
