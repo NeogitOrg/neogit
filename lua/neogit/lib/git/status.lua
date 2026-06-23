@@ -269,7 +269,7 @@ end
 function M.any_unmerged()
   return vim.iter(git.repo.state.unstaged.items):any(function(item)
     return vim.tbl_contains({ "UU", "AA", "DU", "UD", "AU", "UA", "DD" }, item.mode)
-  end)
+  end) or #git.cli["ls-files"].unmerged.call().stdout > 0
 end
 
 M.register = function(meta)
