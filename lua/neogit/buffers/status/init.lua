@@ -356,8 +356,19 @@ function M:redraw(cursor, view)
   end
 end
 
+local refresh_scheduled = false
+
 M.dispatch_refresh = a.void(function(self, partial, reason)
-  self:refresh(partial, reason)
+  if refresh_scheduled then
+    return
+  end
+
+  refresh_scheduled = true
+
+  vim.schedule(function()
+    refresh_scheduled = false
+    self:refresh(partial, reason)
+  end)
 end)
 
 ---@param reason string
