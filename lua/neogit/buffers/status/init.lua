@@ -210,6 +210,8 @@ function M:open(kind)
         [mappings["StageUnstaged"]]             = self:_action("n_stage_unstaged"),
         [mappings["Unstage"]]                   = self:_action("n_unstage"),
         [mappings["UnstageStaged"]]             = self:_action("n_unstage_staged"),
+        [mappings["Undo"]]                      = self:_action("n_undo"),
+        [mappings["Redo"]]                      = self:_action("n_redo"),
         [mappings["GoToFile"]]                  = self:_action("n_goto_file"),
         [mappings["GoToParentRepo"]]            = self:_action("n_goto_parent_repo"),
         [mappings["TabOpen"]]                   = self:_action("n_tab_open"),

@@ -1766,4 +1766,30 @@ M.v_reverse = function(self)
   end)
 end
 
+---@param self StatusBuffer
+---@return fun(): nil
+M.n_undo = function(self)
+  return a.void(function()
+    local ok, message = git.undo.undo()
+    if ok then
+      self:dispatch_refresh({ update_diffs = { "*:*" } }, "n_undo")
+    else
+      notification.warn(message)
+    end
+  end)
+end
+
+---@param self StatusBuffer
+---@return fun(): nil
+M.n_redo = function(self)
+  return a.void(function()
+    local ok, message = git.undo.redo()
+    if ok then
+      self:dispatch_refresh({ update_diffs = { "*:*" } }, "n_redo")
+    else
+      notification.warn(message)
+    end
+  end)
+end
+
 return M
