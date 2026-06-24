@@ -63,7 +63,18 @@ function M.changes(popup)
 end
 
 function M.hunk(popup)
-  git.revert.hunk(popup:get_env("hunk"), popup:get_arguments())
+  local hunk = popup:get_env("hunk")
+  local args = popup:get_arguments()
+  local success, error_msg = git.revert.hunk(hunk, args)
+
+  if not success then
+    local file_info = hunk and hunk.file and (" in " .. hunk.file) or ""
+    notification.error(
+      "Failed to revert hunk" .. file_info .. ".\n"
+      .. "The patch may conflict with the current state.\n\n"
+      .. (error_msg or "Unknown error")
+    )
+  end
 end
 
 function M.continue()
