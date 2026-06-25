@@ -728,6 +728,12 @@ function Buffer.create(config)
 
   local buffer = Buffer.from_name(config.name)
 
+  local existing_buftype = buffer:get_option("buftype")
+  if existing_buftype == "terminal" and config.buftype ~= "terminal" then
+    api.nvim_buf_delete(buffer.handle, { force = true })
+    buffer = Buffer.from_name(config.name)
+  end
+
   buffer.name = config.name
   buffer.kind = config.kind or "split"
 
