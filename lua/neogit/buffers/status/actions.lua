@@ -1146,7 +1146,7 @@ M.n_stage = function(self)
 
       if selection.item and selection.item.mode == "UU" then
         local diff_viewer = config.get_diff_viewer()
-        if diff_viewer and git.merge.is_conflicted(selection.item.escaped_path) then
+        if diff_viewer and git.merge.is_conflicted(selection.item.name) then
           local integration = diff_viewer == "codediff" and require("neogit.integrations.codediff")
             or require("neogit.integrations.diffview")
           integration.open("conflict", selection.item.name, {
