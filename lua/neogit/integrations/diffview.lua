@@ -10,6 +10,17 @@ local Watcher = require("neogit.watcher")
 local git = require("neogit.lib.git")
 local a = require("neogit.lib.async")
 
+-- `git show` represents the file's final newline as an empty string "".
+-- diffview compares line arrays, and its other side is a buffer where the
+-- trailing newline is stripped with no final empty line.
+-- We must match that behavior to avoid an extraneous last line diff.
+local function strip_trailing_eol(lines)
+  if lines[#lines] == "" then
+    lines[#lines] = nil
+  end
+  return lines
+end
+
 local function get_local_diff_view(section_name, item_name, opts)
   local left = Rev(RevType.STAGE)
   local right = Rev(RevType.LOCAL)
@@ -84,10 +95,10 @@ local function get_local_diff_view(section_name, item_name, opts)
           table.insert(args, "HEAD")
         end
 
-        return git.cli.show.file(unpack(args)).call({ await = true, trim = false }).stdout
+        return strip_trailing_eol(git.cli.show.file(unpack(args)).call({ await = true, trim = false }).stdout)
       elseif kind == "working" then
         local fdata = git.cli.show.file(path).call({ await = true, trim = false }).stdout
-        return side == "left" and fdata
+        return side == "left" and strip_trailing_eol(fdata)
       end
     end,
   }
