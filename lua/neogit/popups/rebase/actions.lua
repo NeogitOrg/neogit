@@ -31,7 +31,7 @@ function M.onto_pushRemote(popup)
 end
 
 function M.onto_upstream(popup)
-  local upstream = git.branch.upstream(git.branch.current())
+  local upstream = git.branch.upstream()
   if not upstream then
     upstream = FuzzyFinderBuffer.new(git.refs.list_branches()):open_async()
   end
