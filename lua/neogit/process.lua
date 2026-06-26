@@ -4,6 +4,7 @@ local notification = require("neogit.lib.notification")
 local config = require("neogit.config")
 local logger = require("neogit.logger")
 local util = require("neogit.lib.util")
+local git = require("neogit.lib.git")
 
 local ProcessBuffer = require("neogit.buffers.process")
 local Spinner = require("neogit.spinner")
@@ -379,7 +380,7 @@ function Process:spawn(cb)
     -- was cancelled): the non-zero exit is intentional, not a real failure.
     if code > 0 and not self.killed then
       local should_show_error = self.on_error(res)
-      local is_hook_failure = self.git_hook and code > 0
+      local is_hook_failure = self.git_hook and code > 0 and not git.status.any_unmerged()
 
       -- For git hook failures, always show the Git Console
       if is_hook_failure then

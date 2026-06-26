@@ -303,6 +303,7 @@ end
 
 ---@class GitCommandLsFiles: GitCommandBuilder
 ---@field others self
+---@field unmerged self
 ---@field deleted self
 ---@field modified self
 ---@field cached self
@@ -939,6 +940,7 @@ local configurations = {
 
   ["ls-files"] = config {
     flags = {
+      unmerged = "--unmerged",
       others = "--others",
       deleted = "--deleted",
       modified = "--modified",
