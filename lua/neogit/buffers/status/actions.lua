@@ -15,14 +15,50 @@ local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 local fn = vim.fn
 local api = vim.api
 
+local function absolute_path(path)
+  if vim.startswith(path, "/") then
+    return vim.fs.normalize(path)
+  end
+
+  return vim.fs.normalize(git.repo.worktree_root .. "/" .. path)
+end
+
+local function path_contains(parent, child)
+  parent = vim.fs.normalize(parent)
+  child = vim.fs.normalize(child)
+
+  return child == parent or vim.startswith(child .. "/", parent .. "/")
+end
+
+local function move_cwds_out_of_dir(dir)
+  local root = vim.fs.normalize(git.repo.worktree_root)
+
+  if path_contains(dir, vim.uv.cwd()) then
+    api.nvim_set_current_dir(root)
+  end
+
+  for _, tabpage in ipairs(api.nvim_list_tabpages()) do
+    for _, win in ipairs(api.nvim_tabpage_list_wins(tabpage)) do
+      api.nvim_win_call(win, function()
+        if path_contains(dir, fn.getcwd()) then
+          vim.cmd.lcd(fn.fnameescape(root))
+        end
+      end)
+    end
+  end
+end
+
 local function cleanup_dir(dir)
   if vim.in_fast_event() then
     a.util.scheduler()
   end
 
+  dir = absolute_path(dir)
+  move_cwds_out_of_dir(dir)
+
   for name, type in vim.fs.dir(dir, { depth = math.huge }) do
     if type == "file" then
-      local bufnr = fn.bufnr(name)
+      local bufnr = fn.bufnr(vim.fs.joinpath(dir, name))
       if bufnr > 0 then
         api.nvim_buf_delete(bufnr, { force = false })
       end
@@ -30,6 +66,31 @@ local function cleanup_dir(dir)
   end
 
   fn.delete(dir, "rf")
+end
+
+local function empty_dir(dir)
+  local ok, iter = pcall(vim.fs.dir, dir)
+  return ok and iter and iter() == nil
+end
+
+local function cleanup_empty_parent_dirs(path)
+  local root = vim.fs.normalize(git.repo.worktree_root)
+  local dir = vim.fs.dirname(absolute_path(path))
+
+  while dir and dir ~= "." do
+    dir = vim.fs.normalize(dir)
+
+    if dir == root or not path_contains(root, dir) then
+      break
+    end
+
+    if fn.isdirectory(dir) == 0 or not empty_dir(dir) then
+      break
+    end
+
+    fn.delete(dir, "d")
+    dir = vim.fs.dirname(dir)
+  end
 end
 
 ---@param items StatusItem[]
@@ -42,13 +103,19 @@ local function cleanup_items(items)
     local path = item.absolute_path or item.name
     logger.debug("[cleanup_items()] Cleaning " .. vim.inspect(path))
     assert(path, "cleanup_items() - item must have a name")
+    local resolved_path = absolute_path(path)
 
-    local bufnr = fn.bufnr(path)
+    local bufnr = fn.bufnr(resolved_path)
     if bufnr > 0 then
       pcall(api.nvim_buf_delete, bufnr, { force = false })
     end
 
-    fn.delete(fn.fnameescape(path))
+    if fn.isdirectory(resolved_path) == 1 then
+      cleanup_dir(resolved_path)
+      cleanup_empty_parent_dirs(resolved_path)
+    elseif fn.delete(resolved_path) == 0 then
+      cleanup_empty_parent_dirs(resolved_path)
+    end
   end
 end
 
