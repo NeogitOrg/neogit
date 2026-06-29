@@ -249,7 +249,14 @@ function Buffer:close(force)
       self.old_cwd = nil
     end
 
-    api.nvim_buf_delete(self.handle, { force = force })
+    if self.old_buf and api.nvim_buf_is_valid(self.old_buf) then
+      local ok = pcall(api.nvim_win_set_buf, self.win_handle, self.old_buf)
+      if not ok then
+        vim.cmd.enew()
+      end
+    else
+      vim.cmd.enew()
+    end
     return
   end
 
