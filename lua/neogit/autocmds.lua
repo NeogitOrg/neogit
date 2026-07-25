@@ -20,12 +20,14 @@ function M.setup()
 
   api.nvim_create_autocmd("SessionLoadPost", {
     callback = function()
-      for _, buf in ipairs(api.nvim_list_bufs()) do
-        local buf_name = api.nvim_buf_get_name(buf)
-        if buf_name:match("Neogit%w+") then
-          api.nvim_buf_delete(buf, { force = true })
+      vim.schedule(function()
+        for _, buf in ipairs(api.nvim_list_bufs()) do
+          local buf_name = api.nvim_buf_get_name(buf)
+          if buf_name:match("Neogit%w+") then
+            api.nvim_buf_delete(buf, { force = true })
+          end
         end
-      end
+      end)
     end,
   })
 
