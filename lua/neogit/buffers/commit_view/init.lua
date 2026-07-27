@@ -7,7 +7,6 @@ local popups = require("neogit.popups")
 local a = require("neogit.lib.async")
 local input = require("neogit.lib.input")
 local commit_view_maps = require("neogit.config").get_reversed_commit_view_maps()
-local status_maps = require("neogit.config").get_reversed_status_maps()
 local notification = require("neogit.lib.notification")
 local jump = require("neogit.lib.jump")
 local util = require("neogit.lib.util")
@@ -229,6 +228,7 @@ function M:open(kind)
   kind = kind or config.values.commit_view.kind
 
   M.instance = self
+  local status_maps = config.get_reversed_status_maps()
 
   self.buffer = Buffer.create {
     name = "NeogitCommitView",

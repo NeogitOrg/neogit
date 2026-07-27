@@ -3,7 +3,6 @@ local Buffer = require("neogit.lib.buffer")
 local ui = require("neogit.buffers.commit_select_view.ui")
 local config = require("neogit.config")
 local util = require("neogit.lib.util")
-local status_maps = require("neogit.config").get_reversed_status_maps()
 
 ---@class CommitSelectViewBuffer
 ---@field commits CommitLogEntry[]
@@ -55,6 +54,7 @@ function M:open(action)
 
   ---@type fun(commit: string[])|nil
   local action = action
+  local status_maps = config.get_reversed_status_maps()
 
   self.buffer = Buffer.create {
     name = "NeogitCommitSelectView",
