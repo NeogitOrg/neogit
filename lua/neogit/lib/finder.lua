@@ -122,35 +122,49 @@ local function telescope_mappings(on_select, allow_multi, refocus_status)
   end
 end
 
---- Utility function to map actions
+--- Build the fzf-lua actions table and an abort handler
+---
+--- The `esc`/`ctrl-c`/`ctrl-q` actions only fire when fzf is given one of those
+--- keys and prints it back; if the fzf process is instead terminated (window
+--- closed, job killed) no action is dispatched at all. The caller wires the
+--- returned `on_close` to `winopts.on_close` so an abort still completes the
+--- finder via `nil`, matching the abort semantics of every other integration.
 ---@param on_select fun(item: any|nil)
 ---@param allow_multi boolean
 ---@param refocus_status boolean
+---@return table actions
+---@return function on_close
 local function fzf_actions(on_select, allow_multi, refocus_status)
+  local completed = false
+
   local function refresh()
     if refocus_status then
       refocus_status_buffer()
     end
   end
 
-  local function close_action()
-    on_select(nil)
+  local function complete(selection)
+    if completed then
+      return
+    end
+    completed = true
+    on_select(selection)
     refresh()
+  end
+
+  local function close_action()
+    complete(nil)
   end
 
   return {
     ["default"] = function(selected)
-      if allow_multi then
-        on_select(selected)
-      else
-        on_select(selected[1])
-      end
-      refresh()
+      complete(allow_multi and selected or selected[1])
     end,
     ["esc"] = close_action,
     ["ctrl-c"] = close_action,
     ["ctrl-q"] = close_action,
-  }
+  },
+    close_action
 end
 
 ---Convert entries to snack picker items
@@ -368,6 +382,7 @@ function Finder:find(on_select)
       :find()
   elseif config.check_integration("fzf_lua") then
     local fzf_lua = require("fzf-lua")
+    local actions, on_close = fzf_actions(on_select, self.opts.allow_multi, self.opts.refocus_status)
     fzf_lua.fzf_exec(self.entries, {
       prompt = string.format("%s> ", self.opts.prompt_prefix),
       fzf_opts = fzf_opts(self.opts),
@@ -375,8 +390,15 @@ function Finder:find(on_select)
         height = self.opts.layout_config.height,
         border = self.opts.border,
         preview = { border = self.opts.border },
+        -- fzf-lua invokes `winopts.on_close` from `FzfWin:close()` before the
+        -- selected action is dispatched, so defer the abort completion to the
+        -- next event loop tick; the `completed` guard turns the resulting
+        -- double call into a no-op when a selection was already dispatched.
+        on_close = function()
+          vim.schedule(on_close)
+        end,
       },
-      actions = fzf_actions(on_select, self.opts.allow_multi, self.opts.refocus_status),
+      actions = actions,
     })
   elseif config.check_integration("mini_pick") then
     local mini_pick = require("mini.pick")
