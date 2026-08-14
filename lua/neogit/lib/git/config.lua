@@ -151,6 +151,13 @@ function M.get_matching(pattern)
   return matches
 end
 
+---Returns all values set for a multi-valued key (e.g. remote.<name>.fetch).
+---@param key string
+---@return string[]
+function M.get_all_values(key)
+  return git.cli.config.get_all(key).call({ ignore_error = true }).stdout
+end
+
 function M.set(key, value)
   cache_key = nil
 

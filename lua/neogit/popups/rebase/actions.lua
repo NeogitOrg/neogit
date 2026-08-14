@@ -75,6 +75,7 @@ function M.interactively(popup)
       elseif choice == "s" then
         popup.state.env.commit = nil
         M.interactively(popup)
+        return
       else
         return
       end
@@ -136,10 +137,18 @@ function M.subset(popup)
     )
       :open_async()[1]
   end
-
-  if start then
-    git.rebase.onto(start, newbase, popup:get_arguments())
+  if not start then
+    return
   end
+
+  local args = popup:get_arguments()
+  local parent = git.log.parent(start)
+  if parent then
+    start = start .. "^"
+  else
+    table.insert(args, "--root")
+  end
+  git.rebase.onto(start, newbase, args)
 end
 
 function M.continue()
@@ -155,19 +164,22 @@ function M.edit()
 end
 
 function M.autosquash(popup)
+  local args = util.deduplicate(util.merge(popup:get_arguments(), { "--autosquash", "--keep-empty" }))
   local base
   if popup.state.env.commit and git.log.is_ancestor(popup.state.env.commit, "HEAD") then
-    base = popup.state.env.commit
+    local parent = git.log.parent(popup.state.env.commit)
+    if parent then
+      base = popup.state.env.commit .. "^"
+    else
+      base = popup.state.env.commit
+      table.insert(args, "--root")
+    end
   else
     base = git.rebase.merge_base_HEAD()
   end
 
   if base then
-    git.rebase.onto(
-      "HEAD",
-      base,
-      util.deduplicate(util.merge(popup:get_arguments(), { "--autosquash", "--keep-empty" }))
-    )
+    git.rebase.rebase_interactive(base, args)
   end
 end
 

@@ -20,7 +20,7 @@ local commit_header_pat = "([| ]*)(%*?)([| ]*)commit (%w+)"
 ---@field committer_name string the name of the committer
 ---@field committer_email string the email of the committer
 ---@field committer_date string when the committer committed
----@field description string a list of lines
+---@field description string[] a list of lines
 ---@field commit_arg string the passed argument of the git command
 ---@field subject string
 ---@field parent string
@@ -425,13 +425,17 @@ function M.register(meta)
     repo_state.recent = { items = {} }
 
     local count = config.values.status.recent_commit_count
-    local order = state.get({ "NeogitMarginPopup", "-order" }, "topo")
+    local order = state.get({ "NeogitMarginPopup", "-order" }, config.values.commit_order)
 
     if count > 0 then
-      repo_state.recent.items = util.filter_map(
-        M.list({ "--max-count=" .. tostring(count), "--" .. order .. "-order" }, {}, {}, true),
-        M.present_commit
-      )
+      local args = { "--max-count=" .. tostring(count) }
+      local graph = nil
+      if order and order ~= "" then
+        table.insert(args, "--" .. order .. "-order")
+        graph = {}
+      end
+
+      repo_state.recent.items = util.filter_map(M.list(args, graph, {}, true), M.present_commit)
     end
   end
 end
@@ -462,11 +466,18 @@ function M.present_commit(commit)
     return
   end
 
+  local is_shortstat = state.get({ "margin", "shortstat" }, false)
+  local shortstat
+  if is_shortstat then
+    shortstat = git.cli.show.format("").shortstat.args(commit.oid).call().stdout[1]
+  end
+
   return {
     name = string.format("%s %s", commit.abbreviated_commit, commit.subject or "<empty>"),
     decoration = M.branch_info(commit.ref_name, git.remote.list()),
     oid = commit.oid,
     commit = commit,
+    shortstat = shortstat,
   }
 end
 
@@ -544,11 +555,11 @@ M.branch_info = util.memoize(function(ref, remotes)
   return result
 end)
 
-function M.reflog_message(skip)
+function M.log_message(skip)
   return git.cli.log
     .format("%B")
     .max_count(1)
-    .args("--reflog", "--no-merges", "--skip=" .. tostring(skip))
+    .args("--no-merges", "--skip=" .. tostring(skip))
     .call({ ignore_error = true }).stdout
 end
 

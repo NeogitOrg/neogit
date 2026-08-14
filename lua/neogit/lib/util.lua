@@ -197,15 +197,27 @@ end
 --   return res
 -- end
 
-function M.str_min_width(str, len, sep)
+---@param opts table? If { mode = 'append' }, adds spaces to the end of `str`. If { mode = 'insert' }, adds spaces to the beginning.
+function M.str_min_width(str, len, sep, opts)
+  local mode = (type(opts) == "table" and opts.mode) or "append"
   local length = vim.fn.strdisplaywidth(str)
   if length > len then
     return str
   end
 
-  return str .. string.rep(sep or " ", len - length)
+  if mode == "append" then
+    -- Add spaces to the right of str
+    return str .. string.rep(sep or " ", len - length)
+  else
+    -- Add spaces to the left of str
+    return string.rep(sep or " ", len - length) .. str
+  end
 end
 
+---Extract slice from a table
+---@param tbl table
+---@param s integer start index
+---@param e integer ending index
 function M.slice(tbl, s, e)
   local pos, new = 1, {}
 
@@ -247,6 +259,10 @@ end
 --   return vim.split(str, "\r?\n")
 -- end
 
+function M.str_first_char(str)
+  return vim.fn.strcharpart(str, 0, 1)
+end
+
 function M.str_truncate(str, max_length, trailing)
   trailing = trailing or "..."
   if vim.fn.strdisplaywidth(str) > max_length then
@@ -255,8 +271,10 @@ function M.str_truncate(str, max_length, trailing)
   return str
 end
 
-function M.str_clamp(str, len, sep)
-  return M.str_min_width(M.str_truncate(str, len - 1, ""), len, sep or " ")
+---@param opts table? If { mode = 'append' }, adds spaces to the end of `str`. If { mode = 'insert' }, adds spaces to the beginning.
+function M.str_clamp(str, len, sep, opts)
+  local opts = (type(opts) == "table" and opts.mode) or { mode = "append" }
+  return M.str_min_width(M.str_truncate(str, len - 1, ""), len, sep or " ", opts)
 end
 
 --- Splits a string every n characters, respecting word boundaries
@@ -585,7 +603,8 @@ function M.throttle_by_id(fn, schedule)
 end
 
 -- from: https://stackoverflow.com/questions/48948630/lua-ansi-escapes-pattern
-local pattern_1 = "[\27\155][][()#;?%d]*[A-PRZcf-ntqry=><~]"
+-- Excludes \155 as that can be a valid continuation byte.
+local pattern_1 = "\27[][()#;?%d]*[A-PRZcf-ntqry=><~]"
 local pattern_2 = "[\r\n\04\08]"
 local BLANK = ""
 local gsub = string.gsub

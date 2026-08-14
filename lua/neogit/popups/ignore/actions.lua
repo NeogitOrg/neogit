@@ -1,6 +1,6 @@
 local M = {}
 
-local Path = require("plenary.path")
+local Path = require("neogit.lib.path")
 local git = require("neogit.lib.git")
 local util = require("neogit.lib.util")
 local input = require("neogit.lib.input")
@@ -19,7 +19,7 @@ local function make_rules(popup, relative)
   end, files))
 end
 
----@param path Path
+---@param path NeogitPath
 ---@param rules string[]
 local function add_rules(path, rules)
   local selected = FuzzyFinderBuffer.new(rules)
@@ -52,15 +52,21 @@ end
 
 function M.private_local(popup)
   local ignore_file = git.repo:git_path("info", "exclude")
-  local rules = make_rules(popup, git.repo.worktree_root)
+  if not ignore_file:exists() then
+    ignore_file:touch { parents = true }
+  end
 
+  local rules = make_rules(popup, git.repo.worktree_root)
   add_rules(ignore_file, rules)
 end
 
 function M.private_global(popup)
   local ignore_file = Path:new(git.config.get_global("core.excludesfile"):read())
-  local rules = make_rules(popup, git.repo.worktree_root)
+  if not ignore_file:exists() then
+    ignore_file:touch { parents = true }
+  end
 
+  local rules = make_rules(popup, git.repo.worktree_root)
   add_rules(ignore_file, rules)
 end
 

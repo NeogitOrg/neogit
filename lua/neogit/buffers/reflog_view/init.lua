@@ -2,8 +2,10 @@ local Buffer = require("neogit.lib.buffer")
 local ui = require("neogit.buffers.reflog_view.ui")
 local config = require("neogit.config")
 local popups = require("neogit.popups")
-local status_maps = require("neogit.config").get_reversed_status_maps()
+local commit_view_maps = require("neogit.config").get_reversed_commit_view_maps()
 local CommitViewBuffer = require("neogit.buffers.commit_view")
+local notification = require("neogit.lib.notification")
+local git = require("neogit.lib.git")
 
 ---@class ReflogViewBuffer
 ---@field entries ReflogEntry[]
@@ -47,6 +49,7 @@ function M:open(_)
   end
 
   M.instance = self
+  local status_maps = config.get_reversed_status_maps()
 
   self.buffer = Buffer.create {
     name = "NeogitReflogView",
@@ -100,6 +103,25 @@ function M:open(_)
         end),
       },
       n = {
+        [commit_view_maps["OpenCommitLinkInBrowser"]] = function()
+          if not vim.ui.open then
+            notification.warn("Requires Neovim >= 0.10")
+            return
+          end
+
+          local oid = self.buffer.ui:get_commit_under_cursor()
+          if not oid then
+            return
+          end
+
+          local uri = git.remote.commit_url(oid)
+          if uri then
+            notification.info(("Opening %q in your browser."):format(uri))
+            vim.ui.open(uri)
+          else
+            notification.warn("Couldn't determine commit URL to open")
+          end
+        end,
         [popups.mapping_for("BisectPopup")] = popups.open("bisect", function(p)
           p { commits = { self.buffer.ui:get_commit_under_cursor() } }
         end),

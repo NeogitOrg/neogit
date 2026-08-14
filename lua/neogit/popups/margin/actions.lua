@@ -1,7 +1,7 @@
 local M = {}
 
 local state = require("neogit.lib.state")
-local a = require("plenary.async")
+local a = require("neogit.lib.async")
 
 function M.refresh_buffer(buffer)
   return a.void(function()
@@ -27,6 +27,12 @@ function M.toggle_details()
   local details = state.get({ "margin", "details" }, false)
   local new_details = not details
   state.set({ "margin", "details" }, new_details)
+end
+
+function M.toggle_shortstat()
+  local shortstat = state.get({ "margin", "shortstat" }, false)
+  local new_shortstat = not shortstat
+  state.set({ "margin", "shortstat" }, new_shortstat)
 end
 
 return M

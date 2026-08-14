@@ -85,14 +85,14 @@ end
 ---@param args? string[]
 ---@return ProcessResult
 function M.checkout(name, args)
-  return git.cli.checkout.branch(name).arg_list(args or {}).call { await = true }
+  return git.cli.checkout.branch(name).arg_list(args or {}).call()
 end
 
 ---@param name string
 ---@param args? string[]
 ---@return ProcessResult
 function M.track(name, args)
-  return git.cli.checkout.track(name).arg_list(args or {}).call { await = true }
+  return git.cli.checkout.track(name).arg_list(args or {}).call()
 end
 
 ---@param include_current? boolean
@@ -260,8 +260,9 @@ function M.pushRemote_or_pushDefault_label()
   end
 
   local pushDefault = M.pushDefault()
-  if pushDefault then
-    return ("%s, creating it"):format(M.pushDefault_ref())
+  local pushDefault_ref = M.pushDefault_ref()
+  if pushDefault and pushDefault_ref then
+    return ("%s, creating it"):format(pushDefault_ref)
   end
 
   return "pushRemote, setting that"
@@ -311,8 +312,9 @@ end
 ---@return string|nil
 function M.upstream(name)
   if name then
-    local result =
-      git.cli["rev-parse"].symbolic_full_name.abbrev_ref(name .. "@{upstream}").call { ignore_error = true }
+    local result = git.cli["rev-parse"].symbolic_full_name.abbrev_ref
+      .args(name .. "@{upstream}")
+      .call { ignore_error = true }
 
     if result:success() then
       return result.stdout[1]

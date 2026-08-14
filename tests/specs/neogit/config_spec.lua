@@ -32,7 +32,7 @@ describe("Neogit config", function()
       end)
 
       it("should return invalid when disable_insert_on_commit isn't a boolean", function()
-        config.values.telescope_sorter = "not a boolean"
+        config.values.disable_insert_on_commit = "not a boolean"
         assert.True(vim.tbl_count(require("neogit.config").validate_config()) ~= 0)
       end)
 
@@ -58,6 +58,11 @@ describe("Neogit config", function()
 
       it("should return invalid when initial_branch_name isn't a string", function()
         config.values.initial_branch_name = false
+        assert.True(vim.tbl_count(require("neogit.config").validate_config()) ~= 0)
+      end)
+
+      it("should return invalid when initial_branch_rename isn't an optional string", function()
+        config.values.initial_branch_rename = false
         assert.True(vim.tbl_count(require("neogit.config").validate_config()) ~= 0)
       end)
 
@@ -233,6 +238,11 @@ describe("Neogit config", function()
 
       it("should return invalid when popup.kind isn't a valid kind", function()
         config.values.popup.kind = "not a valid kind"
+        assert.True(vim.tbl_count(require("neogit.config").validate_config()) ~= 0)
+      end)
+
+      it("should return invalid when popup.show_title isn't a boolean", function()
+        config.values.popup.show_title = "not a boolean"
         assert.True(vim.tbl_count(require("neogit.config").validate_config()) ~= 0)
       end)
 
@@ -563,6 +573,16 @@ describe("Neogit config", function()
 
       it("should return valid when a command mappings.finder is a boolean", function()
         config.values.mappings.finder["c"] = false
+        assert.True(vim.tbl_count(require("neogit.config").validate_config()) == 0)
+      end)
+
+      it("should return valid when initial_branch_rename is string", function()
+        config.values.initial_branch_rename = "default-name"
+        assert.True(vim.tbl_count(require("neogit.config").validate_config()) == 0)
+      end)
+
+      it("should return valid when initial_branch_rename is nil", function()
+        config.values.initial_branch_rename = nil
         assert.True(vim.tbl_count(require("neogit.config").validate_config()) == 0)
       end)
     end)

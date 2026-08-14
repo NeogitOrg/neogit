@@ -6,7 +6,8 @@ local input = require("neogit.lib.input")
 local util = require("neogit.lib.util")
 local notification = require("neogit.lib.notification")
 local event = require("neogit.lib.event")
-local a = require("plenary.async")
+local hook = require("neogit.lib.hook")
+local a = require("neogit.lib.async")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 local BranchConfigPopup = require("neogit.popups.branch_config")
@@ -21,6 +22,8 @@ local function fetch_remote_branch(target)
 end
 
 local function checkout_branch(target, args)
+  hook.run("PreBranchCheckout", { branch_name = target })
+
   local result = git.branch.checkout(target, args)
   if result:failure() then
     notification.error(table.concat(result.stderr, "\n"))
@@ -73,6 +76,7 @@ local function spin_off_branch(checkout)
   local current_branch_name = git.branch.current_full_name()
 
   if checkout then
+    hook.run("PreBranchCheckout", { branch_name = name })
     git.cli.checkout.branch(name).call()
     event.send("BranchCheckout", { branch_name = name })
   end
@@ -188,6 +192,8 @@ function M.checkout_local_branch(popup)
   }
 
   if target then
+    hook.run("PreBranchCheckout", { branch_name = target })
+
     if vim.tbl_contains(remote_branches, target) then
       local result = git.branch.track(target, popup:get_arguments())
       if result:failure() then
@@ -240,7 +246,8 @@ function M.rename_branch()
     return
   end
 
-  local new_name = get_branch_name_user_input(("Rename '%s' to"):format(selected_branch))
+  local default_branch_name = config.values.initial_branch_rename or selected_branch
+  local new_name = get_branch_name_user_input(("Rename '%s' to"):format(selected_branch), default_branch_name)
   if not new_name then
     return
   end
@@ -378,7 +385,7 @@ function M.open_pull_request()
   for s, v in pairs(config.values.git_services) do
     if url:match(util.pattern_escape(s)) then
       service = s
-      template = v
+      template = v.pull_request
       break
     end
   end
@@ -409,7 +416,7 @@ function M.open_pull_request()
       notification.info(("Opening %q in your browser."):format(uri))
       vim.ui.open(uri)
     else
-      notification.warn("Requires Neovim 0.10")
+      notification.warn("Requires Neovim >= 0.10")
     end
   else
     notification.warn("Pull request URL template not found for this branch's upstream")

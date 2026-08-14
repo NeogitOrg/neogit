@@ -5,6 +5,7 @@ local util = require("neogit.lib.util")
 local git = require("neogit.lib.git")
 local logger = require("neogit.logger")
 local process = require("neogit.process")
+local event = require("neogit.lib.event")
 
 local DiffViewBuffer = require("neogit.buffers.diff")
 
@@ -46,12 +47,12 @@ function M:open(kind)
   local message_buffer = { { "" } }
   local amend_header, footer
 
-  local function reflog_message(index)
-    return git.log.reflog_message(index - 2)
+  local function log_message(index)
+    return git.log.log_message(index - 2)
   end
 
   local function commit_message()
-    return message_buffer[message_index] or reflog_message(message_index)
+    return message_buffer[message_index] or log_message(message_index)
   end
 
   local function current_message(buffer)
@@ -69,6 +70,8 @@ function M:open(kind)
     buftype = "",
     kind = kind,
     modifiable = true,
+    disable_line_numbers = config.values.disable_line_numbers,
+    disable_relative_line_numbers = config.values.disable_relative_line_numbers,
     status_column = not config.values.disable_signs and "" or nil,
     readonly = false,
     autocmds = {
@@ -99,6 +102,7 @@ function M:open(kind)
         self.diff_view = nil
       end
 
+      event.send("EditorClosed")
       logger.debug("[EDITOR] Done cleaning up")
     end,
     after = function(buffer)
@@ -260,7 +264,7 @@ function M:open(kind)
         [mapping["ResetMessage"]] = function(buffer)
           logger.debug("[EDITOR] Action N: ResetMessage")
           local message = current_message(buffer)
-          buffer:set_lines(0, #message, false, reflog_message(message_index))
+          buffer:set_lines(0, #message, false, log_message(message_index))
           buffer:move_cursor(1)
         end,
       },

@@ -28,7 +28,9 @@ end
 ---@return string
 ---@async
 function M.verify(rev)
-  return git.cli["rev-parse"].verify.abbrev_ref(rev).call({ hidden = true, ignore_error = true }).stdout[1]
+  return git.cli["rev-parse"].verify.abbrev_ref
+    .args(rev)
+    .call({ hidden = true, ignore_error = true }).stdout[1]
 end
 
 ---@param rev string
@@ -37,6 +39,11 @@ function M.full_name(rev)
   return git.cli["rev-parse"].verify.symbolic_full_name
     .args(rev)
     .call({ hidden = true, ignore_error = true }).stdout[1]
+end
+
+---@return string?
+function M.parent_repo()
+  return git.cli["rev-parse"].show_superproject_working_tree.call({ hidden = true, ignore_error = true }).stdout[1]
 end
 
 return M

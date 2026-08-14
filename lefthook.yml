@@ -1,5 +1,6 @@
 skip_output:
   - meta
+skip_lfs: true
 pre-push:
   files: "rg --files"
   parallel: true

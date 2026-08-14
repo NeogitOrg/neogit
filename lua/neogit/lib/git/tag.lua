@@ -4,9 +4,14 @@ local git = require("neogit.lib.git")
 local M = {}
 
 --- Outputs a list of tags locally
+---@param filter string?
 ---@return table List of tags.
-function M.list()
-  return git.cli.tag.list.call({ hidden = true }).stdout
+function M.list(filter)
+  if filter then
+    return git.cli.tag.list.args(filter).call({ hidden = true }).stdout
+  else
+    return git.cli.tag.list.call({ hidden = true }).stdout
+  end
 end
 
 --- Deletes a list of tags
@@ -22,6 +27,33 @@ end
 ---@return table
 function M.list_remote(remote)
   return git.cli["ls-remote"].tags.args(remote).call({ hidden = true }).stdout
+end
+
+---Find tags that point at an object ID
+---@param oid string
+---@return string[]
+function M.for_commit(oid)
+  return git.cli.tag.points_at(oid).call({ hidden = true }).stdout
+end
+
+--- Returns the highest tag by version sort, or nil if no tags exist.
+---@return string|nil
+function M.highest()
+  local tags = git.cli.tag.list.args("--sort=version:refname").call({ hidden = true }).stdout
+  if #tags == 0 then
+    return nil
+  end
+  return tags[#tags]
+end
+
+--- Returns the annotation message of a tag, or nil if lightweight or empty.
+---@param tagname string
+---@return string|nil
+function M.message(tagname)
+  local result =
+    git.cli["for-each-ref"].format("%(contents)").args("refs/tags/" .. tagname).call { hidden = true }
+  local msg = table.concat(result.stdout, "\n"):gsub("%s+$", "")
+  return msg ~= "" and msg or nil
 end
 
 local tag_pattern = "(.-)%-([0-9]+)%-g%x+$"

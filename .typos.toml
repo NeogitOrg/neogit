@@ -1,3 +1,9 @@
+[default]
+extend-ignore-re = [
+  ".*(?:#|--|//|/*).*(?:spellchecker|typos):\\s?ignore[^\\n]*\\n",
+  ".*(?:spellchecker|typos):\\s?ignore-next-line[^\\n]*\\n[^\\n]*",
+]
+
 [default.extend-words]
 # `enew` is a valid nvim command
 enew = "enew"

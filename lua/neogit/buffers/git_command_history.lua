@@ -2,7 +2,6 @@ local Buffer = require("neogit.lib.buffer")
 local Git = require("neogit.lib.git")
 local Ui = require("neogit.lib.ui")
 local util = require("neogit.lib.util")
-local status_maps = require("neogit.config").get_reversed_status_maps()
 
 local map = util.map
 local filter_map = util.filter_map
@@ -11,8 +10,9 @@ local text = Ui.text
 local col = Ui.col
 local row = Ui.row
 
-local command_mask =
-  vim.pesc(" --no-pager --literal-pathspecs --no-optional-locks -c core.preloadindex=true -c color.ui=always")
+local command_mask = vim.pesc(
+  " --no-pager --literal-pathspecs --no-optional-locks -c core.preloadindex=true -c color.ui=always -c diff.noprefix=false"
+)
 
 local M = {}
 
@@ -48,6 +48,7 @@ function M:show()
   end
 
   M.instance = self
+  local status_maps = require("neogit.config").get_reversed_status_maps()
 
   self.buffer = Buffer.create {
     kind = "popup",
