@@ -709,8 +709,10 @@ function Ui:update()
 
     self.buf:unlock()
     self.buf:clear()
+
     self.buf:clear_namespace("default")
     self.buf:clear_namespace("ViewContext")
+    self.buf:clear_namespace("VirtualText")
     self.buf:clear_namespace("NeogitDiffHighlight")
 
     self.buf:set_lines(0, -1, false, renderer.buffer.line)
