@@ -712,7 +712,7 @@ function Ui:update()
     self.buf:clear_namespace("default")
     self.buf:clear_namespace("ViewContext")
     self.buf:clear_namespace("NeogitDiffHighlight")
-    self.buf:resize(#renderer.buffer.line)
+
     self.buf:set_lines(0, -1, false, renderer.buffer.line)
     self.buf:set_highlights(renderer.buffer.highlight)
     self.buf:set_diff_highlights(renderer.buffer.diff_highlight)

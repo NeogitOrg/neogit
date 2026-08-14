@@ -131,10 +131,6 @@ function Buffer:insert_line(line)
   api.nvim_buf_set_lines(self.handle, line_nr, line_nr, false, { line })
 end
 
-function Buffer:resize(length)
-  api.nvim_buf_set_lines(self.handle, length, -1, false, {})
-end
-
 function Buffer:set_highlights(highlights)
   for _, highlight in ipairs(highlights) do
     self:add_highlight(unpack(highlight))
