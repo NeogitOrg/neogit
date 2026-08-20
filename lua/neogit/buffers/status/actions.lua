@@ -1114,9 +1114,9 @@ end
 ---@param _self StatusBuffer
 ---@return fun(): nil
 M.n_init_repo = function(_self)
-  return function()
+  return a.void(function()
     git.init.init_repo()
-  end
+  end)
 end
 
 ---@param self StatusBuffer
