@@ -530,10 +530,6 @@ end
 function Buffer:clear_namespace(name)
   assert(name, "Cannot clear namespace without specifying which")
 
-  if not self:is_focused() then
-    return
-  end
-
   local ns_id = self:get_namespace_id(name)
   if ns_id then
     api.nvim_buf_clear_namespace(self.handle, ns_id, 0, -1)
