@@ -88,6 +88,10 @@ to Neovim users.
     local neogit = require("neogit")
 
     neogit.setup {
+    -- Use Treesitter to apply syntax highlighting to diff hunks
+    treesitter_diff_highlight = true,
+    -- Apply word-diff highlights to diff hunks
+    word_diff_highlight = true,
     -- Hides the hints at the top of the status buffer
     disable_hint = false,
     -- Disables changing the buffer highlights based on where the cursor is.
@@ -121,6 +125,8 @@ to Neovim users.
     -- `Delta` is `{ 'delta', '--width', '117' }`. For `Delta`, hyperlinks must be disabled when called by `neogit`, for text to be colorized properly.
     log_pager = nil,
     -- Used to generate URL's for branch popup action "pull request" or opening a commit.
+    process_spinner = false,
+    -- Used to generate URL's for branch popup action "pull request", "open commit" and "open tree"
     git_services = {
         ["github.com"] = {
             pull_request = "https://github.com/${owner}/${repository}/compare/${branch_name}?expand=1",
