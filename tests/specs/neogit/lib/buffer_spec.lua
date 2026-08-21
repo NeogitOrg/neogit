@@ -6,6 +6,7 @@ describe("buffer decorations", function()
   local buffer
   local original_window
   local unfocused_window
+  local replacement_buffer
 
   local function extmarks(namespace)
     return vim.api.nvim_buf_get_extmarks(buffer.handle, buffer:get_namespace_id(namespace), 0, -1, {})
@@ -29,6 +30,10 @@ describe("buffer decorations", function()
       if vim.api.nvim_buf_is_valid(buffer.handle) then
         vim.api.nvim_buf_delete(buffer.handle, { force = true })
       end
+    end
+
+    if replacement_buffer and vim.api.nvim_buf_is_valid(replacement_buffer) then
+      vim.api.nvim_buf_delete(replacement_buffer, { force = true })
     end
   end)
 
@@ -55,6 +60,28 @@ describe("buffer decorations", function()
       eq(1, #marks)
       eq({ 0, 0 }, { marks[1][2], marks[1][3] })
     end
+  end)
+
+  it("only decorates its owning buffer", function()
+    local active_item = { oid = require("neogit.buffers.commit_view").current_oid() }
+    buffer = Buffer.create {
+      name = "NeogitActiveItemOwnerTest",
+      kind = "split",
+      bufhidden = "hide",
+      active_item_highlight = true,
+      render = function()
+        return {
+          Ui.row({ Ui.text("active item") }, { item = active_item }),
+        }
+      end,
+    }
+
+    replacement_buffer = vim.api.nvim_create_buf(false, true)
+    vim.api.nvim_win_set_buf(buffer.win_handle, replacement_buffer)
+    buffer:clear_namespace("ActiveItem")
+    vim.cmd("redraw!")
+
+    eq(0, #extmarks("ActiveItem"))
   end)
 
   it("clears a namespace while another buffer is focused", function()

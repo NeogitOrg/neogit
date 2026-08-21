@@ -947,7 +947,11 @@ function Buffer.create(config)
       on_start = function()
         return buffer:exists() and buffer:is_valid()
       end,
-      on_win = function()
+      on_win = function(_, _, bufnr)
+        if bufnr ~= buffer.handle then
+          return false
+        end
+
         buffer:clear_namespace("ActiveItem")
 
         local active_oid = require("neogit.buffers.commit_view").current_oid()
