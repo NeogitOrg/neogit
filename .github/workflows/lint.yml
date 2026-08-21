@@ -16,6 +16,11 @@ jobs:
       - uses: taiki-e/install-action@v2
         with:
           tool: selene,typos-cli
+      - uses: JohnnyMorganz/stylua-action@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          version: latest
+          args: false
       - name: Run linters
         run: make lint
 
