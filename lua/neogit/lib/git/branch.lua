@@ -19,7 +19,9 @@ local function parse_branches(branches, include_current)
   local ref = " %-> "
   local detached = "^%(HEAD detached at %x%x%x%x%x%x%x"
   local no_branch = "^%(no branch,"
-  local pattern = include_current and "^[* ] (.+)" or "^  (.+)"
+  -- `git branch` prefixes the current branch with "*", branches checked out in another worktree with "+", and
+  -- all other branches with a space.
+  local pattern = include_current and "^[*+ ] (.+)" or "^[+ ] (.+)"
 
   for _, b in ipairs(branches) do
     local branch_name = b:match(pattern)
@@ -66,7 +68,7 @@ function M.list_related_branches(relation, commit, ...)
 
   local branches = {}
   for _, branch in ipairs(result.stdout) do
-    branch = branch:match("^%s*(.-)%s*$")
+    branch = branch:gsub("^[*+] ", ""):match("^%s*(.-)%s*$")
     if branch and not branch:match("^%(HEAD") and not branch:match("^HEAD ->") and branch ~= "" then
       table.insert(branches, branch)
     end
