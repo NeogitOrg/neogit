@@ -13,9 +13,9 @@ local function eol_character(path)
     local _, _, match = output:find("i/(%w+)")
 
     if match ~= nil then
-      if match == crlf then
+      if match == 'crlf' then
         return crlf
-      elseif match == lf then
+      elseif match == 'lf' then
         return lf
       end
     end
