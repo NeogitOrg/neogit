@@ -76,7 +76,8 @@ function M.rename(stash)
   if message then
     local oid = git.rev_parse.oid(stash)
     git.cli.stash.drop.args(stash).call()
-    git.cli.stash.store.message(message).args(oid).call()
+    local result = git.cli.stash.store.message(message).args(oid).call()
+    event.send("Stash", { success = result:success() })
   end
 end
 

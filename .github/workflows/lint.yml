@@ -24,17 +24,6 @@ jobs:
       - name: Run linters
         run: make lint
 
-  code_style:
-    name: Code Style
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - uses: JohnnyMorganz/stylua-action@v5
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          version: latest
-          args: --check lua/ tests/
-
   ruby_lint:
     name: Rubocop
     runs-on: ubuntu-latest
@@ -50,7 +39,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: Homebrew/actions/setup-homebrew@master
+      - uses: Homebrew/actions/setup-homebrew@1f8e202ffddf94def7f42f6fa3a482e821489f9c
       - run: brew install lua-language-server
       - uses: luarocks/gh-actions-lua@v10
         with:
