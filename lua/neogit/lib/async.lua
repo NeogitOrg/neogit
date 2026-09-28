@@ -33,6 +33,22 @@ local function in_async_context()
   return co ~= nil and our_threads[co] == true
 end
 
+--- Sentinel used to resume a suspended await with an *error* rather than a
+--- value.  When a wrapped leaf fn throws synchronously before ever invoking its
+--- callback, `step` resumes the coroutine with `(ASYNC_THROW, err)` so the await
+--- site re-raises instead of parking forever.
+local ASYNC_THROW = {}
+
+--- Unwraps the values a suspended await was resumed with.  If the first value is
+--- the `ASYNC_THROW` sentinel, re-raises the accompanying error inside the
+--- coroutine; otherwise forwards the resume values unchanged (arity-preserving).
+local function resume_or_throw(first, ...)
+  if first == ASYNC_THROW then
+    error((...), 0)
+  end
+  return first, ...
+end
+
 ---@class NeogitTask
 ---@field _done boolean
 ---@field _cancelled boolean
@@ -204,7 +220,23 @@ local function execute(task, async_fn, callback, ...)
     -- The wrapped fn may return a function that cancels the operation it
     -- just kicked off (e.g. killing a process).  Stash it on the task so
     -- cancel() can invoke it.
-    local cancel_handle = fn(unpack(user_args, 1, argc))
+    --
+    -- Guard the call: if the leaf throws synchronously before ever invoking its
+    -- callback (e.g. a process that fails to spawn, a picker that errors on
+    -- open), the coroutine is still suspended at its await.  Resume it with the
+    -- error so the await site re-raises -- letting a surrounding pcall run its
+    -- cleanup (e.g. releasing the popup action lock) -- instead of parking
+    -- forever and wedging that lock for the rest of the session.
+    local ok_fn, cancel_handle = pcall(fn, unpack(user_args, 1, argc))
+    if not ok_fn then
+      if coroutine.status(thread) == "suspended" then
+        return step(ASYNC_THROW, cancel_handle)
+      end
+      if not task._done then
+        finish(false, { cancel_handle, debug.traceback(thread, tostring(cancel_handle)) }, 2)
+      end
+      return
+    end
     if type(cancel_handle) == "function" and not task._done then
       task._current_child = cancel_handle
     end
@@ -249,7 +281,7 @@ function M.wrap(fn, argc)
         2
       )
     end
-    return coroutine.yield(fn, argc, ...)
+    return resume_or_throw(coroutine.yield(fn, argc, ...))
   end
 end
 

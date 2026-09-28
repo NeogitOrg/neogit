@@ -1,5 +1,48 @@
 local a = require("neogit.lib.async")
-local input = a.wrap(vim.ui.input, 2)
+
+-- `vim.ui.input`, hardened against implementations that close their prompt
+-- without ever invoking the callback.
+--
+-- The built-in cmdline input always calls back, but several floating-window
+-- replacements (e.g. snacks.nvim) only call `on_confirm` via their own
+-- confirm/cancel actions and skip it entirely when the window is dismissed
+-- some other way (`:q`, `<C-w>c`, a focus steal, a programmatic close). A
+-- dropped callback parks the awaiting coroutine forever -- and because popup
+-- actions run under a single shared permit lock, one parked action silently
+-- turns *every* subsequent popup action into a no-op until Neovim restarts.
+--
+-- We guarantee the callback fires exactly once: the real value if the user
+-- responds, or `nil` (a normal cancel) if the prompt window closes first.
+local input = a.wrap(function(opts, callback)
+  local done = false
+  local function finish(value)
+    if done then
+      return
+    end
+    done = true
+    callback(value)
+  end
+
+  vim.ui.input(opts, finish)
+
+  -- If the implementation synchronously entered a floating prompt window,
+  -- treat that window closing without a result as a cancel. Deferred so a
+  -- real callback dispatched during the same close wins the race: both the
+  -- value and this fallback get scheduled, and implementations call
+  -- `on_confirm` before closing, so the real value is enqueued first.
+  local win = vim.api.nvim_get_current_win()
+  if not done and vim.api.nvim_win_is_valid(win) and vim.api.nvim_win_get_config(win).relative ~= "" then
+    vim.api.nvim_create_autocmd("WinClosed", {
+      pattern = tostring(win),
+      once = true,
+      callback = function()
+        vim.schedule(function()
+          finish(nil)
+        end)
+      end,
+    })
+  end
+end, 2)
 
 local M = {}
 

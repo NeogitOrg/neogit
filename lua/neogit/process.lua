@@ -365,58 +365,74 @@ function Process:spawn(cb)
     -- Remove self
     processes[self.job] = nil
     self.result = res
-    self:stop_timer()
-    self:hide_spinner()
 
-    stdout_cleanup()
-    stderr_cleanup()
+    -- Everything below is best-effort presentation/cleanup (timers, spinner,
+    -- error display, console show/close).  It MUST NOT prevent the resume
+    -- callback from firing: if it threw, the awaiting coroutine would never
+    -- resume, orphaning it -- and because popup actions hold a shared permit
+    -- lock while awaiting a process, that silently wedges every subsequent
+    -- popup action until Neovim restarts.  Guard it so `cb(res)` always runs.
+    local handler_ok, handler_err = pcall(function()
+      self:stop_timer()
+      self:hide_spinner()
 
-    if self.buffer and not self.suppress_console then
-      self.buffer:append(string.format("Process exited with code: %d", code))
-    end
+      stdout_cleanup()
+      stderr_cleanup()
 
-    -- Handle git hook failures and other errors.  Skip entirely if the
-    -- process was killed via Process:stop() (i.e. the surrounding async task
-    -- was cancelled): the non-zero exit is intentional, not a real failure.
-    if code > 0 and not self.killed then
-      local should_show_error = self.on_error(res)
-      local is_hook_failure = self.git_hook and code > 0 and not git.status.any_unmerged()
+      if self.buffer and not self.suppress_console then
+        self.buffer:append(string.format("Process exited with code: %d", code))
+      end
 
-      -- For git hook failures, always show the Git Console
-      if is_hook_failure then
-        -- Simply show the existing buffer with the git hook output
-        if self.buffer then
-          self.buffer:show()
+      -- Handle git hook failures and other errors.  Skip entirely if the
+      -- process was killed via Process:stop() (i.e. the surrounding async task
+      -- was cancelled): the non-zero exit is intentional, not a real failure.
+      if code > 0 and not self.killed then
+        local should_show_error = self.on_error(res)
+        local is_hook_failure = self.git_hook and code > 0 and not git.status.any_unmerged()
+
+        -- For git hook failures, always show the Git Console
+        if is_hook_failure then
+          -- Simply show the existing buffer with the git hook output
+          if self.buffer then
+            self.buffer:show()
+          end
+        end
+
+        -- Handle normal error display logic
+        if should_show_error and not is_hook_failure then
+          local output = {}
+          local start = math.max(#res.stderr - 16, 1)
+          for i = start, math.min(#res.stderr, start + 16) do
+            insert(output, "> " .. util.remove_ansi_escape_codes(res.stderr[i]))
+          end
+
+          if not config.values.auto_close_console then
+            local message = string.format(
+              "%s:\n\n%s",
+              mask_command(table.concat(self.cmd, " ")),
+              table.concat(output, "\n")
+            )
+            notification.warn(message)
+          elseif config.values.auto_show_console_on == "error" and self.buffer then
+            self.buffer:show()
+          end
         end
       end
 
-      -- Handle normal error display logic
-      if should_show_error and not is_hook_failure then
-        local output = {}
-        local start = math.max(#res.stderr - 16, 1)
-        for i = start, math.min(#res.stderr, start + 16) do
-          insert(output, "> " .. util.remove_ansi_escape_codes(res.stderr[i]))
-        end
-
-        if not config.values.auto_close_console then
-          local message =
-            string.format("%s:\n\n%s", mask_command(table.concat(self.cmd, " ")), table.concat(output, "\n"))
-          notification.warn(message)
-        elseif config.values.auto_show_console_on == "error" and self.buffer then
-          self.buffer:show()
-        end
+      -- Close console on success if configured
+      if
+        self.buffer
+        and not self.user_command
+        and config.values.auto_close_console
+        and self.buffer:is_visible()
+        and code == 0
+      then
+        self.buffer:close()
       end
-    end
+    end)
 
-    -- Close console on success if configured
-    if
-      self.buffer
-      and not self.user_command
-      and config.values.auto_close_console
-      and self.buffer:is_visible()
-      and code == 0
-    then
-      self.buffer:close()
+    if not handler_ok then
+      logger.error("[PROCESS] on_exit handler failed: " .. tostring(handler_err))
     end
 
     self.stdin = nil
@@ -440,7 +456,11 @@ function Process:spawn(cb)
   })
 
   if job <= 0 then
-    error("Failed to start process: " .. vim.inspect(self))
+    -- Spawn failed.  Per the spawn_async contract this resolves to nil -- but we
+    -- must actually invoke the callback: `error()` here would abort before the
+    -- (previously dead) cb call, leaving the awaiting coroutine parked forever
+    -- and wedging the shared popup action lock.
+    logger.error("[PROCESS] Failed to start process: " .. vim.inspect(self.cmd))
     if cb then
       cb(nil)
     end

@@ -340,6 +340,25 @@ end
 ---Engages finder and invokes `on_select` with the item or items, or nil if aborted
 ---@param on_select fun(item: any|nil)
 function Finder:find(on_select)
+  -- `find` is the leaf of an awaited async call (`find_async`), so `on_select`
+  -- is the coroutine's resume. Each picker branch below is a separate place the
+  -- "always call back, even on abort" contract can break; a dropped resume
+  -- parks the awaiting coroutine forever and -- because popup actions hold a
+  -- shared permit lock while awaiting a finder -- silently turns every later
+  -- popup action into a no-op until Neovim restarts. Guarantee the resume fires
+  -- exactly once (here), and give each branch a close/abort net (below).
+  do
+    local resume = on_select
+    local resolved = false
+    on_select = function(item)
+      if resolved then
+        return
+      end
+      resolved = true
+      resume(item)
+    end
+  end
+
   if config.check_integration("telescope") then
     local pickers = require("telescope.pickers")
     local finders = require("telescope.finders")
@@ -359,13 +378,29 @@ function Finder:find(on_select)
       default_sorter = sorters.get_generic_fuzzy_sorter()
     end
 
-    pickers
-      .new(self.opts, {
-        finder = finders.new_table { results = self.entries },
-        sorter = config.values.telescope_sorter() or default_sorter,
-        attach_mappings = telescope_mappings(on_select, self.opts.allow_multi, self.opts.refocus_status),
+    local picker = pickers.new(self.opts, {
+      finder = finders.new_table { results = self.entries },
+      sorter = config.values.telescope_sorter() or default_sorter,
+      attach_mappings = telescope_mappings(on_select, self.opts.allow_multi, self.opts.refocus_status),
+    })
+    picker:find()
+
+    -- Net: telescope resumes only through its mapped Select/Close actions; if the
+    -- prompt buffer is wiped another way (`:q`, a force-close), resume as abort.
+    -- Deferred so a mapped action (which wipes the prompt buffer, then calls
+    -- on_select) wins the once-guard race.
+    local prompt_bufnr = picker.prompt_bufnr
+    if prompt_bufnr and vim.api.nvim_buf_is_valid(prompt_bufnr) then
+      vim.api.nvim_create_autocmd("BufWipeout", {
+        buffer = prompt_bufnr,
+        once = true,
+        callback = function()
+          vim.schedule(function()
+            on_select(nil)
+          end)
+        end,
       })
-      :find()
+    end
   elseif config.check_integration("fzf_lua") then
     local fzf_lua = require("fzf-lua")
     fzf_lua.fzf_exec(self.entries, {
@@ -375,6 +410,16 @@ function Finder:find(on_select)
         height = self.opts.layout_config.height,
         border = self.opts.border,
         preview = { border = self.opts.border },
+        -- Net: fzf-lua skips its exit action (and thus our on_select) when the
+        -- picker closes without a selection (`:q`, a force-close, a killed
+        -- process -- see fzf-lua core "if not exit_code ... return"). on_close
+        -- fires on every window close; deferred so a real selection, dispatched
+        -- right after the window closes, wins the once-guard race.
+        on_close = function()
+          vim.schedule(function()
+            on_select(nil)
+          end)
+        end,
       },
       actions = fzf_actions(on_select, self.opts.allow_multi, self.opts.refocus_status),
     })
@@ -428,6 +473,23 @@ function Finder:find(on_select)
         end
       end)
     end)
+
+    -- Net: some vim.ui.select replacements drop their callback when the prompt
+    -- is dismissed without a selection. If a floating prompt window was entered,
+    -- treat its close without a result as an abort. Deferred so a real callback
+    -- wins the once-guard race.
+    local win = vim.api.nvim_get_current_win()
+    if vim.api.nvim_win_is_valid(win) and vim.api.nvim_win_get_config(win).relative ~= "" then
+      vim.api.nvim_create_autocmd("WinClosed", {
+        pattern = tostring(win),
+        once = true,
+        callback = function()
+          vim.schedule(function()
+            on_select(nil)
+          end)
+        end,
+      })
+    end
   end
 end
 

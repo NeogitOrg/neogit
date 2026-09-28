@@ -69,6 +69,67 @@ describe("lib.async", function()
     end)
   end)
 
+  describe("wrap (synchronous leaf failure)", function()
+    -- Regression: a wrapped leaf that throws synchronously before ever invoking
+    -- its callback (e.g. a process that fails to spawn, a picker that errors on
+    -- open) used to leave the coroutine suspended at its await forever. Because
+    -- popup actions hold a shared permit lock while awaiting, one such throw
+    -- wedged the lock and silently turned every later popup action into a no-op.
+    it("re-raises at the await site instead of parking the coroutine", function()
+      local throwing_leaf = async.wrap(function(_cb)
+        error("spawn-boom")
+      end, 1)
+
+      local outcome
+      async.run(function()
+        local ok, err = pcall(throwing_leaf)
+        outcome = { ok = ok, err = err }
+      end)
+
+      wait_for(function()
+        return outcome ~= nil
+      end, 1000)
+
+      assert.is_truthy(outcome) -- did not hang
+      assert.is_false(outcome.ok)
+      assert.is_truthy(tostring(outcome.err):match("spawn%-boom"))
+    end)
+
+    it("releases a held Semaphore permit when the awaited op throws", function()
+      -- Mirrors the popup action pattern: acquire the shared permit, run an
+      -- action that awaits a leaf which throws, release the permit. The parked
+      -- coroutine used to skip forget(), wedging the lock; the next acquirer
+      -- must still get the permit.
+      local sem = async.control.Semaphore.new(1)
+      local throwing_leaf = async.wrap(function(_cb)
+        error("action-boom")
+      end, 1)
+
+      local second_ran = false
+      async.void(function()
+        async.util.run_all({
+          function()
+            local permit = sem:acquire()
+            pcall(throwing_leaf) -- parked-then-orphaned under the old bug
+            permit:forget()
+          end,
+          function()
+            sleep(30) -- let the throwing action acquire first
+            local permit = sem:acquire()
+            second_ran = true
+            permit:forget()
+          end,
+        }, function() end)
+      end)()
+
+      wait_for(function()
+        return second_ran
+      end, 1000)
+
+      assert.is_true(second_ran) -- permit was released; lock is not wedged
+    end)
+  end)
+
   describe("util.run_all", function()
     it("invokes the callback after every async fn completes", function()
       local log = {}
