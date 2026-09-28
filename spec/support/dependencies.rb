@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 def dir_name(name)
-  name.match(%r{[^/]+/(?<dir_name>[^\.]+)})[:dir_name]
+  name.match(%r{[^/]+/(?<dir_name>[^.]+)})[:dir_name]
 end
 
 def ensure_installed(name, build: nil)

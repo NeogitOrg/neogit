@@ -60,15 +60,15 @@ RSpec.describe "Commit Buffer", :git, :nvim do
     end
 
     it "can yank tag" do
-      git.add_tag("test-tag", "HEAD")
+      git.tag_create("test-tag", "HEAD")
       nvim.keys("Yt")
       yank = nvim.cmd("echo @*").first
       expect(yank).to eq("test-tag")
     end
 
     it "can yank tags" do
-      git.add_tag("test-tag-a", "HEAD")
-      git.add_tag("test-tag-b", "HEAD")
+      git.tag_create("test-tag-a", "HEAD")
+      git.tag_create("test-tag-b", "HEAD")
       nvim.keys("Yt")
       yank = nvim.cmd("echo @*").first
       expect(yank).to eq("test-tag-a, test-tag-b")

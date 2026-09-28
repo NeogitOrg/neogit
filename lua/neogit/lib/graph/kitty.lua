@@ -335,6 +335,46 @@ end
 ---@field start integer
 ---@field stop integer
 
+---@class I.GraphLine
+---@field [1] string? -- oid, or "" / "strip" for connector rows
+---@field [2] string[]? -- the row's rendered symbols
+
+---@class I.RawCommit
+---@field msg string
+---@field branch_names string[]
+---@field tags string[]
+---@field author_date string
+---@field author_name string
+---@field hash string
+---@field parents string[]
+
+---@class I.GGSymbols
+---@field merge_commit string
+---@field commit string
+---@field merge_commit_end string
+---@field commit_end string
+---@field GVER string
+---@field GHOR string
+---@field GCLD string
+---@field GCRD string
+---@field GCLU string
+---@field GCRU string
+---@field GLRU string
+---@field GLRD string
+---@field GLUD string
+---@field GRUD string
+---@field GFORKU string
+---@field GFORKD string
+---@field GRUDCD string
+---@field GRUDCU string
+---@field GLUDCD string
+---@field GLUDCU string
+---@field GLRDCL string
+---@field GLRDCR string
+---@field GLRUCL string
+---@field GLRUCR string
+
+---@type I.GGSymbols
 local sym = {
   merge_commit = "",
   commit = "",
@@ -972,10 +1012,10 @@ end
 
 ---@param graph I.Row[]
 ---@param sym I.GGSymbols
----@return string[][]
+---@return I.GraphLine[]
 ---@return I.Highlight[]
 local function graph_to_lines(graph, sym)
-  ---@type table[]
+  ---@type I.GraphLine[]
   local lines = {}
 
   ---@type I.Highlight[]
@@ -996,9 +1036,9 @@ local function graph_to_lines(graph, sym)
   end
 
   ---@param row I.Row
-  ---@return table
+  ---@return string[]
   local function row_to_str(row)
-    local row_strs = {}
+    local row_strs = {} ---@type string[]
     for j = 1, #row.cells do
       local cell = row.cells[j]
       if cell.connector then
@@ -1086,9 +1126,10 @@ local function graph_to_lines(graph, sym)
   for idx = 1, #graph do
     local proper_row = graph[idx]
 
+    ---@type I.GraphLine
     local row_str_arr = {}
 
-    ---@param stuff table|string
+    ---@param stuff string|string[]
     local function add_to_row(stuff)
       row_str_arr[#row_str_arr + 1] = stuff
     end
@@ -1139,6 +1180,7 @@ function M.build(commits, color)
         branch_names = {},
         tags = {},
         author_date = item.author_date,
+        author_name = item.author_name,
         hash = item.oid,
         parents = vim.split(item.parent, " "),
       }
@@ -1178,6 +1220,7 @@ function M.build(commits, color)
     local graph_row = {}
     local oid = line[1]
     local parts = line[2]
+    assert(parts, "assertion failed")
 
     for i, part in ipairs(parts) do
       local current_highlight = hl[row][i] or {}

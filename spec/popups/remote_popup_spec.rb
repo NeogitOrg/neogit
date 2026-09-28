@@ -6,27 +6,27 @@ RSpec.describe "Remote Popup", :git, :nvim, :popup do
   let(:keymap) { "M" }
   let(:view) do
     [
-      " Variables                                                                      ",
-      " u remote.origin.url unset                                                      ",
-      " U remote.origin.fetch unset                                                    ",
-      " s remote.origin.pushurl unset                                                  ",
-      " S remote.origin.push unset                                                     ",
-      " O remote.origin.tagOpt [--no-tags|--tags]                                      ",
+      "Variables                                                                       ",
+      "u remote.origin.url unset                                                       ",
+      "U remote.origin.fetch unset                                                     ",
+      "s remote.origin.pushurl unset                                                   ",
+      "S remote.origin.push unset                                                      ",
+      "O remote.origin.tagOpt [--no-tags|--tags]                                       ",
       "                                                                                ",
-      " Arguments                                                                      ",
-      " -f Fetch after add (-f)                                                        ",
+      "Arguments                                                                       ",
+      "-f Fetch after add (-f)                                                         ",
       "                                                                                ",
-      " Actions                                                                        ",
-      " a Add         C Configure...                                                   ",
-      " r Rename      p Prune stale branches                                           ",
-      " x Remove      P Prune stale refspecs                                           ",
-      "               b Update default branch                                          ",
-      "               z Unshallow remote                                               "
+      "Actions                                                                         ",
+      "a Add         C Configure...                                                    ",
+      "r Rename      p Prune stale branches                                            ",
+      "x Remove      P Prune stale refspecs                                            ",
+      "              b Update default branch                                           ",
+      "              z Unshallow remote                                                "
     ]
   end
 
-  %w[u U s S O a d x C p P b z].each { include_examples "interaction", _1 }
-  %w[-f].each { include_examples "argument", _1 }
+  %w[u U s S O a d x C p P b z].each { it_behaves_like "interaction", it }
+  %w[-f].each { it_behaves_like "argument", it }
 
   describe "add" do
     context "with 'origin 'unset" do
@@ -34,14 +34,15 @@ RSpec.describe "Remote Popup", :git, :nvim, :popup do
         nvim.keys("a")
         nvim.keys("origin<cr>")
         nvim.keys("git@github.com:NeogitOrg/neogit.git<cr>")
-        expect(git.remote.name).to eq("origin")
-        expect(git.remote.url).to eq("git@github.com:NeogitOrg/neogit.git")
+        origin = git.remote_list.find { |r| r.name == "origin" }
+        expect(origin.name).to eq("origin")
+        expect(origin.url.first).to eq("git@github.com:NeogitOrg/neogit.git")
       end
     end
 
     context "with 'origin' set" do
       before do
-        git.config("remote.origin.url", "git@github.com:NeogitOrg/neogit.git")
+        git.config_set("remote.origin.url", "git@github.com:NeogitOrg/neogit.git")
       end
 
       it "auto-populates host/remote" do
@@ -62,14 +63,14 @@ RSpec.describe "Remote Popup", :git, :nvim, :popup do
 
     context "with a remote configured" do
       before do
-        git.config("remote.origin.url", "git@github.com:NeogitOrg/neogit.git")
+        git.config_set("remote.origin.url", "git@github.com:NeogitOrg/neogit.git")
       end
 
       it "can remove a remote" do
         nvim.keys("x")
         nvim.keys("origin<cr>")
         expect(nvim.screen.last).to start_with("Removed remote 'origin'")
-        expect(git.remotes).to be_empty
+        expect(git.remote_list).to be_empty
       end
     end
   end
@@ -84,7 +85,7 @@ RSpec.describe "Remote Popup", :git, :nvim, :popup do
 
     context "with a remote configured" do
       before do
-        git.config("remote.origin.url", "git@github.com:NeogitOrg/neogit.git")
+        git.config_set("remote.origin.url", "git@github.com:NeogitOrg/neogit.git")
       end
 
       it "can rename a remote" do
@@ -92,7 +93,7 @@ RSpec.describe "Remote Popup", :git, :nvim, :popup do
         nvim.keys("origin<cr>")
         nvim.keys("fork<cr>")
         expect(nvim.screen.last).to start_with("Renamed 'origin' -> 'fork'")
-        expect(git.remotes.first.name).to eq("fork")
+        expect(git.remote_list.first.name).to eq("fork")
       end
     end
   end
@@ -107,20 +108,24 @@ RSpec.describe "Remote Popup", :git, :nvim, :popup do
 
     context "with a remote configured" do
       before do
-        git.config("remote.origin.url", "git@github.com:NeogitOrg/neogit.git")
+        git.config_set("remote.origin.url", "git@github.com:NeogitOrg/neogit.git")
       end
 
       it "can launch remote config popup" do
         nvim.keys("C")
         nvim.keys("origin<cr>")
-        expect(nvim.screen[14..19]).to eq(
-          [" Configure remote                                                               ",
-           " u remote.origin.url git@github.com:NeogitOrg/neogit.git                        ",
-           " U remote.origin.fetch unset                                                    ",
-           " s remote.origin.pushurl unset                                                  ",
-           " S remote.origin.push unset                                                     ",
-           " O remote.origin.tagOpt [--no-tags|--tags]                                      "]
-        )
+        await do
+          screen = nvim.screen
+          idx    = screen.index { |line| line.start_with?("Configure remote") }
+          expect(screen[idx, 6]).to eq(
+            ["Configure remote                                                                ",
+             "u remote.origin.url git@github.com:NeogitOrg/neogit.git                         ",
+             "U remote.origin.fetch unset                                                     ",
+             "s remote.origin.pushurl unset                                                   ",
+             "S remote.origin.push unset                                                      ",
+             "O remote.origin.tagOpt [--no-tags|--tags]                                       "]
+          )
+        end
       end
     end
   end
@@ -135,7 +140,7 @@ RSpec.describe "Remote Popup", :git, :nvim, :popup do
 
     context "with a remote configured" do
       before do
-        git.config("remote.origin.url", "git@github.com:NeogitOrg/neogit.git")
+        git.config_set("remote.origin.url", "git@github.com:NeogitOrg/neogit.git")
       end
 
       it "can launch remote config popup" do

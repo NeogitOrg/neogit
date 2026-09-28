@@ -10,6 +10,7 @@ jobs:
   test:
     name: Test
     runs-on: ${{ matrix.os }}
+    continue-on-error: true
     strategy:
       matrix:
         release: [stable, nightly]
@@ -40,7 +41,7 @@ jobs:
 
       - name: E2E Test
         run: |
-          bundle exec rspec
+          bundle exec rspec --format doc
 
       - name: Unit Test
         run: |

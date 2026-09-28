@@ -2,7 +2,7 @@ require:
   - rubocop-rspec
 AllCops:
   NewCops: enable
-  TargetRubyVersion: 3.3.1
+  TargetRubyVersion: 4.0.0
 Style/StringLiterals:
   EnforcedStyle: double_quotes
 RSpec/DescribeClass:
@@ -14,4 +14,8 @@ RSpec/ExampleLength:
 RSpec/NestedGroups:
   Enabled: false
 Style/NestedModifier:
+  Enabled: false
+RSpec/Output:
+  Enabled: false
+RSpec/ExpectInHook:
   Enabled: false

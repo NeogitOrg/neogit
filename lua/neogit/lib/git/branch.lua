@@ -125,12 +125,23 @@ function M.is_unmerged(branch, base)
 end
 
 ---@return string|nil
-function M.base_branch()
-  local result = git.cli.reflog.show.args("--no-abbrev", M.current()).call({ hidden = true })
-  local base_commit = vim.split(result.stdout[#result.stdout], " ")[1]
+function M.base_commit()
+  local result = git.cli.reflog.show.args("--no-abbrev", M.current()).call { hidden = true }
+  return vim.split(result.stdout[#result.stdout], " ")[1]
+end
 
-  return git.cli["name-rev"].name_only.exclude("tags/*").exclude("remotes/*").args(base_commit).call({ hidden = true })
-  .stdout[1]
+---@return string|nil
+function M.base_branch()
+  local base = M.base_commit()
+  if base then
+    local branch = git.cli["name-rev"].name_only
+      .exclude("tags/*")
+      .exclude("remotes/*")
+      .args(base)
+      .call({ hidden = true }).stdout[1]
+
+    return vim.split(branch, "~")[1]
+  end
 end
 
 ---Determine if a branch exists locally

@@ -7,21 +7,21 @@ RSpec.describe "Reset Popup", :git, :nvim, :popup do
 
   let(:view) do
     [
-      " Reset         Reset this                                                       ",
-      " f file        m mixed    (HEAD and index)                                      ",
-      " b branch      s soft     (HEAD only)                                           ",
-      "               h hard     (HEAD, index and files)                               ",
-      "               k keep     (HEAD and index, keeping uncommitted)                 ",
-      "               i index    (only)                                                ",
-      "               w worktree (only)                                                "
+      "Reset         Reset this                                                        ",
+      "f file        m mixed    (HEAD and index)                                       ",
+      "b branch      s soft     (HEAD only)                                            ",
+      "              h hard     (HEAD, index and files)                                ",
+      "              k keep     (HEAD and index, keeping uncommitted)                  ",
+      "              i index    (only)                                                 ",
+      "              w worktree (only)                                                 "
     ]
   end
 
-  %w[f b m s h k i w].each { include_examples "interaction", _1 }
+  %w[f b m s h k i w].each { it_behaves_like "interaction", it }
 
   describe "Actions" do
     before do
-      git.add_tag("checkpoint") # lightweight tag at initial commit
+      git.tag_create("checkpoint") # lightweight tag at initial commit
       File.write("extra.txt", "extra content")
       git.add("extra.txt")
       git.commit("add extra.txt")
@@ -44,7 +44,7 @@ RSpec.describe "Reset Popup", :git, :nvim, :popup do
         nvim.keys("check<cr>")
         await do
           expect(git.revparse("HEAD")).to eq(target)
-          expect(git.status.added.keys).to include("extra.txt")
+          expect(git.status_info.added.keys).to include("extra.txt")
         end
       end
     end
