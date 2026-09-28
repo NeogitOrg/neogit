@@ -167,6 +167,10 @@ function M.checkout_branch_revision(popup)
       git.refs.heads()
     )
   )
+  if git.branch.current() then
+    util.remove_item_from_table(options, git.branch.current())
+  end
+
   local selected_branch = FuzzyFinderBuffer.new(options):open_async { refocus_status = false }
   if not selected_branch then
     return
@@ -177,6 +181,10 @@ end
 
 function M.checkout_local_branch(popup)
   local local_branches = git.refs.list_local_branches()
+  if git.branch.current() then
+    util.remove_item_from_table(local_branches, git.branch.current())
+  end
+
   local remote_branches = util.filter_map(git.refs.list_remote_branches(), function(name)
     local branch_name = name:match([[%/(.*)$]])
     -- Remove remote branches that have a local branch by the same name
