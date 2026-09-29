@@ -94,7 +94,7 @@ class NeovimClient # rubocop:disable Metrics/ClassLength
         if i == cursor_line
           line[...cursor_col] +
           @pastel.black.on_yellow(line[cursor_col]) +
-          line[(cursor_col + 1..)]
+          line[(cursor_col + 1)..]
         else
           line
         end
@@ -196,7 +196,7 @@ class NeovimClient # rubocop:disable Metrics/ClassLength
   end
 
   def runtime_dependencies
-    Dir[File.join(PROJECT_DIR, "tmp", "*")].select { Dir.exist? _1 }
+    Dir[File.join(PROJECT_DIR, "tmp", "*")].select { Dir.exist? it }
   end
 
   private

@@ -22,7 +22,7 @@ RSpec.describe "Worktree Popup", :git, :nvim, :popup do
     end
   end
 
-  %w[w W g m D].each { include_examples "interaction", _1 }
+  %w[w W g m D].each { it_behaves_like "interaction", it }
 
   describe "Actions" do
     describe "Checkout" do

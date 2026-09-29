@@ -25,8 +25,8 @@ RSpec.describe "Remote Popup", :git, :nvim, :popup do
     ]
   end
 
-  %w[u U s S O a d x C p P b z].each { include_examples "interaction", _1 }
-  %w[-f].each { include_examples "argument", _1 }
+  %w[u U s S O a d x C p P b z].each { it_behaves_like "interaction", it }
+  %w[-f].each { it_behaves_like "argument", it }
 
   describe "add" do
     context "with 'origin 'unset" do

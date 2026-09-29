@@ -24,8 +24,8 @@ RSpec.describe "Branch Popup", :git, :nvim, :popup do
     ]
   end
 
-  %w[d u R p b l r c s w n S W C m X D].each { include_examples "interaction", _1 }
-  %w[-r].each { include_examples "argument", _1 }
+  %w[d u R p b l r c s w n S W C m X D].each { it_behaves_like "interaction", it }
+  %w[-r].each { it_behaves_like "argument", it }
 
   describe "Variables" do
     describe "branch.<current>.description" do

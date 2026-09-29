@@ -32,6 +32,6 @@ RSpec.describe "Log Popup", :git, :nvim, :popup do # rubocop:disable RSpec/Empty
     ]
   end
 
-  %w[l h u o L b a r H O].each { include_examples "interaction", _1 }
-  %w[-n -A -F -G -S -L -s -u =m =p -D -- -f -r -o =R -g -c -d =S].each { include_examples "argument", _1 }
+  %w[l h u o L b a r H O].each { it_behaves_like "interaction", it }
+  %w[-n -A -F -G -S -L -s -u =m =p -D -- -f -r -o =R -g -c -d =S].each { it_behaves_like "argument", it }
 end

@@ -13,5 +13,5 @@ RSpec.describe "Diff Popup", :git, :nvim, :popup do # rubocop:disable RSpec/Empt
     ]
   end
 
-  %w[d r p u s w c t].each { include_examples "interaction", _1 }
+  %w[d r p u s w c t].each { it_behaves_like "interaction", it }
 end

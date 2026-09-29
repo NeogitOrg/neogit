@@ -23,7 +23,7 @@ RSpec.describe "Pull Popup", :git, :nvim, :popup do
     ]
   end
 
-  %w[r -f -r -a -t -F p u e C].each { include_examples "interaction", _1 }
+  %w[r -f -r -a -t -F p u e C].each { it_behaves_like "interaction", it }
 
   describe "Actions" do
     describe "Pull from elsewhere", :with_remote_origin do

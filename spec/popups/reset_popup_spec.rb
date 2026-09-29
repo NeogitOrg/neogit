@@ -17,7 +17,7 @@ RSpec.describe "Reset Popup", :git, :nvim, :popup do
     ]
   end
 
-  %w[f b m s h k i w].each { include_examples "interaction", _1 }
+  %w[f b m s h k i w].each { it_behaves_like "interaction", it }
 
   describe "Actions" do
     before do

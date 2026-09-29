@@ -26,8 +26,8 @@ RSpec.describe "Commit Popup", :git, :nvim, :popup do
     ]
   end
 
-  %w[-a -e -v -h -R -A -s -S -C].each { include_examples "argument", _1 }
-  %w[c x e w a f s A F S n W].each { include_examples "interaction", _1 }
+  %w[-a -e -v -h -R -A -s -S -C].each { it_behaves_like "argument", it }
+  %w[c x e w a f s A F S n W].each { it_behaves_like "interaction", it }
 
   describe "Actions" do
     describe "Create Commit" do

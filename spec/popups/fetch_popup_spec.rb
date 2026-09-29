@@ -19,6 +19,6 @@ RSpec.describe "Fetch Popup", :git, :nvim, :popup do # rubocop:disable RSpec/Emp
     ]
   end
 
-  %w[p u e a o r m C].each { include_examples "interaction", _1 }
-  %w[-p -t -F].each { include_examples "argument", _1 }
+  %w[p u e a o r m C].each { it_behaves_like "interaction", it }
+  %w[-p -t -F].each { it_behaves_like "argument", it }
 end

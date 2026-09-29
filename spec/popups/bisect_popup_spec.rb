@@ -16,8 +16,8 @@ RSpec.describe "Bisect Popup", :git, :nvim, :popup do
     ]
   end
 
-  %w[-r -p].each { include_examples "argument", _1 }
-  %w[B S].each { include_examples "interaction", _1 }
+  %w[-r -p].each { it_behaves_like "argument", it }
+  %w[B S].each { it_behaves_like "interaction", it }
 
   describe "Actions" do
     describe "Start bisect" do

@@ -13,7 +13,7 @@ RSpec.describe "Ignore Popup", :git, :nvim, :popup do
     ]
   end
 
-  %w[t s p].each { include_examples "interaction", _1 }
+  %w[t s p].each { it_behaves_like "interaction", it }
 
   describe "Actions" do
     describe "Shared at top-level" do

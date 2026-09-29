@@ -19,8 +19,8 @@ RSpec.describe "Tag Popup", :git, :nvim, :popup do
     ]
   end
 
-  %w[t r x p].each { include_examples "interaction", _1 }
-  %w[-f -a -s -u].each { include_examples "argument", _1 }
+  %w[t r x p].each { it_behaves_like "interaction", it }
+  %w[-f -a -s -u].each { it_behaves_like "argument", it }
 
   describe "Actions" do
     describe "Create tag" do

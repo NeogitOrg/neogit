@@ -24,8 +24,8 @@ RSpec.describe "Merge Popup", :git, :nvim, :popup do
     ]
   end
 
-  %w[m e n s a p i].each { include_examples "interaction", _1 }
-  %w[-f -n -s -X -b -w -A -S].each { include_examples "argument", _1 }
+  %w[m e n s a p i].each { it_behaves_like "interaction", it }
+  %w[-f -n -s -X -b -w -A -S].each { it_behaves_like "argument", it }
 
   describe "Actions" do
     describe "Merge" do

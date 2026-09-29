@@ -21,5 +21,5 @@ RSpec.describe "Help Popup", :git, :nvim, :popup do # rubocop:disable RSpec/Empt
     ]
   end
 
-  %w[$ A b B c d f i I l L M m P p r t v w X Z].each { include_examples "interaction", _1 }
+  %w[$ A b B c d f i I l L M m P p r t v w X Z].each { it_behaves_like "interaction", it }
 end

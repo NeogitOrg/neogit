@@ -42,9 +42,9 @@ RSpec.shared_examples "popup", :popup do
   it "renders view properly" do
     await do
       screen  = nvim.screen
-      indices = view.map { screen.index(_1) }
+      indices = view.map { screen.index(it) }
       expect(indices).to all(be_a(Integer))
-      range   = (indices.first..indices.last)
+      range = (indices.first..indices.last)
       expect(screen[range]).to eq(view)
     end
   end

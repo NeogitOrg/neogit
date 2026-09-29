@@ -20,8 +20,8 @@ RSpec.describe "Stash Popup", :git, :nvim, :popup do
     ]
   end
 
-  %w[z i w x P Z I W r p a d l b B m f].each { include_examples "interaction", _1 }
-  %w[-u -a].each { include_examples "argument", _1 }
+  %w[z i w x P Z I W r p a d l b B m f].each { it_behaves_like "interaction", it }
+  %w[-u -a].each { it_behaves_like "argument", it }
 
   describe "Stash both" do
     before do

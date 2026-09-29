@@ -27,7 +27,7 @@ RSpec.describe "Branch Config Popup", :git, :nvim, :popup do
 
   before { await { expect(nvim.filetype).to eq("NeogitPopup") } }
 
-  %w[d u r p R P B A as ar].each { include_examples "interaction", _1 }
+  %w[d u r p R P B A as ar].each { it_behaves_like "interaction", it }
 
   describe "Variables" do
     describe "description" do

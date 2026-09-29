@@ -409,7 +409,7 @@ RSpec.describe "Status Buffer", :git, :nvim do
 
       git.commit("Add submodule")
 
-      File.open(File.join(submodule_path, "file.txt"), "a") { _1.puts("local change") }
+      File.open(File.join(submodule_path, "file.txt"), "a") { it.puts("local change") }
       nvim.lua(<<~LUA)
         local status = require("neogit.buffers.status")
         local instance = status.instance()

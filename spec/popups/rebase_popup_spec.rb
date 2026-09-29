@@ -27,8 +27,8 @@ RSpec.describe "Rebase Popup", :git, :nvim, :popup do
     ]
   end
 
-  %w[p u e i s m w d f].each { include_examples "interaction", _1 }
-  %w[-k -r -u -d -t -a -A -i -h -S].each { include_examples "argument", _1 }
+  %w[p u e i s m w d f].each { it_behaves_like "interaction", it }
+  %w[-k -r -u -d -t -a -A -i -h -S].each { it_behaves_like "argument", it }
 
   describe "Actions" do
     describe "Rebase onto elsewhere" do

@@ -25,8 +25,8 @@ RSpec.describe "Push Popup", :git, :nvim, :popup, :with_remote_origin do
     ]
   end
 
-  %w[-f -F -u -h -d].each { include_examples "argument", _1 }
-  %w[p u e o r m T t C].each { include_examples "interaction", _1 }
+  %w[-f -F -u -h -d].each { it_behaves_like "argument", it }
+  %w[p u e o r m T t C].each { it_behaves_like "interaction", it }
 
   describe "Actions" do
     describe "Push to branch.pushRemote" do
@@ -42,7 +42,9 @@ RSpec.describe "Push Popup", :git, :nvim, :popup, :with_remote_origin do
           nvim.refresh
 
           nvim.keys("p")
-          expect(git.show("HEAD").split[1]).to eq(git.branch_list("#{git.remote_list.first.name}/#{git.current_branch}").first.target_oid)
+          expect(git.show("HEAD").split[1]).to eq(
+            git.branch_list("#{git.remote_list.first.name}/#{git.current_branch}").first.target_oid
+          )
         end
       end
 
@@ -63,7 +65,9 @@ RSpec.describe "Push Popup", :git, :nvim, :popup, :with_remote_origin do
           nvim.confirm(true)
           nvim.keys("Pp")
 
-          expect(git.show("HEAD").split[1]).to eq(git.branch_list("#{git.remote_list.first.name}/#{git.current_branch}").first.target_oid)
+          expect(git.show("HEAD").split[1]).to eq(
+            git.branch_list("#{git.remote_list.first.name}/#{git.current_branch}").first.target_oid
+          )
         end
 
         it "prompts the user to force push (no)" do
@@ -82,7 +86,9 @@ RSpec.describe "Push Popup", :git, :nvim, :popup, :with_remote_origin do
           nvim.confirm(false)
           nvim.keys("Pp")
 
-          expect(git.show("HEAD").split[1]).not_to eq(git.branch_list("#{git.remote_list.first.name}/#{git.current_branch}").first.target_oid)
+          expect(git.show("HEAD").split[1]).not_to eq(
+            git.branch_list("#{git.remote_list.first.name}/#{git.current_branch}").first.target_oid
+          )
         end
       end
     end
