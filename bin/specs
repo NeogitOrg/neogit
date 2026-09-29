@@ -8,7 +8,6 @@ gemfile do
   gem "open3"
   gem "tty-spinner"
   gem "pastel"
-  gem "debug"
 end
 
 require "async"
