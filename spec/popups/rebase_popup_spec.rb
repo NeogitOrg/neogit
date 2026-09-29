@@ -35,8 +35,8 @@ RSpec.describe "Rebase Popup", :git, :nvim, :popup do
       before do
         # Create a diverged history: feature branch made from initial commit,
         # then a new commit added to master.
-        git.branch("base-branch").checkout
-        git.branch("master").checkout
+        git.checkout("base-branch")
+        git.checkout("master")
         File.write("master_work.txt", "master work")
         git.add("master_work.txt")
         git.commit("master work")

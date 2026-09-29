@@ -3,7 +3,6 @@
 require "tmpdir"
 require "git"
 require "neovim"
-require "debug"
 require "active_support/all"
 require "timeout"
 require "super_diff/rspec"
@@ -46,7 +45,7 @@ RSpec.configure do |config|
 
         Dir.chdir(local) do
           local_repo = Git.init(".", { initial_branch: "master" })
-          local_repo.add_remote("origin", remote) if with_remote
+          local_repo.remote_add("origin", remote) if with_remote
           example.run
         end
       end

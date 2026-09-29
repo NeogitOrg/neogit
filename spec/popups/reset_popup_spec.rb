@@ -21,7 +21,7 @@ RSpec.describe "Reset Popup", :git, :nvim, :popup do
 
   describe "Actions" do
     before do
-      git.add_tag("checkpoint") # lightweight tag at initial commit
+      git.tag_create("checkpoint") # lightweight tag at initial commit
       File.write("extra.txt", "extra content")
       git.add("extra.txt")
       git.commit("add extra.txt")
@@ -44,7 +44,7 @@ RSpec.describe "Reset Popup", :git, :nvim, :popup do
         nvim.keys("check<cr>")
         await do
           expect(git.revparse("HEAD")).to eq(target)
-          expect(git.status.added.keys).to include("extra.txt")
+          expect(git.status_info.added.keys).to include("extra.txt")
         end
       end
     end

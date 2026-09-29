@@ -28,7 +28,7 @@ RSpec.describe "Tag Popup", :git, :nvim, :popup do
         nvim.input("v1.0")
         nvim.keys("t")
         nvim.keys("HEAD<cr>")
-        expect(git.tags.map(&:name)).to include("v1.0")
+        expect(git.tag_list.map(&:name)).to include("v1.0")
       end
     end
 
@@ -37,25 +37,25 @@ RSpec.describe "Tag Popup", :git, :nvim, :popup do
         it "creates a tag on HEAD" do
           nvim.input("v1.0.0")
           nvim.keys("r")
-          expect(git.tags.map(&:name)).to include("v1.0.0")
+          expect(git.tag_list.map(&:name)).to include("v1.0.0")
         end
       end
 
       context "with an existing tag" do
-        before { git.add_tag("v1.0.0") }
+        before { git.tag_create("v1.0.0") }
 
         it "uses the highest tag as the default name" do
           # User clears the default and types the new version
           nvim.keys("r")
           nvim.keys("<c-u>v2.0.0<cr>")
-          expect(git.tags.map(&:name)).to include("v2.0.0")
+          expect(git.tag_list.map(&:name)).to include("v2.0.0")
         end
       end
 
       context "with --annotate enabled" do
         before do
           nvim.keys("-a")
-          git.add_tag("v1.0.0", annotate: true, message: "My Project 1.0.0")
+          git.tag_create("v1.0.0", annotate: true, message: "My Project 1.0.0")
         end
 
         it "creates an annotated tag with a proposed message derived from the previous tag" do
@@ -64,19 +64,19 @@ RSpec.describe "Tag Popup", :git, :nvim, :popup do
           nvim.keys("<c-u>v2.0.0<cr>")
           # Accept the proposed message ("My Project 2.0.0" derived from old "My Project 1.0.0")
           nvim.keys("<cr>")
-          expect(git.tags.map(&:name)).to include("v2.0.0")
-          expect(git.tags.find { |t| t.name == "v2.0.0" }.message).to eq("My Project 2.0.0")
+          expect(git.tag_list.map(&:name)).to include("v2.0.0")
+          expect(git.tag_list.find { |t| t.name == "v2.0.0" }.message).to eq("My Project 2.0.0")
         end
       end
     end
 
     describe "Delete tag" do
-      before { git.add_tag("v1.0") }
+      before { git.tag_create("v1.0") }
 
       it "deletes the selected tag" do
         nvim.keys("x")
         nvim.keys("v1.0<cr>")
-        expect(git.tags.map(&:name)).not_to include("v1.0")
+        expect(git.tag_list.map(&:name)).not_to include("v1.0")
       end
     end
   end

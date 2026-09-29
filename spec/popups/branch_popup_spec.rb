@@ -34,18 +34,18 @@ RSpec.describe "Branch Popup", :git, :nvim, :popup do
         nvim.keys("describe the branch<esc>")
         nvim.keys(":wq<cr>")
 
-        expect(git.config("branch.master.description")).to eq("describe the branch\n")
+        expect(git.config_get("branch.master.description").value).to eq("describe the branch")
       end
     end
 
     describe "branch.<current>.{merge,remote}" do
       it "can set the upstream for current branch" do
-        expect_git_failure { git.config("branch.#{git.branch.name}.remote") }
-        expect_git_failure { git.config("branch.#{git.branch.name}.merge") }
+        expect(git.config_get("branch.#{git.current_branch}.remote")).to be_nil
+        expect(git.config_get("branch.#{git.current_branch}.merge")).to be_nil
 
         nvim.keys("umaster<cr>")
-        expect(git.config("branch.#{git.branch.name}.remote")).to eq(".")
-        expect(git.config("branch.#{git.branch.name}.merge")).to eq("refs/heads/master")
+        expect(git.config_get("branch.#{git.current_branch}.remote").value).to eq(".")
+        expect(git.config_get("branch.#{git.current_branch}.merge").value).to eq("refs/heads/master")
       end
 
       it "unsets both values if already set" do
@@ -62,8 +62,8 @@ RSpec.describe "Branch Popup", :git, :nvim, :popup do
 
         nvim.keys("u")
 
-        expect_git_failure { git.config("branch.#{git.branch.name}.remote") }
-        expect_git_failure { git.config("branch.#{git.branch.name}.merge") }
+        expect(git.config_get("branch.#{git.current_branch}.remote")).to be_nil
+        expect(git.config_get("branch.#{git.current_branch}.merge")).to be_nil
 
         await do
           screen = nvim.screen
@@ -77,25 +77,25 @@ RSpec.describe "Branch Popup", :git, :nvim, :popup do
     end
 
     describe "branch.<current>.rebase" do
-      before { git.config("pull.rebase", "false") }
+      before { git.config_set("pull.rebase", "false") }
 
       it "can change rebase setting" do
-        expect_git_failure { git.config("branch.#{git.branch.name}.rebase") }
-        expect(git.config("pull.rebase")).to eq("false")
+        expect(git.config_get("branch.#{git.current_branch}.rebase")).to be_nil
+        expect(git.config_get("pull.rebase").value).to eq("false")
         nvim.keys("R")
-        expect(git.config("branch.#{git.branch.name}.rebase")).to eq("true")
+        expect(git.config_get("branch.#{git.current_branch}.rebase").value).to eq("true")
         nvim.keys("R")
-        expect(git.config("branch.#{git.branch.name}.rebase")).to eq("false")
+        expect(git.config_get("branch.#{git.current_branch}.rebase").value).to eq("false")
         nvim.keys("R")
-        expect_git_failure { git.config("branch.#{git.branch.name}.rebase") }
+        expect(git.config_get("branch.#{git.current_branch}.rebase")).to be_nil
       end
     end
 
     describe "branch.<current>.pushRemote", :with_remote_origin do
       it "can change pushRemote for current branch" do
-        expect_git_failure { git.config("branch.master.pushRemote") }
+        expect(git.config_get("branch.master.pushRemote")).to be_nil
         nvim.keys("p")
-        expect(git.config("branch.master.pushRemote")).to eq("origin")
+        expect(git.config_get("branch.master.pushRemote").value).to eq("origin")
       end
     end
   end
@@ -111,7 +111,7 @@ RSpec.describe "Branch Popup", :git, :nvim, :popup do
 
     describe "Checkout local branch" do
       before do
-        git.branch("new-local-branch").checkout
+        git.checkout("new-local-branch")
         nvim.refresh
       end
 
@@ -155,7 +155,7 @@ RSpec.describe "Branch Popup", :git, :nvim, :popup do
       end
 
       it "lets you pick a base branch" do
-        git.branch("new-base-branch").checkout
+        git.checkout("new-base-branch")
 
         nvim.input("feature-branch")
         nvim.keys("c")

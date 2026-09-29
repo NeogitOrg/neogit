@@ -33,7 +33,7 @@ RSpec.describe "Push Popup", :git, :nvim, :popup, :with_remote_origin do
       context "when branch.pushRemote is unset" do
         it "sets branch.pushRemote" do
           nvim.keys("p")
-          expect(git.config("branch.master.pushRemote")).to eq("origin")
+          expect(git.config_get("branch.master.pushRemote").value).to eq("origin")
         end
 
         it "pushes local commits to remote" do
@@ -42,7 +42,7 @@ RSpec.describe "Push Popup", :git, :nvim, :popup, :with_remote_origin do
           nvim.refresh
 
           nvim.keys("p")
-          expect(git.show("HEAD").split[1]).to eq(git.remotes.first.branch.gcommit.sha)
+          expect(git.show("HEAD").split[1]).to eq(git.branch_list("#{git.remote_list.first.name}/#{git.current_branch}").first.target_oid)
         end
       end
 
@@ -63,7 +63,7 @@ RSpec.describe "Push Popup", :git, :nvim, :popup, :with_remote_origin do
           nvim.confirm(true)
           nvim.keys("Pp")
 
-          expect(git.show("HEAD").split[1]).to eq(git.remotes.first.branch.gcommit.sha)
+          expect(git.show("HEAD").split[1]).to eq(git.branch_list("#{git.remote_list.first.name}/#{git.current_branch}").first.target_oid)
         end
 
         it "prompts the user to force push (no)" do
@@ -82,7 +82,7 @@ RSpec.describe "Push Popup", :git, :nvim, :popup, :with_remote_origin do
           nvim.confirm(false)
           nvim.keys("Pp")
 
-          expect(git.show("HEAD").split[1]).not_to eq(git.remotes.first.branch.gcommit.sha)
+          expect(git.show("HEAD").split[1]).not_to eq(git.branch_list("#{git.remote_list.first.name}/#{git.current_branch}").first.target_oid)
         end
       end
     end

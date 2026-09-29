@@ -34,14 +34,15 @@ RSpec.describe "Remote Popup", :git, :nvim, :popup do
         nvim.keys("a")
         nvim.keys("origin<cr>")
         nvim.keys("git@github.com:NeogitOrg/neogit.git<cr>")
-        expect(git.remote.name).to eq("origin")
-        expect(git.remote.url).to eq("git@github.com:NeogitOrg/neogit.git")
+        origin = git.remote_list.find { |r| r.name == "origin" }
+        expect(origin.name).to eq("origin")
+        expect(origin.url.first).to eq("git@github.com:NeogitOrg/neogit.git")
       end
     end
 
     context "with 'origin' set" do
       before do
-        git.config("remote.origin.url", "git@github.com:NeogitOrg/neogit.git")
+        git.config_set("remote.origin.url", "git@github.com:NeogitOrg/neogit.git")
       end
 
       it "auto-populates host/remote" do
@@ -62,14 +63,14 @@ RSpec.describe "Remote Popup", :git, :nvim, :popup do
 
     context "with a remote configured" do
       before do
-        git.config("remote.origin.url", "git@github.com:NeogitOrg/neogit.git")
+        git.config_set("remote.origin.url", "git@github.com:NeogitOrg/neogit.git")
       end
 
       it "can remove a remote" do
         nvim.keys("x")
         nvim.keys("origin<cr>")
         expect(nvim.screen.last).to start_with("Removed remote 'origin'")
-        expect(git.remotes).to be_empty
+        expect(git.remote_list).to be_empty
       end
     end
   end
@@ -84,7 +85,7 @@ RSpec.describe "Remote Popup", :git, :nvim, :popup do
 
     context "with a remote configured" do
       before do
-        git.config("remote.origin.url", "git@github.com:NeogitOrg/neogit.git")
+        git.config_set("remote.origin.url", "git@github.com:NeogitOrg/neogit.git")
       end
 
       it "can rename a remote" do
@@ -92,7 +93,7 @@ RSpec.describe "Remote Popup", :git, :nvim, :popup do
         nvim.keys("origin<cr>")
         nvim.keys("fork<cr>")
         expect(nvim.screen.last).to start_with("Renamed 'origin' -> 'fork'")
-        expect(git.remotes.first.name).to eq("fork")
+        expect(git.remote_list.first.name).to eq("fork")
       end
     end
   end
@@ -107,7 +108,7 @@ RSpec.describe "Remote Popup", :git, :nvim, :popup do
 
     context "with a remote configured" do
       before do
-        git.config("remote.origin.url", "git@github.com:NeogitOrg/neogit.git")
+        git.config_set("remote.origin.url", "git@github.com:NeogitOrg/neogit.git")
       end
 
       it "can launch remote config popup" do
@@ -139,7 +140,7 @@ RSpec.describe "Remote Popup", :git, :nvim, :popup do
 
     context "with a remote configured" do
       before do
-        git.config("remote.origin.url", "git@github.com:NeogitOrg/neogit.git")
+        git.config_set("remote.origin.url", "git@github.com:NeogitOrg/neogit.git")
       end
 
       it "can launch remote config popup" do

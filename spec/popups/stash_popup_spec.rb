@@ -40,8 +40,8 @@ RSpec.describe "Stash Popup", :git, :nvim, :popup do
       it "stashes staged, unstaged, and untracked changed" do
         nvim.keys("-u")
         nvim.keys("z")
-        expect(git.status.changed).to be_empty
-        expect(git.status.untracked).to be_empty
+        expect(git.status_info.changed).to be_empty
+        expect(git.status_info.untracked).to be_empty
       end
     end
 
@@ -49,15 +49,15 @@ RSpec.describe "Stash Popup", :git, :nvim, :popup do
       it "stashes staged, unstaged, untracked, and ignored changes" do
         nvim.keys("-a")
         nvim.keys("z")
-        expect(git.status.changed).to be_empty
-        expect(git.status.untracked).to be_empty
+        expect(git.status_info.changed).to be_empty
+        expect(git.status_info.untracked).to be_empty
       end
     end
 
     it "stashes both staged and unstaged changes" do
       nvim.keys("z")
-      expect(git.status.changed).to be_empty
-      expect(git.status.untracked).not_to be_empty
+      expect(git.status_info.changed).to be_empty
+      expect(git.status_info.untracked).not_to be_empty
     end
   end
 
@@ -79,8 +79,8 @@ RSpec.describe "Stash Popup", :git, :nvim, :popup do
 
     it "stashes only staged changes" do
       nvim.keys("i")
-      expect(git.status.changed.keys).to contain_exactly("bar")
-      expect(git.status.untracked).not_to be_empty
+      expect(git.status_info.changed.keys).to contain_exactly("bar")
+      expect(git.status_info.untracked).not_to be_empty
     end
   end
 
@@ -102,8 +102,8 @@ RSpec.describe "Stash Popup", :git, :nvim, :popup do
 
     it "stashes only unstaged changes" do
       nvim.keys("x")
-      expect(git.status.changed.keys).to contain_exactly("foo")
-      expect(git.status.untracked).not_to be_empty
+      expect(git.status_info.changed.keys).to contain_exactly("foo")
+      expect(git.status_info.untracked).not_to be_empty
     end
   end
 
@@ -124,13 +124,13 @@ RSpec.describe "Stash Popup", :git, :nvim, :popup do
     end
 
     it "stashes only specified file" do
-      expect(git.status.changed.keys).to contain_exactly("foo", "bar")
+      expect(git.status_info.changed.keys).to contain_exactly("foo", "bar")
 
       nvim.keys("Pfoo<cr>")
-      expect(git.status.changed.keys).to contain_exactly("bar")
+      expect(git.status_info.changed.keys).to contain_exactly("bar")
 
       nvim.keys("ZPbar<cr>")
-      expect(git.status.changed.keys).to be_empty
+      expect(git.status_info.changed.keys).to be_empty
     end
   end
 

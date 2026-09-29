@@ -22,7 +22,7 @@ RSpec.describe "Bisect Popup", :git, :nvim, :popup do
   describe "Actions" do
     describe "Start bisect" do
       before do
-        git.add_tag("known-good") # tag initial commit as good baseline
+        git.tag_create("known-good") # tag initial commit as good baseline
         3.times do |i|
           File.write("step#{i}.txt", i.to_s)
           git.add("step#{i}.txt")

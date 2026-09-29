@@ -122,7 +122,7 @@ RSpec.describe "Status Buffer", :git, :nvim do
       nvim.keys("S")
       await do
         expect(`git diff --cached --name-only`.strip).to eq("tracked")
-        expect(git.status.untracked).not_to be_empty
+        expect(git.status_info.untracked).not_to be_empty
       end
     end
   end
@@ -142,7 +142,7 @@ RSpec.describe "Status Buffer", :git, :nvim do
       nvim.keys("u")
       await do
         expect(`git diff --cached --name-only`.strip).to be_empty
-        expect(git.status.changed.keys).to contain_exactly("foo")
+        expect(git.status_info.changed.keys).to contain_exactly("foo")
       end
     end
 
@@ -150,7 +150,7 @@ RSpec.describe "Status Buffer", :git, :nvim do
       nvim.keys("U")
       await do
         expect(`git diff --cached --name-only`.strip).to be_empty
-        expect(git.status.changed.keys).to contain_exactly("foo")
+        expect(git.status_info.changed.keys).to contain_exactly("foo")
       end
     end
 
@@ -159,7 +159,7 @@ RSpec.describe "Status Buffer", :git, :nvim do
       nvim.keys("Vu") # visual line mode, then unstage
       await do
         expect(`git diff --cached --name-only`.strip).to be_empty
-        expect(git.status.changed.keys).to contain_exactly("foo")
+        expect(git.status_info.changed.keys).to contain_exactly("foo")
       end
     end
   end
@@ -180,7 +180,7 @@ RSpec.describe "Status Buffer", :git, :nvim do
         nvim.keys("x")
         await do
           expect(File.read("foo")).to eq("original\n")
-          expect(git.status.changed).to be_empty
+          expect(git.status_info.changed).to be_empty
         end
       end
     end
@@ -402,7 +402,7 @@ RSpec.describe "Status Buffer", :git, :nvim do
     before do
       initialize_submodule_source
 
-      git.config("protocol.file.allow", "always")
+      git.config_set("protocol.file.allow", "always")
       unless system("git", "-c", "protocol.file.allow=always", "submodule", "add", submodule_source_dir, submodule_path)
         raise "Failed to add submodule"
       end
@@ -464,8 +464,8 @@ RSpec.describe "Status Buffer", :git, :nvim do
 
     def initialize_submodule_source
       repo = Git.init(submodule_source_dir)
-      repo.config("user.email", "test@example.com")
-      repo.config("user.name", "tester")
+      repo.config_set("user.email", "test@example.com")
+      repo.config_set("user.name", "tester")
       File.write(File.join(submodule_source_dir, "file.txt"), "submodule file\n")
       repo.add("file.txt")
       repo.commit("Initial submodule commit")

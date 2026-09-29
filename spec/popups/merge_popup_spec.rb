@@ -30,11 +30,11 @@ RSpec.describe "Merge Popup", :git, :nvim, :popup do
   describe "Actions" do
     describe "Merge" do
       before do
-        git.branch("feature").checkout
+        git.checkout("feature")
         File.write("feature.txt", "feature content")
         git.add("feature.txt")
         git.commit("add feature.txt")
-        git.branch("master").checkout
+        git.checkout("master")
         nvim.refresh
       end
 
@@ -42,17 +42,17 @@ RSpec.describe "Merge Popup", :git, :nvim, :popup do
         nvim.keys("m")
         nvim.keys("feat<cr>")
         expect(File.exist?("feature.txt")).to be true
-        expect(git.log(5).entries.map(&:message)).to include("add feature.txt")
+        expect(git.log(5).execute.map(&:message)).to include("add feature.txt")
       end
     end
 
     describe "Squash merge" do
       before do
-        git.branch("feature").checkout
+        git.checkout("feature")
         File.write("squashed.txt", "squashed content")
         git.add("squashed.txt")
         git.commit("squashed commit")
-        git.branch("master").checkout
+        git.checkout("master")
         nvim.refresh
       end
 

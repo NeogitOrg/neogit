@@ -41,7 +41,7 @@ RSpec.describe "Pull Popup", :git, :nvim, :popup do
         nvim.keys("e")
         nvim.keys("origin/master<cr>")
         await do
-          expect(git.log(3).entries.map(&:message)).to include("remote commit")
+          expect(git.log(3).execute.map(&:message)).to include("remote commit")
         end
       end
     end

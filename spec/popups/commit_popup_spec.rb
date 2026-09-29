@@ -73,7 +73,7 @@ RSpec.describe "Commit Popup", :git, :nvim, :popup do
       end
 
       it "Amends previous commit without editing message" do
-        expect(git.log(1).entries.first.diff_parent.patch).to eq <<~DIFF.strip
+        expect(git.log(1).execute.first.diff_parent.patch).to eq <<~DIFF.strip
           diff --git a/example.txt b/example.txt
           deleted file mode 100644
           index 8c01d89..0000000
@@ -88,7 +88,7 @@ RSpec.describe "Commit Popup", :git, :nvim, :popup do
         git.add("example.txt")
         nvim.keys("e")
 
-        expect(git.log(1).entries.first.diff_parent.patch).to eq <<~DIFF.strip
+        expect(git.log(1).execute.first.diff_parent.patch).to eq <<~DIFF.strip
           diff --git a/example.txt b/example.txt
           deleted file mode 100644
           index cfbe699..0000000
@@ -107,7 +107,7 @@ RSpec.describe "Commit Popup", :git, :nvim, :popup do
         nvim.keys("w")
         nvim.keys("cc")
         nvim.keys("reworded!<esc>:w<cr>q")
-        expect(git.log(1).entries.first.message).to eq("reworded!\ncommit message")
+        expect(git.log(1).execute.first.message).to eq("reworded!\ncommit message")
       end
     end
 
@@ -120,7 +120,7 @@ RSpec.describe "Commit Popup", :git, :nvim, :popup do
       end
 
       it "Amends previous commit and edits message" do
-        expect(git.log(1).entries.first.diff_parent.patch).to eq <<~DIFF.strip
+        expect(git.log(1).execute.first.diff_parent.patch).to eq <<~DIFF.strip
           diff --git a/example.txt b/example.txt
           deleted file mode 100644
           index 8c01d89..0000000
@@ -135,8 +135,8 @@ RSpec.describe "Commit Popup", :git, :nvim, :popup do
         git.add("example.txt")
         nvim.keys("accamended!<esc>:w<cr>q")
 
-        expect(git.log(1).entries.first.message).to eq("amended!")
-        expect(git.log(1).entries.first.diff_parent.patch).to eq <<~DIFF.strip
+        expect(git.log(1).execute.first.message).to eq("amended!")
+        expect(git.log(1).execute.first.diff_parent.patch).to eq <<~DIFF.strip
           diff --git a/example.txt b/example.txt
           deleted file mode 100644
           index cfbe699..0000000

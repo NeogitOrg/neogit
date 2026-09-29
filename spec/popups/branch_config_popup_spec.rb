@@ -39,7 +39,7 @@ RSpec.describe "Branch Config Popup", :git, :nvim, :popup do
           row = nvim.screen.find { |line| line.start_with?("d branch.master.description") }
           expect(row).to start_with("d branch.master.description hello world")
         end
-        expect(git.config("branch.master.description")).to eq("hello world\n")
+        expect(git.config_get("branch.master.description").value).to eq("hello world")
       end
     end
 
@@ -47,7 +47,7 @@ RSpec.describe "Branch Config Popup", :git, :nvim, :popup do
       it "sets merge and remote values" do
         nvim.keys("u<cr>")
         expect(nvim.errors).to be_empty
-        expect(git.config("branch.master.merge")).to eq "refs/heads/master"
+        expect(git.config_get("branch.master.merge").value).to eq "refs/heads/master"
       end
     end
 
@@ -62,11 +62,11 @@ RSpec.describe "Branch Config Popup", :git, :nvim, :popup do
     describe "pull.rebase" do
       it "changes pull.rebase" do
         nvim.keys("R")
-        expect(git.config("pull.rebase")).to eq("true")
+        expect(git.config_get("pull.rebase").value).to eq("true")
         nvim.keys("R")
-        expect(git.config("pull.rebase")).to eq("false")
+        expect(git.config_get("pull.rebase").value).to eq("false")
         nvim.keys("R")
-        expect(git.config("pull.rebase")).to eq("true")
+        expect(git.config_get("pull.rebase").value).to eq("true")
 
         expect(nvim.errors).to be_empty
       end

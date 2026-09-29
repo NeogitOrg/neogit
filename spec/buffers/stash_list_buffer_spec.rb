@@ -8,7 +8,7 @@ RSpec.describe "Stash list Buffer", :git, :nvim do
     git.add("1")
     git.commit("test")
     create_file("1", content: "hello world")
-    git.lib.stash_save("test")
+    git.stash_push(message: "test")
     nvim.refresh
   end
 
