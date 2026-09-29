@@ -41,7 +41,7 @@ jobs:
 
       - name: E2E Test
         run: |
-          bundle exec rspec
+          bundle exec rspec --format doc
 
       - name: Unit Test
         run: |
