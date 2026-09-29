@@ -7,15 +7,15 @@ RSpec.describe "Tag Popup", :git, :nvim, :popup do
 
   let(:view) do
     [
-      " Arguments                                                                      ",
-      " -f Force (--force)                                                             ",
-      " -a Annotate (--annotate)                                                       ",
-      " -s Sign (--sign)                                                               ",
-      " -u Sign as (--local-user=)                                                     ",
+      "Arguments                                                                       ",
+      "-f Force (--force)                                                              ",
+      "-a Annotate (--annotate)                                                        ",
+      "-s Sign (--sign)                                                                ",
+      "-u Sign as (--local-user=)                                                      ",
       "                                                                                ",
-      " Create         Do                                                              ",
-      " t tag          x delete                                                        ",
-      " r release      p prune                                                         "
+      "Create         Do                                                               ",
+      "t tag          x delete                                                         ",
+      "r release      p prune                                                          "
     ]
   end
 

@@ -6,16 +6,16 @@ RSpec.describe "Fetch Popup", :git, :nvim, :popup do # rubocop:disable RSpec/Emp
   let(:keymap) { "f" }
   let(:view) do
     [
-      " Arguments                                                                      ",
-      " -p Prune deleted branches (--prune)                                            ",
-      " -t Fetch all tags (--tags)                                                     ",
-      " -F force (--force)                                                             ",
+      "Arguments                                                                       ",
+      "-p Prune deleted branches (--prune)                                             ",
+      "-t Fetch all tags (--tags)                                                      ",
+      "-F force (--force)                                                              ",
       "                                                                                ",
-      " Fetch from                      Fetch                Configure                 ",
-      " p pushRemote, setting that      o another branch     C Set variables...        ",
-      " u @{upstream}, setting it       r explicit refspec                             ",
-      " e elsewhere                     m submodules                                   ",
-      " a all remotes                                                                  "
+      "Fetch from                      Fetch                Configure                  ",
+      "p pushRemote, setting that      o another branch     C Set variables...         ",
+      "u @{upstream}, setting it       r explicit refspec                              ",
+      "e elsewhere                     m submodules                                    ",
+      "a all remotes                                                                   "
     ]
   end
 

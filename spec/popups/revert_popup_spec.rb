@@ -7,17 +7,17 @@ RSpec.describe "Revert Popup", :git, :nvim, :popup do
 
   let(:view) do
     [
-      " Arguments                                                                      ",
-      " =m Replay merge relative to parent (--mainline=)                               ",
-      " -e Edit commit messages (--edit)                                               ",
-      " -E Don't edit commit messages (--no-edit)                                      ",
-      " -s Add Signed-off-by lines (--signoff)                                         ",
-      " =s Strategy (--strategy=)                                                      ",
-      " -S Sign using gpg (--gpg-sign=)                                                ",
+      "Arguments                                                                       ",
+      "=m Replay merge relative to parent (--mainline=)                                ",
+      "-e Edit commit messages (--edit)                                                ",
+      "-E Don't edit commit messages (--no-edit)                                       ",
+      "-s Add Signed-off-by lines (--signoff)                                          ",
+      "=s Strategy (--strategy=)                                                       ",
+      "-S Sign using gpg (--gpg-sign=)                                                 ",
       "                                                                                ",
-      " Revert                                                                         ",
-      " v Commit(s)                                                                    ",
-      " V Changes                                                                      "
+      "Revert                                                                          ",
+      "v Commit(s)                                                                     ",
+      "V Changes                                                                       "
     ]
   end
 

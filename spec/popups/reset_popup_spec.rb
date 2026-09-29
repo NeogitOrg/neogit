@@ -7,13 +7,13 @@ RSpec.describe "Reset Popup", :git, :nvim, :popup do
 
   let(:view) do
     [
-      " Reset         Reset this                                                       ",
-      " f file        m mixed    (HEAD and index)                                      ",
-      " b branch      s soft     (HEAD only)                                           ",
-      "               h hard     (HEAD, index and files)                               ",
-      "               k keep     (HEAD and index, keeping uncommitted)                 ",
-      "               i index    (only)                                                ",
-      "               w worktree (only)                                                "
+      "Reset         Reset this                                                        ",
+      "f file        m mixed    (HEAD and index)                                       ",
+      "b branch      s soft     (HEAD only)                                            ",
+      "              h hard     (HEAD, index and files)                                ",
+      "              k keep     (HEAD and index, keeping uncommitted)                  ",
+      "              i index    (only)                                                 ",
+      "              w worktree (only)                                                 "
     ]
   end
 

@@ -45,7 +45,7 @@ RSpec.configure do |config|
         Git.init(remote, { bare: true }) if with_remote
 
         Dir.chdir(local) do
-          local_repo = Git.init
+          local_repo = Git.init(".", { initial_branch: "master" })
           local_repo.add_remote("origin", remote) if with_remote
           example.run
         end

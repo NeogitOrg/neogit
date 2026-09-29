@@ -6,13 +6,13 @@ RSpec.describe "Bisect Popup", :git, :nvim, :popup do
   let(:keymap) { "B" }
   let(:view) do
     [
-      " Arguments                                                                      ",
-      " -r Don't checkout commits (--no-checkout)                                      ",
-      " -p Follow only first parent of a merge (--first-parent)                        ",
+      "Arguments                                                                       ",
+      "-r Don't checkout commits (--no-checkout)                                       ",
+      "-p Follow only first parent of a merge (--first-parent)                         ",
       "                                                                                ",
-      " Bisect                                                                         ",
-      " B Start                                                                        ",
-      " S Scripted                                                                     "
+      "Bisect                                                                          ",
+      "B Start                                                                         ",
+      "S Scripted                                                                      "
     ]
   end
 

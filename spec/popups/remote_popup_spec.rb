@@ -6,22 +6,22 @@ RSpec.describe "Remote Popup", :git, :nvim, :popup do
   let(:keymap) { "M" }
   let(:view) do
     [
-      " Variables                                                                      ",
-      " u remote.origin.url unset                                                      ",
-      " U remote.origin.fetch unset                                                    ",
-      " s remote.origin.pushurl unset                                                  ",
-      " S remote.origin.push unset                                                     ",
-      " O remote.origin.tagOpt [--no-tags|--tags]                                      ",
+      "Variables                                                                       ",
+      "u remote.origin.url unset                                                       ",
+      "U remote.origin.fetch unset                                                     ",
+      "s remote.origin.pushurl unset                                                   ",
+      "S remote.origin.push unset                                                      ",
+      "O remote.origin.tagOpt [--no-tags|--tags]                                       ",
       "                                                                                ",
-      " Arguments                                                                      ",
-      " -f Fetch after add (-f)                                                        ",
+      "Arguments                                                                       ",
+      "-f Fetch after add (-f)                                                         ",
       "                                                                                ",
-      " Actions                                                                        ",
-      " a Add         C Configure...                                                   ",
-      " r Rename      p Prune stale branches                                           ",
-      " x Remove      P Prune stale refspecs                                           ",
-      "               b Update default branch                                          ",
-      "               z Unshallow remote                                               "
+      "Actions                                                                         ",
+      "a Add         C Configure...                                                    ",
+      "r Rename      p Prune stale branches                                            ",
+      "x Remove      P Prune stale refspecs                                            ",
+      "              b Update default branch                                           ",
+      "              z Unshallow remote                                                "
     ]
   end
 
@@ -113,14 +113,18 @@ RSpec.describe "Remote Popup", :git, :nvim, :popup do
       it "can launch remote config popup" do
         nvim.keys("C")
         nvim.keys("origin<cr>")
-        expect(nvim.screen[14..19]).to eq(
-          [" Configure remote                                                               ",
-           " u remote.origin.url git@github.com:NeogitOrg/neogit.git                        ",
-           " U remote.origin.fetch unset                                                    ",
-           " s remote.origin.pushurl unset                                                  ",
-           " S remote.origin.push unset                                                     ",
-           " O remote.origin.tagOpt [--no-tags|--tags]                                      "]
-        )
+        await do
+          screen = nvim.screen
+          idx    = screen.index { |line| line.start_with?("Configure remote") }
+          expect(screen[idx, 6]).to eq(
+            ["Configure remote                                                                ",
+             "u remote.origin.url git@github.com:NeogitOrg/neogit.git                         ",
+             "U remote.origin.fetch unset                                                     ",
+             "s remote.origin.pushurl unset                                                   ",
+             "S remote.origin.push unset                                                      ",
+             "O remote.origin.tagOpt [--no-tags|--tags]                                       "]
+          )
+        end
       end
     end
   end

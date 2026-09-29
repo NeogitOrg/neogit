@@ -7,10 +7,10 @@ RSpec.describe "Worktree Popup", :git, :nvim, :popup do
 
   let(:view) do
     [
-      " Worktree        Do                                                             ",
-      " w Checkout      g Goto                                                         ",
-      " W Create        m Move                                                         ",
-      "                 D Delete                                                       "
+      "Worktree        Do                                                              ",
+      "w Checkout      g Goto                                                          ",
+      "W Create        m Move                                                          ",
+      "                D Delete                                                        "
     ]
   end
 

@@ -7,16 +7,16 @@ RSpec.describe "Stash Popup", :git, :nvim, :popup do
 
   let(:view) do
     [
-      " Arguments                                                                      ",
-      " -u Also save untracked files (--include-untracked)                             ",
-      " -a Also save untracked and ignored files (--all)                               ",
+      "Arguments                                                                       ",
+      "-u Also save untracked files (--include-untracked)                              ",
+      "-a Also save untracked and ignored files (--all)                                ",
       "                                                                                ",
-      " Stash                Snapshot       Use       Inspect   Transform              ",
-      " z both               Z both         p pop     l List    b Branch               ",
-      " i index              I index        a apply   v Show    B Branch here          ",
-      " w worktree           W worktree     d drop              m Rename               ",
-      " x keeping index      r to wip ref                       f Format patch         ",
-      " P push                                                                         "
+      "Stash                Snapshot       Use       Inspect   Transform               ",
+      "z both               Z both         p pop     l List    b Branch                ",
+      "i index              I index        a apply   v Show    B Branch here           ",
+      "w worktree           W worktree     d drop              m Rename                ",
+      "x keeping index      r to wip ref                       f Format patch          ",
+      "P push                                                                          "
     ]
   end
 

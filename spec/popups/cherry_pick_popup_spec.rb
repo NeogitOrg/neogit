@@ -6,20 +6,20 @@ RSpec.describe "Cherry Pick Popup", :git, :nvim, :popup do # rubocop:disable RSp
   let(:keymap) { "A" }
   let(:view) do
     [
-      " Arguments                                                                      ",
-      " -m Replay merge relative to parent (--mainline=)                               ",
-      " =s Strategy (--strategy=)                                                      ",
-      " -F Attempt fast-forward (--ff)                                                 ",
-      " -x Reference cherry in commit message (-x)                                     ",
-      " -e Edit commit messages (--edit)                                               ",
-      " -s Add Signed-off-by lines (--signoff)                                         ",
-      " -S Sign using gpg (--gpg-sign=)                                                ",
+      "Arguments                                                                       ",
+      "-m Replay merge relative to parent (--mainline=)                                ",
+      "=s Strategy (--strategy=)                                                       ",
+      "-F Attempt fast-forward (--ff)                                                  ",
+      "-x Reference cherry in commit message (-x)                                      ",
+      "-e Edit commit messages (--edit)                                                ",
+      "-s Add Signed-off-by lines (--signoff)                                          ",
+      "-S Sign using gpg (--gpg-sign=)                                                 ",
       "                                                                                ",
-      " Apply here      Apply elsewhere                                                ",
-      " A Pick          d Donate                                                       ",
-      " a Apply         n Spinout                                                      ",
-      " h Harvest       s Spinoff                                                      ",
-      " m Squash                                                                       "
+      "Apply here      Apply elsewhere                                                 ",
+      "A Pick          d Donate                                                        ",
+      "a Apply         n Spinout                                                       ",
+      "h Harvest       s Spinoff                                                       ",
+      "m Squash                                                                        "
     ]
   end
 

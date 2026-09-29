@@ -7,21 +7,21 @@ RSpec.describe "Push Popup", :git, :nvim, :popup, :with_remote_origin do
 
   let(:view) do
     [
-      " Arguments                                                                      ",
-      " -f Force with lease (--force-with-lease)                                       ",
-      " -F Force (--force)                                                             ",
-      " -h Disable hooks (--no-verify)                                                 ",
-      " -d Dry run (--dry-run)                                                         ",
-      " -u Set the upstream before pushing (--set-upstream)                            ",
-      " -T Include all tags (--tags)                                                   ",
-      " -t Include related annotated tags (--follow-tags)                              ",
+      "Arguments                                                                       ",
+      "-f Force with lease (--force-with-lease)                                        ",
+      "-F Force (--force)                                                              ",
+      "-h Disable hooks (--no-verify)                                                  ",
+      "-d Dry run (--dry-run)                                                          ",
+      "-u Set the upstream before pushing (--set-upstream)                             ",
+      "-T Include all tags (--tags)                                                    ",
+      "-t Include related annotated tags (--follow-tags)                               ",
       "                                                                                ",
-      " Push master to                  Push                  Configure                ",
-      " p pushRemote, setting that      o another branch      C Set variables...       ",
-      " u @{upstream}, creating it      r explicit refspec                             ",
-      " e elsewhere                     m matching branches                            ",
-      "                                 T a tag                                        ",
-      "                                 t all tags                                     "
+      "Push master to                  Push                  Configure                 ",
+      "p pushRemote, setting that      o another branch      C Set variables...        ",
+      "u @{upstream}, creating it      r explicit refspec                              ",
+      "e elsewhere                     m matching branches                             ",
+      "                                T a tag                                         ",
+      "                                t all tags                                      "
     ]
   end
 

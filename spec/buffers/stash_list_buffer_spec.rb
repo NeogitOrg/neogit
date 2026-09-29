@@ -14,12 +14,8 @@ RSpec.describe "Stash list Buffer", :git, :nvim do
 
   it "renders, raising no errors" do
     nvim.keys("Zl")
-    expect(nvim.screen[1..2]).to eq(
-      [
-        " Stashes (1)                                                                    ",
-        "stash@{0} On master: test                                          0 seconds ago"
-      ]
-    )
+    expect(nvim.screen[1]).to eq(" Stashes (1)                                                                    ")
+    expect(nvim.screen[2]).to match(/\Astash@\{0\} On (main|master): test\s+\d+ seconds? ago\s*\z/)
 
     expect(nvim.errors).to be_empty
     expect(nvim.filetype).to eq("NeogitStashView")

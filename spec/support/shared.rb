@@ -36,13 +36,16 @@ RSpec.shared_examples "popup", :popup do
   end
 
   it "has correct filetype" do
-    expect(nvim.filetype).to eq("NeogitPopup")
+    await { expect(nvim.filetype).to eq("NeogitPopup") }
   end
 
   it "renders view properly" do
-    screen  = nvim.screen
-    indices = view.map { screen.index(_1) }
-    range   = (indices.first..indices.last)
-    expect(screen[range]).to eq(view)
+    await do
+      screen  = nvim.screen
+      indices = view.map { screen.index(_1) }
+      expect(indices).to all(be_a(Integer))
+      range   = (indices.first..indices.last)
+      expect(screen[range]).to eq(view)
+    end
   end
 end

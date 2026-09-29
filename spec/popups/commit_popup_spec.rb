@@ -6,23 +6,23 @@ RSpec.describe "Commit Popup", :git, :nvim, :popup do
   let(:keymap) { "c" }
   let(:view) do
     [
-      " Arguments                                                                      ",
-      " -a Stage all modified and deleted files (--all)                                ",
-      " -e Allow empty commit (--allow-empty)                                          ",
-      " -v Show diff of changes to be committed (--verbose)                            ",
-      " -h Disable hooks (--no-verify)                                                 ",
-      " -R Claim authorship and reset author date (--reset-author)                     ",
-      " -A Override the author (--author=)                                             ",
-      " -s Add Signed-off-by line (--signoff)                                          ",
-      " -S Sign using gpg (--gpg-sign=)                                                ",
-      " -C Reuse commit message (--reuse-message=)                                     ",
+      "Arguments                                                                       ",
+      "-a Stage all modified and deleted files (--all)                                 ",
+      "-e Allow empty commit (--allow-empty)                                           ",
+      "-v Show diff of changes to be committed (--verbose)                             ",
+      "-h Disable hooks (--no-verify)                                                  ",
+      "-R Claim authorship and reset author date (--reset-author)                      ",
+      "-A Override the author (--author=)                                              ",
+      "-s Add Signed-off-by line (--signoff)                                           ",
+      "-S Sign using gpg (--gpg-sign=)                                                 ",
+      "-C Reuse commit message (--reuse-message=)                                      ",
       "                                                                                ",
-      " Create        Edit HEAD   Edit        Edit and rebase    Spread across commits ",
-      " c Commit      e Extend    f Fixup     F Instant Fixup    x Absorb              ",
-      "                           s Squash    S Instant Squash                         ",
-      "               a Amend     A Alter                                              ",
-      "                           n Augment                                            ",
-      "               w Reword    W Revise                                             "
+      "Create        Edit HEAD   Edit        Edit and rebase    Spread across commits  ",
+      "c Commit      e Extend    f Fixup     F Instant Fixup    x Absorb               ",
+      "                          s Squash    S Instant Squash                          ",
+      "              a Amend     A Alter                                               ",
+      "                          n Augment                                             ",
+      "              w Reword    W Revise                                              "
     ]
   end
 

@@ -6,21 +6,21 @@ RSpec.describe "Branch Popup", :git, :nvim, :popup do
   let(:keymap) { "b" }
   let(:view) do
     [
-      " Configure branch                                                               ",
-      " d branch.master.description unset                                              ",
-      " u branch.master.merge unset                                                    ",
-      "   branch.master.remote unset                                                   ",
-      " R branch.master.rebase [true|false|pull.rebase:false]                          ",
-      " p branch.master.pushRemote []                                                  ",
+      "Configure branch                                                                ",
+      "d branch.master.description unset                                               ",
+      "u branch.master.merge unset                                                     ",
+      "  branch.master.remote unset                                                    ",
+      "R branch.master.rebase [true|false|pull.rebase:false]                           ",
+      "p branch.master.pushRemote []                                                   ",
       "                                                                                ",
-      " Arguments                                                                      ",
-      " -r Recurse submodules when checking out an existing branch (--recurse-submodule",
+      "Arguments                                                                       ",
+      "-r Recurse submodules when checking out an existing branch (--recurse-submodules",
       "                                                                                ",
-      " Checkout                                Create           Do                    ",
-      " b branch/revision      c new branch     n new branch     C Configure...        ",
-      " l local branch         s new spin-off   S new spin-out   m rename              ",
-      " r recent branch        w new worktree   W new worktree   X reset               ",
-      "                                                          D delete              "
+      "Checkout                                Create           Do                     ",
+      "b branch/revision      c new branch     n new branch     C Configure...         ",
+      "l local branch         s new spin-off   S new spin-out   m rename               ",
+      "r recent branch        w new worktree   W new worktree   X reset                ",
+      "                                                         D delete               "
     ]
   end
 
@@ -51,20 +51,28 @@ RSpec.describe "Branch Popup", :git, :nvim, :popup do
       it "unsets both values if already set" do
         nvim.keys("umaster<cr>")
 
-        expect(nvim.screen[8..9]).to eq(
-          [" u branch.master.merge refs/heads/master                                        ",
-           "   branch.master.remote .                                                       "]
-        )
+        await do
+          screen = nvim.screen
+          idx    = screen.index { |line| line.start_with?("u branch.master.merge") }
+          expect(screen[idx, 2]).to eq(
+            ["u branch.master.merge refs/heads/master                                         ",
+             "  branch.master.remote .                                                        "]
+          )
+        end
 
         nvim.keys("u")
 
         expect_git_failure { git.config("branch.#{git.branch.name}.remote") }
         expect_git_failure { git.config("branch.#{git.branch.name}.merge") }
 
-        expect(nvim.screen[8..9]).to eq(
-          [" u branch.master.merge unset                                                    ",
-           "   branch.master.remote unset                                                   "]
-        )
+        await do
+          screen = nvim.screen
+          idx    = screen.index { |line| line.start_with?("u branch.master.merge") }
+          expect(screen[idx, 2]).to eq(
+            ["u branch.master.merge unset                                                     ",
+             "  branch.master.remote unset                                                    "]
+          )
+        end
       end
     end
 
@@ -102,7 +110,10 @@ RSpec.describe "Branch Popup", :git, :nvim, :popup do
     end
 
     describe "Checkout local branch" do
-      before { git.branch("new-local-branch").checkout }
+      before do
+        git.branch("new-local-branch").checkout
+        nvim.refresh
+      end
 
       it "can checkout a local branch" do
         nvim.keys("l")
@@ -153,7 +164,7 @@ RSpec.describe "Branch Popup", :git, :nvim, :popup do
         expect(git.current_branch).to eq "feature-branch"
 
         expect(
-          git.merge_base("feature-branch", "master").first.sha
+          git.merge_base("feature-branch", "master").first
         ).to eq(git.revparse("master"))
       end
     end
@@ -185,26 +196,30 @@ RSpec.describe "Branch Popup", :git, :nvim, :popup do
     describe "Configure" do
       it "Launches the configuration popup" do
         nvim.keys("C<cr>")
-        expect(nvim.screen[4..19]).to eq(
-          [
-            " Configure branch                                                               ",
-            " d branch.master.description unset                                              ",
-            " u branch.master.merge unset                                                    ",
-            "   branch.master.remote unset                                                   ",
-            " r branch.master.rebase [true|false|pull.rebase:false]                          ",
-            " p branch.master.pushRemote []                                                  ",
-            "                                                                                ",
-            " Configure repository defaults                                                  ",
-            " R pull.rebase [true|false]                                                     ",
-            " P remote.pushDefault []                                                        ",
-            " b neogit.baseBranch unset                                                      ",
-            " A neogit.askSetPushDefault [ask|ask-if-unset|never]                            ",
-            "                                                                                ",
-            " Configure branch creation                                                      ",
-            " a s branch.autoSetupMerge [always|true|false|inherit|simple|default:true]      ",
-            " a r branch.autoSetupRebase [always|local|remote|never|default:never]           "
-          ]
-        )
+        await do
+          screen = nvim.screen
+          idx    = screen.index { |line| line.start_with?("Configure branch") }
+          expect(screen[idx, 16]).to eq(
+            [
+              "Configure branch                                                                ",
+              "d branch.master.description unset                                               ",
+              "u branch.master.merge unset                                                     ",
+              "  branch.master.remote unset                                                    ",
+              "r branch.master.rebase [true|false|pull.rebase:false]                           ",
+              "p branch.master.pushRemote []                                                   ",
+              "                                                                                ",
+              "Configure repository defaults                                                   ",
+              "R pull.rebase [true|false]                                                      ",
+              "P remote.pushDefault []                                                         ",
+              "b neogit.baseBranch unset                                                       ",
+              "A neogit.askSetPushDefault [ask|ask-if-unset|never]                             ",
+              "                                                                                ",
+              "Configure branch creation                                                       ",
+              "a s branch.autoSetupMerge [always|true|false|inherit|simple|default:true]       ",
+              "a r branch.autoSetupRebase [always|local|remote|never|default:never]            "
+            ]
+          )
+        end
       end
     end
 

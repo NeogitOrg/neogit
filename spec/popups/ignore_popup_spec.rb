@@ -6,10 +6,10 @@ RSpec.describe "Ignore Popup", :git, :nvim, :popup do
   let(:keymap) { "i" }
   let(:view) do
     [
-      " Gitignore                                                                      ",
-      " t shared at top-level            (.gitignore)                                  ",
-      " s shared in sub-directory        (path/to/.gitignore)                          ",
-      " p privately for this repository  (.git/info/exclude)                           "
+      "Gitignore                                                                       ",
+      "t shared at top-level            (.gitignore)                                   ",
+      "s shared in sub-directory        (path/to/.gitignore)                           ",
+      "p privately for this repository  (.git/info/exclude)                            "
     ]
   end
 
