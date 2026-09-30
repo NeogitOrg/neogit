@@ -7,21 +7,21 @@ RSpec.describe "Stash Popup", :git, :nvim, :popup do
 
   let(:view) do
     [
-      " Arguments                                                                      ",
-      " -u Also save untracked files (--include-untracked)                             ",
-      " -a Also save untracked and ignored files (--all)                               ",
+      "Arguments                                                                       ",
+      "-u Also save untracked files (--include-untracked)                              ",
+      "-a Also save untracked and ignored files (--all)                                ",
       "                                                                                ",
-      " Stash                Snapshot       Use       Inspect   Transform              ",
-      " z both               Z both         p pop     l List    b Branch               ",
-      " i index              I index        a apply   v Show    B Branch here          ",
-      " w worktree           W worktree     d drop              m Rename               ",
-      " x keeping index      r to wip ref                       f Format patch         ",
-      " P push                                                                         "
+      "Stash                Snapshot       Use       Inspect   Transform               ",
+      "z both               Z both         p pop     l List    b Branch                ",
+      "i index              I index        a apply   v Show    B Branch here           ",
+      "w worktree           W worktree     d drop              m Rename                ",
+      "x keeping index      r to wip ref                       f Format patch          ",
+      "P push                                                                          "
     ]
   end
 
-  %w[z i w x P Z I W r p a d l b B m f].each { include_examples "interaction", _1 }
-  %w[-u -a].each { include_examples "argument", _1 }
+  %w[z i w x P Z I W r p a d l b B m f].each { it_behaves_like "interaction", it }
+  %w[-u -a].each { it_behaves_like "argument", it }
 
   describe "Stash both" do
     before do
@@ -40,8 +40,8 @@ RSpec.describe "Stash Popup", :git, :nvim, :popup do
       it "stashes staged, unstaged, and untracked changed" do
         nvim.keys("-u")
         nvim.keys("z")
-        expect(git.status.changed).to be_empty
-        expect(git.status.untracked).to be_empty
+        expect(git.status_info.changed).to be_empty
+        expect(git.status_info.untracked).to be_empty
       end
     end
 
@@ -49,15 +49,15 @@ RSpec.describe "Stash Popup", :git, :nvim, :popup do
       it "stashes staged, unstaged, untracked, and ignored changes" do
         nvim.keys("-a")
         nvim.keys("z")
-        expect(git.status.changed).to be_empty
-        expect(git.status.untracked).to be_empty
+        expect(git.status_info.changed).to be_empty
+        expect(git.status_info.untracked).to be_empty
       end
     end
 
     it "stashes both staged and unstaged changes" do
       nvim.keys("z")
-      expect(git.status.changed).to be_empty
-      expect(git.status.untracked).not_to be_empty
+      expect(git.status_info.changed).to be_empty
+      expect(git.status_info.untracked).not_to be_empty
     end
   end
 
@@ -79,8 +79,8 @@ RSpec.describe "Stash Popup", :git, :nvim, :popup do
 
     it "stashes only staged changes" do
       nvim.keys("i")
-      expect(git.status.changed.keys).to contain_exactly("bar")
-      expect(git.status.untracked).not_to be_empty
+      expect(git.status_info.changed.keys).to contain_exactly("bar")
+      expect(git.status_info.untracked).not_to be_empty
     end
   end
 
@@ -102,8 +102,8 @@ RSpec.describe "Stash Popup", :git, :nvim, :popup do
 
     it "stashes only unstaged changes" do
       nvim.keys("x")
-      expect(git.status.changed.keys).to contain_exactly("foo")
-      expect(git.status.untracked).not_to be_empty
+      expect(git.status_info.changed.keys).to contain_exactly("foo")
+      expect(git.status_info.untracked).not_to be_empty
     end
   end
 
@@ -124,13 +124,13 @@ RSpec.describe "Stash Popup", :git, :nvim, :popup do
     end
 
     it "stashes only specified file" do
-      expect(git.status.changed.keys).to contain_exactly("foo", "bar")
+      expect(git.status_info.changed.keys).to contain_exactly("foo", "bar")
 
       nvim.keys("Pfoo<cr>")
-      expect(git.status.changed.keys).to contain_exactly("bar")
+      expect(git.status_info.changed.keys).to contain_exactly("bar")
 
       nvim.keys("ZPbar<cr>")
-      expect(git.status.changed.keys).to be_empty
+      expect(git.status_info.changed.keys).to be_empty
     end
   end
 

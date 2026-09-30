@@ -6,34 +6,40 @@ RSpec.describe "Branch Config Popup", :git, :nvim, :popup do
   let(:keymap) { "bC<cr>" }
   let(:view) do
     [
-      " Configure branch                                                               ",
-      " d branch.master.description unset                                              ",
-      " u branch.master.merge unset                                                    ",
-      "   branch.master.remote unset                                                   ",
-      " r branch.master.rebase [true|false|pull.rebase:false]                          ",
-      " p branch.master.pushRemote []                                                  ",
+      "Configure branch                                                                ",
+      "d branch.master.description unset                                               ",
+      "u branch.master.merge unset                                                     ",
+      "  branch.master.remote unset                                                    ",
+      "r branch.master.rebase [true|false|pull.rebase:false]                           ",
+      "p branch.master.pushRemote []                                                   ",
       "                                                                                ",
-      " Configure repository defaults                                                  ",
-      " R pull.rebase [true|false]                                                     ",
-      " P remote.pushDefault []                                                        ",
-      " b neogit.baseBranch unset                                                      ",
-      " A neogit.askSetPushDefault [ask|ask-if-unset|never]                            ",
+      "Configure repository defaults                                                   ",
+      "R pull.rebase [true|false]                                                      ",
+      "P remote.pushDefault []                                                         ",
+      "b neogit.baseBranch unset                                                       ",
+      "A neogit.askSetPushDefault [ask|ask-if-unset|never]                             ",
       "                                                                                ",
-      " Configure branch creation                                                      ",
-      " a s branch.autoSetupMerge [always|true|false|inherit|simple|default:true]      ",
-      " a r branch.autoSetupRebase [always|local|remote|never|default:never]           "
+      "Configure branch creation                                                       ",
+      "a s branch.autoSetupMerge [always|true|false|inherit|simple|default:true]       ",
+      "a r branch.autoSetupRebase [always|local|remote|never|default:never]            "
     ]
   end
 
-  %w[d u r p R P B A as ar].each { include_examples "interaction", _1 }
+  before { await { expect(nvim.filetype).to eq("NeogitPopup") } }
+
+  %w[d u r p R P B A as ar].each { it_behaves_like "interaction", it }
 
   describe "Variables" do
     describe "description" do
       it "sets description" do
         nvim.keys("d")
-        nvim.keys("hello world<esc>q")
-        expect(nvim.screen[5]).to start_with(" d branch.master.description hello world")
-        expect(git.config("branch.master.description")).to eq("hello world\n")
+        nvim.keys("hello world<esc>")
+        nvim.keys(":wq<cr>")
+        await do
+          row = nvim.screen.find { |line| line.start_with?("d branch.master.description") }
+          expect(row).to start_with("d branch.master.description hello world")
+        end
+        expect(git.config_get("branch.master.description").value).to eq("hello world")
       end
     end
 
@@ -41,7 +47,7 @@ RSpec.describe "Branch Config Popup", :git, :nvim, :popup do
       it "sets merge and remote values" do
         nvim.keys("u<cr>")
         expect(nvim.errors).to be_empty
-        expect(git.config("branch.master.merge")).to eq "refs/heads/master"
+        expect(git.config_get("branch.master.merge").value).to eq "refs/heads/master"
       end
     end
 
@@ -56,11 +62,11 @@ RSpec.describe "Branch Config Popup", :git, :nvim, :popup do
     describe "pull.rebase" do
       it "changes pull.rebase" do
         nvim.keys("R")
-        expect(git.config("pull.rebase")).to eq("true")
+        expect(git.config_get("pull.rebase").value).to eq("true")
         nvim.keys("R")
-        expect(git.config("pull.rebase")).to eq("false")
+        expect(git.config_get("pull.rebase").value).to eq("false")
         nvim.keys("R")
-        expect(git.config("pull.rebase")).to eq("true")
+        expect(git.config_get("pull.rebase").value).to eq("true")
 
         expect(nvim.errors).to be_empty
       end

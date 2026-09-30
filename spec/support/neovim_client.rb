@@ -28,6 +28,8 @@ class NeovimClient # rubocop:disable Metrics/ClassLength
       require("diffview").setup()
       require('neogit').setup(#{neogit_config})
       require('neogit').open()
+
+      vim.opt.lines = 78
     LUA
 
     sleep(0.1) # Seems to be about right
@@ -48,7 +50,15 @@ class NeovimClient # rubocop:disable Metrics/ClassLength
   end
 
   def refresh
-    lua "require('neogit.buffers.status').instance():dispatch_refresh()"
+    lua <<~LUA
+      local done = false
+      vim.api.nvim_create_autocmd(
+        "User",
+        { pattern = "NeogitStatusRefreshed", once = true, callback = function() done = true end }
+      )
+      require('neogit.buffers.status').instance():dispatch_refresh()
+      vim.wait(2000, function() return done end, 20)
+    LUA
   end
 
   def screen
@@ -84,7 +94,7 @@ class NeovimClient # rubocop:disable Metrics/ClassLength
         if i == cursor_line
           line[...cursor_col] +
           @pastel.black.on_yellow(line[cursor_col]) +
-          line[(cursor_col + 1..)]
+          line[(cursor_col + 1)..]
         else
           line
         end
@@ -186,7 +196,7 @@ class NeovimClient # rubocop:disable Metrics/ClassLength
   end
 
   def runtime_dependencies
-    Dir[File.join(PROJECT_DIR, "tmp", "*")].select { Dir.exist? _1 }
+    Dir[File.join(PROJECT_DIR, "tmp", "*")].select { Dir.exist? it }
   end
 
   private

@@ -7,36 +7,36 @@ RSpec.describe "Rebase Popup", :git, :nvim, :popup do
 
   let(:view) do
     [
-      " Arguments                                                                      ",
-      " -k Keep empty commits (--keep-empty)                                           ",
-      " -r Rebase merges (--rebase-merges=)                                            ",
-      " -u Update branches (--update-refs)                                             ",
-      " -d Use author date as committer date (--committer-date-is-author-date)         ",
-      " -t Use current time as author date (--ignore-date)                             ",
-      " -a Autosquash (--autosquash)                                                   ",
-      " -A Autostash (--autostash)                                                     ",
-      " -i Interactive (--interactive)                                                 ",
-      " -h Disable hooks (--no-verify)                                                 ",
-      " -S Sign using gpg (--gpg-sign=)                                                ",
+      "Arguments                                                                       ",
+      "-k Keep empty commits (--keep-empty)                                            ",
+      "-r Rebase merges (--rebase-merges=)                                             ",
+      "-u Update branches (--update-refs)                                              ",
+      "-d Use author date as committer date (--committer-date-is-author-date)          ",
+      "-t Use current time as author date (--ignore-date)                              ",
+      "-a Autosquash (--autosquash)                                                    ",
+      "-A Autostash (--autostash)                                                      ",
+      "-i Interactive (--interactive)                                                  ",
+      "-h Disable hooks (--no-verify)                                                  ",
+      "-S Sign using gpg (--gpg-sign=)                                                 ",
       "                                                                                ",
-      " Rebase master onto              Rebase                                         ",
-      " p pushRemote, setting that      i interactively   m to modify a commit         ",
-      " u @{upstream}, creating it      s a subset        w to reword a commit         ",
-      " e elsewhere                                       d to remove a commit         ",
-      "                                                   f to autosquash              "
+      "Rebase master onto              Rebase                                          ",
+      "p pushRemote, setting that      i interactively   m to modify a commit          ",
+      "u @{upstream}, creating it      s a subset        w to reword a commit          ",
+      "e elsewhere                                       d to remove a commit          ",
+      "                                                  f to autosquash               "
     ]
   end
 
-  %w[p u e i s m w d f].each { include_examples "interaction", _1 }
-  %w[-k -r -u -d -t -a -A -i -h -S].each { include_examples "argument", _1 }
+  %w[p u e i s m w d f].each { it_behaves_like "interaction", it }
+  %w[-k -r -u -d -t -a -A -i -h -S].each { it_behaves_like "argument", it }
 
   describe "Actions" do
     describe "Rebase onto elsewhere" do
       before do
         # Create a diverged history: feature branch made from initial commit,
         # then a new commit added to master.
-        git.branch("base-branch").checkout
-        git.branch("master").checkout
+        git.checkout("base-branch")
+        git.checkout("master")
         File.write("master_work.txt", "master work")
         git.add("master_work.txt")
         git.commit("master work")

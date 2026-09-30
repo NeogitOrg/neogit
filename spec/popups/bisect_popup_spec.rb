@@ -6,23 +6,23 @@ RSpec.describe "Bisect Popup", :git, :nvim, :popup do
   let(:keymap) { "B" }
   let(:view) do
     [
-      " Arguments                                                                      ",
-      " -r Don't checkout commits (--no-checkout)                                      ",
-      " -p Follow only first parent of a merge (--first-parent)                        ",
+      "Arguments                                                                       ",
+      "-r Don't checkout commits (--no-checkout)                                       ",
+      "-p Follow only first parent of a merge (--first-parent)                         ",
       "                                                                                ",
-      " Bisect                                                                         ",
-      " B Start                                                                        ",
-      " S Scripted                                                                     "
+      "Bisect                                                                          ",
+      "B Start                                                                         ",
+      "S Scripted                                                                      "
     ]
   end
 
-  %w[-r -p].each { include_examples "argument", _1 }
-  %w[B S].each { include_examples "interaction", _1 }
+  %w[-r -p].each { it_behaves_like "argument", it }
+  %w[B S].each { it_behaves_like "interaction", it }
 
   describe "Actions" do
     describe "Start bisect" do
       before do
-        git.add_tag("known-good") # tag initial commit as good baseline
+        git.tag_create("known-good") # tag initial commit as good baseline
         3.times do |i|
           File.write("step#{i}.txt", i.to_s)
           git.add("step#{i}.txt")

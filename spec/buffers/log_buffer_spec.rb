@@ -7,7 +7,7 @@ RSpec.describe "Log Buffer", :git, :nvim do
     nvim.keys("ll")
     expect(nvim.errors).to be_empty
     expect(nvim.filetype).to eq("NeogitLogView")
-    expect(nvim.screen[1].strip).to eq("Commits in master")
+    expect(nvim.screen[1].strip).to match(/Commits in (master|main)/)
   end
 
   it "renders HEAD, raising no errors" do
@@ -21,14 +21,14 @@ RSpec.describe "Log Buffer", :git, :nvim do
     nvim.keys("lu")
     expect(nvim.errors).to be_empty
     expect(nvim.filetype).to eq("NeogitLogView")
-    expect(nvim.screen[1].strip).to eq("Commits in master")
+    expect(nvim.screen[1].strip).to match(/Commits in (master|main)/)
   end
 
   it "renders other, raising no errors" do
     nvim.keys("lo<cr>")
     expect(nvim.errors).to be_empty
     expect(nvim.filetype).to eq("NeogitLogView")
-    expect(nvim.screen[1].strip).to eq("Commits in master")
+    expect(nvim.screen[1].strip).to match(/Commits in (master|main)/)
   end
 
   it "renders local branches, raising no errors" do

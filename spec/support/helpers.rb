@@ -5,10 +5,6 @@ module Helpers
     File.write(File.join(Dir.pwd, filename), content)
   end
 
-  def expect_git_failure(&)
-    expect(&).to raise_error(Git::FailedError)
-  end
-
   def await # rubocop:disable Metrics/MethodLength
     last_error = nil
     success = false
