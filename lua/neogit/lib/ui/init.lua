@@ -37,7 +37,11 @@ Ui.__index = Ui
 ---@param buf Buffer
 ---@return Ui
 function Ui.new(buf)
-  return setmetatable({ buf = buf, layout = {} }, Ui)
+  return setmetatable({
+    buf = buf,
+    layout = {},
+    statuscolumn = { foldmarkers = {} },
+  }, Ui)
 end
 
 ---@return Component|nil
@@ -705,13 +709,18 @@ function Ui:update()
 
     self.buf:unlock()
     self.buf:clear()
+
     self.buf:clear_namespace("default")
     self.buf:clear_namespace("ViewContext")
-    self.buf:resize(#renderer.buffer.line)
+    self.buf:clear_namespace("VirtualText")
+    self.buf:clear_namespace("NeogitDiffHighlight")
+
     self.buf:set_lines(0, -1, false, renderer.buffer.line)
     self.buf:set_highlights(renderer.buffer.highlight)
+    self.buf:set_diff_highlights(renderer.buffer.diff_highlight)
     self.buf:set_extmarks(renderer.buffer.extmark)
     self.buf:set_line_highlights(renderer.buffer.line_highlight)
+    self.buf:set_ansi_highlights(renderer.buffer.ansi_highlight)
     self.buf:set_folds(renderer.buffer.fold)
 
     self.statuscolumn = {}

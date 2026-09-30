@@ -22,6 +22,10 @@ function M.parse_commit_overview(raw)
         -- matches: .../db/b8571c4f873daff059c04443077b43a703338a      | Bin 0 -> 192 bytes
         file.path, file.changes = raw[i]:match(" (.*)%s+|%s+(Bin .*)$")
       end
+      if vim.tbl_isempty(file) then
+        -- matches:  resource/{ => audio}/error.wav                     | Bin
+        file.path, file.changes = raw[i]:match(" (.*)%s+|%s+(Bin)$")
+      end
 
       table.insert(overview.files, file)
     end

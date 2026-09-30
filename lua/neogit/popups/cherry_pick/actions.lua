@@ -1,6 +1,7 @@
 local M = {}
 local util = require("neogit.lib.util")
 local git = require("neogit.lib.git")
+local input = require("neogit.lib.input")
 local notification = require("neogit.lib.notification")
 
 local CommitSelectViewBuffer = require("neogit.buffers.commit_select_view")
@@ -126,6 +127,49 @@ function M.harvest(popup)
     notification.info(("Harvested %d cherr%s"):format(#commits, #commits > 1 and "ies" or "y"))
     git.cherry_pick.move(commits, branch, current, popup:get_arguments(), nil, true)
   end
+end
+
+---@param popup PopupData
+---@param checkout boolean Whether to checkout the new branch afterwards (spinoff) or stay on current (spinout)
+local function spin(popup, checkout)
+  local commits = get_commits(popup)
+  if #commits == 0 then
+    return
+  end
+
+  local src = git.branch.current()
+  if not src then
+    return notification.error("Cannot spin out/off: not on a branch")
+  end
+
+  local prompt = checkout and "Spin-off to branch" or "Spin-out to branch"
+  local name = input.get_user_input(prompt, { strip_spaces = true })
+  if not name then
+    return
+  end
+
+  if git.branch.exists(name) then
+    return notification.error("Branch '" .. name .. "' already exists")
+  end
+
+  -- git.log.list returns newest-first; move() expects oldest-first so that
+  -- tip = commits[#commits] is HEAD and keep = commits[1]^  is the reset point.
+  local ordered = util.reverse(commits)
+  -- Create the new branch at the parent of the oldest selected commit so the
+  -- cherry-pick onto it is a clean fast-forward.
+  local start = ordered[1] .. "^"
+
+  git.cherry_pick.move(ordered, src, name, popup:get_arguments(), start, checkout)
+end
+
+---@param popup PopupData
+function M.spinout(popup)
+  spin(popup, false)
+end
+
+---@param popup PopupData
+function M.spinoff(popup)
+  spin(popup, true)
 end
 
 function M.continue()

@@ -1,7 +1,7 @@
 local git = require("neogit.lib.git")
 local process = require("neogit.process")
 local util = require("neogit.lib.util")
-local Path = require("plenary.path")
+local Path = require("neogit.lib.path")
 local runner = require("neogit.runner")
 
 ---Get the configured git executable path
@@ -9,6 +9,22 @@ local runner = require("neogit.runner")
 local function get_git_executable()
   local config = require("neogit.config")
   return config.get_git_executable()
+end
+
+local hook_commands = {
+  commit = true,
+  merge = true,
+  rebase = true,
+  checkout = true,
+  push = true,
+}
+
+local function hooks_enabled(subcommand, cmd)
+  if not hook_commands[subcommand] then
+    return false
+  end
+
+  return not vim.tbl_contains(cmd, "--no-verify")
 end
 
 ---@class GitCommandSetup
@@ -84,6 +100,8 @@ end
 ---@field null_separated self
 ---@field porcelain fun(string): self
 
+---@class GitCommandSubmodule: GitCommandBuilder
+
 ---@class GitCommandLog: GitCommandBuilder
 ---@field oneline self
 ---@field branches self
@@ -106,6 +124,7 @@ end
 ---@field set fun(key: string, value: string): self
 ---@field unset fun(key: string): self
 ---@field get fun(path: string): self
+---@field get_all fun(key: string): self
 
 ---@class GitCommandDescribe: GitCommandBuilder
 ---@field long self
@@ -136,6 +155,7 @@ end
 ---@field n self
 ---@field list self
 ---@field delete self
+---@field points_at fun(oid: string): self
 
 ---@class GitCommandRebase: GitCommandBuilder
 ---@field interactive self
@@ -284,6 +304,7 @@ end
 
 ---@class GitCommandLsFiles: GitCommandBuilder
 ---@field others self
+---@field unmerged self
 ---@field deleted self
 ---@field modified self
 ---@field cached self
@@ -320,7 +341,8 @@ end
 ---@field no_flags self
 ---@field symbolic self
 ---@field symbolic_full_name self
----@field abbrev_ref fun(ref: string): self
+---@field show_superproject_working_tree self
+---@field abbrev_ref self
 
 ---@class GitCommandCherryPick: GitCommandBuilder
 ---@field no_commit self
@@ -373,6 +395,7 @@ end
 ---@field show-ref       GitCommandShowRef
 ---@field stash          GitCommandStash
 ---@field status         GitCommandStatus
+---@field submodule      GitCommandSubmodule
 ---@field tag            GitCommandTag
 ---@field update-index   GitCommandUpdateIndex
 ---@field update-ref     GitCommandUpdateRef
@@ -467,6 +490,8 @@ local configurations = {
     },
   },
 
+  submodule = config {},
+
   log = config {
     flags = {
       oneline = "--oneline",
@@ -489,6 +514,7 @@ local configurations = {
       global = "--global",
       list = "--list",
       _get = "--get",
+      _get_all = "--get-all",
       _add = "--add",
       _unset = "--unset",
       null = "--null",
@@ -507,6 +533,11 @@ local configurations = {
       get = function(tbl)
         return function(path)
           return tbl._get.args(path)
+        end
+      end,
+      get_all = function(tbl)
+        return function(path)
+          return tbl._get_all.args(path)
         end
       end,
     },
@@ -556,6 +587,13 @@ local configurations = {
       n = "-n",
       list = "--list",
       delete = "--delete",
+    },
+    aliases = {
+      points_at = function(tbl)
+        return function(oid)
+          return tbl.args("--points-at", oid)
+        end
+      end,
     },
   },
 
@@ -903,6 +941,7 @@ local configurations = {
 
   ["ls-files"] = config {
     flags = {
+      unmerged = "--unmerged",
       others = "--others",
       deleted = "--deleted",
       modified = "--modified",
@@ -963,10 +1002,10 @@ local configurations = {
       no_flags = "--no-flags",
       symbolic = "--symbolic",
       symbolic_full_name = "--symbolic-full-name",
-    },
-    options = {
+      show_superproject_working_tree = "--show-superproject-working-tree",
       abbrev_ref = "--abbrev-ref",
     },
+    options = {},
   },
 
   ["cherry-pick"] = config {
@@ -1175,19 +1214,21 @@ local function new_builder(subcommand)
     end
 
     -- stylua: ignore
-    cmd = util.merge(
-      {
-        get_git_executable(),
-        "--no-pager",
-        "--literal-pathspecs",
-        "--no-optional-locks",
-        "-c", "core.preloadindex=true",
-        "-c", "color.ui=always",
-        "-c", "diff.noprefix=false",
-        subcommand
-      },
-      cmd
-    )
+    local base = {
+      get_git_executable(),
+      "--no-pager",
+      "--no-optional-locks",
+      "-c", "core.preloadindex=true",
+      "-c", "color.ui=always",
+      "-c", "diff.noprefix=false",
+      subcommand,
+    }
+
+    if not hooks_enabled(subcommand, cmd) then
+      table.insert(base, 3, "--literal-pathspecs")
+    end
+
+    cmd = util.merge(base, cmd)
 
     return process.new {
       cmd = cmd,

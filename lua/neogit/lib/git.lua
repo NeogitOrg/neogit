@@ -25,6 +25,7 @@
 ---@field sequencer   NeogitGitSequencer
 ---@field stash       NeogitGitStash
 ---@field status      NeogitGitStatus
+---@field submodule   NeogitGitSubmodule
 ---@field tag         NeogitGitTag
 ---@field worktree    NeogitGitWorktree
 ---@field hooks       NeogitGitHooks

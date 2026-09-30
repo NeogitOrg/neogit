@@ -374,51 +374,9 @@ local NUM_BRANCH_COLORS = #BRANCH_COLORS
 
 local util = require("neogit.lib.util")
 
----@param commits CommitLogEntry[]
----@param color boolean?
-function M.build(commits, color)
-  local GVER = sym.GVER
-  local GHOR = sym.GHOR
-  local GCLD = sym.GCLD
-  local GCRD = sym.GCRD
-  local GCLU = sym.GCLU
-  local GCRU = sym.GCRU
-  local GLRU = sym.GLRU
-  local GLRD = sym.GLRD
-  local GLUD = sym.GLUD
-  local GRUD = sym.GRUD
-
-  local GFORKU = sym.GFORKU
-  local GFORKD = sym.GFORKD
-
-  local GRUDCD = sym.GRUDCD
-  local GRUDCU = sym.GRUDCU
-  local GLUDCD = sym.GLUDCD
-  local GLUDCU = sym.GLUDCU
-
-  local GLRDCL = sym.GLRDCL
-  local GLRDCR = sym.GLRDCR
-  local GLRUCL = sym.GLRUCL
-  -- local GLRUCR = sym.GLRUCR
-
-  local GRCM = sym.commit
-  local GMCM = sym.merge_commit
-  local GRCME = sym.commit_end
-  local GMCME = sym.merge_commit_end
-
-  local raw_commits = util.filter_map(commits, function(item)
-    if item.oid then
-      return {
-        msg = item.subject,
-        branch_names = {},
-        tags = {},
-        author_date = item.author_date,
-        hash = item.oid,
-        parents = vim.split(item.parent, " "),
-      }
-    end
-  end)
-
+---@param raw_commits I.RawCommit[]
+---@return table<string, I.Commit>, string[]
+local function process_raw_commits(raw_commits)
   local commits = {} ---@type table<string, I.Commit>
   local sorted_commits = {} ---@type string[]
 
@@ -440,469 +398,317 @@ function M.build(commits, color)
     commits[rc.hash] = commit
   end
 
-  do
-    for _, c_hash in ipairs(sorted_commits) do
-      local c = commits[c_hash]
+  return commits, sorted_commits
+end
 
-      for _, h in ipairs(c.parents) do
-        local p = commits[h]
-        if p then
-          p.children[#p.children + 1] = c.hash
-        else
-          -- create a virtual parent, it is not added to the list of commit hashes
-          commits[h] = {
-            hash = h,
-            author_name = "virtual",
-            msg = "virtual parent",
-            author_date = "unknown",
-            parents = {},
-            children = { c.hash },
-            branch_names = {},
-            tags = {},
-            i = -1,
-            j = -1,
-          }
-        end
-      end
-    end
-  end
+---@param commits table<string, I.Commit>
+---@param sorted_commits string[]
+local function populate_child_parent_data(commits, sorted_commits)
+  for _, c_hash in ipairs(sorted_commits) do
+    local c = commits[c_hash]
 
-  ---@param cells I.Cell[]
-  ---@return I.Cell[]
-  local function propagate(cells)
-    local new_cells = {}
-    for _, cell in ipairs(cells) do
-      if cell.connector then
-        -- new_cells[#new_cells + 1] = { connector = " " }
-        new_cells[#new_cells + 1] = { connector = cell.connector }
-      elseif cell.commit then
-        assert(cell.commit, "assertion failed")
-        new_cells[#new_cells + 1] = { commit = cell.commit }
+    for _, h in ipairs(c.parents) do
+      local p = commits[h]
+      if p then
+        p.children[#p.children + 1] = c.hash
       else
-        new_cells[#new_cells + 1] = { connector = " " }
+        -- create a virtual parent, it is not added to the list of commit hashes
+        commits[h] = {
+          hash = h,
+          author_name = "virtual",
+          msg = "virtual parent",
+          author_date = "unknown",
+          parents = {},
+          children = { c.hash },
+          branch_names = {},
+          tags = {},
+          i = -1,
+          j = -1,
+        }
       end
     end
-    return new_cells
   end
+end
 
-  ---@param cells I.Cell[]
-  ---@param hash string
-  ---@param start integer?
-  ---@return integer?
-  local function find(cells, hash, start)
-    local start = start or 1
-    for idx = start, #cells, 2 do
-      local c = cells[idx]
-      if c.commit and c.commit.hash == hash then
-        return idx
-      end
-    end
-    return nil
-  end
-
-  ---@param cells I.Cell[]
-  ---@param start integer?
-  ---@return integer
-  local function next_vacant_j(cells, start)
-    local start = start or 1
-    for i = start, #cells, 2 do
-      local cell = cells[i]
-      if cell.connector == " " then
-        return i
-      end
-    end
-    return #cells + 1
-  end
-
-  --- returns the generated row and the integer (j) location of the commit
-  ---@param c I.Commit
-  ---@param prev_row I.Row?
-  ---@return I.Row, integer
-  local function generate_commit_row(c, prev_row)
-    local j = nil ---@type integer?
-
-    local rowc = {} ---@type I.Cell[]
-
-    if prev_row then
-      rowc = propagate(prev_row.cells)
-      j = find(prev_row.cells, c.hash)
-    end
-
-    -- if reserved location use it
-    if j then
-      c.j = j
-      rowc[j] = { commit = c, is_commit = true }
-
-      -- clear any supurfluous reservations
-      for k = j + 1, #rowc do
-        local v = rowc[k]
-        if v.commit and v.commit.hash == c.hash then
-          rowc[k] = { connector = " " }
-        end
-      end
+---@param cells I.Cell[]
+---@return I.Cell[]
+local function propagate(cells)
+  local new_cells = {}
+  for _, cell in ipairs(cells) do
+    if cell.connector then
+      -- new_cells[#new_cells + 1] = { connector = " " }
+      new_cells[#new_cells + 1] = { connector = cell.connector }
+    elseif cell.commit then
+      assert(cell.commit, "assertion failed")
+      new_cells[#new_cells + 1] = { commit = cell.commit }
     else
-      j = next_vacant_j(rowc)
-      c.j = j
-      rowc[j] = { commit = c, is_commit = true }
-      rowc[j + 1] = { connector = " " }
+      new_cells[#new_cells + 1] = { connector = " " }
     end
+  end
+  return new_cells
+end
 
-    return { cells = rowc, commit = c }, j
+---@param cells I.Cell[]
+---@param hash string
+---@param start integer?
+---@return integer?
+local function find(cells, hash, start)
+  local start = start or 1
+  for idx = start, #cells, 2 do
+    local c = cells[idx]
+    if c.commit and c.commit.hash == hash then
+      return idx
+    end
+  end
+  return nil
+end
+
+---@param cells I.Cell[]
+---@param start integer?
+---@return integer
+local function next_vacant_j(cells, start)
+  local start = start or 1
+  for i = start, #cells, 2 do
+    local cell = cells[i]
+    if cell.connector == " " then
+      return i
+    end
+  end
+  return #cells + 1
+end
+
+--- returns the generated row and the integer (j) location of the commit
+---@param c I.Commit
+---@param prev_row I.Row?
+---@return I.Row, integer
+local function generate_commit_row(c, prev_row)
+  local j = nil ---@type integer?
+
+  local rowc = {} ---@type I.Cell[]
+
+  if prev_row then
+    rowc = propagate(prev_row.cells)
+    j = find(prev_row.cells, c.hash)
   end
 
-  ---@param prev_commit_row I.Row
-  ---@param prev_connector_row I.Row
-  ---@param commit_row I.Row
-  ---@param commit_loc integer
-  ---@param curr_commit I.Commit
-  ---@param next_commit I.Commit?
-  ---@return I.Row
-  local function generate_connector_row(
-    prev_commit_row,
-    prev_connector_row,
-    commit_row,
-    commit_loc,
-    curr_commit,
-    next_commit
-  )
-    -- connector row (reservation row)
-    --
-    -- first we propagate
-    local connector_cells = propagate(commit_row.cells)
+  -- if reserved location use it
+  if j then
+    c.j = j
+    rowc[j] = { commit = c, is_commit = true }
 
-    -- connector row
-    --
-    -- now we proceed to add the parents of the commit we just added
-    if #curr_commit.parents > 0 then
-      ---@param rem_parents string[]
-      local function reserve_remainder(rem_parents)
-        --
-        -- reserve the rest of the parents in slots to the right of us
-        --
-        -- ... another alternative is to reserve rest of the parents of c if they have not already been reserved
-        -- for i = 2, #c.parents do
-        for _, h in ipairs(rem_parents) do
-          local j = find(commit_row.cells, h, commit_loc)
-          if not j then
-            local j = next_vacant_j(connector_cells, commit_loc)
-            connector_cells[j] = { commit = commits[h], emphasis = true }
-            connector_cells[j + 1] = { connector = " " }
-          else
-            connector_cells[j].emphasis = true
-          end
-        end
+    -- clear any supurfluous reservations
+    for k = j + 1, #rowc do
+      local v = rowc[k]
+      if v.commit and v.commit.hash == c.hash then
+        rowc[k] = { connector = " " }
       end
+    end
+  else
+    j = next_vacant_j(rowc)
+    c.j = j
+    rowc[j] = { commit = c, is_commit = true }
+    rowc[j + 1] = { connector = " " }
+  end
 
-      -- we start by peeking at next commit and seeing if it is one of our parents
-      -- we only do this if one of our propagating branches is already destined for this commit
-      ---@type I.Cell?
-      local tracker = nil
-      if next_commit then
-        for _, cell in ipairs(connector_cells) do
-          if cell.commit and cell.commit.hash == next_commit.hash then
-            tracker = cell
-            break
-          end
-        end
-      end
+  return { cells = rowc, commit = c }, j
+end
 
-      local next_p_idx = nil -- default to picking first parent
-      if tracker and next_commit then
-        -- this loop updates next_p_idx to the next commit if they are identical
-        for k, h in ipairs(curr_commit.parents) do
-          if h == next_commit.hash then
-            next_p_idx = k
-            break
-          end
-        end
-      end
+---@param commits table<string, I.Commit>
+---@param prev_commit_row I.Row
+---@param prev_connector_row I.Row
+---@param commit_row I.Row
+---@param commit_loc integer
+---@param curr_commit I.Commit
+---@param next_commit I.Commit?
+---@return I.Row
+local function generate_connector_row(
+  commits,
+  prev_commit_row,
+  prev_connector_row,
+  commit_row,
+  commit_loc,
+  curr_commit,
+  next_commit
+)
+  -- connector row (reservation row)
+  --
+  -- first we propagate
+  local connector_cells = propagate(commit_row.cells)
 
-      -- next_p_idx = nil
-
-      -- add parents
-      if next_p_idx then
-        assert(tracker, "assertion failed")
-        -- if next commit is our parent then we do some complex logic
-        if #curr_commit.parents == 1 then
-          -- simply place parent at our location
-          connector_cells[commit_loc].commit = commits[curr_commit.parents[1]]
-          connector_cells[commit_loc].emphasis = true
+  -- connector row
+  --
+  -- now we proceed to add the parents of the commit we just added
+  if #curr_commit.parents > 0 then
+    ---@param rem_parents string[]
+    local function reserve_remainder(rem_parents)
+      --
+      -- reserve the rest of the parents in slots to the right of us
+      --
+      -- ... another alternative is to reserve rest of the parents of c if they have not already been reserved
+      -- for i = 2, #c.parents do
+      for _, h in ipairs(rem_parents) do
+        local j = find(commit_row.cells, h, commit_loc)
+        if not j then
+          local j = next_vacant_j(connector_cells, commit_loc)
+          connector_cells[j] = { commit = commits[h], emphasis = true }
+          connector_cells[j + 1] = { connector = " " }
         else
-          -- void the cell at our location (will be replaced by our parents in a moment)
-          connector_cells[commit_loc] = { connector = " " }
-
-          -- put emphasis on tracker for the special parent
-          tracker.emphasis = true
-
-          -- only reserve parents that are different from next commit
-          ---@type string[]
-          local rem_parents = {}
-          for k, h in ipairs(curr_commit.parents) do
-            if k ~= next_p_idx then
-              rem_parents[#rem_parents + 1] = h
-            end
-          end
-
-          assert(#rem_parents == #curr_commit.parents - 1, "unexpected amount of rem parents")
-          reserve_remainder(rem_parents)
-
-          -- we fill this with the next commit if it is empty, a bit hacky
-          if connector_cells[commit_loc].connector == " " then
-            connector_cells[commit_loc].commit = tracker.commit
-            connector_cells[commit_loc].emphasis = true
-            connector_cells[commit_loc].connector = nil
-            tracker.emphasis = false
-          end
+          connector_cells[j].emphasis = true
         end
-      else
-        -- simply add first parent at our location and then reserve the rest
+      end
+    end
+
+    -- we start by peeking at next commit and seeing if it is one of our parents
+    -- we only do this if one of our propagating branches is already destined for this commit
+    ---@type I.Cell?
+    local tracker = nil
+    if next_commit then
+      for _, cell in ipairs(connector_cells) do
+        if cell.commit and cell.commit.hash == next_commit.hash then
+          tracker = cell
+          break
+        end
+      end
+    end
+
+    local next_p_idx = nil -- default to picking first parent
+    if tracker and next_commit then
+      -- this loop updates next_p_idx to the next commit if they are identical
+      for k, h in ipairs(curr_commit.parents) do
+        if h == next_commit.hash then
+          next_p_idx = k
+          break
+        end
+      end
+    end
+
+    -- next_p_idx = nil
+
+    -- add parents
+    if next_p_idx then
+      assert(tracker, "assertion failed")
+      -- if next commit is our parent then we do some complex logic
+      if #curr_commit.parents == 1 then
+        -- simply place parent at our location
         connector_cells[commit_loc].commit = commits[curr_commit.parents[1]]
         connector_cells[commit_loc].emphasis = true
+      else
+        -- void the cell at our location (will be replaced by our parents in a moment)
+        connector_cells[commit_loc] = { connector = " " }
 
+        -- put emphasis on tracker for the special parent
+        tracker.emphasis = true
+
+        -- only reserve parents that are different from next commit
+        ---@type string[]
         local rem_parents = {}
-        for k = 2, #curr_commit.parents do
-          rem_parents[#rem_parents + 1] = curr_commit.parents[k]
+        for k, h in ipairs(curr_commit.parents) do
+          if k ~= next_p_idx then
+            rem_parents[#rem_parents + 1] = h
+          end
         end
 
+        assert(#rem_parents == #curr_commit.parents - 1, "unexpected amount of rem parents")
         reserve_remainder(rem_parents)
+
+        -- we fill this with the next commit if it is empty, a bit hacky
+        if connector_cells[commit_loc].connector == " " then
+          connector_cells[commit_loc].commit = tracker.commit
+          connector_cells[commit_loc].emphasis = true
+          connector_cells[commit_loc].connector = nil
+          tracker.emphasis = false
+        end
       end
-
-      local connector_row = { cells = connector_cells } ---@type I.Row
-
-      -- handle bi-connector rows
-      local is_bi_crossing, bi_crossing_safely_resolvable =
-        get_is_bi_crossing(commit_row, connector_row, next_commit)
-
-      if is_bi_crossing and bi_crossing_safely_resolvable and next_commit then
-        resolve_bi_crossing(prev_commit_row, prev_connector_row, commit_row, connector_row, next_commit)
-      end
-
-      return connector_row
     else
-      -- if we're here then it means that this commit has no common ancestors with other commits
-      -- ... a different family ... see test `different family`
+      -- simply add first parent at our location and then reserve the rest
+      connector_cells[commit_loc].commit = commits[curr_commit.parents[1]]
+      connector_cells[commit_loc].emphasis = true
 
-      -- we must remove the already propagated connector for the current commit since it has no parents
-      for i = 1, #connector_cells, 2 do
-        local cell = connector_cells[i]
-        if cell.commit and cell.commit.hash == curr_commit.hash then
-          connector_cells[i] = { connector = " " }
-        end
+      local rem_parents = {}
+      for k = 2, #curr_commit.parents do
+        rem_parents[#rem_parents + 1] = curr_commit.parents[k]
       end
 
-      local connector_row = { cells = connector_cells }
+      reserve_remainder(rem_parents)
+    end
 
-      return connector_row
+    local connector_row = { cells = connector_cells } ---@type I.Row
+
+    -- handle bi-connector rows
+    local is_bi_crossing, bi_crossing_safely_resolvable =
+      get_is_bi_crossing(commit_row, connector_row, next_commit)
+
+    if is_bi_crossing and bi_crossing_safely_resolvable and next_commit then
+      resolve_bi_crossing(prev_commit_row, prev_connector_row, commit_row, connector_row, next_commit)
+    end
+
+    return connector_row
+  else
+    -- if we're here then it means that this commit has no common ancestors with other commits
+    -- ... a different family ... see test `different family`
+
+    -- we must remove the already propagated connector for the current commit since it has no parents
+    for i = 1, #connector_cells, 2 do
+      local cell = connector_cells[i]
+      if cell.commit and cell.commit.hash == curr_commit.hash then
+        connector_cells[i] = { connector = " " }
+      end
+    end
+
+    local connector_row = { cells = connector_cells }
+
+    return connector_row
+  end
+end
+
+---@param commits table<string, I.Commit>
+---@param sorted_commits string[]
+---@return I.Row[]
+local function straight_j(commits, sorted_commits)
+  local graph = {} ---@type I.Row[]
+
+  for i, c_hash in ipairs(sorted_commits) do
+    -- get the input parameters
+    local curr_commit = commits[c_hash]
+    local next_commit = commits[sorted_commits[i + 1]]
+    local prev_commit_row = graph[#graph - 1]
+    local prev_connector_row = graph[#graph]
+
+    -- generate commit and connector row for the current commit
+    local commit_row, commit_loc = generate_commit_row(curr_commit, prev_connector_row)
+    local connector_row = nil ---@type I.Row
+    if i < #sorted_commits then
+      connector_row = generate_connector_row(
+        commits,
+        prev_commit_row,
+        prev_connector_row,
+        commit_row,
+        commit_loc,
+        curr_commit,
+        next_commit
+      )
+    end
+
+    -- write the result
+    graph[#graph + 1] = commit_row
+    if connector_row then
+      graph[#graph + 1] = connector_row
     end
   end
 
-  ---@param commits table<string, I.Commit>
-  ---@param sorted_commits string[]
-  ---@return I.Row[]
-  local function straight_j(commits, sorted_commits)
-    local graph = {} ---@type I.Row[]
+  return graph
+end
 
-    for i, c_hash in ipairs(sorted_commits) do
-      -- get the input parameters
-      local curr_commit = commits[c_hash]
-      local next_commit = commits[sorted_commits[i + 1]]
-      local prev_commit_row = graph[#graph - 1]
-      local prev_connector_row = graph[#graph]
+---@param c I.Cell?
+---@return string?
+local function hash(c)
+  return c and c.commit and c.commit.hash
+end
 
-      -- generate commit and connector row for the current commit
-      local commit_row, commit_loc = generate_commit_row(curr_commit, prev_connector_row)
-      local connector_row = nil ---@type I.Row
-      if i < #sorted_commits then
-        connector_row = generate_connector_row(
-          prev_commit_row,
-          prev_connector_row,
-          commit_row,
-          commit_loc,
-          curr_commit,
-          next_commit
-        )
-      end
-
-      -- write the result
-      graph[#graph + 1] = commit_row
-      if connector_row then
-        graph[#graph + 1] = connector_row
-      end
-    end
-
-    return graph
-  end
-
-  local graph = straight_j(commits, sorted_commits)
-
-  ---@param graph I.Row[]
-  ---@return string[]
-  ---@return I.Highlight[]
-  local function graph_to_lines(graph)
-    ---@type table[]
-    local lines = {}
-
-    ---@type I.Highlight[]
-    local highlights = {}
-
-    ---@param cell I.Cell
-    ---@return string
-    local function commit_cell_symb(cell)
-      assert(cell.is_commit, "assertion failed")
-
-      if #cell.commit.parents > 1 then
-        -- merge commit
-        return #cell.commit.children == 0 and GMCME or GMCM
-      else
-        -- regular commit
-        return #cell.commit.children == 0 and GRCME or GRCM
-      end
-    end
-
-    ---@param row I.Row
-    ---@return table
-    local function row_to_str(row)
-      local row_strs = {}
-      for j = 1, #row.cells do
-        local cell = row.cells[j]
-        if cell.connector then
-          cell.symbol = cell.connector -- TODO: connector and symbol should not be duplicating data?
-        else
-          assert(cell.commit, "assertion failed")
-          cell.symbol = commit_cell_symb(cell)
-        end
-        row_strs[#row_strs + 1] = cell.symbol
-      end
-      -- return table.concat(row_strs)
-      return row_strs
-    end
-
-    ---@param row I.Row
-    ---@param row_idx integer
-    ---@return I.Highlight[]
-    local function row_to_highlights(row, row_idx)
-      local row_hls = {}
-      local offset = 1 -- WAS 0
-
-      for j = 1, #row.cells do
-        local cell = row.cells[j]
-
-        local width = cell.symbol and vim.fn.strdisplaywidth(cell.symbol) or 1
-        local start = offset
-        local stop = start + width
-
-        offset = offset + width
-
-        if cell.commit then
-          local hg = (cell.emphasis and "Bold" or "") .. BRANCH_COLORS[(j % NUM_BRANCH_COLORS + 1)]
-          row_hls[#row_hls + 1] = {
-            hg = hg,
-            row = row_idx,
-            start = start,
-            stop = stop,
-          }
-        elseif cell.symbol == GHOR then
-          -- take color from first right cell that attaches to this connector
-          for k = j + 1, #row.cells do
-            local rcell = row.cells[k]
-
-            -- TODO: would be nice with a better way than this hacky method of
-            --       to figure out where our vertical branch is
-            local continuations = {
-              GCLD,
-              GCLU,
-              --
-              GFORKD,
-              GFORKU,
-              --
-              GLUDCD,
-              GLUDCU,
-              --
-              GLRDCL,
-              GLRUCL,
-            }
-
-            if rcell.commit and vim.tbl_contains(continuations, rcell.symbol) then
-              local hg = (cell.emphasis and "Bold" or "")
-                .. BRANCH_COLORS[(rcell.commit.j % NUM_BRANCH_COLORS + 1)]
-              row_hls[#row_hls + 1] = {
-                hg = hg,
-                row = row_idx,
-                start = start,
-                stop = stop,
-              }
-
-              break
-            end
-          end
-        end
-      end
-
-      return row_hls
-    end
-
-    local width = 0
-    for _, row in ipairs(graph) do
-      if #row.cells > width then
-        width = #row.cells
-      end
-    end
-
-    for idx = 1, #graph do
-      local proper_row = graph[idx]
-
-      local row_str_arr = {}
-
-      ---@param stuff table|string
-      local function add_to_row(stuff)
-        row_str_arr[#row_str_arr + 1] = stuff
-      end
-
-      local c = proper_row.commit
-      if c then
-        add_to_row(c.hash) -- Commit row
-        add_to_row(row_to_str(proper_row))
-      else
-        local c = graph[idx - 1].commit
-        assert(c, "assertion failed")
-
-        local row = row_to_str(proper_row)
-        local valid = false
-        for _, char in ipairs(row) do
-          if char ~= " " and char ~= GVER then
-            valid = true
-            break
-          end
-        end
-
-        if valid then
-          add_to_row("") -- Connection Row
-        else
-          add_to_row("strip") -- Useless Connection Row
-        end
-
-        add_to_row(row)
-      end
-
-      for _, hl in ipairs(row_to_highlights(proper_row, idx)) do
-        highlights[#highlights + 1] = hl
-      end
-
-      lines[#lines + 1] = row_str_arr
-    end
-
-    return lines, highlights
-  end
-
-  -- store stage 1 graph
-  --
-  ---@param c I.Cell?
-  ---@return string?
-  local function hash(c)
-    return c and c.commit and c.commit.hash
-  end
-
-  -- inserts vertical and horizontal pipes
+--- inserts vertical and horizontal pipes
+---@param graph I.Row[]
+---@param sym I.GGSymbols
+local function insert_vert_and_hor_pipes(graph, sym)
   for i = 2, #graph - 1 do
     local row = graph[i]
 
@@ -952,7 +758,7 @@ function M.build(commits, color)
 
           if not has_repeats then
             local cell = graph[i].cells[j]
-            cell.connector = GVER
+            cell.connector = sym.GVER
           else
             local k = first_repeat
             local this_k = graph[i].cells[k]
@@ -964,7 +770,7 @@ function M.build(commits, color)
             -- local bkc, tkc = below_k.commit, this_k.commit
             if (bkc and tkc) and bkc.hash == tkc.hash then
               local cell = graph[i].cells[j]
-              cell.connector = GVER
+              cell.connector = sym.GVER
             end
           end
         end
@@ -979,7 +785,7 @@ function M.build(commits, color)
       for j = 1, #last_row.cells, 2 do
         local cell = last_row.cells[j]
         if cell.commit and not cell.is_commit then
-          cell.connector = GVER
+          cell.connector = sym.GVER
         end
       end
     end
@@ -1048,15 +854,17 @@ function M.build(commits, color)
         for j = a + 1, b - 1 do
           local this = graph[i].cells[j]
           if this.connector == " " then
-            this.connector = GHOR
+            this.connector = sym.GHOR
           end
         end
       end
     end
   end
+end
 
-  -- print '---- stage 2 -------'
-
+---@param graph I.Row[]
+---@param sym I.GGSymbols
+local function insert_symbols_on_connector_rows(graph, sym)
   -- insert symbols on connector rows
   --
   -- note that there are 8 possible connections
@@ -1072,15 +880,15 @@ function M.build(commits, color)
   local symb_map = {
     -- two neighbors (no straights)
     -- - 8421
-    [10] = GCLU, -- '1010'
-    [9] = GCLD, -- '1001'
-    [6] = GCRU, -- '0110'
-    [5] = GCRD, -- '0101'
+    [10] = sym.GCLU, -- '1010'
+    [9] = sym.GCLD, -- '1001'
+    [6] = sym.GCRU, -- '0110'
+    [5] = sym.GCRD, -- '0101'
     -- three neighbors
-    [14] = GLRU, -- '1110'
-    [13] = GLRD, -- '1101'
-    [11] = GLUD, -- '1011'
-    [7] = GRUD, -- '0111'
+    [14] = sym.GLRU, -- '1110'
+    [13] = sym.GLRD, -- '1101'
+    [11] = sym.GLUD, -- '1011'
+    [7] = sym.GRUD, -- '0111'
   }
 
   for i = 2, #graph, 2 do
@@ -1091,7 +899,7 @@ function M.build(commits, color)
     for j = 1, #row.cells, 2 do
       local this = row.cells[j]
 
-      if this.connector ~= GVER then
+      if this.connector ~= sym.GVER then
         local lc = row.cells[j - 1]
         local rc = row.cells[j + 1]
         local uc = above and above.cells[j]
@@ -1116,7 +924,7 @@ function M.build(commits, color)
         local symbol = symb_map[symb_n] or "?"
 
         if (i == #graph or i == #graph - 1) and symbol == "?" then
-          symbol = GVER
+          symbol = sym.GVER
         end
 
         local commit_dir_above = above.commit and above.commit.j == j
@@ -1128,30 +936,30 @@ function M.build(commits, color)
           clh_above = above.commit.j < j and "l" or "r"
         end
 
-        if clh_above and symbol == GLRD then
+        if clh_above and symbol == sym.GLRD then
           if clh_above == "l" then
-            symbol = GLRDCL -- '<'
+            symbol = sym.GLRDCL -- '<'
           elseif clh_above == "r" then
-            symbol = GLRDCR -- '>'
+            symbol = sym.GLRDCR -- '>'
           end
-        elseif symbol == GLRU then
+        elseif symbol == sym.GLRU then
           -- because nothing else is possible with our
           -- current implicit graph building rules?
-          symbol = GLRUCL -- '<'
+          symbol = sym.GLRUCL -- '<'
         end
 
         local merge_dir_above = commit_dir_above and #above.commit.parents > 1
 
-        if symbol == GLUD then
-          symbol = merge_dir_above and GLUDCU or GLUDCD
+        if symbol == sym.GLUD then
+          symbol = merge_dir_above and sym.GLUDCU or sym.GLUDCD
         end
 
-        if symbol == GRUD then
-          symbol = merge_dir_above and GRUDCU or GRUDCD
+        if symbol == sym.GRUD then
+          symbol = merge_dir_above and sym.GRUDCU or sym.GRUDCD
         end
 
         if nn == 4 then
-          symbol = merge_dir_above and GFORKD or GFORKU
+          symbol = merge_dir_above and sym.GFORKD or sym.GFORKU
         end
 
         if row.cells[j].commit then
@@ -1160,8 +968,194 @@ function M.build(commits, color)
       end
     end
   end
+end
 
-  local lines, highlights = graph_to_lines(graph)
+---@param graph I.Row[]
+---@param sym I.GGSymbols
+---@return string[][]
+---@return I.Highlight[]
+local function graph_to_lines(graph, sym)
+  ---@type table[]
+  local lines = {}
+
+  ---@type I.Highlight[]
+  local highlights = {}
+
+  ---@param cell I.Cell
+  ---@return string
+  local function commit_cell_symb(cell)
+    assert(cell.is_commit, "assertion failed")
+
+    if #cell.commit.parents > 1 then
+      -- merge commit
+      return #cell.commit.children == 0 and sym.merge_commit_end or sym.merge_commit
+    else
+      -- regular commit
+      return #cell.commit.children == 0 and sym.commit_end or sym.commit
+    end
+  end
+
+  ---@param row I.Row
+  ---@return table
+  local function row_to_str(row)
+    local row_strs = {}
+    for j = 1, #row.cells do
+      local cell = row.cells[j]
+      if cell.connector then
+        cell.symbol = cell.connector -- TODO: connector and symbol should not be duplicating data?
+      else
+        assert(cell.commit, "assertion failed")
+        cell.symbol = commit_cell_symb(cell)
+      end
+      row_strs[#row_strs + 1] = cell.symbol
+    end
+    -- return table.concat(row_strs)
+    return row_strs
+  end
+
+  ---@param row I.Row
+  ---@param row_idx integer
+  ---@return I.Highlight[]
+  local function row_to_highlights(row, row_idx)
+    local row_hls = {}
+    local offset = 1 -- WAS 0
+
+    for j = 1, #row.cells do
+      local cell = row.cells[j]
+
+      local width = cell.symbol and vim.fn.strdisplaywidth(cell.symbol) or 1
+      local start = offset
+      local stop = start + width
+
+      offset = offset + width
+
+      if cell.commit then
+        local hg = (cell.emphasis and "Bold" or "") .. BRANCH_COLORS[(j % NUM_BRANCH_COLORS + 1)]
+        row_hls[#row_hls + 1] = {
+          hg = hg,
+          row = row_idx,
+          start = start,
+          stop = stop,
+        }
+      elseif cell.symbol == sym.GHOR then
+        -- take color from first right cell that attaches to this connector
+        for k = j + 1, #row.cells do
+          local rcell = row.cells[k]
+
+          -- TODO: would be nice with a better way than this hacky method of
+          --       to figure out where our vertical branch is
+          local continuations = {
+            sym.GCLD,
+            sym.GCLU,
+            --
+            sym.GFORKD,
+            sym.GFORKU,
+            --
+            sym.GLUDCD,
+            sym.GLUDCU,
+            --
+            sym.GLRDCL,
+            sym.GLRUCL,
+          }
+
+          if rcell.commit and vim.tbl_contains(continuations, rcell.symbol) then
+            local hg = (cell.emphasis and "Bold" or "") .. BRANCH_COLORS[(k % NUM_BRANCH_COLORS + 1)]
+            row_hls[#row_hls + 1] = {
+              hg = hg,
+              row = row_idx,
+              start = start,
+              stop = stop,
+            }
+
+            break
+          end
+        end
+      end
+    end
+
+    return row_hls
+  end
+
+  local width = 0
+  for _, row in ipairs(graph) do
+    if #row.cells > width then
+      width = #row.cells
+    end
+  end
+
+  for idx = 1, #graph do
+    local proper_row = graph[idx]
+
+    local row_str_arr = {}
+
+    ---@param stuff table|string
+    local function add_to_row(stuff)
+      row_str_arr[#row_str_arr + 1] = stuff
+    end
+
+    local c = proper_row.commit
+    if c then
+      add_to_row(c.hash) -- Commit row
+      add_to_row(row_to_str(proper_row))
+    else
+      local c = graph[idx - 1].commit
+      assert(c, "assertion failed")
+
+      local row = row_to_str(proper_row)
+      local valid = false
+      for _, char in ipairs(row) do
+        if char ~= " " and char ~= sym.GVER then
+          valid = true
+          break
+        end
+      end
+
+      if valid then
+        add_to_row("") -- Connection Row
+      else
+        add_to_row("strip") -- Useless Connection Row
+      end
+
+      add_to_row(row)
+    end
+
+    for _, hl in ipairs(row_to_highlights(proper_row, idx)) do
+      highlights[#highlights + 1] = hl
+    end
+
+    lines[#lines + 1] = row_str_arr
+  end
+
+  return lines, highlights
+end
+
+---@param commits CommitLogEntry[]
+---@param color boolean?
+function M.build(commits, color)
+  local raw_commits = util.filter_map(commits, function(item)
+    if item.oid then
+      return {
+        msg = item.subject,
+        branch_names = {},
+        tags = {},
+        author_date = item.author_date,
+        hash = item.oid,
+        parents = vim.split(item.parent, " "),
+      }
+    end
+  end)
+
+  local commits, sorted_commits = process_raw_commits(raw_commits)
+
+  populate_child_parent_data(commits, sorted_commits)
+
+  local graph = straight_j(commits, sorted_commits)
+
+  insert_vert_and_hor_pipes(graph, sym)
+
+  insert_symbols_on_connector_rows(graph, sym)
+
+  local lines, highlights = graph_to_lines(graph, sym)
 
   --
   -- BEGIN NEOGIT COMPATIBILITY CODE

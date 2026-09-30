@@ -107,7 +107,7 @@ RSpec.describe "Commit Popup", :git, :nvim, :popup do
         nvim.keys("w")
         nvim.keys("cc")
         nvim.keys("reworded!<esc>:w<cr>q")
-        expect(git.log(1).entries.first.message).to eq("reworded!")
+        expect(git.log(1).entries.first.message).to eq("reworded!\ncommit message")
       end
     end
 

@@ -70,6 +70,8 @@ end
 ---@field line string[]
 ---@field highlight table[]
 ---@field line_highlight table[]
+---@field diff_highlight table[]
+---@field ansi_highlight table[]
 ---@field extmark table[]
 ---@field fold table[]
 
@@ -103,6 +105,8 @@ function Renderer:new(layout, buffer)
       line = {},
       highlight = {},
       line_highlight = {},
+      diff_highlight = {},
+      ansi_highlight = {},
       extmark = {},
       fold = {},
     },
@@ -207,6 +211,13 @@ function Renderer:_render_child(child)
     table.insert(self.buffer.line_highlight, { #self.buffer.line - 1, line_hl })
   end
 
+  if child.options.ansi_hl then
+    table.insert(self.buffer.ansi_highlight, {
+      #self.buffer.line - (child.position.row_end - child.position.row_start),
+      #self.buffer.line,
+    })
+  end
+
   if child.options.virtual_text then
     table.insert(self.buffer.extmark, {
       self.namespace,
@@ -217,6 +228,14 @@ function Renderer:_render_child(child)
         virt_text = child.options.virtual_text,
         virt_text_pos = "right_align",
       },
+    })
+  end
+
+  if child.options.filepath then
+    table.insert(self.buffer.diff_highlight, {
+      first_line = #self.buffer.line - (child.position.row_end - child.position.row_start),
+      last_line = #self.buffer.line,
+      filepath = child.options.filepath,
     })
   end
 

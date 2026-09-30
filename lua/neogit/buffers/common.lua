@@ -18,28 +18,26 @@ M.EmptyLine = Component.new(function()
   return col { row { text("") } }
 end)
 
+---@param diff Diff
 M.Diff = Component.new(function(diff)
   return col.tag("Diff")({
     text(string.format("%s %s", diff.kind, diff.file), { line_hl = "NeogitDiffHeader" }),
     M.DiffHunks(diff),
-  }, { foldable = true, folded = false, context = true })
+  }, { foldable = true, folded = false, context = true, diff = diff })
 end)
 
--- Use vim iter api?
+---@param diff Diff
 M.DiffHunks = Component.new(function(diff)
-  local hunk_props = vim
-    .iter(diff.hunks)
-    :map(function(hunk)
-      hunk.content = vim.iter(diff.lines):slice(hunk.diff_from + 1, hunk.diff_to):totable()
-
-      return {
-        header = diff.lines[hunk.diff_from],
-        content = hunk.content,
-        hunk = hunk,
-        folded = hunk._folded,
-      }
-    end)
-    :totable()
+  local hunk_props = {}
+  for i, hunk in ipairs(diff.hunks) do
+    table.insert(hunk_props, {
+      header = diff.lines[hunk.diff_from],
+      content = diff.pager_contents[i],
+      hunk = hunk,
+      folded = hunk._folded,
+      filepath = diff.file,
+    })
+  end
 
   return col.tag("DiffContent") {
     col.tag("DiffInfo")(map(diff.info, text)),
@@ -47,38 +45,41 @@ M.DiffHunks = Component.new(function(diff)
   }
 end)
 
-local diff_add_start = "+"
-local diff_add_start_2 = " +"
-local diff_delete_start = "-"
-local diff_delete_start_2 = " -"
-
-local HunkLine = Component.new(function(line)
+local HunkLine = Component.new(function(line, hunk)
   local line_hl
 
-  -- TODO: Should use file mode, not merge head
-  if git.repo.state.merge.head then
-    if
-      line:match("..<<<<<<<")
-      or line:match("..|||||||")
-      or line:match("..=======")
-      or line:match("..>>>>>>>")
-    then
-      line_hl = "NeogitHunkMergeHeader"
-    elseif string.sub(line, 1, 1) == diff_add_start or string.sub(line, 1, 2) == diff_add_start_2 then
-      line_hl = "NeogitDiffAdd"
-    elseif string.sub(line, 1, 1) == diff_delete_start or string.sub(line, 1, 2) == diff_delete_start_2 then
-      line_hl = "NeogitDiffDelete"
-    else
-      line_hl = "NeogitDiffContext"
+  -- Dynamically compute prefix length from the hunk header (defaulting to 1)
+  local prefix_length = 1
+  if hunk and hunk.line then
+    local at_signs = string.match(hunk.line, "^(@+)")
+    if at_signs then
+      prefix_length = #at_signs - 1
     end
+  end
+
+  -- Isolate the exact status prefix for this specific line
+  local prefix = string.sub(line, 1, prefix_length)
+
+  -- Evaluate Highlighting
+  if
+    line:match("^..<<<<<<<")
+    or line:match("^..|||||||")
+    or line:match("^..=======")
+    or line:match("^..>>>>>>>")
+  then
+    line_hl = "NeogitHunkMergeHeader"
+
+  -- If the prefix contains a '+', it's an addition (e.g., "+", " +", "+ ")
+  elseif string.match(prefix, "%+") then
+    line_hl = "NeogitDiffAdd"
+
+  -- If the prefix contains a '-', it's a deletion (e.g., "-", " -", "- ")
+  elseif string.match(prefix, "%-") then
+    line_hl = "NeogitDiffDelete"
+
+  -- If it contains neither (just spaces), it is unchanged context
   else
-    if string.sub(line, 1, 1) == diff_add_start then
-      line_hl = "NeogitDiffAdd"
-    elseif string.sub(line, 1, 1) == diff_delete_start then
-      line_hl = "NeogitDiffDelete"
-    else
-      line_hl = "NeogitDiffContext"
-    end
+    line_hl = "NeogitDiffContext"
   end
 
   return text(line, { line_hl = line_hl })
@@ -87,8 +88,17 @@ end)
 M.Hunk = Component.new(function(props)
   return col.tag("Hunk")({
     text.line_hl("NeogitHunkHeader")(props.header),
-    col.tag("HunkContent")(map(props.content, HunkLine)),
-  }, { foldable = true, folded = props.folded or false, context = true, hunk = props.hunk })
+    col.tag("HunkContent")(map(props.content, function(line)
+      return HunkLine(line, props.hunk)
+    end)),
+  }, {
+    ansi_hl = config.values.log_pager ~= nil,
+    foldable = true,
+    folded = props.folded or false,
+    context = true,
+    hunk = props.hunk,
+    filepath = props.filepath,
+  })
 end)
 
 M.List = Component.new(function(props)

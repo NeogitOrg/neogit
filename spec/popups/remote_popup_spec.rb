@@ -147,4 +147,13 @@ RSpec.describe "Remote Popup", :git, :nvim, :popup do
       end
     end
   end
+
+  describe "unshallow" do
+    context "with no remotes configured" do
+      it "notifies user" do
+        nvim.keys("z")
+        expect(nvim.screen.last).to start_with("No remotes found")
+      end
+    end
+  end
 end

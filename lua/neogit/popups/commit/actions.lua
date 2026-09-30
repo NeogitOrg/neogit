@@ -6,7 +6,7 @@ local client = require("neogit.client")
 local input = require("neogit.lib.input")
 local notification = require("neogit.lib.notification")
 local config = require("neogit.config")
-local a = require("plenary.async")
+local a = require("neogit.lib.async")
 
 ---@param popup PopupData
 ---@return boolean
@@ -19,6 +19,7 @@ local function confirm_modifications()
   if
     git.branch.upstream()
     and #git.repo.state.upstream.unmerged.items < 1
+    and config.values.prompt_amend_commit
     and not input.get_permission(
       string.format(
         "This commit has already been published to %s, do you really want to modify it?",

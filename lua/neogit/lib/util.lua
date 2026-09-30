@@ -214,6 +214,10 @@ function M.str_min_width(str, len, sep, opts)
   end
 end
 
+---Extract slice from a table
+---@param tbl table
+---@param s integer start index
+---@param e integer ending index
 function M.slice(tbl, s, e)
   local pos, new = 1, {}
 
@@ -254,6 +258,10 @@ end
 --   -- we need \r? to support windows
 --   return vim.split(str, "\r?\n")
 -- end
+
+function M.str_first_char(str)
+  return vim.fn.strcharpart(str, 0, 1)
+end
 
 function M.str_truncate(str, max_length, trailing)
   trailing = trailing or "..."
@@ -595,7 +603,8 @@ function M.throttle_by_id(fn, schedule)
 end
 
 -- from: https://stackoverflow.com/questions/48948630/lua-ansi-escapes-pattern
-local pattern_1 = "[\27\155][][()#;?%d]*[A-PRZcf-ntqry=><~]"
+-- Excludes \155 as that can be a valid continuation byte.
+local pattern_1 = "\27[][()#;?%d]*[A-PRZcf-ntqry=><~]"
 local pattern_2 = "[\r\n\04\08]"
 local BLANK = ""
 local gsub = string.gsub

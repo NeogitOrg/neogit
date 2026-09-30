@@ -3,8 +3,9 @@ local Component = require("neogit.lib.ui.component")
 local util = require("neogit.lib.util")
 local common = require("neogit.buffers.common")
 local config = require("neogit.config")
-local a = require("plenary.async")
+local a = require("neogit.lib.async")
 local state = require("neogit.lib.state")
+local event = require("neogit.lib.event")
 
 local col = Ui.col
 local row = Ui.row
@@ -241,6 +242,40 @@ local SectionItemFile = function(section, config)
           this:append(DiffHunks(diff))
           ui:update()
         end)
+
+        event.send("DiffLoaded", {
+          item = {
+            absolute_path = item.absolute_path,
+            relative_path = item.escaped_path,
+            row_start = item.first,
+            row_end = item.last,
+            mode = item.mode,
+          },
+          diff = {
+            kind = diff.kind,
+            lines = diff.lines,
+            hunks = util.map(diff.hunks, function(hunk)
+              local original_lines = util.filter_map(hunk.lines, function(line)
+                if not (vim.startswith(line, "+") or vim.startswith(line, "-")) then
+                  return line
+                end
+              end)
+
+              local modified_lines = util.map(hunk.lines, function(line)
+                return line:gsub("^[+-]", " ")
+              end)
+
+              return {
+                lines = hunk.lines,
+                original_lines = original_lines,
+                modified_lines = modified_lines,
+                row_start = hunk.first,
+                row_end = hunk.last,
+                header = hunk.line,
+              }
+            end),
+          },
+        })
       end)
     end
 
@@ -364,7 +399,7 @@ local SectionItemCommit = Component.new(function(item)
   local virtual_text
 
   -- Render margin, if visible
-  if state.get({ "margin", "visibility" }, false) then
+  if state.get({ "margin", "visibility" }, true) then
     local is_shortstat = state.get({ "margin", "shortstat" }, false)
 
     if is_shortstat then
@@ -390,7 +425,7 @@ local SectionItemCommit = Component.new(function(item)
       }
     else -- Author & date margin
       local margin_date_style = state.get({ "margin", "date_style" }, 1)
-      local details = state.get({ "margin", "details" }, false)
+      local details = state.get({ "margin", "details" }, true)
 
       local date
       local rel_date
@@ -426,7 +461,7 @@ local SectionItemCommit = Component.new(function(item)
           left_pad = ""
         end
 
-        date = left_pad .. date_number .. date_quantifier:sub(1, 1)
+        date = left_pad .. date_number .. util.str_first_char(date_quantifier)
         date_width = 3
         clamp_width = 23
       elseif margin_date_style == 2 then -- relative date (long)

@@ -63,6 +63,11 @@ function M.get_reversed_commit_editor_maps_I()
 end
 
 ---@return table<string, string[]>
+function M.get_reversed_commit_view_maps()
+  return get_reversed_maps("commit_view")
+end
+
+---@return table<string, string[]>
 function M.get_reversed_refs_view_maps()
   return get_reversed_maps("refs_view")
 end
@@ -103,6 +108,7 @@ end
 
 ---@class NeogitConfigPopup Popup window options
 ---@field kind WindowKind The type of window that should be opened
+---@field show_title boolean Show a title for the popup
 
 ---@class NeogitConfigFloating
 ---@field relative? string
@@ -218,6 +224,7 @@ end
 ---| "Untrack"
 ---| "RefreshBuffer"
 ---| "GoToFile"
+---| "GoToParentRepo",
 ---| "PeekFile"
 ---| "VSplitOpen"
 ---| "SplitOpen"
@@ -318,6 +325,9 @@ end
 ---| "author-date"
 ---| "date"
 
+---@alias NeogitHook
+---| "PreBranchCheckout"
+
 ---@class NeogitConfigStatusOptions
 ---@field recent_commit_count? integer The number of recent commits to display
 ---@field mode_padding? integer The amount of padding to add to the right of the mode column
@@ -347,10 +357,12 @@ end
 ---@field git_executable? string Path to git executable (defaults to "git")
 ---@field commit_date_format? string Commit date format
 ---@field log_date_format? string Log date format
+---@field log_pager? [string] Log pager
 ---@field disable_hint? boolean Remove the top hint in the Status buffer
 ---@field disable_context_highlighting? boolean Disable context highlights based on cursor position
 ---@field disable_signs? boolean Special signs to draw for sections etc. in Neogit
 ---@field prompt_force_push? boolean Offer to force push when branches diverge
+---@field prompt_amend_commit? boolean Request confirmation when amending already published commits
 ---@field git_services? NeogitConfigGitService[] Templates to use when opening a pull request for a branch, or commit
 ---@field fetch_after_checkout? boolean Perform a fetch if the newly checked out branch has an upstream or pushRemote set
 ---@field telescope_sorter? function The sorter telescope will use
@@ -361,6 +373,7 @@ end
 ---@field sort_branches? string Value used for `--sort` for the `git branch` command
 ---@field commit_order? NeogitCommitOrder Value used for `--<commit_order>-order` for the `git log` command
 ---@field initial_branch_name? string Default for new branch name prompts
+---@field initial_branch_rename? string Default for rename branch prompt. If not set, the current branch name is used
 ---@field kind? WindowKind The default type of window neogit should open in
 ---@field floating? NeogitConfigFloating The floating window style
 ---@field disable_line_numbers? boolean Whether to disable line numbers
@@ -382,14 +395,18 @@ end
 ---@field preview_buffer? NeogitConfigPopup Preview options
 ---@field popup? NeogitConfigPopup Set the default way of opening popups
 ---@field signs? NeogitConfigSigns Signs used for toggled regions
----@field integrations? { diffview: boolean, telescope: boolean, fzf_lua: boolean, mini_pick: boolean, snacks: boolean } Which integrations to enable
+---@field integrations? { diffview: boolean, codediff: boolean, telescope: boolean, fzf_lua: boolean, mini_pick: boolean, snacks: boolean } Which integrations to enable
+---@field diff_viewer? "diffview"|"codediff"|nil Which diff viewer to use (nil = auto-detect)
 ---@field sections? NeogitConfigSections
 ---@field ignored_settings? string[] Settings to never persist, format: "Filetype--cli-value", i.e. "NeogitCommitPopup--author"
 ---@field mappings? NeogitConfigMappings
 ---@field notification_icon? string
 ---@field use_default_keymaps? boolean
 ---@field highlight? HighlightOptions
+---@field treesitter_diff_highlight? boolean Apply syntax highlighting to diff hunks via treesitter
+---@field word_diff_highlight? boolean Apply word-diff highlighting to diff hunks
 ---@field builders? { [string]: fun(builder: PopupBuilder) }
+---@field hooks? { [NeogitHook]: fun(data: table?) }
 
 ---Returns the default Neogit configuration
 ---@return NeogitConfig
@@ -399,11 +416,16 @@ function M.get_default_values()
     disable_hint = false,
     disable_context_highlighting = false,
     disable_signs = false,
+    treesitter_diff_highlight = false,
+    word_diff_highlight = true,
     prompt_force_push = true,
+    prompt_amend_commit = true,
     graph_style = "ascii",
     commit_date_format = nil,
     log_date_format = nil,
+    log_pager = nil,
     process_spinner = false,
+    hooks = {},
     filewatcher = {
       enabled = true,
     },
@@ -520,6 +542,7 @@ function M.get_default_values()
     },
     popup = {
       kind = "popup",
+      show_title = false,
     },
     stash = {
       kind = "tab",
@@ -535,10 +558,12 @@ function M.get_default_values()
     integrations = {
       telescope = nil,
       diffview = nil,
+      codediff = nil,
       fzf_lua = nil,
       mini_pick = nil,
       snacks = nil,
     },
+    diff_viewer = nil,
     sections = {
       sequencer = {
         folded = false,
@@ -591,6 +616,10 @@ function M.get_default_values()
     },
     ignored_settings = {},
     mappings = {
+      commit_view = {
+        ["a"] = "OpenFileInWorktree",
+        ["o"] = "OpenCommitLinkInBrowser",
+      },
       commit_editor = {
         ["q"] = "Close",
         ["<c-c><c-c>"] = "Submit",
@@ -688,6 +717,7 @@ function M.get_default_values()
         ["zC"] = "Depth1",
         ["zO"] = "Depth4",
         ["x"] = "Discard",
+        ["-"] = "Reverse",
         ["s"] = "Stage",
         ["S"] = "StageUnstaged",
         ["<c-s>"] = "StageAll",
@@ -698,6 +728,7 @@ function M.get_default_values()
         ["y"] = "ShowRefs",
         ["$"] = "CommandHistory",
         ["Y"] = "YankSelected",
+        ["gp"] = "GoToParentRepo",
         ["<c-r>"] = "RefreshBuffer",
         ["<cr>"] = "GoToFile",
         ["<s-cr>"] = "PeekFile",
@@ -848,8 +879,26 @@ function M.validate_config()
     end
   end
 
+  local function validate_diff_viewer()
+    if config.diff_viewer == nil then
+      return
+    end
+
+    local valid_viewers = { "diffview", "codediff" }
+    if not vim.tbl_contains(valid_viewers, config.diff_viewer) then
+      err(
+        "diff_viewer",
+        string.format(
+          "Expected diff_viewer to be one of %s or nil, got '%s'",
+          table.concat(valid_viewers, ", "),
+          tostring(config.diff_viewer)
+        )
+      )
+    end
+  end
+
   local function validate_integrations()
-    local valid_integrations = { "diffview", "telescope", "fzf_lua", "mini_pick", "snacks" }
+    local valid_integrations = { "diffview", "codediff", "telescope", "fzf_lua", "mini_pick", "snacks" }
     if not validate_type(config.integrations, "integrations", "table") or #config.integrations == 0 then
       return
     end
@@ -1192,6 +1241,7 @@ function M.validate_config()
     validate_type(config.remember_settings, "remember_settings", "boolean")
     validate_type(config.sort_branches, "sort_branches", "string")
     validate_type(config.initial_branch_name, "initial_branch_name", "string")
+    validate_type(config.initial_branch_rename, "initial_branch_name", { "string", "nil" })
     validate_type(config.notification_icon, "notification_icon", "string")
     validate_type(config.console_timeout, "console_timeout", "number")
     validate_kind(config.kind, "kind")
@@ -1257,6 +1307,7 @@ function M.validate_config()
     -- Popup
     if validate_type(config.popup, "popup", "table") then
       validate_kind(config.popup.kind, "popup.kind")
+      validate_type(config.popup.show_title, "popup.show_title", "boolean")
     end
 
     if validate_type(config.git_services, "git_services", "table") then
@@ -1269,6 +1320,7 @@ function M.validate_config()
     end
 
     validate_integrations()
+    validate_diff_viewer()
     validate_sections()
     validate_ignored_settings()
     validate_mappings()
@@ -1298,6 +1350,32 @@ function M.check_integration(name)
 
   logger.info(("[CONFIG] Found explicit integration '%s' = %s"):format(name, enabled))
   return enabled
+end
+
+---Returns the configured diff viewer, or auto-detects if not set
+---@return string|nil The diff viewer to use ("diffview", "codediff"), or nil if none available
+function M.get_diff_viewer()
+  local logger = require("neogit.logger")
+  local viewer = M.values.diff_viewer
+
+  if viewer then
+    -- Explicit choice - verify it's available
+    if M.check_integration(viewer) then
+      return viewer
+    else
+      logger.warn(("[CONFIG] Configured diff_viewer '%s' is not available"):format(viewer))
+      return nil
+    end
+  end
+
+  -- Auto-detect: try diffview first (backwards compatible), then codediff
+  if M.check_integration("diffview") then
+    return "diffview"
+  elseif M.check_integration("codediff") then
+    return "codediff"
+  end
+
+  return nil
 end
 
 function M.setup(opts)

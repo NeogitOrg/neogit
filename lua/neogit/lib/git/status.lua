@@ -1,4 +1,4 @@
-local Path = require("plenary.path")
+local Path = require("neogit.lib.path")
 local git = require("neogit.lib.git")
 local util = require("neogit.lib.util")
 local Collection = require("neogit.lib.collection")
@@ -265,11 +265,22 @@ function M.anything_unstaged()
   end)
 end
 
+-- All two-character porcelain status codes that denote an unmerged (conflicted)
+-- entry. During a rebase or merge a conflict is not always "UU" -- an add/add
+-- conflict is "AA", a delete/delete is "DD", etc.
+local UNMERGED_MODES = { "UU", "AA", "DU", "UD", "AU", "UA", "DD" }
+
+---@param mode string a StatusItem `mode` (two-character porcelain status code)
+---@return boolean whether the mode denotes an unmerged/conflicted entry
+function M.is_unmerged(mode)
+  return vim.tbl_contains(UNMERGED_MODES, mode)
+end
+
 ---@return boolean
 function M.any_unmerged()
   return vim.iter(git.repo.state.unstaged.items):any(function(item)
-    return vim.tbl_contains({ "UU", "AA", "DU", "UD", "AU", "UA", "DD" }, item.mode)
-  end)
+    return M.is_unmerged(item.mode)
+  end) or #git.cli["ls-files"].unmerged.call().stdout > 0
 end
 
 M.register = function(meta)

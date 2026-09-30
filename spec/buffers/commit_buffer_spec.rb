@@ -17,9 +17,62 @@ RSpec.describe "Commit Buffer", :git, :nvim do
     expect(nvim.filetype).to eq("NeogitLogView")
   end
 
-  it "can yank OID" do
+  it "can open Yank popup" do
     nvim.keys("Y")
-    expect(nvim.screen.last.strip).to match(/\A[a-f0-9]{40}\z/)
+    expect(nvim.filetype).to eq("NeogitPopup")
+  end
+
+  if ENV["CI"].nil? # Fails in GHA :'(
+    it "can yank oid" do
+      nvim.keys("YY")
+      yank = nvim.cmd("echo @*").first
+      expect(yank).to match(/[0-9a-f]{40}/)
+    end
+
+    it "can yank author" do
+      nvim.keys("Ya")
+      yank = nvim.cmd("echo @*").first
+      expect(yank).to eq("tester <test@example.com>")
+    end
+
+    it "can yank subject" do
+      nvim.keys("Ys")
+      yank = nvim.cmd("echo @*").first
+      expect(yank).to eq("Initial commit")
+    end
+
+    it "can yank message" do
+      nvim.keys("Ym")
+      yank = nvim.cmd("echo @*")
+      expect(yank).to contain_exactly("Initial commit\n", "commit message")
+    end
+
+    it "can yank body" do
+      nvim.keys("Yb")
+      yank = nvim.cmd("echo @*").first
+      expect(yank).to eq("commit message")
+    end
+
+    it "can yank diff" do
+      nvim.keys("Yd")
+      yank = nvim.cmd("echo @*")
+      expect(yank).to contain_exactly("@@ -0,0 +1 @@\n", "+hello, world")
+    end
+
+    it "can yank tag" do
+      git.add_tag("test-tag", "HEAD")
+      nvim.keys("Yt")
+      yank = nvim.cmd("echo @*").first
+      expect(yank).to eq("test-tag")
+    end
+
+    it "can yank tags" do
+      git.add_tag("test-tag-a", "HEAD")
+      git.add_tag("test-tag-b", "HEAD")
+      nvim.keys("Yt")
+      yank = nvim.cmd("echo @*").first
+      expect(yank).to eq("test-tag-a, test-tag-b")
+    end
   end
 
   it "can open the bisect popup" do
@@ -110,5 +163,28 @@ RSpec.describe "Commit Buffer", :git, :nvim do
   it "can open the stash popup" do
     nvim.keys("Z")
     expect(nvim.filetype).to eq("NeogitPopup")
+  end
+
+  describe "reversing" do
+    it "reverses a hunk into the working tree" do
+      nvim.move_to_line("+hello, world")
+      nvim.confirm(true)
+      nvim.keys("-")
+      await { expect(File.read("testfile")).to eq("") }
+    end
+
+    it "reverses all changes in a file into the working tree" do
+      nvim.move_to_line("new file testfile")
+      nvim.confirm(true)
+      nvim.keys("-")
+      await { expect(File.read("testfile")).to eq("") }
+    end
+
+    it "reverses all diffs in the commit when cursor is on metadata" do
+      # Cursor starts at the top of the commit view (on metadata, outside any diff)
+      nvim.confirm(true)
+      nvim.keys("-")
+      await { expect(File.read("testfile")).to eq("") }
+    end
   end
 end

@@ -4,6 +4,14 @@ local git_harness = require("tests.util.git_harness")
 local in_prepared_repo = git_harness.in_prepared_repo
 
 describe("git cli", function()
+  describe("builder formatting", function()
+    it("formats abbrev-ref as a flag without equal sign", function()
+      local cmd = git_cli["rev-parse"].symbolic_full_name.abbrev_ref.args("main@{upstream}")
+      local str = tostring(cmd)
+      eq("git rev-parse --symbolic-full-name --abbrev-ref main@{upstream} -- ", str)
+    end)
+  end)
+
   describe("root detection", function()
     it(
       "finds the correct git root for a non symlinked directory",
