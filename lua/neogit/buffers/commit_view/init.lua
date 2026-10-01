@@ -343,6 +343,8 @@ function M:open(kind)
               end
 
               return first
+            else
+              return 1
             end
           end
 
@@ -353,21 +355,28 @@ function M:open(kind)
           end
         end,
         ["}"] = function() -- Goto next
-          local c = self.buffer.ui:get_component_under_cursor(function(c)
-            return c.options.tag == "Diff" or c.options.tag == "Hunk"
-          end)
+          local function next_hunk_header(self, line)
+            local c = self.buffer.ui:get_component_on_line(line, function(c)
+              return c.options.tag == "Diff" or c.options.tag == "Hunk"
+            end)
 
-          if c then
-            if c.options.tag == "Diff" then
-              self.buffer:move_cursor(vim.fn.line(".") + 1)
-            else
-              local _, last = c:row_range_abs()
-              if last == vim.fn.line("$") then
-                self.buffer:move_cursor(last)
+            if c then
+              local first, last = c:row_range_abs()
+              if line == first then
+                return first
+              elseif last == vim.fn.line("$") then
+                return last
               else
-                self.buffer:move_cursor(last + 1)
+                return next_hunk_header(self, last + 1)
               end
+            elseif line <= vim.fn.line("$") then
+              return next_hunk_header(self, line + 1)
             end
+          end
+
+          local next_header = next_hunk_header(self, vim.fn.line(".") + 1)
+          if next_header then
+            api.nvim_win_set_cursor(0, { next_header, 0 })
             vim.cmd("normal! zt")
           end
         end,
