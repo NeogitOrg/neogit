@@ -415,6 +415,7 @@ The following mappings can all be customized via the setup function.
 
       commit_view = {
         ["a"]          = "OpenFileInWorktree",
+        ["o"]          = "OpenCommitLinkInBrowser",
       }
 
       rebase_editor = {
@@ -461,6 +462,10 @@ The following mappings can all be customized via the setup function.
         ["<2-LeftMouse>"]      = "NOP",
       }
 
+      refs_view = {
+        ["x"] = "DeleteBranch",
+      }
+
       popup = {
         ["?"] = "HelpPopup",
         ["A"] = "CherryPickPopup",
@@ -477,6 +482,7 @@ The following mappings can all be customized via the setup function.
         ["c"] = "CommitPopup",
         ["f"] = "FetchPopup",
         ["l"] = "LogPopup",
+        ["L"] = "MarginPopup",
         ["m"] = "MergePopup",
         ["p"] = "PullPopup",
         ["r"] = "RebasePopup",
@@ -495,6 +501,11 @@ The following mappings can all be customized via the setup function.
         ["4"]      = "Depth4",
         ["Q"]      = "Command",
         ["<tab>"]  = "Toggle",
+        ["za"]     = "Toggle",
+        ["zo"]     = "OpenFold",
+        ["zc"]     = "CloseFold",
+        ["zC"]     = "Depth1",
+        ["zO"]     = "Depth4",
         ["x"]      = "Discard",
         ["-"]      = "Reverse",
         ["s"]      = "Stage",
@@ -502,6 +513,7 @@ The following mappings can all be customized via the setup function.
         ["<c-s>"]  = "StageAll",
         ["u"]      = "Unstage",
         ["K"]      = "Untrack",
+        ["R"]      = "Rename",
         ["U"]      = "UnstageStaged",
         ["y"]      = "ShowRefs",
         ["$"]      = "CommandHistory",
@@ -519,6 +531,8 @@ The following mappings can all be customized via the setup function.
         ["]c"]     = "OpenOrScrollDown",
         ["<c-k>"]  = "PeekUp",
         ["<c-j>"]  = "PeekDown",
+        ["<c-n>"]  = "NextSection",
+        ["<c-p>"]  = "PreviousSection",
       }
 <
 ==============================================================================
