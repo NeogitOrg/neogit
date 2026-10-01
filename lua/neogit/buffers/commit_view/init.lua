@@ -369,6 +369,15 @@ function M:open(kind)
               end
             end
             vim.cmd("normal! zt")
+          else
+            -- Possibly in the header, scan down to the first hunk
+            local firstHunk = self.buffer.ui:find_component(function(c)
+              return c.options.tag == "Hunk"
+            end)
+            if firstHunk ~= nil then
+              local first, _ = firstHunk:row_range_abs()
+              self.buffer:move_cursor(first)
+            end
           end
         end,
         [popups.mapping_for("BisectPopup")] = popups.open("bisect", function(p)
