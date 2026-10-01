@@ -125,6 +125,7 @@ M.actions = function()
   return present {
     { "Stage", "Stage", NONE },
     { "StageUnstaged", "Stage unstaged", NONE },
+    { "SelectLines", "Select specific lines", NONE },
     { "StageAll", "Stage all", NONE },
     { "Unstage", "Unstage", NONE },
     { "UnstageStaged", "Unstage all", NONE },
