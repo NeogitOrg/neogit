@@ -27,6 +27,7 @@
 ---@field status      NeogitGitStatus
 ---@field submodule   NeogitGitSubmodule
 ---@field tag         NeogitGitTag
+---@field undo        NeogitGitUndo
 ---@field worktree    NeogitGitWorktree
 ---@field hooks       NeogitGitHooks
 local Git = {}
