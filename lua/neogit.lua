@@ -163,6 +163,7 @@ function M.open(opts)
   end
 
   if opts[1] ~= nil then
+    require("neogit.lib.git.repository").instance(opts.cwd)
     local a = require("neogit.lib.async")
     local cb = function()
       open_popup(opts[1])
