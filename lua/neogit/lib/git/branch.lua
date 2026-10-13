@@ -126,16 +126,11 @@ end
 
 ---@return string|nil
 function M.base_branch()
-  local value = git.config.get("neogit.baseBranch")
-  if value:is_set() then
-    return value:read() ---@type string
-  else
-    if M.exists("master") then
-      return "master"
-    elseif M.exists("main") then
-      return "main"
-    end
-  end
+  local result = git.cli.reflog.show.args("--no-abbrev", M.current()).call({ hidden = true })
+  local base_commit = vim.split(result.stdout[#result.stdout], " ")[1]
+
+  return git.cli["name-rev"].name_only.exclude("tags/*").exclude("remotes/*").args(base_commit).call({ hidden = true })
+  .stdout[1]
 end
 
 ---Determine if a branch exists locally
