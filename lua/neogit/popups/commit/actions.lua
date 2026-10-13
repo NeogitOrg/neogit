@@ -33,6 +33,7 @@ local function confirm_modifications()
   return true
 end
 
+---@param popup PopupData
 local function do_commit(popup, cmd)
   client.wrap(cmd.arg_list(popup:get_arguments()), {
     autocmd = "NeogitCommitComplete",
@@ -45,6 +46,7 @@ local function do_commit(popup, cmd)
   })
 end
 
+---@param popup PopupData
 local function commit_special(popup, method, opts)
   if not git.status.anything_staged() and not allow_empty(popup) then
     if git.status.anything_unstaged() then
@@ -105,6 +107,7 @@ local function commit_special(popup, method, opts)
   end
 end
 
+---@param popup PopupData
 function M.commit(popup)
   if not git.status.anything_staged() and not allow_empty(popup) then
     notification.warn("No changes to commit.")
@@ -114,6 +117,7 @@ function M.commit(popup)
   do_commit(popup, git.cli.commit)
 end
 
+---@param popup PopupData
 function M.extend(popup)
   if not git.status.anything_staged() and not allow_empty(popup) then
     if git.status.anything_unstaged() then
@@ -134,6 +138,7 @@ function M.extend(popup)
   do_commit(popup, git.cli.commit.no_edit.amend)
 end
 
+---@param popup PopupData
 function M.reword(popup)
   if not confirm_modifications() then
     return
@@ -142,6 +147,7 @@ function M.reword(popup)
   do_commit(popup, git.cli.commit.amend.only)
 end
 
+---@param popup PopupData
 function M.amend(popup)
   if not confirm_modifications() then
     return
@@ -150,26 +156,32 @@ function M.amend(popup)
   do_commit(popup, git.cli.commit.amend)
 end
 
+---@param popup PopupData
 function M.fixup(popup)
   commit_special(popup, "--fixup=%s", { edit = false })
 end
 
+---@param popup PopupData
 function M.squash(popup)
   commit_special(popup, "--squash=%s", { edit = false })
 end
 
+---@param popup PopupData
 function M.augment(popup)
   commit_special(popup, "--squash=%s", { edit = true })
 end
 
+---@param popup PopupData
 function M.alter(popup)
   commit_special(popup, "--fixup=amend:%s", { edit = true })
 end
 
+---@param popup PopupData
 function M.revise(popup)
   commit_special(popup, "--fixup=reword:%s", { edit = true })
 end
 
+---@param popup PopupData
 function M.instant_fixup(popup)
   if not confirm_modifications() then
     return
@@ -178,6 +190,7 @@ function M.instant_fixup(popup)
   commit_special(popup, "--fixup=%s", { rebase = true, edit = false })
 end
 
+---@param popup PopupData
 function M.instant_squash(popup)
   if not confirm_modifications() then
     return
@@ -186,6 +199,7 @@ function M.instant_squash(popup)
   commit_special(popup, "--squash=%s", { rebase = true, edit = false })
 end
 
+---@param popup PopupData
 function M.absorb(popup)
   if vim.fn.executable("git-absorb") == 0 then
     notification.info("Absorb requires `https://github.com/tummychow/git-absorb` to be installed.")
@@ -206,6 +220,7 @@ function M.absorb(popup)
   end
 
   local commit = popup.state.env.commit
+    or git.branch.base_commit()
     or CommitSelectViewBuffer.new(
       git.log.list { "HEAD" },
       git.remote.list(),
