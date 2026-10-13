@@ -59,28 +59,19 @@ local function get_codediff_modules()
   return codediff_git, view
 end
 
-local function make_explorer_data(status_result, focus_file)
-  local explorer_data = {
-    status_result = status_result,
-  }
-
-  if type(focus_file) == "string" and focus_file ~= "" then
-    explorer_data.focus_file = focus_file
-  end
-
-  return explorer_data
-end
-
 local function open_explorer(view, git_root, status_result, original_revision, modified_revision, focus_file)
   ---@type table
   local session_config = {
-    mode = "explorer",
     git_root = git_root,
-    original_path = "",
-    modified_path = "",
     original_revision = original_revision,
     modified_revision = modified_revision,
-    explorer_data = make_explorer_data(status_result, focus_file),
+    layout = "side-by-side",
+    panel = {
+      name = "explorer",
+      data = {
+        git_root = git_root,
+      },
+    }
   }
 
   view.create(session_config, "")
