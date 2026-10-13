@@ -106,7 +106,7 @@ function M:open(kind)
         ("%s   %s tell Git that you changed your mind, i.e. abort"):format(comment_char, pad_mapping("Abort")),
         ("%s   %s move the commit up"):format(comment_char, pad_mapping("MoveUp")),
         ("%s   %s move the commit down"):format(comment_char, pad_mapping("MoveDown")),
-        ("%s   %s show the commit another buffer"):format(comment_char, pad_mapping("OpenCommit")),
+        ("%s   %s show the commit in another buffer"):format(comment_char, pad_mapping("OpenCommit")),
         ("%s"):format(comment_char),
         ("%s These lines can be re-ordered; they are executed from top to bottom."):format(comment_char),
         ("%s"):format(comment_char),
