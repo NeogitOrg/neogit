@@ -18,7 +18,7 @@ local function setup_on_close(opts)
   end
 end
 
-local function validate_codediff_api(codediff_git, view)
+local function validate_codediff_api(codediff_git, view, path)
   local missing = {}
 
   for _, fn in ipairs { "get_status", "get_diff_revisions", "resolve_revision", "get_relative_path" } do
@@ -29,6 +29,12 @@ local function validate_codediff_api(codediff_git, view)
 
   if type(view.create) ~= "function" then
     table.insert(missing, "codediff.ui.view.create")
+  end
+
+  for _, fn in ipairs { "empty", "make_ref" } do
+    if type(path[fn]) ~= "function" then
+      table.insert(missing, "codediff.core.path." .. fn)
+    end
   end
 
   if #missing > 0 then
@@ -52,7 +58,16 @@ local function get_codediff_modules()
     return nil, nil
   end
 
-  if not validate_codediff_api(codediff_git, view) then
+  -- SessionConfig takes typed Path refs since codediff.nvim v2.67.2
+  local ok_path, path = pcall(require, "codediff.core.path")
+  if not ok_path then
+    notify_error(
+      "failed to load codediff.core.path (" .. tostring(path) .. "); codediff.nvim >= v2.67.2 is required"
+    )
+    return nil, nil
+  end
+
+  if not validate_codediff_api(codediff_git, view, path) then
     return nil, nil
   end
 
@@ -72,15 +87,20 @@ local function make_explorer_data(status_result, focus_file)
 end
 
 local function open_explorer(view, git_root, status_result, original_revision, modified_revision, focus_file)
+  local path = require("codediff.core.path")
+
   ---@type table
   local session_config = {
-    mode = "explorer",
+    panel = {
+      name = "explorer",
+      data = make_explorer_data(status_result, focus_file),
+    },
     git_root = git_root,
-    original_path = "",
-    modified_path = "",
+    -- Empty refs make codediff open placeholder panes until the explorer selects a file
+    original = path.empty(),
+    modified = path.empty(),
     original_revision = original_revision,
     modified_revision = modified_revision,
-    explorer_data = make_explorer_data(status_result, focus_file),
   }
 
   view.create(session_config, "")
@@ -340,13 +360,13 @@ function M.open(section_name, item_name, opts)
       local relative_path = codediff_git.get_relative_path(git_root .. "/" .. file_path, git_root)
       local filetype = vim.filetype.match { filename = file_path } or ""
       local original_revision, modified_revision = get_conflict_revisions()
+      local path = require("codediff.core.path")
 
       ---@type table
       local session_config = {
-        mode = "standalone",
         git_root = git_root,
-        original_path = relative_path,
-        modified_path = relative_path,
+        original = path.make_ref(relative_path, git_root),
+        modified = path.make_ref(relative_path, git_root),
         original_revision = original_revision,
         modified_revision = modified_revision,
         conflict = true,
