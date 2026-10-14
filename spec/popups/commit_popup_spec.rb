@@ -16,6 +16,7 @@ RSpec.describe "Commit Popup", :git, :nvim, :popup do
       " -s Add Signed-off-by line (--signoff)                                          ",
       " -S Sign using gpg (--gpg-sign=)                                                ",
       " -C Reuse commit message (--reuse-message=)                                     ",
+      " -m Commit message (--message=)                                                 ",
       "                                                                                ",
       " Create        Edit HEAD   Edit        Edit and rebase    Spread across commits ",
       " c Commit      e Extend    f Fixup     F Instant Fixup    x Absorb              ",
@@ -26,7 +27,7 @@ RSpec.describe "Commit Popup", :git, :nvim, :popup do
     ]
   end
 
-  %w[-a -e -v -h -R -A -s -S -C].each { include_examples "argument", _1 }
+  %w[-a -e -v -h -R -A -s -S -C -m].each { include_examples "argument", _1 }
   %w[c x e w a f s A F S n W].each { include_examples "interaction", _1 }
 
   describe "Actions" do
