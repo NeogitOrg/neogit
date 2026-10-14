@@ -41,6 +41,11 @@ function M.this_to_HEAD(popup)
   end
 end
 
+function M.base_to_HEAD(popup)
+  popup:close()
+  get_diff_integration().open("range", git.branch.base_branch() .. "..HEAD")
+end
+
 function M.range(popup)
   local commit
   local item = popup:get_env("item")
