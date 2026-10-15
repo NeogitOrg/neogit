@@ -3,6 +3,7 @@ local git = require("neogit.lib.git")
 local util = require("neogit.lib.util")
 local Collection = require("neogit.lib.collection")
 local logger = require("neogit.logger")
+local config = require("neogit.config")
 
 ---@class StatusItem
 ---@field mode string
@@ -251,6 +252,11 @@ end
 
 ---@return boolean
 function M.anything_staged()
+  local fast = config.values.commit_editor.fast or false
+  if fast then
+    return git.repo.state.staged.items[1] ~= nil
+  end
+
   local output = git.cli.status.porcelain(2).call({ hidden = true }).stdout
   return vim.iter(output):any(function(line)
     return line:match("^%d [^%.]")
@@ -259,6 +265,11 @@ end
 
 ---@return boolean
 function M.anything_unstaged()
+  local fast = config.values.commit_editor.fast or false
+  if fast then
+    return git.repo.state.unstaged.items[1] ~= nil
+  end
+
   local output = git.cli.status.porcelain(2).call({ hidden = true }).stdout
   return vim.iter(output):any(function(line)
     return line:match("^%d %..")

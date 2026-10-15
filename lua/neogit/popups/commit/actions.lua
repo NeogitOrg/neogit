@@ -48,7 +48,7 @@ end
 
 ---@param popup PopupData
 local function commit_special(popup, method, opts)
-  if not git.status.anything_staged() and not allow_empty(popup) then
+  if not allow_empty(popup) and not git.status.anything_staged() then
     if git.status.anything_unstaged() then
       if input.get_permission("Nothing is staged. Commit all uncommitted changed?") then
         opts.all = true
@@ -109,7 +109,7 @@ end
 
 ---@param popup PopupData
 function M.commit(popup)
-  if not git.status.anything_staged() and not allow_empty(popup) then
+  if not allow_empty(popup) and not git.status.anything_staged() then
     notification.warn("No changes to commit.")
     return
   end
