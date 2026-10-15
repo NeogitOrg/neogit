@@ -3,6 +3,7 @@ local M = {}
 local config = require("neogit.config")
 local popup = require("neogit.lib.popup")
 local actions = require("neogit.popups.diff.actions")
+local git = require("neogit.lib.git")
 
 function M.create(env)
   local diff_viewer = config.get_diff_viewer()
@@ -14,6 +15,9 @@ function M.create(env)
       and type(env.item.name) == "string"
     or false
 
+  local base_branch = git.branch.base_branch()
+  local has_base = type(base_branch) == "string"
+
   local p = popup
     .builder()
     :name("NeogitDiffPopup")
@@ -21,6 +25,7 @@ function M.create(env)
     :action_if(has_diff_viewer and has_item, "d", "this", actions.this)
     :action_if(has_diff_viewer and commit_selected, "h", "this..HEAD", actions.this_to_HEAD)
     :action_if(has_diff_viewer, "r", "range", actions.range)
+    :action_if(has_diff_viewer and has_base, "b", base_branch .. "..HEAD", actions.base_to_HEAD)
     :action("p", "paths")
     :new_action_group()
     :action_if(has_diff_viewer, "u", "unstaged", actions.unstaged)

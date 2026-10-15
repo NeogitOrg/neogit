@@ -40,8 +40,8 @@ class NeovimClient # rubocop:disable Metrics/ClassLength
   end
 
   def teardown
-    if @mode == :tcp
-      system("kill -9 #{@pid}")
+    if @pid
+      system("kill -9 #{@pid}", out: File::NULL, err: File::NULL)
       @pid = nil
     end
 
@@ -202,7 +202,21 @@ class NeovimClient # rubocop:disable Metrics/ClassLength
   private
 
   def attach_pipe
-    Neovim.attach_child(["nvim", "--embed", "--clean", "--headless"])
+    instance = Neovim.attach_child(["nvim", "--embed", "--clean", "--headless"])
+    @pid = child_pid(instance)
+    instance
+  end
+
+  # The neovim gem doesn't expose the child process's pid, so reach into the
+  # IO.popen handle it wraps. Without this, pipe-mode nvim processes are
+  # never killed and leak indefinitely (detached, no EOF ever sent).
+  def child_pid(instance)
+    instance.session.instance_variable_get(:@event_loop)
+            .instance_variable_get(:@connection)
+            .instance_variable_get(:@wr)
+            .pid
+  rescue StandardError
+    nil
   end
 
   def attach_tcp

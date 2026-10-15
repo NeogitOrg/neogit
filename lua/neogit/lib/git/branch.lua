@@ -137,7 +137,7 @@ function M.base_branch()
     local branch = git.cli["name-rev"].name_only
       .exclude("tags/*")
       .exclude("remotes/*")
-      .args(base)
+      .args(base .. "^")
       .call({ hidden = true }).stdout[1]
 
     return vim.split(branch, "~")[1]
