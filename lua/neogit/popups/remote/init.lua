@@ -29,7 +29,7 @@ function M.create()
     :action("p", "Prune stale branches", actions.prune_branches)
     :action("P", "Prune stale refspecs")
     :action("b", "Update default branch")
-    :action("z", "Unshallow remote")
+    :action("z", "Unshallow remote", actions.unshallow)
     :env({ highlight = { git.branch.pushRemote() } })
     :build()
 

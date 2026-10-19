@@ -2,12 +2,11 @@ local Buffer = require("neogit.lib.buffer")
 local config = require("neogit.config")
 local ui = require("neogit.buffers.refs_view.ui")
 local popups = require("neogit.popups")
-local status_maps = require("neogit.config").get_reversed_status_maps()
 local mapping = config.get_reversed_refs_view_maps()
 local CommitViewBuffer = require("neogit.buffers.commit_view")
 local Watcher = require("neogit.watcher")
 local logger = require("neogit.logger")
-local a = require("plenary.async")
+local a = require("neogit.lib.async")
 local git = require("neogit.lib.git")
 local event = require("neogit.lib.event")
 
@@ -89,6 +88,7 @@ function M:open()
   end
 
   M.instance = self
+  local status_maps = config.get_reversed_status_maps()
 
   self.buffer = Buffer.create {
     name = "NeogitRefsView",

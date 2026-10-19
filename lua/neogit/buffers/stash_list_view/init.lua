@@ -2,7 +2,6 @@ local Buffer = require("neogit.lib.buffer")
 local config = require("neogit.config")
 local CommitViewBuffer = require("neogit.buffers.commit_view")
 local popups = require("neogit.popups")
-local status_maps = require("neogit.config").get_reversed_status_maps()
 local util = require("neogit.lib.util")
 
 local git = require("neogit.lib.git")
@@ -32,6 +31,7 @@ end
 --- Creates a buffer populated with output of `git stash list`
 --- and supports related operations.
 function M:open()
+  local status_maps = config.get_reversed_status_maps()
   self.buffer = Buffer.create {
     name = "NeogitStashView",
     filetype = "NeogitStashView",

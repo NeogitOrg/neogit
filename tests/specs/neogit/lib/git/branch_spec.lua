@@ -181,3 +181,48 @@ pending("lib.git.branch", function()
     end)
   end)
 end)
+
+describe("lib.git.branch with linked worktrees", function()
+  -- Neogit caches the repository root for the session, so the repository is only created once.
+  local repo_dir
+
+  before_each(function()
+    if repo_dir then
+      vim.api.nvim_set_current_dir(repo_dir)
+      return
+    end
+
+    repo_dir = util.create_temp_dir("worktree-repo")
+    local worktree_dir = util.create_temp_dir("worktree-linked") .. "/linked"
+
+    vim.api.nvim_set_current_dir(repo_dir)
+    util.system { "git", "init", "--initial-branch", "master" }
+    util.system { "git", "config", "user.email", "test@neogit-test.test" }
+    util.system { "git", "config", "user.name", "Neogit Test" }
+    util.system { "git", "commit", "--allow-empty", "-m", "initial commit" }
+    util.system { "git", "branch", "plain-branch" }
+    util.system { "git", "worktree", "add", "-b", "worktree-branch", worktree_dir }
+  end)
+
+  it("includes branches checked out in another worktree in local branches", function()
+    assert.True(vim.tbl_contains(gb.get_local_branches(false), "worktree-branch"))
+    assert.True(vim.tbl_contains(gb.get_local_branches(true), "worktree-branch"))
+  end)
+
+  it("includes branches checked out in another worktree in all branches", function()
+    assert.True(vim.tbl_contains(gb.get_all_branches(false), "worktree-branch"))
+  end)
+
+  it("still excludes the current branch unless requested", function()
+    local branches = gb.get_local_branches(false)
+    assert.False(vim.tbl_contains(branches, "master"))
+    assert.True(vim.tbl_contains(branches, "plain-branch"))
+    assert.True(vim.tbl_contains(gb.get_local_branches(true), "master"))
+  end)
+
+  it("strips branch markers from related branch names", function()
+    local branches = gb.list_related_branches("--contains", "master")
+    table.sort(branches)
+    assert.are.same({ "master", "plain-branch", "worktree-branch" }, branches)
+  end)
+end)

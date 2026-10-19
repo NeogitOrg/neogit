@@ -32,11 +32,12 @@ Here's an example spec for [Lazy](https://github.com/folke/lazy.nvim), but you'r
   "NeogitOrg/neogit",
   lazy = true,
   dependencies = {
-    "nvim-lua/plenary.nvim",         -- required
-
     -- Only one of these is needed.
     "sindrets/diffview.nvim",        -- optional
     "esmuellert/codediff.nvim",      -- optional
+
+    -- For a custom log pager
+    "m00qek/baleia.nvim",            -- optional
 
     -- Only one of these is needed.
     "nvim-telescope/telescope.nvim", -- optional
@@ -123,6 +124,10 @@ You can configure neogit by running the `require('neogit').setup {}` function, p
 local neogit = require("neogit")
 
 neogit.setup {
+  -- Use Treesitter to apply syntax highlighting to diff hunks
+  treesitter_diff_highlight = true,
+  -- Apply word-diff highlights to diff hunks
+  word_diff_highlight = true,
   -- Hides the hints at the top of the status buffer
   disable_hint = false,
   -- Disables changing the buffer highlights based on where the cursor is.
@@ -133,6 +138,8 @@ neogit.setup {
   git_executable = "git",
   -- Offer to force push when branches diverge
   prompt_force_push = true,
+  -- Request confirmation when amending already published commits
+  prompt_amend_commit = true,
   -- Changes what mode the Commit Editor starts in. `true` will leave nvim in normal mode, `false` will change nvim to
   -- insert mode, and `"auto"` will change nvim to insert mode IF the commit message is empty, otherwise leaving it in
   -- normal mode.
@@ -150,6 +157,8 @@ neogit.setup {
   -- Show relative date by default. When set, use `strftime` to display dates
   commit_date_format = nil,
   log_date_format = nil,
+  -- When set, used to format the diff. Requires *baleia* to colorize text with ANSI escape sequences. An example for `Delta` is `{ 'delta', '--width', '117' }`. For `Delta`, hyperlinks must be disabled when called by `neogit`, for text to be colorized properly.
+  log_pager = nil,
   -- Show message with spinning animation when a git command is running.
   process_spinner = false,
   -- Used to generate URL's for branch popup action "pull request", "open commit" and "open tree"
@@ -299,7 +308,8 @@ neogit.setup {
     kind = "floating_console",
   },
   popup = {
-    kind = "split",
+    kind = "popup",
+    show_title = false,
   },
   stash = {
     kind = "tab",
@@ -546,6 +556,13 @@ This works for just about everything that has an object-ID in git, and if you fi
 
 See the built-in documentation for a comprehensive list of highlight groups. If your theme doesn't style a particular group, we'll try our best to do a nice job.
 
+## Hooks
+
+Neogit supports hooks for the following actions:
+
+| Hook                | Description                    | Hook Data                 |
+| ------------------- | ------------------------------ | ------------------------- |
+| `PreBranchCheckout` | Before a branch is checked out | `{ branch_name: string }` |
 
 ## Events
 

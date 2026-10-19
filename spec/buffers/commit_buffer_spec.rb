@@ -60,15 +60,15 @@ RSpec.describe "Commit Buffer", :git, :nvim do
     end
 
     it "can yank tag" do
-      git.add_tag("test-tag", "HEAD")
+      git.tag_create("test-tag", "HEAD")
       nvim.keys("Yt")
       yank = nvim.cmd("echo @*").first
       expect(yank).to eq("test-tag")
     end
 
     it "can yank tags" do
-      git.add_tag("test-tag-a", "HEAD")
-      git.add_tag("test-tag-b", "HEAD")
+      git.tag_create("test-tag-a", "HEAD")
+      git.tag_create("test-tag-b", "HEAD")
       nvim.keys("Yt")
       yank = nvim.cmd("echo @*").first
       expect(yank).to eq("test-tag-a, test-tag-b")
@@ -163,5 +163,28 @@ RSpec.describe "Commit Buffer", :git, :nvim do
   it "can open the stash popup" do
     nvim.keys("Z")
     expect(nvim.filetype).to eq("NeogitPopup")
+  end
+
+  describe "reversing" do
+    it "reverses a hunk into the working tree" do
+      nvim.move_to_line("+hello, world")
+      nvim.confirm(true)
+      nvim.keys("-")
+      await { expect(File.read("testfile")).to eq("") }
+    end
+
+    it "reverses all changes in a file into the working tree" do
+      nvim.move_to_line("new file testfile")
+      nvim.confirm(true)
+      nvim.keys("-")
+      await { expect(File.read("testfile")).to eq("") }
+    end
+
+    it "reverses all diffs in the commit when cursor is on metadata" do
+      # Cursor starts at the top of the commit view (on metadata, outside any diff)
+      nvim.confirm(true)
+      nvim.keys("-")
+      await { expect(File.read("testfile")).to eq("") }
+    end
   end
 end

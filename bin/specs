@@ -8,7 +8,6 @@ gemfile do
   gem "open3"
   gem "tty-spinner"
   gem "pastel"
-  gem "debug"
 end
 
 require "async"
@@ -48,8 +47,8 @@ class Runner # rubocop:disable Style/Documentation
         break
       elsif retries < 5
         @failed_lines = JSON.parse(output)["examples"]
-                            .select { _1["status"] == "failed" }
-                            .map { _1["line_number"] }
+                            .select { it["status"] == "failed" }
+                            .map { it["line_number"] }
                             .uniq
 
         @retries += 1

@@ -3,7 +3,7 @@ local M = {}
 local api = vim.api
 
 function M.setup()
-  local a = require("plenary.async")
+  local a = require("neogit.lib.async")
   local status_buffer = require("neogit.buffers.status")
   local git = require("neogit.lib.git")
   local group = require("neogit").autocmd_group
@@ -16,6 +16,19 @@ function M.setup()
       highlight.setup(config.values)
     end,
     group = group,
+  })
+
+  api.nvim_create_autocmd("SessionLoadPost", {
+    callback = function()
+      vim.schedule(function()
+        for _, buf in ipairs(api.nvim_list_bufs()) do
+          local buf_name = api.nvim_buf_get_name(buf)
+          if buf_name:match("Neogit%w+") then
+            api.nvim_buf_delete(buf, { force = true })
+          end
+        end
+      end)
+    end,
   })
 
   local autocmd_disabled = false

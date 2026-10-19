@@ -6,12 +6,12 @@ RSpec.describe "Diff Popup", :git, :nvim, :popup do # rubocop:disable RSpec/Empt
   let(:keymap) { "d" }
   let(:view) do
     [
-      " Diff                      Show                                                 ",
-      " d this       u unstaged   c Commit                                             ",
-      " r range      s staged     t Stash                                              ",
-      " p paths      w worktree                                                        "
+      "Diff                      Show                                                  ",
+      "d this       u unstaged   c Commit                                              ",
+      "r range      s staged     t Stash                                               ",
+      "p paths      w worktree                                                         "
     ]
   end
 
-  %w[d r p u s w c t].each { include_examples "interaction", _1 }
+  %w[d r p u s w c t].each { it_behaves_like "interaction", it }
 end

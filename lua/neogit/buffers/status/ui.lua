@@ -3,7 +3,7 @@ local Component = require("neogit.lib.ui.component")
 local util = require("neogit.lib.util")
 local common = require("neogit.buffers.common")
 local config = require("neogit.config")
-local a = require("plenary.async")
+local a = require("neogit.lib.async")
 local state = require("neogit.lib.state")
 local event = require("neogit.lib.event")
 
@@ -399,7 +399,7 @@ local SectionItemCommit = Component.new(function(item)
   local virtual_text
 
   -- Render margin, if visible
-  if state.get({ "margin", "visibility" }, false) then
+  if state.get({ "margin", "visibility" }, true) then
     local is_shortstat = state.get({ "margin", "shortstat" }, false)
 
     if is_shortstat then
@@ -425,7 +425,7 @@ local SectionItemCommit = Component.new(function(item)
       }
     else -- Author & date margin
       local margin_date_style = state.get({ "margin", "date_style" }, 1)
-      local details = state.get({ "margin", "details" }, false)
+      local details = state.get({ "margin", "details" }, true)
 
       local date
       local rel_date
@@ -461,7 +461,7 @@ local SectionItemCommit = Component.new(function(item)
           left_pad = ""
         end
 
-        date = left_pad .. date_number .. date_quantifier:sub(1, 1)
+        date = left_pad .. date_number .. util.str_first_char(date_quantifier)
         date_width = 3
         clamp_width = 23
       elseif margin_date_style == 2 then -- relative date (long)

@@ -99,6 +99,7 @@ end
 ---| "vsplit" Open in a vertical split
 ---| "floating" Open in a floating window
 ---| "floating_console" Open in a floating window across the bottom of the screen
+---| "popup" Open in a popup
 ---| "auto" vsplit if window would have 80 cols, otherwise split
 
 ---@class NeogitCommitBufferConfig Commit buffer options
@@ -107,6 +108,7 @@ end
 
 ---@class NeogitConfigPopup Popup window options
 ---@field kind WindowKind The type of window that should be opened
+---@field show_title boolean Show a title for the popup
 
 ---@class NeogitConfigFloating
 ---@field relative? string
@@ -324,6 +326,9 @@ end
 ---| "author-date"
 ---| "date"
 
+---@alias NeogitHook
+---| "PreBranchCheckout"
+
 ---@class NeogitConfigStatusOptions
 ---@field recent_commit_count? integer The number of recent commits to display
 ---@field mode_padding? integer The amount of padding to add to the right of the mode column
@@ -353,10 +358,12 @@ end
 ---@field git_executable? string Path to git executable (defaults to "git")
 ---@field commit_date_format? string Commit date format
 ---@field log_date_format? string Log date format
+---@field log_pager? [string] Log pager
 ---@field disable_hint? boolean Remove the top hint in the Status buffer
 ---@field disable_context_highlighting? boolean Disable context highlights based on cursor position
 ---@field disable_signs? boolean Special signs to draw for sections etc. in Neogit
 ---@field prompt_force_push? boolean Offer to force push when branches diverge
+---@field prompt_amend_commit? boolean Request confirmation when amending already published commits
 ---@field git_services? NeogitConfigGitService[] Templates to use when opening a pull request for a branch, or commit
 ---@field fetch_after_checkout? boolean Perform a fetch if the newly checked out branch has an upstream or pushRemote set
 ---@field telescope_sorter? function The sorter telescope will use
@@ -397,7 +404,10 @@ end
 ---@field notification_icon? string
 ---@field use_default_keymaps? boolean
 ---@field highlight? HighlightOptions
+---@field treesitter_diff_highlight? boolean Apply syntax highlighting to diff hunks via treesitter
+---@field word_diff_highlight? boolean Apply word-diff highlighting to diff hunks
 ---@field builders? { [string]: fun(builder: PopupBuilder) }
+---@field hooks? { [NeogitHook]: fun(data: table?) }
 
 ---Returns the default Neogit configuration
 ---@return NeogitConfig
@@ -407,11 +417,16 @@ function M.get_default_values()
     disable_hint = false,
     disable_context_highlighting = false,
     disable_signs = false,
+    treesitter_diff_highlight = false,
+    word_diff_highlight = true,
     prompt_force_push = true,
+    prompt_amend_commit = true,
     graph_style = "ascii",
     commit_date_format = nil,
     log_date_format = nil,
+    log_pager = nil,
     process_spinner = false,
+    hooks = {},
     filewatcher = {
       enabled = true,
     },
@@ -527,7 +542,8 @@ function M.get_default_values()
       kind = "floating_console",
     },
     popup = {
-      kind = "split",
+      kind = "popup",
+      show_title = false,
     },
     stash = {
       kind = "tab",
@@ -603,6 +619,7 @@ function M.get_default_values()
     mappings = {
       commit_view = {
         ["a"] = "OpenFileInWorktree",
+        ["o"] = "OpenCommitLinkInBrowser",
       },
       commit_editor = {
         ["q"] = "Close",
@@ -701,6 +718,7 @@ function M.get_default_values()
         ["zC"] = "Depth1",
         ["zO"] = "Depth4",
         ["x"] = "Discard",
+        ["-"] = "Reverse",
         ["s"] = "Stage",
         ["S"] = "StageUnstaged",
         ["<c-s>"] = "StageAll",
@@ -791,13 +809,14 @@ function M.validate_config()
         "floating",
         "floating_console",
         "replace",
+        "popup",
         "auto",
       }, val)
     then
       err(
         name,
         string.format(
-          "Expected `%s` to be one of 'split', 'vsplit', 'split_above', 'vsplit_left', tab', 'floating', 'replace' or 'auto', got '%s'",
+          "Expected `%s` to be one of 'split', 'vsplit', 'split_above', 'split_above_all', 'split_below', 'split_below_all', 'vsplit_left', tab', 'floating', 'floating_console', 'replace', 'popup' or 'auto', got '%s'",
           name,
           val
         )
@@ -1289,6 +1308,7 @@ function M.validate_config()
     -- Popup
     if validate_type(config.popup, "popup", "table") then
       validate_kind(config.popup.kind, "popup.kind")
+      validate_type(config.popup.show_title, "popup.show_title", "boolean")
     end
 
     if validate_type(config.git_services, "git_services", "table") then

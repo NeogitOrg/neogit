@@ -7,7 +7,7 @@ local LogViewBuffer = require("neogit.buffers.log_view")
 local ReflogViewBuffer = require("neogit.buffers.reflog_view")
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
-local a = require("plenary.async")
+local a = require("neogit.lib.async")
 
 --- Runs `git log` and parses the commits
 ---@param popup table Contains the argument list

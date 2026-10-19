@@ -1,5 +1,6 @@
 local git = require("neogit.lib.git")
 local notification = require("neogit.lib.notification")
+local Path = require("neogit.lib.path")
 
 local api = vim.api
 
@@ -154,9 +155,9 @@ end
 function M.goto_file_at(path, cursor)
   local absolute_path = vim.fs.joinpath(git.repo.worktree_root, path)
 
-  local path_exists = require("plenary.path"):new(path):exists()
+  local path_exists = Path:new(absolute_path):exists()
   if not path_exists then
-    notification.warn("Path " .. path .. " not found in current HEAD")
+    notification.warn("Path " .. absolute_path .. " not found in current HEAD")
     return
   end
 

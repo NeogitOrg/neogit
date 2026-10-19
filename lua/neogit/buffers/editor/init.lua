@@ -5,6 +5,7 @@ local util = require("neogit.lib.util")
 local git = require("neogit.lib.git")
 local logger = require("neogit.logger")
 local process = require("neogit.process")
+local event = require("neogit.lib.event")
 
 local DiffViewBuffer = require("neogit.buffers.diff")
 
@@ -101,6 +102,7 @@ function M:open(kind)
         self.diff_view = nil
       end
 
+      event.send("EditorClosed")
       logger.debug("[EDITOR] Done cleaning up")
     end,
     after = function(buffer)
@@ -164,7 +166,8 @@ function M:open(kind)
         vim.fn.matchadd("NeogitRemote", git.branch.upstream(), 100)
       end
 
-      if self.show_diff and kind ~= "floating" then
+      -- The diff buffer can't render if there are too many files
+      if self.show_diff and kind ~= "floating" and #git.repo.state.staged.items < 10 then
         logger.debug("[EDITOR] Opening Diffview for staged changes")
         self.diff_view = DiffViewBuffer:new("Staged Changes"):open()
       end
