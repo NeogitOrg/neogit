@@ -474,9 +474,12 @@ end
 M.v_diff_popup = function(self)
   return popups.open("diff", function(p)
     local section = self.buffer.ui:get_selection().section
-    local item = self.buffer.ui:get_commits_in_selection()
-    if #item > 0 then
-      table.insert(item, 1, item[1] .. "~1")
+    local commits = self.buffer.ui:get_commits_in_selection()
+    ---@type string|string[]|nil
+    local item
+    if #commits > 0 then
+      table.insert(commits, 1, commits[1] .. "~1")
+      item = commits
     else
       item = self.buffer.ui:get_yankable_under_cursor()
     end
