@@ -52,6 +52,15 @@ RSpec.describe "Log Buffer", :git, :nvim do
     expect(nvim.screen[1].strip).to eq("Commits in --all")
   end
 
+  it "ignores a visual diff selection without commits" do
+    nvim.keys("ll")
+    nvim.move_to_line("Commits in master")
+    nvim.keys("Vd")
+
+    expect(nvim.errors).to be_empty
+    expect(nvim.filetype).to eq("NeogitLogView")
+  end
+
   it "can open CommitView" do
     nvim.keys("ll<enter>")
     expect(nvim.errors).to be_empty

@@ -122,6 +122,10 @@ function M:open()
         end),
         [popups.mapping_for("DiffPopup")] = popups.open("diff", function(p)
           local items = self.buffer.ui:get_commits_in_selection()
+          if #items == 0 then
+            return
+          end
+
           table.insert(items, 1, items[1] .. "~1")
           p {
             section = { name = "log" },
