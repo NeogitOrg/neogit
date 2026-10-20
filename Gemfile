@@ -6,7 +6,6 @@ source "https://rubygems.org"
 
 gem "activesupport"
 gem "amazing_print"
-gem "debug"
 gem "fuubar"
 gem "git"
 gem "neovim"
@@ -20,3 +19,7 @@ gem "super_diff"
 gem "tmpdir"
 
 gem "lefthook", "~> 1.7"
+
+gem "async", "~> 2.46"
+
+gem "tty-spinner", "~> 0.9.3"

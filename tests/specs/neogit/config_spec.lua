@@ -32,7 +32,7 @@ describe("Neogit config", function()
       end)
 
       it("should return invalid when disable_insert_on_commit isn't a boolean", function()
-        config.values.telescope_sorter = "not a boolean"
+        config.values.disable_insert_on_commit = "not a boolean"
         assert.True(vim.tbl_count(require("neogit.config").validate_config()) ~= 0)
       end)
 
@@ -238,6 +238,11 @@ describe("Neogit config", function()
 
       it("should return invalid when popup.kind isn't a valid kind", function()
         config.values.popup.kind = "not a valid kind"
+        assert.True(vim.tbl_count(require("neogit.config").validate_config()) ~= 0)
+      end)
+
+      it("should return invalid when popup.show_title isn't a boolean", function()
+        config.values.popup.show_title = "not a boolean"
         assert.True(vim.tbl_count(require("neogit.config").validate_config()) ~= 0)
       end)
 

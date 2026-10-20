@@ -1,6 +1,6 @@
 local M = {}
 
-local Path = require("plenary.path")
+local Path = require("neogit.lib.path")
 local git = require("neogit.lib.git")
 local util = require("neogit.lib.util")
 local input = require("neogit.lib.input")
@@ -19,7 +19,7 @@ local function make_rules(popup, relative)
   end, files))
 end
 
----@param path Path
+---@param path NeogitPath
 ---@param rules string[]
 local function add_rules(path, rules)
   local selected = FuzzyFinderBuffer.new(rules)

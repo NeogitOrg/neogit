@@ -1,5 +1,5 @@
 local config = require("neogit.config")
-local a = require("plenary.async")
+local a = require("neogit.lib.async")
 
 local function refocus_status_buffer()
   local status = require("neogit.buffers.status")
@@ -122,35 +122,49 @@ local function telescope_mappings(on_select, allow_multi, refocus_status)
   end
 end
 
---- Utility function to map actions
+--- Build the fzf-lua actions table and an abort handler
+---
+--- The `esc`/`ctrl-c`/`ctrl-q` actions only fire when fzf is given one of those
+--- keys and prints it back; if the fzf process is instead terminated (window
+--- closed, job killed) no action is dispatched at all. The caller wires the
+--- returned `on_close` to `winopts.on_close` so an abort still completes the
+--- finder via `nil`, matching the abort semantics of every other integration.
 ---@param on_select fun(item: any|nil)
 ---@param allow_multi boolean
 ---@param refocus_status boolean
+---@return table actions
+---@return function on_close
 local function fzf_actions(on_select, allow_multi, refocus_status)
+  local completed = false
+
   local function refresh()
     if refocus_status then
       refocus_status_buffer()
     end
   end
 
-  local function close_action()
-    on_select(nil)
+  local function complete(selection)
+    if completed then
+      return
+    end
+    completed = true
+    on_select(selection)
     refresh()
+  end
+
+  local function close_action()
+    complete(nil)
   end
 
   return {
     ["default"] = function(selected)
-      if allow_multi then
-        on_select(selected)
-      else
-        on_select(selected[1])
-      end
-      refresh()
+      complete(allow_multi and selected or selected[1])
     end,
     ["esc"] = close_action,
     ["ctrl-c"] = close_action,
     ["ctrl-q"] = close_action,
-  }
+  },
+    close_action
 end
 
 ---Convert entries to snack picker items
@@ -215,6 +229,39 @@ local function snacks_confirm(on_select, allow_multi, refocus_status)
   end
 
   return confirm, on_close
+end
+
+--- Build `source.choose` and an abort handler for mini.pick
+---
+--- Unlike the confirm path, `source.choose` is not invoked when the picker is
+--- aborted (e.g. <Esc>); the caller wires the returned `on_stop` to a
+--- `MiniPickStop` autocmd so an abort still completes the finder via `nil`,
+--- matching the abort semantics of every other integration.
+---@param on_select fun(item: any|nil)
+---@param refocus_status boolean
+---@return function choose, function on_stop
+local function mini_pick_choose(on_select, refocus_status)
+  local completed = false
+  local function complete(selection)
+    if completed then
+      return
+    end
+    on_select(selection)
+    completed = true
+    if refocus_status then
+      refocus_status_buffer()
+    end
+  end
+
+  local function choose(item)
+    complete(item)
+  end
+
+  local function on_stop()
+    complete(nil)
+  end
+
+  return choose, on_stop
 end
 
 --- Utility function to map finder opts to fzf
@@ -335,6 +382,7 @@ function Finder:find(on_select)
       :find()
   elseif config.check_integration("fzf_lua") then
     local fzf_lua = require("fzf-lua")
+    local actions, on_close = fzf_actions(on_select, self.opts.allow_multi, self.opts.refocus_status)
     fzf_lua.fzf_exec(self.entries, {
       prompt = string.format("%s> ", self.opts.prompt_prefix),
       fzf_opts = fzf_opts(self.opts),
@@ -342,12 +390,34 @@ function Finder:find(on_select)
         height = self.opts.layout_config.height,
         border = self.opts.border,
         preview = { border = self.opts.border },
+        -- fzf-lua invokes `winopts.on_close` from `FzfWin:close()` before the
+        -- selected action is dispatched, so defer the abort completion to the
+        -- next event loop tick; the `completed` guard turns the resulting
+        -- double call into a no-op when a selection was already dispatched.
+        on_close = function()
+          vim.schedule(on_close)
+        end,
       },
-      actions = fzf_actions(on_select, self.opts.allow_multi, self.opts.refocus_status),
+      actions = actions,
     })
   elseif config.check_integration("mini_pick") then
     local mini_pick = require("mini.pick")
-    mini_pick.start { source = { items = self.entries, choose = on_select } }
+    local choose, on_stop = mini_pick_choose(on_select, self.opts.refocus_status)
+    -- `source.choose` only fires on explicit confirm (<CR>); aborting via <Esc> goes
+    -- through `picker_stop` and never calls `choose`. Without the `MiniPickStop`
+    -- handler below, `on_select` would never run on abort, leaving the `find_async`
+    -- coroutine suspended forever (the picker then appears dead until restart).
+    local group = vim.api.nvim_create_augroup("NeogitMiniPickStop", { clear = true })
+    vim.api.nvim_create_autocmd("User", {
+      pattern = "MiniPickStop",
+      once = true,
+      group = group,
+      callback = function()
+        vim.api.nvim_clear_autocmds { group = group }
+        on_stop()
+      end,
+    })
+    mini_pick.start { source = { items = self.entries, choose = choose } }
   elseif config.check_integration("snacks") then
     local snacks_picker = require("snacks.picker")
     local confirm, on_close = snacks_confirm(on_select, self.opts.allow_multi, self.opts.refocus_status)

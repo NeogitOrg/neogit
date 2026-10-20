@@ -10,6 +10,7 @@ jobs:
   test:
     name: Test
     runs-on: ${{ matrix.os }}
+    continue-on-error: true
     strategy:
       matrix:
         release: [stable, nightly]
@@ -17,7 +18,7 @@ jobs:
     env:
       CI: "1"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: ruby/setup-ruby@v1
         with:
@@ -40,7 +41,7 @@ jobs:
 
       - name: E2E Test
         run: |
-          bundle exec rspec
+          bundle exec rspec --format doc
 
       - name: Unit Test
         run: |

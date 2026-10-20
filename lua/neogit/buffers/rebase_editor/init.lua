@@ -1,3 +1,4 @@
+local a = require("neogit.lib.async")
 local Buffer = require("neogit.lib.buffer")
 local config = require("neogit.config")
 local input = require("neogit.lib.input")
@@ -105,7 +106,7 @@ function M:open(kind)
         ("%s   %s tell Git that you changed your mind, i.e. abort"):format(comment_char, pad_mapping("Abort")),
         ("%s   %s move the commit up"):format(comment_char, pad_mapping("MoveUp")),
         ("%s   %s move the commit down"):format(comment_char, pad_mapping("MoveDown")),
-        ("%s   %s show the commit another buffer"):format(comment_char, pad_mapping("OpenCommit")),
+        ("%s   %s show the commit in another buffer"):format(comment_char, pad_mapping("OpenCommit")),
         ("%s"):format(comment_char),
         ("%s These lines can be re-ordered; they are executed from top to bottom."):format(comment_char),
         ("%s"):format(comment_char),
@@ -172,14 +173,13 @@ function M:open(kind)
         [mapping["Edit"]] = line_action("edit", comment_char),
         [mapping["Squash"]] = line_action("squash", comment_char),
         [mapping["Fixup"]] = line_action("fixup", comment_char),
-        [mapping["Execute"]] = function(buffer)
+        [mapping["Execute"]] = a.void(function(buffer)
           local exec = input.get_user_input("Execute")
           if not exec then
             return
           end
-
           buffer:insert_line("exec " .. exec)
-        end,
+        end),
         [mapping["Drop"]] = function()
           local line = vim.api.nvim_get_current_line()
           if line:match(string.format("^%s ", comment_char)) then

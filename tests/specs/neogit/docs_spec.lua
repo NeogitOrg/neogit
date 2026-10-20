@@ -1,4 +1,4 @@
-local Path = require("plenary.path")
+local Path = require("neogit.lib.path")
 
 describe("docs", function()
   it("doesn't repeat any tags", function()

@@ -163,7 +163,8 @@ function M.open(opts)
   end
 
   if opts[1] ~= nil then
-    local a = require("plenary.async")
+    require("neogit.lib.git.repository").instance(opts.cwd)
+    local a = require("neogit.lib.async")
     local cb = function()
       open_popup(opts[1])
     end
@@ -187,7 +188,7 @@ end
 function M.action(popup, action, args)
   local util = require("neogit.lib.util")
   local git = require("neogit.lib.git")
-  local a = require("plenary.async")
+  local a = require("neogit.lib.async")
 
   args = args or {}
 

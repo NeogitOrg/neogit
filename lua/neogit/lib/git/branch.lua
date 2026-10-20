@@ -19,7 +19,9 @@ local function parse_branches(branches, include_current)
   local ref = " %-> "
   local detached = "^%(HEAD detached at %x%x%x%x%x%x%x"
   local no_branch = "^%(no branch,"
-  local pattern = include_current and "^[* ] (.+)" or "^  (.+)"
+  -- `git branch` prefixes the current branch with "*", branches checked out in another worktree with "+", and
+  -- all other branches with a space.
+  local pattern = include_current and "^[*+ ] (.+)" or "^[+ ] (.+)"
 
   for _, b in ipairs(branches) do
     local branch_name = b:match(pattern)
@@ -66,7 +68,7 @@ function M.list_related_branches(relation, commit, ...)
 
   local branches = {}
   for _, branch in ipairs(result.stdout) do
-    branch = branch:match("^%s*(.-)%s*$")
+    branch = branch:gsub("^[*+] ", ""):match("^%s*(.-)%s*$")
     if branch and not branch:match("^%(HEAD") and not branch:match("^HEAD ->") and branch ~= "" then
       table.insert(branches, branch)
     end
@@ -85,14 +87,14 @@ end
 ---@param args? string[]
 ---@return ProcessResult
 function M.checkout(name, args)
-  return git.cli.checkout.branch(name).arg_list(args or {}).call { await = true }
+  return git.cli.checkout.branch(name).arg_list(args or {}).call()
 end
 
 ---@param name string
 ---@param args? string[]
 ---@return ProcessResult
 function M.track(name, args)
-  return git.cli.checkout.track(name).arg_list(args or {}).call { await = true }
+  return git.cli.checkout.track(name).arg_list(args or {}).call()
 end
 
 ---@param include_current? boolean
@@ -123,16 +125,22 @@ function M.is_unmerged(branch, base)
 end
 
 ---@return string|nil
+function M.base_commit()
+  local result = git.cli.reflog.show.args("--no-abbrev", M.current()).call { hidden = true }
+  return vim.split(result.stdout[#result.stdout], " ")[1]
+end
+
+---@return string|nil
 function M.base_branch()
-  local value = git.config.get("neogit.baseBranch")
-  if value:is_set() then
-    return value:read() ---@type string
-  else
-    if M.exists("master") then
-      return "master"
-    elseif M.exists("main") then
-      return "main"
-    end
+  local base = M.base_commit()
+  if base then
+    local branch = git.cli["name-rev"].name_only
+      .exclude("tags/*")
+      .exclude("remotes/*")
+      .args(base)
+      .call({ hidden = true }).stdout[1]
+
+    return vim.split(branch, "~")[1]
   end
 end
 
@@ -260,8 +268,9 @@ function M.pushRemote_or_pushDefault_label()
   end
 
   local pushDefault = M.pushDefault()
-  if pushDefault then
-    return ("%s, creating it"):format(M.pushDefault_ref())
+  local pushDefault_ref = M.pushDefault_ref()
+  if pushDefault and pushDefault_ref then
+    return ("%s, creating it"):format(pushDefault_ref)
   end
 
   return "pushRemote, setting that"
@@ -311,8 +320,9 @@ end
 ---@return string|nil
 function M.upstream(name)
   if name then
-    local result =
-      git.cli["rev-parse"].symbolic_full_name.abbrev_ref(name .. "@{upstream}").call { ignore_error = true }
+    local result = git.cli["rev-parse"].symbolic_full_name.abbrev_ref
+      .args(name .. "@{upstream}")
+      .call { ignore_error = true }
 
     if result:success() then
       return result.stdout[1]

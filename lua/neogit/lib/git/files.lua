@@ -1,6 +1,6 @@
 local git = require("neogit.lib.git")
 local util = require("neogit.lib.util")
-local Path = require("plenary.path")
+local Path = require("neogit.lib.path")
 
 ---@class NeogitGitFiles
 local M = {}

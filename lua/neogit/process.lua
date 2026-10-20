@@ -1,9 +1,10 @@
-local a = require("plenary.async")
+local a = require("neogit.lib.async")
 local notification = require("neogit.lib.notification")
 
 local config = require("neogit.config")
 local logger = require("neogit.logger")
 local util = require("neogit.lib.util")
+local git = require("neogit.lib.git")
 
 local ProcessBuffer = require("neogit.buffers.process")
 local Spinner = require("neogit.spinner")
@@ -11,13 +12,23 @@ local Spinner = require("neogit.spinner")
 local api = vim.api
 local fn = vim.fn
 
-local command_mask = vim.pesc(
-  " --no-pager --literal-pathspecs --no-optional-locks -c core.preloadindex=true -c color.ui=always -c diff.noprefix=false"
-)
+local command_masks = {
+  vim.pesc(
+    " --no-pager --literal-pathspecs --no-optional-locks -c core.preloadindex=true -c color.ui=always -c diff.noprefix=false"
+  ),
+  vim.pesc(
+    " --no-pager --no-optional-locks -c core.preloadindex=true -c color.ui=always -c diff.noprefix=false"
+  ),
+}
 
 local function mask_command(cmd)
-  local command, _ = cmd:gsub(command_mask, "")
-  return command
+  for _, mask in ipairs(command_masks) do
+    local command, count = cmd:gsub(mask, "")
+    if count > 0 then
+      return command
+    end
+  end
+  return cmd
 end
 
 ---@class ProcessOpts
@@ -103,6 +114,21 @@ ProcessResult.__index = ProcessResult
 ---@return Process
 function Process.new(process)
   return setmetatable(process, Process) ---@class Process
+end
+
+---@return Process
+function Process:clone()
+  return Process.new {
+    cmd = self.cmd,
+    cwd = self.cwd,
+    env = self.env and vim.tbl_extend("force", {}, self.env) or nil,
+    input = self.input,
+    on_error = self.on_error,
+    pty = self.pty,
+    git_hook = self.git_hook,
+    suppress_console = self.suppress_console,
+    user_command = self.user_command,
+  }
 end
 
 local hide_console = false
@@ -216,15 +242,20 @@ function Process:wait(timeout)
 end
 
 function Process:stop()
-  if self.job then
-    assert(fn.jobstop(self.job) == 1, "invalid job id")
+  if self.job and not self.result then
+    -- jobstop returns 1 on success, 0 if the job has already exited / id is
+    -- invalid.  Don't assert: a cancellation racing with normal exit is fine.
+    self.killed = true
+    fn.jobstop(self.job)
   end
 end
 
 --- Spawn and await the process
---- Must be called inside a plenary async context
+--- Must be called inside a neogit async context.
 ---
---- Returns nil if spawning fails
+--- Returns nil if spawning fails.  If the surrounding async task is cancelled
+--- while the process is in flight, the underlying job is killed via
+--- `Process:stop()`.
 ---@param post fun(process: Process)|nil
 ---@return ProcessResult|nil
 function Process:spawn_async(post)
@@ -232,6 +263,10 @@ function Process:spawn_async(post)
     self:spawn(cb)
     if post then
       post(self)
+    end
+    -- Cancel-handle: when the surrounding task is cancelled, kill the job.
+    return function()
+      self:stop()
     end
   end, 1)()
 end
@@ -338,8 +373,25 @@ function Process:spawn(cb)
 
     if self.buffer and not self.suppress_console then
       self.buffer:append(string.format("Process exited with code: %d", code))
+    end
 
-      if not self.buffer:is_visible() and code > 0 and self.on_error(res) then
+    -- Handle git hook failures and other errors.  Skip entirely if the
+    -- process was killed via Process:stop() (i.e. the surrounding async task
+    -- was cancelled): the non-zero exit is intentional, not a real failure.
+    if code > 0 and not self.killed then
+      local should_show_error = self.on_error(res)
+      local is_hook_failure = self.git_hook and code > 0 and not git.status.any_unmerged()
+
+      -- For git hook failures, always show the Git Console
+      if is_hook_failure then
+        -- Simply show the existing buffer with the git hook output
+        if self.buffer then
+          self.buffer:show()
+        end
+      end
+
+      -- Handle normal error display logic
+      if should_show_error and not is_hook_failure then
         local output = {}
         local start = math.max(#res.stderr - 16, 1)
         for i = start, math.min(#res.stderr, start + 16) do
@@ -350,19 +402,21 @@ function Process:spawn(cb)
           local message =
             string.format("%s:\n\n%s", mask_command(table.concat(self.cmd, " ")), table.concat(output, "\n"))
           notification.warn(message)
-        elseif config.values.auto_show_console_on == "error" then
+        elseif config.values.auto_show_console_on == "error" and self.buffer then
           self.buffer:show()
         end
       end
+    end
 
-      if
-        not self.user_command
-        and config.values.auto_close_console
-        and self.buffer:is_visible()
-        and code == 0
-      then
-        self.buffer:close()
-      end
+    -- Close console on success if configured
+    if
+      self.buffer
+      and not self.user_command
+      and config.values.auto_close_console
+      and self.buffer:is_visible()
+      and code == 0
+    then
+      self.buffer:close()
     end
 
     self.stdin = nil

@@ -16,9 +16,21 @@ function M.commits(commits, args)
   end
 end
 
+---@param hunk Hunk
+---@param _ string[]
+---@return boolean success
+---@return string|nil error_message
 function M.hunk(hunk, _)
   local patch = git.index.generate_patch(hunk, { reverse = true })
-  git.index.apply(patch, { reverse = true })
+  local result = git.index.apply(patch, { reverse = true })
+
+  if result:success() then
+    return true, nil
+  else
+    -- Extract error message from stderr, or provide default
+    local error_msg = #result.stderr > 0 and table.concat(result.stderr, "\n") or "Failed to apply patch"
+    return false, error_msg
+  end
 end
 
 function M.continue()

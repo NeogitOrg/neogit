@@ -1,5 +1,5 @@
 local git = require("neogit.lib.git")
-local Path = require("plenary.path")
+local Path = require("neogit.lib.path")
 local util = require("neogit.lib.util")
 
 ---@param path string
@@ -125,7 +125,7 @@ end
 
 function M.checkout_unstaged()
   local items = util.map(git.repo.state.unstaged.items, function(item)
-    return item.escaped_path
+    return item.name
   end)
 
   return git.cli.checkout.files(unpack(items)).call { await = true }
