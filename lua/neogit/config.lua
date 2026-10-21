@@ -221,6 +221,8 @@ end
 ---| "StageAll"
 ---| "Unstage"
 ---| "UnstageStaged"
+---| "Undo"
+---| "Redo"
 ---| "Untrack"
 ---| "RefreshBuffer"
 ---| "GoToFile"
@@ -725,6 +727,8 @@ function M.get_default_values()
         ["K"] = "Untrack",
         ["R"] = "Rename",
         ["U"] = "UnstageStaged",
+        ["<m-u>"] = "Undo",
+        ["<m-r>"] = "Redo",
         ["y"] = "ShowRefs",
         ["$"] = "CommandHistory",
         ["Y"] = "YankSelected",
