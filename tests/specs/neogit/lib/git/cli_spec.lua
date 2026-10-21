@@ -21,6 +21,17 @@ describe("git cli", function()
       end)
     )
 
+    it("resolves the git dir against the given directory, not the current cwd", function()
+      local root_dir = git_harness.prepare_repository()
+      local sub_dir = root_dir .. "/sub-dir"
+      vim.fn.mkdir(sub_dir, "p")
+      vim.api.nvim_set_current_dir(sub_dir)
+
+      local expected = vim.fs.normalize(root_dir .. "/.git")
+      eq(expected, vim.fs.normalize(git_cli.worktree_git_dir(root_dir)))
+      eq(expected, vim.fs.normalize(git_cli.git_dir(root_dir)))
+    end)
+
     it(
       "finds the correct git root for a symlinked directory without a .git dir in its upper paths",
       in_prepared_repo(function(root_dir)
