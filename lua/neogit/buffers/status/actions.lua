@@ -236,20 +236,20 @@ M.v_discard = function(self)
 
       if #unstaged_files > 0 then
         git.index.checkout(util.map(unstaged_files, function(item)
-          return item.escaped_path
+          return item.name
         end))
       end
 
       if #new_files > 0 then
         git.index.reset(util.map(new_files, function(item)
-          return item.escaped_path
+          return item.name
         end))
         cleanup_items(new_files)
       end
 
       if #staged_files_modified > 0 then
         local paths = util.map(staged_files_modified, function(item)
-          return item.escaped_path
+          return item.name
         end)
         git.index.reset(paths)
         git.index.checkout(paths)
@@ -295,9 +295,9 @@ M.v_stage = function(self)
             end
           else
             if section.name == "unstaged" then
-              table.insert(unstaged_files, item.escaped_path)
+              table.insert(unstaged_files, item.name)
             else
-              table.insert(untracked_files, item.escaped_path)
+              table.insert(untracked_files, item.name)
             end
           end
         end
@@ -348,7 +348,7 @@ M.v_unstage = function(self)
               )
             end
           else
-            table.insert(files, item.escaped_path)
+            table.insert(files, item.name)
           end
         end
       end
@@ -864,7 +864,7 @@ M.n_discard = function(self)
           message = ("Discard %q?"):format(selection.item.name)
           action = function()
             if selection.item.mode == "A" then
-              git.index.reset { selection.item.escaped_path }
+              git.index.reset { selection.item.name }
               cleanup_items { selection.item }
             else
               git.index.checkout { selection.item.name }
@@ -903,22 +903,20 @@ M.n_discard = function(self)
           message = ("Discard %q?"):format(selection.item.name)
           action = function()
             if selection.item.mode == "N" then
-              git.index.reset { selection.item.escaped_path }
+              git.index.reset { selection.item.name }
               cleanup_items { selection.item }
             elseif selection.item.mode == "M" then
-              git.index.reset { selection.item.escaped_path }
-              git.index.checkout { selection.item.escaped_path }
+              git.index.reset { selection.item.name }
+              git.index.checkout { selection.item.name }
             elseif selection.item.mode == "R" then
               git.index.reset_HEAD(selection.item.name, selection.item.original_name)
               git.index.checkout { selection.item.original_name }
               cleanup_items { selection.item }
             elseif selection.item.mode == "D" then
-              git.index.reset_HEAD(selection.item.escaped_path)
-              git.index.checkout { selection.item.escaped_path }
+              git.index.reset_HEAD(selection.item.name)
+              git.index.checkout { selection.item.name }
             else
-              error(
-                ("Unhandled file mode %q for %q"):format(selection.item.mode, selection.item.escaped_path)
-              )
+              error(("Unhandled file mode %q for %q"):format(selection.item.mode, selection.item.name))
             end
           end
           refresh = { update_diffs = { "staged:" .. selection.item.name } }
@@ -999,19 +997,19 @@ M.n_discard = function(self)
             if item.mode == "N" or item.mode == "A" then
               table.insert(new_files, item)
             elseif item.mode == "M" then
-              table.insert(staged_files_modified, item.escaped_path)
+              table.insert(staged_files_modified, item.name)
             elseif item.mode == "R" then
               table.insert(staged_files_renamed, item)
             elseif item.mode == "D" then
-              table.insert(staged_files_deleted, item.escaped_path)
+              table.insert(staged_files_deleted, item.name)
             else
-              error(("Unknown file mode %q for %q"):format(item.mode, item.escaped_path))
+              error(("Unknown file mode %q for %q"):format(item.mode, item.name))
             end
           end
 
           if #new_files > 0 then
             git.index.reset(util.map(new_files, function(item)
-              return item.escaped_path
+              return item.name
             end))
             cleanup_items(new_files)
           end
@@ -1025,7 +1023,7 @@ M.n_discard = function(self)
             for _, item in ipairs(staged_files_renamed) do
               git.index.reset_HEAD(item.name, item.original_name)
               git.index.checkout { item.original_name }
-              fn.delete(item.escaped_path)
+              fn.delete(item.absolute_path)
             end
           end
 
