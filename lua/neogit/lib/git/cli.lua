@@ -1035,13 +1035,34 @@ local function worktree_root(dir)
   return Path:new(vim.trim(result.stdout)):absolute()
 end
 
+---Resolve a path returned by `git -C <dir> rev-parse` against `dir` rather than the CWD
+---TODO: replace with `vim.fs.abspath(path, { cwd = dir })` when stable
+---@param dir string
+---@param path string
+---@return string Absolute path
+local function resolve_git_path(dir, path)
+  path = vim.trim(path)
+
+  -- `git` returns paths relative to `dir`, but `Path:absolute()` resolves against
+  -- the process CWD, which may differ (e.g. subdirectory of a monorepo).
+  local is_absolute = vim.startswith(path, "/")
+    or vim.startswith(path, "\\\\")
+    or path:match("^%a:[/\\]") ~= nil
+
+  if not is_absolute then
+    path = vim.fs.joinpath(dir, path)
+  end
+
+  return Path:new(path):absolute()
+end
+
 ---@param dir string
 ---@return string Absolute path of `.git/` directory
 local function git_dir(dir)
   local cmd = { get_git_executable(), "-C", dir, "rev-parse", "--git-common-dir" }
   local result = vim.system(cmd, { text = true }):wait()
 
-  return Path:new(vim.trim(result.stdout)):absolute()
+  return resolve_git_path(dir, result.stdout)
 end
 
 ---@param dir string
@@ -1050,7 +1071,7 @@ local function worktree_git_dir(dir)
   local cmd = { get_git_executable(), "-C", dir, "rev-parse", "--git-dir" }
   local result = vim.system(cmd, { text = true }):wait()
 
-  return Path:new(vim.trim(result.stdout)):absolute()
+  return resolve_git_path(dir, result.stdout)
 end
 
 ---@param dir string
