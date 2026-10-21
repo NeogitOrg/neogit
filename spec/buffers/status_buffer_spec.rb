@@ -84,6 +84,18 @@ RSpec.describe "Status Buffer", :git, :nvim do
     # end
   end
 
+  describe "diffing a visual selection" do
+    it "opens the diff popup for a selected file" do
+      create_file("testfile", "changed\n")
+      nvim.refresh
+      nvim.move_to_line("testfile", after: "Unstaged changes")
+      nvim.keys("Vd")
+
+      expect(nvim.errors).to be_empty
+      expect(nvim.filetype).to eq("NeogitPopup")
+    end
+  end
+
   describe "staging tracked files" do
     before do
       File.write("foo", "original content\n")
