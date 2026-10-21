@@ -107,9 +107,8 @@ local function open_status_buffer(opts)
   local status = require("neogit.buffers.status")
   local config = require("neogit.config")
 
-  -- We need to construct the repo instance manually here since the actual CWD may not be the directory neogit is
-  -- going to open into. We will use vim.fn.lcd() in the status buffer constructor, so this will eventually be
-  -- correct.
+  -- Construct the repo instance here since the current CWD may not be the directory Neogit is going to open into.
+  -- The status buffer sets its own window-local CWD (vim.fn.lcd) to the worktree root.
   local repo = require("neogit.lib.git.repository").instance(opts.cwd)
   status.new(config.values, repo.worktree_root, opts.cwd):open(opts.kind):dispatch_refresh()
 end
