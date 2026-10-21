@@ -132,15 +132,15 @@ end
 
 ---@return string|nil
 function M.base_branch()
-  local base = M.base_commit()
-  if base then
-    local branch = git.cli["name-rev"].name_only
-      .exclude("tags/*")
-      .exclude("remotes/*")
-      .args(base)
-      .call({ hidden = true }).stdout[1]
-
-    return vim.split(branch, "~")[1]
+  local value = git.config.get("neogit.baseBranch")
+  if value:is_set() then
+    return value:read() ---@type string
+  else
+    if M.exists("master") then
+      return "master"
+    elseif M.exists("main") then
+      return "main"
+    end
   end
 end
 
