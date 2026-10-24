@@ -145,6 +145,7 @@ function M:open(kind)
     active_item_highlight = true,
     on_detach = function()
       Watcher.instance(self.root):unregister(self)
+      self.buffer = nil
 
       if self.prev_autochdir then
         vim.o.autochdir = self.prev_autochdir
