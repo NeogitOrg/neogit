@@ -97,6 +97,7 @@ function M:open()
     context_highlight = false,
     on_detach = function()
       Watcher.instance(self.root):unregister(self)
+      self.buffer = nil
     end,
     mappings = {
       v = {
