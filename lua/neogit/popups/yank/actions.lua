@@ -7,7 +7,7 @@ local function yank(key)
   return function(popup)
     local data = popup:get_env(key)
     if data then
-      vim.cmd.let(("@+='%s'"):format(data))
+      vim.fn.setreg("+", data)
       notification.info(("Copied %s to clipboard."):format(key))
     end
   end
