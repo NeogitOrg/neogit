@@ -793,9 +793,8 @@ M.n_yank_selected = function(self)
         yank = git.rev_parse.oid(yank:match("^(stash@{%d+})"))
       end
 
-      yank = string.format("'%s'", yank)
-      vim.cmd.let("@+=" .. yank)
-      vim.cmd.echo(yank)
+      vim.fn.setreg("+", yank)
+      vim.cmd.echo(string.format("%q", yank))
     else
       vim.cmd("echo ''")
     end
