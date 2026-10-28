@@ -434,6 +434,9 @@ function Finder:find(on_select)
       },
       confirm = confirm,
       on_close = on_close,
+      -- Return focus to the window that opened the picker. Snacks' default "main" window is never a
+      -- float, so closing it would leave a floating popup open but unfocused.
+      main = { current = true, float = true, file = false },
     })
   else
     vim.ui.select(self.entries, {
