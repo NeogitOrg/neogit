@@ -135,9 +135,22 @@ function M.get_global(key)
   return ConfigEntry.new(key, result, "global")
 end
 
+---Section and variable names are case-insensitive, but subsections (e.g. a branch or remote name) are not. This
+---matches how `git config --list` prints keys.
+---@param key string
+---@return string
+local function normalize_key(key)
+  local section, subsection, name = key:match("^([^.]+)%.(.+)%.([^.]+)$")
+  if section then
+    return string.format("%s.%s.%s", section:lower(), subsection, name:lower())
+  end
+
+  return key:lower()
+end
+
 ---@return ConfigEntry
 function M.get_local(key)
-  return config()[key:lower()] or ConfigEntry.new(key, "", "local")
+  return config()[normalize_key(key)] or ConfigEntry.new(key, "", "local")
 end
 
 function M.get_matching(pattern)
