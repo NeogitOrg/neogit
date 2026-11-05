@@ -333,9 +333,12 @@ end
 ---@return table
 function M.deduplicate(tbl)
   local res = {}
+  local seen = {}
   for i = 1, #tbl do
-    if tbl[i] and not vim.tbl_contains(res, tbl[i]) then
-      table.insert(res, tbl[i])
+    local value = tbl[i]
+    if value and not seen[value] then
+      seen[value] = true
+      table.insert(res, value)
     end
   end
   return res
