@@ -408,10 +408,11 @@ end
 ---@field upstream string|nil
 
 ---@return BranchStatus
-function M.status()
-  local result = git.cli.status.porcelain(2).branch.call { hidden = true }
+---@param lines? string[]
+function M.status(lines)
+  lines = lines or git.cli.status.porcelain(2).branch.call({ hidden = true }).stdout
   local status = {}
-  for _, line in ipairs(result.stdout) do
+  for _, line in ipairs(lines) do
     if line:match("^# branch") then
       local key, value = line:match("^# branch%.([^%s]+) (.*)$")
       status[key] = value
@@ -428,8 +429,8 @@ end
 local INITIAL_COMMIT = "(initial)"
 
 ---@param state NeogitRepoState
-local function update_branch_information(state)
-  local status = M.status()
+local function update_branch_information(state, _, status)
+  local status = status and status.branch or M.status()
 
   state.upstream.ref = nil
   state.upstream.remote = nil

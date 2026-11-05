@@ -246,12 +246,12 @@ function Repo:git_path(...)
   return Path:new(self.git_dir):joinpath(...)
 end
 
-function Repo:tasks(filter, state)
+function Repo:tasks(filter, state, status)
   local tasks = {}
   for name, fn in pairs(self.lib) do
     table.insert(tasks, function()
       local start = vim.uv.now()
-      fn(state, filter)
+      fn(state, filter, status)
       logger.debug(("[REPO]: Refreshed %s in %d ms"):format(name, vim.uv.now() - start))
     end)
   end
@@ -274,6 +274,13 @@ function Repo:run_callbacks(id)
 end
 
 local DEFAULT_FILTER = ItemFilter.create { "*:*" }
+
+local run_tasks = a.wrap(function(tasks, callback)
+  local task = a.util.run_all(tasks, callback)
+  return function()
+    task:cancel()
+  end
+end, 2)
 
 local function timestamp()
   vim.uv.update_time()
@@ -319,7 +326,10 @@ function Repo:refresh(opts)
     filter = DEFAULT_FILTER
   end
 
-  self._refresh_task = a.util.run_all(self:tasks(filter, self:current_state(start)), function()
+  self._refresh_task = a.run(function()
+    local status = git.status.read()
+    run_tasks(self:tasks(filter, self:current_state(start), status))
+  end, function()
     if self._refresh_task and self._refresh_task:cancelled() then
       logger.debug("[REPO]: (" .. start .. ") Refresh cancelled before completion")
       return
