@@ -312,6 +312,7 @@ end
 ---@field exclude_standard self
 ---@field full_name self
 ---@field error_unmatch self
+---@field eol self
 
 ---@class GitCommandLsTree: GitCommandBuilder
 ---@field full_tree self
@@ -950,6 +951,7 @@ local configurations = {
       exclude_standard = "--exclude-standard",
       full_name = "--full-name",
       error_unmatch = "--error-unmatch",
+      eol = "--eol",
     },
   },
 
