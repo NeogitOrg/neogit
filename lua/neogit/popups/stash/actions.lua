@@ -1,3 +1,4 @@
+local config = require("neogit.config")
 local git = require("neogit.lib.git")
 local input = require("neogit.lib.input")
 
@@ -6,16 +7,32 @@ local StashListBuffer = require("neogit.buffers.stash_list_view")
 
 local M = {}
 
+--- Asks the user for a message for the new stash, if enabled in the config.
+---@return string|nil message nil means "stash without a message"
+local function stash_message()
+  if not config.values.prompt_stash_message then
+    return nil
+  end
+
+  local message = input.get_user_input("Stash message")
+
+  if not message or message == "" then
+    return nil
+  end
+
+  return message
+end
+
 function M.both(popup)
-  git.stash.stash_all(popup:get_arguments())
+  git.stash.stash_all(popup:get_arguments(), stash_message())
 end
 
 function M.index()
-  git.stash.stash_index()
+  git.stash.stash_index(stash_message())
 end
 
 function M.keep_index()
-  git.stash.stash_keep_index()
+  git.stash.stash_keep_index(stash_message())
 end
 
 function M.push(popup)
@@ -24,7 +41,7 @@ function M.push(popup)
     return
   end
 
-  git.stash.push(popup:get_arguments(), files)
+  git.stash.push(popup:get_arguments(), files, stash_message())
 end
 
 ---@param action string

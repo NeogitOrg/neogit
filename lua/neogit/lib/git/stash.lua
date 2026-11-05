@@ -17,25 +17,53 @@ function M.list_refs()
 end
 
 ---@param args string[]
-function M.stash_all(args)
-  local result = git.cli.stash.push.files(".").arg_list(args).call()
+---@param message string|nil
+function M.stash_all(args, message)
+  local cli = git.cli.stash.push
+
+  if message then
+    cli = cli.message(message)
+  end
+
+  local result = cli.files(".").arg_list(args).call()
   event.send("Stash", { success = result:success() })
 end
 
-function M.stash_index()
-  local result = git.cli.stash.staged.call()
+---@param message string|nil
+function M.stash_index(message)
+  local cli = git.cli.stash.staged
+
+  if message then
+    cli = cli.message(message)
+  end
+
+  local result = cli.call()
   event.send("Stash", { success = result:success() })
 end
 
-function M.stash_keep_index()
-  local result = git.cli.stash.keep_index.files(".").call()
+---@param message string|nil
+function M.stash_keep_index(message)
+  local cli = git.cli.stash.keep_index
+
+  if message then
+    cli = cli.message(message)
+  end
+
+  local result = cli.files(".").call()
   event.send("Stash", { success = result:success() })
 end
 
 ---@param args string[]
 ---@param files string[]
-function M.push(args, files)
-  local result = git.cli.stash.push.arg_list(args).files(unpack(files)).call()
+---@param message string|nil
+function M.push(args, files, message)
+  local cli = git.cli.stash.push
+
+  if message then
+    cli = cli.message(message)
+  end
+
+  local result = cli.arg_list(args).files(unpack(files)).call()
   event.send("Stash", { success = result:success() })
 end
 
