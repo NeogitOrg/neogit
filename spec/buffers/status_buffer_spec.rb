@@ -80,6 +80,22 @@ RSpec.describe "Status Buffer", :git, :nvim do
       end
     end
 
+    context "with untracked files whose names contain spaces" do
+      before do
+        create_file("file 01.txt", "1\n")
+        create_file("file 02.txt", "2\n")
+        nvim.refresh
+        nvim.move_to_line("file 01.txt", after: "Untracked files")
+      end
+
+      it "stages a visual selection with s" do
+        nvim.keys("Vjs")
+        await do
+          expect(`git diff --cached --name-only`.lines.map(&:strip)).to contain_exactly("file 01.txt", "file 02.txt")
+        end
+      end
+    end
+
     # context "with tracked file" do
     # end
   end
@@ -292,6 +308,40 @@ RSpec.describe "Status Buffer", :git, :nvim do
           expect(File.read("foo")).to eq("original\n")
           expect(`git diff --cached --name-only`.strip).to be_empty
         end
+      end
+    end
+  end
+
+  describe "tracked files whose names contain spaces" do
+    before do
+      File.write("file 01.txt", "original\n")
+      File.write("file 02.txt", "original\n")
+      git.add(["file 01.txt", "file 02.txt"])
+      git.commit("initial commit")
+      File.write("file 01.txt", "modified\n")
+      File.write("file 02.txt", "modified\n")
+    end
+
+    it "unstages a visual selection with u" do
+      git.add(["file 01.txt", "file 02.txt"])
+      nvim.refresh
+      nvim.move_to_line("modified   file 01.txt", after: "Staged changes")
+      nvim.keys("Vju")
+      await do
+        expect(`git diff --cached --name-only`.strip).to be_empty
+        expect(git.status_info.changed.keys).to contain_exactly("file 01.txt", "file 02.txt")
+      end
+    end
+
+    it "discards a staged file with x" do
+      git.add("file 01.txt")
+      nvim.refresh
+      nvim.move_to_line("modified   file 01.txt", after: "Staged changes")
+      nvim.confirm(true)
+      nvim.keys("x")
+      await do
+        expect(File.read("file 01.txt")).to eq("original\n")
+        expect(`git diff --cached --name-only`.strip).to be_empty
       end
     end
   end

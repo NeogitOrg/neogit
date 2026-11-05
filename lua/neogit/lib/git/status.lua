@@ -225,7 +225,7 @@ end
 
 function M.stage_untracked()
   local paths = util.map(git.repo.state.untracked.items, function(item)
-    return item.escaped_path
+    return item.name
   end)
 
   git.cli.add.files(unpack(paths)).call { await = true }
