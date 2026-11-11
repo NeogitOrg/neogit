@@ -1,5 +1,4 @@
 local git = require("neogit.lib.git")
-local logger = require("neogit.logger")
 
 ---@class NeogitGitConfig
 local M = {}
@@ -79,18 +78,8 @@ function ConfigEntry:refresh()
   return self
 end
 
----@type table<string, ConfigEntry>
-local config_cache = {}
-local cache_key = nil
-
-local function make_cache_key()
-  local stat = vim.uv.fs_stat(git.repo:git_path("config"):absolute())
-  if stat then
-    return stat.mtime.sec
-  end
-end
-
-local function build_config()
+---@return table<string, ConfigEntry>
+local function config()
   local result = {}
 
   local out = vim.split(
@@ -108,16 +97,6 @@ local function build_config()
   return result
 end
 
-local function config()
-  if not cache_key or cache_key ~= make_cache_key() then
-    logger.debug("[Config] Rebuilding git config_cache")
-    cache_key = make_cache_key()
-    config_cache = build_config()
-  end
-
-  return config_cache
-end
-
 ---@return ConfigEntry
 function M.get(key)
   if M.get_local(key):is_set() then
@@ -131,13 +110,14 @@ end
 
 ---@return ConfigEntry
 function M.get_global(key)
-  local result = git.cli.config.get(key).call({ ignore_error = true }).stdout[1]
+  local result = git.cli.config.get(key).args("--global").call({ ignore_error = true }).stdout[1]
   return ConfigEntry.new(key, result, "global")
 end
 
 ---@return ConfigEntry
 function M.get_local(key)
-  return config()[key:lower()] or ConfigEntry.new(key, "", "local")
+  local result = git.cli.config.get(key).args("--local").call({ ignore_error = true }).stdout[1]
+  return ConfigEntry.new(key, result, "global")
 end
 
 function M.get_matching(pattern)
@@ -159,8 +139,6 @@ function M.get_all_values(key)
 end
 
 function M.set(key, value)
-  cache_key = nil
-
   if not value or value == "" then
     M.unset(key)
   else
@@ -174,7 +152,6 @@ function M.unset(key)
     return
   end
 
-  cache_key = nil
   git.cli.config.unset(key).call { ignore_error = true }
 end
 
