@@ -559,6 +559,8 @@ local configurations = {
       name_only = "--name-only",
       no_ext_diff = "--no-ext-diff",
       no_index = "--no-index",
+      binary = "--binary",
+      no_textconv = "--no-textconv",
       check = "--check",
     },
   },
