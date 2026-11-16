@@ -117,6 +117,7 @@ end
 ---@field _local self
 ---@field global self
 ---@field includes self
+---@field show_scope self
 ---@field list self
 ---@field _get self PRIVATE - use alias
 ---@field _add self PRIVATE - use alias
@@ -514,6 +515,7 @@ local configurations = {
       _local = "--local",
       global = "--global",
       includes = "--includes",
+      show_scope = "--show-scope",
       list = "--list",
       _get = "--get",
       _get_all = "--get-all",
