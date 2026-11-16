@@ -266,6 +266,7 @@ function M:open(kind)
       ["NeogitBranchReset"] = self:deferred_refresh("reset_branch"),
       ["NeogitEditorClosed"] = self:deferred_refresh("editor_closed"),
       ["NeogitFetchComplete"] = self:deferred_refresh("fetch"),
+      ["NeogitPullComplete"] = self:deferred_refresh("pull"),
       ["NeogitMerge"] = self:deferred_refresh("merge"),
     },
     autocmds = {
