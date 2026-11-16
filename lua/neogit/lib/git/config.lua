@@ -110,14 +110,14 @@ end
 
 ---@return ConfigEntry
 function M.get_global(key)
-  local result = git.cli.config.get(key).args("--global").call({ ignore_error = true }).stdout[1]
+  local result = git.cli.config.global.includes.get(key).call({ ignore_error = true }).stdout[1]
   return ConfigEntry.new(key, result, "global")
 end
 
 ---@return ConfigEntry
 function M.get_local(key)
-  local result = git.cli.config.get(key).args("--local").call({ ignore_error = true }).stdout[1]
-  return ConfigEntry.new(key, result, "global")
+  local result = git.cli.config._local.includes.get(key).call({ ignore_error = true }).stdout[1]
+  return ConfigEntry.new(key, result, "local")
 end
 
 function M.get_matching(pattern)
