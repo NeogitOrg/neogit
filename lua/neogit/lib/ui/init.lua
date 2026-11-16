@@ -66,7 +66,7 @@ end
 ---@param f fun(c: UiComponent): boolean
 ---@param options FindOptions|nil
 function Ui:find_component(f, options)
-  return Ui._find_component(self.layout, f, options or {})
+  return Ui._find_component(self.layout.children, f, options or {})
 end
 
 ---@param fn? fun(c: Component): boolean
