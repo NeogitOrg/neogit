@@ -72,9 +72,8 @@ M.register = function(meta)
     local finished
 
     for line in git.repo:worktree_git_path("BISECT_LOG"):iter() do
-      if line:match("^#") and line ~= "" then
-        local action, oid, subject = line:match("^# ([^:]+): %[(.+)%] (.+)")
-
+      local action, oid, subject = line:match("^# ([^:]+): %[(.+)%] (.+)")
+      if action then
         finished = action == "first bad commit"
         if finished then
           event.send("Bisect", { type = "finished", oid = oid })
