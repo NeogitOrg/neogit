@@ -140,6 +140,8 @@ end
 ---@field no_index self
 ---@field index self
 ---@field check self
+---@field binary self
+---@field no_textconv self
 
 ---@class GitCommandStash: GitCommandBuilder
 ---@field apply self
