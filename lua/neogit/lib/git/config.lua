@@ -6,7 +6,7 @@ local M = {}
 ---@class ConfigEntry
 ---@field value string
 ---@field name string
----@field scope string Global/System/Local
+---@field scope string Scope reported by `git config --show-scope`, e.g. local/global/system/command
 local ConfigEntry = {}
 ConfigEntry.__index = ConfigEntry
 
@@ -73,6 +73,8 @@ function ConfigEntry:refresh()
     self.value = M.get_local(self.name).value
   elseif self.scope == "global" then
     self.value = M.get_global(self.name).value
+  else
+    self.value = M.get(self.name).value
   end
 
   return self
@@ -99,25 +101,22 @@ end
 
 ---@return ConfigEntry
 function M.get(key)
-  if M.get_local(key):is_set() then
-    return M.get_local(key)
-  elseif M.get_global(key):is_set() then
-    return M.get_global(key)
-  else
-    return ConfigEntry.new(key, "", "local")
-  end
+  -- Unscoped lookup, so system config, `git -c` and includes apply exactly as git resolves them
+  local result = git.cli.config.show_scope.get(key).call({ ignore_error = true }).stdout[1]
+  local scope, value = (result or ""):match("^(%w+)\t(.*)$")
+  return ConfigEntry.new(key, value, scope or "local")
 end
 
 ---@return ConfigEntry
 function M.get_global(key)
-  local result = git.cli.config.get(key).args("--global").call({ ignore_error = true }).stdout[1]
+  local result = git.cli.config.global.includes.get(key).call({ ignore_error = true }).stdout[1]
   return ConfigEntry.new(key, result, "global")
 end
 
 ---@return ConfigEntry
 function M.get_local(key)
-  local result = git.cli.config.get(key).args("--local").call({ ignore_error = true }).stdout[1]
-  return ConfigEntry.new(key, result, "global")
+  local result = git.cli.config._local.includes.get(key).call({ ignore_error = true }).stdout[1]
+  return ConfigEntry.new(key, result, "local")
 end
 
 function M.get_matching(pattern)
