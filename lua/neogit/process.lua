@@ -116,6 +116,19 @@ function Process.new(process)
   return setmetatable(process, Process) ---@class Process
 end
 
+---@alias ProcessLifecycle "not_started"|"running"|"stopping"|"done"
+
+---@return ProcessLifecycle
+function Process:state()
+  if self.result then
+    return "done"
+  elseif self.job then
+    return self.killed and "stopping" or "running"
+  else
+    return "not_started"
+  end
+end
+
 ---@return Process
 function Process:clone()
   return Process.new {
@@ -229,7 +242,7 @@ end
 ---@param timeout number|nil
 ---@return ProcessResult|nil
 function Process:wait(timeout)
-  if not self.job then
+  if self:state() == "not_started" then
     error("Process not started")
   end
   if timeout then
@@ -242,7 +255,8 @@ function Process:wait(timeout)
 end
 
 function Process:stop()
-  if self.job and not self.result then
+  local state = self:state()
+  if state == "running" or state == "stopping" then
     -- jobstop returns 1 on success, 0 if the job has already exited / id is
     -- invalid.  Don't assert: a cancellation racing with normal exit is fine.
     self.killed = true
@@ -320,7 +334,7 @@ function Process:spawn(cb)
     cmd = table.concat(self.cmd, " "),
   }, ProcessResult)
 
-  assert(self.job == nil, "Process started twice")
+  assert(self:state() == "not_started", "Process already started")
 
   self.env = self.env or {}
   self.env.TERM = "xterm-256color"
