@@ -16,8 +16,8 @@ function M.pull_interactive(remote, branch, args)
   return result
 end
 
-local function update_unpulled(state)
-  local status = git.branch.status()
+local function update_unpulled(state, _, status)
+  local status = status and status.branch or git.branch.status()
 
   state.upstream.unpulled.items = {}
   state.pushRemote.unpulled.items = {}

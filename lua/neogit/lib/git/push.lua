@@ -31,8 +31,8 @@ function M.auto_setup_remote(branch)
   ) == true
 end
 
-local function update_unmerged(state)
-  local status = git.branch.status()
+local function update_unmerged(state, _, status)
+  local status = status and status.branch or git.branch.status()
 
   state.upstream.unmerged.items = {}
   state.pushRemote.unmerged.items = {}
