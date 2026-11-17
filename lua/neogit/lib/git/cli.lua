@@ -142,6 +142,8 @@ end
 ---@field no_index self
 ---@field index self
 ---@field check self
+---@field binary self
+---@field no_textconv self
 
 ---@class GitCommandStash: GitCommandBuilder
 ---@field apply self
@@ -563,6 +565,8 @@ local configurations = {
       name_only = "--name-only",
       no_ext_diff = "--no-ext-diff",
       no_index = "--no-index",
+      binary = "--binary",
+      no_textconv = "--no-textconv",
       check = "--check",
     },
   },
