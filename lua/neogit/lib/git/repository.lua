@@ -291,6 +291,11 @@ function Repo:set_state(id)
   self.state = self:current_state(id)
 end
 
+---@return boolean
+function Repo:is_refreshing()
+  return self._refresh_task ~= nil and not self._refresh_task:done()
+end
+
 function Repo:refresh(opts)
   if self.worktree_root == "" then
     logger.debug("[REPO] No git root found - skipping refresh")
@@ -307,7 +312,7 @@ function Repo:refresh(opts)
 
   -- Cancel any in-flight refresh.  This propagates to per-module sub-tasks
   -- which in turn kill the underlying git subprocesses (see Process:stop).
-  if self._refresh_task and not self._refresh_task:done() then
+  if self:is_refreshing() then
     logger.debug("[REPO] (" .. start .. ") Cancelling in-flight refresh")
     self._refresh_task:cancel()
   end
@@ -319,8 +324,9 @@ function Repo:refresh(opts)
     filter = DEFAULT_FILTER
   end
 
-  self._refresh_task = a.util.run_all(self:tasks(filter, self:current_state(start)), function()
-    if self._refresh_task and self._refresh_task:cancelled() then
+  local task
+  task = a.util.run_all(self:tasks(filter, self:current_state(start)), function()
+    if task:cancelled() then
       logger.debug("[REPO]: (" .. start .. ") Refresh cancelled before completion")
       return
     end
@@ -329,6 +335,7 @@ function Repo:refresh(opts)
     self:set_state(start)
     self:run_callbacks(start)
   end)
+  self._refresh_task = task
 end
 
 ---@return NeogitTask
