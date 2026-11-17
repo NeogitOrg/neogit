@@ -22,6 +22,8 @@ function M.pick_or_revert_in_progress()
   return git.repo.state.sequencer.head ~= nil or pick_or_revert_todo
 end
 
+---@alias SequencerStatus "none"|"cherry_pick"|"revert"
+
 ---@class SequencerItem
 ---@field action string
 ---@field oid string
@@ -29,7 +31,7 @@ end
 ---@field subject string
 
 function M.update_sequencer_status(state)
-  state.sequencer = { items = {}, head = nil, head_oid = nil, revert = false, cherry_pick = false }
+  state.sequencer = { items = {}, head = nil, head_oid = nil, status = "none" }
 
   local revert_head = git.repo:worktree_git_path("REVERT_HEAD")
   local cherry_head = git.repo:worktree_git_path("CHERRY_PICK_HEAD")
@@ -37,11 +39,11 @@ function M.update_sequencer_status(state)
   if cherry_head:exists() then
     state.sequencer.head = "CHERRY_PICK_HEAD"
     state.sequencer.head_oid = vim.trim(git.repo:worktree_git_path("CHERRY_PICK_HEAD"):read())
-    state.sequencer.cherry_pick = true
+    state.sequencer.status = "cherry_pick"
   elseif revert_head:exists() then
     state.sequencer.head = "REVERT_HEAD"
     state.sequencer.head_oid = vim.trim(git.repo:worktree_git_path("REVERT_HEAD"):read())
-    state.sequencer.revert = true
+    state.sequencer.status = "revert"
   end
 
   local HEAD_oid = git.rev_parse.oid("HEAD")
@@ -67,7 +69,7 @@ function M.update_sequencer_status(state)
         })
       end
     end
-  elseif state.sequencer.cherry_pick or state.sequencer.revert then
+  elseif state.sequencer.status ~= "none" then
     table.insert(state.sequencer.items, {
       action = "join",
       oid = state.sequencer.head_oid,

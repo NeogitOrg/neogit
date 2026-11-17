@@ -150,13 +150,16 @@ function M.merge_base_HEAD()
   end
 end
 
+---@alias RebaseItemState "pending"|"current"|"done"
+
 ---@class RebaseItem
 ---@field action string
 ---@field oid string
 ---@field abbreviated_commit string
 ---@field subject string
----@field done boolean
----@field stopped boolean
+---@field state RebaseItemState
+
+---@alias RebaseStatus "none"|"active"|"stopped"
 
 ---@class RebaseOnto
 ---@field oid string
@@ -181,7 +184,7 @@ end
 
 ---@return boolean
 function M.in_progress()
-  return git.repo.state.rebase.head ~= nil
+  return git.repo.state.rebase.status ~= "none"
 end
 
 ---@return string|nil
@@ -190,7 +193,7 @@ function M.current_HEAD()
 end
 
 function M.update_rebase_status(state)
-  state.rebase = { items = {}, onto = {}, head_oid = nil, head = nil, current = nil }
+  state.rebase = { items = {}, onto = {}, head_oid = nil, head = nil, current = nil, status = "none" }
 
   local rebase_file
   local rebase_merge = git.repo:worktree_git_path("rebase-merge")
@@ -232,7 +235,7 @@ function M.update_rebase_status(state)
               oid = oid,
               abbreviated_commit = oid:sub(1, git.log.abbreviated_size()),
               subject = line:match("^%w+ %x+ (.+)$"),
-              done = true,
+              state = "done",
             })
           else
             logger.debug("[rebase status] No OID found on line '" .. line .. "'")
@@ -243,8 +246,7 @@ function M.update_rebase_status(state)
 
     local cur = state.rebase.items[#state.rebase.items]
     if cur then
-      cur.done = false
-      cur.stopped = true
+      cur.state = "current"
       state.rebase.current = #state.rebase.items
     end
 
@@ -255,7 +257,7 @@ function M.update_rebase_status(state)
           local oid = line:match("^%w+ (%x+)")
           if oid then
             table.insert(state.rebase.items, {
-              done = false,
+              state = "pending",
               action = line:match("^(%w+) "),
               oid = oid,
               abbreviated_commit = oid:sub(1, git.log.abbreviated_size()),
@@ -268,13 +270,15 @@ function M.update_rebase_status(state)
 
     if onto:exists() then
       table.insert(state.rebase.items, {
-        done = false,
+        state = "pending",
         action = "onto",
         oid = state.rebase.onto.oid,
         abbreviated_commit = state.rebase.onto.oid:sub(1, git.log.abbreviated_size()),
         subject = state.rebase.onto.subject,
       })
     end
+
+    state.rebase.status = cur and "stopped" or "active"
   end
 end
 
