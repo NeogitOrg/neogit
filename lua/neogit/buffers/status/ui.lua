@@ -513,17 +513,17 @@ end)
 
 local SectionItemRebase = Component.new(function(item)
   if item.oid then
-    local action_hl = (item.done and "NeogitRebaseDone")
+    local action_hl = (item.state == "done" and "NeogitRebaseDone")
       or (item.action == "onto" and "NeogitGraphBlue")
       or "NeogitGraphOrange"
 
     return row({
-      text(item.stopped and "> " or "  "),
+      text(item.state == "current" and "> " or "  "),
       text.highlight(action_hl)(util.pad_right(item.action, 6)),
       text(" "),
       text.highlight("NeogitRebaseDone")(item.abbreviated_commit),
       text(" "),
-      text.highlight(item.done and "NeogitRebaseDone")(item.subject),
+      text.highlight(item.state == "done" and "NeogitRebaseDone")(item.subject),
     }, { yankable = item.oid, oid = item.oid })
   else
     return row {
@@ -620,10 +620,10 @@ function M.Status(state, config)
   local show_rebase = #state.rebase.items > 0
     and not config.sections.rebase.hidden
 
-  local show_cherry_pick = state.sequencer.cherry_pick
+  local show_cherry_pick = state.sequencer.status == "cherry_pick"
     and not config.sections.sequencer.hidden
 
-  local show_revert = state.sequencer.revert
+  local show_revert = state.sequencer.status == "revert"
     and not config.sections.sequencer.hidden
 
   local show_bisect = #state.bisect.items > 0
