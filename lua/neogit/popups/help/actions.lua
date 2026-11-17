@@ -128,6 +128,8 @@ M.actions = function()
     { "StageAll", "Stage all", NONE },
     { "Unstage", "Unstage", NONE },
     { "UnstageStaged", "Unstage all", NONE },
+    { "Undo", "Undo", NONE },
+    { "Redo", "Redo", NONE },
     { "Discard", "Discard", NONE },
     { "Untrack", "Untrack", NONE },
   }
