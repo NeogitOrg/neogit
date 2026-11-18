@@ -186,6 +186,7 @@ function M:set_option(option, value)
   if option.value and option.value ~= "" then
     -- Ensure that other switches/options that are incompatible with this one are disabled
     self:disable_all(option.incompatible)
+  else
     -- Ensure that switches/options that depend on this one are also disabled
     self:disable_all(option.dependent)
   end
