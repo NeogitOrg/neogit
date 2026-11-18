@@ -145,34 +145,12 @@ function M:toggle_switch(switch)
     state.set({ self.state.name, switch.cli }, switch.enabled)
   end
 
-  -- Ensure that other switches/options that are incompatible with this one are disabled
-  if switch.enabled and #switch.incompatible > 0 then
-    for _, var in ipairs(self.state.args) do
-      if switch.incompatible[var.cli] then
-        if var.type == "switch" then
-          ---@cast var PopupSwitch
-          self:disable_switch(var)
-        elseif var.type == "option" then
-          ---@cast var PopupOption
-          self:disable_option(var)
-        end
-      end
-    end
-  end
-
-  -- Ensure that switches/options that depend on this one are also disabled
-  if not switch.enabled and #switch.dependent > 0 then
-    for _, var in ipairs(self.state.args) do
-      if switch.dependent[var.cli] then
-        if var.type == "switch" then
-          ---@cast var PopupSwitch
-          self:disable_switch(var)
-        elseif var.type == "option" then
-          ---@cast var PopupOption
-          self:disable_option(var)
-        end
-      end
-    end
+  if switch.enabled then
+    -- Ensure that other switches/options that are incompatible with this one are disabled
+    self:disable_all(switch.incompatible)
+  else
+    -- Ensure that switches/options that depend on this one are also disabled
+    self:disable_all(switch.dependent)
   end
 end
 
@@ -205,30 +183,11 @@ function M:set_option(option, value)
 
   state.set({ self.state.name, option.cli }, option.value)
 
-  -- Ensure that other switches/options that are incompatible with this one are disabled
-  if option.value and option.value ~= "" and #option.incompatible > 0 then
-    for _, var in ipairs(self.state.args) do
-      if option.incompatible[var.cli] then
-        if var.type == "switch" then
-          self:disable_switch(var --[[@as PopupSwitch]])
-        elseif var.type == "option" then
-          self:disable_option(var --[[@as PopupOption]])
-        end
-      end
-    end
-  end
-
-  -- Ensure that switches/options that depend on this one are also disabled
-  if option.value and option.value ~= "" and #option.dependent > 0 then
-    for _, var in ipairs(self.state.args) do
-      if option.dependent[var.cli] then
-        if var.type == "switch" then
-          self:disable_switch(var --[[@as PopupSwitch]])
-        elseif var.type == "option" then
-          self:disable_option(var --[[@as PopupOption]])
-        end
-      end
-    end
+  if option.value and option.value ~= "" then
+    -- Ensure that other switches/options that are incompatible with this one are disabled
+    self:disable_all(option.incompatible)
+    -- Ensure that switches/options that depend on this one are also disabled
+    self:disable_all(option.dependent)
   end
 end
 
@@ -247,6 +206,31 @@ end
 function M:disable_option(option)
   if option.value and option.value ~= "" then
     self:set_option(option, "")
+  end
+end
+
+---Disables every switch/option named in `edges`, a reverse-lookup set of cli
+---flags (as built by `util.build_reverse_lookup` for a switch/option's
+---`incompatible`/`dependent` list). Disabling a switch re-enters
+---`toggle_switch`, so this can cascade transitively through the dependency
+---graph; it terminates because each arg can only go enabled -> disabled once,
+---and `disable_switch`/`disable_option` no-op on an arg that's already off.
+---@param edges table<string, boolean>
+function M:disable_all(edges)
+  if not edges or #edges == 0 then
+    return
+  end
+
+  for _, var in ipairs(self.state.args) do
+    if edges[var.cli] then
+      if var.type == "switch" then
+        ---@cast var PopupSwitch
+        self:disable_switch(var)
+      elseif var.type == "option" then
+        ---@cast var PopupOption
+        self:disable_option(var)
+      end
+    end
   end
 end
 
