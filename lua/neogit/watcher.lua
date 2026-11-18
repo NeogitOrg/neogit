@@ -64,7 +64,7 @@ function Watcher:unregister(buffer)
 
   logger.debug("[WATCHER] Unregistered buffer " .. buffer:id())
 
-  if vim.tbl_isempty(self.buffers) and self.running then
+  if vim.tbl_isempty(self.buffers) then
     logger.debug("[WATCHER] No registered buffers - stopping")
     self:stop()
   end
@@ -72,13 +72,19 @@ function Watcher:unregister(buffer)
   return self
 end
 
+---@alias WatcherState "disabled"|"stopped"|"running"
+
+---@return WatcherState
+function Watcher:state()
+  if not config.values.filewatcher.enabled then
+    return "disabled"
+  end
+  return self.running and "running" or "stopped"
+end
+
 ---@return Watcher
 function Watcher:start()
-  if not config.values.filewatcher.enabled then
-    return self
-  end
-
-  if self.running then
+  if self:state() ~= "stopped" then
     return self
   end
 
@@ -90,11 +96,7 @@ end
 
 ---@return Watcher
 function Watcher:stop()
-  if not config.values.filewatcher.enabled then
-    return self
-  end
-
-  if not self.running then
+  if self:state() ~= "running" then
     return self
   end
 
