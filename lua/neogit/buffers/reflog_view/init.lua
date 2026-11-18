@@ -39,7 +39,7 @@ end
 
 ---@return boolean
 function M.is_open()
-  return (M.instance and M.instance.buffer and M.instance.buffer:is_visible()) == true
+  return Buffer.is_open(M.instance)
 end
 
 function M:open(_)

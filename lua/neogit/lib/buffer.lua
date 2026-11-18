@@ -304,6 +304,12 @@ function Buffer:hide()
   end
 end
 
+---@param instance { buffer: Buffer? }|nil
+---@return boolean
+function Buffer.is_open(instance)
+  return instance ~= nil and instance.buffer ~= nil and instance.buffer:is_visible()
+end
+
 function Buffer:is_visible()
   local buffer_in_window = #fn.win_findbuf(self.handle) > 0
   local window_in_tabpage = vim.tbl_contains(api.nvim_tabpage_list_wins(0), self.win_handle)
