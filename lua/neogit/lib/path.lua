@@ -39,9 +39,23 @@ function Path:__tostring()
   return self._path
 end
 
+---@param path string
+---@return boolean
+local function is_absolute(path)
+  return vim.startswith(path, "/") or vim.startswith(path, "\\\\") or path:match("^%a:[/\\]") ~= nil
+end
+
+---@param base string|NeogitPath|nil Directory to resolve a relative path against (defaults to CWD)
 ---@return string Absolute path with no trailing separator
-function Path:absolute()
-  local p = vim.fn.fnamemodify(self._path, ":p")
+function Path:absolute(base)
+  local path = self._path
+
+  -- TODO: use `vim.fs.abspath(path, { cwd = base })` once that option is in a stable Neovim release
+  if base and not is_absolute(path) then
+    path = vim.fs.joinpath(tostring(base), path)
+  end
+
+  local p = vim.fn.fnamemodify(path, ":p")
   -- Strip trailing separator (mirrors plenary behaviour)
   if p ~= sep and p:sub(-1) == sep then
     p = p:sub(1, -2)

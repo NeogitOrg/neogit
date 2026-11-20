@@ -9,6 +9,7 @@ local notification = require("neogit.lib.notification")
 local util = require("neogit.lib.util")
 local config = require("neogit.config")
 local jump = require("neogit.lib.jump")
+local Path = require("neogit.lib.path")
 
 local FuzzyFinderBuffer = require("neogit.buffers.fuzzy_finder")
 
@@ -16,11 +17,7 @@ local fn = vim.fn
 local api = vim.api
 
 local function absolute_path(path)
-  if vim.startswith(path, "/") or path:match("^%a:[/\\]") or vim.startswith(path, "\\\\") then
-    return vim.fs.normalize(path)
-  end
-
-  return vim.fs.normalize(git.repo.worktree_root .. "/" .. path)
+  return Path:new(path):absolute(git.repo.worktree_root)
 end
 
 local function path_contains(parent, child)
