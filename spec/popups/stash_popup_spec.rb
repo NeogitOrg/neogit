@@ -134,6 +134,39 @@ RSpec.describe "Stash Popup", :git, :nvim, :popup do
     end
   end
 
+  describe "Stash with message" do
+    let(:neogit_config) { "{ prompt_stash_message = true }" }
+
+    before do
+      File.write("foo", "hello foo")
+      git.add("foo")
+      git.commit("initial commit")
+      File.write("foo", "hello world")
+      git.add("foo")
+    end
+
+    it "uses the given message" do
+      nvim.input("my stash message")
+      nvim.keys("z")
+
+      expect(`git stash list`).to include("my stash message")
+    end
+
+    it "uses the given message when stashing the index" do
+      nvim.input("index stash message")
+      nvim.keys("i")
+
+      expect(`git stash list`).to include("index stash message")
+    end
+
+    it "stashes without a message when the input is empty" do
+      nvim.input("")
+      nvim.keys("z")
+
+      expect(`git stash list`).to include("WIP on")
+    end
+  end
+
   describe "Pop stash" do
     before do
       File.write("testfile", "modified by stash")

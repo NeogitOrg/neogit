@@ -140,6 +140,8 @@ neogit.setup {
   prompt_force_push = true,
   -- Request confirmation when amending already published commits
   prompt_amend_commit = true,
+  -- Ask for a message when creating a stash. An empty message creates the stash without one.
+  prompt_stash_message = false,
   -- Changes what mode the Commit Editor starts in. `true` will leave nvim in normal mode, `false` will change nvim to
   -- insert mode, and `"auto"` will change nvim to insert mode IF the commit message is empty, otherwise leaving it in
   -- normal mode.

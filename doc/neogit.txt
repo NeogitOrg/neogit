@@ -104,6 +104,8 @@ to Neovim users.
     prompt_force_push = true,
     -- Request confirmation when amending already published commits
     prompt_amend_commit = true,
+    -- Ask for a message when creating a stash. An empty message creates the stash without one.
+    prompt_stash_message = false,
     -- Changes what mode the Commit Editor starts in. `true` will leave nvim in normal mode, `false` will change nvim to
     -- insert mode, and `"auto"` will change nvim to insert mode IF the commit message is empty, otherwise leaving it in
     -- normal mode.
@@ -2070,6 +2072,9 @@ The stash popup actions will affect the current index (staged changes) and the
 working tree (unstaged changes and untracked files). When the cursor is on a
 stash in the stash list, actions under the "Use" column (pop, apply and drop)
 will affect the stash under the cursor.
+
+When `prompt_stash_message` is enabled, the actions that create a stash ask
+for a message first. An empty message creates the stash without one.
 
 Actions:                                            *neogit_stash_popup_actions*
   • Stash both                                               *neogit_stash_both*
