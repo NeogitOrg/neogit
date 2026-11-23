@@ -103,3 +103,43 @@ describe("buffer decorations", function()
     eq(0, #extmarks("Test"))
   end)
 end)
+
+describe("Buffer.from_name", function()
+  local original_cwd
+  local handles = {}
+
+  before_each(function()
+    original_cwd = vim.fn.getcwd()
+  end)
+
+  after_each(function()
+    vim.cmd.cd(vim.fn.fnameescape(original_cwd))
+    for _, handle in ipairs(handles) do
+      if vim.api.nvim_buf_is_valid(handle) then
+        vim.api.nvim_buf_delete(handle, { force = true })
+      end
+    end
+    handles = {}
+  end)
+
+  local function from_name_in(dir, name)
+    vim.cmd.cd(vim.fn.fnameescape(dir))
+    local buffer = Buffer.from_name(name)
+    table.insert(handles, buffer.handle)
+    return buffer
+  end
+
+  it("does not reuse a buffer with the same name from another directory", function()
+    local first_dir = vim.fn.tempname()
+    local second_dir = vim.fn.tempname()
+    vim.fn.mkdir(first_dir, "p")
+    vim.fn.mkdir(second_dir, "p")
+
+    local first = from_name_in(first_dir, "NeogitFromNameTest")
+    local second = from_name_in(second_dir, "NeogitFromNameTest")
+
+    assert.are_not.equal(first.handle, second.handle)
+    eq(first.handle, from_name_in(first_dir, "NeogitFromNameTest").handle)
+    eq(second.handle, from_name_in(second_dir, "NeogitFromNameTest").handle)
+  end)
+end)
