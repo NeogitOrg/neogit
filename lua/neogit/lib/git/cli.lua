@@ -1049,7 +1049,7 @@ local function git_dir(dir)
   local cmd = { get_git_executable(), "-C", dir, "rev-parse", "--git-common-dir" }
   local result = vim.system(cmd, { text = true }):wait()
 
-  return Path:new(vim.trim(result.stdout)):absolute()
+  return Path:new(vim.trim(result.stdout)):absolute(dir)
 end
 
 ---@param dir string
@@ -1058,7 +1058,7 @@ local function worktree_git_dir(dir)
   local cmd = { get_git_executable(), "-C", dir, "rev-parse", "--git-dir" }
   local result = vim.system(cmd, { text = true }):wait()
 
-  return Path:new(vim.trim(result.stdout)):absolute()
+  return Path:new(vim.trim(result.stdout)):absolute(dir)
 end
 
 ---@param dir string
