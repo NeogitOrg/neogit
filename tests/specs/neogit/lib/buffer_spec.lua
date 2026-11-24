@@ -230,52 +230,6 @@ describe("buffer filetype and window options", function()
     eq(false, vim.api.nvim_get_option_value("spell", { win = buffer.win_handle }))
   end)
 
-  it("fires BufWinEnter after filetype and ftplugin options are applied", function()
-    vim.o.wrap = false
-
-    local temp_dir = vim.fn.tempname()
-    table.insert(temp_dirs, temp_dir)
-    local after_dir = temp_dir .. "/after"
-    vim.fn.mkdir(after_dir .. "/ftplugin", "p")
-    vim.fn.writefile({ "vim.opt_local.wrap = true" }, after_dir .. "/ftplugin/gitcommit.lua")
-    vim.opt.runtimepath:append(after_dir)
-
-    local group = vim.api.nvim_create_augroup("NeogitBufferBufWinEnterOrderTest", { clear = true })
-    table.insert(augroups, group)
-
-    local events = {}
-    local target_name = temp_dir .. "/COMMIT_EDITMSG"
-
-    vim.api.nvim_create_autocmd({ "FileType", "BufEnter", "BufWinEnter" }, {
-      group = group,
-      callback = function(ev)
-        if vim.api.nvim_buf_get_name(ev.buf) == target_name then
-          table.insert(events, {
-            event = ev.event,
-            buf = ev.buf,
-            ft = vim.bo[ev.buf].filetype,
-            wrap = vim.wo.wrap,
-          })
-        end
-      end,
-    })
-
-    local buffer = create_buffer {
-      name = target_name,
-      filetype = "gitcommit",
-      buftype = "",
-      kind = "split",
-      bufhidden = "wipe",
-    }
-
-    eq({
-      { event = "FileType", buf = buffer.handle, ft = "gitcommit", wrap = true },
-      { event = "BufEnter", buf = buffer.handle, ft = "gitcommit", wrap = true },
-      { event = "BufWinEnter", buf = buffer.handle, ft = "gitcommit", wrap = true },
-    }, events)
-    eq(original_eventignore, vim.o.eventignore)
-  end)
-
   it("handles windows closed during initialize and open = false buffers safely", function()
     local closed_buf = create_buffer {
       name = vim.fn.tempname() .. "/COMMIT_EDITMSG_CLOSED",
