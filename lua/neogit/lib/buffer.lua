@@ -753,11 +753,6 @@ function Buffer.create(config)
     buffer:set_buffer_option("buftype", config.buftype or "nofile")
   end
 
-  if config.filetype then
-    logger.debug("[BUFFER:" .. buffer.handle .. "] Setting filetype: " .. config.filetype)
-    buffer:set_filetype(config.filetype)
-  end
-
   if config.status_column then
     buffer:set_window_option("statuscolumn", config.status_column)
     buffer:set_window_option("signcolumn", "no")
@@ -794,9 +789,49 @@ function Buffer.create(config)
   end
 
   local win
+  local defer_buf_events = false
+  local fire_buf_enter = false
+  local fire_buf_win_enter = false
+
   if config.open ~= false then
+    local saved_eventignore
+    if config.filetype and #fn.win_findbuf(buffer.handle) == 0 then
+      local ignored = {}
+      for _, ev in ipairs(vim.split(vim.o.eventignore, ",", { plain = true, trimempty = true })) do
+        ignored[ev:lower()] = true
+      end
+
+      if not ignored["all"] then
+        fire_buf_enter = not ignored["bufenter"]
+        fire_buf_win_enter = not ignored["bufwinenter"]
+        defer_buf_events = fire_buf_enter or fire_buf_win_enter
+      end
+
+      if defer_buf_events then
+        saved_eventignore = vim.o.eventignore
+        local to_ignore = {}
+        if fire_buf_enter then
+          table.insert(to_ignore, "BufEnter")
+        end
+        if fire_buf_win_enter then
+          table.insert(to_ignore, "BufWinEnter")
+        end
+        vim.o.eventignore = saved_eventignore == "" and table.concat(to_ignore, ",")
+          or (saved_eventignore .. "," .. table.concat(to_ignore, ","))
+      end
+    end
+
     logger.debug("KIND " .. buffer.kind)
-    win = buffer:show()
+    if saved_eventignore ~= nil then
+      local ok, result = pcall(buffer.show, buffer)
+      vim.o.eventignore = saved_eventignore
+      if not ok then
+        error(result)
+      end
+      win = result
+    else
+      win = buffer:show()
+    end
     logger.debug("KIND " .. buffer.kind)
     logger.debug("[BUFFER:" .. buffer.handle .. "] Showing buffer in window " .. win .. " as " .. buffer.kind)
   end
@@ -806,7 +841,7 @@ function Buffer.create(config)
     config.initialize(buffer, win)
   end
 
-  if win then
+  if win and api.nvim_win_is_valid(win) then
     logger.debug("[BUFFER:" .. buffer.handle .. "] Setting window options")
 
     buffer:set_window_option("foldenable", true)
@@ -848,6 +883,42 @@ function Buffer.create(config)
     buffer:set_window_option("foldmethod", "manual")
     -- TODO: Need to find a way to turn this off properly when unloading plugin
     -- buffer:set_window_option("winfixbuf", true)
+  end
+
+  if config.filetype and buffer:is_valid() then
+    logger.debug("[BUFFER:" .. buffer.handle .. "] Setting filetype: " .. config.filetype)
+    if buffer.win_handle and api.nvim_win_is_valid(buffer.win_handle) then
+      buffer:win_call(function()
+        buffer:set_filetype(config.filetype)
+      end)
+    else
+      buffer:set_filetype(config.filetype)
+    end
+  end
+
+  if
+    defer_buf_events
+    and buffer:is_valid()
+    and buffer.win_handle
+    and api.nvim_win_is_valid(buffer.win_handle)
+  then
+    buffer:win_call(function()
+      if
+        fire_buf_enter
+        and buffer:is_valid()
+        and api.nvim_win_get_buf(buffer.win_handle) == buffer.handle
+      then
+        api.nvim_exec_autocmds("BufEnter", { buf = buffer.handle, modeline = false })
+      end
+      if
+        fire_buf_win_enter
+        and buffer:is_valid()
+        and api.nvim_win_is_valid(buffer.win_handle)
+        and api.nvim_win_get_buf(buffer.win_handle) == buffer.handle
+      then
+        api.nvim_exec_autocmds("BufWinEnter", { buf = buffer.handle, modeline = false })
+      end
+    end)
   end
 
   if config.render then
