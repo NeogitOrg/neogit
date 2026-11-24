@@ -51,7 +51,8 @@ function M.range(popup)
 
   local options = util.deduplicate(
     util.merge(
-      { commit, git.branch.current() or "HEAD" },
+      commit and { commit } or {},
+      { git.branch.current() or "HEAD" },
       git.branch.get_all_branches(false),
       git.tag.list(),
       git.refs.heads()
