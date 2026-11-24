@@ -1030,7 +1030,17 @@ end
 ---@param name string
 ---@return Buffer
 function Buffer.from_name(name)
-  local buffer_handle = fn.bufnr(name)
+  -- `bufnr()` also accepts a partial match, which would reuse a buffer with the same name that was created in another
+  -- directory (e.g. the status buffer of another repository). Only reuse a buffer whose full name matches.
+  local full_name = fn.fnamemodify(name, ":p")
+  local buffer_handle = -1
+  for _, handle in ipairs(api.nvim_list_bufs()) do
+    if api.nvim_buf_get_name(handle) == full_name then
+      buffer_handle = handle
+      break
+    end
+  end
+
   if buffer_handle == -1 then
     buffer_handle = api.nvim_create_buf(false, false)
     api.nvim_buf_set_name(buffer_handle, name)
