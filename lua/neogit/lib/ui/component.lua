@@ -45,7 +45,7 @@ local default_component_options = {
 ---@field index number|nil
 ---@field value string|nil
 ---@field id string|nil
----@field highlight fun(hl_group:string): self
+---@field highlight fun(hl_group:string?): self
 ---@field line_hl fun(hl_group:string): self
 ---@field padding_left fun(string): self
 ---@field first integer|nil first line component appears rendered in buffer

@@ -77,15 +77,15 @@ local modules = {
 ---@field items          SequencerItem[]
 ---@field head           string|nil
 ---@field head_oid       string|nil
----@field revert         boolean
----@field cherry_pick    boolean
+---@field status         SequencerStatus
 ---
 ---@class NeogitRepoRebase
 ---@field items          RebaseItem[]
 ---@field onto           RebaseOnto
 ---@field head           string|nil
 ---@field head_oid       string|nil
----@field current        string|nil
+---@field current        integer|nil
+---@field status         RebaseStatus
 ---
 ---@class NeogitRepoMerge
 ---@field items          MergeItem[]

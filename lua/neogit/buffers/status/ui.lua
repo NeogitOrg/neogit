@@ -523,7 +523,7 @@ local SectionItemRebase = Component.new(function(item)
       text(" "),
       text.highlight("NeogitRebaseDone")(item.abbreviated_commit),
       text(" "),
-      text.highlight(item.state == "done" and "NeogitRebaseDone")(item.subject),
+      text.highlight(item.state == "done" and "NeogitRebaseDone" or nil)(item.subject),
     }, { yankable = item.oid, oid = item.oid })
   else
     return row {
