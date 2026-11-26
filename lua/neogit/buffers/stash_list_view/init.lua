@@ -7,6 +7,7 @@ local util = require("neogit.lib.util")
 local git = require("neogit.lib.git")
 local ui = require("neogit.buffers.stash_list_view.ui")
 local input = require("neogit.lib.input")
+local a = require("neogit.lib.async")
 
 ---@class StashListBuffer
 ---@field stashes StashItem[]
@@ -24,8 +25,18 @@ function M.new(stashes)
 end
 
 function M:close()
-  self.buffer:close()
-  self.buffer = nil
+  if self.buffer then
+    self.buffer:win_call(function()
+      self.fold_state = self.buffer.ui:get_fold_state()
+      self.cursor_state = self.buffer:cursor_line()
+      self.view_state = self.buffer:save_view()
+    end)
+
+    self.buffer:close()
+    if not config.values.keep_hidden_buffers then
+      self.buffer = nil
+    end
+  end
 end
 
 --- Creates a buffer populated with output of `git stash list`
@@ -38,8 +49,62 @@ function M:open()
     header = "Stashes (" .. #self.stashes .. ")",
     scroll_header = true,
     kind = config.values.stash.kind,
+    bufhidden = config.values.keep_hidden_buffers and "hide" or nil,
+    buflisted = config.values.keep_hidden_buffers or nil,
     context_highlight = true,
     active_item_highlight = true,
+    on_detach = function()
+      self.buffer = nil
+    end,
+    on_win_leave = function(buffer)
+      if #vim.fn.win_findbuf(buffer.handle) <= 1 then
+        buffer:win_call(function()
+          self.fold_state = buffer.ui:get_fold_state()
+          self.cursor_state = buffer:cursor_line()
+          self.view_state = buffer:save_view()
+        end)
+      end
+    end,
+    on_win_enter = function()
+      if self.fold_state and self.buffer then
+        self.buffer.ui:set_fold_state(self.fold_state)
+        self.fold_state = nil
+      end
+      if self.view_state and self.cursor_state and self.buffer then
+        self.buffer:win_call(function()
+          self.buffer:restore_view(self.view_state, self.cursor_state)
+        end)
+        self.view_state = nil
+        self.cursor_state = nil
+      end
+
+      a.void(function()
+        git.repo.lib.update_stashes(git.repo.state)
+        if self.buffer and self.buffer:is_valid() then
+          local fold_state = self.buffer.ui:get_fold_state()
+          local cursor, view
+          self.buffer:win_call(function()
+            cursor = self.buffer:cursor_line()
+            view = self.buffer:save_view()
+          end)
+
+          self.stashes = git.repo.state.stashes.items
+          self.buffer.ui:render(unpack(ui.View(self.stashes)))
+          self.buffer.ui:set_fold_state(fold_state)
+          if self.buffer:is_visible() and view and cursor then
+            self.buffer:win_call(function()
+              self.buffer:restore_view(view, cursor)
+            end)
+          end
+
+          if self.buffer:is_visible() then
+            self.buffer:set_header("Stashes (" .. #self.stashes .. ")", false)
+          else
+            self.buffer.header = "Stashes (" .. #self.stashes .. ")"
+          end
+        end
+      end)()
+    end,
     mappings = {
       v = {
         [popups.mapping_for("CherryPickPopup")] = function()

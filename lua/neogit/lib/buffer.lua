@@ -10,10 +10,17 @@ local diff_highlights = require("neogit.lib.diff_highlights")
 
 local Path = require("neogit.lib.path")
 
+local attached_handles = {}
+local on_detach_callbacks = {}
+local header_wins = {}
+
 ---@class Buffer
 ---@field handle number
 ---@field win_handle number
 ---@field header_win_handle number?
+---@field header_parent_win number?
+---@field old_buf number?
+---@field old_cwd string?
 ---@field namespaces table
 ---@field autocmd_group number
 ---@field ui Ui
@@ -48,6 +55,43 @@ function Buffer:new(handle, win_handle)
 end
 
 ---@return number|nil
+function Buffer:get_win_handle()
+  if not self.handle or not api.nvim_buf_is_valid(self.handle) then
+    return nil
+  end
+
+  local cur_win = api.nvim_get_current_win()
+  if api.nvim_win_is_valid(cur_win) and api.nvim_win_get_buf(cur_win) == self.handle then
+    self.win_handle = cur_win
+    return cur_win
+  end
+
+  if
+    self.win_handle
+    and api.nvim_win_is_valid(self.win_handle)
+    and api.nvim_win_get_buf(self.win_handle) == self.handle
+  then
+    return self.win_handle
+  end
+
+  local windows = fn.win_findbuf(self.handle)
+  if #windows == 0 then
+    return nil
+  end
+
+  local tab_wins = api.nvim_tabpage_list_wins(0)
+  for _, win in ipairs(windows) do
+    if vim.tbl_contains(tab_wins, win) then
+      self.win_handle = win
+      return win
+    end
+  end
+
+  self.win_handle = windows[1]
+  return windows[1]
+end
+
+---@return number|nil
 function Buffer:focus()
   local windows = fn.win_findbuf(self.handle)
 
@@ -55,8 +99,18 @@ function Buffer:focus()
     return nil
   end
 
-  fn.win_gotoid(windows[1])
-  return windows[1]
+  local tab_wins = api.nvim_tabpage_list_wins(0)
+  local target = windows[1]
+  for _, win in ipairs(windows) do
+    if vim.tbl_contains(tab_wins, win) then
+      target = win
+      break
+    end
+  end
+
+  fn.win_gotoid(target)
+  self.win_handle = target
+  return target
 end
 
 ---@return boolean
@@ -206,8 +260,11 @@ function Buffer:move_cursor(line)
     position = line
   end
 
-  -- pcall used in case the line is out of bounds
-  pcall(api.nvim_win_set_cursor, self.win_handle, position)
+  local win = self:get_win_handle()
+  if win then
+    -- pcall used in case the line is out of bounds
+    pcall(api.nvim_win_set_cursor, win, position)
+  end
 end
 
 ---@param line nil|number|number[]
@@ -245,13 +302,27 @@ function Buffer:close(force)
       self.old_cwd = nil
     end
 
-    if self.old_buf and api.nvim_buf_is_valid(self.old_buf) then
-      local ok = pcall(api.nvim_win_set_buf, self.win_handle, self.old_buf)
-      if not ok then
-        vim.cmd.enew()
+    local win = self:get_win_handle()
+    local target_buf = self.old_buf
+    self.old_buf = nil
+    if (not target_buf or not api.nvim_buf_is_valid(target_buf) or target_buf == self.handle) and win then
+      api.nvim_win_call(win, function()
+        local alt = fn.bufnr("#")
+        if alt > 0 and alt ~= self.handle and api.nvim_buf_is_valid(alt) then
+          target_buf = alt
+        end
+      end)
+    end
+
+    if win then
+      if target_buf and api.nvim_buf_is_valid(target_buf) and target_buf ~= self.handle then
+        local ok = pcall(api.nvim_win_set_buf, win, target_buf)
+        if not ok then
+          api.nvim_win_call(win, vim.cmd.enew)
+        end
+      else
+        api.nvim_win_call(win, vim.cmd.enew)
       end
-    else
-      vim.cmd.enew()
     end
     return
   end
@@ -259,7 +330,28 @@ function Buffer:close(force)
   if self.kind == "tab" then
     local ok, _ = pcall(vim.cmd, "tabclose")
     if not ok and #api.nvim_list_tabpages() == 1 then
-      ok, _ = pcall(vim.cmd, "bd! " .. self.handle)
+      if not force and self:get_option("bufhidden") == "hide" then
+        local win = self:get_win_handle()
+        if win then
+          api.nvim_win_call(win, function()
+            local alt = fn.bufnr("#")
+            if
+              alt > 0
+              and alt ~= self.handle
+              and api.nvim_buf_is_valid(alt)
+              and pcall(api.nvim_win_set_buf, win, alt)
+            then
+              return
+            end
+            vim.cmd.enew()
+          end)
+        else
+          vim.cmd.enew()
+        end
+        return
+      else
+        ok, _ = pcall(vim.cmd, "bd! " .. self.handle)
+      end
     end
     if not ok then
       vim.cmd("tab sb " .. self.handle)
@@ -270,11 +362,10 @@ function Buffer:close(force)
   end
 
   if api.nvim_buf_is_valid(self.handle) then
-    local winnr = fn.bufwinnr(self.handle)
-    if winnr ~= -1 then
-      local winid = fn.win_getid(winnr)
-      vim.schedule_wrap(util.safe_win_close)(winid, force)
-    else
+    local win = self:get_win_handle()
+    if win then
+      vim.schedule_wrap(util.safe_win_close)(win, force)
+    elseif force or self:get_option("bufhidden") ~= "hide" then
       vim.schedule_wrap(api.nvim_buf_delete)(self.handle, { force = force })
     end
   end
@@ -311,10 +402,18 @@ function Buffer.is_open(instance)
 end
 
 function Buffer:is_visible()
-  local buffer_in_window = #fn.win_findbuf(self.handle) > 0
-  local window_in_tabpage = vim.tbl_contains(api.nvim_tabpage_list_wins(0), self.win_handle)
+  if not self.handle or not api.nvim_buf_is_valid(self.handle) then
+    return false
+  end
 
-  return buffer_in_window and window_in_tabpage
+  local tab_wins = api.nvim_tabpage_list_wins(0)
+  for _, win in ipairs(fn.win_findbuf(self.handle)) do
+    if vim.tbl_contains(tab_wins, win) then
+      return true
+    end
+  end
+
+  return false
 end
 
 ---@return number
@@ -325,6 +424,7 @@ function Buffer:show()
   if #windows > 0 then
     logger.debug("Buffer already visible: using that.")
     vim.api.nvim_set_current_win(windows[1])
+    self.win_handle = windows[1]
     return windows[1]
   end
 
@@ -467,8 +567,9 @@ function Buffer:get_option(name)
 end
 
 function Buffer:get_window_option(name)
-  if self.win_handle ~= nil then
-    return api.nvim_get_option_value(name, { win = self.win_handle })
+  local win = self:get_win_handle()
+  if win ~= nil then
+    return api.nvim_get_option_value(name, { win = win })
   end
 end
 
@@ -484,8 +585,9 @@ function Buffer:set_buffer_option(name, value)
 end
 
 function Buffer:set_window_option(name, value)
-  if self.win_handle ~= nil then
-    api.nvim_set_option_value(name, value, { scope = "local", win = self.win_handle })
+  local win = self:get_win_handle()
+  if win ~= nil then
+    api.nvim_set_option_value(name, value, { scope = "local", win = win })
   end
 end
 
@@ -578,9 +680,10 @@ function Buffer:call(f, ...)
 end
 
 function Buffer:win_call(f, ...)
-  if self.win_handle and api.nvim_win_is_valid(self.win_handle) then
+  local win = self:get_win_handle()
+  if win then
     local args = { ... }
-    api.nvim_win_call(self.win_handle, function()
+    api.nvim_win_call(win, function()
       f(unpack(args))
     end)
   end
@@ -611,7 +714,10 @@ function Buffer:close_terminal_channel()
 end
 
 function Buffer:win_exec(cmd)
-  fn.win_execute(self.win_handle, cmd)
+  local win = self:get_win_handle()
+  if win then
+    fn.win_execute(win, cmd)
+  end
 end
 
 function Buffer:exists()
@@ -633,20 +739,44 @@ function Buffer:line_count()
   return api.nvim_buf_line_count(self.handle)
 end
 
+function Buffer:close_header()
+  local winid = self.header_win_handle or header_wins[self.handle]
+  if winid and api.nvim_win_is_valid(winid) then
+    pcall(api.nvim_win_close, winid, true)
+  end
+  self.header_win_handle = nil
+  self.header_parent_win = nil
+  header_wins[self.handle] = nil
+end
+
 function Buffer:resize_header()
-  if not self.header_win_handle then
+  local winid = self.header_win_handle or header_wins[self.handle]
+  if not winid or not api.nvim_win_is_valid(winid) then
     return
   end
 
-  api.nvim_win_set_width(self.header_win_handle, fn.winwidth(self.win_handle))
+  local win = self:get_win_handle()
+  if win then
+    api.nvim_win_set_width(winid, fn.winwidth(win))
+  end
 end
 
 ---@param text string
 ---@param scroll boolean
 function Buffer:set_header(text, scroll)
+  local win = self:get_win_handle()
+  if not win then
+    return
+  end
+
+  self:close_header()
+  self.header = text
+
   -- Create a blank line at the top of the buffer so our floating window doesn't
   -- hide any content
-  self:set_extmark(self:get_namespace_id("default"), 0, 0, {
+  local header_ns = self:create_namespace("Header")
+  self:clear_namespace("Header")
+  self:set_extmark(header_ns, 0, 0, {
     virt_lines = { { { "", "NeogitObjectId" } } },
     virt_lines_above = true,
   })
@@ -661,8 +791,8 @@ function Buffer:set_header(text, scroll)
   -- Display the buffer in a floating window
   local winid = api.nvim_open_win(buf, false, {
     relative = "win",
-    win = self.win_handle,
-    width = fn.winwidth(self.win_handle),
+    win = win,
+    width = fn.winwidth(win),
     height = 1,
     row = 0,
     col = 0,
@@ -676,6 +806,8 @@ function Buffer:set_header(text, scroll)
 
   fn.matchadd("NeogitFloatHeaderHighlight", [[\v\<cr\>|\<esc\>]], 100, -1, { window = winid })
   self.header_win_handle = winid
+  self.header_parent_win = win
+  header_wins[self.handle] = winid
 
   if scroll then
     -- Log view doesn't need scroll because the top line is blank... Because it can't be a fold or the view doesn't work.
@@ -700,6 +832,7 @@ end
 ---@field kind string
 ---@field filetype string|nil
 ---@field bufhidden string|nil
+---@field buflisted boolean|nil
 ---@field header string|nil
 ---@field scroll_header boolean|nil
 ---@field buftype string|nil|boolean
@@ -723,8 +856,77 @@ end
 ---@field initialize function|nil
 ---@field after function|nil
 ---@field on_detach function|nil
+---@field on_win_enter function|nil
+---@field on_win_leave function|nil
 ---@field render function|nil
 ---@field foldmarkers boolean|nil
+
+---@param buffer Buffer
+---@param config BufferConfig
+---@param win number?
+local function apply_window_options(buffer, config, win)
+  if not win or not api.nvim_win_is_valid(win) then
+    return
+  end
+
+  buffer.win_handle = win
+  logger.debug("[BUFFER:" .. buffer.handle .. "] Setting window options")
+
+  buffer:set_window_option("foldenable", true)
+  buffer:set_window_option("foldlevel", 99)
+  buffer:set_window_option("foldminlines", 0)
+  buffer:set_window_option("foldtext", "")
+  if config.status_column then
+    buffer:set_window_option("statuscolumn", config.status_column)
+    buffer:set_window_option("signcolumn", "no")
+  else
+    buffer:set_window_option("statuscolumn", "")
+  end
+  buffer:set_window_option("foldcolumn", "0")
+  buffer:set_window_option("listchars", "")
+  buffer:set_window_option("list", false)
+
+  buffer:win_call(function()
+    vim.opt_local.fillchars:append("fold: ")
+  end)
+
+  local hl_ns = buffer:create_namespace("Highlights")
+  vim.api.nvim_win_set_hl_ns(win, hl_ns)
+  vim.api.nvim_set_hl(hl_ns, "Folded", { bg = "NONE", fg = "NONE" })
+  vim.api.nvim_set_hl(hl_ns, "FoldedNC", { bg = "NONE", fg = "NONE" })
+  vim.api.nvim_set_hl(hl_ns, "FoldColumn", { link = "NeogitFoldColumn" })
+  vim.api.nvim_set_hl(hl_ns, "SignColumn", { link = "NeogitSignColumn" })
+  vim.api.nvim_set_hl(hl_ns, "Normal", { link = "NeogitNormal" })
+  vim.api.nvim_set_hl(hl_ns, "NormalFloat", { link = "NeogitNormalFloat" })
+  vim.api.nvim_set_hl(hl_ns, "FloatBorder", { link = "NeogitFloatBorder" })
+  vim.api.nvim_set_hl(hl_ns, "WinSeparator", { link = "NeogitWinSeparator" })
+  vim.api.nvim_set_hl(hl_ns, "CursorLineNr", { link = "NeogitCursorLineNr" })
+  vim.api.nvim_set_hl(hl_ns, "CursorLine", { link = "NeogitCursorLine" })
+
+  if (config.disable_line_numbers == nil) or config.disable_line_numbers then
+    buffer:set_window_option("number", false)
+  end
+
+  if (config.disable_relative_line_numbers == nil) or config.disable_relative_line_numbers then
+    buffer:set_window_option("relativenumber", false)
+  end
+
+  buffer:set_window_option("spell", config.spell_check or false)
+  buffer:set_window_option("wrap", false)
+  buffer:set_window_option("foldmethod", "manual")
+
+  if config.foldmarkers then
+    buffer:set_window_option("signcolumn", "auto")
+  end
+
+  if config.cwd then
+    logger.debug("[BUFFER:" .. buffer.handle .. "] Setting CWD to: " .. config.cwd)
+    buffer:win_exec("lcd " .. fn.fnameescape(config.cwd))
+  end
+
+  -- TODO: Need to find a way to turn this off properly when unloading plugin
+  -- buffer:set_window_option("winfixbuf", true)
+end
 
 ---@param config BufferConfig
 ---@return Buffer
@@ -741,6 +943,7 @@ function Buffer.create(config)
 
   buffer.name = config.name
   buffer.kind = config.kind or "split"
+  buffer.header = config.header
 
   if config.load then
     logger.debug("[BUFFER:" .. buffer.handle .. "] Loading content from file: " .. config.name)
@@ -751,17 +954,13 @@ function Buffer.create(config)
   buffer:set_buffer_option("swapfile", false)
   buffer:set_buffer_option("modeline", false)
   buffer:set_buffer_option("bufhidden", config.bufhidden or "wipe")
+  buffer:set_buffer_option("buflisted", config.buflisted or false)
   buffer:set_buffer_option("modifiable", config.modifiable or false)
   buffer:set_buffer_option("modified", config.modifiable or false)
   buffer:set_buffer_option("readonly", config.readonly or false)
 
   if config.buftype ~= false then
     buffer:set_buffer_option("buftype", config.buftype or "nofile")
-  end
-
-  if config.status_column then
-    buffer:set_window_option("statuscolumn", config.status_column)
-    buffer:set_window_option("signcolumn", "no")
   end
 
   if config.user_mappings then
@@ -808,48 +1007,7 @@ function Buffer.create(config)
   end
 
   if win then
-    logger.debug("[BUFFER:" .. buffer.handle .. "] Setting window options")
-
-    buffer:set_window_option("foldenable", true)
-    buffer:set_window_option("foldlevel", 99)
-    buffer:set_window_option("foldminlines", 0)
-    buffer:set_window_option("foldtext", "")
-    buffer:set_window_option("statuscolumn", "")
-    buffer:set_window_option("foldcolumn", "0")
-    buffer:set_window_option("listchars", "")
-    buffer:set_window_option("list", false)
-
-    buffer:call(function()
-      vim.opt_local.fillchars:append("fold: ")
-    end)
-
-    local hl_ns = buffer:create_namespace("Highlights")
-    vim.api.nvim_win_set_hl_ns(buffer.win_handle, hl_ns)
-    vim.api.nvim_set_hl(hl_ns, "Folded", { bg = "NONE", fg = "NONE" })
-    vim.api.nvim_set_hl(hl_ns, "FoldedNC", { bg = "NONE", fg = "NONE" })
-    vim.api.nvim_set_hl(hl_ns, "FoldColumn", { link = "NeogitFoldColumn" })
-    vim.api.nvim_set_hl(hl_ns, "SignColumn", { link = "NeogitSignColumn" })
-    vim.api.nvim_set_hl(hl_ns, "Normal", { link = "NeogitNormal" })
-    vim.api.nvim_set_hl(hl_ns, "NormalFloat", { link = "NeogitNormalFloat" })
-    vim.api.nvim_set_hl(hl_ns, "FloatBorder", { link = "NeogitFloatBorder" })
-    vim.api.nvim_set_hl(hl_ns, "WinSeparator", { link = "NeogitWinSeparator" })
-    vim.api.nvim_set_hl(hl_ns, "CursorLineNr", { link = "NeogitCursorLineNr" })
-    vim.api.nvim_set_hl(hl_ns, "CursorLine", { link = "NeogitCursorLine" })
-
-    if (config.disable_line_numbers == nil) or config.disable_line_numbers then
-      buffer:set_window_option("number", false)
-    end
-
-    if (config.disable_relative_line_numbers == nil) or config.disable_relative_line_numbers then
-      buffer:set_window_option("relativenumber", false)
-    end
-
-    buffer:set_window_option("spell", config.spell_check or false)
-    buffer:set_window_option("wrap", false)
-    buffer:set_window_option("foldmethod", "manual")
-
-    -- TODO: Need to find a way to turn this off properly when unloading plugin
-    -- buffer:set_window_option("winfixbuf", true)
+    apply_window_options(buffer, config, win)
   end
 
   if config.filetype then
@@ -880,6 +1038,46 @@ function Buffer.create(config)
     })
   end
 
+  api.nvim_create_autocmd("BufWinEnter", {
+    buffer = buffer.handle,
+    group = buffer.autocmd_group,
+    callback = function()
+      local enter_win = api.nvim_get_current_win()
+      if not buffer.old_buf then
+        local alt = fn.bufnr("#")
+        if alt > 0 and alt ~= buffer.handle and api.nvim_buf_is_valid(alt) then
+          buffer.old_buf = alt
+        end
+      end
+
+      apply_window_options(buffer, config, enter_win)
+
+      if buffer.header then
+        buffer:set_header(buffer.header, false)
+      end
+
+      if config.on_win_enter then
+        config.on_win_enter(buffer, enter_win)
+      end
+    end,
+  })
+
+  api.nvim_create_autocmd("BufWinLeave", {
+    buffer = buffer.handle,
+    group = buffer.autocmd_group,
+    callback = function()
+      if config.on_win_leave then
+        config.on_win_leave(buffer)
+      end
+
+      if buffer.header_win_handle ~= nil or header_wins[buffer.handle] ~= nil then
+        if #fn.win_findbuf(buffer.handle) <= 1 or buffer.header_parent_win == api.nvim_get_current_win() then
+          buffer:close_header()
+        end
+      end
+    end,
+  })
+
   if config.after then
     logger.debug("[BUFFER:" .. buffer.handle .. "] Running config.after callback")
     buffer:call(function()
@@ -887,28 +1085,39 @@ function Buffer.create(config)
     end)
   end
 
-  api.nvim_buf_attach(buffer.handle, false, {
-    on_detach = function()
-      logger.debug("[BUFFER:" .. buffer.handle .. "] Setting up on_detach callback")
+  on_detach_callbacks[buffer.handle] = function()
+    logger.debug("[BUFFER:" .. buffer.handle .. "] Setting up on_detach callback")
 
-      if config.on_detach then
-        logger.debug("[BUFFER:" .. buffer.handle .. "] Running on_detach")
-        config.on_detach(buffer)
-      end
+    if config.on_detach then
+      logger.debug("[BUFFER:" .. buffer.handle .. "] Running on_detach")
+      config.on_detach(buffer)
+    end
 
-      if config.autocmds or config.user_autocmds then
-        logger.debug("[BUFFER:" .. buffer.handle .. "] Clearing autocmd group")
-        pcall(api.nvim_del_augroup_by_id, buffer.autocmd_group)
-      end
+    logger.debug("[BUFFER:" .. buffer.handle .. "] Clearing autocmd group")
+    pcall(api.nvim_del_augroup_by_id, buffer.autocmd_group)
 
-      if buffer.header_win_handle ~= nil then
-        vim.schedule(function()
-          logger.debug("[BUFFER:" .. buffer.handle .. "] Closing header window")
-          pcall(api.nvim_win_close, buffer.header_win_handle, true)
-        end)
-      end
-    end,
-  })
+    if buffer.header_win_handle ~= nil or header_wins[buffer.handle] ~= nil then
+      vim.schedule(function()
+        logger.debug("[BUFFER:" .. buffer.handle .. "] Closing header window")
+        buffer:close_header()
+      end)
+    end
+  end
+
+  if not attached_handles[buffer.handle] then
+    attached_handles[buffer.handle] = true
+    local handle = buffer.handle
+    api.nvim_buf_attach(handle, false, {
+      on_detach = function()
+        attached_handles[handle] = nil
+        local cb = on_detach_callbacks[handle]
+        on_detach_callbacks[handle] = nil
+        if cb then
+          cb()
+        end
+      end,
+    })
+  end
 
   if config.context_highlight then
     logger.debug("[BUFFER:" .. buffer.handle .. "] Setting up context highlighting")
@@ -986,8 +1195,6 @@ function Buffer.create(config)
   end
 
   if config.foldmarkers then
-    buffer:set_window_option("signcolumn", "auto")
-
     logger.debug("[BUFFER:" .. buffer.handle .. "] Setting up foldmarkers")
     buffer:create_namespace("FoldSigns")
     buffer:set_decorations("FoldSigns", {
@@ -1021,14 +1228,9 @@ function Buffer.create(config)
     })
   end
 
-  if config.header then
+  if buffer.header then
     logger.debug("[BUFFER:" .. buffer.handle .. "] Setting header")
-    buffer:set_header(config.header, config.scroll_header)
-  end
-
-  if config.cwd then
-    logger.debug("[BUFFER:" .. buffer.handle .. "] Setting CWD to: " .. config.cwd)
-    buffer:win_exec("lcd " .. fn.fnameescape(config.cwd))
+    buffer:set_header(buffer.header, config.scroll_header)
   end
 
   return buffer

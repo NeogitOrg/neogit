@@ -79,11 +79,21 @@ end
 --- Closes the CommitViewBuffer
 function M:close()
   if self.buffer then
+    self.buffer:win_call(function()
+      self.fold_state = self.buffer.ui:get_fold_state()
+      self.cursor_state = self.buffer:cursor_line()
+      self.view_state = self.buffer:save_view()
+    end)
+
     self.buffer:close()
-    self.buffer = nil
+    if not config.values.keep_hidden_buffers then
+      self.buffer = nil
+    end
   end
 
-  M.instance = nil
+  if not config.values.keep_hidden_buffers then
+    M.instance = nil
+  end
 end
 
 ---@return string
@@ -234,8 +244,42 @@ function M:open(kind)
     name = "NeogitCommitView",
     filetype = "NeogitCommitView",
     kind = kind,
+    bufhidden = config.values.keep_hidden_buffers and "hide" or nil,
+    buflisted = config.values.keep_hidden_buffers or nil,
     status_column = not config.values.disable_signs and "" or nil,
     context_highlight = not config.values.disable_context_highlighting and config.values.log_pager == nil,
+    on_detach = function()
+      self.buffer = nil
+      if M.instance == self then
+        M.instance = nil
+      end
+    end,
+    on_win_leave = function(buffer)
+      if #vim.fn.win_findbuf(buffer.handle) <= 1 then
+        buffer:win_call(function()
+          self.fold_state = buffer.ui:get_fold_state()
+          self.cursor_state = buffer:cursor_line()
+          self.view_state = buffer:save_view()
+        end)
+      end
+    end,
+    on_win_enter = function()
+      M.instance = self
+      if self.fold_state and self.buffer then
+        self.buffer.ui:set_fold_state(self.fold_state)
+        self.fold_state = nil
+      elseif self.buffer then
+        self.buffer:win_exec("normal! zR")
+      end
+
+      if self.view_state and self.cursor_state and self.buffer then
+        self.buffer:win_call(function()
+          self.buffer:restore_view(self.view_state, self.cursor_state)
+        end)
+        self.view_state = nil
+        self.cursor_state = nil
+      end
+    end,
     autocmds = {
       ["WinLeave"] = function()
         if self.buffer and self.buffer.kind == "floating" then

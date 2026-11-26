@@ -194,6 +194,8 @@ to Neovim users.
     initial_branch_rename = nil,
     -- Change the default way of opening neogit
     kind = "tab",
+    -- Keep Neogit's view buffers alive and listed when hidden instead of wiping them
+    keep_hidden_buffers = false,
     -- Floating window style
     floating = {
       relative = "editor",

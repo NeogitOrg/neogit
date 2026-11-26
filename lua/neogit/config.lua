@@ -375,6 +375,7 @@ end
 ---@field initial_branch_name? string Default for new branch name prompts
 ---@field initial_branch_rename? string Default for rename branch prompt. If not set, the current branch name is used
 ---@field kind? WindowKind The default type of window neogit should open in
+---@field keep_hidden_buffers? boolean Keep view buffers alive and listed when hidden instead of wiping them
 ---@field floating? NeogitConfigFloating The floating window style
 ---@field disable_line_numbers? boolean Whether to disable line numbers
 ---@field disable_relative_line_numbers? boolean Whether to disable line numbers
@@ -468,6 +469,7 @@ function M.get_default_values()
     sort_branches = "-committerdate",
     commit_order = "topo",
     kind = "tab",
+    keep_hidden_buffers = false,
     floating = {
       relative = "editor",
       width = 0.8,
@@ -1245,6 +1247,7 @@ function M.validate_config()
     validate_type(config.notification_icon, "notification_icon", "string")
     validate_type(config.console_timeout, "console_timeout", "number")
     validate_kind(config.kind, "kind")
+    validate_type(config.keep_hidden_buffers, "keep_hidden_buffers", "boolean")
     if validate_type(config.floating, "floating", "table") then
       validate_type(config.floating.relative, "relative", "string")
       validate_type(config.floating.width, "width", "number")

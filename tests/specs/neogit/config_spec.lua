@@ -76,6 +76,11 @@ describe("Neogit config", function()
         assert.True(vim.tbl_count(require("neogit.config").validate_config()) ~= 0)
       end)
 
+      it("should return invalid when keep_hidden_buffers isn't a boolean", function()
+        config.values.keep_hidden_buffers = "not a boolean"
+        assert.True(vim.tbl_count(require("neogit.config").validate_config()) ~= 0)
+      end)
+
       it("should return invalid when disable_line_numbers isn't a boolean", function()
         config.values.disable_line_numbers = "not a boolean"
         assert.True(vim.tbl_count(require("neogit.config").validate_config()) ~= 0)
