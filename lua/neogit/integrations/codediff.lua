@@ -240,6 +240,7 @@ local function get_focus_file(section_name, item_name)
   if
     section_name == "staged"
     or section_name == "unstaged"
+    or section_name == "untracked"
     or section_name == "merge"
     or section_name == "worktree"
   then
@@ -316,7 +317,12 @@ function M.open(section_name, item_name, opts)
 
   -- Map Neogit sections to codediff operations
   -- selene: allow(if_same_then_else)
-  if section_name == "staged" or section_name == "unstaged" or section_name == "merge" then
+  if
+    section_name == "staged"
+    or section_name == "unstaged"
+    or section_name == "untracked"
+    or section_name == "merge"
+  then
     open_status_explorer(codediff_git, view, git_root, get_focus_file(section_name, item_name))
   elseif
     section_name == "recent"
