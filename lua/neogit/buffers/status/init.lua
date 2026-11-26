@@ -125,9 +125,16 @@ end
 ---| "'vsplit'"
 ---@return StatusBuffer
 function M:open(kind)
-  if self.buffer and self.buffer:is_visible() then
-    logger.debug("[STATUS] An Instance is already open - focusing it")
-    self.buffer:focus()
+  if self.buffer and self.buffer:is_valid() then
+    if self.buffer:is_visible() then
+      logger.debug("[STATUS] An Instance is already open - focusing it")
+      self.buffer:focus()
+      return self
+    end
+
+    logger.debug("[STATUS] Re-showing kept hidden buffer")
+    self.buffer.kind = kind or config.values.kind or "tab"
+    self.buffer:show()
     return self
   end
 
@@ -137,6 +144,8 @@ function M:open(kind)
     name = "NeogitStatus",
     filetype = "NeogitStatus",
     cwd = self.cwd,
+    bufhidden = config.values.keep_hidden_buffers and "hide" or nil,
+    buflisted = config.values.keep_hidden_buffers or nil,
     context_highlight = not config.values.disable_context_highlighting and config.values.log_pager == nil,
     kind = kind or config.values.kind or "tab",
     disable_line_numbers = config.values.disable_line_numbers,
@@ -149,6 +158,29 @@ function M:open(kind)
 
       if self.prev_autochdir then
         vim.o.autochdir = self.prev_autochdir
+      end
+    end,
+    on_win_leave = function(buffer)
+      if self.prev_autochdir then
+        vim.o.autochdir = self.prev_autochdir
+      end
+
+      if #vim.fn.win_findbuf(buffer.handle) <= 1 then
+        buffer:win_call(function()
+          self.fold_state = buffer.ui:get_fold_state()
+          self.cursor_location = buffer.ui:get_cursor_location()
+          self.cursor_state = buffer:cursor_line()
+          self.view_state = buffer:save_view()
+        end)
+      end
+    end,
+    on_win_enter = function()
+      self.prev_autochdir = vim.o.autochdir
+      vim.o.autochdir = false
+
+      self:redraw()
+      if config.values.auto_refresh then
+        self:dispatch_refresh(nil, "buf_win_enter")
       end
     end,
     --stylua: ignore start
@@ -279,13 +311,18 @@ end
 
 function M:close()
   if self.buffer then
-    self.fold_state = self.buffer.ui:get_fold_state()
-    self.cursor_state = self.buffer:cursor_line()
-    self.view_state = self.buffer:save_view()
+    self.buffer:win_call(function()
+      self.fold_state = self.buffer.ui:get_fold_state()
+      self.cursor_location = self.buffer.ui:get_cursor_location()
+      self.cursor_state = self.buffer:cursor_line()
+      self.view_state = self.buffer:save_view()
+    end)
 
     logger.debug("[STATUS] Closing Buffer")
     self.buffer:close()
-    self.buffer = nil
+    if not config.values.keep_hidden_buffers then
+      self.buffer = nil
+    end
   end
 end
 
@@ -317,9 +354,11 @@ function M:refresh(partial, reason)
 
   -- Needs to be captured _before_ refresh because the diffs are needed, but will be changed by refreshing.
   local cursor, view
-  if self.buffer and self.buffer:is_focused() then
-    cursor = self.buffer.ui:get_cursor_location()
-    view = self.buffer:save_view()
+  if self.buffer and self.buffer:is_visible() then
+    self.buffer:win_call(function()
+      cursor = self.buffer.ui:get_cursor_location()
+      view = self.buffer:save_view()
+    end)
   end
 
   git.repo:dispatch_refresh {
@@ -336,7 +375,7 @@ end
 ---@param cursor CursorLocation?
 ---@param view table?
 function M:redraw(cursor, view)
-  if not self.buffer then
+  if not self.buffer or not self.buffer:is_valid() then
     logger.debug("[STATUS] Buffer no longer exists - bail")
     return
   end
@@ -350,13 +389,24 @@ function M:redraw(cursor, view)
     self.fold_state = nil
   end
 
-  if self.cursor_state and self.view_state and self.buffer then
-    logger.debug("[STATUS] Restoring cursor and view state")
-    self.buffer:restore_view(self.view_state, self.cursor_state)
-    self.view_state = nil
-    self.cursor_state = nil
-  elseif cursor and view and self.buffer then
-    self.buffer:restore_view(view, self.buffer.ui:resolve_cursor_location(cursor))
+  if self.buffer and self.buffer:is_visible() then
+    if self.view_state and (self.cursor_location or self.cursor_state) then
+      logger.debug("[STATUS] Restoring cursor and view state")
+      local line = self.cursor_state
+      if self.cursor_location and self.cursor_location.section then
+        line = self.buffer.ui:resolve_cursor_location(self.cursor_location)
+      end
+      self.buffer:win_call(function()
+        self.buffer:restore_view(self.view_state, line)
+      end)
+      self.view_state = nil
+      self.cursor_state = nil
+      self.cursor_location = nil
+    elseif cursor and view then
+      self.buffer:win_call(function()
+        self.buffer:restore_view(view, self.buffer.ui:resolve_cursor_location(cursor))
+      end)
+    end
   end
 end
 
@@ -381,7 +431,9 @@ end)
 function M:deferred_refresh(reason, wait)
   return function()
     vim.defer_fn(function()
-      self:dispatch_refresh(nil, reason)
+      if self.buffer and self.buffer:is_visible() then
+        self:dispatch_refresh(nil, reason)
+      end
     end, wait or 2000)
   end
 end

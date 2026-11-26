@@ -56,11 +56,21 @@ end
 
 function M:close()
   if self.buffer then
+    self.buffer:win_call(function()
+      self.fold_state = self.buffer.ui:get_fold_state()
+      self.cursor_state = self.buffer:cursor_line()
+      self.view_state = self.buffer:save_view()
+    end)
+
     self.buffer:close()
-    self.buffer = nil
+    if not config.values.keep_hidden_buffers then
+      self.buffer = nil
+    end
   end
 
-  M.instance = nil
+  if not config.values.keep_hidden_buffers then
+    M.instance = nil
+  end
 end
 
 ---@return boolean
@@ -81,11 +91,66 @@ function M:open()
     name = "NeogitLogView",
     filetype = "NeogitLogView",
     kind = config.values.log_view.kind,
+    bufhidden = config.values.keep_hidden_buffers and "hide" or nil,
+    buflisted = config.values.keep_hidden_buffers or nil,
     context_highlight = false,
     header = self.header,
     scroll_header = false,
     active_item_highlight = true,
     status_column = not config.values.disable_signs and "" or nil,
+    on_detach = function()
+      self.buffer = nil
+      if M.instance == self then
+        M.instance = nil
+      end
+    end,
+    on_win_leave = function(buffer)
+      if #vim.fn.win_findbuf(buffer.handle) <= 1 then
+        buffer:win_call(function()
+          self.fold_state = buffer.ui:get_fold_state()
+          self.cursor_state = buffer:cursor_line()
+          self.view_state = buffer:save_view()
+        end)
+      end
+    end,
+    on_win_enter = function()
+      if self.fold_state and self.buffer then
+        self.buffer.ui:set_fold_state(self.fold_state)
+        self.fold_state = nil
+      end
+      if self.view_state and self.cursor_state and self.buffer then
+        self.buffer:win_call(function()
+          self.buffer:restore_view(self.view_state, self.cursor_state)
+        end)
+        self.view_state = nil
+        self.cursor_state = nil
+      end
+
+      if self.fetch_func then
+        a.void(function()
+          local permit = self.refresh_lock:acquire()
+          local commits = self.fetch_func(0)
+          if self.buffer and self.buffer:is_valid() then
+            local fold_state = self.buffer.ui:get_fold_state()
+            local cursor, view
+            self.buffer:win_call(function()
+              cursor = self.buffer:cursor_line()
+              view = self.buffer:save_view()
+            end)
+
+            self.commits = commits
+            self.buffer.ui:render(unpack(ui.View(self.commits, self.remotes, self.internal_args)))
+            self.buffer.ui:set_fold_state(fold_state)
+            if self.buffer:is_visible() and view and cursor then
+              self.buffer:win_call(function()
+                self.buffer:restore_view(view, cursor)
+              end)
+            end
+          end
+          permit:forget()
+        end)()
+      end
+    end,
     mappings = {
       v = {
         [popups.mapping_for("CherryPickPopup")] = popups.open("cherry_pick", function(p)

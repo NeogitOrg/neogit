@@ -6,20 +6,24 @@ local commit_view_maps = require("neogit.config").get_reversed_commit_view_maps(
 local CommitViewBuffer = require("neogit.buffers.commit_view")
 local notification = require("neogit.lib.notification")
 local git = require("neogit.lib.git")
+local a = require("neogit.lib.async")
 
 ---@class ReflogViewBuffer
 ---@field entries ReflogEntry[]
 ---@field header string
+---@field fetch_func? fun(): ReflogEntry[]
 local M = {}
 M.__index = M
 
 ---@param entries ReflogEntry[]|nil
 ---@param header string
+---@param fetch_func? fun(): ReflogEntry[]
 ---@return ReflogViewBuffer
-function M.new(entries, header)
+function M.new(entries, header, fetch_func)
   local instance = {
     entries = entries,
     header = header,
+    fetch_func = fetch_func,
     buffer = nil,
   }
 
@@ -30,11 +34,21 @@ end
 
 function M:close()
   if self.buffer then
+    self.buffer:win_call(function()
+      self.fold_state = self.buffer.ui:get_fold_state()
+      self.cursor_state = self.buffer:cursor_line()
+      self.view_state = self.buffer:save_view()
+    end)
+
     self.buffer:close()
-    self.buffer = nil
+    if not config.values.keep_hidden_buffers then
+      self.buffer = nil
+    end
   end
 
-  M.instance = nil
+  if not config.values.keep_hidden_buffers then
+    M.instance = nil
+  end
 end
 
 ---@return boolean
@@ -55,11 +69,64 @@ function M:open(_)
     name = "NeogitReflogView",
     filetype = "NeogitReflogView",
     kind = config.values.reflog_view.kind,
+    bufhidden = config.values.keep_hidden_buffers and "hide" or nil,
+    buflisted = config.values.keep_hidden_buffers or nil,
     header = self.header,
     scroll_header = true,
     status_column = not config.values.disable_signs and "" or nil,
     context_highlight = true,
     active_item_highlight = true,
+    on_detach = function()
+      self.buffer = nil
+      if M.instance == self then
+        M.instance = nil
+      end
+    end,
+    on_win_leave = function(buffer)
+      if #vim.fn.win_findbuf(buffer.handle) <= 1 then
+        buffer:win_call(function()
+          self.fold_state = buffer.ui:get_fold_state()
+          self.cursor_state = buffer:cursor_line()
+          self.view_state = buffer:save_view()
+        end)
+      end
+    end,
+    on_win_enter = function()
+      if self.fold_state and self.buffer then
+        self.buffer.ui:set_fold_state(self.fold_state)
+        self.fold_state = nil
+      end
+      if self.view_state and self.cursor_state and self.buffer then
+        self.buffer:win_call(function()
+          self.buffer:restore_view(self.view_state, self.cursor_state)
+        end)
+        self.view_state = nil
+        self.cursor_state = nil
+      end
+
+      if self.fetch_func then
+        a.void(function()
+          local entries = self.fetch_func()
+          if self.buffer and self.buffer:is_valid() then
+            local fold_state = self.buffer.ui:get_fold_state()
+            local cursor, view
+            self.buffer:win_call(function()
+              cursor = self.buffer:cursor_line()
+              view = self.buffer:save_view()
+            end)
+
+            self.entries = entries
+            self.buffer.ui:render(unpack(ui.View(self.entries)))
+            self.buffer.ui:set_fold_state(fold_state)
+            if self.buffer:is_visible() and view and cursor then
+              self.buffer:win_call(function()
+                self.buffer:restore_view(view, cursor)
+              end)
+            end
+          end
+        end)()
+      end
+    end,
     mappings = {
       v = {
         [popups.mapping_for("CherryPickPopup")] = popups.open("cherry_pick", function(p)

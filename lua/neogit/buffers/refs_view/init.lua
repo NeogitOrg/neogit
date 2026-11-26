@@ -37,12 +37,22 @@ end
 
 function M:close()
   if self.buffer then
+    self.buffer:win_call(function()
+      self.fold_state = self.buffer.ui:get_fold_state()
+      self.cursor_state = self.buffer:cursor_line()
+      self.view_state = self.buffer:save_view()
+    end)
+
     self.buffer:close()
-    self.buffer = nil
+    if not config.values.keep_hidden_buffers then
+      self.buffer = nil
+    end
   end
 
-  Watcher.instance(self.root):unregister(self)
-  M.instance = nil
+  if not config.values.keep_hidden_buffers then
+    Watcher.instance(self.root):unregister(self)
+    M.instance = nil
+  end
 end
 
 ---@return boolean
@@ -94,10 +104,41 @@ function M:open()
     name = "NeogitRefsView",
     filetype = "NeogitRefsView",
     kind = config.values.refs_view.kind,
+    bufhidden = config.values.keep_hidden_buffers and "hide" or nil,
+    buflisted = config.values.keep_hidden_buffers or nil,
     context_highlight = false,
     on_detach = function()
       Watcher.instance(self.root):unregister(self)
       self.buffer = nil
+      if M.instance == self then
+        M.instance = nil
+      end
+    end,
+    on_win_leave = function(buffer)
+      if #vim.fn.win_findbuf(buffer.handle) <= 1 then
+        buffer:win_call(function()
+          self.fold_state = buffer.ui:get_fold_state()
+          self.cursor_state = buffer:cursor_line()
+          self.view_state = buffer:save_view()
+        end)
+      end
+    end,
+    on_win_enter = function()
+      if self.fold_state and self.buffer then
+        self.buffer.ui:set_fold_state(self.fold_state)
+        self.fold_state = nil
+      end
+      if self.view_state and self.cursor_state and self.buffer then
+        self.buffer:win_call(function()
+          self.buffer:restore_view(self.view_state, self.cursor_state)
+        end)
+        self.view_state = nil
+        self.cursor_state = nil
+      end
+
+      a.void(function()
+        self:redraw()
+      end)()
     end,
     mappings = {
       v = {
@@ -328,8 +369,27 @@ function M:open()
 end
 
 function M:redraw()
+  if not self.buffer or not self.buffer:is_valid() or not self.buffer:is_visible() then
+    return
+  end
+
   logger.debug("[REFS] Beginning redraw")
-  self.buffer.ui:render(unpack(ui.RefsView(git.refs.list_parsed(), self.head)))
+  local fold_state = self.buffer.ui:get_fold_state()
+  local cursor, view
+  self.buffer:win_call(function()
+    cursor = self.buffer:cursor_line()
+    view = self.buffer:save_view()
+  end)
+
+  self.refs = git.refs.list_parsed()
+  self.buffer.ui:render(unpack(ui.RefsView(self.refs, self.head)))
+  self.buffer.ui:set_fold_state(fold_state)
+
+  if self.buffer and self.buffer:is_visible() and view and cursor then
+    self.buffer:win_call(function()
+      self.buffer:restore_view(view, cursor)
+    end)
+  end
 
   event.send("RefsRefreshed")
   logger.info("[REFS] Redraw complete")

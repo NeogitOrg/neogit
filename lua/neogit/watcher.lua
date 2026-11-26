@@ -150,12 +150,27 @@ function Watcher:fs_event_callback()
 end
 
 function Watcher:dispatch_refresh()
+  local has_visible = false
+  for _, buffer in pairs(self.buffers) do
+    if buffer.buffer and buffer.buffer:is_valid() and buffer.buffer:is_visible() then
+      has_visible = true
+      break
+    end
+  end
+
+  if not has_visible then
+    logger.debug("[WATCHER] Skipping refresh: no visible buffers")
+    return
+  end
+
   git.repo:dispatch_refresh {
     source = "watcher",
     callback = function()
       for name, buffer in pairs(self.buffers) do
-        logger.debug("[WATCHER] Dispatching redraw to " .. name)
-        buffer:redraw()
+        if buffer.buffer and buffer.buffer:is_valid() and buffer.buffer:is_visible() then
+          logger.debug("[WATCHER] Dispatching redraw to " .. name)
+          buffer:redraw()
+        end
       end
     end,
   }
